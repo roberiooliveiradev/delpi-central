@@ -1,5 +1,13 @@
 import { ChevronLeft, ChevronRight, Clapperboard } from "lucide-react";
-import { useCallback, useState, type CSSProperties, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 
 import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
@@ -25,6 +33,7 @@ type Props = {
   onCopy: (slide: Slide) => void;
   onPaste: () => void;
   onDuplicate: (slide: Slide) => void;
+  onRename: (slide: Slide, title: string) => void;
   onToggleActive: (slide: Slide) => void;
   onRemove: (slide: Slide) => void;
 };
@@ -47,6 +56,7 @@ export function SlideFilmstrip({
   onCopy,
   onPaste,
   onDuplicate,
+  onRename,
   onToggleActive,
   onRemove,
 }: Props) {
@@ -57,8 +67,51 @@ export function SlideFilmstrip({
     x: number;
     y: number;
   } | null>(null);
+  const [renamingSlideId, setRenamingSlideId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const renameInputRef = useRef<HTMLInputElement>(null);
+  const skipBlurCommitRef = useRef(false);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  const beginRename = useCallback(
+    (slide: Slide) => {
+      skipBlurCommitRef.current = false;
+      setRenamingSlideId(slide.id);
+      setRenameDraft(slide.title);
+      onSelect(slide.id);
+    },
+    [onSelect],
+  );
+
+  const cancelRename = useCallback(() => {
+    skipBlurCommitRef.current = true;
+    setRenamingSlideId(null);
+    setRenameDraft("");
+  }, []);
+
+  const commitRename = useCallback(
+    (slide: Slide) => {
+      if (skipBlurCommitRef.current) {
+        skipBlurCommitRef.current = false;
+        return;
+      }
+      const next = renameDraft.trim();
+      setRenamingSlideId(null);
+      setRenameDraft("");
+      if (!next || next === slide.title) return;
+      onRename(slide, next);
+    },
+    [onRename, renameDraft],
+  );
+
+  useEffect(() => {
+    if (!renamingSlideId) return;
+    const el = renameInputRef.current;
+    if (!el) return;
+    el.focus();
+    el.select();
+  }, [renamingSlideId]);
 
   const handleContextMenu = useCallback(
     (event: MouseEvent, slide: Slide) => {
@@ -68,6 +121,17 @@ export function SlideFilmstrip({
     },
     [onSelect],
   );
+
+  const onRenameKeyDown = (event: KeyboardEvent<HTMLInputElement>, slide: Slide) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commitRename(slide);
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancelRename();
+    }
+  };
 
   const shellStyle = {
     "--td-filmstrip-width": `${panelWidthPx}px`,
@@ -118,37 +182,73 @@ export function SlideFilmstrip({
               <ol className="td-deck-filmstrip__list">
                 {slides.map((slide, index) => {
                   const selected = slide.id === selectedSlideId;
+                  const renaming = renamingSlideId === slide.id;
                   return (
                     <li
                       key={slide.id}
                       className={`td-deck-filmstrip__item${selected ? " td-deck-filmstrip__item--selected" : ""}${!slide.isActive ? " td-deck-filmstrip__item--inactive" : ""}${dragIndex === index ? " td-deck-filmstrip__item--dragging" : ""}`}
-                      draggable
-                      onDragStart={() => onDragStart(index)}
+                      draggable={!renaming}
+                      onDragStart={() => {
+                        if (renaming) return;
+                        onDragStart(index);
+                      }}
                       onDragOver={(event) => event.preventDefault()}
                       onDrop={() => onDrop(index)}
                       onDragEnd={onDragEnd}
                     >
-                      <button
-                        type="button"
+                      <div
                         className="td-deck-filmstrip__select"
-                        onClick={() => onSelect(slide.id)}
-                        onContextMenu={(event) => handleContextMenu(event, slide)}
                         aria-current={selected ? "true" : undefined}
-                        aria-label={`Tela ${index + 1}: ${slide.title}`}
                       >
-                        <span className="td-deck-filmstrip__index">{index + 1}</span>
-                        <SlideCardThumbnail
-                          slide={slide}
-                          playlistId={playlistId}
-                          previewSlide={previewBySlideId[slide.id]}
-                          viewportProfile={viewportProfile}
-                          masterConfig={masterConfig}
-                        />
-                        <span className="td-deck-filmstrip__title">{slide.title}</span>
+                        <button
+                          type="button"
+                          className="td-deck-filmstrip__thumb-btn"
+                          onClick={() => onSelect(slide.id)}
+                          onDoubleClick={(event) => {
+                            event.preventDefault();
+                            beginRename(slide);
+                          }}
+                          onContextMenu={(event) => handleContextMenu(event, slide)}
+                          aria-label={`Tela ${index + 1}: ${slide.title}`}
+                        >
+                          <span className="td-deck-filmstrip__index">{index + 1}</span>
+                          <SlideCardThumbnail
+                            slide={slide}
+                            playlistId={playlistId}
+                            previewSlide={previewBySlideId[slide.id]}
+                            viewportProfile={viewportProfile}
+                            masterConfig={masterConfig}
+                          />
+                        </button>
+                        {renaming ? (
+                          <input
+                            ref={renameInputRef}
+                            className="td-deck-filmstrip__title-input"
+                            value={renameDraft}
+                            aria-label={`Renomear tela ${index + 1}`}
+                            onChange={(event) => setRenameDraft(event.target.value)}
+                            onBlur={() => commitRename(slide)}
+                            onKeyDown={(event) => onRenameKeyDown(event, slide)}
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            className="td-deck-filmstrip__title"
+                            title="Duplo clique para renomear"
+                            onClick={() => onSelect(slide.id)}
+                            onDoubleClick={(event) => {
+                              event.preventDefault();
+                              beginRename(slide);
+                            }}
+                            onContextMenu={(event) => handleContextMenu(event, slide)}
+                          >
+                            {slide.title}
+                          </button>
+                        )}
                         {!slide.isActive ? (
                           <span className="td-deck-filmstrip__badge">{inactiveLabel}</span>
                         ) : null}
-                      </button>
+                      </div>
                     </li>
                   );
                 })}
@@ -182,6 +282,7 @@ export function SlideFilmstrip({
           onPaste={onPaste}
           onDuplicate={() => onDuplicate(contextMenu.slide)}
           onAdd={onAdd}
+          onRename={() => beginRename(contextMenu.slide)}
           onToggleActive={() => onToggleActive(contextMenu.slide)}
           onRemove={() => onRemove(contextMenu.slide)}
         />

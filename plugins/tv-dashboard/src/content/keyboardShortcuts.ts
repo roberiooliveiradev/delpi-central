@@ -110,7 +110,8 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     group: "selecao",
     label: "Multi-seleção (clique)",
     keys: "Shift+Clique",
-    description: "Alterna o grupo (ou bloco) na seleção. Com filho já isolado, alterna irmãos",
+    description:
+      "Alterna o grupo (ou bloco) na seleção. Em membros do mesmo grupo, alterna irmãos (também Ctrl+Clique)",
     showAltTip: false,
   },
   {
@@ -148,9 +149,10 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
   {
     id: "deselect-ctrl",
     group: "selecao",
-    label: "Remover da seleção",
+    label: "Alternar / remover da seleção",
     keys: "Ctrl+Clique",
-    description: "Tira o item (ou o grupo fechado) da seleção atual",
+    description:
+      "No mesmo grupo, adiciona ou remove o irmão. Fora do grupo, tira o item da seleção",
     showAltTip: false,
   },
   {

@@ -21,6 +21,7 @@ type Props = {
   onCopySlide: (slide: Slide) => void;
   onPasteSlide: () => void;
   onDuplicateSlide: (slide: Slide) => void;
+  onRenameSlide: (slide: Slide, title: string) => void;
   onToggleSlideActive: (slide: Slide) => void;
   onRemoveSlide: (slide: Slide) => void;
   stage: ReactNode;
@@ -45,6 +46,7 @@ export function DeckWorkspace({
   onCopySlide,
   onPasteSlide,
   onDuplicateSlide,
+  onRenameSlide,
   onToggleSlideActive,
   onRemoveSlide,
   stage,
@@ -70,6 +72,7 @@ export function DeckWorkspace({
         onCopy={onCopySlide}
         onPaste={onPasteSlide}
         onDuplicate={onDuplicateSlide}
+        onRename={onRenameSlide}
         onToggleActive={onToggleSlideActive}
         onRemove={onRemoveSlide}
       />

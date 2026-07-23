@@ -25,7 +25,7 @@ function fakeEvent(partial: Partial<ReactPointerEvent> = {}): ReactPointerEvent 
 }
 
 describe("beginBlockStageMoveDrag", () => {
-  it("Ctrl+clique remove da seleção sem iniciar drag", () => {
+  it("Ctrl+clique no membro do grupo fechado alterna o filho sem iniciar drag", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
@@ -45,9 +45,31 @@ describe("beginBlockStageMoveDrag", () => {
       armTapDeselect,
     });
     expect(result).toBe(false);
-    expect(selectBlock).toHaveBeenCalledWith("a", { subtract: true, expandGroup: false });
+    /* Mesmo grupo na seleção: Ctrl alterna o membro (não subtract do grupo inteiro). */
+    expect(selectBlock).toHaveBeenCalledWith("a", { additive: true, expandGroup: false });
     expect(startDrag).not.toHaveBeenCalled();
     expect(armTapDeselect).toHaveBeenCalledWith(null);
+  });
+
+  it("Ctrl+clique fora do grupo remove da seleção", () => {
+    const a = fakeBlock("a", "grp");
+    const x = fakeBlock("x");
+    const selectBlock = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ ctrlKey: true }),
+      block: x,
+      blocks: [a, x],
+      isBlockSelected: () => true,
+      selectedIds: ["a", "x"],
+      selectedId: "x",
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag: vi.fn(),
+      armTapDeselect: vi.fn(),
+    });
+    expect(result).toBe(false);
+    expect(selectBlock).toHaveBeenCalledWith("x", { subtract: true, expandGroup: false });
   });
 
   it("2º clique com o grupo selecionado isola o subitem", () => {
@@ -104,7 +126,7 @@ describe("beginBlockStageMoveDrag", () => {
     expect(startDrag).toHaveBeenCalled();
   });
 
-  it("Shift com grupo selecionado alterna o grupo (não isola subitem)", () => {
+  it("Shift com grupo selecionado alterna o membro (não desliga o grupo inteiro)", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
@@ -123,8 +145,29 @@ describe("beginBlockStageMoveDrag", () => {
       armTapDeselect: vi.fn(),
     });
     expect(result).toBe(false);
-    expect(selectBlock).toHaveBeenCalledWith("a", { additive: true, expandGroup: true });
+    expect(selectBlock).toHaveBeenCalledWith("a", { additive: true, expandGroup: false });
     expect(startDrag).not.toHaveBeenCalled();
+  });
+
+  it("Ctrl em irmão do mesmo grupo adiciona o membro à seleção", () => {
+    const a = fakeBlock("a", "grp");
+    const b = fakeBlock("b", "grp");
+    const selectBlock = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ ctrlKey: true }),
+      block: b,
+      blocks: [a, b],
+      isBlockSelected: (id) => id === "a",
+      selectedIds: ["a"],
+      selectedId: "a",
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag: vi.fn(),
+      armTapDeselect: vi.fn(),
+    });
+    expect(result).toBe(false);
+    expect(selectBlock).toHaveBeenCalledWith("b", { additive: true, expandGroup: false });
   });
 
   it("Shift em modo filhos faz toggle do subitem", () => {

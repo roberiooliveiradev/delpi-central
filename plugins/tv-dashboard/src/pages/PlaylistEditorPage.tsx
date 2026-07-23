@@ -40,6 +40,7 @@ import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
 import { SlideStagePreview } from "../components/SlideStagePreview";
 import { enrichComunicadoConfigForEditor } from "../components/slideCardPreview";
+import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import {
   DeckEditorHistoryProvider,
   type DeckEditorHistoryContextValue,
@@ -626,6 +627,26 @@ export function PlaylistEditorPage({
     }
   }
 
+  /** Coloca o slide recém-criado abaixo da âncora (tela ativa) e persiste a ordem. */
+  async function placeSlideAfterActive(newSlide: Slide, anchorId?: string | null) {
+    if (!playlist) return newSlide;
+    const prev = playlist.slides ?? [];
+    const activeId = anchorId ?? selectedSlideId ?? selectedSlide?.id ?? null;
+    const ordered = insertSlideAfterAnchor([...prev, newSlide], newSlide, activeId);
+    const onlyAppended =
+      ordered.length === prev.length + 1 &&
+      ordered[ordered.length - 1]?.id === newSlide.id &&
+      prev.every((slide, index) => ordered[index]?.id === slide.id);
+    if (onlyAppended) {
+      setPlaylist({ ...playlist, slides: ordered });
+      return newSlide;
+    }
+    const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+    const result = await reorderSlides(playlist.id, items);
+    setPlaylist({ ...playlist, slides: result.slides });
+    return result.slides.find((item) => item.id === newSlide.id) ?? newSlide;
+  }
+
   async function handleAddCustomSlide() {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
@@ -635,6 +656,7 @@ export function PlaylistEditorPage({
     ).length;
     const baseTitle = customCatalogItem?.label ?? "Personalizado";
     const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
+    const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
     try {
       const slide = await addSlide(playlist.id, {
       slideType: "native",
@@ -645,8 +667,26 @@ export function PlaylistEditorPage({
       ),
       durationSec: customCatalogItem?.defaultDurationSec ?? 30,
       });
-      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-      selectSlide(slide.id, slide);
+      const placed = await placeSlideAfterActive(slide, anchorId);
+      selectSlide(placed.id, placed);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
+  async function handleRenameSlide(slide: Slide, nextTitle: string) {
+    if (!playlist) return;
+    const title = nextTitle.trim();
+    if (!title || title === slide.title) return;
+    deckHistory.recordBeforeChange();
+    try {
+      const updated = await updateSlide(playlist.id, slide.id, { title });
+      setPlaylist({
+        ...playlist,
+        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+      });
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -992,8 +1032,8 @@ export function PlaylistEditorPage({
     deckHistory.recordBeforeChange();
     try {
       const copy = await duplicateSlide(playlist.id, slide.id);
-      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
-      selectSlide(copy.id, copy);
+      const placed = await placeSlideAfterActive(copy, slide.id);
+      selectSlide(placed.id, placed);
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1009,6 +1049,7 @@ export function PlaylistEditorPage({
   async function handlePasteSlide() {
     if (!playlist || !slideClipboardRef.current) return;
     const payload = slideClipboardRef.current;
+    const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
     deckHistory.recordBeforeChange();
     try {
       const slide = await addSlide(playlist.id, {
@@ -1018,8 +1059,8 @@ export function PlaylistEditorPage({
         nativeConfig: payload.nativeConfig ?? undefined,
         externalUrl: payload.externalUrl ?? undefined,
       });
-      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-      selectSlide(slide.id, slide);
+      const placed = await placeSlideAfterActive(slide, anchorId);
+      selectSlide(placed.id, placed);
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1166,6 +1207,7 @@ export function PlaylistEditorPage({
     onCopySlide: handleCopySlide,
     onPasteSlide: () => void handlePasteSlide(),
     onDuplicateSlide: (slide: Slide) => void handleDuplicateSlide(slide),
+    onRenameSlide: (slide: Slide, title: string) => void handleRenameSlide(slide, title),
     onToggleSlideActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemoveSlide: (slide: Slide) => void handleRemoveSlide(slide),
   };

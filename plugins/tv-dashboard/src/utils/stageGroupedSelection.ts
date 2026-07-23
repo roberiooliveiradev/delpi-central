@@ -248,9 +248,12 @@ export function resolveEscapeHierarchyAction(params: {
  * Contrato:
  * - 1º clique em membro → seleciona o grupo (pai).
  * - Com o grupo selecionado, 2º clique no membro → isola o subitem.
- * - Shift → multi-seleção de **grupos** (ou blocos soltos); só em modo filhos
- *   (já isolado) Shift alterna irmãos.
- * - Alt → isola (atalho); Ctrl/Cmd → remove o grupo/bloco da seleção.
+ * - Shift/Ctrl em irmão do **mesmo** grupo já presente na seleção → alterna
+ *   o membro (`toggle-child`, `expandGroup: false`) — permite multi-selecionar
+ *   dois filhos sem desligar o grupo inteiro.
+ * - Shift fora do grupo → multi-seleção de grupos/blocos soltos.
+ * - Ctrl fora do grupo → remove da seleção.
+ * - Alt → isola (atalho).
  */
 export type GroupedBlockPointerDownAction =
   | { type: "select-expand-group"; blockId: string }
@@ -259,6 +262,15 @@ export type GroupedBlockPointerDownAction =
   | { type: "toggle-group"; blockId: string }
   | { type: "subtract"; blockId: string }
   | { type: "drag-current-selection" };
+
+function selectionSharesGroupId(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+  groupId: string | undefined,
+): boolean {
+  if (!groupId) return false;
+  return selectedIds.some((id) => blocks.find((item) => item.id === id)?.groupId === groupId);
+}
 
 export function resolveGroupedBlockPointerDownAction(params: {
   block: ComunicadoBlock;
@@ -270,10 +282,6 @@ export function resolveGroupedBlockPointerDownAction(params: {
 }): GroupedBlockPointerDownAction {
   const { block, blocks, selectedIds, shiftKey, ctrlOrMeta, altKey } = params;
 
-  if (ctrlOrMeta) {
-    return { type: "subtract", blockId: block.id };
-  }
-
   if (altKey && block.groupId) {
     return { type: "isolate-child", blockId: block.id };
   }
@@ -284,10 +292,18 @@ export function resolveGroupedBlockPointerDownAction(params: {
     closed && block.groupId === closed.groupId && closed.memberIds.includes(block.id),
   );
   const inChildrenGroup = Boolean(children && block.groupId === children.groupId);
+  const sameGroupInSelection = selectionSharesGroupId(blocks, selectedIds, block.groupId);
+
+  if (ctrlOrMeta && !shiftKey) {
+    /* Mesmo grupo já na seleção: Ctrl alterna o membro (paridade Shift / Camadas). */
+    if (sameGroupInSelection) {
+      return { type: "toggle-child", blockId: block.id };
+    }
+    return { type: "subtract", blockId: block.id };
+  }
 
   if (shiftKey) {
-    /* Já em L3 (filhos): Shift multiplica irmãos. Senão: multi de grupos/blocos. */
-    if (inChildrenGroup) {
+    if (sameGroupInSelection || inChildrenGroup || inClosedGroup) {
       return { type: "toggle-child", blockId: block.id };
     }
     return { type: "toggle-group", blockId: block.id };

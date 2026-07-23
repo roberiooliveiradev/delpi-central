@@ -291,7 +291,7 @@ describe("resolveGroupedBlockPointerDownAction", () => {
       }),
     ).toEqual({ type: "toggle-group", blockId: "b" });
 
-    /* Shift com grupo fechado selecionado → também toggle-group (não isola). */
+    /* Shift com grupo fechado → alterna o membro (entra em multi de filhos). */
     expect(
       resolveGroupedBlockPointerDownAction({
         block: blocks[0]!,
@@ -301,7 +301,7 @@ describe("resolveGroupedBlockPointerDownAction", () => {
         ctrlOrMeta: false,
         altKey: false,
       }),
-    ).toEqual({ type: "toggle-group", blockId: "a" });
+    ).toEqual({ type: "toggle-child", blockId: "a" });
 
     /* Já em modo filhos: Shift alterna irmãos. */
     expect(
@@ -311,6 +311,18 @@ describe("resolveGroupedBlockPointerDownAction", () => {
         selectedIds: ["a"],
         shiftKey: true,
         ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "toggle-child", blockId: "b" });
+
+    /* Ctrl em irmão do mesmo grupo → toggle-child (não subtract do grupo inteiro). */
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[1]!,
+        blocks,
+        selectedIds: ["a"],
+        shiftKey: false,
+        ctrlOrMeta: true,
         altKey: false,
       }),
     ).toEqual({ type: "toggle-child", blockId: "b" });

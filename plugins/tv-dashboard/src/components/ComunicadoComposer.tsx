@@ -799,7 +799,10 @@ export function ComunicadoComposerCanvas() {
                   }
                 }}
                 onPointerDown={(event) => {
-                  /* Ctrl/Cmd+clique: remove da seleção (não pan). */
+                  /*
+                   * Ctrl/Cmd+clique vai pela policy (`beginBlockStageMoveDrag`):
+                   * irmão do mesmo grupo → toggle-child; senão → subtract.
+                   */
                   if (
                     (event.ctrlKey || event.metaKey) &&
                     !event.shiftKey &&
@@ -807,7 +810,19 @@ export function ComunicadoComposerCanvas() {
                   ) {
                     event.stopPropagation();
                     event.preventDefault();
-                    selectBlock(block.id, { subtract: true, expandGroup: false });
+                    beginBlockStageMoveDrag({
+                      event,
+                      block,
+                      blocks,
+                      isBlockSelected,
+                      selectedIds,
+                      selectedId,
+                      selectBlock,
+                      selectBlocksByIds,
+                      armMultiDragSelection,
+                      startDrag,
+                      armTapDeselect,
+                    });
                     return;
                   }
                   // Pan (mão): não engolir o evento — o wrap do palco arrasta o scroll.

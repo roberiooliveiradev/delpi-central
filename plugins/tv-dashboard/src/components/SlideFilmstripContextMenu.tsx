@@ -10,6 +10,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export type SlideFilmstripContextMenuProps = {
   onPaste: () => void;
   onDuplicate: () => void;
   onAdd: () => void;
+  onRename: () => void;
   onToggleActive: () => void;
   onRemove: () => void;
 };
@@ -45,6 +47,7 @@ export function SlideFilmstripContextMenu({
   onPaste,
   onDuplicate,
   onAdd,
+  onRename,
   onToggleActive,
   onRemove,
 }: SlideFilmstripContextMenuProps) {
@@ -77,6 +80,7 @@ export function SlideFilmstripContextMenu({
       <ContextMenuDivider />
       <ContextMenuItem label={C.newSlide} icon={Plus} onSelect={() => run(onAdd)} />
       <ContextMenuItem label={C.duplicate} icon={Copy} onSelect={() => run(onDuplicate)} />
+      <ContextMenuItem label={C.rename} icon={Pencil} onSelect={() => run(onRename)} />
       <ContextMenuDivider />
       <ContextMenuItem
         label={slideActive ? C.hide : C.show}

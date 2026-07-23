@@ -2,7 +2,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   ribbon: {
     slides:
       "Navegue e gerencie as telas da apresentação. Use as setas para alternar sem sair do editor.",
-    newSlide: "Adiciona uma nova tela personalizada vazia ao final da playlist para montar gráficos e indicadores.",
+    newSlide:
+      "Adiciona uma nova tela personalizada vazia logo abaixo da tela ativa (ou no final se nenhuma estiver selecionada).",
     prevSlide: "Volta para a tela anterior na ordem de exibição.",
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
@@ -488,6 +489,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paste: "Colar tela",
     newSlide: "Nova tela",
     duplicate: "Duplicar tela",
+    rename: "Renomear tela",
     hide: "Ocultar tela",
     show: "Exibir tela",
     delete: "Excluir tela",
