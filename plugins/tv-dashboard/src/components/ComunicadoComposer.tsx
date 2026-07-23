@@ -28,6 +28,7 @@ const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
+import { useStageLineDraw } from "../hooks/useStageLineDraw";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
@@ -148,6 +149,8 @@ export function ComunicadoComposerCanvas() {
     viewportProfile,
     stageZoom,
     stagePanMode,
+    stageDrawTool,
+    addPreparedShapeBlock,
     fitStageToView,
     bootstrapStageViewPosition,
     persistStageViewPosition,
@@ -358,6 +361,13 @@ export function ComunicadoComposerCanvas() {
     };
   }, [canvasRef]);
 
+  const { drawPreview, beginDraw, isDrawToolActive } = useStageLineDraw({
+    stageDrawTool,
+    blocks,
+    clientToCanvasPercent,
+    addPreparedShapeBlock,
+  });
+
   const finishMarquee = useCallback(
     (additive: boolean) => {
       const rect = marqueeRectRef.current;
@@ -419,6 +429,13 @@ export function ComunicadoComposerCanvas() {
   const handleCanvasPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (shouldDeferToStagePan(event, stagePanMode)) return;
+      if (editingTextId) return;
+
+      if (isDrawToolActive) {
+        beginDraw(event);
+        return;
+      }
+
       // Marquee só no fundo do slide — não iniciar sobre um bloco.
       const target = event.target as HTMLElement | null;
       if (
@@ -428,7 +445,6 @@ export function ComunicadoComposerCanvas() {
       ) {
         return;
       }
-      if (editingTextId) return;
 
       // Impede seleção nativa de texto enquanto o retângulo de marquee arrasta.
       event.preventDefault();
@@ -481,7 +497,14 @@ export function ComunicadoComposerCanvas() {
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onUp);
     },
-    [clientToCanvasPercent, editingTextId, finishMarquee, stagePanMode],
+    [
+      beginDraw,
+      clientToCanvasPercent,
+      editingTextId,
+      finishMarquee,
+      isDrawToolActive,
+      stagePanMode,
+    ],
   );
 
   const handleStageContextMenu = useCallback(
@@ -655,6 +678,7 @@ export function ComunicadoComposerCanvas() {
               "td-composer__canvas",
               COMPOSER_STAGE_BEM.root,
               marquee ? "td-composer__canvas--marqueeing" : "",
+              isDrawToolActive ? "td-composer__canvas--draw-tool" : "",
             ]
               .filter(Boolean)
               .join(" "),
@@ -667,6 +691,7 @@ export function ComunicadoComposerCanvas() {
             height: designSize.height,
             transform: `scale(${stageZoom})`,
             transformOrigin: "top left",
+            ...(isDrawToolActive ? { cursor: "crosshair" } : {}),
           }}
           onPointerDown={handleCanvasPointerDown}
           onContextMenu={handleCanvasContextMenu}
@@ -1015,6 +1040,30 @@ export function ComunicadoComposerCanvas() {
               ].join(" ")}
               style={marqueeStyle}
               aria-hidden="true"
+            />
+          ) : null}
+          {drawPreview && drawPreview.points.length >= 2 ? (
+            <svg
+              className="td-composer__draw-preview"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polyline
+                points={drawPreview.points.map((point) => `${point.x},${point.y}`).join(" ")}
+                fill="none"
+                stroke="#089bdb"
+                strokeWidth={0.35}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : null}
+          {isDrawToolActive ? (
+            <div
+              className="td-composer__draw-hitlayer"
+              aria-hidden="true"
+              onPointerDown={handleCanvasPointerDown}
             />
           ) : null}
           </div>

@@ -125,6 +125,7 @@ export type {
   ComunicadoShapeBlock,
   ComunicadoShapeKind,
   ComunicadoShapeConnector,
+  ComunicadoConnectorRouting,
   ComunicadoGeometryVertex,
   ComunicadoTextBlock,
   ComunicadoTextDecoration,
@@ -176,6 +177,7 @@ export {
   COMUNICADO_POINT_HIT_SIZE_PCT,
   applyLineEndpointAt,
   applyLineEndpoints,
+  applyLinePolyline,
   clampFrameForBlock,
   clampFrameForShapeBlock,
   frameFromLineEndpoints,
@@ -229,6 +231,23 @@ export {
   syncAllConnectors,
   type ComunicadoConnectorAnchor,
 } from "./comunicadoConnectors";
+export {
+  buildCurveControlPoint,
+  buildElbowRoutePoints,
+  buildRoutedLinePoints,
+  normalizeConnectorRouting,
+} from "./comunicadoConnectorRouting";
+export {
+  createDrawnLineBlock,
+  isLineDrawToolId,
+  lineToolRouting,
+  lineToolShapeKind,
+  previewDrawnLinePoints,
+  sampleQuadraticCurve,
+  snapPointToConnectionSite,
+  type DrawnLineAttach,
+  type LineDrawToolKind,
+} from "./comunicadoLineDraw";
 export {
   adjustmentHandleCssPosition,
   borderRadiusPxToCornerAdjustment,

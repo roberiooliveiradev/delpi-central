@@ -197,6 +197,14 @@ export type ComunicadoEditorContextValue = {
   uploading: boolean;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;
+  /**
+   * Ferramenta de desenho no palco (Inserir → Linha).
+   * `null` = interação normal (seleção/marquee).
+   */
+  stageDrawTool: import("@delpi/tv-dashboard-presentation").ComunicadoLineToolId | null;
+  setStageDrawTool: (
+    tool: import("@delpi/tv-dashboard-presentation").ComunicadoLineToolId | null,
+  ) => void;
   background: ComunicadoConfig["background"];
   canvasRef: RefObject<HTMLDivElement | null>;
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
@@ -240,6 +248,10 @@ export type ComunicadoEditorContextValue = {
   selectionPanelTab: SelectionPanelTab;
   setSelectionPanelTab: (tab: SelectionPanelTab) => void;
   addShape: (shape: ComunicadoShapeKind) => void;
+  /** Shape já com frame/vertices (gesto de desenho no palco). */
+  addPreparedShapeBlock: (
+    block: import("@delpi/tv-dashboard-presentation").ComunicadoShapeBlock,
+  ) => void;
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;
   ungroupSelected: () => void;

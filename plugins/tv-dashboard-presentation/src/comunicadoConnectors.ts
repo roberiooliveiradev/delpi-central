@@ -5,12 +5,22 @@
 
 import type {
   ComunicadoBlock,
+  ComunicadoConnectorRouting,
   ComunicadoGeometryVertex,
   ComunicadoShapeBlock,
   ComunicadoShapeConnector,
 } from "./comunicadoTypes";
 import { pickNearestAnchorsBetweenBlocks } from "./comunicadoConnectionSites";
-import { applyLineEndpoints, resolveLineEndpoints } from "./comunicadoShapeGeometry";
+import {
+  buildCurveControlPoint,
+  buildRoutedLinePoints,
+  normalizeConnectorRouting,
+} from "./comunicadoConnectorRouting";
+import {
+  applyLinePolyline,
+  geometryBoundingFrame,
+  resolveLineEndpoints,
+} from "./comunicadoShapeGeometry";
 import { isLineShapeKind } from "./comunicadoVisualPrimitive";
 
 export type ComunicadoConnectorAnchor = NonNullable<ComunicadoShapeConnector["fromAnchor"]>;
@@ -47,11 +57,13 @@ export function normalizeShapeConnector(value: unknown): ComunicadoShapeConnecto
   const toBlockId = trimId(raw.toBlockId) || undefined;
   if (!fromBlockId && !toBlockId) return undefined;
   if (fromBlockId && toBlockId && fromBlockId === toBlockId) return undefined;
+  const routing = normalizeConnectorRouting(raw.routing);
   return {
     ...(fromBlockId ? { fromBlockId } : {}),
     ...(toBlockId ? { toBlockId } : {}),
     fromAnchor: normalizeConnectorAnchor(raw.fromAnchor),
     toAnchor: normalizeConnectorAnchor(raw.toAnchor),
+    ...(routing !== "straight" ? { routing } : {}),
   };
 }
 
@@ -148,14 +160,28 @@ export function applyConnectorGeometry(
   nextConnector = normalizeShapeConnector(nextConnector);
 
   const [a, b] = endpoints;
-  const withEnds = applyLineEndpoints(lineBlock, a, b);
+  const routing = normalizeConnectorRouting(nextConnector?.routing ?? connector.routing);
+  const fromAnchor = normalizeConnectorAnchor(nextConnector?.fromAnchor ?? connector.fromAnchor);
+  const toAnchor = normalizeConnectorAnchor(nextConnector?.toAnchor ?? connector.toAnchor);
+  const routePoints = buildRoutedLinePoints(a, b, routing, fromAnchor, toAnchor);
+  let withEnds = applyLinePolyline(lineBlock, routePoints);
+  if (routing === "curve") {
+    const control = buildCurveControlPoint(a, b);
+    withEnds = {
+      ...withEnds,
+      frame: geometryBoundingFrame({ primitive: "line", points: [a, control, b] }),
+    };
+  }
   if (!nextConnector) {
     const { connector: _drop, ...rest } = withEnds;
     return rest as ComunicadoShapeBlock;
   }
   return {
     ...withEnds,
-    connector: nextConnector,
+    connector: {
+      ...nextConnector,
+      ...(routing !== "straight" ? { routing } : {}),
+    },
   };
 }
 
@@ -185,15 +211,18 @@ export function createConnectorBlock(
     zIndex?: number;
     fromAnchor?: ComunicadoConnectorAnchor;
     toAnchor?: ComunicadoConnectorAnchor;
+    routing?: ComunicadoConnectorRouting;
   },
 ): ComunicadoShapeBlock {
   const shape = options?.shape ?? "line-arrow-right";
   const nearest = pickNearestAnchorsBetweenBlocks(from, to);
+  const routing = normalizeConnectorRouting(options?.routing);
   const connector: ComunicadoShapeConnector = {
     fromBlockId: from.id,
     toBlockId: to.id,
     fromAnchor: options?.fromAnchor ?? nearest.fromAnchor ?? "center",
     toAnchor: options?.toAnchor ?? nearest.toAnchor ?? "center",
+    ...(routing !== "straight" ? { routing } : {}),
   };
   const draft: ComunicadoShapeBlock = {
     id: newConnectorId(),
@@ -228,17 +257,20 @@ export function detachConnectorEndpoint(
 ): ComunicadoShapeBlock {
   const connector = normalizeShapeConnector(block.connector);
   if (!connector) return block;
+  const routing = connector.routing;
   const next: ComunicadoShapeConnector =
     endpointIndex === 0
       ? {
           ...(connector.toBlockId ? { toBlockId: connector.toBlockId } : {}),
           toAnchor: connector.toAnchor,
           fromAnchor: connector.fromAnchor,
+          ...(routing ? { routing } : {}),
         }
       : {
           ...(connector.fromBlockId ? { fromBlockId: connector.fromBlockId } : {}),
           fromAnchor: connector.fromAnchor,
           toAnchor: connector.toAnchor,
+          ...(routing ? { routing } : {}),
         };
   const normalized = normalizeShapeConnector(next);
   if (!normalized) return detachConnector(block);

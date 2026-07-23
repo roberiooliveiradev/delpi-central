@@ -137,6 +137,9 @@ export function ComunicadoVisualBoxView({
           style={block.style}
           geometry={block.type === "shape" ? resolveShapeGeometry(block) : undefined}
           markerRadius={block.style?.markerRadius}
+          lineRouting={
+            block.type === "shape" ? block.connector?.routing ?? "straight" : undefined
+          }
         />
       ) : null}
       {textNode ? (

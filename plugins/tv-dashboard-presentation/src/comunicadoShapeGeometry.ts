@@ -168,27 +168,47 @@ export function applyLineEndpoints(
   a: ComunicadoGeometryVertex,
   b: ComunicadoGeometryVertex,
 ): ComunicadoShapeBlock {
-  const start = { x: clampPct(a.x), y: clampPct(a.y) };
-  const end = { x: clampPct(b.x), y: clampPct(b.y) };
-  const vertices = [start, end];
+  return applyLinePolyline(block, [a, b]);
+}
+
+/** Polilinha aberta (≥2 pontos) — elbow, scribble, etc. */
+export function applyLinePolyline(
+  block: ComunicadoShapeBlock,
+  points: ComunicadoGeometryVertex[],
+): ComunicadoShapeBlock {
+  if (points.length < 2) {
+    const [a, b] = resolveLineEndpoints(block);
+    return applyLinePolyline(block, [a, b]);
+  }
+  const vertices = points.map((point) => ({
+    x: clampPct(point.x),
+    y: clampPct(point.y),
+  }));
   return {
     ...block,
     vertices,
-    frame: frameFromLineEndpoints(start, end),
+    frame: geometryBoundingFrame({ primitive: "line", points: vertices }),
   };
 }
 
-/** Translada ambos os endpoints (move do bloco linha). */
+/** Translada todos os vértices da linha (move do bloco). */
 export function translateLineEndpoints(
   block: ComunicadoShapeBlock,
   dx: number,
   dy: number,
 ): ComunicadoShapeBlock {
-  const [a, b] = resolveLineEndpoints(block);
-  return applyLineEndpoints(
+  const geometry = resolveShapeGeometry(block);
+  if (geometry.primitive !== "line") {
+    const [a, b] = resolveLineEndpoints(block);
+    return applyLineEndpoints(
+      block,
+      { x: a.x + dx, y: a.y + dy },
+      { x: b.x + dx, y: b.y + dy },
+    );
+  }
+  return applyLinePolyline(
     block,
-    { x: a.x + dx, y: a.y + dy },
-    { x: b.x + dx, y: b.y + dy },
+    geometry.points.map((point) => ({ x: point.x + dx, y: point.y + dy })),
   );
 }
 
@@ -198,9 +218,19 @@ export function applyLineEndpointAt(
   endpointIndex: 0 | 1,
   point: ComunicadoGeometryVertex,
 ): ComunicadoShapeBlock {
-  const [a, b] = resolveLineEndpoints(block);
-  if (endpointIndex === 0) return applyLineEndpoints(block, point, b);
-  return applyLineEndpoints(block, a, point);
+  const geometry = resolveShapeGeometry(block);
+  if (geometry.primitive !== "line" || geometry.points.length < 2) {
+    const [a, b] = resolveLineEndpoints(block);
+    if (endpointIndex === 0) return applyLineEndpoints(block, point, b);
+    return applyLineEndpoints(block, a, point);
+  }
+  const points = geometry.points.map((vertex) => ({ ...vertex }));
+  if (endpointIndex === 0) {
+    points[0] = { x: clampPct(point.x), y: clampPct(point.y) };
+  } else {
+    points[points.length - 1] = { x: clampPct(point.x), y: clampPct(point.y) };
+  }
+  return applyLinePolyline(block, points);
 }
 
 /** Frame persistido: ponto só posição (w=h=0); demais primitivos usam bbox da geometria. */

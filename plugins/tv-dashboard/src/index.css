@@ -1452,6 +1452,25 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+.dashboard-tv-dashboard .td-composer__canvas--draw-tool{
+  cursor: crosshair;
+}
+.dashboard-tv-dashboard .td-composer__draw-hitlayer{
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  cursor: crosshair;
+  touch-action: none;
+}
+.dashboard-tv-dashboard .td-composer__draw-preview{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 41;
+  pointer-events: none;
+  overflow: visible;
+}
 .dashboard-tv-dashboard .td-shape-library__grid--icons{
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

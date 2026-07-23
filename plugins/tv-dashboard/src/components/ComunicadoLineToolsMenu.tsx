@@ -8,7 +8,6 @@ import {
 import {
   COMUNICADO_LINE_TOOLS,
   type ComunicadoLineToolId,
-  type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
@@ -19,7 +18,6 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 type Props = {
   open: boolean;
   anchorRef: React.RefObject<HTMLDivElement | null>;
-  onInsertKind: (kind: ComunicadoShapeKind) => void;
   onSelectTool: (toolId: ComunicadoLineToolId) => void;
   onDismiss: () => void;
 };
@@ -41,7 +39,6 @@ const TOOL_ICONS: Record<ComunicadoLineToolId, typeof Minus> = {
 export function ComunicadoLineToolsMenu({
   open,
   anchorRef,
-  onInsertKind,
   onSelectTool,
   onDismiss,
 }: Props) {
@@ -79,10 +76,6 @@ export function ComunicadoLineToolsMenu({
                   aria-disabled={!tool.ready}
                   onClick={() => {
                     if (!tool.ready) return;
-                    if (tool.insertKind) {
-                      onInsertKind(tool.insertKind);
-                      return;
-                    }
                     onSelectTool(tool.id);
                   }}
                 >

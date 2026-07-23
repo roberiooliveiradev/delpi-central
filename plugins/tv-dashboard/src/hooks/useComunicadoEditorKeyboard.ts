@@ -35,10 +35,14 @@ export function useComunicadoEditorKeyboard({
   ungroupSelected,
   nudgeSelected,
   enableHistoryShortcuts = true,
+  stageDrawTool = null,
+  clearStageDrawTool,
 }: ComunicadoEditorKeyboardActions & {
   enableHistoryShortcuts?: boolean;
   blocks?: ComunicadoBlock[];
   selectBlocksByIds?: (ids: string[]) => void;
+  stageDrawTool?: string | null;
+  clearStageDrawTool?: () => void;
 }) {
   const hasSelection = selectedIds.length > 0;
 
@@ -66,6 +70,10 @@ export function useComunicadoEditorKeyboard({
       const key = event.key.toLowerCase();
 
       if (event.key === "Escape") {
+        if (stageDrawTool && clearStageDrawTool) {
+          clearStageDrawTool();
+          return { handled: true };
+        }
         const escape = resolveStageEscapeAction({
           blocks,
           selectedIds,

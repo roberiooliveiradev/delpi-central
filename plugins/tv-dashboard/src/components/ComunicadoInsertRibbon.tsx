@@ -91,6 +91,8 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   const {
     shapeMenuOpen,
     setShapeMenuOpen,
+    stageDrawTool,
+    setStageDrawTool,
     addBlock,
     addShape,
     addIconBlock,
@@ -130,8 +132,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   }
 
   function selectLineTool(toolId: ComunicadoLineToolId) {
-    // Fase 2/3: ativar ferramenta de desenho no palco.
-    void toolId;
+    setStageDrawTool(toolId);
     closeInsertMenus();
   }
 
@@ -234,7 +235,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               icon={Minus}
               label={labels.comunicadoAddLine ?? "Linha"}
               hint={H.insertLineTool ?? H.insertLineShape}
-              active={lineMenuOpen}
+              active={lineMenuOpen || Boolean(stageDrawTool)}
               keyTip={K.line}
               onClick={() => {
                 setShapeMenuOpen(false);
@@ -248,7 +249,6 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               <ComunicadoLineToolsMenu
                 open={lineMenuOpen}
                 anchorRef={lineAnchorRef}
-                onInsertKind={insertShape}
                 onSelectTool={selectLineTool}
                 onDismiss={closeInsertMenus}
               />

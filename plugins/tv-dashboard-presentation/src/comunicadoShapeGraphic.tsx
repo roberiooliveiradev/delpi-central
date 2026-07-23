@@ -7,7 +7,13 @@ import {
   geometryBoundingFrame,
 } from "./comunicadoShapeGeometry";
 import { resolveShapeAdjustments } from "./comunicadoShapeAdjustments";
-import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoTypes";
+import { buildCurveControlPoint } from "./comunicadoConnectorRouting";
+import type {
+  ComunicadoBlockStyle,
+  ComunicadoConnectorRouting,
+  ComunicadoGeometryVertex,
+  ComunicadoShapeKind,
+} from "./comunicadoTypes";
 import {
   arrowDownPath,
   arrowLeftPath,
@@ -119,15 +125,26 @@ function insetLineEnd(
   };
 }
 
+function polylinePointsAttr(points: ComunicadoGeometryVertex[]): string {
+  return points.map((point) => `${point.x},${point.y}`).join(" ");
+}
+
 function renderLineGeometry(
   geometry: Extract<ComunicadoShapeGeometry, { primitive: "line" }>,
   kind: ComunicadoShapeKind,
   colors: ShapeGraphicColors,
+  routing: ComunicadoConnectorRouting = "straight",
 ): ReactNode {
   const bbox = geometryBoundingFrame(geometry);
   const { stroke, strokeWidth } = colors;
-  const [start, end] = geometry.points;
+  const points = geometry.points;
+  const start = points[0];
+  const end = points[points.length - 1];
   if (!start || !end) return null;
+
+  const tipFrom =
+    points.length >= 2 ? points[points.length - 2]! : start;
+  const tipTo = points.length >= 2 ? points[1]! : end;
 
   const lineLen = Math.hypot(
     (end.x - start.x) * COMUNICADO_STAGE_ASPECT,
@@ -138,18 +155,46 @@ function renderLineGeometry(
   const sw = Math.max(2, strokeWidth);
   const arrowRight = kind === "line-arrow-right" || kind === "line-arrow-both";
   const arrowLeft = kind === "line-arrow-left" || kind === "line-arrow-both";
-  const lineStart = arrowLeft ? insetLineEnd(start, end, head.length) : start;
-  const lineEnd = arrowRight ? insetLineEnd(end, start, head.length) : end;
   const hasArrow = arrowLeft || arrowRight;
 
-  return (
-    <svg
-      viewBox={`${bbox.x} ${bbox.y} ${Math.max(bbox.w, 0.001)} ${Math.max(bbox.h, 0.001)}`}
-      className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
-      aria-hidden="true"
-      preserveAspectRatio="none"
-      style={{ overflow: "visible", width: "100%", height: "100%" }}
-    >
+  let strokeElement: ReactNode;
+  if (routing === "curve" && points.length === 2) {
+    const control = buildCurveControlPoint(start, end);
+    const pathStart = arrowLeft ? insetLineEnd(start, control, head.length) : start;
+    const pathEnd = arrowRight ? insetLineEnd(end, control, head.length) : end;
+    strokeElement = (
+      <path
+        d={`M ${pathStart.x} ${pathStart.y} Q ${control.x} ${control.y} ${pathEnd.x} ${pathEnd.y}`}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinecap={hasArrow ? "butt" : "round"}
+        vectorEffect="non-scaling-stroke"
+      />
+    );
+  } else if (points.length > 2) {
+    const drawPoints = [...points];
+    if (arrowLeft) {
+      drawPoints[0] = insetLineEnd(start, tipTo, head.length);
+    }
+    if (arrowRight) {
+      drawPoints[drawPoints.length - 1] = insetLineEnd(end, tipFrom, head.length);
+    }
+    strokeElement = (
+      <polyline
+        points={polylinePointsAttr(drawPoints)}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={sw}
+        strokeLinecap={hasArrow ? "butt" : "round"}
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    );
+  } else {
+    const lineStart = arrowLeft ? insetLineEnd(start, end, head.length) : start;
+    const lineEnd = arrowRight ? insetLineEnd(end, start, head.length) : end;
+    strokeElement = (
       <line
         x1={lineStart.x}
         y1={lineStart.y}
@@ -160,11 +205,23 @@ function renderLineGeometry(
         strokeLinecap={hasArrow ? "butt" : "round"}
         vectorEffect="non-scaling-stroke"
       />
+    );
+  }
+
+  return (
+    <svg
+      viewBox={`${bbox.x} ${bbox.y} ${Math.max(bbox.w, 0.001)} ${Math.max(bbox.h, 0.001)}`}
+      className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
+      aria-hidden="true"
+      preserveAspectRatio="none"
+      style={{ overflow: "visible", width: "100%", height: "100%" }}
+    >
+      {strokeElement}
       {arrowRight ? (
-        <polygon points={lineArrowHeadPolygonPoints(end, start, head)} fill={stroke} stroke="none" />
+        <polygon points={lineArrowHeadPolygonPoints(end, tipFrom, head)} fill={stroke} stroke="none" />
       ) : null}
       {arrowLeft ? (
-        <polygon points={lineArrowHeadPolygonPoints(start, end, head)} fill={stroke} stroke="none" />
+        <polygon points={lineArrowHeadPolygonPoints(start, tipTo, head)} fill={stroke} stroke="none" />
       ) : null}
     </svg>
   );
@@ -675,6 +732,7 @@ export function ComunicadoShapeGraphic({
   style,
   geometry,
   markerRadius = COMUNICADO_MARKER_RADIUS_DEFAULT,
+  lineRouting,
 }: {
   kind: ComunicadoShapeKind;
   fill: string;
@@ -685,6 +743,8 @@ export function ComunicadoShapeGraphic({
   style?: ComunicadoBlockStyle | null;
   geometry?: ComunicadoShapeGeometry;
   markerRadius?: number;
+  /** Roteamento do conector (curva/elbow) — só linhas. */
+  lineRouting?: ComunicadoConnectorRouting;
 }) {
   const resolvedAdj =
     adjustments ?? resolveShapeAdjustments(kind, style ?? { borderRadius, adjustments });
@@ -695,7 +755,7 @@ export function ComunicadoShapeGraphic({
 
   if (geometry?.primitive === "line") {
     /* SVG próprio com viewBox = bbox do palco (evita normalizar 0–100 e esmagar a seta). */
-    return renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth });
+    return renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth }, lineRouting);
   }
 
   if (kind === "line" || kind === "line-arrow-right" || kind === "line-arrow-left" || kind === "line-arrow-both") {

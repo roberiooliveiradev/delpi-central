@@ -48,6 +48,8 @@ describe("comunicadoShapeCatalog (Onda 4K)", () => {
     expect(COMUNICADO_LINE_TOOLS.filter((tool) => tool.ready).map((tool) => tool.id)).toEqual([
       "line",
       "line-arrow",
+      "elbow-connector",
+      "curved-connector",
     ]);
   });
 

@@ -114,6 +114,8 @@ function ComunicadoEditorKeyboardBridge() {
     groupSelected,
     ungroupSelected,
     nudgeSelected,
+    stageDrawTool,
+    setStageDrawTool,
   } = useComunicadoEditor();
   useComunicadoEditorKeyboard({
     selectedIds,
@@ -121,6 +123,8 @@ function ComunicadoEditorKeyboardBridge() {
     editingTextId,
     blocks,
     selectBlocksByIds,
+    stageDrawTool,
+    clearStageDrawTool: () => setStageDrawTool(null),
     hasPartSelection: Boolean(
       selectedChartPart || selectedKpiPart || selectedTablePart || selectedInputPart,
     ),
@@ -178,6 +182,9 @@ export function ComunicadoEditorProvider({
   const [dataCatalogAnchor, setDataCatalogAnchor] = useState<HTMLElement | null>(null);
   const [dataCatalogMode, setDataCatalogMode] = useState<"insert" | "replace">("insert");
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const [stageDrawTool, setStageDrawTool] = useState<
+    import("@delpi/tv-dashboard-presentation").ComunicadoLineToolId | null
+  >(null);
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -671,6 +678,8 @@ export function ComunicadoEditorProvider({
     uploading: media.uploading,
     shapeMenuOpen,
     setShapeMenuOpen,
+    stageDrawTool,
+    setStageDrawTool,
     background,
     canvasRef,
     startDrag,
@@ -701,6 +710,7 @@ export function ComunicadoEditorProvider({
     selectionPanelTab: selection.selectionPanelTab,
     setSelectionPanelTab: selection.setSelectionPanelTab,
     addShape: blockActions.addShape,
+    addPreparedShapeBlock: blockActions.addPreparedShapeBlock,
     addIconBlock: blockActions.addIconBlock,
     groupSelected: blockActions.groupSelected,
     ungroupSelected: blockActions.ungroupSelected,

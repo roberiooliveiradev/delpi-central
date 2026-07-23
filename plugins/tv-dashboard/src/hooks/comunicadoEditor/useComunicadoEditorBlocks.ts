@@ -70,6 +70,7 @@ import {
   type ComunicadoInputBlock,
   type ComunicadoInputPartRef,
   type ComunicadoKpiPartRef,
+  type ComunicadoShapeBlock,
   type ComunicadoShapeKind,
   type ComunicadoTablePartRef,
   type ComunicadoTablePreset,
@@ -548,6 +549,23 @@ export function useComunicadoEditorBlocks({
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
     [configRef, placeInserted, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],
+  );
+
+  /** Insere bloco shape já posicionado (desenho no palco — linhas/conectores). */
+  const addPreparedShapeBlock = useCallback(
+    (block: ComunicadoShapeBlock) => {
+      const next: ComunicadoShapeBlock = {
+        ...block,
+        style: {
+          ...block.style,
+          zIndex: block.style?.zIndex ?? nextZIndex(configRef.current.blocks ?? []),
+        },
+      };
+      setSelectedId(next.id);
+      setRibbonTabRequest("element");
+      updateBlocks([...(configRef.current.blocks ?? []), next]);
+    },
+    [configRef, setRibbonTabRequest, setSelectedId, updateBlocks],
   );
 
   const addIconBlock = useCallback(
@@ -1426,6 +1444,7 @@ export function useComunicadoEditorBlocks({
     setDataFilters,
     patchInputBlock,
     addShape,
+    addPreparedShapeBlock,
     addIconBlock,
     groupSelected,
     ungroupSelected,

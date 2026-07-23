@@ -203,10 +203,11 @@ export const COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES: ComunicadoShapeCatalogC
  * Fase 0: Linha e Seta inserem bloco; demais tools entram nas Fases 2/3.
  */
 export const COMUNICADO_LINE_TOOLS: ComunicadoLineToolDefinition[] = [
-  { id: "line", label: "Linha", insertKind: "line", ready: true },
-  { id: "line-arrow", label: "Seta", insertKind: "line-arrow-right", ready: true },
-  { id: "elbow-connector", label: "Conector angulado", ready: false },
-  { id: "curved-connector", label: "Conector curvado", ready: false },
+  /** Fase 2: Linha/Seta/conectores desenham no palco (sem insertKind). */
+  { id: "line", label: "Linha", ready: true },
+  { id: "line-arrow", label: "Seta", ready: true },
+  { id: "elbow-connector", label: "Conector angulado", ready: true },
+  { id: "curved-connector", label: "Conector curvado", ready: true },
   { id: "curve", label: "Curva", ready: false },
   { id: "polyline", label: "Polilinha", ready: false },
   { id: "scribble", label: "Rabisco", ready: false },

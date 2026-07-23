@@ -245,6 +245,9 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
 
 export type ComunicadoGeometryVertex = { x: number; y: number };
 
+/** Roteamento visual do conector (Google Slides: reta / angulado / curvado). */
+export type ComunicadoConnectorRouting = "straight" | "elbow" | "curve";
+
 /**
  * Ligação entre blocos (conector) — ver `comunicadoConnectors`.
  * from/to opcionais: ponta solta mantém o outro lado grudado (picker PPT).
@@ -254,6 +257,8 @@ export type ComunicadoShapeConnector = {
   toBlockId?: string;
   fromAnchor?: "center" | "n" | "s" | "e" | "w";
   toAnchor?: "center" | "n" | "s" | "e" | "w";
+  /** Default `straight`. Elbow/curve geram vértices intermediários em `applyConnectorGeometry`. */
+  routing?: ComunicadoConnectorRouting;
 };
 
 export type ComunicadoShapeBlock = ComunicadoBlockBase &
