@@ -89,6 +89,14 @@
   color: var(--delpi-kpi-value-fg, #0f172a);
 }
 
+.delpi-kpi-card--fill .delpi-kpi-card__value:not(.delpi-kpi-part--framed) {
+  /* No layout flex do card fill, ocupa o restante e dá bbox estável ao FitText. */
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  min-height: 0;
+}
+
 .delpi-kpi-card--value-dominant .delpi-kpi-card__value {
   flex: 1 1 auto;
   width: 100%;

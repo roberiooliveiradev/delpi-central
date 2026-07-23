@@ -111,11 +111,9 @@ describe("DelpiKpiCard chrome", () => {
       <DelpiKpiCard label="Consumo" value="10" kpiParts={kpiParts} interaction={null} />,
     );
 
-    const selectedTitle = selected.container.querySelector(
-      ".delpi-kpi-card__label .delpi-ui-fit-text",
-    ) as HTMLElement;
+    const selectedTitle = selected.container.querySelector(".delpi-kpi-card__label") as HTMLElement;
     const deselectedTitle = deselected.container.querySelector(
-      ".delpi-kpi-card__label .delpi-ui-fit-text",
+      ".delpi-kpi-card__label",
     ) as HTMLElement;
     expect(selectedTitle.style.fontSize).toBe("22px");
     expect(deselectedTitle.style.fontSize).toBe("22px");

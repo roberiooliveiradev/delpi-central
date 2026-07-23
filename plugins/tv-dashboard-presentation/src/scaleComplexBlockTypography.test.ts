@@ -53,22 +53,22 @@ describe("scaleFontPx", () => {
 });
 
 describe("scaleComplexBlockOnResize", () => {
-  it("escala tipografia do KPI (título/valor auto-fit; ícone em px)", () => {
+  it("escala tipografia do KPI (título/ícone; valor fica auto-fit)", () => {
     const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
     const next = scaleComplexBlockOnResize(block, { w: 20, h: 20 }, { w: 40, h: 40 }) as ComunicadoKpiViewBlock;
     expect(next.kpiParts?.value?.style?.fontSize).toBeUndefined();
-    expect(next.kpiParts?.title?.style?.fontSize).toBeUndefined();
+    expect(next.kpiParts?.title?.style?.fontSize).toBe(36);
     expect(next.kpiParts?.icon?.style?.iconSize).toBe(72);
   });
 
-  it("KPI alongado só na altura ainda escala ícone e limpa tipografia auto-fit", () => {
+  it("KPI alongado só na altura ainda escala título/ícone", () => {
     const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
     const next = scaleComplexBlockOnResize(
       block,
       { w: 12, h: 7 },
       { w: 12, h: 28 },
     ) as ComunicadoKpiViewBlock;
-    expect(next.kpiParts?.title?.style?.fontSize).toBeUndefined();
+    expect(next.kpiParts?.title?.style?.fontSize).toBe(36);
     expect(next.kpiParts?.icon?.style?.iconSize).toBe(72);
     expect(next.kpiParts?.value?.style?.fontSize).toBeUndefined();
   });
@@ -147,15 +147,14 @@ describe("applyComplexBlockFrameWithTypography (live a partir do baseline)", () 
     const endFrame = { ...kpi.frame, w: kpi.frame.w * 2, h: kpi.frame.h * 2 };
     const end = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
     expect(mid.kpiParts?.value?.style?.fontSize).toBeUndefined();
-    expect(mid.kpiParts?.title?.style?.fontSize).toBeUndefined();
+    expect(mid.kpiParts?.title?.style?.fontSize).toBe(27);
     expect(end.kpiParts?.value?.style?.fontSize).toBeUndefined();
-    expect(end.kpiParts?.title?.style?.fontSize).toBeUndefined();
-    /* Bug antigo: tipografia já escalada + fator origin→final → dobra de novo.
-     * Com auto-fit, título/valor permanecem sem fontSize (FitText no card). */
+    expect(end.kpiParts?.title?.style?.fontSize).toBe(36);
+    /* Bug antigo: tipografia já escalada + fator origin→final → dobra de novo. */
     const doubled = scaleComplexBlockOnResize(end, kpi.frame, endFrame) as ComunicadoKpiViewBlock;
-    expect(doubled.kpiParts?.title?.style?.fontSize).toBeUndefined();
+    expect(doubled.kpiParts?.title?.style?.fontSize).toBe(72);
     const finalizeOk = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
-    expect(finalizeOk.kpiParts?.title?.style?.fontSize).toBeUndefined();
+    expect(finalizeOk.kpiParts?.title?.style?.fontSize).toBe(36);
     expect(finalizeOk.kpiParts?.value?.style?.fontSize).toBeUndefined();
     expect(finalizeOk.kpiParts?.icon?.style?.iconSize).toBe(72);
 

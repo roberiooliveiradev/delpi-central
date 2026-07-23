@@ -339,11 +339,13 @@ export function DelpiKpiCard({
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.title?.style,
-        // Auto-fit: FitText define o tamanho; não fixar fontSize no host.
-        ...(titleAutoFit ? { fontSize: undefined } : { fontSize: titleFontSizePx }),
+        // Sem frame: px no host (escala no resize do bloco). Com frame + auto-fit: FitText.
+        ...(titleAutoFit && titleFramed
+          ? { fontSize: undefined }
+          : { fontSize: titleFontSizePx }),
         color: resolvedTitleColor,
       },
-      { flexPart: false },
+      { flexPart: false, fillHost: titleFramed },
     ),
     ...titleLayoutStyle,
   };
@@ -355,7 +357,8 @@ export function DelpiKpiCard({
         ...(valueAutoFit ? { fontSize: undefined } : { fontSize: valueFontSizePx }),
         ...(valueColorForStyle ? { color: valueColorForStyle } : { color: undefined }),
       },
-      { flexPart: true },
+      // fillHost só com frame absoluto — no flex, height:100% colapsa o FitText.
+      { flexPart: true, fillHost: valueFramed },
     ),
     ...valueLayoutStyle,
   };
@@ -510,16 +513,27 @@ export function DelpiKpiCard({
                       }
                     }}
                   />
-                ) : (
+                ) : titleAutoFit && titleFramed ? (
                   <>
                     <FitText
-                      fixedPx={titleAutoFit ? null : titleFontSizePx}
+                      fixedPx={null}
                       minPx={12}
                       maxPx={120}
                       className="delpi-kpi-card__title-fit"
                     >
                       {titleContent}
                     </FitText>
+                    {titleHint && DELPI_KPI_CLASS_NAMES.labelHelp ? (
+                      <HelpTooltip
+                        content={titleHint}
+                        ariaLabel={`Ajuda: ${titleContent}`}
+                        className={DELPI_KPI_CLASS_NAMES.labelHelp}
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    {titleContent}
                     {titleHint && DELPI_KPI_CLASS_NAMES.labelHelp ? (
                       <HelpTooltip
                         content={titleHint}

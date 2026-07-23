@@ -33,7 +33,6 @@ import {
   KPI_ICON_DEFAULT_SIZE_PX,
   KPI_PART_FONT_SIZE_DEFAULTS,
   isKpiTextPartKind,
-  kpiPartUsesAutoFitFont,
   mergeKpiPartsWithOptions,
   resolveKpiPartFontSize,
   serializeKpiPartRef,
@@ -210,17 +209,13 @@ function scaleKpiPartStyle(
   scale: number,
 ): ComunicadoKpiPartStyle {
   const next: ComunicadoKpiPartStyle = { ...(style ?? {}) };
-  // Valor: sempre FitText no host — limpa fontSize persistido no resize.
-  // Título/hint: auto-fit (seed default) limpa; override explícito escala em px.
+  // Valor: FitText preenche o host (flex ou frame) — limpa fontSize no resize do bloco.
+  // Título/hint: escalam em px no layout flex; em layout livre o FitText do frame usa auto-fit.
   if (ref.kind === "value") {
     next.fontSize = undefined;
   } else if (isKpiTextPartKind(ref.kind)) {
-    if (kpiPartUsesAutoFitFont(ref.kind, style)) {
-      next.fontSize = undefined;
-    } else {
-      const base = resolveKpiPartFontSize(ref.kind, style);
-      next.fontSize = scaleFontPx(base, scale);
-    }
+    const base = resolveKpiPartFontSize(ref.kind, style);
+    next.fontSize = scaleFontPx(base, scale);
   } else if (style?.fontSize != null && style.fontSize > 0) {
     next.fontSize = scaleFontPx(style.fontSize, scale);
   }
@@ -246,8 +241,8 @@ function ensureKpiTextDefaults(parts: ComunicadoKpiPartsMap): ComunicadoKpiParts
   for (const kind of Object.keys(KPI_PART_FONT_SIZE_DEFAULTS) as Array<
     keyof typeof KPI_PART_FONT_SIZE_DEFAULTS
   >) {
-    // Partes auto-fit ficam sem fontSize persistido após resize.
-    if (kind === "value" || kind === "title" || kind === "hint") continue;
+    // Valor fica sem fontSize → auto-fit no container.
+    if (kind === "value") continue;
     const ref: ComunicadoKpiPartRef = { kind };
     const key = serializeKpiPartRef(ref);
     if (!next[key]?.style?.fontSize) {

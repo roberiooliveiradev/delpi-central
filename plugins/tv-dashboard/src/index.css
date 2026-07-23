@@ -3688,16 +3688,17 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon__frame-grid{
   display: grid;
-  grid-template-columns: repeat(3, minmax(72px, 88px));
+  /* 4 colunas: X / Y / Larg / Alt na mesma faixa (evita Alt vazando para 2ª linha). */
+  grid-template-columns: repeat(4, minmax(72px, 88px));
   gap: 4px 10px;
   width: max-content;
   max-width: 100%;
   align-items: end;
   overflow: visible;
 }
-/* Ribbon: Posição em grade 3 colunas (RangeField no host compact ≈96px). */
+/* Ribbon: Posição em grade 4 colunas (RangeField no host compact ≈96px). */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid{
-  grid-template-columns: repeat(3, minmax(88px, 104px));
+  grid-template-columns: repeat(4, minmax(88px, 104px));
   gap: 4px 8px;
   flex-wrap: nowrap;
 }
@@ -3999,7 +4000,7 @@ body.td-composer--marqueeing *{
   max-height: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid{
-  /* grid definido em .td-deck-ribbon__frame-grid — mantém densidade 3 colunas. */
+  /* grid definido em .td-deck-ribbon__frame-grid — mantém densidade 4 colunas. */
   width: max-content;
   max-width: none;
 }
@@ -4126,7 +4127,7 @@ body.td-composer--marqueeing *{
   display: grid;
   width: max-content;
   max-width: 100%;
-  grid-template-columns: repeat(3, minmax(120px, 148px));
+  grid-template-columns: repeat(4, minmax(120px, 148px));
   gap: 6px 12px;
   align-items: end;
 }
@@ -4135,7 +4136,7 @@ body.td-composer--marqueeing *{
   padding-top: 10px;
   border-top: 1px solid color-mix(in srgb, var(--delpi-ui-border, #3a4558) 80%, transparent);
   display: grid;
-  grid-template-columns: repeat(3, minmax(120px, 148px));
+  grid-template-columns: repeat(4, minmax(120px, 148px));
   gap: 6px 12px;
   align-items: end;
   width: max-content;

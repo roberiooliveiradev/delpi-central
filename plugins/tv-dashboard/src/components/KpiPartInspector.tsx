@@ -1,4 +1,4 @@
-import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, LucideIconField, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, HintAction, LucideIconField, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_ICON_DEFAULT_SIZE_PX,
@@ -29,6 +29,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ActiveCompositePartSelect } from "./ActiveCompositePartSelect";
@@ -404,9 +405,15 @@ export function KpiPartInspector({ pane = false, block }: Props) {
             Posição absoluta na página (px de design), origem no canto inferior esquerdo
           </p>
           {!explicitFrame ? (
-            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
-              Posicionar livremente no card…
-            </button>
+            <HintAction
+              hint={TV_DASHBOARD_HELP_TOOLTIPS.ribbon.kpiFreePosition}
+              ariaLabel="Ajuda: Posicionar livremente no card"
+              placement="bottom"
+            >
+              <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+                Posicionar livremente no card…
+              </button>
+            </HintAction>
           ) : (
             <>
               <div className="td-part-inspector-toolbar__fields-row">

@@ -55,6 +55,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Posição, tamanho e rotação do elemento. Opacidade fica em Exibição (mídia) ou Forma; não neste painel.",
     sizePosition:
       "Posição (X/Y), tamanho (largura/altura) e rotação em pixels de design da página, com origem no canto inferior esquerdo.",
+    kpiFreePosition:
+      "Ativa o layout livre das partes do KPI (título, valor, ícone…): cada uma ganha uma caixa própria no card para arrastar e redimensionar. No layout automático (padrão), o texto já acompanha o tamanho do card sem precisar deste passo.",
+    inputFreePosition:
+      "Ativa o layout livre das partes do filtro: cada parte ganha caixa própria para arrastar e redimensionar no bloco.",
     undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",
     redo: "Refazer alteração desfeita na programação ou no slide (Ctrl+Y ou Ctrl+Shift+Z).",
     zoomOut: "Diminuir zoom do palco no editor.",

@@ -1,4 +1,4 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   INPUT_ICON_DEFAULT_SIZE_PX,
   clearInputPartsFreeLayoutFrames,
@@ -24,6 +24,7 @@ import {
   type InputTextPartKind,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { enableInputFreeLayoutFromDom } from "../utils/enableInputFreeLayoutFromDom";
 import { inputPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -197,9 +198,15 @@ export function InputPartInspector({ pane = false, block }: Props) {
             Posição absoluta na página (px de design), origem no canto inferior esquerdo
           </p>
           {!explicitFrame ? (
-            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
-              Posicionar livremente no filtro…
-            </button>
+            <HintAction
+              hint={TV_DASHBOARD_HELP_TOOLTIPS.ribbon.inputFreePosition}
+              ariaLabel="Ajuda: Posicionar livremente no filtro"
+              placement="bottom"
+            >
+              <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+                Posicionar livremente no filtro…
+              </button>
+            </HintAction>
           ) : (
             <>
               <div className="td-part-inspector-toolbar__fields-row">

@@ -41,6 +41,7 @@ import {
   type KpiFramePartKind,
   type ViewportPixelSize,
 } from "@delpi/tv-dashboard-presentation";
+import { HintAction } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -244,9 +245,15 @@ export function FormatRibbonFrameSection({
         includeOpacity={includeOpacity}
         emptyAction={
           !explicitFrame ? (
-            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
-              Posicionar livremente…
-            </button>
+            <HintAction
+              hint={H.inputFreePosition}
+              ariaLabel="Ajuda: Posicionar livremente"
+              placement="bottom"
+            >
+              <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+                Posicionar livremente…
+              </button>
+            </HintAction>
           ) : undefined
         }
       >
@@ -332,9 +339,15 @@ export function FormatRibbonFrameSection({
         includeOpacity={includeOpacity}
         emptyAction={
           !explicitFrame ? (
-            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
-              Posicionar livremente…
-            </button>
+            <HintAction
+              hint={H.kpiFreePosition}
+              ariaLabel="Ajuda: Posicionar livremente"
+              placement="bottom"
+            >
+              <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+                Posicionar livremente…
+              </button>
+            </HintAction>
           ) : undefined
         }
       >

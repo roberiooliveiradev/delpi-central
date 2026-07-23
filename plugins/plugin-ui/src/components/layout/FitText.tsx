@@ -17,6 +17,9 @@ type Props = {
 /**
  * Ajusta `font-size` para o texto preencher o container pai (largura e altura),
  * ou aplica `fixedPx` quando a tipografia foi configurada explicitamente.
+ *
+ * Mede o texto com largura intrínseca (`max-content`) — medir com width/height 100%
+ * fazia scrollWidth≈clientWidth e o fit ficava preso no mínimo (layout flex do KPI).
  */
 export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx }: Props) {
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -36,6 +39,15 @@ export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx 
       const maxH = parent.clientHeight;
       if (maxW <= 0 || maxH <= 0) return;
 
+      const prevWidth = el.style.width;
+      const prevHeight = el.style.height;
+      const prevMaxWidth = el.style.maxWidth;
+      const prevMaxHeight = el.style.maxHeight;
+      el.style.width = "max-content";
+      el.style.height = "auto";
+      el.style.maxWidth = "none";
+      el.style.maxHeight = "none";
+
       let lo = minPx;
       let hi = Math.min(maxPx, Math.max(minPx, Math.floor(Math.min(maxW, maxH) * 1.15)));
       let best = minPx;
@@ -51,6 +63,11 @@ export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx 
           hi = mid - 1;
         }
       }
+
+      el.style.width = prevWidth;
+      el.style.height = prevHeight;
+      el.style.maxWidth = prevMaxWidth;
+      el.style.maxHeight = prevMaxHeight;
       setFontSize(best);
     };
 
