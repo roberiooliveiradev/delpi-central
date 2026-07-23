@@ -8,12 +8,15 @@ import {
 } from "./selectionChromeMetrics";
 
 describe("resolveSelectionChromeMetrics", () => {
-  it("em 100% usa handles 16px e pad enxuto (6)", () => {
+  it("em 100% usa cantos 10px, pills e pad enxuto (4)", () => {
     const m = resolveSelectionChromeMetrics(1);
-    expect(m.handleSize).toBeGreaterThanOrEqual(16);
-    expect(m.outlineWidth).toBeGreaterThanOrEqual(2);
-    expect(m.selectionPad).toBe(6);
-    expect(m.adjustSize).toBe(m.handleSize);
+    expect(m.handleSize).toBe(10);
+    expect(m.edgeLength).toBe(14);
+    expect(m.edgeThickness).toBe(6);
+    expect(m.outlineWidth).toBe(1.5);
+    expect(m.selectionPad).toBe(4);
+    expect(m.adjustSize).toBe(10);
+    expect(m.rotateSize).toBe(18);
   });
 
   it("cresce em design px ao zoom out até o piso", () => {
@@ -33,6 +36,8 @@ describe("resolveSelectionChromeMetrics", () => {
   it("selectionChromeCssVars expõe tokens para o canvas", () => {
     const vars = selectionChromeCssVars(resolveSelectionChromeMetrics(1));
     expect(vars["--td-selection-handle-size"]).toMatch(/px$/);
+    expect(vars["--td-selection-edge-length"]).toMatch(/px$/);
+    expect(vars["--td-selection-edge-thickness"]).toMatch(/px$/);
     expect(vars["--td-selection-outline-width"]).toMatch(/px$/);
     expect(vars["--td-global-selection-pad"]).toMatch(/px$/);
   });

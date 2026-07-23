@@ -1,6 +1,6 @@
 /**
  * Cores do chrome de seleção (outline, handles, marquee) com contraste
- * contra o fundo do slide — evita accent sumir em fundo da mesma família.
+ * contra o fundo do slide — visual oco (fill claro + borda colorida).
  */
 import {
   cssToColorValue,
@@ -18,11 +18,14 @@ export type SelectionChromeColors = {
   marqueeBorder: string;
   marqueeFill: string;
   stem: string;
+  /** Contorno do pai enquanto filho está isolado. */
+  parentHint: string;
 };
 
 const ACCENT_DEFAULT = "#089bdb";
 const LIGHT = "#ffffff";
 const DARK = "#0f172a";
+const PARENT_HINT = "#94a3b8";
 /** Contraste mínimo WCAG aproximado para chrome de UI (não texto). */
 const MIN_CONTRAST = 3;
 
@@ -64,44 +67,34 @@ export function resolveSlideBackgroundSample(
   return "#6b7280";
 }
 
-function pickHandleFill(bgHex: string, accent: string): string {
-  const candidates = [accent, LIGHT, DARK];
-  let best = LIGHT;
-  let bestRatio = 0;
-  for (const candidate of candidates) {
-    const ratio = contrastRatio(cssToColorValue(candidate).hex, bgHex);
-    if (ratio > bestRatio) {
-      bestRatio = ratio;
-      best = candidate;
-    }
-  }
-  if (contrastRatio(cssToColorValue(accent).hex, bgHex) >= MIN_CONTRAST) {
-    return accent;
-  }
-  return best;
-}
-
-function contrastingBorder(fillHex: string): string {
-  return relativeLuminance(fillHex) >= 0.55 ? DARK : LIGHT;
-}
-
 export function resolveSelectionChromeColors(
   background: ComunicadoBackground | undefined,
   accent: string = ACCENT_DEFAULT,
 ): SelectionChromeColors {
   const bgHex = resolveSlideBackgroundSample(background);
   const accentHex = cssToColorValue(accent, ACCENT_DEFAULT).hex;
-  const fill = pickHandleFill(bgHex, accentHex);
-  const fillHex = cssToColorValue(fill).hex;
-  const border = contrastingBorder(fillHex);
+
+  let outline = accentHex;
+  if (contrastRatio(outline, bgHex) < MIN_CONTRAST) {
+    outline = relativeLuminance(bgHex) >= 0.45 ? DARK : LIGHT;
+  }
+
+  /* Handles ocos: fill branco + borda = cor do outline (prints Figma/Canva). */
+  const handleFill = LIGHT;
+  let handleBorder = outline;
+  if (contrastRatio(handleBorder, handleFill) < MIN_CONTRAST) {
+    handleBorder = DARK;
+  }
+
   return {
-    handleFill: fillHex,
-    handleBorder: border,
-    outline: fillHex,
-    outlineMulti: mixHex(fillHex, border, 0.35),
-    marqueeBorder: fillHex,
-    marqueeFill: fillHex,
-    stem: fillHex,
+    handleFill,
+    handleBorder,
+    outline: handleBorder,
+    outlineMulti: mixHex(handleBorder, LIGHT, 0.35),
+    marqueeBorder: handleBorder,
+    marqueeFill: handleBorder,
+    stem: handleBorder,
+    parentHint: PARENT_HINT,
   };
 }
 
@@ -117,5 +110,6 @@ export function selectionChromeContrastCssVars(
     "--td-selection-marquee-border": colors.marqueeBorder,
     "--td-selection-marquee-fill": colors.marqueeFill,
     "--td-selection-stem": colors.stem,
+    "--td-selection-parent-hint": colors.parentHint,
   };
 }

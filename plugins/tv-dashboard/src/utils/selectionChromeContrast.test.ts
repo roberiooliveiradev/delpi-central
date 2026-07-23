@@ -17,30 +17,33 @@ describe("selectionChromeContrast", () => {
     expect(mid).toBe("#808080");
   });
 
-  it("em fundo azul da marca, handles não usam o mesmo azul (perdem contraste)", () => {
+  it("handles ocos: fill branco + borda que contraste com o fundo", () => {
     const colors = resolveSelectionChromeColors({ type: "color", value: "#089bdb" });
-    expect(colors.handleFill.toLowerCase()).not.toBe("#089bdb");
+    expect(colors.handleFill.toLowerCase()).toBe("#ffffff");
     expect(colors.handleBorder).not.toBe(colors.handleFill);
+    expect(colors.handleBorder.toLowerCase()).not.toBe("#089bdb");
   });
 
-  it("em fundo branco mantém accent da marca quando há contraste", () => {
+  it("em fundo branco: fill branco e borda accent da marca", () => {
     const colors = resolveSelectionChromeColors({ type: "color", value: "#ffffff" });
-    expect(colors.handleFill.toLowerCase()).toBe("#089bdb");
-    expect(colors.handleBorder).toBe("#ffffff");
+    expect(colors.handleFill.toLowerCase()).toBe("#ffffff");
+    expect(colors.handleBorder.toLowerCase()).toBe("#089bdb");
+    expect(colors.outline.toLowerCase()).toBe("#089bdb");
   });
 
-  it("em fundo escuro usa chrome claro quando accent some", () => {
+  it("em fundo escuro: borda clara o suficiente contra o slide", () => {
     const colors = resolveSelectionChromeColors({ type: "color", value: "#0a3a52" }, "#089bdb");
-    // accent perto do fundo escuro/azulado — pick deve contrastar
-    expect(colors.handleFill.toLowerCase()).not.toBe("#0a3a52");
+    expect(colors.handleFill.toLowerCase()).toBe("#ffffff");
     expect(colors.handleBorder).not.toBe(colors.handleFill);
+    expect(colors.handleBorder.toLowerCase()).not.toBe("#0a3a52");
   });
 
-  it("selectionChromeContrastCssVars expõe tokens", () => {
-    const vars = selectionChromeContrastCssVars(
-      resolveSelectionChromeColors({ type: "color", value: "#ffffff" }),
-    );
+  it("parent hint e tokens CSS", () => {
+    const colors = resolveSelectionChromeColors({ type: "color", value: "#ffffff" });
+    expect(colors.parentHint).toMatch(/^#/);
+    const vars = selectionChromeContrastCssVars(colors);
     expect(vars["--td-selection-handle-fill"]).toMatch(/^#/);
     expect(vars["--td-selection-outline"]).toMatch(/^#/);
+    expect(vars["--td-selection-parent-hint"]).toMatch(/^#/);
   });
 });
