@@ -33,6 +33,26 @@ describe("resolveStageContextMenuHit", () => {
     expect(menuSrc).not.toMatch(/if \(missing\) selectBlocksByIds\(menuSelectedIds\)/);
   });
 
+  it("botão direito não inicia move/resize/rotate nem resize de partes", () => {
+    const interactionSrc = readFileSync(
+      join(componentsBase, "useCanvasBlockInteraction.ts"),
+      "utf8",
+    );
+    const blockViewSrc = readFileSync(
+      join(componentsBase, "ComunicadoEditorBlockView.tsx"),
+      "utf8",
+    );
+    // startDrag é o ponto canônico de move/resize/rotate/adjust/endpoint.
+    expect(interactionSrc).toMatch(
+      /const startDrag = useCallback\(\s*\([\s\S]*?if \(Number\.isFinite\(event\.button\) && event\.button !== 0\) return/,
+    );
+    // Resize de partes (chart/kpi/input) não passa por startDrag.
+    const partResizeGuards = blockViewSrc.match(
+      /onPartResizePointerDown = useCallback\([\s\S]*?if \(Number\.isFinite\(event\.button\) && event\.button !== 0\) return/g,
+    );
+    expect(partResizeGuards?.length).toBeGreaterThanOrEqual(3);
+  });
+
   it("prioriza blockId explícito", () => {
     expect(
       resolveStageContextMenuHit({

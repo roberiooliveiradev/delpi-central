@@ -370,6 +370,7 @@ function EditorChartViewBlock({
 
   const onPartResizePointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event: ReactPointerEvent, handle: ComunicadoChartPartResizeHandle) => {
+      if (Number.isFinite(event.button) && event.button !== 0) return;
       if (!chartPartAllowsResize(ref)) return;
       const chartRoot = resolveChartPartFrameRoot(ref, event.currentTarget as HTMLElement);
       const host = (event.currentTarget as HTMLElement).closest("[data-chart-part]");
@@ -871,6 +872,7 @@ function EditorKpiViewBlock({
       event: ReactPointerEvent,
       handle: ComunicadoKpiPartResizeHandle,
     ) => {
+      if (Number.isFinite(event.button) && event.button !== 0) return;
       if (!kpiPartAllowsResize(ref)) return;
       const cardRoot = resolveKpiPartFrameRoot(event.currentTarget as HTMLElement, ref);
       const host = (event.currentTarget as HTMLElement).closest("[data-kpi-part]");
@@ -1253,6 +1255,7 @@ function EditorInputBlock({
       event: ReactPointerEvent,
       handle: ComunicadoInputPartResizeHandle,
     ) => {
+      if (Number.isFinite(event.button) && event.button !== 0) return;
       if (!inputPartAllowsResize(ref)) return;
       const root = resolveInputPartFrameRoot(event.currentTarget as HTMLElement);
       const host = (event.currentTarget as HTMLElement).closest("[data-input-part]");

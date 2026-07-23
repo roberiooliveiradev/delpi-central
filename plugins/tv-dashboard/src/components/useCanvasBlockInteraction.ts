@@ -359,6 +359,8 @@ export function useCanvasBlockInteraction({
 
   const startDrag = useCallback(
     (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => {
+      // Só botão esquerdo: direito abre menu; meio/outros não movem nem redimensionam.
+      if (Number.isFinite(event.button) && event.button !== 0) return;
       // Ctrl+arraste = pan do palco; não iniciar move/resize do bloco.
       if (event.ctrlKey) return;
       event.preventDefault();
