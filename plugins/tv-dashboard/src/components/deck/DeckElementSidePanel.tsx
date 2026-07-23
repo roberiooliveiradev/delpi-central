@@ -73,6 +73,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
 
   const hasSelection = selectedIds.length > 0;
   const isTableSelection = selected?.type === "table_view";
+  const isCanvasTableSelection = selected?.type === "canvas_table";
   const hasDataBoundSelection = Boolean(
     selected && isDataBoundEditorBlockType(selected.type),
   );
@@ -83,8 +84,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
         hasSelection,
         showDataTab,
         isTableSelection,
+        isCanvasTableSelection,
       }),
-    [hasSelection, showDataTab, isTableSelection],
+    [hasSelection, showDataTab, isTableSelection, isCanvasTableSelection],
   );
 
   useEffect(() => {
@@ -146,7 +148,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       return "Definir Forma";
     }
     if (selected?.type === "kpi_view") return "Formatar KPI";
-    if (selected?.type === "canvas_table") return "Grade";
+    if (selected?.type === "canvas_table") return "Formatar Grade";
     return "Definir elemento";
   }, [tab, dataPanelIntent, dataContext.kind, selected?.type, selectedTablePart]);
 
@@ -252,10 +254,14 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
                 setCollapsed(false);
                 handleTabChange("element");
               }}
-              aria-label="Elemento"
-              title="Definir elemento"
+              aria-label={isCanvasTableSelection ? "Grade" : "Elemento"}
+              title={isCanvasTableSelection ? "Formatar Grade" : "Definir elemento"}
             >
-              <MousePointer2 size={16} aria-hidden="true" />
+              {isCanvasTableSelection ? (
+                <Table2 size={16} aria-hidden="true" />
+              ) : (
+                <MousePointer2 size={16} aria-hidden="true" />
+              )}
             </button>
           ) : null}
           {railShowsTableDesign ? (

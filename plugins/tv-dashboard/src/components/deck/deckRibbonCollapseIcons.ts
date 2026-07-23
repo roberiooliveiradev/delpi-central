@@ -30,6 +30,7 @@ import {
   Scaling,
   SwatchBook,
   Table,
+  Table2,
   Tag,
   Type,
   Wrench,
@@ -79,7 +80,9 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "media-section": Image,
   "appearance-display": Eye,
   "data-source-hint": Database,
-  "canvas-table": Table,
+  "canvas-table": Table2,
+  "canvas-table-design": Palette,
+  "canvas-table-cell": Type,
   "part-nav": ArrowLeft,
   /* Design tabela */
   "table-style-options": ListChecks,

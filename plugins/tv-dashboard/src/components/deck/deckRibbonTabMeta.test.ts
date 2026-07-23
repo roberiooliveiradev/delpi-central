@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyCanvasTableRibbonTabMeta,
   isContextualDeckRibbonTab,
   resolveDeckRibbonTabs,
   resolveEmbeddedComunicadoRibbonTabs,
@@ -146,5 +147,30 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
       { id: "data", hasIcon: true },
       { id: "layers", hasIcon: true },
     ]);
+  });
+
+  it("painel lateral: Grade usa aba Elemento com label/ícone Table2", () => {
+    const tabs = resolveSelectionPanelTabs({
+      hasSelection: true,
+      showDataTab: true,
+      isCanvasTableSelection: true,
+    });
+    expect(tabs.map((t) => t.id)).toEqual(["element", "data", "layers"]);
+    expect(tabs[0]).toMatchObject({ id: "element", label: "Grade" });
+    expect(tabs[0]?.icon).toBeTruthy();
+  });
+
+  it("applyCanvasTableRibbonTabMeta centraliza rename Grade na top bar", () => {
+    const base = resolveEmbeddedComunicadoRibbonTabs({
+      hasSelection: true,
+      showDataTab: false,
+    });
+    const tabs = applyCanvasTableRibbonTabMeta(base, true);
+    const element = tabs.find((tab) => tab.id === "element");
+    expect(element?.label).toBe("Grade");
+    expect(element?.icon).toBeTruthy();
+    expect(applyCanvasTableRibbonTabMeta(base, false).find((t) => t.id === "element")?.label).toBe(
+      "Elemento",
+    );
   });
 });

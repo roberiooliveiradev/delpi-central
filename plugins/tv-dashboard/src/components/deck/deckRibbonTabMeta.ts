@@ -181,6 +181,31 @@ export type SelectionPanelTabMeta = {
   hint: string;
   icon: typeof Plus;
 };
+
+const CANVAS_TABLE_TAB_HINT =
+  T.canvasTable ?? "Ferramentas da Grade: estrutura, estilo e célula.";
+
+/**
+ * Renomeia a aba Elemento → Grade (label + ícone) quando `canvas_table` está selecionada.
+ * Fonte única para top bar embutida, deck e painel lateral.
+ */
+export function applyCanvasTableRibbonTabMeta<T extends DeckRibbonTabMeta | SelectionPanelTabMeta>(
+  tabs: readonly T[],
+  isCanvasTableSelection: boolean,
+): T[] {
+  if (!isCanvasTableSelection) return [...tabs];
+  return tabs.map((tab) =>
+    tab.id === "element"
+      ? {
+          ...tab,
+          label: "Grade",
+          icon: Table2,
+          hint: CANVAS_TABLE_TAB_HINT,
+        }
+      : tab,
+  );
+}
+
 /**
  * Abas do painel lateral — mesma fonte de labels/hints/ícones da ribbon.
  * Sem seleção: só Camadas.
@@ -191,6 +216,8 @@ export function resolveSelectionPanelTabs(options: {
   hasSelection: boolean;
   showDataTab: boolean;
   isTableSelection?: boolean;
+  /** Grade (`canvas_table`) — mesma aba Elemento com label/ícone Grade. */
+  isCanvasTableSelection?: boolean;
 }): SelectionPanelTabMeta[] {
   const tabs: SelectionPanelTabMeta[] = [];
   if (options.hasSelection) {
@@ -230,5 +257,5 @@ export function resolveSelectionPanelTabs(options: {
     hint: PANEL.layers ?? "Painel de Seleção: ordem e visibilidade dos elementos.",
     icon: Layers,
   });
-  return tabs;
+  return applyCanvasTableRibbonTabMeta(tabs, Boolean(options.isCanvasTableSelection));
 }

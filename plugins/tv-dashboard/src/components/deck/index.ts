@@ -28,6 +28,7 @@ export { DeckRibbonTile } from "./DeckRibbonTile";
 export type { DeckRibbonTabId } from "./deckRibbonTabMeta";
 export {
   DECK_RIBBON_TABS,
+  applyCanvasTableRibbonTabMeta,
   isContextualDeckRibbonTab,
   resolveDeckRibbonTabs,
   resolveEmbeddedComunicadoRibbonTabs,
