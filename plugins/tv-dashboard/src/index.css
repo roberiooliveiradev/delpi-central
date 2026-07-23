@@ -4222,7 +4222,8 @@ body.td-composer--marqueeing *{
   --td-ribbon-height: auto;
   height: auto;
   min-height: 72px;
-  max-height: min(220px, 34vh);
+  /* Organizar (2 filas + chevron + caption) precisa de folga vertical. */
+  max-height: min(240px, 38vh);
   overflow-x: auto;
   overflow-y: hidden;
 }
