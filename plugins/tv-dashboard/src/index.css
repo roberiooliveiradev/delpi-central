@@ -3687,19 +3687,39 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon__frame-grid{
   display: grid;
-  /* 4 colunas: X / Y / Larg / Alt na mesma faixa (evita Alt vazando para 2ª linha). */
-  grid-template-columns: repeat(4, minmax(72px, 88px));
-  gap: 4px 10px;
+  /* 5 colunas: X / Y / Larg / Alt / Rot na mesma faixa. */
+  grid-template-columns: repeat(5, minmax(64px, 80px));
+  gap: 4px 6px;
   width: max-content;
   max-width: 100%;
   align-items: end;
   overflow: visible;
 }
-/* Ribbon: Posição em grade 4 colunas (RangeField no host compact ≈96px). */
+/* Ribbon: densifica RangeField (host compact ≈96px) para caber 5 na faixa. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid{
-  grid-template-columns: repeat(4, minmax(88px, 104px));
-  gap: 4px 8px;
+  grid-template-columns: repeat(5, minmax(72px, 84px));
+  gap: 4px 6px;
   flex-wrap: nowrap;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid .delpi-ui-range-field{
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid .delpi-ui-range-field__row{
+  min-width: 0;
+  width: 100%;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid .delpi-ui-range-field__slider,
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid input.delpi-ui-native-range.delpi-ui-range-field__slider{
+  min-width: 0;
+  width: 100%;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__frame-grid .delpi-ui-range-field__input{
+  min-width: 0;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__organize{
   display: flex;
@@ -3850,7 +3870,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon__frame-field .td-deck-ribbon__number{
   width: 100%;
-  min-width: 76px;
+  min-width: 0;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact{
   box-sizing: border-box;
@@ -3999,7 +4019,7 @@ body.td-composer--marqueeing *{
   max-height: 100%;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid{
-  /* grid definido em .td-deck-ribbon__frame-grid — mantém densidade 4 colunas. */
+  /* grid definido em .td-deck-ribbon__frame-grid — mantém densidade 5 colunas. */
   width: max-content;
   max-width: none;
 }
@@ -4120,14 +4140,14 @@ body.td-composer--marqueeing *{
 }
 /*
  * Portal no body não herda .td-deck-ribbon--compact: sem estas regras a grade
- * fica em 72–88px e o RangeField (min 148px) “monta” em coluna única.
+ * fica estreita e o RangeField (min 148px) “monta” em coluna única.
  */
 .dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid{
   display: grid;
   width: max-content;
   max-width: 100%;
-  grid-template-columns: repeat(4, minmax(120px, 148px));
-  gap: 6px 12px;
+  grid-template-columns: repeat(5, minmax(96px, 120px));
+  gap: 6px 10px;
   align-items: end;
 }
 .dashboard-tv-dashboard .td-frame-size-popover .td-frame-size-popover__opacity{
@@ -4135,10 +4155,15 @@ body.td-composer--marqueeing *{
   padding-top: 10px;
   border-top: 1px solid color-mix(in srgb, var(--delpi-ui-border, #3a4558) 80%, transparent);
   display: grid;
-  grid-template-columns: repeat(4, minmax(120px, 148px));
-  gap: 6px 12px;
+  grid-template-columns: repeat(5, minmax(96px, 120px));
+  gap: 6px 10px;
   align-items: end;
   width: max-content;
+  max-width: 100%;
+}
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid .delpi-ui-range-field{
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
 }
 /* Popover de efeitos — painel ancorado ao tile (como cores do Preench.). */

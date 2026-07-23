@@ -100,12 +100,21 @@ describe("ribbon density contract", () => {
     expect(group).not.toMatch(/justify-content:\s*space-between/);
   });
 
-  it("inputs de frame têm largura legível (≥72px)", () => {
+  it("inputs de frame têm largura legível (≥72px) em 5 colunas", () => {
     expect(css).toMatch(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*flex-wrap:\s*nowrap/s,
     );
     expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__frame-grid\s*\{[^}]*grid-template-columns:\s*repeat\(5,/s,
+    );
+    expect(css).toMatch(
       /\.td-deck-ribbon--compact \.td-deck-ribbon__number--compact\s*\{[^}]*width:\s*72px/s,
+    );
+  });
+
+  it("RangeField na grade de frame densifica (não força 148px)", () => {
+    expect(css).toMatch(
+      /\.td-deck-ribbon__frame-grid \.delpi-ui-range-field\s*\{[^}]*min-width:\s*0/s,
     );
   });
 
