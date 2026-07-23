@@ -32,7 +32,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpProduct } from "../types/lmp";
-import { formatPeriodLabel } from "../utils/dates";
+import { formatLmpApiDate, formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
@@ -44,13 +44,7 @@ type LmpDetailPageProps = {
 };
 
 function formatDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "—";
-
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-
-  return `${day}/${month}/${year}`;
+  return formatLmpApiDate(value);
 }
 
 function formatMinutes(value?: number | null): string {

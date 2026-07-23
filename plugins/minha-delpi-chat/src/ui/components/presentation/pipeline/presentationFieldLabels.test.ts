@@ -23,6 +23,14 @@ describe("presentationFieldLabels", () => {
     ).toBe("17/03/2026");
   });
 
+  it("preserva datas já em dd/mm/yyyy no eixo do gráfico", () => {
+    expect(
+      formatChartAxisValue("23/07/2026", "start_date", {
+        start_date: "date",
+      }),
+    ).toBe("23/07/2026");
+  });
+
   it("reaproveita labels da tabela ao montar gráfico", () => {
     const { fieldLabels, fieldFormats } = buildFieldLabelsFromTableColumns([
       { key: "issue_date", label: "Data emissão", dataType: "date" },

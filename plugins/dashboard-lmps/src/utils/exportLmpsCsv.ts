@@ -1,5 +1,6 @@
 import type { LmpDashboardItem } from "../types/lmp";
 import { downloadCsv } from "./csv";
+import { formatLmpApiDate } from "./dates";
 import { formatOperationalUnitCode } from "./operationalUnitLabels";
 import {
   formatCycleIndex,
@@ -7,8 +8,7 @@ import {
 } from "./lmpListingDisplay";
 
 function formatApiDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "";
-  return `${value.slice(6, 8)}/${value.slice(4, 6)}/${value.slice(0, 4)}`;
+  return formatLmpApiDate(value, "");
 }
 
 function formatListingKind(kind?: string | null): string {

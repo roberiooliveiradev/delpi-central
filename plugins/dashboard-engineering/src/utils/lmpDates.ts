@@ -1,4 +1,6 @@
-/** Converte input YYYY-MM-DD para YYYYMMDD exigido pela API de LMPs. */
+import { formatLmpApiDateDisplay } from "./dates";
+
+/** Converte input YYYY-MM-DD para YYYYMMDD (API ainda aceita vários formatos). */
 export function inputDateToLmpApi(value?: string): string | undefined {
   if (!value) return undefined;
   const normalized = value.trim();
@@ -10,11 +12,7 @@ export function inputDateToLmpApi(value?: string): string | undefined {
 }
 
 export function formatLmpDisplayDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "—";
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-  return `${day}/${month}/${year}`;
+  return formatLmpApiDateDisplay(value);
 }
 
 export function formatListingKind(kind?: string | null): string {

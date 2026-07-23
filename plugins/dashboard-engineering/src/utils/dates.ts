@@ -119,3 +119,20 @@ export function lmpDateToIso(value: string | null | undefined): string | null {
 
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
+
+/** Exibe data da API LMP (dd/mm/yyyy ou YYYYMMDD legado) como dd/mm/yyyy. */
+export function formatLmpApiDateDisplay(
+  value: string | null | undefined,
+  empty = "—",
+): string {
+  const parts = parseDateParts(value);
+  if (!parts) return empty;
+  return `${String(parts.day).padStart(2, "0")}/${String(parts.month).padStart(2, "0")}/${parts.year}`;
+}
+
+/** Chave YYYYMMDD para ordenação/comparação. */
+export function lmpDateSortKey(value: string | null | undefined): string {
+  const parts = parseDateParts(value);
+  if (!parts) return "";
+  return `${parts.year}${String(parts.month).padStart(2, "0")}${String(parts.day).padStart(2, "0")}`;
+}

@@ -1,11 +1,8 @@
 import type { LmpDashboardItem, LmpListingKind } from "../types/lmp";
+import { formatLmpApiDateDisplay, lmpDateSortKey } from "./dates";
 
 export function formatLmpApiDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "—";
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-  return `${day}/${month}/${year}`;
+  return formatLmpApiDateDisplay(value);
 }
 
 export function formatListingKind(kind?: LmpListingKind | null): string {
@@ -16,10 +13,9 @@ export function formatListingKind(kind?: LmpListingKind | null): string {
 }
 
 export function parseLmpDateNumber(value?: string | null): number {
-  if (!value) return 0;
-  const normalized = value.replaceAll("-", "");
-  if (normalized.length !== 8) return 0;
-  const parsed = Number(normalized);
+  const key = lmpDateSortKey(value);
+  if (!key) return 0;
+  const parsed = Number(key);
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 

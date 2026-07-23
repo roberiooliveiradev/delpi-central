@@ -1,6 +1,9 @@
 # app/domain/entities/lmp/lmp.py
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List
+
+from app.shared.utils.spreadsheet_date import format_date_ddmmyyyy
+
 from .lmp_product import LMPProduct
 from .lmp_history_event import LMPHistoryEvent
 
@@ -43,4 +46,21 @@ class LMP:
     list_history: Optional[List[LMPHistoryEvent]] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        data["start_date"] = format_date_ddmmyyyy(data.get("start_date"))
+        data["end_date"] = format_date_ddmmyyyy(data.get("end_date"))
+        history = data.get("list_history") or []
+        if history:
+            data["list_history"] = [
+                {
+                    **event,
+                    "start_date": format_date_ddmmyyyy(event.get("start_date")),
+                    "limit_date": format_date_ddmmyyyy(event.get("limit_date")),
+                    "end_date": format_date_ddmmyyyy(event.get("end_date")),
+                    "next_start_date": format_date_ddmmyyyy(event.get("next_start_date")),
+                }
+                if isinstance(event, dict)
+                else event
+                for event in history
+            ]
+        return data

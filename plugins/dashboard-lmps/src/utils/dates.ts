@@ -119,3 +119,39 @@ export function lmpDateToIso(value: string | null | undefined): string | null {
 
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
+
+/** Exibe data da API LMP (dd/mm/yyyy ou YYYYMMDD legado) como dd/mm/yyyy. */
+export function formatLmpApiDate(
+  value: string | null | undefined,
+  empty = "—",
+): string {
+  const parts = parseDateParts(value);
+  if (!parts) return empty;
+  return `${String(parts.day).padStart(2, "0")}/${String(parts.month).padStart(2, "0")}/${parts.year}`;
+}
+
+/** Chave YYYYMMDD para ordenação/comparação (aceita BR e YMD). */
+export function lmpDateSortKey(value: string | null | undefined): string {
+  const parts = parseDateParts(value);
+  if (!parts) return "";
+  return `${parts.year}${String(parts.month).padStart(2, "0")}${String(parts.day).padStart(2, "0")}`;
+}
+
+export function lmpDateToTimestamp(
+  date?: string | null,
+  time?: string | null,
+): number | null {
+  const parts = parseDateParts(date);
+  if (!parts) return null;
+
+  const normalizedTime = time?.trim() || "00:00";
+  const hhmm =
+    normalizedTime.length === 4 && /^\d+$/.test(normalizedTime)
+      ? `${normalizedTime.slice(0, 2)}:${normalizedTime.slice(2)}`
+      : normalizedTime;
+
+  const parsed = Date.parse(
+    `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}T${hhmm}:00`,
+  );
+  return Number.isNaN(parsed) ? null : parsed;
+}

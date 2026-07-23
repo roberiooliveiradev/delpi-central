@@ -1,6 +1,23 @@
 # app/application/services/lmp_business_rules.py
+from __future__ import annotations
+
 from datetime import date, timedelta
-from typing import Optional
+from typing import Any, Iterable, Optional
+
+from app.shared.utils.spreadsheet_date import format_date_ddmmyyyy, parse_spreadsheet_date
+
+# Campos de data emitidos nas respostas HTTP LMP / histórico OV compartilhado.
+LMP_RESPONSE_DATE_KEYS = frozenset(
+    {
+        "start_date",
+        "end_date",
+        "data_limite",
+        "homolog_date",
+        "limit_date",
+        "next_start_date",
+        "panel_start_date",
+    }
+)
 
 
 class LMPBusinessRules:
@@ -34,24 +51,37 @@ class LMPBusinessRules:
 
     @classmethod
     def parse_totvs_date(cls, value: Optional[str]) -> Optional[date]:
+        """Interpreta data Protheus (YYYYMMDD) e formatos de resposta (dd/mm/yyyy, ISO)."""
         value = cls.normalize_string(value)
-
-        if not value or len(value) != 8:
+        if not value:
             return None
-
-        try:
-            year = int(value[0:4])
-            month = int(value[4:6])
-            day = int(value[6:8])
-            return date(year, month, day)
-        except ValueError:
-            return None
+        return parse_spreadsheet_date(value)
 
     @staticmethod
     def format_date_to_ymd(value: Optional[date]) -> Optional[str]:
+        """Formato interno/Protheus (YYYYMMDD). Não usar em payload HTTP de resposta."""
         if not value:
             return None
         return value.strftime("%Y%m%d")
+
+    @classmethod
+    def format_date_for_response(cls, value: Any) -> Optional[str]:
+        """Serialização HTTP LMP: dd/mm/yyyy. Vazio/ inválido → None."""
+        return format_date_ddmmyyyy(value)
+
+    @classmethod
+    def format_payload_dates(
+        cls,
+        payload: dict[str, Any],
+        keys: Iterable[str] | None = None,
+    ) -> dict[str, Any]:
+        """Copia o dict formatando chaves de data para dd/mm/yyyy."""
+        target_keys = frozenset(keys) if keys is not None else LMP_RESPONSE_DATE_KEYS
+        out = dict(payload)
+        for key in target_keys:
+            if key in out:
+                out[key] = cls.format_date_for_response(out.get(key))
+        return out
 
     @staticmethod
     def is_weekend(value: date) -> bool:

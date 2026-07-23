@@ -34,6 +34,7 @@ import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpDashboardItem } from "../types/lmp";
+import { formatLmpApiDate } from "../utils/dates";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
 import {
   formatPeriodLabel,
@@ -77,13 +78,7 @@ const TOOLTIP_STYLE = { fontSize: CHART_FONT_SIZE };
 const LEGEND_STYLE = { fontSize: CHART_FONT_SIZE };
 
 function formatDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "-";
-
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-
-  return `${day}/${month}/${year}`;
+  return formatLmpApiDate(value, "-");
 }
 
 function formatListingKind(kind?: string | null): string {

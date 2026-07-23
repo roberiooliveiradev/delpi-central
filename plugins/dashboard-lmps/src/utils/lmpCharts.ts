@@ -1,13 +1,6 @@
 import type { LmpDashboardItem } from "../types/lmp";
 import type { LmpsDashboardCharts } from "../api/lmpApi";
-
-function parseDateNumber(value?: string | null): number {
-  if (!value) return 0;
-  const normalized = value.replaceAll("-", "");
-  if (normalized.length !== 8) return 0;
-  const parsed = Number(normalized);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
+import { lmpDateSortKey } from "./dates";
 
 export function buildLmpFallbackCharts(
   items: LmpDashboardItem[]
@@ -43,6 +36,10 @@ export function buildLmpFallbackCharts(
   return { levelData, statusData, leadByLevel };
 }
 
+/** Número YYYYMMDD para sort (aceita dd/mm/yyyy e YYYYMMDD). */
 export function parseLmpDateNumber(value?: string | null): number {
-  return parseDateNumber(value);
+  const key = lmpDateSortKey(value);
+  if (!key) return 0;
+  const parsed = Number(key);
+  return Number.isNaN(parsed) ? 0 : parsed;
 }

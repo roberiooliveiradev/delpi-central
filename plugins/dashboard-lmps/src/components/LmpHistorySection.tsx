@@ -7,6 +7,7 @@ import { DataTable } from "./DataTable";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { LmpHistoryTimeline } from "./LmpHistoryTimeline";
 import type { LmpHistoryEvent } from "../types/lmp";
+import { formatLmpApiDate } from "../utils/dates";
 import {
   buildHistoryEventKey,
   filterHistoryEvents,
@@ -197,10 +198,9 @@ export function LmpHistorySection({
     if (historyReferenceRevision) {
       scopeParts.push(`revisão ${historyReferenceRevision}`);
     }
-    if (historyPanelStartDate && historyPanelStartDate.length === 8) {
-      scopeParts.push(
-        `a partir de ${historyPanelStartDate.slice(6, 8)}/${historyPanelStartDate.slice(4, 6)}/${historyPanelStartDate.slice(0, 4)}`,
-      );
+    const panelStartLabel = formatLmpApiDate(historyPanelStartDate, "");
+    if (panelStartLabel) {
+      scopeParts.push(`a partir de ${panelStartLabel}`);
     }
 
     if (scopeParts.length === 0) {

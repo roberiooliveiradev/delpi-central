@@ -5,6 +5,7 @@ import type { CommercialProposalHistoryEvent } from "../types/commercial";
 import {
   buildHistoryEventKey,
   formatHistoryDateTime,
+  historyDateSortKey,
   formatProcessStageLabel,
   isHistoryEngineeringFlow,
   resolveHistoryDuration,
@@ -85,7 +86,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
     className: "dc-table__col--numeric",
     render: (row) => formatHistoryDateTime(row.start_date, row.start_time),
     sortable: true,
-    sortValue: (row) => row.start_date,
+    sortValue: (row) => historyDateSortKey(row.start_date),
   },
   {
     key: "limit",
@@ -94,7 +95,7 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
     className: "dc-table__col--numeric",
     render: (row) => formatHistoryDateTime(row.limit_date, row.limit_time),
     sortable: true,
-    sortValue: (row) => row.limit_date,
+    sortValue: (row) => historyDateSortKey(row.limit_date),
   },
   {
     key: "end",
@@ -106,7 +107,8 @@ const historyColumns: DataTableColumn<CommercialProposalHistoryEvent>[] = [
         ? "Em andamento"
         : formatHistoryDateTime(row.end_date, row.end_time),
     sortable: true,
-    sortValue: (row) => (row.is_open ? "99999999" : row.end_date),
+    sortValue: (row) =>
+      row.is_open ? "99999999" : historyDateSortKey(row.end_date),
   },
   {
     key: "duration",

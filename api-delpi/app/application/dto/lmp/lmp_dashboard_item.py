@@ -2,6 +2,8 @@
 from dataclasses import dataclass, asdict
 from typing import Optional
 
+from app.application.services.lmp_business_rules import LMPBusinessRules
+
 
 @dataclass
 class LMPDashboardItem:
@@ -26,4 +28,8 @@ class LMPDashboardItem:
     qtd_pi: int = 0
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        data = asdict(self)
+        return LMPBusinessRules.format_payload_dates(
+            data,
+            ("start_date", "end_date", "data_limite", "homolog_date"),
+        )

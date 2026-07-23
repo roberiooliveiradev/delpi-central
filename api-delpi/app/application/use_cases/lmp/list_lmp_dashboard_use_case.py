@@ -301,7 +301,7 @@ class ListLMPDashboardUseCase:
         paginated = filtered[start:end]
 
         return {
-            "items": [asdict(item) for item in paginated],
+            "items": [item.to_dict() for item in paginated],
             "total": total,
             "page": page,
             "page_size": page_size,
@@ -336,7 +336,7 @@ class ListLMPDashboardUseCase:
         paginated = filtered[start:end]
 
         result = {
-            "items": [asdict(item) for item in paginated],
+            "items": [item.to_dict() for item in paginated],
             "total": total,
             "page": page,
             "page_size": page_size,

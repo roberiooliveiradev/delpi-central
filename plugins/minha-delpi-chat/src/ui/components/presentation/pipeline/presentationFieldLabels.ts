@@ -58,6 +58,11 @@ export function formatChartAxisValue(
   const fieldFormat = resolveFieldFormat(key, fieldFormats);
 
   if (fieldFormat === "date") {
+    // Já no padrão BR (ex.: rotas LMP).
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(text)) {
+      return text;
+    }
+
     if (/^\d{8}$/.test(text)) {
       return `${text.slice(6, 8)}/${text.slice(4, 6)}/${text.slice(0, 4)}`;
     }

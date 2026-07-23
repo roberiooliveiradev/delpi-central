@@ -470,6 +470,10 @@ class ExternalActionColumnLabelService:
         text = str(value).strip()
 
         if field_format == "date" and text:
+            # Já no padrão de exibição BR (ex.: LMP dd/mm/yyyy).
+            if re.match(r"^\d{2}/\d{2}/\d{4}$", text):
+                return text
+
             if len(text) == 8 and text.isdigit():
                 return f"{text[6:8]}/{text[4:6]}/{text[0:4]}"
 

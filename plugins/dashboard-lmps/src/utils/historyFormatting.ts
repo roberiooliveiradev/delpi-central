@@ -1,13 +1,12 @@
 import type { LmpHistoryEvent } from "../types/lmp";
+import {
+  formatLmpApiDate,
+  lmpDateSortKey,
+  lmpDateToTimestamp,
+} from "./dates";
 
 export function formatHistoryDate(value?: string | null): string {
-  if (!value || value.length !== 8) return "—";
-
-  const year = value.slice(0, 4);
-  const month = value.slice(4, 6);
-  const day = value.slice(6, 8);
-
-  return `${day}/${month}/${year}`;
+  return formatLmpApiDate(value);
 }
 
 export function formatHistoryDateTime(
@@ -135,14 +134,12 @@ export function scopeHistoryToPanelContext(
     );
   }
 
-  const panelStartDate = options?.panelStartDate?.trim();
-  if (panelStartDate && panelStartDate.length === 8) {
+  const panelStartKey = lmpDateSortKey(options?.panelStartDate);
+  if (panelStartKey) {
     scoped = scoped.filter((event) => {
-      const eventStart = event.start_date?.trim();
-      if (!eventStart || eventStart.length !== 8) {
-        return false;
-      }
-      return eventStart >= panelStartDate;
+      const eventStartKey = lmpDateSortKey(event.start_date);
+      if (!eventStartKey) return false;
+      return eventStartKey >= panelStartKey;
     });
   }
 
@@ -306,37 +303,15 @@ export type HistoryGanttLayout = {
   limitPercent: number | null;
 };
 
-function parseTotvsToTimestamp(
-  date?: string | null,
-  time?: string | null,
-): number | null {
-  const normalizedDate = date?.trim();
-  if (!normalizedDate || normalizedDate.length !== 8) {
-    return null;
-  }
-
-  const normalizedTime = time?.trim() || "00:00";
-  const hhmm =
-    normalizedTime.length === 4 && /^\d+$/.test(normalizedTime)
-      ? `${normalizedTime.slice(0, 2)}:${normalizedTime.slice(2)}`
-      : normalizedTime;
-
-  const parsed = Date.parse(
-    `${normalizedDate.slice(0, 4)}-${normalizedDate.slice(4, 6)}-${normalizedDate.slice(6, 8)}T${hhmm}:00`,
-  );
-
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
 function collectRevisionTimestamps(events: LmpHistoryEvent[]): number[] {
   const values: number[] = [];
 
   for (const event of events) {
-    const start = parseTotvsToTimestamp(event.start_date, event.start_time);
+    const start = lmpDateToTimestamp(event.start_date, event.start_time);
     const end = event.is_open
       ? Date.now()
-      : parseTotvsToTimestamp(event.end_date, event.end_time);
-    const limit = parseTotvsToTimestamp(event.limit_date, event.limit_time);
+      : lmpDateToTimestamp(event.end_date, event.end_time);
+    const limit = lmpDateToTimestamp(event.limit_date, event.limit_time);
 
     if (start != null) values.push(start);
     if (end != null) values.push(end);
@@ -358,7 +333,7 @@ export function buildHistoryGanttLayout(
   revisionEvents: LmpHistoryEvent[],
 ): HistoryGanttLayout | null {
   const revisionTimestamps = collectRevisionTimestamps(revisionEvents);
-  const eventStart = parseTotvsToTimestamp(event.start_date, event.start_time);
+  const eventStart = lmpDateToTimestamp(event.start_date, event.start_time);
 
   if (revisionTimestamps.length === 0 || eventStart == null) {
     return null;
@@ -372,8 +347,8 @@ export function buildHistoryGanttLayout(
 
   const eventEnd = event.is_open
     ? Date.now()
-    : parseTotvsToTimestamp(event.end_date, event.end_time) ?? eventStart;
-  const limit = parseTotvsToTimestamp(event.limit_date, event.limit_time);
+    : lmpDateToTimestamp(event.end_date, event.end_time) ?? eventStart;
+  const limit = lmpDateToTimestamp(event.limit_date, event.limit_time);
 
   return {
     rangeStartMs,

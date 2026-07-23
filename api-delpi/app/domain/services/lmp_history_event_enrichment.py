@@ -91,8 +91,10 @@ def _parse_totvs_datetime(
     date_str: str | None,
     time_str: str | None,
 ) -> datetime | None:
-    normalized_date = str(date_str or "").strip()
-    if len(normalized_date) != 8 or not normalized_date.isdigit():
+    from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
+
+    parsed_date = parse_spreadsheet_date(date_str)
+    if parsed_date is None:
         return None
 
     normalized_time = str(time_str or "").strip() or "00:00"
@@ -100,12 +102,14 @@ def _parse_totvs_datetime(
         normalized_time = f"{normalized_time[:2]}:{normalized_time[2:]}"
 
     try:
-        return datetime.strptime(
-            f"{normalized_date}{normalized_time}",
-            "%Y%m%d%H:%M",
-        )
+        parsed_time = datetime.strptime(normalized_time, "%H:%M").time()
     except ValueError:
-        return None
+        try:
+            parsed_time = datetime.strptime(normalized_time, "%H:%M:%S").time()
+        except ValueError:
+            return None
+
+    return datetime.combine(parsed_date, parsed_time)
 
 
 def is_event_open(event: dict[str, Any]) -> bool:

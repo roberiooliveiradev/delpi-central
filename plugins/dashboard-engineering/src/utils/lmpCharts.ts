@@ -3,25 +3,20 @@ import type {
   LmpsDashboardCharts,
   LmpsEvolutionDatum,
 } from "../types/lmp";
+import { lmpDateSortKey, parseDateParts } from "./dates";
 
 function parseDateNumber(value?: string | null): number {
-  if (!value) return 0;
-  const normalized = value.replaceAll("-", "");
-  if (normalized.length !== 8) return 0;
-  const parsed = Number(normalized);
+  const key = lmpDateSortKey(value);
+  if (!key) return 0;
+  const parsed = Number(key);
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
 function getPeriodo(dateValue?: string | null): string | null {
-  if (!dateValue || dateValue.length !== 8) return null;
+  const parts = parseDateParts(dateValue);
+  if (!parts) return null;
 
-  const year = Number(dateValue.slice(0, 4));
-  const month = Number(dateValue.slice(4, 6));
-  const day = Number(dateValue.slice(6, 8));
-
-  if (!year || !month || !day) return null;
-
-  const date = new Date(year, month - 1, day);
+  const date = new Date(parts.year, parts.month - 1, parts.day);
   return date.toLocaleDateString("pt-BR", {
     month: "short",
     year: "2-digit",

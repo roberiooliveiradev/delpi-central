@@ -26,7 +26,7 @@ class GetLMPUseCase:
         payload["nivel"] = nivel
         payload["dias_uteis_sla"] = sla_days
         payload["sla_minutos"] = sla_minutes
-        payload["data_limite"] = data_limite
+        payload["data_limite"] = LMPBusinessRules.format_date_for_response(data_limite)
         payload["lead_time_util"] = lead_time_util
         payload["status"] = status
         payload["list_history"] = []

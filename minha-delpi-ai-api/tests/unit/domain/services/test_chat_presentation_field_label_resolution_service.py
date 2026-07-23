@@ -31,6 +31,7 @@ def test_format_field_value_percent_suffix_wins_over_cost_token():
     assert service.format_field_value("material_cost_vs_pa_standard_percent", 6474.99) == "6.474,99%"
     assert service.format_field_value("returned_materials", 17) == "17"
     assert service.format_field_value("standard_cost_date", "20260531") == "31/05/2026"
+    assert service.format_field_value("start_date", "23/07/2026") == "23/07/2026"
 
 
 def test_build_kv_rows_humanizes_summary_fields():
