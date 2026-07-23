@@ -1,3 +1,6 @@
+from app.application.use_cases.production.list_production_machine_program_top_intermediates_use_case import (
+    ListProductionMachineProgramTopIntermediatesUseCase,
+)
 from app.application.use_cases.production.get_production_allocation_gaps_use_case import (
     GetProductionAllocationGapsUseCase,
 )
@@ -48,6 +51,9 @@ from app.application.use_cases.production.get_production_schedule_today_use_case
 )
 from app.application.use_cases.purchases.get_purchases_top_products_use_case import (
     GetPurchasesTopProductsUseCase,
+)
+from app.infrastructure.persistence.totvs.production_repositories.production_machine_programs_repository import (
+    ProductionMachineProgramsRepository,
 )
 from app.infrastructure.persistence.totvs.production_repositories.production_consumption_repository import (
     ProductionConsumptionRepository,
@@ -149,3 +155,11 @@ def build_get_production_order_by_op_use_case() -> GetProductionOrderByOpUseCase
 
 def build_search_production_orders_by_op_use_case() -> SearchProductionOrdersByOpUseCase:
     return SearchProductionOrdersByOpUseCase(ProductionOrdersRepository())
+
+
+def build_list_production_machine_program_top_intermediates_use_case() -> (
+    ListProductionMachineProgramTopIntermediatesUseCase
+):
+    return ListProductionMachineProgramTopIntermediatesUseCase(
+        ProductionMachineProgramsRepository()
+    )

@@ -7,6 +7,7 @@ import { MiniAplicadoresPage } from "./ui/pages/MiniAplicadoresPage";
 import { ConfiguracaoPage } from "./ui/pages/ConfiguracaoPage";
 import { FiliaisPage } from "./ui/pages/FiliaisPage";
 import { ManutencaoGeralPage } from "./ui/pages/ManutencaoGeralPage";
+import { ProgramasMaquinasPage } from "./ui/pages/ProgramasMaquinasPage";
 import { RelatorioPage } from "./ui/pages/RelatorioPage";
 
 export type AppProps = {
@@ -79,6 +80,15 @@ export default function App({
         pathname={pathname}
         filialScope={route.filialScope}
         alternateEntry={alternateEntry}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (route.view === "programas-maquinas") {
+    page = (
+      <ProgramasMaquinasPage
+        getAccessToken={getAccessToken}
+        pathname={pathname}
+        filialScope={route.filialScope}
         onNavigate={onNavigate}
       />
     );

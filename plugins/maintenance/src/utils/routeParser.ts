@@ -11,7 +11,8 @@ export type MaintenanceView =
   | "mini-aplicadores"
   | "mini-aplicador"
   | "relatorio"
-  | "configuracao";
+  | "configuracao"
+  | "programas-maquinas";
 
 export type ParsedMaintenanceRoute = {
   view: MaintenanceView;
@@ -71,6 +72,10 @@ export function parseMaintenancePath(pathname: string): ParsedMaintenanceRoute {
 
   if (path === MINI_APP) {
     return { view: "mini-aplicadores" };
+  }
+
+  if (path === MAINTENANCE_ROUTES.programasMaquinas) {
+    return { view: "programas-maquinas" };
   }
 
   if (path === MAINTENANCE_ROUTES.home) {

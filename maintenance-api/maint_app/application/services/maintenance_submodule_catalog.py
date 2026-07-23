@@ -27,6 +27,14 @@ SUBMODULE_CATALOG: tuple[dict[str, Any], ...] = (
         "filiais": None,
     },
     {
+        "id": "programas-maquinas",
+        "label": "Programas de máquina",
+        "description": "Ranking de intermediários mais produzidos e cadastro para programas das máquinas.",
+        "icon": "cpu",
+        "entry_path": "/apps/maintenance/programas-maquinas",
+        "filiais": None,
+    },
+    {
         "id": "manutencao-geral",
         "label": "Manutenção geral",
         "description": "Registro de máquinas, equipamentos, lâmpadas e demais ocorrências.",

@@ -2891,6 +2891,23 @@
       },
       "category": "production"
     },
+    "list_production_machine_program_top_intermediates": {
+      "locale": {
+        "en": {
+          "summary": "Paged list — top intermediate products for machine programs",
+          "description": "Ranking of PI products from SH6010 appointments with finished product, cutting CT (SG2 op 01) and open OP flag.",
+          "label": "Machine program top intermediates",
+          "whenToUse": "When registering products on machine programs from recent production volume."
+        },
+        "pt-BR": {
+          "summary": "Lista paginada — intermediários mais produzidos para programas de máquina",
+          "description": "Ranking de PIs apontados (SH6010) com PA, CT de corte (SG2 op 01) e flag de OP aberta.",
+          "label": "Intermediários para programas de máquina",
+          "whenToUse": "Ao cadastrar produtos nos programas das máquinas com base no volume recente."
+        }
+      },
+      "category": "production"
+    },
     "get_production_consumption_top_items_by_work_center": {
       "locale": {
         "en": {

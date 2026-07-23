@@ -13,6 +13,9 @@ from maint_app.core.responses import fail
 from maint_app.interface.http.routes.filial_routes import router as filial_router
 from maint_app.interface.http.routes.maintenance_routes import router as maintenance_router
 from maint_app.interface.http.routes.mini_applicators_routes import router as mini_applicators_router
+from maint_app.interface.http.routes.programas_maquinas_routes import (
+    router as programas_maquinas_router,
+)
 from maint_app.interface.http.routes.operational_routes import router as operational_router
 from maint_app.interface.http.routes.preventiva_routes import router as preventiva_router
 from maint_app.middleware.auth_middleware import jwt_middleware
@@ -96,5 +99,6 @@ def health():
 app.include_router(maintenance_router)
 app.include_router(filial_router)
 app.include_router(mini_applicators_router)
+app.include_router(programas_maquinas_router)
 app.include_router(operational_router)
 app.include_router(preventiva_router)

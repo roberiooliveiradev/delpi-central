@@ -9,6 +9,36 @@
   gap: 12px;
 }
 
+.dashboard-maintenance .dm-datatable table.dm-table thead th {
+  background: var(--dm-blue-900);
+  color: #fff;
+  border-bottom-color: color-mix(in srgb, var(--dm-blue-900) 72%, #000);
+}
+
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-button,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-button,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__header-label,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__header-label,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-indicator,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-indicator {
+  color: #fff;
+}
+
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-button:hover,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-button:focus-visible,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-button:hover,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-button:focus-visible {
+  background: color-mix(in srgb, #fff 14%, var(--dm-blue-900));
+  color: #fff;
+}
+
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-button--active,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-button--active,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .dm-table__sort-button--active .dm-table__sort-indicator,
+.dashboard-maintenance .dm-datatable table.dm-table thead th .delpi-ui-table__sort-button--active .delpi-ui-table__sort-indicator {
+  color: #fff;
+}
+
 .dashboard-maintenance .dm-datatable table.dm-table tbody tr.is-blocked {
   background: color-mix(in srgb, var(--dm-text-muted) 7%, var(--dm-card-bg));
 }

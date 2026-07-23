@@ -109,9 +109,11 @@ Permissões canônicas (ver `maintenance.manifest.json` v0.2.1):
 | `maintenance.manage` | Cadastro de filiais (`/apps/maintenance/filiais`) |
 | `maintenance.mini-applicators.view.filial-01` / `02` | Ler ferramentas, relatório e histórico na filial |
 | `maintenance.mini-applicators.manage.filial-01` / `02` | Reposições, motivos e status preventivo na filial |
-| `maintenance.manutencao-geral.view.filial-01` | Formulário manutenção geral (filial 01) |
+| `maintenance.programas-maquinas.view.filial-01` / `02` | Ranking e consulta de produtos para programas de máquina |
+| `maintenance.programas-maquinas.manage.filial-01` / `02` | Cadastrar/remover produtos dos programas de máquina |
+| `maintenance.manutencao-geral.view.filial-01` | Abrir formulário Manutenção geral (só filial 01 hoje) |
 
-Fluxo: escolher filial no **Início** (se houver mais de uma); submódulos visíveis conforme `mini-applicators.view.filial-XX`; mutações exigem `mini-applicators.manage.filial-XX` da filial ativa. Após alterar permissões na Core API, o usuário deve **logout/login**.
+Fluxo: escolher filial no **Início** (se houver mais de uma); submódulos visíveis conforme permissão `*.view.filial-XX` de cada submódulo; mutações exigem `*.manage.filial-XX` da filial ativa. Após alterar permissões na Core API, o usuário deve **logout/login**.
 
 **Não usar** permissões genéricas fora do manifesto (`maintenance.view.filial-XX`, `maintenance.manage.filial-XX`, `maintenance.mini-applicators.view` sem sufixo de filial) — a API não as mapeia para escopo.
 

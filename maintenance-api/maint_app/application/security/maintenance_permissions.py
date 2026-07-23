@@ -12,8 +12,10 @@ MAINTENANCE_MANAGE = "maintenance.manage"
 MINI_APPLICATORS_VIEW_PREFIX = "maintenance.mini-applicators.view"
 MINI_APPLICATORS_MANAGE_PREFIX = "maintenance.mini-applicators.manage"
 MANUTENCAO_GERAL_VIEW_PREFIX = "maintenance.manutencao-geral.view"
+PROGRAMAS_MAQUINAS_VIEW_PREFIX = "maintenance.programas-maquinas.view"
+PROGRAMAS_MAQUINAS_MANAGE_PREFIX = "maintenance.programas-maquinas.manage"
 
-# Manifest v0.2.1 — mapa explícito filial → permissão (não usar marcadores genéricos).
+# Manifest — mapa explícito filial → permissão (não usar marcadores genéricos).
 MINI_APPLICATORS_VIEW_FILIAL: dict[str, str] = {
     "01": "maintenance.mini-applicators.view.filial-01",
     "02": "maintenance.mini-applicators.view.filial-02",
@@ -28,13 +30,25 @@ MANUTENCAO_GERAL_VIEW_FILIAL: dict[str, str] = {
     "01": "maintenance.manutencao-geral.view.filial-01",
 }
 
+PROGRAMAS_MAQUINAS_VIEW_FILIAL: dict[str, str] = {
+    "01": "maintenance.programas-maquinas.view.filial-01",
+    "02": "maintenance.programas-maquinas.view.filial-02",
+}
+
+PROGRAMAS_MAQUINAS_MANAGE_FILIAL: dict[str, str] = {
+    "01": "maintenance.programas-maquinas.manage.filial-01",
+    "02": "maintenance.programas-maquinas.manage.filial-02",
+}
+
 SUBMODULE_VIEW_PREFIXES: dict[str, str] = {
     "mini-aplicadores": MINI_APPLICATORS_VIEW_PREFIX,
     "manutencao-geral": MANUTENCAO_GERAL_VIEW_PREFIX,
+    "programas-maquinas": PROGRAMAS_MAQUINAS_VIEW_PREFIX,
 }
 
 SUBMODULE_MANAGE_PREFIXES: dict[str, str] = {
     "mini-aplicadores": MINI_APPLICATORS_MANAGE_PREFIX,
+    "programas-maquinas": PROGRAMAS_MAQUINAS_MANAGE_PREFIX,
 }
 
 VIEW_FILIAL_PERMISSIONS: tuple[str, ...] = tuple(
@@ -42,11 +56,19 @@ VIEW_FILIAL_PERMISSIONS: tuple[str, ...] = tuple(
         [
             *MINI_APPLICATORS_VIEW_FILIAL.values(),
             *MANUTENCAO_GERAL_VIEW_FILIAL.values(),
+            *PROGRAMAS_MAQUINAS_VIEW_FILIAL.values(),
         ]
     )
 )
 
-MANAGE_FILIAL_PERMISSIONS: tuple[str, ...] = tuple(MINI_APPLICATORS_MANAGE_FILIAL.values())
+MANAGE_FILIAL_PERMISSIONS: tuple[str, ...] = tuple(
+    dict.fromkeys(
+        [
+            *MINI_APPLICATORS_MANAGE_FILIAL.values(),
+            *PROGRAMAS_MAQUINAS_MANAGE_FILIAL.values(),
+        ]
+    )
+)
 
 
 def filial_codes_from_permission_map(
@@ -57,7 +79,7 @@ def filial_codes_from_permission_map(
 
 
 def view_filial_codes_from_permissions(permissions: list[str]) -> list[str]:
-    """Filials com leitura — união dos submódulos declarados no manifesto."""
+    """Filiais com leitura — união dos submódulos declarados no manifesto."""
     codigos: set[str] = set()
     codigos.update(
         filial_codes_from_permission_map(permissions, MINI_APPLICATORS_VIEW_FILIAL),
@@ -65,12 +87,22 @@ def view_filial_codes_from_permissions(permissions: list[str]) -> list[str]:
     codigos.update(
         filial_codes_from_permission_map(permissions, MANUTENCAO_GERAL_VIEW_FILIAL),
     )
+    codigos.update(
+        filial_codes_from_permission_map(permissions, PROGRAMAS_MAQUINAS_VIEW_FILIAL),
+    )
     return sorted(codigos)
 
 
 def manage_filial_codes_from_permissions(permissions: list[str]) -> list[str]:
-    """Filials com escrita operacional (mini-aplicadores) — manifesto."""
-    return filial_codes_from_permission_map(permissions, MINI_APPLICATORS_MANAGE_FILIAL)
+    """Filiais com escrita operacional — manifesto."""
+    codigos: set[str] = set()
+    codigos.update(
+        filial_codes_from_permission_map(permissions, MINI_APPLICATORS_MANAGE_FILIAL),
+    )
+    codigos.update(
+        filial_codes_from_permission_map(permissions, PROGRAMAS_MAQUINAS_MANAGE_FILIAL),
+    )
+    return sorted(codigos)
 
 
 def submodule_view_permission(submodule_id: str, codigo_filial: str) -> str:

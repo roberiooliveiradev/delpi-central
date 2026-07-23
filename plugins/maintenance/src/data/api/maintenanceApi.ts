@@ -851,3 +851,152 @@ export function deleteFilial(filialRef: string | number, getAccessToken?: () => 
     getAccessToken,
   });
 }
+
+export type RankingIntermediarioItem = {
+  intermediate_code: string;
+  intermediate_description?: string;
+  finished_product_code?: string;
+  cutting_work_center?: string;
+  has_open_production_order?: boolean;
+  qty_produced?: number;
+  appointment_count?: number;
+  already_registered?: boolean;
+};
+
+export type RankingIntermediariosPage = {
+  items: RankingIntermediarioItem[];
+  page?: number;
+  page_size?: number;
+  total: number;
+  total_pages?: number;
+  summary?: Record<string, unknown>;
+};
+
+export type ProgramaMaquinaProduto = {
+  id: string;
+  filial: string;
+  codigo_intermediario: string;
+  descricao_intermediario?: string | null;
+  codigo_produto_acabado?: string | null;
+  codigo_ct_corte?: string | null;
+  nome_programa?: string | null;
+  observacao?: string | null;
+  ativo: boolean;
+  usuario_ativacao_nome?: string | null;
+  data_ativacao?: string | null;
+  data_criacao?: string;
+  data_alteracao?: string;
+};
+
+export function fetchProgramasMaquinasRanking(
+  params: {
+    filial: string;
+    dataInicial?: string;
+    dataFinal?: string;
+    search?: string;
+  } & ListQueryParams,
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams();
+  search.set("filial", params.filial);
+  appendListQuery(
+    search,
+    {
+      page: params.page,
+      pageSize: params.pageSize,
+      sortKey: params.sortKey,
+      sortDirection: params.sortDirection,
+    },
+    {
+      data_inicial: params.dataInicial,
+      data_final: params.dataFinal,
+      search: params.search,
+    },
+  );
+  return maintenanceFetch<RankingIntermediariosPage>(
+    `/programas-maquinas/ranking?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
+export function fetchProgramasMaquinasProdutos(
+  params: {
+    filial: string;
+    search?: string;
+    incluirInativos?: boolean;
+  } & ListQueryParams,
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams();
+  search.set("filial", params.filial);
+  appendListQuery(
+    search,
+    {
+      page: params.page,
+      pageSize: params.pageSize,
+      sortKey: params.sortKey,
+      sortDirection: params.sortDirection,
+    },
+    {
+      search: params.search,
+      incluir_inativos: params.incluirInativos ? true : undefined,
+    },
+  );
+  return maintenanceFetch<PagedItems<ProgramaMaquinaProduto>>(
+    `/programas-maquinas/produtos?${search.toString()}`,
+    { getAccessToken },
+  );
+}
+
+export function createProgramaMaquinaProduto(
+  payload: {
+    filial: string;
+    codigo_intermediario: string;
+    descricao_intermediario?: string | null;
+    codigo_produto_acabado?: string | null;
+    codigo_ct_corte?: string | null;
+    nome_programa?: string | null;
+    observacao?: string | null;
+    ativo?: boolean;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<ProgramaMaquinaProduto>("/programas-maquinas/produtos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    getAccessToken,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateProgramaMaquinaProduto(
+  id: string,
+  payload: {
+    filial: string;
+    nome_programa?: string | null;
+    observacao?: string | null;
+    ativo?: boolean | null;
+    codigo_produto_acabado?: string | null;
+    codigo_ct_corte?: string | null;
+  },
+  getAccessToken?: () => string | undefined,
+) {
+  return maintenanceFetch<ProgramaMaquinaProduto>(`/programas-maquinas/produtos/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    getAccessToken,
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteProgramaMaquinaProduto(
+  id: string,
+  filial: string,
+  getAccessToken?: () => string | undefined,
+) {
+  const search = new URLSearchParams({ filial });
+  return maintenanceFetch<null>(`/programas-maquinas/produtos/${id}?${search.toString()}`, {
+    method: "DELETE",
+    getAccessToken,
+  });
+}

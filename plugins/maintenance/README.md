@@ -22,17 +22,26 @@ Microfrontend React do módulo **Manutenção** (`id`: `maintenance`) — Module
 
 | Item | Valor |
 |------|-------|
-| Manifesto | `maintenance.manifest.json` (v0.2.1) |
+| Manifesto | `maintenance.manifest.json` (v0.2.3) |
 | `id` | `maintenance` |
 | `name` | Manutenção |
 | `basePath` | `/apps/maintenance` |
 | API | `/apps/maintenance-api/maintenance` |
 | Container (alvo) | `delpi-maintenance` |
 
+## Submódulos
+
+| Submódulo | Rota | Notas |
+|-----------|------|--------|
+| Mini-aplicadores | `/apps/maintenance/mini-aplicadores` | Reposição, golpes, preventiva |
+| Programas de máquina | `/apps/maintenance/programas-maquinas` | Ranking PI (api-delpi) + cadastro Postgres |
+| Manutenção geral | `/apps/maintenance/filial-01/manutencao-geral` | Embed externo (só filial 01) |
+
 ## Primeira funcionalidade
 
 **Mini-aplicadores** (ferramentaria) — reposição de peças, golpes e alertas preventivos. Migração do legado WinForms `MiniAplicadores`.
 
+**Programas de máquina** — ranking dos intermediários mais produzidos (últimos 6 meses via apontamentos SH6) e cadastro para programação nas máquinas.
 ## Componentes de UI (canônicos)
 
 | Módulo | Caminho | Uso |

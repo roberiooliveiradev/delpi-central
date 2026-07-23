@@ -96,3 +96,20 @@ def test_filter_submodules_manutencao_geral_hidden_for_filial_02():
     assert all(item["id"] != "manutencao-geral" for item in items)
     assert len(items) == 1
     assert items[0]["id"] == "mini-aplicadores"
+
+
+def test_filter_submodules_programas_maquinas_view():
+    user = SimpleNamespace(
+        is_superadmin=False,
+        permissions=["maintenance.programas-maquinas.view.filial-01"],
+    )
+    scope = FilialAccessScope(
+        mode="scoped",
+        allowed_codigos=frozenset({"01"}),
+        manage_codigos=frozenset(),
+    )
+    items = filter_submodules_for_user(user, filial="01", scope=scope)
+    assert len(items) == 1
+    assert items[0]["id"] == "programas-maquinas"
+    assert items[0]["entry_path"] == "/apps/maintenance/programas-maquinas"
+    assert items[0]["can_manage"] is False

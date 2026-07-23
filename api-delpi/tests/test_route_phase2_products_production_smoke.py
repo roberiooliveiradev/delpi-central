@@ -304,3 +304,36 @@ def test_eficiencia_fabril_appointments_returns_meta(mock_build) -> None:
         operation_id="list_eficiencia_fabril_appointments",
         shape="paged_list",
     )
+
+
+@patch(f"{_OPERATIONAL}.build_list_production_machine_program_top_intermediates_use_case")
+def test_production_machine_program_top_intermediates_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.production.production_operational_router import (
+        list_machine_program_top_intermediates,
+    )
+
+    mock_build.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "items": [],
+                "page": 1,
+                "page_size": 50,
+                "total": 0,
+                "total_pages": 0,
+                "summary": {},
+            }
+        )
+    )
+    response = list_machine_program_top_intermediates(
+        branch="01",
+        date_start=None,
+        date_end=None,
+        page=1,
+        page_size=50,
+        search=None,
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="list_production_machine_program_top_intermediates",
+        shape="paged_list",
+    )

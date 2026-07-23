@@ -4,12 +4,17 @@ from delpi_api_client import DelpiApiClient
 
 from maint_app.config import settings
 from maint_app.domain.ports.mini_applicators_totvs_port import MiniApplicatorsTotvsPort
+from maint_app.domain.ports.machine_programs_totvs_port import MachineProgramsTotvsPort
 from maint_app.infrastructure.gateways.delpi_mini_applicators_gateway import (
     DelpiMiniAplicatorsGateway,
+)
+from maint_app.infrastructure.gateways.delpi_machine_programs_gateway import (
+    DelpiMachineProgramsGateway,
 )
 
 _delpi_client: DelpiApiClient | None = None
 _totvs_gateway: DelpiMiniAplicatorsGateway | None = None
+_machine_programs_gateway: DelpiMachineProgramsGateway | None = None
 
 
 def _get_delpi_client() -> DelpiApiClient:
@@ -30,7 +35,24 @@ def build_mini_applicators_totvs_gateway() -> MiniApplicatorsTotvsPort:
     return _totvs_gateway
 
 
-def build_reposicao_service() -> ReposicaoService:
+def build_machine_programs_totvs_gateway() -> MachineProgramsTotvsPort:
+    global _machine_programs_gateway
+    if _machine_programs_gateway is None:
+        _machine_programs_gateway = DelpiMachineProgramsGateway(_get_delpi_client())
+    return _machine_programs_gateway
+
+
+def build_programas_maquina_service():
+    from maint_app.application.services.programas_maquina_service import (
+        ProgramasMaquinaService,
+    )
+
+    return ProgramasMaquinaService(
+        totvs_gateway=build_machine_programs_totvs_gateway(),
+    )
+
+
+def build_reposicao_service():
     from maint_app.application.services.reposicao_service import ReposicaoService
 
     return ReposicaoService(totvs_gateway=build_mini_applicators_totvs_gateway())

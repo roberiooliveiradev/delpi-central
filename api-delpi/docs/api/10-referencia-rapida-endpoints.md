@@ -164,6 +164,7 @@ Legenda de permissões:
 | GET | `/production/consumption/top-items` | A |
 | GET | `/production/consumption/top-items-by-work-center` | A |
 | GET | `/production/consumption/top-items-validated` | A |
+| GET | `/production/machine-programs/top-intermediates` | A |
 | GET | `/production/consumption/by-item/{code}` | A |
 | GET | `/production/losses/top-materials` | A |
 | GET | `/production/losses/records` | A |

@@ -2,11 +2,50 @@ type FilialSwitcherProps = {
   filiais: Array<{ id: string; label: string }>;
   value: string;
   onChange: (filialId: string) => void;
+  /** Layout compacto para o header da home (estilo Reports). */
+  compact?: boolean;
 };
 
-export function FilialSwitcher({ filiais, value, onChange }: FilialSwitcherProps) {
+export function FilialSwitcher({
+  filiais,
+  value,
+  onChange,
+  compact = false,
+}: FilialSwitcherProps) {
   if (filiais.length <= 1) {
     return null;
+  }
+
+  if (compact) {
+    return (
+      <div className="dm-filial-switcher dm-filial-switcher--compact">
+        <p className="dm-filial-switcher__label">Filial</p>
+        <div
+          className="dm-filial-switcher__options"
+          role="tablist"
+          aria-label="Filiais"
+        >
+          {filiais.map((filial) => {
+            const active = value === filial.id;
+            return (
+              <button
+                key={filial.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                className={`dm-filial-switcher__option${active ? " is-active" : ""}`}
+                onClick={() => onChange(filial.id)}
+                title={`Filial ${filial.id}`}
+              >
+                <span className="dm-filial-switcher__option-label">
+                  {filial.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
   }
 
   return (
