@@ -133,13 +133,13 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertLineShape:
       "Linha livre: alças nas pontas. Arraste uma ponta até outro bloco para grudar (conector); os pontos de conexão aparecem ao aproximar.",
     insertLineTool:
-      "Ferramentas de linha no estilo Google Slides: linha, seta, conectores, curva, polilinha e rabisco.",
+      "Ferramentas de linha: linha, seta, conectores, curva, polilinha e rabisco.",
     iconEditor:
-      "Trocar o glifo Lucide e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
-    iconPicker: "Escolha outro ícone da biblioteca Lucide.",
+      "Trocar o ícone e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
+    iconPicker: "Escolha outro ícone da biblioteca.",
     iconColor: "Cor do traço do ícone (glifo). Padrão: azul accent das formas (#089bdb).",
     iconStrokeWidth:
-      "Espessura do traço Lucide do glifo, em pixels (0,5–6). Distinta do contorno da caixa.",
+      "Espessura do traço do ícone, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas, linhas e ícones editáveis.",
@@ -155,7 +155,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
     insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
     insertShape:
-      "Formas geométricas com preenchimento e contorno. Em Linhas, use as alças das pontas; aproxime de outro bloco para conectar (estilo PowerPoint).",
+      "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
     chartType: "Abre o catálogo de tipos (mesmo de Inserir → Gráficos) para trocar o gráfico.",
     tableData: "Fonte e vínculo dos dados da tabela.",

@@ -33,8 +33,7 @@ const TOOL_ICONS: Record<ComunicadoLineToolId, typeof Minus> = {
 };
 
 /**
- * Menu Inserir → Linha (paridade Google Slides).
- * Fase 0: Linha/Seta inserem; demais tools aguardam desenho interativo (Fases 2/3).
+ * Menu Inserir → Linha: linha, seta, conectores, curva, polilinha e rabisco.
  */
 export function ComunicadoLineToolsMenu({
   open,

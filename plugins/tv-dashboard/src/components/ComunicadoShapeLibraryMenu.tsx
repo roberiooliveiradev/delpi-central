@@ -27,7 +27,7 @@ type Props = {
 };
 
 /**
- * Flyout Inserir → Formas (estilo Google Slides):
+ * Flyout Inserir → Formas:
  * lista lateral Formas / Setas / Descrições / Equação + grade à direita.
  */
 export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
