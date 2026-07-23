@@ -22,24 +22,42 @@ import {
   arrowUpDownPath,
   arrowUpPath,
   bannerPath,
+  bentArrowPath,
+  burstPoints,
   calloutBubble,
+  calloutLineParts,
   chevronLeftPath,
   chevronRightPath,
+  cornerLPath,
   cornerRx,
   crossPath,
+  cubePath,
+  curvedRightArrowPath,
   cylinderParts,
   documentPath,
+  donutPath,
+  foldedCornerPath,
+  framePath,
   hexagonPoints,
   moonPath,
   notchedArrowPath,
   octagonPoints,
   parallelogramPoints,
+  piePath,
   polygonPoints,
+  quadArrowPath,
+  regularPolygonPoints,
+  roundOneRectPath,
   roundSameSidePath,
+  scrollPath,
+  snipDiagonalRectPoints,
   snipRectPoints,
   starPoints,
+  stripedRightArrowPath,
+  teardropPath,
   trapezoidPoints,
   trianglePoints,
+  uTurnArrowPath,
   wavePath,
 } from "./comunicadoShapePaths";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
@@ -409,8 +427,95 @@ function renderSvgShape(
       return (
         <polygon points={polygonPoints(octagonPoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
       );
+    case "heptagon":
+      return (
+        <polygon
+          points={polygonPoints(regularPolygonPoints(7))}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+        />
+      );
+    case "decagon":
+      return (
+        <polygon
+          points={polygonPoints(regularPolygonPoints(10))}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+        />
+      );
+    case "dodecagon":
+      return (
+        <polygon
+          points={polygonPoints(regularPolygonPoints(12))}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+        />
+      );
     case "cross":
       return <path d={crossPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "cube":
+      return (
+        <path
+          d={cubePath()}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          fillRule="evenodd"
+        />
+      );
+    case "donut":
+      return (
+        <path d={donutPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} fillRule="evenodd" />
+      );
+    case "pie":
+      return <path d={piePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "teardrop":
+      return <path d={teardropPath()} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "frame":
+      return (
+        <path d={framePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} fillRule="evenodd" />
+      );
+    case "corner":
+      return <path d={cornerLPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "folded-corner":
+      return (
+        <path
+          d={foldedCornerPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          fillRule="evenodd"
+        />
+      );
+    case "smiley":
+      return (
+        <>
+          <circle cx="50" cy="50" r="40" fill={fill} stroke={stroke} strokeWidth={sw} />
+          <circle cx="36" cy="42" r="5" fill={stroke} />
+          <circle cx="64" cy="42" r="5" fill={stroke} />
+          <path
+            d="M32 62 Q50 78 68 62"
+            fill="none"
+            stroke={stroke}
+            strokeWidth={Math.max(2, sw)}
+            strokeLinecap="round"
+          />
+        </>
+      );
+    case "round-1-rect":
+      return <path d={roundOneRectPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "snip-diag-rect":
+      return (
+        <polygon
+          points={polygonPoints(snipDiagonalRectPoints(adj))}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+        />
+      );
     case "cylinder": {
       const { ry, bodyBottom } = cylinderParts(adj);
       return (
@@ -595,6 +700,61 @@ function renderSvgShape(
           strokeLinejoin="miter"
         />
       );
+    case "bent-arrow":
+      return (
+        <path
+          d={bentArrowPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
+    case "u-turn-arrow":
+      return (
+        <path
+          d={uTurnArrowPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
+    case "quad-arrow":
+      return (
+        <path
+          d={quadArrowPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
+    case "curved-right-arrow":
+      return (
+        <path
+          d={curvedRightArrowPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
+    case "striped-right-arrow":
+      return (
+        <>
+          <path
+            d={stripedRightArrowPath(adj)}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+            strokeLinejoin="miter"
+          />
+          <line x1="18" y1="28" x2="18" y2="72" stroke={stroke} strokeWidth={Math.max(2, sw)} />
+          <line x1="28" y1="28" x2="28" y2="72" stroke={stroke} strokeWidth={Math.max(2, sw)} />
+          <line x1="38" y1="28" x2="38" y2="72" stroke={stroke} strokeWidth={Math.max(2, sw)} />
+        </>
+      );
     case "star":
       return (
         <polygon
@@ -635,8 +795,72 @@ function renderSvgShape(
           strokeLinejoin="round"
         />
       );
+    case "star-7":
+      return (
+        <polygon
+          points={starPoints(7, 46, 18 + (adj[0] ?? 0.4) * 26)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
+    case "star-10":
+      return (
+        <polygon
+          points={starPoints(10, 46, 18 + (adj[0] ?? 0.4) * 24)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
+    case "star-12":
+      return (
+        <polygon
+          points={starPoints(12, 46, 20 + (adj[0] ?? 0.4) * 20)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
+    case "star-16":
+      return (
+        <polygon
+          points={starPoints(16, 46, 22 + (adj[0] ?? 0.4) * 16)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
+    case "star-24":
+      return (
+        <polygon
+          points={starPoints(24, 46, 26 + (adj[0] ?? 0.35) * 12)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
+    case "burst-16":
+      return (
+        <polygon
+          points={burstPoints(16, 46, 22 + (adj[0] ?? 0.35) * 14)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="round"
+        />
+      );
     case "banner":
       return <path d={bannerPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+    case "scroll":
+      return (
+        <path d={scrollPath()} fill={fill} stroke={stroke} strokeWidth={sw} fillRule="evenodd" />
+      );
     case "wave":
       return <path d={wavePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "callout-rect": {
@@ -672,6 +896,48 @@ function renderSvgShape(
             strokeWidth={sw}
           />
           <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
+        </>
+      );
+    }
+    case "callout-oval": {
+      const bubble = calloutBubble(adj, 40);
+      return (
+        <>
+          <ellipse
+            cx={bubble.rect.x + bubble.rect.w / 2}
+            cy={bubble.rect.y + bubble.rect.h / 2}
+            rx={bubble.rect.w / 2}
+            ry={bubble.rect.h / 2}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
+          <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
+        </>
+      );
+    }
+    case "callout-line": {
+      const parts = calloutLineParts(adj);
+      return (
+        <>
+          <rect
+            x={parts.rect.x}
+            y={parts.rect.y}
+            width={parts.rect.w}
+            height={parts.rect.h}
+            rx={6}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth={sw}
+          />
+          <line
+            x1={parts.line.x1}
+            y1={parts.line.y1}
+            x2={parts.line.x2}
+            y2={parts.line.y2}
+            stroke={stroke}
+            strokeWidth={Math.max(2, sw)}
+          />
         </>
       );
     }

@@ -230,3 +230,117 @@ export function cylinderParts(values: number[]): { ry: number; bodyBottom: numbe
 export function cornerRx(values: number[], fallback: number): number {
   return a(values, 0, fallback / 50) * Math.min(84, 76);
 }
+
+/** Polígono regular (heptágono, decágono, …) centrado no viewBox 0–100. */
+export function regularPolygonPoints(
+  sides: number,
+  radius = 46,
+  cx = 50,
+  cy = 50,
+): number[] {
+  const coords: number[] = [];
+  for (let i = 0; i < sides; i += 1) {
+    const angle = (Math.PI * 2 * i) / sides - Math.PI / 2;
+    coords.push(cx + radius * Math.cos(angle), cy + radius * Math.sin(angle));
+  }
+  return coords;
+}
+
+export function roundOneRectPath(values: number[]): string {
+  const r = a(values, 0, 0.22) * 40;
+  return `M8 12 H92 V${88 - r} Q92 88 ${92 - r} 88 H8 Z`;
+}
+
+export function snipDiagonalRectPoints(values: number[]): number[] {
+  const snip = a(values, 0, 0.22) * 36;
+  return [8, 12, 92 - snip, 12, 92, 12 + snip, 92, 88 - snip, 92 - snip, 88, 8, 88];
+}
+
+export function teardropPath(): string {
+  return "M50 8 C78 8 92 28 92 50 C92 78 72 92 50 92 C28 92 8 72 8 50 C8 32 22 18 38 14 C42 28 50 36 62 36 C54 22 50 12 50 8 Z";
+}
+
+export function framePath(values: number[]): string {
+  const t = 8 + a(values, 0, 0.2) * 16;
+  return `M8 8 H92 V92 H8 Z M${8 + t} ${8 + t} V${92 - t} H${92 - t} V${8 + t} Z`;
+}
+
+export function cornerLPath(values: number[]): string {
+  const arm = 28 + a(values, 0, 0.35) * 24;
+  return `M8 8 H${8 + arm} V${92 - arm} H92 V92 H8 Z`;
+}
+
+export function donutPath(values: number[]): string {
+  const inner = 12 + a(values, 0, 0.35) * 18;
+  return `M50 8 A42 42 0 1 1 49.9 8 Z M50 ${50 - inner} A${inner} ${inner} 0 1 0 50.1 ${50 - inner} Z`;
+}
+
+export function piePath(values: number[]): string {
+  const sweep = 0.35 + a(values, 0, 0.45) * 0.5;
+  const angle = -Math.PI / 2 + sweep * Math.PI * 2;
+  const x = 50 + 42 * Math.cos(angle);
+  const y = 50 + 42 * Math.sin(angle);
+  const large = sweep > 0.5 ? 1 : 0;
+  return `M50 50 L50 8 A42 42 0 ${large} 1 ${x} ${y} Z`;
+}
+
+export function cubePath(): string {
+  /* Isométrico sólido (faces sugeridas por arestas internas no stroke). */
+  return "M20 32 L50 14 L80 32 L80 68 L50 86 L20 68 Z M20 32 L50 50 L80 32 M50 50 V86";
+}
+
+export function foldedCornerPath(values: number[]): string {
+  const fold = 18 + a(values, 0, 0.25) * 20;
+  return `M8 8 H${92 - fold} L92 ${8 + fold} V92 H8 Z M${92 - fold} 8 V${8 + fold} H92`;
+}
+
+export function bentArrowPath(values: number[]): string {
+  const head = a(values, 0, 0.28);
+  const shaft = a(values, 1, 0.22);
+  const half = shaft * 40;
+  const neck = 100 - head * 70;
+  return `M12 ${50 - half} H55 V28 H${neck} V12 L92 40 L${neck} 68 V52 H${55 + half} V${50 + half} H12 Z`;
+}
+
+export function uTurnArrowPath(values: number[]): string {
+  const shaft = a(values, 0, 0.22) * 36;
+  return `M28 88 V40 C28 18 48 10 68 10 C88 10 92 28 92 40 V58 H${92 - shaft} V40 C${92 - shaft} 30 80 ${18 + shaft * 0.2} 68 ${18 + shaft * 0.2} C56 ${18 + shaft * 0.2} ${28 + shaft} 28 ${28 + shaft} 40 V72 H44 L28 96 L12 72 H${28} Z`;
+}
+
+export function quadArrowPath(values: number[]): string {
+  const shaft = a(values, 0, 0.22) * 28;
+  const s0 = 50 - shaft;
+  const s1 = 50 + shaft;
+  return `M50 6 L70 28 H${s1} V${s0} H72 L94 50 L72 72 H${s1} V${s1} H70 L50 94 L30 72 H${s0} V${s1} H28 L6 50 L28 28 H${s0} V${s0} H30 Z`;
+}
+
+export function curvedRightArrowPath(values: number[]): string {
+  const thick = 10 + a(values, 0, 0.25) * 14;
+  return `M18 78 C18 40 40 18 72 18 H78 L68 4 L96 22 L68 40 L78 28 H72 C48 28 34 44 34 ${78 - thick} H18 Z`;
+}
+
+export function stripedRightArrowPath(values: number[]): string {
+  const head = a(values, 0, 0.32);
+  const neckX = 100 - head * 100;
+  return `M4 28 H${neckX} V12 L96 50 L${neckX} 88 V72 H4 Z`;
+}
+
+export function burstPoints(points = 16, outer = 46, inner = 28): string {
+  return starPoints(points, outer, inner);
+}
+
+export function scrollPath(): string {
+  return "M22 16 H78 C88 16 92 24 92 32 V68 C92 78 84 84 74 84 H26 C16 84 8 76 8 66 V34 C8 22 14 16 22 16 Z M22 16 C14 16 14 28 22 28 H78 M22 84 C14 84 14 72 22 72 H74";
+}
+
+export function calloutLineParts(values: number[]): {
+  rect: { x: number; y: number; w: number; h: number };
+  line: { x1: number; y1: number; x2: number; y2: number };
+} {
+  const px = 8 + a(values, 0, 0.15) * 24;
+  const py = 70 + a(values, 1, 0.7) * 26;
+  return {
+    rect: { x: 28, y: 16, w: 60, h: 48 },
+    line: { x1: 28, y1: 52, x2: px, y2: py },
+  };
+}

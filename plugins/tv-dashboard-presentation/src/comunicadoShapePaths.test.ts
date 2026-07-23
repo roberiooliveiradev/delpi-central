@@ -7,10 +7,16 @@ import {
   arrowRightPath,
   arrowUpDownPath,
   arrowUpPath,
+  bentArrowPath,
   chevronLeftPath,
   chevronRightPath,
   notchedArrowPath,
+  regularPolygonPoints,
+  teardropPath,
 } from "./comunicadoShapePaths";
+import { COMUNICADO_SHAPE_KIND_VALUES, isComunicadoShapeKind } from "./comunicadoShapeCatalog";
+import { createShapeBlock } from "./comunicadoHelpers";
+import { resolveShapePrimitive } from "./comunicadoVisualPrimitive";
 
 function pathNumbers(d: string): number[] {
   return (d.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
@@ -52,5 +58,21 @@ describe("comunicadoShapePaths — setas Office-like", () => {
     expect(d).toContain("L96 50");
     expect(d).toMatch(/L\d+(\.\d+)? 50 Z$/);
     expect(notchedArrowPath([0.2, 0.2])).not.toBe(notchedArrowPath([0.5, 0.4]));
+  });
+
+  it("novas formas da Fase 1 geram geometria válida", () => {
+    expect(regularPolygonPoints(7)).toHaveLength(14);
+    expect(regularPolygonPoints(12)).toHaveLength(24);
+    expect(bentArrowPath([0.28, 0.22])).toContain("Z");
+    expect(teardropPath().startsWith("M")).toBe(true);
+    expect(COMUNICADO_SHAPE_KIND_VALUES.length).toBeGreaterThan(80);
+    for (const kind of ["heptagon", "donut", "bent-arrow", "star-16", "callout-oval"] as const) {
+      expect(isComunicadoShapeKind(kind)).toBe(true);
+      const block = createShapeBlock(kind);
+      expect(block.type).toBe("shape");
+      if (block.type === "shape") {
+        expect(resolveShapePrimitive(block.shape)).toBe("area");
+      }
+    }
   });
 });
