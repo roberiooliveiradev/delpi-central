@@ -2,6 +2,7 @@ import { createBlock, type ComunicadoBlock } from "@delpi/tv-dashboard-presentat
 import { describe, expect, it } from "vitest";
 
 import { cloneBlocksForClipboard, pasteClipboardBlocks } from "./comunicadoEditorClipboard";
+import { groupBlocks } from "./comunicadoGrouping";
 import { bringForward, bringToFront, sendBackward, sendToBack } from "./comunicadoLayerOrder";
 import {
   isContextMenuActionEnabled,
@@ -86,5 +87,69 @@ describe("comunicadoStageContextMenuActions", () => {
     const state = resolveContextMenuActionState({ selected, canPaste: false });
     expect(state.canEditText).toBe(true);
     expect(isContextMenuActionEnabled("editText", state)).toBe(true);
+  });
+
+  it("habilita duplicar/girar com seleção e agrupar/alinhar com multi", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    const c = createBlock("text", "C");
+    const blocks = [a, b, c];
+
+    const single = resolveContextMenuActionState({
+      selected: a,
+      canPaste: false,
+      selectedIds: [a.id],
+      blocks,
+    });
+    expect(isContextMenuActionEnabled("duplicate", single)).toBe(true);
+    expect(isContextMenuActionEnabled("rotateCw", single)).toBe(true);
+    expect(isContextMenuActionEnabled("group", single)).toBe(false);
+    expect(isContextMenuActionEnabled("align-left", single)).toBe(false);
+    expect(isContextMenuActionEnabled("align-slide-left", single)).toBe(true);
+    expect(isContextMenuActionEnabled("distribute-h", single)).toBe(false);
+    expect(isContextMenuActionEnabled("editText", single)).toBe(true);
+
+    const multi = resolveContextMenuActionState({
+      selected: a,
+      canPaste: false,
+      selectedIds: [a.id, b.id],
+      blocks,
+    });
+    expect(isContextMenuActionEnabled("group", multi)).toBe(true);
+    expect(isContextMenuActionEnabled("align-left", multi)).toBe(true);
+    expect(isContextMenuActionEnabled("distribute-h", multi)).toBe(false);
+    expect(isContextMenuActionEnabled("editText", multi)).toBe(false);
+
+    const three = resolveContextMenuActionState({
+      selected: a,
+      canPaste: false,
+      selectedIds: [a.id, b.id, c.id],
+      blocks,
+    });
+    expect(isContextMenuActionEnabled("distribute-v", three)).toBe(true);
+  });
+
+  it("habilita desagrupar e reagrupar conforme ribbon", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    const grouped = groupBlocks([a, b], [a.id, b.id], "grp_test");
+    const withGroup = resolveContextMenuActionState({
+      selected: grouped[0],
+      canPaste: false,
+      selectedIds: [a.id, b.id],
+      blocks: grouped,
+    });
+    expect(isContextMenuActionEnabled("ungroup", withGroup)).toBe(true);
+    expect(isContextMenuActionEnabled("regroup", withGroup)).toBe(false);
+
+    const afterUngroup = resolveContextMenuActionState({
+      selected: a,
+      canPaste: false,
+      selectedIds: [a.id],
+      blocks: [a, b],
+      lastUngroupedIds: [a.id, b.id],
+    });
+    expect(isContextMenuActionEnabled("ungroup", afterUngroup)).toBe(false);
+    expect(isContextMenuActionEnabled("regroup", afterUngroup)).toBe(true);
   });
 });
