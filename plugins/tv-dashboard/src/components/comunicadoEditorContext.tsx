@@ -721,6 +721,8 @@ export function ComunicadoEditorProvider({
     closeMediaLibrary: media.closeMediaLibrary,
     applyMediaAsset: media.applyMediaAsset,
     triggerUpload: media.triggerUpload,
+    probeClipboardHasImage: media.probeClipboardHasImage,
+    replaceSelectedMediaFromClipboard: media.replaceSelectedMediaFromClipboard,
     setBackgroundColor: blockActions.setBackgroundColor,
     setBackgroundGradient: blockActions.setBackgroundGradient,
     bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,

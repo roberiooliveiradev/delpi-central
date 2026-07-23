@@ -223,6 +223,18 @@ function collectImageFiles(data: DataTransfer): File[] {
   return files;
 }
 
+/** Há arquivo de imagem no DataTransfer (enablement «Da área de transferência»). */
+export function dataTransferHasImageFiles(data: DataTransfer | null | undefined): boolean {
+  if (!data) return false;
+  return collectImageFiles(data).length > 0;
+}
+
+/** Primeira imagem do clipboard — troca in-place (mantém frame). */
+export function firstDataTransferImageFile(data: DataTransfer | null | undefined): File | null {
+  if (!data) return null;
+  return collectImageFiles(data)[0] ?? null;
+}
+
 /**
  * Há conteúdo externo no DataTransfer (Google Slides, web, imagem…)?
  * Usado para NÃO cair no clipboard interno da sessão quando o SO trouxe

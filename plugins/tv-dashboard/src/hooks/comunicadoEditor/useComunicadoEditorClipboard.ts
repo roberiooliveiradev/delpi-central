@@ -22,6 +22,7 @@ import {
   placeFrameCenteredAt,
   resolveViewportCenterCanvasPercent,
 } from "../../utils/placeBlockInViewport";
+import { readSystemClipboardDataTransfer } from "../../utils/readSystemClipboardDataTransfer";
 
 type Options = {
   playlistId: string;
@@ -52,24 +53,6 @@ async function writeBlocksToSystemClipboard(blocks: ComunicadoBlock[]): Promise<
   } catch {
     // Sem permissão / contexto inseguro — clipboard interno em memória permanece.
   }
-}
-
-async function buildDataTransferFromClipboardItems(items: ClipboardItems): Promise<DataTransfer> {
-  const dt = new DataTransfer();
-  for (const item of items) {
-    for (const type of item.types) {
-      if (type.startsWith("image/")) {
-        const blob = await item.getType(type);
-        const ext = type.split("/")[1] || "png";
-        dt.items.add(new File([blob], `clipboard.${ext}`, { type }));
-      } else if (type === "text/plain" || type === "text/html") {
-        const blob = await item.getType(type);
-        const text = await blob.text();
-        dt.setData(type, text);
-      }
-    }
-  }
-  return dt;
 }
 
 export function useComunicadoEditorClipboard({
@@ -249,29 +232,6 @@ export function useComunicadoEditorClipboard({
     [applyPastePlan, pasteSelected],
   );
 
-  const readSystemClipboardDataTransfer = useCallback(async (): Promise<DataTransfer | null> => {
-    if (typeof navigator === "undefined" || !navigator.clipboard) return null;
-    try {
-      if (navigator.clipboard.read) {
-        const items = await navigator.clipboard.read();
-        return buildDataTransferFromClipboardItems(items);
-      }
-      const text = await navigator.clipboard.readText();
-      const dt = new DataTransfer();
-      dt.setData("text/plain", text);
-      return dt;
-    } catch {
-      try {
-        const text = await navigator.clipboard.readText();
-        const dt = new DataTransfer();
-        dt.setData("text/plain", text);
-        return dt;
-      } catch {
-        return null;
-      }
-    }
-  }, []);
-
   const pasteFromSystemClipboard = useCallback(async (): Promise<boolean> => {
     const dt = await readSystemClipboardDataTransfer();
     if (dt) {
@@ -281,7 +241,7 @@ export function useComunicadoEditorClipboard({
       if (hasExternalClipboardPayload(dt)) return false;
     }
     return pasteFromClipboardData(null, { allowInternalFallback: true });
-  }, [pasteFromClipboardData, readSystemClipboardDataTransfer]);
+  }, [pasteFromClipboardData]);
 
   const cutSelected = useCallback(() => {
     copySelected();
@@ -330,7 +290,7 @@ export function useComunicadoEditorClipboard({
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-  }, [getEditingTextId, pasteFromClipboardData, readSystemClipboardDataTransfer]);
+  }, [getEditingTextId, pasteFromClipboardData]);
 
   const canPaste = true;
   void clipboardRevision;

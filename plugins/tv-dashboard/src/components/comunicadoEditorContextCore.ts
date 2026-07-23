@@ -302,6 +302,10 @@ export type ComunicadoEditorContextValue = {
   closeMediaLibrary: () => void;
   applyMediaAsset: (asset: MediaAsset) => void;
   triggerUpload: (target: "block" | "background") => void;
+  /** Clipboard do SO tem imagem (probe assíncrono). */
+  probeClipboardHasImage: () => Promise<boolean>;
+  /** Troca mídia do bloco selecionado pela imagem do clipboard (mantém frame). */
+  replaceSelectedMediaFromClipboard: () => Promise<boolean>;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
   /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */

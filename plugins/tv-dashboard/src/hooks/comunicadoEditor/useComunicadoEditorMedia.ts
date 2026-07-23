@@ -9,7 +9,12 @@ import {
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
 import type { MediaLibraryTarget } from "../../components/comunicadoEditorTypes";
+import {
+  dataTransferHasImageFiles,
+  firstDataTransferImageFile,
+} from "../../utils/externalClipboardPaste";
 import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
+import { readSystemClipboardDataTransfer } from "../../utils/readSystemClipboardDataTransfer";
 
 type Options = {
   playlistId: string;
@@ -161,6 +166,24 @@ export function useComunicadoEditorMedia({
     fileInputRef.current?.click();
   }, []);
 
+  /** Probe para enablement do menu «Da área de transferência». */
+  const probeClipboardHasImage = useCallback(async (): Promise<boolean> => {
+    const dt = await readSystemClipboardDataTransfer();
+    return dataTransferHasImageFiles(dt);
+  }, []);
+
+  /**
+   * Substitui a mídia do bloco selecionado pela imagem do clipboard,
+   * mantendo frame/estilo (paridade Change Picture do Office).
+   */
+  const replaceSelectedMediaFromClipboard = useCallback(async (): Promise<boolean> => {
+    const dt = await readSystemClipboardDataTransfer();
+    const file = firstDataTransferImageFile(dt);
+    if (!file) return false;
+    await handleUploadFile(file, "block");
+    return true;
+  }, [handleUploadFile]);
+
   return {
     uploading,
     mediaLibraryOpen,
@@ -173,5 +196,7 @@ export function useComunicadoEditorMedia({
     triggerUpload,
     handleUploadFile,
     uploadCustomFont,
+    probeClipboardHasImage,
+    replaceSelectedMediaFromClipboard,
   };
 }

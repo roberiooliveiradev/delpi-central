@@ -39,6 +39,9 @@ import {
   Group,
   Heading,
   Layers,
+  FolderOpen,
+  Image as ImageIcon,
+  Monitor,
   RefreshCw,
   Replace,
   RotateCcw,
@@ -52,7 +55,7 @@ import {
   Trash2,
   Ungroup,
 } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -115,12 +118,32 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     addBlock,
     addShape,
     openDataCatalog,
+    openMediaLibrary,
+    triggerUpload,
+    probeClipboardHasImage,
+    replaceSelectedMediaFromClipboard,
   } = useComunicadoEditor();
 
   const pickerAnchorRef = useRef<HTMLDivElement>(null);
   const [pickerAnchorPoint, setPickerAnchorPoint] = useState<FixedPanelPoint | null>(null);
   const [shapeLibraryOpen, setShapeLibraryOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [canReplaceImageFromClipboard, setCanReplaceImageFromClipboard] = useState(false);
+
+  useEffect(() => {
+    const isMedia = selected?.type === "image" || selected?.type === "video";
+    if (!open || !isMedia) {
+      setCanReplaceImageFromClipboard(false);
+      return;
+    }
+    let cancelled = false;
+    void probeClipboardHasImage().then((hasImage) => {
+      if (!cancelled) setCanReplaceImageFromClipboard(hasImage);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, probeClipboardHasImage, selected?.type]);
 
   const actionState = useMemo(
     () =>
@@ -130,8 +153,9 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         selectedIds,
         blocks,
         lastUngroupedIds,
+        canReplaceImageFromClipboard,
       }),
-    [blocks, canPaste, lastUngroupedIds, selected, selectedIds],
+    [blocks, canPaste, canReplaceImageFromClipboard, lastUngroupedIds, selected, selectedIds],
   );
 
   const isShapeBlock =
@@ -378,6 +402,36 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
               icon={Sparkles}
               disabled={!enabled("changeIcon")}
               onSelect={openIconPickerFromMenu}
+            />
+          </ContextMenuSub>
+        </>
+      ) : null}
+
+      {actionState.canChangeImage ? (
+        <>
+          <ContextMenuDivider />
+          <ContextMenuSub label={C.changeImage} icon={ImageIcon}>
+            <ContextMenuItem
+              label={C.changeImageFromDevice}
+              icon={Monitor}
+              disabled={!enabled("changeImageFromDevice")}
+              onSelect={() =>
+                run(() => {
+                  triggerUpload("block");
+                })
+              }
+            />
+            <ContextMenuItem
+              label={C.changeImageFromLibrary}
+              icon={FolderOpen}
+              disabled={!enabled("changeImageFromLibrary")}
+              onSelect={() => run(() => openMediaLibrary("block"))}
+            />
+            <ContextMenuItem
+              label={C.changeImageFromClipboard}
+              icon={ClipboardPaste}
+              disabled={!enabled("changeImageFromClipboard")}
+              onSelect={() => run(() => void replaceSelectedMediaFromClipboard())}
             />
           </ContextMenuSub>
         </>

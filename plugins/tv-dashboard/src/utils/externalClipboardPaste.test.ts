@@ -5,6 +5,8 @@ import {
   DELPI_TV_BLOCKS_CLIPBOARD_PREFIX,
   blocksFromExternalHtml,
   blocksFromPlainText,
+  dataTransferHasImageFiles,
+  firstDataTransferImageFile,
   hasExternalClipboardPayload,
   looksLikeInternalBlocksPayload,
   parseInternalBlocksPayload,
@@ -122,6 +124,14 @@ describe("externalClipboardPaste", () => {
     );
     expect(plan.kind).toBe("images");
     if (plan.kind === "images") expect(plan.files).toHaveLength(1);
+  });
+
+  it("detecta imagem no DataTransfer para Alterar imagem ▸ clipboard", () => {
+    const file = new File([new Uint8Array([1, 2, 3])], "clip.png", { type: "image/png" });
+    const withImage = mockDataTransfer({ files: [file] });
+    expect(dataTransferHasImageFiles(withImage)).toBe(true);
+    expect(firstDataTransferImageFile(withImage)?.name).toBe("clip.png");
+    expect(dataTransferHasImageFiles(mockDataTransfer({ plain: "só texto" }))).toBe(false);
   });
 
   it("detecta payload externo mesmo quando o planner não extrai blocos (HTML Slides)", () => {
