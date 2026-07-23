@@ -84,10 +84,20 @@ export function createPartTextEditorBridge(params: {
   onRunsCommit: (runs: ComunicadoContentRun[]) => void;
 }): TextEditorBridge {
   const { blockId, editor, reportTextEditSelection, onRunsCommit } = params;
+  let lastPartial: { start: number; end: number } | null = null;
+
+  const resolvePartial = () => {
+    const live = getEditableTextSelectionOffsets(editor);
+    if (live && live.end > live.start) {
+      lastPartial = live;
+      return live;
+    }
+    return lastPartial && lastPartial.end > lastPartial.start ? lastPartial : null;
+  };
 
   const applyToggle = (toggleKey: ContentRunStyleToggleKey) => {
-    const selection = getEditableTextSelectionOffsets(editor);
-    if (!selection || selection.start >= selection.end) return;
+    const selection = resolvePartial();
+    if (!selection) return;
     const runs = contentRunsFromEditableRoot(editor);
     const nextRuns = toggleContentRunStyleInRange(
       runs,
@@ -105,8 +115,8 @@ export function createPartTextEditorBridge(params: {
   };
 
   const applyPatch = (patch: ContentRunStylePatch) => {
-    const selection = getEditableTextSelectionOffsets(editor);
-    if (!selection || selection.start >= selection.end) return;
+    const selection = resolvePartial();
+    if (!selection) return;
     const runs = contentRunsFromEditableRoot(editor);
     const nextRuns = applyContentRunStyleInRange(
       runs,
@@ -130,10 +140,8 @@ export function createPartTextEditorBridge(params: {
     applyNamedStyleToggle: () => undefined,
     refreshSelectionState: () => {
       const offsets = getEditableTextSelectionOffsets(editor);
-      if (!offsets) {
-        reportTextEditSelection(null);
-        return;
-      }
+      if (!offsets) return;
+      if (offsets.end > offsets.start) lastPartial = offsets;
       reportTextEditSelection(
         { blockId, ...offsets },
         contentRunsFromEditableRoot(editor),

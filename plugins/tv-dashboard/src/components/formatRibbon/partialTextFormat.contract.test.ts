@@ -41,4 +41,9 @@ describe("partial text format (ribbon → contentRuns)", () => {
   it("limpar formatação usa clearVisualBoxTextFormatting (zera runs)", () => {
     expect(typography).toContain("clearVisualBoxTextFormatting");
   });
+
+  it("seleção parcial usa lastPartial quando o Range do DOM some no clique", () => {
+    expect(typography).toContain("lastPartialTextEditSelection");
+    expect(typography).toContain("effectivePartialSelection");
+  });
 });

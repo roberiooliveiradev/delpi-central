@@ -2,6 +2,7 @@ import { HintAction, RibbonColorPicker, type ColorPickerVariant } from "@delpi/p
 import { useState } from "react";
 
 import { readRecentComunicadoColors, rememberComunicadoColor } from "../../utils/comunicadoRecentColors";
+import { PRESERVE_TEXT_EDIT_FOCUS_ATTR } from "../../utils/preserveTextEditFocus";
 
 type TvRibbonColorPickerProps = {
   hint?: string;
@@ -42,20 +43,28 @@ export function TvRibbonColorPicker({
   };
 
   const picker = (
-    <RibbonColorPicker
-      label={label}
-      ariaLabel={ariaLabel ?? label}
-      value={value}
-      onChange={handleChange}
-      variant={variant}
-      showNoFill={showNoFill}
-      onNoFill={onNoFill}
-      showAutomatic={showAutomatic}
-      contrastBackground={contrastBackground}
-      onAutomatic={onAutomatic}
-      recentColors={recentColors}
-      className={inline ? "delpi-ui-color-picker-trigger--inline" : undefined}
-    />
+    <span
+      {...{ [PRESERVE_TEXT_EDIT_FOCUS_ATTR]: "" }}
+      onMouseDown={(event) => {
+        /* Evita blur do contentEditable ao abrir o seletor de cor. */
+        event.preventDefault();
+      }}
+    >
+      <RibbonColorPicker
+        label={label}
+        ariaLabel={ariaLabel ?? label}
+        value={value}
+        onChange={handleChange}
+        variant={variant}
+        showNoFill={showNoFill}
+        onNoFill={onNoFill}
+        showAutomatic={showAutomatic}
+        contrastBackground={contrastBackground}
+        onAutomatic={onAutomatic}
+        recentColors={recentColors}
+        className={inline ? "delpi-ui-color-picker-trigger--inline" : undefined}
+      />
+    </span>
   );
 
   if (!hint) {

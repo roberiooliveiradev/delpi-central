@@ -128,6 +128,12 @@ export function useComunicadoEditorSelection({
     [],
   );
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
+  /**
+   * Última seleção parcial enquanto a edição inline está ativa.
+   * Sobrevive quando o Range do DOM some (clique na ribbon / blur temporário).
+   */
+  const [lastPartialTextEditSelection, setLastPartialTextEditSelection] =
+    useState<TextEditSelection | null>(null);
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
   >(null);
@@ -184,6 +190,7 @@ export function useComunicadoEditorSelection({
 
   const clearTextEditUi = useCallback(() => {
     setTextEditSelection(null);
+    setLastPartialTextEditSelection(null);
     setTextEditSelectionStyle(null);
     setTextEditListSelection(null);
     setTextEditNamedStyleSelection(null);
@@ -644,6 +651,9 @@ export function useComunicadoEditorSelection({
     runs?: ComunicadoContentRun[],
   ) => {
     setTextEditSelection(selection);
+    if (selection && selection.end > selection.start) {
+      setLastPartialTextEditSelection(selection);
+    }
     if (!selection) {
       setTextEditSelectionStyle(null);
       setTextEditListSelection(null);
@@ -877,6 +887,7 @@ export function useComunicadoEditorSelection({
     setEditingTextId: setEditingTextIdWithSelection,
     enterTextEdit,
     textEditSelection,
+    lastPartialTextEditSelection,
     textEditSelectionStyle,
     textEditListSelection,
     textEditNamedStyleSelection,

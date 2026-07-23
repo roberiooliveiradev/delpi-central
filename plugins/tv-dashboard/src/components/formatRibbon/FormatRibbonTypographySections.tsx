@@ -123,6 +123,7 @@ export function FormatRibbonTypographySections({
     updateSelected,
     editingTextId,
     textEditSelection,
+    lastPartialTextEditSelection,
     textEditSelectionStyle,
     toggleEditingTextRunStyle,
     applyEditingTextRunStylePatch,
@@ -217,18 +218,23 @@ export function FormatRibbonTypographySections({
                     chartPartKind as keyof typeof CHART_PART_FONT_SIZE_DEFAULTS
                   ]
                 : 9;
+  const effectivePartialSelection =
+    textEditSelection && textEditSelection.end > textEditSelection.start
+      ? textEditSelection
+      : lastPartialTextEditSelection &&
+          lastPartialTextEditSelection.end > lastPartialTextEditSelection.start
+        ? lastPartialTextEditSelection
+        : null;
   const partEditBridgeActive =
     textFormatTarget.mode === "part" &&
     Boolean(selected) &&
-    textEditSelection &&
-    textEditSelection.blockId === selected?.id &&
-    textEditSelection.end > textEditSelection.start;
+    effectivePartialSelection &&
+    effectivePartialSelection.blockId === selected?.id;
   const partialTextSelectionActive = Boolean(
     (visualBoxBlock &&
       editingTextId === visualBoxBlock.id &&
-      textEditSelection &&
-      textEditSelection.blockId === visualBoxBlock.id &&
-      textEditSelection.end > textEditSelection.start) ||
+      effectivePartialSelection &&
+      effectivePartialSelection.blockId === visualBoxBlock.id) ||
       partEditBridgeActive,
   );
   const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {

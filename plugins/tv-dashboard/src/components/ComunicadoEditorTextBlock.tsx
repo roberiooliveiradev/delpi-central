@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type FocusEvent,
+} from "react";
 import {
   appendHrefLineToRuns,
   blockCssStyle,
@@ -19,6 +26,7 @@ import {
   type ComunicadoTextDataRef,
 } from "@delpi/tv-dashboard-presentation";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
+import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -183,6 +191,7 @@ export function ComunicadoEditorTextBlock({
     applyNamedStyleToggle,
     insertLineBreak,
     reportSelectionFromEditor,
+    clearPartialRangeFallback,
   } = useVisualBoxTextEditorBridge({
     blockId: block.id,
     editorRef,
@@ -220,8 +229,14 @@ export function ComunicadoEditorTextBlock({
 
   function exitEditing() {
     commitPending();
+    clearPartialRangeFallback();
     reportTextEditSelection(null);
     setEditingTextId(null);
+  }
+
+  function handleEditorBlur(event: FocusEvent<HTMLDivElement>) {
+    if (shouldPreserveTextEditOnBlur(event.relatedTarget)) return;
+    exitEditing();
   }
 
   useEffect(() => {
@@ -342,7 +357,7 @@ export function ComunicadoEditorTextBlock({
                 renderedSignatureRef.current = JSON.stringify(runs);
                 reportSelectionFromEditor();
               }}
-              onBlur={exitEditing}
+              onBlur={handleEditorBlur}
               onKeyUp={reportSelectionFromEditor}
               onMouseUp={reportSelectionFromEditor}
               onKeyDown={(event) => {

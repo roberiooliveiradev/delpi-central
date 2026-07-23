@@ -665,6 +665,7 @@ export function ComunicadoEditorProvider({
       selection.enterTextEdit(blockId);
     },
     textEditSelection: selection.textEditSelection,
+    lastPartialTextEditSelection: selection.lastPartialTextEditSelection,
     textEditSelectionStyle: selection.textEditSelectionStyle,
     textEditListSelection: selection.textEditListSelection,
     textEditNamedStyleSelection: selection.textEditNamedStyleSelection,

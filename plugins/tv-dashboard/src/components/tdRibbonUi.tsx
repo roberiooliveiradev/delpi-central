@@ -6,6 +6,8 @@ import {
 } from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
 
+import { PRESERVE_TEXT_EDIT_FOCUS_ATTR } from "../utils/preserveTextEditFocus";
+
 type TdRibbonSelectProps = {
   id?: string;
   value: string;
@@ -72,6 +74,11 @@ export function TdRibbonIconButton({
           .join(" ")}
         aria-label={ariaLabel}
         disabled={disabled}
+        {...{ [PRESERVE_TEXT_EDIT_FOCUS_ATTR]: "" }}
+        onMouseDown={(event) => {
+          /* Mantém foco/seleção no contentEditable — senão B/I/U aplica no bloco inteiro. */
+          event.preventDefault();
+        }}
         onClick={onClick}
       >
         {children}

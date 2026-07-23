@@ -1,4 +1,4 @@
-import { useCallback, type MutableRefObject, type RefObject } from "react";
+import { useCallback, useRef, type MutableRefObject, type RefObject } from "react";
 import {
   applyContentRunStyleInRange,
   applyNamedStyleInRange,
@@ -17,6 +17,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 type TextFields = { content: string; contentRuns?: ComunicadoContentRun[] };
+type TextRange = { start: number; end: number };
 
 type Options = {
   blockId: string;
@@ -50,6 +51,22 @@ export function useVisualBoxTextEditorBridge({
   reportTextEditSelection,
   normalizeEditorRuns,
 }: Options) {
+  /** Última seleção parcial — fallback se o clique na ribbon perder o Range do DOM. */
+  const lastPartialRangeRef = useRef<TextRange | null>(null);
+
+  const resolvePartialRange = useCallback((): TextRange | null => {
+    const editor = editorRef.current;
+    if (!editor) return null;
+    const live = getEditableTextSelectionOffsets(editor);
+    if (live && live.end > live.start) {
+      lastPartialRangeRef.current = live;
+      return live;
+    }
+    const fallback = lastPartialRangeRef.current;
+    if (fallback && fallback.end > fallback.start) return fallback;
+    return null;
+  }, [editorRef]);
+
   const readRuns = useCallback((): ComunicadoContentRun[] | null => {
     const editor = editorRef.current;
     if (!editor) return null;
@@ -61,8 +78,8 @@ export function useVisualBoxTextEditorBridge({
     (toggleKey: ContentRunStyleToggleKey) => {
       const editor = editorRef.current;
       if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      if (!selection || selection.start >= selection.end) return;
+      const selection = resolvePartialRange();
+      if (!selection) return;
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = toggleContentRunStyleInRange(
         runs,
@@ -88,6 +105,7 @@ export function useVisualBoxTextEditorBridge({
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
+      resolvePartialRange,
       syncEditorHtml,
     ],
   );
@@ -96,8 +114,8 @@ export function useVisualBoxTextEditorBridge({
     (patch: ContentRunStylePatch) => {
       const editor = editorRef.current;
       if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      if (!selection || selection.start >= selection.end) return;
+      const selection = resolvePartialRange();
+      if (!selection) return;
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = applyContentRunStyleInRange(
         runs,
@@ -123,6 +141,7 @@ export function useVisualBoxTextEditorBridge({
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
+      resolvePartialRange,
       syncEditorHtml,
     ],
   );
@@ -132,9 +151,10 @@ export function useVisualBoxTextEditorBridge({
       const editor = editorRef.current;
       if (!editor) return;
       const selection = getEditableTextSelectionOffsets(editor);
+      const partial = resolvePartialRange();
       const runs = contentRunsFromEditableRoot(editor);
-      const start = selection?.start ?? plainTextFromContentRuns(runs).length;
-      const end = selection?.end ?? start;
+      const start = partial?.start ?? selection?.start ?? plainTextFromContentRuns(runs).length;
+      const end = partial?.end ?? selection?.end ?? start;
       const nextRuns = toggleListTypeInRange(runs, start, end, listType);
       const normalized = normalizeEditorRuns ? normalizeEditorRuns(nextRuns) : nextRuns;
       draftRef.current = syncTextBlockFromRuns(normalized);
@@ -151,6 +171,7 @@ export function useVisualBoxTextEditorBridge({
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
+      resolvePartialRange,
       syncEditorHtml,
     ],
   );
@@ -160,9 +181,10 @@ export function useVisualBoxTextEditorBridge({
       const editor = editorRef.current;
       if (!editor) return;
       const selection = getEditableTextSelectionOffsets(editor);
+      const partial = resolvePartialRange();
       const runs = contentRunsFromEditableRoot(editor);
-      const start = selection?.start ?? 0;
-      const end = selection?.end ?? plainTextFromContentRuns(runs).length;
+      const start = partial?.start ?? selection?.start ?? 0;
+      const end = partial?.end ?? selection?.end ?? plainTextFromContentRuns(runs).length;
       const nextRuns = applyNamedStyleInRange(runs, start, end, namedStyle);
       const normalized = normalizeEditorRuns ? normalizeEditorRuns(nextRuns) : nextRuns;
       draftRef.current = syncTextBlockFromRuns(normalized);
@@ -179,6 +201,7 @@ export function useVisualBoxTextEditorBridge({
       normalizeEditorRuns,
       renderedSignatureRef,
       reportTextEditSelection,
+      resolvePartialRange,
       syncEditorHtml,
     ],
   );
@@ -213,12 +236,19 @@ export function useVisualBoxTextEditorBridge({
     if (!editor) return;
     const offsets = getEditableTextSelectionOffsets(editor);
     if (!offsets) {
-      reportTextEditSelection(null);
+      /* Não zerar estado — clique na ribbon pode remover o Range sem sair da edição. */
       return;
+    }
+    if (offsets.end > offsets.start) {
+      lastPartialRangeRef.current = offsets;
     }
     const runs = contentRunsFromEditableRoot(editor);
     reportTextEditSelection({ blockId, ...offsets }, runs);
   }, [blockId, editorRef, reportTextEditSelection]);
+
+  const clearPartialRangeFallback = useCallback(() => {
+    lastPartialRangeRef.current = null;
+  }, []);
 
   return {
     applyPartialStyleToggle,
@@ -228,5 +258,6 @@ export function useVisualBoxTextEditorBridge({
     insertLineBreak,
     reportSelectionFromEditor,
     readRuns,
+    clearPartialRangeFallback,
   };
 }

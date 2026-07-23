@@ -185,6 +185,11 @@ export type ComunicadoEditorContextValue = {
   /** Isola o bloco e entra em edição inline (texto/título/shape). */
   enterTextEdit: (blockId: string) => void;
   textEditSelection: TextEditSelection | null;
+  /**
+   * Última seleção parcial da edição inline — usada pela ribbon quando o Range
+   * do DOM some no clique do botão (evita formatar o bloco inteiro).
+   */
+  lastPartialTextEditSelection: TextEditSelection | null;
   textEditSelectionStyle: ContentRunSelectionStyleState | null;
   textEditListSelection: ContentRunListSelectionState | null;
   textEditNamedStyleSelection: ContentRunNamedStyleSelectionState | null;
