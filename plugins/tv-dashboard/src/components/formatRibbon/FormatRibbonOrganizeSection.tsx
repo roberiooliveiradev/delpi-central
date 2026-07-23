@@ -163,7 +163,7 @@ export function FormatRibbonOrganizeActions(props: SectionProps) {
 
 /**
  * Campos de opacidade (+ ajuste de mídia) — seção Exibição / Forma.
- * Não misturar com o popover Posição (só geometria).
+ * Não misturar com o grupo Tamanho e posição (só geometria).
  */
 export function FormatRibbonOpacityFields({
   className = "td-deck-ribbon__organize-props",

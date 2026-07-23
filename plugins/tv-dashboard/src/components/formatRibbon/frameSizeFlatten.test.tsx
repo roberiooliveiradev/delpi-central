@@ -1,45 +1,14 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
-import { Move } from "lucide-react";
+import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-import {
-  RibbonGroupSurfaceProvider,
-  useRibbonSectionPopoverSurface,
-} from "../../../../plugin-ui/src/components/ribbon/RibbonGroupSurfaceContext";
-
-afterEach(() => cleanup());
-
-/** Espelho mínimo da regra FrameSizeBandOrInline — sem montar editor completo. */
-function FrameSizeProbe({ hint = "hint" }: { hint?: string }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
-  if (flattenNested) {
-    return <div data-testid="frame-inline">grade</div>;
-  }
-  return (
-    <div data-testid="frame-entry">
-      <button type="button" aria-label="Tamanho e posição">
-        <Move size={18} />
-        Posição
-      </button>
-      <span>{hint}</span>
-    </div>
-  );
-}
-
-describe("ribbon section popover flatten", () => {
-  it("banda: mantém gatilho Posição", () => {
-    render(<FrameSizeProbe />);
-    expect(screen.getByTestId("frame-entry")).toBeTruthy();
-    expect(screen.queryByTestId("frame-inline")).toBeNull();
-  });
-
-  it("section-popover: grade direta sem gatilho Posição", () => {
-    render(
-      <RibbonGroupSurfaceProvider value="section-popover">
-        <FrameSizeProbe />
-      </RibbonGroupSurfaceProvider>,
-    );
-    expect(screen.getByTestId("frame-inline")).toBeTruthy();
-    expect(screen.queryByTestId("frame-entry")).toBeNull();
+describe("FormatRibbonFrameSection — sem popover interno", () => {
+  it("não monta tile Posição / AnchoredPanelPortal aninhado", () => {
+    const src = readFileSync(resolve(__dirname, "./FormatRibbonFrameSection.tsx"), "utf8");
+    expect(src).not.toContain("FrameSizeBandOrInline");
+    expect(src).not.toContain("td-frame-size-entry");
+    expect(src).not.toContain("AnchoredPanelPortal");
+    expect(src).toContain('groupId="frame-size"');
+    expect(src).toContain('label="Tamanho e posição"');
   });
 });

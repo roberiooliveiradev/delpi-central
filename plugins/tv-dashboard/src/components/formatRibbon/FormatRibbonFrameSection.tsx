@@ -1,5 +1,3 @@
-import { Move } from "lucide-react";
-import { useRef, useState, type ReactNode } from "react";
 import {
   chartPartAllowsFrame,
   clampChartPartFrame,
@@ -43,10 +41,9 @@ import {
   type KpiFramePartKind,
   type ViewportPixelSize,
 } from "@delpi/tv-dashboard-presentation";
-import { AnchoredPanelPortal, HintAction, useRibbonSectionPopoverSurface } from "@delpi/plugin-ui/index";
+import type { ReactNode } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import { enableInputFreeLayoutFromDom } from "../../utils/enableInputFreeLayoutFromDom";
 import {
   DeckRangeField,
@@ -71,7 +68,6 @@ const SIZE_POSITION_GROUP_HINT =
   "Posição, tamanho e rotação em pixels de design da página (origem no canto inferior esquerdo).";
 
 type FrameSizeGroupProps = {
-  embed: boolean;
   captionPlacement: "below" | "none";
   hint?: string;
   /** Ação fora do painel (ex.: «Posicionar livremente…») — ribbon e painel sem popover. */
@@ -82,11 +78,10 @@ type FrameSizeGroupProps = {
 };
 
 /**
- * Ribbon: tile «Posição» + grade (posição/tamanho/rotação) no popover.
- * Embed (sidebar): campos embutidos na seção do accordion.
+ * Grupo «Tamanho e posição»: grade X/Y/Larg/Alt/rotação no corpo do grupo.
+ * Sem tile/popover interno — o popover externo é só o colapso da seção na ribbon.
  */
 function FrameSizeGroup({
-  embed,
   captionPlacement,
   hint = SIZE_POSITION_GROUP_HINT,
   emptyAction,
@@ -109,19 +104,6 @@ function FrameSizeGroup({
     </>
   );
 
-  if (embed || emptyAction) {
-    return (
-      <DeckRibbonGroup
-        groupId="frame-size"
-        label="Tamanho e posição"
-        hint={hint}
-        captionPlacement={captionPlacement}
-      >
-        {body}
-      </DeckRibbonGroup>
-    );
-  }
-
   return (
     <DeckRibbonGroup
       groupId="frame-size"
@@ -129,68 +111,8 @@ function FrameSizeGroup({
       hint={hint}
       captionPlacement={captionPlacement}
     >
-      <FrameSizeBandOrInline hint={hint} body={body} />
+      {body}
     </DeckRibbonGroup>
-  );
-}
-
-/** Filho do grupo: lê surface do popover colapsado e achata o tile «Posição». */
-function FrameSizeBandOrInline({ hint, body }: { hint: string; body: ReactNode }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  if (flattenNested) {
-    return <>{body}</>;
-  }
-
-  return (
-      <div
-        ref={rootRef}
-        className="td-frame-size-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
-      >
-        <HintAction hint={hint} ariaLabel="Ajuda: Tamanho e posição">
-          <button
-            ref={triggerRef}
-            type="button"
-            className={[
-              "delpi-ui-shape-menu__trigger",
-              open ? "td-frame-size-entry__trigger--active" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-label="Tamanho e posição"
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            onClick={() => setOpen((prev) => !prev)}
-          >
-            <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
-              <Move size={18} />
-            </span>
-            <span className="delpi-ui-shape-menu__trigger-label">Posição</span>
-          </button>
-        </HintAction>
-        {open ? (
-          <AnchoredPanelPortal
-            open={open}
-            anchorRef={triggerRef}
-            panelRef={panelRef}
-            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-            className="td-frame-size-popover"
-            role="dialog"
-            aria-label="Tamanho e posição"
-            preferredPlacement="bottom"
-            allowFlip={false}
-            gap={10}
-            density="compact"
-            onDismiss={() => setOpen(false)}
-          >
-            {body}
-          </AnchoredPanelPortal>
-        ) : null}
-      </div>
   );
 }
 
@@ -217,7 +139,7 @@ export { patchComunicadoFrame };
 /**
  * Tamanho e posição: X/Y / largura / altura / rotação — bloco no palco ou
  * parte do KPI/gráfico. UI em px de design; modelo permanece em %.
- * Ribbon: tile + grade no popover; sidebar (`embed`): grade embutida.
+ * Grade no corpo do grupo (ribbon expandida ou popover de colapso da seção).
  * Opacidade e raio ficam na seção Forma.
  */
 export function FormatRibbonFrameSection({
@@ -258,7 +180,6 @@ export function FormatRibbonFrameSection({
   ) {
     if (!includeOpacity) return null;
     return (
-      <FrameSizeGroup embed={embed} captionPlacement={captionPlacement} includeOpacity />
     );
   }
 
@@ -318,7 +239,6 @@ export function FormatRibbonFrameSection({
 
     return (
       <FrameSizeGroup
-        embed={embed}
         captionPlacement={captionPlacement}
         includeOpacity={includeOpacity}
         emptyAction={
@@ -407,7 +327,6 @@ export function FormatRibbonFrameSection({
 
     return (
       <FrameSizeGroup
-        embed={embed}
         captionPlacement={captionPlacement}
         includeOpacity={includeOpacity}
         emptyAction={
@@ -495,7 +414,6 @@ export function FormatRibbonFrameSection({
 
     return (
       <FrameSizeGroup
-        embed={embed}
         captionPlacement={captionPlacement}
         includeOpacity={includeOpacity}
       >
@@ -563,7 +481,6 @@ export function FormatRibbonFrameSection({
 
   return (
     <FrameSizeGroup
-      embed={embed}
       captionPlacement={captionPlacement}
       includeOpacity={includeOpacity}
     >
