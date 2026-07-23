@@ -11,7 +11,8 @@ import {
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
-  resolveCollapsedRibbonGroupIds,
+  ribbonGroupWidthsNearlyEqual,
+  stabilizeCollapsedRibbonGroupIds,
   type RibbonGroupSize,
 } from "./resolveCollapsedRibbonGroupIds";
 
@@ -80,7 +81,8 @@ export function RibbonGroupsRow({
     const node = rowRef.current;
     if (!node || typeof ResizeObserver === "undefined") return;
     const update = () => {
-      setAvailableWidth(measureRibbonAvailableWidth(node));
+      const next = measureRibbonAvailableWidth(node);
+      setAvailableWidth((prev) => (prev === next ? prev : next));
     };
     update();
     const observer = new ResizeObserver(update);
@@ -93,8 +95,8 @@ export function RibbonGroupsRow({
     const prev = measuresRef.current.get(id);
     if (
       prev &&
-      prev.expandedWidth === measure.expandedWidth &&
-      prev.collapsedWidth === measure.collapsedWidth &&
+      ribbonGroupWidthsNearlyEqual(prev.expandedWidth, measure.expandedWidth) &&
+      ribbonGroupWidthsNearlyEqual(prev.collapsedWidth, measure.collapsedWidth) &&
       prev.order === measure.order
     ) {
       return;
@@ -123,8 +125,8 @@ export function RibbonGroupsRow({
         order: measure.order,
       }),
     );
-    const next = resolveCollapsedRibbonGroupIds(list, availableWidth, gap);
     const prev = collapsedIdsPrev.current;
+    const next = stabilizeCollapsedRibbonGroupIds(list, availableWidth, prev, gap);
     if (prev.size === next.size && [...next].every((id) => prev.has(id))) {
       return prev;
     }

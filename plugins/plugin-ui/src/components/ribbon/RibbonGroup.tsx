@@ -14,6 +14,7 @@ import {
   measureElementContentWidth,
   useRibbonOverflowContext,
 } from "./RibbonGroupsRow";
+import { ribbonGroupWidthsNearlyEqual } from "./resolveCollapsedRibbonGroupIds";
 import { RibbonGroupSurfaceProvider } from "./RibbonGroupSurfaceContext";
 
 export type RibbonGroupClassNames = {
@@ -142,7 +143,8 @@ export function RibbonGroup({
       collapsedWidth: cachedCollapsed.current,
       order,
     });
-  }, [collapsed, groupId, order, children]);
+    /* Sem `children`: re-render do pai não deve re-registrar e alimentar o loop RO. */
+  }, [collapsed, groupId, order]);
 
   useLayoutEffect(() => {
     if (!groupId || !registerRef.current || typeof ResizeObserver === "undefined") {
@@ -152,7 +154,7 @@ export function RibbonGroup({
     if (!node || collapsed) return;
     const observer = new ResizeObserver(() => {
       const w = measureElementContentWidth(node);
-      if (!(w > 0) || w === cachedExpanded.current) return;
+      if (!(w > 0) || ribbonGroupWidthsNearlyEqual(w, cachedExpanded.current)) return;
       cachedExpanded.current = w;
       registerRef.current?.(groupId, {
         expandedWidth: w,

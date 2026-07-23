@@ -11,6 +11,12 @@ export type RibbonGroupSize = {
   order: number;
 };
 
+/** Folga exigida para reexpandir um grupo já colapsado (evita oscilação RO ↔ setState). */
+export const RIBBON_COLLAPSE_EXPAND_HYSTERESIS_PX = 24;
+
+/** Ignora ruído de subpixel / ceil ao registrar medidas. */
+export const RIBBON_GROUP_WIDTH_EPSILON_PX = 2;
+
 export function sumRibbonGroupsWidth(
   groups: ReadonlyArray<RibbonGroupSize>,
   collapsedIds: ReadonlySet<string>,
@@ -70,4 +76,38 @@ export function resolveCollapsedRibbonGroupIds(
   }
 
   return collapsed;
+}
+
+/**
+ * Estabiliza o conjunto colapsado: pode colapsar mais (ideal), mas só reexpande
+ * quando há folga ≥ `expandHysteresisPx`. Evita React #185 por loop
+ * colapsar ↔ medir ↔ expandir na fronteira de largura.
+ */
+export function stabilizeCollapsedRibbonGroupIds(
+  groups: ReadonlyArray<RibbonGroupSize>,
+  availableWidth: number,
+  previousCollapsed: ReadonlySet<string>,
+  gap = 8,
+  expandHysteresisPx = RIBBON_COLLAPSE_EXPAND_HYSTERESIS_PX,
+): Set<string> {
+  const ideal = resolveCollapsedRibbonGroupIds(groups, availableWidth, gap);
+  if (previousCollapsed.size === 0 || !(availableWidth > 0)) return ideal;
+
+  const next = new Set(ideal);
+  const slackLimit = availableWidth - Math.max(0, expandHysteresisPx);
+  for (const id of previousCollapsed) {
+    if (next.has(id)) continue;
+    if (sumRibbonGroupsWidth(groups, next, gap) > slackLimit) {
+      next.add(id);
+    }
+  }
+  return next;
+}
+
+export function ribbonGroupWidthsNearlyEqual(
+  a: number,
+  b: number,
+  epsilonPx = RIBBON_GROUP_WIDTH_EPSILON_PX,
+): boolean {
+  return Math.abs(a - b) <= Math.max(0, epsilonPx);
 }

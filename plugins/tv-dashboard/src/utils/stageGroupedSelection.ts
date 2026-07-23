@@ -227,16 +227,100 @@ export function resolveEscapeHierarchyAction(params: {
 }
 
 /**
- * Segundo toque (pointerup sem arrastar) em item já selecionado → limpa seleção.
- * Não usa dblclick: é um novo toque após a seleção já estar ativa.
+ * Clique / pointerdown em bloco no palco — fonte única para grupo ↔ subitens.
+ *
+ * Contrato:
+ * - 1º clique em membro → seleciona o grupo (pai).
+ * - Com o grupo selecionado, 2º clique no membro → isola o subitem.
+ * - Shift → multi de subitens (sem expandir grupo); no pai fechado, Shift entra nos filhos.
+ * - Alt → isola (atalho); Ctrl/Cmd → remove.
+ */
+export type GroupedBlockPointerDownAction =
+  | { type: "select-expand-group"; blockId: string }
+  | { type: "isolate-child"; blockId: string }
+  | { type: "toggle-child"; blockId: string }
+  | { type: "subtract"; blockId: string }
+  | { type: "drag-current-selection" };
+
+export function resolveGroupedBlockPointerDownAction(params: {
+  block: ComunicadoBlock;
+  blocks: ComunicadoBlock[];
+  selectedIds: string[];
+  shiftKey: boolean;
+  ctrlOrMeta: boolean;
+  altKey: boolean;
+}): GroupedBlockPointerDownAction {
+  const { block, blocks, selectedIds, shiftKey, ctrlOrMeta, altKey } = params;
+
+  if (ctrlOrMeta) {
+    return { type: "subtract", blockId: block.id };
+  }
+
+  if (altKey && block.groupId) {
+    return { type: "isolate-child", blockId: block.id };
+  }
+
+  const closed = resolveClosedGroupSelection(blocks, selectedIds);
+  const children = resolveGroupChildrenSelection(blocks, selectedIds);
+  const inClosedGroup = Boolean(
+    closed && block.groupId === closed.groupId && closed.memberIds.includes(block.id),
+  );
+  const inChildrenGroup = Boolean(children && block.groupId === children.groupId);
+
+  if (shiftKey) {
+    if (inClosedGroup) {
+      /* Entra no modo filhos a partir do membro clicado. */
+      return { type: "isolate-child", blockId: block.id };
+    }
+    return { type: "toggle-child", blockId: block.id };
+  }
+
+  if (inClosedGroup) {
+    /* 2º clique com o grupo selecionado → subitem. */
+    return { type: "isolate-child", blockId: block.id };
+  }
+
+  if (inChildrenGroup) {
+    if (selectedIds.includes(block.id)) {
+      return { type: "drag-current-selection" };
+    }
+    /* Outro irmão no modo filhos → troca o subitem (não volta ao pai). */
+    return { type: "isolate-child", blockId: block.id };
+  }
+
+  if (selectedIds.includes(block.id)) {
+    return { type: "drag-current-selection" };
+  }
+
+  return { type: "select-expand-group", blockId: block.id };
+}
+
+/**
+ * Segundo toque (pointerup sem arrastar) em item já selecionado.
+ * - Filho isolado / bloco simples → limpa seleção.
+ * - Grupo fechado (fallback) → isola o subitem (o pointerdown já deve ter isolado).
  */
 export function resolveTapWithoutDragSelectionAction(params: {
+  blocks?: ComunicadoBlock[];
   selectedIds: string[];
   targetBlockId: string;
   wasAlreadySelected: boolean;
-}): { type: "clear-selection" } | { type: "none" } {
+}):
+  | { type: "clear-selection" }
+  | { type: "isolate-child"; blockId: string }
+  | { type: "none" } {
   if (!params.wasAlreadySelected) return { type: "none" };
   if (!params.selectedIds.includes(params.targetBlockId)) return { type: "none" };
+
+  const blocks = params.blocks ?? [];
+  if (blocks.length > 0) {
+    const closed = resolveClosedGroupSelection(blocks, params.selectedIds);
+    const target = blocks.find((item) => item.id === params.targetBlockId);
+    if (closed && target?.groupId === closed.groupId) {
+      return { type: "isolate-child", blockId: params.targetBlockId };
+    }
+  }
+
   return { type: "clear-selection" };
 }
 

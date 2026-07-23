@@ -1,6 +1,10 @@
 export {
   resolveCollapsedRibbonGroupIds,
+  stabilizeCollapsedRibbonGroupIds,
+  ribbonGroupWidthsNearlyEqual,
   sumRibbonGroupsWidth,
+  RIBBON_COLLAPSE_EXPAND_HYSTERESIS_PX,
+  RIBBON_GROUP_WIDTH_EPSILON_PX,
   type RibbonGroupSize,
 } from "./resolveCollapsedRibbonGroupIds";
 export {

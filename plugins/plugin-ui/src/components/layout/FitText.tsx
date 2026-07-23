@@ -47,52 +47,60 @@ export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx 
 
     let raf = 0;
     let attempts = 0;
+    let fitting = false;
 
     const fit = () => {
-      const { maxW, maxH } = readHostSize(parent);
-      if (maxW <= 1 || maxH <= 1) {
-        /* Flex ainda não resolveu altura — tenta de novo no próximo frame. */
-        if (attempts < 8) {
-          attempts += 1;
-          raf = requestAnimationFrame(fit);
+      if (fitting) return;
+      fitting = true;
+      try {
+        const { maxW, maxH } = readHostSize(parent);
+        if (maxW <= 1 || maxH <= 1) {
+          /* Flex ainda não resolveu altura — tenta de novo no próximo frame. */
+          if (attempts < 8) {
+            attempts += 1;
+            raf = requestAnimationFrame(fit);
+          }
+          return;
         }
-        return;
-      }
-      attempts = 0;
+        attempts = 0;
 
-      const prevWidth = el.style.width;
-      const prevHeight = el.style.height;
-      const prevMaxWidth = el.style.maxWidth;
-      const prevMaxHeight = el.style.maxHeight;
-      const prevWhiteSpace = el.style.whiteSpace;
-      el.style.width = "max-content";
-      el.style.height = "auto";
-      el.style.maxWidth = "none";
-      el.style.maxHeight = "none";
-      el.style.whiteSpace = "nowrap";
+        const prevWidth = el.style.width;
+        const prevHeight = el.style.height;
+        const prevMaxWidth = el.style.maxWidth;
+        const prevMaxHeight = el.style.maxHeight;
+        const prevWhiteSpace = el.style.whiteSpace;
+        el.style.width = "max-content";
+        el.style.height = "auto";
+        el.style.maxWidth = "none";
+        el.style.maxHeight = "none";
+        el.style.whiteSpace = "nowrap";
 
-      let lo = minPx;
-      let hi = Math.min(maxPx, Math.max(minPx, Math.floor(Math.min(maxW, maxH) * 1.15)));
-      let best = minPx;
+        let lo = minPx;
+        let hi = Math.min(maxPx, Math.max(minPx, Math.floor(Math.min(maxW, maxH) * 1.15)));
+        let best = minPx;
 
-      while (lo <= hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        el.style.fontSize = `${mid}px`;
-        const fits = el.scrollWidth <= maxW + 0.5 && el.scrollHeight <= maxH + 0.5;
-        if (fits) {
-          best = mid;
-          lo = mid + 1;
-        } else {
-          hi = mid - 1;
+        while (lo <= hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          el.style.fontSize = `${mid}px`;
+          const fits = el.scrollWidth <= maxW + 0.5 && el.scrollHeight <= maxH + 0.5;
+          if (fits) {
+            best = mid;
+            lo = mid + 1;
+          } else {
+            hi = mid - 1;
+          }
         }
-      }
 
-      el.style.width = prevWidth;
-      el.style.height = prevHeight;
-      el.style.maxWidth = prevMaxWidth;
-      el.style.maxHeight = prevMaxHeight;
-      el.style.whiteSpace = prevWhiteSpace;
-      setFontSize((prev) => (prev === best ? prev : best));
+        el.style.width = prevWidth;
+        el.style.height = prevHeight;
+        el.style.maxWidth = prevMaxWidth;
+        el.style.maxHeight = prevMaxHeight;
+        el.style.whiteSpace = prevWhiteSpace;
+        /* Evita oscilação 1px host↔fonte (RO → setState → React #185). */
+        setFontSize((prev) => (Math.abs(prev - best) <= 1 ? prev : best));
+      } finally {
+        fitting = false;
+      }
     };
 
     fit();

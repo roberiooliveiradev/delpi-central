@@ -110,10 +110,12 @@ export function useComunicadoEditorDrag({
       tapDeselectBlockIdRef.current = null;
       if (!candidate || candidate !== blockId) return;
       const action = resolveTapWithoutDragSelectionAction({
+        blocks: configRef.current.blocks ?? [],
         selectedIds: selectedIdsRef.current,
         targetBlockId: blockId,
         wasAlreadySelected: true,
       });
+      /* isolate-child: o pointerdown já isolou; não limpar. */
       if (action.type !== "clear-selection") return;
       /*
        * Atrasa a limpeza para não roubar o 1º clique de um clique duplo
@@ -127,7 +129,7 @@ export function useComunicadoEditorDrag({
         clearSelection();
       }, TAP_DESELECT_DELAY_MS);
     },
-    [clearSelection],
+    [clearSelection, configRef],
   );
   const updateBlocksSilent = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {

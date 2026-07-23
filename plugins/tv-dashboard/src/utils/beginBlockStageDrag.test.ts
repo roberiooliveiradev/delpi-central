@@ -50,7 +50,7 @@ describe("beginBlockStageMoveDrag", () => {
     expect(armTapDeselect).toHaveBeenCalledWith(null);
   });
 
-  it("2º toque em item já selecionado arma limpeza se soltar sem arrastar", () => {
+  it("2º clique com o grupo selecionado isola o subitem", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
@@ -71,10 +71,10 @@ describe("beginBlockStageMoveDrag", () => {
       armTapDeselect,
     });
     expect(result).toBe(true);
-    expect(armTapDeselect).toHaveBeenCalledWith("a");
-    expect(armMultiDragSelection).toHaveBeenCalledWith(["a", "b"]);
+    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
+    expect(armMultiDragSelection).toHaveBeenCalledWith(["a"]);
     expect(startDrag).toHaveBeenCalled();
-    expect(selectBlock).not.toHaveBeenCalled();
   });
 
   it("1º clique em membro seleciona o grupo e arrasta juntos", () => {
@@ -102,6 +102,50 @@ describe("beginBlockStageMoveDrag", () => {
     expect(armTapDeselect).toHaveBeenCalledWith(null);
     expect(armMultiDragSelection).toHaveBeenCalledWith(["a", "b"]);
     expect(startDrag).toHaveBeenCalled();
+  });
+
+  it("Shift com grupo selecionado isola o subitem para multi", () => {
+    const a = fakeBlock("a", "grp");
+    const b = fakeBlock("b", "grp");
+    const selectBlock = vi.fn();
+    const startDrag = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ shiftKey: true }),
+      block: a,
+      blocks: [a, b],
+      isBlockSelected: () => true,
+      selectedIds: ["a", "b"],
+      selectedId: "a",
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag,
+      armTapDeselect: vi.fn(),
+    });
+    expect(result).toBe(false);
+    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(startDrag).not.toHaveBeenCalled();
+  });
+
+  it("Shift em modo filhos faz toggle do subitem", () => {
+    const a = fakeBlock("a", "grp");
+    const b = fakeBlock("b", "grp");
+    const selectBlock = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ shiftKey: true }),
+      block: b,
+      blocks: [a, b],
+      isBlockSelected: (id) => id === "a",
+      selectedIds: ["a"],
+      selectedId: "a",
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag: vi.fn(),
+      armTapDeselect: vi.fn(),
+    });
+    expect(result).toBe(false);
+    expect(selectBlock).toHaveBeenCalledWith("b", { additive: true, expandGroup: false });
   });
 
   it("Alt+clique isola o membro mesmo fora da seleção pai", () => {

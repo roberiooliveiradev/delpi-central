@@ -9,6 +9,7 @@ import {
 import {
   resolveBlockWrapChromeFlags,
   resolveEscapeHierarchyAction,
+  resolveGroupedBlockPointerDownAction,
   resolveStageSelectionHierarchy,
   resolveTapWithoutDragSelectionAction,
 } from "./stageGroupedSelection";
@@ -187,7 +188,7 @@ describe("resolveEscapeHierarchyAction", () => {
 });
 
 describe("resolveTapWithoutDragSelectionAction", () => {
-  it("só limpa no segundo toque em item já selecionado", () => {
+  it("só limpa no segundo toque em item já selecionado (não agrupado)", () => {
     expect(
       resolveTapWithoutDragSelectionAction({
         selectedIds: ["a"],
@@ -202,5 +203,55 @@ describe("resolveTapWithoutDragSelectionAction", () => {
         wasAlreadySelected: true,
       }),
     ).toEqual({ type: "clear-selection" });
+  });
+
+  it("com grupo fechado, 2º toque isola o subitem em vez de limpar", () => {
+    const blocks = [block("a", { groupId: "g1" }), block("b", { groupId: "g1" })];
+    expect(
+      resolveTapWithoutDragSelectionAction({
+        blocks,
+        selectedIds: ["a", "b"],
+        targetBlockId: "a",
+        wasAlreadySelected: true,
+      }),
+    ).toEqual({ type: "isolate-child", blockId: "a" });
+  });
+});
+
+describe("resolveGroupedBlockPointerDownAction", () => {
+  it("1º clique expande o grupo; 2º isola o filho; Shift multiplica filhos", () => {
+    const blocks = [block("a", { groupId: "g1" }), block("b", { groupId: "g1" })];
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[0]!,
+        blocks,
+        selectedIds: [],
+        shiftKey: false,
+        ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "select-expand-group", blockId: "a" });
+
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[0]!,
+        blocks,
+        selectedIds: ["a", "b"],
+        shiftKey: false,
+        ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "isolate-child", blockId: "a" });
+
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[1]!,
+        blocks,
+        selectedIds: ["a"],
+        shiftKey: true,
+        ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "toggle-child", blockId: "b" });
   });
 });
