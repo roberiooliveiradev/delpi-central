@@ -67,6 +67,7 @@ import {
   isContextMenuActionEnabled,
   resolveContextMenuActionState,
 } from "../utils/comunicadoStageContextMenuActions";
+import { resolveContextMenuIconPickerTargetId } from "../utils/contextMenuSelectionGuard";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -126,6 +127,9 @@ export function ComunicadoStageContextMenu({
     requestRibbonTab,
     updateSelected,
     updateSelectedStyle,
+    updateBlock,
+    selectBlocksByIds,
+    cancelPendingTapDeselect,
     addBlock,
     addShape,
     openDataCatalog,
@@ -139,6 +143,8 @@ export function ComunicadoStageContextMenu({
   const [pickerAnchorPoint, setPickerAnchorPoint] = useState<FixedPanelPoint | null>(null);
   const [shapeLibraryOpen, setShapeLibraryOpen] = useState(false);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  /** Alvo estável do picker após fechar o menu (selection pode ter sido limpa). */
+  const [pickerTargetBlockId, setPickerTargetBlockId] = useState<string | null>(null);
   const [canReplaceImageFromClipboard, setCanReplaceImageFromClipboard] = useState(false);
 
   const menuSelected = useMemo(() => {
@@ -153,6 +159,15 @@ export function ComunicadoStageContextMenu({
     if (selectedIds.includes(targetBlockId)) return selectedIds;
     return [targetBlockId];
   }, [selectedIds, targetBlockId]);
+
+  /** Mantém seleção/chrome alinhados ao alvo do menu enquanto o menu está aberto. */
+  useEffect(() => {
+    if (!open) return;
+    cancelPendingTapDeselect();
+    if (menuSelectedIds.length === 0) return;
+    const missing = menuSelectedIds.some((id) => !selectedIds.includes(id));
+    if (missing) selectBlocksByIds(menuSelectedIds);
+  }, [cancelPendingTapDeselect, menuSelectedIds, open, selectBlocksByIds, selectedIds]);
 
   useEffect(() => {
     const isMedia = menuSelected?.type === "image" || menuSelected?.type === "video";
@@ -210,7 +225,13 @@ export function ComunicadoStageContextMenu({
       (shapePrimitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
     : menuSelected?.style?.borderColor ?? "#cbd5e1";
 
+  function ensureMenuSelection() {
+    cancelPendingTapDeselect();
+    if (menuSelectedIds.length > 0) selectBlocksByIds(menuSelectedIds);
+  }
+
   function run(action: () => void) {
+    ensureMenuSelection();
     action();
     onClose();
   }
@@ -225,34 +246,67 @@ export function ComunicadoStageContextMenu({
   }
 
   function openShapeLibraryFromMenu() {
+    const targetId = menuSelected?.id ?? targetBlockId ?? null;
+    setPickerTargetBlockId(targetId);
+    ensureMenuSelection();
     capturePickerAnchorAndClose();
     setIconPickerOpen(false);
     setShapeLibraryOpen(true);
   }
 
   function openIconPickerFromMenu() {
+    const targetFromMenu = targetBlockId
+      ? blocks.find((block) => block.id === targetBlockId)
+      : null;
+    const targetId = resolveContextMenuIconPickerTargetId({
+      menuSelectedId: menuSelected?.id,
+      menuSelectedType: menuSelected?.type,
+      targetBlockId,
+      targetBlockType: targetFromMenu?.type,
+      fallbackSelectedIds: menuSelectedIds,
+    });
+    setPickerTargetBlockId(targetId);
+    ensureMenuSelection();
     capturePickerAnchorAndClose();
     setShapeLibraryOpen(false);
     setIconPickerOpen(true);
   }
 
   function applyShapeKind(kind: ComunicadoShapeKind) {
-    if (!menuSelected) return;
-    const patch = buildVisualBoxShapeKindPatch(menuSelected, kind);
+    const targetId = pickerTargetBlockId ?? menuSelected?.id ?? null;
+    const target =
+      (targetId ? blocks.find((block) => block.id === targetId) : null) ?? menuSelected;
+    if (!target) return;
+    const patch = buildVisualBoxShapeKindPatch(target, kind);
     if (!patch) return;
-    updateSelected(patch as Partial<ComunicadoBlock>);
+    updateBlock(target.id, patch as Partial<ComunicadoBlock>);
+    selectBlocksByIds([target.id]);
     rememberComunicadoShape(kind);
     setShapeLibraryOpen(false);
+    setPickerTargetBlockId(null);
   }
 
   function applyIconName(name: string | null) {
     const next = name?.trim() || "Star";
-    updateSelected({ iconName: next } as Partial<ComunicadoIconBlock>);
+    const targetId = pickerTargetBlockId ?? menuSelected?.id ?? null;
+    if (!targetId) return;
+    const target = blocks.find((block) => block.id === targetId);
+    if (!target || target.type !== "icon") return;
+    updateBlock(targetId, { iconName: next } as Partial<ComunicadoIconBlock>);
+    selectBlocksByIds([targetId]);
     setIconPickerOpen(false);
+    setPickerTargetBlockId(null);
   }
 
+  const pickerTargetBlock = pickerTargetBlockId
+    ? blocks.find((block) => block.id === pickerTargetBlockId)
+    : null;
   const selectedIconName =
-    menuSelected?.type === "icon" ? menuSelected.iconName?.trim() || "Star" : "Star";
+    (pickerTargetBlock?.type === "icon"
+      ? pickerTargetBlock.iconName
+      : menuSelected?.type === "icon"
+        ? menuSelected.iconName
+        : null)?.trim() || "Star";
 
   const enabled = (action: Parameters<typeof isContextMenuActionEnabled>[0]) =>
     isContextMenuActionEnabled(action, actionState);

@@ -180,6 +180,7 @@ export function ComunicadoComposerCanvas() {
     if (editingTextId) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
+    cancelPendingTapDeselect();
     const canvasRect = canvas.getBoundingClientRect();
     const frames = blocks
       .filter((block) => selectedIds.includes(block.id))
@@ -189,7 +190,7 @@ export function ComunicadoComposerCanvas() {
       ...anchor,
       targetBlockId: selectedId ?? selectedIds[0] ?? null,
     });
-  }, [blocks, canvasRef, editingTextId, selectedId, selectedIds]);
+  }, [blocks, cancelPendingTapDeselect, canvasRef, editingTextId, selectedId, selectedIds]);
 
   useEditorShortcut(
     "comunicado-stage-context-menu",
@@ -489,6 +490,11 @@ export function ComunicadoComposerCanvas() {
       });
       if (hit.type === "block") {
         event.stopPropagation();
+        /*
+         * pointerdown em ícone/imagem arma tap-deselect; o pointerup do right-click
+         * limpava a seleção com o menu ainda aberto (chrome some; Alterar ícone no-op).
+         */
+        cancelPendingTapDeselect();
         if (!isBlockSelected(hit.blockId)) {
           selectBlock(hit.blockId);
         }
@@ -500,6 +506,7 @@ export function ComunicadoComposerCanvas() {
         return;
       }
       // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
+      cancelPendingTapDeselect();
       clearSelection();
       setContextMenu({
         x: event.clientX,
@@ -507,7 +514,7 @@ export function ComunicadoComposerCanvas() {
         targetBlockId: null,
       });
     },
-    [clearSelection, editingTextId, isBlockSelected, selectBlock],
+    [cancelPendingTapDeselect, clearSelection, editingTextId, isBlockSelected, selectBlock],
   );
 
   const handleCanvasContextMenu = useCallback(
