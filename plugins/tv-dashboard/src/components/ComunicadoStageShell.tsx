@@ -1,11 +1,4 @@
-import {
-  Grid3x3,
-  Hand,
-  Maximize2,
-  Ruler,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
+import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
 import { NativeRangeControl, InlineLoadingProgress, inlineLoadingProgressBemClasses } from "@delpi/plugin-ui/index";
 import {
   useCallback,
@@ -33,10 +26,10 @@ import {
   stageZoomFromWheelDelta,
 } from "../utils/stageViewport";
 import { ShortcutTip } from "./ShortcutTip";
+import { StageStatusShowToggles } from "./StageStatusShowToggles";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
-const V = TV_DASHBOARD_HELP_TOOLTIPS.view;
 const TD_INLINE_LOADING_PROGRESS_CN = inlineLoadingProgressBemClasses("td");
 
 type StageMetrics = {
@@ -166,17 +159,11 @@ function StageRulerVertical({
   );
 }
 
-function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
+function ComunicadoStageStatusBar() {
   const {
     stageZoom,
     setStageZoom,
     fitStageToView,
-    showStageGrid,
-    setShowStageGrid,
-    showStageGuides,
-    setShowStageGuides,
-    stagePanMode,
-    setStagePanMode,
     isDataPreviewStale,
     dataPreviewError,
     dataPreviewLoading,
@@ -191,56 +178,8 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
     Number.isFinite(dataPreviewLoadingProgress);
 
   return (
-    <div className="td-stage-statusbar" role="toolbar" aria-label="Zoom, exibição e avisos do palco">
-      <div className="td-stage-statusbar__toggles">
-        <button
-          type="button"
-          className={[
-            "td-stage-statusbar__toggle",
-            showStageGrid ? "td-stage-statusbar__toggle--active" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          title={V.grid}
-          aria-label="Grade"
-          aria-pressed={showStageGrid}
-          onClick={() => setShowStageGrid(!showStageGrid)}
-        >
-          <Grid3x3 size={14} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className={[
-            "td-stage-statusbar__toggle",
-            showStageGuides ? "td-stage-statusbar__toggle--active" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          title={V.guides}
-          aria-label="Guias"
-          aria-pressed={showStageGuides}
-          onClick={() => setShowStageGuides(!showStageGuides)}
-        >
-          <Ruler size={14} aria-hidden="true" />
-        </button>
-        <ShortcutTip shortcutId="pan">
-          <button
-            type="button"
-            className={[
-              "td-stage-statusbar__toggle",
-              panActive ? "td-stage-statusbar__toggle--active" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            title={V.pan}
-            aria-label="Pan"
-            aria-pressed={panActive}
-            onClick={() => setStagePanMode(!stagePanMode)}
-          >
-            <Hand size={14} aria-hidden="true" />
-          </button>
-        </ShortcutTip>
-      </div>
+    <div className="td-stage-statusbar" role="toolbar" aria-label="Mostrar, zoom e avisos do palco">
+      <StageStatusShowToggles />
 
       <div
         className="td-stage-statusbar__messages"
@@ -575,7 +514,7 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
           {children}
         </div>
       </div>
-      <ComunicadoStageStatusBar panActive={panActive} />
+      <ComunicadoStageStatusBar />
     </div>
   );
 }

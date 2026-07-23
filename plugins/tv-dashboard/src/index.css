@@ -1874,6 +1874,15 @@ body.td-composer--marqueeing *{
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.dashboard-tv-dashboard .td-stage-statusbar__grid-size{
+  display: inline-flex;
+  align-items: center;
+  min-width: 48px;
+}
+.dashboard-tv-dashboard .td-stage-statusbar__grid-size-combobox{
+  width: 52px;
 }
 /* Faixa central de avisos / info (stale, erro de preview, etc.). */
 .dashboard-tv-dashboard .td-stage-statusbar__messages{

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { Type } from "lucide-react";
+import { Eye, Type } from "lucide-react";
 
 import {
   DECK_RIBBON_COLLAPSE_ICONS,
@@ -27,12 +27,8 @@ describe("deckRibbonCollapseIcons", () => {
   });
 
   it("slide-current e playlist-chrome não usam Eye", () => {
-    expect(DECK_RIBBON_COLLAPSE_ICONS["slide-current"]).not.toBe(
-      DECK_RIBBON_COLLAPSE_ICONS["view-show"],
-    );
-    expect(DECK_RIBBON_COLLAPSE_ICONS["playlist-chrome"]).not.toBe(
-      DECK_RIBBON_COLLAPSE_ICONS["view-show"],
-    );
+    expect(DECK_RIBBON_COLLAPSE_ICONS["slide-current"]).not.toBe(Eye);
+    expect(DECK_RIBBON_COLLAPSE_ICONS["playlist-chrome"]).not.toBe(Eye);
   });
 
   it("todo groupId=\"…\" explícito em componentes tem ícone no mapa", () => {
