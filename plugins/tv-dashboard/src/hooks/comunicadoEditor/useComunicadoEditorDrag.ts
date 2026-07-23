@@ -15,7 +15,11 @@ import {
 
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
-import { applyMultiFrameDelta } from "../../utils/multiFrameTransform";
+import {
+  applyGroupRotationDelta,
+  applyMultiFrameDelta,
+  resolveFramesGroupCenter,
+} from "../../utils/multiFrameTransform";
 import {
   peerFramesForSmartGuides,
   snapFrameToPeerBlocks,
@@ -78,7 +82,11 @@ export function useComunicadoEditorDrag({
   clearSelection,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
-  const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
+  const multiDragRef = useRef<{
+    startFrames: Map<string, ComunicadoBlock["frame"]>;
+    startRotations: Map<string, number>;
+    groupCenter: { x: number; y: number };
+  } | null>(null);
   /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
   /** Segundo toque: limpa seleção se soltar sem cruzar o limiar de arraste. */
@@ -141,6 +149,35 @@ export function useComunicadoEditorDrag({
 
   const handleUpdateStyle = useCallback(
     (blockId: string, patch: NonNullable<ComunicadoBlock["style"]>) => {
+      const multi = multiDragRef.current;
+      if (
+        multi &&
+        multi.startFrames.size > 1 &&
+        typeof patch.rotation === "number" &&
+        multi.startFrames.has(blockId)
+      ) {
+        const startRotation = multi.startRotations.get(blockId) ?? 0;
+        const deltaDeg = patch.rotation - startRotation;
+        const updates = applyGroupRotationDelta({
+          startFrames: multi.startFrames,
+          startRotations: multi.startRotations,
+          center: multi.groupCenter,
+          deltaDeg,
+        });
+        const draggedIds = new Set(updates.keys());
+        const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+          const update = updates.get(block.id);
+          if (!update) return block;
+          return {
+            ...block,
+            frame: update.frame,
+            style: { ...block.style, rotation: update.rotation },
+          } as ComunicadoBlock;
+        });
+        updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
+        return;
+      }
+
       const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
         block.id === blockId
           ? ({ ...block, style: { ...block.style, ...patch } } as ComunicadoBlock)
@@ -240,11 +277,18 @@ export function useComunicadoEditorDrag({
     const activeIds = resolveMultiDragBlockIds(configRef.current.blocks ?? [], baseIds);
     if (activeIds.length > 1) {
       const startFrames = new Map<string, ComunicadoBlock["frame"]>();
+      const startRotations = new Map<string, number>();
       for (const id of activeIds) {
         const block = configRef.current.blocks?.find((item) => item.id === id);
-        if (block) startFrames.set(id, { ...block.frame });
+        if (!block) continue;
+        startFrames.set(id, { ...block.frame });
+        startRotations.set(id, block.style?.rotation ?? 0);
       }
-      multiDragRef.current = { startFrames };
+      multiDragRef.current = {
+        startFrames,
+        startRotations,
+        groupCenter: resolveFramesGroupCenter(startFrames.values()),
+      };
     } else {
       multiDragRef.current = null;
     }

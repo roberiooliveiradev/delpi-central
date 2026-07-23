@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { applyMultiFrameDelta } from "./multiFrameTransform";
+import {
+  applyGroupRotationDelta,
+  applyMultiFrameDelta,
+  resolveFramesGroupCenter,
+} from "./multiFrameTransform";
 
 describe("applyMultiFrameDelta", () => {
   it("move aplica o mesmo dx/dy a todos", () => {
@@ -32,5 +36,36 @@ describe("applyMultiFrameDelta", () => {
     const next = applyMultiFrameDelta(start, "a", { x: 0, y: 0, w: 5, h: 5 });
     expect(next.get("b")?.w).toBe(0.5);
     expect(next.get("b")?.h).toBe(0.5);
+  });
+});
+
+describe("applyGroupRotationDelta", () => {
+  it("orbita membros em torno do centro e soma rotação", () => {
+    const startFrames = new Map([
+      ["a", { x: 0, y: 40, w: 20, h: 20 }],
+      ["b", { x: 80, y: 40, w: 20, h: 20 }],
+    ]);
+    const startRotations = new Map([
+      ["a", 0],
+      ["b", 10],
+    ]);
+    const center = resolveFramesGroupCenter(startFrames.values());
+    expect(center).toEqual({ x: 50, y: 50 });
+
+    const next = applyGroupRotationDelta({
+      startFrames,
+      startRotations,
+      center,
+      deltaDeg: 90,
+    });
+    const a = next.get("a")!;
+    const b = next.get("b")!;
+    expect(a.rotation).toBe(90);
+    expect(b.rotation).toBe(100);
+    // Centros trocam de lado no eixo vertical após 90°.
+    expect(a.frame.x + a.frame.w / 2).toBeCloseTo(50, 5);
+    expect(a.frame.y + a.frame.h / 2).toBeCloseTo(10, 5);
+    expect(b.frame.x + b.frame.w / 2).toBeCloseTo(50, 5);
+    expect(b.frame.y + b.frame.h / 2).toBeCloseTo(90, 5);
   });
 });

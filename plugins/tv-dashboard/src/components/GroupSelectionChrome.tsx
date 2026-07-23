@@ -18,7 +18,7 @@ type Props = {
 };
 
 /**
- * Chrome de seleção pai do grupo — bbox unificado com move + resize
+ * Chrome de seleção pai do grupo — bbox unificado com move + resize + giro
  * (paridade com bloco individual / moldura de KPI).
  */
 export function GroupSelectionChrome({
@@ -27,6 +27,7 @@ export function GroupSelectionChrome({
   allowResize = true,
   onPointerDown,
 }: Props) {
+  /** Frame do grupo — centro do giro e bbox dos handles. */
   const hitBlock: ComunicadoBlock = {
     ...anchorBlock,
     frame,
@@ -48,6 +49,12 @@ export function GroupSelectionChrome({
         <SelectionMoveHitFrame
           block={hitBlock}
           onMovePointerDown={(event) => onPointerDown(event, anchorBlock, "move")}
+        />
+        <button
+          type="button"
+          className="td-composer__rotate"
+          aria-label="Girar grupo"
+          onPointerDown={(event) => onPointerDown(event, hitBlock, "rotate")}
         />
         {allowResize
           ? BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (

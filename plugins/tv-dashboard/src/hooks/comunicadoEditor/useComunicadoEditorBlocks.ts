@@ -97,6 +97,10 @@ import {
 } from "../../utils/comunicadoLayerOrder";
 import { groupBlocks, ungroupBlocks, expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import {
+  applyGroupRotationDelta,
+  resolveFramesGroupCenter,
+} from "../../utils/multiFrameTransform";
+import {
   flipHorizontalStyle,
   flipVerticalStyle,
   rotateBlockStyle,
@@ -1195,12 +1199,42 @@ export function useComunicadoEditorBlocks({
     (deltaDeg: number) => {
       if (selectedIds.length === 0) return;
       const idSet = new Set(selectedIds);
+      const current = configRef.current.blocks ?? [];
+
+      if (selectedIds.length === 1) {
+        updateBlocks(
+          current.map((block) =>
+            idSet.has(block.id)
+              ? ({ ...block, style: rotateBlockStyle(block.style, deltaDeg) } as ComunicadoBlock)
+              : block,
+          ),
+        );
+        return;
+      }
+
+      const startFrames = new Map<string, ComunicadoBlock["frame"]>();
+      const startRotations = new Map<string, number>();
+      for (const block of current) {
+        if (!idSet.has(block.id)) continue;
+        startFrames.set(block.id, { ...block.frame });
+        startRotations.set(block.id, block.style?.rotation ?? 0);
+      }
+      const updates = applyGroupRotationDelta({
+        startFrames,
+        startRotations,
+        center: resolveFramesGroupCenter(startFrames.values()),
+        deltaDeg,
+      });
       updateBlocks(
-        (configRef.current.blocks ?? []).map((block) =>
-          idSet.has(block.id)
-            ? ({ ...block, style: rotateBlockStyle(block.style, deltaDeg) } as ComunicadoBlock)
-            : block,
-        ),
+        current.map((block) => {
+          const update = updates.get(block.id);
+          if (!update) return block;
+          return {
+            ...block,
+            frame: update.frame,
+            style: { ...block.style, rotation: update.rotation },
+          } as ComunicadoBlock;
+        }),
       );
     },
     [configRef, selectedIds, updateBlocks],
