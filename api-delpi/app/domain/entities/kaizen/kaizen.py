@@ -14,6 +14,8 @@ class Kaizen:
     daily_savings: Optional[float]
     annual_savings: Optional[float]
     branch: Optional[str] = None
+    # Âncora do indicador de quantidade: COALESCE(aprovação comitê, implantação).
+    quantity_date: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -35,6 +37,7 @@ class KaizenDetail:
     occurrences_per_day: Optional[float] = None
     hourly_cost: Optional[float] = None
     hours_saved_per_day: Optional[float] = None
+    quantity_date: Optional[str] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

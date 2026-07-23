@@ -5,6 +5,9 @@ from decimal import Decimal
 from typing import Any
 
 from app.domain.entities.kaizen.kaizen import Kaizen, KaizenDetail
+from app.domain.services.kaizen.kaizen_indicator_eligibility import (
+    quantity_anchor_from_row,
+)
 from app.domain.services.kaizen.kaizen_legacy_id import build_legacy_sheet_id
 
 
@@ -59,6 +62,7 @@ def row_to_kaizen(row: dict[str, Any]) -> Kaizen:
         daily_savings=_as_float(row.get("daily_savings")),
         annual_savings=_as_float(row.get("annual_savings")),
         branch=row.get("branch_code"),
+        quantity_date=_format_date(quantity_anchor_from_row(row)),
     )
 
 
@@ -78,6 +82,7 @@ def row_to_kaizen_detail(row: dict[str, Any]) -> KaizenDetail:
         occurrences_per_day=_as_float(row.get("occurrences_per_day")),
         hourly_cost=_as_float(row.get("hourly_cost")),
         hours_saved_per_day=_hours_saved_per_day(row),
+        quantity_date=_format_date(quantity_anchor_from_row(row)),
     )
 
 

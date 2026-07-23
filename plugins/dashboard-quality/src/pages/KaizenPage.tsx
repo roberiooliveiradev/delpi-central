@@ -337,7 +337,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       <section className="dq-chart-section" aria-busy={loading}>
         <ChartCard
           title="Kaizens por período"
-          hint="Por data de implementação. Clique em um ponto para filtrar o período."
+          hint={`${QUALITY_HELP_TOOLTIPS.charts.kaizenByPeriod} Clique em um ponto para filtrar o período.`}
         >
           <ChartToolbar
             idPrefix="kz-period"

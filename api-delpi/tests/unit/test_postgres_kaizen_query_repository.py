@@ -88,6 +88,31 @@ def test_postgres_kaizen_summary_counts_aprovado_without_savings() -> None:
 
     assert summary.total_kaizens == 1
     assert summary.total_savings == 0.0
+    assert summary.list_kaizen[0].quantity_date == "2026-01-20"
+    assert summary.list_kaizen[0].date_implemented is None
+
+
+def test_postgres_kaizen_summary_quantity_date_prefers_committee_over_implemented() -> None:
+    repository = _repository(
+        [
+            _row(
+                status="implantado",
+                date_committee_approved=date(2026, 7, 5),
+                date_implemented=date(2026, 1, 16),
+            )
+        ]
+    )
+
+    summary = repository.get_kaizen_summary(
+        KaizenSummaryRequest(
+            date_start="2026-07-01",
+            date_end="2026-07-23",
+        )
+    )
+
+    assert summary.total_kaizens == 1
+    assert summary.list_kaizen[0].quantity_date == "2026-07-05"
+    assert summary.list_kaizen[0].date_implemented == "2026-01-16"
 
 
 def test_postgres_kaizen_summary_aprovado_falls_back_to_implemented_date() -> None:

@@ -93,10 +93,11 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             yield row
 
     def _row_to_kaizen(self, row: dict) -> Kaizen:
+        implemented = row["date_implemented"]
         return Kaizen(
             id=row["id"],
             title=row["title"],
-            date_implemented=row["date_implemented"],
+            date_implemented=implemented,
             status=row["status"],
             accountable=row["accountable"],
             sector=row["sector"],
@@ -104,6 +105,7 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             daily_savings=row["daily_savings"],
             annual_savings=row["annual_savings"],
             branch=row.get("branch"),
+            quantity_date=row.get("quantity_date") or implemented,
         )
 
     def _map_row_to_summary_model(self, row: dict) -> Optional[dict]:

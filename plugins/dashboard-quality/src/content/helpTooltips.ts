@@ -53,6 +53,8 @@ export const QUALITY_HELP_TOOLTIPS = {
   charts: {
     ppmEvolution: "Evolução temporal do PPM conforme granularidade selecionada.",
     kaizenByStatus: "Distribuição de kaizens por status no período.",
+    kaizenByPeriod:
+      "Contagem de ideias aprovadas/implantadas por período, usando a data de aprovação no comitê (ou implantação se a aprovação não estiver cadastrada) — a mesma âncora do KPI Ideias aprovadas.",
     audit5sEvolution: "Evolução das notas de auditoria 5S ao longo do tempo.",
   },
   pagination: {

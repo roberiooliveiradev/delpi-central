@@ -72,7 +72,8 @@ export function aggregateKaizenCountByPeriod(
 ): TimeSeriesPoint[] {
   return aggregateCountByPeriod({
     items,
-    getDate: (item) => item.date_implemented,
+    // Mesma âncora do KPI total_kaizens (API: quantity_date).
+    getDate: (item) => item.quantity_date ?? item.date_implemented,
     dateStart,
     dateEnd,
     granularity,

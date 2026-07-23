@@ -19,6 +19,8 @@ export type Kaizen = {
   daily_savings: number | null;
   annual_savings: number | null;
   branch: string | null;
+  /** Âncora do indicador de quantidade (aprovação comitê ou implantação). */
+  quantity_date?: string | null;
 };
 
 export type KaizenDetail = Kaizen & {
