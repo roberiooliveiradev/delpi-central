@@ -133,6 +133,7 @@ export {
 export {
   kpiPartStyleWithAutoFont,
   kpiPartStyleWithFixedFontSize,
+  mergeKpiPartStyle,
   type KpiPartTypographyMode,
 } from "./kpiCardParts";
 
