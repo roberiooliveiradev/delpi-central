@@ -169,3 +169,65 @@ def test_si_indicator_prefix_overlay_applies_kpi_value_fields():
     assert sample["valueFields"] == ["value"]
     assert sample["allowedDisplayModes"] == ["kpi", "auto"]
     assert sample["label"] == "PPM Interno — realizado"
+
+
+def test_merge_with_existing_openapi_wins_on_optional():
+    """Catálogo antigo com optional:false não pode congelar após OpenAPI tornar opcional."""
+    gen = _load_generator_module()
+    base = {
+        "operationId": "get_refugos_scrap_cost_pct",
+        "label": "Custo de refugo / ROL",
+        "description": "omita filial para consolidado",
+        "paramSchema": {
+            "filial": {
+                "type": "string",
+                "optional": True,
+                "label": "Filial",
+                "enum": ["01", "02"],
+                "default": "01",
+            },
+            "motivo": {"type": "string", "optional": True, "label": "Motivo"},
+        },
+    }
+    existing = {
+        "operationId": "get_refugos_scrap_cost_pct",
+        "label": "legado",
+        "description": "legado",
+        "paramSchema": {
+            "filial": {
+                "type": "string",
+                "optional": False,
+                "required": True,
+                "label": "Filial",
+                "enum": ["01", "02"],
+            },
+            "motivo": {"type": "string", "optional": True, "label": "Motivo curado"},
+        },
+        "valueFields": ["scrap_cost_pct", "value"],
+    }
+    merged = gen.merge_with_existing(base, existing)
+    filial = (merged.get("paramSchema") or {}).get("filial") or {}
+    assert filial.get("optional") is True
+    assert "required" not in filial
+    assert filial.get("default") == "01"
+    assert merged.get("description") == "omita filial para consolidado"
+    assert merged.get("valueFields") == ["scrap_cost_pct", "value"]
+    assert ((merged.get("paramSchema") or {}).get("motivo") or {}).get("label") == "Motivo curado"
+
+
+def test_scrap_cost_pct_filial_optional_in_generated_catalog():
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    scrap = next(item for item in generated if item["operationId"] == "get_refugos_scrap_cost_pct")
+    filial = (scrap.get("paramSchema") or {}).get("filial") or {}
+    assert filial.get("optional") is True
+    required = [
+        key
+        for key, value in (scrap.get("paramSchema") or {}).items()
+        if isinstance(value, dict) and value.get("optional") is False
+    ]
+    assert required == []

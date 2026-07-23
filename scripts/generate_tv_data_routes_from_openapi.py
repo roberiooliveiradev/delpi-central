@@ -506,7 +506,9 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 merged[key] = value
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
-        # OpenAPI enum/default vencem; overlay/existing só preenche buracos e labels extras.
+        # OpenAPI vence em contrato (optional/type/enum/default); existing só preenche
+        # buracos e labels extras. Sem isso, sync live congela optional:false antigo
+        # enquanto description/whenToUse já vêm do OpenAPI (ex.: filial consolidada).
         openapi_schema = merged.get("paramSchema") if isinstance(merged.get("paramSchema"), dict) else {}
         patched_existing: dict[str, Any] = {}
         for key, value in existing_schema.items():
@@ -515,6 +517,13 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 continue
             entry = dict(value)
             openapi_entry = openapi_schema.get(key) if isinstance(openapi_schema.get(key), dict) else {}
+            # paramSchema TV usa só `optional`; `required` residual do baseline não deve
+            # vencer no MFE (isParamFieldOptional prioriza required).
+            entry.pop("required", None)
+            if "optional" in openapi_entry:
+                entry["optional"] = bool(openapi_entry["optional"])
+            if openapi_entry.get("type"):
+                entry["type"] = openapi_entry["type"]
             if openapi_entry.get("enum"):
                 entry["enum"] = list(openapi_entry["enum"])
             if openapi_entry.get("default") is not None:
