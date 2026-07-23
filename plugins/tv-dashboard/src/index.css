@@ -1909,21 +1909,29 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-layers-list__item--grouped .td-layers-list__type{
   color: var(--td-accent, #3b82f6);
 }
+.dashboard-tv-dashboard .td-layers-list--tree{
+  --td-layers-tree-slot: 22px;
+  --td-layers-tree-indent: 16px;
+}
 .dashboard-tv-dashboard .td-layers-list__row--group{
   gap: 0;
 }
+/* Filhos: um nível à direita da coluna twist/slot (mesma hierarquia visual). */
 .dashboard-tv-dashboard .td-layers-list__row--child{
   position: relative;
-  /* twist (22) + recuo visual sob o pai */
-  padding-left: 38px;
+  padding-left: calc(var(--td-layers-tree-slot, 22px) + var(--td-layers-tree-indent, 16px));
   box-sizing: border-box;
 }
-.dashboard-tv-dashboard .td-layers-list__twist{
+.dashboard-tv-dashboard .td-layers-list__twist,
+.dashboard-tv-dashboard .td-layers-list__twist-slot{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 22px;
-  width: 22px;
+  flex: 0 0 var(--td-layers-tree-slot, 22px);
+  width: var(--td-layers-tree-slot, 22px);
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-layers-list__twist{
   border: 0;
   border-radius: 4px;
   background: transparent;
@@ -1946,7 +1954,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-layers-list__tree-guide{
   position: absolute;
-  left: 28px;
+  left: calc(var(--td-layers-tree-slot, 22px) + 6px);
   top: 2px;
   bottom: 2px;
   width: 2px;
@@ -3778,36 +3786,34 @@ body.td-composer--marqueeing *{
   min-height: 0;
 }
 /*
- * Organizar: flex wrap responsivo (3 colunas × 2 filas).
- * Altura pelo conteúdo dos tiles — não força grid fixo que sobrescreve a caption.
+ * Organizar: uma linha (nowrap) — evita corte dos chevrons em faixa compacta.
  */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid{
-  --td-organize-col-min: 3.15rem;
-  --td-organize-gap-x: 4px;
-  --td-organize-gap-y: 2px;
+  --td-organize-col-min: 2.65rem;
+  --td-organize-gap-x: 2px;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  align-content: flex-start;
+  flex-wrap: nowrap;
   align-items: stretch;
   justify-content: flex-start;
-  gap: var(--td-organize-gap-y) var(--td-organize-gap-x);
+  gap: 0 var(--td-organize-gap-x);
   box-sizing: border-box;
-  width: calc(var(--td-organize-col-min) * 3 + var(--td-organize-gap-x) * 2);
-  max-width: 100%;
+  width: max-content;
+  max-width: none;
   min-width: 0;
   min-height: 0;
   height: auto;
+  overflow: visible;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .delpi-ui-help-tooltip--wrap,
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .td-ribbon-menu-tile,
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .td-ribbon-tile{
   display: flex;
-  flex: 1 1 var(--td-organize-col-min);
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: stretch;
   min-width: var(--td-organize-col-min);
-  max-width: 5.25rem;
+  max-width: 4.25rem;
   min-height: 0;
   box-sizing: border-box;
 }
@@ -3819,7 +3825,6 @@ body.td-composer--marqueeing *{
   max-width: none;
   height: 100%;
 }
-/* Tiles mais baixos na faixa — cabem 2 filas + caption sem corte. */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile{
   min-width: 0;
   max-width: none;
@@ -3839,6 +3844,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__chevron{
   padding: 0 2px 1px;
   line-height: 1;
+  flex: 0 0 auto;
 }
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__label,
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-tile__label{
@@ -3856,17 +3862,17 @@ body.td-composer--marqueeing *{
   width: 18px;
   height: 18px;
 }
-/* Grupo Organizar: body cresce pelo conteúdo; caption abaixo sem overlap. */
+/* Grupo Organizar: altura pelo conteúdo; caption abaixo sem overlap/corte. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__organize-grid){
   height: auto;
-  max-height: 100%;
+  max-height: none;
   min-height: 0;
   overflow: visible;
   justify-content: flex-start;
   gap: 2px;
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__organize-grid) .td-deck-ribbon__body{
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
   max-height: none;
   overflow: visible;
@@ -3882,8 +3888,7 @@ body.td-composer--marqueeing *{
 }
 @media (max-width: 900px){
   .dashboard-tv-dashboard .td-deck-ribbon__organize-grid{
-    --td-organize-col-min: 2.85rem;
-    width: calc(var(--td-organize-col-min) * 3 + var(--td-organize-gap-x) * 2);
+    --td-organize-col-min: 2.4rem;
   }
 }
 /* Split menu: ícone+rótulo em cima, chevron abaixo (mesmo padrão shape-menu / collapse). */

@@ -298,14 +298,17 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                 key={block.id}
                 className={[
                   "td-layers-list__row",
-                  row.depth > 0 ? "td-layers-list__row--child" : "",
+                  row.depth > 0 ? "td-layers-list__row--child" : "td-layers-list__row--root",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
                 {row.depth > 0 ? (
                   <span className="td-layers-list__tree-guide" aria-hidden="true" />
-                ) : null}
+                ) : (
+                  /* Reserva a mesma coluna do twist do grupo — alinhamento por nível. */
+                  <span className="td-layers-list__twist-slot" aria-hidden="true" />
+                )}
                 <button
                   type="button"
                   className={[
