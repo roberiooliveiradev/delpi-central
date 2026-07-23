@@ -131,9 +131,9 @@ describe("stageInteractionPolicy teclado", () => {
     expect(
       resolveStageEnterKeyAction({
         blocks,
-        selectedIds: ["t1", "i1"],
+        selectedIds: ["i1"],
       }),
-    ).toEqual({ type: "isolate-child", blockId: "i1" });
+    ).toEqual({ type: "none" });
   });
 
   it("F2 entra e sai da edição de texto", () => {
