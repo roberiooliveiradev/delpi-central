@@ -82,7 +82,7 @@ Combina o custo de refugo do período (`/refugos/resumo` → `totalValor`) com o
 | `filters_applied` | `mp`, `pa`, `op`, `motivo`, `recurso` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
-Parâmetros: mesmos de `/refugos/resumo` (`filial` obrigatória; período e filtros opcionais).
+Parâmetros: período e filtros opcionais iguais a `/refugos/resumo`. `filial` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
 
 ---
 

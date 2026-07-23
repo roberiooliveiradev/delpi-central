@@ -29,6 +29,7 @@ from app.interface.http.routes.refugos.refugos_route_helpers import (
     DATA_INICIO_QUERY,
     DIMENSION_QUERY,
     FILIAL_QUERY,
+    FILIAL_QUERY_OPTIONAL,
     GRANULARITY_QUERY,
     LIMIT_QUERY,
     MOTIVO_QUERY,
@@ -160,7 +161,7 @@ def get_refugos_resumo_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_scrap_cost_pct(
-    filial: str = FILIAL_QUERY(),
+    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
     data_inicio: Optional[str] = DATA_INICIO_QUERY(),
     data_fim: Optional[str] = DATA_FIM_QUERY(),
     mp: Optional[str] = MP_QUERY(),
@@ -183,6 +184,7 @@ def get_refugos_scrap_cost_pct(
             op=op,
             motivo=motivo,
             recurso=recurso,
+            require_filial=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar scrap cost / ROL: {exc}")

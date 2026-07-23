@@ -19,7 +19,7 @@ class RetrabalhoRepositoryPort(Protocol):
         *,
         start_date: str,
         end_date: str,
-        branch: str,
+        branch: str | None,
         recurso: str | None = None,
         centro_custo: str | None = None,
         codigo_operador: str | None = None,

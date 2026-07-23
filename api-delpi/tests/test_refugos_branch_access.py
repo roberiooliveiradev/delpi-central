@@ -56,3 +56,22 @@ def test_branch_access_error_returns_403_for_denied_filial() -> None:
 
     assert response is not None
     assert response.status_code == 403
+
+
+def test_branch_access_error_consolidated_requires_all_branches() -> None:
+    with patch(
+        "app.interface.http.routes.refugos.refugos_branch_access.consolidated_view_allowed",
+        return_value=False,
+    ):
+        response = branch_access_error(None)
+
+    assert response is not None
+    assert response.status_code == 403
+
+
+def test_branch_access_error_consolidated_allowed() -> None:
+    with patch(
+        "app.interface.http.routes.refugos.refugos_branch_access.consolidated_view_allowed",
+        return_value=True,
+    ):
+        assert branch_access_error(None) is None

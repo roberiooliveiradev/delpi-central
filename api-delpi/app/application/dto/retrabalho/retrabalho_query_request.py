@@ -30,11 +30,13 @@ class RetrabalhoQueryRequest:
         codigo_operador: str | None = None,
         order_by: str | None = None,
         limit: int | None = None,
+        require_filial: bool = True,
     ) -> RetrabalhoQueryRequest:
         period = RetrabalhoPeriod.resolve(
             filial=filial,
             data_inicio=data_inicio,
             data_fim=data_fim,
+            require_filial=require_filial,
         )
         normalized_order = str(order_by or "horas").strip().lower() or "horas"
         if normalized_order not in {"horas", "custo"}:

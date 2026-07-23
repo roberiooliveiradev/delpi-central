@@ -4,6 +4,7 @@ from app.domain.quality.retrabalho.retrabalho_view_scope import (
     FONTE_CUSTO_SEM_CUSTO,
     RETRABALHO_HORAS_IMPRODUTIVAS_VIEW,
     RETRABALHO_MOTIVO_CODE,
+    VALID_RETRABALHO_BRANCHES,
 )
 from app.infrastructure.persistence.totvs.retrabalho.retrabalho_query_settings import (
     MAX_FILTROS_ITEMS,
@@ -23,22 +24,32 @@ DETALHES_SORT_COLUMNS = {
 }
 
 
+def _branch_filter_sql(branch: str | None) -> tuple[str, list[str]]:
+    """Equality for one branch; IN (valid branches) when consolidated (None)."""
+    if branch:
+        return "LTRIM(RTRIM(FILIAL)) = ?", [branch]
+    ordered = sorted(VALID_RETRABALHO_BRANCHES)
+    placeholders = ", ".join("?" for _ in ordered)
+    return f"LTRIM(RTRIM(FILIAL)) IN ({placeholders})", list(ordered)
+
+
 def build_base_where(
     *,
     start_date: str,
     end_date: str,
-    branch: str,
+    branch: str | None,
     recurso: str | None = None,
     centro_custo: str | None = None,
     codigo_operador: str | None = None,
 ) -> tuple[str, tuple]:
+    branch_sql, branch_params = _branch_filter_sql(branch)
     clauses = [
         "DATA_REFERENCIA >= ?",
         "DATA_REFERENCIA <= ?",
-        "LTRIM(RTRIM(FILIAL)) = ?",
+        branch_sql,
         "LTRIM(RTRIM(MOTIVO)) = ?",
     ]
-    params: list[str] = [start_date, end_date, branch, RETRABALHO_MOTIVO_CODE]
+    params: list[str] = [start_date, end_date, *branch_params, RETRABALHO_MOTIVO_CODE]
 
     if recurso:
         clauses.append("LTRIM(RTRIM(RECURSO)) = ?")
@@ -127,7 +138,7 @@ def build_resumo_query(
     *,
     start_date: str,
     end_date: str,
-    branch: str,
+    branch: str | None,
     recurso: str | None = None,
     centro_custo: str | None = None,
     codigo_operador: str | None = None,

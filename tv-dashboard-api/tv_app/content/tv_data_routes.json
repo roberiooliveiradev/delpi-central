@@ -1470,11 +1470,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1532,11 +1532,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1594,11 +1594,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1656,11 +1656,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1718,11 +1718,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1780,11 +1780,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1842,11 +1842,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1904,11 +1904,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1966,11 +1966,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2028,11 +2028,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2090,11 +2090,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2152,11 +2152,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2214,11 +2214,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2276,11 +2276,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2338,11 +2338,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2400,11 +2400,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2462,11 +2462,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2524,11 +2524,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2586,11 +2586,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2648,11 +2648,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2710,11 +2710,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2772,11 +2772,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2834,11 +2834,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2896,11 +2896,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2958,11 +2958,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3020,11 +3020,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3082,11 +3082,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3144,11 +3144,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3206,11 +3206,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3268,11 +3268,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3330,11 +3330,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3392,11 +3392,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3454,11 +3454,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3516,11 +3516,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3578,11 +3578,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3640,11 +3640,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3702,11 +3702,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3764,11 +3764,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3826,11 +3826,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3888,11 +3888,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3950,11 +3950,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4012,11 +4012,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4074,11 +4074,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4136,11 +4136,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4198,11 +4198,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4260,11 +4260,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4322,11 +4322,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4384,11 +4384,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4446,11 +4446,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4508,11 +4508,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4570,11 +4570,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4632,11 +4632,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4694,11 +4694,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4756,11 +4756,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4818,11 +4818,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4880,11 +4880,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4942,11 +4942,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5004,11 +5004,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5066,11 +5066,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5128,11 +5128,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5190,11 +5190,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5252,11 +5252,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5314,11 +5314,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5376,11 +5376,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -9892,17 +9892,6 @@
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
@@ -9921,7 +9910,18 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -9981,14 +9981,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10327,6 +10327,13 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points",
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10334,14 +10341,7 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -10401,14 +10401,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10932,15 +10932,15 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "tableFields": "items"
+      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -15309,8 +15309,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
-      "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
+      "description": "Custo de refugo sobre o ROL financeiro (com IPI) no período. Filial opcional: omitida consolida todas. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) só no numerador.",
+      "whenToUse": "Usar no card KPI de custo de refugo / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
       "paramSchema": {
         "filial": {
           "type": "string",
@@ -16094,8 +16094,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
-      "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
+      "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) no período. Filial opcional: omitida consolida todas. Filtros opcionais (recurso, centro de custo, operador) só no numerador.",
+      "whenToUse": "Usar no card KPI de custo de retrabalho / ROL. Mesmo período de /financial/rol; omita filial para consolidado.",
       "paramSchema": {
         "filial": {
           "type": "string",

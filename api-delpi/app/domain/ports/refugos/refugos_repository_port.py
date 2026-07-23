@@ -19,7 +19,7 @@ class RefugosRepositoryPort(Protocol):
         *,
         date_start: str,
         date_end_exclusive: str,
-        branch: str,
+        branch: str | None,
         day_start: str,
         day_end_exclusive: str,
         month_start: str,

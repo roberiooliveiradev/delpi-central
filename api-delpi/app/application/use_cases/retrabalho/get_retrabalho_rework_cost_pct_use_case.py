@@ -10,7 +10,7 @@ from app.domain.ports.retrabalho.retrabalho_repository_port import RetrabalhoRep
 
 
 class GetRetrabalhoReworkCostPctUseCase:
-    """Rework cost (RT view) over financial ROL for the same branch and period."""
+    """Rework cost (RT view) over financial ROL for the same branch scope and period."""
 
     def __init__(
         self,
@@ -22,10 +22,13 @@ class GetRetrabalhoReworkCostPctUseCase:
 
     def execute(self, request: RetrabalhoQueryRequest) -> dict:
         start_iso, end_iso = request.period.iso_range()
+        branch = request.period.filial
+        branch_filter_applied = branch is not None
+        consolidated = not branch_filter_applied
         common = {
             "start_date": start_iso,
             "end_date": end_iso,
-            "branch": request.period.filial,
+            "branch": branch,
             "recurso": request.recurso,
             "centro_custo": request.centro_custo,
             "codigo_operador": request.codigo_operador,
@@ -34,7 +37,7 @@ class GetRetrabalhoReworkCostPctUseCase:
         row = self._retrabalho_repository.get_resumo(**common)
         rol_data = self._financial_repository.get_rol(
             GetRolRequest(
-                branch=request.period.filial,
+                branch=branch,
                 start_date=start_iso,
                 end_date=end_iso,
             )
@@ -52,7 +55,7 @@ class GetRetrabalhoReworkCostPctUseCase:
         )
 
         return {
-            "branch": request.period.filial,
+            "branch": branch or "consolidated",
             "start_date": start_iso,
             "end_date": end_iso,
             "rework_cost": rework_cost,
@@ -77,9 +80,9 @@ class GetRetrabalhoReworkCostPctUseCase:
                 "ipi_separated": round_cost(rol_data.get("ipi_separated")),
             },
             "summary": {
-                "branch": request.period.filial,
-                "branch_filter_applied": True,
-                "consolidated_across_branches": False,
+                "branch": branch,
+                "branch_filter_applied": branch_filter_applied,
+                "consolidated_across_branches": consolidated,
                 "period": {"start": start_iso, "end": end_iso},
                 "rework_cost": rework_cost,
                 "rol_with_ipi": rol_with_ipi,

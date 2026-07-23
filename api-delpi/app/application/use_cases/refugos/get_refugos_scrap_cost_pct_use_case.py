@@ -10,7 +10,7 @@ from app.domain.ports.refugos.refugos_repository_port import RefugosRepositoryPo
 
 
 class GetRefugosScrapCostPctUseCase:
-    """Scrap cost (SBC) over financial ROL for the same branch and period."""
+    """Scrap cost (SBC) over financial ROL for the same branch scope and period."""
 
     def __init__(
         self,
@@ -25,11 +25,14 @@ class GetRefugosScrapCostPctUseCase:
         day_start, day_end_exclusive = request.period.day_closed_open()
         month_start, month_end_exclusive = request.period.month_closed_open()
         start_iso, end_iso = request.period.iso_range()
+        branch = request.period.filial
+        branch_filter_applied = branch is not None
+        consolidated = not branch_filter_applied
 
         row = self._refugos_repository.get_resumo(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=request.period.filial,
+            branch=branch,
             day_start=day_start,
             day_end_exclusive=day_end_exclusive,
             month_start=month_start,
@@ -39,7 +42,7 @@ class GetRefugosScrapCostPctUseCase:
 
         rol_data = self._financial_repository.get_rol(
             GetRolRequest(
-                branch=request.period.filial,
+                branch=branch,
                 start_date=start_iso,
                 end_date=end_iso,
             )
@@ -53,7 +56,7 @@ class GetRefugosScrapCostPctUseCase:
         )
 
         return {
-            "branch": request.period.filial,
+            "branch": branch or "consolidated",
             "start_date": start_iso,
             "end_date": end_iso,
             "scrap_cost": scrap_cost,
@@ -79,9 +82,9 @@ class GetRefugosScrapCostPctUseCase:
                 "ipi_separated": round_cost(rol_data.get("ipi_separated")),
             },
             "summary": {
-                "branch": request.period.filial,
-                "branch_filter_applied": True,
-                "consolidated_across_branches": False,
+                "branch": branch,
+                "branch_filter_applied": branch_filter_applied,
+                "consolidated_across_branches": consolidated,
                 "period": {"start": start_iso, "end": end_iso},
                 "scrap_cost": scrap_cost,
                 "rol_with_ipi": rol_with_ipi,

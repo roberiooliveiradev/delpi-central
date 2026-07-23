@@ -86,6 +86,44 @@ def test_rework_cost_pct_null_when_rol_is_zero() -> None:
     assert result["rework_cost"] == 80.0
 
 
+def test_consolidated_when_filial_omitted() -> None:
+    retrabalho_repo = MagicMock()
+    retrabalho_repo.get_resumo.return_value = {
+        "total_custo": 2000.0,
+        "total_horas": 20.0,
+        "total_apontamentos": 4,
+        "registros_sem_custo": 0,
+    }
+    financial_repo = MagicMock()
+    financial_repo.get_rol.return_value = {
+        "rol": 100_000.0,
+        "rol_with_ipi": 100_000.0,
+        "gross_revenue": 100_000.0,
+        "returns": 0.0,
+        "discounts": 0.0,
+        "ipi_separated": 0.0,
+    }
+
+    request = RetrabalhoQueryRequest(
+        period=RetrabalhoPeriod.resolve(
+            filial=None,
+            data_inicio="2026-06-01",
+            data_fim="2026-06-30",
+            require_filial=False,
+        )
+    )
+    result = GetRetrabalhoReworkCostPctUseCase(retrabalho_repo, financial_repo).execute(
+        request
+    )
+
+    assert result["branch"] == "consolidated"
+    assert result["summary"]["branch_filter_applied"] is False
+    assert result["summary"]["consolidated_across_branches"] is True
+    assert result["rework_cost_pct"] == 2.0
+    assert retrabalho_repo.get_resumo.call_args.kwargs["branch"] is None
+    assert financial_repo.get_rol.call_args.args[0].branch is None
+
+
 def test_optional_recurso_filter_forwarded_to_repository() -> None:
     retrabalho_repo = MagicMock()
     retrabalho_repo.get_resumo.return_value = {

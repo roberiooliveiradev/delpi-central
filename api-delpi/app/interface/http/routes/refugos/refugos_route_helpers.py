@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional
 from fastapi import Query
 
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
     GRANULARITY_QUERY_DAY_MONTH_AUTO,
     REFUGOS_DIMENSION_QUERY,
@@ -27,7 +28,7 @@ from app.utils.logger import log_error
 
 def build_refugos_query_request(
     *,
-    filial: str,
+    filial: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     dimension: Optional[str] = None,
@@ -37,6 +38,7 @@ def build_refugos_query_request(
     motivo: Optional[str] = None,
     recurso: Optional[str] = None,
     limit: Optional[int] = None,
+    require_filial: bool = True,
 ) -> RefugosQueryRequest:
     return RefugosQueryRequest.from_query(
         filial=filial,
@@ -49,6 +51,7 @@ def build_refugos_query_request(
         motivo=motivo,
         recurso=recurso,
         limit=limit,
+        require_filial=require_filial,
     )
 
 
@@ -133,6 +136,12 @@ def execute_refugos_route(
 
 def FILIAL_QUERY():
     return BRANCH_QUERY_REQUIRED()
+
+
+def FILIAL_QUERY_OPTIONAL():
+    return BRANCH_QUERY_OPTIONAL()
+
+
 def DATA_INICIO_QUERY():
     return Query(
     None,

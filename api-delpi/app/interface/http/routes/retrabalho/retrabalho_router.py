@@ -30,6 +30,7 @@ from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
     DATA_FIM_QUERY,
     DATA_INICIO_QUERY,
     FILIAL_QUERY,
+    FILIAL_QUERY_OPTIONAL,
     LIMIT_QUERY,
     ORDER_BY_DETALHES_QUERY,
     ORDER_BY_RANKING_QUERY,
@@ -162,7 +163,7 @@ def get_retrabalhos_resumo_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_rework_cost_pct(
-    filial: str = FILIAL_QUERY(),
+    filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
     data_inicio: Optional[str] = DATA_INICIO_QUERY(),
     data_fim: Optional[str] = DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
@@ -181,6 +182,7 @@ def get_retrabalhos_rework_cost_pct(
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
+            require_filial=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar rework cost / ROL: {exc}")

@@ -87,6 +87,42 @@ def test_scrap_cost_pct_null_when_rol_is_zero() -> None:
     assert result["scrap_cost"] == 100.0
 
 
+def test_consolidated_when_filial_omitted() -> None:
+    refugos_repo = MagicMock()
+    refugos_repo.get_resumo.return_value = {
+        "total_valor": 5000.0,
+        "total_quantidade": 2.0,
+        "ocorrencias": 2,
+        "registros_sem_custo": 0,
+    }
+    financial_repo = MagicMock()
+    financial_repo.get_rol.return_value = {
+        "rol": 200_000.0,
+        "rol_with_ipi": 200_000.0,
+        "gross_revenue": 200_000.0,
+        "returns": 0.0,
+        "discounts": 0.0,
+        "ipi_separated": 0.0,
+    }
+
+    request = RefugosQueryRequest(
+        period=RefugosPeriod.resolve(
+            filial=None,
+            data_inicio="2026-06-01",
+            data_fim="2026-06-30",
+            require_filial=False,
+        )
+    )
+    result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(request)
+
+    assert result["branch"] == "consolidated"
+    assert result["summary"]["branch_filter_applied"] is False
+    assert result["summary"]["consolidated_across_branches"] is True
+    assert result["scrap_cost_pct"] == 2.5
+    assert refugos_repo.get_resumo.call_args.kwargs["branch"] is None
+    assert financial_repo.get_rol.call_args.args[0].branch is None
+
+
 def test_optional_mp_filter_forwarded_to_refugos_repository() -> None:
     refugos_repo = MagicMock()
     refugos_repo.get_resumo.return_value = {

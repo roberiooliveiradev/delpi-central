@@ -108,6 +108,34 @@ def test_rework_cost_pct_returns_envelope(
     return_value=None,
 )
 @patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_rework_cost_pct_use_case"
+)
+def test_rework_cost_pct_allows_omitted_filial(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "consolidated",
+        "rework_cost_pct": 0.5,
+    }
+    mock_builder.return_value = use_case
+
+    response = retrabalho_client.get(
+        "/retrabalhos/rework_cost_pct",
+        params={"dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_rework_cost_pct"
+    assert body["data"]["branch"] == "consolidated"
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
     "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_detalhes_use_case"
 )
 def test_detalhes_returns_paged_meta(mock_builder, _mock_branch, retrabalho_client: TestClient) -> None:

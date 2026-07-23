@@ -8,11 +8,26 @@ Join SB2 agregado por filial+produto evita multiplicação por B2_LOCAL.
 
 from __future__ import annotations
 
-from app.domain.quality.refugos.refugos_scope import REFUGOS_LOSS_TYPE
+from app.domain.quality.refugos.refugos_scope import (
+    REFUGOS_LOSS_TYPE,
+    VALID_REFUGOS_BRANCHES,
+)
 from app.infrastructure.persistence.totvs.refugos.refugos_query_settings import (
     MAX_FILTROS_ITEMS,
     RANKING_DIMENSIONS,
 )
+
+
+def _branch_filter_sql(
+    column: str,
+    branch: str | None,
+) -> tuple[str, list]:
+    """Equality for one branch; IN (valid branches) when consolidated (None)."""
+    if branch:
+        return f"LTRIM(RTRIM({column})) = ?", [branch]
+    ordered = sorted(VALID_REFUGOS_BRANCHES)
+    placeholders = ", ".join("?" for _ in ordered)
+    return f"LTRIM(RTRIM({column})) IN ({placeholders})", list(ordered)
 
 # Custo médio sem multiplicar linhas (vários B2_LOCAL).
 _COST_JOIN = """
@@ -63,21 +78,22 @@ def build_base_where(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     mp: str | None = None,
     pa: str | None = None,
     op: str | None = None,
     motivo: str | None = None,
     recurso: str | None = None,
 ) -> tuple[str, list]:
+    branch_sql, branch_params = _branch_filter_sql("BC.BC_FILIAL", branch)
     clauses = [
         "BC.D_E_L_E_T_ = ''",
         "BC.BC_TIPO = ?",
-        "LTRIM(RTRIM(BC.BC_FILIAL)) = ?",
+        branch_sql,
         "BC.BC_DATA >= ?",
         "BC.BC_DATA < ?",
     ]
-    params: list = [REFUGOS_LOSS_TYPE, branch, date_start, date_end_exclusive]
+    params: list = [REFUGOS_LOSS_TYPE, *branch_params, date_start, date_end_exclusive]
 
     if mp:
         clauses.append("LTRIM(RTRIM(BC.BC_PRODUTO)) = ?")
@@ -220,7 +236,7 @@ def build_resumo_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     day_start: str,
     day_end_exclusive: str,
     month_start: str,
@@ -232,6 +248,7 @@ def build_resumo_query(
     recurso: str | None = None,
 ) -> tuple[str, tuple]:
     """Uma query: total do período + KPIs do dia (dataFim) e do mês calendário completo de dataFim."""
+    branch_sql, branch_params = _branch_filter_sql("BC.BC_FILIAL", branch)
     sql = f"""
     SELECT
         SUM(CASE WHEN BC.BC_DATA >= ? AND BC.BC_DATA < ? THEN {_VALOR_EXPR} ELSE 0 END) AS total_valor,
@@ -249,7 +266,7 @@ def build_resumo_query(
     {_BASE_FROM}
     WHERE BC.D_E_L_E_T_ = ''
       AND BC.BC_TIPO = ?
-      AND LTRIM(RTRIM(BC.BC_FILIAL)) = ?
+      AND {branch_sql}
       AND BC.BC_DATA >= ?
       AND BC.BC_DATA < ?
     """
@@ -267,7 +284,7 @@ def build_resumo_query(
         month_start,
         month_end_exclusive,
         REFUGOS_LOSS_TYPE,
-        branch,
+        *branch_params,
         min(date_start, day_start, month_start),
         max(date_end_exclusive, day_end_exclusive, month_end_exclusive),
     ]

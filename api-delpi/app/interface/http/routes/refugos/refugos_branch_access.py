@@ -10,6 +10,7 @@ from app.application.security.api_delpi_permissions import (
     SCRAP_MONITORING_VIEW,
 )
 from app.core.responses import error_response
+from app.domain.quality.refugos.refugos_scope import VALID_REFUGOS_BRANCHES
 
 
 def _is_superadmin() -> bool:
@@ -32,8 +33,20 @@ def branch_view_allowed(filial: str) -> bool:
     return branch_perm is not None and has_permission(user, branch_perm)
 
 
-def branch_access_error(filial: str):
-    if branch_view_allowed(filial):
+def consolidated_view_allowed() -> bool:
+    return all(branch_view_allowed(branch) for branch in sorted(VALID_REFUGOS_BRANCHES))
+
+
+def branch_access_error(filial: str | None):
+    normalized = str(filial or "").strip() or None
+    if normalized is None:
+        if consolidated_view_allowed():
+            return None
+        return error_response(
+            "Sem permissão para acessar refugos consolidado (todas as filiais).",
+            status_code=403,
+        )
+    if branch_view_allowed(normalized):
         return None
     return error_response(
         "Sem permissão para acessar refugos desta filial.",

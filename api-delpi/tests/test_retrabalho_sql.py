@@ -17,3 +17,14 @@ def test_resumo_query_uses_view_with_nolock_and_branch_filter() -> None:
     assert "LTRIM(RTRIM(FILIAL)) = ?" in query
     assert "LTRIM(RTRIM(MOTIVO)) = ?" in query
     assert params == ("2025-07-06", "2026-07-06", "01", "RT")
+
+
+def test_resumo_query_consolidated_uses_valid_branch_in_clause() -> None:
+    query, params = build_resumo_query(
+        start_date="2025-07-06",
+        end_date="2026-07-06",
+        branch=None,
+    )
+
+    assert "LTRIM(RTRIM(FILIAL)) IN (?, ?)" in query
+    assert params == ("2025-07-06", "2026-07-06", "01", "02", "RT")

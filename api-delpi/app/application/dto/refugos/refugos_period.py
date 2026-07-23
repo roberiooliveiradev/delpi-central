@@ -19,7 +19,7 @@ def _months_inclusive(start: date, end: date) -> int:
 class RefugosPeriod:
     start_date: date
     end_date: date
-    filial: str
+    filial: str | None
 
     @classmethod
     def resolve(
@@ -28,11 +28,13 @@ class RefugosPeriod:
         filial: str | None,
         data_inicio: str | None = None,
         data_fim: str | None = None,
+        require_filial: bool = True,
     ) -> RefugosPeriod:
-        normalized_filial = str(filial or "").strip()
-        if not normalized_filial:
-            raise ValueError("filial é obrigatória.")
-        if normalized_filial not in VALID_REFUGOS_BRANCHES:
+        normalized_filial = str(filial or "").strip() or None
+        if normalized_filial is None:
+            if require_filial:
+                raise ValueError("filial é obrigatória.")
+        elif normalized_filial not in VALID_REFUGOS_BRANCHES:
             raise ValueError('filial inválida. Use "01" ou "02".')
 
         utils = Utils()
@@ -67,7 +69,7 @@ class RefugosPeriod:
     def iso_range(self) -> tuple[str, str]:
         return self.start_date.isoformat(), self.end_date.isoformat()
 
-    def periodo_dict(self) -> dict[str, str]:
+    def periodo_dict(self) -> dict[str, str | None]:
         start, end = self.iso_range()
         return {"dataInicio": start, "dataFim": end, "filial": self.filial}
 

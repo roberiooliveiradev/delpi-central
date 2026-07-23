@@ -57,7 +57,7 @@ Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto
 | `filters_applied` | `recurso`, `centro_custo`, `codigo_operador` (afetam só o numerador) |
 | `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
-Parâmetros: mesmos de `/retrabalhos/resumo` (`filial` obrigatória; período e filtros opcionais).
+Parâmetros: período e filtros opcionais iguais a `/retrabalhos/resumo`. `filial` é **opcional** — omitida consolida SC+ES (`01`+`02`) no numerador e no ROL.
 
 ---
 

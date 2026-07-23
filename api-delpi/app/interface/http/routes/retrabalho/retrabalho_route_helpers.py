@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional
 from fastapi import Query
 
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
     RETRABALHO_ORDER_BY_DETALHES_QUERY,
     RETRABALHO_ORDER_BY_RANKING_QUERY,
@@ -29,7 +30,7 @@ from app.utils.logger import log_error
 
 def build_retrabalho_query_request(
     *,
-    filial: str,
+    filial: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     recurso: Optional[str] = None,
@@ -37,6 +38,7 @@ def build_retrabalho_query_request(
     codigo_operador: Optional[str] = None,
     order_by: Optional[str] = None,
     limit: Optional[int] = None,
+    require_filial: bool = True,
 ) -> RetrabalhoQueryRequest:
     return RetrabalhoQueryRequest.from_query(
         filial=filial,
@@ -47,6 +49,7 @@ def build_retrabalho_query_request(
         codigo_operador=codigo_operador,
         order_by=order_by,
         limit=limit,
+        require_filial=require_filial,
     )
 
 
@@ -111,6 +114,12 @@ def execute_retrabalho_route(
 
 def FILIAL_QUERY():
     return BRANCH_QUERY_REQUIRED()
+
+
+def FILIAL_QUERY_OPTIONAL():
+    return BRANCH_QUERY_OPTIONAL()
+
+
 def DATA_INICIO_QUERY():
     return Query(
     None,

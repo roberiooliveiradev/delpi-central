@@ -111,6 +111,34 @@ def test_scrap_cost_pct_returns_envelope(
     return_value=None,
 )
 @patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_scrap_cost_pct_use_case"
+)
+def test_scrap_cost_pct_allows_omitted_filial(
+    mock_builder, _mock_branch, refugos_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "branch": "consolidated",
+        "scrap_cost_pct": 1.0,
+    }
+    mock_builder.return_value = use_case
+
+    response = refugos_client.get(
+        "/refugos/scrap_cost_pct",
+        params={"dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_refugos_scrap_cost_pct"
+    assert body["data"]["branch"] == "consolidated"
+
+
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.branch_access_error",
+    return_value=None,
+)
+@patch(
     "app.interface.http.routes.refugos.refugos_router.build_get_refugos_rankings_use_case"
 )
 def test_rankings_returns_playbook_meta(
