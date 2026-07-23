@@ -182,3 +182,19 @@ export function partitionSelectionIntoLayoutUnits(
 
   return units;
 }
+
+/**
+ * Bbox do grupo pai para contorno pontilhado enquanto filhos estão isolados.
+ * null quando a seleção já é o grupo fechado ou não há filhos de grupo.
+ */
+export function resolveParentGroupHintFrame(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): ComunicadoFrame | null {
+  if (resolveClosedGroupSelection(blocks, selectedIds)) return null;
+  const children = resolveGroupChildrenSelection(blocks, selectedIds);
+  if (!children) return null;
+  const members = membersOfGroup(blocks, children.groupId);
+  if (members.length < 2) return null;
+  return unionFramePercent(members.map((member) => member.frame));
+}

@@ -1903,8 +1903,23 @@ body.td-composer--marqueeing *{
   outline-offset: var(--td-global-selection-pad, 6px);
   overflow: visible;
 }
+/*
+ * Igual ao bloco individual: container oco (`pointer-events: none`).
+ * Só edges/resize/rotate recebem hit — senão o overlay engole o 2º clique
+ * nos membros e impede isolar subitens.
+ */
 .dashboard-tv-dashboard .td-composer__group-chrome .td-composer__block-handles{
-  pointer-events: auto;
+  pointer-events: none;
+}
+/* Contorno do pai enquanto um filho está isolado (sem handles / sem hit). */
+.dashboard-tv-dashboard .td-composer__group-chrome--parent-hint{
+  z-index: 35;
+  outline-width: max(1.5px, calc(var(--td-selection-outline-width, 2.5px) - 0.5px));
+  outline-color: color-mix(
+    in srgb,
+    var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff)) 55%,
+    transparent
+  );
 }
 .dashboard-tv-dashboard .td-layers-list__item--grouped .td-layers-list__type{
   color: var(--td-accent, #3b82f6);

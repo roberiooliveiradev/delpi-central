@@ -38,6 +38,7 @@ import {
 } from "../utils/comunicadoMarquee";
 import {
   resolveClosedGroupSelection,
+  resolveParentGroupHintFrame,
   unionFramePercent,
 } from "../utils/comunicadoGrouping";
 import {
@@ -528,6 +529,11 @@ export function ComunicadoComposerCanvas() {
       null
     );
   }, [closedGroup, primarySelected]);
+  /** Contorno pontilhado do pai quando um (ou mais) filhos estão isolados. */
+  const parentGroupHintFrame = useMemo(
+    () => resolveParentGroupHintFrame(blocks, selectedIds),
+    [blocks, selectedIds],
+  );
 
   const showResizeHandles = (blockId: string) => {
     const block = blocks.find((item) => item.id === blockId);
@@ -850,6 +856,19 @@ export function ComunicadoComposerCanvas() {
               frame={groupUnionFrame}
               anchorBlock={groupAnchorBlock}
               onPointerDown={startDragRespectingPan}
+            />
+          ) : null}
+          {parentGroupHintFrame ? (
+            <div
+              className="td-composer__group-chrome td-composer__group-chrome--parent-hint"
+              style={{
+                left: `${parentGroupHintFrame.x}%`,
+                top: `${parentGroupHintFrame.y}%`,
+                width: `${parentGroupHintFrame.w}%`,
+                height: `${parentGroupHintFrame.h}%`,
+              }}
+              data-group-chrome="parent-hint"
+              aria-hidden="true"
             />
           ) : null}
           {marqueeStyle ? (

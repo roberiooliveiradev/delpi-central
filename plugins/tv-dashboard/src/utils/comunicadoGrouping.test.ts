@@ -7,6 +7,7 @@ import {
   isIsolatedGroupChildSelection,
   partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
+  resolveParentGroupHintFrame,
   selectedHasGroup,
   ungroupBlocks,
   unionFramePercent,
@@ -87,5 +88,22 @@ describe("comunicadoGrouping", () => {
     const units = partitionSelectionIntoLayoutUnits([a, b], [a.id]);
     expect(units).toHaveLength(1);
     expect(units[0]?.key).toBe(a.id);
+  });
+
+  it("resolveParentGroupHintFrame só com filhos isolados", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    a.frame = { x: 10, y: 10, w: 20, h: 10 };
+    b.frame = { x: 15, y: 25, w: 20, h: 10 };
+    expect(resolveParentGroupHintFrame([a, b], [a.id, b.id])).toBeNull();
+    expect(resolveParentGroupHintFrame([a, b], [a.id])).toEqual({
+      x: 10,
+      y: 10,
+      w: 25,
+      h: 25,
+    });
+    expect(resolveParentGroupHintFrame([a, b], [])).toBeNull();
   });
 });
