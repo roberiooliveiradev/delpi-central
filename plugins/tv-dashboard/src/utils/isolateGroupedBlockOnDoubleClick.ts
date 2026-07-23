@@ -1,10 +1,12 @@
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
-import { resolveClosedGroupSelection } from "./comunicadoGrouping";
+import { resolveStageDblClickAction } from "./stageInteractionPolicy";
 
 /**
- * Clique duplo em membro de grupo → isola o subitem (sem expandir o grupo).
- * Retorna true se a seleção foi alterada.
+ * Clique duplo em membro de grupo (não-texto) → isola o subitem.
+ * Texto/título/shape: use `enterTextEdit` / `resolveStageDblClickAction`.
+ *
+ * @deprecated Preferir `resolveStageDblClickAction` + apply no Composer.
  */
 export function isolateGroupedBlockOnDoubleClick(params: {
   block: ComunicadoBlock;
@@ -12,13 +14,8 @@ export function isolateGroupedBlockOnDoubleClick(params: {
   selectedIds: string[];
   selectBlock: (id: string, options?: { expandGroup?: boolean }) => void;
 }): boolean {
-  const { block, blocks, selectedIds, selectBlock } = params;
-  if (!block.groupId) return false;
-  const closed = resolveClosedGroupSelection(blocks, selectedIds);
-  const inClosedGroup = Boolean(closed && closed.groupId === block.groupId);
-  const alreadyIsolated =
-    selectedIds.length === 1 && selectedIds[0] === block.id;
-  if (alreadyIsolated && !inClosedGroup) return false;
-  selectBlock(block.id, { expandGroup: false });
+  const action = resolveStageDblClickAction(params);
+  if (action.type !== "isolate-child") return false;
+  params.selectBlock(action.blockId, { expandGroup: false });
   return true;
 }

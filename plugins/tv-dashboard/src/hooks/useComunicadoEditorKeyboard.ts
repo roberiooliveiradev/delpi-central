@@ -2,7 +2,7 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
-import { resolveEscapeHierarchyAction } from "../utils/stageGroupedSelection";
+import { resolveStageEscapeAction } from "../utils/stageInteractionPolicy";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -42,7 +42,7 @@ export function useComunicadoEditorKeyboard({
       const key = event.key.toLowerCase();
 
       if (event.key === "Escape") {
-        const escape = resolveEscapeHierarchyAction({
+        const escape = resolveStageEscapeAction({
           blocks,
           selectedIds,
           hasPartSelection,

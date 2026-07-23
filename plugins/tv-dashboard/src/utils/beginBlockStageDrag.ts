@@ -3,10 +3,8 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { BlockDragMode } from "../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "./comunicadoGrouping";
-import {
-  resolveGroupedBlockPointerDownAction,
-  resolveStageSelectionHierarchy,
-} from "./stageGroupedSelection";
+import { resolveStageSelectionHierarchy } from "./stageGroupedSelection";
+import { resolveStagePointerDownAction } from "./stageInteractionPolicy";
 
 type BeginBlockStageDragArgs = {
   event: ReactPointerEvent;
@@ -29,8 +27,7 @@ type BeginBlockStageDragArgs = {
 
 /**
  * Seleção + arm de multi + startDrag move.
- * Hierarquia: `resolveGroupedBlockPointerDownAction`
- * (1º clique = grupo pai, 2º = subitem, Shift = multi de filhos).
+ * Hierarquia: `resolveStagePointerDownAction` (policy → grupo L2/L3).
  */
 export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean {
   const {
@@ -46,7 +43,7 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     armTapDeselect,
   } = args;
 
-  const action = resolveGroupedBlockPointerDownAction({
+  const action = resolveStagePointerDownAction({
     block,
     blocks,
     selectedIds,

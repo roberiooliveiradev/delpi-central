@@ -27,7 +27,7 @@ const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
-import { isolateGroupedBlockOnDoubleClick } from "../utils/isolateGroupedBlockOnDoubleClick";
+import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   blocksInMarquee,
   mergeMarqueeSelection,
@@ -124,6 +124,7 @@ export function ComunicadoComposerCanvas() {
     selectBlocksByIds,
     clearSelection,
     editingTextId,
+    enterTextEdit,
     canvasRef,
     canvasWrapRef,
     startDrag,
@@ -714,12 +715,18 @@ export function ComunicadoComposerCanvas() {
                   event.stopPropagation();
                   event.preventDefault();
                   cancelPendingTapDeselect();
-                  isolateGroupedBlockOnDoubleClick({
+                  const action = resolveStageDblClickAction({
                     block,
                     blocks,
                     selectedIds,
-                    selectBlock,
                   });
+                  if (action.type === "enter-text-edit") {
+                    enterTextEdit(action.blockId);
+                    return;
+                  }
+                  if (action.type === "isolate-child") {
+                    selectBlock(action.blockId, { expandGroup: false });
+                  }
                 }}
                 onPointerDown={(event) => {
                   /* Ctrl/Cmd+clique: remove da seleção (não pan). */

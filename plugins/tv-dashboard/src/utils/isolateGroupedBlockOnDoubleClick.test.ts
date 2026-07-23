@@ -3,7 +3,17 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import { isolateGroupedBlockOnDoubleClick } from "./isolateGroupedBlockOnDoubleClick";
 
-function fakeBlock(id: string, groupId?: string): ComunicadoBlock {
+function fakeIcon(id: string, groupId?: string): ComunicadoBlock {
+  return {
+    id,
+    type: "icon",
+    iconName: "Target",
+    frame: { x: 10, y: 10, w: 20, h: 10 },
+    ...(groupId ? { groupId } : {}),
+  };
+}
+
+function fakeText(id: string, groupId?: string): ComunicadoBlock {
   return {
     id,
     type: "text",
@@ -14,9 +24,9 @@ function fakeBlock(id: string, groupId?: string): ComunicadoBlock {
 }
 
 describe("isolateGroupedBlockOnDoubleClick", () => {
-  it("isola membro quando o grupo fechado está selecionado", () => {
-    const a = fakeBlock("a", "grp");
-    const b = fakeBlock("b", "grp");
+  it("isola ícone quando o grupo fechado está selecionado", () => {
+    const a = fakeIcon("a", "grp");
+    const b = fakeIcon("b", "grp");
     const selectBlock = vi.fn();
     expect(
       isolateGroupedBlockOnDoubleClick({
@@ -29,9 +39,9 @@ describe("isolateGroupedBlockOnDoubleClick", () => {
     expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
   });
 
-  it("isola mesmo se o grupo ainda não estiver selecionado", () => {
-    const a = fakeBlock("a", "grp");
-    const b = fakeBlock("b", "grp");
+  it("isola ícone mesmo se o grupo ainda não estiver selecionado", () => {
+    const a = fakeIcon("a", "grp");
+    const b = fakeIcon("b", "grp");
     const selectBlock = vi.fn();
     expect(
       isolateGroupedBlockOnDoubleClick({
@@ -45,13 +55,28 @@ describe("isolateGroupedBlockOnDoubleClick", () => {
   });
 
   it("ignora bloco sem grupo", () => {
-    const a = fakeBlock("a");
+    const a = fakeIcon("a");
     const selectBlock = vi.fn();
     expect(
       isolateGroupedBlockOnDoubleClick({
         block: a,
         blocks: [a],
         selectedIds: ["a"],
+        selectBlock,
+      }),
+    ).toBe(false);
+    expect(selectBlock).not.toHaveBeenCalled();
+  });
+
+  it("texto em grupo não isola aqui — policy devolve enter-text-edit", () => {
+    const a = fakeText("a", "grp");
+    const b = fakeText("b", "grp");
+    const selectBlock = vi.fn();
+    expect(
+      isolateGroupedBlockOnDoubleClick({
+        block: a,
+        blocks: [a, b],
+        selectedIds: ["a", "b"],
         selectBlock,
       }),
     ).toBe(false);
