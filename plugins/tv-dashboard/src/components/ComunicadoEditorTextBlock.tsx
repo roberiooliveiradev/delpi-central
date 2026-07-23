@@ -74,7 +74,8 @@ export function ComunicadoEditorTextBlock({
     updateBlock,
     updateBlockLink,
     setEditingTextId,
-    selectBlock,
+    enterTextEdit,
+    cancelPendingTapDeselect,
     registerTextEditorBridge,
     reportTextEditSelection,
   } = useComunicadoEditor();
@@ -451,8 +452,8 @@ export function ComunicadoEditorTextBlock({
       style={style}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        selectBlock(block.id);
-        setEditingTextId(block.id);
+        cancelPendingTapDeselect();
+        enterTextEdit(block.id);
       }}
     >
       <ComunicadoBlockView block={block} fontScale={fontScale} embedded interactive />

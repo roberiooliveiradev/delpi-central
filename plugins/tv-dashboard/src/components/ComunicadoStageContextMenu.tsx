@@ -57,7 +57,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     cutSelected,
     copySelected,
     pasteFromSystemClipboard,
-    setEditingTextId,
+    enterTextEdit,
     bringToFront,
     sendToBack,
     bringForward,
@@ -204,7 +204,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
           <ContextMenuItem
             label={C.editText}
             icon={SquarePen}
-            onSelect={() => run(() => selected && setEditingTextId(selected.id))}
+            onSelect={() => run(() => selected && enterTextEdit(selected.id))}
           />
         </>
       ) : null}

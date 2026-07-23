@@ -539,6 +539,34 @@ export function useComunicadoEditorSelection({
     [clearTextEditUi, flushActiveTextEdit],
   );
 
+  /**
+   * Entra em edição inline (L5): isola o bloco (sem reexpandir grupo) e ativa caret.
+   * Preferir a `selectBlock` + `setEditingTextId` soltos — evita conflito com grupo fechado.
+   */
+  const enterTextEdit = useCallback(
+    (blockId: string) => {
+      const blocksNow = configRef.current.blocks ?? [];
+      const targetId = resolveStageSelectionTargetId(blockId, blocksNow);
+      if (!targetId) return;
+      const block = blocksNow.find((item) => item.id === targetId);
+      if (!block) return;
+      if (block.type !== "heading" && block.type !== "text" && block.type !== "shape") {
+        return;
+      }
+
+      if (editingTextIdRef.current && editingTextIdRef.current !== targetId) {
+        flushActiveTextEdit(editingTextIdRef.current);
+      }
+
+      setSelectedIds([targetId]);
+      clearPartSelections();
+      setEditingTextId(targetId);
+      clearTextEditUi();
+      requestRibbonTab(block.type === "shape" ? "shape" : "element");
+    },
+    [clearPartSelections, clearTextEditUi, configRef, flushActiveTextEdit, requestRibbonTab],
+  );
+
   const registerTextEditorBridge = useCallback((blockId: string, bridge: TextEditorBridge | null) => {
     if (bridge) textEditorBridgesRef.current.set(blockId, bridge);
     else textEditorBridgesRef.current.delete(blockId);
@@ -738,6 +766,7 @@ export function useComunicadoEditorSelection({
     clearInputPartSelection,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
+    enterTextEdit,
     textEditSelection,
     textEditSelectionStyle,
     textEditListSelection,

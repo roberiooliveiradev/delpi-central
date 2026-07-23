@@ -212,4 +212,55 @@ describe("useComunicadoEditorSelection", () => {
     });
     expect(result.current.selectedKpiParts).toEqual([{ kind: "card" }]);
   });
+
+  it("enterTextEdit isola membro de grupo e ativa edição sem reexpandir", () => {
+    const grouped: ComunicadoBlock[] = [
+      {
+        id: "t1",
+        type: "text",
+        content: "Texto",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        groupId: "g1",
+      },
+      {
+        id: "t2",
+        type: "heading",
+        content: "Titulo",
+        frame: { x: 10, y: 0, w: 10, h: 10 },
+        groupId: "g1",
+      },
+    ];
+    const configRef = { current: { version: 2 as const, blocks: grouped } };
+    const { result } = renderHook(() => {
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: grouped,
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("t1");
+    });
+    expect(result.current.selectedIds).toEqual(["t1", "t2"]);
+
+    act(() => {
+      result.current.enterTextEdit("t1");
+    });
+    expect(result.current.selectedIds).toEqual(["t1"]);
+    expect(result.current.editingTextId).toBe("t1");
+  });
+
+  it("enterTextEdit em bloco simples só ativa edição", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.enterTextEdit("a");
+    });
+    expect(result.current.selectedIds).toEqual(["a"]);
+    expect(result.current.editingTextId).toBe("a");
+  });
 });

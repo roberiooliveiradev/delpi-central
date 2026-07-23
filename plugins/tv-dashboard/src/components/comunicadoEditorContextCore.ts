@@ -151,6 +151,8 @@ export type ComunicadoEditorContextValue = {
   clearInputPartSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
+  /** Isola o bloco e entra em edição inline (texto/título/shape). */
+  enterTextEdit: (blockId: string) => void;
   textEditSelection: TextEditSelection | null;
   textEditSelectionStyle: ContentRunSelectionStyleState | null;
   textEditListSelection: ContentRunListSelectionState | null;

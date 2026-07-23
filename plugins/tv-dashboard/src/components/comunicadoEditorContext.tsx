@@ -611,6 +611,7 @@ export function ComunicadoEditorProvider({
     cancelEditKpiPart: selection.cancelEditKpiPart,
     editingTextId: selection.editingTextId,
     setEditingTextId: selection.setEditingTextId,
+    enterTextEdit: selection.enterTextEdit,
     textEditSelection: selection.textEditSelection,
     textEditSelectionStyle: selection.textEditSelectionStyle,
     textEditListSelection: selection.textEditListSelection,

@@ -52,4 +52,15 @@ describe("text edit commit cleanup contract", () => {
     expect(shapeSrc).toMatch(/commitDraftRef\.current\(\)/);
     expect(shapeSrc).not.toMatch(/\}, \[isEditing, commitDraft\]\)/);
   });
+
+  it("duplo clique usa enterTextEdit (não selectBlock cru)", () => {
+    const textSrc = readFileSync(join(base, "ComunicadoEditorTextBlock.tsx"), "utf8");
+    const shapeSrc = readFileSync(join(base, "ComunicadoEditorShapeBlock.tsx"), "utf8");
+    expect(textSrc).toMatch(/enterTextEdit\(block\.id\)/);
+    expect(textSrc).toMatch(/cancelPendingTapDeselect\(\)/);
+    expect(textSrc).not.toMatch(/selectBlock\(block\.id\)/);
+    expect(shapeSrc).toMatch(/enterTextEdit\(block\.id\)/);
+    expect(shapeSrc).toMatch(/cancelPendingTapDeselect\(\)/);
+    expect(shapeSrc).not.toMatch(/selectBlock\(block\.id\)/);
+  });
 });

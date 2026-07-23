@@ -38,9 +38,9 @@ export function ComunicadoEditorShapeBlock({
     updateBlockContent,
     updateBlock,
     setEditingTextId,
-    selectBlock,
+    enterTextEdit,
+    cancelPendingTapDeselect,
     registerTextEditorBridge,
-    requestRibbonTab,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef(block);
@@ -178,9 +178,8 @@ export function ComunicadoEditorShapeBlock({
       style={style}
       onDoubleClick={(event) => {
         event.stopPropagation();
-        selectBlock(block.id);
-        setEditingTextId(block.id);
-        requestRibbonTab("shape");
+        cancelPendingTapDeselect();
+        enterTextEdit(block.id);
       }}
     >
       <ComunicadoBlockView block={block} fontScale={fontScale} embedded interactive />
