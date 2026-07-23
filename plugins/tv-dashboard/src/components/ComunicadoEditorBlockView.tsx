@@ -944,8 +944,9 @@ function EditorKpiViewBlock({
           onPartContentCommit,
           onPartEditCancel: cancelEditKpiPart,
           onPartMovePointerDown,
+          onPartResizePointerDown,
           onPartFrameChange,
-          /* Resize/raio só no wrap do bloco — mesmo padrão de formas. */
+          onPartCornerAdjustPointerDown,
         }
       : null;
 

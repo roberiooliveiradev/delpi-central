@@ -79,12 +79,31 @@ function formatKpiValue(
   unit?: string,
 ): string {
   if (value == null || value === "") return "—";
-  if (format === "raw" || format == null) {
+
+  const numeric = parseKpiNumericValue(value);
+
+  /**
+   * `raw` explícito: se o valor numérico tem excesso de casas (float de API),
+   * formata como número — senão o FitText do card fica travado em fonte miúda.
+   */
+  if (format === "raw") {
+    const base = String(value);
+    if (numeric != null && /^-?\d+\.\d{4,}$/.test(base.trim())) {
+      const text = formatNumber(numeric);
+      return unit ? `${text} ${unit}` : text;
+    }
+    return unit && !base.includes(unit) ? `${base}${unit}` : base;
+  }
+
+  if (format == null) {
+    if (numeric != null) {
+      const text = formatNumber(numeric);
+      return unit ? `${text} ${unit}` : text;
+    }
     const base = String(value);
     return unit && !base.includes(unit) ? `${base}${unit}` : base;
   }
 
-  const numeric = parseKpiNumericValue(value);
   if (numeric == null) {
     const base = String(value);
     return unit && !base.includes(unit) ? `${base}${unit}` : base;

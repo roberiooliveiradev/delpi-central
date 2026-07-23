@@ -131,7 +131,7 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
               <FormSelectControl
                 id="td-kpi-format"
                 ariaLabel="Formato do valor"
-                value={options.valueFormat ?? "raw"}
+                value={options.valueFormat ?? "number"}
                 onChange={(value) =>
                   patchOptions({
                     valueFormat: value as ComunicadoKpiOptions["valueFormat"],

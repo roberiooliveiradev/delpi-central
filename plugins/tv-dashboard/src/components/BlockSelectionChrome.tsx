@@ -47,8 +47,8 @@ export function BlockSelectionChrome({
   allowResize,
   onPointerDown,
 }: Props) {
-  const showAdjust =
-    blockSupportsShapeChromeHandles(block) && block.type !== "kpi_view";
+  /* KPI incluso — `comunicadoBlockShapeChrome` já resolve cantos da parte `card`. */
+  const showAdjust = blockSupportsShapeChromeHandles(block);
 
   return (
     <div className="td-composer__block-handles">

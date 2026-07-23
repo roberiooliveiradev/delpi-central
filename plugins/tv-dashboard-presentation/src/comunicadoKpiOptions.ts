@@ -26,7 +26,8 @@ export const DEFAULT_COMUNICADO_KPI_OPTIONS: ComunicadoKpiOptions = {
   showIcon: true,
   iconName: DECK_KPI_DEFAULTS.iconName,
   tone: "default",
-  valueFormat: "raw",
+  /* Número formatado (pt-BR) — raw deixa floats longos e o FitText fica miúdo no card. */
+  valueFormat: "number",
   backgroundColor: DECK_KPI_DEFAULTS.backgroundColor,
   valueColor: "auto",
 };

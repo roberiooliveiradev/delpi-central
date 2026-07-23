@@ -332,12 +332,15 @@ export function DelpiKpiCard({
 
   const valueAutoFit = kpiPartUsesAutoFitFont("value", parts.value?.style);
   const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
+  const titleAutoFit = kpiPartUsesAutoFitFont("title", parts.title?.style);
+  const titleFontSizePx = resolveKpiPartFontSize("title", parts.title?.style);
 
   const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.title?.style,
-        fontSize: resolveKpiPartFontSize("title", parts.title?.style),
+        // Auto-fit: FitText define o tamanho; não fixar fontSize no host.
+        ...(titleAutoFit ? { fontSize: undefined } : { fontSize: titleFontSizePx }),
         color: resolvedTitleColor,
       },
       { flexPart: false },
@@ -509,7 +512,14 @@ export function DelpiKpiCard({
                   />
                 ) : (
                   <>
-                    {titleContent}
+                    <FitText
+                      fixedPx={titleAutoFit ? null : titleFontSizePx}
+                      minPx={12}
+                      maxPx={120}
+                      className="delpi-kpi-card__title-fit"
+                    >
+                      {titleContent}
+                    </FitText>
                     {titleHint && DELPI_KPI_CLASS_NAMES.labelHelp ? (
                       <HelpTooltip
                         content={titleHint}

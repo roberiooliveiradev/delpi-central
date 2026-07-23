@@ -100,7 +100,7 @@ describe("DelpiKpiCard chrome", () => {
 
   it("mantém tipografia de parts com e sem interaction (deselect)", () => {
     const kpiParts = {
-      title: { style: { fontSize: 18, color: "#94a3b8" } },
+      title: { style: { fontSize: 22, color: "#94a3b8" } },
       value: { style: { fontSize: 64, color: "#ffffff" } },
     };
 
@@ -111,15 +111,21 @@ describe("DelpiKpiCard chrome", () => {
       <DelpiKpiCard label="Consumo" value="10" kpiParts={kpiParts} interaction={null} />,
     );
 
-    const selectedTitle = selected.container.querySelector(".delpi-kpi-card__label") as HTMLElement;
-    const deselectedTitle = deselected.container.querySelector(
-      ".delpi-kpi-card__label",
+    const selectedTitle = selected.container.querySelector(
+      ".delpi-kpi-card__label .delpi-ui-fit-text",
     ) as HTMLElement;
-    expect(selectedTitle.style.fontSize).toBe("18px");
-    expect(deselectedTitle.style.fontSize).toBe("18px");
+    const deselectedTitle = deselected.container.querySelector(
+      ".delpi-kpi-card__label .delpi-ui-fit-text",
+    ) as HTMLElement;
+    expect(selectedTitle.style.fontSize).toBe("22px");
+    expect(deselectedTitle.style.fontSize).toBe("22px");
 
-    const selectedValue = selected.container.querySelector(".delpi-ui-fit-text") as HTMLElement;
-    const deselectedValue = deselected.container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    const selectedValue = selected.container.querySelector(
+      ".delpi-kpi-card__value .delpi-ui-fit-text",
+    ) as HTMLElement;
+    const deselectedValue = deselected.container.querySelector(
+      ".delpi-kpi-card__value .delpi-ui-fit-text",
+    ) as HTMLElement;
     expect(selectedValue.style.fontSize).toBe("64px");
     expect(deselectedValue.style.fontSize).toBe("64px");
   });
@@ -238,7 +244,7 @@ describe("DelpiKpiCard chrome", () => {
         kpiParts={{ value: { style: { fontSize: 72 } } }}
       />,
     );
-    const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
     expect(fit?.style.fontSize).toBe("72px");
   });
 

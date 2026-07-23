@@ -83,4 +83,24 @@ describe("kpi_view", () => {
     expect(presentation.tone).toBe("positive");
     expect(presentation.valueText).toContain("%");
   });
+
+  it("formata número por padrão e evita float longo mesmo em raw", () => {
+    const defaultFmt = resolveKpiViewPresentation(
+      { kpi: { value: 1470.2460282202592, label: "ppm" } },
+      {},
+    );
+    expect(defaultFmt.valueText).toBe("1.470,25");
+
+    const rawShort = resolveKpiViewPresentation(
+      { kpi: { value: 1470.2460282202592, label: "ppm" } },
+      { valueFormat: "raw" },
+    );
+    expect(rawShort.valueText).toBe("1.470,25");
+
+    const rawExact = resolveKpiViewPresentation(
+      { kpi: { value: "42", label: "n" } },
+      { valueFormat: "raw" },
+    );
+    expect(rawExact.valueText).toBe("42");
+  });
 });
