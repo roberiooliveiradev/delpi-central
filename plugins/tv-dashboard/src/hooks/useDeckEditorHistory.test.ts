@@ -125,7 +125,7 @@ describe("useDeckEditorHistory", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
-  it("preserva undo no eco local e invalida pilhas em atualização remota", async () => {
+  it("preserva ponteiros de revisão no eco local e em atualização remota", async () => {
     const { result } = renderHook(() =>
       useDeckEditorHistory({
         playlistId: "pl-1",
@@ -147,7 +147,7 @@ describe("useDeckEditorHistory", () => {
 
     vi.mocked(listPlaylistHistory).mockResolvedValue(page("snap-4", 4));
     await act(async () => result.current.handleRemoteUpdate());
-    expect(result.current.canUndo).toBe(false);
+    expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
   });
 });

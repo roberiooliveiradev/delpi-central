@@ -38,41 +38,35 @@ export function useComunicadoEditorHistory({
     setHistoryTick((tick) => tick + 1);
   }, []);
 
+  /**
+   * Undo/redo do slide é sempre local e imediato.
+   * `deckHistory` só registra ponteiro de revisão no servidor (painel / eco);
+   * não pode bloquear Ctrl+Z até o save nem apagar a pilha no WS.
+   */
   const commitWithHistory = useCallback(
     (next: ComunicadoConfig) => {
-      if (deckHistory) {
-        deckHistory.recordBeforeChange();
-      } else {
-        pushPast(snapshotConfig(configRef.current));
-      }
+      pushPast(snapshotConfig(configRef.current));
+      deckHistory?.recordBeforeChange();
       applyConfig(next);
     },
     [applyConfig, configRef, deckHistory, pushPast],
   );
 
   const undo = useCallback(() => {
-    if (deckHistory) {
-      deckHistory.undo();
-      return;
-    }
     const previous = pastRef.current.pop();
     if (!previous) return;
     futureRef.current.push(snapshotConfig(configRef.current));
     applyConfig(previous);
     setHistoryTick((tick) => tick + 1);
-  }, [applyConfig, configRef, deckHistory]);
+  }, [applyConfig, configRef]);
 
   const redo = useCallback(() => {
-    if (deckHistory) {
-      deckHistory.redo();
-      return;
-    }
     const next = futureRef.current.pop();
     if (!next) return;
     pastRef.current.push(snapshotConfig(configRef.current));
     applyConfig(next);
     setHistoryTick((tick) => tick + 1);
-  }, [applyConfig, configRef, deckHistory]);
+  }, [applyConfig, configRef]);
 
   const resetLocalHistory = useCallback(() => {
     pastRef.current = [];
@@ -80,8 +74,8 @@ export function useComunicadoEditorHistory({
     setHistoryTick((tick) => tick + 1);
   }, []);
 
-  const canUndo = deckHistory ? deckHistory.canUndo : pastRef.current.length > 0;
-  const canRedo = deckHistory ? deckHistory.canRedo : futureRef.current.length > 0;
+  const canUndo = pastRef.current.length > 0;
+  const canRedo = futureRef.current.length > 0;
   void historyTick;
 
   return {

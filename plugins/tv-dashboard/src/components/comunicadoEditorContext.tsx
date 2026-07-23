@@ -475,6 +475,27 @@ export function ComunicadoEditorProvider({
     [blockActions],
   );
 
+  const updateBlockLive = useCallback(
+    (blockId: string, patch: Partial<ComunicadoBlock>) => {
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === blockId ? ({ ...block, ...patch } as ComunicadoBlock) : block,
+      );
+      applyConfig({ ...configRef.current, blocks: nextBlocks });
+    },
+    [applyConfig],
+  );
+
+  const snapshotEditorConfig = useCallback(() => configRef.current, []);
+
+  const finalizeHistoryGesture = useCallback(
+    (before: ComunicadoConfig) => {
+      pushPast(before);
+      deckHistory?.recordBeforeChange(serializeComunicadoConfig(before));
+      applyConfig(configRef.current);
+    },
+    [applyConfig, deckHistory, pushPast],
+  );
+
   const getClipboardSources = useCallback(
     () =>
       selection.selectedBlocks.length > 0
@@ -637,6 +658,9 @@ export function ComunicadoEditorProvider({
     setSpeakerNotes,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,
+    updateBlockLive,
+    snapshotEditorConfig,
+    finalizeHistoryGesture,
     updateBlocksAtomically,
     updateBlockContent: blockActions.updateBlockContent,
     updateBlockTextFields: blockActions.updateBlockTextFields,

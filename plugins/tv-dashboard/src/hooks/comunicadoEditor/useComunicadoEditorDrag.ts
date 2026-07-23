@@ -207,6 +207,11 @@ export function useComunicadoEditorDrag({
       multiDragRef.current = null;
       if (!before) return;
 
+      const recordGestureHistory = () => {
+        pushPast(before);
+        deckHistory?.recordBeforeChange(serializeComunicadoConfig(before));
+      };
+
       if (mode === "rotate" || mode === "adjust") {
         const beforeBlock = before.blocks?.find((block) => block.id === blockId);
         const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
@@ -228,11 +233,7 @@ export function useComunicadoEditorDrag({
           applyConfig(configRef.current);
           return;
         }
-        if (deckHistory) {
-          deckHistory.recordBeforeChange(serializeComunicadoConfig(before));
-        } else {
-          pushPast(before);
-        }
+        recordGestureHistory();
         applyConfig(configRef.current);
         return;
       }
@@ -254,12 +255,11 @@ export function useComunicadoEditorDrag({
 
         let snappedFrame = current.frame;
         let didSnap = false;
-        /* Multi: o live já encaixou o primário; não reencaixar cada um (quebra o delta). */
-        if (snapToObjectsRef.current && idsToFinalize.length === 1) {
-          const peers = peerFramesForSmartGuides(nextBlocks, draggedIds);
-          snappedFrame = snapFrameToPeerBlocks(snappedFrame, peers, snapMode).frame;
-          didSnap = true;
-        }
+        /*
+         * Snap a objetos já roda no live (`handleUpdateFrame`). Reaplicar no
+         * pointerup puxa o frame de novo (ex.: item centralizado “salta” ao soltar).
+         * No fim só grade / clamp.
+         */
         if (snapToGridRef.current) {
           snappedFrame = snapComunicadoFrame(current, snappedFrame, snapMode, snapPercents);
           didSnap = true;
@@ -309,11 +309,7 @@ export function useComunicadoEditorDrag({
         return;
       }
 
-      if (deckHistory) {
-        deckHistory.recordBeforeChange(serializeComunicadoConfig(before));
-      } else {
-        pushPast(before);
-      }
+      recordGestureHistory();
       applyConfig(nextConfig);
     },
     [
@@ -322,7 +318,6 @@ export function useComunicadoEditorDrag({
       deckHistory,
       pushPast,
       snapToGridRef,
-      snapToObjectsRef,
       stageGridSizePercentRef,
     ],
   );

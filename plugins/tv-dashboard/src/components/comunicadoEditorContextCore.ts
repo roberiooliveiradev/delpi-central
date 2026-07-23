@@ -225,6 +225,12 @@ export type ComunicadoEditorContextValue = {
   setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
+  /** Patch live sem empilhar histórico (gesto de parte no palco). */
+  updateBlockLive: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
+  /** Snapshot atual do config (antes de gesto live). */
+  snapshotEditorConfig: () => ComunicadoConfig;
+  /** Empilha undo do estado anterior após gesto live. */
+  finalizeHistoryGesture: (before: ComunicadoConfig) => void;
   /** Aplica patches de vários blocos em um único commit de config/histórico. */
   updateBlocksAtomically: (
     patches: ReadonlyArray<{ blockId: string; patch: Partial<ComunicadoBlock> }>,

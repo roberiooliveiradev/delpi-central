@@ -247,25 +247,17 @@ export function useDeckEditorHistory({
   );
 
   const handleRemoteUpdate = useCallback(async () => {
-    const previousRevision = currentRevisionRef.current;
     const refreshed = await loadHistory(1);
-    if (pendingRef.current && refreshed?.currentRevision != null) {
+    if (refreshed?.currentRevision == null) return;
+    /*
+     * Nunca zerar ponteiros de undo no eco WS / revisão alheia.
+     * Apagar a pilha aqui fazia o histórico “sumir” após save ou sync —
+     * o Ctrl+Z do slide já é local (`useComunicadoEditorHistory`).
+     */
+    if (pendingRef.current) {
       lastLocalRevisionRef.current = refreshed.currentRevision;
-      return;
     }
-    if (
-      previousRevision != null &&
-      refreshed?.currentRevision != null &&
-      refreshed.currentRevision !== previousRevision &&
-      refreshed.currentRevision !== lastLocalRevisionRef.current
-    ) {
-      pastRef.current = [];
-      futureRef.current = [];
-      pendingRef.current = false;
-      refreshAvailability();
-      persistStacks();
-    }
-  }, [loadHistory, persistStacks, refreshAvailability]);
+  }, [loadHistory]);
 
   const reset = useCallback(() => {
     pastRef.current = [];

@@ -52,18 +52,22 @@ describe("useComunicadoEditorHistory", () => {
     expect(applyConfig).toHaveBeenLastCalledWith(v2Snap);
   });
 
-  it("com deckHistory delega undo/redo e recordBeforeChange", () => {
+  it("com deckHistory ainda empilha undo local imediato (não espera save)", () => {
     const applyConfig = vi.fn();
     const deckHistory = {
       recordBeforeChange: vi.fn(),
       undo: vi.fn(),
       redo: vi.fn(),
-      canUndo: true,
+      canUndo: false,
       canRedo: false,
       historyEpoch: 0,
       setLiveComunicadoConfig: vi.fn(),
     };
-    const configRef = { current: emptyConfig() };
+    const configRef = {
+      current: emptyConfig([
+        { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v1" } as never,
+      ]),
+    };
 
     const { result } = renderHook(() =>
       useComunicadoEditorHistory({
@@ -73,17 +77,23 @@ describe("useComunicadoEditorHistory", () => {
       }),
     );
 
-    act(() => {
-      result.current.commitWithHistory(emptyConfig());
-    });
-    expect(deckHistory.recordBeforeChange).toHaveBeenCalledOnce();
+    const v1Snap = snapshotConfig(configRef.current);
+    const v2 = emptyConfig([
+      { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v2" } as never,
+    ]);
 
     act(() => {
-      result.current.undo();
-      result.current.redo();
+      result.current.commitWithHistory(v2);
     });
-    expect(deckHistory.undo).toHaveBeenCalledOnce();
-    expect(deckHistory.redo).toHaveBeenCalledOnce();
-    expect(applyConfig).toHaveBeenCalledTimes(1);
+    expect(deckHistory.recordBeforeChange).toHaveBeenCalledOnce();
+    expect(result.current.canUndo).toBe(true);
+
+    configRef.current = v2;
+    act(() => {
+      result.current.undo();
+    });
+    expect(deckHistory.undo).not.toHaveBeenCalled();
+    expect(applyConfig).toHaveBeenLastCalledWith(v1Snap);
+    expect(result.current.canRedo).toBe(true);
   });
 });

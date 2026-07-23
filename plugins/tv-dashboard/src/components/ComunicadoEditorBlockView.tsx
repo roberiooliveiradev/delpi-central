@@ -83,6 +83,7 @@ import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { resolveCompositePartPointerAction, isCompositeContentPart } from "../utils/compositePartSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
@@ -167,6 +168,9 @@ function EditorChartViewBlock({
     cancelEditChartPart,
     requestRibbonTab,
     updateBlock,
+    updateBlockLive,
+    snapshotEditorConfig,
+    finalizeHistoryGesture,
     blocks,
     startDrag,
     armMultiDragSelection,
@@ -325,6 +329,10 @@ function EditorChartViewBlock({
       const startClientY = event.clientY;
       let lastParts = block.chartParts;
       let dragged = false;
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
@@ -337,17 +345,24 @@ function EditorChartViewBlock({
           y: origin.y + dy,
         });
         lastParts = upsertChartPartState(lastParts, ref, { frame: nextFrame });
-        updateBlock(block.id, { chartParts: lastParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ chartParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.chartParts, block.id, updateBlock],
+    [
+      block.chartParts,
+      block.id,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const onPartResizePointerDown = useCallback(
@@ -372,6 +387,10 @@ function EditorChartViewBlock({
       const originParts = block.chartParts;
       const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
       const aspectRatio = originSize.w / Math.max(originSize.h, 0.1);
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const applyLive = (nextFrame: ReturnType<typeof clampChartPartFrame>) => {
         let nextParts = upsertChartPartState(originParts, ref, { frame: nextFrame });
@@ -379,7 +398,7 @@ function EditorChartViewBlock({
           w: nextFrame.w ?? originSize.w,
           h: nextFrame.h ?? originSize.h,
         });
-        updateBlock(block.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ chartParts: nextParts } as Partial<ComunicadoBlock>);
       };
 
       const onMove = (ev: PointerEvent) => {
@@ -399,11 +418,18 @@ function EditorChartViewBlock({
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.chartParts, block.id, updateBlock],
+    [
+      block.chartParts,
+      block.id,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const onPartFrameChange = useCallback(
@@ -666,6 +692,9 @@ function EditorKpiViewBlock({
     cancelEditKpiPart,
     requestRibbonTab,
     updateBlock,
+    updateBlockLive,
+    snapshotEditorConfig,
+    finalizeHistoryGesture,
     blocks,
     startDrag,
     armMultiDragSelection,
@@ -797,6 +826,10 @@ function EditorKpiViewBlock({
       const startClientX = event.clientX;
       const startClientY = event.clientY;
       let dragged = false;
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
@@ -809,17 +842,24 @@ function EditorKpiViewBlock({
           y: origin.y + dy,
         });
         lastParts = upsertKpiPartState(lastParts, ref, { frame: nextFrame });
-        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ kpiParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.kpiParts, updateBlock],
+    [
+      block.id,
+      block.kpiParts,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const onPartResizePointerDown = useCallback(
@@ -852,6 +892,10 @@ function EditorKpiViewBlock({
       const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
       const aspectRatio = originSize.w / Math.max(originSize.h, 0.1);
       let resized = false;
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const applyLive = (nextFrame: ReturnType<typeof clampKpiPartFrame>) => {
         let nextParts = upsertKpiPartState(originParts, ref, { frame: nextFrame });
@@ -859,7 +903,7 @@ function EditorKpiViewBlock({
           w: nextFrame.w ?? originSize.w,
           h: nextFrame.h ?? originSize.h,
         });
-        updateBlock(block.id, { kpiParts: nextParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ kpiParts: nextParts } as Partial<ComunicadoBlock>);
       };
 
       const onMove = (ev: PointerEvent) => {
@@ -881,11 +925,18 @@ function EditorKpiViewBlock({
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.kpiParts, updateBlock],
+    [
+      block.id,
+      block.kpiParts,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const onPartFrameChange = useCallback(
@@ -912,6 +963,10 @@ function EditorKpiViewBlock({
       const startLocalX = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
       const startRaw = kpiPartCornerAdjFromLocalX(startLocalX);
       let lastParts = block.kpiParts;
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const onMove = (ev: PointerEvent) => {
         const localX = ((ev.clientX - rect.left) / Math.max(rect.width, 1)) * 100;
@@ -924,17 +979,24 @@ function EditorKpiViewBlock({
         lastParts = upsertKpiPartState(lastParts, ref, {
           style: { borderRadius: nextRadius },
         });
-        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ kpiParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.kpiParts, updateBlock],
+    [
+      block.id,
+      block.kpiParts,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const interaction =
@@ -999,6 +1061,9 @@ function EditorInputBlock({
     selectInputPart,
     requestRibbonTab,
     updateBlock,
+    updateBlockLive,
+    snapshotEditorConfig,
+    finalizeHistoryGesture,
     blocks,
     startDrag,
     armMultiDragSelection,
@@ -1137,6 +1202,10 @@ function EditorInputBlock({
       const startClientX = event.clientX;
       const startClientY = event.clientY;
       let dragged = false;
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
@@ -1149,12 +1218,13 @@ function EditorInputBlock({
           y: origin.y + dy,
         });
         lastParts = upsertInputPartState(lastParts, ref, { frame: nextFrame });
-        updateBlock(block.id, { inputParts: lastParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ inputParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
         // Clique sem arrastar na caixa → foca o valor (edição).
         if (!dragged && ref.kind === "control") {
           const host = event.currentTarget as HTMLElement;
@@ -1165,7 +1235,13 @@ function EditorInputBlock({
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.inputParts, updateBlock],
+    [
+      block.id,
+      block.inputParts,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   const onPartResizePointerDown = useCallback(
@@ -1195,6 +1271,10 @@ function EditorInputBlock({
       const startClientX = event.clientX;
       const startClientY = event.clientY;
       const beforeSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
+      const gesture = startLiveBlockPatchGesture(
+        { snapshotEditorConfig, updateBlockLive, finalizeHistoryGesture },
+        block.id,
+      );
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
@@ -1205,17 +1285,24 @@ function EditorInputBlock({
           w: nextFrame.w ?? beforeSize.w,
           h: nextFrame.h ?? beforeSize.h,
         });
-        updateBlock(block.id, { inputParts: lastParts } as Partial<ComunicadoBlock>);
+        gesture.apply({ inputParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        gesture.finish();
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [block.id, block.inputParts, updateBlock],
+    [
+      block.id,
+      block.inputParts,
+      finalizeHistoryGesture,
+      snapshotEditorConfig,
+      updateBlockLive,
+    ],
   );
 
   /**

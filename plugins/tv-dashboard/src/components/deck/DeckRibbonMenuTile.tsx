@@ -31,8 +31,9 @@ type Props = {
 };
 
 /**
- * Tile da ribbon com menu dropdown (padrão Excel: Avançar▼ / Alinhar▼).
- * Usa AnchoredPanelPortal do kit — sem segundo portal quando já está no popover colapsado.
+ * Tile da ribbon com menu dropdown.
+ * Layout em coluna: ícone + rótulo em cima, chevron abaixo
+ * (mesmo padrão dos gatilhos shape-menu / grupo colapsado).
  */
 export function DeckRibbonMenuTile({
   icon: Icon,
@@ -52,6 +53,10 @@ export function DeckRibbonMenuTile({
 
   const dismiss = () => setOpen(false);
   const enabledItems = items.filter(Boolean);
+  const toggleMenu = () => {
+    if (disabled || enabledItems.length === 0) return;
+    setOpen((prev) => !prev);
+  };
 
   const tile = (
     <div
@@ -75,7 +80,7 @@ export function DeckRibbonMenuTile({
             onPrimaryClick();
             return;
           }
-          setOpen((prev) => !prev);
+          toggleMenu();
         }}
       >
         <span className="td-ribbon-menu-tile__icon" aria-hidden="true">
@@ -90,10 +95,7 @@ export function DeckRibbonMenuTile({
         aria-label={`${label}: mais opções`}
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => {
-          if (disabled) return;
-          setOpen((prev) => !prev);
-        }}
+        onClick={toggleMenu}
       >
         <ChevronDown size={12} aria-hidden="true" />
       </button>
