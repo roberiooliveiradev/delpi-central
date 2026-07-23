@@ -21,8 +21,16 @@ export type SelectionChromeMetrics = {
   selectionPad: number;
   /** Metade do handle de canto — offset. */
   handleHalf: number;
-  /** Haste do rotate até o outline. */
+  /**
+   * Distância do centro do disco de giro até a borda superior do frame (y=0).
+   * Usada no offset do botão; não é a altura visual da haste.
+   */
   rotateStem: number;
+  /**
+   * Comprimento desenhado da haste — do fundo do disco ao topo do pill N
+   * (não atravessa o handle de redimensionamento).
+   */
+  rotateStemDraw: number;
 };
 
 /** Alvo visual na tela @ zoom 100% — alinhado aos prints de referência. */
@@ -67,6 +75,14 @@ export function resolveSelectionChromeMetrics(stageZoom: number): SelectionChrom
   const topChromeClearance = edgeThickness + adjustSize / 2 + 12;
   const rotateStem =
     Math.round((rotateSize * 0.5 + selectionPad + topChromeClearance) * 10) / 10;
+  /*
+   * Centro do disco em -rotateStem; fundo em -rotateStem + rotateSize/2.
+   * Pill N centrado em y=0 → topo em -edgeThickness/2.
+   */
+  const rotateStemDraw =
+    Math.round(
+      Math.max(0, rotateStem - rotateSize / 2 - edgeThickness / 2) * 10,
+    ) / 10;
   return {
     handleSize,
     edgeLength,
@@ -77,6 +93,7 @@ export function resolveSelectionChromeMetrics(stageZoom: number): SelectionChrom
     selectionPad,
     handleHalf: Math.round((handleSize / 2) * 10) / 10,
     rotateStem,
+    rotateStemDraw,
   };
 }
 
@@ -93,7 +110,7 @@ export function selectionChromeCssVars(
     "--td-selection-rotate-size": `${metrics.rotateSize}px`,
     "--td-selection-outline-width": `${metrics.outlineWidth}px`,
     "--td-global-selection-pad": `${metrics.selectionPad}px`,
-    "--td-selection-rotate-stem": `${metrics.rotateStem}px`,
+    "--td-selection-rotate-stem": `${metrics.rotateStemDraw}px`,
     "--td-selection-rotate-offset": `${metrics.rotateStem + metrics.rotateSize / 2}px`,
   };
 }

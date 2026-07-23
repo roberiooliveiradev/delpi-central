@@ -29,6 +29,17 @@ describe("resolveSelectionChromeMetrics", () => {
     expect(gap).toBeGreaterThanOrEqual(12);
   });
 
+  it("haste desenhada para no topo do pill N sem atravessá-lo", () => {
+    const m = resolveSelectionChromeMetrics(1);
+    expect(m.rotateStemDraw).toBe(
+      m.rotateStem - m.rotateSize / 2 - m.edgeThickness / 2,
+    );
+    const diskBottomY = -m.rotateStem + m.rotateSize / 2;
+    const stemEndY = diskBottomY + m.rotateStemDraw;
+    const pillTopY = -m.edgeThickness / 2;
+    expect(stemEndY).toBeCloseTo(pillTopY, 5);
+  });
+
   it("cresce em design px ao zoom out até o piso", () => {
     const at100 = resolveSelectionChromeMetrics(1);
     const atFloor = resolveSelectionChromeMetrics(SELECTION_CHROME_ZOOM_FLOOR);
@@ -44,11 +55,13 @@ describe("resolveSelectionChromeMetrics", () => {
   });
 
   it("selectionChromeCssVars expõe tokens para o canvas", () => {
-    const vars = selectionChromeCssVars(resolveSelectionChromeMetrics(1));
+    const m = resolveSelectionChromeMetrics(1);
+    const vars = selectionChromeCssVars(m);
     expect(vars["--td-selection-handle-size"]).toMatch(/px$/);
     expect(vars["--td-selection-edge-length"]).toMatch(/px$/);
     expect(vars["--td-selection-edge-thickness"]).toMatch(/px$/);
     expect(vars["--td-selection-outline-width"]).toMatch(/px$/);
     expect(vars["--td-global-selection-pad"]).toMatch(/px$/);
+    expect(vars["--td-selection-rotate-stem"]).toBe(`${m.rotateStemDraw}px`);
   });
 });
