@@ -428,6 +428,25 @@
 }
 
 /*
+ * Formas SVG (cruz, estrela, seta…): contorno em px de tela — mesma espessura
+ * do `border` CSS do retângulo/elipse. Sem isto, strokeWidth no viewBox 0–100
+ * engrossa com o tamanho do bloco (preserveAspectRatio=none).
+ */
+.delpi-ui-comunicado__shape-svg:not(.delpi-ui-comunicado__shape-svg--line):not(
+    .delpi-ui-comunicado__shape-svg--point
+  ) {
+  overflow: visible;
+}
+.delpi-ui-comunicado__shape-svg:not(.delpi-ui-comunicado__shape-svg--line):not(
+    .delpi-ui-comunicado__shape-svg--point
+  )
+  :is(path, polygon, polyline, rect, circle, ellipse, line) {
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/*
  * Shell do texto na caixa visual.
  * Padding / justify / align vêm de `resolveVisualBoxContentLayoutStyle` (inline) —
  * não hardcoded aqui, senão a TV diverge do verticalAlign do editor.

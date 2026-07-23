@@ -1122,7 +1122,7 @@ export function ComunicadoShapeGraphic({
       className={ensureComunicadoDualClass("tdp-comunicado__shape-svg")}
       preserveAspectRatio="none"
       aria-hidden="true"
-      style={svgShadow}
+      style={{ overflow: "visible", ...svgShadow }}
     >
       {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj, borderRadius)}
     </svg>

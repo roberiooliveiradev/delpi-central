@@ -28,4 +28,9 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     expect(css).toMatch(/flex:\s*0\s+0\s+auto/);
     expect(css).toMatch(/\.delpi-ui-comunicado__shape-text\s*\{[^}]*pointer-events:\s*none/s);
   });
+
+  it("formas SVG de área usam non-scaling-stroke (paridade com border CSS do retângulo)", () => {
+    expect(css).toMatch(/vector-effect:\s*non-scaling-stroke/);
+    expect(css).toMatch(/stroke-linejoin:\s*round/);
+  });
 });
