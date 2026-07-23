@@ -157,6 +157,11 @@ describe("comunicadoStageContextMenuActions", () => {
       canReplaceImageFromClipboard: false,
     });
     expect(isContextMenuActionEnabled("changeImageFromClipboard", noClip)).toBe(false);
+
+    const video = createBlock("video");
+    const videoState = resolveContextMenuActionState({ selected: video, canPaste: false });
+    expect(isContextMenuActionEnabled("changeImage", videoState)).toBe(true);
+    expect(isContextMenuActionEnabled("changeShape", videoState)).toBe(false);
   });
 
   it("habilita desagrupar e reagrupar conforme ribbon", () => {

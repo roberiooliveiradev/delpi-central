@@ -439,6 +439,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     changeIcon: "Alterar ícone",
     changeIconFromLibrary: "De ícones…",
     changeImage: "Alterar imagem",
+    changeVideo: "Alterar vídeo",
     changeImageFromDevice: "Este dispositivo…",
     changeImageFromLibrary: "Da biblioteca…",
     changeImageFromClipboard: "Da área de transferência…",

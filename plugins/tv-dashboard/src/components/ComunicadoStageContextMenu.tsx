@@ -410,7 +410,10 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
       {actionState.canChangeImage ? (
         <>
           <ContextMenuDivider />
-          <ContextMenuSub label={C.changeImage} icon={ImageIcon}>
+          <ContextMenuSub
+            label={selected?.type === "video" ? C.changeVideo : C.changeImage}
+            icon={ImageIcon}
+          >
             <ContextMenuItem
               label={C.changeImageFromDevice}
               icon={Monitor}
