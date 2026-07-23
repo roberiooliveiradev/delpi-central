@@ -233,7 +233,22 @@ describe("DelpiKpiCard chrome", () => {
     expect(fit.style.fontSize).not.toBe("40px");
   });
 
-  it("valor com fontSize 40 persistido usa tamanho fixo (não auto-fit)", () => {
+  it("valor com fontSize 40 + typographyMode fixed usa tamanho fixo", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="1.400"
+        fill
+        kpiParts={{
+          value: { style: { fontSize: 40, typographyMode: "fixed" } },
+        }}
+      />,
+    );
+    const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
+    expect(fit?.style.fontSize).toBe("40px");
+  });
+
+  it("valor com só fontSize 40 (legado) usa auto-fit, não trava em 40px", () => {
     const { container } = render(
       <DelpiKpiCard
         label="Consumo"
@@ -243,7 +258,7 @@ describe("DelpiKpiCard chrome", () => {
       />,
     );
     const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
-    expect(fit?.style.fontSize).toBe("40px");
+    expect(fit?.style.fontSize).not.toBe("40px");
   });
 
   it("valor com fontSize explícito usa tamanho fixo", () => {

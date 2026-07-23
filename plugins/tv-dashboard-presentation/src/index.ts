@@ -547,6 +547,7 @@ export {
   kpiPartUsesAutoFitFont,
   kpiPartStyleWithAutoFont,
   kpiPartStyleWithFixedFontSize,
+  mergeKpiPartStyle,
   serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,

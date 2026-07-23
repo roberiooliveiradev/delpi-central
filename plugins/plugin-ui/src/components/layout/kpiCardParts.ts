@@ -278,17 +278,25 @@ export function resolveKpiPartFontSize(
 
 /**
  * Tipografia automática (FitText preenche o container).
- * Qualquer `fontSize` persistido (incluindo defaults 40/18/14) é tamanho fixo —
- * alinhado à ribbon. Use `typographyMode: "auto"` para forçar auto-fit explícito.
+ * - `typographyMode: "auto"` → FitText
+ * - `typographyMode: "fixed"` → px (ribbon/inspetor ao gravar tamanho)
+ * - sem modo: `fontSize` persistido ⇒ fixo, exceto valor com default canônico 40
+ *   (legado/seed da ribbon — não trava o crescimento do card)
  */
 export function kpiPartUsesAutoFitFont(
-  _kind: KpiTextPartKind,
+  kind: KpiTextPartKind,
   style?: KpiPartStyle | null,
 ): boolean {
   if (style?.typographyMode === "auto") return true;
   if (style?.typographyMode === "fixed") return false;
   const explicit = style?.fontSize;
   if (explicit == null || !Number.isFinite(explicit) || explicit <= 0) return true;
+  if (
+    kind === "value" &&
+    Math.round(explicit) === KPI_PART_FONT_SIZE_DEFAULTS.value
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -304,13 +312,15 @@ export function kpiPartStyleWithFixedFontSize(
   };
 }
 
-/** Volta ao auto-fit (remove tamanho persistido). */
+/** Volta ao auto-fit (`fontSize: undefined` → upsert remove a chave). */
 export function kpiPartStyleWithAutoFont(
   style: KpiPartStyle | null | undefined,
 ): KpiPartStyle {
-  const next: KpiPartStyle = { ...(style ?? {}), typographyMode: "auto" };
-  delete next.fontSize;
-  return next;
+  return {
+    ...(style ?? {}),
+    typographyMode: "auto",
+    fontSize: undefined,
+  };
 }
 
 export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
@@ -660,6 +670,20 @@ export type KpiPartStatePatch = Omit<KpiPartState, "frame" | "style"> & {
   frame?: KpiPartFrame | null;
 };
 
+/** Merge de style: `undefined` remove a chave (ex.: voltar ao auto-fit do valor). */
+export function mergeKpiPartStyle(
+  prev: KpiPartStyle | null | undefined,
+  patch: KpiPartStyle,
+): KpiPartStyle {
+  const merged: KpiPartStyle = { ...(prev ?? {}), ...patch };
+  for (const key of Object.keys(merged) as Array<keyof KpiPartStyle>) {
+    if (merged[key] === undefined) {
+      delete merged[key];
+    }
+  }
+  return merged;
+}
+
 export function upsertKpiPartState(
   parts: KpiPartsMap | null | undefined,
   ref: KpiPartRef,
@@ -679,7 +703,7 @@ export function upsertKpiPartState(
     [key]: {
       ...prev,
       ...restPatch,
-      style: patch.style ? { ...prev.style, ...patch.style } : prev.style,
+      style: patch.style ? mergeKpiPartStyle(prev.style, patch.style) : prev.style,
       frame: nextFrame,
     },
   };

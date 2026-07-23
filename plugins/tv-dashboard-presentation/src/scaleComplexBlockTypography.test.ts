@@ -119,7 +119,11 @@ describe("scalePartTypographyOnResize", () => {
   });
 
   it("escala tipografia da parte KPI (valor limpa fontSize para auto-fit)", () => {
-    const parts = upsertKpiPartState({}, { kind: "value" }, { style: { fontSize: 32 } });
+    const parts = upsertKpiPartState(
+      {},
+      { kind: "value" },
+      { style: { fontSize: 32, typographyMode: "fixed" } },
+    );
     const next = scaleKpiPartTypographyOnResize(
       parts,
       { kind: "value" },
@@ -127,6 +131,23 @@ describe("scalePartTypographyOnResize", () => {
       { w: 25, h: 20 },
     );
     expect(next.value?.style?.fontSize).toBeUndefined();
+    expect(next.value?.style?.typographyMode).toBe("auto");
+  });
+
+  it("valor reativa auto-fit mesmo com resize só na largura (fator uniforme ≈ 1)", () => {
+    const parts = upsertKpiPartState(
+      {},
+      { kind: "value" },
+      { style: { fontSize: 40, typographyMode: "fixed" } },
+    );
+    const next = scaleKpiPartTypographyOnResize(
+      parts,
+      { kind: "value" },
+      { w: 40, h: 20 },
+      { w: 80, h: 20 },
+    );
+    expect(next.value?.style?.fontSize).toBeUndefined();
+    expect(next.value?.style?.typographyMode).toBe("auto");
   });
 });
 

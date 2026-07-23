@@ -2544,7 +2544,7 @@ body.td-composer--marqueeing *{
   top: 100%;
   width: max(1px, var(--td-selection-outline-width, 1.5px));
   /* Para no topo do pill N — não atravessa o handle de redimensionamento. */
-  height: var(--td-selection-rotate-stem, 33px);
+  height: var(--td-selection-rotate-stem, 24px);
   background: var(--td-selection-stem, var(--td-accent, #089bdb));
   transform: translateX(-50%);
 }

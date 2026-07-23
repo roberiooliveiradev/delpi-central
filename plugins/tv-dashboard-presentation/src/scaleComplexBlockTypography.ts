@@ -33,6 +33,7 @@ import {
   KPI_ICON_DEFAULT_SIZE_PX,
   KPI_PART_FONT_SIZE_DEFAULTS,
   isKpiTextPartKind,
+  kpiPartStyleWithAutoFont,
   mergeKpiPartsWithOptions,
   resolveKpiPartFontSize,
   serializeKpiPartRef,
@@ -208,16 +209,17 @@ function scaleKpiPartStyle(
   style: ComunicadoKpiPartStyle | undefined,
   scale: number,
 ): ComunicadoKpiPartStyle {
-  const next: ComunicadoKpiPartStyle = { ...(style ?? {}) };
-  // Valor: FitText preenche o host (flex ou frame) — limpa fontSize no resize do bloco.
-  // Título/hint: escalam em px no layout flex; em layout livre o FitText do frame usa auto-fit.
-  if (ref.kind === "value") {
-    next.fontSize = undefined;
-  } else if (isKpiTextPartKind(ref.kind)) {
-    const base = resolveKpiPartFontSize(ref.kind, style);
-    next.fontSize = scaleFontPx(base, scale);
-  } else if (style?.fontSize != null && style.fontSize > 0) {
-    next.fontSize = scaleFontPx(style.fontSize, scale);
+  // Valor: FitText preenche o host — volta ao auto (limpa fontSize + modo fixed).
+  // Título/hint: escalam em px; em layout livre o FitText do frame usa auto-fit.
+  const next: ComunicadoKpiPartStyle =
+    ref.kind === "value" ? kpiPartStyleWithAutoFont(style) : { ...(style ?? {}) };
+  if (ref.kind !== "value") {
+    if (isKpiTextPartKind(ref.kind)) {
+      const base = resolveKpiPartFontSize(ref.kind, style);
+      next.fontSize = scaleFontPx(base, scale);
+    } else if (style?.fontSize != null && style.fontSize > 0) {
+      next.fontSize = scaleFontPx(style.fontSize, scale);
+    }
   }
   if (ref.kind === "icon" || style?.iconSize != null) {
     const base =
@@ -286,10 +288,18 @@ export function scaleKpiPartTypographyOnResize(
   beforeFrame: FrameSize,
   afterFrame: FrameSize,
 ): ComunicadoKpiPartsMap {
-  const scale = uniformFrameScale(beforeFrame, afterFrame);
-  if (Math.abs(scale - 1) < SCALE_EPSILON) return parts ?? {};
   if (!isKpiTextPartKind(ref.kind) && ref.kind !== "icon") return parts ?? {};
   const key = serializeKpiPartRef(ref);
+  /*
+   * Valor: qualquer resize do frame (mesmo só largura, fator uniforme ≈ 1)
+   * deve reativar auto-fit — senão fica preso em 40px com caixa larga.
+   */
+  if (ref.kind === "value") {
+    const stylePatch = scaleKpiPartStyle(ref, parts?.[key]?.style, 1);
+    return upsertKpiPartState(parts, ref, { style: stylePatch });
+  }
+  const scale = uniformFrameScale(beforeFrame, afterFrame);
+  if (Math.abs(scale - 1) < SCALE_EPSILON) return parts ?? {};
   const stylePatch = scaleKpiPartStyle(ref, parts?.[key]?.style, scale);
   return upsertKpiPartState(parts, ref, { style: stylePatch });
 }

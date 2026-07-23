@@ -255,16 +255,19 @@ describe("kpi icon layout", () => {
     expect(resolveKpiPartFontSize("value", { fontSize: 72 })).toBe(72);
   });
 
-  it("kpiPartUsesAutoFitFont: sem size → auto; qualquer fontSize persistido → fixo", () => {
+  it("kpiPartUsesAutoFitFont: valor default 40 sem modo = auto; fixed explícito trava", () => {
     expect(kpiPartUsesAutoFitFont("value")).toBe(true);
     expect(kpiPartUsesAutoFitFont("value", {})).toBe(true);
-    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40 })).toBe(false);
+    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40 })).toBe(true);
     expect(kpiPartUsesAutoFitFont("value", { fontSize: 72 })).toBe(false);
     expect(kpiPartUsesAutoFitFont("title", { fontSize: 18 })).toBe(false);
     expect(kpiPartUsesAutoFitFont("title", { fontSize: 22 })).toBe(false);
     expect(kpiPartUsesAutoFitFont("value", { typographyMode: "auto" })).toBe(true);
     expect(kpiPartUsesAutoFitFont("value", { fontSize: 40, typographyMode: "auto" })).toBe(true);
     expect(kpiPartUsesAutoFitFont("value", { typographyMode: "fixed" })).toBe(false);
+    expect(
+      kpiPartUsesAutoFitFont("value", { fontSize: 40, typographyMode: "fixed" }),
+    ).toBe(false);
   });
 
   it("upsertKpiPartState faz merge de frame e limpa com null", () => {
@@ -276,6 +279,19 @@ describe("kpi icon layout", () => {
     const cleared = upsertKpiPartState(moved, { kind: "icon" }, { frame: null, style: { iconSize: 48 } });
     expect(cleared.icon?.frame).toBeUndefined();
     expect(cleared.icon?.style?.iconSize).toBe(48);
+  });
+
+  it("upsert remove fontSize quando o patch traz undefined (auto-fit do valor)", () => {
+    const withSize = upsertKpiPartState(
+      {},
+      { kind: "value" },
+      { style: { fontSize: 40, typographyMode: "fixed" } },
+    );
+    const auto = upsertKpiPartState(withSize, { kind: "value" }, {
+      style: { fontSize: undefined, typographyMode: "auto" },
+    });
+    expect(auto.value?.style?.fontSize).toBeUndefined();
+    expect(auto.value?.style?.typographyMode).toBe("auto");
   });
 
   it("seedKpiPartsFreeLayoutFrames aplica frames em lote, não só numa parte", () => {
