@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COMUNICADO_LINE_TOOLS,
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
   COMUNICADO_SHAPE_KIND_VALUES,
+  COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES,
   isComunicadoShapeKind,
 } from "./comunicadoShapeCatalog";
 import { createShapeBlock } from "./comunicadoHelpers";
@@ -20,6 +22,33 @@ describe("comunicadoShapeCatalog (Onda 4K)", () => {
     const fromCategories = COMUNICADO_SHAPE_CATALOG_CATEGORIES.flatMap((category) => category.shapes);
     expect(new Set(fromCategories).size).toBe(fromCategories.length);
     expect(new Set(fromCategories)).toEqual(new Set(COMUNICADO_SHAPE_KIND_VALUES));
+  });
+
+  it("flyout Formas segue categorias Google Slides (sem linhas)", () => {
+    expect(COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES.map((c) => c.id)).toEqual([
+      "formas",
+      "setas",
+      "descricoes",
+      "equacao",
+    ]);
+    const flyoutKinds = COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES.flatMap((c) => c.shapes);
+    expect(flyoutKinds.some((kind) => resolveShapePrimitive(kind) === "line")).toBe(false);
+  });
+
+  it("menu Linha lista as 7 ferramentas do Google Slides", () => {
+    expect(COMUNICADO_LINE_TOOLS.map((tool) => tool.id)).toEqual([
+      "line",
+      "line-arrow",
+      "elbow-connector",
+      "curved-connector",
+      "curve",
+      "polyline",
+      "scribble",
+    ]);
+    expect(COMUNICADO_LINE_TOOLS.filter((tool) => tool.ready).map((tool) => tool.id)).toEqual([
+      "line",
+      "line-arrow",
+    ]);
   });
 
   it("cria bloco shape com primitivo coerente para linha e área", () => {

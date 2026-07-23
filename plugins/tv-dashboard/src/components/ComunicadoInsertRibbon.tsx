@@ -8,6 +8,7 @@ import {
   Grid3X3,
   Heading,
   Image as ImageIcon,
+  Minus,
   Shapes,
   Sparkles,
   Table2,
@@ -28,6 +29,7 @@ import {
   createChartViewBlock,
   createTableViewBlock,
   type ComunicadoChartType,
+  type ComunicadoLineToolId,
   type ComunicadoShapeKind,
   type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
@@ -36,6 +38,7 @@ import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DECK_INSERT_ACTION_KEYTIPS } from "../utils/deckKeyTips";
+import { ComunicadoLineToolsMenu } from "./ComunicadoLineToolsMenu";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
@@ -101,17 +104,20 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     insertTextDataFieldBlock,
   } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
+  const lineAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
   const chartAnchorRef = useRef<HTMLDivElement>(null);
   const tableAnchorRef = useRef<HTMLDivElement>(null);
   const chartPanelRef = useRef<HTMLDivElement>(null);
   const tablePanelRef = useRef<HTMLDivElement>(null);
+  const [lineMenuOpen, setLineMenuOpen] = useState(false);
   const [iconMenuOpen, setIconMenuOpen] = useState(false);
   const [chartMenuOpen, setChartMenuOpen] = useState(false);
   const [tableMenuOpen, setTableMenuOpen] = useState(false);
 
   const closeInsertMenus = () => {
     setShapeMenuOpen(false);
+    setLineMenuOpen(false);
     setIconMenuOpen(false);
     setChartMenuOpen(false);
     setTableMenuOpen(false);
@@ -120,7 +126,13 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   function insertShape(kind: ComunicadoShapeKind) {
     addShape(kind);
     rememberComunicadoShape(kind);
-    setShapeMenuOpen(false);
+    closeInsertMenus();
+  }
+
+  function selectLineTool(toolId: ComunicadoLineToolId) {
+    // Fase 2/3: ativar ferramenta de desenho no palco.
+    void toolId;
+    closeInsertMenus();
   }
 
   function insertChart(chartType: DelpiChartType) {
@@ -201,6 +213,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               active={shapeMenuOpen}
               keyTip={K.shape}
               onClick={() => {
+                setLineMenuOpen(false);
                 setIconMenuOpen(false);
                 setChartMenuOpen(false);
                 setTableMenuOpen(false);
@@ -216,6 +229,31 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               />
             ) : null}
           </div>
+          <div ref={lineAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonTile
+              icon={Minus}
+              label={labels.comunicadoAddLine ?? "Linha"}
+              hint={H.insertLineTool ?? H.insertLineShape}
+              active={lineMenuOpen}
+              keyTip={K.line}
+              onClick={() => {
+                setShapeMenuOpen(false);
+                setIconMenuOpen(false);
+                setChartMenuOpen(false);
+                setTableMenuOpen(false);
+                setLineMenuOpen(!lineMenuOpen);
+              }}
+            />
+            {lineMenuOpen ? (
+              <ComunicadoLineToolsMenu
+                open={lineMenuOpen}
+                anchorRef={lineAnchorRef}
+                onInsertKind={insertShape}
+                onSelectTool={selectLineTool}
+                onDismiss={closeInsertMenus}
+              />
+            ) : null}
+          </div>
           <div ref={iconAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
               icon={Sparkles}
@@ -225,6 +263,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               keyTip={K.icon}
               onClick={() => {
                 setShapeMenuOpen(false);
+                setLineMenuOpen(false);
                 setChartMenuOpen(false);
                 setTableMenuOpen(false);
                 setIconMenuOpen((open) => !open);
@@ -303,6 +342,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               keyTip={K.chart}
               onClick={() => {
                 setShapeMenuOpen(false);
+                setLineMenuOpen(false);
                 setIconMenuOpen(false);
                 setTableMenuOpen(false);
                 setChartMenuOpen((open) => !open);
@@ -330,6 +370,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               keyTip={K.table}
               onClick={() => {
                 setShapeMenuOpen(false);
+                setLineMenuOpen(false);
                 setIconMenuOpen(false);
                 setChartMenuOpen(false);
                 setTableMenuOpen((open) => !open);

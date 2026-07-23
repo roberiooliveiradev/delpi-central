@@ -132,6 +132,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertIcon: "Ícones vetoriais prontos para o slide.",
     insertLineShape:
       "Linha livre: alças nas pontas. Arraste uma ponta até outro bloco para grudar (conector); os pontos de conexão aparecem ao aproximar.",
+    insertLineTool:
+      "Ferramentas de linha no estilo Google Slides: linha, seta, conectores, curva, polilinha e rabisco.",
     iconEditor:
       "Trocar o glifo Lucide e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
     iconPicker: "Escolha outro ícone da biblioteca Lucide.",
@@ -140,7 +142,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Espessura do traço Lucide do glifo, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
-    insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
+    insertIllustrationsGroup: "Biblioteca visual de formas, linhas e ícones editáveis.",
     insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados no slide.",
     insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",

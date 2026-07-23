@@ -1,14 +1,14 @@
-import { useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronRight } from "lucide-react";
 import {
   AnchoredPanelPortal,
   HintAction,
   useRibbonSectionPopoverSurface,
 } from "@delpi/plugin-ui/index";
 import {
-  COMUNICADO_SHAPE_CATALOG_CATEGORIES,
+  COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES,
   ComunicadoShapePreview,
   comunicadoShapeLabel,
-  isLineShapeKind,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -17,6 +17,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { readRecentComunicadoShapes } from "../utils/comunicadoRecentShapes";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+const RECENT_CATEGORY_ID = "__recent__";
 
 type Props = {
   open: boolean;
@@ -25,10 +26,33 @@ type Props = {
   onDismiss: () => void;
 };
 
+/**
+ * Flyout Inserir → Formas (estilo Google Slides):
+ * lista lateral Formas / Setas / Descrições / Equação + grade à direita.
+ */
 export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const inSectionPopover = useRibbonSectionPopoverSurface();
-  const recent = readRecentComunicadoShapes();
+  const recent = useMemo(() => readRecentComunicadoShapes(), [open]);
+  const flyoutCategories = COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES;
+  const defaultCategoryId =
+    recent.length > 0 ? RECENT_CATEGORY_ID : (flyoutCategories[0]?.id ?? "formas");
+  const [activeCategoryId, setActiveCategoryId] = useState(defaultCategoryId);
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveCategoryId(recent.length > 0 ? RECENT_CATEGORY_ID : (flyoutCategories[0]?.id ?? "formas"));
+  }, [open, recent.length, flyoutCategories]);
+
+  const activeShapes: ComunicadoShapeKind[] = useMemo(() => {
+    if (activeCategoryId === RECENT_CATEGORY_ID) return recent;
+    return flyoutCategories.find((category) => category.id === activeCategoryId)?.shapes ?? [];
+  }, [activeCategoryId, flyoutCategories, recent]);
+
+  const activeTitle =
+    activeCategoryId === RECENT_CATEGORY_ID
+      ? "Usadas recentemente"
+      : (flyoutCategories.find((category) => category.id === activeCategoryId)?.label ?? "Formas");
 
   return (
     <AnchoredPanelPortal
@@ -37,34 +61,71 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismis
       panelRef={panelRef}
       variant="bare"
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-      className="delpi-ui-popover-surface td-shape-library td-shape-library--portal"
+      className="delpi-ui-popover-surface td-shape-library td-shape-library--portal td-shape-library--flyout"
       role="menu"
       aria-label="Biblioteca de formas"
       density="compact"
       exclusive={!inSectionPopover}
       onDismiss={onDismiss}
     >
-      {recent.length ? (
-        <section className="td-shape-library__section">
-          <h4 className="td-shape-library__title">Usadas recentemente</h4>
+      <div className="td-shape-library__flyout">
+        <nav className="td-shape-library__nav" aria-label="Categorias de formas">
+          {recent.length ? (
+            <button
+              type="button"
+              role="menuitem"
+              className={[
+                "td-shape-library__nav-item",
+                activeCategoryId === RECENT_CATEGORY_ID ? "td-shape-library__nav-item--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-current={activeCategoryId === RECENT_CATEGORY_ID ? "true" : undefined}
+              onMouseEnter={() => setActiveCategoryId(RECENT_CATEGORY_ID)}
+              onFocus={() => setActiveCategoryId(RECENT_CATEGORY_ID)}
+              onClick={() => setActiveCategoryId(RECENT_CATEGORY_ID)}
+            >
+              <span className="td-shape-library__nav-label">Usadas recentemente</span>
+              <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+            </button>
+          ) : null}
+          {flyoutCategories.map((category) => {
+            const active = activeCategoryId === category.id;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                role="menuitem"
+                className={[
+                  "td-shape-library__nav-item",
+                  active ? "td-shape-library__nav-item--active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-current={active ? "true" : undefined}
+                onMouseEnter={() => setActiveCategoryId(category.id)}
+                onFocus={() => setActiveCategoryId(category.id)}
+                onClick={() => setActiveCategoryId(category.id)}
+              >
+                <span className="td-shape-library__nav-label">{category.label}</span>
+                <ChevronRight size={14} strokeWidth={2} aria-hidden="true" />
+              </button>
+            );
+          })}
+        </nav>
+        <section className="td-shape-library__panel" aria-label={activeTitle}>
+          <h4 className="td-shape-library__title">{activeTitle}</h4>
           <div className="td-shape-library__grid">
-            {recent.map((kind) => (
-              <ShapeLibraryButton key={`recent-${kind}`} kind={kind} onSelect={onSelect} />
+            {activeShapes.map((kind) => (
+              <ShapeLibraryButton
+                key={`${activeCategoryId}-${kind}`}
+                kind={kind}
+                onSelect={onSelect}
+              />
             ))}
           </div>
         </section>
-      ) : null}
-
-      {COMUNICADO_SHAPE_CATALOG_CATEGORIES.map((category) => (
-        <section key={category.id} className="td-shape-library__section">
-          <h4 className="td-shape-library__title">{category.label}</h4>
-          <div className="td-shape-library__grid">
-            {category.shapes.map((kind) => (
-              <ShapeLibraryButton key={kind} kind={kind} onSelect={onSelect} />
-            ))}
-          </div>
-        </section>
-      ))}
+      </div>
     </AnchoredPanelPortal>
   );
 }
@@ -77,10 +138,9 @@ function ShapeLibraryButton({
   onSelect: (kind: ComunicadoShapeKind) => void;
 }) {
   const label = comunicadoShapeLabel(kind);
-  const hintBase = isLineShapeKind(kind) ? (H.insertLineShape ?? H.insertShape) : H.insertShape;
 
   return (
-    <HintAction hint={`${hintBase} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
+    <HintAction hint={`${H.insertShape} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
       <button
         type="button"
         role="menuitem"

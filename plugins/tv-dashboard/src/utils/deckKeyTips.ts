@@ -46,6 +46,7 @@ export const DECK_INSERT_ACTION_KEYTIPS = {
   image: "M",
   video: "W",
   shape: "O",
+  line: "L",
   icon: "C",
   canvasTable: "A",
   dataSource: "S",

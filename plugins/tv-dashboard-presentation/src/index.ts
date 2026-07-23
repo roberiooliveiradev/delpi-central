@@ -146,12 +146,19 @@ export {
   COMUNICADO_LINE_HEIGHT_OPTIONS,
 } from "./comunicadoTypes";
 export {
+  COMUNICADO_LINE_TOOLS,
   COMUNICADO_SHAPE_CATALOG,
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
   COMUNICADO_SHAPE_KINDS,
   COMUNICADO_SHAPE_KIND_VALUES,
+  COMUNICADO_SHAPE_LIBRARY_FLYOUT_CATEGORIES,
   comunicadoShapeLabel,
+  isComunicadoLineToolId,
   isComunicadoShapeKind,
+  type ComunicadoLineToolDefinition,
+  type ComunicadoLineToolId,
+  type ComunicadoShapeCatalogCategory,
+  type ComunicadoShapeCatalogEntry,
 } from "./comunicadoShapeCatalog";
 export {
   defaultStrokeWidthForPrimitive,
