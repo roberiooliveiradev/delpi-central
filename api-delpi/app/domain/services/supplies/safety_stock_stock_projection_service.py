@@ -139,7 +139,7 @@ def enrich_open_commitments(
                 "projection_eligible": projection_eligible,
                 "commitment_date": iso_date,
                 "date_status": date_status,
-                "date_semantics": "commitment_date",
+                "date_semantics": "production_order_start_date",
             }
         )
 
@@ -289,7 +289,7 @@ def build_stock_projection(
             {
                 "event_date": iso_date,
                 "date_status": date_status,
-                "date_semantics": "commitment_date",
+                "date_semantics": "production_order_start_date",
                 "origin": ORIGIN_COMMITMENT,
                 "origin_label": "Empenho",
                 "reference": format_commitment_ledger_reference(

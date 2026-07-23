@@ -143,7 +143,7 @@ Seguir [novo-plugin-mfe-checklist.md](../../05-plugin-system/novo-plugin-mfe-che
 | Saldo inicial | Disponível SB2 **01+98+99** |
 | Timeline | `+` SC7 elegíveis, `−` SD4 elegíveis; no mesmo dia, saídas antes de entradas |
 | Ruptura | Primeiro `running_balance < 0` → `first_shortage_date` |
-| Inclusão no relatório | `first_shortage_date` ∈ `[as_of_date, as_of_date + 30 dias]` |
+| Inclusão no relatório | `first_shortage_date` ≤ `as_of_date + 30 dias` (inclui atrasadas; data = início da OP do empenho) |
 | Fora | Status ESTSEG / `deficit_quantity` (não confundir com ruptura física) |
 | Empenhos sem data | Não geram previsão confiável (mesmo warning do módulo atual) |
 

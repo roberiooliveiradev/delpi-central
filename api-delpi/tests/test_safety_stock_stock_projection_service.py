@@ -66,6 +66,8 @@ def test_enrich_commitments_converts_and_marks_ineligible_warehouse() -> None:
 
     assert enriched[0]["projection_eligible"] is True
     assert enriched[0]["open_quantity_primary_unit"] == 10.0
+    assert enriched[0]["date_semantics"] == "production_order_start_date"
+    assert enriched[0]["commitment_date"] == "2026-07-20"
     assert enriched[1]["warehouse_eligible"] is False
     assert enriched[1]["projection_eligible"] is False
     assert enriched[2]["unit_compatible"] is True

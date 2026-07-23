@@ -113,6 +113,7 @@ def test_map_open_commitment_formats_date_and_uses_qtdeori_fields() -> None:
             "production_order": "OP001",
             "origin_production_order": "OP000",
             "commitment_date": "20260720",
+            "empenho_recorded_date": "20260715",
             "unit": "M",
             "original_quantity": 100.0,
             "open_quantity": 40.0,
@@ -127,6 +128,7 @@ def test_map_open_commitment_formats_date_and_uses_qtdeori_fields() -> None:
     )
 
     assert mapped["commitment_date"] == "2026-07-20"
+    assert mapped["empenho_recorded_date"] == "2026-07-15"
     assert mapped["original_quantity"] == 100.0
     assert mapped["open_quantity"] == 40.0
     assert mapped["consumed_quantity"] == 60.0

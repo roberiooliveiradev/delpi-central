@@ -130,6 +130,8 @@ export type SafetyStockOpenCommitment = {
   production_order: string;
   origin_production_order: string;
   commitment_date: string | null;
+  /** Data do registro do empenho (D4_DATA); a projeção usa commitment_date = C2_DATPRI. */
+  empenho_recorded_date?: string | null;
   unit: string;
   original_quantity: number;
   open_quantity: number;

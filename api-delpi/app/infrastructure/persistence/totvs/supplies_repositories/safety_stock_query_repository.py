@@ -484,6 +484,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
               row.get("origin_production_order") or ""
           ).strip(),
           "commitment_date": cls._format_protheus_date(row.get("commitment_date")),
+          "empenho_recorded_date": cls._format_protheus_date(
+              row.get("empenho_recorded_date")
+          ),
           "unit": str(row.get("unit") or "").strip(),
           "original_quantity": original,
           "open_quantity": open_qty,

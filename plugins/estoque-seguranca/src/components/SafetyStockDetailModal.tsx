@@ -369,7 +369,7 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
               <h3>Extrato projetado de saldo</h3>
               <HelpTooltip
                 ariaLabel="Como funciona o extrato projetado"
-                content="Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho é a data do empenho no Protheus, não a garantia de consumo fabril."
+                content="Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho no extrato é o início previsto da OP do empenho (SC2.C2_DATPRI), não D4_DATA nem a OP do produto acabado."
                 placement="bottom"
               />
             </div>

@@ -162,7 +162,7 @@ const detailsPayload = {
         warehouse_eligible: true,
         projection_eligible: true,
         date_status: "scheduled" as const,
-        date_semantics: "commitment_date",
+        date_semantics: "production_order_start_date",
       },
     ],
     total: 1,
@@ -196,7 +196,7 @@ const detailsPayload = {
         sequence: 2,
         event_date: "2026-07-20",
         date_status: "scheduled" as const,
-        date_semantics: "commitment_date",
+        date_semantics: "production_order_start_date",
         origin: "commitment" as const,
         origin_label: "Empenho",
         reference: "OP150",
@@ -496,7 +496,7 @@ describe("SafetyStockPage", () => {
     });
 
     const ledgerHelp =
-      "Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho é a data do empenho no Protheus, não a garantia de consumo fabril.";
+      "Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho no extrato é o início previsto da OP do empenho (SC2.C2_DATPRI), não D4_DATA nem a OP do produto acabado.";
     expect(screen.queryByText(ledgerHelp)).toBeNull();
     fireEvent.focus(screen.getByRole("button", { name: "Como funciona o extrato projetado" }));
     expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe(ledgerHelp);
