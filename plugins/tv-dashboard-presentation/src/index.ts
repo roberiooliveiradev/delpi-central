@@ -441,6 +441,7 @@ export {
   type ComunicadoTextShadowPreset,
 } from "./comunicadoTextEffects";
 export {
+  applyContentRunStyleInRange,
   compactContentRuns,
   contentRunInlineStyleProperties,
   contentRunsFromEditableRoot,
@@ -458,6 +459,7 @@ export {
   toggleListTypeOnAllLines,
   type ContentRunListSelectionState,
   type ContentRunSelectionStyleState,
+  type ContentRunStylePatch,
   type ContentRunStyleToggleKey,
   type TextDisplaySegment,
 } from "./comunicadoContentRunEditing";

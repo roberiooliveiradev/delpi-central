@@ -41,11 +41,27 @@ type CharToken = {
 
 export type ContentRunStyleToggleKey = "fontWeight" | "fontStyle" | "underline" | "strikethrough";
 
+/** Patch de tipografia de caractere (Google Slides TextRun / Canva RichtextRange). */
+export type ContentRunStylePatch = {
+  fontSize?: number | null;
+  color?: string | null;
+  fontFamily?: string | null;
+  /** `null` ou `transparent` remove o realce. */
+  textHighlight?: string | null;
+  fontWeight?: "normal" | "bold" | null;
+  fontStyle?: "normal" | "italic" | null;
+  textDecoration?: ComunicadoTextDecoration | null;
+};
+
 export type ContentRunSelectionStyleState = {
   fontWeight: "bold" | "normal" | "mixed";
   fontStyle: "italic" | "normal" | "mixed";
   underline: boolean | "mixed";
   strikethrough: boolean | "mixed";
+  fontFamily: string | "mixed" | null;
+  fontSize: number | "mixed" | null;
+  color: string | "mixed" | null;
+  textHighlight: string | "mixed" | null;
 };
 
 const TOGGLE_SPECS: Record<
@@ -288,13 +304,114 @@ export function selectionRunStyleState(
   const strikeStates = new Set(
     chars.map((char) => parseTextDecorationFlags(char.style?.textDecoration).strikethrough),
   );
+  const familyStates = new Set(chars.map((char) => char.style?.fontFamily?.trim() || ""));
+  const sizeStates = new Set(
+    chars.map((char) =>
+      char.style?.fontSize != null && Number.isFinite(char.style.fontSize)
+        ? String(char.style.fontSize)
+        : "",
+    ),
+  );
+  const colorStates = new Set(chars.map((char) => char.style?.color?.trim() || ""));
+  const highlightStates = new Set(
+    chars.map((char) => {
+      const value = char.style?.textHighlight?.trim() || "";
+      return value === "transparent" ? "" : value;
+    }),
+  );
+
+  const singleOrMixed = <T extends string>(states: Set<T>, emptyAsNull = true): T | "mixed" | null => {
+    if (states.size > 1) return "mixed";
+    const only = [...states][0] ?? ("" as T);
+    if (emptyAsNull && only === "") return null;
+    return only;
+  };
 
   return {
     fontWeight: weightStates.size > 1 ? "mixed" : weightStates.has("bold") ? "bold" : "normal",
     fontStyle: styleStates.size > 1 ? "mixed" : styleStates.has("italic") ? "italic" : "normal",
     underline: underlineStates.size > 1 ? "mixed" : underlineStates.has(true),
     strikethrough: strikeStates.size > 1 ? "mixed" : strikeStates.has(true),
+    fontFamily: singleOrMixed(familyStates),
+    fontSize: (() => {
+      const value = singleOrMixed(sizeStates);
+      if (value === "mixed" || value == null) return value;
+      const n = Number(value);
+      return Number.isFinite(n) ? n : null;
+    })(),
+    color: singleOrMixed(colorStates),
+    textHighlight: singleOrMixed(highlightStates),
   };
+}
+
+function applyStylePatchToRunStyle(
+  base: ComunicadoContentRunStyle | undefined,
+  patch: ContentRunStylePatch,
+): ComunicadoContentRunStyle | undefined {
+  const next: ComunicadoContentRunStyle = { ...(base ?? {}) };
+  if ("fontSize" in patch) {
+    if (patch.fontSize == null) delete next.fontSize;
+    else next.fontSize = patch.fontSize;
+  }
+  if ("color" in patch) {
+    if (patch.color == null || patch.color === "") delete next.color;
+    else next.color = patch.color;
+  }
+  if ("fontFamily" in patch) {
+    if (patch.fontFamily == null || patch.fontFamily === "") delete next.fontFamily;
+    else next.fontFamily = patch.fontFamily;
+  }
+  if ("textHighlight" in patch) {
+    if (
+      patch.textHighlight == null ||
+      patch.textHighlight === "" ||
+      patch.textHighlight === "transparent"
+    ) {
+      delete next.textHighlight;
+    } else {
+      next.textHighlight = patch.textHighlight;
+    }
+  }
+  if ("fontWeight" in patch) {
+    if (patch.fontWeight == null || patch.fontWeight === "normal") delete next.fontWeight;
+    else next.fontWeight = "bold";
+  }
+  if ("fontStyle" in patch) {
+    if (patch.fontStyle == null || patch.fontStyle === "normal") delete next.fontStyle;
+    else next.fontStyle = "italic";
+  }
+  if ("textDecoration" in patch) {
+    if (patch.textDecoration == null || patch.textDecoration === "none") {
+      delete next.textDecoration;
+    } else {
+      next.textDecoration = patch.textDecoration;
+    }
+  }
+  return pruneRunStyle(next);
+}
+
+/**
+ * Aplica tipografia de caractere a um intervalo (cria TextRuns implícitos).
+ * Espelha UpdateTextStyleRequest (Google Slides) / formatText (Canva).
+ */
+export function applyContentRunStyleInRange(
+  runs: ComunicadoContentRun[],
+  start: number,
+  end: number,
+  patch: ContentRunStylePatch,
+): ComunicadoContentRun[] {
+  const range = clampSelectionRange(runs, start, end);
+  if (range.start >= range.end) return compactContentRuns(runs);
+  if (Object.keys(patch).length === 0) return compactContentRuns(runs);
+
+  const chars = flattenRunsToChars(runs);
+  for (let index = range.start; index < range.end; index += 1) {
+    const nextStyle = applyStylePatchToRunStyle(chars[index].style, patch);
+    chars[index] = nextStyle
+      ? { text: chars[index].text, style: nextStyle }
+      : { text: chars[index].text };
+  }
+  return charsToRuns(chars);
 }
 
 export function toggleContentRunStyleInRange(

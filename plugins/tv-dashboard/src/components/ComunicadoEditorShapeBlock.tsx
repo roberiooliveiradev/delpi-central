@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
 import {
+  applyContentRunStyleInRange,
+  applyNamedStyleInRange,
   blockCssStyle,
   ComunicadoBlockView,
+  contentRunsFromEditableRoot,
+  getEditableTextSelectionOffsets,
+  insertLineBreakAtOffset,
   patchTextProjectionFromEditedDisplay,
+  plainTextFromContentRuns,
+  renderTextBlockEditorHtml,
   resolveVisualBoxDisplayText,
+  restoreEditableTextSelection,
+  syncTextBlockFromRuns,
+  toggleContentRunStyleInRange,
+  toggleListTypeInRange,
   visualBoxBlockModifierClasses,
+  type ComunicadoListType,
+  type ComunicadoNamedTextStyle,
   type ComunicadoShapeBlock,
+  type ContentRunStylePatch,
+  type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -20,11 +35,13 @@ type Props = {
 
 const PLACEHOLDER = "Texto na forma";
 
-function shapeDisplayText(block: ComunicadoShapeBlock): string {
-  return (
-    resolveVisualBoxDisplayText(block, "resolved" in block ? block.resolved : undefined).content ??
-    ""
+function shapeEditorRuns(block: ComunicadoShapeBlock) {
+  const display = resolveVisualBoxDisplayText(
+    block,
+    "resolved" in block ? block.resolved : undefined,
   );
+  if (display.contentRuns?.length) return display.contentRuns;
+  return [{ text: display.content ?? "" }];
 }
 
 export function ComunicadoEditorShapeBlock({
@@ -35,17 +52,19 @@ export function ComunicadoEditorShapeBlock({
   isEditing,
 }: Props) {
   const {
-    updateBlockContent,
     updateBlock,
     setEditingTextId,
     enterTextEdit,
     cancelPendingTapDeselect,
     registerTextEditorBridge,
+    reportTextEditSelection,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef(block);
   blockRef.current = block;
-  const draftRef = useRef(shapeDisplayText(block));
+  const draftRef = useRef(syncTextBlockFromRuns(shapeEditorRuns(block)));
+  const renderedSignatureRef = useRef("");
+  const editingInitBlockIdRef = useRef<string | null>(null);
 
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -54,7 +73,6 @@ export function ComunicadoEditorShapeBlock({
     top: undefined,
     width: "100%",
     height: "100%",
-    // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
     transform: undefined,
   };
 
@@ -70,53 +88,220 @@ export function ComunicadoEditorShapeBlock({
     .filter(Boolean)
     .join(" ");
 
-  const commitDraft = useCallback(() => {
-    const fromEditor = editorRef.current?.textContent ?? draftRef.current;
-    draftRef.current = fromEditor;
-    const blockNow = blockRef.current;
-    const projection = blockNow.textProjection;
-    if (projection?.field?.trim()) {
-      const nextProjection = patchTextProjectionFromEditedDisplay(
-        projection,
-        fromEditor,
-        "resolved" in blockNow ? blockNow.resolved : undefined,
-      );
-      updateBlock(blockNow.id, { textProjection: nextProjection });
+  const syncEditorHtml = useCallback(
+    (
+      runs = shapeEditorRuns(blockRef.current),
+      selectionOverride?: { start: number; end: number } | null,
+    ) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection =
+        selectionOverride === undefined
+          ? getEditableTextSelectionOffsets(editor)
+          : selectionOverride;
+      const signature = JSON.stringify(runs);
+      if (signature === renderedSignatureRef.current) return;
+      editor.innerHTML = renderTextBlockEditorHtml(runs, { fontScale });
+      renderedSignatureRef.current = signature;
+      if (selection) restoreEditableTextSelection(editor, selection.start, selection.end);
+    },
+    [fontScale],
+  );
+
+  const reportSelectionFromEditor = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const offsets = getEditableTextSelectionOffsets(editor);
+    if (!offsets) {
+      reportTextEditSelection(null);
       return;
     }
-    updateBlockContent(blockNow.id, fromEditor);
-  }, [updateBlock, updateBlockContent]);
-  const commitDraftRef = useRef(commitDraft);
-  commitDraftRef.current = commitDraft;
+    const runs = contentRunsFromEditableRoot(editor);
+    reportTextEditSelection({ blockId: block.id, ...offsets }, runs);
+  }, [block.id, reportTextEditSelection]);
+
+  const commitDraft = useCallback(
+    (runs?: ReturnType<typeof contentRunsFromEditableRoot>) => {
+      const fromEditor =
+        runs ?? (editorRef.current ? contentRunsFromEditableRoot(editorRef.current) : null);
+      if (!fromEditor) return;
+      const synced = syncTextBlockFromRuns(fromEditor);
+      draftRef.current = synced;
+      const blockNow = blockRef.current;
+      const projection = blockNow.textProjection;
+      const hasDataRuns = fromEditor.some((run) => run.dataRef?.field?.trim());
+      if (hasDataRuns) {
+        updateBlock(blockNow.id, {
+          content: synced.content,
+          contentRuns: synced.contentRuns,
+          textProjection: undefined,
+        });
+        return;
+      }
+      if (projection?.field?.trim()) {
+        const nextProjection = patchTextProjectionFromEditedDisplay(
+          projection,
+          synced.content,
+          "resolved" in blockNow ? blockNow.resolved : undefined,
+        );
+        updateBlock(blockNow.id, { textProjection: nextProjection });
+        return;
+      }
+      updateBlock(blockNow.id, {
+        content: synced.content,
+        contentRuns: synced.contentRuns,
+      });
+    },
+    [updateBlock],
+  );
+  const commitPending = useCallback(() => {
+    commitDraft();
+  }, [commitDraft]);
+  const commitPendingRef = useRef(commitPending);
+  commitPendingRef.current = commitPending;
+
+  const applyPartialStyleToggle = useCallback(
+    (toggleKey: ContentRunStyleToggleKey) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection = getEditableTextSelectionOffsets(editor);
+      if (!selection || selection.start >= selection.end) return;
+      const runs = contentRunsFromEditableRoot(editor);
+      const nextRuns = toggleContentRunStyleInRange(
+        runs,
+        selection.start,
+        selection.end,
+        toggleKey,
+      );
+      draftRef.current = syncTextBlockFromRuns(nextRuns);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
+      commitDraft(nextRuns);
+      reportTextEditSelection(
+        { blockId: block.id, start: selection.start, end: selection.end },
+        nextRuns,
+      );
+    },
+    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  );
+
+  const applyPartialStylePatch = useCallback(
+    (patch: ContentRunStylePatch) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection = getEditableTextSelectionOffsets(editor);
+      if (!selection || selection.start >= selection.end) return;
+      const runs = contentRunsFromEditableRoot(editor);
+      const nextRuns = applyContentRunStyleInRange(
+        runs,
+        selection.start,
+        selection.end,
+        patch,
+      );
+      draftRef.current = syncTextBlockFromRuns(nextRuns);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
+      commitDraft(nextRuns);
+      reportTextEditSelection(
+        { blockId: block.id, start: selection.start, end: selection.end },
+        nextRuns,
+      );
+    },
+    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  );
+
+  const applyListToggle = useCallback(
+    (listType: ComunicadoListType) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection = getEditableTextSelectionOffsets(editor);
+      const runs = contentRunsFromEditableRoot(editor);
+      const start = selection?.start ?? plainTextFromContentRuns(runs).length;
+      const end = selection?.end ?? start;
+      const nextRuns = toggleListTypeInRange(runs, start, end, listType);
+      draftRef.current = syncTextBlockFromRuns(nextRuns);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start, end });
+      commitDraft(nextRuns);
+      reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
+    },
+    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  );
+
+  const applyNamedStyleToggle = useCallback(
+    (namedStyle: ComunicadoNamedTextStyle) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection = getEditableTextSelectionOffsets(editor);
+      const runs = contentRunsFromEditableRoot(editor);
+      const start = selection?.start ?? 0;
+      const end = selection?.end ?? plainTextFromContentRuns(runs).length;
+      const nextRuns = applyNamedStyleInRange(runs, start, end, namedStyle);
+      draftRef.current = syncTextBlockFromRuns(nextRuns);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start, end });
+      commitDraft(nextRuns);
+      reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
+    },
+    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  );
+
+  const insertLineBreak = useCallback(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const selection = getEditableTextSelectionOffsets(editor);
+    if (!selection) return;
+    const runs = contentRunsFromEditableRoot(editor);
+    const nextRuns = insertLineBreakAtOffset(runs, selection.start);
+    const nextOffset = selection.start + 1;
+    draftRef.current = syncTextBlockFromRuns(nextRuns);
+    renderedSignatureRef.current = "";
+    syncEditorHtml(nextRuns, { start: nextOffset, end: nextOffset });
+    commitDraft(nextRuns);
+    reportTextEditSelection({ blockId: block.id, start: nextOffset, end: nextOffset }, nextRuns);
+  }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
 
   function exitEditing() {
-    commitDraft();
+    commitPending();
+    reportTextEditSelection(null);
     setEditingTextId(null);
   }
 
   useLayoutEffect(() => {
-    if (!isEditing) return;
-    const display = shapeDisplayText(block);
-    draftRef.current = display;
+    if (!isEditing) {
+      editingInitBlockIdRef.current = null;
+      return;
+    }
+    if (editingInitBlockIdRef.current === block.id) return;
+    editingInitBlockIdRef.current = block.id;
+
+    const editorRuns = shapeEditorRuns(block);
+    draftRef.current = syncTextBlockFromRuns(editorRuns);
+    renderedSignatureRef.current = "";
     const editor = editorRef.current;
     if (!editor) return;
-    editor.textContent = display;
+    syncEditorHtml(editorRuns, null);
     editor.focus();
-    const range = document.createRange();
-    range.selectNodeContents(editor);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-  }, [isEditing, block.id, block.content, block.textProjection, block.resolved]);
+    const end = plainTextFromContentRuns(editorRuns).length;
+    restoreEditableTextSelection(editor, end, end);
+    reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
+  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection]);
 
   useEffect(() => {
     if (!isEditing) return;
-    /* Só ao sair da edição — ver Comentário em ComunicadoEditorTextBlock. */
     return () => {
-      commitDraftRef.current();
+      commitPendingRef.current();
     };
   }, [isEditing]);
+
+  useLayoutEffect(() => {
+    if (!isEditing) return;
+    const editor = editorRef.current;
+    const editorRuns = shapeEditorRuns(block);
+    const selection = editor ? getEditableTextSelectionOffsets(editor) : null;
+    syncEditorHtml(editorRuns, selection);
+    draftRef.current = syncTextBlockFromRuns(editorRuns);
+  }, [block.contentRuns, block.content, isEditing, fontScale, syncEditorHtml]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -125,17 +310,29 @@ export function ComunicadoEditorShapeBlock({
     }
 
     registerTextEditorBridge(block.id, {
-      applyPartialStyleToggle: () => {},
-      applyListToggle: () => {},
-      applyNamedStyleToggle: () => {},
-      refreshSelectionState: () => {},
-      commitPending: commitDraft,
+      applyPartialStyleToggle,
+      applyPartialStylePatch,
+      applyListToggle,
+      applyNamedStyleToggle,
+      refreshSelectionState: reportSelectionFromEditor,
+      commitPending,
     });
 
     return () => registerTextEditorBridge(block.id, null);
-  }, [isEditing, block.id, commitDraft, registerTextEditorBridge]);
+  }, [
+    isEditing,
+    block.id,
+    applyPartialStyleToggle,
+    applyPartialStylePatch,
+    applyListToggle,
+    applyNamedStyleToggle,
+    reportSelectionFromEditor,
+    registerTextEditorBridge,
+    commitPending,
+  ]);
 
   if (isEditing) {
+    const showPlaceholder = !shapeEditorRuns(block).some((run) => run.text.trim());
     return (
       <div className={blockClass} style={style} onPointerDown={(event) => event.stopPropagation()}>
         <ComunicadoBlockView
@@ -147,7 +344,14 @@ export function ComunicadoEditorShapeBlock({
           visualBoxTextContent={
             <div
               ref={editorRef}
-              className="td-composer__inline-text td-composer__inline-text--shape"
+              className={[
+                "td-composer__inline-text",
+                "td-composer__inline-text--rich",
+                "td-composer__inline-text--shape",
+                showPlaceholder ? "td-composer__text-placeholder" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               contentEditable
               suppressContentEditableWarning
               role="textbox"
@@ -155,14 +359,39 @@ export function ComunicadoEditorShapeBlock({
               aria-label={PLACEHOLDER}
               data-placeholder={PLACEHOLDER}
               onInput={() => {
-                draftRef.current = editorRef.current?.textContent ?? "";
+                const editor = editorRef.current;
+                if (!editor) return;
+                const runs = contentRunsFromEditableRoot(editor);
+                draftRef.current = syncTextBlockFromRuns(runs);
+                renderedSignatureRef.current = JSON.stringify(runs);
+                reportSelectionFromEditor();
               }}
               onBlur={exitEditing}
+              onKeyUp={reportSelectionFromEditor}
+              onMouseUp={reportSelectionFromEditor}
               onKeyDown={(event) => {
                 event.stopPropagation();
                 if (event.key === "Escape") {
                   event.preventDefault();
                   exitEditing();
+                  return;
+                }
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  insertLineBreak();
+                  return;
+                }
+                if (!(event.ctrlKey || event.metaKey)) return;
+                const key = event.key.toLowerCase();
+                if (key === "b") {
+                  event.preventDefault();
+                  applyPartialStyleToggle("fontWeight");
+                } else if (key === "i") {
+                  event.preventDefault();
+                  applyPartialStyleToggle("fontStyle");
+                } else if (key === "u") {
+                  event.preventDefault();
+                  applyPartialStyleToggle("underline");
                 }
               }}
             />

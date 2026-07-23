@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyContentRunStyleInRange,
   compactContentRuns,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
@@ -67,9 +68,44 @@ describe("comunicadoContentRunEditing", () => {
       fontStyle: "normal",
       underline: false,
       strikethrough: false,
+      fontFamily: null,
+      fontSize: null,
+      color: null,
+      textHighlight: null,
     });
     expect(selectionRunStyleState(runs, 1, 2).fontWeight).toBe("normal");
     expect(selectionRunStyleState(runs, 0, 1).fontWeight).toBe("bold");
+  });
+
+  it("aplica cor/fonte/tamanho só no trecho selecionado", () => {
+    const runs: ComunicadoContentRun[] = [{ text: "ABCDEF" }];
+    const next = applyContentRunStyleInRange(runs, 1, 4, {
+      color: "#dc2626",
+      fontFamily: "Georgia, serif",
+      fontSize: 28,
+    });
+    expect(next).toEqual([
+      { text: "A" },
+      {
+        text: "BCD",
+        style: { color: "#dc2626", fontFamily: "Georgia, serif", fontSize: 28 },
+      },
+      { text: "EF" },
+    ]);
+    expect(selectionRunStyleState(next, 1, 4)).toMatchObject({
+      color: "#dc2626",
+      fontFamily: "Georgia, serif",
+      fontSize: 28,
+    });
+  });
+
+  it("remove realce com transparent/null no trecho", () => {
+    const runs: ComunicadoContentRun[] = [
+      { text: "AB", style: { textHighlight: "#fef08a" } },
+      { text: "CD" },
+    ];
+    const cleared = applyContentRunStyleInRange(runs, 0, 2, { textHighlight: "transparent" });
+    expect(cleared).toEqual([{ text: "ABCD" }]);
   });
 
   it("serializa e reidrata HTML editável", () => {

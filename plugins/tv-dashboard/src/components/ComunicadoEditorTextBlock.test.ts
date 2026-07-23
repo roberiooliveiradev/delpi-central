@@ -49,7 +49,8 @@ describe("text edit commit cleanup contract", () => {
     const shapeSrc = readFileSync(join(base, "ComunicadoEditorShapeBlock.tsx"), "utf8");
     expect(textSrc).toMatch(/commitPendingRef\.current\(\)/);
     expect(textSrc).not.toMatch(/\}, \[isEditing, commitPending\]\)/);
-    expect(shapeSrc).toMatch(/commitDraftRef\.current\(\)/);
+    expect(shapeSrc).toMatch(/commitPendingRef\.current\(\)/);
+    expect(shapeSrc).not.toMatch(/\}, \[isEditing, commitPending\]\)/);
     expect(shapeSrc).not.toMatch(/\}, \[isEditing, commitDraft\]\)/);
   });
 

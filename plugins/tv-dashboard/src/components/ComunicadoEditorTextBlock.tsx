@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
 import {
   appendHrefLineToRuns,
+  applyContentRunStyleInRange,
   blockCssStyle,
   comunicadoTextInnerStyle,
   ComunicadoBlockView,
@@ -23,6 +24,7 @@ import {
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
   type ComunicadoTextDataRef,
+  type ContentRunStylePatch,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -208,6 +210,31 @@ export function ComunicadoEditorTextBlock({
     [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
   );
 
+  const applyPartialStylePatch = useCallback(
+    (patch: ContentRunStylePatch) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const selection = getEditableTextSelectionOffsets(editor);
+      if (!selection || selection.start >= selection.end) return;
+      const runs = contentRunsFromEditableRoot(editor);
+      const nextRuns = applyContentRunStyleInRange(
+        runs,
+        selection.start,
+        selection.end,
+        patch,
+      );
+      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
+      commitDraft(nextRuns);
+      reportTextEditSelection(
+        { blockId: block.id, start: selection.start, end: selection.end },
+        nextRuns,
+      );
+    },
+    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  );
+
   const applyListToggle = useCallback(
     (listType: ComunicadoListType) => {
       const editor = editorRef.current;
@@ -348,6 +375,7 @@ export function ComunicadoEditorTextBlock({
 
     registerTextEditorBridge(block.id, {
       applyPartialStyleToggle,
+      applyPartialStylePatch,
       applyListToggle,
       applyNamedStyleToggle,
       refreshSelectionState: reportSelectionFromEditor,
@@ -360,6 +388,7 @@ export function ComunicadoEditorTextBlock({
     isEditing,
     block.id,
     applyPartialStyleToggle,
+    applyPartialStylePatch,
     applyListToggle,
     applyNamedStyleToggle,
     reportSelectionFromEditor,

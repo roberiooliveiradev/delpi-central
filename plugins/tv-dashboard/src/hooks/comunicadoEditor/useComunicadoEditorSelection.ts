@@ -652,15 +652,25 @@ export function useComunicadoEditorSelection({
     }
 
     const resolvedBlock = configRef.current.blocks?.find((item) => item.id === selection.blockId);
+    const isVisualText =
+      resolvedBlock &&
+      (resolvedBlock.type === "heading" ||
+        resolvedBlock.type === "text" ||
+        resolvedBlock.type === "shape");
     const resolvedRuns = (() => {
       if (runs) return runs;
-      if (!resolvedBlock || (resolvedBlock.type !== "heading" && resolvedBlock.type !== "text")) {
-        return null;
+      if (!resolvedBlock || !isVisualText) return null;
+      if (resolvedBlock.type === "shape") {
+        return (
+          resolvedBlock.contentRuns?.length
+            ? resolvedBlock.contentRuns
+            : [{ text: resolvedBlock.content ?? "" }]
+        );
       }
       return resolveTextBlockDisplayRuns(resolvedBlock);
     })();
 
-    if (!resolvedRuns || !resolvedBlock || (resolvedBlock.type !== "heading" && resolvedBlock.type !== "text")) {
+    if (!resolvedRuns || !resolvedBlock || !isVisualText) {
       setTextEditSelectionStyle(null);
       setTextEditListSelection(null);
       setTextEditNamedStyleSelection(null);
@@ -673,7 +683,9 @@ export function useComunicadoEditorSelection({
         selectionListTypeState(resolvedRuns, selection.start, selection.start),
       );
       setTextEditNamedStyleSelection(
-        resolveNamedStyleSelectionForBlock(resolvedBlock, selection.start, selection.start),
+        resolvedBlock.type === "shape"
+          ? defaultNamedStyleForBlockType("text")
+          : resolveNamedStyleSelectionForBlock(resolvedBlock, selection.start, selection.start),
       );
       return;
     }
@@ -686,7 +698,7 @@ export function useComunicadoEditorSelection({
     );
     setTextEditNamedStyleSelection(
       selectionNamedStyleState(resolvedRuns, selection.start, selection.end) ??
-        defaultNamedStyleForBlockType(resolvedBlock.type),
+        defaultNamedStyleForBlockType(resolvedBlock.type === "shape" ? "text" : resolvedBlock.type),
     );
   }, [configRef]);
 
@@ -695,6 +707,15 @@ export function useComunicadoEditorSelection({
     const bridge = textEditorBridgesRef.current.get(editingTextId);
     bridge?.applyPartialStyleToggle(toggleKey);
   }, [editingTextId]);
+
+  const applyEditingTextRunStylePatch = useCallback(
+    (patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch) => {
+      if (!editingTextId) return;
+      const bridge = textEditorBridgesRef.current.get(editingTextId);
+      bridge?.applyPartialStylePatch?.(patch);
+    },
+    [editingTextId],
+  );
 
   const toggleSelectedTextListType = useCallback((listType: ComunicadoListType) => {
     let target: ComunicadoBlock | null =
@@ -846,6 +867,7 @@ export function useComunicadoEditorSelection({
     registerTextEditorBridge,
     reportTextEditSelection,
     toggleEditingTextRunStyle,
+    applyEditingTextRunStylePatch,
     toggleSelectedTextListType,
     applySelectedNamedTextStyle,
     insertDataFieldAtCursor,

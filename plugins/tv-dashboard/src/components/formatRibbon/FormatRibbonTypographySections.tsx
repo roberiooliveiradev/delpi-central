@@ -124,6 +124,7 @@ export function FormatRibbonTypographySections({
     textEditSelection,
     textEditSelectionStyle,
     toggleEditingTextRunStyle,
+    applyEditingTextRunStylePatch,
     textEditListSelection,
     toggleSelectedTextListType,
     textEditNamedStyleSelection,
@@ -215,9 +216,60 @@ export function FormatRibbonTypographySections({
                     chartPartKind as keyof typeof CHART_PART_FONT_SIZE_DEFAULTS
                   ]
                 : 9;
+  const partialTextSelectionActive = Boolean(
+    visualBoxBlock &&
+      editingTextId === visualBoxBlock.id &&
+      textEditSelection &&
+      textEditSelection.blockId === visualBoxBlock.id &&
+      textEditSelection.end > textEditSelection.start,
+  );
+  const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
+    if (partialTextSelectionActive) {
+      const runPatch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch = {};
+      if (patch.fontFamily !== undefined) runPatch.fontFamily = patch.fontFamily;
+      if (patch.fontSize !== undefined) runPatch.fontSize = patch.fontSize;
+      if (patch.color !== undefined) runPatch.color = patch.color;
+      if (patch.textHighlight !== undefined) runPatch.textHighlight = patch.textHighlight;
+      if (patch.fontWeight === "bold" || patch.fontWeight === "normal") {
+        runPatch.fontWeight = patch.fontWeight;
+      }
+      if (patch.fontStyle === "italic" || patch.fontStyle === "normal") {
+        runPatch.fontStyle = patch.fontStyle;
+      }
+      if (patch.textDecoration !== undefined) {
+        runPatch.textDecoration =
+          patch.textDecoration as import("@delpi/tv-dashboard-presentation").ComunicadoTextDecoration;
+      }
+      applyEditingTextRunStylePatch(runPatch);
+      return;
+    }
+    updateSelectedTextFormatStyle(patch);
+  };
   const fontSizeAuto = Boolean(formatStyle?.fontSizeAuto);
-  const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
-  const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
+  const currentFontSize =
+    partialTextSelectionActive &&
+    textEditSelectionStyle?.fontSize != null &&
+    textEditSelectionStyle.fontSize !== "mixed"
+      ? textEditSelectionStyle.fontSize
+      : (formatStyle?.fontSize ?? fontSizeDefault);
+  const currentFontFamily =
+    partialTextSelectionActive &&
+    textEditSelectionStyle?.fontFamily != null &&
+    textEditSelectionStyle.fontFamily !== "mixed"
+      ? textEditSelectionStyle.fontFamily
+      : (formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]);
+  const currentTextColor =
+    partialTextSelectionActive &&
+    textEditSelectionStyle?.color != null &&
+    textEditSelectionStyle.color !== "mixed"
+      ? textEditSelectionStyle.color
+      : formatStyle?.color;
+  const currentTextHighlight =
+    partialTextSelectionActive &&
+    textEditSelectionStyle?.textHighlight != null &&
+    textEditSelectionStyle.textHighlight !== "mixed"
+      ? textEditSelectionStyle.textHighlight
+      : formatStyle?.textHighlight;
   const textAlignActive =
     textFormatTarget.textAlign ??
     formatStyle?.textAlign ??
@@ -230,13 +282,6 @@ export function FormatRibbonTypographySections({
       : isShapeTextTarget
         ? "middle"
         : "middle");
-  const partialTextSelectionActive = Boolean(
-    textBlock &&
-      editingTextId === textBlock.id &&
-      textEditSelection &&
-      textEditSelection.blockId === textBlock.id &&
-      textEditSelection.end > textEditSelection.start,
-  );
   const blockFontWeightActive = formatStyle?.fontWeight === "bold";
   const blockFontStyleActive = formatStyle?.fontStyle === "italic";
   const blockDecorationFlags = parseTextDecorationFlags(
@@ -419,7 +464,7 @@ export function FormatRibbonTypographySections({
                 value={currentFontFamily}
                 onChange={(value) => {
                   ensureComunicadoGoogleFontsLoaded([value]);
-                  updateSelectedTextFormatStyle({ fontFamily: value });
+                  applyTextFormatStyle({ fontFamily: value });
                 }}
                 options={fontFamilySelectOptions}
               />
@@ -449,7 +494,7 @@ export function FormatRibbonTypographySections({
                 ariaLabel="Diminuir fonte"
                 disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
                 onClick={() =>
-                  updateSelectedTextFormatStyle({
+                  applyTextFormatStyle({
                     fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
                     fontSizeAuto: false,
                   })
@@ -469,7 +514,7 @@ export function FormatRibbonTypographySections({
                   clamp={clampFontSize}
                   portalScopeClassName="dashboard-tv-dashboard"
                   onChange={(next) =>
-                    updateSelectedTextFormatStyle({
+                    applyTextFormatStyle({
                       fontSize: clampFontSize(next),
                       fontSizeAuto: false,
                     })
@@ -480,7 +525,7 @@ export function FormatRibbonTypographySections({
                 hint={H.fontSizeUp}
                 ariaLabel="Aumentar fonte"
                 onClick={() =>
-                  updateSelectedTextFormatStyle({
+                  applyTextFormatStyle({
                     fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
                     fontSizeAuto: false,
                   })
@@ -595,9 +640,9 @@ export function FormatRibbonTypographySections({
                 ariaLabel="Realce do texto"
                 inline
                 variant="fill"
-                value={formatStyle?.textHighlight ?? "#fef08a"}
-                onChange={(color) => updateSelectedTextFormatStyle({ textHighlight: color })}
-                onNoFill={() => updateSelectedTextFormatStyle({ textHighlight: "transparent" })}
+                value={currentTextHighlight ?? "#fef08a"}
+                onChange={(color) => applyTextFormatStyle({ textHighlight: color })}
+                onNoFill={() => applyTextFormatStyle({ textHighlight: "transparent" })}
               />
             ) : null}
             <TvRibbonColorPicker
@@ -627,11 +672,11 @@ export function FormatRibbonTypographySections({
                 (background?.type === "color" ? background.value : "#ffffff")
               }
               value={
-                isAutomaticTextColor(formatStyle?.color)
+                isAutomaticTextColor(currentTextColor)
                   ? undefined
-                  : (formatStyle?.color ?? "#0f172a")
+                  : (currentTextColor ?? "#0f172a")
               }
-              onChange={(color) => updateSelectedTextFormatStyle({ color })}
+              onChange={(color) => applyTextFormatStyle({ color })}
             />
             {showClearFormatting && visualBoxBlock ? (
               <TdRibbonIconButton

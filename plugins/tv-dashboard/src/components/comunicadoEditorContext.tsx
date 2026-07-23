@@ -664,6 +664,7 @@ export function ComunicadoEditorProvider({
     registerTextEditorBridge: selection.registerTextEditorBridge,
     reportTextEditSelection: selection.reportTextEditSelection,
     toggleEditingTextRunStyle: selection.toggleEditingTextRunStyle,
+    applyEditingTextRunStylePatch: selection.applyEditingTextRunStylePatch,
     toggleSelectedTextListType: selection.toggleSelectedTextListType,
     applySelectedNamedTextStyle: selection.applySelectedNamedTextStyle,
     insertDataFieldAtCursor: selection.insertDataFieldAtCursor,

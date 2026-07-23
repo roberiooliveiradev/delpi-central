@@ -245,7 +245,10 @@ export function resolveVisualBoxDisplayText(
 ): Pick<ComunicadoTextBlock, "content" | "contentRuns"> {
   if (!textBlockHasDataBinding(block)) {
     if (block.type === "shape") {
-      return { content: block.content ?? "" };
+      return {
+        content: block.content ?? "",
+        contentRuns: block.contentRuns,
+      };
     }
     return {
       content: block.content,
