@@ -19,6 +19,7 @@ import type {
   Slide,
 } from "../api/tvDashboardApi";
 import { adminMediaUrl, uploadPlaylistMedia } from "../api/tvDashboardApi";
+import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { BranchField } from "./BranchField";
@@ -123,6 +124,7 @@ export function DeckSettingsPanel({
   const logoUrl =
     master.logo?.url ??
     (master.logo?.assetId ? adminMediaUrl(playlist.id, master.logo.assetId) : undefined);
+  const { src: logoPreviewSrc } = useAuthenticatedBlobUrl(logoUrl);
 
   function saveMaster(next: PlaylistMasterConfig) {
     onSavePlaylistSettings("masterConfig", next);
@@ -444,7 +446,11 @@ export function DeckSettingsPanel({
               {logoUrl ? (
                 <div
                   className="td-deck-master__logo-preview"
-                  style={{ backgroundImage: `url(${logoUrl})` }}
+                  style={
+                    logoPreviewSrc
+                      ? { backgroundImage: `url(${logoPreviewSrc})` }
+                      : undefined
+                  }
                   title="Logo do master"
                 />
               ) : null}

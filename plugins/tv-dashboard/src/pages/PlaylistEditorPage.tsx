@@ -6,6 +6,7 @@ import {
   type PresentationSelectionUpdateEvent,
 } from "@delpi/tv-dashboard-presentation";
 
+import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
 import {
   activatePlaylist,
   addSlide,
@@ -319,7 +320,7 @@ export function PlaylistEditorPage({
       return;
     }
     try {
-      const payload = await getPreviewPayload(playlistId);
+      const payload = rewriteAdminMediaUrlsForBrowser(await getPreviewPayload(playlistId));
       const next: Record<string, PresentationPayload["slides"][number]> = {};
       for (const slide of payload.slides) next[slide.id] = slide;
       setPreviewBySlideId(next);

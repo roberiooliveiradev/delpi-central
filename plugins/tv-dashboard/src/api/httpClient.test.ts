@@ -9,11 +9,14 @@ describe("resolveHttpErrorMessage", () => {
     );
   });
 
-  it("usa detail do FastAPI quando não há message", () => {
-    expect(resolveHttpErrorMessage({ detail: "Unauthorized" }, 401)).toBe("Unauthorized");
+  it("traduz detail Unauthorized do JWT para PT-BR", () => {
+    expect(resolveHttpErrorMessage({ detail: "Unauthorized" }, 401)).toBe(
+      "Não autorizado. Faça login novamente.",
+    );
   });
 
   it("fallback para status HTTP", () => {
     expect(resolveHttpErrorMessage(null, 502)).toBe("Erro HTTP 502");
+    expect(resolveHttpErrorMessage(null, 401)).toBe("Não autorizado. Faça login novamente.");
   });
 });

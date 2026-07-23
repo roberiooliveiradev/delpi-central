@@ -35,12 +35,18 @@ function authHeaders(): Record<string, string> {
 /** Extrai mensagem legível de envelope TV (`message`) ou FastAPI (`detail`). */
 export function resolveHttpErrorMessage(body: unknown, status: number): string {
   const fallback = `Erro HTTP ${status}`;
-  if (!body || typeof body !== "object") return fallback;
+  if (!body || typeof body !== "object") {
+    return status === 401 ? "Não autorizado. Faça login novamente." : fallback;
+  }
   const record = body as Record<string, unknown>;
   const message = record.message;
-  if (typeof message === "string" && message.trim()) return message.trim();
+  if (typeof message === "string" && message.trim()) {
+    return localizeAuthError(message.trim(), status);
+  }
   const detail = record.detail;
-  if (typeof detail === "string" && detail.trim()) return detail.trim();
+  if (typeof detail === "string" && detail.trim()) {
+    return localizeAuthError(detail.trim(), status);
+  }
   if (Array.isArray(detail) && detail.length > 0) {
     const parts = detail
       .map((item) => {
@@ -52,9 +58,23 @@ export function resolveHttpErrorMessage(body: unknown, status: number): string {
       })
       .map((part) => part.trim())
       .filter(Boolean);
-    if (parts.length) return parts.join("; ");
+    if (parts.length) return localizeAuthError(parts.join("; "), status);
   }
-  return fallback;
+  return status === 401 ? "Não autorizado. Faça login novamente." : fallback;
+}
+
+function localizeAuthError(message: string, status: number): string {
+  if (status !== 401) return message;
+  const normalized = message.trim().toLowerCase();
+  if (
+    normalized === "unauthorized" ||
+    normalized === "invalid token claims" ||
+    normalized === "usuário não identificado." ||
+    normalized === "usuario nao identificado."
+  ) {
+    return "Não autorizado. Faça login novamente.";
+  }
+  return message;
 }
 
 async function parseJson<T>(response: Response): Promise<T> {

@@ -90,10 +90,11 @@ function useCanvasBackgroundStyle() {
 function MasterLogoOverlay() {
   const { masterLogo } = useComunicadoEditor();
   const { src: logoBlobUrl } = useAuthenticatedBlobUrl(masterLogo?.url);
-  if (!masterLogo?.url && !logoBlobUrl) return null;
+  // Nunca cair no URL da API: CSS `background-image` não envia Bearer → 401.
+  if (!logoBlobUrl) return null;
   return (
     <RichComunicadoMasterLogo
-      url={logoBlobUrl ?? masterLogo?.url}
+      url={logoBlobUrl}
       frame={masterLogo?.frame}
       opacity={masterLogo?.opacity ?? 1}
       className={ensureComunicadoDualClass(

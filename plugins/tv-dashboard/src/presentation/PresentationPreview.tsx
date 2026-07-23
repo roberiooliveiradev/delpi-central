@@ -17,6 +17,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
+import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
 import { getAccessToken } from "../api/httpClient";
 import { ExternalSlidePreview } from "./ExternalSlidePreview";
 import "./presentation.css";
@@ -32,6 +33,10 @@ function blocksFromNativeData(data: Record<string, unknown> | undefined): Comuni
   if (!data || typeof data !== "object") return [];
   const blocks = data.blocks;
   return Array.isArray(blocks) ? (blocks as ComunicadoBlock[]) : [];
+}
+
+function forBrowserDisplay(payload: PresentationPayload): PresentationPayload {
+  return rewriteAdminMediaUrlsForBrowser(payload);
 }
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
@@ -64,7 +69,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     const filters = hasInputFilterContributions(overridesRef.current)
       ? overridesRef.current
       : null;
-    return onRefresh(filters);
+    const next = await onRefresh(filters);
+    return next ? forBrowserDisplay(next) : null;
   }, [onRefresh]);
 
   const {
@@ -78,7 +84,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     goPrevious,
     goNext,
   } = usePresentationEngine({
-    initialPayload: initial,
+    initialPayload: forBrowserDisplay(initial),
     onRefresh: onRefresh ? reloadWithFilters : undefined,
     enableHiddenPause: false,
     enableKeyboardControls: true,

@@ -5,9 +5,18 @@ import {
   serializeComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
 
-import { adminMediaUrl, type PlaylistMasterConfig, type Slide } from "../api/tvDashboardApi";
-import type { PresentationPayload } from "../api/tvDashboardApi";
+import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
+import {
+  adminMediaUrl,
+  type PlaylistMasterConfig,
+  type PresentationPayload,
+  type Slide,
+} from "../api/tvDashboardApi";
 
+/** URL de mídia para render nativo (miniatura / CSS / img) — Bearer via query. */
+function displayMediaUrl(playlistId: string, assetId: string): string {
+  return withBrowserMediaAccessToken(adminMediaUrl(playlistId, assetId));
+}
 /**
  * Serializa o config do editor com `resolved` dos blocos de dados/views —
  * necessário para o filmstrip ser o print do palco (gráficos/tabelas ao vivo).
@@ -181,7 +190,9 @@ export function resolveMasterForPreview(
     if (background.type === "image" && background.assetId) {
       out.background = {
         ...background,
-        url: background.url ?? adminMediaUrl(playlistId, background.assetId),
+        url: withBrowserMediaAccessToken(
+          background.url ?? adminMediaUrl(playlistId, background.assetId),
+        ),
       };
     } else {
       out.background = background;
@@ -191,7 +202,9 @@ export function resolveMasterForPreview(
   if (logo) {
     const logoOut: Record<string, unknown> = { ...logo };
     if (logo.assetId && !logo.url) {
-      logoOut.url = adminMediaUrl(playlistId, logo.assetId);
+      logoOut.url = displayMediaUrl(playlistId, logo.assetId);
+    } else if (typeof logoOut.url === "string" && logoOut.url) {
+      logoOut.url = withBrowserMediaAccessToken(logoOut.url);
     }
     out.logo = logoOut;
   }
@@ -246,7 +259,7 @@ function buildComunicadoPreviewData(
   if (resolvedBackground.type === "image" && resolvedBackground.assetId) {
     resolvedBackground = {
       ...resolvedBackground,
-      url: adminMediaUrl(playlistId, resolvedBackground.assetId),
+      url: displayMediaUrl(playlistId, resolvedBackground.assetId),
     };
   }
   const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
@@ -264,7 +277,7 @@ function buildComunicadoPreviewData(
       ? {
           customFonts: cfg.customFonts.map((font) => ({
             ...font,
-            url: adminMediaUrl(playlistId, font.assetId),
+            url: displayMediaUrl(playlistId, font.assetId),
           })),
         }
       : {}),
@@ -295,7 +308,7 @@ function enrichBlocksForEditorThumbnail(
     if ((block.type === "image" || block.type === "video") && block.assetId) {
       return {
         ...block,
-        url: adminMediaUrl(playlistId, block.assetId),
+        url: displayMediaUrl(playlistId, block.assetId),
       };
     }
     // chart_view / table_view / kpi_view / data_*: preservar `resolved` (print do palco).
