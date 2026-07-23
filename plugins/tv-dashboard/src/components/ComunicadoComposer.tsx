@@ -26,7 +26,9 @@ const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
+import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
+import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   blocksInMarquee,
@@ -167,6 +169,32 @@ export function ComunicadoComposerCanvas() {
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [panGutter, setPanGutter] = useState({ x: 48, y: 48 });
+
+  const openStageContextMenuFromKeyboard = useCallback(() => {
+    if (editingTextId) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const canvasRect = canvas.getBoundingClientRect();
+    const frames = blocks
+      .filter((block) => selectedIds.includes(block.id))
+      .map((block) => block.frame);
+    setContextMenu(resolveStageContextMenuAnchorClient({ canvasRect, frames }));
+  }, [blocks, canvasRef, editingTextId, selectedIds]);
+
+  useEditorShortcut(
+    "comunicado-stage-context-menu",
+    (event) => {
+      if (isEditableKeyboardTarget(event.target)) return;
+      if (editingTextId) return;
+      const isShiftF10 = event.key === "F10" && event.shiftKey && !event.ctrlKey && !event.metaKey;
+      const isContextMenuKey = event.key === "ContextMenu";
+      if (!isShiftF10 && !isContextMenuKey) return;
+      openStageContextMenuFromKeyboard();
+      return { handled: true };
+    },
+    { phase: "bubble", priority: 55 },
+  );
+
   const marqueeActiveRef = useRef(false);
   const marqueeStartClientRef = useRef<{ x: number; y: number } | null>(null);
   const marqueeRectRef = useRef<MarqueeRect | null>(null);
