@@ -29,6 +29,7 @@ import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticated
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
+import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   blocksInMarquee,
@@ -167,7 +168,12 @@ export function ComunicadoComposerCanvas() {
     [stageGridSizePercent, designSize],
   );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    /** Bloco sob o clique — evita menu de fundo enquanto o select ainda não commitou. */
+    targetBlockId: string | null;
+  } | null>(null);
   const [panGutter, setPanGutter] = useState({ x: 48, y: 48 });
 
   const openStageContextMenuFromKeyboard = useCallback(() => {
@@ -178,8 +184,12 @@ export function ComunicadoComposerCanvas() {
     const frames = blocks
       .filter((block) => selectedIds.includes(block.id))
       .map((block) => block.frame);
-    setContextMenu(resolveStageContextMenuAnchorClient({ canvasRect, frames }));
-  }, [blocks, canvasRef, editingTextId, selectedIds]);
+    const anchor = resolveStageContextMenuAnchorClient({ canvasRect, frames });
+    setContextMenu({
+      ...anchor,
+      targetBlockId: selectedId ?? selectedIds[0] ?? null,
+    });
+  }, [blocks, canvasRef, editingTextId, selectedId, selectedIds]);
 
   useEditorShortcut(
     "comunicado-stage-context-menu",
@@ -473,20 +483,29 @@ export function ComunicadoComposerCanvas() {
     (event: React.MouseEvent<HTMLDivElement>, blockId?: string) => {
       event.preventDefault();
       if (editingTextId) return;
-      if (blockId) {
+      const hit = resolveStageContextMenuHit({
+        blockId,
+        eventTarget: event.target,
+      });
+      if (hit.type === "block") {
         event.stopPropagation();
-        if (!isBlockSelected(blockId)) {
-          selectBlock(blockId);
+        if (!isBlockSelected(hit.blockId)) {
+          selectBlock(hit.blockId);
         }
-      } else {
-        const target = event.target as HTMLElement | null;
-        const onBlock = target?.closest?.("[data-block-id]");
-        // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
-        if (!onBlock) {
-          clearSelection();
-        }
+        setContextMenu({
+          x: event.clientX,
+          y: event.clientY,
+          targetBlockId: hit.blockId,
+        });
+        return;
       }
-      setContextMenu({ x: event.clientX, y: event.clientY });
+      // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
+      clearSelection();
+      setContextMenu({
+        x: event.clientX,
+        y: event.clientY,
+        targetBlockId: null,
+      });
     },
     [clearSelection, editingTextId, isBlockSelected, selectBlock],
   );
@@ -929,6 +948,7 @@ export function ComunicadoComposerCanvas() {
       <ComunicadoStageContextMenu
         open={contextMenu != null}
         position={contextMenu}
+        targetBlockId={contextMenu?.targetBlockId ?? null}
         onClose={() => setContextMenu(null)}
       />
     </ComunicadoStageShell>

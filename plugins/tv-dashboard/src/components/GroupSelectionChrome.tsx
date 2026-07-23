@@ -43,6 +43,7 @@ export function GroupSelectionChrome({
         height: `${frame.h}%`,
       }}
       data-group-chrome=""
+      data-block-id={anchorBlock.id}
       aria-label="Seleção do grupo"
     >
       <div className="td-composer__block-handles">

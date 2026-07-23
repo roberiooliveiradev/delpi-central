@@ -85,10 +85,21 @@ const S = {
 type Props = {
   open: boolean;
   position: FixedPanelPoint | null;
+  /**
+   * Bloco sob o right-click / Shift+F10.
+   * Usado no enablement mesmo antes do React commitar `selected`
+   * (evita menu de «Inserir…» ao clicar num ícone ainda não selecionado).
+   */
+  targetBlockId?: string | null;
   onClose: () => void;
 };
 
-export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
+export function ComunicadoStageContextMenu({
+  open,
+  position,
+  targetBlockId = null,
+  onClose,
+}: Props) {
   const {
     selected,
     selectedIds,
@@ -130,8 +141,21 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [canReplaceImageFromClipboard, setCanReplaceImageFromClipboard] = useState(false);
 
+  const menuSelected = useMemo(() => {
+    if (targetBlockId) {
+      return blocks.find((block) => block.id === targetBlockId) ?? selected;
+    }
+    return selected;
+  }, [blocks, selected, targetBlockId]);
+
+  const menuSelectedIds = useMemo(() => {
+    if (!targetBlockId) return selectedIds;
+    if (selectedIds.includes(targetBlockId)) return selectedIds;
+    return [targetBlockId];
+  }, [selectedIds, targetBlockId]);
+
   useEffect(() => {
-    const isMedia = selected?.type === "image" || selected?.type === "video";
+    const isMedia = menuSelected?.type === "image" || menuSelected?.type === "video";
     if (!open || !isMedia) {
       setCanReplaceImageFromClipboard(false);
       return;
@@ -143,37 +167,48 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, probeClipboardHasImage, selected?.type]);
+  }, [open, probeClipboardHasImage, menuSelected?.type]);
 
   const actionState = useMemo(
     () =>
       resolveContextMenuActionState({
-        selected,
+        selected: menuSelected,
         canPaste,
-        selectedIds,
+        selectedIds: menuSelectedIds,
         blocks,
         lastUngroupedIds,
         canReplaceImageFromClipboard,
       }),
-    [blocks, canPaste, canReplaceImageFromClipboard, lastUngroupedIds, selected, selectedIds],
+    [
+      blocks,
+      canPaste,
+      canReplaceImageFromClipboard,
+      lastUngroupedIds,
+      menuSelected,
+      menuSelectedIds,
+    ],
   );
 
   const isShapeBlock =
-    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
+    menuSelected &&
+    isComunicadoVisualBoxBlock(menuSelected) &&
+    visualBoxSupportsShapeFormatting(menuSelected);
   const shapePrimitive =
-    isShapeBlock && selected.type === "shape" ? resolveShapePrimitive(selected.shape) : null;
-  const shapeChrome = isShapeBlock ? resolveVisualBoxChrome(selected) : null;
+    isShapeBlock && menuSelected.type === "shape"
+      ? resolveShapePrimitive(menuSelected.shape)
+      : null;
+  const shapeChrome = isShapeBlock ? resolveVisualBoxChrome(menuSelected) : null;
   const showShapeFill = shapePrimitive ? shapeSupportsFill(shapePrimitive) : false;
   const showShapeStroke = shapePrimitive ? shapeSupportsStroke(shapePrimitive) : false;
 
   const fillValue = isShapeBlock
-    ? selected.style?.fill ?? shapeChrome?.fill ?? DECK_SHAPE_DEFAULTS.fill
-    : selected?.style?.backgroundColor ?? DECK_COLOR_SURFACE;
+    ? menuSelected.style?.fill ?? shapeChrome?.fill ?? DECK_SHAPE_DEFAULTS.fill
+    : menuSelected?.style?.backgroundColor ?? DECK_COLOR_SURFACE;
   const outlineValue = isShapeBlock
-    ? selected.style?.stroke ??
+    ? menuSelected.style?.stroke ??
       shapeChrome?.stroke ??
       (shapePrimitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
-    : selected?.style?.borderColor ?? "#cbd5e1";
+    : menuSelected?.style?.borderColor ?? "#cbd5e1";
 
   function run(action: () => void) {
     action();
@@ -202,8 +237,8 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   }
 
   function applyShapeKind(kind: ComunicadoShapeKind) {
-    if (!selected) return;
-    const patch = buildVisualBoxShapeKindPatch(selected, kind);
+    if (!menuSelected) return;
+    const patch = buildVisualBoxShapeKindPatch(menuSelected, kind);
     if (!patch) return;
     updateSelected(patch as Partial<ComunicadoBlock>);
     rememberComunicadoShape(kind);
@@ -217,7 +252,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   }
 
   const selectedIconName =
-    selected?.type === "icon" ? selected.iconName?.trim() || "Star" : "Star";
+    menuSelected?.type === "icon" ? menuSelected.iconName?.trim() || "Star" : "Star";
 
   const enabled = (action: Parameters<typeof isContextMenuActionEnabled>[0]) =>
     isContextMenuActionEnabled(action, actionState);
@@ -263,7 +298,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
       aria-label={C.menu}
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
     >
-      {actionState.showStyleToolbar && selected ? (
+      {actionState.showStyleToolbar && menuSelected ? (
         <>
           <ContextMenuToolbar aria-label={C.quickFormat}>
             {showShapeFill ? (
@@ -275,7 +310,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 inline
                 variant="fill"
               />
-            ) : selected.type === "heading" || selected.type === "text" ? (
+            ) : menuSelected.type === "heading" || menuSelected.type === "text" ? (
               <TvRibbonColorPicker
                 label={C.fill}
                 value={fillValue}
@@ -292,9 +327,9 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
                 inline
                 variant="outline"
               />
-            ) : selected.type === "heading" ||
-              selected.type === "text" ||
-              selected.type === "icon" ? (
+            ) : menuSelected.type === "heading" ||
+              menuSelected.type === "text" ||
+              menuSelected.type === "icon" ? (
               <TvRibbonColorPicker
                 label={C.outline}
                 value={outlineValue}
@@ -376,7 +411,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
             label={C.editText}
             icon={SquarePen}
             disabled={!enabled("editText")}
-            onSelect={() => run(() => selected && enterTextEdit(selected.id))}
+            onSelect={() => run(() => menuSelected && enterTextEdit(menuSelected.id))}
           />
         </>
       ) : null}
@@ -411,7 +446,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         <>
           <ContextMenuDivider />
           <ContextMenuSub
-            label={selected?.type === "video" ? C.changeVideo : C.changeImage}
+            label={menuSelected?.type === "video" ? C.changeVideo : C.changeImage}
             icon={ImageIcon}
           >
             <ContextMenuItem
