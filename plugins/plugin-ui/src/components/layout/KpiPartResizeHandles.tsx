@@ -26,7 +26,10 @@ export type KpiPartResizeHandlesProps = {
   onCornerAdjustPointerDown?: (event: ReactPointerEvent) => void;
 };
 
-/** Handles de resize (+ raio) no bbox da parte KPI (paridade com chart_view / bloco). */
+/**
+ * Handles de resize (+ raio) — mesmas classes do chrome de bloco (`td-composer__*`)
+ * para paridade visual pai/filho (complexo ≡ agrupado).
+ */
 export function KpiPartResizeHandles({
   visible,
   onResizePointerDown,
@@ -37,12 +40,12 @@ export function KpiPartResizeHandles({
   if (!visible) return null;
 
   return (
-    <>
+    <div className="td-composer__block-handles delpi-kpi-part-handles" data-kpi-part-chrome="">
       {KPI_PART_RESIZE_HANDLES.map((handle) => (
         <button
           key={handle}
           type="button"
-          className={`delpi-kpi-part-resize delpi-kpi-part-resize--${handle}`}
+          className={`td-composer__resize td-composer__resize--${handle} delpi-kpi-part-resize delpi-kpi-part-resize--${handle}`}
           aria-label={HANDLE_LABELS[handle]}
           onPointerDown={(event) => {
             event.stopPropagation();
@@ -54,7 +57,7 @@ export function KpiPartResizeHandles({
       {showCornerAdjust && onCornerAdjustPointerDown ? (
         <button
           type="button"
-          className="delpi-kpi-part-adjust"
+          className="td-composer__adjust delpi-kpi-part-adjust"
           style={cornerAdjustStyle}
           aria-label="Ajustar raio dos cantos"
           title="Raio"
@@ -65,6 +68,6 @@ export function KpiPartResizeHandles({
           }}
         />
       ) : null}
-    </>
+    </div>
   );
 }

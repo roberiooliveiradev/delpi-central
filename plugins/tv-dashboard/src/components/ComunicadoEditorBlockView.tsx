@@ -654,6 +654,7 @@ function EditorKpiViewBlock({
   const {
     selectedId,
     selectedKpiPart,
+    selectedKpiParts,
     editingKpiPart,
     selectedIds,
     isBlockSelected,
@@ -674,7 +675,9 @@ function EditorKpiViewBlock({
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
       if (event.shiftKey) {
-        selectBlock(block.id, { additive: true });
+        selectKpiPart(block.id, part, { additive: true });
+        if (part.kind === "metricCard") requestRibbonTab("data");
+        else requestRibbonTab("shape");
         return;
       }
       const samePartSelected =
@@ -938,6 +941,7 @@ function EditorKpiViewBlock({
     selectedId === block.id
       ? {
           selectedPart: selectedKpiPart,
+          selectedParts: selectedKpiParts,
           editingPart: editingKpiPart,
           onPartPointerDown,
           onPartDoubleClick,
@@ -989,6 +993,7 @@ function EditorInputBlock({
     selectedIds,
     isBlockSelected,
     selectedInputPart,
+    selectedInputParts,
     selectBlock,
     selectBlocksByIds,
     selectInputPart,
@@ -1053,7 +1058,8 @@ function EditorInputBlock({
     (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
       if (event.shiftKey) {
-        selectBlock(block.id, { additive: true });
+        selectInputPart(block.id, part, { additive: true });
+        requestRibbonTab("shape");
         return;
       }
       const blockSelected = selectedId === block.id;
@@ -1219,6 +1225,7 @@ function EditorInputBlock({
   const interaction = useMemo(
     () => ({
       selectedPart: selectedId === block.id ? selectedInputPart : null,
+      selectedParts: selectedId === block.id ? selectedInputParts : null,
       onPartPointerDown,
       onPartDoubleClick,
       onPartMovePointerDown,
@@ -1230,6 +1237,7 @@ function EditorInputBlock({
       onPartPointerDown,
       selectedId,
       selectedInputPart,
+      selectedInputParts,
     ],
   );
 

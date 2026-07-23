@@ -1,9 +1,10 @@
 /**
  * Política de clique em partes de widgets compostos (KPI / chart / table / input).
  *
- * Palco = mesmo modo de formas/textos: clique seleciona e arrasta o **bloco**.
- * Parte interna entra via toolbar / duplo clique; só então arrasta a parte se móvel.
- * Chrome de outline/handles no wrap permanece no bloco (não some ao focar uma parte).
+ * Complexo ≡ agrupado (`stageGroupedSelection.ts`):
+ * - Clique simples no palco = unidade pai (arrasta o bloco).
+ * - Parte de conteúdo = filho; chrome do pai desativa (`shouldUsePartChromeInsteadOfBlock`).
+ * - Moldura (`card` / `frame` / …) permanece na unidade pai.
  */
 
 export type CompositePartPointerAction = "drag-block" | "part-move" | "select-part";
@@ -42,15 +43,15 @@ export function isMolduraPartSelection(
 }
 
 /**
- * Chrome de palco: sempre no wrap do bloco (como formas).
- * A parte selecionada continua com outline/handles próprios no host interno;
- * o wrap não cede o outline global nem esconde os handles de resize do bloco.
+ * Chrome de palco no wrap do bloco some quando um **filho** (parte de conteúdo)
+ * está selecionado — paridade com membro isolado de grupo.
+ * Moldura / sem parte → chrome permanece no pai.
  */
 export function shouldUsePartChromeInsteadOfBlock(
-  _blockType: string | undefined,
-  _part: { kind: string } | null | undefined,
+  blockType: string | undefined,
+  part: { kind: string } | null | undefined,
 ): boolean {
-  return false;
+  return isCompositeContentPart(blockType, part);
 }
 
 /** Parte de conteúdo (não moldura) — ribbon / duplo clique / float toolbar. */
@@ -59,4 +60,31 @@ export function isCompositeContentPart(
   part: { kind: string } | null | undefined,
 ): boolean {
   return Boolean(part) && !isMolduraPartSelection(blockType, part);
+}
+
+/**
+ * Alterna parte na multi-seleção de filhos (Shift), como blocos em grupo.
+ * Moldura sempre substitui (volta à unidade pai).
+ */
+export function toggleCompositePartSelection<T extends { kind: string }>(params: {
+  blockType: string;
+  current: T[];
+  next: T;
+  equal: (a: T, b: T) => boolean;
+  additive?: boolean;
+}): T[] {
+  const { blockType, current, next, equal, additive } = params;
+  if (isMolduraPartSelection(blockType, next) || !additive) {
+    return [next];
+  }
+  if (!isCompositeContentPart(blockType, next)) {
+    return [next];
+  }
+  const contentOnly = current.filter((part) => isCompositeContentPart(blockType, part));
+  const already = contentOnly.some((part) => equal(part, next));
+  if (already) {
+    const rest = contentOnly.filter((part) => !equal(part, next));
+    return rest.length > 0 ? rest : [next];
+  }
+  return [...contentOnly, next];
 }

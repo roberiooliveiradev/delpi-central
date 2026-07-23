@@ -72,6 +72,7 @@ export {
   findKpiPartFromTarget,
   getKpiPartState,
   isKpiPartRefEqual,
+  isKpiPartSelected,
   isKpiPartVisible,
   kpiOptionsToParts,
   kpiPartAllowsDelete,
@@ -392,10 +393,7 @@ export function DelpiKpiCard({
   const iconShowResize =
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
     Boolean(interaction?.onPartResizePointerDown);
-  const cardShowChrome =
-    cardPtr.selected &&
-    kpiPartAllowsResize({ kind: "card" }) &&
-    Boolean(interaction?.onPartResizePointerDown);
+  const cardShowChrome = false; /* moldura = chrome do wrap (pai); evita handles duplicados */
 
   const partCornerStyle = (host: HTMLElement | null, radiusPx: number) => {
     const shortSide = Math.min(

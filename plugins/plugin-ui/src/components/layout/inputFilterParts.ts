@@ -117,6 +117,8 @@ export const INPUT_ICON_DEFAULT_SIZE_PX = 20;
 
 export type InputFilterInteraction = {
   selectedPart?: InputPartRef | null;
+  /** Multi-seleção de filhos — outline/handles em todos. */
+  selectedParts?: InputPartRef[] | null;
   onPartPointerDown?: (ref: InputPartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: InputPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
   onPartMovePointerDown?: (ref: InputPartRef, event: ReactPointerEvent) => void;
@@ -126,6 +128,17 @@ export type InputFilterInteraction = {
     handle: InputPartResizeHandle,
   ) => void;
 };
+
+export function isInputPartSelected(
+  ref: InputPartRef,
+  selectedPart?: InputPartRef | null,
+  selectedParts?: InputPartRef[] | null,
+): boolean {
+  if (selectedParts && selectedParts.length > 0) {
+    return selectedParts.some((part) => isInputPartRefEqual(part, ref));
+  }
+  return isInputPartRefEqual(ref, selectedPart);
+}
 
 export function isInputTextPartKind(kind: InputPartRef["kind"]): kind is InputTextPartKind {
   return (INPUT_TEXT_PART_KINDS as readonly string[]).includes(kind);
@@ -473,13 +486,14 @@ export function bindInputPartPointer(
   onDoubleClick?: (event: ReactMouseEvent) => void;
 } {
   if (!interaction) return {};
-  const selected =
-    Boolean(interaction.selectedPart) && isInputPartRefEqual(interaction.selectedPart, ref);
+  const selected = isInputPartSelected(ref, interaction.selectedPart, interaction.selectedParts);
 
   const dispatchPartPointer = (partRef: InputPartRef, event: ReactPointerEvent) => {
-    const partSelected =
-      Boolean(interaction.selectedPart) &&
-      isInputPartRefEqual(interaction.selectedPart, partRef);
+    const partSelected = isInputPartSelected(
+      partRef,
+      interaction.selectedPart,
+      interaction.selectedParts,
+    );
     interaction.onPartPointerDown?.(partRef, event);
     if (inputPartAllowsMove(partRef) && partSelected) {
       interaction.onPartMovePointerDown?.(partRef, event);

@@ -55,14 +55,38 @@ export function resolveClosedGroupSelection(
   return { groupId, memberIds, members };
 }
 
-/** Um único filho de grupo isolado (seleção via Camadas). */
+/**
+ * Subconjunto de membros de um mesmo grupo (não a seleção pai fechada).
+ * Paridade com filhos de widget complexo.
+ */
+export function resolveGroupChildrenSelection(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): { groupId: string; memberIds: string[] } | null {
+  if (selectedIds.length === 0) return null;
+  if (resolveClosedGroupSelection(blocks, selectedIds)) return null;
+  const selected = blocks.filter((block) => selectedIds.includes(block.id));
+  if (selected.length !== selectedIds.length) return null;
+  const groupId = selected[0]?.groupId;
+  if (!groupId) return null;
+  if (!selected.every((block) => block.groupId === groupId)) return null;
+  return { groupId, memberIds: selected.map((block) => block.id) };
+}
+
+/** Um ou mais filhos de grupo isolados (Camadas / 2º clique / multi Shift). */
+export function isGroupChildrenSelection(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): boolean {
+  return resolveGroupChildrenSelection(blocks, selectedIds) != null;
+}
+
+/** @deprecated Preferir `isGroupChildrenSelection` (suporta multi). */
 export function isIsolatedGroupChildSelection(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
 ): boolean {
-  if (selectedIds.length !== 1) return false;
-  const block = blocks.find((item) => item.id === selectedIds[0]);
-  return Boolean(block?.groupId);
+  return isGroupChildrenSelection(blocks, selectedIds);
 }
 
 export function unionFramePercent(frames: ComunicadoFrame[]): ComunicadoFrame {

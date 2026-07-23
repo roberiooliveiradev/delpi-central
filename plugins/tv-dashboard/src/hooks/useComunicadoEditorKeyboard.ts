@@ -2,7 +2,7 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
-import { expandSelectionWithGroups } from "../utils/comunicadoGrouping";
+import { resolveEscapeHierarchyAction } from "../utils/stageGroupedSelection";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -40,16 +40,18 @@ export function useComunicadoEditorKeyboard({
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
 
-      if (event.key === "Escape" && hasPartSelection) {
-        clearPartSelection?.();
-        return { handled: true };
-      }
-
-      // Filho isolado do grupo (Camadas) → Esc volta à seleção pai.
-      if (event.key === "Escape" && selectBlocksByIds && selectedIds.length === 1) {
-        const alone = blocks.find((block) => block.id === selectedIds[0]);
-        if (alone?.groupId) {
-          selectBlocksByIds(expandSelectionWithGroups(blocks, [alone.id]));
+      if (event.key === "Escape") {
+        const escape = resolveEscapeHierarchyAction({
+          blocks,
+          selectedIds,
+          hasPartSelection,
+        });
+        if (escape.type === "clear-parts") {
+          clearPartSelection?.();
+          return { handled: true };
+        }
+        if (escape.type === "select-ids" && selectBlocksByIds) {
+          selectBlocksByIds(escape.ids);
           return { handled: true };
         }
       }

@@ -344,7 +344,7 @@
       --td-selection-outline,
       color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff)
     );
-  outline-offset: 0;
+  outline-offset: var(--td-global-selection-pad, 6px);
 }
 
 .delpi-kpi-card__edit {

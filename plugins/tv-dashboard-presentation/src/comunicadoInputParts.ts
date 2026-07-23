@@ -40,6 +40,7 @@ export {
   inputPartSupportsTypography,
   isInputElementEnabled,
   isInputPartRefEqual,
+  isInputPartSelected,
   isInputPartVisible,
   isInputTextPartKind,
   findInputBlockHostInDocument,

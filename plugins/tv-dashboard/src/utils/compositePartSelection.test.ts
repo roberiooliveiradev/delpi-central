@@ -5,6 +5,7 @@ import {
   isMolduraPartSelection,
   resolveCompositePartPointerAction,
   shouldUsePartChromeInsteadOfBlock,
+  toggleCompositePartSelection,
 } from "./compositePartSelection";
 
 describe("resolveCompositePartPointerAction", () => {
@@ -65,7 +66,7 @@ describe("resolveCompositePartPointerAction", () => {
 });
 
 describe("isMolduraPartSelection / shouldUsePartChromeInsteadOfBlock", () => {
-  it("molduras (KPI card, filtro, gráfico, tabela) usam chrome global do bloco", () => {
+  it("molduras usam chrome global do bloco (pai ativo)", () => {
     expect(isMolduraPartSelection("kpi_view", { kind: "card" })).toBe(true);
     expect(isMolduraPartSelection("input", { kind: "frame" })).toBe(true);
     expect(isMolduraPartSelection("chart_view", { kind: "chartArea" })).toBe(true);
@@ -75,20 +76,66 @@ describe("isMolduraPartSelection / shouldUsePartChromeInsteadOfBlock", () => {
     expect(shouldUsePartChromeInsteadOfBlock("kpi_view", { kind: "card" })).toBe(false);
   });
 
-  it("subitens são conteúdo; chrome de palco permanece no bloco (como formas)", () => {
+  it("subitens (filhos) desativam chrome do pai — complexo ≡ agrupado", () => {
     expect(isCompositeContentPart("input", { kind: "control" })).toBe(true);
     expect(isCompositeContentPart("chart_view", { kind: "title" })).toBe(true);
-    expect(isCompositeContentPart("chart_view", { kind: "series" })).toBe(true);
     expect(isCompositeContentPart("kpi_view", { kind: "value" })).toBe(true);
     expect(isCompositeContentPart("kpi_view", { kind: "card" })).toBe(false);
-    expect(isCompositeContentPart("chart_view", { kind: "chartArea" })).toBe(false);
-    expect(shouldUsePartChromeInsteadOfBlock("input", { kind: "control" })).toBe(false);
-    expect(shouldUsePartChromeInsteadOfBlock("chart_view", { kind: "title" })).toBe(false);
-    expect(shouldUsePartChromeInsteadOfBlock("kpi_view", { kind: "value" })).toBe(false);
+    expect(shouldUsePartChromeInsteadOfBlock("input", { kind: "control" })).toBe(true);
+    expect(shouldUsePartChromeInsteadOfBlock("chart_view", { kind: "title" })).toBe(true);
+    expect(shouldUsePartChromeInsteadOfBlock("kpi_view", { kind: "value" })).toBe(true);
   });
 
   it("sem parte = chrome global", () => {
     expect(shouldUsePartChromeInsteadOfBlock("chart_view", null)).toBe(false);
     expect(isMolduraPartSelection("input", null)).toBe(false);
+  });
+});
+
+describe("toggleCompositePartSelection", () => {
+  const equal = (a: { kind: string }, b: { kind: string }) => a.kind === b.kind;
+
+  it("sem additive substitui", () => {
+    expect(
+      toggleCompositePartSelection({
+        blockType: "kpi_view",
+        current: [{ kind: "title" }],
+        next: { kind: "value" },
+        equal,
+      }),
+    ).toEqual([{ kind: "value" }]);
+  });
+
+  it("additive alterna filhos de conteúdo", () => {
+    expect(
+      toggleCompositePartSelection({
+        blockType: "kpi_view",
+        current: [{ kind: "title" }],
+        next: { kind: "value" },
+        equal,
+        additive: true,
+      }),
+    ).toEqual([{ kind: "title" }, { kind: "value" }]);
+    expect(
+      toggleCompositePartSelection({
+        blockType: "kpi_view",
+        current: [{ kind: "title" }, { kind: "value" }],
+        next: { kind: "title" },
+        equal,
+        additive: true,
+      }),
+    ).toEqual([{ kind: "value" }]);
+  });
+
+  it("moldura ignora additive e volta ao pai", () => {
+    expect(
+      toggleCompositePartSelection({
+        blockType: "kpi_view",
+        current: [{ kind: "title" }, { kind: "value" }],
+        next: { kind: "card" },
+        equal,
+        additive: true,
+      }),
+    ).toEqual([{ kind: "card" }]);
   });
 });

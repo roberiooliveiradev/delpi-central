@@ -1,6 +1,9 @@
 /**
  * Registry canônico de blocos complexos (KPI / gráfico / tabela / filtro).
  * Escala tipográfica no resize, drag e chrome de parte usam este ponto de verdade.
+ *
+ * Contrato de seleção: complexo ≡ agrupado — ver `stageGroupedSelection.ts`
+ * (pai = wrap do widget; filhos = partes de conteúdo).
  */
 
 import type { ComunicadoBlock } from "./comunicadoTypes";

@@ -75,6 +75,8 @@ export type KpiPartsMap = Record<string, KpiPartState>;
 
 export type KpiCardInteraction = {
   selectedPart?: KpiPartRef | null;
+  /** Multi-seleção de filhos — quando presente, outline/handles em todos. */
+  selectedParts?: KpiPartRef[] | null;
   editingPart?: KpiPartRef | null;
   onPartPointerDown?: (ref: KpiPartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: KpiPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
@@ -693,12 +695,27 @@ export function applyKpiPartStyleToSiblingParts(
   return next;
 }
 
-export function kpiPartDomProps(ref: KpiPartRef, selectedPart?: KpiPartRef | null) {
-  const selected = isKpiPartRefEqual(ref, selectedPart);
+export function kpiPartDomProps(
+  ref: KpiPartRef,
+  selectedPart?: KpiPartRef | null,
+  selectedParts?: KpiPartRef[] | null,
+) {
+  const selected = isKpiPartSelected(ref, selectedPart, selectedParts);
   return {
     [KPI_PART_DATA_ATTR]: serializeKpiPartRef(ref),
     "aria-selected": selected ? true : undefined,
   };
+}
+
+export function isKpiPartSelected(
+  ref: KpiPartRef,
+  selectedPart?: KpiPartRef | null,
+  selectedParts?: KpiPartRef[] | null,
+): boolean {
+  if (selectedParts && selectedParts.length > 0) {
+    return selectedParts.some((part) => isKpiPartRefEqual(part, ref));
+  }
+  return isKpiPartRefEqual(ref, selectedPart);
 }
 
 /** Tipografia + alinhamento de parte textual do KPI (title/value/hint).
@@ -742,9 +759,13 @@ export function resolveKpiPartTypographyStyle(
 
 export function bindKpiPartPointer(ref: KpiPartRef, interaction?: KpiCardInteraction | null) {
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const selected = isKpiPartRefEqual(ref, interaction?.selectedPart);
+  const selected = isKpiPartSelected(
+    ref,
+    interaction?.selectedPart,
+    interaction?.selectedParts,
+  );
   const editing = isKpiPartRefEqual(ref, interaction?.editingPart);
-  const dom = kpiPartDomProps(ref, interaction?.selectedPart);
+  const dom = kpiPartDomProps(ref, interaction?.selectedPart, interaction?.selectedParts);
   const moveWhenSelected = kpiPartAllowsMove(ref);
 
   if (!interactive) {

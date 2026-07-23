@@ -128,7 +128,13 @@ export type ComunicadoEditorContextValue = {
   cancelEditTablePart: () => void;
   /** KPI — subseleção de parte do card (título, valor, ícone…). */
   selectedKpiPart: ComunicadoKpiPartRef | null;
-  selectKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
+  /** Multi-seleção de partes KPI — o último item é a parte primária. */
+  selectedKpiParts: ComunicadoKpiPartRef[];
+  selectKpiPart: (
+    blockId: string,
+    part: ComunicadoKpiPartRef,
+    options?: { additive?: boolean },
+  ) => void;
   clearKpiPartSelection: () => void;
   editingKpiPart: ComunicadoKpiPartRef | null;
   beginEditKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
@@ -136,7 +142,12 @@ export type ComunicadoEditorContextValue = {
   cancelEditKpiPart: () => void;
   /** Filtro — subseleção de parte (frame/icon/label/badge/control). */
   selectedInputPart: ComunicadoInputPartRef | null;
-  selectInputPart: (blockId: string, part: ComunicadoInputPartRef) => void;
+  selectedInputParts: ComunicadoInputPartRef[];
+  selectInputPart: (
+    blockId: string,
+    part: ComunicadoInputPartRef,
+    options?: { additive?: boolean },
+  ) => void;
   clearInputPartSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;

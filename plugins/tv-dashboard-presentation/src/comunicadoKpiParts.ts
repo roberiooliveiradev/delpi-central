@@ -32,6 +32,7 @@ export {
   isKpiElementEnabled,
   isKpiElementOpenForPart,
   isKpiPartRefEqual,
+  isKpiPartSelected,
   isKpiPartVisible,
   kpiElementIdForPartRef,
   kpiElementPrimaryPartRef,

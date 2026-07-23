@@ -39,7 +39,10 @@ import {
   resolveClosedGroupSelection,
   unionFramePercent,
 } from "../utils/comunicadoGrouping";
-import { shouldUsePartChromeInsteadOfBlock } from "../utils/compositePartSelection";
+import {
+  resolveBlockWrapChromeFlags,
+  resolveStageSelectionHierarchy,
+} from "../utils/stageGroupedSelection";
 import {
   resolveStagePanGutterPx,
   shouldDeferToStagePan,
@@ -109,8 +112,10 @@ export function ComunicadoComposerCanvas() {
     remoteSelections,
     selectedChartPart,
     selectedKpiPart,
+    selectedKpiParts,
     selectedTablePart,
     selectedInputPart,
+    selectedInputParts,
     isBlockSelected,
     selectBlock,
     selectBlocksByIds,
@@ -469,6 +474,45 @@ export function ComunicadoComposerCanvas() {
     () => resolveClosedGroupSelection(blocks, selectedIds),
     [blocks, selectedIds],
   );
+  const selectionHierarchy = useMemo(() => {
+    const primaryComplex = blocks.find((item) => item.id === selectedId);
+    const selectedParts =
+      primaryComplex?.type === "kpi_view"
+        ? selectedKpiParts
+        : primaryComplex?.type === "input"
+          ? selectedInputParts
+          : primaryComplex?.type === "table_view" && selectedTablePart
+            ? [selectedTablePart]
+            : primaryComplex?.type === "chart_view" && selectedChartPart
+              ? [selectedChartPart]
+              : undefined;
+    const selectedPart =
+      primaryComplex?.type === "kpi_view"
+        ? selectedKpiPart
+        : primaryComplex?.type === "chart_view"
+          ? selectedChartPart
+          : primaryComplex?.type === "table_view"
+            ? selectedTablePart
+            : primaryComplex?.type === "input"
+              ? selectedInputPart
+              : null;
+    return resolveStageSelectionHierarchy({
+      blocks,
+      selectedIds,
+      selectedPart,
+      selectedParts,
+    });
+  }, [
+    blocks,
+    selectedId,
+    selectedIds,
+    selectedKpiPart,
+    selectedKpiParts,
+    selectedChartPart,
+    selectedTablePart,
+    selectedInputPart,
+    selectedInputParts,
+  ]);
   const groupUnionFrame = useMemo(() => {
     if (!closedGroup) return null;
     return unionFramePercent(closedGroup.members.map((member) => member.frame));
@@ -483,41 +527,27 @@ export function ComunicadoComposerCanvas() {
   }, [closedGroup, primarySelected]);
 
   const showResizeHandles = (blockId: string) => {
-    // Seleção pai do grupo: handles só no chrome unificado.
-    if (closedGroup) return false;
-    // Todos os itens selecionados mostram quadrados de edição (move/resize em grupo).
-    if (!isBlockSelected(blockId) || editingTextId === blockId) {
-      return false;
-    }
     const block = blocks.find((item) => item.id === blockId);
-    // Handles do wrap sempre no nível global (como formas) — partes usam chrome próprio
-    // no host interno sem esconder outline/handles do bloco.
-    if (blockId === primarySelected) {
-      if (
-        block?.type === "chart_view" &&
-        shouldUsePartChromeInsteadOfBlock(block.type, selectedChartPart)
-      ) {
-        return false;
-      }
-      if (
-        block?.type === "kpi_view" &&
-        shouldUsePartChromeInsteadOfBlock(block.type, selectedKpiPart)
-      ) {
-        return false;
-      }
-      if (
-        block?.type === "table_view" &&
-        shouldUsePartChromeInsteadOfBlock(block.type, selectedTablePart)
-      ) {
-        return false;
-      }
-      if (
-        block?.type === "input" &&
-        shouldUsePartChromeInsteadOfBlock(block.type, selectedInputPart)
-      ) {
-        return false;
-      }
-    }
+    const partForChrome =
+      block?.type === "kpi_view"
+        ? selectedKpiPart
+        : block?.type === "chart_view"
+          ? selectedChartPart
+          : block?.type === "table_view"
+            ? selectedTablePart
+            : block?.type === "input"
+              ? selectedInputPart
+              : null;
+    const flags = resolveBlockWrapChromeFlags({
+      hierarchy: selectionHierarchy,
+      blockId,
+      blockType: block?.type,
+      isSelected: isBlockSelected(blockId),
+      editingText: editingTextId === blockId,
+      closedGroupActive: Boolean(closedGroup),
+      selectedPart: partForChrome,
+    });
+    if (!flags.showHandles) return false;
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
   };
 
@@ -623,8 +653,16 @@ export function ComunicadoComposerCanvas() {
                     : block.type === "input"
                       ? selectedInputPart
                       : null;
-            const hasPartChrome =
-              isPrimary && shouldUsePartChromeInsteadOfBlock(block.type, partForChrome);
+            const wrapChrome = resolveBlockWrapChromeFlags({
+              hierarchy: selectionHierarchy,
+              blockId: block.id,
+              blockType: block.type,
+              isSelected,
+              editingText: editingTextId === block.id,
+              closedGroupActive: inClosedGroup,
+              selectedPart: partForChrome,
+            });
+            const hasPartChrome = wrapChrome.partChildrenActive;
             const selectionRadius = isSelected || remoteEditors.length > 0
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
@@ -634,11 +672,11 @@ export function ComunicadoComposerCanvas() {
                 data-block-id={block.id}
                 className={[
                   "td-composer__block-wrap",
-                  isSelected && !inClosedGroup ? "td-composer__block-wrap--selected" : "",
-                  isSelected && !isPrimary && !inClosedGroup
+                  wrapChrome.showOutline ? "td-composer__block-wrap--selected" : "",
+                  isSelected && !isPrimary && wrapChrome.showOutline
                     ? "td-composer__block-wrap--multi"
                     : "",
-                  inClosedGroup ? "td-composer__block-wrap--group-member" : "",
+                  wrapChrome.mutedAsGroupMember ? "td-composer__block-wrap--group-member" : "",
                   hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
                   block.type === "text" || block.type === "heading"
                     ? "td-composer__block-wrap--text"

@@ -18,6 +18,7 @@ import {
   bindInputPartPointer,
   getInputPartState,
   isInputPartRefEqual,
+  isInputPartSelected,
   isInputPartVisible,
   inputPartAllowsResize,
   resolveInputBlockPaintCssVars,
@@ -207,9 +208,12 @@ export function ComunicadoInputBlockView({
   };
 
   const selected = interaction?.selectedPart ?? null;
+  const selectedParts = interaction?.selectedParts ?? null;
+  const isPartOn = (ref: InputPartRef) =>
+    isInputPartSelected(ref, selected, selectedParts);
   /** Editor com interaction: valor só clica quando a parte control está selecionada. */
   const controlValueInteractive =
-    !interaction || isInputPartRefEqual(selected, { kind: "control" });
+    !interaction || isPartOn({ kind: "control" });
   const controlClass = ensureComunicadoDualClass(
     [
       "tdp-comunicado__input-block-control",
@@ -282,7 +286,7 @@ export function ComunicadoInputBlockView({
   );
 
   const renderPartChrome = (ref: ComunicadoInputPartRef) => {
-    if (!interaction || !isInputPartRefEqual(selected, ref) || !inputPartAllowsResize(ref)) {
+    if (!interaction || !isPartOn(ref) || !inputPartAllowsResize(ref)) {
       return null;
     }
     return (
@@ -292,7 +296,7 @@ export function ComunicadoInputBlockView({
             key={handle}
             type="button"
             className={ensureComunicadoDualClass(
-              `tdp-comunicado__input-part-handle tdp-comunicado__input-part-handle--${handle}`,
+              `tdp-comunicado__input-part-handle td-composer__resize td-composer__resize--${handle} tdp-comunicado__input-part-handle--${handle}`,
             )}
             onPointerDown={(event: ReactPointerEvent) => {
               event.stopPropagation();
@@ -351,7 +355,7 @@ export function ComunicadoInputBlockView({
         <span
           className={partClass(
             "icon",
-            isInputPartRefEqual(selected, { kind: "icon" }),
+            isPartOn({ kind: "icon" }),
             Boolean(resolveInputPartFrame(iconState)),
           )}
           style={resolveInputIconBoxStyle(iconState, contrastBackground)}
@@ -369,7 +373,7 @@ export function ComunicadoInputBlockView({
             <span
               className={partClass(
                 "label",
-                isInputPartRefEqual(selected, { kind: "label" }),
+                isPartOn({ kind: "label" }),
                 Boolean(resolveInputPartFrame(labelState)),
               )}
               style={{
@@ -390,7 +394,7 @@ export function ComunicadoInputBlockView({
             <span
               className={partClass(
                 "badge",
-                isInputPartRefEqual(selected, { kind: "badge" }),
+                isPartOn({ kind: "badge" }),
                 Boolean(resolveInputPartFrame(badgeState)),
               )}
               style={{
@@ -422,7 +426,7 @@ export function ComunicadoInputBlockView({
         <span
           className={partClass(
             "control",
-            isInputPartRefEqual(selected, { kind: "control" }),
+            isPartOn({ kind: "control" }),
             Boolean(resolveInputPartFrame(controlState)),
           )}
           style={{

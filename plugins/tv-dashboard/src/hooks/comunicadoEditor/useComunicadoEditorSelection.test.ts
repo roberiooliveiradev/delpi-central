@@ -191,4 +191,25 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedTableParts).toEqual([]);
     expect(result.current.selectedTablePart).toBeNull();
   });
+
+  it("multi-seleção de partes KPI (filhos do complexo)", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "title" });
+    });
+    expect(result.current.selectedKpiParts).toEqual([{ kind: "title" }]);
+    expect(result.current.selectedKpiPart).toEqual({ kind: "title" });
+
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "value" }, { additive: true });
+    });
+    expect(result.current.selectedKpiParts).toEqual([{ kind: "title" }, { kind: "value" }]);
+    expect(result.current.selectedKpiPart).toEqual({ kind: "value" });
+
+    act(() => {
+      result.current.selectKpiPart("a", { kind: "card" }, { additive: true });
+    });
+    expect(result.current.selectedKpiParts).toEqual([{ kind: "card" }]);
+  });
 });
