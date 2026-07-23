@@ -129,6 +129,36 @@ describe("comunicadoStageContextMenuActions", () => {
     expect(isContextMenuActionEnabled("distribute-v", three)).toBe(true);
   });
 
+  it("habilita Alterar forma/ícone/imagem conforme o tipo", () => {
+    const shape = createBlock("shape");
+    const shapeState = resolveContextMenuActionState({ selected: shape, canPaste: false });
+    expect(isContextMenuActionEnabled("changeShape", shapeState)).toBe(true);
+    expect(isContextMenuActionEnabled("changeIcon", shapeState)).toBe(false);
+    expect(isContextMenuActionEnabled("changeImage", shapeState)).toBe(false);
+
+    const icon = createBlock("icon");
+    const iconState = resolveContextMenuActionState({ selected: icon, canPaste: false });
+    expect(isContextMenuActionEnabled("changeIcon", iconState)).toBe(true);
+    expect(isContextMenuActionEnabled("changeShape", iconState)).toBe(false);
+
+    const image = createBlock("image");
+    const imageState = resolveContextMenuActionState({
+      selected: image,
+      canPaste: false,
+      canReplaceImageFromClipboard: true,
+    });
+    expect(isContextMenuActionEnabled("changeImage", imageState)).toBe(true);
+    expect(isContextMenuActionEnabled("changeImageFromDevice", imageState)).toBe(true);
+    expect(isContextMenuActionEnabled("changeImageFromClipboard", imageState)).toBe(true);
+
+    const noClip = resolveContextMenuActionState({
+      selected: image,
+      canPaste: false,
+      canReplaceImageFromClipboard: false,
+    });
+    expect(isContextMenuActionEnabled("changeImageFromClipboard", noClip)).toBe(false);
+  });
+
   it("habilita desagrupar e reagrupar conforme ribbon", () => {
     const a = createBlock("text", "A");
     const b = createBlock("text", "B");

@@ -26,6 +26,12 @@ export type ComunicadoContextMenuActionId =
   | "rotateCcw"
   | "flipH"
   | "flipV"
+  | "changeShape"
+  | "changeIcon"
+  | "changeImage"
+  | "changeImageFromDevice"
+  | "changeImageFromLibrary"
+  | "changeImageFromClipboard"
   | "delete"
   | "format"
   | "insertHeading"
@@ -46,6 +52,14 @@ export type ComunicadoContextMenuActionState = {
   canAlignSelection: boolean;
   canDistribute: boolean;
   canRotate: boolean;
+  /** Forma / título / texto — «Alterar forma». */
+  canChangeShape: boolean;
+  /** Bloco ícone Lucide — «Alterar ícone». */
+  canChangeIcon: boolean;
+  /** Imagem (ou vídeo) — «Alterar imagem». */
+  canChangeImage: boolean;
+  /** Clipboard do SO tem imagem (submenu Alterar imagem). */
+  canReplaceImageFromClipboard: boolean;
 };
 
 const SELECTION_ALIGN_COMMANDS = new Set<LayoutAlignCommand>([
@@ -78,6 +92,18 @@ export function resolveShowStyleToolbar(block: ComunicadoBlock | null): boolean 
   return block.type === "heading" || block.type === "text" || block.type === "icon";
 }
 
+export function resolveCanChangeShape(block: ComunicadoBlock | null): boolean {
+  return Boolean(block && isComunicadoVisualBoxBlock(block));
+}
+
+export function resolveCanChangeIcon(block: ComunicadoBlock | null): boolean {
+  return block?.type === "icon";
+}
+
+export function resolveCanChangeImage(block: ComunicadoBlock | null): boolean {
+  return block?.type === "image" || block?.type === "video";
+}
+
 /**
  * Enablement do menu de contexto — espelha o ribbon (multi-seleção, grupo, align).
  * `selected` continua sendo o bloco primário (toolbar / editar texto).
@@ -88,6 +114,8 @@ export function resolveContextMenuActionState(input: {
   selectedIds?: string[];
   blocks?: ComunicadoBlock[];
   lastUngroupedIds?: string[];
+  /** Clipboard do SO contém imagem (probe assíncrono no host do menu). */
+  canReplaceImageFromClipboard?: boolean;
 }): ComunicadoContextMenuActionState {
   const selectedIds =
     input.selectedIds ?? (input.selected ? [input.selected.id] : []);
@@ -97,6 +125,9 @@ export function resolveContextMenuActionState(input: {
   const hasSelection = selectionCount > 0;
   const blockIdSet = new Set(blocks.map((block) => block.id));
   const singleSelection = selectionCount === 1;
+  const canChangeShape = singleSelection && resolveCanChangeShape(input.selected);
+  const canChangeIcon = singleSelection && resolveCanChangeIcon(input.selected);
+  const canChangeImage = singleSelection && resolveCanChangeImage(input.selected);
 
   return {
     hasSelection,
@@ -111,6 +142,11 @@ export function resolveContextMenuActionState(input: {
     canAlignSelection: selectionCount >= 2,
     canDistribute: selectionCount >= 3,
     canRotate: hasSelection,
+    canChangeShape,
+    canChangeIcon,
+    canChangeImage,
+    canReplaceImageFromClipboard:
+      canChangeImage && Boolean(input.canReplaceImageFromClipboard),
   };
 }
 
@@ -149,6 +185,16 @@ export function isContextMenuActionEnabled(
       return state.canRotate;
     case "editText":
       return state.canEditText;
+    case "changeShape":
+      return state.canChangeShape;
+    case "changeIcon":
+      return state.canChangeIcon;
+    case "changeImage":
+    case "changeImageFromDevice":
+    case "changeImageFromLibrary":
+      return state.canChangeImage;
+    case "changeImageFromClipboard":
+      return state.canReplaceImageFromClipboard;
     case "paste":
       // Sempre habilitado: tenta SO; interno só se o SO estiver vazio (nunca no lugar do Google).
       return true;

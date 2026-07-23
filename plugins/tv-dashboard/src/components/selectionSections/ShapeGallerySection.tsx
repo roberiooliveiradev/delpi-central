@@ -1,16 +1,13 @@
 import { useRef, useState } from "react";
 import { Replace } from "lucide-react";
 import {
-  defaultFrame,
-  defaultStrokeWidthForPrimitive,
   isComunicadoVisualBoxBlock,
-  resolveShapePrimitive,
-  resolveVisualBoxShapeKind,
   type ComunicadoBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { buildVisualBoxShapeKindPatch } from "../../utils/applyVisualBoxShapeKind";
 import { rememberComunicadoShape } from "../../utils/comunicadoRecentShapes";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoShapeLibraryMenu } from "../ComunicadoShapeLibraryMenu";
@@ -30,32 +27,10 @@ export function ShapeChangeControl() {
   if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
 
   const block = selected;
-  const currentKind = resolveVisualBoxShapeKind(block);
 
   const applyShapeKind = (kind: ComunicadoShapeKind) => {
-    const prevPrimitive = resolveShapePrimitive(currentKind);
-    const nextPrimitive = resolveShapePrimitive(kind);
-    const patch: Record<string, unknown> = { shape: kind };
-
-    if (prevPrimitive !== nextPrimitive) {
-      const nextFrame = defaultFrame("shape", kind);
-      patch.frame = {
-        ...nextFrame,
-        x: Math.max(0, Math.min(100 - nextFrame.w, block.frame.x)),
-        y: Math.max(0, Math.min(100 - nextFrame.h, block.frame.y)),
-      };
-      patch.style = {
-        ...block.style,
-        strokeWidth:
-          block.type === "heading" || block.type === "text"
-            ? (block.style?.strokeWidth ?? block.style?.borderWidth ?? 0)
-            : defaultStrokeWidthForPrimitive(nextPrimitive),
-        ...(nextPrimitive === "point"
-          ? { markerRadius: block.style?.markerRadius ?? 8 }
-          : {}),
-      };
-    }
-
+    const patch = buildVisualBoxShapeKindPatch(block, kind);
+    if (!patch) return;
     updateSelected(patch as Partial<ComunicadoBlock>);
     rememberComunicadoShape(kind);
     setChangeShapeOpen(false);
