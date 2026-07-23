@@ -16,6 +16,7 @@ function fakeBlock(id: string, groupId?: string): ComunicadoBlock {
 
 function fakeEvent(partial: Partial<ReactPointerEvent> = {}): ReactPointerEvent {
   return {
+    button: 0,
     shiftKey: false,
     ctrlKey: false,
     metaKey: false,
@@ -25,6 +26,27 @@ function fakeEvent(partial: Partial<ReactPointerEvent> = {}): ReactPointerEvent 
 }
 
 describe("beginBlockStageMoveDrag", () => {
+  it("botão direito não seleciona nem inicia drag", () => {
+    const a = fakeBlock("a");
+    const selectBlock = vi.fn();
+    const startDrag = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ button: 2 }),
+      block: a,
+      blocks: [a],
+      isBlockSelected: () => false,
+      selectedIds: [],
+      selectedId: null,
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag,
+    });
+    expect(result).toBe(false);
+    expect(selectBlock).not.toHaveBeenCalled();
+    expect(startDrag).not.toHaveBeenCalled();
+  });
+
   it("Ctrl+clique no membro do grupo fechado alterna o filho sem iniciar drag", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");

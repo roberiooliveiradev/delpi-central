@@ -113,14 +113,11 @@ export function SlideFilmstrip({
     el.select();
   }, [renamingSlideId]);
 
-  const handleContextMenu = useCallback(
-    (event: MouseEvent, slide: Slide) => {
-      event.preventDefault();
-      onSelect(slide.id);
-      setContextMenu({ slide, x: event.clientX, y: event.clientY });
-    },
-    [onSelect],
-  );
+  const handleContextMenu = useCallback((event: MouseEvent, slide: Slide) => {
+    event.preventDefault();
+    /* Direito só abre opções — seleção de tela fica no clique esquerdo. */
+    setContextMenu({ slide, x: event.clientX, y: event.clientY });
+  }, []);
 
   const onRenameKeyDown = (event: KeyboardEvent<HTMLInputElement>, slide: Slide) => {
     if (event.key === "Enter") {

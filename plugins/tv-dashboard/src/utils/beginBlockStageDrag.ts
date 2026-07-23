@@ -51,6 +51,9 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     armTapDeselect,
   } = args;
 
+  /* Botão direito/meio: não seleciona — menu de contexto cuida das opções. */
+  if (Number.isFinite(event.button) && event.button !== 0) return false;
+
   const action = resolveStagePointerDownAction({
     block,
     blocks,

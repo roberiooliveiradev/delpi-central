@@ -18,6 +18,21 @@ describe("resolveStageContextMenuHit", () => {
     expect(menuSrc).toMatch(/resolveContextMenuIconPickerTargetId/);
   });
 
+  it("botão direito não seleciona no pointerdown nem no contextmenu", () => {
+    const composerSrc = readFileSync(join(componentsBase, "ComunicadoComposer.tsx"), "utf8");
+    const menuSrc = readFileSync(join(componentsBase, "ComunicadoStageContextMenu.tsx"), "utf8");
+    const dragSrc = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "beginBlockStageDrag.ts"),
+      "utf8",
+    );
+    expect(composerSrc).toMatch(/event\.button !== 0/);
+    expect(composerSrc).toMatch(/só abre opções/);
+    expect(composerSrc).not.toMatch(/if \(!isBlockSelected\(hit\.blockId\)\) \{\s*selectBlock/);
+    expect(dragSrc).toMatch(/event\.button !== 0/);
+    expect(menuSrc).toMatch(/não força seleção no right-click/);
+    expect(menuSrc).not.toMatch(/if \(missing\) selectBlocksByIds\(menuSelectedIds\)/);
+  });
+
   it("prioriza blockId explícito", () => {
     expect(
       resolveStageContextMenuHit({

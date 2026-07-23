@@ -490,16 +490,13 @@ export function ComunicadoComposerCanvas() {
         blockId,
         eventTarget: event.target,
       });
+      /*
+       * Botão direito só abre opções — não altera a seleção (só o esquerdo seleciona).
+       * O alvo do menu vai em targetBlockId; ações do menu aplicam seleção sob demanda.
+       */
+      cancelPendingTapDeselect();
       if (hit.type === "block") {
         event.stopPropagation();
-        /*
-         * pointerdown em ícone/imagem arma tap-deselect; o pointerup do right-click
-         * limpava a seleção com o menu ainda aberto (chrome some; Alterar ícone no-op).
-         */
-        cancelPendingTapDeselect();
-        if (!isBlockSelected(hit.blockId)) {
-          selectBlock(hit.blockId);
-        }
         setContextMenu({
           x: event.clientX,
           y: event.clientY,
@@ -507,16 +504,13 @@ export function ComunicadoComposerCanvas() {
         });
         return;
       }
-      // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
-      cancelPendingTapDeselect();
-      clearSelection();
       setContextMenu({
         x: event.clientX,
         y: event.clientY,
         targetBlockId: null,
       });
     },
-    [cancelPendingTapDeselect, clearSelection, editingTextId, isBlockSelected, selectBlock],
+    [cancelPendingTapDeselect, editingTextId],
   );
 
   const handleCanvasContextMenu = useCallback(
@@ -813,6 +807,8 @@ export function ComunicadoComposerCanvas() {
                   }
                 }}
                 onPointerDown={(event) => {
+                  /* Só botão esquerdo seleciona / arrasta; direito fica para o menu. */
+                  if (event.button !== 0) return;
                   /*
                    * Ctrl/Cmd+clique vai pela policy (`beginBlockStageMoveDrag`):
                    * irmão do mesmo grupo → toggle-child; senão → subtract.

@@ -366,8 +366,15 @@ export function ChatProjectHome({
                       href={buildChatSessionHrefForSession(session)}
                       className="mdc-chat-project-chat-row__link"
                       onClick={(event) => {
+                        /* Só esquerdo ativa a conversa; direito abre opções. */
+                        if (event.button !== 0) return;
                         event.preventDefault();
                         onSelectSession(session);
+                      }}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setOpenSessionMenuId(session.id);
                       }}
                     >
                       <span className="mdc-chat-project-chat-row__avatar">

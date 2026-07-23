@@ -1,5 +1,5 @@
 import { Loader2 } from "lucide-react";
-import type { ReactNode } from "react";
+import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 
 import type { ChatSession } from "../../../data/api/chatTypes";
 import { handleChatNavClick } from "../../../navigation/chatNavigation";
@@ -18,6 +18,11 @@ type ChatConversationListItemProps = {
   isProcessing?: boolean;
   href?: string;
   onClick?: () => void;
+  /**
+   * Botão direito: abre opções sem selecionar/navegar a conversa.
+   * Só o clique esquerdo ativa a sessão.
+   */
+  onContextMenu?: (event: ReactMouseEvent<HTMLElement>) => void;
   draggable?: boolean;
   onDragStart?: (event: React.DragEvent<HTMLElement>) => void;
   onDragEnd?: (event: React.DragEvent<HTMLElement>) => void;
@@ -32,6 +37,7 @@ export function ChatConversationListItem({
   isProcessing = false,
   href,
   onClick,
+  onContextMenu,
   draggable = false,
   onDragStart,
   onDragEnd,
@@ -72,6 +78,13 @@ export function ChatConversationListItem({
     </>
   );
 
+  const handleContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
+    if (!onContextMenu) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onContextMenu(event);
+  };
+
   if (href) {
     return (
       <a
@@ -84,6 +97,7 @@ export function ChatConversationListItem({
           handleChatNavClick(event, href);
           onClick?.();
         }}
+        onContextMenu={handleContextMenu}
         aria-busy={isProcessing || undefined}
         title={isProcessing ? "Gerando resposta..." : undefined}
       >
@@ -100,6 +114,7 @@ export function ChatConversationListItem({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={onClick}
+      onContextMenu={handleContextMenu}
       aria-busy={isProcessing || undefined}
       title={isProcessing ? "Gerando resposta..." : undefined}
     >

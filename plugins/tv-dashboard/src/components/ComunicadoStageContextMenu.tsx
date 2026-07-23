@@ -160,14 +160,11 @@ export function ComunicadoStageContextMenu({
     return [targetBlockId];
   }, [selectedIds, targetBlockId]);
 
-  /** Mantém seleção/chrome alinhados ao alvo do menu enquanto o menu está aberto. */
+  /** Cancela tap-deselect armado pelo pointerdown; não força seleção no right-click. */
   useEffect(() => {
     if (!open) return;
     cancelPendingTapDeselect();
-    if (menuSelectedIds.length === 0) return;
-    const missing = menuSelectedIds.some((id) => !selectedIds.includes(id));
-    if (missing) selectBlocksByIds(menuSelectedIds);
-  }, [cancelPendingTapDeselect, menuSelectedIds, open, selectBlocksByIds, selectedIds]);
+  }, [cancelPendingTapDeselect, open]);
 
   useEffect(() => {
     const isMedia = menuSelected?.type === "image" || menuSelected?.type === "video";
