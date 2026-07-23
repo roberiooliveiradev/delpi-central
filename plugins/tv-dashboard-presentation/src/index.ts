@@ -513,6 +513,19 @@ export {
   type TextDisplaySegment,
 } from "./comunicadoContentRunEditing";
 export {
+  DYNAMIC_CONTENT_KIND_CATALOG,
+  dataRefToDynamicContent,
+  dynamicContentKindDescriptor,
+  dynamicContentToDataRef,
+  isDynamicContentKindImplemented,
+  type DynamicContentConditionalText,
+  type DynamicContentDataField,
+  type DynamicContentExpression,
+  type DynamicContentKind,
+  type DynamicContentKindDescriptor,
+  type DynamicContentSpec,
+} from "./dynamicContent";
+export {
   groupContentRunsForDisplay,
   hasListContentRuns,
   splitContentRunsIntoLines,

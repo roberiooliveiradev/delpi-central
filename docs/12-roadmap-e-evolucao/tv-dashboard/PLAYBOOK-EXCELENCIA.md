@@ -2032,10 +2032,11 @@ Paridade **PowerPoint** (não FigJam): linha reta + âncoras N/S/E/W/centro; elb
 | 4P.0 | Tipos `textProjection` / `dataRef`, `textViewProjection.ts`, render TV | `tv-dashboard-presentation` |
 | 4P.1 | Inspector `TextDataBindingInspector`, ribbon «Campo em texto», click-to-link no palco | `plugins/tv-dashboard` |
 | 4P.2 | Runs mistos (`contentRuns[].dataRef`), badge «dado», botão `{ }` na faixa Fonte, color rules | presentation + MFE |
+| 4P.2b | Fluxo `{ }` de conteúdo dinâmico (kinds: `data_field` + scaffold condicional/expressão); picker; Grade + texto/forma | `dynamicContent.ts` + MFE |
 | 4P.3 | Enrichment público: `resolved` em heading/text/shape ligados + `serverTextProjectionApplied` | `tv-dashboard-api` |
 | 4P.4 | Fingerprint `textLinks`, docs, regressão | `dataRefresh.ts`, PLAYBOOK, testes |
 
-**North star:** `data_source → resolved (runtime) → textProjection / dataRef → ComunicadoTextRunsView` — sem persistir `resolved` no JSON.
+**North star:** `atalho { } → DynamicContentSpec → data_field (modelo) | scaffolds` · `data_source → resolved → textProjection / dataRef → ComunicadoTextRunsView` — sem persistir `resolved` no JSON.
 
 **Anti-padrões:** bloco monolítico `data_text` com `operationId`; `if (type === "text")` espalhado no MFE para formatar valor; bypass do enrichment na TV pública.
 

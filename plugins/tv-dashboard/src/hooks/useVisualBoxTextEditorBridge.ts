@@ -4,6 +4,7 @@ import {
   applyNamedStyleInRange,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
+  insertDataRefAtOffset,
   insertLineBreakAtOffset,
   plainTextFromContentRuns,
   syncTextBlockFromRuns,
@@ -12,6 +13,7 @@ import {
   type ComunicadoContentRun,
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
+  type ComunicadoTextDataRef,
   type ContentRunStylePatch,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
@@ -35,6 +37,11 @@ type Options = {
   ) => void;
   /** Pós-processa runs do DOM antes de gravar (ex.: separar href do texto). */
   normalizeEditorRuns?: (runs: ComunicadoContentRun[]) => ComunicadoContentRun[];
+  /**
+   * Após inserir `dataRef`: grava no bloco (Text limpa `textProjection`; Shape só runs).
+   * Sem callback, a inserção só atualiza draft/editor local.
+   */
+  onDataRefInserted?: (runs: ComunicadoContentRun[]) => void;
 };
 
 /**
@@ -50,6 +57,7 @@ export function useVisualBoxTextEditorBridge({
   commitDraft,
   reportTextEditSelection,
   normalizeEditorRuns,
+  onDataRefInserted,
 }: Options) {
   /** Última seleção parcial — fallback se o clique na ribbon perder o Range do DOM. */
   const lastPartialRangeRef = useRef<TextRange | null>(null);
@@ -231,6 +239,40 @@ export function useVisualBoxTextEditorBridge({
     syncEditorHtml,
   ]);
 
+  const insertDataRefAtSelection = useCallback(
+    (dataRef: ComunicadoTextDataRef) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const raw = contentRunsFromEditableRoot(editor);
+      const runs = normalizeEditorRuns ? normalizeEditorRuns(raw) : raw;
+      const selection = getEditableTextSelectionOffsets(editor);
+      const offset = selection?.start ?? plainTextFromContentRuns(runs).length;
+      const nextRuns = insertDataRefAtOffset(runs, offset, dataRef);
+      const nextOffset = offset + 1;
+      const normalized = normalizeEditorRuns ? normalizeEditorRuns(nextRuns) : nextRuns;
+      draftRef.current = syncTextBlockFromRuns(normalized);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(nextRuns, { start: nextOffset, end: nextOffset });
+      if (onDataRefInserted) {
+        onDataRefInserted(nextRuns);
+      } else {
+        commitDraft(nextRuns);
+      }
+      reportTextEditSelection({ blockId, start: nextOffset, end: nextOffset }, nextRuns);
+    },
+    [
+      blockId,
+      commitDraft,
+      draftRef,
+      editorRef,
+      normalizeEditorRuns,
+      onDataRefInserted,
+      renderedSignatureRef,
+      reportTextEditSelection,
+      syncEditorHtml,
+    ],
+  );
+
   const reportSelectionFromEditor = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -256,6 +298,7 @@ export function useVisualBoxTextEditorBridge({
     applyListToggle,
     applyNamedStyleToggle,
     insertLineBreak,
+    insertDataRefAtSelection,
     reportSelectionFromEditor,
     readRuns,
     clearPartialRangeFallback,

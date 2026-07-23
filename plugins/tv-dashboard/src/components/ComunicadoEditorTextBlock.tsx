@@ -14,7 +14,6 @@ import {
   ComunicadoBlockView,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
-  insertDataRefAtOffset,
   partitionTextBlockRunsAndHref,
   patchTextProjectionFromEditedDisplay,
   plainTextFromContentRuns,
@@ -24,7 +23,7 @@ import {
   syncTextBlockFromRuns,
   visualBoxBlockModifierClasses,
   type ComunicadoBlock,
-  type ComunicadoTextDataRef,
+  type ComunicadoContentRun,
 } from "@delpi/tv-dashboard-presentation";
 import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { shouldPreserveTextEditOnBlur } from "../utils/preserveTextEditFocus";
@@ -130,9 +129,13 @@ export function ComunicadoEditorTextBlock({
         selectionOverride === undefined
           ? getEditableTextSelectionOffsets(editor)
           : selectionOverride;
-      const signature = JSON.stringify(runs);
+      const displayRuns = appendHrefLineToRuns(
+        partitionTextBlockRunsAndHref(runs).runs,
+        blockRef.current.href,
+      );
+      const signature = JSON.stringify(displayRuns);
       if (signature === renderedSignatureRef.current) return;
-      editor.innerHTML = renderTextBlockEditorHtml(runs, { fontScale });
+      editor.innerHTML = renderTextBlockEditorHtml(displayRuns, { fontScale });
       renderedSignatureRef.current = signature;
       if (selection) restoreEditableTextSelection(editor, selection.start, selection.end);
     },
@@ -182,9 +185,21 @@ export function ComunicadoEditorTextBlock({
   commitPendingRef.current = commitPending;
 
   const normalizeEditorRuns = useCallback(
-    (runs: import("@delpi/tv-dashboard-presentation").ComunicadoContentRun[]) =>
-      partitionTextBlockRunsAndHref(runs).runs,
+    (runs: ComunicadoContentRun[]) => partitionTextBlockRunsAndHref(runs).runs,
     [],
+  );
+
+  const onDataRefInserted = useCallback(
+    (runs: ComunicadoContentRun[]) => {
+      const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(runs);
+      draftRef.current = syncTextBlockFromRuns(contentRuns);
+      updateBlock(block.id, {
+        ...draftRef.current,
+        textProjection: undefined,
+      } as Partial<ComunicadoBlock>);
+      updateBlockLink(block.id, href);
+    },
+    [block.id, updateBlock, updateBlockLink],
   );
 
   const {
@@ -193,6 +208,7 @@ export function ComunicadoEditorTextBlock({
     applyListToggle,
     applyNamedStyleToggle,
     insertLineBreak,
+    insertDataRefAtSelection,
     reportSelectionFromEditor,
     clearPartialRangeFallback,
   } = useVisualBoxTextEditorBridge({
@@ -204,31 +220,8 @@ export function ComunicadoEditorTextBlock({
     commitDraft,
     reportTextEditSelection,
     normalizeEditorRuns,
+    onDataRefInserted,
   });
-
-  const insertDataRefAtSelection = useCallback(
-    (dataRef: ComunicadoTextDataRef) => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      const runs = contentRunsFromEditableRoot(editor);
-      const selection = getEditableTextSelectionOffsets(editor);
-      const offset = selection?.start ?? plainTextFromContentRuns(runs).length;
-      const nextRuns = insertDataRefAtOffset(runs, offset, dataRef);
-      const nextOffset = offset + 1;
-      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-      renderedSignatureRef.current = "";
-      syncEditorHtml(appendHrefLineToRuns(nextRuns, blockRef.current.href), {
-        start: nextOffset,
-        end: nextOffset,
-      });
-      updateBlock(block.id, {
-        ...draftRef.current,
-        textProjection: undefined,
-      } as Partial<ComunicadoBlock>);
-      reportTextEditSelection({ blockId: block.id, start: nextOffset, end: nextOffset }, nextRuns);
-    },
-    [block.id, reportTextEditSelection, syncEditorHtml, updateBlock],
-  );
 
   function exitEditing() {
     commitPending();

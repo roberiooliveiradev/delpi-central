@@ -320,8 +320,12 @@ export type ComunicadoEditorContextValue = {
     textStrokeWidth?: number;
     textReflection?: boolean;
   }) => void;
-  /** Insere run dinâmico no cursor do texto em edição (requer fonte + campo). */
+  /** @deprecated Use `applyDynamicContentSpec` via picker `{ }`. */
   insertDataFieldAtCursor: () => void;
+  /** Aplica spec do fluxo de conteúdo dinâmico no alvo ativo (texto/forma/Grade). */
+  applyDynamicContentSpec: (
+    spec: import("@delpi/tv-dashboard-presentation").DynamicContentSpec,
+  ) => import("../utils/applyDynamicContent").ApplyDynamicContentResult;
   removeSelected: () => void;
   duplicateSelected: () => void;
   cutSelected: () => void;

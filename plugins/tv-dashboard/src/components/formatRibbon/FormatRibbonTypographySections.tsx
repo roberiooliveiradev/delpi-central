@@ -7,7 +7,6 @@ import {
   AlignVerticalJustifyEnd,
   AlignVerticalJustifyStart,
   Bold,
-  Braces,
   Italic,
   List,
   ListOrdered,
@@ -55,6 +54,7 @@ import {
 } from "../../utils/selectedTextFormatTarget";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
+import { DynamicContentInsertControl } from "../DynamicContentInsertControl";
 import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ParagraphSpacingMenu } from "./ParagraphSpacingMenu";
@@ -131,7 +131,6 @@ export function FormatRibbonTypographySections({
     toggleSelectedTextListType,
     textEditNamedStyleSelection,
     applySelectedNamedTextStyle,
-    insertDataFieldAtCursor,
     uploadCustomFont,
     uploading,
   } = useComunicadoEditor();
@@ -185,9 +184,6 @@ export function FormatRibbonTypographySections({
   const showParagraphLists = visualCaps?.paragraphLists ?? isTextBlock;
   const showParagraphSpacing = visualCaps?.paragraphSpacing ?? isTextBlock;
   const showParagraphNamedStyle = visualCaps?.paragraphNamedStyle ?? isTextBlock;
-  const canInsertDataField =
-    Boolean(editingTextId) &&
-    Boolean(visualBoxBlock && "dataSourceId" in visualBoxBlock && visualBoxBlock.dataSourceId?.trim());
   const formatStyle = textFormatTarget.style;
   const kpiPartKind =
     textFormatTarget.mode === "part" && textFormatTarget.source === "kpi"
@@ -580,15 +576,7 @@ export function FormatRibbonTypographySections({
             </div>
           </div>
           <div className="td-deck-ribbon__toolbar-row">
-            {canInsertDataField ? (
-              <TdRibbonIconButton
-                hint={TV_DASHBOARD_HELP_TOOLTIPS.data.insertFieldAtCursor}
-                ariaLabel="Inserir campo dinâmico no cursor"
-                onClick={() => insertDataFieldAtCursor()}
-              >
-                <Braces size={15} aria-hidden="true" />
-              </TdRibbonIconButton>
-            ) : null}
+            <DynamicContentInsertControl variant="ribbon" />
             <TdRibbonIconButton
               hint={H.bold}
               ariaLabel="Negrito"

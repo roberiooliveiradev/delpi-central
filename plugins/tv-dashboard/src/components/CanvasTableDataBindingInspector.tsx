@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
+import { DynamicContentInsertControl } from "./DynamicContentInsertControl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
@@ -177,6 +178,9 @@ export function CanvasTableDataBindingInspector({
                 Célula {cellSel.row + 1}×{cellSel.col + 1}
                 {selectedCell?.kind === "sparkline" ? " (sparkline)" : ""}
               </p>
+              <div className="td-dynamic-content-insert--inspector">
+                <DynamicContentInsertControl variant="inspector" />
+              </div>
               <DeckField label="Campo">
                 <FormSelectControl
                   className={compactSelect}

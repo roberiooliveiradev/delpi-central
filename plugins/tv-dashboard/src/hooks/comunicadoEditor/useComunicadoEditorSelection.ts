@@ -22,7 +22,6 @@ import {
   selectionListTypeState,
   selectionNamedStyleState,
   selectionRunStyleState,
-  suggestDefaultTextProjection,
   syncTextBlockFromRuns,
   toggleListTypeOnAllLines,
   visualBoxEnsureRichTextBlock,
@@ -37,7 +36,9 @@ import {
   type ComunicadoTablePartRef,
   type ComunicadoTextBlock,
   type ContentRunStyleToggleKey,
+  type DynamicContentSpec,
 } from "@delpi/tv-dashboard-presentation";
+import { applyDynamicContent } from "../../utils/applyDynamicContent";
 
 import type {
   ComunicadoCanvasTableCellSelection,
@@ -818,29 +819,28 @@ export function useComunicadoEditorSelection({
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
 
+  const applyDynamicContentSpec = useCallback(
+    (spec: DynamicContentSpec) => {
+      return applyDynamicContent(spec, {
+        blocks: configRef.current.blocks ?? blocks,
+        editingTextId,
+        selectedCanvasTableCell,
+        getTextEditorBridge: (blockId) => textEditorBridgesRef.current.get(blockId),
+        updateBlock: (blockId, patch) => {
+          const current = configRef.current.blocks ?? [];
+          updateBlocksRef.current(
+            current.map((block) => (block.id === blockId ? { ...block, ...patch } : block)),
+          );
+        },
+      });
+    },
+    [blocks, configRef, editingTextId, selectedCanvasTableCell, updateBlocksRef],
+  );
+
+  /** @deprecated Preferir picker `{ }` → `applyDynamicContentSpec`. */
   const insertDataFieldAtCursor = useCallback(() => {
-    if (!editingTextId) return;
-    const block = configRef.current.blocks?.find((item) => item.id === editingTextId);
-    if (!block || !isComunicadoVisualBoxBlock(block)) return;
-    const sourceId = block.dataSourceId?.trim();
-    if (!sourceId) return;
-    const source = configRef.current.blocks?.find((item) => item.id === sourceId);
-    const resolved =
-      source && "resolved" in source && source.resolved ? source.resolved : undefined;
-    const projection =
-      block.textProjection ??
-      suggestDefaultTextProjection(resolved) ??
-      undefined;
-    const field = projection?.field?.trim();
-    if (!field) return;
-    const bridge = textEditorBridgesRef.current.get(editingTextId);
-    bridge?.insertDataRefAtSelection?.({
-      field,
-      aggregation: projection?.aggregation,
-      format: projection?.format,
-      label: field,
-    });
-  }, [configRef, editingTextId]);
+    /* Sem picker: no-op — o atalho abre DynamicContentInsertControl. */
+  }, []);
 
   /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
   const resetSelectionForSlide = useCallback(() => {
@@ -914,6 +914,7 @@ export function useComunicadoEditorSelection({
     toggleSelectedTextListType,
     applySelectedNamedTextStyle,
     insertDataFieldAtCursor,
+    applyDynamicContentSpec,
     ribbonTabRequest,
     setRibbonTabRequest,
     requestRibbonTab,

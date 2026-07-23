@@ -157,6 +157,7 @@ export function ComunicadoEditorShapeBlock({
     applyListToggle,
     applyNamedStyleToggle,
     insertLineBreak,
+    insertDataRefAtSelection,
     reportSelectionFromEditor,
     clearPartialRangeFallback,
   } = useVisualBoxTextEditorBridge({
@@ -245,6 +246,7 @@ export function ComunicadoEditorShapeBlock({
       applyNamedStyleToggle,
       refreshSelectionState: reportSelectionFromEditor,
       commitPending,
+      insertDataRefAtSelection,
     });
 
     return () => registerTextEditorBridge(block.id, null);
@@ -255,6 +257,7 @@ export function ComunicadoEditorShapeBlock({
     applyPartialStylePatch,
     applyListToggle,
     applyNamedStyleToggle,
+    insertDataRefAtSelection,
     reportSelectionFromEditor,
     registerTextEditorBridge,
     commitPending,

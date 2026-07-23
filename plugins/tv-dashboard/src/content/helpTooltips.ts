@@ -437,6 +437,19 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     copyColumn: "Copiar nome da coluna",
     selectAllColumns: "Manter só esta coluna",
   },
+  /** Fluxo `{ }` — conteúdo dinâmico (modelo de dados + scaffolds). */
+  dynamicContent: {
+    pickerTitle: "Conteúdo dinâmico",
+    kindsLabel: "Tipos de conteúdo dinâmico",
+    insertAria: "Inserir conteúdo dinâmico",
+    insertLabel: "Dinâmico",
+    comingSoon: "Em breve",
+    needSource: "Ligue uma fonte de dados a este elemento para listar campos.",
+    linkSource: "Escolher fonte…",
+    noFields: "Nenhum campo disponível nesta fonte. Atualize a prévia ou escolha outra rota.",
+    scaffoldBody:
+      "Este tipo fará parte do mesmo atalho `{ }`. A engine ainda não aplica o valor — use Campo do modelo de dados por enquanto.",
+  },
   contextMenu: {
     menu: "Menu de contexto do palco.",
     textSelectionMenu: "Formatação do trecho selecionado.",

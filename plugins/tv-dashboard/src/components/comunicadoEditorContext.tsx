@@ -679,6 +679,7 @@ export function ComunicadoEditorProvider({
     toggleSelectedTextListType: selection.toggleSelectedTextListType,
     applySelectedNamedTextStyle: selection.applySelectedNamedTextStyle,
     insertDataFieldAtCursor: selection.insertDataFieldAtCursor,
+    applyDynamicContentSpec: selection.applyDynamicContentSpec,
     uploading: media.uploading,
     shapeMenuOpen,
     setShapeMenuOpen,
