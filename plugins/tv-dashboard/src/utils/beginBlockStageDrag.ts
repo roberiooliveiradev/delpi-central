@@ -2,7 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { BlockDragMode } from "../components/useCanvasBlockInteraction";
-import { expandSelectionWithGroups, resolveClosedGroupSelection } from "./comunicadoGrouping";
+import { expandSelectionWithGroups } from "./comunicadoGrouping";
 
 type BeginBlockStageDragArgs = {
   event: ReactPointerEvent;
@@ -15,6 +15,8 @@ type BeginBlockStageDragArgs = {
   selectBlocksByIds: (ids: string[]) => void;
   armMultiDragSelection: (ids: string[]) => void;
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
+  /** Marca candidato a limpar seleção se o pointerup for sem arraste. */
+  armTapDeselect?: (blockId: string | null) => void;
 };
 
 /**
@@ -22,7 +24,7 @@ type BeginBlockStageDragArgs = {
  * - Shift = toggle multi sem expandir grupo.
  * - Alt = isola o membro (seleciona só ele) e arrasta.
  * - Ctrl/Cmd = remove o alvo da seleção (sem pan / sem isolar).
- * - 2º clique com seleção pai fechada = isola o membro clicado e arrasta só ele.
+ * - Toque em item já selecionado sem arrastar = limpa seleção (`armTapDeselect`).
  * - Clique normal em membro = seleciona o grupo inteiro e arrasta juntos.
  */
 export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean {
@@ -37,40 +39,34 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     selectBlocksByIds,
     armMultiDragSelection,
     startDrag,
+    armTapDeselect,
   } = args;
 
   if (event.shiftKey) {
+    armTapDeselect?.(null);
     selectBlock(block.id, { additive: true, expandGroup: false });
     return false;
   }
 
   if (event.ctrlKey || event.metaKey) {
+    armTapDeselect?.(null);
     selectBlock(block.id, { subtract: true, expandGroup: false });
     return false;
   }
 
   if (event.altKey && block.groupId) {
+    armTapDeselect?.(null);
     selectBlock(block.id, { expandGroup: false });
     armMultiDragSelection([block.id]);
     startDrag(event, block, "move");
     return true;
   }
 
-  const closed = resolveClosedGroupSelection(blocks, selectedIds);
-  if (
-    closed &&
-    block.groupId === closed.groupId &&
-    isBlockSelected(block.id)
-  ) {
-    /* Seleção pai → isola o filho clicado (gesto no palco = Camadas). */
-    selectBlock(block.id, { expandGroup: false });
-    armMultiDragSelection([block.id]);
-    startDrag(event, block, "move");
-    return true;
-  }
+  const alreadySelected = isBlockSelected(block.id);
+  armTapDeselect?.(alreadySelected ? block.id : null);
 
   let dragIds: string[];
-  if (!isBlockSelected(block.id)) {
+  if (!alreadySelected) {
     selectBlock(block.id);
     dragIds = expandSelectionWithGroups(blocks, [block.id]);
   } else {

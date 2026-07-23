@@ -19,6 +19,7 @@ function fakeEvent(partial: Partial<ReactPointerEvent> = {}): ReactPointerEvent 
     shiftKey: false,
     ctrlKey: false,
     metaKey: false,
+    altKey: false,
     ...partial,
   } as ReactPointerEvent;
 }
@@ -29,6 +30,7 @@ describe("beginBlockStageMoveDrag", () => {
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
     const startDrag = vi.fn();
+    const armTapDeselect = vi.fn();
     const result = beginBlockStageMoveDrag({
       event: fakeEvent({ ctrlKey: true }),
       block: a,
@@ -40,18 +42,21 @@ describe("beginBlockStageMoveDrag", () => {
       selectBlocksByIds: vi.fn(),
       armMultiDragSelection: vi.fn(),
       startDrag,
+      armTapDeselect,
     });
     expect(result).toBe(false);
     expect(selectBlock).toHaveBeenCalledWith("a", { subtract: true, expandGroup: false });
     expect(startDrag).not.toHaveBeenCalled();
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
   });
 
-  it("2º clique com seleção pai isola o membro e inicia drag só dele", () => {
+  it("2º toque em item já selecionado arma limpeza se soltar sem arrastar", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
     const armMultiDragSelection = vi.fn();
     const startDrag = vi.fn();
+    const armTapDeselect = vi.fn();
     const result = beginBlockStageMoveDrag({
       event: fakeEvent(),
       block: a,
@@ -63,11 +68,13 @@ describe("beginBlockStageMoveDrag", () => {
       selectBlocksByIds: vi.fn(),
       armMultiDragSelection,
       startDrag,
+      armTapDeselect,
     });
     expect(result).toBe(true);
-    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
-    expect(armMultiDragSelection).toHaveBeenCalledWith(["a"]);
+    expect(armTapDeselect).toHaveBeenCalledWith("a");
+    expect(armMultiDragSelection).toHaveBeenCalledWith(["a", "b"]);
     expect(startDrag).toHaveBeenCalled();
+    expect(selectBlock).not.toHaveBeenCalled();
   });
 
   it("1º clique em membro seleciona o grupo e arrasta juntos", () => {
@@ -76,6 +83,7 @@ describe("beginBlockStageMoveDrag", () => {
     const selectBlock = vi.fn();
     const armMultiDragSelection = vi.fn();
     const startDrag = vi.fn();
+    const armTapDeselect = vi.fn();
     const result = beginBlockStageMoveDrag({
       event: fakeEvent(),
       block: a,
@@ -87,9 +95,11 @@ describe("beginBlockStageMoveDrag", () => {
       selectBlocksByIds: vi.fn(),
       armMultiDragSelection,
       startDrag,
+      armTapDeselect,
     });
     expect(result).toBe(true);
     expect(selectBlock).toHaveBeenCalledWith("a");
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
     expect(armMultiDragSelection).toHaveBeenCalledWith(["a", "b"]);
     expect(startDrag).toHaveBeenCalled();
   });
@@ -100,6 +110,7 @@ describe("beginBlockStageMoveDrag", () => {
     const selectBlock = vi.fn();
     const armMultiDragSelection = vi.fn();
     const startDrag = vi.fn();
+    const armTapDeselect = vi.fn();
     const result = beginBlockStageMoveDrag({
       event: fakeEvent({ altKey: true }),
       block: a,
@@ -111,9 +122,11 @@ describe("beginBlockStageMoveDrag", () => {
       selectBlocksByIds: vi.fn(),
       armMultiDragSelection,
       startDrag,
+      armTapDeselect,
     });
     expect(result).toBe(true);
     expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
     expect(armMultiDragSelection).toHaveBeenCalledWith(["a"]);
     expect(startDrag).toHaveBeenCalled();
   });

@@ -92,6 +92,7 @@ function ComunicadoEditorKeyboardBridge() {
     clearTablePartSelection,
     clearInputPartSelection,
     selectBlocksByIds,
+    clearSelection,
     undo,
     redo,
     canUndo,
@@ -118,6 +119,7 @@ function ComunicadoEditorKeyboardBridge() {
       clearTablePartSelection();
       clearInputPartSelection();
     },
+    clearSelection,
     undo,
     redo,
     canUndo,
@@ -331,6 +333,7 @@ export function ComunicadoEditorProvider({
     startDrag,
     clearDragSnapshot,
     armMultiDragSelection,
+    armTapDeselect,
     activeSmartGuides,
   } = useComunicadoEditorDrag({
     configRef,
@@ -342,6 +345,7 @@ export function ComunicadoEditorProvider({
     snapToGridRef: stage.snapToGridRef,
     snapToObjectsRef: stage.snapToObjectsRef,
     stageGridSizePercentRef: stage.stageGridSizePercentRef,
+    clearSelection: selection.clearSelection,
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -623,6 +627,7 @@ export function ComunicadoEditorProvider({
     canvasRef,
     startDrag,
     armMultiDragSelection,
+    armTapDeselect,
     addBlock: blockActions.addBlock,
     addDataBlock: blockActions.addDataBlock,
     addDataSourceBlock: blockActions.addDataSourceBlock,

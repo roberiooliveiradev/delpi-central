@@ -64,6 +64,8 @@ type Options = {
     frame: ComunicadoFrame,
     mode: "move" | "resize" | "rotate" | "adjust",
   ) => void;
+  /** Move cancelado antes do limiar (toque sem arrastar). */
+  onTapWithoutDrag?: (blockId: string) => void;
   resolveBlock?: (blockId: string) => ComunicadoBlock | undefined;
 };
 
@@ -92,6 +94,7 @@ export function useCanvasBlockInteraction({
   onUpdateBlock,
   onInteractionStart,
   onInteractionEnd,
+  onTapWithoutDrag,
   resolveBlock,
 }: Options) {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -102,11 +105,13 @@ export function useCanvasBlockInteraction({
   const onUpdateBlockRef = useRef(onUpdateBlock);
   const onInteractionStartRef = useRef(onInteractionStart);
   const onInteractionEndRef = useRef(onInteractionEnd);
+  const onTapWithoutDragRef = useRef(onTapWithoutDrag);
   onUpdateFrameRef.current = onUpdateFrame;
   onUpdateStyleRef.current = onUpdateStyle;
   onUpdateBlockRef.current = onUpdateBlock;
   onInteractionStartRef.current = onInteractionStart;
   onInteractionEndRef.current = onInteractionEnd;
+  onTapWithoutDragRef.current = onTapWithoutDrag;
 
   const pointerToPercent = useCallback((clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -260,8 +265,12 @@ export function useCanvasBlockInteraction({
 
   pointerListenersRef.current.onPendingUp = (event: PointerEvent) => {
     if (pendingRef.current && event.pointerId !== pendingRef.current.pointerId) return;
+    const pending = pendingRef.current;
     pendingRef.current = null;
     removePointerListeners();
+    if (pending) {
+      onTapWithoutDragRef.current?.(pending.blockId);
+    }
   };
 
   useEffect(() => {

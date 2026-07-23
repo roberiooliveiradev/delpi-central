@@ -10,6 +10,7 @@ export function useComunicadoEditorKeyboard({
   editingTextId,
   hasPartSelection = false,
   clearPartSelection,
+  clearSelection,
   blocks = [],
   selectBlocksByIds,
   undo,
@@ -52,6 +53,10 @@ export function useComunicadoEditorKeyboard({
         }
         if (escape.type === "select-ids" && selectBlocksByIds) {
           selectBlocksByIds(escape.ids);
+          return { handled: true };
+        }
+        if (escape.type === "clear-selection") {
+          clearSelection?.();
           return { handled: true };
         }
       }

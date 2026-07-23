@@ -171,6 +171,8 @@ export type ComunicadoEditorContextValue = {
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
   /** Arma seleção multi antes do drag (evita race com setState). */
   armMultiDragSelection: (ids: string[]) => void;
+  /** Marca limpeza de seleção se o toque não virar arraste. */
+  armTapDeselect: (blockId: string | null) => void;
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (

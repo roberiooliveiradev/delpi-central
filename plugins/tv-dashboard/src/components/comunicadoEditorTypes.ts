@@ -11,6 +11,7 @@ export type ComunicadoEditorKeyboardActions = {
   /** Há parte de KPI/chart/tabela selecionada (Esc volta ao escopo global). */
   hasPartSelection?: boolean;
   clearPartSelection?: () => void;
+  clearSelection?: () => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;

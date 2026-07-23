@@ -199,13 +199,17 @@ export function resolveBlockWrapChromeFlags(params: {
 }
 
 /**
- * Esc: limpa partes → sobe de filhos de grupo para seleção pai.
+ * Esc: limpa partes → sobe filhos de grupo para o pai → limpa a seleção.
  */
 export function resolveEscapeHierarchyAction(params: {
   blocks: ComunicadoBlock[];
   selectedIds: string[];
   hasPartSelection: boolean;
-}): { type: "clear-parts" } | { type: "select-ids"; ids: string[] } | { type: "none" } {
+}):
+  | { type: "clear-parts" }
+  | { type: "select-ids"; ids: string[] }
+  | { type: "clear-selection" }
+  | { type: "none" } {
   if (params.hasPartSelection) {
     return { type: "clear-parts" };
   }
@@ -216,7 +220,24 @@ export function resolveEscapeHierarchyAction(params: {
       ids: expandSelectionWithGroups(params.blocks, [children.memberIds[0]]),
     };
   }
+  if (params.selectedIds.length > 0) {
+    return { type: "clear-selection" };
+  }
   return { type: "none" };
+}
+
+/**
+ * Segundo toque (pointerup sem arrastar) em item já selecionado → limpa seleção.
+ * Não usa dblclick: é um novo toque após a seleção já estar ativa.
+ */
+export function resolveTapWithoutDragSelectionAction(params: {
+  selectedIds: string[];
+  targetBlockId: string;
+  wasAlreadySelected: boolean;
+}): { type: "clear-selection" } | { type: "none" } {
+  if (!params.wasAlreadySelected) return { type: "none" };
+  if (!params.selectedIds.includes(params.targetBlockId)) return { type: "none" };
+  return { type: "clear-selection" };
 }
 
 export function isComplexMolduraOrParentPart(

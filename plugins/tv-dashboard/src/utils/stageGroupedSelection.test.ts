@@ -10,6 +10,7 @@ import {
   resolveBlockWrapChromeFlags,
   resolveEscapeHierarchyAction,
   resolveStageSelectionHierarchy,
+  resolveTapWithoutDragSelectionAction,
 } from "./stageGroupedSelection";
 
 function block(
@@ -161,5 +162,45 @@ describe("resolveEscapeHierarchyAction", () => {
         hasPartSelection: false,
       }),
     ).toEqual({ type: "select-ids", ids: ["a", "b"] });
+  });
+
+  it("seleção pai ou bloco limpa com Esc", () => {
+    const blocks = [
+      block("a", { groupId: "g1" }),
+      block("b", { groupId: "g1" }),
+    ];
+    expect(
+      resolveEscapeHierarchyAction({
+        blocks,
+        selectedIds: ["a", "b"],
+        hasPartSelection: false,
+      }),
+    ).toEqual({ type: "clear-selection" });
+    expect(
+      resolveEscapeHierarchyAction({
+        blocks: [block("x")],
+        selectedIds: ["x"],
+        hasPartSelection: false,
+      }),
+    ).toEqual({ type: "clear-selection" });
+  });
+});
+
+describe("resolveTapWithoutDragSelectionAction", () => {
+  it("só limpa no segundo toque em item já selecionado", () => {
+    expect(
+      resolveTapWithoutDragSelectionAction({
+        selectedIds: ["a"],
+        targetBlockId: "a",
+        wasAlreadySelected: false,
+      }),
+    ).toEqual({ type: "none" });
+    expect(
+      resolveTapWithoutDragSelectionAction({
+        selectedIds: ["a"],
+        targetBlockId: "a",
+        wasAlreadySelected: true,
+      }),
+    ).toEqual({ type: "clear-selection" });
   });
 });

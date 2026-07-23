@@ -23,6 +23,7 @@ import {
   type SmartGuideLine,
 } from "../../utils/comunicadoSmartGuides";
 import { finalizeMultiFramesWithSnap } from "../../utils/finalizeMultiFramesWithSnap";
+import { resolveTapWithoutDragSelectionAction } from "../../utils/stageGroupedSelection";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
@@ -36,6 +37,7 @@ type Options = {
   snapToGridRef: MutableRefObject<boolean>;
   snapToObjectsRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
+  clearSelection: () => void;
 };
 
 function resolveDraggedExcludeIds(
@@ -70,17 +72,42 @@ export function useComunicadoEditorDrag({
   snapToGridRef,
   snapToObjectsRef,
   stageGridSizePercentRef,
+  clearSelection,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
   /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
+  /** Segundo toque: limpa seleção se soltar sem cruzar o limiar de arraste. */
+  const tapDeselectBlockIdRef = useRef<string | null>(null);
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
   const [activeSmartGuides, setActiveSmartGuides] = useState<SmartGuideLine[]>([]);
 
   const armMultiDragSelection = useCallback((ids: string[]) => {
     multiDragSelectionOverrideRef.current = [...new Set(ids.filter(Boolean))];
   }, []);
 
+  const armTapDeselect = useCallback((blockId: string | null) => {
+    tapDeselectBlockIdRef.current = blockId;
+  }, []);
+
+  const handleTapWithoutDrag = useCallback(
+    (blockId: string) => {
+      const candidate = tapDeselectBlockIdRef.current;
+      tapDeselectBlockIdRef.current = null;
+      if (!candidate || candidate !== blockId) return;
+      const action = resolveTapWithoutDragSelectionAction({
+        selectedIds: selectedIdsRef.current,
+        targetBlockId: blockId,
+        wasAlreadySelected: true,
+      });
+      if (action.type === "clear-selection") {
+        clearSelection();
+      }
+    },
+    [clearSelection],
+  );
   const updateBlocksSilent = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
       applyConfig({ ...configRef.current, blocks: nextBlocks });
@@ -172,6 +199,7 @@ export function useComunicadoEditorDrag({
   );
 
   const handleInteractionStart = useCallback(() => {
+    tapDeselectBlockIdRef.current = null;
     setActiveSmartGuides([]);
     dragSnapshotRef.current = snapshotConfig(configRef.current);
     const override = multiDragSelectionOverrideRef.current;
@@ -333,6 +361,7 @@ export function useComunicadoEditorDrag({
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
     multiDragSelectionOverrideRef.current = null;
+    tapDeselectBlockIdRef.current = null;
     setActiveSmartGuides([]);
   }, []);
 
@@ -342,6 +371,7 @@ export function useComunicadoEditorDrag({
     onUpdateBlock: handleUpdateBlock,
     onInteractionStart: handleInteractionStart,
     onInteractionEnd: handleInteractionEnd,
+    onTapWithoutDrag: handleTapWithoutDrag,
     resolveBlock: (blockId) => configRef.current.blocks?.find((block) => block.id === blockId),
   });
 
@@ -350,6 +380,7 @@ export function useComunicadoEditorDrag({
     startDrag,
     clearDragSnapshot,
     armMultiDragSelection,
+    armTapDeselect,
     activeSmartGuides,
   };
 }

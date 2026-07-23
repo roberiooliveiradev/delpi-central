@@ -125,6 +125,7 @@ export function ComunicadoComposerCanvas() {
     canvasWrapRef,
     startDrag,
     armMultiDragSelection,
+    armTapDeselect,
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
@@ -778,6 +779,7 @@ export function ComunicadoComposerCanvas() {
                     selectBlocksByIds,
                     armMultiDragSelection,
                     startDrag,
+                    armTapDeselect,
                   });
                 }}
               >
