@@ -60,6 +60,13 @@ export function resolveSelectionChromeMetrics(stageZoom: number): SelectionChrom
   const rotateSize = scaleToDesign(SCREEN_AT_100.rotate, effective);
   const outlineWidth = scaleToDesign(SCREEN_AT_100.outline, effective);
   const selectionPad = scaleToDesign(SCREEN_AT_100.pad, effective);
+  /*
+   * Haste longa o bastante para o disco de giro ficar acima do pill N
+   * e do losango de ajuste na borda superior (antes ficavam quase colados).
+   */
+  const topChromeClearance = edgeThickness + adjustSize / 2 + 12;
+  const rotateStem =
+    Math.round((rotateSize * 0.5 + selectionPad + topChromeClearance) * 10) / 10;
   return {
     handleSize,
     edgeLength,
@@ -69,7 +76,7 @@ export function resolveSelectionChromeMetrics(stageZoom: number): SelectionChrom
     outlineWidth,
     selectionPad,
     handleHalf: Math.round((handleSize / 2) * 10) / 10,
-    rotateStem: Math.round((rotateSize * 0.55 + selectionPad) * 10) / 10,
+    rotateStem,
   };
 }
 

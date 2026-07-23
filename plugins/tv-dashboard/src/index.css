@@ -41,8 +41,8 @@
   --td-selection-outline-width: 1.5px;
   --td-remote-selection: var(--danger, #ef4444);
   --td-global-selection-pad: 4px;
-  --td-selection-rotate-stem: 20px;
-  --td-selection-rotate-offset: 28px;
+  --td-selection-rotate-stem: 36px;
+  --td-selection-rotate-offset: 45px;
   --td-float-popover-bg: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
   --delpi-ui-accent: var(--td-accent);
   --delpi-ui-surface: var(--td-surface);
@@ -2449,7 +2449,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__rotate{
   position: absolute;
-  top: calc(-1 * var(--td-selection-rotate-offset, 28px));
+  top: calc(-1 * var(--td-selection-rotate-offset, 45px));
   left: 50%;
   transform: translateX(-50%);
   width: var(--td-selection-rotate-size, 18px);
@@ -2544,7 +2544,7 @@ body.td-composer--marqueeing *{
   top: 100%;
   width: max(1px, var(--td-selection-outline-width, 1.5px));
   /* Liga o pivô ao outline global (já afastado por --td-global-selection-pad). */
-  height: var(--td-selection-rotate-stem, 20px);
+  height: var(--td-selection-rotate-stem, 36px);
   background: var(--td-selection-stem, var(--td-accent, #089bdb));
   transform: translateX(-50%);
 }

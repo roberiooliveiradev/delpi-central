@@ -19,6 +19,16 @@ describe("resolveSelectionChromeMetrics", () => {
     expect(m.rotateSize).toBe(18);
   });
 
+  it("haste do giro deixa folga acima do pill N e do losango de ajuste", () => {
+    const m = resolveSelectionChromeMetrics(1);
+    /* Fundo do disco = -stem + rotateSize/2; topo do pill ≈ -edgeThickness. */
+    const rotateBottom = -m.rotateStem + m.rotateSize / 2;
+    const edgeChromeTop = -m.edgeThickness;
+    const gap = edgeChromeTop - rotateBottom;
+    expect(m.rotateStem).toBeGreaterThanOrEqual(30);
+    expect(gap).toBeGreaterThanOrEqual(12);
+  });
+
   it("cresce em design px ao zoom out até o piso", () => {
     const at100 = resolveSelectionChromeMetrics(1);
     const atFloor = resolveSelectionChromeMetrics(SELECTION_CHROME_ZOOM_FLOOR);
