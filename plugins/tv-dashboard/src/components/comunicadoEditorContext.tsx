@@ -137,7 +137,8 @@ function ComunicadoEditorKeyboardBridge() {
     pasteSelected,
     canPaste,
     nudgeSelected,
-    enableHistoryShortcuts: !deckHistory,
+    /* Undo do slide é local/imediato — deck history é só trilha de revisão. */
+    enableHistoryShortcuts: true,
   });
   return null;
 }
@@ -307,14 +308,16 @@ export function ComunicadoEditorProvider({
   designSizeRef.current = resolveViewportPixelSize(viewportProfile);
 
   const applyConfig = useCallback(
-    (next: ComunicadoConfig) => {
+    (next: ComunicadoConfig, options?: { persist?: boolean }) => {
       // Atualiza o ref no mesmo tick — consumidores encadeados (ex.: input + dataFilters)
       // não devem ler o config prévio e sobrescrever a primeira edição.
       configRef.current = next;
       setConfig(next);
       const serialized = serializeComunicadoConfig(next);
       lastEmittedFingerprintRef.current = fingerprintComunicadoValue(serialized);
+      // Live (drag/resize) atualiza eco WS/preview sem disparar autosave a cada pointermove.
       deckHistory?.setLiveComunicadoConfig(serialized);
+      if (options?.persist === false) return;
       onChange(serialized);
     },
     [deckHistory, onChange],
@@ -491,7 +494,7 @@ export function ComunicadoEditorProvider({
       const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
         block.id === blockId ? ({ ...block, ...patch } as ComunicadoBlock) : block,
       );
-      applyConfig({ ...configRef.current, blocks: nextBlocks });
+      applyConfig({ ...configRef.current, blocks: nextBlocks }, { persist: false });
     },
     [applyConfig],
   );

@@ -225,15 +225,17 @@ export function resolveVisualBoxContentLayoutStyle(
   /* Texto na forma: layout absoluto sobre o gráfico — mesmo path para text e shape. */
   const textAlign = style.textAlign ?? (profile.mode === "text" ? undefined : "center");
   const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
-  /* Edição inline: sem inset — o padding em px ainda comia frames baixos no contentEditable. */
-  const contentPadding = options?.editorInteractive ? 0 : VISUAL_BOX_CONTENT_INSET;
+  /*
+   * Inset idêntico em edição e leitura — zerar o padding no contentEditable
+   * alargava a caixa e mudava o wrap (organização do texto divergia do modo normal/TV).
+   */
   if (profile.mode === "text") {
     css.alignItems = "stretch";
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     if (style.textAlign) css.textAlign = style.textAlign;
     css.position = "absolute";
     css.inset = 0;
-    css.padding = contentPadding;
+    css.padding = VISUAL_BOX_CONTENT_INSET;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   } else {
     css.alignItems =
@@ -241,7 +243,7 @@ export function resolveVisualBoxContentLayoutStyle(
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     css.position = "absolute";
     css.inset = 0;
-    css.padding = contentPadding;
+    css.padding = VISUAL_BOX_CONTENT_INSET;
     if (textAlign) css.textAlign = textAlign;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }

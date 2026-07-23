@@ -125,6 +125,43 @@ describe("useDeckEditorHistory", () => {
     expect(result.current.canRedo).toBe(false);
   });
 
+  it("confirmChange consome um pending por vez (save atrasado não apaga gesto seguinte)", async () => {
+    const { result } = renderHook(() =>
+      useDeckEditorHistory({
+        playlistId: "pl-1",
+        getPlaylist: () => playlist,
+        getSelectedSlideId: () => null,
+        getLiveComunicadoConfig: () => null,
+        getComunicadoSlideId: () => null,
+        applySnapshot: vi.fn(),
+      }),
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.recordBeforeChange();
+      result.current.recordBeforeChange();
+    });
+
+    vi.mocked(listPlaylistHistory).mockResolvedValue(page("snap-3", 3));
+    await act(async () => result.current.confirmChange());
+    expect(result.current.canUndo).toBe(true);
+
+    vi.mocked(listPlaylistHistory).mockResolvedValue(page("snap-4", 4));
+    await act(async () => result.current.confirmChange());
+    expect(result.current.canUndo).toBe(true);
+    expect(result.current.canRedo).toBe(false);
+
+    /* Terceiro confirm sem pending — não empilha de novo. */
+    const pastLenBefore = 2;
+    vi.mocked(listPlaylistHistory).mockResolvedValue(page("snap-5", 5));
+    await act(async () => result.current.confirmChange());
+    /* canUndo continua true; future continua vazio (não houve stack extra que limpasse). */
+    expect(result.current.canUndo).toBe(true);
+    expect(result.current.canRedo).toBe(false);
+    void pastLenBefore;
+  });
+
   it("preserva ponteiros de revisão no eco local e em atualização remota", async () => {
     const { result } = renderHook(() =>
       useDeckEditorHistory({

@@ -2326,8 +2326,10 @@ body.td-composer--marqueeing *{
   /* Igual tipografia TV/readonly — max-height+hidden cortava glifos no edit. */
   overflow: visible;
   white-space: pre-wrap;
+  word-break: break-word;
   caret-color: currentColor;
-  field-sizing: content;
+  /* normal: evita field-sizing:content mudar a caixa vs. <p>/<h1> da leitura. */
+  field-sizing: normal;
 }
 .dashboard-tv-dashboard .td-composer__inline-text::placeholder{
   color: color-mix(in srgb, currentColor 45%, transparent);
@@ -2338,9 +2340,10 @@ body.td-composer--marqueeing *{
   outline: none;
 }
 .dashboard-tv-dashboard .td-composer__inline-text--rich{
+  /* Mesmo gap do rich-text da TV (comunicado-stage.css) — paridade edição/leitura. */
   display: flex;
   flex-direction: column;
-  gap: 0.15em;
+  gap: 0.35em;
 }
 .dashboard-tv-dashboard .td-composer__inline-text--rich [data-comunicado-line]{
   position: relative;

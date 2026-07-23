@@ -168,6 +168,7 @@ export function useComunicadoEditorKeyboard({
         return { handled: true };
       }
     },
-    { phase: "bubble", priority: 40 },
+    /* Acima do deck-history (50): Ctrl+Z do slide é local/imediato. */
+    { phase: "bubble", priority: 60 },
   );
 }

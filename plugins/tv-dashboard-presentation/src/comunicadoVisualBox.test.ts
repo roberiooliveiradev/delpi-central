@@ -27,10 +27,14 @@ describe("comunicadoVisualBox", () => {
     expect(shapeLayout.justifyContent).toBe("center");
   });
 
-  it("edição inline zera inset para não cortar tipografia em frames baixos", () => {
+  it("edição inline mantém o mesmo inset da leitura (paridade de wrap)", () => {
     const heading = createBlock("heading", "PPM interno");
+    const reading = resolveVisualBoxContentLayoutStyle(heading);
     const editing = resolveVisualBoxContentLayoutStyle(heading, { editorInteractive: true });
-    expect(editing.padding).toBe(0);
+    expect(editing.padding).toBe(VISUAL_BOX_CONTENT_INSET);
+    expect(editing.padding).toBe(reading.padding);
+    expect(editing.pointerEvents).toBe("auto");
+    expect(reading.pointerEvents).toBe("none");
   });
 
   it("texto preserva fill escolhido (default transparente só na inserção)", () => {
@@ -70,7 +74,7 @@ describe("comunicadoVisualBox", () => {
       fill: "transparent",
       stroke: "transparent",
       strokeWidth: 0,
-      borderRadius: undefined,
+      borderRadius: 0,
       shapeKind: "rectangle",
     });
     expect(visualBoxSupportsTextFormatting(block)).toBe(true);

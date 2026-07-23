@@ -34,7 +34,7 @@ type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
   selectedIds: string[];
   selectedId: string | null;
-  applyConfig: (next: ComunicadoConfig) => void;
+  applyConfig: (next: ComunicadoConfig, options?: { persist?: boolean }) => void;
   pushPast: (snapshot: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
   snapToGridRef: MutableRefObject<boolean>;
@@ -133,7 +133,8 @@ export function useComunicadoEditorDrag({
   );
   const updateBlocksSilent = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
-      applyConfig({ ...configRef.current, blocks: nextBlocks });
+      /* Preview local do gesto — autosave só no pointerup (handleInteractionEnd). */
+      applyConfig({ ...configRef.current, blocks: nextBlocks }, { persist: false });
     },
     [applyConfig, configRef],
   );

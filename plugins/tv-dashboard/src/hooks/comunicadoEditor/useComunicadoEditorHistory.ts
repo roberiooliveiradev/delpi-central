@@ -16,7 +16,7 @@ export function snapshotConfig(config: ComunicadoConfig): ComunicadoConfig {
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
-  applyConfig: (next: ComunicadoConfig) => void;
+  applyConfig: (next: ComunicadoConfig, options?: { persist?: boolean }) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
 };
 

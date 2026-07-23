@@ -34,8 +34,19 @@ export function DeckHistoryTabActions({ onBack }: Props) {
   const refreshing = Boolean(
     editor?.dataPreviewLoading || (editor?.refreshingSourceIds?.length ?? 0) > 0,
   );
+  /*
+   * Slide custom: Desfazer/Refazer = pilha local imediata do editor.
+   * Outras telas / sem editor: ponteiros de revisão do deck.
+   * (Painel de revisões continua no histórico da programação.)
+   */
+  const canUndo = editor
+    ? Boolean(editor.canUndo)
+    : Boolean(history?.canUndo && !history.restoring);
+  const canRedo = editor
+    ? Boolean(editor.canRedo)
+    : Boolean(history?.canRedo && !history.restoring);
 
-  if (!history && !onBack && !hasDataBlocks) return null;
+  if (!history && !onBack && !hasDataBlocks && !editor) return null;
 
   return (
     <div className="td-deck-chrome__history" role="group" aria-label="Ações do editor">
@@ -52,7 +63,7 @@ export function DeckHistoryTabActions({ onBack }: Props) {
           </button>
         </HintAction>
       ) : null}
-      {history ? (
+      {history || editor ? (
         <>
           <ShortcutTip shortcutId="undo" placement="bottom" offsetX={-18}>
             <span>
@@ -60,8 +71,14 @@ export function DeckHistoryTabActions({ onBack }: Props) {
                 <button
                   type="button"
                   className="td-deck-chrome__history-btn"
-                  disabled={!history.canUndo || history.restoring}
-                  onClick={() => void history.undo()}
+                  disabled={!canUndo}
+                  onClick={() => {
+                    if (editor) {
+                      editor.undo();
+                      return;
+                    }
+                    void history?.undo();
+                  }}
                   aria-label="Desfazer"
                 >
                   <Undo2 size={14} aria-hidden="true" />
@@ -75,8 +92,14 @@ export function DeckHistoryTabActions({ onBack }: Props) {
                 <button
                   type="button"
                   className="td-deck-chrome__history-btn"
-                  disabled={!history.canRedo || history.restoring}
-                  onClick={() => void history.redo()}
+                  disabled={!canRedo}
+                  onClick={() => {
+                    if (editor) {
+                      editor.redo();
+                      return;
+                    }
+                    void history?.redo();
+                  }}
                   aria-label="Refazer"
                 >
                   <Redo2 size={14} aria-hidden="true" />

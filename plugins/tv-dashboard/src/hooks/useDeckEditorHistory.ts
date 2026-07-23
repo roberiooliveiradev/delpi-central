@@ -35,7 +35,8 @@ export function useDeckEditorHistory({
   const futureRef = useRef<DeckEditorHistoryPointer[]>([]);
   const currentRevisionRef = useRef<number | null>(null);
   const lastLocalRevisionRef = useRef<number | null>(null);
-  const pendingRef = useRef(false);
+  /** Quantos `recordBeforeChange` ainda aguardam um `confirmChange` (não booleano global). */
+  const pendingCountRef = useRef(0);
   const restoringRef = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
@@ -88,26 +89,30 @@ export function useDeckEditorHistory({
     const stored = readDeckEditorHistory(playlistId);
     pastRef.current = stored?.past ?? [];
     futureRef.current = stored?.future ?? [];
-    pendingRef.current = false;
+    pendingCountRef.current = 0;
     refreshAvailability();
     void loadHistory(1);
   }, [loadHistory, playlistId, refreshAvailability]);
 
   const recordBeforeChange = useCallback(
     (_liveComunicadoOverride?: Record<string, unknown> | null) => {
-      pendingRef.current = true;
+      pendingCountRef.current += 1;
     },
     [],
   );
 
   const confirmChange = useCallback(async () => {
-    const pending = pendingRef.current;
-    pendingRef.current = false;
+    /*
+     * Cada save consome no máximo um pending. Autosaves sem recordBeforeChange
+     * (ou saves atrasados) não “roubam” o pending de um gesto/edição posterior.
+     */
+    const shouldStack = pendingCountRef.current > 0;
+    if (shouldStack) pendingCountRef.current -= 1;
     const refreshed = await loadHistory(1);
     if (!refreshed) return;
     lastLocalRevisionRef.current = refreshed.currentRevision;
     const captured = refreshed.items[0];
-    if (pending && captured) {
+    if (shouldStack && captured) {
       pastRef.current = [
         ...pastRef.current.slice(-(DECK_EDITOR_HISTORY_POINTER_LIMIT - 1)),
         { snapshotId: captured.snapshotId, revision: captured.revision },
@@ -119,7 +124,7 @@ export function useDeckEditorHistory({
   }, [loadHistory, persistStacks, refreshAvailability]);
 
   const cancelChange = useCallback(() => {
-    pendingRef.current = false;
+    if (pendingCountRef.current > 0) pendingCountRef.current -= 1;
   }, []);
 
   const applyRestoredPlaylist = useCallback(
@@ -150,7 +155,7 @@ export function useDeckEditorHistory({
     });
     pastRef.current = [];
     futureRef.current = [];
-    pendingRef.current = false;
+    pendingCountRef.current = 0;
     refreshAvailability();
     persistStacks();
     await loadHistory(1);
@@ -254,7 +259,7 @@ export function useDeckEditorHistory({
      * Apagar a pilha aqui fazia o histórico “sumir” após save ou sync —
      * o Ctrl+Z do slide já é local (`useComunicadoEditorHistory`).
      */
-    if (pendingRef.current) {
+    if (pendingCountRef.current > 0) {
       lastLocalRevisionRef.current = refreshed.currentRevision;
     }
   }, [loadHistory]);
@@ -262,7 +267,7 @@ export function useDeckEditorHistory({
   const reset = useCallback(() => {
     pastRef.current = [];
     futureRef.current = [];
-    pendingRef.current = false;
+    pendingCountRef.current = 0;
     refreshAvailability();
     clearDeckEditorHistory(playlistId);
   }, [playlistId, refreshAvailability]);
