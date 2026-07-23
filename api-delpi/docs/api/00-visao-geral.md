@@ -89,7 +89,7 @@ Sucesso com metadados semânticos (obrigatório em rotas com envelope — Playbo
   "data": { },
   "error": null,
   "meta": {
-    "dataVersion": "2026-06",
+    "dataVersion": "2026-07",
     "operationId": "get_product_stock",
     "entity": "product_stock",
     "shape": "paged_list"

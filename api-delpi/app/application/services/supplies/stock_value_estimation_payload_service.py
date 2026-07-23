@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
 from app.application.services.supplies.stock_value_method_service import (
     STOCK_METHOD_RESOLVED_OFFICIAL,
     STOCK_METHOD_RESOLVED_REGISTER_SNAPSHOT,
@@ -47,15 +50,19 @@ def build_stock_estimation_payload(
         "method": method,
         "stock_method": stock_method_requested,
         "stock_method_resolved": stock_method_resolved,
-        "start_date": period_start,
-        "end_date": period_end,
-        "end_date_exclusive": period_end_exclusive,
-        "closing_base_date": estimation_meta.get("closing_base_date"),
+        "start_date": ResponseDateFormatService.format_date(period_start),
+        "end_date": ResponseDateFormatService.format_date(period_end),
+        "end_date_exclusive": ResponseDateFormatService.format_date(period_end_exclusive),
+        "closing_base_date": ResponseDateFormatService.format_date(
+            estimation_meta.get("closing_base_date")
+        ),
         "closing_base_value": estimation_meta.get("closing_base_value"),
         "bridge_value": estimation_meta.get("bridge_value"),
         "period_net_value": estimation_meta.get("period_net_value"),
         "official_closure_available": estimation_meta.get("official_closure_available", False),
-        "official_closure_date": estimation_meta.get("official_closure_date"),
+        "official_closure_date": ResponseDateFormatService.format_date(
+            estimation_meta.get("official_closure_date")
+        ),
         "official_closure_value": estimation_meta.get("official_closure_value"),
         "official_closure_on_period_end": estimation_meta.get(
             "official_closure_on_period_end", False

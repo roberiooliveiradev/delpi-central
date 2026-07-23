@@ -46,10 +46,10 @@ def test_dashboard_paginates_items_and_builds_summary() -> None:
     assert result["total"] == 3
     assert result["summary"]["total_items"] == 3
     assert result["charts"]["levelData"]
-    assert result["items"][0]["start_date"] == "01/05/2026"
-    assert result["items"][0]["end_date"] == "10/05/2026"
-    assert result["items"][0]["data_limite"] == "07/05/2026"
-    assert result["items"][0]["homolog_date"] == "01/05/2026"
+    assert result["items"][0]["start_date"] == "2026-05-01"
+    assert result["items"][0]["end_date"] == "2026-05-10"
+    assert result["items"][0]["data_limite"] == "2026-05-07"
+    assert result["items"][0]["homolog_date"] == "2026-05-01"
 
 
 def test_execute_summary_caches_response_without_second_repository_call() -> None:

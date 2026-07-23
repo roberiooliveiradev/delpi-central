@@ -178,8 +178,8 @@ class GetInventoryTurnoverUseCase:
         payload = {
             "branch": stock_context.get("branch") or request.branch or "consolidated",
             "location": stock_context.get("location") or request.location or "all",
-            "start_date": start_date.strftime("%Y%m%d"),
-            "end_date": end_date.strftime("%Y%m%d"),
+            "start_date": start_date.isoformat(),
+            "end_date": end_date.isoformat(),
             "summary": {
                 "inventory_turnover_months": inventory_turnover_months,
                 "inventory_turnover_times": inventory_turnover_times,

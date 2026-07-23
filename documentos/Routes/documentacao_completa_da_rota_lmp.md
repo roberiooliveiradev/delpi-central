@@ -1151,15 +1151,15 @@ Comportamento esperado:
         "branch": "01",
         "sale_number": "003482",
         "sale_description": "BRASELIO REAJUSTE 2026",
-        "start_date": "23/03/2026",
-        "end_date": "23/03/2026",
+        "start_date": "2026-03-23",
+        "end_date": "2026-03-23",
         "engineering_status": "FINALIZADA",
         "qtd_pi": 274,
         "nivel": "Nível 3",
         "dias_uteis_sla": 20,
         "sla_minutos": 28800,
         "engineering_total_minutes": 0,
-        "data_limite": "20/04/2026",
+        "data_limite": "2026-04-20",
         "lead_time_util": 1,
         "status": "Pontual"
       }

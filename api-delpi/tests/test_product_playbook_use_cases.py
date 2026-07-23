@@ -91,13 +91,20 @@ def test_production_status_use_case_uses_reference_date() -> None:
         }
     ]
 
-    use_case = GetProductProductionStatusUseCase(repository)
-    result = use_case.execute(
-        ProductPlaybookRequest(code="90261255", reference_date="2026-06-04")
+    from app.application.services.product.protheus_field_normalizer import (
+        normalize_playbook_payload,
     )
 
-    assert result["reference_date"] == "20260604"
-    assert result["summary"]["pa_production_started"] == "SIM"
+    use_case = GetProductProductionStatusUseCase(repository)
+    raw = use_case.execute(
+        ProductPlaybookRequest(code="90261255", reference_date="2026-06-04")
+    )
+    result = normalize_playbook_payload(raw)
+
+    assert result["reference_date"] == "2026-06-04"
+    assert result["reference_date_iso"] == "2026-06-04"
+    assert result["summary"]["pa_production_started"] is True
+    assert result["summary"]["pa_production_started_label"] == "Sim"
     repository.fetch_production_status.assert_called_once_with(
         "90261255",
         "20260604",

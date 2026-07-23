@@ -41,7 +41,7 @@ def test_consumption_top_items_use_case_returns_summary() -> None:
     assert len(result["items"]) == 1
     assert result["summary"]["total_records"] == 1
     assert result["summary"]["consolidated_across_branches"] is True
-    assert result["summary"]["period"]["start"] == "20260301"
+    assert result["summary"]["period"]["start"] == "2026-03-01"
     repository.fetch_top_items.assert_called_once()
 
 
@@ -157,7 +157,7 @@ def test_schedule_today_use_case_uses_reference_date() -> None:
         ProductionOperationalRequest(reference_date="2026-06-11", limit=20)
     )
 
-    assert result["reference_date"] == "20260611"
+    assert result["reference_date"] == "2026-06-11"
     assert result["items"][0]["product_code"] == "90261255"
     assert result["pagination"]["is_complete"] is True
     repository.fetch_schedule_today.assert_called_once_with(

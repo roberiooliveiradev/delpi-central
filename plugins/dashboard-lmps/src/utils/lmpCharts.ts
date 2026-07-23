@@ -36,7 +36,7 @@ export function buildLmpFallbackCharts(
   return { levelData, statusData, leadByLevel };
 }
 
-/** Número YYYYMMDD para sort (aceita dd/mm/yyyy e YYYYMMDD). */
+/** Número YYYYMMDD para sort (aceita ISO, dd/mm/yyyy e YYYYMMDD legado). */
 export function parseLmpDateNumber(value?: string | null): number {
   const key = lmpDateSortKey(value);
   if (!key) return 0;

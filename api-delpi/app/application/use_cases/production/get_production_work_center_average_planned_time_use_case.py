@@ -9,6 +9,10 @@ from app.application.services.production.operational_limit_page_service import (
 from app.application.services.production.production_operational_summary_service import (
     build_reference_date_summary,
 )
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
+
 from app.domain.constants.production_operational import (
     DEFAULT_PRODUCTION_OPERATIONAL_LIMIT,
     MAX_PRODUCTION_OPERATIONAL_LIMIT,
@@ -45,7 +49,7 @@ class GetProductionWorkCenterAveragePlannedTimeUseCase:
         items, is_complete = trim_overfetched(raw_items, limit)
 
         return {
-            "reference_date": reference_date,
+            "reference_date": ResponseDateFormatService.format_date(reference_date),
             "items": items,
             "summary": build_reference_date_summary(
                 items=items,

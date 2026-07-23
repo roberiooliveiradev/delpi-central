@@ -16,6 +16,15 @@ function parseHistoryDateParts(
     return { year, month, day };
   }
 
+  const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) {
+    const year = Number(iso[1]);
+    const month = Number(iso[2]);
+    const day = Number(iso[3]);
+    if (!year || month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return { year, month, day };
+  }
+
   if (/^\d{8}$/.test(trimmed)) {
     const year = Number(trimmed.slice(0, 4));
     const month = Number(trimmed.slice(4, 6));
@@ -33,7 +42,7 @@ export function formatHistoryDate(value?: string | null): string {
   return `${String(parts.day).padStart(2, "0")}/${String(parts.month).padStart(2, "0")}/${parts.year}`;
 }
 
-/** Chave YYYYMMDD para sort (aceita dd/mm/yyyy e YYYYMMDD). */
+/** Chave YYYYMMDD para sort (aceita ISO, dd/mm/yyyy e YYYYMMDD legado). */
 export function historyDateSortKey(value?: string | null): string {
   const parts = parseHistoryDateParts(value);
   if (!parts) return "";

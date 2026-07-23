@@ -6,6 +6,9 @@ from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_query_request import (
     DespesasCentroCustoQueryRequest,
 )
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
 from app.domain.ports.financeiro_despesas_centro_custo.despesas_centro_custo_repository_port import (
     DespesasCentroCustoRepositoryPort,
 )
@@ -29,8 +32,9 @@ class GetDespesasCentroCustoFiltrosUseCase:
 
         return DespesasCentroCustoFiltrosResponse(
             periodo={
-                "data_inicio": start_date,
-                "data_fim": end_date,
+                "data_inicio": ResponseDateFormatService.format_date(start_date)
+                or start_date,
+                "data_fim": ResponseDateFormatService.format_date(end_date) or end_date,
             },
             filiais=payload.get("filiais") or [],
             centros_custo=payload.get("centros_custo") or [],

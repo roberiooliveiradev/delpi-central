@@ -75,5 +75,12 @@ class DespesasCentroCustoQueryRequest:
         return min(max(int(self.limit), 1), maximum)
 
     def periodo_dict(self) -> dict[str, str]:
+        from app.application.services.response_date_format_service import (
+            ResponseDateFormatService,
+        )
+
         start, end = self.resolve_protheus_period()
-        return {"data_inicio": start, "data_fim": end}
+        return {
+            "data_inicio": ResponseDateFormatService.format_date(start) or start,
+            "data_fim": ResponseDateFormatService.format_date(end) or end,
+        }

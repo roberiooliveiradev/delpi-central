@@ -1,3 +1,8 @@
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
+
+
 def build_period_summary(
     *,
     items: list[dict],
@@ -12,8 +17,8 @@ def build_period_summary(
         "branch": branch,
         "branch_filter_applied": branch is not None,
         "period": {
-            "start": period_start,
-            "end": period_end_exclusive,
+            "start": ResponseDateFormatService.format_date(period_start),
+            "end": ResponseDateFormatService.format_date(period_end_exclusive),
         },
     }
 
@@ -38,7 +43,7 @@ def build_reference_date_summary(
         "total_records": len(items),
         "branch": branch,
         "branch_filter_applied": branch is not None,
-        "reference_date": reference_date,
+        "reference_date": ResponseDateFormatService.format_date(reference_date),
     }
 
     if consolidated_across_branches is not None:

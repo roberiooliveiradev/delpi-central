@@ -4,7 +4,7 @@ import math
 import re
 from typing import Any
 
-from app.shared.utils.spreadsheet_date import format_date_ddmmyyyy
+from app.shared.utils.spreadsheet_date import format_date_iso
 
 
 def _as_str(value: Any) -> str:
@@ -82,7 +82,8 @@ class PropostaComercialFormatter:
 
     @staticmethod
     def format_date(value: Any) -> str | None:
-        return format_date_ddmmyyyy(value)
+        """Datas de calendário na resposta HTTP: ISO ``YYYY-MM-DD``."""
+        return format_date_iso(value)
 
     @staticmethod
     def format_integer_days(value: Any) -> int | None:

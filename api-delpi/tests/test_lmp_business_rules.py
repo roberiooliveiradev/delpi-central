@@ -66,9 +66,10 @@ def test_returned_lmp_is_returned() -> None:
     assert status == LMPBusinessRules.DASHBOARD_STATUS_RETURNED
 
 
-def test_format_date_for_response_converts_yyyymmdd_to_br() -> None:
-    assert LMPBusinessRules.format_date_for_response("20260723") == "23/07/2026"
-    assert LMPBusinessRules.format_date_for_response("23/07/2026") == "23/07/2026"
+def test_format_date_for_response_converts_to_iso() -> None:
+    assert LMPBusinessRules.format_date_for_response("20260723") == "2026-07-23"
+    assert LMPBusinessRules.format_date_for_response("23/07/2026") == "2026-07-23"
+    assert LMPBusinessRules.format_date_for_response("2026-07-23") == "2026-07-23"
     assert LMPBusinessRules.format_date_for_response("") is None
     assert LMPBusinessRules.format_date_for_response(None) is None
     assert LMPBusinessRules.format_date_for_response("        ") is None
@@ -88,6 +89,6 @@ def test_format_payload_dates_formats_known_keys() -> None:
             "status": "1",
         }
     )
-    assert payload["start_date"] == "20/07/2026"
-    assert payload["end_date"] == "23/07/2026"
+    assert payload["start_date"] == "2026-07-20"
+    assert payload["end_date"] == "2026-07-23"
     assert payload["sale_number"] == "003578"

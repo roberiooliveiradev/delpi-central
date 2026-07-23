@@ -179,7 +179,7 @@ def test_formatter_formats_document_fields() -> None:
     assert PropostaComercialFormatter.format_phone("4733705502") == "(47) 3370-5502"
     assert PropostaComercialFormatter.format_ncm("85444200") == "8544.42.00"
     assert PropostaComercialFormatter.format_currency(40041.56) == "R$ 40.041,56"
-    assert PropostaComercialFormatter.format_date("20260612") == "12/06/2026"
+    assert PropostaComercialFormatter.format_date("20260612") == "2026-06-12"
     assert PropostaComercialFormatter.format_integer_days(45.0) == 45
     assert PropostaComercialFormatter.format_lote_minimo_mil(3000.0) == "3,000"
     assert PropostaComercialFormatter.format_lote_minimo_mil(2000.0) == "2,000"
@@ -198,7 +198,7 @@ def _sample_detail() -> dict:
             "oportunidade": "003581",
             "versao": "01",
             "revisao_oportunidade": "08",
-            "data": "12/06/2026",
+            "data": "2026-06-12",
             "validade_dias": 30,
             "filial": "01",
             "status": "A",
@@ -311,7 +311,7 @@ def test_list_propostas_comerciais_use_case_formats_items() -> None:
     repository.list_active_recent.assert_called_once_with(limit=10)
     assert result["total"] == 1
     assert result["items"][0]["numero_ov"] == "OV003581"
-    assert result["items"][0]["data"] == "12/06/2026"
+    assert result["items"][0]["data"] == "2026-06-12"
 
 
 def test_get_proposta_comercial_use_case_raises_when_missing() -> None:

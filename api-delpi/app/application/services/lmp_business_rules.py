@@ -4,7 +4,10 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import Any, Iterable, Optional
 
-from app.shared.utils.spreadsheet_date import format_date_ddmmyyyy, parse_spreadsheet_date
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
+from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 # Campos de data emitidos nas respostas HTTP LMP / histórico OV compartilhado.
 LMP_RESPONSE_DATE_KEYS = frozenset(
@@ -66,8 +69,8 @@ class LMPBusinessRules:
 
     @classmethod
     def format_date_for_response(cls, value: Any) -> Optional[str]:
-        """Serialização HTTP LMP: dd/mm/yyyy. Vazio/ inválido → None."""
-        return format_date_ddmmyyyy(value)
+        """Serialização HTTP LMP: ISO ``YYYY-MM-DD``. Vazio/ inválido → None."""
+        return ResponseDateFormatService.format_date(value)
 
     @classmethod
     def format_payload_dates(
@@ -75,13 +78,11 @@ class LMPBusinessRules:
         payload: dict[str, Any],
         keys: Iterable[str] | None = None,
     ) -> dict[str, Any]:
-        """Copia o dict formatando chaves de data para dd/mm/yyyy."""
-        target_keys = frozenset(keys) if keys is not None else LMP_RESPONSE_DATE_KEYS
-        out = dict(payload)
-        for key in target_keys:
-            if key in out:
-                out[key] = cls.format_date_for_response(out.get(key))
-        return out
+        """Copia o dict formatando chaves de data para ISO ``YYYY-MM-DD``."""
+        return ResponseDateFormatService.format_payload_dates(
+            payload,
+            keys if keys is not None else LMP_RESPONSE_DATE_KEYS,
+        )
 
     @staticmethod
     def is_weekend(value: date) -> bool:

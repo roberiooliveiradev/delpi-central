@@ -36,7 +36,7 @@ def test_api_delpi_success_includes_meta() -> None:
     assert body["meta"]["operationId"] == "get_financial_rol"
     assert body["meta"]["entity"] == "financial_rol"
     assert body["meta"]["shape"] == "scalar"
-    assert body["meta"]["dataVersion"] == "2026-06"
+    assert body["meta"]["dataVersion"] == "2026-07"
 
 
 @patch("app.interface.http.routes.financial.financial_routes.build_get_rol_use_case")

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-DATA_VERSION = "2026-06"
+DATA_VERSION = "2026-07"
 
 
 class ResponseMetaBuilder:

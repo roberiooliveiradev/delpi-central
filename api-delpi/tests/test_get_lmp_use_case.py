@@ -54,9 +54,9 @@ def test_get_lmp_use_case_enriches_dashboard_status_fields():
 
     assert result["sale_number"] == "003578"
     assert result["listing_kind"] == "LMP"
-    assert result["start_date"] == "20/05/2026"
+    assert result["start_date"] == "2026-05-20"
     assert result["end_date"] is None
-    assert result["data_limite"] == "26/05/2026"
+    assert result["data_limite"] == "2026-05-26"
     assert result["nivel"] in {"Nível 1", "Nível 2", "Nível 3"}
     assert "status" in result
     assert "lead_time_util" in result

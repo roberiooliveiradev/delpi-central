@@ -121,6 +121,9 @@ Independente de TOTVS: inventário OpenAPI × menção de `operationId` em teste
 cd api-delpi
 python scripts/audit_route_test_coverage.py --report
 python scripts/audit_route_test_coverage.py --check-complete
+
+# Datas de calendário na resposta = ISO (anti-YYYYMMDD em fixtures)
+python scripts/audit_response_calendar_dates.py --check
 ```
 
 Playbook: [playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md).  

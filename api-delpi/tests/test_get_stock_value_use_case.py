@@ -71,10 +71,10 @@ def test_execute_with_dates_includes_estimation_metadata():
     )
 
     assert result["estimation"]["enabled"] is True
-    assert result["estimation"]["start_date"] == "20260401"
-    assert result["estimation"]["end_date"] == "20260430"
-    assert result["estimation"]["end_date_exclusive"] == "20260501"
-    assert result["estimation"]["closing_base_date"] == "20260228"
+    assert result["estimation"]["start_date"] == "2026-04-01"
+    assert result["estimation"]["end_date"] == "2026-04-30"
+    assert result["estimation"]["end_date_exclusive"] == "2026-05-01"
+    assert result["estimation"]["closing_base_date"] == "2026-02-28"
     assert result["estimation"]["bridge_value"] == -50.0
     assert result["estimation"]["official_closure_available"] is True
     assert "data_quality_warning" in result["estimation"]

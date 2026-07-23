@@ -9,7 +9,7 @@ def test_build_includes_data_version_and_shape() -> None:
         entity="product_stock",
         shape="paged_list",
     )
-    assert meta["dataVersion"] == "2026-06"
+    assert meta["dataVersion"] == "2026-07"
     assert meta["operationId"] == "get_product_stock"
     assert meta["entity"] == "product_stock"
     assert meta["shape"] == "paged_list"

@@ -42,11 +42,11 @@ def test_get_lmp_history_events_use_case_enriches_items():
 
     assert result["sale_number"] == "003092"
     assert result["reference_revision"] == "03"
-    assert result["panel_start_date"] == "15/06/2026"
+    assert result["panel_start_date"] == "2026-06-15"
     assert result["total"] == 1
     assert result["items"][0]["process_label"] == "Engenharia"
     assert result["items"][0]["is_current"] is True
-    assert result["items"][0]["start_date"] == "15/06/2026"
+    assert result["items"][0]["start_date"] == "2026-06-15"
 
 
 def test_get_lmp_history_flow_use_case_detects_transition():
@@ -83,8 +83,8 @@ def test_get_lmp_history_flow_use_case_detects_transition():
     )
 
     assert result["total"] == 1
-    assert result["panel_start_date"] == "15/06/2026"
+    assert result["panel_start_date"] == "2026-06-15"
     assert result["items"][0]["flow_transition"] == "advanced_from_engineering"
     assert result["items"][0]["flow_transition_label"] == "Saída da engenharia (avanço)"
-    assert result["items"][0]["start_date"] == "15/06/2026"
-    assert result["items"][0]["end_date"] == "15/06/2026"
+    assert result["items"][0]["start_date"] == "2026-06-15"
+    assert result["items"][0]["end_date"] == "2026-06-15"

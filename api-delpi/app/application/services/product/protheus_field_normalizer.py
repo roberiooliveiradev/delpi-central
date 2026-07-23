@@ -72,15 +72,12 @@ def is_protheus_yes(value: Any) -> bool:
 
 
 def protheus_date_to_iso(value: str | None) -> str | None:
-    if not value or not isinstance(value, str):
-        return None
-    digits = value.strip()
-    if len(digits) != 8 or not digits.isdigit():
-        return None
-    try:
-        return datetime.strptime(digits, "%Y%m%d").date().isoformat()
-    except ValueError:
-        return None
+    """Converte data Protheus/BR/ISO → ``YYYY-MM-DD`` (borda HTTP)."""
+    from app.application.services.response_date_format_service import (
+        ResponseDateFormatService,
+    )
+
+    return ResponseDateFormatService.format_date(value)
 
 
 def _normalize_yes_no_field(item: dict[str, Any], field: str, *, legacy: bool) -> None:
@@ -159,15 +156,16 @@ def _normalize_summary(summary: dict[str, Any], *, legacy: bool) -> dict[str, An
 
 
 def _normalize_dates(payload: dict[str, Any], *, legacy: bool) -> None:
+    """Primário vira ISO; companion ``*_iso`` permanece como alias (deprecado)."""
     for raw_field, iso_field in DATE_FIELD_PAIRS:
         raw_value = payload.get(raw_field)
         if legacy:
             payload.pop(iso_field, None)
             continue
-        if isinstance(raw_value, str):
-            iso_value = protheus_date_to_iso(raw_value)
-            if iso_value:
-                payload[iso_field] = iso_value
+        iso_value = protheus_date_to_iso(raw_value if isinstance(raw_value, str) else None)
+        if iso_value:
+            payload[raw_field] = iso_value
+            payload[iso_field] = iso_value
 
 
 def normalize_playbook_payload(data: dict[str, Any], *, legacy: bool = False) -> dict[str, Any]:

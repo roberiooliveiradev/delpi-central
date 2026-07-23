@@ -67,11 +67,15 @@ def test_execute_uses_stock_value_repository_for_stock_context():
     assert stock_request.start_date == "2026-04-01"
     assert stock_request.end_date == "2026-04-30"
 
+    assert result["start_date"] == "2026-04-01"
+    assert result["end_date"] == "2026-04-30"
     assert result["summary"]["total_stock_value"] == 6_554_795.0
     assert result["summary"]["inventory_turnover_months"] == pytest.approx(
         6_554_795.0 / 2_000_000.0
     )
     assert result["stock_estimation"]["enabled"] is True
+    assert result["stock_estimation"]["start_date"] == "2026-04-01"
+    assert result["stock_estimation"]["closing_base_date"] == "2026-02-28"
 
 
 def test_execute_uses_inventory_turnover_cache_on_second_call():

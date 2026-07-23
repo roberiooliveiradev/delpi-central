@@ -19,9 +19,19 @@ export function getFirstDayOfMonthInputValue(reference = new Date()): string {
 
 export function formatDisplayDate(value: string | null | undefined): string {
   if (!value) return "—";
-  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return value;
-  return `${match[3]}/${match[2]}/${match[1]}`;
+  const trimmed = value.trim();
+  const iso = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  const ymd = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (ymd) return `${ymd[3]}/${ymd[2]}/${ymd[1]}`;
+  const br = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if (br) {
+    const day = br[1].padStart(2, "0");
+    const month = br[2].padStart(2, "0");
+    const year = br[3].length === 2 ? `20${br[3]}` : br[3];
+    return `${day}/${month}/${year}`;
+  }
+  return value;
 }
 
 export function monthKeyToLabel(monthKey: string): string {

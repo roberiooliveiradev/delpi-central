@@ -33,7 +33,7 @@ def test_normalize_playbook_payload_converts_exclusive_raw_material() -> None:
     assert normalized["summary"]["pa_production_started"] is True
     assert normalized["summary"]["pa_production_started_label"] == "Sim"
     assert normalized["reference_date_iso"] == "2026-06-04"
-    assert normalized["reference_date"] == "20260604"
+    assert normalized["reference_date"] == "2026-06-04"
 
 
 def test_normalize_playbook_payload_legacy_keeps_strings() -> None:

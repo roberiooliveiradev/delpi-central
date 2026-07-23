@@ -1,6 +1,10 @@
 # app/application/models/page.py
 from dataclasses import dataclass
-from typing import Generic, List, TypeVar
+from typing import Any, Generic, List, TypeVar
+
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
 
 T = TypeVar("T")
 
@@ -18,17 +22,21 @@ class Page(Generic[T]):
         return (self.total + self.page_size - 1) // self.page_size
 
     def to_dict(self):
+        items: list[Any] = []
+        for item in self.items:
+            if hasattr(item, "to_dict"):
+                row = item.to_dict()
+            elif isinstance(item, dict):
+                row = item
+            else:
+                row = vars(item)
+            if isinstance(row, dict):
+                row = ResponseDateFormatService.format_payload_dates(row)
+            items.append(row)
         return {
-            "items": [
-                i.to_dict()
-                if hasattr(i, "to_dict")
-                else i
-                if isinstance(i, dict)
-                else vars(i)
-                for i in self.items
-            ],
+            "items": items,
             "page": self.page,
             "page_size": self.page_size,
             "total": self.total,
-            "total_pages": self.total_pages
+            "total_pages": self.total_pages,
         }

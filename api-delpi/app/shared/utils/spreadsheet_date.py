@@ -103,6 +103,14 @@ def format_date_ddmmyyyy(value: Any) -> str | None:
     return parsed.strftime("%d/%m/%Y")
 
 
+def format_date_iso(value: Any) -> str | None:
+    """Serialização HTTP de calendário: ``YYYY-MM-DD``."""
+    parsed = parse_spreadsheet_date(value)
+    if parsed is None:
+        return None
+    return parsed.isoformat()
+
+
 def format_date_yyyymmdd(value: Any) -> str | None:
     parsed = parse_spreadsheet_date(value)
     if parsed is None:

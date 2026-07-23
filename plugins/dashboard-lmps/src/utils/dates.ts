@@ -120,7 +120,7 @@ export function lmpDateToIso(value: string | null | undefined): string | null {
   return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
 }
 
-/** Exibe data da API LMP (dd/mm/yyyy ou YYYYMMDD legado) como dd/mm/yyyy. */
+/** Exibe data da API LMP (ISO YYYY-MM-DD; legado dd/mm/yyyy ou YYYYMMDD) como dd/mm/yyyy. */
 export function formatLmpApiDate(
   value: string | null | undefined,
   empty = "—",

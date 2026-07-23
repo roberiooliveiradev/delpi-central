@@ -11,6 +11,9 @@ from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_
     DespesasCentroCustoLancamentosPagination,
     DespesasCentroCustoLancamentosResponse,
 )
+from app.application.services.response_date_format_service import (
+    ResponseDateFormatService,
+)
 from app.domain.ports.financeiro_despesas_centro_custo.despesas_centro_custo_repository_port import (
     DespesasCentroCustoRepositoryPort,
 )
@@ -41,9 +44,11 @@ def _as_float(value: Any) -> float:
 
 
 def _normalize_item(row: dict) -> DespesasCentroCustoLancamentoItem:
+    raw_emissao = _as_str(row.get("data_emissao"))
+    data_emissao_iso = ResponseDateFormatService.format_date(raw_emissao) or raw_emissao
     return DespesasCentroCustoLancamentoItem(
         filial=_as_str(row.get("filial")),
-        data_emissao=_as_str(row.get("data_emissao")),
+        data_emissao=data_emissao_iso,
         data_emissao_formatada=_as_str(row.get("data_emissao_formatada")),
         centro_custo_codigo=_as_str(row.get("centro_custo_codigo")),
         centro_custo_descricao=_as_str(row.get("centro_custo_descricao")),

@@ -4,6 +4,14 @@
 
 ---
 
+## 2026-07 — Datas de calendário na resposta → ISO (`YYYY-MM-DD`)
+
+Contrato HTTP: datas de calendário (sem hora) serializadas como **`YYYY-MM-DD`** via `ResponseDateFormatService`. Inclui LMP, playbook/produto (`reference_date` primário), produção operacional (`period` / `reference_date` / `loss_date`), supplies (estoque/giro/estimation), despesas CC e propostas comerciais. Companions `*_iso` no playbook permanecem como alias deprecado (remoção planejada 2027-06). SQL/TOTVS e query params inalterados. `meta.dataVersion` → `2026-07`.
+
+Gate: `scripts/audit_response_calendar_dates.py --check`.
+
+---
+
 ## 2026-06 — Modelo `work_month_lmp` (padrão)
 
 Listagem por **revisão com trabalho LMP no mês** (`first_eng` ou âncora na revisão) + **fallback âncora OV** (`anchor_in_period`) para não perder OVs do controle.

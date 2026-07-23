@@ -130,4 +130,8 @@ class Product:
 
 
     def to_dict(self)->dict:
-        return asdict(self)
+        from app.shared.utils.spreadsheet_date import format_date_iso
+
+        data = asdict(self)
+        data["last_revision_date"] = format_date_iso(data.get("last_revision_date"))
+        return data

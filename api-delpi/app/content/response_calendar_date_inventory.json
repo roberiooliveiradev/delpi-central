@@ -1,0 +1,12 @@
+{
+  "contract": "YYYY-MM-DD",
+  "dataVersion": "2026-07",
+  "allowlist": [],
+  "notes": "Datas de calendário na resposta HTTP devem ser ISO. YYYYMMDD só em allowlist (SQL/params internos). Companions *_iso do playbook são alias deprecado (remoção planejada 2027-06).",
+  "companionIsoFields": [
+    "reference_date_iso",
+    "date_start_iso",
+    "date_end_exclusive_iso"
+  ],
+  "lastScanYmdHits": []
+}

@@ -21,4 +21,4 @@ def test_product_stock_returns_meta_shape(mock_build_stock) -> None:
     assert body["meta"]["shape"] == "paged_list"
     assert body["meta"]["entity"] == "product_stock"
     assert body["meta"]["operationId"] == "get_product_stock"
-    assert body["meta"]["dataVersion"] == "2026-06"
+    assert body["meta"]["dataVersion"] == "2026-07"
