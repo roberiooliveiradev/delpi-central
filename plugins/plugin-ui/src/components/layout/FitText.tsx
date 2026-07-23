@@ -96,8 +96,13 @@ export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx 
         el.style.maxWidth = prevMaxWidth;
         el.style.maxHeight = prevMaxHeight;
         el.style.whiteSpace = prevWhiteSpace;
-        /* Evita oscilação 1px host↔fonte (RO → setState → React #185). */
-        setFontSize((prev) => (Math.abs(prev - best) <= 1 ? prev : best));
+        /* Evita oscilação host↔fonte (RO → setState → React #185). */
+        setFontSize((prev) => {
+          if (Math.abs(prev - best) <= 1) return prev;
+          /* Mudança grande ainda pode oscilar em 2–3 px — estabiliza. */
+          if (Math.abs(prev - best) <= 3 && prev > minPx) return prev;
+          return best;
+        });
       } finally {
         fitting = false;
       }
@@ -107,13 +112,17 @@ export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx 
     if (typeof ResizeObserver === "undefined") {
       return () => cancelAnimationFrame(raf);
     }
+    let roRaf = 0;
     const observer = new ResizeObserver(() => {
       attempts = 0;
-      fit();
+      /* Debounce: evita cascata síncrona de setState no mesmo frame de layout. */
+      cancelAnimationFrame(roRaf);
+      roRaf = requestAnimationFrame(fit);
     });
     observer.observe(parent);
     return () => {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(roRaf);
       observer.disconnect();
     };
   }, [children, maxPx, minPx, useFixed]);

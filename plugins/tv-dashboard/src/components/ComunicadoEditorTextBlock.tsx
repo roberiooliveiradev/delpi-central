@@ -184,6 +184,8 @@ export function ComunicadoEditorTextBlock({
   const commitPending = useCallback(() => {
     commitDraft();
   }, [commitDraft]);
+  const commitPendingRef = useRef(commitPending);
+  commitPendingRef.current = commitPending;
 
   const applyPartialStyleToggle = useCallback(
     (toggleKey: ContentRunStyleToggleKey) => {
@@ -311,10 +313,15 @@ export function ComunicadoEditorTextBlock({
 
   useEffect(() => {
     if (!isEditing) return;
+    /*
+     * Cleanup só ao sair da edição — NÃO depender de commitPending.
+     * Senão cada nova identidade do callback dispara cleanup → commit →
+     * update do bloco → novo callback → React #185 (maximum update depth).
+     */
     return () => {
-      commitPending();
+      commitPendingRef.current();
     };
-  }, [isEditing, commitPending]);
+  }, [isEditing]);
 
   useLayoutEffect(() => {
     if (!isEditing) {

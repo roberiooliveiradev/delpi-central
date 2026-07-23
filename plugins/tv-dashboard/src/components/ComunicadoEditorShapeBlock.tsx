@@ -86,6 +86,8 @@ export function ComunicadoEditorShapeBlock({
     }
     updateBlockContent(blockNow.id, fromEditor);
   }, [updateBlock, updateBlockContent]);
+  const commitDraftRef = useRef(commitDraft);
+  commitDraftRef.current = commitDraft;
 
   function exitEditing() {
     commitDraft();
@@ -110,10 +112,11 @@ export function ComunicadoEditorShapeBlock({
 
   useEffect(() => {
     if (!isEditing) return;
+    /* Só ao sair da edição — ver Comentário em ComunicadoEditorTextBlock. */
     return () => {
-      commitDraft();
+      commitDraftRef.current();
     };
-  }, [isEditing, commitDraft]);
+  }, [isEditing]);
 
   useEffect(() => {
     if (!isEditing) {
