@@ -1,9 +1,9 @@
 /**
- * Policy unificada de interação do palco (Fase 1 — seleção nivelada).
+ * Policy unificada de interação do palco (seleção nivelada L0–L5).
  *
- * Fonte única para gestos que mudam nível (L0–L5). Pointerdown de grupo e Esc
- * continuam nos resolvers canônicos de `stageGroupedSelection`; este módulo
- * agrega o contrato e define o dblclick (editar texto vs isolar filho).
+ * Fonte única para gestos que mudam nível. Não reintroduzir
+ * `isolateGroupedBlockOnDoubleClick` nem `selectBlock`+`setEditingTextId` soltos
+ * no dblclick — usar `resolveStageDblClickAction` + `enterTextEdit`.
  */
 
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";

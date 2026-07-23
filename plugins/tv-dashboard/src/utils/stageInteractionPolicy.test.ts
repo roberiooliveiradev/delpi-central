@@ -74,6 +74,16 @@ describe("stageInteractionPolicy dblclick", () => {
     ).toEqual({ type: "none" });
   });
 
+  it("ícone em grupo sem seleção ainda isola", () => {
+    expect(
+      resolveStageDblClickAction({
+        block: groupedIcon,
+        blocks,
+        selectedIds: [],
+      }),
+    ).toEqual({ type: "isolate-child", blockId: "i1" });
+  });
+
   it("bloco sem grupo não-texto → none", () => {
     const solo: ComunicadoBlock = {
       id: "img",
