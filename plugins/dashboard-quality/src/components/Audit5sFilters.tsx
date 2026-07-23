@@ -5,8 +5,8 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type Audit5sFiltersProps = {
@@ -45,37 +45,31 @@ export function Audit5sFilters({
   );
 
   return (
-    <section className="dq-filters-row" aria-label="Filtros de auditoria 5S">
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
-        <NativeTextControl
-          id="a5s-competence"
-          type="month"
-          value={competence}
-          onChange={onCompetenceChange}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
-        <NativeTextControl
-          id="a5s-date-start"
-          type="date"
-          value={dateStart}
-          onChange={onDateStartChange}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
-        <NativeTextControl
-          id="a5s-date-end"
-          type="date"
-          value={dateEnd}
-          onChange={onDateEndChange}
-        />
-      </label>
-
+    <FiltersRow ariaLabel="Filtros de auditoria 5S">
+      <FilterInputField
+        id="a5s-competence"
+        label="Competência"
+        hint={QUALITY_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id="a5s-date-start"
+        label="Data inicial"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="a5s-date-end"
+        label="Data final"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
@@ -86,6 +80,6 @@ export function Audit5sFilters({
         searchable
         disabled={branchesLoading}
       />
-    </section>
+    </FiltersRow>
   );
 }

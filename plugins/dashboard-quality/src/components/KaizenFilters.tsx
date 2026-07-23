@@ -5,8 +5,8 @@ import {
   buildBranchOptions,
   sanitizeBranches,
 } from "../utils/branchClientFilters";
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "./MultiSelectField";
+import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
 
 type KaizenFiltersProps = {
@@ -53,37 +53,35 @@ export function KaizenFilters({
   );
 
   return (
-    <section className="dq-filters-row dq-filters-row--extended" aria-label="Filtros de kaizen">
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Competência" hint={QUALITY_HELP_TOOLTIPS.filters.competence} className="dq-field__label" />
-        <NativeTextControl
-          id="kz-competence"
-          type="month"
-          value={competence}
-          onChange={onCompetenceChange}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data inicial" hint={QUALITY_HELP_TOOLTIPS.filters.dateStart} className="dq-field__label" />
-        <NativeTextControl
-          id="kz-date-start"
-          type="date"
-          value={dateStart}
-          onChange={onDateStartChange}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Data final" hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd} className="dq-field__label" />
-        <NativeTextControl
-          id="kz-date-end"
-          type="date"
-          value={dateEnd}
-          onChange={onDateEndChange}
-        />
-      </label>
-
+    <FiltersRow
+      className="dq-filters-row--extended"
+      ariaLabel="Filtros de kaizen"
+      variant="extended"
+    >
+      <FilterInputField
+        id="kz-competence"
+        label="Competência"
+        hint={QUALITY_HELP_TOOLTIPS.filters.competence}
+        type="month"
+        value={competence}
+        onChange={onCompetenceChange}
+      />
+      <FilterInputField
+        id="kz-date-start"
+        label="Data inicial"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateStart}
+        type="date"
+        value={dateStart}
+        onChange={onDateStartChange}
+      />
+      <FilterInputField
+        id="kz-date-end"
+        label="Data final"
+        hint={QUALITY_HELP_TOOLTIPS.filters.dateEnd}
+        type="date"
+        value={dateEnd}
+        onChange={onDateEndChange}
+      />
       <MultiSelectField
         label={OPERATIONAL_UNIT_FIELD_LABEL}
         labelHint={QUALITY_HELP_TOOLTIPS.filters.branch}
@@ -94,28 +92,22 @@ export function KaizenFilters({
         searchable
         disabled={branchesLoading}
       />
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Título" className="dq-field__label" />
-        <NativeTextControl
-          id="kz-title"
-          type="text"
-          value={title}
-          placeholder="Buscar por título"
-          onChange={onTitleChange}
-        />
-      </label>
-
-      <label className="dq-filter-box dq-field">
-        <FieldLabel label="Status" className="dq-field__label" />
-        <NativeTextControl
-          id="kz-status"
-          type="text"
-          value={status}
-          placeholder="Filtro de status"
-          onChange={onStatusChange}
-        />
-      </label>
-    </section>
+      <FilterInputField
+        id="kz-title"
+        label="Título"
+        type="text"
+        value={title}
+        placeholder="Buscar por título"
+        onChange={onTitleChange}
+      />
+      <FilterInputField
+        id="kz-status"
+        label="Status"
+        type="text"
+        value={status}
+        placeholder="Filtro de status"
+        onChange={onStatusChange}
+      />
+    </FiltersRow>
   );
 }
