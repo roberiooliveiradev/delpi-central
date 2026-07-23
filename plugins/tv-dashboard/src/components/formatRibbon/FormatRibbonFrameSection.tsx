@@ -180,6 +180,7 @@ export function FormatRibbonFrameSection({
   ) {
     if (!includeOpacity) return null;
     return (
+      <FrameSizeGroup captionPlacement={captionPlacement} includeOpacity />
     );
   }
 
