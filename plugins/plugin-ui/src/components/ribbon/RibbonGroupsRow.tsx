@@ -80,11 +80,12 @@ export function RibbonGroupsRow({
     const node = rowRef.current;
     if (!node || typeof ResizeObserver === "undefined") return;
     const update = () => {
-      setAvailableWidth(node.clientWidth);
+      setAvailableWidth(measureRibbonAvailableWidth(node));
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(node);
+    if (node.parentElement) observer.observe(node.parentElement);
     return () => observer.disconnect();
   }, []);
 
@@ -159,4 +160,31 @@ export function RibbonGroupsRow({
 export function measureElementWidth(node: HTMLElement | null): number {
   if (!node) return 0;
   return Math.ceil(node.getBoundingClientRect().width);
+}
+
+/** Largura de conteúdo (ignora max-width que comprime o bbox na faixa com scroll). */
+export function measureElementContentWidth(node: HTMLElement | null): number {
+  if (!node) return 0;
+  const box = Math.ceil(node.getBoundingClientRect().width);
+  const scroll = Math.ceil(node.scrollWidth);
+  return Math.max(box, scroll);
+}
+
+/**
+ * Largura útil da faixa: o host pai costuma estar limitado ao viewport;
+ * o próprio row com overflow-x:auto pode reportar clientWidth ≈ scrollWidth
+ * quando o ancestral cresce com o conteúdo — aí o colapso nunca dispara.
+ */
+export function measureRibbonAvailableWidth(row: HTMLElement | null): number {
+  if (!row) return 0;
+  const rowClient = row.clientWidth;
+  const parent = row.parentElement;
+  const parentClient = parent?.clientWidth ?? 0;
+  if (parentClient > 0 && row.scrollWidth > rowClient + 1) {
+    return Math.min(rowClient, parentClient);
+  }
+  if (parentClient > 0) {
+    return Math.min(rowClient > 0 ? rowClient : parentClient, parentClient);
+  }
+  return rowClient;
 }

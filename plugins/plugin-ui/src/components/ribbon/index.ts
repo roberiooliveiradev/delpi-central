@@ -13,6 +13,8 @@ export {
   ribbonGroupsRowBemClasses,
   useRibbonOverflowContext,
   measureElementWidth,
+  measureElementContentWidth,
+  measureRibbonAvailableWidth,
   type RibbonGroupsRowClassNames,
   type RibbonGroupsRowProps,
 } from "./RibbonGroupsRow";

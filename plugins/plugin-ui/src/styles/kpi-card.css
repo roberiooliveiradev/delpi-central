@@ -90,11 +90,32 @@
 }
 
 .delpi-kpi-card--fill .delpi-kpi-card__value:not(.delpi-kpi-part--framed) {
-  /* No layout flex do card fill, ocupa o restante e dá bbox estável ao FitText. */
-  flex: 1 1 auto;
-  align-self: stretch;
-  width: 100%;
+  /*
+   * Host do FitText: precisa de bbox estável (flex grow).
+   * Evitar height:100% no filho — % com host height:auto colapsa o fit em minPx.
+   */
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
   min-height: 0;
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__value:not(.delpi-kpi-part--framed).delpi-kpi-part--boxed {
+  /* Auto-fit manda: caixa pintada não pode virar fit-content e esmagar o valor. */
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+  width: 100% !important;
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__value.delpi-kpi-part--framed {
+  /* Frame absoluto já define w/h % — FitText mede esse bbox. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .delpi-kpi-card--value-dominant .delpi-kpi-card__value {

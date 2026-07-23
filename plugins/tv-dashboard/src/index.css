@@ -3898,8 +3898,8 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups{
   flex-wrap: nowrap;
-  /* Overflow responsivo (plugin-ui): medir a largura do host, não crescer com o conteúdo. */
-  overflow-x: auto;
+  /* Overflow responsivo: colapsa seções; esconde scroll-X enquanto o kit decide. */
+  overflow-x: hidden;
   overflow-y: hidden;
   scrollbar-width: thin;
   align-items: stretch;
@@ -3928,8 +3928,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band .td-deck-ribbon__groups{
   flex-wrap: nowrap;
-  /* Preferir caber na largura (ranges compactos); scroll só se a viewport for estreita. */
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   scrollbar-width: thin;
 }

@@ -10,9 +10,15 @@
   align-items: stretch;
   min-width: 0;
   width: 100%;
-  overflow-x: auto;
+  max-width: 100%;
+  /* Colapso responsivo primeiro; auto só como fallback extremo. */
+  overflow-x: hidden;
   overflow-y: hidden;
   box-sizing: border-box;
+}
+
+.delpi-ui-ribbon-groups[data-ribbon-overflow="off"] {
+  overflow-x: auto;
 }
 
 .delpi-ui-ribbon-group {
@@ -22,7 +28,8 @@
   flex: 0 0 auto;
   align-items: stretch;
   min-width: 0;
-  max-width: 100%;
+  /* Não comprimir o bbox ao width do host — senão a medida expandida fica subestimada. */
+  max-width: none;
   box-sizing: border-box;
 }
 

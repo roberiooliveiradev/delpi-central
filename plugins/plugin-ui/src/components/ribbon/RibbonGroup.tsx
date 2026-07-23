@@ -11,7 +11,7 @@ import { SectionHintLabel } from "../help/SectionHintLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import {
-  measureElementWidth,
+  measureElementContentWidth,
   useRibbonOverflowContext,
 } from "./RibbonGroupsRow";
 import { RibbonGroupSurfaceProvider } from "./RibbonGroupSurfaceContext";
@@ -127,13 +127,14 @@ export function RibbonGroup({
   useLayoutEffect(() => {
     if (!groupId || !registerRef.current) return;
     if (!collapsed && rootRef.current) {
-      const w = measureElementWidth(rootRef.current);
+      const w = measureElementContentWidth(rootRef.current);
       if (w > 0) cachedExpanded.current = w;
     }
     if (triggerRef.current) {
       /* Força medida mesmo com classe measure (visually hidden). */
       const cw =
-        Math.ceil(triggerRef.current.scrollWidth) || measureElementWidth(triggerRef.current);
+        Math.ceil(triggerRef.current.scrollWidth) ||
+        measureElementContentWidth(triggerRef.current);
       if (cw > 0) cachedCollapsed.current = cw;
     }
     registerRef.current(groupId, {
@@ -142,6 +143,26 @@ export function RibbonGroup({
       order,
     });
   }, [collapsed, groupId, order, children]);
+
+  useLayoutEffect(() => {
+    if (!groupId || !registerRef.current || typeof ResizeObserver === "undefined") {
+      return;
+    }
+    const node = rootRef.current;
+    if (!node || collapsed) return;
+    const observer = new ResizeObserver(() => {
+      const w = measureElementContentWidth(node);
+      if (!(w > 0) || w === cachedExpanded.current) return;
+      cachedExpanded.current = w;
+      registerRef.current?.(groupId, {
+        expandedWidth: w,
+        collapsedWidth: cachedCollapsed.current,
+        order,
+      });
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [collapsed, groupId, order]);
 
   useLayoutEffect(() => {
     if (!groupId) return;

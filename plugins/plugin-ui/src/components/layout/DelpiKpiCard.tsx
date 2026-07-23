@@ -358,10 +358,20 @@ export function DelpiKpiCard({
         ...(valueAutoFit ? { fontSize: undefined } : { fontSize: valueFontSizePx }),
         ...(valueColorForStyle ? { color: valueColorForStyle } : { color: undefined }),
       },
-      // fillHost só com frame absoluto — no flex, height:100% colapsa o FitText.
-      { flexPart: true, fillHost: valueFramed },
+      // Sem frame: não forçar coluna tipográfica — o CSS flex do card dá a altura ao FitText.
+      { flexPart: valueFramed, fillHost: valueFramed },
     ),
     ...valueLayoutStyle,
+    // Auto-fit no flex: host precisa esticar (vence fit-content de caixa pintada).
+    ...(valueAutoFit && !valueFramed
+      ? {
+          flex: "1 1 auto",
+          alignSelf: "stretch",
+          width: "100%",
+          minWidth: 0,
+          minHeight: 0,
+        }
+      : null),
   };
   const hintTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
