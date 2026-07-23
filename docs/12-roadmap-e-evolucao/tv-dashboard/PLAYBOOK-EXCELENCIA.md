@@ -2019,9 +2019,11 @@ Paridade **PowerPoint** (não FigJam): linha reta + âncoras N/S/E/W/centro; elb
 | 19.23.5 | Export PPTX (`pptxgenjs`) mapeando blocos básicos | `exportSlidePptx.ts` + ribbon |
 | 19.23.6 | Presença de editores (`presence_*` no WS da programação) | hub + chip «Também editando» |
 
-**Grade (`canvas_table`) — paridade editor (jul/2026):** tipografia efetiva + escala no resize (`scaleCanvasTableBlockTypography`); aba Elemento → ribbon Grade (estrutura/estilo/célula); células tipadas (`text` | `number` | `sparkline`) com migrate de string legado; chrome de célula + inspetor; paste TSV infere número/sparkline; PPTX exporta matriz de texto (sparkline → valor âncora). **Não** há `dataSourceId` / projeção — isso permanece em `table_view` / `kpi_view` / `chart_view`.
+**Grade (`canvas_table`) — paridade editor (jul/2026):** tipografia efetiva + escala no resize (`scaleCanvasTableBlockTypography`); aba Elemento → ribbon Grade (estrutura/estilo/célula); células tipadas (`text` | `number` | `sparkline`) com migrate de string legado; chrome de célula + inspetor; paste TSV infere número/sparkline; PPTX exporta matriz de texto (sparkline → valor âncora).
 
-**Anti-padrões:** misturar `canvas_table` com `table_view` live; embutir blocos KPI/chart reais em células; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
+**Grade + dados (jul/2026):** `dataSourceId` no bloco + `dataRef` por célula (espelho 4P). Uma célula ou várias (aplicar coluna/corpo). Resolve em `canvasTableProjection.ts` / enrichment `serverCanvasTableProjectionApplied`. **Não** vira `table_view` / `tableProjection`.
+
+**Anti-padrões:** misturar `canvas_table` com `table_view` live; embutir blocos KPI/chart reais em células; `operationId` na célula; persistir `resolved` no native_config; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
 
 ### 19.24 Dados em texto e formas — projeção dinâmica (Onda 4P)
 

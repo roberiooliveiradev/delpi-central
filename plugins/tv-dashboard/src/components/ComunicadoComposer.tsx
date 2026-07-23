@@ -4,9 +4,11 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   buildViewDataLinkPatch,
+  buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
   isComunicadoVisualBoxBlock,
+  isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
@@ -882,6 +884,25 @@ export function ComunicadoComposerCanvas() {
                         dataSourceId: block.id,
                         resolved,
                         existing: selected.textProjection,
+                      }) as Partial<ComunicadoBlock>,
+                    );
+                    return;
+                  }
+                  if (
+                    isDataSourceBlockType(block.type) &&
+                    selected &&
+                    isCanvasTableDataBoundBlockType(selected.type) &&
+                    selected.type === "canvas_table" &&
+                    !selected.dataSourceId?.trim()
+                  ) {
+                    const resolved =
+                      "resolved" in block ? block.resolved : undefined;
+                    updateBlock(
+                      selected.id,
+                      buildCanvasTableDataLinkPatch({
+                        dataSourceId: block.id,
+                        resolved,
+                        existingCells: selected.cells,
                       }) as Partial<ComunicadoBlock>,
                     );
                     return;

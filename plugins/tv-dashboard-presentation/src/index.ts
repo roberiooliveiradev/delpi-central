@@ -339,6 +339,7 @@ export {
   isDataViewBlockType,
   isDataBoundEditorBlockType,
   isTextDataBoundBlockType,
+  isCanvasTableDataBoundBlockType,
   isFetchableDataBlockType,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
@@ -961,6 +962,19 @@ export {
   type BuildTextDataLinkPatchInput,
   type TextDataBoundBlock,
 } from "./textViewProjection";
+export {
+  applyCanvasTableDataRef,
+  buildCanvasTableDataLinkPatch,
+  canvasTableCellHasDataRef,
+  canvasTableHasDataBinding,
+  isCanvasTableDataBoundBlock,
+  resolveCanvasTableCellDisplay,
+  suggestCanvasTableCellDataRef,
+  syncCanvasTableBlocksWithResolved,
+  type ApplyCanvasTableDataRefScope,
+  type BuildCanvasTableDataLinkPatchInput,
+  type CanvasTableCellDisplay,
+} from "./canvasTableProjection";
 export type {
   ComunicadoTextDataRef,
   ComunicadoTextProjection,

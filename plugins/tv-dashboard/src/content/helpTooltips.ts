@@ -301,6 +301,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
+    canvasTableDataBinding:
+      "Liga uma fonte à Grade e um campo a cada célula (ou à coluna/corpo). Não substitui a tabela de dados live.",
     textDataBinding:
       "Projeta um campo da fonte no bloco. Prefixo/sufixo e formato aplicam-se ao valor dinâmico; alterar filtros atualiza o preview.",
     textDataColorRules:

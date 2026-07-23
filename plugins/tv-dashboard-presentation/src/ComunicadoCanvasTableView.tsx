@@ -1,9 +1,9 @@
 import type { CSSProperties, FocusEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 
+import { resolveCanvasTableCellDisplay } from "./canvasTableProjection";
 import {
   buildCanvasTableSparklinePath,
   canvasTableCellPlainText,
-  formatCanvasTableNumber,
   inferCanvasTableCellFromText,
   mergeCanvasTableOptions,
   normalizeCanvasTableCell,
@@ -65,6 +65,16 @@ export function ComunicadoCanvasTableView({
   const opts = mergeCanvasTableOptions(block.canvasTableOptions);
   const hostStyle = resolveCanvasTableHostStyle(block) as CSSProperties;
   const selected = interaction?.selectedCell ?? null;
+  const resolvedCells = block.cells.map((row) =>
+    row.map((raw) => {
+      const cell = normalizeCanvasTableCell(raw);
+      const display = resolveCanvasTableCellDisplay(cell, block.resolved);
+      if (display.series?.length) {
+        return { ...cell, kind: "sparkline" as const, series: display.series };
+      }
+      return cell;
+    }),
+  );
 
   function commitText(row: number, col: number, raw: string) {
     const next = inferCanvasTableCellFromText(raw);
@@ -158,7 +168,8 @@ export function ComunicadoCanvasTableView({
                 const Cell = isHeader ? "th" : "td";
                 const isSelected =
                   selected?.row === rowIndex && selected?.col === colIndex;
-                const axis = resolveColumnSparklineAxis(block.cells, colIndex);
+                const display = resolveCanvasTableCellDisplay(cell, block.resolved);
+                const axis = resolveColumnSparklineAxis(resolvedCells, colIndex);
                 const cellStyle: CSSProperties = {
                   ...(cell.style?.fontSize != null
                     ? { fontSize: `${cell.style.fontSize}px` }
@@ -166,7 +177,11 @@ export function ComunicadoCanvasTableView({
                   ...(cell.style?.fontWeight != null
                     ? { fontWeight: cell.style.fontWeight }
                     : null),
-                  ...(cell.style?.color ? { color: cell.style.color } : null),
+                  ...(display.color
+                    ? { color: display.color }
+                    : cell.style?.color
+                      ? { color: cell.style.color }
+                      : null),
                   ...(cell.style?.backgroundColor
                     ? { backgroundColor: cell.style.backgroundColor }
                     : null),
@@ -174,12 +189,10 @@ export function ComunicadoCanvasTableView({
                     ? { textAlign: cell.style.textAlign }
                     : null),
                 };
-                const displayText =
-                  cell.kind === "number" && cell.value != null
-                    ? formatCanvasTableNumber(cell.value, cell.format ?? "decimal")
-                    : cell.kind === "sparkline" && cell.value != null
-                      ? formatCanvasTableNumber(cell.value, cell.format ?? "decimal")
-                      : cell.text ?? "";
+                const displayText = display.text;
+                const sparkSeries = display.series ?? cell.series;
+                const bound = display.fromData;
+                const allowEdit = editable && cell.kind !== "sparkline" && !bound;
 
                 return (
                   <Cell
@@ -187,29 +200,31 @@ export function ComunicadoCanvasTableView({
                     data-cell-row={rowIndex}
                     data-cell-col={colIndex}
                     data-cell-kind={cell.kind}
+                    data-cell-bound={bound ? "true" : undefined}
                     className={[
                       isSelected ? "td-canvas-table__cell--selected" : "",
                       cell.kind === "sparkline" ? "td-canvas-table__cell--sparkline" : "",
                       cell.kind === "number" ? "td-canvas-table__cell--number" : "",
+                      bound ? "td-canvas-table__cell--bound" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                     style={cellStyle}
-                    contentEditable={editable && cell.kind !== "sparkline"}
+                    contentEditable={allowEdit}
                     suppressContentEditableWarning
                     tabIndex={editable ? 0 : undefined}
                     onPointerDown={(event) => onCellPointerDown(event, rowIndex, colIndex)}
                     onKeyDown={(event) => onCellKeyDown(event, rowIndex, colIndex)}
                     onBlur={(event: FocusEvent<HTMLTableCellElement>) => {
-                      if (!editable || cell.kind === "sparkline") return;
+                      if (!allowEdit) return;
                       const value = event.currentTarget.textContent ?? "";
                       commitText(rowIndex, colIndex, value);
                     }}
                   >
                     {cell.kind === "sparkline" ? (
                       <span className="td-canvas-table__sparkline-wrap">
-                        {cell.series && cell.series.length >= 2 ? (
-                          <CanvasSparkline series={cell.series} axis={axis} />
+                        {sparkSeries && sparkSeries.length >= 2 ? (
+                          <CanvasSparkline series={sparkSeries} axis={axis} />
                         ) : null}
                         {displayText ? (
                           <span className="td-canvas-table__sparkline-value">{displayText}</span>

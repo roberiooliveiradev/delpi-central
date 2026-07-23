@@ -246,6 +246,10 @@
   border-color: transparent;
 }
 
+.td-canvas-table__cell--bound {
+  box-shadow: inset 0 0 0 1px rgba(8, 155, 219, 0.35);
+}
+
 .td-canvas-table__cell--selected {
   outline: 2px solid var(--primary, #089bdb);
   outline-offset: -2px;

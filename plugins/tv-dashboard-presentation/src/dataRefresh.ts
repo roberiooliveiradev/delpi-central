@@ -99,14 +99,24 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
         block.type === "chart_view" ||
         block.type === "table_view" ||
         block.type === "kpi_view" ||
+        block.type === "canvas_table" ||
         ((block.type === "heading" || block.type === "text" || block.type === "shape") &&
           "dataSourceId" in block &&
           block.dataSourceId?.trim()),
     )
+    .filter((block) => {
+      if (block.type === "canvas_table") {
+        return Boolean(block.dataSourceId?.trim());
+      }
+      return true;
+    })
     .map((block) => ({
       id: block.id,
       dataSourceId:
-        block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view"
+        block.type === "chart_view" ||
+        block.type === "table_view" ||
+        block.type === "kpi_view" ||
+        block.type === "canvas_table"
           ? block.dataSourceId
           : "dataSourceId" in block
             ? block.dataSourceId
@@ -114,6 +124,18 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
       textProjection:
         block.type === "heading" || block.type === "text" || block.type === "shape"
           ? block.textProjection?.field
+          : undefined,
+      canvasCells:
+        block.type === "canvas_table"
+          ? block.cells.flatMap((row, rowIndex) =>
+              row
+                .map((cell, colIndex) =>
+                  cell.dataRef?.field
+                    ? `${rowIndex}:${colIndex}:${cell.dataRef.field}`
+                    : null,
+                )
+                .filter(Boolean),
+            )
           : undefined,
     }));
   const inputBlocks = (config.blocks ?? [])

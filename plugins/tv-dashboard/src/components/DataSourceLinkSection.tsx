@@ -1,6 +1,7 @@
 import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   dataSourceOptionsForInspector,
+  isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isTextDataBoundBlockType,
@@ -19,7 +20,11 @@ export function canLinkBlockToProjectDataSource(
   block: { type: string } | null | undefined,
 ): boolean {
   if (!block) return false;
-  return isDataViewBlockType(block.type) || isTextDataBoundBlockType(block.type);
+  return (
+    isDataViewBlockType(block.type) ||
+    isTextDataBoundBlockType(block.type) ||
+    isCanvasTableDataBoundBlockType(block.type)
+  );
 }
 
 type LinkSectionProps = {

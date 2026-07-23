@@ -1,4 +1,5 @@
 import {
+  isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
@@ -31,7 +32,7 @@ function dataFingerprint(block: ComunicadoBlock): string {
     const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
     return sourceId ? `source:${sourceId}` : `unbound:${block.id}`;
   }
-  if (isTextDataBoundBlockType(block.type)) {
+  if (isTextDataBoundBlockType(block.type) || isCanvasTableDataBoundBlockType(block.type)) {
     const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
     return sourceId ? `source:${sourceId}` : `text-unbound:${block.id}`;
   }
@@ -53,7 +54,7 @@ function resolveBindingTarget(
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
   }
-  if (isTextDataBoundBlockType(primary.type)) {
+  if (isTextDataBoundBlockType(primary.type) || isCanvasTableDataBoundBlockType(primary.type)) {
     const sourceId = "dataSourceId" in primary ? primary.dataSourceId?.trim() : undefined;
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
@@ -69,6 +70,7 @@ function isSelectedDataBlock(block: ComunicadoBlock): boolean {
   if (isFetchableDataBlockType(block.type)) return true;
   // Texto/forma/título podem vincular fonte mesmo sem binding ainda (mesmo fluxo do KPI).
   if (isTextDataBoundBlockType(block.type)) return true;
+  if (isCanvasTableDataBoundBlockType(block.type)) return true;
   return false;
 }
 

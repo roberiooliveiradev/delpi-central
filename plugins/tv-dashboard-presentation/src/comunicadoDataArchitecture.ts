@@ -1,3 +1,8 @@
+import {
+  canvasTableHasDataBinding,
+  isCanvasTableDataBoundBlock,
+  isCanvasTableDataBoundBlockType,
+} from "./canvasTableProjection";
 import type { ComunicadoBlock, ComunicadoDataSourceBlock } from "./comunicadoTypes";
 import { isTextDataBoundBlock, textBlockHasDataBinding } from "./textViewProjection";
 
@@ -15,11 +20,18 @@ export function isTextDataBoundBlockType(type: string): boolean {
   return isTextDataBoundBlock({ type });
 }
 
+export { isCanvasTableDataBoundBlockType };
+
 /**
- * Bloco que participa do fluxo de dados no editor (fonte, visual, texto/forma ligado ou legado data_*).
+ * Bloco que participa do fluxo de dados no editor (fonte, visual, texto/forma, Grade ou legado data_*).
  */
 export function isDataBoundEditorBlockType(type: string): boolean {
-  return isDataViewBlockType(type) || isFetchableDataBlockType(type) || isTextDataBoundBlockType(type);
+  return (
+    isDataViewBlockType(type) ||
+    isFetchableDataBlockType(type) ||
+    isTextDataBoundBlockType(type) ||
+    isCanvasTableDataBoundBlockType(type)
+  );
 }
 
 /** Blocos cujo binding dispara fetch na api-delpi. */
@@ -37,6 +49,11 @@ export function getLinkedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
       continue;
     }
     if (isTextDataBoundBlock(block) && textBlockHasDataBinding(block)) {
+      const sourceId = block.dataSourceId?.trim();
+      if (sourceId) linked.add(sourceId);
+      continue;
+    }
+    if (isCanvasTableDataBoundBlock(block) && canvasTableHasDataBinding(block)) {
       const sourceId = block.dataSourceId?.trim();
       if (sourceId) linked.add(sourceId);
     }

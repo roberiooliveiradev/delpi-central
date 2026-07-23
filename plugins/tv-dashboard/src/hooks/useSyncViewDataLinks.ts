@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 
 import {
+  canvasTableHasDataBinding,
+  isCanvasTableDataBoundBlockType,
   isComunicadoVisualBoxBlock,
   isDataViewBlockType,
+  syncCanvasTableBlocksWithResolved,
   syncDataViewBlocksWithResolved,
   syncTextBlocksWithResolved,
   viewHasProjectionConfigured,
@@ -53,15 +56,33 @@ export function useSyncViewDataLinks({
       })
       .sort()
       .join("|");
-    return `${viewPart}||${textPart}`;
+    const canvasPart = blocks
+      .filter(
+        (block) =>
+          isCanvasTableDataBoundBlockType(block.type) && canvasTableHasDataBinding(block as never),
+      )
+      .map((block) => {
+        const sourceId =
+          "dataSourceId" in block && typeof block.dataSourceId === "string"
+            ? block.dataSourceId.trim()
+            : "";
+        const hasResolved = Boolean(sourceId && resolvedByBlockId[sourceId]);
+        return `${block.id}:${sourceId}:${hasResolved ? 1 : 0}`;
+      })
+      .sort()
+      .join("|");
+    return `${viewPart}||${textPart}||${canvasPart}`;
   }, [blocks, resolvedByBlockId]);
 
   useEffect(() => {
     const current = configRef.current.blocks ?? [];
     const viewSync = syncDataViewBlocksWithResolved(current, resolvedByBlockId);
     const textSync = syncTextBlocksWithResolved(viewSync.next, resolvedByBlockId);
-    const next = textSync.next;
-    const changedIds = [...new Set([...viewSync.changedIds, ...textSync.changedIds])];
+    const canvasSync = syncCanvasTableBlocksWithResolved(textSync.next, resolvedByBlockId);
+    const next = canvasSync.next;
+    const changedIds = [
+      ...new Set([...viewSync.changedIds, ...textSync.changedIds, ...canvasSync.changedIds]),
+    ];
     if (changedIds.length === 0) return;
 
     const syncKey = changedIds

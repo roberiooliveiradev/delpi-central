@@ -274,6 +274,16 @@ export function ComunicadoEditorProvider({
           return { ...block, resolved: labeled };
         }
       }
+      if (block.type === "canvas_table" && block.dataSourceId?.trim()) {
+        const sourceId = block.dataSourceId.trim();
+        const preview = resolvedByBlockId[sourceId];
+        if (preview) {
+          const labeled =
+            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??
+            preview;
+          return { ...block, resolved: labeled };
+        }
+      }
       if (isDataBlockType(block.type)) {
         const preview = resolvedByBlockId[block.id];
         if (preview) return { ...block, resolved: preview };

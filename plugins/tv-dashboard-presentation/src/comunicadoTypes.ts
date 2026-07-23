@@ -359,7 +359,6 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   resolved?: ComunicadoDataResolved;
 };
 
-/** Grade estática editável, independente de fontes de dados. */
 /** Célula tipada da Grade canvas — ver `comunicadoCanvasTable.ts`. */
 export type ComunicadoCanvasTableCellKind = "text" | "number" | "sparkline";
 
@@ -385,6 +384,8 @@ export type ComunicadoCanvasTableCell = {
   format?: ComunicadoCanvasTableNumberFormat;
   series?: number[];
   style?: ComunicadoCanvasTableCellStyle;
+  /** Campo dinâmico da fonte do bloco (`dataSourceId`) — Onda Grade+dados. */
+  dataRef?: ComunicadoTextDataRef;
 };
 
 export type ComunicadoCanvasTableOptions = {
@@ -404,6 +405,11 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   cells: ComunicadoCanvasTableCell[][];
   headerRow?: boolean;
   canvasTableOptions?: ComunicadoCanvasTableOptions;
+  /** Fonte default do bloco; células apontam campos via `dataRef`. */
+  dataSourceId?: string;
+  /** Runtime — enrichment / preview; não persistir no native_config. */
+  resolved?: ComunicadoDataResolved;
+  serverCanvasTableProjectionApplied?: boolean;
 };
 
 /** Escopo do filtro no palco: slide inteiro ou fontes específicas. */

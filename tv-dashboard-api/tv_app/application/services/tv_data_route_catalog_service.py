@@ -24,6 +24,8 @@ ROUTES_PATH = resolve_routes_path()
 DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
 DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view", "kpi_view"})
 TEXT_DATA_BOUND_BLOCK_TYPES = frozenset({"heading", "text", "shape"})
+# Grade (`canvas_table`): dataSourceId no bloco + dataRef por célula (≠ table_view).
+CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES = frozenset({"canvas_table"})
 FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 
 # Campos de overlay aplicados em runtime sem regenerar o catálogo completo.

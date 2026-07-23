@@ -163,6 +163,7 @@ import { normalizeTextProjection } from "./textViewProjection";
 import { normalizeFieldLabels } from "./fieldLabelRegistry";
 
 export {
+  isCanvasTableDataBoundBlockType,
   isDataBoundEditorBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -878,9 +879,16 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "canvas_table") {
     base.rows = block.rows;
     base.cols = block.cols;
-    base.cells = block.cells.map((row) => row.map((cell) => ({ ...cell, style: cell.style ? { ...cell.style } : undefined })));
+    base.cells = block.cells.map((row) =>
+      row.map((cell) => ({
+        ...cell,
+        style: cell.style ? { ...cell.style } : undefined,
+        dataRef: cell.dataRef ? { ...cell.dataRef } : undefined,
+      })),
+    );
     if (block.headerRow != null) base.headerRow = block.headerRow;
     if (block.canvasTableOptions) base.canvasTableOptions = { ...block.canvasTableOptions };
+    if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.kpiProjection) base.kpiProjection = block.kpiProjection;
@@ -1215,6 +1223,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const canvasTableOptions = parseCanvasTableOptions(
       (block as { canvasTableOptions?: unknown }).canvasTableOptions,
     );
+    const dataSourceId =
+      typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -1227,6 +1237,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         cells: normalizeCanvasTableCells(block.cells, rows, cols),
         headerRow: block.headerRow !== false,
         ...(canvasTableOptions ? { canvasTableOptions } : {}),
+        ...(dataSourceId ? { dataSourceId } : {}),
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
       },
       block,
     );

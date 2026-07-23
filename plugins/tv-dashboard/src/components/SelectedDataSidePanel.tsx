@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   buildViewDataLinkPatch,
+  isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isTextDataBoundBlockType,
@@ -21,6 +23,10 @@ import {
   canLinkBlockToProjectDataSource,
   ProjectDataSourcesCatalogSection,
 } from "./DataSourceLinkSection";
+import {
+  CanvasTableDataBindingInspector,
+  canShowCanvasTableDataBindingInspector,
+} from "./CanvasTableDataBindingInspector";
 import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -73,6 +79,9 @@ export function SelectedDataSidePanel({
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
   const isTextBound = primary ? canShowTextDataBindingInspector(primary) : false;
+  const isCanvasTableBound = primary
+    ? canShowCanvasTableDataBindingInspector(primary)
+    : false;
 
   useEffect(() => {
     if (isRibbon || showCatalog || !bindingTarget || !("dataBinding" in bindingTarget)) return;
@@ -118,13 +127,23 @@ export function SelectedDataSidePanel({
       });
       updateSelected(patch as Partial<ComunicadoBlock>);
       setDataPanelIntent("binding");
+      return;
+    }
+    if (isCanvasTableDataBoundBlockType(primary.type) && primary.type === "canvas_table") {
+      const patch = buildCanvasTableDataLinkPatch({
+        dataSourceId: sourceId,
+        resolved,
+        existingCells: primary.cells,
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
     }
   }
 
   /** Faixa superior: toolbar horizontal — inspector completo só no painel lateral. */
   if (isRibbon) {
     const unboundView = isView && !bindingTarget;
-    const unboundText = isTextBound && !bindingTarget;
+    const unboundText = (isTextBound || isCanvasTableBound) && !bindingTarget;
     const hint = showCatalog
       ? "Escolha uma fonte do slide ou uma rota nova no catálogo."
       : context.kind === "mixed"
@@ -242,6 +261,14 @@ export function SelectedDataSidePanel({
         />
       ) : null}
 
+      {isCanvasTableBound && !isView ? (
+        <CanvasTableDataBindingInspector
+          pane
+          route={selectedRoute}
+          onOpenDataSources={() => openCatalog("insert")}
+        />
+      ) : null}
+
       {bindingTarget && "dataBinding" in bindingTarget ? (
         <DataBindingInspector
           route={selectedRoute}
@@ -249,7 +276,7 @@ export function SelectedDataSidePanel({
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
         />
-      ) : isView || isTextBound ? (
+      ) : isView || isTextBound || isCanvasTableBound ? (
         <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
@@ -261,7 +288,7 @@ export function SelectedDataSidePanel({
         <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
-      {!isView && !isTextBound && !bindingTarget ? (
+      {!isView && !isTextBound && !isCanvasTableBound && !bindingTarget ? (
         <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>

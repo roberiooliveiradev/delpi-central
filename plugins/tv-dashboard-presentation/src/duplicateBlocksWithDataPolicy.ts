@@ -1,6 +1,7 @@
 import {
   isDataSourceBlockType,
   isDataViewBlockType,
+  isCanvasTableDataBoundBlockType,
   isFetchableDataBlockType,
   isTextDataBoundBlockType,
 } from "./comunicadoDataArchitecture";
@@ -52,6 +53,9 @@ export function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> 
     if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) {
       ids.add(block.dataSourceId.trim());
     }
+    if (isCanvasTableDataBoundBlockType(block.type) && "dataSourceId" in block && block.dataSourceId?.trim()) {
+      ids.add(block.dataSourceId.trim());
+    }
     if (isComunicadoInputBlock(block) && block.input.targetScope === "sources") {
       for (const sourceId of block.input.targetSourceIds ?? []) {
         const trimmed = String(sourceId || "").trim();
@@ -91,6 +95,13 @@ export function needsDataSourceDuplicateChoice(sources: ComunicadoBlock[]): bool
     if (block.type.startsWith("data_")) return true;
     if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) return true;
     if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) return true;
+    if (
+      isCanvasTableDataBoundBlockType(block.type) &&
+      "dataSourceId" in block &&
+      block.dataSourceId?.trim()
+    ) {
+      return true;
+    }
     if (
       isComunicadoInputBlock(block) &&
       block.input.targetScope === "sources" &&
@@ -245,6 +256,14 @@ export function duplicateBlocksWithDataPolicy(
         if (mapped) copy.dataSourceId = mapped;
       }
       if (isTextDataBoundBlockType(copy.type) && copy.dataSourceId?.trim()) {
+        const mapped = sourceIdMap.get(copy.dataSourceId.trim());
+        if (mapped) copy.dataSourceId = mapped;
+      }
+      if (
+        isCanvasTableDataBoundBlockType(copy.type) &&
+        "dataSourceId" in copy &&
+        copy.dataSourceId?.trim()
+      ) {
         const mapped = sourceIdMap.get(copy.dataSourceId.trim());
         if (mapped) copy.dataSourceId = mapped;
       }

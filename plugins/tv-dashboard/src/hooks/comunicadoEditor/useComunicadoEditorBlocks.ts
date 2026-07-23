@@ -52,7 +52,9 @@ import {
   getKpiPartState,
   mergeKpiPartsWithOptions,
   buildViewDataLinkPatch,
+  buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
+  isCanvasTableDataBoundBlockType,
   duplicateBlocksWithDataPolicy,
   enrichClipboardWithLinkedDataSources,
   isComunicadoVisualBoxBlock,
@@ -268,6 +270,15 @@ export function useComunicadoEditorBlocks({
           dataSourceId: sourceId,
           resolved,
           existing: block.textProjection,
+        });
+        return { ...block, ...patch } as ComunicadoBlock;
+      }
+      if (isCanvasTableDataBoundBlockType(block.type) && block.type === "canvas_table") {
+        const resolved = getSourceResolved?.(sourceId);
+        const patch = buildCanvasTableDataLinkPatch({
+          dataSourceId: sourceId,
+          resolved,
+          existingCells: block.cells,
         });
         return { ...block, ...patch } as ComunicadoBlock;
       }

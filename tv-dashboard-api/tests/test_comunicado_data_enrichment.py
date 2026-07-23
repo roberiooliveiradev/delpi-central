@@ -1498,3 +1498,60 @@ def test_enrich_links_text_block_to_data_source_resolved():
     assert source.get("resolved", {}).get("kpi", {}).get("value") is not None
     assert text.get("resolved", {}).get("kpi", {}).get("value") is not None
     assert text.get("serverTextProjectionApplied") is True
+
+
+def test_enrich_blocks_links_resolved_to_canvas_table():
+    """Grade com dataSourceId recebe resolved da fonte (células usam dataRef no cliente)."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "data": {
+            "branch": "02",
+            "rol_target_pct": 111.1,
+        },
+        "route": {
+            "label": "Meta ROL",
+            "valueFields": ["rol_target_pct"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_branch_rol_target_pct",
+                    "displayMode": "kpi",
+                },
+            },
+            {
+                "id": "grade-1",
+                "type": "canvas_table",
+                "rows": 2,
+                "cols": 2,
+                "cells": [
+                    [{"kind": "text", "text": "KPI"}, {"kind": "text", "text": "Valor"}],
+                    [
+                        {"kind": "text", "text": "ROL"},
+                        {
+                            "kind": "number",
+                            "dataRef": {"field": "rol_target_pct", "format": "number"},
+                        },
+                    ],
+                ],
+                "dataSourceId": "src-1",
+                "frame": {"x": 0, "y": 0, "w": 40, "h": 20},
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    grade = next(b for b in enriched if b.get("id") == "grade-1")
+    assert grade.get("resolved", {}).get("kpi", {}).get("value") is not None
+    assert grade.get("serverCanvasTableProjectionApplied") is True

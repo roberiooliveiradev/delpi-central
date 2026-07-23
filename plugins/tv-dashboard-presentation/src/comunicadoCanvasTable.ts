@@ -1,9 +1,14 @@
 /**
  * Grade canvas (`canvas_table`) — células tipadas, opções de design e helpers.
- * Estático/ilustrativo (≠ `table_view` live).
+ * Ilustrativa com opcional `dataRef` por célula (≠ `table_view` live).
  */
 
-import type { ComunicadoBlockStyle, ComunicadoCanvasTableBlock } from "./comunicadoTypes";
+import type {
+  ComunicadoBlockStyle,
+  ComunicadoCanvasTableBlock,
+  ComunicadoTextDataRef,
+} from "./comunicadoTypes";
+import { normalizeTextDataRef } from "./textViewProjection";
 
 export const CANVAS_TABLE_MIN_ROWS = 1;
 export const CANVAS_TABLE_MAX_ROWS = 20;
@@ -38,6 +43,8 @@ export type CanvasTableCell = {
   /** Série estática do sparkline (5–60 pontos). */
   series?: number[];
   style?: CanvasTableCellStyle;
+  /** Campo dinâmico da fonte do bloco. */
+  dataRef?: ComunicadoTextDataRef;
 };
 
 export type CanvasTableHeaderStyle = "subtle" | "accent" | "none";
@@ -98,6 +105,8 @@ export function normalizeCanvasTableCell(value: unknown): CanvasTableCell {
     if (value.style && typeof value.style === "object") {
       cell.style = { ...value.style };
     }
+    const dataRef = normalizeTextDataRef((value as CanvasTableCell).dataRef);
+    if (dataRef) cell.dataRef = dataRef;
     return cell;
   }
   return { kind: "text", text: value == null ? "" : String(value) };
