@@ -97,6 +97,11 @@ export type ComunicadoEditorContextValue = {
   selectedId: string | null;
   selected: ComunicadoBlock | null;
   selectedBlocks: ComunicadoBlock[];
+  /**
+   * Modo filhos do grupo (`expandGroup: false`): permite selecionar todos os
+   * irmãos sem promover ao chrome do grupo fechado.
+   */
+  preferGroupChildrenSelection: boolean;
   /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
   remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;

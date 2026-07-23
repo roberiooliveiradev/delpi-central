@@ -86,6 +86,7 @@ function ComunicadoEditorKeyboardBridge() {
   const {
     blocks,
     selectedIds,
+    preferGroupChildrenSelection,
     editingTextId,
     enterTextEdit,
     setEditingTextId,
@@ -116,6 +117,7 @@ function ComunicadoEditorKeyboardBridge() {
   } = useComunicadoEditor();
   useComunicadoEditorKeyboard({
     selectedIds,
+    preferGroupChildrenSelection,
     editingTextId,
     blocks,
     selectBlocksByIds,
@@ -603,6 +605,7 @@ export function ComunicadoEditorProvider({
     selectedId: selection.selectedId,
     selected: selection.selected,
     selectedBlocks: selection.selectedBlocks,
+    preferGroupChildrenSelection: selection.preferGroupChildrenSelection,
     remoteSelections,
     isBlockSelected: selection.isBlockSelected,
     selectBlock: selection.selectBlock,

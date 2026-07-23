@@ -24,6 +24,7 @@ import {
   expandSelectionWithGroups,
   resolveClosedGroupSelection,
   resolveGroupChildrenSelection,
+  type GroupSelectionResolveOptions,
 } from "./comunicadoGrouping";
 
 export type StagePartRef = { kind: string };
@@ -57,11 +58,17 @@ export function resolveStageSelectionHierarchy(params: {
   selectedIds: string[];
   selectedPart?: StagePartRef | null;
   selectedParts?: StagePartRef[] | null;
+  /** Mantém modo filhos mesmo com todos os irmãos selecionados. */
+  preferGroupChildrenSelection?: boolean;
 }): StageSelectionHierarchy {
   const { blocks, selectedIds } = params;
   if (selectedIds.length === 0) return { mode: "none" };
 
-  const closed = resolveClosedGroupSelection(blocks, selectedIds);
+  const groupOpts: GroupSelectionResolveOptions = {
+    preferChildren: Boolean(params.preferGroupChildrenSelection),
+  };
+
+  const closed = resolveClosedGroupSelection(blocks, selectedIds, groupOpts);
   if (closed) {
     return {
       mode: "parent",
@@ -70,7 +77,7 @@ export function resolveStageSelectionHierarchy(params: {
     };
   }
 
-  const groupChildren = resolveGroupChildrenSelection(blocks, selectedIds);
+  const groupChildren = resolveGroupChildrenSelection(blocks, selectedIds, groupOpts);
   if (groupChildren) {
     return {
       mode: "children",
@@ -122,9 +129,14 @@ export function resolveStageSelectionHierarchy(params: {
 export function resolveMultiDragBlockIds(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: { preferGroupChildrenSelection?: boolean },
 ): string[] {
   if (selectedIds.length === 0) return [];
-  const hierarchy = resolveStageSelectionHierarchy({ blocks, selectedIds });
+  const hierarchy = resolveStageSelectionHierarchy({
+    blocks,
+    selectedIds,
+    preferGroupChildrenSelection: options?.preferGroupChildrenSelection,
+  });
   if (hierarchy.mode === "children") {
     return [...selectedIds];
   }
@@ -221,6 +233,7 @@ export function resolveEscapeHierarchyAction(params: {
   blocks: ComunicadoBlock[];
   selectedIds: string[];
   hasPartSelection: boolean;
+  preferGroupChildrenSelection?: boolean;
 }):
   | { type: "clear-parts" }
   | { type: "select-ids"; ids: string[] }
@@ -229,7 +242,9 @@ export function resolveEscapeHierarchyAction(params: {
   if (params.hasPartSelection) {
     return { type: "clear-parts" };
   }
-  const children = resolveGroupChildrenSelection(params.blocks, params.selectedIds);
+  const children = resolveGroupChildrenSelection(params.blocks, params.selectedIds, {
+    preferChildren: Boolean(params.preferGroupChildrenSelection),
+  });
   if (children) {
     return {
       type: "select-ids",
@@ -250,7 +265,7 @@ export function resolveEscapeHierarchyAction(params: {
  * - Com o grupo selecionado, 2º clique no membro → isola o subitem.
  * - Shift/Ctrl em irmão do **mesmo** grupo já presente na seleção → alterna
  *   o membro (`toggle-child`, `expandGroup: false`) — permite multi-selecionar
- *   dois filhos sem desligar o grupo inteiro.
+ *   **todos** os irmãos sem promover para o grupo fechado.
  * - Shift fora do grupo → multi-seleção de grupos/blocos soltos.
  * - Ctrl fora do grupo → remove da seleção.
  * - Alt → isola (atalho).
@@ -279,15 +294,19 @@ export function resolveGroupedBlockPointerDownAction(params: {
   shiftKey: boolean;
   ctrlOrMeta: boolean;
   altKey: boolean;
+  preferGroupChildrenSelection?: boolean;
 }): GroupedBlockPointerDownAction {
   const { block, blocks, selectedIds, shiftKey, ctrlOrMeta, altKey } = params;
+  const groupOpts: GroupSelectionResolveOptions = {
+    preferChildren: Boolean(params.preferGroupChildrenSelection),
+  };
 
   if (altKey && block.groupId) {
     return { type: "isolate-child", blockId: block.id };
   }
 
-  const closed = resolveClosedGroupSelection(blocks, selectedIds);
-  const children = resolveGroupChildrenSelection(blocks, selectedIds);
+  const closed = resolveClosedGroupSelection(blocks, selectedIds, groupOpts);
+  const children = resolveGroupChildrenSelection(blocks, selectedIds, groupOpts);
   const inClosedGroup = Boolean(
     closed && block.groupId === closed.groupId && closed.memberIds.includes(block.id),
   );
@@ -339,6 +358,7 @@ export function resolveTapWithoutDragSelectionAction(params: {
   selectedIds: string[];
   targetBlockId: string;
   wasAlreadySelected: boolean;
+  preferGroupChildrenSelection?: boolean;
 }):
   | { type: "clear-selection" }
   | { type: "isolate-child"; blockId: string }
@@ -348,7 +368,9 @@ export function resolveTapWithoutDragSelectionAction(params: {
 
   const blocks = params.blocks ?? [];
   if (blocks.length > 0) {
-    const closed = resolveClosedGroupSelection(blocks, params.selectedIds);
+    const closed = resolveClosedGroupSelection(blocks, params.selectedIds, {
+      preferChildren: Boolean(params.preferGroupChildrenSelection),
+    });
     const target = blocks.find((item) => item.id === params.targetBlockId);
     if (closed && target?.groupId === closed.groupId) {
       return { type: "isolate-child", blockId: params.targetBlockId };

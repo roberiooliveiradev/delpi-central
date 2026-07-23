@@ -65,14 +65,26 @@ export function resolveFullySelectedGroups(
   return out;
 }
 
+export type GroupSelectionResolveOptions = {
+  /**
+   * Quando true, todos os membros selecionados permanecem em modo «filhos»
+   * (chrome individual) em vez de promover para o grupo fechado.
+   * Ativado por isolate/toggle-child (`expandGroup: false`).
+   */
+  preferChildren?: boolean;
+};
+
 /**
  * Seleção «pai»: todos os membros de um único groupId estão selecionados
  * (equivalente à moldura de KPI/gráfico — um chrome externo).
+ * Com `preferChildren`, não promove — permite multi de todos os irmãos.
  */
 export function resolveClosedGroupSelection(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: GroupSelectionResolveOptions,
 ): ClosedGroupSelection | null {
+  if (options?.preferChildren) return null;
   const groups = resolveFullySelectedGroups(blocks, selectedIds);
   if (groups.length !== 1) return null;
   const only = groups[0]!;
@@ -81,15 +93,16 @@ export function resolveClosedGroupSelection(
 }
 
 /**
- * Subconjunto de membros de um mesmo grupo (não a seleção pai fechada).
+ * Membros de um mesmo grupo em modo filhos (subset **ou** todos, se preferChildren).
  * Paridade com filhos de widget complexo.
  */
 export function resolveGroupChildrenSelection(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: GroupSelectionResolveOptions,
 ): { groupId: string; memberIds: string[] } | null {
   if (selectedIds.length === 0) return null;
-  if (resolveClosedGroupSelection(blocks, selectedIds)) return null;
+  if (resolveClosedGroupSelection(blocks, selectedIds, options)) return null;
   const selected = blocks.filter((block) => selectedIds.includes(block.id));
   if (selected.length !== selectedIds.length) return null;
   const groupId = selected[0]?.groupId;
@@ -102,8 +115,9 @@ export function resolveGroupChildrenSelection(
 export function isGroupChildrenSelection(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: GroupSelectionResolveOptions,
 ): boolean {
-  return resolveGroupChildrenSelection(blocks, selectedIds) != null;
+  return resolveGroupChildrenSelection(blocks, selectedIds, options) != null;
 }
 
 /** @deprecated Preferir `isGroupChildrenSelection` (suporta multi). */
@@ -215,9 +229,10 @@ export function partitionSelectionIntoLayoutUnits(
 export function resolveParentGroupHintFrame(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
+  options?: GroupSelectionResolveOptions,
 ): ComunicadoFrame | null {
-  if (resolveClosedGroupSelection(blocks, selectedIds)) return null;
-  const children = resolveGroupChildrenSelection(blocks, selectedIds);
+  if (resolveClosedGroupSelection(blocks, selectedIds, options)) return null;
+  const children = resolveGroupChildrenSelection(blocks, selectedIds, options);
   if (!children) return null;
   const members = membersOfGroup(blocks, children.groupId);
   if (members.length < 2) return null;

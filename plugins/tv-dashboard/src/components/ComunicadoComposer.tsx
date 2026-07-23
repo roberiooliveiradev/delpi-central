@@ -116,6 +116,7 @@ export function ComunicadoComposerCanvas() {
     selected,
     selectedId,
     selectedIds,
+    preferGroupChildrenSelection,
     remoteSelections,
     selectedChartPart,
     selectedKpiPart,
@@ -537,13 +538,21 @@ export function ComunicadoComposerCanvas() {
     () => resolveFullySelectedGroups(blocks, selectedIds),
     [blocks, selectedIds],
   );
-  const fullySelectedMemberIds = useMemo(() => {
+  /** Chrome do grupo fechado — omitido quando todos os irmãos estão em modo filhos. */
+  const closedGroupChromeList = useMemo(() => {
+    if (!preferGroupChildrenSelection) return fullySelectedGroups;
+    return fullySelectedGroups.filter((group) => {
+      if (selectedIds.length !== group.memberIds.length) return true;
+      return !group.memberIds.every((id) => selectedIds.includes(id));
+    });
+  }, [fullySelectedGroups, preferGroupChildrenSelection, selectedIds]);
+  const closedGroupMemberIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const group of fullySelectedGroups) {
+    for (const group of closedGroupChromeList) {
       for (const id of group.memberIds) ids.add(id);
     }
     return ids;
-  }, [fullySelectedGroups]);
+  }, [closedGroupChromeList]);
   const selectionHierarchy = useMemo(() => {
     const primaryComplex = blocks.find((item) => item.id === selectedId);
     const selectedParts =
@@ -571,9 +580,11 @@ export function ComunicadoComposerCanvas() {
       selectedIds,
       selectedPart,
       selectedParts,
+      preferGroupChildrenSelection,
     });
   }, [
     blocks,
+    preferGroupChildrenSelection,
     selectedId,
     selectedIds,
     selectedKpiPart,
@@ -585,8 +596,11 @@ export function ComunicadoComposerCanvas() {
   ]);
   /** Contorno pontilhado do pai quando um (ou mais) filhos estão isolados. */
   const parentGroupHintFrame = useMemo(
-    () => resolveParentGroupHintFrame(blocks, selectedIds),
-    [blocks, selectedIds],
+    () =>
+      resolveParentGroupHintFrame(blocks, selectedIds, {
+        preferChildren: preferGroupChildrenSelection,
+      }),
+    [blocks, preferGroupChildrenSelection, selectedIds],
   );
 
   /** Chrome de seleção (inclui endpoints de linha mesmo sem resize de bbox). */
@@ -608,7 +622,7 @@ export function ComunicadoComposerCanvas() {
       blockType: block?.type,
       isSelected: isBlockSelected(blockId),
       /* Membro de qualquer grupo fechado na seleção → chrome no grupo, não no filho. */
-      closedGroupActive: fullySelectedMemberIds.has(blockId),
+      closedGroupActive: closedGroupMemberIds.has(blockId),
       selectedPart: partForChrome,
     });
     return flags.showHandles;
@@ -720,7 +734,7 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
-            const inClosedGroup = Boolean(isSelected && fullySelectedMemberIds.has(block.id));
+            const inClosedGroup = Boolean(isSelected && closedGroupMemberIds.has(block.id));
             const remoteEditors = remoteSelections.filter((selection) =>
               selection.selectedIds.includes(block.id),
             );
@@ -817,6 +831,7 @@ export function ComunicadoComposerCanvas() {
                       isBlockSelected,
                       selectedIds,
                       selectedId,
+                      preferGroupChildrenSelection,
                       selectBlock,
                       selectBlocksByIds,
                       armMultiDragSelection,
@@ -888,6 +903,7 @@ export function ComunicadoComposerCanvas() {
                     isBlockSelected,
                     selectedIds,
                     selectedId,
+                    preferGroupChildrenSelection,
                     selectBlock,
                     selectBlocksByIds,
                     armMultiDragSelection,
@@ -944,7 +960,7 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
-          {fullySelectedGroups.map((group) => {
+          {closedGroupChromeList.map((group) => {
             const frame = unionFramePercent(group.members.map((member) => member.frame));
             const anchor =
               group.members.find((member) => member.id === primarySelected) ??

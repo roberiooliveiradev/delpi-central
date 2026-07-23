@@ -41,6 +41,23 @@ describe("resolveStageSelectionHierarchy", () => {
     ).toEqual({ mode: "parent", unit: "group", blockIds: ["a", "b"] });
   });
 
+  it("todos os irmãos com preferChildren = modo filhos (não promove ao pai)", () => {
+    const blocks = [
+      block("a", { groupId: "g1" }),
+      block("b", { groupId: "g1" }),
+    ];
+    expect(
+      resolveStageSelectionHierarchy({
+        blocks,
+        selectedIds: ["a", "b"],
+        preferGroupChildrenSelection: true,
+      }),
+    ).toEqual({ mode: "children", unit: "group", blockIds: ["a", "b"] });
+    expect(isGroupChildrenSelection(blocks, ["a", "b"], { preferChildren: true })).toBe(
+      true,
+    );
+  });
+
   it("subset do grupo = filhos", () => {
     const blocks = [
       block("a", { groupId: "g1" }),
@@ -326,5 +343,18 @@ describe("resolveGroupedBlockPointerDownAction", () => {
         altKey: false,
       }),
     ).toEqual({ type: "toggle-child", blockId: "b" });
+
+    /* Com todos os irmãos em modo filhos: clique arrasta a multi, não isola de novo. */
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[0]!,
+        blocks,
+        selectedIds: ["a", "b"],
+        shiftKey: false,
+        ctrlOrMeta: false,
+        altKey: false,
+        preferGroupChildrenSelection: true,
+      }),
+    ).toEqual({ type: "drag-current-selection" });
   });
 });

@@ -12,6 +12,7 @@ import {
 export function useComunicadoEditorKeyboard({
   selectedIds,
   editingTextId,
+  preferGroupChildrenSelection = false,
   hasPartSelection = false,
   clearPartSelection,
   clearSelection,
@@ -69,6 +70,7 @@ export function useComunicadoEditorKeyboard({
           blocks,
           selectedIds,
           hasPartSelection,
+          preferGroupChildrenSelection,
         });
         if (escape.type === "clear-parts") {
           clearPartSelection?.();

@@ -107,6 +107,41 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedIds.sort()).toEqual(["c", "d"]);
   });
 
+  it("expandGroup false mantém preferGroupChildrenSelection com todos os irmãos", () => {
+    const grouped: ComunicadoBlock[] = [
+      { id: "a", type: "text", content: "A", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g1" },
+      { id: "b", type: "text", content: "B", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g1" },
+    ];
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks: grouped });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: grouped,
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("a", { expandGroup: false });
+    });
+    expect(result.current.preferGroupChildrenSelection).toBe(true);
+    expect(result.current.selectedIds).toEqual(["a"]);
+
+    act(() => {
+      result.current.selectBlock("b", { additive: true, expandGroup: false });
+    });
+    expect(result.current.selectedIds.sort()).toEqual(["a", "b"]);
+    expect(result.current.preferGroupChildrenSelection).toBe(true);
+
+    act(() => {
+      result.current.selectBlocksByIds(["a", "b"]);
+    });
+    expect(result.current.preferGroupChildrenSelection).toBe(false);
+  });
+
   it("subtract (Ctrl) remove da seleção sem alternar para incluir", () => {
     const { result } = renderSelectionHook();
 

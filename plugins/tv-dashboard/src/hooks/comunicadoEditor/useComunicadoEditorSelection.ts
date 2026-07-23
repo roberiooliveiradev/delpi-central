@@ -74,6 +74,11 @@ export function useComunicadoEditorSelection({
 }: Options) {
   /** Sem auto-seleção: Gerenciar / F5 abrem no palco sem forçar Elemento. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  /**
+   * Modo filhos do grupo: Shift/Camadas/`expandGroup: false`.
+   * Permite selecionar todos os irmãos sem promover ao chrome do grupo fechado.
+   */
+  const [preferGroupChildrenSelection, setPreferGroupChildrenSelection] = useState(false);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
@@ -207,6 +212,7 @@ export function useComunicadoEditorSelection({
       const blocksNow = configRef.current.blocks ?? [];
       const target = id ? resolveStageSelectionTargetId(id, blocksNow) : null;
       setSelectedIds(target ? [target] : []);
+      setPreferGroupChildrenSelection(false);
       setEditingTextId((current) => (target === current ? current : null));
       clearPartSelections();
       if (!target) clearTextEditUi();
@@ -227,6 +233,8 @@ export function useComunicadoEditorSelection({
         ),
       ];
       setSelectedIds(unique);
+      /* Marquee / nó do grupo / Esc → seleção pai fechada quando couber. */
+      setPreferGroupChildrenSelection(false);
       setEditingTextId(null);
       clearPartSelections();
     },
@@ -244,17 +252,27 @@ export function useComunicadoEditorSelection({
       if (!targetId) {
         if (!options?.additive && !options?.subtract) {
           setSelectedIds([]);
+          setPreferGroupChildrenSelection(false);
           setEditingTextId(null);
           clearPartSelections();
         }
         return;
       }
+      /*
+       * expandGroup === false → modo filhos (Shift/Camadas/isolate).
+       * Default true → grupo fechado / bloco solto.
+       */
+      const preferChildren = options?.expandGroup === false;
       let selectedBlockType: string | undefined;
       if (options?.subtract) {
         setSelectedIds((current) => {
           const remove = new Set<string>([targetId]);
           const block = blocksNow.find((item) => item.id === targetId);
-          if (block?.groupId) {
+          /*
+           * Em modo filhos, Ctrl remove só o membro — não o grupo inteiro.
+           * No grupo fechado (preferChildren false), remove todos os membros.
+           */
+          if (block?.groupId && !preferChildren) {
             const memberIds = blocksNow
               .filter((item) => item.groupId === block.groupId)
               .map((item) => item.id);
@@ -267,10 +285,12 @@ export function useComunicadoEditorSelection({
             blocksNow,
           );
         });
+        setPreferGroupChildrenSelection(preferChildren);
         setEditingTextId(null);
         clearPartSelections();
         return;
       }
+      setPreferGroupChildrenSelection(preferChildren);
       if (options?.additive) {
         setSelectedIds((current) => {
           const block = blocksNow.find((item) => item.id === targetId);
@@ -332,6 +352,7 @@ export function useComunicadoEditorSelection({
   const clearSelection = useCallback(() => {
     flushActiveTextEdit();
     setSelectedIds([]);
+    setPreferGroupChildrenSelection(false);
     setEditingTextId(null);
     clearPartSelections();
   }, [clearPartSelections, flushActiveTextEdit]);
@@ -730,6 +751,7 @@ export function useComunicadoEditorSelection({
   /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
   const resetSelectionForSlide = useCallback(() => {
     setSelectedIds([]);
+    setPreferGroupChildrenSelection(false);
     setEditingTextId(null);
     clearPartSelections();
     clearTextEditUi();
@@ -738,6 +760,7 @@ export function useComunicadoEditorSelection({
   return {
     selectedIds,
     setSelectedIds,
+    preferGroupChildrenSelection,
     selectedId,
     selected,
     selectedBlocks,

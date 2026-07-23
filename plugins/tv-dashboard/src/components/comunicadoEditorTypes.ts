@@ -8,6 +8,8 @@ export type MediaLibraryTarget =
 export type ComunicadoEditorKeyboardActions = {
   selectedIds: string[];
   editingTextId: string | null;
+  /** Modo filhos do grupo — Esc sobe para o grupo fechado mesmo com todos os irmãos. */
+  preferGroupChildrenSelection?: boolean;
   /** Há parte de KPI/chart/tabela selecionada (Esc volta ao escopo global). */
   hasPartSelection?: boolean;
   clearPartSelection?: () => void;

@@ -18,6 +18,7 @@ type BeginBlockStageDragArgs = {
   blocks: ComunicadoBlock[];
   selectedIds: string[];
   selectedId: string | null;
+  preferGroupChildrenSelection?: boolean;
   selectBlock: (
     id: string,
     options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean },
@@ -42,6 +43,7 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     blocks,
     selectedIds,
     selectedId,
+    preferGroupChildrenSelection = false,
     selectBlock,
     selectBlocksByIds,
     armMultiDragSelection,
@@ -56,6 +58,7 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     shiftKey: event.shiftKey,
     ctrlOrMeta: event.ctrlKey || event.metaKey,
     altKey: event.altKey,
+    preferGroupChildrenSelection,
   });
 
   if (action.type === "subtract") {
@@ -99,8 +102,14 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
   }
 
   /* drag-current-selection: filhos não reexpandem o grupo ao arrastar. */
-  const hierarchy = resolveStageSelectionHierarchy({ blocks, selectedIds });
-  const dragIds = resolveMultiDragBlockIds(blocks, selectedIds);
+  const hierarchy = resolveStageSelectionHierarchy({
+    blocks,
+    selectedIds,
+    preferGroupChildrenSelection,
+  });
+  const dragIds = resolveMultiDragBlockIds(blocks, selectedIds, {
+    preferGroupChildrenSelection,
+  });
   if (shouldArmTapDeselectOnDragCurrent(block)) {
     armTapDeselect?.(block.id);
   } else {

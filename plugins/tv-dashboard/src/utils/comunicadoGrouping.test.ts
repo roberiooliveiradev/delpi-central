@@ -8,6 +8,7 @@ import {
   partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
   resolveFullySelectedGroups,
+  resolveGroupChildrenSelection,
   resolveParentGroupHintFrame,
   selectedHasGroup,
   ungroupBlocks,
@@ -48,6 +49,13 @@ describe("comunicadoGrouping", () => {
     expect(resolveClosedGroupSelection([a, b, c], [a.id])).toBeNull();
     expect(isIsolatedGroupChildSelection([a, b], [a.id])).toBe(true);
     expect(isIsolatedGroupChildSelection([a, b], [a.id, b.id])).toBe(false);
+    expect(
+      resolveClosedGroupSelection([a, b], [a.id, b.id], { preferChildren: true }),
+    ).toBeNull();
+    expect(
+      resolveGroupChildrenSelection([a, b], [a.id, b.id], { preferChildren: true })
+        ?.memberIds.sort(),
+    ).toEqual([a.id, b.id].sort());
   });
 
   it("lista vários grupos fechados na multi-seleção", () => {
