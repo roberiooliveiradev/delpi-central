@@ -39,8 +39,9 @@ type Props = {
 };
 
 /**
- * Grupo Organizar estilo Excel — grade 2×3:
- * Avançar▼ / Recuar▼ / Painel de Seleção | Alinhar▼ / Agrupar▼ / Girar▼
+ * Grupo Organizar estilo Excel — flex 2×3 (3 colunas):
+ * Avançar▼ | Alinhar▼ | Painel
+ * Recuar▼  | Agrupar▼ | Girar▼
  */
 export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
   const {
@@ -261,25 +262,25 @@ export function FormatRibbonOrganizeGroup({ embed = false }: Props) {
           menuAriaLabel="Avançar"
         />
         <DeckRibbonMenuTile
+          icon={AlignHorizontalJustifyStart}
+          label="Alinhar"
+          hint={H.alignSelection}
+          items={alignItems}
+          menuAriaLabel="Alinhar"
+        />
+        <DeckRibbonTile
+          icon={MousePointer2}
+          label="Painel"
+          hint={H.selectionPane}
+          onClick={() => openLayersPanel()}
+        />
+        <DeckRibbonMenuTile
           icon={SendToBack}
           label="Recuar"
           hint={C.sendBackward}
           onPrimaryClick={sendBackward}
           items={backwardItems}
           menuAriaLabel="Recuar"
-        />
-        <DeckRibbonTile
-          icon={MousePointer2}
-          label="Painel de Seleção"
-          hint={H.selectionPane}
-          onClick={() => openLayersPanel()}
-        />
-        <DeckRibbonMenuTile
-          icon={AlignHorizontalJustifyStart}
-          label="Alinhar"
-          hint={H.alignSelection}
-          items={alignItems}
-          menuAriaLabel="Alinhar"
         />
         <DeckRibbonMenuTile
           icon={Group}

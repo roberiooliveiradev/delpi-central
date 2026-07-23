@@ -3770,22 +3770,121 @@ body.td-composer--marqueeing *{
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  align-items: stretch;
   gap: 8px 10px;
   width: max-content;
   max-width: 100%;
   max-height: 100%;
   min-height: 0;
 }
+/*
+ * Organizar: flex wrap responsivo (3 colunas × 2 filas).
+ * Altura pelo conteúdo dos tiles — não força grid fixo que sobrescreve a caption.
+ */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-grid{
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(3, auto);
-  gap: 2px 8px;
+  --td-organize-col-min: 3.15rem;
+  --td-organize-gap-x: 4px;
+  --td-organize-gap-y: 2px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
   align-items: stretch;
-  width: max-content;
+  justify-content: flex-start;
+  gap: var(--td-organize-gap-y) var(--td-organize-gap-x);
+  box-sizing: border-box;
+  width: calc(var(--td-organize-col-min) * 3 + var(--td-organize-gap-x) * 2);
   max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .delpi-ui-help-tooltip--wrap,
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .td-ribbon-menu-tile,
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .td-ribbon-tile{
+  display: flex;
+  flex: 1 1 var(--td-organize-col-min);
+  flex-direction: column;
+  align-items: stretch;
+  min-width: var(--td-organize-col-min);
+  max-width: 5.25rem;
+  min-height: 0;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .delpi-ui-help-tooltip--wrap > .td-ribbon-menu-tile,
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid > .delpi-ui-help-tooltip--wrap > .td-ribbon-tile{
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+}
+/* Tiles mais baixos na faixa — cabem 2 filas + caption sem corte. */
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile{
+  min-width: 0;
+  max-width: none;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__primary{
+  padding: 2px 4px 0;
+  gap: 1px;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__icon{
+  width: 18px;
+  height: 18px;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__icon svg{
+  width: 16px;
+  height: 16px;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__chevron{
+  padding: 0 2px 1px;
+  line-height: 1;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-menu-tile__label,
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-tile__label{
+  font-size: 9px;
+  line-height: 1.1;
+  max-width: 100%;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-tile{
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 4px;
+  gap: 1px;
+}
+.dashboard-tv-dashboard .td-deck-ribbon__organize-grid .td-ribbon-tile__icon{
+  width: 18px;
+  height: 18px;
+}
+/* Grupo Organizar: body cresce pelo conteúdo; caption abaixo sem overlap. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__organize-grid){
+  height: auto;
+  max-height: 100%;
+  min-height: 0;
+  overflow: visible;
+  justify-content: flex-start;
+  gap: 2px;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__organize-grid) .td-deck-ribbon__body{
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  align-items: flex-start;
+}
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__organize-grid) .td-deck-ribbon__caption{
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
+  padding-top: 2px;
+  background: color-mix(in srgb, var(--td-surface, var(--delpi-ui-surface, #1e1e1e)) 92%, transparent);
+}
+@media (max-width: 900px){
+  .dashboard-tv-dashboard .td-deck-ribbon__organize-grid{
+    --td-organize-col-min: 2.85rem;
+    width: calc(var(--td-organize-col-min) * 3 + var(--td-organize-gap-x) * 2);
+  }
 }
 /* Split menu: ícone+rótulo em cima, chevron abaixo (mesmo padrão shape-menu / collapse). */
 .dashboard-tv-dashboard .td-ribbon-menu-tile{
