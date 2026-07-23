@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import {
   ClipboardCheck,
-  Boxes,
   Factory,
   Lightbulb,
-  Plug,
   Truck,
   Wallet,
 } from "lucide-react";
@@ -12,20 +10,16 @@ import {
 import { FilterBar } from "../components/FilterBar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { KpiCard } from "../components/KpiCard";
-import { PpmSparkline } from "../components/PpmSparkline";
 import { ModuleShortcut, PPM_SHORTCUT_HREF } from "../components/ModuleShortcut";
 import { QUALITY_ROUTES } from "../constants/routes";
-import { CHART_COLORS } from "../constants/chartColors";
 import {
   QualityExportButtons,
   buildDashboardExportContext,
 } from "../export";
 import {
-  buildPpmSeriesExportPayload,
   formatQualityKpiValue,
   formatQualityPercentKpi,
 } from "../export/qualityDashboardSheets";
-import { usePpmChartSeries } from "../hooks/usePpmChartSeries";
 import { useQualityBranches } from "../hooks/useQualityBranches";
 import { useQualityDashboard } from "../hooks/useQualityDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
@@ -41,7 +35,6 @@ import {
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatPeriodLabel } from "../utils/dates";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { PLUGS_PRODUCT_PREFIX, COMPONENTS_PRODUCT_PREFIX } from "../utils/ppmProductScope";
 
 const MODULE_SHORTCUTS = [
   {
@@ -89,18 +82,10 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   const {
     ppmInternal,
     ppmExternal,
-    ppmInternalPlugs,
-    ppmExternalPlugs,
-    ppmInternalComponents,
-    ppmExternalComponents,
     kaizen,
     audit5s,
     ppmInternalBranches,
     ppmExternalBranches,
-    ppmInternalPlugsBranches,
-    ppmExternalPlugsBranches,
-    ppmInternalComponentsBranches,
-    ppmExternalComponentsBranches,
     kaizenIdeasBranches,
     kaizenSavingsBranches,
     audit5sBranches,
@@ -113,52 +98,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
   } = useQualityDashboard(apiParams);
 
   const printDisabled = loading && !ppmInternal;
-
-  const plugsFilters = useMemo(
-    () => ({ ...apiParams, product_prefix: PLUGS_PRODUCT_PREFIX }),
-    [apiParams]
-  );
-
-  const componentsFilters = useMemo(
-    () => ({ ...apiParams, product_prefix: COMPONENTS_PRODUCT_PREFIX }),
-    [apiParams]
-  );
-
-  const internalSparkline = usePpmChartSeries({
-    type: "internal",
-    filters: apiParams,
-    granularity: "month",
-  });
-
-  const externalSparkline = usePpmChartSeries({
-    type: "external",
-    filters: apiParams,
-    granularity: "month",
-  });
-
-  const internalPlugsSparkline = usePpmChartSeries({
-    type: "internal",
-    filters: plugsFilters,
-    granularity: "month",
-  });
-
-  const externalPlugsSparkline = usePpmChartSeries({
-    type: "external",
-    filters: plugsFilters,
-    granularity: "month",
-  });
-
-  const internalComponentsSparkline = usePpmChartSeries({
-    type: "internal",
-    filters: componentsFilters,
-    granularity: "month",
-  });
-
-  const externalComponentsSparkline = usePpmChartSeries({
-    type: "external",
-    filters: componentsFilters,
-    granularity: "month",
-  });
 
   const periodLabel = useMemo(
     () => formatPeriodLabel(dateStart, dateEnd),
@@ -185,26 +124,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
         contexto: `Devolvido: ${formatDecimal(ppmExternal?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
       },
       {
-        indicador: "PPM interno — plugues",
-        valor: formatQualityKpiValue(ppmInternalPlugs?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmInternalPlugs?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "PPM externo — plugues",
-        valor: formatQualityKpiValue(ppmExternalPlugs?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmExternalPlugs?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "PPM interno — componentes",
-        valor: formatQualityKpiValue(ppmInternalComponents?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmInternalComponents?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
-      },
-      {
-        indicador: "PPM externo — componentes",
-        valor: formatQualityKpiValue(ppmExternalComponents?.ppm),
-        contexto: `Devolvido: ${formatDecimal(ppmExternalComponents?.total_devolvido_un)} un · ${branchLabel} · ${periodLabel}`,
-      },
-      {
         indicador: "Kaizens",
         valor: formatQualityKpiValue(kaizen?.total_kaizens, (v) => String(Math.round(v))),
         contexto: `Economia: ${formatDecimal(kaizen?.total_savings)} · ${branchLabel} · ${periodLabel}`,
@@ -223,16 +142,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       periodLabel,
       ppmExternal?.ppm,
       ppmExternal?.total_devolvido_un,
-      ppmExternalPlugs?.ppm,
-      ppmExternalPlugs?.total_devolvido_un,
-      ppmInternalComponents?.ppm,
-      ppmInternalComponents?.total_devolvido_un,
-      ppmExternalComponents?.ppm,
-      ppmExternalComponents?.total_devolvido_un,
       ppmInternal?.ppm,
       ppmInternal?.total_devolvido_un,
-      ppmInternalPlugs?.ppm,
-      ppmInternalPlugs?.total_devolvido_un,
     ],
   );
 
@@ -245,38 +156,9 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
           scopeLabel: branchLabel,
         },
         kpiExportRows,
-        [
-          buildPpmSeriesExportPayload("PPM interno — série", internalSparkline.points),
-          buildPpmSeriesExportPayload("PPM externo — série", externalSparkline.points),
-          buildPpmSeriesExportPayload(
-            "PPM interno plugues — série",
-            internalPlugsSparkline.points,
-          ),
-          buildPpmSeriesExportPayload(
-            "PPM externo plugues — série",
-            externalPlugsSparkline.points,
-          ),
-          buildPpmSeriesExportPayload(
-            "PPM interno componentes — série",
-            internalComponentsSparkline.points,
-          ),
-          buildPpmSeriesExportPayload(
-            "PPM externo componentes — série",
-            externalComponentsSparkline.points,
-          ),
-        ],
+        [],
       ),
-    [
-      branchLabel,
-      externalComponentsSparkline.points,
-      externalPlugsSparkline.points,
-      externalSparkline.points,
-      internalComponentsSparkline.points,
-      internalPlugsSparkline.points,
-      internalSparkline.points,
-      kpiExportRows,
-      periodLabel,
-    ],
+    [branchLabel, kpiExportRows, periodLabel],
   );
 
   return (
@@ -357,12 +239,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             )}
             icon={<Factory size={22} />}
             loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={internalSparkline.points}
-                loading={internalSparkline.loading}
-              />
-            }
           />
           <KpiCard
             title="PPM externo"
@@ -379,113 +255,8 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
             )}
             icon={<Truck size={22} />}
             loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={externalSparkline.points}
-                color={CHART_COLORS[1]}
-                loading={externalSparkline.loading}
-              />
-            }
           />
         </div>
-      </section>
-
-      <section className="dq-kpi-grid" aria-busy={isBusy}>
-        <KpiCard
-          title="PPM interno — plugues"
-            titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmInternalPlugs}
-            value={formatDashboardMetricValue(ppmInternalPlugs?.ppm, ppmInternalPlugs)}
-            {...buildKpiGoalPresentationWithBranchIdd(
-              `Devolvido: ${formatDecimal(ppmInternalPlugs?.total_devolvido_un)} un · ${periodLabel}`,
-              ppmInternalPlugs,
-              {
-                realizedValue: ppmInternalPlugs?.ppm,
-                activeBranch: activeApiBranch,
-                branches: ppmInternalPlugsBranches,
-              },
-            )}
-            icon={<Plug size={22} />}
-            loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={internalPlugsSparkline.points}
-                color={CHART_COLORS[2]}
-                loading={internalPlugsSparkline.loading}
-              />
-            }
-          />
-          <KpiCard
-            title="PPM externo — plugues"
-            titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmExternalPlugs}
-            value={formatDashboardMetricValue(ppmExternalPlugs?.ppm, ppmExternalPlugs)}
-            {...buildKpiGoalPresentationWithBranchIdd(
-              `Devolvido: ${formatDecimal(ppmExternalPlugs?.total_devolvido_un)} un · ${periodLabel}`,
-              ppmExternalPlugs,
-              {
-                realizedValue: ppmExternalPlugs?.ppm,
-                activeBranch: activeApiBranch,
-                branches: ppmExternalPlugsBranches,
-              },
-            )}
-            icon={<Plug size={22} />}
-            loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={externalPlugsSparkline.points}
-                color={CHART_COLORS[3]}
-                loading={externalPlugsSparkline.loading}
-              />
-            }
-          />
-      </section>
-
-      <section className="dq-kpi-grid" aria-busy={isBusy}>
-        <KpiCard
-          title="PPM interno — componentes"
-            titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmInternalComponents}
-            value={formatDashboardMetricValue(ppmInternalComponents?.ppm, ppmInternalComponents)}
-            {...buildKpiGoalPresentationWithBranchIdd(
-              `Devolvido: ${formatDecimal(ppmInternalComponents?.total_devolvido_un)} un · ${periodLabel}`,
-              ppmInternalComponents,
-              {
-                realizedValue: ppmInternalComponents?.ppm,
-                activeBranch: activeApiBranch,
-                branches: ppmInternalComponentsBranches,
-              },
-            )}
-            icon={<Boxes size={22} />}
-            loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={internalComponentsSparkline.points}
-                color={CHART_COLORS[4]}
-                loading={internalComponentsSparkline.loading}
-              />
-            }
-          />
-          <KpiCard
-            title="PPM externo — componentes"
-            titleHint={QUALITY_HELP_TOOLTIPS.kpis.ppmExternalComponents}
-            value={formatDashboardMetricValue(ppmExternalComponents?.ppm, ppmExternalComponents)}
-            {...buildKpiGoalPresentationWithBranchIdd(
-              `Devolvido: ${formatDecimal(ppmExternalComponents?.total_devolvido_un)} un · ${periodLabel}`,
-              ppmExternalComponents,
-              {
-                realizedValue: ppmExternalComponents?.ppm,
-                activeBranch: activeApiBranch,
-                branches: ppmExternalComponentsBranches,
-              },
-            )}
-            icon={<Boxes size={22} />}
-            loading={isBusy}
-            footer={
-              <PpmSparkline
-                data={externalComponentsSparkline.points}
-                color={CHART_COLORS[5]}
-                loading={externalComponentsSparkline.loading}
-              />
-            }
-          />
       </section>
 
       <section className="dq-kpi-grid" aria-busy={isBusy}>
