@@ -11,6 +11,7 @@ import {
 
 import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
+import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
 import { SlideFilmstripControls } from "./SlideFilmstripControls";
@@ -70,7 +71,10 @@ export function SlideFilmstrip({
   const [renamingSlideId, setRenamingSlideId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
   const skipBlurCommitRef = useRef(false);
+
+  useDragEdgeAutoScroll(listRef, dragIndex != null);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
@@ -176,7 +180,14 @@ export function SlideFilmstrip({
             {slides.length === 0 ? (
               <p className="td-deck-filmstrip__empty">Nenhuma tela na programação.</p>
             ) : (
-              <ol className="td-deck-filmstrip__list">
+              <ol
+                ref={listRef}
+                className="td-deck-filmstrip__list"
+                onDragOver={(event) => {
+                  /* Mantém drop permitido na lista e alimenta o auto-scroll das bordas. */
+                  event.preventDefault();
+                }}
+              >
                 {slides.map((slide, index) => {
                   const selected = slide.id === selectedSlideId;
                   const renaming = renamingSlideId === slide.id;
