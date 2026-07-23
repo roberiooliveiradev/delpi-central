@@ -134,6 +134,10 @@ export function useComunicadoEditorSelection({
    */
   const [lastPartialTextEditSelection, setLastPartialTextEditSelection] =
     useState<TextEditSelection | null>(null);
+  const [textFormatContextMenu, setTextFormatContextMenu] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
   >(null);
@@ -191,9 +195,18 @@ export function useComunicadoEditorSelection({
   const clearTextEditUi = useCallback(() => {
     setTextEditSelection(null);
     setLastPartialTextEditSelection(null);
+    setTextFormatContextMenu(null);
     setTextEditSelectionStyle(null);
     setTextEditListSelection(null);
     setTextEditNamedStyleSelection(null);
+  }, []);
+
+  const openTextFormatContextMenu = useCallback((position: { x: number; y: number }) => {
+    setTextFormatContextMenu(position);
+  }, []);
+
+  const closeTextFormatContextMenu = useCallback(() => {
+    setTextFormatContextMenu(null);
   }, []);
 
   const selectedId = selectedIds[selectedIds.length - 1] ?? null;
@@ -888,6 +901,9 @@ export function useComunicadoEditorSelection({
     enterTextEdit,
     textEditSelection,
     lastPartialTextEditSelection,
+    textFormatContextMenu,
+    openTextFormatContextMenu,
+    closeTextFormatContextMenu,
     textEditSelectionStyle,
     textEditListSelection,
     textEditNamedStyleSelection,

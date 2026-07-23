@@ -190,6 +190,10 @@ export type ComunicadoEditorContextValue = {
    * do DOM some no clique do botão (evita formatar o bloco inteiro).
    */
   lastPartialTextEditSelection: TextEditSelection | null;
+  /** Popover de tipografia do trecho (botão direito na edição inline). */
+  textFormatContextMenu: { x: number; y: number } | null;
+  openTextFormatContextMenu: (position: { x: number; y: number }) => void;
+  closeTextFormatContextMenu: () => void;
   textEditSelectionStyle: ContentRunSelectionStyleState | null;
   textEditListSelection: ContentRunListSelectionState | null;
   textEditNamedStyleSelection: ContentRunNamedStyleSelectionState | null;

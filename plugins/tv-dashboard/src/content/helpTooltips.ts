@@ -439,6 +439,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   contextMenu: {
     menu: "Menu de contexto do palco.",
+    textSelectionMenu: "Formatação do trecho selecionado.",
+    textSelectionToolbar: "Negrito, itálico, sublinhado e tachado no trecho.",
     quickFormat: "Atalhos rápidos de preenchimento e contorno.",
     fill: "Cor de preenchimento",
     outline: "Cor do contorno",

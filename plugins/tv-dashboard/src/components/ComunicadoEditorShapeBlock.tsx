@@ -5,6 +5,7 @@ import {
   useRef,
   type CSSProperties,
   type FocusEvent,
+  type MouseEvent,
 } from "react";
 import {
   blockCssStyle,
@@ -58,6 +59,8 @@ export function ComunicadoEditorShapeBlock({
     cancelPendingTapDeselect,
     registerTextEditorBridge,
     reportTextEditSelection,
+    lastPartialTextEditSelection,
+    openTextFormatContextMenu,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef(block);
@@ -178,6 +181,21 @@ export function ComunicadoEditorShapeBlock({
     exitEditing();
   }
 
+  function handleEditorContextMenu(event: MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    reportSelectionFromEditor();
+    const editor = editorRef.current;
+    const live = editor ? getEditableTextSelectionOffsets(editor) : null;
+    const fallback =
+      lastPartialTextEditSelection?.blockId === block.id ? lastPartialTextEditSelection : null;
+    const hasPartial =
+      (live != null && live.end > live.start) ||
+      (fallback != null && fallback.end > fallback.start);
+    if (!hasPartial) return;
+    openTextFormatContextMenu({ x: event.clientX, y: event.clientY });
+  }
+
   useLayoutEffect(() => {
     if (!isEditing) {
       editingInitBlockIdRef.current = null;
@@ -278,6 +296,7 @@ export function ComunicadoEditorShapeBlock({
                 reportSelectionFromEditor();
               }}
               onBlur={handleEditorBlur}
+              onContextMenu={handleEditorContextMenu}
               onKeyUp={reportSelectionFromEditor}
               onMouseUp={reportSelectionFromEditor}
               onKeyDown={(event) => {

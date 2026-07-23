@@ -71,6 +71,7 @@ import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
+import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionContextMenu";
 import { BlockSelectionChrome } from "./BlockSelectionChrome";
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -140,6 +141,10 @@ export function ComunicadoComposerCanvas() {
     armMultiDragSelection,
     armTapDeselect,
     cancelPendingTapDeselect,
+    lastPartialTextEditSelection,
+    textFormatContextMenu,
+    openTextFormatContextMenu,
+    closeTextFormatContextMenu,
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
@@ -522,7 +527,22 @@ export function ComunicadoComposerCanvas() {
   const handleStageContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, blockId?: string) => {
       event.preventDefault();
-      if (editingTextId) return;
+      /*
+       * Em edição de texto, o contentEditable abre o menu de tipografia do trecho.
+       * Se o evento subir (chrome do bloco) e houver seleção parcial, espelha o mesmo menu.
+       */
+      if (editingTextId) {
+        const partial =
+          lastPartialTextEditSelection?.blockId === editingTextId &&
+          lastPartialTextEditSelection.end > lastPartialTextEditSelection.start
+            ? lastPartialTextEditSelection
+            : null;
+        if (partial) {
+          event.stopPropagation();
+          openTextFormatContextMenu({ x: event.clientX, y: event.clientY });
+        }
+        return;
+      }
       const hit = resolveStageContextMenuHit({
         blockId,
         eventTarget: event.target,
@@ -547,7 +567,12 @@ export function ComunicadoComposerCanvas() {
         targetBlockId: null,
       });
     },
-    [cancelPendingTapDeselect, editingTextId],
+    [
+      cancelPendingTapDeselect,
+      editingTextId,
+      lastPartialTextEditSelection,
+      openTextFormatContextMenu,
+    ],
   );
 
   const handleCanvasContextMenu = useCallback(
@@ -1086,6 +1111,11 @@ export function ComunicadoComposerCanvas() {
         position={contextMenu}
         targetBlockId={contextMenu?.targetBlockId ?? null}
         onClose={() => setContextMenu(null)}
+      />
+      <ComunicadoTextSelectionContextMenu
+        open={textFormatContextMenu != null}
+        position={textFormatContextMenu}
+        onClose={closeTextFormatContextMenu}
       />
     </ComunicadoStageShell>
   );

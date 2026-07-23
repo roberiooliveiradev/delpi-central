@@ -5,6 +5,7 @@ import {
   useRef,
   type CSSProperties,
   type FocusEvent,
+  type MouseEvent,
 } from "react";
 import {
   appendHrefLineToRuns,
@@ -80,6 +81,8 @@ export function ComunicadoEditorTextBlock({
     cancelPendingTapDeselect,
     registerTextEditorBridge,
     reportTextEditSelection,
+    lastPartialTextEditSelection,
+    openTextFormatContextMenu,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef(block);
@@ -239,6 +242,21 @@ export function ComunicadoEditorTextBlock({
     exitEditing();
   }
 
+  function handleEditorContextMenu(event: MouseEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    reportSelectionFromEditor();
+    const editor = editorRef.current;
+    const live = editor ? getEditableTextSelectionOffsets(editor) : null;
+    const fallback =
+      lastPartialTextEditSelection?.blockId === block.id ? lastPartialTextEditSelection : null;
+    const hasPartial =
+      (live != null && live.end > live.start) ||
+      (fallback != null && fallback.end > fallback.start);
+    if (!hasPartial) return;
+    openTextFormatContextMenu({ x: event.clientX, y: event.clientY });
+  }
+
   useEffect(() => {
     if (!isEditing) {
       editingInitBlockIdRef.current = null;
@@ -358,6 +376,7 @@ export function ComunicadoEditorTextBlock({
                 reportSelectionFromEditor();
               }}
               onBlur={handleEditorBlur}
+              onContextMenu={handleEditorContextMenu}
               onKeyUp={reportSelectionFromEditor}
               onMouseUp={reportSelectionFromEditor}
               onKeyDown={(event) => {
