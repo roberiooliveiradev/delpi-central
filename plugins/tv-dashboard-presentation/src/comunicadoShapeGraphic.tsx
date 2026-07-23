@@ -1077,7 +1077,6 @@ export function ComunicadoShapeGraphic({
           : typeof borderRadius === "number" && Number.isFinite(borderRadius)
             ? borderRadius
             : `${cornerAdj * 50}%`,
-      ...(style?.boxShadow?.trim() ? { boxShadow: style.boxShadow } : {}),
     };
     return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
@@ -1089,22 +1088,18 @@ export function ComunicadoShapeGraphic({
       backgroundColor: fill,
       border: `${strokeWidth}px solid ${stroke}`,
       borderRadius: 9999,
-      ...(style?.boxShadow?.trim() ? { boxShadow: style.boxShadow } : {}),
     };
     return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
 
-  const svgShadow = style?.boxShadow?.trim()
-    ? ({ boxShadow: style.boxShadow } as CSSProperties)
-    : undefined;
-
+  /* Sombra: --tdp-block-shape-filter no bloco (drop-shadow), não box-shadow no SVG. */
   return (
     <svg
       viewBox="0 0 100 100"
       className={ensureComunicadoDualClass("tdp-comunicado__shape-svg")}
       preserveAspectRatio="none"
       aria-hidden="true"
-      style={{ overflow: "visible", ...svgShadow }}
+      style={{ overflow: "visible" }}
     >
       {renderSvgShape(kind, { fill, stroke, strokeWidth }, resolvedAdj, borderRadius)}
     </svg>

@@ -34,6 +34,7 @@ export {
   DEFAULT_BOX_SHADOW_MODEL,
   MAX_BOX_SHADOW_LAYERS,
   addBoxShadowLayer,
+  boxShadowCssToDropShadowFilter,
   boxShadowsEqual,
   clampBoxShadowModel,
   formatBoxShadow,

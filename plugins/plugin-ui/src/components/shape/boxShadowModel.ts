@@ -264,3 +264,22 @@ export function removeBoxShadowLayer(css: string | undefined, layerIndex: number
   stack.layers.splice(index, 1);
   return formatBoxShadowStack(stack);
 }
+
+/**
+ * Converte `box-shadow` CSS em `filter: drop-shadow(...)` (segue o alpha do desenho).
+ * Camadas `inset` e spread são omitidas (sem equivalente em drop-shadow).
+ */
+export function boxShadowCssToDropShadowFilter(css: string | undefined | null): string | null {
+  const stack = parseBoxShadowStack(css);
+  if (!stack?.layers.length) return null;
+  const parts: string[] = [];
+  for (const layer of stack.layers) {
+    if (layer.inset) continue;
+    const next = clampBoxShadowModel(layer);
+    const color = colorToCss({ hex: next.colorHex, alpha: next.opacity });
+    parts.push(
+      `drop-shadow(${formatLengthPx(next.offsetX)} ${formatLengthPx(next.offsetY)} ${formatLengthPx(next.blur)} ${color})`,
+    );
+  }
+  return parts.length > 0 ? parts.join(" ") : null;
+}

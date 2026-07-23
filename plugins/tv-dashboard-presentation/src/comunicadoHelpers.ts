@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import {
+  boxShadowCssToDropShadowFilter,
   DECK_CHART_DEFAULTS,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
@@ -555,7 +556,6 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       textAlign: "center" as const,
       verticalAlign: "middle" as const,
       fontWeight: "normal" as const,
-      ...(primitive === "area" ? { boxShadow: DECK_SHAPE_DEFAULTS.boxShadow } : {}),
     };
     if (shape && isPointShapeKind(shape)) {
       return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };
@@ -1514,8 +1514,8 @@ function stripOuterChromeStyle(css: CSSProperties) {
 }
 
 /**
- * KPI/chart/tabela/forma: sombra na moldura interna (já com fill + radius), não no wrapper.
- * Wrapper retangular + box-shadow cria “placa” extra e ignora o raio do card/forma.
+ * KPI/chart/tabela/filtro: sombra na moldura interna (já com fill + radius), não no wrapper.
+ * Wrapper retangular + box-shadow cria “placa” extra e ignora o raio do card.
  */
 function promoteBlockShadowToInnerChrome(
   css: CSSProperties,
@@ -1528,6 +1528,27 @@ function promoteBlockShadowToInnerChrome(
   }
   (css as CSSProperties & Record<string, string>)["--tdp-block-box-shadow"] = shadow;
   delete css.boxShadow;
+}
+
+/**
+ * Forma/texto: sombra via `filter: drop-shadow` no SVG/fill — segue o alpha do desenho
+ * (evita “placa” retangular do box-shadow no bbox).
+ */
+function promoteVisualBoxShapeShadow(
+  css: CSSProperties,
+  style: NonNullable<ComunicadoBlock["style"]>,
+) {
+  const vars = css as CSSProperties & Record<string, string | undefined>;
+  const shadow = typeof style.boxShadow === "string" ? style.boxShadow.trim() : "";
+  delete css.boxShadow;
+  delete vars["--tdp-block-box-shadow"];
+  if (!shadow || shadow === "none") {
+    delete vars["--tdp-block-shape-filter"];
+    return;
+  }
+  const filter = boxShadowCssToDropShadowFilter(shadow);
+  if (filter) vars["--tdp-block-shape-filter"] = filter;
+  else delete vars["--tdp-block-shape-filter"];
 }
 
 export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: number }): CSSProperties {
@@ -1557,9 +1578,9 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
 
   if (isComunicadoVisualBoxBlock(block)) {
     const profile = resolveVisualBoxProfile(block);
-    /* Texto e forma: fill/stroke/radius no gráfico — sombra via --tdp-block-box-shadow. */
+    /* Texto e forma: fill/stroke/radius no gráfico — sombra via drop-shadow (alpha). */
     stripOuterChromeStyle(css);
-    promoteBlockShadowToInnerChrome(css, style);
+    promoteVisualBoxShapeShadow(css, style);
 
     if (profile.mode === "text") {
       css.display = "flex";

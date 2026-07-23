@@ -200,7 +200,7 @@ describe("comunicadoHelpers", () => {
     }
   });
 
-  it("promove boxShadow da forma para --tdp-block-box-shadow (sombra segue o raio no fill)", () => {
+  it("promove boxShadow da forma para --tdp-block-shape-filter (drop-shadow)", () => {
     const shadow = "0 8px 20px rgba(15, 23, 42, 0.28)";
     const shape = createShapeBlock("rectangle");
     shape.style = {
@@ -211,14 +211,18 @@ describe("comunicadoHelpers", () => {
     const css = blockCssStyle(shape) as CSSProperties & Record<string, string>;
     expect(css.boxShadow).toBeUndefined();
     expect(css.borderRadius).toBeUndefined();
-    expect(css["--tdp-block-box-shadow"]).toBe(shadow);
+    expect(css["--tdp-block-box-shadow"]).toBeUndefined();
+    expect(css["--tdp-block-shape-filter"]).toBe(
+      "drop-shadow(0 8px 20px rgba(15, 23, 42, 0.28))",
+    );
   });
 
-  it("forma de área nasce com sombra padrão do catálogo", () => {
+  it("forma de área nasce sem sombra por padrão", () => {
     const shape = createShapeBlock("ellipse");
-    expect(shape.style?.boxShadow).toBeTruthy();
+    expect(shape.style?.boxShadow).toBeFalsy();
     const css = blockCssStyle(shape) as CSSProperties & Record<string, string>;
-    expect(css["--tdp-block-box-shadow"]).toBe(shape.style?.boxShadow);
+    expect(css["--tdp-block-shape-filter"]).toBeUndefined();
+    expect(css["--tdp-block-box-shadow"]).toBeUndefined();
   });
 
   it("promove sombra inset e multi-camada para --tdp-block-box-shadow", () => {
