@@ -103,7 +103,6 @@ describe("resolveBlockWrapChromeFlags", () => {
         blockId: "k",
         blockType: "kpi_view",
         isSelected: true,
-        editingText: false,
         closedGroupActive: false,
         selectedPart: { kind: "value" },
       }),
@@ -127,7 +126,28 @@ describe("resolveBlockWrapChromeFlags", () => {
         blockId: "a",
         blockType: "shape",
         isSelected: true,
-        editingText: false,
+        closedGroupActive: false,
+        selectedPart: null,
+      }),
+    ).toEqual({
+      showOutline: true,
+      showHandles: true,
+      mutedAsGroupMember: false,
+      partChildrenActive: false,
+    });
+  });
+
+  it("edição de texto mantém outline e handles de redimensionamento", () => {
+    const hierarchy = resolveStageSelectionHierarchy({
+      blocks: [block("t1", { type: "text" })],
+      selectedIds: ["t1"],
+    });
+    expect(
+      resolveBlockWrapChromeFlags({
+        hierarchy,
+        blockId: "t1",
+        blockType: "text",
+        isSelected: true,
         closedGroupActive: false,
         selectedPart: null,
       }),

@@ -132,13 +132,13 @@ function normalizeSelectedParts(
 /**
  * Chrome do wrap do bloco: handles/outline do «pai» só quando a unidade pai está ativa.
  * Com filhos complexos selecionados, o wrap fica mudo (paridade com membro de grupo).
+ * Edição de texto inline **mantém** outline + resize (paridade Figma/Canva).
  */
 export function resolveBlockWrapChromeFlags(params: {
   hierarchy: StageSelectionHierarchy;
   blockId: string;
   blockType: string | undefined;
   isSelected: boolean;
-  editingText: boolean;
   closedGroupActive: boolean;
   selectedPart?: StagePartRef | null;
 }): {
@@ -152,12 +152,11 @@ export function resolveBlockWrapChromeFlags(params: {
     blockId,
     blockType,
     isSelected,
-    editingText,
     closedGroupActive,
     selectedPart,
   } = params;
 
-  if (!isSelected || editingText) {
+  if (!isSelected) {
     return {
       showOutline: false,
       showHandles: false,

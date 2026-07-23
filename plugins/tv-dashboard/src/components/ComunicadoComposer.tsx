@@ -554,7 +554,6 @@ export function ComunicadoComposerCanvas() {
       blockId,
       blockType: block?.type,
       isSelected: isBlockSelected(blockId),
-      editingText: editingTextId === blockId,
       closedGroupActive: Boolean(closedGroup?.memberIds.includes(blockId)),
       selectedPart: partForChrome,
     });
@@ -669,7 +668,6 @@ export function ComunicadoComposerCanvas() {
               blockId: block.id,
               blockType: block.type,
               isSelected,
-              editingText: editingTextId === block.id,
               closedGroupActive: inClosedGroup,
               selectedPart: partForChrome,
             });
