@@ -18,6 +18,9 @@ describe("keyboardShortcuts catalog", () => {
     expect(getKeyboardShortcut("zoom-wheel")?.showAltTip).toBe(true);
     expect(getKeyboardShortcut("keytips")?.keys).toBe("F1…F8");
     expect(getKeyboardShortcut("show-tips")?.description).toMatch(/ligar\/desligar/i);
+    expect(getKeyboardShortcut("context-menu")?.keys).toBe("Shift+F10");
+    expect(getKeyboardShortcut("group")?.keys).toBe("Ctrl+G");
+    expect(getKeyboardShortcut("ungroup")?.keys).toBe("Ctrl+Shift+G");
     expect(getKeyboardShortcut("missing")).toBeUndefined();
   });
 

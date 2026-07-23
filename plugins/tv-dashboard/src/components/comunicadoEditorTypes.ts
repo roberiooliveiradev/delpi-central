@@ -28,5 +28,7 @@ export type ComunicadoEditorKeyboardActions = {
   copySelected: () => void;
   pasteSelected: () => void;
   canPaste: boolean;
+  groupSelected?: () => void;
+  ungroupSelected?: () => void;
   nudgeSelected: (dx: number, dy: number) => void;
 };

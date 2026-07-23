@@ -49,6 +49,7 @@ import { useMemo } from "react";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { shortcutKeysLabel } from "../content/keyboardShortcuts";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import {
   isContextMenuActionEnabled,
@@ -58,6 +59,15 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.contextMenu;
+const S = {
+  cut: shortcutKeysLabel("cut"),
+  copy: shortcutKeysLabel("copy"),
+  paste: shortcutKeysLabel("paste"),
+  duplicate: shortcutKeysLabel("duplicate"),
+  group: shortcutKeysLabel("group"),
+  ungroup: shortcutKeysLabel("ungroup"),
+  delete: shortcutKeysLabel("delete"),
+} as const;
 
 type Props = {
   open: boolean;
@@ -193,21 +203,21 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
       <ContextMenuItem
         label={C.cut}
         icon={Scissors}
-        shortcut="Ctrl+X"
+        shortcut={S.cut}
         disabled={!enabled("cut")}
         onSelect={() => run(cutSelected)}
       />
       <ContextMenuItem
         label={C.copy}
         icon={Clipboard}
-        shortcut="Ctrl+C"
+        shortcut={S.copy}
         disabled={!enabled("copy")}
         onSelect={() => run(copySelected)}
       />
       <ContextMenuItem
         label={C.paste}
         icon={ClipboardPaste}
-        shortcut="Ctrl+V"
+        shortcut={S.paste}
         disabled={!enabled("paste")}
         onSelect={() => run(() => void pasteFromSystemClipboard())}
       />
@@ -215,7 +225,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         <ContextMenuItem
           label={C.duplicate}
           icon={Copy}
-          shortcut="Ctrl+D"
+          shortcut={S.duplicate}
           disabled={!enabled("duplicate")}
           onSelect={() => run(() => void duplicateSelected())}
         />
@@ -297,6 +307,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
             <ContextMenuItem
               label={C.group}
               icon={Group}
+              shortcut={S.group}
               disabled={!enabled("group")}
               onSelect={() => run(groupSelected)}
             />
@@ -309,6 +320,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
             <ContextMenuItem
               label={C.ungroup}
               icon={Ungroup}
+              shortcut={S.ungroup}
               disabled={!enabled("ungroup")}
               onSelect={() => run(ungroupSelected)}
             />
@@ -436,7 +448,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
           <ContextMenuItem
             label={C.delete}
             icon={Trash2}
-            shortcut="Del"
+            shortcut={S.delete}
             destructive
             disabled={!enabled("delete")}
             onSelect={() => run(removeSelected)}

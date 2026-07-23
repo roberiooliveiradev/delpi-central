@@ -106,6 +106,8 @@ function ComunicadoEditorKeyboardBridge() {
     copySelected,
     pasteSelected,
     canPaste,
+    groupSelected,
+    ungroupSelected,
     nudgeSelected,
   } = useComunicadoEditor();
   useComunicadoEditorKeyboard({
@@ -136,6 +138,8 @@ function ComunicadoEditorKeyboardBridge() {
     copySelected,
     pasteSelected,
     canPaste,
+    groupSelected,
+    ungroupSelected,
     nudgeSelected,
     /* Undo do slide é local/imediato — deck history é só trilha de revisão. */
     enableHistoryShortcuts: true,

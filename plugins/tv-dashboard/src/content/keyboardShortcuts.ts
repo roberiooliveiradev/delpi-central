@@ -82,6 +82,30 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     showAltTip: true,
   },
   {
+    id: "group",
+    group: "edicao",
+    label: "Agrupar",
+    keys: "Ctrl+G",
+    description: "Agrupa dois ou mais elementos selecionados",
+    showAltTip: true,
+  },
+  {
+    id: "ungroup",
+    group: "edicao",
+    label: "Desagrupar",
+    keys: "Ctrl+Shift+G",
+    description: "Desfaz o grupo da seleção",
+    showAltTip: true,
+  },
+  {
+    id: "context-menu",
+    group: "selecao",
+    label: "Menu de contexto",
+    keys: "Shift+F10",
+    description: "Também tecla Menu. Abre o menu no bbox da seleção ou no centro do palco",
+    showAltTip: false,
+  },
+  {
     id: "multi-select-click",
     group: "selecao",
     label: "Multi-seleção (clique)",
@@ -228,6 +252,13 @@ export function shortcutHelpSuffix(id: string): string {
   const entry = getKeyboardShortcut(id);
   if (!entry) return "";
   return ` (${formatShortcutKeys(entry.keys)})`;
+}
+
+/** Atalho para exibir em menus (undefined se o id não existir no catálogo). */
+export function shortcutKeysLabel(id: string): string | undefined {
+  const entry = getKeyboardShortcut(id);
+  if (!entry) return undefined;
+  return formatShortcutKeys(entry.keys);
 }
 
 export function listKeyboardShortcutsByGroup(): Array<{

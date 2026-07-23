@@ -30,6 +30,8 @@ export function useComunicadoEditorKeyboard({
   copySelected,
   pasteSelected: _pasteSelected,
   canPaste: _canPaste,
+  groupSelected,
+  ungroupSelected,
   nudgeSelected,
   enableHistoryShortcuts = true,
 }: ComunicadoEditorKeyboardActions & {
@@ -140,6 +142,16 @@ export function useComunicadoEditorKeyboard({
       if (mod && key === "d") {
         if (!hasSelection) return;
         duplicateSelected();
+        return { handled: true };
+      }
+
+      if (mod && key === "g") {
+        if (!hasSelection) return;
+        if (event.shiftKey) {
+          ungroupSelected?.();
+        } else {
+          groupSelected?.();
+        }
         return { handled: true };
       }
 
