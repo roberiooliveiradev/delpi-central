@@ -41,6 +41,11 @@ export type PageHeaderProps = {
   onRefresh?: () => void;
   refreshing?: boolean;
   compact?: boolean;
+  /**
+   * Omite h1 + subtítulo (mantém eyebrow/nav/ações).
+   * Útil quando a topbar já identifica a área e o título de página seria redundante.
+   */
+  hideHeading?: boolean;
   classNames: PageHeaderClassNames;
   labels: PageHeaderLabels;
 };
@@ -75,8 +80,19 @@ function RefreshButton({
 }
 
 function BrandLayout(props: PageHeaderProps) {
-  const { classNames, title, subtitle, eyebrow, icon, nav, actions, onRefresh, refreshing, labels } =
-    props;
+  const {
+    classNames,
+    title,
+    subtitle,
+    eyebrow,
+    icon,
+    nav,
+    actions,
+    onRefresh,
+    refreshing,
+    labels,
+    hideHeading = false,
+  } = props;
   const mergedActions =
     actions || onRefresh ? (
       <div className={classNames.actions}>
@@ -101,10 +117,14 @@ function BrandLayout(props: PageHeaderProps) {
         <div className={classNames.content}>
           {eyebrow && classNames.eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
           {nav && classNames.nav ? <div className={classNames.nav}>{nav}</div> : nav}
-          <h1>{title}</h1>
-          {subtitle && classNames.subtitle ? (
-            <span className={classNames.subtitle}>{subtitle}</span>
-          ) : null}
+          {hideHeading ? null : (
+            <>
+              <h1>{title}</h1>
+              {subtitle && classNames.subtitle ? (
+                <span className={classNames.subtitle}>{subtitle}</span>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
       {mergedActions}
@@ -246,6 +266,11 @@ export function pageHeaderStackBemClasses(prefix: string): PageHeaderClassNames 
   };
 }
 
+function headerAriaLabel(title: ReactNode, hideHeading: boolean | undefined): string | undefined {
+  if (!hideHeading) return undefined;
+  return typeof title === "string" && title.trim() ? title : undefined;
+}
+
 export function PageHeader(props: PageHeaderProps) {
   const headerClass = [
     props.compact && props.classNames.rootCompact
@@ -256,7 +281,7 @@ export function PageHeader(props: PageHeaderProps) {
     .join(" ");
 
   return (
-    <header className={headerClass}>
+    <header className={headerClass} aria-label={headerAriaLabel(props.title, props.hideHeading)}>
       {props.layout === "brand" ? <BrandLayout {...props} /> : null}
       {props.layout === "titleRow" ? <TitleRowLayout {...props} /> : null}
       {props.layout === "stack" ? <StackLayout {...props} /> : null}

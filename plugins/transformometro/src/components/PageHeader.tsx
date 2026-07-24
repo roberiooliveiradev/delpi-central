@@ -39,6 +39,7 @@ export function PageHeader({
       eyebrow="DELPI • Transformômetro"
       title={title}
       subtitle={subtitle}
+      hideHeading
       nav={<TransformometroNav currentPath={currentPath} onNavigate={onNavigate} />}
       actions={actions}
       onRefresh={onRefresh}
