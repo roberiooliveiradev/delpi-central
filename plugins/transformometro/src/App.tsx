@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { PageTransition } from "./components/PageTransition";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
+import { FloatingNoticeProvider } from "./components/ui/FloatingNoticeProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import {
   ConfiguracoesWorkspacePage,
@@ -91,7 +92,9 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   return (
     <ConfirmDialogProvider>
-      <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
+      <FloatingNoticeProvider>
+        <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
+      </FloatingNoticeProvider>
     </ConfirmDialogProvider>
   );
 }

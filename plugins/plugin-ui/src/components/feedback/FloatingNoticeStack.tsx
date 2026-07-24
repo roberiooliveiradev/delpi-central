@@ -1,5 +1,11 @@
 import { AlertTriangle, CheckCircle2, Info, X, XCircle } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { DELPI_UI_OVERLAY_Z_INDEX } from "../../overlayLayers";
@@ -25,6 +31,7 @@ export type FloatingNoticeStackClassNames = {
   title: string;
   message: string;
   closeButton: string;
+  progress: string;
 };
 
 export type FloatingNoticeStackLabels = {
@@ -85,6 +92,7 @@ export function floatingNoticeStackBemClasses(
     title: element("title"),
     message: element("message"),
     closeButton: element("close"),
+    progress: element("progress"),
   };
 }
 
@@ -113,10 +121,20 @@ function FloatingNotice({
     return () => window.clearTimeout(timer);
   }, [autoDismissMs, item.id, onDismiss]);
 
+  const showProgress =
+    typeof autoDismissMs === "number" && Number.isFinite(autoDismissMs) && autoDismissMs > 0;
+
   return (
     <div
       className={withBemModifier(classNames.notice, variant)}
       role={variant === "error" || variant === "warning" ? "alert" : "status"}
+      style={
+        showProgress
+          ? ({
+              ["--delpi-ui-floating-notice-dismiss-ms"]: `${autoDismissMs}ms`,
+            } as CSSProperties)
+          : undefined
+      }
     >
       <span className={classNames.icon}>{VARIANT_ICONS[variant]}</span>
       <div className={classNames.content}>
@@ -131,6 +149,9 @@ function FloatingNotice({
       >
         <X size={16} aria-hidden="true" />
       </button>
+      {showProgress ? (
+        <span className={classNames.progress} aria-hidden="true" />
+      ) : null}
     </div>
   );
 }

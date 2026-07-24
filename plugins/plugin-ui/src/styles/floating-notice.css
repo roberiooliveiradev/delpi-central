@@ -1,70 +1,100 @@
 /**
- * FloatingNoticeStack — cards flutuantes de erro/aviso (.delpi-ui-floating-notice*).
+ * FloatingNoticeStack — toasts flutuantes (.delpi-ui-floating-notice*).
  * Portal no body; pilha fixa no canto superior direito.
  */
 
 .delpi-ui-floating-notices {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  width: min(380px, calc(100vw - 32px));
+  gap: 12px;
+  width: min(400px, calc(100vw - 40px));
   pointer-events: none;
 }
 
 .delpi-ui-floating-notice {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  border-left: 4px solid var(--delpi-ui-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--delpi-ui-surface, #ffffff);
+  gap: 12px;
+  overflow: hidden;
+  padding: 14px 14px 14px 16px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-border, #e5e7eb) 80%,
+    transparent
+  );
+  border-radius: 14px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, #ffffff) 88%,
+    transparent
+  );
   color: var(--delpi-ui-text, #111111);
   font-size: 13px;
   line-height: 1.45;
-  box-shadow: 0 12px 32px color-mix(in srgb, #000 22%, transparent);
+  box-shadow:
+    0 18px 40px color-mix(in srgb, #000 18%, transparent),
+    0 2px 8px color-mix(in srgb, #000 8%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   pointer-events: auto;
-  animation: delpi-ui-floating-notice-in 180ms ease-out;
+  animation: delpi-ui-floating-notice-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes delpi-ui-floating-notice-in {
   from {
     opacity: 0;
-    transform: translateY(-6px);
+    transform: translate3d(12px, -4px, 0) scale(0.98);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 .delpi-ui-floating-notice__icon {
   display: inline-flex;
   flex: none;
-  margin-top: 1px;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, #111) 6%,
+    transparent
+  );
 }
 
 .delpi-ui-floating-notice__content {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
+  padding-top: 1px;
   overflow-wrap: anywhere;
 }
 
 .delpi-ui-floating-notice__title {
   font-size: 13px;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--delpi-ui-text, #111111);
 }
 
 .delpi-ui-floating-notice__message {
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.75)));
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
+}
+
+.delpi-ui-floating-notice__message:only-child {
+  color: var(--delpi-ui-text, #111111);
+  font-weight: 600;
 }
 
 .delpi-ui-floating-notice__close {
@@ -72,14 +102,18 @@
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  margin: -2px -4px 0 0;
   padding: 0;
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.6)));
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.55)));
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .delpi-ui-floating-notice__close:hover {
@@ -87,34 +121,175 @@
   color: var(--delpi-ui-text, #111111);
 }
 
+.delpi-ui-floating-notice__close:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 70%,
+    transparent
+  );
+  outline-offset: 1px;
+}
+
+/** Barra de auto-dismiss (só quando --delpi-ui-floating-notice-dismiss-ms está setado). */
+.delpi-ui-floating-notice__progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  transform-origin: left center;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 55%,
+    transparent
+  );
+  animation: delpi-ui-floating-notice-progress linear forwards;
+  animation-duration: var(--delpi-ui-floating-notice-dismiss-ms, 6000ms);
+  pointer-events: none;
+}
+
+@keyframes delpi-ui-floating-notice-progress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
 .delpi-ui-floating-notice--error {
-  border-left-color: var(--delpi-ui-danger, #b42318);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #b42318) 28%,
+    var(--delpi-ui-border, #e5e7eb)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #b42318) 8%,
+    var(--delpi-ui-surface, #ffffff)
+  );
 }
 
 .delpi-ui-floating-notice--error .delpi-ui-floating-notice__icon {
   color: var(--delpi-ui-danger, #b42318);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #b42318) 14%,
+    transparent
+  );
+}
+
+.delpi-ui-floating-notice--error .delpi-ui-floating-notice__progress {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #b42318) 65%,
+    transparent
+  );
 }
 
 .delpi-ui-floating-notice--warning {
-  border-left-color: var(--warning, #b54708);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #f59e0b)) 32%,
+    var(--delpi-ui-border, #e5e7eb)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #f59e0b)) 10%,
+    var(--delpi-ui-surface, #ffffff)
+  );
 }
 
 .delpi-ui-floating-notice--warning .delpi-ui-floating-notice__icon {
-  color: var(--warning, #b54708);
+  color: var(--delpi-ui-warning, var(--warning, #b54708));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #f59e0b)) 16%,
+    transparent
+  );
+}
+
+.delpi-ui-floating-notice--warning .delpi-ui-floating-notice__progress {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, var(--warning, #f59e0b)) 70%,
+    transparent
+  );
 }
 
 .delpi-ui-floating-notice--success {
-  border-left-color: var(--success, #12b76a);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #12b76a)) 30%,
+    var(--delpi-ui-border, #e5e7eb)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #12b76a)) 10%,
+    var(--delpi-ui-surface, #ffffff)
+  );
 }
 
 .delpi-ui-floating-notice--success .delpi-ui-floating-notice__icon {
-  color: var(--success, #12b76a);
+  color: var(--delpi-ui-success, var(--success, #12b76a));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #12b76a)) 16%,
+    transparent
+  );
+}
+
+.delpi-ui-floating-notice--success .delpi-ui-floating-notice__progress {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #12b76a)) 70%,
+    transparent
+  );
 }
 
 .delpi-ui-floating-notice--info {
-  border-left-color: var(--delpi-ui-accent, #2563eb);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 30%,
+    var(--delpi-ui-border, #e5e7eb)
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 9%,
+    var(--delpi-ui-surface, #ffffff)
+  );
 }
 
 .delpi-ui-floating-notice--info .delpi-ui-floating-notice__icon {
-  color: var(--delpi-ui-accent, #2563eb);
+  color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 14%,
+    transparent
+  );
+}
+
+.delpi-ui-floating-notice--info .delpi-ui-floating-notice__progress {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 70%,
+    transparent
+  );
+}
+
+@media (max-width: 540px) {
+  .delpi-ui-floating-notices {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-floating-notice,
+  .delpi-ui-floating-notice__progress {
+    animation: none;
+  }
 }

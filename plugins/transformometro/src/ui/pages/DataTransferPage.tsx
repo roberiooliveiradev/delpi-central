@@ -8,6 +8,7 @@ import { TableHeader } from "../../components/TableHeader";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useFloatingNotice } from "../../components/ui/FloatingNoticeProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   applyJsonImport,
@@ -25,6 +26,7 @@ import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { StateBox } from "../../components/StateBox";
 
 const tableCn = DS_TABLE_CLASS_NAMES;
+const FEEDBACK_NOTICE_ID = "tm-data-transfer-feedback";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -62,6 +64,7 @@ const RESOLVED_FORMAT_LABELS: Record<"legacy" | "modern", string> = {
 
 export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props) {
   const confirm = useConfirm();
+  const notice = useFloatingNotice();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<JsonImportMode>("merge");
   const [importSource, setImportSource] = useState<ImportSource>("package");
@@ -69,77 +72,101 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
   const [importFile, setImportFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<JsonImportPreview | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const clearMessages = () => {
-    setError(null);
-    setSuccess(null);
-  };
+  const notifySuccess = useCallback(
+    (title: string, message: string) => {
+      notice({
+        id: FEEDBACK_NOTICE_ID,
+        variant: "success",
+        title,
+        message,
+      });
+    },
+    [notice],
+  );
+
+  const notifyError = useCallback(
+    (message: string) => {
+      notice({
+        id: FEEDBACK_NOTICE_ID,
+        variant: "error",
+        title: "Não foi possível concluir",
+        message,
+      });
+    },
+    [notice],
+  );
 
   const onExportPackage = useCallback(async () => {
-    clearMessages();
     setBusy("export-package");
     try {
       await downloadPackageExport(getAccessToken);
-      setSuccess("Exportação concluída — pacote .tmbackup.zip baixado (cadastro + evidências).");
+      notifySuccess(
+        "Exportação concluída",
+        "Pacote .tmbackup.zip baixado (cadastro + evidências).",
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao exportar pacote.");
+      notifyError(err instanceof Error ? err.message : "Erro ao exportar pacote.");
     } finally {
       setBusy(null);
     }
-  }, [getAccessToken]);
+  }, [getAccessToken, notifyError, notifySuccess]);
 
   const onExportJson = useCallback(async () => {
-    clearMessages();
     setBusy("export-json");
     try {
       await downloadJsonExport(getAccessToken);
-      setSuccess("Exportação concluída — arquivo JSON baixado (sem binários de evidência).");
+      notifySuccess(
+        "Exportação concluída",
+        "Arquivo JSON baixado (sem binários de evidência).",
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao exportar JSON.");
+      notifyError(err instanceof Error ? err.message : "Erro ao exportar JSON.");
     } finally {
       setBusy(null);
     }
-  }, [getAccessToken]);
+  }, [getAccessToken, notifyError, notifySuccess]);
 
-  const onFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
-    clearMessages();
-    setPreview(null);
-    setBundle(null);
-    setImportFile(null);
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setFileName(file.name);
+  const onFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      setPreview(null);
+      setBundle(null);
+      setImportFile(null);
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setFileName(file.name);
 
-    const lower = file.name.toLowerCase();
-    if (lower.endsWith(".zip") || lower.endsWith(".tmbackup.zip")) {
-      setImportSource("package");
-      setImportFile(file);
-      return;
-    }
+      const lower = file.name.toLowerCase();
+      if (lower.endsWith(".zip") || lower.endsWith(".tmbackup.zip")) {
+        setImportSource("package");
+        setImportFile(file);
+        return;
+      }
 
-    setImportSource("json");
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as JsonBackupBundle;
-      setBundle(parsed);
-    } catch {
-      setError("Arquivo inválido — envie um JSON ou pacote .tmbackup.zip exportado pelo Transformômetro.");
-    }
-  }, []);
+      setImportSource("json");
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text) as JsonBackupBundle;
+        setBundle(parsed);
+      } catch {
+        notifyError(
+          "Arquivo inválido — envie um JSON ou pacote .tmbackup.zip exportado pelo Transformômetro.",
+        );
+      }
+    },
+    [notifyError],
+  );
 
   const onPreview = useCallback(async () => {
     if (importSource === "package" && !importFile) {
-      setError("Selecione um pacote .zip antes de pré-visualizar.");
+      notifyError("Selecione um pacote .zip antes de pré-visualizar.");
       return;
     }
     if (importSource === "json" && !bundle) {
-      setError("Selecione um arquivo JSON antes de pré-visualizar.");
+      notifyError("Selecione um arquivo JSON antes de pré-visualizar.");
       return;
     }
-    clearMessages();
     setBusy("preview");
     try {
       const result =
@@ -148,22 +175,22 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
           : await previewJsonImport(bundle!, mode, "auto", getAccessToken);
       setPreview(result);
       if (!result.valid) {
-        setError((result.errors ?? []).join(" ") || "Pacote inválido.");
+        notifyError((result.errors ?? []).join(" ") || "Pacote inválido.");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro na pré-visualização.");
+      notifyError(err instanceof Error ? err.message : "Erro na pré-visualização.");
     } finally {
       setBusy(null);
     }
-  }, [importSource, importFile, bundle, mode, getAccessToken]);
+  }, [importSource, importFile, bundle, mode, getAccessToken, notifyError]);
 
   const onApply = useCallback(async () => {
     if (importSource === "package" && !importFile) {
-      setError("Selecione um pacote .zip antes de importar.");
+      notifyError("Selecione um pacote .zip antes de importar.");
       return;
     }
     if (importSource === "json" && !bundle) {
-      setError("Selecione um arquivo JSON antes de importar.");
+      notifyError("Selecione um arquivo JSON antes de importar.");
       return;
     }
     if (mode === "replace") {
@@ -176,7 +203,6 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       });
       if (!ok) return;
     }
-    clearMessages();
     setBusy("apply");
     try {
       const result =
@@ -189,15 +215,16 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
         result.evidence_files_restored != null
           ? ` ${result.evidence_files_restored} arquivo(s) de evidência restaurado(s).`
           : "";
-      setSuccess(
-        `Importação concluída (${mode === "replace" ? "substituição total" : "mesclagem por ID"}). Dashboard recalculado (${rows} linhas derivadas).${evidence}`
+      notifySuccess(
+        "Importação concluída",
+        `${mode === "replace" ? "Substituição total" : "Mesclagem por ID"}. Dashboard recalculado (${rows} linhas derivadas).${evidence}`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro na importação.");
+      notifyError(err instanceof Error ? err.message : "Erro na importação.");
     } finally {
       setBusy(null);
     }
-  }, [importSource, importFile, bundle, mode, getAccessToken]);
+  }, [importSource, importFile, bundle, mode, getAccessToken, confirm, notifyError, notifySuccess]);
 
   const selectMode = (next: JsonImportMode) => {
     setMode(next);
@@ -218,17 +245,6 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       />
 
       <div className="tm-data-transfer">
-        {error ? (
-          <StateBox variant="error" onDismiss={() => setError(null)}>
-            <p>{error}</p>
-          </StateBox>
-        ) : null}
-        {success ? (
-          <StateBox variant="success" onDismiss={() => setSuccess(null)}>
-            <p>{success}</p>
-          </StateBox>
-        ) : null}
-
         <div className="tm-data-transfer__grid">
           <section className="ds-card tm-data-transfer__panel tm-data-transfer__panel--export">
             <div className="tm-data-transfer__panel-head">

@@ -72,6 +72,8 @@ describe("FloatingNoticeStack", () => {
       />,
     );
 
+    expect(document.querySelector(".delpi-ui-floating-notice__progress")).toBeTruthy();
+
     act(() => {
       vi.advanceTimersByTime(6001);
     });
