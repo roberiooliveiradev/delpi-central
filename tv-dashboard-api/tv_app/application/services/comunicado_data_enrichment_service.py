@@ -61,6 +61,30 @@ _DEFAULT_TABLE_MAX_ROWS = 90
 _DEFAULT_SERIES_TABLE_MAX_ROWS = 366
 
 
+def _collect_canvas_table_source_ids(block: dict[str, Any]) -> list[str]:
+    """Fonte default do bloco + overrides por célula (`dataSourceId`)."""
+    ids: list[str] = []
+    seen: set[str] = set()
+
+    def push(raw: Any) -> None:
+        sid = str(raw or "").strip()
+        if not sid or sid in seen:
+            return
+        seen.add(sid)
+        ids.append(sid)
+
+    push(block.get("dataSourceId"))
+    cells = block.get("cells")
+    if isinstance(cells, list):
+        for row in cells:
+            if not isinstance(row, list):
+                continue
+            for cell in row:
+                if isinstance(cell, dict):
+                    push(cell.get("dataSourceId"))
+    return ids
+
+
 def _apply_incremental_pagination_defaults(
     params: dict[str, Any],
     route: dict[str, Any] | None,
@@ -1086,6 +1110,26 @@ class ComunicadoDataEnrichmentService:
             ):
                 linked.append(block)
                 continue
+            if block_type in CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES:
+                source_ids = _collect_canvas_table_source_ids(block)
+                by_source = {
+                    sid: dict(source_resolved[sid])
+                    for sid in source_ids
+                    if sid in source_resolved
+                }
+                if not by_source:
+                    linked.append(block)
+                    continue
+                merged = dict(block)
+                merged["resolvedBySourceId"] = by_source
+                primary = str(block.get("dataSourceId") or "").strip()
+                if primary and primary in by_source:
+                    merged["resolved"] = dict(by_source[primary])
+                else:
+                    merged["resolved"] = dict(next(iter(by_source.values())))
+                merged["serverCanvasTableProjectionApplied"] = True
+                linked.append(merged)
+                continue
             source_id = str(block.get("dataSourceId") or "").strip()
             if not source_id or source_id not in source_resolved:
                 linked.append(block)
@@ -1097,9 +1141,6 @@ class ComunicadoDataEnrichmentService:
                     base_resolved,
                     block,
                 )
-            elif block_type in CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES:
-                merged["resolved"] = dict(base_resolved)
-                merged["serverCanvasTableProjectionApplied"] = True
             else:
                 merged["resolved"] = dict(base_resolved)
                 merged["serverTextProjectionApplied"] = True

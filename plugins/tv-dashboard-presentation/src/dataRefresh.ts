@@ -106,7 +106,15 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
     )
     .filter((block) => {
       if (block.type === "canvas_table") {
-        return Boolean(block.dataSourceId?.trim());
+        return Boolean(
+          block.dataSourceId?.trim() ||
+            block.cells.some((row) =>
+              row.some(
+                (cell) =>
+                  Boolean(cell.dataRef?.field?.trim()) || Boolean(cell.dataSourceId?.trim()),
+              ),
+            ),
+        );
       }
       return true;
     })
@@ -131,7 +139,7 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
               row
                 .map((cell, colIndex) =>
                   cell.dataRef?.field
-                    ? `${rowIndex}:${colIndex}:${cell.dataRef.field}`
+                    ? `${rowIndex}:${colIndex}:${cell.dataSourceId?.trim() || block.dataSourceId?.trim() || ""}:${cell.dataRef.field}`
                     : null,
                 )
                 .filter(Boolean),

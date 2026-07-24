@@ -47,8 +47,13 @@ export type CanvasTableCell = {
   style?: CanvasTableCellStyle;
   /** Formatação parcial — sem runs = run implícito com `text` + `style`. */
   contentRuns?: ComunicadoContentRun[];
-  /** Campo dinâmico da fonte do bloco. */
+  /** Campo dinâmico (fonte efetiva = `dataSourceId` da célula ou do bloco). */
   dataRef?: ComunicadoTextDataRef;
+  /**
+   * Fonte desta célula (bloco `data_source` do slide).
+   * Vazio = herda `ComunicadoCanvasTableBlock.dataSourceId`.
+   */
+  dataSourceId?: string;
 };
 
 export type CanvasTableHeaderStyle = "subtle" | "accent" | "none";
@@ -113,6 +118,11 @@ export function normalizeCanvasTableCell(value: unknown): CanvasTableCell {
     if (runs && shouldPersistContentRuns(runs)) cell.contentRuns = runs;
     const dataRef = normalizeTextDataRef((value as CanvasTableCell).dataRef);
     if (dataRef) cell.dataRef = dataRef;
+    const cellSource =
+      typeof (value as CanvasTableCell).dataSourceId === "string"
+        ? (value as CanvasTableCell).dataSourceId.trim()
+        : "";
+    if (cellSource) cell.dataSourceId = cellSource;
     return cell;
   }
   return { kind: "text", text: value == null ? "" : String(value) };

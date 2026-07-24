@@ -9,6 +9,7 @@ import {
 
 import {
   applyFieldLabelsToResolved,
+  collectCanvasTableSourceIds,
   isComunicadoVisualBoxBlock,
   isDataBlockType,
   isDataSourceBlockType,
@@ -281,15 +282,27 @@ export function ComunicadoEditorProvider({
           return { ...block, resolved: labeled };
         }
       }
-      if (block.type === "canvas_table" && block.dataSourceId?.trim()) {
-        const sourceId = block.dataSourceId.trim();
-        const preview = resolvedByBlockId[sourceId];
-        if (preview) {
-          const labeled =
-            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??
-            preview;
-          return { ...block, resolved: labeled };
+      if (block.type === "canvas_table") {
+        const sourceIds = collectCanvasTableSourceIds(block);
+        if (sourceIds.length === 0) return block;
+        const resolvedBySourceId: Record<string, NonNullable<(typeof resolvedByBlockId)[string]>> =
+          {};
+        for (const sourceId of sourceIds) {
+          const preview = resolvedByBlockId[sourceId];
+          if (!preview) continue;
+          resolvedBySourceId[sourceId] =
+            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ?? preview;
         }
+        if (Object.keys(resolvedBySourceId).length === 0) return block;
+        const primary = block.dataSourceId?.trim() ?? "";
+        const resolved =
+          (primary && resolvedBySourceId[primary]) ||
+          Object.values(resolvedBySourceId)[0];
+        return {
+          ...block,
+          resolved,
+          resolvedBySourceId,
+        };
       }
       if (isDataBlockType(block.type)) {
         const preview = resolvedByBlockId[block.id];

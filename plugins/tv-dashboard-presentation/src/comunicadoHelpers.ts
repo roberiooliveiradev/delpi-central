@@ -904,6 +904,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
         ...cell,
         style: cell.style ? { ...cell.style } : undefined,
         dataRef: cell.dataRef ? { ...cell.dataRef } : undefined,
+        ...(cell.dataSourceId?.trim()
+          ? { dataSourceId: cell.dataSourceId.trim() }
+          : {}),
       })),
     );
     if (block.headerRow != null) base.headerRow = block.headerRow;

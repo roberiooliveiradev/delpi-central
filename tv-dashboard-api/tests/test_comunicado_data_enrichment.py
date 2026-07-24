@@ -1501,22 +1501,36 @@ def test_enrich_links_text_block_to_data_source_resolved():
 
 
 def test_enrich_blocks_links_resolved_to_canvas_table():
-    """Grade com dataSourceId recebe resolved da fonte (células usam dataRef no cliente)."""
+    """Grade com dataSourceId (bloco e/ou célula) recebe resolvedBySourceId."""
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
-    gateway.fetch_by_operation_id.return_value = {
-        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
-        "data": {
-            "branch": "02",
-            "rol_target_pct": 111.1,
-            "meta": 120.0,
-        },
-        "route": {
-            "label": "Meta ROL",
-            "valueFields": ["rol_target_pct", "meta"],
-            "tvConstraints": {},
-        },
-    }
+
+    def _fetch(operation_id: str, **kwargs):
+        if operation_id == "get_ppm_meta":
+            return {
+                "meta": {"operationId": "get_ppm_meta", "shape": "scalar"},
+                "data": {"ppm": 1400},
+                "route": {
+                    "label": "PPM meta",
+                    "valueFields": ["ppm"],
+                    "tvConstraints": {},
+                },
+            }
+        return {
+            "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+            "data": {
+                "branch": "02",
+                "rol_target_pct": 111.1,
+                "meta": 120.0,
+            },
+            "route": {
+                "label": "Meta ROL",
+                "valueFields": ["rol_target_pct", "meta"],
+                "tvConstraints": {},
+            },
+        }
+
+    gateway.fetch_by_operation_id.side_effect = _fetch
     service = ComunicadoDataEnrichmentService(
         catalog=TvDataRouteCatalogService(),
         gateway=gateway,
@@ -1532,6 +1546,14 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
                 },
             },
             {
+                "id": "src-meta",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_ppm_meta",
+                    "displayMode": "kpi",
+                },
+            },
+            {
                 "id": "grade-1",
                 "type": "canvas_table",
                 "rows": 3,
@@ -1539,24 +1561,22 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
                 "cells": [
                     [{"kind": "text", "text": "KPI"}, {"kind": "text", "text": "Valor"}],
                     [
-                        {"kind": "text", "text": "Meta"},
-                        {
-                            "kind": "number",
-                            "dataRef": {"field": "meta", "format": "number"},
-                        },
-                    ],
-                    [
                         {"kind": "text", "text": "Realizado"},
                         {
                             "kind": "number",
-                            "dataRef": {
-                                "field": "rol_target_pct",
-                                "format": "number",
-                            },
+                            "dataSourceId": "src-1",
+                            "dataRef": {"field": "rol_target_pct", "format": "number"},
+                        },
+                    ],
+                    [
+                        {"kind": "text", "text": "Meta"},
+                        {
+                            "kind": "number",
+                            "dataSourceId": "src-meta",
+                            "dataRef": {"field": "ppm", "format": "number"},
                         },
                     ],
                 ],
-                "dataSourceId": "src-1",
                 "frame": {"x": 0, "y": 0, "w": 40, "h": 20},
             },
         ],
@@ -1564,13 +1584,14 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
         authorization="Bearer x",
     )
     grade = next(b for b in enriched if b.get("id") == "grade-1")
-    assert grade.get("resolved", {}).get("kpi", {}).get("value") is not None
+    by_source = grade.get("resolvedBySourceId") or {}
+    assert "src-1" in by_source
+    assert "src-meta" in by_source
     assert grade.get("serverCanvasTableProjectionApplied") is True
-    # Enrichment entrega um resolved único; N dataRef no cliente consomem o mesmo payload.
     body_refs = [
-        cell.get("dataRef", {}).get("field")
+        (cell.get("dataSourceId"), cell.get("dataRef", {}).get("field"))
         for row in grade.get("cells", [])[1:]
         for cell in row
         if cell.get("dataRef", {}).get("field")
     ]
-    assert body_refs == ["meta", "rol_target_pct"]
+    assert body_refs == [("src-1", "rol_target_pct"), ("src-meta", "ppm")]

@@ -1,12 +1,16 @@
 import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   TEXT_FIELD_AGGREGATION_OPTIONS,
+  applyCanvasTableCellDataSourceId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
   discoverResolvedFieldOptions,
   formatCanvasTableDataBindingLabel,
   listCanvasTableDataBindings,
   normalizeCanvasTableCell,
+  resolveCanvasTableCellResolved,
+  resolveCanvasTableCellSourceId,
+  resolveDataSourceLabel,
   suggestCanvasTableCellDataRef,
   type ApplyCanvasTableDataRefScope,
   type ComunicadoTextDataRef,
@@ -44,7 +48,7 @@ type Props = {
   onOpenDataSources?: () => void;
 };
 
-/** Vincular fonte à Grade e campo a uma célula / coluna / corpo. */
+/** Vincular fonte(s) à Grade e campo por célula / coluna / corpo. */
 export function CanvasTableDataBindingInspector({
   pane = false,
   layout = "pane",
@@ -71,6 +75,24 @@ export function CanvasTableDataBindingInspector({
       ? normalizeCanvasTableCell(table.cells[cellSel.row]?.[cellSel.col])
       : null;
 
+  const blockSourceId = table?.dataSourceId?.trim() ?? "";
+  /** Com célula selecionada: fonte efetiva dessa célula; senão, default do bloco. */
+  const effectiveSourceId =
+    table && selectedCell
+      ? resolveCanvasTableCellSourceId(table, selectedCell)
+      : blockSourceId;
+
+  const linkedSource = effectiveSourceId
+    ? blocks.find((block) => block.id === effectiveSourceId) ?? null
+    : null;
+  const resolved =
+    (table && selectedCell
+      ? resolveCanvasTableCellResolved(table, selectedCell)
+      : undefined) ??
+    (linkedSource && "resolved" in linkedSource && linkedSource.resolved
+      ? linkedSource.resolved
+      : table?.resolved);
+
   const catalogFields = useMemo(
     () =>
       (route?.valueFields ?? []).map((field) => ({
@@ -79,13 +101,6 @@ export function CanvasTableDataBindingInspector({
       })),
     [route?.valueFieldLabels, route?.valueFields],
   );
-
-  const sourceId = table?.dataSourceId?.trim() ?? "";
-  const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
-  const resolved =
-    linkedSource && "resolved" in linkedSource && linkedSource.resolved
-      ? linkedSource.resolved
-      : table?.resolved;
 
   const fieldOptions = useMemo(
     () =>
@@ -104,9 +119,19 @@ export function CanvasTableDataBindingInspector({
     [table],
   );
 
+  const sourceLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const block of blocks) {
+      if (block.type === "data_source") {
+        map.set(block.id, resolveDataSourceLabel(block));
+      }
+    }
+    return map;
+  }, [blocks]);
+
   if (!table) return null;
 
-  function linkSource(nextSourceId: string) {
+  function linkBlockSource(nextSourceId: string) {
     if (!nextSourceId.trim()) {
       updateSelected({
         dataSourceId: undefined,
@@ -125,6 +150,40 @@ export function CanvasTableDataBindingInspector({
       existingCells: table.cells,
     });
     updateSelected(patch);
+  }
+
+  /** Célula selecionada: altera só essa célula (não sobrescreve a outra). */
+  function linkCellSource(nextSourceId: string) {
+    if (!cellSel) {
+      linkBlockSource(nextSourceId);
+      return;
+    }
+    const trimmed = nextSourceId.trim();
+    let next = applyCanvasTableCellDataSourceId(
+      table,
+      cellSel,
+      trimmed || null,
+    );
+    if (trimmed) {
+      const source = blocks.find((block) => block.id === trimmed);
+      const sourceResolved =
+        source && "resolved" in source && source.resolved ? source.resolved : undefined;
+      const cell = normalizeCanvasTableCell(next.cells[cellSel.row]?.[cellSel.col]);
+      if (!cell.dataRef?.field?.trim() && sourceResolved) {
+        const suggested = suggestCanvasTableCellDataRef(
+          sourceResolved,
+          catalogFields,
+          cell.kind === "sparkline",
+        );
+        if (suggested) {
+          next = applyCanvasTableDataRef(next, cellSel, suggested, "cell");
+        }
+      }
+    }
+    updateBlock(table.id, {
+      cells: next.cells,
+      dataSourceId: table.dataSourceId,
+    });
   }
 
   function patchCellDataRef(
@@ -162,25 +221,39 @@ export function CanvasTableDataBindingInspector({
         ? "1 campo vinculado"
         : `${bindings.length} campos vinculados`;
 
+  const cellHasOwnSource = Boolean(selectedCell?.dataSourceId?.trim());
+
   return (
     <>
       <DataSourceLinkSection
         blocks={blocks}
         selectedId={table.id}
-        sourceId={sourceId}
+        sourceId={cellSel ? effectiveSourceId : blockSourceId}
         compactSelect={compactSelect}
         pane={pane}
-        onChangeSourceId={linkSource}
+        sectionTitle={cellSel ? "Fonte desta célula" : "Fonte padrão da Grade"}
+        onChangeSourceId={cellSel ? linkCellSource : linkBlockSource}
         onOpenCatalog={openCatalog}
         catalogLabel="Inserir nova fonte…"
         emptyHint={
-          sourceId
-            ? undefined
-            : "Escolha uma fonte deste slide para alimentar células da Grade."
+          cellSel
+            ? "Escolha a fonte só para esta célula (as demais não mudam)."
+            : blockSourceId
+              ? "Default para células sem fonte própria. Selecione uma célula para usar outra fonte."
+              : "Escolha uma fonte default ou selecione uma célula e vincule a fonte nela."
         }
       />
+      {cellSel && cellHasOwnSource ? (
+        <p className="td-subtitle">
+          Esta célula usa fonte própria
+          {effectiveSourceId
+            ? ` («${sourceLabelById.get(effectiveSourceId) ?? effectiveSourceId}»)`
+            : ""}
+          . Células sem override herdam a fonte padrão da Grade.
+        </p>
+      ) : null}
 
-      {sourceId ? (
+      {effectiveSourceId || bindings.length > 0 ? (
         <DeckPropertySection
           title="Campo na célula"
           hint={H.canvasTableDataBinding ?? H.textDataBinding ?? H.viewBinding}
@@ -196,8 +269,18 @@ export function CanvasTableDataBindingInspector({
                 const fieldLabel =
                   fieldOptions.find((item) => item.field === entry.field)?.label ??
                   entry.field;
+                const sourceBit = entry.dataSourceId
+                  ? sourceLabelById.get(entry.dataSourceId) ?? entry.dataSourceId
+                  : null;
+                const baseLabel = formatCanvasTableDataBindingLabel(
+                  {
+                    ...entry,
+                    field: fieldLabel,
+                  },
+                  AGG_LABEL[entry.aggregation] ?? entry.aggregation,
+                );
                 return (
-                  <li key={`${entry.row}:${entry.col}:${entry.field}`}>
+                  <li key={`${entry.row}:${entry.col}:${entry.field}:${entry.dataSourceId ?? ""}`}>
                     <button
                       type="button"
                       className={[
@@ -210,13 +293,7 @@ export function CanvasTableDataBindingInspector({
                         selectCanvasTableCell(table.id, { row: entry.row, col: entry.col })
                       }
                     >
-                      {formatCanvasTableDataBindingLabel(
-                        {
-                          ...entry,
-                          field: fieldLabel,
-                        },
-                        AGG_LABEL[entry.aggregation] ?? entry.aggregation,
-                      )}
+                      {sourceBit ? `${baseLabel} · ${sourceBit}` : baseLabel}
                     </button>
                   </li>
                 );
@@ -226,8 +303,12 @@ export function CanvasTableDataBindingInspector({
 
           {!cellSel ? (
             <p className="td-subtitle">
-              Selecione uma célula na Grade para vincular um campo próprio (cada célula pode ter
-              um dado diferente).
+              Selecione uma célula na Grade para vincular fonte e campo próprios (cada célula pode
+              ter um dado e uma fonte diferente).
+            </p>
+          ) : !effectiveSourceId ? (
+            <p className="td-subtitle">
+              Célula {cellSel.row + 1}×{cellSel.col + 1}: escolha a fonte acima para esta célula.
             </p>
           ) : (
             <>

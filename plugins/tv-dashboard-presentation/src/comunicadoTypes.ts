@@ -423,8 +423,13 @@ export type ComunicadoCanvasTableCell = {
    * Formatação parcial (TextRun). Sem runs = um run implícito com `text` + `style`.
    */
   contentRuns?: ComunicadoContentRun[];
-  /** Campo dinâmico da fonte do bloco (`dataSourceId`) — Onda Grade+dados. */
+  /** Campo dinâmico — fonte efetiva: `dataSourceId` da célula ou do bloco. */
   dataRef?: ComunicadoTextDataRef;
+  /**
+   * Fonte desta célula (id de bloco `data_source` no slide).
+   * Omitido = herda `dataSourceId` do bloco Grade.
+   */
+  dataSourceId?: string;
 };
 
 export type ComunicadoCanvasTableOptions = {
@@ -444,10 +449,15 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   cells: ComunicadoCanvasTableCell[][];
   headerRow?: boolean;
   canvasTableOptions?: ComunicadoCanvasTableOptions;
-  /** Fonte default do bloco; células apontam campos via `dataRef`. */
+  /** Fonte default do bloco; células podem sobrescrever com `cells[][].dataSourceId`. */
   dataSourceId?: string;
   /** Runtime — enrichment / preview; não persistir no native_config. */
   resolved?: ComunicadoDataResolved;
+  /**
+   * Runtime — resolved por id de fonte (bloco + overrides por célula).
+   * Não persistir no native_config.
+   */
+  resolvedBySourceId?: Record<string, ComunicadoDataResolved>;
   serverCanvasTableProjectionApplied?: boolean;
 };
 

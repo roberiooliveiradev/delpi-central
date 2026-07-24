@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyCanvasTableCellDataSourceId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
   canvasTableHasDataBinding,
+  collectCanvasTableSourceIds,
   formatCanvasTableDataBindingLabel,
   listCanvasTableDataBindings,
   resolveCanvasTableCellDisplay,
+  resolveCanvasTableCellResolved,
+  resolveCanvasTableCellSourceId,
 } from "./canvasTableProjection";
 import { normalizeCanvasTableCells } from "./comunicadoCanvasTable";
 import type { ComunicadoCanvasTableBlock, ComunicadoDataResolved } from "./comunicadoTypes";
@@ -32,6 +36,14 @@ const multiFieldResolved: ComunicadoDataResolved = {
     { field: "meta", value: 1400, label: "Meta" },
     { field: "value", value: 1146.3, label: "Realizado" },
   ],
+};
+
+const realizadoResolved: ComunicadoDataResolved = {
+  kpiMetrics: [{ field: "value", value: 1135.73, label: "PPM" }],
+};
+
+const metaResolved: ComunicadoDataResolved = {
+  kpiMetrics: [{ field: "ppm", value: 1400, label: "Meta PPM" }],
 };
 
 function makeTable(rows: number, cols: number): ComunicadoCanvasTableBlock {
@@ -89,7 +101,7 @@ describe("canvasTableProjection", () => {
       { field: "rol", format: "number", aggregation: "first" },
       "column",
     );
-    expect(withRef.cells[0]?.[0]?.dataRef).toBeUndefined(); // cabeçalho
+    expect(withRef.cells[0]?.[0]?.dataRef).toBeUndefined();
     expect(withRef.cells[1]?.[0]?.dataRef?.field).toBe("rol");
     expect(withRef.cells[2]?.[0]?.dataRef?.field).toBe("rol");
     expect(withRef.cells[1]?.[1]?.dataRef).toBeUndefined();
@@ -201,5 +213,50 @@ describe("canvasTableProjection", () => {
     expect(body.cells[1]?.[0]?.dataRef?.field).toBe("value");
     expect(body.cells[1]?.[1]?.dataRef?.field).toBe("value");
     expect(body.cells[2]?.[1]?.dataRef?.field).toBe("value");
+  });
+
+  it("fonte por célula: alterar A não muda B; displays usam resolved distintos", () => {
+    let next = makeTable(3, 2);
+    next = applyCanvasTableCellDataSourceId(next, { row: 1, col: 1 }, "src-realizado");
+    next = applyCanvasTableDataRef(
+      next,
+      { row: 1, col: 1 },
+      { field: "value", format: "number", aggregation: "first" },
+      "cell",
+    );
+    next = applyCanvasTableCellDataSourceId(next, { row: 2, col: 1 }, "src-meta");
+    next = applyCanvasTableDataRef(
+      next,
+      { row: 2, col: 1 },
+      { field: "ppm", format: "number", aggregation: "first" },
+      "cell",
+    );
+    next = {
+      ...next,
+      resolvedBySourceId: {
+        "src-realizado": realizadoResolved,
+        "src-meta": metaResolved,
+      },
+    };
+
+    expect(resolveCanvasTableCellSourceId(next, next.cells[1]![1]!)).toBe("src-realizado");
+    expect(resolveCanvasTableCellSourceId(next, next.cells[2]![1]!)).toBe("src-meta");
+    expect(collectCanvasTableSourceIds(next)).toEqual(["src-realizado", "src-meta"]);
+
+    const real = resolveCanvasTableCellDisplay(
+      next.cells[1]![1]!,
+      resolveCanvasTableCellResolved(next, next.cells[1]![1]!),
+    );
+    const meta = resolveCanvasTableCellDisplay(
+      next.cells[2]![1]!,
+      resolveCanvasTableCellResolved(next, next.cells[2]![1]!),
+    );
+    expect(real.value).toBeCloseTo(1135.73);
+    expect(meta.value).toBe(1400);
+    expect(real.text).not.toBe(meta.text);
+
+    const onlyB = applyCanvasTableCellDataSourceId(next, { row: 2, col: 1 }, "src-outra");
+    expect(onlyB.cells[1]?.[1]?.dataSourceId).toBe("src-realizado");
+    expect(onlyB.cells[2]?.[1]?.dataSourceId).toBe("src-outra");
   });
 });

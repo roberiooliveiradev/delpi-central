@@ -246,30 +246,7 @@
   border-color: transparent;
 }
 
-.td-canvas-table__cell--bound {
-  position: relative;
-  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--primary, #089bdb) 55%, transparent);
-  background-image: linear-gradient(
-    to bottom right,
-    color-mix(in srgb, var(--primary, #089bdb) 10%, transparent),
-    transparent 42%
-  );
-}
-
-/* Badge «{ }» só no editor — não polui a TV. */
-.td-canvas-table--editable .td-canvas-table__cell--bound::after {
-  content: "{ }";
-  position: absolute;
-  top: 2px;
-  right: 3px;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  color: color-mix(in srgb, var(--primary, #089bdb) 85%, #0a4a6b);
-  pointer-events: none;
-  opacity: 0.9;
-}
+/* Célula com dataRef: sem chrome automático — só seleção explícita (--selected). */
 
 .td-canvas-table__cell--selected {
   outline: 2px solid var(--primary, #089bdb);

@@ -1,6 +1,6 @@
 import type { CSSProperties, FocusEvent, KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
 
-import { resolveCanvasTableCellDisplay } from "./canvasTableProjection";
+import { resolveCanvasTableCellDisplay, resolveCanvasTableCellResolved } from "./canvasTableProjection";
 import {
   buildCanvasTableSparklinePath,
   canvasTableCellDisplayRuns,
@@ -71,7 +71,10 @@ export function ComunicadoCanvasTableView({
   const resolvedCells = block.cells.map((row) =>
     row.map((raw) => {
       const cell = normalizeCanvasTableCell(raw);
-      const display = resolveCanvasTableCellDisplay(cell, block.resolved);
+      const display = resolveCanvasTableCellDisplay(
+        cell,
+        resolveCanvasTableCellResolved(block, cell),
+      );
       if (display.series?.length) {
         return { ...cell, kind: "sparkline" as const, series: display.series };
       }
@@ -172,7 +175,10 @@ export function ComunicadoCanvasTableView({
                 const Cell = isHeader ? "th" : "td";
                 const isSelected =
                   selected?.row === rowIndex && selected?.col === colIndex;
-                const display = resolveCanvasTableCellDisplay(cell, block.resolved);
+                const display = resolveCanvasTableCellDisplay(
+                  cell,
+                  resolveCanvasTableCellResolved(block, cell),
+                );
                 const axis = resolveColumnSparklineAxis(resolvedCells, colIndex);
                 const cellStyle: CSSProperties = {
                   ...(cell.style?.fontSize != null

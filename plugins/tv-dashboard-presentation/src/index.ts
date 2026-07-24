@@ -1034,14 +1034,18 @@ export {
   type TextDataBoundBlock,
 } from "./textViewProjection";
 export {
+  applyCanvasTableCellDataSourceId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
   canvasTableCellHasDataRef,
   canvasTableHasDataBinding,
+  collectCanvasTableSourceIds,
   formatCanvasTableDataBindingLabel,
   isCanvasTableDataBoundBlock,
   listCanvasTableDataBindings,
   resolveCanvasTableCellDisplay,
+  resolveCanvasTableCellResolved,
+  resolveCanvasTableCellSourceId,
   suggestCanvasTableCellDataRef,
   syncCanvasTableBlocksWithResolved,
   type ApplyCanvasTableDataRefScope,

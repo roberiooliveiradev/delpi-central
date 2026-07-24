@@ -1,6 +1,6 @@
 /**
  * Projeção de dados na Grade (`canvas_table`) — espelho 4P.
- * Fonte no bloco (`dataSourceId`); campo por célula (`dataRef`).
+ * Fonte default no bloco (`dataSourceId`); override e campo por célula.
  */
 
 import {
@@ -47,12 +47,63 @@ export function canvasTableHasDataBinding(
 ): boolean {
   if (block.dataSourceId?.trim()) return true;
   return block.cells.some((row) =>
-    row.some((cell) => Boolean(normalizeCanvasTableCell(cell).dataRef?.field?.trim())),
+    row.some((raw) => {
+      const cell = normalizeCanvasTableCell(raw);
+      return Boolean(cell.dataRef?.field?.trim() || cell.dataSourceId?.trim());
+    }),
   );
 }
 
 export function canvasTableCellHasDataRef(cell: CanvasTableCell | unknown): boolean {
   return Boolean(normalizeCanvasTableCell(cell).dataRef?.field?.trim());
+}
+
+/** Fonte efetiva da célula (override ou default do bloco). */
+export function resolveCanvasTableCellSourceId(
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId">,
+  cell: CanvasTableCell | unknown,
+): string {
+  const normalized = normalizeCanvasTableCell(cell);
+  const cellSource = normalized.dataSourceId?.trim() ?? "";
+  if (cellSource) return cellSource;
+  return block.dataSourceId?.trim() ?? "";
+}
+
+/** Ids únicos de fonte usados pela Grade (bloco + células). */
+export function collectCanvasTableSourceIds(
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "cells">,
+): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  const push = (raw: string | undefined) => {
+    const id = raw?.trim() ?? "";
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    ids.push(id);
+  };
+  push(block.dataSourceId);
+  for (const row of block.cells) {
+    for (const cell of row) {
+      push(normalizeCanvasTableCell(cell).dataSourceId);
+    }
+  }
+  return ids;
+}
+
+/** Resolved da fonte efetiva da célula (`resolvedBySourceId` ou `resolved` do bloco). */
+export function resolveCanvasTableCellResolved(
+  block: Pick<
+    ComunicadoCanvasTableBlock,
+    "dataSourceId" | "resolved" | "resolvedBySourceId"
+  >,
+  cell: CanvasTableCell | unknown,
+): ComunicadoDataResolved | undefined {
+  const sourceId = resolveCanvasTableCellSourceId(block, cell);
+  if (!sourceId) return undefined;
+  const bySource = block.resolvedBySourceId?.[sourceId];
+  if (bySource) return bySource;
+  if (sourceId === (block.dataSourceId?.trim() ?? "")) return block.resolved;
+  return undefined;
 }
 
 /** Vínculo de dados de uma célula (mapa no inspetor). */
@@ -62,14 +113,16 @@ export type CanvasTableDataBindingEntry = {
   field: string;
   aggregation: ViewAggregation;
   format?: TextProjectionFormat;
+  /** Fonte efetiva (célula ou bloco). */
+  dataSourceId?: string;
 };
 
 /**
  * Lista células com `dataRef.field` (ordem linha → coluna).
- * Uma fonte no bloco; N campos no componente.
+ * N campos e, opcionalmente, N fontes no mesmo componente.
  */
 export function listCanvasTableDataBindings(
-  block: Pick<ComunicadoCanvasTableBlock, "cells">,
+  block: Pick<ComunicadoCanvasTableBlock, "dataSourceId" | "cells">,
 ): CanvasTableDataBindingEntry[] {
   const entries: CanvasTableDataBindingEntry[] = [];
   block.cells.forEach((row, rowIndex) => {
@@ -77,12 +130,14 @@ export function listCanvasTableDataBindings(
       const cell = normalizeCanvasTableCell(raw);
       const ref = normalizeTextDataRef(cell.dataRef);
       if (!ref?.field?.trim()) return;
+      const dataSourceId = resolveCanvasTableCellSourceId(block, cell) || undefined;
       entries.push({
         row: rowIndex,
         col: colIndex,
         field: ref.field,
         aggregation: (ref.aggregation ?? "first") as ViewAggregation,
         format: ref.format,
+        ...(dataSourceId ? { dataSourceId } : {}),
       });
     });
   });
@@ -288,6 +343,30 @@ export function applyCanvasTableDataRef(
             ? { ...ref, aggregation: ref.aggregation ?? "list" }
             : ref,
       };
+    }),
+  );
+  return { ...block, cells };
+}
+
+/** Define (ou limpa) a fonte de uma célula — não altera outras células nem o default do bloco. */
+export function applyCanvasTableCellDataSourceId(
+  block: ComunicadoCanvasTableBlock,
+  cellRef: CanvasTableCellRef,
+  dataSourceId: string | null | undefined,
+): ComunicadoCanvasTableBlock {
+  const nextId = dataSourceId?.trim() || undefined;
+  const cells = block.cells.map((row, rowIndex) =>
+    row.map((raw, colIndex) => {
+      if (rowIndex !== cellRef.row || colIndex !== cellRef.col) {
+        return normalizeCanvasTableCell(raw);
+      }
+      const cell = normalizeCanvasTableCell(raw);
+      if (!nextId) {
+        const next = { ...cell };
+        delete next.dataSourceId;
+        return next;
+      }
+      return { ...cell, dataSourceId: nextId };
     }),
   );
   return { ...block, cells };

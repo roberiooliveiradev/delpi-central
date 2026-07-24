@@ -4,6 +4,9 @@ import { useMemo, useRef, useState } from "react";
 import {
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
+  normalizeCanvasTableCell,
+  resolveCanvasTableCellResolved,
+  resolveCanvasTableCellSourceId,
   type DynamicContentKind,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -51,17 +54,41 @@ export function DynamicContentInsertControl({ variant = "ribbon" }: Props) {
     return null;
   }, [blocks, editingTextId, selected, selectedCanvasTableCell]);
 
-  const sourceId =
-    targetBlock && "dataSourceId" in targetBlock
-      ? String(targetBlock.dataSourceId ?? "").trim()
-      : "";
+  const sourceId = useMemo(() => {
+    if (!targetBlock) return "";
+    if (
+      targetBlock.type === "canvas_table" &&
+      selectedCanvasTableCell?.blockId === targetBlock.id
+    ) {
+      const cell = normalizeCanvasTableCell(
+        targetBlock.cells[selectedCanvasTableCell.row]?.[selectedCanvasTableCell.col],
+      );
+      return resolveCanvasTableCellSourceId(targetBlock, cell);
+    }
+    if ("dataSourceId" in targetBlock) {
+      return String(targetBlock.dataSourceId ?? "").trim();
+    }
+    return "";
+  }, [selectedCanvasTableCell, targetBlock]);
+
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
-  const resolved =
-    linkedSource && "resolved" in linkedSource && linkedSource.resolved
-      ? linkedSource.resolved
-      : targetBlock && "resolved" in targetBlock
-        ? targetBlock.resolved
-        : undefined;
+  const resolved = useMemo(() => {
+    if (
+      targetBlock?.type === "canvas_table" &&
+      selectedCanvasTableCell?.blockId === targetBlock.id
+    ) {
+      const cell = normalizeCanvasTableCell(
+        targetBlock.cells[selectedCanvasTableCell.row]?.[selectedCanvasTableCell.col],
+      );
+      const fromMap = resolveCanvasTableCellResolved(targetBlock, cell);
+      if (fromMap) return fromMap;
+    }
+    if (linkedSource && "resolved" in linkedSource && linkedSource.resolved) {
+      return linkedSource.resolved;
+    }
+    if (targetBlock && "resolved" in targetBlock) return targetBlock.resolved;
+    return undefined;
+  }, [linkedSource, selectedCanvasTableCell, targetBlock]);
   const fieldLabels =
     linkedSource && "fieldLabels" in linkedSource
       ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
