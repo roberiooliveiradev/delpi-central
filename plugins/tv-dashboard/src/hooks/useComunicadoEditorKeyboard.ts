@@ -55,6 +55,15 @@ export function useComunicadoEditorKeyboard({
           exitTextEdit?.();
           return { handled: true };
         }
+        /*
+         * Esc com filho selecionado (célula da Grade, parte KPI…): mesmo fluxo
+         * do palco — sobe um nível — mesmo com caret em contentEditable.
+         */
+        if (event.key === "Escape" && hasPartSelection) {
+          clearPartSelection?.();
+          if (event.target instanceof HTMLElement) event.target.blur();
+          return { handled: true };
+        }
         return;
       }
 

@@ -901,6 +901,7 @@ export function useComunicadoEditorSelection({
     setSelectedInputPart,
     selectInputPart,
     clearInputPartSelection,
+    clearPartSelections,
     selectedCanvasTableCell,
     selectCanvasTableCell,
     clearCanvasTableCellSelection,

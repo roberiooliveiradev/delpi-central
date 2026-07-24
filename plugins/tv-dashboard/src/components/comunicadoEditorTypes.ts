@@ -10,8 +10,9 @@ export type ComunicadoEditorKeyboardActions = {
   editingTextId: string | null;
   /** Modo filhos do grupo — Esc sobe para o grupo fechado mesmo com todos os irmãos. */
   preferGroupChildrenSelection?: boolean;
-  /** Há parte de KPI/chart/tabela selecionada (Esc volta ao escopo global). */
+  /** Há subseleção de filho (parte ou célula da Grade) — Esc sobe um nível. */
   hasPartSelection?: boolean;
+  /** Limpa todas as subseleções (KPI/chart/table/input/célula Grade). */
   clearPartSelection?: () => void;
   clearSelection?: () => void;
   /** Isola e entra em edição inline (F2 / Enter em texto). */

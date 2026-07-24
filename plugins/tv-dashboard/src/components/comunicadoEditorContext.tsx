@@ -45,6 +45,7 @@ import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
+import { resolveStageHasPartSelection } from "../utils/stageInteractionPolicy";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
 import {
@@ -96,10 +97,8 @@ function ComunicadoEditorKeyboardBridge() {
     selectedKpiPart,
     selectedTablePart,
     selectedInputPart,
-    clearChartPartSelection,
-    clearKpiPartSelection,
-    clearTablePartSelection,
-    clearInputPartSelection,
+    selectedCanvasTableCell,
+    clearPartSelections,
     selectBlocksByIds,
     clearSelection,
     undo,
@@ -126,15 +125,14 @@ function ComunicadoEditorKeyboardBridge() {
     selectBlocksByIds,
     stageDrawTool,
     clearStageDrawTool: () => setStageDrawTool(null),
-    hasPartSelection: Boolean(
-      selectedChartPart || selectedKpiPart || selectedTablePart || selectedInputPart,
-    ),
-    clearPartSelection: () => {
-      clearChartPartSelection();
-      clearKpiPartSelection();
-      clearTablePartSelection();
-      clearInputPartSelection();
-    },
+    hasPartSelection: resolveStageHasPartSelection({
+      selectedChartPart,
+      selectedKpiPart,
+      selectedTablePart,
+      selectedInputPart,
+      selectedCanvasTableCell,
+    }),
+    clearPartSelection: clearPartSelections,
     clearSelection,
     enterTextEdit,
     exitTextEdit: () => setEditingTextId(null),
@@ -666,6 +664,7 @@ export function ComunicadoEditorProvider({
     selectedInputParts: selection.selectedInputParts,
     selectInputPart: selection.selectInputPart,
     clearInputPartSelection: selection.clearInputPartSelection,
+    clearPartSelections: selection.clearPartSelections,
     selectedCanvasTableCell: selection.selectedCanvasTableCell,
     selectCanvasTableCell: selection.selectCanvasTableCell,
     clearCanvasTableCellSelection: selection.clearCanvasTableCellSelection,

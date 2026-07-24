@@ -16,6 +16,8 @@ import {
   type GroupedBlockPointerDownAction,
 } from "./stageGroupedSelection";
 
+export { resolveStageHasPartSelection } from "./stagePartSelection";
+
 export type StageDblClickAction =
   | { type: "enter-text-edit"; blockId: string }
   | { type: "isolate-child"; blockId: string }

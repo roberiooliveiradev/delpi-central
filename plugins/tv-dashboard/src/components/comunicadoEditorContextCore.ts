@@ -174,7 +174,9 @@ export type ComunicadoEditorContextValue = {
     options?: { additive?: boolean },
   ) => void;
   clearInputPartSelection: () => void;
-  /** Grade — célula selecionada (chrome + inspetor). */
+  /** Limpa todas as subseleções de filho (partes + célula da Grade). */
+  clearPartSelections: () => void;
+  /** Grade — célula selecionada (espelho de parte KPI: Esc sobe ao container). */
   selectedCanvasTableCell: ComunicadoCanvasTableCellSelection | null;
   selectCanvasTableCell: (
     blockId: string,
