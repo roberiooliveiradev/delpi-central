@@ -1,20 +1,8 @@
+import { DELPI_LOGO_MARK_SVG } from "@delpi/plugin-ui/index";
+
 import type { Participant } from "../types";
-import delpiLogoSvg from "../assets/logoDelpi.svg?raw";
 
 export type PrintResult = { success: boolean; error?: string };
-
-/**
- * Wordmark Delpi sem o slogan "Conexões Elétricas".
- * Sanitiza o asset (mesmo legado com tagline) na hora da impressão.
- */
-function delpiLogoMarkSvg(raw: string): string {
-  return raw
-    .replace(/<path[^>]*d="M25\.168 516\.792[\s\S]*?<\/path>\s*/g, "")
-    .replace(/\bheight="547"\b/, 'height="440"')
-    .replace(/\bviewBox="0 0 832 547"\b/, 'viewBox="0 0 832 440"');
-}
-
-const DELPI_LOGO_MARK_SVG = delpiLogoMarkSvg(delpiLogoSvg);
 
 /**
  * Selo "Aprovado Qualidade" recriado em SVG (não há asset oficial no repo).
@@ -121,11 +109,9 @@ function buildLabelStyles(): string {
     }
     .tag__logo {
       width: 100%;
-      max-height: 7mm;
-      overflow: hidden;
       display: flex;
       justify-content: center;
-      align-items: flex-start;
+      align-items: center;
     }
     .tag__logo svg {
       width: 16mm;
