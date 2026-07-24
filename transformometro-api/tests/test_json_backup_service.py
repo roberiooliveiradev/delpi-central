@@ -7,7 +7,10 @@ from tm_app.application.services.json_backup_service import (
     SCHEMA_VERSION,
     detect_import_format,
 )
-from tm_app.infrastructure.persistence.json_backup_repository import JsonBackupRepository
+from tm_app.infrastructure.persistence.json_backup_repository import (
+    ENTITY_SPECS,
+    JsonBackupRepository,
+)
 
 
 def _mock_service() -> JsonBackupService:
@@ -31,6 +34,8 @@ def _sample_bundle() -> dict:
             }
         ],
         "setor_filiais": [{"setor_id": "eng", "filial_id": "01"}],
+        "processo_filiais": [],
+        "processo_setores": [],
         "processos": [
             {
                 "processo_id": pid,
@@ -77,7 +82,77 @@ def _sample_bundle() -> dict:
         "instancia_decomposicao_escopos": [],
         "revisao_decomposicao_overlays": [],
         "revisao_evidencias": [],
+        "processo_arquivos": [],
     }
+
+
+def test_entity_specs_cover_processo_escopo_and_revisao_matriz():
+    processos = next(s for s in ENTITY_SPECS if s.bundle_key == "processos")
+    revisoes = next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes")
+    assert "todas_filiais_ativas" in processos.columns
+    assert "revisao_referencia_id" in revisoes.columns
+    assert "matriz_impacto_esforco" in revisoes.columns
+
+
+def test_export_bundle_uses_canonical_fetches_not_dashboard_subset():
+    repo = MagicMock()
+    repo.load_export_bundle.return_value = MagicMock(
+        processos=[],
+        processo_instancias=[{"instancia_id": "thin"}],
+        revisoes=[],
+        medicoes=[],
+        investimentos=[],
+        recursos_compartilhados=[],
+        revisao_recursos_compartilhados=[],
+        recurso_custos=[],
+    )
+    repo.ensure_bundle_parent_rows.side_effect = lambda data: data
+    repo.fetch_filiais.return_value = []
+    repo.fetch_setores.return_value = []
+    repo.fetch_setor_filiais.return_value = []
+    repo.fetch_processos.return_value = [
+        {
+            "processo_id": "11111111-1111-1111-1111-111111111111",
+            "codigo_processo": "PROC-1",
+            "todas_filiais_ativas": True,
+            "deletado": False,
+        }
+    ]
+    repo.fetch_processo_filiais.return_value = [
+        {"processo_id": "11111111-1111-1111-1111-111111111111", "filial_id": "01"}
+    ]
+    repo.fetch_processo_setores.return_value = [
+        {"processo_id": "11111111-1111-1111-1111-111111111111", "setor_id": "eng"}
+    ]
+    repo.fetch_processo_instancias.return_value = [
+        {
+            "instancia_id": "22222222-2222-2222-2222-222222222222",
+            "processo_id": "11111111-1111-1111-1111-111111111111",
+            "resumo_melhoria": "Texto completo",
+            "fase_melhoria": "implantado",
+            "contexto": {"notas": "x"},
+            "deletado": False,
+        }
+    ]
+    repo.fetch_processo_instancia_setores.return_value = []
+    repo.fetch_processo_diagramas.return_value = []
+    repo.fetch_instancia_diagrama_escopos.return_value = []
+    repo.fetch_revisao_diagrama_overlays.return_value = []
+    repo.fetch_processo_decomposicao.return_value = []
+    repo.fetch_instancia_decomposicao_escopos.return_value = []
+    repo.fetch_revisao_decomposicao_overlays.return_value = []
+    repo.fetch_revisao_evidencias.return_value = []
+    repo.fetch_processo_arquivos.return_value = []
+
+    bundle = JsonBackupService(repo).export_bundle()
+    assert bundle["schema_version"] == SCHEMA_VERSION
+    assert bundle["processos"][0]["todas_filiais_ativas"] is True
+    assert bundle["processo_filiais"][0]["filial_id"] == "01"
+    assert bundle["processo_setores"][0]["setor_id"] == "eng"
+    assert bundle["processo_instancias"][0]["resumo_melhoria"] == "Texto completo"
+    assert bundle["processo_instancias"][0]["contexto"] == {"notas": "x"}
+    repo.fetch_processo_instancias.assert_called_once()
+    repo.fetch_processos.assert_called_once()
 
 
 def _complete_legacy_bundle(bundle: dict) -> dict:
@@ -317,6 +392,15 @@ def test_preview_merge_counts_insert_and_update():
     )
     repo.fetch_filiais.return_value = []
     repo.fetch_setor_filiais.return_value = [{"setor_id": "eng", "filial_id": "01"}]
+    repo.fetch_processo_filiais.return_value = []
+    repo.fetch_processo_setores.return_value = []
+    repo.fetch_processos.return_value = []
+    repo.fetch_processo_instancias.return_value = []
+    repo.fetch_processo_instancia_setores.return_value = []
+    repo.fetch_revisao_evidencias.return_value = []
+    repo.fetch_revisao_evidencias_existing_ids.return_value = set()
+    repo.fetch_processo_arquivos.return_value = []
+    repo.fetch_processo_arquivos_existing_ids.return_value = set()
     repo.load_export_bundle.return_value = MagicMock(
         processos=[{}],
         processo_instancias=[],

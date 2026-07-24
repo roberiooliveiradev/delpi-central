@@ -19,9 +19,12 @@ from tm_app.infrastructure.persistence.json_backup_repository import (
     ENTITY_SPECS,
     INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
     INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
+    PROCESSO_ARQUIVOS_BUNDLE_KEY,
     PROCESSO_DECOMPOSICAO_BUNDLE_KEY,
     PROCESSO_DIAGRAMAS_BUNDLE_KEY,
+    PROCESSO_FILIAIS_BUNDLE_KEY,
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+    PROCESSO_SETORES_BUNDLE_KEY,
     REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
     REVISAO_DIAGRAMA_OVERLAYS_BUNDLE_KEY,
     REVISAO_EVIDENCIAS_BUNDLE_KEY,
@@ -33,8 +36,8 @@ from tm_app.infrastructure.persistence.json_backup_repository import (
 ExportMode = Literal["replace", "merge"]
 ImportFormat = Literal["auto", "modern", "legacy"]
 ResolvedImportFormat = Literal["modern", "legacy"]
-SCHEMA_VERSION = "1.2"
-SUPPORTED_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, "1.1", "1.0"})
+SCHEMA_VERSION = "1.4"
+SUPPORTED_SCHEMA_VERSIONS = frozenset({SCHEMA_VERSION, "1.3", "1.2", "1.1", "1.0"})
 LEGACY_IMPORT_NAMESPACE = NAMESPACE_DNS
 
 IMPORT_FORMAT_INCOMPATIBLE_MESSAGE = (
@@ -211,11 +214,14 @@ class JsonBackupService:
     def export_bundle(self) -> dict[str, Any]:
         raw = self._repo.load_export_bundle()
         data = self._repo.ensure_bundle_parent_rows(_as_dict(raw))
+        # Fontes canônicas (não o subset magro de load_raw / dashboard).
         data["filiais"] = self._repo.fetch_filiais()
         data["setores"] = self._repo.fetch_setores()
         data["setor_filiais"] = self._repo.fetch_setor_filiais()
-        if not data.get("processo_instancias"):
-            data["processo_instancias"] = self._repo.fetch_processo_instancias()
+        data["processos"] = self._repo.fetch_processos()
+        data["processo_filiais"] = self._repo.fetch_processo_filiais()
+        data["processo_setores"] = self._repo.fetch_processo_setores()
+        data["processo_instancias"] = self._repo.fetch_processo_instancias()
         data["processo_instancia_setores"] = self._repo.fetch_processo_instancia_setores()
         data["processo_diagramas"] = self._repo.fetch_processo_diagramas()
         data["instancia_diagrama_escopos"] = self._repo.fetch_instancia_diagrama_escopos()
@@ -224,6 +230,7 @@ class JsonBackupService:
         data["instancia_decomposicao_escopos"] = self._repo.fetch_instancia_decomposicao_escopos()
         data["revisao_decomposicao_overlays"] = self._repo.fetch_revisao_decomposicao_overlays()
         data["revisao_evidencias"] = self._repo.fetch_revisao_evidencias()
+        data["processo_arquivos"] = self._repo.fetch_processo_arquivos()
         data = self._repo.ensure_bundle_parent_rows(data)
         return {
             "schema_version": SCHEMA_VERSION,
@@ -276,9 +283,9 @@ class JsonBackupService:
 
         for key in BUNDLE_KEYS:
             rows = payload.get(key)
+            # Schemas antigos omitem chaves novas — tratar como lista vazia.
             if rows is None:
-                errors.append(f"Campo obrigatório ausente: {key}.")
-                continue
+                rows = []
             if not isinstance(rows, list):
                 errors.append(f"{key} deve ser uma lista.")
                 continue
@@ -302,6 +309,32 @@ class JsonBackupService:
                                 f"{key}: vínculo duplicado ({setor_id}, {filial_id})."
                             )
                         seen_pairs.add(pair)
+                continue
+
+            if key in {PROCESSO_FILIAIS_BUNDLE_KEY, PROCESSO_SETORES_BUNDLE_KEY}:
+                link_field = (
+                    "filial_id" if key == PROCESSO_FILIAIS_BUNDLE_KEY else "setor_id"
+                )
+                seen_links: set[tuple[str, str]] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    processo_id = row.get("processo_id")
+                    link_id = row.get(link_field) or row.get(
+                        "codigo_filial" if link_field == "filial_id" else "codigo_setor"
+                    )
+                    if not processo_id:
+                        errors.append(f"{key}[{index}]: processo_id obrigatório.")
+                    if not link_id:
+                        errors.append(f"{key}[{index}]: {link_field} obrigatório.")
+                    if processo_id and link_id:
+                        pair = (_norm_id(processo_id), str(link_id).strip().lower())
+                        if pair in seen_links:
+                            errors.append(
+                                f"{key}: vínculo duplicado ({processo_id}, {link_id})."
+                            )
+                        seen_links.add(pair)
                 continue
 
             if key == PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY:
@@ -373,6 +406,25 @@ class JsonBackupService:
                         if pk_str in seen_evidence:
                             errors.append(f"{key}: evidencia_id duplicado ({pk_str}).")
                         seen_evidence.add(pk_str)
+                continue
+
+            if key == PROCESSO_ARQUIVOS_BUNDLE_KEY:
+                seen_arquivos: set[str] = set()
+                for index, row in enumerate(rows):
+                    if not isinstance(row, dict):
+                        errors.append(f"{key}[{index}]: registro deve ser objeto.")
+                        continue
+                    arquivo_id = row.get("arquivo_id")
+                    processo_id = row.get("processo_id")
+                    if not arquivo_id:
+                        errors.append(f"{key}[{index}]: arquivo_id obrigatório.")
+                    if not processo_id:
+                        errors.append(f"{key}[{index}]: processo_id obrigatório.")
+                    if arquivo_id:
+                        pk_str = _norm_id(arquivo_id)
+                        if pk_str in seen_arquivos:
+                            errors.append(f"{key}: arquivo_id duplicado ({pk_str}).")
+                        seen_arquivos.add(pk_str)
                 continue
 
             spec = _entity_spec_for_key(key)
@@ -507,6 +559,42 @@ class JsonBackupService:
                         f"revisao_evidencias: revisao_id={rid} não está em revisoes no JSON."
                     )
 
+        for row in payload.get(PROCESSO_ARQUIVOS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("processo_id"):
+                pid = _norm_id(row["processo_id"])
+                if pid not in processo_ids:
+                    errors.append(
+                        f"processo_arquivos: processo_id={pid} não está em processos no JSON."
+                    )
+
+        for row in payload.get(PROCESSO_FILIAIS_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("processo_id"):
+                pid = _norm_id(row["processo_id"])
+                if pid not in processo_ids:
+                    errors.append(
+                        f"processo_filiais: processo_id={pid} não está em processos no JSON."
+                    )
+
+        for row in payload.get(PROCESSO_SETORES_BUNDLE_KEY, []):
+            if isinstance(row, dict) and row.get("processo_id"):
+                pid = _norm_id(row["processo_id"])
+                if pid not in processo_ids:
+                    errors.append(
+                        f"processo_setores: processo_id={pid} não está em processos no JSON."
+                    )
+
+        revisao_ids_all = id_sets.get("revisoes", set())
+        for row in payload.get("revisoes", []):
+            if not isinstance(row, dict):
+                continue
+            ref = row.get("revisao_referencia_id")
+            if not ref:
+                continue
+            if _norm_id(ref) not in revisao_ids_all:
+                errors.append(
+                    f"revisoes: revisao_referencia_id={ref} não está em revisoes no JSON."
+                )
+
         return _dedupe_errors(errors)
 
     def preview(
@@ -616,6 +704,30 @@ class JsonBackupService:
             "skip": ev_skip,
         }
 
+        arquivo_rows = prepared.get(PROCESSO_ARQUIVOS_BUNDLE_KEY, [])
+        arquivo_existing = self._repo.fetch_processo_arquivos_existing_ids()
+        arq_insert = arq_update = arq_skip = 0
+        for row in arquivo_rows:
+            if not isinstance(row, dict):
+                continue
+            pk = str(row.get("arquivo_id", ""))
+            if not pk:
+                arq_skip += 1
+                continue
+            if mode == "merge":
+                if pk in arquivo_existing:
+                    arq_update += 1
+                else:
+                    arq_insert += 1
+            else:
+                arq_insert += 1
+        entities[PROCESSO_ARQUIVOS_BUNDLE_KEY] = {
+            "total": len(arquivo_rows),
+            "insert": arq_insert,
+            "update": arq_update,
+            "skip": arq_skip,
+        }
+
         sf_rows = prepared.get(SETOR_FILIAIS_BUNDLE_KEY, [])
         entities[SETOR_FILIAIS_BUNDLE_KEY] = {
             "total": len(sf_rows),
@@ -623,12 +735,26 @@ class JsonBackupService:
             "update": 0,
             "skip": 0,
         }
+        for link_key in (PROCESSO_FILIAIS_BUNDLE_KEY, PROCESSO_SETORES_BUNDLE_KEY):
+            link_rows = prepared.get(link_key, [])
+            entities[link_key] = {
+                "total": len(link_rows),
+                "insert": len(link_rows),
+                "update": 0,
+                "skip": 0,
+            }
 
         if mode == "replace":
             current_counts = self._current_bundle_counts()
         else:
             current_counts = {key: len(existing.get(key, set())) for key in BUNDLE_KEYS}
             current_counts[SETOR_FILIAIS_BUNDLE_KEY] = len(self._repo.fetch_setor_filiais())
+            current_counts[PROCESSO_FILIAIS_BUNDLE_KEY] = len(
+                self._repo.fetch_processo_filiais()
+            )
+            current_counts[PROCESSO_SETORES_BUNDLE_KEY] = len(
+                self._repo.fetch_processo_setores()
+            )
 
         return {
             "valid": True,
@@ -675,11 +801,13 @@ class JsonBackupService:
                 if isinstance(row, dict)
             ]
             self._repo.sync_setor_filiais(sf_rows, auto_commit=False)
+            self._repo.sync_processo_escopo_links(prepared, auto_commit=False)
             self._sync_processo_instancias_from_payload(prepared)
             self._sync_processo_instancia_setores_from_payload(prepared)
             self._repo.sync_diagram_bundles(prepared, auto_commit=False)
             self._repo.sync_decomposition_bundles(prepared, auto_commit=False)
             self._repo.sync_revisao_evidencias(prepared, auto_commit=False)
+            self._repo.sync_processo_arquivos(prepared, auto_commit=False)
 
             self._repo._connection.commit()
         except Exception:
@@ -867,18 +995,34 @@ class JsonBackupService:
     def _current_bundle_counts(self) -> dict[str, int]:
         raw = self._repo.load_export_bundle()
         data = _as_dict(raw)
+        skip_keys = {
+            SETOR_FILIAIS_BUNDLE_KEY,
+            PROCESSO_FILIAIS_BUNDLE_KEY,
+            PROCESSO_SETORES_BUNDLE_KEY,
+            PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
+            REVISAO_EVIDENCIAS_BUNDLE_KEY,
+            PROCESSO_ARQUIVOS_BUNDLE_KEY,
+            "processos",
+            "processo_instancias",
+        }
         return {
             **{
                 key: len(data.get(key) or [])
                 for key in BUNDLE_KEYS
-                if key not in {SETOR_FILIAIS_BUNDLE_KEY, PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY}
+                if key not in skip_keys
             },
             "filiais": len(self._repo.fetch_filiais()),
             "setores": len(self._repo.fetch_setores()),
+            "processos": len(self._repo.fetch_processos()),
+            "processo_instancias": len(self._repo.fetch_processo_instancias()),
             SETOR_FILIAIS_BUNDLE_KEY: len(self._repo.fetch_setor_filiais()),
+            PROCESSO_FILIAIS_BUNDLE_KEY: len(self._repo.fetch_processo_filiais()),
+            PROCESSO_SETORES_BUNDLE_KEY: len(self._repo.fetch_processo_setores()),
             PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY: len(
                 self._repo.fetch_processo_instancia_setores()
             ),
+            REVISAO_EVIDENCIAS_BUNDLE_KEY: len(self._repo.fetch_revisao_evidencias()),
+            PROCESSO_ARQUIVOS_BUNDLE_KEY: len(self._repo.fetch_processo_arquivos()),
         }
 
     @staticmethod
@@ -962,7 +1106,7 @@ class JsonBackupService:
             if not todas_filiais and not filial_id:
                 continue
             try:
-                inst_repo.create(
+                created = inst_repo.create(
                     {
                         "processo_id": str(processo_id),
                         "filial_id": str(filial_id) if filial_id else None,
@@ -970,9 +1114,19 @@ class JsonBackupService:
                         "setor_ids": setor_ids,
                         "rotulo_instancia": row.get("rotulo_instancia"),
                         "status_instancia": row.get("status_instancia") or "ativo",
+                        "resumo_melhoria": row.get("resumo_melhoria"),
+                        "responsavel_local": row.get("responsavel_local"),
+                        "fase_melhoria": row.get("fase_melhoria"),
+                        "data_alvo_go_live": row.get("data_alvo_go_live"),
+                        "prioridade": row.get("prioridade"),
                     },
                     auto_commit=False,
                 )
+                contexto = row.get("contexto")
+                if isinstance(contexto, dict) and created.get("instancia_id"):
+                    inst_repo.update_contexto(
+                        str(created["instancia_id"]), contexto, auto_commit=False
+                    )
             except Exception:
                 existing = inst_repo.get_by_processo(str(processo_id))
                 if existing is None:

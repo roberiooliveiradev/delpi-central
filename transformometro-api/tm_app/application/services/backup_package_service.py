@@ -13,20 +13,29 @@ from tm_app.application.services.json_backup_service import (
     ImportFormat,
     JsonBackupService,
 )
+from tm_app.application.services.processo_arquivo_storage import ProcessoArquivoStorage
 from tm_app.application.services.revisao_evidence_storage import RevisaoEvidenceStorage
 from tm_app.config import settings
 from tm_app.core.serialize import json_safe
-from tm_app.infrastructure.persistence.json_backup_repository import REVISAO_EVIDENCIAS_BUNDLE_KEY
+from tm_app.infrastructure.persistence.json_backup_repository import (
+    PROCESSO_ARQUIVOS_BUNDLE_KEY,
+    REVISAO_EVIDENCIAS_BUNDLE_KEY,
+)
 
 PACKAGE_FORMAT = "transformometro_backup"
 PACKAGE_VERSION = "1.0"
 MANIFEST_FILENAME = "manifest.json"
 CADASTRO_FILENAME = "cadastro.json"
 EVIDENCE_PREFIX = "evidencias/"
+PROCESSO_ARQUIVO_PREFIX = "processo_arquivos/"
 
 
 def evidence_archive_path(revisao_id: str, stored_name: str) -> str:
     return f"{EVIDENCE_PREFIX}{revisao_id.strip()}/{stored_name.strip()}"
+
+
+def processo_arquivo_archive_path(processo_id: str, stored_name: str) -> str:
+    return f"{PROCESSO_ARQUIVO_PREFIX}{processo_id.strip()}/{stored_name.strip()}"
 
 
 def _sha256_hex(content: bytes) -> str:
@@ -39,10 +48,15 @@ def _is_safe_archive_path(path: str) -> bool:
         return False
     if normalized == CADASTRO_FILENAME or normalized == MANIFEST_FILENAME:
         return True
-    if normalized.startswith(EVIDENCE_PREFIX):
+    if normalized.startswith(EVIDENCE_PREFIX) or normalized.startswith(PROCESSO_ARQUIVO_PREFIX):
         parts = normalized.split("/")
         return len(parts) == 3 and bool(parts[1]) and bool(parts[2])
     return False
+
+
+def _is_binary_attachment_row(row: dict[str, Any]) -> bool:
+    tipo = (row.get("tipo") or "anexo").strip().lower()
+    return tipo != "link"
 
 
 class TransformometroBackupPackageService:
@@ -50,9 +64,13 @@ class TransformometroBackupPackageService:
         self,
         json_backup: JsonBackupService | None = None,
         storage: RevisaoEvidenceStorage | None = None,
+        processo_arquivo_storage: ProcessoArquivoStorage | None = None,
     ) -> None:
         self._json_backup = json_backup or JsonBackupService()
         self._storage = storage or RevisaoEvidenceStorage()
+        self._processo_arquivo_storage = (
+            processo_arquivo_storage or ProcessoArquivoStorage()
+        )
         self._max_bytes = int(
             getattr(settings, "TM_BACKUP_PACKAGE_MAX_BYTES", 500 * 1024 * 1024)
         )
@@ -69,23 +87,31 @@ class TransformometroBackupPackageService:
                 "size_bytes": len(cadastro_bytes),
             }
         }
+        missing_files: list[str] = []
 
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
             archive.writestr(CADASTRO_FILENAME, cadastro_bytes)
 
             for row in cadastro.get(REVISAO_EVIDENCIAS_BUNDLE_KEY) or []:
-                if not isinstance(row, dict):
+                if not isinstance(row, dict) or not _is_binary_attachment_row(row):
                     continue
                 stored_name = (row.get("nome_armazenado") or "").strip()
                 revisao_id = str(row.get("revisao_id") or "").strip()
+                label = (
+                    row.get("nome_arquivo")
+                    or stored_name
+                    or str(row.get("evidencia_id") or "evidencia")
+                )
                 if not stored_name or not revisao_id:
+                    missing_files.append(f"evidência {label}")
                     continue
                 try:
                     file_path = self._storage.resolve_file(
                         revisao_id=revisao_id, stored_name=stored_name
                     )
                 except Exception:
+                    missing_files.append(f"evidência {label} ({revisao_id}/{stored_name})")
                     continue
                 rel_path = evidence_archive_path(revisao_id, stored_name)
                 content = file_path.read_bytes()
@@ -94,6 +120,48 @@ class TransformometroBackupPackageService:
                     "sha256": _sha256_hex(content),
                     "size_bytes": len(content),
                 }
+
+            for row in cadastro.get(PROCESSO_ARQUIVOS_BUNDLE_KEY) or []:
+                if not isinstance(row, dict) or not _is_binary_attachment_row(row):
+                    continue
+                stored_name = (row.get("nome_armazenado") or "").strip()
+                processo_id = str(row.get("processo_id") or "").strip()
+                label = (
+                    row.get("nome_arquivo")
+                    or stored_name
+                    or str(row.get("arquivo_id") or "arquivo")
+                )
+                if not stored_name or not processo_id:
+                    missing_files.append(f"arquivo do processo {label}")
+                    continue
+                try:
+                    file_path = self._processo_arquivo_storage.resolve_file(
+                        processo_id=processo_id, stored_name=stored_name
+                    )
+                except Exception:
+                    missing_files.append(
+                        f"arquivo do processo {label} ({processo_id}/{stored_name})"
+                    )
+                    continue
+                rel_path = processo_arquivo_archive_path(processo_id, stored_name)
+                content = file_path.read_bytes()
+                archive.writestr(rel_path, content)
+                entries[rel_path] = {
+                    "sha256": _sha256_hex(content),
+                    "size_bytes": len(content),
+                }
+
+            if missing_files:
+                preview = "; ".join(missing_files[:8])
+                extra = (
+                    f" (+{len(missing_files) - 8} outras)"
+                    if len(missing_files) > 8
+                    else ""
+                )
+                raise ValueError(
+                    "Exportação incompleta: há anexos no banco sem arquivo no volume "
+                    f"({len(missing_files)}). Ausentes: {preview}{extra}"
+                )
 
             manifest = {
                 "package_format": PACKAGE_FORMAT,
@@ -105,6 +173,9 @@ class TransformometroBackupPackageService:
                     **(cadastro.get("counts") or {}),
                     "evidence_files": sum(
                         1 for key in entries if key.startswith(EVIDENCE_PREFIX)
+                    ),
+                    "processo_arquivo_files": sum(
+                        1 for key in entries if key.startswith(PROCESSO_ARQUIVO_PREFIX)
                     ),
                 },
             }
@@ -179,6 +250,10 @@ class TransformometroBackupPackageService:
                 continue
             if path.startswith(EVIDENCE_PREFIX) and path not in entries:
                 errors.append(f"Arquivo de evidência não listado no manifesto: {path}.")
+            if path.startswith(PROCESSO_ARQUIVO_PREFIX) and path not in entries:
+                errors.append(
+                    f"Arquivo do processo não listado no manifesto: {path}."
+                )
 
         return errors
 
@@ -189,18 +264,38 @@ class TransformometroBackupPackageService:
     ) -> list[str]:
         errors: list[str] = []
         for row in cadastro.get(REVISAO_EVIDENCIAS_BUNDLE_KEY) or []:
-            if not isinstance(row, dict):
+            if not isinstance(row, dict) or not _is_binary_attachment_row(row):
                 continue
             stored_name = (row.get("nome_armazenado") or "").strip()
             revisao_id = str(row.get("revisao_id") or "").strip()
-            tipo = (row.get("tipo") or "anexo").strip().lower()
-            if tipo == "link" or not stored_name:
+            if not stored_name:
                 continue
             rel_path = evidence_archive_path(revisao_id, stored_name)
             if rel_path not in files:
                 label = row.get("nome_arquivo") or stored_name
                 errors.append(
                     f"Evidência sem arquivo no pacote: {label} ({rel_path})."
+                )
+        return errors
+
+    def validate_processo_arquivo_files(
+        self,
+        cadastro: dict[str, Any],
+        files: dict[str, bytes],
+    ) -> list[str]:
+        errors: list[str] = []
+        for row in cadastro.get(PROCESSO_ARQUIVOS_BUNDLE_KEY) or []:
+            if not isinstance(row, dict) or not _is_binary_attachment_row(row):
+                continue
+            stored_name = (row.get("nome_armazenado") or "").strip()
+            processo_id = str(row.get("processo_id") or "").strip()
+            if not stored_name:
+                continue
+            rel_path = processo_arquivo_archive_path(processo_id, stored_name)
+            if rel_path not in files:
+                label = row.get("nome_arquivo") or stored_name
+                errors.append(
+                    f"Arquivo do processo sem binário no pacote: {label} ({rel_path})."
                 )
         return errors
 
@@ -223,18 +318,29 @@ class TransformometroBackupPackageService:
 
         integrity_errors = self.validate_package_integrity(manifest, files)
         evidence_errors = self.validate_evidence_files(cadastro, files)
-        errors = integrity_errors + evidence_errors
+        processo_arquivo_errors = self.validate_processo_arquivo_files(cadastro, files)
+        errors = integrity_errors + evidence_errors + processo_arquivo_errors
 
         cadastro_preview = self._json_backup.preview(cadastro, mode, import_format)
         evidence_files = [
             path for path in files if path.startswith(EVIDENCE_PREFIX)
         ]
-        expected_files = sum(
+        processo_arquivo_files = [
+            path for path in files if path.startswith(PROCESSO_ARQUIVO_PREFIX)
+        ]
+        expected_evidence = sum(
             1
             for row in (cadastro.get(REVISAO_EVIDENCIAS_BUNDLE_KEY) or [])
             if isinstance(row, dict)
             and (row.get("nome_armazenado") or "").strip()
-            and (row.get("tipo") or "anexo").strip().lower() != "link"
+            and _is_binary_attachment_row(row)
+        )
+        expected_processo_arquivos = sum(
+            1
+            for row in (cadastro.get(PROCESSO_ARQUIVOS_BUNDLE_KEY) or [])
+            if isinstance(row, dict)
+            and (row.get("nome_armazenado") or "").strip()
+            and _is_binary_attachment_row(row)
         )
 
         result = {
@@ -244,8 +350,13 @@ class TransformometroBackupPackageService:
             "manifest_schema_version": manifest.get("schema_version"),
             "evidence_files": {
                 "in_package": len(evidence_files),
-                "expected_from_metadata": expected_files,
+                "expected_from_metadata": expected_evidence,
                 "missing_paths": evidence_errors,
+            },
+            "processo_arquivo_files": {
+                "in_package": len(processo_arquivo_files),
+                "expected_from_metadata": expected_processo_arquivos,
+                "missing_paths": processo_arquivo_errors,
             },
         }
         if errors:
@@ -268,13 +379,16 @@ class TransformometroBackupPackageService:
 
         if mode == "replace":
             self._clear_evidence_storage()
+            self._clear_processo_arquivo_storage()
 
-        restored = self._restore_evidence_files(files)
+        restored_evidence = self._restore_evidence_files(files)
+        restored_processo = self._restore_processo_arquivo_files(files)
         return {
             **cadastro_result,
             "package_format": PACKAGE_FORMAT,
             "package_version": manifest.get("package_version"),
-            "evidence_files_restored": restored,
+            "evidence_files_restored": restored_evidence,
+            "processo_arquivo_files_restored": restored_processo,
         }
 
     def _restore_evidence_files(self, files: dict[str, bytes]) -> int:
@@ -292,8 +406,29 @@ class TransformometroBackupPackageService:
             restored += 1
         return restored
 
+    def _restore_processo_arquivo_files(self, files: dict[str, bytes]) -> int:
+        restored = 0
+        for path, content in files.items():
+            if not path.startswith(PROCESSO_ARQUIVO_PREFIX):
+                continue
+            parts = path.split("/")
+            if len(parts) != 3:
+                continue
+            processo_id, stored_name = parts[1], parts[2]
+            target_dir = self._processo_arquivo_storage.base_dir / processo_id
+            target_dir.mkdir(parents=True, exist_ok=True)
+            (target_dir / stored_name).write_bytes(content)
+            restored += 1
+        return restored
+
     def _clear_evidence_storage(self) -> None:
         base = self._storage.base_dir
+        if base.exists():
+            shutil.rmtree(base)
+        base.mkdir(parents=True, exist_ok=True)
+
+    def _clear_processo_arquivo_storage(self) -> None:
+        base = self._processo_arquivo_storage.base_dir
         if base.exists():
             shutil.rmtree(base)
         base.mkdir(parents=True, exist_ok=True)

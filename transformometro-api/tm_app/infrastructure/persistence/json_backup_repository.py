@@ -64,6 +64,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "status_processo",
             "familia_processo",
             "agrupador_ferramenta",
+            "todas_filiais_ativas",
             "created_at",
             "updated_at",
             "deletado",
@@ -139,6 +140,8 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "data_inicio_vigencia",
             "data_fim_vigencia",
             "revisao_ativa",
+            "revisao_referencia_id",
+            "matriz_impacto_esforco",
             "observacoes",
             "status_aprovacao",
             "aprovado_em",
@@ -249,9 +252,14 @@ PROCESSO_DECOMPOSICAO_BUNDLE_KEY = "processo_decomposicao"
 INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY = "instancia_decomposicao_escopos"
 REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY = "revisao_decomposicao_overlays"
 REVISAO_EVIDENCIAS_BUNDLE_KEY = "revisao_evidencias"
+PROCESSO_ARQUIVOS_BUNDLE_KEY = "processo_arquivos"
+PROCESSO_FILIAIS_BUNDLE_KEY = "processo_filiais"
+PROCESSO_SETORES_BUNDLE_KEY = "processo_setores"
 BUNDLE_KEYS = (
     *tuple(spec.bundle_key for spec in ENTITY_SPECS),
     SETOR_FILIAIS_BUNDLE_KEY,
+    PROCESSO_FILIAIS_BUNDLE_KEY,
+    PROCESSO_SETORES_BUNDLE_KEY,
     PROCESSO_INSTANCIA_SETORES_BUNDLE_KEY,
     PROCESSO_DIAGRAMAS_BUNDLE_KEY,
     INSTANCIA_DIAGRAMA_ESCOPOS_BUNDLE_KEY,
@@ -260,6 +268,7 @@ BUNDLE_KEYS = (
     INSTANCIA_DECOMPOSICAO_ESCOPOS_BUNDLE_KEY,
     REVISAO_DECOMPOSICAO_OVERLAYS_BUNDLE_KEY,
     REVISAO_EVIDENCIAS_BUNDLE_KEY,
+    PROCESSO_ARQUIVOS_BUNDLE_KEY,
 )
 
 
@@ -284,6 +293,112 @@ class JsonBackupRepository(PluginBaseRepository):
             ORDER BY codigo_filial ASC
             """
         )
+
+    def fetch_processos(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                processo_id,
+                codigo_processo,
+                nome_processo,
+                descricao_processo,
+                gestor_responsavel,
+                objetivo_processo,
+                status_processo,
+                familia_processo,
+                agrupador_ferramenta,
+                todas_filiais_ativas,
+                created_at,
+                updated_at,
+                deletado
+            FROM transformometro.processos
+            WHERE deletado = FALSE
+            ORDER BY codigo_processo ASC
+            """
+        )
+
+    def fetch_processo_filiais(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                pf.processo_id,
+                f.codigo_filial AS filial_id,
+                pf.created_at
+            FROM transformometro.processo_filiais pf
+            JOIN transformometro.filiais f ON f.filial_id = pf.filial_id
+            JOIN transformometro.processos p ON p.processo_id = pf.processo_id
+            WHERE p.deletado = FALSE AND f.deletado = FALSE
+            ORDER BY pf.processo_id ASC, f.codigo_filial ASC
+            """
+        )
+
+    def fetch_processo_setores(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                ps.processo_id,
+                s.codigo_setor AS setor_id,
+                ps.created_at
+            FROM transformometro.processo_setores ps
+            JOIN transformometro.setores s ON s.setor_id = ps.setor_id
+            JOIN transformometro.processos p ON p.processo_id = ps.processo_id
+            WHERE p.deletado = FALSE AND s.deletado = FALSE
+            ORDER BY ps.processo_id ASC, s.codigo_setor ASC
+            """
+        )
+
+    def sync_processo_escopo_links(
+        self,
+        payload: dict[str, list[dict[str, Any]]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        """Substitui vínculos processo×filial e processo×setor a partir do backup."""
+        self.execute("DELETE FROM transformometro.processo_filiais", auto_commit=False)
+        self.execute("DELETE FROM transformometro.processo_setores", auto_commit=False)
+
+        for row in payload.get(PROCESSO_FILIAIS_BUNDLE_KEY, []) or []:
+            if not isinstance(row, dict):
+                continue
+            processo_id = row.get("processo_id")
+            filial_codigo = row.get("codigo_filial") or row.get("filial_id")
+            if not processo_id or not filial_codigo:
+                continue
+            self.execute(
+                """
+                INSERT INTO transformometro.processo_filiais (processo_id, filial_id)
+                SELECT %s::uuid, f.filial_id
+                FROM transformometro.filiais f
+                WHERE f.codigo_filial = %s
+                  AND f.deletado = FALSE
+                ON CONFLICT DO NOTHING
+                """,
+                (str(processo_id), str(filial_codigo).strip()),
+                auto_commit=False,
+            )
+
+        for row in payload.get(PROCESSO_SETORES_BUNDLE_KEY, []) or []:
+            if not isinstance(row, dict):
+                continue
+            processo_id = row.get("processo_id")
+            setor_codigo = row.get("codigo_setor") or row.get("setor_id")
+            if not processo_id or not setor_codigo:
+                continue
+            self.execute(
+                """
+                INSERT INTO transformometro.processo_setores (processo_id, setor_id)
+                SELECT %s::uuid, s.setor_id
+                FROM transformometro.setores s
+                WHERE s.codigo_setor = %s
+                  AND s.deletado = FALSE
+                ON CONFLICT DO NOTHING
+                """,
+                (str(processo_id), str(setor_codigo).strip()),
+                auto_commit=False,
+            )
+
+        if auto_commit:
+            self._connection.commit()
 
     def fetch_processo_instancias(self) -> list[dict[str, Any]]:
         return self.fetch_all(
@@ -450,6 +565,82 @@ class JsonBackupRepository(PluginBaseRepository):
         if auto_commit:
             self._connection.commit()
 
+    def fetch_processo_arquivos(self) -> list[dict[str, Any]]:
+        return self.fetch_all(
+            """
+            SELECT
+                arquivo_id,
+                processo_id,
+                tipo,
+                nome_arquivo,
+                nome_armazenado,
+                tipo_mime,
+                tamanho_bytes,
+                descricao,
+                url_externa,
+                enviado_por_id,
+                enviado_por_nome,
+                created_at
+            FROM transformometro.processo_arquivos
+            WHERE deleted_at IS NULL
+            ORDER BY created_at ASC
+            """
+        )
+
+    def fetch_processo_arquivos_existing_ids(self) -> set[str]:
+        rows = self.fetch_all(
+            """
+            SELECT arquivo_id::text AS id
+            FROM transformometro.processo_arquivos
+            WHERE deleted_at IS NULL
+            """
+        )
+        return {str(row["id"]) for row in rows}
+
+    def sync_processo_arquivos(
+        self,
+        payload: dict[str, list[dict[str, Any]]],
+        *,
+        auto_commit: bool = False,
+    ) -> None:
+        for row in payload.get(PROCESSO_ARQUIVOS_BUNDLE_KEY, []) or []:
+            if not isinstance(row, dict) or not row.get("arquivo_id"):
+                continue
+            values = {
+                col: row[col]
+                for col in (
+                    "arquivo_id",
+                    "processo_id",
+                    "tipo",
+                    "nome_arquivo",
+                    "nome_armazenado",
+                    "tipo_mime",
+                    "tamanho_bytes",
+                    "descricao",
+                    "url_externa",
+                    "enviado_por_id",
+                    "enviado_por_nome",
+                    "created_at",
+                )
+                if col in row
+            }
+            cols = list(values.keys())
+            placeholders = ", ".join(["%s"] * len(cols))
+            col_sql = ", ".join(cols)
+            update_cols = [c for c in cols if c != "arquivo_id"]
+            update_sql = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+            self.execute(
+                f"""
+                INSERT INTO transformometro.processo_arquivos ({col_sql})
+                VALUES ({placeholders})
+                ON CONFLICT (arquivo_id) DO UPDATE SET {update_sql}, deleted_at = NULL
+                """,
+                tuple(values[c] for c in cols),
+                auto_commit=False,
+            )
+        if auto_commit:
+            self._connection.commit()
+
     def fetch_revisao_decomposicao_overlays(self) -> list[dict[str, Any]]:
         return self.fetch_all(
             """
@@ -608,6 +799,15 @@ class JsonBackupRepository(PluginBaseRepository):
         for row in data.get("revisoes") or []:
             if isinstance(row, dict) and row.get("processo_id"):
                 needed_processos.add(str(row["processo_id"]))
+        for key in (
+            PROCESSO_ARQUIVOS_BUNDLE_KEY,
+            PROCESSO_FILIAIS_BUNDLE_KEY,
+            PROCESSO_SETORES_BUNDLE_KEY,
+            "processo_instancias",
+        ):
+            for row in data.get(key) or []:
+                if isinstance(row, dict) and row.get("processo_id"):
+                    needed_processos.add(str(row["processo_id"]))
         missing_processos = needed_processos - processo_ids
         if missing_processos:
             processos.extend(self.fetch_rows_by_ids(
@@ -640,7 +840,12 @@ class JsonBackupRepository(PluginBaseRepository):
             if isinstance(row, dict) and row.get("revisao_id")
         }
         needed_revisoes: set[str] = set()
-        for key in ("medicoes", "investimentos", "revisao_recursos_compartilhados"):
+        for key in (
+            "medicoes",
+            "investimentos",
+            "revisao_recursos_compartilhados",
+            REVISAO_EVIDENCIAS_BUNDLE_KEY,
+        ):
             for row in data.get(key) or []:
                 if isinstance(row, dict) and row.get("revisao_id"):
                     needed_revisoes.add(str(row["revisao_id"]))
@@ -695,6 +900,9 @@ class JsonBackupRepository(PluginBaseRepository):
             """
             TRUNCATE TABLE
                 transformometro.dashboard_calculos,
+                transformometro.processo_arquivos,
+                transformometro.processo_filiais,
+                transformometro.processo_setores,
                 transformometro.revisao_evidencias,
                 transformometro.revisao_decomposicao_overlays,
                 transformometro.instancia_decomposicao_escopo,

@@ -104,7 +104,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       await downloadPackageExport(getAccessToken);
       notifySuccess(
         "Exportação concluída",
-        "Pacote .tmbackup.zip baixado (cadastro + evidências).",
+        "Pacote .tmbackup.zip baixado (cadastro + arquivos do processo + evidências).",
       );
     } catch (err) {
       notifyError(err instanceof Error ? err.message : "Erro ao exportar pacote.");
@@ -119,7 +119,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       await downloadJsonExport(getAccessToken);
       notifySuccess(
         "Exportação concluída",
-        "Arquivo JSON baixado (sem binários de evidência).",
+        "Arquivo JSON baixado (sem binários de anexos).",
       );
     } catch (err) {
       notifyError(err instanceof Error ? err.message : "Erro ao exportar JSON.");
@@ -197,7 +197,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
       const ok = await confirm({
         title: "Substituir dados",
         message:
-          "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos, recursos e evidências atuais. Deseja continuar?",
+          "Substituir todos os dados apagará departamentos, processos, revisões, medições, investimentos, recursos, arquivos do processo e evidências atuais. Deseja continuar?",
         confirmLabel: "Substituir",
         variant: "danger",
       });
@@ -211,13 +211,24 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
           : await applyJsonImport(bundle!, mode, "auto", getAccessToken);
       setPreview(result as JsonImportPreview);
       const rows = result.recalc?.rows_upserted ?? 0;
-      const evidence =
-        result.evidence_files_restored != null
-          ? ` ${result.evidence_files_restored} arquivo(s) de evidência restaurado(s).`
+      const restoredParts: string[] = [];
+      if (result.evidence_files_restored != null) {
+        restoredParts.push(
+          `${result.evidence_files_restored} evidência(s) de revisão`,
+        );
+      }
+      if (result.processo_arquivo_files_restored != null) {
+        restoredParts.push(
+          `${result.processo_arquivo_files_restored} arquivo(s) do processo`,
+        );
+      }
+      const restored =
+        restoredParts.length > 0
+          ? ` ${restoredParts.join(" e ")} restaurado(s).`
           : "";
       notifySuccess(
         "Importação concluída",
-        `${mode === "replace" ? "Substituição total" : "Mesclagem por ID"}. Dashboard recalculado (${rows} linhas derivadas).${evidence}`,
+        `${mode === "replace" ? "Substituição total" : "Mesclagem por ID"}. Dashboard recalculado (${rows} linhas derivadas).${restored}`,
       );
     } catch (err) {
       notifyError(err instanceof Error ? err.message : "Erro na importação.");
@@ -239,7 +250,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
     <TransformometroShell>
       <PageHeader
         title="Exportar / Importar"
-        subtitle="Backup completo em pacote (.tmbackup.zip) com cadastro, diagramas, mapeamento e evidências."
+        subtitle="Backup completo em pacote (.tmbackup.zip) com cadastro, diagramas, mapeamento, arquivos do processo e evidências."
         currentPath={pathname}
         onNavigate={onNavigate}
       />
@@ -260,8 +271,9 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                   />
                 </h2>
                 <p className="ds-hint">
-                  O pacote <code>.tmbackup.zip</code> inclui cadastro, diagramas, mapeamento WBS e
-                  arquivos de evidência. Use JSON apenas para transferência leve sem anexos.
+                  O pacote <code>.tmbackup.zip</code> inclui cadastro, diagramas, mapeamento WBS,
+                  arquivos do processo e evidências de revisão. Use JSON apenas para transferência
+                  leve sem anexos.
                 </p>
               </div>
             </div>
@@ -426,7 +438,10 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                   <p className="tm-data-transfer__format-summary">
                     Pacote {preview.package_version ?? ""} · schema {preview.manifest_schema_version ?? "—"}
                     {preview.evidence_files
-                      ? ` · ${preview.evidence_files.in_package} arquivo(s) de evidência`
+                      ? ` · ${preview.evidence_files.in_package} evidência(s) de revisão`
+                      : ""}
+                    {preview.processo_arquivo_files
+                      ? ` · ${preview.processo_arquivo_files.in_package} arquivo(s) do processo`
                       : ""}
                   </p>
                 ) : null}

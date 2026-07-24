@@ -1184,7 +1184,13 @@ export type JsonImportPreview = {
     expected_from_metadata: number;
     missing_paths?: string[];
   };
+  processo_arquivo_files?: {
+    in_package: number;
+    expected_from_metadata: number;
+    missing_paths?: string[];
+  };
   evidence_files_restored?: number;
+  processo_arquivo_files_restored?: number;
 };
 
 export function downloadJsonExport(getAccessToken?: () => string | undefined) {

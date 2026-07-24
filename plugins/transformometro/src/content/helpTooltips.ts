@@ -453,7 +453,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   dataTransfer: {
     export:
-      "Gera um pacote .tmbackup.zip com cadastro, diagramas, mapeamento WBS, metadados e arquivos de evidência. O JSON inclui só dados estruturados (sem anexos binários).",
+      "Gera um pacote .tmbackup.zip com cadastro, diagramas, mapeamento WBS, metadados, arquivos do processo e evidências de revisão. O JSON inclui só dados estruturados (sem anexos binários).",
     importFormat:
       "A importação detecta automaticamente backup legado (unidade/departamento nos processos) ou Playbook 18 (instâncias). Arquivos fora desse padrão são rejeitados.",
     previewEntidade: "Tipo de registro no backup (unidades, processos, revisões…).",
