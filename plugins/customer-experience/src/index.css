@@ -204,13 +204,13 @@
   cursor: default;
   text-align: left;
 }.cx-photo-drop__thumb{
-  width: 72px;
+  width: 96px;
   height: 72px;
   flex-shrink: 0;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 12px;
   border: 1px solid var(--cx-border);
-  background: var(--cx-border);
+  background: color-mix(in srgb, var(--cx-border) 55%, var(--cx-surface, var(--surface, #fff)));
 }.cx-photo-drop__meta{
   display: flex;
   flex-direction: column;
@@ -317,12 +317,12 @@
   align-items: center;
   gap: 14px;
 }.cx-participant__photo{
-  width: 56px;
-  height: 56px;
+  width: 88px;
+  height: 64px;
   border-radius: 12px;
-  object-fit: cover;
+  object-fit: contain;
   flex-shrink: 0;
-  background: var(--cx-border);
+  background: color-mix(in srgb, var(--cx-border) 55%, var(--cx-surface, var(--surface, #fff)));
 }.cx-participant__info{
   display: flex;
   flex-direction: column;

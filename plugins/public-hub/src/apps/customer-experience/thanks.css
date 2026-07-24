@@ -2,7 +2,7 @@
 
 .cxp-hero {
   width: 100%;
-  max-width: 560px;
+  max-width: 760px;
   text-align: center;
   color: var(--pub-text-body);
 }
@@ -57,11 +57,11 @@
   margin-bottom: 22px;
 }
 
-/* Foto grande em destaque — proporção retrato para a foto do visitante em pé */
+/* Foto em destaque — moldura acompanha a proporção original (sem crop) */
 .cxp-photo-frame {
   position: relative;
-  width: min(88vw, 460px);
-  aspect-ratio: 3 / 4;
+  width: fit-content;
+  max-width: min(92vw, 720px);
   margin: 0 auto 8px;
   border-radius: 32px;
   padding: 6px;
@@ -80,11 +80,13 @@
 }
 
 .cxp-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 26px;
   display: block;
+  width: auto;
+  height: auto;
+  max-width: min(calc(92vw - 12px), 708px);
+  max-height: min(70vh, 720px);
+  object-fit: contain;
+  border-radius: 26px;
   background: #dfe6ee;
 }
 
@@ -128,7 +130,7 @@
 
 .cxp-message {
   margin: 26px auto 0;
-  max-width: 460px;
+  max-width: 640px;
 }
 
 .cxp-message p {
@@ -177,8 +179,9 @@
 }
 
 @media (max-width: 480px) {
-  .cxp-photo-frame {
-    width: min(92vw, 380px);
+  .cxp-photo {
+    max-width: min(calc(92vw - 12px), 380px);
+    max-height: min(62vh, 520px);
   }
   .cxp-message {
     padding: 0 4px;
