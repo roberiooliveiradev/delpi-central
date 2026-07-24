@@ -46,7 +46,7 @@ export function segmentToggleBemClasses(prefix: string): SegmentToggleClassNames
 }
 
 /**
- * Toggle segmentado moderno (trilha + opção ativa em destaque).
+ * Toggle segmentado canônico (trilha + pill accent / texto branco — DNA PPM Qualidade).
  * Canônico em `@delpi/plugin-ui` — MFEs não devem reimplementar o chrome.
  */
 export function SegmentToggle<T extends string>({
