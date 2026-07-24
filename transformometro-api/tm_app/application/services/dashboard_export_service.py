@@ -70,7 +70,6 @@ class DashboardExportService:
         )
         liquida = float(summary.get("economia_liquida_total") or 0)
         investimento = float(summary.get("investimento_total") or 0)
-        # Razão líquida/investimento (ex.: 1,5×) — sem ×100.
         roi = (liquida / investimento) if investimento > 0 else 0.0
 
         return {

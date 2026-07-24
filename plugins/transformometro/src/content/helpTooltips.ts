@@ -103,7 +103,7 @@ export const TM_HELP_TOOLTIPS = {
       horas:
         "Total de horas de trabalho economizadas no período no recorte. Instâncias multi-unidade multiplicam horas no Consolidado pelo nº de unidades ativas.",
       roi:
-        "Retorno sobre o investimento: razão economia líquida ÷ investimento total do recorte (ex.: 4,1×). Não é percentual.",
+        "Retorno sobre o investimento: razão economia líquida ÷ investimento total do recorte (ex.: 4,1×).",
       investimento:
         "Investimento total do recorte: aportes e custos de recursos apropriados no período.",
     },
