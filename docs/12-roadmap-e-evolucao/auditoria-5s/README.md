@@ -30,9 +30,9 @@ Documentos previstos nas próximas etapas:
 | Plugin MFE | `plugins/auditoria-5s/` |
 | Rotas operacionais API | `api-delpi/.../audit_5s_operational_router.py` |
 | Repositório PG | `api-delpi/.../postgres_audit_5s_repository.py` |
-| Rotas Qualidade (legado) | `api-delpi/app/interface/http/routes/quality/quality_router.py` |
-| Legado analítico (Sheets) | `api-delpi/.../audit_5s_repository.py` |
-| UI analítica legada | `plugins/dashboard-quality/src/pages/Audit5sPage.tsx` |
+| Rotas Qualidade (summary) | `api-delpi/app/interface/http/routes/quality/quality_router.py` → Postgres query |
+| UI analítica | `plugins/dashboard-quality/src/pages/Audit5sPage.tsx` |
+| Legado Sheets (import) | `api-delpi/.../google_sheets/audit_5s/audit_5s_repository.py` |
 | Migrations quality | `api-delpi/migrations/plugins/quality/` (`V022`–`V025`) |
 | Homologação | `scripts/homologacao/check-auditoria-5s.sh`, `check-audit-5s-api.sh` |
 | Registro de plugin | [registrar-plugin.md](../../10-guias-operacionais/registrar-plugin.md) |
@@ -72,7 +72,7 @@ Documentos previstos nas próximas etapas:
 
 Ver contrato completo em [ROADMAP.md](./ROADMAP.md#5-api-rest-contratos-alvo).
 
-**Legado (mantido):** `GET /apps/api-delpi/quality/audit-5s/summary` — Google Sheets para dashboard analítico.
+**Summary (dashboard-quality / SI):** `GET /apps/api-delpi/quality/audit-5s/summary` — Postgres `quality.audit_5s_*` (média `%` das avaliações com nota; exclui `draft`). Planilha Google Sheets permanece só para importação pontual.
 
 ---
 
@@ -84,7 +84,7 @@ Ver contrato completo em [ROADMAP.md](./ROADMAP.md#5-api-rest-contratos-alvo).
 4. **NC** — tela dedicada; plano com auto-save; fotos antes/depois; finalização explícita.
 5. **Dashboard gerencial** — filtros (período, área, turno, status); KPIs; gráficos de evolução; tabela de auditorias.
 6. **Colaboração** — Socket.IO na avaliação e NC.
-7. **Dashboards legado** — `dashboard-quality` ainda usa Google Sheets (migração futura).
+7. **Dashboards** — `dashboard-quality` e SI consomem `GET /quality/audit-5s/summary` (Postgres).
 
 Deploy típico após alterações:
 

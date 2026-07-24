@@ -31,7 +31,7 @@ export function formatCurrency(value: number | null | undefined): string {
 
 export function formatScore(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
-  return decimalFormatter.format(value);
+  return `${decimalFormatter.format(value)}%`;
 }
 
 export function formatNonconformityCode(

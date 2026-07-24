@@ -270,7 +270,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={areaChart} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 12 }} />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} />
                 <YAxis
                   type="category"
                   dataKey="name"
@@ -319,7 +319,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
                   tick={{ fontSize: 11 }}
                   interval="preserveStartEnd"
                 />
-                <YAxis domain={[0, 5]} tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
                 <Tooltip
                   formatter={(value) => [formatScore(Number(value)), "Nota média"]}
                 />

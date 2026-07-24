@@ -95,7 +95,7 @@ Disponibilizar no Portal uma **aplicação operacional de auditoria 5S** para a 
 - acompanhar **NCs com responsável, prazo, evidência e histórico de ações**;
 - evoluir depois para **dashboards analíticos** com os dados coletados.
 
-**Fonte de dados (MVP):** persistência própria no schema `quality` do banco `postgres-plugins`. O endpoint analítico legado via Google Sheets (`GET /quality/audit-5s/summary`) permanece até a Fase 6.
+**Fonte de dados (MVP):** persistência própria no schema `quality` do banco `postgres-plugins`. O endpoint analítico `GET /quality/audit-5s/summary` lê o mesmo Postgres (dashboard-quality / SI).
 
 ---
 
@@ -331,7 +331,7 @@ Base: `/apps/api-delpi/quality/audit-5s`
 
 Detalhes: [REGRAS-NEGOCIO.md](./REGRAS-NEGOCIO.md#4-validação--conclusão-da-avaliação).
 
-**Legado (mantido até Fase 6):** `GET /quality/audit-5s/summary` — leitura Google Sheets para `dashboard-quality`.
+**Summary (Postgres):** `GET /quality/audit-5s/summary` — média `%` e lista para `dashboard-quality` / SI (exclui `draft`). Sheets só para import pontual.
 
 ---
 
@@ -618,7 +618,7 @@ cd ../plugins/auditoria-5s && npm run build
 | Gráficos Recharts | Alta | Evolução temporal, por área, por senso, NC por status | ✅ |
 | Tabela paginada | Média | Drill-down para auditoria/NC | ✅ |
 | Script homologação | Média | `check-audit-5s-dashboard.sh` | ✅ |
-| Evoluir `dashboard-quality` | Média | `Audit5sPage` legado ainda usa Google Sheets | Pendente |
+| Evoluir `dashboard-quality` | Média | Summary 5S em Postgres (`average_score` = %) | ✅ |
 | Export Excel/PDF | Baixa | A definir com qualidade | Pendente |
 | Migração histórico Sheets | Baixa | Importação pontual se necessário | Pendente |
 

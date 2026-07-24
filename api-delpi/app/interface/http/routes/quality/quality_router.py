@@ -307,8 +307,10 @@ def get_audit_5s_summary(
             operation_id="get_audit_5s_summary",
             fields=kpi_fields(QUALITY_AUDIT_5S_FIELD_LABELS),
         )
-        return error_response(str(exc), status_code=400)
 
+    except ValueError as exc:
+        log_error(f"Erro de validação ao gerar resumo das auditorias 5S: {exc}")
+        return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro ao gerar resumo das auditorias 5S: {exc}")
         return error_response(

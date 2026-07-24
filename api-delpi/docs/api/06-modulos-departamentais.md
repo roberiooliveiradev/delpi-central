@@ -319,7 +319,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |
 | POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha para PostgreSQL. |
 | POST | `/public/kaizen/suggestions` | Sugestão pública (**sem JWT**); status inicial `recebido`. |
-| GET | `/quality/audit-5s/summary` | Resumo auditorias 5S. |
+| GET | `/quality/audit-5s/summary` | Resumo auditorias 5S (Postgres `quality.audit_5s_*`; média `%` das avaliações não-rascunho com nota). |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
 | GET | `/quality/ppm/external/summary` | PPM externo (resumo). |
 | GET | `/quality/ppm/internal/series` | Série PPM interno. |

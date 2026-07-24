@@ -36,6 +36,9 @@ from app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository i
 from app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository import (
     KaizenRepository,
 )
+from app.infrastructure.persistence.plugins.repositories.audit_5s.postgres_audit_5s_query_repository import (
+    PostgresAudit5SQueryRepository,
+)
 from app.infrastructure.persistence.plugins.repositories.kaizen.postgres_kaizen_query_repository import (
     PostgresKaizenQueryRepository,
 )
@@ -49,6 +52,8 @@ from app.infrastructure.persistence.totvs.ppm_repositories.ppm_query_repository 
 from app.infrastructure.providers.google_sheets.google_sheets_client import (
     GoogleSheetsClient,
 )
+
+
 def _build_google_sheets_client() -> GoogleSheetsClient:
     return GoogleSheetsClient(timeout=int(settings.GOOGLE_SHEETS_TIMEOUT))
 
@@ -71,13 +76,18 @@ def _build_kaizen_query_repository() -> PostgresKaizenQueryRepository:
     return PostgresKaizenQueryRepository(utils=_build_utils())
 
 
-def _build_audit_5s_repository() -> Audit5SRepository:
+def _build_audit_5s_sheets_repository() -> Audit5SRepository:
+    """Fonte legada da planilha — mantida só para importação pontual, se necessário."""
     return Audit5SRepository(
         client=_build_google_sheets_client(),
         sheet_id=settings.QUALITY_SHEET_ID,
         gid=settings.QUALITY_AUDIT_5S_SHEET_GID,
         utils=_build_utils(),
     )
+
+
+def _build_audit_5s_query_repository() -> PostgresAudit5SQueryRepository:
+    return PostgresAudit5SQueryRepository(utils=_build_utils())
 
 
 def _build_ppm_repository() -> PpmQueryRepository:
@@ -97,8 +107,7 @@ def build_get_kaizen_by_id_use_case() -> GetKaizenByIdUseCase:
 
 
 def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
-    return GetAudit5SSummaryUseCase(repository=_build_audit_5s_repository())
-
+    return GetAudit5SSummaryUseCase(repository=_build_audit_5s_query_repository())
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
     return GetPpmSummaryUseCase(_build_ppm_repository())
