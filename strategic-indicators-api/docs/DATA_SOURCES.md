@@ -17,7 +17,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 | Financeiro (Sheets EBITDA / custos fixos) | Alinhado — `null` sem linhas no período |
 | RH | Parcial — satisfação/PDI só entram no snapshot se existirem |
 | Comercial | Repassa `null` do snapshot quando aplicável |
-| Qualidade | PPM usa `null` quando a api-delpi não retorna dado |
+| Qualidade | PPM / perdas × ROL usam `null` quando a api-delpi não retorna dado (ex.: ROL = 0) |
 | Produção | Gateways retornam `null`; provider não força `0.0` |
 | Suprimentos / Engenharia | Depende do snapshot upstream (api-delpi) |
 
@@ -28,7 +28,7 @@ O painel SI **não** armazena valores realizados no Postgres (exceto cache `peri
 | Financeiro | ROL, EBITDA, custo fixo, PMR | `api-delpi` HTTP | `financial_indicators_snapshot_provider` |
 | Comercial | ROL por segmento, taxa fechamento, OTD pedidos, % novos negócios | `api-delpi` HTTP | `commercial_indicators_snapshot_provider` |
 | Produção | OTD, OEE, MO, custo e depreciação | `api-delpi` HTTP | `production_indicators_snapshot_provider` |
-| Qualidade | PPM, NC, Kaizen e 5S | `api-delpi` HTTP | `quality_indicators_snapshot_provider` |
+| Qualidade | PPM, perdas (refugo/retrabalho × ROL), NC, Kaizen e 5S | `api-delpi` HTTP | `quality_indicators_snapshot_provider` |
 | Suprimentos | CPV, giro de estoque, OTD, estoque, economia em negociações | `api-delpi` HTTP | `supplies_indicators_snapshot_provider` |
 | Engenharia | LMP, Transforma+ | `api-delpi` HTTP (`/engineering/*`) | `engineering_indicators_snapshot_provider` |
 | RH | Portal RH | `api-delpi` HTTP (`/hr/snapshot`) | `DelpiHrGateway` → `hr_indicators_snapshot_provider` |
