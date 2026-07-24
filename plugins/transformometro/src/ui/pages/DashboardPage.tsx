@@ -583,32 +583,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <section className={`${DS_FILTERS_ROW} ds-no-print`}>
-          <div className={DS_FILTER_BOX_WIDE}>
-            <FieldLabel className="tm-field__label" label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
-            <SegmentToggle
-            ariaLabel="Visão analítica do dashboard"
-            idPrefix="tm-dashboard-view"
-            options={
-              canSelectConsolidatedView(options?.access_scope)
-                ? VIEW_OPTIONS
-                : VIEW_OPTIONS.filter((option) => option.value !== "consolidated")
-            }
-            value={viewMode}
-            onChange={(next) => {
-              setViewMode(next);
-              if (next === "consolidated") {
-                setFilters((prev) => ({ ...prev, filialIds: [], setorIds: [] }));
-              }
-              if (next === "filial" && filters.filialIds.length === 0) {
-                const fallback =
-                  options?.filiais[0]?.id ?? defaultDashboardFilialFilter(options?.access_scope);
-                if (fallback) {
-                  setFilters((prev) => ({ ...prev, filialIds: [fallback], setorIds: [] }));
-                }
-              }
-            }}
-          />
-          </div>
           <label className={DS_FILTER_BOX}>
             <FieldLabel className="tm-field__label"
               label="Competência"
@@ -673,6 +647,32 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             disabled={viewMode !== "department"}
             searchable
           />
+          <div className={DS_FILTER_BOX_WIDE}>
+            <FieldLabel className="tm-field__label" label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
+            <SegmentToggle
+              ariaLabel="Visão analítica do dashboard"
+              idPrefix="tm-dashboard-view"
+              options={
+                canSelectConsolidatedView(options?.access_scope)
+                  ? VIEW_OPTIONS
+                  : VIEW_OPTIONS.filter((option) => option.value !== "consolidated")
+              }
+              value={viewMode}
+              onChange={(next) => {
+                setViewMode(next);
+                if (next === "consolidated") {
+                  setFilters((prev) => ({ ...prev, filialIds: [], setorIds: [] }));
+                }
+                if (next === "filial" && filters.filialIds.length === 0) {
+                  const fallback =
+                    options?.filiais[0]?.id ?? defaultDashboardFilialFilter(options?.access_scope);
+                  if (fallback) {
+                    setFilters((prev) => ({ ...prev, filialIds: [fallback], setorIds: [] }));
+                  }
+                }
+              }}
+            />
+          </div>
       </section>
 
       <StatusAlerts
