@@ -85,6 +85,7 @@ import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { resolveCompositePartPointerAction, isCompositeContentPart } from "../utils/compositePartSelection";
+import { resolveCanvasTableCellPointerAction } from "../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
@@ -1473,21 +1474,25 @@ function resolveEditorDataParamValueLabel(key: string, value: string): string {
   return value;
 }
 
-/** Grade — seleção de célula + commit tipado (sem iniciar move do bloco). */
+/** Grade — 1º clique = container; 2º = célula (sem engolir o move do bloco no 1º). */
 function EditorCanvasTableBlock({
   block,
   fontScale,
   className,
+  isSelected = false,
 }: {
   block: ComunicadoCanvasTableBlock;
   fontScale?: number;
   className?: string;
+  isSelected?: boolean;
 }) {
   const { updateBlock, selectedCanvasTableCell, selectCanvasTableCell } = useComunicadoEditor();
   const selectedCell =
     selectedCanvasTableCell?.blockId === block.id
       ? { row: selectedCanvasTableCell.row, col: selectedCanvasTableCell.col }
       : null;
+  const blockSelected =
+    resolveCanvasTableCellPointerAction({ blockSelected: isSelected }) === "select-cell";
 
   return (
     <ComunicadoBlockView
@@ -1498,6 +1503,7 @@ function EditorCanvasTableBlock({
       className={className}
       canvasTableInteraction={{
         selectedCell,
+        blockSelected,
         onSelectCell: (cell) => selectCanvasTableCell(block.id, cell),
         onCellCommit: (row, col, cell: CanvasTableCell) => {
           const cells = block.cells.map((currentRow) =>
@@ -1595,7 +1601,12 @@ export function ComunicadoEditorBlockView({
 
   if (block.type === "canvas_table") {
     return (
-      <EditorCanvasTableBlock block={block} fontScale={fontScale} className={className} />
+      <EditorCanvasTableBlock
+        block={block}
+        fontScale={fontScale}
+        className={className}
+        isSelected={isSelected}
+      />
     );
   }
 

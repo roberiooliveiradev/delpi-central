@@ -19,6 +19,11 @@ import type { ComunicadoCanvasTableBlock } from "./comunicadoTypes";
 
 export type ComunicadoCanvasTableInteraction = {
   selectedCell?: CanvasTableCellRef | null;
+  /**
+   * Grade no editor: `false` = 1º clique sobe ao wrap (só container);
+   * `true` = permite selecionar/editar célula. Omitido = legado (sempre célula).
+   */
+  blockSelected?: boolean;
   onSelectCell?: (cell: CanvasTableCellRef | null) => void;
   onCellCommit?: (row: number, col: number, cell: CanvasTableCell) => void;
 };
@@ -92,12 +97,16 @@ export function ComunicadoCanvasTableView({
     onCellChange?.(row, col, canvasTableCellPlainText(next));
   }
 
+  const allowCellSelection = interaction?.blockSelected !== false;
+
   function onCellPointerDown(
     event: ReactPointerEvent<HTMLTableCellElement>,
     row: number,
     col: number,
   ) {
     if (!editable) return;
+    /* Container ainda não selecionado: deixa o wrap do bloco receber o gesto. */
+    if (!allowCellSelection) return;
     event.stopPropagation();
     interaction?.onSelectCell?.({ row, col });
   }
@@ -107,7 +116,7 @@ export function ComunicadoCanvasTableView({
     row: number,
     col: number,
   ) {
-    if (!editable || !interaction?.onSelectCell) return;
+    if (!editable || !allowCellSelection || !interaction?.onSelectCell) return;
     const { key } = event;
     let nextRow = row;
     let nextCol = col;
@@ -202,7 +211,11 @@ export function ComunicadoCanvasTableView({
                 const displayText = display.text;
                 const sparkSeries = display.series ?? cell.series;
                 const bound = display.fromData;
-                const allowEdit = editable && cell.kind !== "sparkline" && !bound;
+                const allowEdit =
+                  editable &&
+                  allowCellSelection &&
+                  cell.kind !== "sparkline" &&
+                  !bound;
 
                 return (
                   <Cell
@@ -222,7 +235,7 @@ export function ComunicadoCanvasTableView({
                     style={cellStyle}
                     contentEditable={allowEdit}
                     suppressContentEditableWarning
-                    tabIndex={editable ? 0 : undefined}
+                    tabIndex={allowEdit ? 0 : undefined}
                     onPointerDown={(event) => onCellPointerDown(event, rowIndex, colIndex)}
                     onKeyDown={(event) => onCellKeyDown(event, rowIndex, colIndex)}
                     onBlur={(event: FocusEvent<HTMLTableCellElement>) => {
