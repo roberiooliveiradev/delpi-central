@@ -170,6 +170,8 @@ export const TM_HELP_TOOLTIPS = {
       "Mesmo checklist do detalhe do processo: dados mestre, melhorias, mapeamento, diagrama macro, baseline, melhoria e medição.",
     modosVisualizacao:
       "Alterne entre ícones grandes (só título), ícones médios (+ código e meta), lista (+ status e preenchimento) e tabela detalhada.",
+    visaoOrganizacao:
+      "Processos: listagem plana dos macroprocessos (visão padrão). Departamentos: pastas por departamento do escopo do processo; o mesmo processo pode aparecer em mais de um departamento. Ao abrir uma pasta, veja só os processos amarrados àquele departamento.",
     ordenacaoCampo: "Campo usado para ordenar a lista em todos os modos de visualização.",
     ordenacaoDirecao:
       "Menor → maior (A–Z, 0–100, mais antigo) ou Maior → menor (Z–A, 100–0, mais recente).",

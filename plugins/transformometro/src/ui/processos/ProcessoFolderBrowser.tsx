@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Grid2X2, LayoutGrid, LayoutList, Rows3 } from "lucide-react";
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  ChevronLeft,
+  Grid2X2,
+  LayoutGrid,
+  LayoutList,
+  Rows3,
+} from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
+import { SegmentToggle } from "../../components/SegmentToggle";
 import {
   dataTableSectionBemClasses,
   ensureDelpiUiClass,
@@ -20,6 +29,17 @@ import { handleSpaLinkClick } from "../../utils/spaLink";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { ProcessoFolderIcon } from "./ProcessoFolderIcon";
+import {
+  groupProcessosByDepartamento,
+  sortDepartamentoFolders,
+  type DepartamentoFolder,
+} from "./groupProcessosByDepartamento";
+import {
+  PROCESSO_LIST_BROWSE_MODES,
+  readProcessoListBrowseMode,
+  writeProcessoListBrowseMode,
+  type ProcessoListBrowseMode,
+} from "./processoListBrowseMode";
 import {
   PROCESSO_LIST_SORT_OPTIONS,
   readProcessoListSort,
@@ -81,6 +101,11 @@ function processoFolderTitle(processo: Processo): string {
   return `${processo.codigo_processo} — ${processo.nome_processo}`;
 }
 
+function departamentoMeta(folder: DepartamentoFolder): string {
+  const n = folder.processCount;
+  return `${n} processo${n === 1 ? "" : "s"}`;
+}
+
 type FolderCardProps = {
   processo: Processo;
   iconSize: "lg" | "md";
@@ -121,6 +146,37 @@ function ProcessoFolderCard({ processo, iconSize, visibility, href, onNavigate }
   );
 }
 
+type DepartamentoFolderCardProps = {
+  folder: DepartamentoFolder;
+  iconSize: "lg" | "md";
+  visibility: ProcessoListFieldVisibility;
+  onOpen: (folder: DepartamentoFolder) => void;
+};
+
+function DepartamentoFolderCard({ folder, iconSize, visibility, onOpen }: DepartamentoFolderCardProps) {
+  const minimal = !visibility.showCode && !visibility.showMeta;
+
+  return (
+    <article className={`tm-processo-folder${minimal ? " tm-processo-folder--minimal" : ""}`} role="listitem">
+      <button
+        type="button"
+        className="tm-processo-folder__open"
+        title={`${folder.label} — ${departamentoMeta(folder)}`}
+        onClick={() => onOpen(folder)}
+      >
+        <ProcessoFolderIcon size={iconSize} />
+        {visibility.showCode && folder.codigoSetor ? (
+          <span className="tm-processo-folder__code">{folder.codigoSetor}</span>
+        ) : null}
+        <span className="tm-processo-folder__name">{folder.label}</span>
+        {visibility.showMeta ? (
+          <span className="tm-processo-folder__meta">{departamentoMeta(folder)}</span>
+        ) : null}
+      </button>
+    </article>
+  );
+}
+
 export function ProcessoFolderBrowser({
   title,
   hint,
@@ -135,8 +191,14 @@ export function ProcessoFolderBrowser({
   onNavigate,
 }: Props) {
   const P = TM_HELP_TOOLTIPS.processos;
+  const [browseMode, setBrowseMode] = useState<ProcessoListBrowseMode>(() => readProcessoListBrowseMode());
+  const [selectedDepartamentoKey, setSelectedDepartamentoKey] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ProcessoListViewMode>(() => readProcessoListViewMode());
   const [sort, setSort] = useState<ProcessoListSort>(() => readProcessoListSort());
+
+  useEffect(() => {
+    writeProcessoListBrowseMode(browseMode);
+  }, [browseMode]);
 
   useEffect(() => {
     writeProcessoListViewMode(viewMode);
@@ -146,11 +208,89 @@ export function ProcessoFolderBrowser({
     writeProcessoListSort(sort);
   }, [sort]);
 
-  const sortedItems = useMemo(() => sortProcessoListItems(items, sort), [items, sort]);
-  const fieldVisibility = fieldVisibilityForProcessoListView(viewMode);
+  useEffect(() => {
+    if (browseMode !== "departamento") {
+      setSelectedDepartamentoKey(null);
+    }
+  }, [browseMode]);
 
+  const departamentoFolders = useMemo(() => {
+    const grouped = groupProcessosByDepartamento(items);
+    return sortDepartamentoFolders(grouped, sort.direction);
+  }, [items, sort.direction]);
+
+  const selectedDepartamento = useMemo(
+    () => departamentoFolders.find((folder) => folder.key === selectedDepartamentoKey) ?? null,
+    [departamentoFolders, selectedDepartamentoKey],
+  );
+
+  useEffect(() => {
+    if (selectedDepartamentoKey && !selectedDepartamento) {
+      setSelectedDepartamentoKey(null);
+    }
+  }, [selectedDepartamento, selectedDepartamentoKey]);
+
+  const showingDepartamentoRoot = browseMode === "departamento" && !selectedDepartamento;
+  const processoItems = useMemo(() => {
+    if (browseMode === "processo") return items;
+    return selectedDepartamento?.processes ?? [];
+  }, [browseMode, items, selectedDepartamento]);
+
+  const sortedProcessos = useMemo(
+    () => sortProcessoListItems(processoItems, sort),
+    [processoItems, sort],
+  );
+
+  const fieldVisibility = fieldVisibilityForProcessoListView(viewMode);
   const pageSize = pageSizeForProcessoListView(viewMode);
-  const { page, setPage, slice, total } = useClientPagination(sortedItems, pageSize);
+
+  const listForPagination = showingDepartamentoRoot ? departamentoFolders : sortedProcessos;
+  const { page, setPage, slice, total } = useClientPagination(listForPagination, pageSize);
+
+  const departamentoSlice = showingDepartamentoRoot
+    ? (slice as DepartamentoFolder[])
+    : [];
+  const processoSlice = showingDepartamentoRoot ? [] : (slice as Processo[]);
+
+  const departamentoDetailColumns = useMemo<DataTableColumn<DepartamentoFolder>[]>(
+    () => [
+      {
+        key: "label",
+        header: "Departamento",
+        sortable: false,
+        render: (row) => row.label,
+      },
+      {
+        key: "codigo",
+        header: "Código",
+        sortable: false,
+        render: (row) => row.codigoSetor || "—",
+      },
+      {
+        key: "count",
+        header: "Processos",
+        sortable: false,
+        render: (row) => String(row.processCount),
+      },
+    ],
+    [],
+  );
+
+  function handleBrowseModeChange(mode: ProcessoListBrowseMode) {
+    setBrowseMode(mode);
+    setSelectedDepartamentoKey(null);
+    setPage(1);
+  }
+
+  function handleOpenDepartamento(folder: DepartamentoFolder) {
+    setSelectedDepartamentoKey(folder.key);
+    setPage(1);
+  }
+
+  function handleBackToDepartamentos() {
+    setSelectedDepartamentoKey(null);
+    setPage(1);
+  }
 
   function handleSortChange(columnKey: string) {
     const key = columnKey as ProcessoListSortField;
@@ -183,6 +323,18 @@ export function ProcessoFolderBrowser({
   const sortDirectionLabel = sort.direction === "asc" ? "Menor → maior" : "Maior → menor";
   const showSectionHeading = Boolean(title || hint);
 
+  const countLabel = showingDepartamentoRoot
+    ? `${total} departamento${total === 1 ? "" : "s"}`
+    : browseMode === "departamento" && selectedDepartamento
+      ? `${total} processo${total === 1 ? "" : "s"} em ${selectedDepartamento.label}`
+      : `${total} registro${total === 1 ? "" : "s"}`;
+
+  const modeHint = showingDepartamentoRoot
+    ? "Visão por departamento. Clique na pasta para ver os processos daquele departamento (um processo pode aparecer em mais de um)."
+    : browseMode === "departamento" && selectedDepartamento
+      ? `Processos do departamento «${selectedDepartamento.label}». Clique na pasta para abrir o processo.`
+      : `Visualização: ${currentMode.label}. Clique na pasta para abrir o processo.`;
+
   return (
     <section
       className={ensureDelpiUiClass(
@@ -201,20 +353,63 @@ export function ProcessoFolderBrowser({
 
       {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
 
+      <div className="tm-processo-browser__browse-row">
+        <div className="tm-processo-browser__browse-toggle">
+          <FieldLabel
+            className="tm-field__label"
+            label="Organizar por"
+            hint={P.visaoOrganizacao}
+          />
+          <SegmentToggle
+            ariaLabel="Organizar listagem por processos ou departamentos"
+            idPrefix="tm-proc-browse"
+            options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
+              value: mode.id,
+              label: mode.label,
+            }))}
+            value={browseMode}
+            onChange={handleBrowseModeChange}
+          />
+        </div>
+        {browseMode === "departamento" && selectedDepartamento ? (
+          <nav className="tm-processo-browser__breadcrumb" aria-label="Navegação por departamento">
+            <button
+              type="button"
+              className="tm-processo-browser__breadcrumb-back"
+              onClick={handleBackToDepartamentos}
+            >
+              <ChevronLeft size={16} aria-hidden="true" />
+              Departamentos
+            </button>
+            <span className="tm-processo-browser__breadcrumb-sep" aria-hidden="true">
+              /
+            </span>
+            <span className="tm-processo-browser__breadcrumb-current">{selectedDepartamento.label}</span>
+          </nav>
+        ) : null}
+      </div>
+
       <div
         className={`${SECTION_CN.toolbar} tm-processo-browser__toolbar`}
         aria-label="Configuração da listagem"
       >
         <div className="tm-processo-browser__sort" aria-label="Ordenação da lista">
-          <SelectField
-            id="tm-proc-sort-field"
-            label="Ordenar por"
-            hint={P.ordenacaoCampo}
-            value={sort.key}
-            onChange={handleSortFieldChange}
-            options={PROCESSO_LIST_SORT_OPTIONS}
-            className="tm-processo-browser__sort-field"
-          />
+          {!showingDepartamentoRoot ? (
+            <SelectField
+              id="tm-proc-sort-field"
+              label="Ordenar por"
+              hint={P.ordenacaoCampo}
+              value={sort.key}
+              onChange={handleSortFieldChange}
+              options={PROCESSO_LIST_SORT_OPTIONS}
+              className="tm-processo-browser__sort-field"
+            />
+          ) : (
+            <span className="tm-processo-browser__sort-field-static">
+              <FieldLabel className="tm-field__label" label="Ordenar por" hint={P.ordenacaoCampo} />
+              <span className="ds-hint">Nome do departamento</span>
+            </span>
+          )}
           <div className="tm-processo-browser__sort-direction">
             <FieldLabel
               className="tm-field__label tm-processo-browser__sort-direction-label"
@@ -257,20 +452,70 @@ export function ProcessoFolderBrowser({
               );
             })}
           </div>
-          <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>
-            {total} registro{total === 1 ? "" : "s"}
-          </span>
+          <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>{countLabel}</span>
         </div>
       </div>
 
       {loading ? (
         <p className="ds-hint">Carregando processos…</p>
-      ) : slice.length === 0 ? (
-        <p className="ds-hint">{emptyMessage}</p>
+      ) : total === 0 ? (
+        <p className="ds-hint">
+          {showingDepartamentoRoot ? "Nenhum departamento encontrado nos processos listados." : emptyMessage}
+        </p>
+      ) : showingDepartamentoRoot ? (
+        viewMode === "details" ? (
+          <DataTable
+            columns={departamentoDetailColumns}
+            rows={departamentoSlice}
+            rowKey={(row) => row.key}
+            onRowClick={handleOpenDepartamento}
+          />
+        ) : viewMode === "list" ? (
+          <ul className="tm-processo-browser__list" role="list">
+            {departamentoSlice.map((folder) => (
+              <li key={folder.key}>
+                <button
+                  type="button"
+                  className="tm-processo-browser__list-item"
+                  title={`${folder.label} — ${departamentoMeta(folder)}`}
+                  onClick={() => handleOpenDepartamento(folder)}
+                >
+                  <ProcessoFolderIcon size="sm" />
+                  <span className="tm-processo-browser__list-main">
+                    <span className="tm-processo-browser__list-title">{folder.label}</span>
+                    <span className="tm-processo-browser__list-meta">
+                      {fieldVisibility.showCode && folder.codigoSetor ? `${folder.codigoSetor} · ` : ""}
+                      {departamentoMeta(folder)}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div
+            className={
+              viewMode === "icons-lg"
+                ? "tm-processo-browser__grid tm-processo-browser__grid--lg"
+                : "tm-processo-browser__grid tm-processo-browser__grid--md"
+            }
+            role="list"
+          >
+            {departamentoSlice.map((folder) => (
+              <DepartamentoFolderCard
+                key={folder.key}
+                folder={folder}
+                iconSize={viewMode === "icons-lg" ? "lg" : "md"}
+                visibility={fieldVisibility}
+                onOpen={handleOpenDepartamento}
+              />
+            ))}
+          </div>
+        )
       ) : viewMode === "details" ? (
         <DataTable
           columns={detailColumns}
-          rows={slice}
+          rows={processoSlice}
           rowKey={(row) => row.processo_id}
           onRowClick={onOpen}
           sortKey={sort.key}
@@ -279,36 +524,38 @@ export function ProcessoFolderBrowser({
         />
       ) : viewMode === "list" ? (
         <ul className="tm-processo-browser__list" role="list">
-          {slice.map((processo) => {
+          {processoSlice.map((processo) => {
             const href = buildProcessoPath(processo.processo_id);
             return (
-            <li key={processo.processo_id}>
-              <a
-                href={href}
-                className="tm-processo-browser__list-item"
-                title={processoFolderTitle(processo)}
-                onClick={(event) => handleSpaLinkClick(event, href, onNavigate)}
-              >
-                <ProcessoFolderIcon size="sm" />
-                <span className="tm-processo-browser__list-main">
-                  <span className="tm-processo-browser__list-title">{processo.nome_processo}</span>
-                  <span className="tm-processo-browser__list-meta">
-                    {fieldVisibility.showCode ? `${processo.codigo_processo} · ` : ""}
-                    {folderMeta(processo)}
+              <li key={processo.processo_id}>
+                <a
+                  href={href}
+                  className="tm-processo-browser__list-item"
+                  title={processoFolderTitle(processo)}
+                  onClick={(event) => handleSpaLinkClick(event, href, onNavigate)}
+                >
+                  <ProcessoFolderIcon size="sm" />
+                  <span className="tm-processo-browser__list-main">
+                    <span className="tm-processo-browser__list-title">{processo.nome_processo}</span>
+                    <span className="tm-processo-browser__list-meta">
+                      {fieldVisibility.showCode ? `${processo.codigo_processo} · ` : ""}
+                      {folderMeta(processo)}
+                    </span>
                   </span>
-                </span>
-                {fieldVisibility.showStatus ? (
-                  <span className="tm-processo-browser__list-status">{renderTableStatus(processo.status_processo)}</span>
-                ) : null}
-                {fieldVisibility.showProgress ? (
-                  <ProcessoFormProgress
-                    compact
-                    completion={computeProcessoListCompletion(processo)}
-                    title={`Preenchimento — ${processo.codigo_processo}`}
-                  />
-                ) : null}
-              </a>
-            </li>
+                  {fieldVisibility.showStatus ? (
+                    <span className="tm-processo-browser__list-status">
+                      {renderTableStatus(processo.status_processo)}
+                    </span>
+                  ) : null}
+                  {fieldVisibility.showProgress ? (
+                    <ProcessoFormProgress
+                      compact
+                      completion={computeProcessoListCompletion(processo)}
+                      title={`Preenchimento — ${processo.codigo_processo}`}
+                    />
+                  ) : null}
+                </a>
+              </li>
             );
           })}
         </ul>
@@ -321,7 +568,7 @@ export function ProcessoFolderBrowser({
           }
           role="list"
         >
-          {slice.map((processo) => (
+          {processoSlice.map((processo) => (
             <ProcessoFolderCard
               key={processo.processo_id}
               processo={processo}
@@ -339,8 +586,8 @@ export function ProcessoFolderBrowser({
       {footer ? <div className="tm-processo-browser__footer">{footer}</div> : null}
 
       <p className="ds-hint tm-processo-browser__mode-hint">
-        Visualização: {currentMode.label}. Clique na pasta para abrir o processo.
-        <HelpTooltip content={P.modosVisualizacao} ariaLabel="Ajuda: modos de visualização" />
+        {modeHint}
+        <HelpTooltip content={P.visaoOrganizacao} ariaLabel="Ajuda: organização da listagem" />
       </p>
     </section>
   );
