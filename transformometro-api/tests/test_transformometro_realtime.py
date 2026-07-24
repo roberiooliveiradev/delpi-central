@@ -75,6 +75,37 @@ def test_related_rooms_investimento_fans_out_to_revisao():
     assert catalog_room("dashboard") in rooms
 
 
+def test_related_rooms_medicao_fans_out_to_processo_and_instancia():
+    rooms = _related_rooms(
+        "medicao",
+        "med-1",
+        {
+            "revisao_id": "rev-1",
+            "instancia_id": "inst-1",
+            "processo_id": "proc-1",
+        },
+    )
+    assert room_key("medicao", "med-1") in rooms
+    assert room_key("revisao", "rev-1") in rooms
+    assert room_key("processo_instancia", "inst-1") in rooms
+    assert room_key("processo", "proc-1") in rooms
+    assert catalog_room("dashboard") in rooms
+
+
+def test_related_rooms_investimento_with_scope_fans_out_to_processo():
+    rooms = _related_rooms(
+        "investimento",
+        "inv-1",
+        {
+            "revisao_id": "rev-1",
+            "instancia_id": "inst-1",
+            "processo_id": "proc-1",
+        },
+    )
+    assert room_key("processo", "proc-1") in rooms
+    assert room_key("processo_instancia", "inst-1") in rooms
+
+
 def test_related_rooms_recurso_custo_fans_out_to_recurso():
     rooms = _related_rooms(
         "recurso_custo",

@@ -243,6 +243,12 @@ export function RevisaoCadastroPanel({
     }
   }
 
+  const reloadCadastroAndPropagate = useCallback(async () => {
+    await load();
+    // Invalida árvore, comparativo e matriz da melhoria (painéis keep-alive).
+    onRevisaoUpdated();
+  }, [load, onRevisaoUpdated]);
+
   async function saveMedicao() {
     setSavingMedicao(true);
     onError(null);
@@ -252,7 +258,7 @@ export function RevisaoCadastroPanel({
         getAccessToken
       );
       sectionEdit.stopEdit("medicao");
-      await load();
+      await reloadCadastroAndPropagate();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar medição");
     } finally {
@@ -527,7 +533,7 @@ export function RevisaoCadastroPanel({
             investimentos={investimentos}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
           />
         }
         editContent={
@@ -538,7 +544,7 @@ export function RevisaoCadastroPanel({
             investimentos={investimentos}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
           />
         }
       />
@@ -561,7 +567,7 @@ export function RevisaoCadastroPanel({
             vinculos={vinculos}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
           />
         }
         editContent={
@@ -573,7 +579,7 @@ export function RevisaoCadastroPanel({
             vinculos={vinculos}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
           />
         }
       />

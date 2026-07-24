@@ -55,7 +55,11 @@ import {
   buildRevisaoColumns,
 } from "../../utils/processoDetailTables";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
-import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT, requestWorkspaceTreeRefresh } from "../../utils/navigation";
+import {
+  TRANSFORMOMETRO_WORKSPACE_HASH_EVENT,
+  TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT,
+  requestWorkspaceTreeRefresh,
+} from "../../utils/navigation";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
 import {
@@ -105,9 +109,12 @@ export function InstanciaDetailPage({
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /** Incrementado a cada load — invalida matriz/ranking keep-alive. */
+  const [dataEpoch, setDataEpoch] = useState(0);
   const [showRevisaoForm, setShowRevisaoForm] = useState(false);
   const pendingRevisaoScroll = useRef(false);
   const consumedNovaRevisaoHash = useRef(false);
+  const wasEmbeddedActive = useRef(embeddedActive);
   const { ref: revisoesSectionRef, scrollToRef: scrollToRevisoes } = useScrollToRef<HTMLElement>();
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
@@ -161,6 +168,7 @@ export function InstanciaDetailPage({
       );
       setComparativo(comp.items.filter((item) => revisaoIds.has(item.revisao_id)));
       setOptions(opts);
+      setDataEpoch((epoch) => epoch + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
@@ -177,14 +185,36 @@ export function InstanciaDetailPage({
   });
 
   useTransformometroEntityWatch({
-    entities: [{ entityType: "processo", entityId: processoId }],
+    entities: [
+      { entityType: "processo", entityId: processoId },
+      { entityType: "processo_instancia", entityId: instanciaId },
+    ],
     getAccessToken,
-    enabled: (!embedded || embeddedActive) && Boolean(processoId),
+    enabled: (!embedded || embeddedActive) && Boolean(processoId) && Boolean(instanciaId),
     onEntityUpdated: sectionEdit.handleRemoteEntityUpdate,
   });
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  // Painel keep-alive: ao voltar da revisão, refetch lista/comparativo/matriz.
+  useEffect(() => {
+    const becameActive = embedded && embeddedActive && !wasEmbeddedActive.current;
+    wasEmbeddedActive.current = embeddedActive;
+    if (becameActive) {
+      void load();
+    }
+  }, [embedded, embeddedActive, load]);
+
+  // Mutações na revisão (medição/investimento) pedem tree-refresh — espelha nos dados da melhoria.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onTreeRefresh = () => {
+      void load();
+    };
+    window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onTreeRefresh);
+    return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onTreeRefresh);
   }, [load]);
 
   const fallbackSection = useInstanciaWorkspaceSection();
@@ -680,6 +710,7 @@ export function InstanciaDetailPage({
               instanciaLabel={instanciaLabel}
               getAccessToken={getAccessToken}
               onError={setError}
+              resyncVersion={dataEpoch}
               onNavigateToRevisao={(revisaoId) =>
                 onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId))
               }

@@ -164,6 +164,21 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
     )
 
 
+def _payload_with_revisao_scope(payload: dict, revisao_id: str) -> dict:
+    """Inclui processo_id/instancia_id para fan-out WS da matriz/comparativo."""
+    enriched = {**payload, "revisao_id": str(revisao_id)}
+    revisao = RevisaoRepository().get(str(revisao_id))
+    if not revisao:
+        return enriched
+    instancia_id = revisao.get("instancia_id")
+    processo_id = revisao.get("processo_id")
+    if instancia_id:
+        enriched["instancia_id"] = str(instancia_id)
+    if processo_id:
+        enriched["processo_id"] = str(processo_id)
+    return enriched
+
+
 def _recalc_after_processo(processo_id: str) -> None:
     _recalc_hook.after_processo(processo_id)
 
@@ -1038,7 +1053,13 @@ def get_medicao(revisao_id: str):
 def upsert_medicao(body: MedicaoBody, request: Request):
     row = MedicaoRepository().upsert(body.model_dump())
     mid = str(row["medicao_id"])
-    _audit(request, "medicao", mid, "upsert", body.model_dump())
+    _audit(
+        request,
+        "medicao",
+        mid,
+        "upsert",
+        _payload_with_revisao_scope(body.model_dump(), str(body.revisao_id)),
+    )
     _recalc_after_revisao(str(body.revisao_id))
     return ok(row_to_json(row), "Medição salva.")
 
@@ -1064,7 +1085,13 @@ def create_investimento(body: InvestimentoBody, request: Request):
         return fail(str(exc), 400)
 
     iid = str(row["investimento_id"])
-    _audit(request, "investimento", iid, "create", body.model_dump())
+    _audit(
+        request,
+        "investimento",
+        iid,
+        "create",
+        _payload_with_revisao_scope(body.model_dump(), str(body.revisao_id)),
+    )
     _recalc_after_revisao(str(body.revisao_id))
     return ok(row_to_json(row), "Investimento criado.", 201)
 
@@ -1088,7 +1115,7 @@ def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, requ
         "investimento",
         investimento_id,
         "update",
-        {**body.model_dump(), "revisao_id": str(row["revisao_id"])},
+        _payload_with_revisao_scope(body.model_dump(), str(row["revisao_id"])),
     )
     _recalc_after_revisao(str(row["revisao_id"]))
     return ok(row_to_json(row), "Investimento atualizado.")
@@ -1106,7 +1133,10 @@ def delete_investimento(investimento_id: str, request: Request):
         "investimento",
         investimento_id,
         "delete",
-        {"revisao_id": str(existing["revisao_id"]), "investimento_id": investimento_id},
+        _payload_with_revisao_scope(
+            {"investimento_id": investimento_id},
+            str(existing["revisao_id"]),
+        ),
     )
     _recalc_after_revisao(str(existing["revisao_id"]))
     return ok(message="Investimento excluído.")
@@ -1458,7 +1488,13 @@ def list_vinculos(revisao_id: str):
 def create_vinculo(body: VinculoBody, request: Request):
     row = VinculoRepository().create(body.model_dump())
     vid = str(row["vinculo_id"])
-    _audit(request, "vinculo", vid, "create", body.model_dump())
+    _audit(
+        request,
+        "vinculo",
+        vid,
+        "create",
+        _payload_with_revisao_scope(body.model_dump(), str(body.revisao_id)),
+    )
     _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo criado.", 201)
 
@@ -1473,7 +1509,7 @@ def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
         "vinculo",
         vinculo_id,
         "update",
-        {**body.model_dump(), "revisao_id": str(row["revisao_id"])},
+        _payload_with_revisao_scope(body.model_dump(), str(row["revisao_id"])),
     )
     _recalc_after_global_resource_change()
     return ok(row_to_json(row), "Vínculo atualizado.")
@@ -1491,7 +1527,10 @@ def delete_vinculo(vinculo_id: str, request: Request):
         "vinculo",
         vinculo_id,
         "delete",
-        {"revisao_id": str(existing["revisao_id"]), "vinculo_id": vinculo_id},
+        _payload_with_revisao_scope(
+            {"vinculo_id": vinculo_id},
+            str(existing["revisao_id"]),
+        ),
     )
     _recalc_after_global_resource_change()
     return ok(message="Vínculo excluído.")

@@ -116,6 +116,13 @@ def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) ->
     revisao_id = payload.get("revisao_id")
     if revisao_id and entity_type in {"medicao", "investimento", "vinculo"}:
         rooms.append(room_key("revisao", str(revisao_id)))
+        # Matriz/comparativo da melhoria e árvore do processo precisam invalidar.
+        instancia_id_op = payload.get("instancia_id")
+        processo_id_op = payload.get("processo_id")
+        if instancia_id_op:
+            rooms.append(room_key("processo_instancia", str(instancia_id_op)))
+        if processo_id_op:
+            rooms.append(room_key("processo", str(processo_id_op)))
 
     processo_id = payload.get("processo_id")
     if processo_id and entity_type in {"processo_instancia", "revisao"}:

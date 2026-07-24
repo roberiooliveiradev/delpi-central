@@ -37,6 +37,8 @@ type Props = {
   instanciaLabel: string;
   getAccessToken?: () => string | undefined;
   onError: (message: string | null) => void;
+  /** Quando muda (ex.: load da melhoria após medição/investimento), refetch da matriz. */
+  resyncVersion?: number;
   onNavigateToRevisao?: (revisaoId: string) => void;
 };
 
@@ -53,6 +55,7 @@ export function InstanciaMatrizRevisoesSection({
   instanciaLabel,
   getAccessToken,
   onError,
+  resyncVersion = 0,
   onNavigateToRevisao,
 }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
@@ -81,7 +84,7 @@ export function InstanciaMatrizRevisoesSection({
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, resyncVersion]);
 
   const scatterPoints = useMemo(
     () => pontos.map((ponto) => matrizPontoToImpactEffortPoint(ponto)),
