@@ -129,14 +129,18 @@
   white-space: nowrap;
 }
 
-/* Segment toggle — trilha única + opção ativa em pill (canônico do kit). */
+/* Segment toggle — trilha + opção ativa (2+ opções sem estourar o layout). */
 .delpi-ui-segment-toggle {
-  display: inline-flex;
+  display: flex;
   align-items: stretch;
+  flex-wrap: wrap;
   gap: 2px;
-  flex-wrap: nowrap;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
   padding: 3px;
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid color-mix(
     in srgb,
     var(--delpi-ui-border, var(--border, #e6e6e6)) 88%,
@@ -148,24 +152,34 @@
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   box-shadow: inset 0 1px 2px color-mix(in srgb, #000 8%, transparent);
+  overflow: hidden;
+}
+
+/* Em célula de filtro estreita: ocupar a largura disponível e quebrar opções. */
+.delpi-ui-filter-box .delpi-ui-segment-toggle,
+.delpi-ui-filters-row .delpi-ui-segment-toggle {
+  width: 100%;
 }
 
 .delpi-ui-segment-toggle--sm {
   padding: 2px;
   gap: 1px;
+  border-radius: 10px;
 }
 
 .delpi-ui-segment-toggle__btn {
   position: relative;
   z-index: 0;
+  flex: 1 1 auto;
+  min-width: min-content;
   min-height: 32px;
-  padding: 0.35rem 0.9rem;
+  padding: 0.35rem 0.65rem;
   border: none;
-  border-radius: 999px;
+  border-radius: 9px;
   background: transparent;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--delpi-ui-text, #111) 62%, transparent));
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.01em;
@@ -174,14 +188,14 @@
   transition:
     color 0.16s ease,
     background 0.16s ease,
-    box-shadow 0.16s ease,
-    transform 0.16s ease;
+    box-shadow 0.16s ease;
 }
 
 .delpi-ui-segment-toggle--sm .delpi-ui-segment-toggle__btn {
   min-height: 28px;
-  padding: 0.28rem 0.7rem;
-  font-size: 0.74rem;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.72rem;
+  border-radius: 8px;
 }
 
 .delpi-ui-segment-toggle__btn:hover:not(:disabled):not(.delpi-ui-segment-toggle__btn--active) {

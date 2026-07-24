@@ -69,7 +69,7 @@ import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
-import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_PLAIN } from "../../components/filterChrome";
+import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -583,7 +583,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       />
 
       <section className={`${DS_FILTERS_ROW} ds-no-print`}>
-          <div className={DS_FILTER_BOX_PLAIN}>
+          <div className={DS_FILTER_BOX_WIDE}>
             <FieldLabel className="tm-field__label" label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
             <SegmentToggle
             ariaLabel="Visão analítica do dashboard"

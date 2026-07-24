@@ -57,4 +57,21 @@ describe("SegmentToggle", () => {
     const root = container.querySelector(".delpi-ui-segment-toggle");
     expect(root?.className.includes("delpi-ui-segment-toggle--sm")).toBe(true);
   });
+
+  it("renderiza três ou mais opções sem perder botões", () => {
+    render(
+      <SegmentToggle
+        ariaLabel="Visão"
+        options={[
+          { value: "consolidated", label: "Consolidado" },
+          { value: "filial", label: "Unidade" },
+          { value: "department", label: "Departamento" },
+        ]}
+        value="consolidated"
+        onChange={() => undefined}
+      />,
+    );
+    expect(screen.getAllByRole("button")).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "Departamento" })).toBeTruthy();
+  });
 });
