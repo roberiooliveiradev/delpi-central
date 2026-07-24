@@ -266,11 +266,6 @@ export function ProcessosPage({
             />
           </section>
         }
-        footer={
-          <p className="ds-hint">
-            Clique na pasta para abrir revisões, medições e investimentos.
-          </p>
-        }
       />
     </TransformometroShell>
   );

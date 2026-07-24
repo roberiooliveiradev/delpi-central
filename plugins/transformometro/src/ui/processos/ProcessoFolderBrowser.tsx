@@ -351,15 +351,37 @@ export function ProcessoFolderBrowser({
         </div>
       ) : null}
 
-      {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
-
       <div className="tm-processo-browser__browse-row">
-        <div className="tm-processo-browser__browse-toggle">
+        <div className="tm-processo-browser__browse-label">
           <FieldLabel
             className="tm-field__label"
             label="Organizar por"
             hint={P.visaoOrganizacao}
           />
+          {browseMode === "departamento" && selectedDepartamento ? (
+            <nav className="tm-processo-browser__breadcrumb" aria-label="Navegação por departamento">
+              <button
+                type="button"
+                className="tm-processo-browser__breadcrumb-back"
+                onClick={handleBackToDepartamentos}
+              >
+                <ChevronLeft size={16} aria-hidden="true" />
+                Departamentos
+              </button>
+              <span className="tm-processo-browser__breadcrumb-sep" aria-hidden="true">
+                /
+              </span>
+              <span className="tm-processo-browser__breadcrumb-current">{selectedDepartamento.label}</span>
+            </nav>
+          ) : (
+            <p className="ds-hint tm-processo-browser__browse-hint">
+              {browseMode === "departamento"
+                ? "Pastas por departamento do escopo (preferência salva neste navegador)."
+                : "Listagem plana de macroprocessos (preferência salva neste navegador)."}
+            </p>
+          )}
+        </div>
+        <div className="tm-processo-browser__browse-toggle">
           <SegmentToggle
             ariaLabel="Organizar listagem por processos ou departamentos"
             idPrefix="tm-proc-browse"
@@ -371,23 +393,9 @@ export function ProcessoFolderBrowser({
             onChange={handleBrowseModeChange}
           />
         </div>
-        {browseMode === "departamento" && selectedDepartamento ? (
-          <nav className="tm-processo-browser__breadcrumb" aria-label="Navegação por departamento">
-            <button
-              type="button"
-              className="tm-processo-browser__breadcrumb-back"
-              onClick={handleBackToDepartamentos}
-            >
-              <ChevronLeft size={16} aria-hidden="true" />
-              Departamentos
-            </button>
-            <span className="tm-processo-browser__breadcrumb-sep" aria-hidden="true">
-              /
-            </span>
-            <span className="tm-processo-browser__breadcrumb-current">{selectedDepartamento.label}</span>
-          </nav>
-        ) : null}
       </div>
+
+      {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
 
       <div
         className={`${SECTION_CN.toolbar} tm-processo-browser__toolbar`}
