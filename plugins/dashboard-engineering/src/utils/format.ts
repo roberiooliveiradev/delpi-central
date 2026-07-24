@@ -24,16 +24,19 @@ export function formatPercent(
   })}%`;
 }
 
-/** ROI da transformometro-api: razão (ex.: 3,36 = 336% de retorno sobre investimento). */
+/**
+ * ROI da transformometro-api: razão líquida/investimento (ex.: 4,1 → "4,1×").
+ * Sem multiplicar por 100 — alinhado ao Transformômetro.
+ */
 export function formatRoiRatio(
   value: number | null | undefined,
   fractionDigits = 1
 ): string {
   if (value == null || Number.isNaN(value)) return "—";
-  return `${(value * 100).toLocaleString("pt-BR", {
+  return `${value.toLocaleString("pt-BR", {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
-  })}%`;
+  })}×`;
 }
 
 export function formatDecimal(

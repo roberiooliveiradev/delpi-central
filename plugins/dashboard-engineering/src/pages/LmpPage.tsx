@@ -322,14 +322,15 @@ export function LmpPage({ pathname }: LmpPageProps) {
         onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
-      />
+      >
+        <LmpFilters
+          listingTypes={listingTypes}
+          statuses={statuses}
+          onListingTypesChange={setListingTypes}
+          onStatusesChange={setStatuses}
+        />
+      </FilterBar>
       <DataSourceBanner variant="lmp" />
-      <LmpFilters
-        listingTypes={listingTypes}
-        statuses={statuses}
-        onListingTypesChange={setListingTypes}
-        onStatusesChange={setStatuses}
-      />
       <EngineeringStatusAlerts
         error={error}
         loading={loading}

@@ -20,6 +20,8 @@ type FilterBarProps = {
   onRefresh: () => void;
   refreshing?: boolean;
   exportActions?: ReactNode;
+  /** Filtros da página na mesma FiltersRow (evita segunda faixa full-width). */
+  children?: ReactNode;
 };
 
 export function FilterBar({
@@ -38,6 +40,7 @@ export function FilterBar({
   onRefresh,
   refreshing = false,
   exportActions,
+  children,
 }: FilterBarProps) {
   return (
     <>
@@ -63,7 +66,9 @@ export function FilterBar({
         onDateStartChange={onDateStartChange}
         onDateEndChange={onDateEndChange}
         onBranchesChange={onBranchesChange}
-      />
+      >
+        {children}
+      </EngineeringFilters>
     </>
   );
 }

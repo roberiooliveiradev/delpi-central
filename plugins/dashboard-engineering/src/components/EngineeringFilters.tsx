@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { BRANCH_OPTIONS } from "../constants/filterOptions";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { MultiSelectField } from "./MultiSelectField";
@@ -15,6 +17,8 @@ type EngineeringFiltersProps = {
   onBranchesChange: (values: string[]) => void;
   showPeriodFilters?: boolean;
   className?: string;
+  /** Filtros extras na mesma grade (Tipo/Status LMP, status TRANSFORMA+, …). */
+  children?: ReactNode;
 };
 
 export function EngineeringFilters({
@@ -28,9 +32,14 @@ export function EngineeringFilters({
   onBranchesChange,
   showPeriodFilters = true,
   className = "",
+  children,
 }: EngineeringFiltersProps) {
   return (
-    <FiltersRow className={className}>
+    <FiltersRow
+      className={className}
+      variant={children ? "extended" : "default"}
+      ariaLabel="Filtros do dashboard"
+    >
       {showPeriodFilters ? (
         <>
           <FilterInputField
@@ -68,6 +77,7 @@ export function EngineeringFilters({
         emptyLabel="Consolidado"
         searchable
       />
+      {children}
     </FiltersRow>
   );
 }

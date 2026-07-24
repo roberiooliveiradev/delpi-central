@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { NativeTextControl, useChartGranularitySelection } from "@delpi/plugin-ui/index";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -12,7 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Clock, Coins, Lightbulb, Percent } from "lucide-react";
+import { Clock, Coins, Lightbulb, TrendingUp } from "lucide-react";
 
 import { getTransformaProcesses, getTransformaSummary } from "../api/engineeringApi";
 import { ChartCard } from "../components/ChartCard";
@@ -21,6 +21,7 @@ import { DataSourceBanner } from "../components/DataSourceBanner";
 import type { DataTableColumn } from "../components/DataTable";
 import { DataTableSection } from "../components/DataTableSection";
 import { FilterBar } from "../components/FilterBar";
+import { FilterInputField } from "../components/dashboardFiltersUi";
 import { KpiCard } from "../components/KpiCard";
 import { EngineeringStatusAlerts } from "../components/EngineeringStatusAlerts";
 import { CHART_COLORS } from "../constants/chartColors";
@@ -220,7 +221,16 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         onBranchesChange={setBranches}
         onRefresh={reload}
         refreshing={refreshing}
-      />
+      >
+        <FilterInputField
+          id="de-transforma-status"
+          label="Status do processo"
+          type="text"
+          value={statusFilter}
+          placeholder="Todos"
+          onChange={setStatusFilter}
+        />
+      </FilterBar>
       <DataSourceBanner variant="transforma" />
       <p className="ds-hint" style={{ margin: "0 0 1rem" }}>
         Dados via API de engenharia, lidos do schema{" "}
@@ -236,19 +246,6 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         onRetry={reload}
         refreshTitle="Atualizando TRANSFORMA+"
       />
-
-      <section className="ds-filters-row">
-        <div className="ds-filter-box">
-          <label htmlFor="de-transforma-status">Status do processo</label>
-          <NativeTextControl
-            id="de-transforma-status"
-            type="text"
-            value={statusFilter}
-            placeholder="Todos"
-            onChange={setStatusFilter}
-          />
-        </div>
-      </section>
 
       <section className="ds-kpi-grid" aria-busy={isBusy}>
         <KpiCard
@@ -304,7 +301,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
               showGoal: false,
             },
           )}
-          icon={<Percent size={22} />}
+          icon={<TrendingUp size={22} />}
           loading={isBusy}
         />
         <KpiCard

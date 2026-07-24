@@ -29,7 +29,7 @@ export const ENGINEERING_HELP_TOOLTIPS = {
     implementedSolutions:
       "Quantidade de soluções/melhorias implementadas no TRANSFORMA+.",
     averageRoi:
-      "Retorno sobre investimento no recorte: economia líquida ÷ investimento total (razão da API × 100). Mesmo cálculo do dashboard Transformômetro.",
+      "Retorno sobre investimento no recorte: razão economia líquida ÷ investimento total (ex.: 4,1×). Mesmo cálculo e formato do dashboard Transformômetro.",
     netSavings: "Economia líquida acumulada no recorte filtrado.",
     hoursSaved: "Total de horas economizadas pelas soluções implementadas.",
     listedProcesses: "Quantidade de processos listados com os filtros aplicados.",

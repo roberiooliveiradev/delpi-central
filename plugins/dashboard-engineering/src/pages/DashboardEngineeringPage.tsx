@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { BarChart3, CircleGauge, Clock, Coins, Lightbulb, Percent } from "lucide-react";
+import { BarChart3, CircleGauge, Clock, Coins, Lightbulb, TrendingUp } from "lucide-react";
 
 import { DataSourceBanner } from "../components/DataSourceBanner";
 import { FilterBar } from "../components/FilterBar";
@@ -257,7 +257,7 @@ export function DashboardEngineeringPage({ pathname }: DashboardEngineeringPageP
               showGoal: false,
             },
           )}
-          icon={<Percent size={22} />}
+          icon={<TrendingUp size={22} />}
           loading={isBusy}
         />
       </section>

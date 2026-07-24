@@ -12,6 +12,7 @@ type LmpFiltersProps = {
   onStatusesChange: (values: string[]) => void;
 };
 
+/** Campos extras para a mesma FiltersRow do FilterBar (não criar seção à parte). */
 export function LmpFilters({
   listingTypes,
   statuses,
@@ -19,10 +20,7 @@ export function LmpFilters({
   onStatusesChange,
 }: LmpFiltersProps) {
   return (
-    <section
-      className="ds-filters-row ds-filters-row--extended"
-      aria-label="Filtros de LMP"
-    >
+    <>
       <MultiSelectField
         label="Tipo"
         labelHint={ENGINEERING_HELP_TOOLTIPS.filters.listingType}
@@ -41,6 +39,6 @@ export function LmpFilters({
         emptyLabel="Todos"
         searchable
       />
-    </section>
+    </>
   );
 }
