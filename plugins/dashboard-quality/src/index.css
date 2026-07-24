@@ -210,6 +210,11 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--dq-grid-gap);
+}.dashboard-quality .dq-module-shortcut-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--dq-grid-gap);
+  margin-bottom: var(--dq-section-gap);
 }.dashboard-quality .dq-module-shortcut{
   opacity: 0.85;
   text-decoration: none;
@@ -359,7 +364,8 @@
   .dashboard-quality .dq-charts-grid,
   .dashboard-quality .dq-kpi-grid--detail,
   .dashboard-quality .dq-detail-layout,
-  .dashboard-quality .dq-detail-grid{
+  .dashboard-quality .dq-detail-grid,
+  .dashboard-quality .dq-module-shortcut-grid{
     grid-template-columns: 1fr;
   }.dashboard-quality .dq-page-header__actions{
     width: 100%;
