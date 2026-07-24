@@ -78,4 +78,4 @@ def test_build_csv_appends_summary_row(mock_live):
     csv_out = DashboardExportService().build_csv()
 
     assert "TOTAIS DO RECORTE" in csv_out
-    assert "ROI acumulado 150" in csv_out
+    assert "ROI acumulado 1.5×" in csv_out

@@ -5,7 +5,7 @@ const currencyFormatter = new Intl.NumberFormat("pt-BR", {
   maximumFractionDigits: 2,
 });
 
-/** `value` é múltiplo (ex.: 2,88 = 288% de retorno sobre investimento). */
+/** `value` já é fração 0–1 (ex.: 0,15 → 15%). Não usar para ROI (razão). */
 export function formatPercent(
   value: number | null | undefined,
   fractionDigits = 2
@@ -17,12 +17,19 @@ export function formatPercent(
   })}%`;
 }
 
-/** Alias explícito para ROI consolidado retornado pela API (razão líquida/investimento). */
+/**
+ * ROI consolidado da API: razão líquida/investimento (ex.: 4,1 → "4,1×").
+ * Não multiplica por 100.
+ */
 export function formatRoiRatio(
   value: number | null | undefined,
   fractionDigits = 1
 ): string {
-  return formatPercent(value, fractionDigits);
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })}×`;
 }
 
 export function formatDecimal(

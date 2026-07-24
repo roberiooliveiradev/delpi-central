@@ -100,7 +100,7 @@ investimento_total_mes =
 ROI acumulado = economia_liquida_total / investimento_total
 ```
 
-A chave da API permanece `roi_medio` por compatibilidade com o frontend. Não descontar investimento duas vezes: a economia líquida já inclui todos os custos.
+Exibido como **razão** (ex.: `4,1×`), sem multiplicar por 100. A chave da API permanece `roi_medio` por compatibilidade com o frontend. Não descontar investimento duas vezes: a economia líquida já inclui todos os custos.
 
 ## Dias do mês (corridos)
 

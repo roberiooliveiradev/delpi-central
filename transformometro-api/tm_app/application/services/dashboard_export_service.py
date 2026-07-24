@@ -70,11 +70,12 @@ class DashboardExportService:
         )
         liquida = float(summary.get("economia_liquida_total") or 0)
         investimento = float(summary.get("investimento_total") or 0)
-        roi = (liquida / investimento * 100) if investimento > 0 else 0.0
+        # Razão líquida/investimento (ex.: 1,5×) — sem ×100.
+        roi = (liquida / investimento) if investimento > 0 else 0.0
 
         return {
             "codigo_processo": "TOTAIS DO RECORTE",
-            "competencia": f"ROI acumulado {round(roi, 1)}%",
+            "competencia": f"ROI acumulado {round(roi, 1)}×",
             "economia_bruta": summary.get("economia_bruta_total"),
             "economia_liquida_mes": summary.get("economia_liquida_total"),
             "investimento_unico_mes": summary.get("investimento_unico_total"),

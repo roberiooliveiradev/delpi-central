@@ -5,7 +5,7 @@ import {
   Clock,
   Coins,
   Lightbulb,
-  Percent,
+  TrendingUp,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -811,7 +811,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.roi}
           value={formatRoiRatio(resumo?.roi_medio, 1)}
           subtitle={`Economia líquida / investimento · ${periodLabel}`}
-          icon={<Percent size={22} />}
+          icon={<TrendingUp size={22} />}
           loading={isBusy && !resumo}
         />
         <KpiCard
