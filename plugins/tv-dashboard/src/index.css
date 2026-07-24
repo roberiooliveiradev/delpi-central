@@ -7041,6 +7041,39 @@ body.td-composer--marqueeing *{
   flex-direction: column;
   gap: 12px;
 }
+.dashboard-tv-dashboard .td-canvas-table-bindings__count{
+  margin: 0;
+}
+.dashboard-tv-dashboard .td-canvas-table-bindings{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow: auto;
+}
+.dashboard-tv-dashboard .td-canvas-table-bindings__item{
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid color-mix(in srgb, var(--td-border, #d0d7de) 80%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--td-surface, #fff) 92%, var(--primary, #089bdb) 8%);
+  color: var(--td-text, #1f2328);
+  font-size: 12px;
+  line-height: 1.35;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-canvas-table-bindings__item:hover{
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 45%, transparent);
+}
+.dashboard-tv-dashboard .td-canvas-table-bindings__item--active{
+  border-color: var(--primary, #089bdb);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+}
 /* Legado: checklists em ul — sem marcadores; preferir InspectorElementRow. */
 .dashboard-tv-dashboard .td-deck-inspector__checklist{
   list-style: none;

@@ -2021,7 +2021,7 @@ Paridade **PowerPoint** (não FigJam): linha reta + âncoras N/S/E/W/centro; elb
 
 **Grade (`canvas_table`) — paridade editor (jul/2026):** tipografia efetiva + escala no resize (`scaleCanvasTableBlockTypography`); aba Elemento → ribbon Grade (estrutura/estilo/célula); células tipadas (`text` | `number` | `sparkline`) com migrate de string legado; chrome de célula + inspetor; paste TSV infere número/sparkline; PPTX exporta matriz de texto (sparkline → valor âncora).
 
-**Grade + dados (jul/2026):** `dataSourceId` no bloco + `dataRef` por célula (espelho 4P). Uma célula ou várias (aplicar coluna/corpo). Resolve em `canvasTableProjection.ts` / enrichment `serverCanvasTableProjectionApplied`. **Não** vira `table_view` / `tableProjection`.
+**Grade + dados (jul/2026):** `dataSourceId` no bloco + `dataRef` por célula (espelho 4P). **N campos na mesma Grade / uma fonte** — cada célula (ou coluna/corpo) com `field`/`aggregation`/`formato` próprio; mapa de vínculos no inspetor Dados. Resolve em `canvasTableProjection.ts` / enrichment `serverCanvasTableProjectionApplied`. **Não** vira `table_view` / `tableProjection`. Multi-fonte por célula = fora de escopo (anti-padrão `operationId` na célula).
 
 **Anti-padrões:** misturar `canvas_table` com `table_view` live; embutir blocos KPI/chart reais em células; `operationId` na célula; persistir `resolved` no native_config; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
 

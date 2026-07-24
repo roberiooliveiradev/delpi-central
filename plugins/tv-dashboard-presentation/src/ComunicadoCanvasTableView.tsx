@@ -144,6 +144,7 @@ export function ComunicadoCanvasTableView({
     <div
       className={[
         "td-canvas-table",
+        editable ? "td-canvas-table--editable" : "",
         opts.bandedRows ? "td-canvas-table--banded-rows" : "",
         opts.bandedColumns ? "td-canvas-table--banded-cols" : "",
         opts.borderStyle === "horizontal" ? "td-canvas-table--borders-h" : "",

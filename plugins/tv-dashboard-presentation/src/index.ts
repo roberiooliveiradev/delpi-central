@@ -1038,13 +1038,16 @@ export {
   buildCanvasTableDataLinkPatch,
   canvasTableCellHasDataRef,
   canvasTableHasDataBinding,
+  formatCanvasTableDataBindingLabel,
   isCanvasTableDataBoundBlock,
+  listCanvasTableDataBindings,
   resolveCanvasTableCellDisplay,
   suggestCanvasTableCellDataRef,
   syncCanvasTableBlocksWithResolved,
   type ApplyCanvasTableDataRefScope,
   type BuildCanvasTableDataLinkPatchInput,
   type CanvasTableCellDisplay,
+  type CanvasTableDataBindingEntry,
 } from "./canvasTableProjection";
 export type {
   ComunicadoTextDataRef,

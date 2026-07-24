@@ -304,7 +304,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
     canvasTableDataBinding:
-      "Liga uma fonte à Grade e um campo a cada célula (ou à coluna/corpo). Não substitui a tabela de dados live.",
+      "Uma fonte na Grade; cada célula pode ter um campo diferente (Meta ≠ Realizado). Use o mapa de vínculos ou selecione a célula no palco. Não substitui a tabela de dados live.",
     textDataBinding:
       "Projeta um campo da fonte no bloco. Prefixo/sufixo e formato aplicam-se ao valor dinâmico; alterar filtros atualiza o preview.",
     textDataColorRules:

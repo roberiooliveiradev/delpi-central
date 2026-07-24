@@ -4,6 +4,8 @@ import {
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
   discoverResolvedFieldOptions,
+  formatCanvasTableDataBindingLabel,
+  listCanvasTableDataBindings,
   normalizeCanvasTableCell,
   suggestCanvasTableCellDataRef,
   type ApplyCanvasTableDataRefScope,
@@ -31,6 +33,10 @@ const FORMAT_OPTIONS: Array<{ value: TextProjectionFormat; label: string }> = [
   { value: "date", label: "Data" },
 ];
 
+const AGG_LABEL = Object.fromEntries(
+  TEXT_FIELD_AGGREGATION_OPTIONS.map((item) => [item.value, item.label]),
+) as Record<string, string>;
+
 type Props = {
   pane?: boolean;
   layout?: PanelLayout;
@@ -52,6 +58,7 @@ export function CanvasTableDataBindingInspector({
     updateBlock,
     openDataCatalog,
     selectedCanvasTableCell,
+    selectCanvasTableCell,
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
@@ -90,6 +97,11 @@ export function CanvasTableDataBindingInspector({
           : undefined,
       ),
     [catalogFields, linkedSource, resolved],
+  );
+
+  const bindings = useMemo(
+    () => (table ? listCanvasTableDataBindings(table) : []),
+    [table],
   );
 
   if (!table) return null;
@@ -143,6 +155,12 @@ export function CanvasTableDataBindingInspector({
 
   const openCatalog = onOpenDataSources ?? (() => openDataCatalog("insert"));
   const dataRef = selectedCell?.dataRef;
+  const bindingCountLabel =
+    bindings.length === 0
+      ? "Nenhum campo vinculado"
+      : bindings.length === 1
+        ? "1 campo vinculado"
+        : `${bindings.length} campos vinculados`;
 
   return (
     <>
@@ -168,9 +186,48 @@ export function CanvasTableDataBindingInspector({
           hint={H.canvasTableDataBinding ?? H.textDataBinding ?? H.viewBinding}
           pane={pane}
         >
+          <p className="td-subtitle td-canvas-table-bindings__count">{bindingCountLabel}</p>
+
+          {bindings.length > 0 ? (
+            <ul className="td-canvas-table-bindings" aria-label="Campos vinculados na Grade">
+              {bindings.map((entry) => {
+                const active =
+                  cellSel?.row === entry.row && cellSel?.col === entry.col;
+                const fieldLabel =
+                  fieldOptions.find((item) => item.field === entry.field)?.label ??
+                  entry.field;
+                return (
+                  <li key={`${entry.row}:${entry.col}:${entry.field}`}>
+                    <button
+                      type="button"
+                      className={[
+                        "td-canvas-table-bindings__item",
+                        active ? "td-canvas-table-bindings__item--active" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onClick={() =>
+                        selectCanvasTableCell(table.id, { row: entry.row, col: entry.col })
+                      }
+                    >
+                      {formatCanvasTableDataBindingLabel(
+                        {
+                          ...entry,
+                          field: fieldLabel,
+                        },
+                        AGG_LABEL[entry.aggregation] ?? entry.aggregation,
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+
           {!cellSel ? (
             <p className="td-subtitle">
-              Selecione uma célula na Grade para vincular um campo (ou aplicar à coluna).
+              Selecione uma célula na Grade para vincular um campo próprio (cada célula pode ter
+              um dado diferente).
             </p>
           ) : (
             <>

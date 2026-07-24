@@ -15,12 +15,14 @@ import type {
   ComunicadoCanvasTableBlock,
   ComunicadoDataResolved,
   ComunicadoTextDataRef,
+  TextProjectionFormat,
 } from "./comunicadoTypes";
 import {
   parseProjectionNumber,
   resolveProjectedField,
   suggestDefaultAggregationForField,
   suggestPreferredProjectionField,
+  type ViewAggregation,
 } from "./fieldValueProjection";
 import {
   formatTextProjectionValue,
@@ -51,6 +53,49 @@ export function canvasTableHasDataBinding(
 
 export function canvasTableCellHasDataRef(cell: CanvasTableCell | unknown): boolean {
   return Boolean(normalizeCanvasTableCell(cell).dataRef?.field?.trim());
+}
+
+/** Vínculo de dados de uma célula (mapa no inspetor). */
+export type CanvasTableDataBindingEntry = {
+  row: number;
+  col: number;
+  field: string;
+  aggregation: ViewAggregation;
+  format?: TextProjectionFormat;
+};
+
+/**
+ * Lista células com `dataRef.field` (ordem linha → coluna).
+ * Uma fonte no bloco; N campos no componente.
+ */
+export function listCanvasTableDataBindings(
+  block: Pick<ComunicadoCanvasTableBlock, "cells">,
+): CanvasTableDataBindingEntry[] {
+  const entries: CanvasTableDataBindingEntry[] = [];
+  block.cells.forEach((row, rowIndex) => {
+    row.forEach((raw, colIndex) => {
+      const cell = normalizeCanvasTableCell(raw);
+      const ref = normalizeTextDataRef(cell.dataRef);
+      if (!ref?.field?.trim()) return;
+      entries.push({
+        row: rowIndex,
+        col: colIndex,
+        field: ref.field,
+        aggregation: (ref.aggregation ?? "first") as ViewAggregation,
+        format: ref.format,
+      });
+    });
+  });
+  return entries;
+}
+
+/** Rótulo estável para o mapa: `2×1 · meta · first`. */
+export function formatCanvasTableDataBindingLabel(
+  entry: Pick<CanvasTableDataBindingEntry, "row" | "col" | "field" | "aggregation">,
+  aggregationLabel?: string,
+): string {
+  const agg = aggregationLabel?.trim() || entry.aggregation || "first";
+  return `${entry.row + 1}×${entry.col + 1} · ${entry.field} · ${agg}`;
 }
 
 export type CanvasTableCellDisplay = {

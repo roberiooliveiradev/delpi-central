@@ -1509,10 +1509,11 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
         "data": {
             "branch": "02",
             "rol_target_pct": 111.1,
+            "meta": 120.0,
         },
         "route": {
             "label": "Meta ROL",
-            "valueFields": ["rol_target_pct"],
+            "valueFields": ["rol_target_pct", "meta"],
             "tvConstraints": {},
         },
     }
@@ -1533,15 +1534,25 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
             {
                 "id": "grade-1",
                 "type": "canvas_table",
-                "rows": 2,
+                "rows": 3,
                 "cols": 2,
                 "cells": [
                     [{"kind": "text", "text": "KPI"}, {"kind": "text", "text": "Valor"}],
                     [
-                        {"kind": "text", "text": "ROL"},
+                        {"kind": "text", "text": "Meta"},
                         {
                             "kind": "number",
-                            "dataRef": {"field": "rol_target_pct", "format": "number"},
+                            "dataRef": {"field": "meta", "format": "number"},
+                        },
+                    ],
+                    [
+                        {"kind": "text", "text": "Realizado"},
+                        {
+                            "kind": "number",
+                            "dataRef": {
+                                "field": "rol_target_pct",
+                                "format": "number",
+                            },
                         },
                     ],
                 ],
@@ -1555,3 +1566,11 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
     grade = next(b for b in enriched if b.get("id") == "grade-1")
     assert grade.get("resolved", {}).get("kpi", {}).get("value") is not None
     assert grade.get("serverCanvasTableProjectionApplied") is True
+    # Enrichment entrega um resolved único; N dataRef no cliente consomem o mesmo payload.
+    body_refs = [
+        cell.get("dataRef", {}).get("field")
+        for row in grade.get("cells", [])[1:]
+        for cell in row
+        if cell.get("dataRef", {}).get("field")
+    ]
+    assert body_refs == ["meta", "rol_target_pct"]
