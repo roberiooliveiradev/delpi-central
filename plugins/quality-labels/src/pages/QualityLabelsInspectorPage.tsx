@@ -200,7 +200,7 @@ export function QualityLabelsInspectorPage() {
   }
 
   return (
-    <>
+    <div className="ql-page-stack">
       {error && <div className="ql-state ql-state--error"><p>{error}</p></div>}
       {success && <div className="ql-state ql-state--success"><p>{success}</p></div>}
 
@@ -213,13 +213,13 @@ export function QualityLabelsInspectorPage() {
         </span>
       </div>
 
-      <section className="ql-card ql-card--pad">
-        <div className="ql-card__accent" />
-        <div className="ql-card__head">
+      <section className="ql-panel ql-panel--pad">
+        <div className="ql-panel__accent" />
+        <div className="ql-panel__head">
           <UserCheck className="ql-icon" />
           <div>
-            <h2 className="ql-card__title">Perfil do inspetor</h2>
-            <p className="ql-card__subtitle">
+            <h2 className="ql-panel__title">Perfil do inspetor</h2>
+            <p className="ql-panel__subtitle">
               Nome e cargo usados nos certificados de qualidade que você emitir.
             </p>
           </div>
@@ -262,13 +262,13 @@ export function QualityLabelsInspectorPage() {
         )}
       </section>
 
-      <section className="ql-card ql-card--pad">
-        <div className="ql-card__accent" />
-        <div className="ql-card__head">
+      <section className="ql-panel ql-panel--pad">
+        <div className="ql-panel__accent" />
+        <div className="ql-panel__head">
           <PenLine className="ql-icon" />
           <div>
-            <h2 className="ql-card__title">Assinatura</h2>
-            <p className="ql-card__subtitle">
+            <h2 className="ql-panel__title">Assinatura</h2>
+            <p className="ql-panel__subtitle">
               Desenhe com o mouse ou caneta/tablet, ou envie uma imagem da sua assinatura.
             </p>
           </div>
@@ -326,6 +326,6 @@ export function QualityLabelsInspectorPage() {
           </label>
         </div>
       </section>
-    </>
+    </div>
   );
 }

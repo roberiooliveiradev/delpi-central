@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Eye,
   FileCheck,
@@ -12,6 +12,7 @@ import {
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { listAuditEvents } from "../api/qualityLabelsApi";
+import { DataTableSection, type DataTableColumn } from "../components/data";
 import { formatOperationalUnit } from "../utils/operationalUnits";
 import type { AuditEvent } from "../types/qualityLabels";
 
@@ -113,8 +114,75 @@ export function QualityLabelsAuditPage() {
     );
   }
 
+  const columns = useMemo<DataTableColumn<AuditEvent>[]>(
+    () => [
+      {
+        key: "createdAt",
+        header: "Data / hora",
+        sortable: true,
+        sortValue: (row) => row.createdAt ?? "",
+        render: (row) => (
+          <span className="ql-cell-nowrap">{formatDateTime(row.createdAt)}</span>
+        ),
+      },
+      {
+        key: "event",
+        header: "Evento",
+        sortable: true,
+        sortValue: (row) => String(row.eventType),
+        render: (row) => {
+          const meta = eventMeta(String(row.eventType));
+          const Icon = meta.icon;
+          return (
+            <span className={`ql-badge ${meta.badge}`}>
+              <Icon className="ql-badge__icon" />
+              {meta.label}
+            </span>
+          );
+        },
+      },
+      {
+        key: "op",
+        header: "OP",
+        sortable: true,
+        sortValue: (row) => row.productionOrder ?? "",
+        render: (row) => row.productionOrder ?? "-",
+      },
+      {
+        key: "product",
+        header: "Produto",
+        sortable: true,
+        sortValue: (row) => row.productCode ?? "",
+        render: (row) => row.productCode ?? "-",
+      },
+      {
+        key: "unit",
+        header: "Unidade",
+        sortable: true,
+        sortValue: (row) => row.branchName ?? row.branch ?? "",
+        render: (row) => row.branchName ?? formatOperationalUnit(row.branch, "-"),
+      },
+      {
+        key: "result",
+        header: "Resultado",
+        sortable: true,
+        sortValue: (row) => (row.result ? String(row.result) : ""),
+        render: (row) =>
+          row.result ? RESULT_LABELS[String(row.result)] ?? row.result : "-",
+      },
+      {
+        key: "actor",
+        header: "Responsável",
+        sortable: true,
+        sortValue: (row) => row.actorName ?? "",
+        render: (row) => row.actorName ?? "-",
+      },
+    ],
+    [],
+  );
+
   return (
-    <>
+    <div className="ql-page-stack">
       {error && <div className="ql-state ql-state--error"><p>{error}</p></div>}
 
       <section className="ql-audit-summary">
@@ -141,12 +209,20 @@ export function QualityLabelsAuditPage() {
         })}
       </section>
 
-      <section className="ql-list">
-        <div className="ql-list__header">
-          <h2 className="ql-list__title">
-            Trilha de auditoria
-            <span className="ql-list__count">{total}</span>
-          </h2>
+      <DataTableSection
+        title="Trilha de auditoria"
+        hint={`${total} evento(s)`}
+        columns={columns}
+        rows={events}
+        rowKey={(row) => row.id}
+        loading={loading}
+        hideSearch
+        hidePageSizeSelect
+        clearClientSortOnThirdClick
+        defaultSortKey="createdAt"
+        defaultSortDirection="desc"
+        emptyMessage="Nenhum evento de auditoria registrado."
+        toolbarExtra={
           <div className="ql-list__filters">
             <div className="ql-op-row">
               <NativeTextControl
@@ -167,59 +243,8 @@ export function QualityLabelsAuditPage() {
               </button>
             </div>
           </div>
-        </div>
-
-        {loading ? (
-          <div className="ql-state"><p>Carregando auditoria...</p></div>
-        ) : events.length === 0 ? (
-          <div className="ql-state"><p>Nenhum evento de auditoria registrado.</p></div>
-        ) : (
-          <div className="ql-table-wrap">
-            <table className="ql-table">
-              <thead>
-                <tr>
-                  <th>Data / hora</th>
-                  <th>Evento</th>
-                  <th>OP</th>
-                  <th>Produto</th>
-                  <th>Unidade</th>
-                  <th>Resultado</th>
-                  <th>Responsável</th>
-                </tr>
-              </thead>
-              <tbody>
-                {events.map((event) => {
-                  const meta = eventMeta(String(event.eventType));
-                  const Icon = meta.icon;
-                  return (
-                    <tr key={event.id}>
-                      <td className="ql-cell-nowrap">{formatDateTime(event.createdAt)}</td>
-                      <td>
-                        <span className={`ql-badge ${meta.badge}`}>
-                          <Icon className="ql-badge__icon" />
-                          {meta.label}
-                        </span>
-                      </td>
-                      <td>{event.productionOrder ?? "-"}</td>
-                      <td>{event.productCode ?? "-"}</td>
-                      <td>
-                        {event.branchName ??
-                          formatOperationalUnit(event.branch, "-")}
-                      </td>
-                      <td>
-                        {event.result
-                          ? RESULT_LABELS[String(event.result)] ?? event.result
-                          : "-"}
-                      </td>
-                      <td>{event.actorName ?? "-"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </>
+        }
+      />
+    </div>
   );
 }

@@ -14,6 +14,16 @@
   --ql-radius: 18px;
   --ql-radius-sm: 12px;
   --ql-shadow: 0 12px 32px rgba(0, 56, 102, 0.07);
+  --ql-section-gap: 22px;
+  --ql-grid-gap: 16px;
+  --delpi-ui-accent: var(--ql-accent);
+  --delpi-ui-surface: var(--ql-surface);
+  --delpi-ui-text: var(--ql-text);
+  --delpi-ui-border: var(--ql-border);
+  --delpi-ui-muted: var(--ql-muted);
+  --delpi-ui-card-padding: 20px;
+  --delpi-ui-section-gap: var(--ql-section-gap);
+  --delpi-ui-grid-gap: var(--ql-grid-gap);
 }.quality-labels-page{
   width: 100%;
   min-height: 100%;
@@ -27,10 +37,17 @@
   );
 }.ql-inner{
   width: 100%;
-  max-width: 1100px;
+  max-width: 1440px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ql-section-gap);
+}.ql-page-stack{
+  display: flex;
+  flex-direction: column;
+  gap: var(--ql-section-gap);
 }.ql-hero{
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }.ql-eyebrow{
   margin: 0;
   font-size: 12px;
@@ -59,7 +76,7 @@
   line-height: 1.6;
   color: var(--ql-muted);
 }.ql-state{
-  margin: 0 0 18px;
+  margin: 0;
   padding: 14px 16px;
   border: 1px solid var(--ql-border);
   border-radius: var(--ql-radius-sm);
@@ -74,15 +91,15 @@
 }.ql-state--success{
   border-color: color-mix(in srgb, #2e7d32 35%, var(--ql-border));
   background: color-mix(in srgb, #2e7d32 10%, var(--ql-surface));
-}.ql-card{
+}.ql-panel{
   position: relative;
   overflow: hidden;
-  margin-bottom: 28px;
+  margin-bottom: 0;
   border: 1px solid var(--ql-border);
   border-radius: var(--ql-radius);
   background: var(--ql-surface);
   box-shadow: var(--ql-shadow);
-}.ql-card__accent{
+}.ql-panel__accent{
   position: absolute;
   top: 0;
   left: 0;
@@ -95,8 +112,8 @@
   padding: 26px 26px 24px;
 }.ql-form__grid{
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 2.2fr) repeat(3, minmax(0, 1fr));
+  gap: var(--ql-grid-gap);
 }.ql-field{
   display: grid;
   gap: 8px;
@@ -240,7 +257,7 @@
   gap: 12px;
   flex-wrap: wrap;
 }/* Card com padding próprio (aba Inspetor) */
-.ql-card--pad{
+.ql-panel--pad{
   padding: 24px 26px 26px;
 }.ql-field-row{
   display: grid;
@@ -275,23 +292,13 @@
   margin: 0;
   font-size: 13px;
   color: var(--ql-muted);
-}.ql-list__header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}.ql-list__title{
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ql-title);
 }.ql-list__filters{
   display: flex;
   gap: 10px;
   align-items: center;
   flex-wrap: wrap;
+  width: 100%;
+  justify-content: flex-end;
 }.ql-multiselect{
   position: relative;
   min-width: 180px;
@@ -358,7 +365,6 @@
   display: block;
   font-size: 12px;
   color: var(--ql-muted);
-  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -387,10 +393,6 @@
 }.ql-badge--info{
   background: color-mix(in srgb, var(--ql-accent) 16%, var(--ql-surface));
   color: var(--ql-accent);
-}.ql-actions{
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
 }.ql-icon-btn{
   display: inline-grid;
   place-items: center;
@@ -434,10 +436,36 @@
   --ql-border: rgba(255, 255, 255, 0.1);
   --ql-accent-soft: color-mix(in srgb, var(--ql-accent) 18%, transparent);
   --ql-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-}@media (max-width: 900px){
+}@media (max-width: 1100px){
+  .ql-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}@media (max-width: 720px){
   .ql-form__grid {
     grid-template-columns: 1fr;
   }
+}.ql-cert-panel{
+  margin-top: 4px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--ql-border);
+  border-radius: var(--ql-radius);
+  background: var(--ql-surface);
+  box-shadow: var(--ql-shadow);
+}.ql-cert-panel__header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}.ql-cert-panel__title{
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ql-title);
+}.ql-cert-panel__meta{
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ql-muted);
 }@media (max-width: 640px){
   .quality-labels-page {
     padding: 20px 16px 28px 20px;
@@ -586,7 +614,7 @@
 .ql-tabs{
   display: flex;
   gap: 6px;
-  margin-bottom: 22px;
+  margin-bottom: 0;
   border-bottom: 1px solid var(--ql-border);
 }.ql-tab{
   display: inline-flex;
@@ -614,7 +642,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 0;
 }.ql-audit-stat{
   display: flex;
   flex-direction: column;
@@ -787,20 +815,20 @@
   background: color-mix(in srgb, var(--ql-muted) 18%, var(--ql-surface));
   color: var(--ql-text);
 }/* Card head (aba Inspetor) */
-.ql-card__head{
+.ql-panel__head{
   display: flex;
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 16px;
-}.ql-card__head .ql-icon{
+}.ql-panel__head .ql-icon{
   color: var(--ql-accent);
   margin-top: 2px;
-}.ql-card__title{
+}.ql-panel__title{
   margin: 0;
   font-size: 15px;
   font-weight: 800;
   color: var(--ql-title);
-}.ql-card__subtitle{
+}.ql-panel__subtitle{
   margin: 2px 0 0;
   font-size: 12px;
   color: var(--ql-muted);
