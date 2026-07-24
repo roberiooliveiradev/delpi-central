@@ -72,6 +72,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | plugin | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
+| `plugins/lancamento-notas-fiscais` | `lancamento-notas-fiscais` | microfrontend | plugin | `/apps/lancamento-notas-fiscais` | `delpi-lancamento-notas-fiscais` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
@@ -115,6 +116,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
 | Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação Sheets; sugestão pública `POST /public/kaizen/suggestions` + form `/p/kaizen/sugestao/aberto` |
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
+| Lançamento de Notas Fiscais | `/apps/api-delpi/lancamento-notas-fiscais/*` (Postgres plugins + SF1/SA2) |
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
 | Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4/SD3; UI: monitoramento + `/analise-consumo`) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
@@ -167,6 +169,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | central-agendamento | `central-agendamento` |
 | cadastro-kaizen | `cadastro-kaizen` |
 | inspecoes-entrada | `inspecoes-entrada` |
+| lancamento-notas-fiscais | `lancamento-notas-fiscais` |
 | inspecoes-processo | `inspecoes-processo` |
 | controle-retrabalhos | `controle-retrabalhos` |
 | scrap-monitoring | `scrap-monitoring` |
@@ -191,6 +194,7 @@ Declaradas no manifesto e persistidas na Core API:
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
 | central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc`, `central-agendamento.approve.filial-es|sc` |
 | inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
+| lancamento-notas-fiscais | `lancamento-notas-fiscais.access`, `.create`, `.view`, `.process`, `.manage` |
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
@@ -216,6 +220,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
 | Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
 | Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
+| Lançamento de Notas Fiscais | [Plugin README](../../plugins/lancamento-notas-fiscais/README.md) · [Playbook](../12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md) · [Roadmap](../12-roadmap-e-evolucao/lancamento-notas-fiscais/ROADMAP.md) · [API](../../api-delpi/docs/api/lancamento-notas-fiscais.md) |
 | Inspeções de Processo | [Plugin README](../../plugins/inspecoes-processo/README.md) · [Auditoria](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md) · [API](../../api-delpi/docs/api/inspecoes-processo.md) |
 | Controle de Retrabalhos | [Plugin README](../../plugins/controle-retrabalhos/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/controle-retrabalhos/README.md) · [API](../../api-delpi/docs/api/controle-retrabalhos.md) |
 | Acompanhamento de Refugos | [Plugin README](../../plugins/scrap-monitoring/README.md) · [API](../../api-delpi/docs/api/scrap-monitoring.md) |

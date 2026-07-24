@@ -54,6 +54,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [estoque-seguranca.md](./estoque-seguranca.md) | Estoque de segurança — filtros, listagem, detalhe com SC7/SD4 e extrato projetado. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
+| [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Lançamento de NF de entrada — fila, atendimento, conciliação SF1, Já lançada. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
 | [guias-procedimentos.md](./guias-procedimentos.md) | Guias e Procedimentos — leitura pública (departamentos e procedimentos publicados). |

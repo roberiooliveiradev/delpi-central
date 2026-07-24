@@ -816,6 +816,46 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_query_cache_stats": RouteContract("query_cache_stats", "scalar"),
     "get_smoke_definitions": RouteContract("smoke_definitions", "scalar"),
     "get_sql_health": RouteContract("sql_health", "scalar"),
+    # Lançamento de notas fiscais
+    "search_lancamento_notas_fiscais_suppliers": RouteContract(
+        "invoice_posting_supplier", "paged_list"
+    ),
+    "create_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "list_lancamento_notas_fiscais_requests": RouteContract(
+        "invoice_posting_request", "paged_list"
+    ),
+    "get_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "update_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "start_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "block_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "resume_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "add_lancamento_notas_fiscais_comment": RouteContract(
+        "invoice_posting_comment", "scalar"
+    ),
+    "cancel_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "post_manual_lancamento_notas_fiscais_request": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
+    "run_lancamento_notas_fiscais_reconciliation": RouteContract(
+        "invoice_posting_reconciliation_batch", "scalar"
+    ),
+    "refresh_lancamento_notas_fiscais_reconciliation": RouteContract(
+        "invoice_posting_reconciliation_refresh", "scalar"
+    ),
 }
 
 

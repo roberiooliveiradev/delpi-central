@@ -1042,6 +1042,22 @@ services:
     networks:
       - delpi-network
 
+  lancamento-notas-fiscais:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: lancamento-notas-fiscais/Dockerfile
+
+    container_name: delpi-lancamento-notas-fiscais
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     depends_on:
       - plugin-ui
@@ -1669,6 +1685,7 @@ services:
       - dashboard-financial
       - financeiro-centro-custo
       - financeiro-inadimplencia
+      - lancamento-notas-fiscais
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

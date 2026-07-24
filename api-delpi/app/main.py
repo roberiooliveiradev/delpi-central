@@ -52,6 +52,9 @@ from app.interface.http.routes.reports import reports_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_admin_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_media_router
+from app.interface.http.routes.lancamento_notas_fiscais import (
+    lancamento_notas_fiscais_router,
+)
 from app.interface.http.routes.inspecoes_entrada import inspecoes_entrada_router
 from app.interface.http.routes.inspecoes_processo import inspecoes_processo_router
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
@@ -268,6 +271,7 @@ app.include_router(
     prefix="/guias-procedimentos",
     tags=["Guias e Procedimentos — Admin Media"],
 )
+app.include_router(lancamento_notas_fiscais_router.router)
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
 app.include_router(customer_routes.router)

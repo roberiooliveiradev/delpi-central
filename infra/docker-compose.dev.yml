@@ -1029,6 +1029,22 @@ services:
     networks:
       - delpi-network
 
+  lancamento-notas-fiscais:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: lancamento-notas-fiscais/Dockerfile
+      target: production
+
+    container_name: delpi-lancamento-notas-fiscais
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     <<: *plugin-ui-federated
     build:
