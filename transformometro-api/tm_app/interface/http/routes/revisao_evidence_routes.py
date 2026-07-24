@@ -63,7 +63,8 @@ def _notify_evidencia(
     )
 
 
-@router.get("/revisoes/{revisao_id}/evidencias")
+@router.get("/revisoes/{revisao_id}/evidencias",
+    operation_id="list_revisao_evidencias")
 def list_revisao_evidencias(revisao_id: str):
     if not _ensure_revisao(revisao_id):
         return fail("Revisão não encontrada.", 404)
@@ -71,7 +72,10 @@ def list_revisao_evidencias(revisao_id: str):
     return ok({"total": len(rows), "items": rows_to_json(rows)}, "Evidências da revisão.")
 
 
-@router.post("/revisoes/{revisao_id}/evidencias")
+@router.post(
+    "/revisoes/{revisao_id}/evidencias",
+    operation_id="attach_revisao_evidencia",
+)
 async def attach_revisao_evidencia(
     revisao_id: str,
     request: Request,
@@ -137,7 +141,8 @@ async def attach_revisao_evidencia(
     return ok(row_to_json(row), "Evidência anexada.", 201)
 
 
-@router.get("/revisoes/{revisao_id}/evidencias/{evidencia_id}/arquivo")
+@router.get("/revisoes/{revisao_id}/evidencias/{evidencia_id}/arquivo",
+    operation_id="download_revisao_evidencia")
 def download_revisao_evidencia(revisao_id: str, evidencia_id: str):
     repo = RevisaoEvidenceRepository()
     evidence = repo.get(revisao_id, evidencia_id)
@@ -160,7 +165,8 @@ def download_revisao_evidencia(revisao_id: str, evidencia_id: str):
     )
 
 
-@router.patch("/revisoes/{revisao_id}/evidencias/{evidencia_id}")
+@router.patch("/revisoes/{revisao_id}/evidencias/{evidencia_id}",
+    operation_id="update_revisao_evidencia")
 def update_revisao_evidencia(
     revisao_id: str,
     evidencia_id: str,
@@ -183,7 +189,8 @@ def update_revisao_evidencia(
     return ok(row_to_json(row), "Evidência atualizada.")
 
 
-@router.delete("/revisoes/{revisao_id}/evidencias/{evidencia_id}")
+@router.delete("/revisoes/{revisao_id}/evidencias/{evidencia_id}",
+    operation_id="delete_revisao_evidencia")
 def delete_revisao_evidencia(revisao_id: str, evidencia_id: str, request: Request):
     revisao = _ensure_revisao(revisao_id)
     if not revisao:

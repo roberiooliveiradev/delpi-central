@@ -198,7 +198,8 @@ def _load_decomposition_merge_context(revisao_id: str):
     return revisao, tree, escopo, overlay
 
 
-@router.get("/processos/{processo_id}/decomposicao")
+@router.get("/processos/{processo_id}/decomposicao",
+    operation_id="get_processo_decomposicao")
 def get_processo_decomposicao(processo_id: str):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -206,7 +207,8 @@ def get_processo_decomposicao(processo_id: str):
     return ok(_tree_response(row, processo_id), "Árvore de decomposição do processo.")
 
 
-@router.get("/processos/{processo_id}/decomposicao/composed")
+@router.get("/processos/{processo_id}/decomposicao/composed",
+    operation_id="get_processo_decomposicao_composed")
 def get_processo_decomposicao_composed(
     processo_id: str,
     at: date | None = Query(default=None, description="Data de composição (YYYY-MM-DD)"),
@@ -222,7 +224,8 @@ def get_processo_decomposicao_composed(
     return ok(composed, "Macro composto na data informada.")
 
 
-@router.put("/processos/{processo_id}/decomposicao")
+@router.put("/processos/{processo_id}/decomposicao",
+    operation_id="put_processo_decomposicao")
 def put_processo_decomposicao(processo_id: str, body: TreeBody, request: Request):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -243,7 +246,8 @@ def put_processo_decomposicao(processo_id: str, body: TreeBody, request: Request
     return ok(payload, "Árvore de decomposição salva.")
 
 
-@router.get("/processos/{processo_id}/decomposicao/export.csv")
+@router.get("/processos/{processo_id}/decomposicao/export.csv",
+    operation_id="get_processo_decomposicao_export_csv")
 def get_processo_decomposicao_export_csv(
     processo_id: str,
     instancia_id: str | None = None,
@@ -302,7 +306,8 @@ def get_processo_decomposicao_export_csv(
     )
 
 
-@router.post("/processos/{processo_id}/decomposicao/validar-vinculos-fluxo")
+@router.post("/processos/{processo_id}/decomposicao/validar-vinculos-fluxo",
+    operation_id="post_validar_vinculos_fluxo")
 def post_validar_vinculos_fluxo(processo_id: str):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -314,7 +319,8 @@ def post_validar_vinculos_fluxo(processo_id: str):
     return ok(report, "Validação de vínculos árvore ↔ fluxo.")
 
 
-@router.post("/processos/{processo_id}/decomposicao/sugerir-rascunho")
+@router.post("/processos/{processo_id}/decomposicao/sugerir-rascunho",
+    operation_id="post_sugerir_rascunho_decomposicao")
 def post_sugerir_rascunho_decomposicao(processo_id: str):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -373,7 +379,8 @@ def post_sugerir_rascunho_decomposicao(processo_id: str):
     )
 
 
-@router.get("/instancias/{instancia_id}/decomposicao-escopo")
+@router.get("/instancias/{instancia_id}/decomposicao-escopo",
+    operation_id="get_instancia_decomposicao_escopo")
 def get_instancia_decomposicao_escopo(instancia_id: str):
     instancia = ProcessoInstanciaRepository().get(instancia_id)
     if not instancia:
@@ -382,7 +389,8 @@ def get_instancia_decomposicao_escopo(instancia_id: str):
     return ok(_escopo_response(row, instancia_id), "Escopo WBS da instância.")
 
 
-@router.put("/instancias/{instancia_id}/decomposicao-escopo")
+@router.put("/instancias/{instancia_id}/decomposicao-escopo",
+    operation_id="put_instancia_decomposicao_escopo")
 def put_instancia_decomposicao_escopo(
     instancia_id: str,
     body: DecompositionEscopoBody,
@@ -418,7 +426,8 @@ def put_instancia_decomposicao_escopo(
     return ok(_escopo_response(row, instancia_id), "Escopo WBS salvo.")
 
 
-@router.get("/instancias/{instancia_id}/contexto")
+@router.get("/instancias/{instancia_id}/contexto",
+    operation_id="get_instancia_contexto")
 def get_instancia_contexto(instancia_id: str):
     instancia = ProcessoInstanciaRepository().get(instancia_id)
     if not instancia:
@@ -430,7 +439,8 @@ def get_instancia_contexto(instancia_id: str):
     )
 
 
-@router.put("/instancias/{instancia_id}/contexto")
+@router.put("/instancias/{instancia_id}/contexto",
+    operation_id="put_instancia_contexto")
 def put_instancia_contexto(instancia_id: str, body: ContextoBody, request: Request):
     instancia = ProcessoInstanciaRepository().get(instancia_id)
     if not instancia:
@@ -454,7 +464,8 @@ def put_instancia_contexto(instancia_id: str, body: ContextoBody, request: Reque
     )
 
 
-@router.get("/revisoes/{revisao_id}/decomposicao")
+@router.get("/revisoes/{revisao_id}/decomposicao",
+    operation_id="get_revisao_decomposicao_merged")
 def get_revisao_decomposicao_merged(revisao_id: str):
     revisao, tree, escopo, overlay = _load_decomposition_merge_context(revisao_id)
     if not revisao:
@@ -494,7 +505,8 @@ def get_revisao_decomposicao_merged(revisao_id: str):
     )
 
 
-@router.get("/revisoes/{revisao_id}/decomposicao/overlay")
+@router.get("/revisoes/{revisao_id}/decomposicao/overlay",
+    operation_id="get_revisao_decomposicao_overlay")
 def get_revisao_decomposicao_overlay(revisao_id: str):
     if not RevisaoRepository().get(revisao_id):
         return fail("Revisão não encontrada.", 404)
@@ -502,7 +514,8 @@ def get_revisao_decomposicao_overlay(revisao_id: str):
     return ok(_overlay_response(row, revisao_id), "Overlay de decomposição da revisão.")
 
 
-@router.put("/revisoes/{revisao_id}/decomposicao/overlay")
+@router.put("/revisoes/{revisao_id}/decomposicao/overlay",
+    operation_id="put_revisao_decomposicao_overlay")
 def put_revisao_decomposicao_overlay(revisao_id: str, body: OverlayBody, request: Request):
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:

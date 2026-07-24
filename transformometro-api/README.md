@@ -38,6 +38,18 @@ make test
 ./scripts/ci-transformometro-api.sh
 ```
 
+### Cobertura Nível A (rotas HTTP)
+
+Inventário + smokes de envelope (`{success,message,data}`) para todas as operações OpenAPI:
+
+```bash
+PYTHONPATH=.:../shared python scripts/sync_openapi_baseline.py --check
+PYTHONPATH=.:../shared python -m pytest tests/test_route_phase*.py -q
+PYTHONPATH=.:../shared python scripts/audit_route_test_coverage.py --check-complete
+```
+
+Playbook: [`docs/roadmaps/playbook-route-test-coverage-100.md`](docs/roadmaps/playbook-route-test-coverage-100.md).
+
 ## Endpoints principais
 
 | Grupo | Exemplos |

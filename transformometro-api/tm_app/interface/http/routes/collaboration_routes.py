@@ -45,7 +45,8 @@ class LockBody(BaseModel):
     section_key: str = ""
 
 
-@router.get("/presenca")
+@router.get("/presenca",
+    operation_id="get_presenca")
 def get_presenca(entity_type: str, entity_id: str):
     try:
         payload = _service.list_presence(entity_type=entity_type, entity_id=entity_id)
@@ -54,7 +55,8 @@ def get_presenca(entity_type: str, entity_id: str):
     return ok(payload, "Presença colaborativa da entidade.")
 
 
-@router.post("/presenca")
+@router.post("/presenca",
+    operation_id="post_presenca")
 def post_presenca(body: HeartbeatBody, request: Request):
     user_id, user_email, user_name = actor_from_request(request)
     if not user_id:
@@ -75,7 +77,8 @@ def post_presenca(body: HeartbeatBody, request: Request):
     return ok(row, "Presença atualizada.")
 
 
-@router.post("/travar")
+@router.post("/travar",
+    operation_id="post_travar")
 def post_travar(body: LockBody, request: Request):
     user_id, user_email, user_name = actor_from_request(request)
     if not user_id:
@@ -101,7 +104,8 @@ def post_travar(body: LockBody, request: Request):
     return ok(result, "Trava de edição adquirida.")
 
 
-@router.post("/liberar")
+@router.post("/liberar",
+    operation_id="post_liberar")
 def post_liberar(body: LockBody, request: Request):
     user_id, _, _ = actor_from_request(request)
     if not user_id:
@@ -119,7 +123,8 @@ def post_liberar(body: LockBody, request: Request):
     return ok({"released": True}, "Trava liberada.")
 
 
-@router.delete("/presenca")
+@router.delete("/presenca",
+    operation_id="delete_presenca")
 def delete_presenca(entity_type: str, entity_id: str, request: Request):
     user_id, _, _ = actor_from_request(request)
     if not user_id:

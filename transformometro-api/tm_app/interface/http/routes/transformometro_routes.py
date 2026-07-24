@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/transformometro", tags=["Transformometro"])
 
 
-@router.get("/health")
+@router.get("/health",
+    operation_id="module_health")
 def module_health():
     db_ready = False
     db_hint = None
@@ -62,7 +63,8 @@ def _load_setores_for_options() -> list[dict]:
         ]
 
 
-@router.get("/options")
+@router.get("/options",
+    operation_id="get_options")
 def get_options(request: Request):
     scope = resolve_access_scope(request)
     filiais = FilialAccessScopeService().filter_filiais_options(

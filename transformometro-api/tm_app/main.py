@@ -109,7 +109,7 @@ app.add_middleware(
 )
 
 
-@app.get("/health", tags=["Health"])
+@app.get("/health", tags=["Health"], operation_id="health")
 def health():
     return {"status": "online", "service": "transformometro-api"}
 

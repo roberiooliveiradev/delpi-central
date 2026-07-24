@@ -55,7 +55,8 @@ def _notify_arquivo_change(
     )
 
 
-@router.get("/processos/{processo_id}/arquivos")
+@router.get("/processos/{processo_id}/arquivos",
+    operation_id="list_processo_arquivos")
 def list_processo_arquivos(processo_id: str):
     if not _ensure_processo(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -63,7 +64,10 @@ def list_processo_arquivos(processo_id: str):
     return ok({"total": len(rows), "items": rows_to_json(rows)}, "Arquivos do processo.")
 
 
-@router.post("/processos/{processo_id}/arquivos")
+@router.post(
+    "/processos/{processo_id}/arquivos",
+    operation_id="attach_processo_arquivo",
+)
 async def attach_processo_arquivo(
     processo_id: str,
     request: Request,
@@ -126,7 +130,8 @@ async def attach_processo_arquivo(
     return ok(row_to_json(row), "Arquivo anexado.", 201)
 
 
-@router.get("/processos/{processo_id}/arquivos/{arquivo_id}/arquivo")
+@router.get("/processos/{processo_id}/arquivos/{arquivo_id}/arquivo",
+    operation_id="download_processo_arquivo")
 def download_processo_arquivo(processo_id: str, arquivo_id: str):
     repo = ProcessoArquivoRepository()
     arquivo = repo.get(processo_id, arquivo_id)
@@ -149,7 +154,8 @@ def download_processo_arquivo(processo_id: str, arquivo_id: str):
     )
 
 
-@router.patch("/processos/{processo_id}/arquivos/{arquivo_id}")
+@router.patch("/processos/{processo_id}/arquivos/{arquivo_id}",
+    operation_id="update_processo_arquivo")
 def update_processo_arquivo(
     processo_id: str,
     arquivo_id: str,
@@ -169,7 +175,8 @@ def update_processo_arquivo(
     return ok(row_to_json(row), "Arquivo atualizado.")
 
 
-@router.delete("/processos/{processo_id}/arquivos/{arquivo_id}")
+@router.delete("/processos/{processo_id}/arquivos/{arquivo_id}",
+    operation_id="delete_processo_arquivo")
 def delete_processo_arquivo(processo_id: str, arquivo_id: str, request: Request):
     repo = ProcessoArquivoRepository()
     removed = repo.soft_delete(processo_id, arquivo_id)

@@ -14,7 +14,8 @@ router = APIRouter(
 )
 
 
-@router.get("/processes")
+@router.get("/processes",
+    operation_id="integration_list_processes")
 def integration_list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
@@ -40,7 +41,8 @@ def integration_list_processes(
     return ok(data, "Processos (contrato engenharia).")
 
 
-@router.get("/processes/summary")
+@router.get("/processes/summary",
+    operation_id="integration_process_summary")
 def integration_process_summary(
     filial_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),

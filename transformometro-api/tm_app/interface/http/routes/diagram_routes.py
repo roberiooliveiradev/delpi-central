@@ -156,12 +156,14 @@ def _overlay_response(row: dict[str, Any] | None, revisao_id: str) -> dict[str, 
     }
 
 
-@router.get("/diagrama/catalogo")
+@router.get("/diagrama/catalogo",
+    operation_id="get_diagrama_catalogo")
 def get_diagrama_catalogo():
     return ok(build_bpmn_catalog_for_api(), "Catálogo BPMN + convenções Mermaid do Transformômetro.")
 
 
-@router.get("/processos/{processo_id}/diagrama")
+@router.get("/processos/{processo_id}/diagrama",
+    operation_id="get_processo_diagrama")
 def get_processo_diagrama(processo_id: str):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -169,7 +171,8 @@ def get_processo_diagrama(processo_id: str):
     return ok(_macro_response(row), "Diagrama macro do processo.")
 
 
-@router.get("/processos/{processo_id}/diagrama/composed")
+@router.get("/processos/{processo_id}/diagrama/composed",
+    operation_id="get_processo_diagrama_composed")
 def get_processo_diagrama_composed(
     processo_id: str,
     at: date | None = Query(default=None, description="Data de composição (YYYY-MM-DD)"),
@@ -185,7 +188,8 @@ def get_processo_diagrama_composed(
     return ok(composed, "Diagrama composto na data informada.")
 
 
-@router.put("/processos/{processo_id}/diagrama")
+@router.put("/processos/{processo_id}/diagrama",
+    operation_id="put_processo_diagrama")
 def put_processo_diagrama(processo_id: str, body: FlowchartBody, request: Request):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -206,7 +210,8 @@ def put_processo_diagrama(processo_id: str, body: FlowchartBody, request: Reques
     return ok(payload, "Diagrama macro salvo.")
 
 
-@router.post("/processos/{processo_id}/diagrama/validacao")
+@router.post("/processos/{processo_id}/diagrama/validacao",
+    operation_id="post_processo_diagrama_validacao")
 def post_processo_diagrama_validacao(processo_id: str, body: FlowchartBody):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -218,7 +223,8 @@ def post_processo_diagrama_validacao(processo_id: str, body: FlowchartBody):
     return ok(report, "Validação estrutural e simulação do diagrama.")
 
 
-@router.get("/processos/{processo_id}/diagrama/bpmn.xml")
+@router.get("/processos/{processo_id}/diagrama/bpmn.xml",
+    operation_id="get_processo_diagrama_bpmn_xml")
 def get_processo_diagrama_bpmn_xml(processo_id: str):
     processo = ProcessoRepository().get(processo_id)
     if not processo:
@@ -235,7 +241,8 @@ def get_processo_diagrama_bpmn_xml(processo_id: str):
     return ok({"xml": xml_text}, "Export BPMN 2.0 XML.")
 
 
-@router.put("/processos/{processo_id}/diagrama/bpmn.xml")
+@router.put("/processos/{processo_id}/diagrama/bpmn.xml",
+    operation_id="put_processo_diagrama_bpmn_xml")
 def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, request: Request):
     if not ProcessoRepository().get(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -262,7 +269,8 @@ def put_processo_diagrama_bpmn_xml(processo_id: str, body: BpmnImportBody, reque
     return ok(payload, "Diagrama importado de BPMN 2.0 XML.")
 
 
-@router.get("/instancias/{instancia_id}/diagrama-escopo")
+@router.get("/instancias/{instancia_id}/diagrama-escopo",
+    operation_id="get_instancia_diagrama_escopo")
 def get_instancia_diagrama_escopo(instancia_id: str):
     instancia = ProcessoInstanciaRepository().get(instancia_id)
     if not instancia:
@@ -271,7 +279,8 @@ def get_instancia_diagrama_escopo(instancia_id: str):
     return ok(_escopo_response(row, instancia_id), "Escopo de diagrama da instância.")
 
 
-@router.put("/instancias/{instancia_id}/diagrama-escopo")
+@router.put("/instancias/{instancia_id}/diagrama-escopo",
+    operation_id="put_instancia_diagrama_escopo")
 def put_instancia_diagrama_escopo(instancia_id: str, body: EscopoBody, request: Request):
     instancia = ProcessoInstanciaRepository().get(instancia_id)
     if not instancia:
@@ -336,7 +345,8 @@ def _load_merge_context(
     return revisao, macro, escopo, overlay
 
 
-@router.get("/revisoes/{revisao_id}/diagrama")
+@router.get("/revisoes/{revisao_id}/diagrama",
+    operation_id="get_revisao_diagrama_merged")
 def get_revisao_diagrama_merged(revisao_id: str):
     revisao, macro, escopo, overlay = _load_merge_context(revisao_id)
     if not revisao:
@@ -374,7 +384,8 @@ def get_revisao_diagrama_merged(revisao_id: str):
     )
 
 
-@router.get("/revisoes/{revisao_id}/diagrama/overlay")
+@router.get("/revisoes/{revisao_id}/diagrama/overlay",
+    operation_id="get_revisao_diagrama_overlay")
 def get_revisao_diagrama_overlay(revisao_id: str):
     if not RevisaoRepository().get(revisao_id):
         return fail("Revisão não encontrada.", 404)
@@ -382,7 +393,8 @@ def get_revisao_diagrama_overlay(revisao_id: str):
     return ok(_overlay_response(row, revisao_id), "Overlay da revisão.")
 
 
-@router.put("/revisoes/{revisao_id}/diagrama/overlay")
+@router.put("/revisoes/{revisao_id}/diagrama/overlay",
+    operation_id="put_revisao_diagrama_overlay")
 def put_revisao_diagrama_overlay(revisao_id: str, body: OverlayBody, request: Request):
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:
@@ -415,7 +427,8 @@ def put_revisao_diagrama_overlay(revisao_id: str, body: OverlayBody, request: Re
     return ok(payload, "Overlay da revisão salvo.")
 
 
-@router.get("/revisoes/{revisao_id}/diagrama/mermaid")
+@router.get("/revisoes/{revisao_id}/diagrama/mermaid",
+    operation_id="get_revisao_diagrama_mermaid")
 def get_revisao_diagrama_mermaid(revisao_id: str):
     revisao, macro, escopo, overlay = _load_merge_context(revisao_id)
     if not revisao:

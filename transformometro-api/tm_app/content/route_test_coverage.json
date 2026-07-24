@@ -1,0 +1,910 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-24",
+  "baselineOperationCount": 123,
+  "operationCount": 123,
+  "coveredCount": 123,
+  "gapCount": 0,
+  "exemptCount": 0,
+  "byModule": {
+    "colaboracao": {
+      "total": 5,
+      "covered": 5,
+      "gap": 0,
+      "exempt": 0
+    },
+    "crud": {
+      "total": 95,
+      "covered": 95,
+      "gap": 0,
+      "exempt": 0
+    },
+    "dashboard": {
+      "total": 14,
+      "covered": 14,
+      "gap": 0,
+      "exempt": 0
+    },
+    "data": {
+      "total": 6,
+      "covered": 6,
+      "gap": 0,
+      "exempt": 0
+    },
+    "health": {
+      "total": 1,
+      "covered": 1,
+      "gap": 0,
+      "exempt": 0
+    },
+    "integrations": {
+      "total": 2,
+      "covered": 2,
+      "gap": 0,
+      "exempt": 0
+    }
+  },
+  "operations": [
+    {
+      "operationId": "post_liberar",
+      "method": "POST",
+      "path": "/transformometro/colaboracao/liberar",
+      "module": "colaboracao",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_presenca",
+      "method": "DELETE",
+      "path": "/transformometro/colaboracao/presenca",
+      "module": "colaboracao",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_presenca",
+      "method": "GET",
+      "path": "/transformometro/colaboracao/presenca",
+      "module": "colaboracao",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_presenca",
+      "method": "POST",
+      "path": "/transformometro/colaboracao/presenca",
+      "module": "colaboracao",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_travar",
+      "method": "POST",
+      "path": "/transformometro/colaboracao/travar",
+      "module": "colaboracao",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_diagrama_catalogo",
+      "method": "GET",
+      "path": "/transformometro/diagrama/catalogo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_filiais",
+      "method": "GET",
+      "path": "/transformometro/filiais",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_filial",
+      "method": "POST",
+      "path": "/transformometro/filiais",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_filial",
+      "method": "DELETE",
+      "path": "/transformometro/filiais/{filial_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_filial",
+      "method": "GET",
+      "path": "/transformometro/filiais/{filial_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_filial",
+      "method": "PUT",
+      "path": "/transformometro/filiais/{filial_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "module_health",
+      "method": "GET",
+      "path": "/transformometro/health",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_instancia",
+      "method": "DELETE",
+      "path": "/transformometro/instancias/{instancia_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_instancia",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_instancia",
+      "method": "PUT",
+      "path": "/transformometro/instancias/{instancia_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_instancia_contexto",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}/contexto",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_instancia_contexto",
+      "method": "PUT",
+      "path": "/transformometro/instancias/{instancia_id}/contexto",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_instancia_decomposicao_escopo",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}/decomposicao-escopo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_instancia_decomposicao_escopo",
+      "method": "PUT",
+      "path": "/transformometro/instancias/{instancia_id}/decomposicao-escopo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_instancia_diagrama_escopo",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}/diagrama-escopo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_instancia_diagrama_escopo",
+      "method": "PUT",
+      "path": "/transformometro/instancias/{instancia_id}/diagrama-escopo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "duplicate_instancia",
+      "method": "POST",
+      "path": "/transformometro/instancias/{instancia_id}/duplicar",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "instancia_matriz_impacto_esforco",
+      "method": "GET",
+      "path": "/transformometro/instancias/{instancia_id}/matriz-impacto-esforco",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_investimento",
+      "method": "POST",
+      "path": "/transformometro/investimentos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_investimento",
+      "method": "DELETE",
+      "path": "/transformometro/investimentos/{investimento_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_investimento",
+      "method": "PUT",
+      "path": "/transformometro/investimentos/{investimento_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "upsert_medicao",
+      "method": "POST",
+      "path": "/transformometro/medicoes",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_options",
+      "method": "GET",
+      "path": "/transformometro/options",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_processos",
+      "method": "GET",
+      "path": "/transformometro/processos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_processo",
+      "method": "POST",
+      "path": "/transformometro/processos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_processos_calculados",
+      "method": "GET",
+      "path": "/transformometro/processos/calculados",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_processo",
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_processo",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_processo_arquivos",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/arquivos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "attach_processo_arquivo",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/arquivos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_processo_arquivo",
+      "method": "DELETE",
+      "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_processo_arquivo",
+      "method": "PATCH",
+      "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "download_processo_arquivo",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/arquivos/{arquivo_id}/arquivo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "processo_comparativo_revisoes",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/comparativo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_decomposicao",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/decomposicao",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_processo_decomposicao",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}/decomposicao",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_decomposicao_composed",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/decomposicao/composed",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_decomposicao_export_csv",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/decomposicao/export.csv",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_sugerir_rascunho_decomposicao",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/decomposicao/sugerir-rascunho",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_validar_vinculos_fluxo",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/decomposicao/validar-vinculos-fluxo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_diagrama",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/diagrama",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_processo_diagrama",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}/diagrama",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_diagrama_bpmn_xml",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/diagrama/bpmn.xml",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_processo_diagrama_bpmn_xml",
+      "method": "PUT",
+      "path": "/transformometro/processos/{processo_id}/diagrama/bpmn.xml",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_processo_diagrama_composed",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/diagrama/composed",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "post_processo_diagrama_validacao",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/diagrama/validacao",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "duplicate_processo",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/duplicar",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_processo_instancias",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/instancias",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_processo_instancia",
+      "method": "POST",
+      "path": "/transformometro/processos/{processo_id}/instancias",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "processo_matriz_impacto_esforco",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/matriz-impacto-esforco",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_revisoes",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/revisoes",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "processo_timeline",
+      "method": "GET",
+      "path": "/transformometro/processos/{processo_id}/timeline",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_recurso_custo",
+      "method": "DELETE",
+      "path": "/transformometro/recurso-custos/{recurso_custo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_recurso_custo",
+      "method": "PUT",
+      "path": "/transformometro/recurso-custos/{recurso_custo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_recursos",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_recurso",
+      "method": "POST",
+      "path": "/transformometro/recursos-compartilhados",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_recurso",
+      "method": "DELETE",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_recurso",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_recurso",
+      "method": "PUT",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_recurso_custos",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_recurso_custo",
+      "method": "POST",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "reajuste_recurso_custo",
+      "method": "POST",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/custos/reajuste",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_recurso_vinculos",
+      "method": "GET",
+      "path": "/transformometro/recursos-compartilhados/{recurso_id}/vinculos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_vinculo",
+      "method": "POST",
+      "path": "/transformometro/revisao-recursos-compartilhados",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_vinculo",
+      "method": "DELETE",
+      "path": "/transformometro/revisao-recursos-compartilhados/{vinculo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_vinculo",
+      "method": "PUT",
+      "path": "/transformometro/revisao-recursos-compartilhados/{vinculo_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_revisao",
+      "method": "POST",
+      "path": "/transformometro/revisoes",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_revisao",
+      "method": "DELETE",
+      "path": "/transformometro/revisoes/{revisao_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_revisao",
+      "method": "PUT",
+      "path": "/transformometro/revisoes/{revisao_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "activate_revisao",
+      "method": "POST",
+      "path": "/transformometro/revisoes/{revisao_id}/ativar",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_revisao_decomposicao_merged",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/decomposicao",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_revisao_decomposicao_overlay",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/decomposicao/overlay",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_revisao_decomposicao_overlay",
+      "method": "PUT",
+      "path": "/transformometro/revisoes/{revisao_id}/decomposicao/overlay",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "revisao_diagnostico_rateio",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/diagnostico-rateio",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_revisao_diagrama_merged",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/diagrama",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_revisao_diagrama_mermaid",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/diagrama/mermaid",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_revisao_diagrama_overlay",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/diagrama/overlay",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_revisao_diagrama_overlay",
+      "method": "PUT",
+      "path": "/transformometro/revisoes/{revisao_id}/diagrama/overlay",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "duplicate_revisao",
+      "method": "POST",
+      "path": "/transformometro/revisoes/{revisao_id}/duplicar",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_revisao_evidencias",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "attach_revisao_evidencia",
+      "method": "POST",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_revisao_evidencia",
+      "method": "DELETE",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias/{evidencia_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_revisao_evidencia",
+      "method": "PATCH",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias/{evidencia_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "download_revisao_evidencia",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/evidencias/{evidencia_id}/arquivo",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_investimentos",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/investimentos",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "revisao_matriz_impacto_esforco",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/matriz-impacto-esforco",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "put_revisao_matriz_impacto_esforco",
+      "method": "PUT",
+      "path": "/transformometro/revisoes/{revisao_id}/matriz-impacto-esforco",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_medicao",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/medicoes",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_vinculos",
+      "method": "GET",
+      "path": "/transformometro/revisoes/{revisao_id}/recursos-compartilhados",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_setores",
+      "method": "GET",
+      "path": "/transformometro/setores",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_setor",
+      "method": "POST",
+      "path": "/transformometro/setores",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_setor",
+      "method": "DELETE",
+      "path": "/transformometro/setores/{setor_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_setor",
+      "method": "GET",
+      "path": "/transformometro/setores/{setor_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_setor",
+      "method": "PUT",
+      "path": "/transformometro/setores/{setor_id}",
+      "module": "crud",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_alertas",
+      "method": "GET",
+      "path": "/transformometro/dashboard/alertas",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_evolucao",
+      "method": "GET",
+      "path": "/transformometro/dashboard/evolucao",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_export_csv",
+      "method": "GET",
+      "path": "/transformometro/dashboard/export.csv",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_export_excel",
+      "method": "GET",
+      "path": "/transformometro/dashboard/export.xls",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_por_familia",
+      "method": "GET",
+      "path": "/transformometro/dashboard/por-familia",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_processos",
+      "method": "GET",
+      "path": "/transformometro/dashboard/processos",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "recalcular_dashboard",
+      "method": "POST",
+      "path": "/transformometro/dashboard/recalcular",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_resumo",
+      "method": "GET",
+      "path": "/transformometro/dashboard/resumo",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_snapshot_instancias",
+      "method": "GET",
+      "path": "/transformometro/dashboard/snapshot/instancias",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_snapshot_linhas",
+      "method": "GET",
+      "path": "/transformometro/dashboard/snapshot/linhas",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_snapshot_meta",
+      "method": "GET",
+      "path": "/transformometro/dashboard/snapshot/meta",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_snapshot_processos",
+      "method": "GET",
+      "path": "/transformometro/dashboard/snapshot/processos",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_snapshot_resumo",
+      "method": "GET",
+      "path": "/transformometro/dashboard/snapshot/resumo",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "dashboard_vencimentos",
+      "method": "GET",
+      "path": "/transformometro/dashboard/vencimentos",
+      "module": "dashboard",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_json",
+      "method": "GET",
+      "path": "/transformometro/data/export",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "export_package",
+      "method": "GET",
+      "path": "/transformometro/data/export/package",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "import_apply",
+      "method": "POST",
+      "path": "/transformometro/data/import/apply",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "import_package_apply",
+      "method": "POST",
+      "path": "/transformometro/data/import/package/apply",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "import_package_preview",
+      "method": "POST",
+      "path": "/transformometro/data/import/package/preview",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "import_preview",
+      "method": "POST",
+      "path": "/transformometro/data/import/preview",
+      "module": "data",
+      "status": "covered"
+    },
+    {
+      "operationId": "health",
+      "method": "GET",
+      "path": "/health",
+      "module": "health",
+      "status": "covered"
+    },
+    {
+      "operationId": "integration_list_processes",
+      "method": "GET",
+      "path": "/transformometro/integrations/engineering/transforma-mais/processes",
+      "module": "integrations",
+      "status": "covered"
+    },
+    {
+      "operationId": "integration_process_summary",
+      "method": "GET",
+      "path": "/transformometro/integrations/engineering/transforma-mais/processes/summary",
+      "module": "integrations",
+      "status": "covered"
+    }
+  ]
+}

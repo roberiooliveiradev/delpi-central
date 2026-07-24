@@ -20,7 +20,8 @@ from tm_app.interface.http.schemas.json_backup_schemas import JsonImportBody, Js
 router = APIRouter(prefix="/transformometro/data", tags=["Transformômetro — backup JSON"])
 
 
-@router.get("/export")
+@router.get("/export",
+    operation_id="export_json")
 def export_json(_request: Request):
     bundle = JsonBackupService().export_bundle()
     filename = f"transformometro-backup-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.json"
@@ -32,7 +33,8 @@ def export_json(_request: Request):
     )
 
 
-@router.get("/export/package")
+@router.get("/export/package",
+    operation_id="export_package")
 def export_package(_request: Request):
     try:
         payload = TransformometroBackupPackageService().export_package()
@@ -55,7 +57,8 @@ async def _read_upload_file(file: UploadFile) -> bytes:
     return content
 
 
-@router.post("/import/package/preview")
+@router.post("/import/package/preview",
+    operation_id="import_package_preview")
 async def import_package_preview(
     file: UploadFile = File(...),
     mode: JsonImportMode = Form(default="merge"),
@@ -73,7 +76,8 @@ async def import_package_preview(
     return ok(result, "Pré-visualização do pacote gerada.")
 
 
-@router.post("/import/package/apply")
+@router.post("/import/package/apply",
+    operation_id="import_package_apply")
 async def import_package_apply(
     request: Request,
     file: UploadFile = File(...),
@@ -116,7 +120,8 @@ async def import_package_apply(
     return ok(result, "Importação do pacote concluída. Dashboard recalculado.")
 
 
-@router.post("/import/preview")
+@router.post("/import/preview",
+    operation_id="import_preview")
 def import_preview(body: JsonImportBody):
     result = JsonBackupService().preview(body.data, body.mode, body.import_format)
     if not result.get("valid"):
@@ -124,7 +129,8 @@ def import_preview(body: JsonImportBody):
     return ok(result, "Pré-visualização gerada.")
 
 
-@router.post("/import/apply")
+@router.post("/import/apply",
+    operation_id="import_apply")
 def import_apply(body: JsonImportBody, request: Request):
     user_id, user_email, user_name = actor_from_request(request)
     try:

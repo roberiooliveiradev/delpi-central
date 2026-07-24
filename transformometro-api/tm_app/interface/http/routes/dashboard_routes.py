@@ -42,7 +42,8 @@ def _scope_error_response(
     return None
 
 
-@router.post("/recalcular")
+@router.post("/recalcular",
+    operation_id="recalcular_dashboard")
 def recalcular_dashboard(
     request: Request,
     revisao_id: str | None = None,
@@ -239,7 +240,8 @@ def dashboard_snapshot_linhas(
     )
 
 
-@router.get("/resumo")
+@router.get("/resumo",
+    operation_id="dashboard_resumo")
 def dashboard_resumo(
     request: Request,
     view: str | None = Query(default=None),
@@ -260,7 +262,8 @@ def dashboard_resumo(
     return ok(summary)
 
 
-@router.get("/evolucao")
+@router.get("/evolucao",
+    operation_id="dashboard_evolucao")
 def dashboard_evolucao(
     request: Request,
     view: str | None = Query(default=None),
@@ -281,7 +284,8 @@ def dashboard_evolucao(
     return ok({"total": len(rows), "items": rows})
 
 
-@router.get("/processos")
+@router.get("/processos",
+    operation_id="dashboard_processos")
 def dashboard_processos(
     request: Request,
     view: str | None = Query(default=None),
@@ -306,7 +310,8 @@ def dashboard_processos(
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/alertas")
+@router.get("/alertas",
+    operation_id="dashboard_alertas")
 def dashboard_alertas(
     request: Request,
     meses_consecutivos: int = Query(default=3, ge=1, le=24),
@@ -330,7 +335,8 @@ def dashboard_alertas(
     return ok(data, "Alertas de economia líquida negativa.")
 
 
-@router.get("/vencimentos")
+@router.get("/vencimentos",
+    operation_id="dashboard_vencimentos")
 def dashboard_vencimentos(
     request: Request,
     dias: int = Query(default=90, ge=1, le=365),
@@ -353,7 +359,8 @@ def dashboard_vencimentos(
     return ok(data, "Revisões prestes a vencer e vencidas.")
 
 
-@router.get("/por-familia")
+@router.get("/por-familia",
+    operation_id="dashboard_por_familia")
 def dashboard_por_familia(
     request: Request,
     view: str | None = Query(default=None),
@@ -374,7 +381,8 @@ def dashboard_por_familia(
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/export.csv")
+@router.get("/export.csv",
+    operation_id="dashboard_export_csv")
 def dashboard_export_csv(
     request: Request,
     view: str | None = Query(default=None),
@@ -401,7 +409,8 @@ def dashboard_export_csv(
     )
 
 
-@router.get("/export.xls")
+@router.get("/export.xls",
+    operation_id="dashboard_export_excel")
 def dashboard_export_excel(
     request: Request,
     view: str | None = Query(default=None),

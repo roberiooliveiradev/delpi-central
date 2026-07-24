@@ -316,7 +316,8 @@ def _validate_recurso_body(body: RecursoBody):
 # --- Processos ---
 
 
-@router.get("/processos")
+@router.get("/processos",
+    operation_id="list_processos")
 def list_processos(
     request: Request,
     filial_id: str | None = None,
@@ -340,7 +341,8 @@ def list_processos(
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/processos/calculados")
+@router.get("/processos/calculados",
+    operation_id="list_processos_calculados")
 def list_processos_calculados(
     request: Request,
     filial_id: str | None = None,
@@ -362,7 +364,8 @@ def list_processos_calculados(
     )
 
 
-@router.get("/processos/{processo_id}")
+@router.get("/processos/{processo_id}",
+    operation_id="get_processo")
 def get_processo(processo_id: str, request: Request):
     if err := check_processo_view_access(request, processo_id):
         return err
@@ -373,7 +376,8 @@ def get_processo(processo_id: str, request: Request):
     return ok(row_to_json(enriched[0]))
 
 
-@router.get("/processos/{processo_id}/timeline")
+@router.get("/processos/{processo_id}/timeline",
+    operation_id="processo_timeline")
 def processo_timeline(
     processo_id: str,
     request: Request,
@@ -413,7 +417,8 @@ def _processo_master_payload(body: ProcessoCreateBody) -> dict:
     }
 
 
-@router.post("/processos")
+@router.post("/processos",
+    operation_id="create_processo")
 def create_processo(body: ProcessoCreateBody, request: Request):
     filial_id = (body.filial_id or "").strip() or None
     setor_id = (body.setor_id or "").strip() or None
@@ -456,7 +461,8 @@ def create_processo(body: ProcessoCreateBody, request: Request):
     return ok(row_to_json(row), "Processo criado.", 201)
 
 
-@router.get("/processos/{processo_id}/instancias")
+@router.get("/processos/{processo_id}/instancias",
+    operation_id="list_processo_instancias")
 def list_processo_instancias(processo_id: str, request: Request):
     if err := check_processo_view_access(request, processo_id):
         return err
@@ -467,7 +473,8 @@ def list_processo_instancias(processo_id: str, request: Request):
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.post("/processos/{processo_id}/instancias")
+@router.post("/processos/{processo_id}/instancias",
+    operation_id="create_processo_instancia")
 def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Request):
     if not body.todas_filiais_ativas:
         if err := check_manage_filial_access(request, body.filial_id or ""):
@@ -509,7 +516,8 @@ def create_processo_instancia(processo_id: str, body: InstanciaBody, request: Re
     return ok(row_to_json(row), "Melhoria criada.", 201)
 
 
-@router.get("/instancias/{instancia_id}")
+@router.get("/instancias/{instancia_id}",
+    operation_id="get_instancia")
 def get_instancia(instancia_id: str, request: Request):
     if err := check_instancia_view_access(request, instancia_id):
         return err
@@ -519,7 +527,8 @@ def get_instancia(instancia_id: str, request: Request):
     return ok(row_to_json(row))
 
 
-@router.put("/instancias/{instancia_id}")
+@router.put("/instancias/{instancia_id}",
+    operation_id="update_instancia")
 def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Request):
     if err := check_instancia_view_access(request, instancia_id):
         return err
@@ -593,7 +602,8 @@ def update_instancia(instancia_id: str, body: InstanciaUpdateBody, request: Requ
     return ok(row_to_json(row), "Melhoria atualizada.")
 
 
-@router.delete("/instancias/{instancia_id}")
+@router.delete("/instancias/{instancia_id}",
+    operation_id="delete_instancia")
 def delete_instancia(instancia_id: str, request: Request):
     if err := check_instancia_view_access(request, instancia_id):
         return err
@@ -626,7 +636,8 @@ def delete_instancia(instancia_id: str, request: Request):
     return ok(message="Instância operacional excluída.")
 
 
-@router.post("/instancias/{instancia_id}/duplicar")
+@router.post("/instancias/{instancia_id}/duplicar",
+    operation_id="duplicate_instancia")
 def duplicate_instancia(instancia_id: str, body: InstanciaDuplicateBody, request: Request):
     if err := check_instancia_view_access(request, instancia_id):
         return err
@@ -676,7 +687,8 @@ def duplicate_instancia(instancia_id: str, body: InstanciaDuplicateBody, request
     )
 
 
-@router.put("/processos/{processo_id}")
+@router.put("/processos/{processo_id}",
+    operation_id="update_processo")
 def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request):
     if err := _validate_processo_escopo_access(request, body):
         return err
@@ -705,7 +717,8 @@ def update_processo(processo_id: str, body: ProcessoUpdateBody, request: Request
     return ok(row_to_json(row), "Processo atualizado.")
 
 
-@router.delete("/processos/{processo_id}")
+@router.delete("/processos/{processo_id}",
+    operation_id="delete_processo")
 def delete_processo(processo_id: str, request: Request):
     if not ProcessoRepository().soft_delete(processo_id):
         return fail("Processo não encontrado.", 404)
@@ -714,7 +727,8 @@ def delete_processo(processo_id: str, request: Request):
     return ok(message="Processo excluído.")
 
 
-@router.post("/processos/{processo_id}/duplicar")
+@router.post("/processos/{processo_id}/duplicar",
+    operation_id="duplicate_processo")
 def duplicate_processo(
     processo_id: str,
     request: Request,
@@ -753,7 +767,8 @@ def duplicate_processo(
 # --- Revisões ---
 
 
-@router.get("/processos/{processo_id}/comparativo")
+@router.get("/processos/{processo_id}/comparativo",
+    operation_id="processo_comparativo_revisoes")
 def processo_comparativo_revisoes(processo_id: str):
     data = ProcessRevisionCompareService().compare(processo_id)
     if not data:
@@ -761,7 +776,8 @@ def processo_comparativo_revisoes(processo_id: str):
     return ok(data, "Comparativo de revisões.")
 
 
-@router.get("/processos/{processo_id}/matriz-impacto-esforco")
+@router.get("/processos/{processo_id}/matriz-impacto-esforco",
+    operation_id="processo_matriz_impacto_esforco")
 def processo_matriz_impacto_esforco(
     processo_id: str,
     request: Request,
@@ -784,13 +800,15 @@ def processo_matriz_impacto_esforco(
     return ok(data, "Matriz impacto × esforço do processo.")
 
 
-@router.get("/processos/{processo_id}/revisoes")
+@router.get("/processos/{processo_id}/revisoes",
+    operation_id="list_revisoes")
 def list_revisoes(processo_id: str):
     rows = RevisaoRepository().list_by_processo(processo_id)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.post("/revisoes")
+@router.post("/revisoes",
+    operation_id="create_revisao")
 def create_revisao(body: RevisaoBody, request: Request):
     try:
         assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
@@ -811,7 +829,8 @@ def create_revisao(body: RevisaoBody, request: Request):
     return ok(row_to_json(row), "Revisão criada.", 201)
 
 
-@router.put("/revisoes/{revisao_id}")
+@router.put("/revisoes/{revisao_id}",
+    operation_id="update_revisao")
 def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     existing = RevisaoRepository().get(revisao_id)
     if not existing:
@@ -857,7 +876,8 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     return ok(row_to_json(row), "Revisão atualizada.")
 
 
-@router.post("/revisoes/{revisao_id}/ativar")
+@router.post("/revisoes/{revisao_id}/ativar",
+    operation_id="activate_revisao")
 def activate_revisao(revisao_id: str, request: Request):
     repo = RevisaoRepository()
     row = repo.activate(revisao_id)
@@ -872,7 +892,8 @@ def activate_revisao(revisao_id: str, request: Request):
     return ok(row_to_json(row), "Revisão ativada.")
 
 
-@router.post("/revisoes/{revisao_id}/duplicar")
+@router.post("/revisoes/{revisao_id}/duplicar",
+    operation_id="duplicate_revisao")
 def duplicate_revisao(
     revisao_id: str,
     request: Request,
@@ -920,7 +941,8 @@ def duplicate_revisao(
     )
 
 
-@router.delete("/revisoes/{revisao_id}")
+@router.delete("/revisoes/{revisao_id}",
+    operation_id="delete_revisao")
 def delete_revisao(revisao_id: str, request: Request):
     existing = RevisaoRepository().get(revisao_id)
     if not existing:
@@ -942,7 +964,8 @@ def delete_revisao(revisao_id: str, request: Request):
     return ok(message="Revisão excluída.")
 
 
-@router.get("/revisoes/{revisao_id}/diagnostico-rateio")
+@router.get("/revisoes/{revisao_id}/diagnostico-rateio",
+    operation_id="revisao_diagnostico_rateio")
 def revisao_diagnostico_rateio(revisao_id: str, competencia: str | None = None):
     data = RevisaoRateioDiagnosticService().diagnose(revisao_id, competencia=competencia)
     if not data:
@@ -950,7 +973,8 @@ def revisao_diagnostico_rateio(revisao_id: str, competencia: str | None = None):
     return ok(data, "Diagnóstico de rateio.")
 
 
-@router.get("/instancias/{instancia_id}/matriz-impacto-esforco")
+@router.get("/instancias/{instancia_id}/matriz-impacto-esforco",
+    operation_id="instancia_matriz_impacto_esforco")
 def instancia_matriz_impacto_esforco(
     instancia_id: str,
     request: Request,
@@ -973,7 +997,8 @@ def instancia_matriz_impacto_esforco(
     return ok(data, "Matriz impacto × esforço da melhoria.")
 
 
-@router.get("/revisoes/{revisao_id}/matriz-impacto-esforco")
+@router.get("/revisoes/{revisao_id}/matriz-impacto-esforco",
+    operation_id="revisao_matriz_impacto_esforco")
 def revisao_matriz_impacto_esforco(
     revisao_id: str,
     request: Request,
@@ -997,7 +1022,8 @@ def revisao_matriz_impacto_esforco(
     return ok(data, "Matriz impacto × esforço da revisão.")
 
 
-@router.put("/revisoes/{revisao_id}/matriz-impacto-esforco")
+@router.put("/revisoes/{revisao_id}/matriz-impacto-esforco",
+    operation_id="put_revisao_matriz_impacto_esforco")
 def put_revisao_matriz_impacto_esforco(
     revisao_id: str,
     body: RevisaoMatrizImpactoBody,
@@ -1050,13 +1076,15 @@ def put_revisao_matriz_impacto_esforco(
 # --- Medições ---
 
 
-@router.get("/revisoes/{revisao_id}/medicoes")
+@router.get("/revisoes/{revisao_id}/medicoes",
+    operation_id="get_medicao")
 def get_medicao(revisao_id: str):
     row = MedicaoRepository().get_by_revisao(revisao_id)
     return ok(row_to_json(row))
 
 
-@router.post("/medicoes")
+@router.post("/medicoes",
+    operation_id="upsert_medicao")
 def upsert_medicao(body: MedicaoBody, request: Request):
     row = MedicaoRepository().upsert(body.model_dump())
     mid = str(row["medicao_id"])
@@ -1074,13 +1102,15 @@ def upsert_medicao(body: MedicaoBody, request: Request):
 # --- Investimentos ---
 
 
-@router.get("/revisoes/{revisao_id}/investimentos")
+@router.get("/revisoes/{revisao_id}/investimentos",
+    operation_id="list_investimentos")
 def list_investimentos(revisao_id: str):
     rows = InvestimentoRepository().list_by_revisao(revisao_id)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.post("/investimentos")
+@router.post("/investimentos",
+    operation_id="create_investimento")
 def create_investimento(body: InvestimentoBody, request: Request):
     try:
         assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
@@ -1103,7 +1133,8 @@ def create_investimento(body: InvestimentoBody, request: Request):
     return ok(row_to_json(row), "Investimento criado.", 201)
 
 
-@router.put("/investimentos/{investimento_id}")
+@router.put("/investimentos/{investimento_id}",
+    operation_id="update_investimento")
 def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, request: Request):
     try:
         assert_in(body.tipo_investimento, TIPO_INVESTIMENTO, "tipo_investimento")
@@ -1128,7 +1159,8 @@ def update_investimento(investimento_id: str, body: InvestimentoUpdateBody, requ
     return ok(row_to_json(row), "Investimento atualizado.")
 
 
-@router.delete("/investimentos/{investimento_id}")
+@router.delete("/investimentos/{investimento_id}",
+    operation_id="delete_investimento")
 def delete_investimento(investimento_id: str, request: Request):
     existing = InvestimentoRepository().get(investimento_id)
     if not existing:
@@ -1152,7 +1184,8 @@ def delete_investimento(investimento_id: str, request: Request):
 # --- Filiais ---
 
 
-@router.get("/filiais")
+@router.get("/filiais",
+    operation_id="list_filiais")
 def list_filiais(request: Request, include_inactive: bool = False):
     rows = FilialRepository().list(include_inactive=include_inactive)
     rows = filter_rows_for_access(
@@ -1164,7 +1197,8 @@ def list_filiais(request: Request, include_inactive: bool = False):
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/filiais/{filial_id}")
+@router.get("/filiais/{filial_id}",
+    operation_id="get_filial")
 def get_filial(filial_id: str, request: Request):
     if err := check_view_filial_access(request, filial_id):
         return err
@@ -1174,7 +1208,8 @@ def get_filial(filial_id: str, request: Request):
     return ok(row_to_json(row))
 
 
-@router.post("/filiais")
+@router.post("/filiais",
+    operation_id="create_filial")
 def create_filial(body: FilialBody, request: Request):
     if err := require_unrestricted_catalog_admin(request):
         return err
@@ -1192,7 +1227,8 @@ def create_filial(body: FilialBody, request: Request):
     return ok(row_to_json(row), "Unidade criada.", 201)
 
 
-@router.put("/filiais/{filial_id}")
+@router.put("/filiais/{filial_id}",
+    operation_id="update_filial")
 def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
     if err := require_unrestricted_catalog_admin(request):
         return err
@@ -1212,7 +1248,8 @@ def update_filial(filial_id: str, body: FilialUpdateBody, request: Request):
     return ok(row_to_json(row), "Unidade atualizada.")
 
 
-@router.delete("/filiais/{filial_id}")
+@router.delete("/filiais/{filial_id}",
+    operation_id="delete_filial")
 def delete_filial(filial_id: str, request: Request):
     if err := require_unrestricted_catalog_admin(request):
         return err
@@ -1232,7 +1269,8 @@ def delete_filial(filial_id: str, request: Request):
 # --- Setores ---
 
 
-@router.get("/setores")
+@router.get("/setores",
+    operation_id="list_setores")
 def list_setores(request: Request, filial_id: str | None = None):
     if filial_id:
         if err := check_view_filial_access(request, filial_id):
@@ -1241,7 +1279,8 @@ def list_setores(request: Request, filial_id: str | None = None):
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/setores/{setor_id}")
+@router.get("/setores/{setor_id}",
+    operation_id="get_setor")
 def get_setor(setor_id: str):
     row = SetorRepository().get(setor_id)
     if not row:
@@ -1249,7 +1288,8 @@ def get_setor(setor_id: str):
     return ok(row_to_json(row))
 
 
-@router.post("/setores")
+@router.post("/setores",
+    operation_id="create_setor")
 def create_setor(body: SetorBody, request: Request):
     try:
         _validate_setor_body(body, is_create=True)
@@ -1265,7 +1305,8 @@ def create_setor(body: SetorBody, request: Request):
     return ok(row_to_json(row), "Setor criado.", 201)
 
 
-@router.put("/setores/{setor_id}")
+@router.put("/setores/{setor_id}",
+    operation_id="update_setor")
 def update_setor(setor_id: str, body: SetorUpdateBody, request: Request):
     try:
         _validate_setor_body(body, is_create=False)
@@ -1283,7 +1324,8 @@ def update_setor(setor_id: str, body: SetorUpdateBody, request: Request):
     return ok(row_to_json(row), "Setor atualizado.")
 
 
-@router.delete("/setores/{setor_id}")
+@router.delete("/setores/{setor_id}",
+    operation_id="delete_setor")
 def delete_setor(setor_id: str, request: Request):
     try:
         if not SetorRepository().soft_delete(setor_id):
@@ -1298,13 +1340,15 @@ def delete_setor(setor_id: str, request: Request):
 # --- Recursos ---
 
 
-@router.get("/recursos-compartilhados")
+@router.get("/recursos-compartilhados",
+    operation_id="list_recursos")
 def list_recursos():
     rows = RecursoRepository().list()
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/recursos-compartilhados/{recurso_id}")
+@router.get("/recursos-compartilhados/{recurso_id}",
+    operation_id="get_recurso")
 def get_recurso(recurso_id: str):
     row = RecursoRepository().get(recurso_id)
     if not row:
@@ -1312,7 +1356,8 @@ def get_recurso(recurso_id: str):
     return ok(row_to_json(row))
 
 
-@router.post("/recursos-compartilhados")
+@router.post("/recursos-compartilhados",
+    operation_id="create_recurso")
 def create_recurso(body: RecursoBody, request: Request):
     try:
         _validate_recurso_body(body)
@@ -1326,7 +1371,8 @@ def create_recurso(body: RecursoBody, request: Request):
     return ok(row_to_json(row), "Recurso criado.", 201)
 
 
-@router.put("/recursos-compartilhados/{recurso_id}")
+@router.put("/recursos-compartilhados/{recurso_id}",
+    operation_id="update_recurso")
 def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
     try:
         _validate_recurso_body(body)
@@ -1342,7 +1388,8 @@ def update_recurso(recurso_id: str, body: RecursoBody, request: Request):
     return ok(row_to_json(row), "Recurso atualizado.")
 
 
-@router.delete("/recursos-compartilhados/{recurso_id}")
+@router.delete("/recursos-compartilhados/{recurso_id}",
+    operation_id="delete_recurso")
 def delete_recurso(recurso_id: str, request: Request):
     if not RecursoRepository().soft_delete(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1351,7 +1398,8 @@ def delete_recurso(recurso_id: str, request: Request):
     return ok(message="Recurso excluído.")
 
 
-@router.get("/recursos-compartilhados/{recurso_id}/vinculos")
+@router.get("/recursos-compartilhados/{recurso_id}/vinculos",
+    operation_id="list_recurso_vinculos")
 def list_recurso_vinculos(recurso_id: str):
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1359,7 +1407,8 @@ def list_recurso_vinculos(recurso_id: str):
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.get("/recursos-compartilhados/{recurso_id}/custos")
+@router.get("/recursos-compartilhados/{recurso_id}/custos",
+    operation_id="list_recurso_custos")
 def list_recurso_custos(recurso_id: str):
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1367,7 +1416,8 @@ def list_recurso_custos(recurso_id: str):
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.post("/recursos-compartilhados/{recurso_id}/custos")
+@router.post("/recursos-compartilhados/{recurso_id}/custos",
+    operation_id="create_recurso_custo")
 def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Request):
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1398,7 +1448,8 @@ def create_recurso_custo(recurso_id: str, body: RecursoCustoBody, request: Reque
     )
 
 
-@router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste")
+@router.post("/recursos-compartilhados/{recurso_id}/custos/reajuste",
+    operation_id="reajuste_recurso_custo")
 def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, request: Request):
     if not RecursoRepository().get(recurso_id):
         return fail("Recurso não encontrado.", 404)
@@ -1429,7 +1480,8 @@ def reajuste_recurso_custo(recurso_id: str, body: RecursoCustoReajusteBody, requ
     )
 
 
-@router.put("/recurso-custos/{recurso_custo_id}")
+@router.put("/recurso-custos/{recurso_custo_id}",
+    operation_id="update_recurso_custo")
 def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request: Request):
     existing = RecursoCustoRepository().get(recurso_custo_id)
     if not existing:
@@ -1460,7 +1512,8 @@ def update_recurso_custo(recurso_custo_id: str, body: RecursoCustoBody, request:
     )
 
 
-@router.delete("/recurso-custos/{recurso_custo_id}")
+@router.delete("/recurso-custos/{recurso_custo_id}",
+    operation_id="delete_recurso_custo")
 def delete_recurso_custo(recurso_custo_id: str, request: Request):
     existing = RecursoCustoRepository().get(recurso_custo_id)
     if not existing:
@@ -1485,13 +1538,15 @@ def delete_recurso_custo(recurso_custo_id: str, request: Request):
 # --- Vínculos ---
 
 
-@router.get("/revisoes/{revisao_id}/recursos-compartilhados")
+@router.get("/revisoes/{revisao_id}/recursos-compartilhados",
+    operation_id="list_vinculos")
 def list_vinculos(revisao_id: str):
     rows = VinculoRepository().list_by_revisao(revisao_id)
     return ok({"total": len(rows), "items": rows_to_json(rows)})
 
 
-@router.post("/revisao-recursos-compartilhados")
+@router.post("/revisao-recursos-compartilhados",
+    operation_id="create_vinculo")
 def create_vinculo(body: VinculoBody, request: Request):
     row = VinculoRepository().create(body.model_dump())
     vid = str(row["vinculo_id"])
@@ -1506,7 +1561,8 @@ def create_vinculo(body: VinculoBody, request: Request):
     return ok(row_to_json(row), "Vínculo criado.", 201)
 
 
-@router.put("/revisao-recursos-compartilhados/{vinculo_id}")
+@router.put("/revisao-recursos-compartilhados/{vinculo_id}",
+    operation_id="update_vinculo")
 def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
     row = VinculoRepository().update(vinculo_id, body.model_dump())
     if not row:
@@ -1522,7 +1578,8 @@ def update_vinculo(vinculo_id: str, body: VinculoUpdateBody, request: Request):
     return ok(row_to_json(row), "Vínculo atualizado.")
 
 
-@router.delete("/revisao-recursos-compartilhados/{vinculo_id}")
+@router.delete("/revisao-recursos-compartilhados/{vinculo_id}",
+    operation_id="delete_vinculo")
 def delete_vinculo(vinculo_id: str, request: Request):
     existing = VinculoRepository().get(vinculo_id)
     if not existing:
