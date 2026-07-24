@@ -1,3 +1,5 @@
+import { printDelpiDocumentHtml } from "@delpi/plugin-ui/index";
+
 import type { InspecoesEntradaHistoricoDetalhe } from "../types/inspecoesEntradaHistoricoDetalhe";
 import {
   collectCertificateInspectorNames,
@@ -598,115 +600,12 @@ export function buildQualityCertificateHtml(
 </html>`;
 }
 
-function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void {
-  const doc = targetWindow.document;
-  const images = Array.from(doc.images);
-
-  const runPrint = () => {
-    targetWindow.focus();
-    targetWindow.scrollTo(0, 0);
-    targetWindow.print();
-    onDone?.();
-  };
-
-  if (images.length === 0) {
-    window.setTimeout(runPrint, 100);
-    return;
-  }
-
-  let ready = 0;
-  const tryPrint = () => {
-    ready += 1;
-    if (ready >= images.length) {
-      window.setTimeout(runPrint, 150);
-    }
-  };
-
-  for (const image of images) {
-    if (image.complete) {
-      tryPrint();
-    } else {
-      image.addEventListener("load", tryPrint, { once: true });
-      image.addEventListener("error", tryPrint, { once: true });
-    }
-  }
-
-  window.setTimeout(runPrint, 1_500);
-}
-
-function scheduleCertificatePrint(targetWindow: Window, onDone?: () => void): void {
-  let started = false;
-
-  const triggerPrint = () => {
-    if (started || targetWindow.closed) return;
-    started = true;
-    waitForImagesThenPrint(targetWindow, onDone);
-  };
-
-  targetWindow.addEventListener("load", triggerPrint, { once: true });
-  window.setTimeout(triggerPrint, 1_000);
-}
-
-function openCertificatePrintWindow(html: string): Window | null {
-  const printWindow = window.open("", "_blank");
-  if (!printWindow) {
-    return null;
-  }
-
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
-  return printWindow;
-}
-
-function printViaPrintFrame(html: string): boolean {
-  const iframe = document.createElement("iframe");
-  iframe.setAttribute("title", "Certificado de qualidade");
-  iframe.setAttribute(
-    "style",
-    [
-      "position:fixed",
-      "inset:0",
-      "width:100%",
-      "height:100%",
-      "border:0",
-      "z-index:99999",
-      "background:#ffffff",
-    ].join(";"),
-  );
-  document.body.appendChild(iframe);
-
-  const targetWindow = iframe.contentWindow;
-  const doc = iframe.contentDocument ?? targetWindow?.document;
-
-  if (!targetWindow || !doc) {
-    iframe.remove();
-    return false;
-  }
-
-  doc.open();
-  doc.write(html);
-  doc.close();
-
-  scheduleCertificatePrint(targetWindow, () => {
-    window.setTimeout(() => iframe.remove(), 1_000);
-  });
-
-  return true;
-}
-
 export function printQualityCertificate(detail: InspecoesEntradaHistoricoDetalhe): PrintQualityCertificateResult {
   const logoUrl =
     typeof window !== "undefined" ? `${window.location.origin}/logoDelpi.svg` : undefined;
   const html = buildQualityCertificateHtml(detail, logoUrl);
 
-  const printWindow = openCertificatePrintWindow(html);
-  if (printWindow) {
-    scheduleCertificatePrint(printWindow);
-    return { success: true };
-  }
-
-  if (printViaPrintFrame(html)) {
+  if (printDelpiDocumentHtml(html, { iframeTitle: "Certificado de qualidade" })) {
     return { success: true };
   }
 

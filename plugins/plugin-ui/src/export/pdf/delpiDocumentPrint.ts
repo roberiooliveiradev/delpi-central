@@ -1,8 +1,26 @@
+/**
+ * Agenda impressão de HTML em janela/iframe.
+ * Garante no máximo um `print()` por documento — o fallback de imagens
+ * não pode reabrir o diálogo depois que o usuário cancelou o primeiro.
+ */
 function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void {
   const doc = targetWindow.document;
   const images = Array.from(doc.images);
+  let printed = false;
+  let readyTimer: ReturnType<typeof window.setTimeout> | undefined;
+  let fallbackTimer: ReturnType<typeof window.setTimeout> | undefined;
+
+  const clearTimers = () => {
+    if (readyTimer !== undefined) window.clearTimeout(readyTimer);
+    if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+    readyTimer = undefined;
+    fallbackTimer = undefined;
+  };
 
   const runPrint = () => {
+    if (printed || targetWindow.closed) return;
+    printed = true;
+    clearTimers();
     targetWindow.focus();
     targetWindow.scrollTo(0, 0);
     targetWindow.print();
@@ -10,7 +28,7 @@ function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void
   };
 
   if (images.length === 0) {
-    window.setTimeout(runPrint, 100);
+    readyTimer = window.setTimeout(runPrint, 100);
     return;
   }
 
@@ -18,9 +36,8 @@ function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void
 
   const tryPrint = () => {
     ready += 1;
-
     if (ready >= images.length) {
-      window.setTimeout(runPrint, 150);
+      readyTimer = window.setTimeout(runPrint, 150);
     }
   };
 
@@ -33,7 +50,8 @@ function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void
     }
   }
 
-  window.setTimeout(runPrint, 1_500);
+  // Só dispara se as imagens não ficarem prontas a tempo — nunca como 2º print.
+  fallbackTimer = window.setTimeout(runPrint, 1_500);
 }
 
 function scheduleDelpiDocumentPrint(targetWindow: Window, onDone?: () => void): void {
@@ -91,6 +109,7 @@ function printViaIframe(html: string, iframeTitle: string, onDone?: () => void):
   return true;
 }
 
+/** Imprime HTML: janela nova se pop-up permitido; senão iframe. Um único diálogo. */
 export function printDelpiDocumentHtml(
   html: string,
   options?: { iframeTitle?: string },
