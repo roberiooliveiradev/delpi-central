@@ -11,6 +11,7 @@ import {
   peekPreviewPayloadCache,
   rememberPreviewPayloadCache,
 } from "../utils/previewPayloadCache";
+import type { InputFilterContributions } from "@delpi/tv-dashboard-presentation";
 
 type Props = {
   playlistId: string;
@@ -45,6 +46,12 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
     }
   }, [playlistId]);
 
+  const onRefresh = useCallback(
+    async (filters?: InputFilterContributions | null) =>
+      withLiveOverlay(playlistId, await getPreviewPayload(playlistId, filters ?? undefined)),
+    [playlistId],
+  );
+
   useEffect(() => {
     const cached = peekPreviewPayloadCache(playlistId);
     setPayload(cached ? withLiveOverlay(playlistId, cached) : null);
@@ -76,9 +83,7 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
           key={playlistId}
           payload={payload}
           playlistId={playlistId}
-          onRefresh={async (filters) =>
-            withLiveOverlay(playlistId, await getPreviewPayload(playlistId, filters))
-          }
+          onRefresh={onRefresh}
         />
       ) : null}
     </div>

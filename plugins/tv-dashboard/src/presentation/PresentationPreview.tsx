@@ -57,6 +57,9 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   overridesRef.current = runtimeOverrides;
   const debounceRef = useRef<number | null>(null);
 
+  /* Estável entre re-renders (ex.: setBooting) — senão o engine faz setPayload em loop (#185). */
+  const browserInitial = useMemo(() => forBrowserDisplay(initial), [initial]);
+
   const wsUrl = useMemo(() => {
     if (!playlistId) return null;
     const token = getAccessToken();
@@ -84,7 +87,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     goPrevious,
     goNext,
   } = usePresentationEngine({
-    initialPayload: forBrowserDisplay(initial),
+    initialPayload: browserInitial,
     onRefresh: onRefresh ? reloadWithFilters : undefined,
     enableHiddenPause: false,
     enableKeyboardControls: true,
@@ -103,7 +106,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       window.cancelAnimationFrame(outer);
       window.cancelAnimationFrame(inner);
     };
-  }, [playlistId, initial.playlist?.id]);
+  }, [playlistId, browserInitial.playlist?.id]);
 
   useEffect(() => {
     return () => {

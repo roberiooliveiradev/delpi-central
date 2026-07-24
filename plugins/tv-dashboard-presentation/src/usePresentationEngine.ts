@@ -72,6 +72,11 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     if (next) setPayload(next);
   }, [onRefresh]);
 
+  /*
+   * Re-seed quando o pai troca o payload (ex.: fetch da prévia).
+   * O pai DEVE memoizar `initialPayload` — referência nova a cada render
+   * (ex.: clone em forBrowserDisplay) + setBooting → React #185.
+   */
   useEffect(() => {
     setPayload(initialPayload);
   }, [initialPayload]);
