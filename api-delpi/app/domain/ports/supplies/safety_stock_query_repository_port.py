@@ -166,3 +166,12 @@ class SafetyStockQueryRepositoryPort(ABC):
         product_code: str,
     ) -> str | None:
         ...
+
+    @abstractmethod
+    def fetch_last_inventory_date(
+        self,
+        *,
+        branch: str,
+        product_code: str,
+    ) -> str | None:
+        ...

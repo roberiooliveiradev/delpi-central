@@ -137,6 +137,8 @@ export function buildBalanceTimelineSeries(
     periodEnd?: string | null;
     averageDailyConsumption?: number | null;
     calendarDays?: number;
+    /** Quando false, ignora entradas SC7 (visão de ruptura sem pedidos). Default: true. */
+    includePurchaseOrders?: boolean;
   } = {},
 ): BalanceTimelineSeries | null {
   const start = parseIsoDate(summary.as_of_date);
@@ -160,7 +162,10 @@ export function buildBalanceTimelineSeries(
           options.periodEnd,
         );
 
-  const inflows = collectPurchaseInflowsByDate(items, summary.as_of_date);
+  const includePurchases = options.includePurchaseOrders !== false;
+  const inflows = includePurchases
+    ? collectPurchaseInflowsByDate(items, summary.as_of_date)
+    : new Map<string, number>();
   const points: BalanceTimelinePoint[] = [];
   let balance = Number(summary.initial_balance) || 0;
   let firstShortageDate: string | null = null;

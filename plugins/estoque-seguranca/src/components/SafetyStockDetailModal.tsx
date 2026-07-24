@@ -275,8 +275,14 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
               <KpiCard
                 title="Saldo disponível"
                 value={formatNumberPtBr(stock.available_stock)}
+                subtitle={
+                  stock.last_inventory_date
+                    ? `Último inventário: ${formatIsoDatePtBr(stock.last_inventory_date)}`
+                    : "Sem inventário registrado"
+                }
                 icon={<PackageCheck size={20} />}
                 wide
+                className="ess-kpi-card--available-balance"
               />
               {peerBranchStock ? (
                 <KpiCard

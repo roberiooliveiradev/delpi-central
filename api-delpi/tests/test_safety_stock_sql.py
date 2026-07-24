@@ -10,6 +10,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     consumption_analysis_rows_sql,
     consumption_last_date_sql,
     consumption_monthly_series_sql,
+    last_inventory_date_sql,
     linked_suppliers_sql,
     materials_base_cte,
     materials_for_projection_batch_sql,
@@ -74,6 +75,16 @@ def test_consumption_last_date_sql() -> None:
     assert "MAX(RTRIM(SD3.D3_EMISSAO))" in sql
     assert "D3_LOCAL) = '99'" in sql
     assert "D3_TM) = '999'" in sql
+
+
+def test_last_inventory_date_sql() -> None:
+    sql = last_inventory_date_sql()
+    assert "SB7010" in sql
+    assert "MAX(RTRIM(SB7.B7_DATA))" in sql
+    assert "B7_FILIAL" in sql
+    assert "B7_COD" in sql
+    assert "WITH (NOLOCK)" in sql
+    assert "D_E_L_E_T_" in sql
 
 
 def test_consumption_monthly_series_sql() -> None:

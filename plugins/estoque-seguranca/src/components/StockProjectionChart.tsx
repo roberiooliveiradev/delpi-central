@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   CartesianGrid,
@@ -22,6 +22,8 @@ import {
 import { formatIsoDatePtBr } from "../utils/safetyStockStatus";
 
 const CHART_HEIGHT = 340;
+
+type ProjectionViewMode = "with_orders" | "without_orders";
 
 type StockProjectionChartProps = {
   items: SafetyStockProjectionLedgerEntry[];
@@ -69,14 +71,18 @@ export function StockProjectionChart({
   periodStart = null,
   periodEnd = null,
 }: StockProjectionChartProps) {
+  const [viewMode, setViewMode] = useState<ProjectionViewMode>("with_orders");
+  const includePurchaseOrders = viewMode === "with_orders";
+
   const series = useMemo(
     () =>
       buildBalanceTimelineSeries(items, summary, {
         periodConsumption,
         periodStart,
         periodEnd,
+        includePurchaseOrders,
       }),
-    [items, summary, periodConsumption, periodStart, periodEnd],
+    [items, summary, periodConsumption, periodStart, periodEnd, includePurchaseOrders],
   );
 
   const chartData = useMemo(() => {
@@ -95,18 +101,52 @@ export function StockProjectionChart({
   const monthTicks = monthTicksFromPoints(series.points);
   const shortageDate = series.firstShortageDate;
   const periodLabel = `Período: ${formatIsoDatePtBr(series.periodStart)} até ${formatIsoDatePtBr(series.periodEnd)}`;
+  const subtitle = includePurchaseOrders
+    ? "Projeção diária dos próximos 12 meses considerando consumo em dias úteis e entradas de pedidos futuros."
+    : "Projeção diária dos próximos 12 meses considerando apenas consumo em dias úteis, sem entradas de pedidos de compra.";
 
   return (
     <div className="ess-projection-timeline">
       <div className="ess-projection-timeline__header">
         <div className="ess-projection-timeline__titles">
           <h4 className="ess-projection-timeline__title">Linha do tempo do saldo</h4>
-          <p className="ess-projection-timeline__subtitle">
-            Projeção diária dos próximos 12 meses considerando consumo em dias úteis e
-            entradas de pedidos futuros.
-          </p>
+          <p className="ess-projection-timeline__subtitle">{subtitle}</p>
         </div>
-        <span className="ess-projection-timeline__period">{periodLabel}</span>
+        <div className="ess-projection-timeline__controls">
+          <div
+            className="ess-chart-tabs ess-projection-timeline__view-tabs"
+            role="tablist"
+            aria-label="Visão da projeção com ou sem pedidos de compra"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={includePurchaseOrders}
+              className={
+                includePurchaseOrders
+                  ? "ess-chart-tabs__btn ess-chart-tabs__btn--active"
+                  : "ess-chart-tabs__btn"
+              }
+              onClick={() => setViewMode("with_orders")}
+            >
+              Com pedidos
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!includePurchaseOrders}
+              className={
+                !includePurchaseOrders
+                  ? "ess-chart-tabs__btn ess-chart-tabs__btn--active"
+                  : "ess-chart-tabs__btn"
+              }
+              onClick={() => setViewMode("without_orders")}
+            >
+              Sem pedidos
+            </button>
+          </div>
+          <span className="ess-projection-timeline__period">{periodLabel}</span>
+        </div>
       </div>
 
       <div className="ess-modern-line-chart ess-projection-chart">
