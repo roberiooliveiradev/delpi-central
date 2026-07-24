@@ -97,6 +97,35 @@
   font-weight: 600;
 }
 
+.delpi-ui-floating-notice__action {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--delpi-ui-accent, #089bdb);
+  font: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.delpi-ui-floating-notice__action:hover {
+  color: var(--delpi-ui-text, #111111);
+}
+
+.delpi-ui-floating-notice__action:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 70%,
+    transparent
+  );
+  outline-offset: 2px;
+}
+
 .delpi-ui-floating-notice__close {
   display: inline-flex;
   flex: none;
@@ -180,12 +209,8 @@
   );
 }
 
-.delpi-ui-floating-notice--error .delpi-ui-floating-notice__progress {
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-danger, #b42318) 65%,
-    transparent
-  );
+.delpi-ui-floating-notice--error .delpi-ui-floating-notice__action {
+  color: var(--delpi-ui-danger, #b42318);
 }
 
 .delpi-ui-floating-notice--warning {

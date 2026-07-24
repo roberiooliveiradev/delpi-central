@@ -97,6 +97,7 @@ export {
   floatingNoticeStackBemClasses,
   useFloatingNotices,
   type DashboardFloatingNoticeStackProps,
+  type FloatingNoticeAction,
   type FloatingNoticeInput,
   type FloatingNoticeItem,
   type FloatingNoticeStackClassNames,

@@ -14,6 +14,11 @@ import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
 
 export type FloatingNoticeVariant = "error" | "warning" | "success" | "info";
 
+export type FloatingNoticeAction = {
+  label: string;
+  onClick: () => void;
+};
+
 export type FloatingNoticeItem = {
   id: string;
   message: ReactNode;
@@ -21,6 +26,10 @@ export type FloatingNoticeItem = {
   variant?: FloatingNoticeVariant;
   /** ms até fechar sozinho; `null` mantém até o usuário fechar. */
   autoDismissMs?: number | null;
+  /** Ação opcional (ex.: «Tentar novamente» em erros). */
+  action?: FloatingNoticeAction;
+  /** Chamado ao fechar pelo X (além de remover o item da pilha). */
+  onClose?: () => void;
 };
 
 export type FloatingNoticeStackClassNames = {
@@ -30,6 +39,7 @@ export type FloatingNoticeStackClassNames = {
   content: string;
   title: string;
   message: string;
+  action: string;
   closeButton: string;
   progress: string;
 };
@@ -92,6 +102,7 @@ export function floatingNoticeStackBemClasses(
     content: element("content"),
     title: element("title"),
     message: element("message"),
+    action: element("action"),
     closeButton: element("close"),
     progress: element("progress"),
   };
@@ -157,12 +168,24 @@ function FloatingNotice({
       <div className={classNames.content}>
         {item.title ? <strong className={classNames.title}>{item.title}</strong> : null}
         <div className={classNames.message}>{item.message}</div>
+        {item.action ? (
+          <button
+            type="button"
+            className={classNames.action}
+            onClick={item.action.onClick}
+          >
+            {item.action.label}
+          </button>
+        ) : null}
       </div>
       <button
         type="button"
         className={classNames.closeButton}
         aria-label={labels.dismissAriaLabel}
-        onClick={() => onDismiss(item.id)}
+        onClick={() => {
+          item.onClose?.();
+          onDismiss(item.id);
+        }}
       >
         <X size={16} aria-hidden="true" />
       </button>

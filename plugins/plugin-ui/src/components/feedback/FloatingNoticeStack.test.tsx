@@ -103,6 +103,34 @@ describe("FloatingNoticeStack", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Fechar aviso" })[0]);
     expect(onDismiss).toHaveBeenCalledWith("err");
   });
+
+  it("renderiza ação e chama onClose ao fechar", () => {
+    const onDismiss = vi.fn();
+    const onAction = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <FloatingNoticeStack
+        items={[
+          {
+            id: "err",
+            message: "Falhou",
+            variant: "error",
+            action: { label: "Tentar novamente", onClick: onAction },
+            onClose,
+          },
+        ]}
+        onDismiss={onDismiss}
+        classNames={classNames}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    expect(onAction).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar aviso" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onDismiss).toHaveBeenCalledWith("err");
+  });
 });
 
 describe("useFloatingNotices", () => {

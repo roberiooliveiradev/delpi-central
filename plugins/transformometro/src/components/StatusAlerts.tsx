@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
-import { InlineErrorState } from "./ErrorStateBox";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import {
   EMPTY_REQUEST_PROGRESS,
   useLoadingProgress,
   type RequestProgress,
 } from "../hooks/useSimulatedLoadingProgress";
+import {
+  PAGE_ERROR_NOTICE_ID,
+  useFloatingNotice,
+} from "./ui/FloatingNoticeProvider";
 
 type StatusAlertsProps = {
   error: string | null;
@@ -14,9 +17,9 @@ type StatusAlertsProps = {
   hasData: boolean;
   requestProgress?: RequestProgress;
   onRetry: () => void;
-  /** Limpa o erro no estado do pai ao fechar (recomendado). */
+  /** Limpa o erro no estado do pai ao fechar o toast. */
   onDismissError?: () => void;
-  /** Título do painel de erro (kit StateBoxPanel). */
+  /** Título do toast de erro. */
   errorTitle?: string;
   /** Título do loading inicial (quando ainda não há dados). */
   loadingTitle?: string;
@@ -24,8 +27,9 @@ type StatusAlertsProps = {
 };
 
 /**
- * Erros permanecem até o usuário fechar (X) ou tentar novamente —
- * não há auto-dismiss por tempo.
+ * Erros de página → `FloatingNotice` (mesmo componente de sucesso/export).
+ * Erro/aviso não somem com o tempo — só com fechar ou «Tentar novamente».
+ * Loading inicial continua no card inline.
  */
 export function StatusAlerts({
   error,
@@ -39,33 +43,34 @@ export function StatusAlerts({
   loadingDescription = "Buscando economia, evolução mensal e ranking de processos.",
 }: StatusAlertsProps) {
   const loadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
-  const [dismissedError, setDismissedError] = useState<string | null>(null);
+  const { notifyError, dismissPageError } = useFloatingNotice();
+  const onRetryRef = useRef(onRetry);
+  const onDismissErrorRef = useRef(onDismissError);
+  onRetryRef.current = onRetry;
+  onDismissErrorRef.current = onDismissError;
 
   useEffect(() => {
-    if (error == null) {
-      setDismissedError(null);
+    if (!error) {
+      dismissPageError();
+      return;
     }
-  }, [error]);
-
-  const visibleError = error && error !== dismissedError ? error : null;
+    notifyError(error, {
+      id: PAGE_ERROR_NOTICE_ID,
+      title: errorTitle,
+      actionLabel: "Tentar novamente",
+      onAction: () => {
+        onDismissErrorRef.current?.();
+        dismissPageError();
+        onRetryRef.current();
+      },
+      onClose: () => {
+        onDismissErrorRef.current?.();
+      },
+    });
+  }, [error, errorTitle, notifyError, dismissPageError]);
 
   return (
     <>
-      {visibleError ? (
-        <InlineErrorState
-          title={errorTitle}
-          message={visibleError}
-          onAction={() => {
-            setDismissedError(null);
-            onRetry();
-          }}
-          onDismiss={() => {
-            setDismissedError(visibleError);
-            onDismissError?.();
-          }}
-        />
-      ) : null}
-
       {loading && !hasData ? (
         <LoadingActivityCard
           title={loadingTitle}
