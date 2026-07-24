@@ -1,25 +1,12 @@
+import { printScopedWindow } from "@delpi/plugin-ui/index";
 import { Printer } from "lucide-react";
+
 import { DS_GHOST_BTN } from "./ghostChrome";
 
 type PrintReportButtonProps = {
   disabled?: boolean;
   label?: string;
 };
-
-function triggerPrint() {
-  const cleanup = () => {
-    document.documentElement.classList.remove("ds-printing");
-    window.removeEventListener("afterprint", cleanup);
-  };
-
-  window.addEventListener("afterprint", cleanup);
-  document.documentElement.classList.add("ds-printing");
-  window.dispatchEvent(new Event("resize"));
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => window.print());
-  });
-}
 
 export function PrintReportButton({
   disabled = false,
@@ -29,7 +16,12 @@ export function PrintReportButton({
     <button
       type="button"
       className={`${DS_GHOST_BTN} ds-no-print`}
-      onClick={triggerPrint}
+      onClick={() =>
+        printScopedWindow({
+          rootClassName: "ds-printing",
+          dispatchResize: true,
+        })
+      }
       disabled={disabled}
       aria-label="Imprimir ou salvar relatório em PDF"
     >

@@ -1,25 +1,12 @@
-import { GHOST_BTN } from "../ui/ghostChrome";
+import { printScopedWindow } from "@delpi/plugin-ui/index";
 import { Printer } from "lucide-react";
+
+import { GHOST_BTN } from "../ui/ghostChrome";
 
 type PrintReportButtonProps = {
   disabled?: boolean;
   label?: string;
 };
-
-function triggerPrint() {
-  const cleanup = () => {
-    document.documentElement.classList.remove("dq-printing");
-    window.removeEventListener("afterprint", cleanup);
-  };
-
-  window.addEventListener("afterprint", cleanup);
-  document.documentElement.classList.add("dq-printing");
-  window.dispatchEvent(new Event("resize"));
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => window.print());
-  });
-}
 
 export function PrintReportButton({
   disabled = false,
@@ -29,7 +16,12 @@ export function PrintReportButton({
     <button
       type="button"
       className={`${GHOST_BTN} dq-no-print`}
-      onClick={triggerPrint}
+      onClick={() =>
+        printScopedWindow({
+          rootClassName: "dq-printing",
+          dispatchResize: true,
+        })
+      }
       disabled={disabled}
       aria-label="Imprimir relatório da página"
     >

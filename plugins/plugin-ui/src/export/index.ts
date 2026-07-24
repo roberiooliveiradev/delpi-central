@@ -46,10 +46,12 @@ export {
   escapeDelpiDocumentHtml,
   resolveDelpiLogoUrl,
   printDelpiDocumentHtml,
+  printScopedWindow,
   exportChartPayloadToPdf,
   exportTablePayloadToPdf,
   exportTablePayloadsToPdf,
   printDelpiDocumentSpec,
+  type ScopedWindowPrintOptions,
 } from "./pdf";
 
 export type {

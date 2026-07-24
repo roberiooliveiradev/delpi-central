@@ -18,6 +18,7 @@ export {
 } from "./delpiDocumentHtml";
 
 export { printDelpiDocumentHtml } from "./delpiDocumentPrint";
+export { printScopedWindow, type ScopedWindowPrintOptions } from "./printOnce";
 
 export {
   exportChartPayloadToPdf,

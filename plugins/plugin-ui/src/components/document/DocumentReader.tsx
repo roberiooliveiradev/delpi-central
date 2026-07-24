@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { printScopedWindow } from "../../export/pdf/printOnce";
+
 export type DocumentReaderProps = {
   children: ReactNode;
   toolbar?: ReactNode;
@@ -133,13 +135,11 @@ export function DocumentSignatureBlock({
 
 /**
  * Imprime somente o DocumentReader ativo sem exigir CSS específico do MFE.
- * A classe é removida por `afterprint` e por fallback após retorno do diálogo.
+ * Usa o helper canônico (um `print()` por sessão — sem reabrir ao cancelar/duplo clique).
  */
-export function printDocumentReader() {
-  const className = "delpi-ui-document-printing";
-  const cleanup = () => document.body.classList.remove(className);
-  document.body.classList.add(className);
-  window.addEventListener("afterprint", cleanup, { once: true });
-  window.print();
-  window.setTimeout(cleanup, 1_000);
+export function printDocumentReader(): boolean {
+  return printScopedWindow({
+    bodyClassName: "delpi-ui-document-printing",
+    deferFrames: false,
+  });
 }

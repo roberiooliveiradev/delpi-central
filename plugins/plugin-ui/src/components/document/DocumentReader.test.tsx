@@ -2,6 +2,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { __resetScopedPrintForTests } from "../../export/pdf/printOnce";
 import {
   DocumentFooter,
   DocumentHeader,
@@ -14,6 +15,7 @@ import {
 afterEach(() => {
   cleanup();
   document.body.classList.remove("delpi-ui-document-printing");
+  __resetScopedPrintForTests();
   vi.restoreAllMocks();
 });
 
@@ -38,16 +40,16 @@ describe("DocumentReader", () => {
     expect(screen.getByText("Baixar")).toBeTruthy();
   });
 
-  it("ativa o escopo de impressão do documento", () => {
-    vi.useFakeTimers();
+  it("ativa o escopo de impressão do documento uma única vez", () => {
     const print = vi.spyOn(window, "print").mockImplementation(() => {});
 
-    printDocumentReader();
+    expect(printDocumentReader()).toBe(true);
+    expect(printDocumentReader()).toBe(false);
 
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(true);
     expect(print).toHaveBeenCalledOnce();
-    vi.runAllTimers();
+
+    window.dispatchEvent(new Event("afterprint"));
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(false);
-    vi.useRealTimers();
   });
 });

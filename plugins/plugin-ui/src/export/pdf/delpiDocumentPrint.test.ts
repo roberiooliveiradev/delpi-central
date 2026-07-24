@@ -31,24 +31,17 @@ describe("printDelpiDocumentHtml", () => {
       scrollTo: vi.fn(),
       print,
       document: fakeDoc,
-      addEventListener: vi.fn((type: string, handler: EventListener) => {
-        if (type === "load") {
-          // dispara no próximo tick via timer do schedule (1s) — usamos o timeout
-          void handler;
-        }
-      }),
+      addEventListener: vi.fn(),
     } as unknown as Window;
 
     vi.spyOn(window, "open").mockReturnValue(fakeWindow);
 
     expect(printDelpiDocumentHtml("<html></html>")).toBe(true);
 
-    // schedule: timeout 1s → waitForImages → ready 150ms → print
     vi.advanceTimersByTime(1_000);
     vi.advanceTimersByTime(150);
     expect(print).toHaveBeenCalledTimes(1);
 
-    // fallback 1.5s a partir do waitForImages (já passou 150ms; restam ~1350ms)
     vi.advanceTimersByTime(2_000);
     expect(print).toHaveBeenCalledTimes(1);
   });
