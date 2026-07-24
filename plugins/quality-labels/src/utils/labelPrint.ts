@@ -2,6 +2,19 @@ import type { QualityLabel } from "../types/qualityLabels";
 import delpiLogoSvg from "../assets/logoDelpi.svg?raw";
 
 /**
+ * Wordmark Delpi sem o slogan "Conexões Elétricas".
+ * Sanitiza o asset (mesmo legado com tagline) na hora da impressão.
+ */
+function delpiLogoMarkSvg(raw: string): string {
+  return raw
+    .replace(/<path[^>]*d="M25\.168 516\.792[\s\S]*?<\/path>\s*/g, "")
+    .replace(/\bheight="547"\b/, 'height="440"')
+    .replace(/\bviewBox="0 0 832 547"\b/, 'viewBox="0 0 832 440"');
+}
+
+const DELPI_LOGO_MARK_SVG = delpiLogoMarkSvg(delpiLogoSvg);
+
+/**
  * Selo de qualidade recriado em SVG (não há asset oficial no repo).
  * O texto superior reflete o resultado da inspeção.
  */
@@ -74,8 +87,11 @@ function buildLabelStyles(): string {
       display: flex;
       align-items: stretch;
       justify-content: space-between;
+      box-sizing: border-box;
       width: 100mm;
       height: 30mm;
+      /* Padding lateral explícito — conteúdo afastado das bordas da mídia */
+      padding: 1.2mm 5.5mm;
       border: 0.3mm dashed #9fb1c1;
       overflow: hidden;
       background: #ffffff;
@@ -86,14 +102,14 @@ function buildLabelStyles(): string {
       align-items: center;
       justify-content: center;
       gap: 0.35mm;
-      padding: 1.2mm 3.2mm;
+      padding: 0;
       width: auto;
-      max-width: 44mm;
+      max-width: 38mm;
       text-align: center;
     }
     .tag__qr img {
-      width: 21mm;
-      height: 21mm;
+      width: 19mm;
+      height: 19mm;
       display: block;
     }
     .tag__caption {
@@ -122,11 +138,14 @@ function buildLabelStyles(): string {
     }
     .tag__logo {
       width: 100%;
+      max-height: 7mm;
+      overflow: hidden;
       display: flex;
       justify-content: center;
+      align-items: flex-start;
     }
     .tag__logo svg {
-      width: 15mm;
+      width: 16mm;
       max-width: 100%;
       height: auto;
       display: block;
@@ -139,8 +158,8 @@ function buildLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 15.5mm;
-      height: 15.5mm;
+      width: 15mm;
+      height: 15mm;
       display: block;
     }
     .hint {
@@ -162,8 +181,10 @@ function buildLabelStyles(): string {
       }
       .tag {
         border: none;
+        box-sizing: border-box;
         width: 100mm;
         height: 30mm;
+        padding: 1.2mm 5.5mm;
       }
       .hint { display: none; }
     }
@@ -191,7 +212,7 @@ function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
       </div>
       <div class="tag__fold" aria-hidden="true"></div>
       <div class="tag__panel tag__brand">
-        <div class="tag__logo">${delpiLogoSvg}</div>
+        <div class="tag__logo">${DELPI_LOGO_MARK_SVG}</div>
         <div class="tag__seal">${qualitySealSvg(topLabel)}</div>
         <div class="tag__product">${productCode}</div>
       </div>
