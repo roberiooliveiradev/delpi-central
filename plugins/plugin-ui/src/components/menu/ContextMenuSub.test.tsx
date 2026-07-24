@@ -1,12 +1,20 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Layers } from "lucide-react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ContextMenu } from "./ContextMenu";
 import { ContextMenuItem } from "./ContextMenuItem";
 import { ContextMenuSub } from "./ContextMenuSub";
 
 describe("ContextMenuSub", () => {
+  afterEach(async () => {
+    cleanup();
+    /* Esvazia close delay (120ms) / updates React pendentes após unmount. */
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    });
+  });
+
   it("abre no hover e dispara onSelect do item filho", () => {
     const onFront = vi.fn();
 
@@ -62,5 +70,21 @@ describe("ContextMenuSub", () => {
     fireEvent.mouseEnter(trigger.parentElement!);
     fireEvent.keyDown(trigger, { key: "ArrowRight" });
     expect(screen.queryByRole("menu", { name: "Alinhar" })).toBeNull();
+  });
+
+  it("flyout usa position fixed após abrir (ajuste ao viewport)", () => {
+    render(
+      <ContextMenu open position={{ x: 80, y: 60 }} onClose={() => undefined} aria-label="Menu">
+        <ContextMenuSub label="Girar">
+          <ContextMenuItem label="Girar 90°" onSelect={() => undefined} />
+        </ContextMenuSub>
+      </ContextMenu>,
+    );
+
+    fireEvent.mouseEnter(screen.getByRole("menuitem", { name: /Girar/i }).parentElement!);
+    const panel = screen.getByRole("menu", { name: "Girar" });
+    expect(panel.style.position).toBe("fixed");
+    expect(panel.style.top).not.toBe("");
+    expect(panel.style.left).not.toBe("");
   });
 });
