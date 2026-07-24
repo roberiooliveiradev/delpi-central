@@ -385,6 +385,8 @@ export function ProcessoFolderBrowser({
           <SegmentToggle
             ariaLabel="Visualizar listagem por processos ou departamentos"
             idPrefix="tm-proc-browse"
+            prefix="ds"
+            size="md"
             options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
               value: mode.id,
               label: mode.label,

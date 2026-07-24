@@ -129,40 +129,93 @@
   white-space: nowrap;
 }
 
+/* Segment toggle — trilha única + opção ativa em pill (canônico do kit). */
 .delpi-ui-segment-toggle {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 2px;
+  flex-wrap: nowrap;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 88%,
+    transparent
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111111)) 6%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  box-shadow: inset 0 1px 2px color-mix(in srgb, #000 8%, transparent);
+}
+
+.delpi-ui-segment-toggle--sm {
+  padding: 2px;
+  gap: 1px;
 }
 
 .delpi-ui-segment-toggle__btn {
-  min-height: 34px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  color: var(--delpi-ui-text, var(--text, #111111));
+  position: relative;
+  z-index: 0;
+  min-height: 32px;
+  padding: 0.35rem 0.9rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--delpi-ui-text, #111) 62%, transparent));
   font: inherit;
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
-.delpi-ui-segment-toggle__btn:hover:not(:disabled) {
-  border-color: color-mix(
+.delpi-ui-segment-toggle--sm .delpi-ui-segment-toggle__btn {
+  min-height: 28px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.74rem;
+}
+
+.delpi-ui-segment-toggle__btn:hover:not(:disabled):not(.delpi-ui-segment-toggle__btn--active) {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  background: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
-    var(--delpi-ui-border, var(--border, #e6e6e6))
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    transparent
   );
+}
+
+.delpi-ui-segment-toggle__btn:focus-visible {
+  outline: 2px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 70%,
+    transparent
+  );
+  outline-offset: 1px;
 }
 
 .delpi-ui-segment-toggle__btn--active {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
-    var(--delpi-ui-surface, var(--surface, #ffffff))
-  );
+  z-index: 1;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-shadow:
+    0 1px 2px color-mix(in srgb, #000 14%, transparent),
+    0 0 0 1px color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 28%,
+      transparent
+    );
+}
+
+.delpi-ui-segment-toggle__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }

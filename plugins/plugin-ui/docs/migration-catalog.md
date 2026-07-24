@@ -69,6 +69,7 @@ Resumo (2+ consumidores):
 | `FilterBar` | 12 | F2 ✅ (FiltersRow + FilterInputField) |
 | `FilterBarShell` | 2 | F2 ✅ (maintenance form/card; ef grid) |
 | `FiltersRow` trailing/compact | 1 | F2 ✅ (quality-action-plans) |
+| `SegmentToggle` (trilha moderna) | transformometro + chart toolbar | ✅ canônico em `forms/SegmentToggle` + `.delpi-ui-segment-toggle*` |
 
 ## Gate CI
 

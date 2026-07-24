@@ -4,17 +4,17 @@ import type { ReactNode } from "react";
 import { HelpTooltip } from "../help/HelpTooltip";
 import { FieldLabel } from "../help/FieldLabel";
 import { delpiUiClass } from "../../utils/delpiUiClass";
+import {
+  segmentToggleBemClasses,
+  type SegmentToggleClassNames,
+} from "../forms/SegmentToggle";
 
 export type ChartGranularityOption<T extends string = string> = {
   value: T;
   label: string;
 };
 
-export type ChartGranularityToggleClassNames = {
-  root: string;
-  button: string;
-  buttonActive: string;
-};
+export type ChartGranularityToggleClassNames = SegmentToggleClassNames;
 
 export type ChartGranularityToggleLabels = {
   groupAriaLabel: string;
@@ -69,20 +69,7 @@ export type ChartToolbarProps<T extends string = string> = {
 
 export type DashboardChartToolbarLabels = ChartToolbarLabels & ChartGranularityToggleLabels;
 
-/** Monta classNames BEM `{prefix}-segment-toggle*` + `.delpi-ui-segment-toggle*`. */
-export function segmentToggleBemClasses(prefix: string): ChartGranularityToggleClassNames {
-  const seg = `${prefix}-segment-toggle`;
-  const ui = "delpi-ui-segment-toggle";
-  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
-  return {
-    root: pair(seg, ui),
-    button: pair(`${seg}__btn`, `${ui}__btn`),
-    buttonActive: pair(
-      `${seg}__btn ${seg}__btn--active`,
-      `${ui}__btn ${ui}__btn--active`,
-    ),
-  };
-}
+export { segmentToggleBemClasses };
 
 /** Monta classNames BEM `{prefix}-chart-toolbar*` + `.delpi-ui-chart-toolbar*`. */
 export function chartToolbarBemClasses(prefix: string) {

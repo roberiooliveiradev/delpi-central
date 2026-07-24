@@ -1,4 +1,13 @@
 export {
+  SegmentToggle,
+  segmentToggleBemClasses,
+  type SegmentToggleClassNames,
+  type SegmentToggleOption,
+  type SegmentToggleProps,
+  type SegmentToggleSize,
+} from "./SegmentToggle";
+
+export {
   MultiSelectField,
   createDashboardCreatableMultiSelectField,
   createDashboardMultiSelectField,
