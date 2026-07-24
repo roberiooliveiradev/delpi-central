@@ -77,6 +77,26 @@ export function useComunicadoEditorSelection({
   /** Sem auto-seleção: Gerenciar / F5 abrem no palco sem forçar Elemento. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   /**
+   * Override síncrono para ações do menu de contexto: aplica no snapshot da
+   * sessão mesmo se `selectedIds` live foi limpa (tap-deselect / race).
+   */
+  const selectedIdsRef = useRef<string[]>([]);
+  selectedIdsRef.current = selectedIds;
+  const actionSelectedIdsOverrideRef = useRef<string[] | null>(null);
+
+  const getActionSelectedIds = useCallback((): string[] => {
+    return actionSelectedIdsOverrideRef.current ?? selectedIdsRef.current;
+  }, []);
+
+  const runWithActionSelectedIds = useCallback((ids: string[], action: () => void) => {
+    actionSelectedIdsOverrideRef.current = ids;
+    try {
+      action();
+    } finally {
+      actionSelectedIdsOverrideRef.current = null;
+    }
+  }, []);
+  /**
    * Modo filhos do grupo: Shift/Camadas/`expandGroup: false`.
    * Permite selecionar todos os irmãos sem promover ao chrome do grupo fechado.
    */
@@ -862,6 +882,8 @@ export function useComunicadoEditorSelection({
   return {
     selectedIds,
     setSelectedIds,
+    getActionSelectedIds,
+    runWithActionSelectedIds,
     preferGroupChildrenSelection,
     selectedId,
     selected,

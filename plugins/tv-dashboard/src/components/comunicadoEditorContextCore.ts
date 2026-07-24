@@ -121,6 +121,10 @@ export type ComunicadoEditorContextValue = {
   selectBlock: (blockId: string, options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean }) => void;
   selectBlocksByIds: (blockIds: string[]) => void;
   clearSelection: () => void;
+  /** Ids efetivos para mutações (override do menu de contexto). */
+  getActionSelectedIds: () => string[];
+  /** Executa ação com snapshot de ids (menu de contexto / grupo). */
+  runWithActionSelectedIds: (ids: string[], action: () => void) => void;
   setSelectedId: (id: string | null) => void;
   /** Onda 4G — subseleção de parte do gráfico (título, série, marcador…). */
   selectedChartPart: ComunicadoChartPartRef | null;

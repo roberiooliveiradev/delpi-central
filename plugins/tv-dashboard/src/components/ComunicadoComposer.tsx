@@ -34,6 +34,7 @@ import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
+import { resolveContextMenuSessionSelectedIds } from "../utils/contextMenuSelectionGuard";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
 import {
   blocksInMarquee,
@@ -186,6 +187,8 @@ export function ComunicadoComposerCanvas() {
     y: number;
     /** Bloco sob o clique — evita menu de fundo enquanto o select ainda não commitou. */
     targetBlockId: string | null;
+    /** Snapshot da seleção ao abrir — ações do menu não dependem do live (grupo). */
+    sessionSelectedIds: string[];
   } | null>(null);
   const [panGutter, setPanGutter] = useState({ x: 48, y: 48 });
 
@@ -202,6 +205,11 @@ export function ComunicadoComposerCanvas() {
     setContextMenu({
       ...anchor,
       targetBlockId: selectedId ?? selectedIds[0] ?? null,
+      sessionSelectedIds: resolveContextMenuSessionSelectedIds({
+        selectedIds,
+        targetBlockId: selectedId ?? selectedIds[0] ?? null,
+        blocks,
+      }),
     });
   }, [blocks, cancelPendingTapDeselect, canvasRef, editingTextId, selectedId, selectedIds]);
 
@@ -558,6 +566,11 @@ export function ComunicadoComposerCanvas() {
           x: event.clientX,
           y: event.clientY,
           targetBlockId: hit.blockId,
+          sessionSelectedIds: resolveContextMenuSessionSelectedIds({
+            selectedIds,
+            targetBlockId: hit.blockId,
+            blocks,
+          }),
         });
         return;
       }
@@ -565,13 +578,20 @@ export function ComunicadoComposerCanvas() {
         x: event.clientX,
         y: event.clientY,
         targetBlockId: null,
+        sessionSelectedIds: resolveContextMenuSessionSelectedIds({
+          selectedIds,
+          targetBlockId: null,
+          blocks,
+        }),
       });
     },
     [
+      blocks,
       cancelPendingTapDeselect,
       editingTextId,
       lastPartialTextEditSelection,
       openTextFormatContextMenu,
+      selectedIds,
     ],
   );
 
@@ -1110,6 +1130,7 @@ export function ComunicadoComposerCanvas() {
         open={contextMenu != null}
         position={contextMenu}
         targetBlockId={contextMenu?.targetBlockId ?? null}
+        sessionSelectedIds={contextMenu?.sessionSelectedIds ?? []}
         onClose={() => setContextMenu(null)}
       />
       <ComunicadoTextSelectionContextMenu

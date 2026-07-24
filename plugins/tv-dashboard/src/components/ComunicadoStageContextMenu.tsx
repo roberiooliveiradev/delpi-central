@@ -67,7 +67,7 @@ import {
   isContextMenuActionEnabled,
   resolveContextMenuActionState,
 } from "../utils/comunicadoStageContextMenuActions";
-import { resolveContextMenuIconPickerTargetId } from "../utils/contextMenuSelectionGuard";
+import { resolveContextMenuIconPickerTargetId, sameSelectedIdSet } from "../utils/contextMenuSelectionGuard";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -92,6 +92,11 @@ type Props = {
    * (evita menu de «Inserir…» ao clicar num ícone ainda não selecionado).
    */
   targetBlockId?: string | null;
+  /**
+   * Snapshot da seleção ao abrir o menu — ações aplicam neste conjunto
+   * (não no `selectedIds` live, que pode ter sido limpo/colapsado).
+   */
+  sessionSelectedIds?: string[];
   onClose: () => void;
 };
 
@@ -99,6 +104,7 @@ export function ComunicadoStageContextMenu({
   open,
   position,
   targetBlockId = null,
+  sessionSelectedIds = [],
   onClose,
 }: Props) {
   const {
@@ -130,6 +136,7 @@ export function ComunicadoStageContextMenu({
     updateBlock,
     selectBlocksByIds,
     cancelPendingTapDeselect,
+    runWithActionSelectedIds,
     addBlock,
     addShape,
     openDataCatalog,
@@ -155,10 +162,12 @@ export function ComunicadoStageContextMenu({
   }, [blocks, selected, targetBlockId]);
 
   const menuSelectedIds = useMemo(() => {
+    /* Sessão congelada ao abrir — não colapsar se selectedIds live sumiu. */
+    if (sessionSelectedIds.length > 0) return sessionSelectedIds;
     if (!targetBlockId) return selectedIds;
     if (selectedIds.includes(targetBlockId)) return selectedIds;
     return [targetBlockId];
-  }, [selectedIds, targetBlockId]);
+  }, [selectedIds, sessionSelectedIds, targetBlockId]);
 
   /** Cancela tap-deselect armado pelo pointerdown; não força seleção no right-click. */
   useEffect(() => {
@@ -224,12 +233,19 @@ export function ComunicadoStageContextMenu({
 
   function ensureMenuSelection() {
     cancelPendingTapDeselect();
-    if (menuSelectedIds.length > 0) selectBlocksByIds(menuSelectedIds);
+    /*
+     * Restaura o snapshot da sessão se a seleção live sumiu/colapsou —
+     * nunca reduz um grupo fechado a um único targetBlockId.
+     */
+    if (menuSelectedIds.length === 0) return;
+    if (!sameSelectedIdSet(selectedIds, menuSelectedIds)) {
+      selectBlocksByIds(menuSelectedIds);
+    }
   }
 
   function run(action: () => void) {
     ensureMenuSelection();
-    action();
+    runWithActionSelectedIds(menuSelectedIds, action);
     onClose();
   }
 

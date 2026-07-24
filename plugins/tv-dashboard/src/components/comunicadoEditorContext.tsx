@@ -464,6 +464,7 @@ export function ComunicadoEditorProvider({
     configRef,
     commitWithHistory,
     selectedIds: selection.selectedIds,
+    getActionSelectedIds: selection.getActionSelectedIds,
     selectedId: selection.selectedId,
     selected: selection.selected,
     selectedBlocks: selection.selectedBlocks,
@@ -557,15 +558,13 @@ export function ComunicadoEditorProvider({
     [applyConfig, deckHistory, pushPast],
   );
 
-  const getClipboardSources = useCallback(
-    () =>
-      selection.selectedBlocks.length > 0
-        ? selection.selectedBlocks
-        : selection.selected
-          ? [selection.selected]
-          : [],
-    [selection.selected, selection.selectedBlocks],
-  );
+  const getClipboardSources = useCallback(() => {
+    const ids = new Set(selection.getActionSelectedIds());
+    if (ids.size === 0) {
+      return selection.selected ? [selection.selected] : [];
+    }
+    return (configRef.current.blocks ?? []).filter((block) => ids.has(block.id));
+  }, [selection]);
 
   const updateBlocksForClipboard = useCallback(
     (nextBlocks: typeof blocks) => {
@@ -639,6 +638,8 @@ export function ComunicadoEditorProvider({
     selectBlock: selection.selectBlock,
     selectBlocksByIds: selection.selectBlocksByIds,
     clearSelection: selection.clearSelection,
+    getActionSelectedIds: selection.getActionSelectedIds,
+    runWithActionSelectedIds: selection.runWithActionSelectedIds,
     setSelectedId: selection.setSelectedId,
     selectedChartPart: selection.selectedChartPart,
     selectChartPart: selection.selectChartPart,

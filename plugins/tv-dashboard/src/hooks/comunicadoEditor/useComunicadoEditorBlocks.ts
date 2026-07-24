@@ -121,6 +121,8 @@ type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
   commitWithHistory: (next: ComunicadoConfig) => void;
   selectedIds: string[];
+  /** Ids efetivos para mutações (override do menu de contexto ou live). */
+  getActionSelectedIds: () => string[];
   selectedId: string | null;
   selected: ComunicadoBlock | null;
   selectedBlocks: ComunicadoBlock[];
@@ -166,6 +168,7 @@ export function useComunicadoEditorBlocks({
   configRef,
   commitWithHistory,
   selectedIds,
+  getActionSelectedIds,
   selectedId,
   selected,
   selectedBlocks,
@@ -580,19 +583,21 @@ export function useComunicadoEditorBlocks({
   );
 
   const groupSelected = useCallback(() => {
-    if (selectedIds.length < 2) return;
-    updateBlocks(groupBlocks(configRef.current.blocks ?? [], selectedIds));
+    const ids = getActionSelectedIds();
+    if (ids.length < 2) return;
+    updateBlocks(groupBlocks(configRef.current.blocks ?? [], ids));
     setLastUngroupedIds([]);
-  }, [configRef, selectedIds, updateBlocks]);
+  }, [configRef, getActionSelectedIds, updateBlocks]);
 
   const ungroupSelected = useCallback(() => {
-    if (selectedIds.length === 0) return;
+    const ids = getActionSelectedIds();
+    if (ids.length === 0) return;
     const current = configRef.current.blocks ?? [];
-    const expanded = expandSelectionWithGroups(current, selectedIds);
+    const expanded = expandSelectionWithGroups(current, ids);
     const members = expanded.filter((id) => Boolean(current.find((block) => block.id === id)?.groupId));
     if (members.length >= 2) setLastUngroupedIds(members);
     updateBlocks(ungroupBlocks(current, expanded));
-  }, [configRef, selectedIds, updateBlocks]);
+  }, [configRef, getActionSelectedIds, updateBlocks]);
 
   const regroupSelected = useCallback(() => {
     const current = configRef.current.blocks ?? [];
@@ -933,7 +938,15 @@ export function useComunicadoEditorBlocks({
   );
 
   const duplicateSelected = useCallback(async () => {
-    const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
+    const ids = new Set(getActionSelectedIds());
+    const sources =
+      ids.size > 0
+        ? (configRef.current.blocks ?? []).filter((block) => ids.has(block.id))
+        : selectedBlocks.length > 0
+          ? selectedBlocks
+          : selected
+            ? [selected]
+            : [];
     if (sources.length === 0) return;
 
     const existing = configRef.current.blocks ?? [];
@@ -967,6 +980,7 @@ export function useComunicadoEditorBlocks({
   }, [
     chooseDataSourceDuplicatePolicy,
     configRef,
+    getActionSelectedIds,
     selectBlocksByIds,
     selected,
     selectedBlocks,
@@ -1013,13 +1027,14 @@ export function useComunicadoEditorBlocks({
   );
 
   const removeSelected = useCallback(() => {
+    const ids = getActionSelectedIds();
     const chartBlock =
       selected?.type === "chart_view" ? selected : selectedBlocks.find((b) => b.type === "chart_view");
     if (
       selectedChartPart &&
       chartBlock &&
       chartBlock.type === "chart_view" &&
-      selectedIds.includes(chartBlock.id) &&
+      ids.includes(chartBlock.id) &&
       chartPartAllowsDelete(selectedChartPart)
     ) {
       const result = deleteChartPart(chartBlock.chartParts, selectedChartPart, chartBlock.chartOptions);
@@ -1039,7 +1054,7 @@ export function useComunicadoEditorBlocks({
       selectedTablePart &&
       tableBlock &&
       tableBlock.type === "table_view" &&
-      selectedIds.includes(tableBlock.id) &&
+      ids.includes(tableBlock.id) &&
       tablePartAllowsDelete(selectedTablePart)
     ) {
       const result = deleteTablePart(tableBlock.tableParts, selectedTablePart, tableBlock.tableOptions);
@@ -1057,7 +1072,7 @@ export function useComunicadoEditorBlocks({
       selectedKpiPart &&
       kpiBlock &&
       kpiBlock.type === "kpi_view" &&
-      selectedIds.includes(kpiBlock.id) &&
+      ids.includes(kpiBlock.id) &&
       kpiPartAllowsDelete(selectedKpiPart)
     ) {
       const result = deleteKpiPart(kpiBlock.kpiParts, selectedKpiPart, kpiBlock.kpiOptions);
@@ -1070,8 +1085,8 @@ export function useComunicadoEditorBlocks({
       return;
     }
 
-    if (selectedIds.length === 0) return;
-    const removeSet = new Set(selectedIds);
+    if (ids.length === 0) return;
+    const removeSet = new Set(ids);
     const currentBlocks = configRef.current.blocks ?? [];
     const removedInputs = currentBlocks.filter(
       (block): block is ComunicadoInputBlock =>
@@ -1106,12 +1121,12 @@ export function useComunicadoEditorBlocks({
   }, [
     commitWithHistory,
     configRef,
+    getActionSelectedIds,
     onInputBlocksRemoved,
     selectBlocksByIds,
     selected,
     selectedBlocks,
     selectedChartPart,
-    selectedIds,
     selectedKpiPart,
     selectedTablePart,
     setEditingChartPart,
@@ -1135,11 +1150,12 @@ export function useComunicadoEditorBlocks({
 
   const applyLayerOrder = useCallback(
     (transform: (blocks: ComunicadoBlock[], selectedIds: string[]) => ComunicadoBlock[]) => {
-      if (selectedIds.length === 0) return;
-      const nextBlocks = transform(configRef.current.blocks ?? [], selectedIds);
+      const ids = getActionSelectedIds();
+      if (ids.length === 0) return;
+      const nextBlocks = transform(configRef.current.blocks ?? [], ids);
       updateBlocks(nextBlocks);
     },
-    [configRef, selectedIds, updateBlocks],
+    [configRef, getActionSelectedIds, updateBlocks],
   );
 
   const bringToFrontSelected = useCallback(() => {
@@ -1238,20 +1254,22 @@ export function useComunicadoEditorBlocks({
 
   const alignSelected = useCallback(
     (command: LayoutAlignCommand) => {
-      if (selectedIds.length === 0) return;
-      const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], selectedIds, command);
-      updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(selectedIds)));
+      const ids = getActionSelectedIds();
+      if (ids.length === 0) return;
+      const aligned = alignComunicadoBlocks(configRef.current.blocks ?? [], ids, command);
+      updateBlocks(reconcileConnectorsAfterDrag(aligned, new Set(ids)));
     },
-    [configRef, selectedIds, updateBlocks],
+    [configRef, getActionSelectedIds, updateBlocks],
   );
 
   const rotateSelected = useCallback(
     (deltaDeg: number) => {
-      if (selectedIds.length === 0) return;
-      const idSet = new Set(selectedIds);
+      const ids = getActionSelectedIds();
+      if (ids.length === 0) return;
+      const idSet = new Set(ids);
       const current = configRef.current.blocks ?? [];
 
-      if (selectedIds.length === 1) {
+      if (ids.length === 1) {
         updateBlocks(
           current.map((block) =>
             idSet.has(block.id)
@@ -1287,12 +1305,13 @@ export function useComunicadoEditorBlocks({
         }),
       );
     },
-    [configRef, selectedIds, updateBlocks],
+    [configRef, getActionSelectedIds, updateBlocks],
   );
 
   const flipSelectedHorizontal = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    const idSet = new Set(selectedIds);
+    const ids = getActionSelectedIds();
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
     updateBlocks(
       (configRef.current.blocks ?? []).map((block) =>
         idSet.has(block.id)
@@ -1300,11 +1319,12 @@ export function useComunicadoEditorBlocks({
           : block,
       ),
     );
-  }, [configRef, selectedIds, updateBlocks]);
+  }, [configRef, getActionSelectedIds, updateBlocks]);
 
   const flipSelectedVertical = useCallback(() => {
-    if (selectedIds.length === 0) return;
-    const idSet = new Set(selectedIds);
+    const ids = getActionSelectedIds();
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
     updateBlocks(
       (configRef.current.blocks ?? []).map((block) =>
         idSet.has(block.id)
@@ -1312,7 +1332,7 @@ export function useComunicadoEditorBlocks({
           : block,
       ),
     );
-  }, [configRef, selectedIds, updateBlocks]);
+  }, [configRef, getActionSelectedIds, updateBlocks]);
 
   const setBlocksHidden = useCallback(
     (blockIds: string[], hidden: boolean) => {
