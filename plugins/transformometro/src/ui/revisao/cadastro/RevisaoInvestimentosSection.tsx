@@ -29,6 +29,7 @@ import {
 import { CadastroSection } from "./CadastroSection";
 import { useConfirm } from "../../../components/ui/ConfirmDialogProvider";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../../components/ghostChrome";
+import { EMPTY_STATE_CLASS } from "../../../components/emptyStateUi";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -223,7 +224,7 @@ export function RevisaoInvestimentosSection({
           />
         </>
       ) : (
-        <p className="ds-state-box">Nenhum investimento nesta revisão.</p>
+        <p className={EMPTY_STATE_CLASS}>Nenhum investimento nesta revisão.</p>
       )}
 
       {!readOnly && editingInvestimento ? (

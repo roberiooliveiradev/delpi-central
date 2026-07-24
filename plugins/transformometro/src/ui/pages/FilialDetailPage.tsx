@@ -13,7 +13,7 @@ import {
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
@@ -75,7 +75,6 @@ export function FilialDetailPage({
       return;
     }
 
-    setError(null);
     try {
       const [row, opts] = await Promise.all([
         fetchFilial(filialId, getAccessToken),
@@ -195,12 +194,15 @@ export function FilialDetailPage({
 
   if (!isCreate && !filial && !loading) {
     const errorView = (
-      <StateBox variant="error" dismissible={false}>
-        <p>{error ?? "Unidade não encontrada."}</p>
-        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
-          Voltar à lista
-        </button>
-      </StateBox>
+      <InlineErrorState
+        title={error ? "Não foi possível carregar a unidade" : "Unidade não encontrada"}
+        message={
+          error ??
+          "Esta unidade pode ter sido excluída ou você não tem acesso."
+        }
+        actionLabel="Voltar à lista"
+        onAction={onBack}
+      />
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;
@@ -231,7 +233,16 @@ export function FilialDetailPage({
         </div>
       )}
 
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+      <StatusAlerts
+        error={error}
+        loading={false}
+        hasData
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
+      />
 
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}

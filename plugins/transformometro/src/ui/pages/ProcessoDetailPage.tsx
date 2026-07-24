@@ -17,7 +17,7 @@ import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveRe
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -130,7 +130,6 @@ export function ProcessoDetailPage({
 
   const load = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
     try {
       const [proc, revs, opts, inst, diagram, comparativo, decomposicao, arquivos] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
@@ -344,12 +343,14 @@ export function ProcessoDetailPage({
             Voltar
           </button>
         ) : null}
-        <StateBox variant="error" dismissible={false}>
-          <p>{error ?? "Processo não encontrado."}</p>
-          <button type="button" className="ds-primary-btn" onClick={() => void load()}>
-            Tentar novamente
-          </button>
-        </StateBox>
+        <InlineErrorState
+          title={error ? "Não foi possível carregar o processo" : "Processo não encontrado"}
+          message={
+            error ??
+            "Este processo pode ter sido excluído ou você não tem acesso."
+          }
+          onAction={() => void load()}
+        />
       </>
     );
     if (embedded) return errorView;
@@ -676,7 +677,16 @@ export function ProcessoDetailPage({
         />
       ) : null}
 
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+      <StatusAlerts
+        error={error}
+        loading={false}
+        hasData
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
+      />
 
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}

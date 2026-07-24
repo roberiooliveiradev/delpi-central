@@ -59,6 +59,7 @@ const DEFAULT_LABELS: FloatingNoticeStackLabels = {
 };
 
 const VARIANT_AUTO_DISMISS_MS: Record<FloatingNoticeVariant, number | null> = {
+  /** Erro/aviso nunca auto-dismiss — só fechar manual (também forçado em resolveAutoDismissMs). */
   error: null,
   warning: null,
   success: 6000,
@@ -96,6 +97,21 @@ export function floatingNoticeStackBemClasses(
   };
 }
 
+function resolveAutoDismissMs(
+  variant: FloatingNoticeVariant,
+  itemAutoDismissMs: number | null | undefined,
+  defaultAutoDismissMs: FloatingNoticeStackProps["defaultAutoDismissMs"],
+): number | null {
+  /** Erro/aviso só saem com fechar manual — ignoram timer do item ou do host. */
+  if (variant === "error" || variant === "warning") {
+    return null;
+  }
+  if (itemAutoDismissMs !== undefined) {
+    return itemAutoDismissMs;
+  }
+  return defaultAutoDismissMs?.[variant] ?? VARIANT_AUTO_DISMISS_MS[variant];
+}
+
 function FloatingNotice({
   item,
   onDismiss,
@@ -110,10 +126,11 @@ function FloatingNotice({
   defaultAutoDismissMs?: FloatingNoticeStackProps["defaultAutoDismissMs"];
 }) {
   const variant = item.variant ?? "error";
-  const autoDismissMs =
-    item.autoDismissMs !== undefined
-      ? item.autoDismissMs
-      : (defaultAutoDismissMs?.[variant] ?? VARIANT_AUTO_DISMISS_MS[variant]);
+  const autoDismissMs = resolveAutoDismissMs(
+    variant,
+    item.autoDismissMs,
+    defaultAutoDismissMs,
+  );
 
   useEffect(() => {
     if (autoDismissMs === null || autoDismissMs === undefined) return;

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { StateBoxPanel, stateBoxBemClasses } from "./StateBoxPanel";
 
@@ -24,5 +24,23 @@ describe("StateBoxPanel", () => {
     expect(document.querySelector(".delpi-ui-state-box--empty")).toBeTruthy();
     expect(document.querySelector(".delpi-ui-card")).toBeTruthy();
     expect(document.querySelector(".delpi-ui-state-box__icon")).toBeTruthy();
+  });
+
+  it("exibe botão fechar quando onDismiss é passado", () => {
+    const onDismiss = vi.fn();
+    render(
+      <StateBoxPanel
+        variant="error"
+        title="Falha"
+        message="Detalhe"
+        icon={<span>!</span>}
+        classNames={classNames}
+        onDismiss={onDismiss}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Fechar aviso" }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".delpi-ui-state-box--dismissible")).toBeTruthy();
   });
 });

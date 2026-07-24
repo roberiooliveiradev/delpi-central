@@ -53,7 +53,6 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
 
   const load = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
     try {
       const [list, opts] = await Promise.all([
         fetchSetores(getAccessToken, filialFilter || undefined),
@@ -191,7 +190,11 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
         error={error}
         loading={loading}
         hasData={items.length > 0}
-        onRetry={() => void load()}
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
       />
 
       <p className="ds-hint">

@@ -80,6 +80,29 @@ describe("FloatingNoticeStack", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
     expect(onDismiss).toHaveBeenCalledWith("ok");
   });
+
+  it("erro/aviso ignoram autoDismissMs e só fecham no botão", () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <FloatingNoticeStack
+        items={[
+          { id: "err", message: "Falhou", variant: "error", autoDismissMs: 500 },
+          { id: "warn", message: "Atenção", variant: "warning", autoDismissMs: 500 },
+        ]}
+        onDismiss={onDismiss}
+        classNames={classNames}
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(onDismiss).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Fechar aviso" })[0]);
+    expect(onDismiss).toHaveBeenCalledWith("err");
+  });
 });
 
 describe("useFloatingNotices", () => {

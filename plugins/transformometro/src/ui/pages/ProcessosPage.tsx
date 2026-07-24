@@ -74,7 +74,6 @@ export function ProcessosPage({
 
   const load = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
     try {
       const [list, opts] = await Promise.all([
         fetchProcessos(getAccessToken, listParams),
@@ -192,7 +191,11 @@ export function ProcessosPage({
         error={error}
         loading={loading}
         hasData={items.length > 0}
-        onRetry={() => void load()}
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
       />
 
       {showForm && options ? (

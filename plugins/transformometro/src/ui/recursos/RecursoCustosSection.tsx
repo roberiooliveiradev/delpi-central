@@ -17,6 +17,7 @@ import { formatCurrency } from "../../utils/format";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
+import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
@@ -167,7 +168,7 @@ export function RecursoCustosSection({
       )}
 
       {loading ? (
-        <p className="ds-state-box">Carregando histórico…</p>
+        <p className={EMPTY_STATE_CLASS}>Carregando histórico…</p>
       ) : custos.length > 0 ? (
         <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
           <table className={tableCn.compactTable}>
@@ -290,7 +291,7 @@ export function RecursoCustosSection({
           </table>
         </div>
       ) : (
-        <p className="ds-state-box">Nenhum período de custo cadastrado.</p>
+        <p className={EMPTY_STATE_CLASS}>Nenhum período de custo cadastrado.</p>
       )}
 
       {!readOnly ? (

@@ -48,7 +48,6 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
 
   const load = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
     try {
       const list = await fetchRecursos(getAccessToken);
       setItems(list.items);
@@ -205,7 +204,11 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
         error={error}
         loading={loading}
         hasData={items.length > 0}
-        onRetry={() => void load()}
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
       />
 
       <p className="ds-hint">

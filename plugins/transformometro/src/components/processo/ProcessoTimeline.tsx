@@ -21,6 +21,7 @@ import {
   type ProcessoTimelineFilter,
 } from "../../utils/processoTimeline";
 import { formatDateTime } from "../../utils/format";
+import { EMPTY_STATE_CLASS } from "../emptyStateUi";
 
 type Props = {
   entries: ProcessoAuditLogEntry[];
@@ -104,7 +105,7 @@ export function ProcessoTimeline({ entries, loading = false }: Props) {
       </div>
 
       {loading ? (
-        <p className="ds-state-box">Carregando histórico…</p>
+        <p className={EMPTY_STATE_CLASS}>Carregando histórico…</p>
       ) : visibleEntries.length ? (
         <ol className="tm-timeline-track">
           {visibleEntries.map((entry) => (
@@ -112,7 +113,7 @@ export function ProcessoTimeline({ entries, loading = false }: Props) {
           ))}
         </ol>
       ) : (
-        <div className="ds-state-box">
+        <div className={EMPTY_STATE_CLASS}>
           <CircleDot size={18} aria-hidden="true" />
           <span>{entries.length ? "Nenhum evento neste filtro." : "Nenhuma alteração registrada ainda."}</span>
         </div>

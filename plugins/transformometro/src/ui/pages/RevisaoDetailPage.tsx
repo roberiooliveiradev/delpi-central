@@ -9,7 +9,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
 import { PageHeader } from "../../components/PageHeader";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import {
@@ -61,12 +61,17 @@ export function RevisaoDetailPage({
   const [allRevisoes, setAllRevisoes] = useState<Revisao[]>([]);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorTitle, setErrorTitle] = useState("Não foi possível carregar");
   const [loading, setLoading] = useState(true);
   /** Incrementado no keep-alive/tree-refresh — Cadastro refetcha medição/inv/rateio. */
   const [cadastroResyncToken, setCadastroResyncToken] = useState(0);
 
+  const reportError = useCallback((message: string | null, title = "Não foi possível carregar") => {
+    setError(message);
+    setErrorTitle(title);
+  }, []);
+
   const load = useCallback(async () => {
-    setError(null);
     try {
       const [proc, revs, opts, inst] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
@@ -85,11 +90,14 @@ export function RevisaoDetailPage({
       setOptions(opts);
       setCadastroResyncToken((token) => token + 1);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar");
+      reportError(
+        err instanceof Error ? err.message : "Falha ao carregar a revisão.",
+        "Não foi possível carregar a revisão",
+      );
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, instanciaId, processoId, revisaoId]);
+  }, [getAccessToken, instanciaId, processoId, reportError, revisaoId]);
 
   useEffect(() => {
     void load();
@@ -125,16 +133,15 @@ export function RevisaoDetailPage({
 
   if (!processo || !revisao || !options) {
     const errorView = (
-      <StateBox variant="error" dismissible={false}>
-        <p>{error ?? "Revisão não encontrada."}</p>
-        <button
-          type="button"
-          className={DS_GHOST_BTN}
-          onClick={() => onNavigate(buildInstanciaPath(processoId, instanciaId))}
-        >
-          Voltar à instância
-        </button>
-      </StateBox>
+      <InlineErrorState
+        title={error ? errorTitle : "Revisão não encontrada"}
+        message={
+          error ??
+          "Esta revisão pode ter sido excluída ou você não tem acesso. Volte à melhoria e abra novamente."
+        }
+        actionLabel="Voltar à melhoria"
+        onAction={() => onNavigate(buildInstanciaPath(processoId, instanciaId))}
+      />
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;
@@ -151,7 +158,9 @@ export function RevisaoDetailPage({
       collaborationActive={!embedded || embeddedActive}
       activeSection={activeSection}
       externalResyncVersion={cadastroResyncToken}
-      onError={setError}
+      onError={(message) =>
+        reportError(message, message ? "Não foi possível salvar" : "Não foi possível carregar")
+      }
       onRevisaoUpdated={() => {
         void load();
         requestWorkspaceTreeRefresh();
@@ -185,7 +194,17 @@ export function RevisaoDetailPage({
         />
       ) : null}
 
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+      <StatusAlerts
+        error={error}
+        errorTitle={errorTitle}
+        loading={false}
+        hasData
+        onRetry={() => {
+          reportError(null);
+          void load();
+        }}
+        onDismissError={() => reportError(null)}
+      />
 
       {embedded ? (
         revisaoMain

@@ -70,6 +70,7 @@ import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
+import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -263,7 +264,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
   const load = useCallback(async () => {
     setRefreshing(true);
-    setError(null);
     try {
       const [
         resumoData,
@@ -679,7 +679,11 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         error={error}
         loading={isBusy}
         hasData={Boolean(resumo)}
-        onRetry={() => void load()}
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
       />
 
       {alertas.length > 0 ? (
@@ -848,7 +852,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             }
           >
             {savingsChartData.length === 0 && !isBusy ? (
-              <p className="ds-state-box">
+              <p className={EMPTY_STATE_CLASS}>
                 Sem dados no período. Cadastre processos, revisões e medições e ajuste os
                 filtros de data.
               </p>
@@ -933,7 +937,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             }
           >
             {topDailyChart.length === 0 && !isBusy ? (
-              <p className="ds-state-box">Nenhum processo com economia diária no recorte.</p>
+              <p className={EMPTY_STATE_CLASS}>Nenhum processo com economia diária no recorte.</p>
             ) : (
               <RankingBarChart
                 data={topDailyChart}
@@ -953,7 +957,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             }
           >
             {topHorasDiariaChart.length === 0 && !isBusy ? (
-              <p className="ds-state-box">Nenhum processo com horas economizadas diárias no recorte.</p>
+              <p className={EMPTY_STATE_CLASS}>Nenhum processo com horas economizadas diárias no recorte.</p>
             ) : (
               <RankingBarChart
                 data={topHorasDiariaChart}

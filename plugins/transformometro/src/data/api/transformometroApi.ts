@@ -2,12 +2,32 @@ import {
   TRANSFORMOMETRO_API_BASE,
   buildAuthHeaders,
 } from "./transformometroApiBase";
+import { describeHttpError } from "../../utils/apiErrorMessage";
 
 type ApiEnvelope<T> = {
   success: boolean;
   message: string;
   data: T;
 };
+
+function detailFromBody(body: { message?: string; detail?: unknown }): string {
+  if (typeof body.message === "string" && body.message.trim()) {
+    return body.message.trim();
+  }
+  if (typeof body.detail === "string" && body.detail.trim()) {
+    return body.detail.trim();
+  }
+  if (Array.isArray(body.detail)) {
+    return body.detail
+      .map((item: { msg?: string; loc?: unknown[] }) => {
+        const loc = Array.isArray(item.loc) ? item.loc.join(".") : "";
+        return loc ? `${loc}: ${item.msg ?? ""}` : (item.msg ?? "");
+      })
+      .filter(Boolean)
+      .join("; ");
+  }
+  return "";
+}
 
 async function request<T>(
   path: string,
@@ -30,30 +50,11 @@ async function request<T>(
     if (response.ok) {
       throw new Error("Resposta inválida da API.");
     }
-    if (response.status === 429) {
-      throw new Error(
-        "Muitas requisições em pouco tempo (HTTP 429). Aguarde alguns segundos e tente novamente."
-      );
-    }
-    throw new Error(
-      `Erro HTTP ${response.status} — verifique se transformometro-api está no ar e as migrations V002 foram aplicadas.`
-    );
+    throw new Error(describeHttpError(response.status));
   }
 
   if (!response.ok || !body.success) {
-    const detail =
-      typeof body.detail === "string"
-        ? body.detail
-        : Array.isArray(body.detail)
-          ? body.detail
-              .map((item: { msg?: string; loc?: unknown[] }) => {
-                const loc = Array.isArray(item.loc) ? item.loc.join(".") : "";
-                return loc ? `${loc}: ${item.msg ?? ""}` : (item.msg ?? "");
-              })
-              .filter(Boolean)
-              .join("; ")
-          : "";
-    throw new Error(body.message || detail || `Erro HTTP ${response.status}`);
+    throw new Error(describeHttpError(response.status, detailFromBody(body)));
   }
   return body.data;
 }
@@ -68,14 +69,14 @@ async function downloadFile(
   });
 
   if (!response.ok) {
-    let message = `Erro HTTP ${response.status}`;
+    let detail = "";
     try {
       const body = (await response.json()) as { message?: string; detail?: string };
-      message = body.message || body.detail || message;
+      detail = detailFromBody(body);
     } catch {
       // resposta pode ser binária/texto
     }
-    throw new Error(message);
+    throw new Error(describeHttpError(response.status, detail));
   }
 
   const blob = await response.blob();
@@ -1237,7 +1238,7 @@ async function uploadPackageFile<T>(
   };
 
   if (!response.ok || body.success === false) {
-    throw new Error(body.message || body.detail || `Erro HTTP ${response.status}`);
+    throw new Error(describeHttpError(response.status, detailFromBody(body)));
   }
   return body.data as T;
 }

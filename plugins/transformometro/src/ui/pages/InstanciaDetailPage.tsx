@@ -17,7 +17,7 @@ import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
@@ -149,7 +149,6 @@ export function InstanciaDetailPage({
   }, [revisoes]);
 
   const load = useCallback(async () => {
-    setError(null);
     try {
       const [proc, revs, opts, comp, inst] = await Promise.all([
         fetchProcesso(processoId, getAccessToken),
@@ -448,12 +447,15 @@ export function InstanciaDetailPage({
 
   if (!processo || !instancia || !options) {
     const errorView = (
-      <StateBox variant="error" dismissible={false}>
-        <p>{error ?? "Instância não encontrada."}</p>
-        <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(buildProcessoPath(processoId))}>
-          Voltar ao processo
-        </button>
-      </StateBox>
+      <InlineErrorState
+        title={error ? "Não foi possível carregar a melhoria" : "Melhoria não encontrada"}
+        message={
+          error ??
+          "Esta melhoria pode ter sido excluída ou você não tem acesso."
+        }
+        actionLabel="Voltar ao processo"
+        onAction={() => onNavigate(buildProcessoPath(processoId))}
+      />
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;
@@ -801,7 +803,16 @@ export function InstanciaDetailPage({
         />
       ) : null}
 
-      <StatusAlerts error={error} loading={false} hasData onRetry={() => void load()} />
+      <StatusAlerts
+        error={error}
+        loading={false}
+        hasData
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
+        onDismissError={() => setError(null)}
+      />
 
       <CollaborativePresenceBanner
         presence={sectionEdit.presence}

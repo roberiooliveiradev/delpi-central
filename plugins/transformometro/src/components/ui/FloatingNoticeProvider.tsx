@@ -28,20 +28,33 @@ const TransformometroFloatingNotices = createFloatingNoticeStack({
 
 /**
  * Toasts flutuantes do Transformômetro (`FloatingNoticeStack` do kit).
- * Sucesso/info fecham sozinhos; erro/aviso permanecem até dismiss.
+ * Sucesso/info fecham sozinhos; erro/aviso permanecem até o usuário fechar.
  */
 export function FloatingNoticeProvider({ children }: { children: ReactNode }) {
   const { items, push, dismiss } = useFloatingNotices();
 
   const notice = useCallback(
-    (input: FloatingNoticeInput | string) => push(input),
+    (input: FloatingNoticeInput | string) => {
+      if (typeof input === "string") {
+        return push({ message: input, variant: "error", autoDismissMs: null });
+      }
+      const variant = input.variant ?? "error";
+      if (variant === "error" || variant === "warning") {
+        return push({ ...input, variant, autoDismissMs: null });
+      }
+      return push(input);
+    },
     [push],
   );
 
   return (
     <FloatingNoticeContext.Provider value={{ notice }}>
       {children}
-      <TransformometroFloatingNotices items={items} onDismiss={dismiss} />
+      <TransformometroFloatingNotices
+        items={items}
+        onDismiss={dismiss}
+        defaultAutoDismissMs={{ error: null, warning: null }}
+      />
     </FloatingNoticeContext.Provider>
   );
 }

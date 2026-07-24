@@ -30,6 +30,7 @@ import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
 import { DS_GHOST_BTN } from "../../../components/ghostChrome";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE, DS_FILTER_BOX_WIDE_MOD } from "../../../components/filterChrome";
+import { EMPTY_STATE_CLASS } from "../../../components/emptyStateUi";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -348,7 +349,7 @@ export function RevisaoRecursosSection({
         />
         </>
       ) : (
-        <p className="ds-state-box">Nenhum recurso vinculado. O rateio só considera recursos com vínculo ativo.</p>
+        <p className={EMPTY_STATE_CLASS}>Nenhum recurso vinculado. O rateio só considera recursos com vínculo ativo.</p>
       )}
 
       {!readOnly ? (

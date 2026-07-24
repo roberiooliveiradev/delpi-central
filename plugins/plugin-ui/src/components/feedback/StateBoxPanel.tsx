@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
@@ -10,6 +11,8 @@ export type StateBoxClassNames = {
   rootError: string;
   rootEmpty: string;
   icon: string;
+  dismiss: string;
+  dismissible: string;
 };
 
 export type StateBoxPanelProps = {
@@ -20,6 +23,9 @@ export type StateBoxPanelProps = {
   icon: ReactNode;
   iconClassName?: string;
   classNames: StateBoxClassNames;
+  /** Se definido, exibe X — erro/aviso só somem com fechar (ou ação do pai). */
+  onDismiss?: () => void;
+  dismissAriaLabel?: string;
 };
 
 /** Dual `{prefix}-state-box*` + `.delpi-ui-state-box*` (+ card shell). */
@@ -45,6 +51,8 @@ export function stateBoxBemClasses(prefix: string): StateBoxClassNames {
       `${uiCard} ${ui} ${ui}--empty`,
     ),
     icon: delpiUiClass(`${base}__icon`, `${ui}__icon`),
+    dismiss: delpiUiClass(`${base}__dismiss`, `${ui}__dismiss`),
+    dismissible: delpiUiClass(`${base}--dismissible`, `${ui}--dismissible`),
   };
 }
 
@@ -86,11 +94,22 @@ export function StateBoxPanel({
   icon,
   iconClassName,
   classNames,
+  onDismiss,
+  dismissAriaLabel = "Fechar aviso",
 }: StateBoxPanelProps) {
   const iconClass = [classNames.icon, iconClassName].filter(Boolean).join(" ");
+  const rootClass = [
+    resolveRootClass(variant, classNames),
+    onDismiss ? classNames.dismissible : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={resolveRootClass(variant, classNames)} role="status">
+    <div
+      className={rootClass}
+      role={variant === "error" ? "alert" : "status"}
+    >
       <span className={iconClass} aria-hidden="true">
         {icon}
       </span>
@@ -99,6 +118,16 @@ export function StateBoxPanel({
         {message ? <p>{message}</p> : null}
       </div>
       {action}
+      {onDismiss ? (
+        <button
+          type="button"
+          className={classNames.dismiss}
+          onClick={onDismiss}
+          aria-label={dismissAriaLabel}
+        >
+          <X size={16} aria-hidden="true" />
+        </button>
+      ) : null}
     </div>
   );
 }

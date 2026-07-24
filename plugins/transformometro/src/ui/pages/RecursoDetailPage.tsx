@@ -9,7 +9,7 @@ import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
@@ -44,6 +44,7 @@ import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
+import { EMPTY_STATE_CLASS } from "../../components/emptyStateUi";
 import {
   emptyRecursoForm,
   payloadFromRecursoForm,
@@ -119,7 +120,6 @@ export function RecursoDetailPage({
     }
 
     setRefreshing(true);
-    setError(null);
     try {
       const [recursoData, vinculosData, opts] = await Promise.all([
         fetchRecurso(recursoId, getAccessToken),
@@ -311,12 +311,15 @@ export function RecursoDetailPage({
 
   if (!isCreate && !recurso && !loading) {
     const errorView = (
-      <StateBox variant="error" dismissible={false}>
-        <p>{error ?? "Recurso não encontrado."}</p>
-        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
-          Voltar à lista
-        </button>
-      </StateBox>
+      <InlineErrorState
+        title={error ? "Não foi possível carregar o recurso" : "Recurso não encontrado"}
+        message={
+          error ??
+          "Este recurso pode ter sido excluído ou você não tem acesso."
+        }
+        actionLabel="Voltar à lista"
+        onAction={onBack}
+      />
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;
@@ -354,7 +357,11 @@ export function RecursoDetailPage({
         error={error}
         loading={loading}
         hasData={Boolean(recurso) || isCreate}
-        onRetry={() => void load()}
+        onDismissError={() => setError(null)}
+        onRetry={() => {
+          setError(null);
+          void load();
+        }}
       />
 
       <CollaborativePresenceBanner
@@ -462,7 +469,7 @@ export function RecursoDetailPage({
               </div>
 
               {filteredVinculos.length === 0 ? (
-                <p className="ds-state-box">Nenhum processo vinculado a este recurso.</p>
+                <p className={EMPTY_STATE_CLASS}>Nenhum processo vinculado a este recurso.</p>
               ) : (
                 <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
                   <table className={tableCn.compactTable}>

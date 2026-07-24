@@ -13,7 +13,7 @@ import {
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
-import { StateBox } from "../../components/StateBox";
+import { InlineErrorState } from "../../components/ErrorStateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
@@ -216,12 +216,15 @@ export function SetorDetailPage({
 
   if (!isCreate && !setor && !loading) {
     const errorView = (
-      <StateBox variant="error" dismissible={false}>
-        <p>{loadError ?? "Departamento não encontrado."}</p>
-        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
-          Voltar à lista
-        </button>
-      </StateBox>
+      <InlineErrorState
+        title={loadError ? "Não foi possível carregar o departamento" : "Departamento não encontrado"}
+        message={
+          loadError ??
+          "Este departamento pode ter sido excluído ou você não tem acesso."
+        }
+        actionLabel="Voltar à lista"
+        onAction={onBack}
+      />
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;
@@ -256,6 +259,10 @@ export function SetorDetailPage({
         error={saveError ?? loadError}
         loading={false}
         hasData
+        onDismissError={() => {
+          setSaveError(null);
+          setLoadError(null);
+        }}
         onRetry={() => {
           if (saveError) {
             void handleSave();
