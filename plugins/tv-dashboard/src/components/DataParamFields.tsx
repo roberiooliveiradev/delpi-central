@@ -140,28 +140,31 @@ export function DataParamFields({
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
   const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
   const datePair = findDateRangeKeys(Object.keys(schema));
+  /* SI / IGD: competence é o eixo — não injeta Período TV inventado. */
+  const competenceFirst = "competence" in schema;
+  const activeDatePair = competenceFirst ? null : datePair;
   const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
-  const preset = (presetRaw || (datePair ? "this_month" : "")) as DateRangePresetId | "";
-  const isCustom = !datePair || preset === "custom";
-  const showLastN = Boolean(datePair) && preset === "last_n_days";
+  const preset = (presetRaw || (activeDatePair ? "this_month" : "")) as DateRangePresetId | "";
+  const isCustom = !activeDatePair || preset === "custom";
+  const showLastN = Boolean(activeDatePair) && preset === "last_n_days";
 
   useEffect(() => {
-    if (!datePair) return;
+    if (!activeDatePair) return;
     if (String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim()) return;
     onChange(DATE_RANGE_PRESET_PARAM, "this_month");
     // Hidrata preset padrão quando a rota tem intervalo de datas.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
-  }, [datePair?.startKey, datePair?.endKey]);
+  }, [activeDatePair?.startKey, activeDatePair?.endKey]);
 
   function patchParam(key: string, value: string) {
-    if (datePair && isDateRangePairKey(key, datePair) && preset !== "custom") {
+    if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset !== "custom") {
       onChange(DATE_RANGE_PRESET_PARAM, "custom");
     }
     onChange(key, value);
   }
 
   const rangeFields =
-    datePair == null
+    activeDatePair == null
       ? null
       : [
           <DeckField
@@ -207,13 +210,13 @@ export function DataParamFields({
 
   const fields = entries.map(([key, field]) => {
     // periodDays só no bloco de preset (Últimos N dias) quando há par de datas.
-    if (datePair && key === PERIOD_DAYS_PARAM) return null;
+    if (activeDatePair && key === PERIOD_DAYS_PARAM) return null;
 
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
     const labelBase = resolveParamFieldLabel(key, field.label);
     const label = `${labelBase}${inherited ? " (herdado do slide)" : ""}`;
-    const isRangeDate = isDateRangePairKey(key, datePair);
+    const isRangeDate = isDateRangePairKey(key, activeDatePair);
     const hint = isRangeDate
       ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixed
       : hintForParam(key, field);

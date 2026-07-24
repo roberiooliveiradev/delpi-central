@@ -50,4 +50,23 @@ describe("buildRouteDefaultParams", () => {
     });
     expect(params.department_id).toBe("commercial");
   });
+
+  it("SI com competence não injeta dateRangePreset (OpenAPI-first)", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_si_indicator_quality_scrap_cost_pct_meta",
+      label: "Custo de Refugo X ROL — meta",
+      category: "quality",
+      path: "/dashboard/indicators/quality-scrap-cost-pct/meta",
+      paramStrategy: "direct",
+      paramSchema: {
+        competence: { type: "string", optional: true, label: "Competência" },
+        start_date: { type: "string", optional: true, label: "Data início" },
+        end_date: { type: "string", optional: true, label: "Data fim" },
+        branch: { type: "string", optional: true, label: "Filial" },
+      },
+    });
+    expect(params.dateRangePreset).toBeUndefined();
+    expect(params.periodDays).toBeUndefined();
+    expect(params.branch).toBeUndefined();
+  });
 });

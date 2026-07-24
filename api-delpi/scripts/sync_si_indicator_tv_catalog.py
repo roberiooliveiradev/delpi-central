@@ -18,6 +18,7 @@ API_ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = API_ROOT / "app" / "content" / "si_indicator_tv_catalog.json"
 AUDIENCE_PATH = API_ROOT / "app" / "content" / "tv_route_audience.json"
 BASELINE_PATH = API_ROOT / "app" / "content" / "openapi_baseline.json"
+PARAM_LOCALE_PATH = API_ROOT / "app" / "content" / "openapi_param_locale.json"
 INVENTORY_PATH = API_ROOT / "app" / "content" / "openapi_operation_id_inventory.json"
 TESTS_SUPPORT_OPS = (
     API_ROOT / "tests" / "support" / "si_indicator_tv_operation_ids.py"
@@ -36,48 +37,31 @@ _ALLOWED_DEPARTMENTS = frozenset(
     }
 )
 
-_PARAM_LOCALE = {
-    "competence": {
-        "en": {
-            "label": "Competence",
-            "description": "Reference month as YYYY-MM.",
-        },
-        "pt-BR": {
-            "label": "Competência",
-            "description": "Mês de referência no formato AAAA-MM.",
-        },
-    },
-    "start_date": {
-        "en": {
-            "label": "Start date",
-            "description": "Period start (YYYY-MM-DD).",
-        },
-        "pt-BR": {
-            "label": "Data início",
-            "description": "Início do intervalo (AAAA-MM-DD).",
-        },
-    },
-    "end_date": {
-        "en": {
-            "label": "End date",
-            "description": "Period end (YYYY-MM-DD).",
-        },
-        "pt-BR": {
-            "label": "Data fim",
-            "description": "Fim do intervalo (AAAA-MM-DD).",
-        },
-    },
-    "branch": {
-        "en": {
-            "label": "Branch",
-            "description": "TOTVS branch code (01/02) when applicable.",
-        },
-        "pt-BR": {
-            "label": "Filial",
-            "description": "Código da filial TOTVS (01/02), quando aplicável.",
-        },
-    },
-}
+_SI_PARAM_NAMES = ("competence", "start_date", "end_date", "branch")
+
+
+def _load_si_param_locale() -> dict[str, Any]:
+    """xDelpi.params no shape canônico: params.<name>.locale.{en,pt-BR}.
+
+    Fonte única: openapi_param_locale.json (sem duplicar textos no script).
+    """
+    payload = json.loads(PARAM_LOCALE_PATH.read_text(encoding="utf-8"))
+    params = payload.get("params") if isinstance(payload, dict) else None
+    if not isinstance(params, dict):
+        raise RuntimeError("openapi_param_locale.json sem objeto params")
+    out: dict[str, Any] = {}
+    for name in _SI_PARAM_NAMES:
+        entry = params.get(name)
+        if not isinstance(entry, dict):
+            raise RuntimeError(f"openapi_param_locale.json sem params.{name}")
+        locale = entry.get("locale")
+        if not isinstance(locale, dict):
+            raise RuntimeError(f"openapi_param_locale.json params.{name} sem locale")
+        out[name] = {"locale": locale}
+    return out
+
+
+_PARAM_LOCALE = _load_si_param_locale()
 
 
 def load_catalog(path: Path = CATALOG_PATH) -> dict:

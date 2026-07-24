@@ -65,7 +65,8 @@ export function buildRouteDefaultParams(
   }
 
   const pair = findDateRangeKeys(Object.keys(schema));
-  const preset = defaultDateRangePreset(pair);
+  const competenceFirst = "competence" in schema;
+  const preset = competenceFirst ? null : defaultDateRangePreset(pair);
   if (preset) {
     defaults[DATE_RANGE_PRESET_PARAM] = preset;
   }

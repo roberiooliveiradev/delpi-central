@@ -17,12 +17,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -63,12 +65,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -119,12 +123,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -177,12 +183,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -237,12 +245,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -283,12 +293,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -339,12 +351,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -396,12 +410,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -463,12 +479,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -516,12 +534,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -573,12 +593,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "status": {
@@ -733,12 +755,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "filial": {
@@ -753,14 +777,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_commercial_rol_series",
@@ -792,12 +809,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -855,12 +874,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -907,12 +928,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -970,12 +993,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_segment": {
@@ -1076,12 +1101,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -1223,12 +1250,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -1239,18 +1268,10 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
       "valueFields": [
         "score",
         "value",
@@ -1258,6 +1279,9 @@
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "defaultParams": {
+        "periodDays": 30
       }
     },
     {
@@ -1301,12 +1325,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -1317,25 +1343,20 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
-      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
       ],
       "tvConstraints": {
         "maxRows": 20
+      },
+      "tableFields": "indicators",
+      "defaultParams": {
+        "periodDays": 30
       }
     },
     {
@@ -1363,12 +1384,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -1379,8 +1402,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "department_id": {
           "type": "string",
@@ -1399,20 +1421,16 @@
         }
       },
       "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
-      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
       ],
       "tvConstraints": {
         "maxRows": 20
+      },
+      "tableFields": "items",
+      "defaultParams": {
+        "periodDays": 30
       }
     },
     {
@@ -1439,42 +1457,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1501,42 +1513,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1563,42 +1569,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1625,42 +1625,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1687,42 +1681,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1749,42 +1737,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1811,42 +1793,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1873,42 +1849,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1935,42 +1905,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1997,42 +1961,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2059,42 +2017,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2121,42 +2073,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2183,42 +2129,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2245,42 +2185,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2307,42 +2241,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2369,42 +2297,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2431,42 +2353,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2493,42 +2409,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2555,42 +2465,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2617,42 +2521,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2679,42 +2577,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2741,42 +2633,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2803,42 +2689,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2865,42 +2745,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2927,42 +2801,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2989,42 +2857,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3051,42 +2913,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3113,42 +2969,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3175,42 +3025,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3237,42 +3081,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3299,42 +3137,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3361,42 +3193,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3423,42 +3249,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3485,42 +3305,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3547,42 +3361,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3609,42 +3417,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3671,42 +3473,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3733,42 +3529,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3795,42 +3585,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3857,42 +3641,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3919,42 +3697,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3981,42 +3753,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4043,42 +3809,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4105,42 +3865,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4167,42 +3921,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4229,42 +3977,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4291,42 +4033,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4353,42 +4089,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4415,42 +4145,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4477,42 +4201,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4539,42 +4257,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4601,42 +4313,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4663,42 +4369,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4725,42 +4425,244 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
+      "httpMethod": "GET",
+      "label": "Custo de Retrabalho X ROL — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Custo de Retrabalho X ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
+        }
+      },
+      "paramStrategy": "direct",
+      "valueFields": [
+        "value"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
+      "httpMethod": "GET",
+      "label": "Custo de Retrabalho X ROL — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Custo de Retrabalho X ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
+        }
+      },
+      "paramStrategy": "direct",
+      "valueFields": [
+        "value"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
+      "httpMethod": "GET",
+      "label": "Custo de Refugo X ROL — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Custo de Refugo X ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Custo de Refugo X ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
+        }
+      },
+      "paramStrategy": "direct",
+      "valueFields": [
+        "value"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
+      "httpMethod": "GET",
+      "label": "Custo de Refugo X ROL — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Custo de Refugo X ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Custo de Refugo X ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
+        }
+      },
+      "paramStrategy": "direct",
+      "valueFields": [
+        "value"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4787,42 +4689,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4849,42 +4745,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4911,42 +4801,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4973,42 +4857,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5035,42 +4913,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5097,42 +4969,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5159,42 +5025,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5221,42 +5081,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5283,42 +5137,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5345,42 +5193,36 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          ]
         }
       },
-      "paramStrategy": "date_range",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
+      "paramStrategy": "direct",
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5400,12 +5242,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -5450,14 +5294,7 @@
           "description": "Inclui quantidade de produto intermediário (PI) no resultado."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_lmps_dashboard",
@@ -5477,12 +5314,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -5537,14 +5376,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmps_dashboard_charts",
@@ -5563,12 +5395,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -5609,14 +5443,7 @@
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_lmps_dashboard_items",
@@ -5635,12 +5462,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -5695,14 +5524,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmps_dashboard_summary",
@@ -5724,12 +5546,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -5771,13 +5595,6 @@
         }
       },
       "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
@@ -5808,12 +5625,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -5828,14 +5647,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_history_events",
@@ -5854,12 +5666,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -5880,14 +5694,7 @@
           "description": "Número ou código da revisão."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_history_flow",
@@ -5906,12 +5713,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -5932,14 +5741,7 @@
           "description": "Número ou código da revisão."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_ferramentas",
@@ -6109,23 +5911,18 @@
           "type": "string",
           "optional": false,
           "label": "Data inicial",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "data_final": {
           "type": "string",
           "optional": false,
           "label": "Data final",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "data_inicial",
-        "data_final"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_pecas",
@@ -6253,12 +6050,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -6301,12 +6100,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -6343,12 +6144,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6402,12 +6205,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6511,12 +6316,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6583,12 +6390,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6649,12 +6458,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6720,12 +6531,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -6792,12 +6605,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "page": {
@@ -6872,12 +6687,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         }
       },
@@ -6908,12 +6725,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_code": {
@@ -6969,12 +6788,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         }
       },
@@ -7005,12 +6826,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "customer_code": {
@@ -7118,12 +6941,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7175,12 +7000,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7232,12 +7059,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7286,12 +7115,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7357,6 +7188,7 @@
           "type": "string",
           "optional": true,
           "label": "Departamento",
+          "format": "uuid",
           "description": "Identificador do departamento no painel IDD."
         },
         "status": {
@@ -7560,12 +7392,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7626,12 +7460,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7679,12 +7515,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -7757,12 +7595,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_to": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "supplier": {
@@ -7807,14 +7647,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_from",
-        "date_to"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_inspecoes_entrada_historico_detalhe",
@@ -8100,6 +7933,7 @@
           "type": "string",
           "optional": true,
           "label": "Data",
+          "format": "date",
           "description": "Data de referência (AAAA-MM-DD)."
         },
         "page": {
@@ -8196,12 +8030,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do período (AAAA-MM-DD)."
         },
         "data_fim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do período (AAAA-MM-DD)."
         },
         "filial": {
@@ -8556,6 +8392,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -8583,10 +8420,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "list_production_appointments",
@@ -8617,12 +8454,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "work_center": {
@@ -8713,12 +8552,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "work_center": {
@@ -8809,12 +8650,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "work_center": {
@@ -8896,12 +8739,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "work_center": {
@@ -8999,12 +8844,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9031,14 +8878,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items",
@@ -9057,12 +8897,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9097,14 +8939,7 @@
           "description": "Como agregar o resultado (geral, filial, produto etc.)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items_by_work_center",
@@ -9123,12 +8958,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9155,14 +8992,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_top_items_validated",
@@ -9181,12 +9011,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9207,14 +9039,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_depreciation_pct",
@@ -9244,12 +9069,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -9301,12 +9128,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -9347,12 +9176,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9392,14 +9223,7 @@
           "description": "Retorna apenas registros com status OK."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -9418,12 +9242,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9476,14 +9302,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_losses_records",
@@ -9502,12 +9321,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9540,14 +9361,7 @@
           "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_losses_top_materials",
@@ -9566,12 +9380,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -9604,14 +9420,7 @@
           "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_production_machine_program_top_intermediates",
@@ -9642,12 +9451,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
@@ -9708,12 +9519,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "status": {
@@ -9853,12 +9666,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -9888,6 +9703,25 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -9902,26 +9736,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -9952,12 +9767,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -9981,14 +9798,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10062,6 +9879,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10107,6 +9925,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10152,6 +9971,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10208,12 +10028,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "status": {
@@ -10292,12 +10114,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -10327,6 +10151,10 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "seriesField": "points",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10335,13 +10163,9 @@
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -10372,12 +10196,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -10401,14 +10227,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10428,6 +10254,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10484,12 +10311,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -10530,6 +10359,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10569,6 +10399,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10608,6 +10439,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "branch": {
@@ -10723,12 +10555,14 @@
           "type": "string",
           "optional": true,
           "label": "Modificado a partir de",
+          "format": "date",
           "description": "Data/hora mínima de modificação (ISO)."
         },
         "modified_to": {
           "type": "string",
           "optional": true,
           "label": "Modificado até",
+          "format": "date",
           "description": "Data/hora máxima de modificação (ISO)."
         },
         "min_size_bytes": {
@@ -10776,14 +10610,7 @@
           "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "modified_from",
-        "modified_to"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_exclusive_raw_materials_catalog",
@@ -10932,14 +10759,14 @@
         }
       },
       "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
+      },
       "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
-      },
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": false
       }
     },
     {
@@ -11118,18 +10945,21 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "date_start": {
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "max_depth": {
@@ -11157,14 +10987,7 @@
           "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_guide",
@@ -11242,12 +11065,14 @@
           "type": "string",
           "optional": true,
           "label": "Data de emissão (início)",
+          "format": "date",
           "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "issue_date_end": {
           "type": "string",
           "optional": true,
           "label": "Data de emissão (fim)",
+          "format": "date",
           "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "supplier": {
@@ -11268,14 +11093,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "issue_date_start",
-        "issue_date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_inspection",
@@ -11342,12 +11160,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -11380,14 +11200,7 @@
           "description": "Número da ordem de produção (OP)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_last_purchase",
@@ -11447,12 +11260,14 @@
           "type": "string",
           "optional": true,
           "label": "Data de emissão (início)",
+          "format": "date",
           "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "issue_date_end": {
           "type": "string",
           "optional": true,
           "label": "Data de emissão (fim)",
+          "format": "date",
           "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
         },
         "customer": {
@@ -11473,14 +11288,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "issue_date_start",
-        "issue_date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_parents",
@@ -11546,6 +11354,7 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "max_depth": {
@@ -11592,12 +11401,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -11612,14 +11423,7 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_purchase_price_history",
@@ -11638,12 +11442,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -11664,14 +11470,7 @@
           "description": "Máximo de pontos no histórico retornado."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_purchases",
@@ -11720,12 +11519,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -11746,14 +11547,7 @@
           "description": "Máximo de pontos no histórico retornado."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_sales_summary",
@@ -11811,18 +11605,21 @@
           "type": "string",
           "optional": true,
           "label": "Data de referência",
+          "format": "date",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         },
         "date_start": {
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -11844,14 +11641,7 @@
           "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_stock",
@@ -12122,12 +11912,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "branch": {
@@ -12148,14 +11940,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plans",
@@ -13009,12 +12794,14 @@
           "type": "string",
           "optional": false,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "area_id": {
@@ -13413,12 +13200,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "area_id": {
@@ -13604,12 +13393,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "branch": {
@@ -13650,12 +13441,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
@@ -13728,12 +13521,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
@@ -13751,14 +13546,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_kaizen_records",
@@ -13801,12 +13589,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
@@ -13849,6 +13639,7 @@
           "type": "string",
           "optional": false,
           "label": "Data",
+          "format": "date",
           "description": "Data de referência (AAAA-MM-DD)."
         }
       },
@@ -13950,12 +13741,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
@@ -14015,23 +13808,18 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -14327,12 +14115,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -14435,12 +14225,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "status": {
@@ -14506,12 +14298,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
@@ -14533,14 +14327,7 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_ppm_external_series",
@@ -14583,12 +14370,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
@@ -14598,14 +14387,7 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_ppm_external_summary",
@@ -14636,12 +14418,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
@@ -14703,12 +14487,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
@@ -14730,14 +14516,7 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_ppm_internal_series",
@@ -14780,12 +14559,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
@@ -14795,14 +14576,7 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_ppm_internal_summary",
@@ -14833,12 +14607,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "product_prefix": {
@@ -14906,23 +14682,18 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_solution_patterns",
@@ -15001,12 +14772,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         }
       },
@@ -15075,12 +14848,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "mp": {
@@ -15159,12 +14934,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "mp": {
@@ -15250,12 +15027,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "mp": {
@@ -15327,12 +15106,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "mp": {
@@ -15408,12 +15189,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "granularity": {
@@ -15607,7 +15390,8 @@
         "definitionId": {
           "type": "string",
           "optional": true,
-          "label": "Definitionid"
+          "label": "Definitionid",
+          "format": "uuid"
         },
         "limit": {
           "type": "integer",
@@ -15659,12 +15443,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -15704,14 +15490,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_detalhes",
@@ -15741,12 +15520,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -15805,14 +15586,7 @@
           "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_filtros",
@@ -15842,23 +15616,18 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_health",
@@ -15901,12 +15670,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -15928,14 +15699,7 @@
           "description": "Código do operador no Protheus."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_recursos",
@@ -15965,12 +15729,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -16010,14 +15776,7 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_resumo",
@@ -16047,12 +15806,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -16074,14 +15835,7 @@
           "description": "Código do operador no Protheus."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "dataInicio",
-        "dataFim"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_rework_cost_pct",
@@ -16112,12 +15866,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período (AAAA-MM-DD)."
         },
         "dataFim": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período (AAAA-MM-DD)."
         },
         "recurso": {
@@ -16169,12 +15925,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         },
         "date_end": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         },
         "page": {
@@ -16190,14 +15948,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "date_start",
-        "date_end"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_scheduling_bookings",
@@ -16227,12 +15978,14 @@
           "type": "string",
           "optional": false,
           "label": "De",
+          "format": "date",
           "description": "Início do intervalo (data ou valor)."
         },
         "to": {
           "type": "string",
           "optional": false,
           "label": "Até",
+          "format": "date",
           "description": "Fim do intervalo (data ou valor)."
         },
         "resource_id": {
@@ -16376,12 +16129,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "top_limit": {
@@ -16442,12 +16197,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "strict_idd_period": {
@@ -16502,12 +16259,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "periodDays": {
@@ -16555,12 +16314,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "top_limit": {
@@ -17106,12 +16867,14 @@
           "type": "string",
           "optional": true,
           "label": "Data início",
+          "format": "date",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
+          "format": "date",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         },
         "top_limit": {
@@ -17150,14 +16913,6 @@
         }
       },
       "paramStrategy": "direct",
-      "dateRangeKeys": [
-        "start_date",
-        "end_date"
-      ],
-      "defaultParams": {
-        "periodDays": 30
-      },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
@@ -17166,7 +16921,8 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      }
+      },
+      "tableFields": "top_products"
     },
     {
       "operationId": "get_caller_stats",

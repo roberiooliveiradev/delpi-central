@@ -178,6 +178,7 @@ def enrich_param_schema_entry(
     *,
     locale_label: str | None = None,
     locale_description: str | None = None,
+    skip_ux_default: bool = False,
 ) -> dict[str, Any]:
     """Aplica label/hint/enum/default — OpenAPI + x-delpi + catálogo JSON; UX defaults TV-only."""
     enriched = dict(entry)
@@ -206,7 +207,11 @@ def enrich_param_schema_entry(
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
         enriched["optional"] = True
         _note_param_fallback("default", name)
-    elif name in _TV_PARAM_UX_DEFAULTS and enriched.get("default") is None:
+    elif (
+        not skip_ux_default
+        and name in _TV_PARAM_UX_DEFAULTS
+        and enriched.get("default") is None
+    ):
         # Default só de UX TV — não inventa contrato HTTP.
         enriched["default"] = _TV_PARAM_UX_DEFAULTS[name]
         enriched["optional"] = True
@@ -218,9 +223,14 @@ def normalize_route_param_schema(route: dict[str, Any]) -> dict[str, Any]:
     schema = route.get("paramSchema")
     if not isinstance(schema, dict) or not schema:
         return route
+    competence_first = "competence" in schema
     updated = dict(route)
     updated["paramSchema"] = {
-        key: enrich_param_schema_entry(key, value if isinstance(value, dict) else {})
+        key: enrich_param_schema_entry(
+            key,
+            value if isinstance(value, dict) else {},
+            skip_ux_default=competence_first and key == "branch",
+        )
         for key, value in schema.items()
     }
     return updated
@@ -277,12 +287,19 @@ def resolve_category(operation: dict[str, Any]) -> str:
 
 
 def extract_param_locale_pt(operation: dict[str, Any], param_name: str) -> tuple[str | None, str | None]:
-    """Retorna (label, description) de xDelpi.params.<name>.locale.pt-BR quando curados."""
+    """Retorna (label, description) de xDelpi.params.<name>.locale.pt-BR quando curados.
+
+    Aceita legado flat `params.<name>.{en,pt-BR}` (sync SI antigo) além do canônico
+    `params.<name>.locale.{en,pt-BR}`.
+    """
     x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
     params = x_delpi.get("params") if isinstance(x_delpi.get("params"), dict) else {}
     entry = params.get(param_name) if isinstance(params.get(param_name), dict) else {}
     locale = entry.get("locale") if isinstance(entry.get("locale"), dict) else {}
     pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
+    if not pt:
+        # Legado SI: params.<name>.pt-BR sem wrapper locale.
+        pt = entry.get("pt-BR") if isinstance(entry.get("pt-BR"), dict) else {}
     label = str(pt.get("label") or "").strip() or None
     description = str(pt.get("description") or "").strip() or None
     return label, description
@@ -353,10 +370,14 @@ def build_param_schema_from_openapi(
     Mantém as chaves de data canônicas no schema (UI de período relativo) e registra
     `dateRangeKeys` para o gateway emitir exatamente os nomes HTTP da api-delpi.
     Preferência: enum/default do OpenAPI; label/description de x-delpi.params.locale.pt-BR.
+
+    Rotas com `competence` (SI / IGD): strategy `direct` — não inventa periodDays nem
+    trata o par de datas como date_range TV (competência é o eixo principal).
     """
     params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
     names = {str(p["name"]) for p in params}
-    date_range_keys = detect_openapi_date_range_keys(names)
+    competence_first = "competence" in names
+    date_range_keys = None if competence_first else detect_openapi_date_range_keys(names)
     strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
     op = operation if isinstance(operation, dict) else {}
@@ -373,16 +394,22 @@ def build_param_schema_from_openapi(
             entry["default"] = param["default"]
         if isinstance(param.get("enum"), list) and param["enum"]:
             entry["enum"] = list(param["enum"])
+        fmt = str(param.get("format") or "").strip()
+        if fmt:
+            entry["format"] = fmt
         openapi_desc = str(param.get("description") or "").strip()
         if locale_description:
             entry["description"] = locale_description
         elif openapi_desc:
             entry["description"] = openapi_desc
+        # SI: filial opcional sem default UX «01» (omitir = consolidado).
+        skip_ux_default = competence_first and name == "branch"
         schema[name] = enrich_param_schema_entry(
             name,
             entry,
             locale_label=locale_label,
             locale_description=locale_description,
+            skip_ux_default=skip_ux_default,
         )
 
     return schema, strategy, date_range_keys
@@ -504,6 +531,16 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
             else:
                 merged[key] = value
+    # OpenAPI direct (ex.: SI competence-first): não herdar date_range / periodDays do catálogo antigo.
+    if merged.get("paramStrategy") == "direct":
+        merged.pop("dateRangeKeys", None)
+        defaults = merged.get("defaultParams")
+        if isinstance(defaults, dict) and "periodDays" in defaults:
+            cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
+            if cleaned:
+                merged["defaultParams"] = cleaned
+            else:
+                merged.pop("defaultParams", None)
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
         # OpenAPI vence em contrato (optional/type/enum/default); existing só preenche
@@ -526,8 +563,12 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 entry["type"] = openapi_entry["type"]
             if openapi_entry.get("enum"):
                 entry["enum"] = list(openapi_entry["enum"])
-            if openapi_entry.get("default") is not None:
+            if "default" in openapi_entry:
                 entry["default"] = openapi_entry["default"]
+            elif openapi_entry.get("optional") is True:
+                # OpenAPI opcional sem default — não reintroduzir UX antigo do catálogo
+                # (ex.: filial SI consolidada vs default «01» herdado).
+                entry.pop("default", None)
             patched_existing[key] = entry
         merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
     return merged
