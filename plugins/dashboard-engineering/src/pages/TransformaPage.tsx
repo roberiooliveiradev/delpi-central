@@ -232,11 +232,6 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
         />
       </FilterBar>
       <DataSourceBanner variant="transforma" />
-      <p className="ds-hint" style={{ margin: "0 0 1rem" }}>
-        Dados via API de engenharia, lidos do schema{" "}
-        <strong>transformometro</strong>. Cadastro completo no app{" "}
-        <a href="/apps/transformometro/dashboard">Transformômetro</a>.
-      </p>
       <EngineeringStatusAlerts
         error={error}
         loading={loading}
