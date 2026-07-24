@@ -246,6 +246,30 @@ class DelpiApiClient:
     ) -> dict[str, Any]:
         return self._get("/quality/audit-5s/summary", params=params, authorization=authorization)
 
+    def get_quality_scrap_cost_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/scrap-cost-pct",
+            params=params,
+            authorization=authorization,
+        )
+
+    def get_quality_rework_cost_pct(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/quality/rework-cost-pct",
+            params=params,
+            authorization=authorization,
+        )
+
     # -- Engineering --
     def list_lmps(self, *, params: Mapping[str, str | None] | None = None, authorization: str | None = None) -> dict[str, Any]:
         return self._get("/engineering/lmps", params=params, authorization=authorization)

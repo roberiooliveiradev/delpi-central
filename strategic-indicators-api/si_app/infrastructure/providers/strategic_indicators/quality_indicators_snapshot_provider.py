@@ -127,6 +127,12 @@ class QualityIndicatorsSnapshotProvider(
         audit_5s_unit_values = {
             item.branch: item.audit_5s_score for item in snapshot.branches
         }
+        scrap_cost_pct_unit_values = {
+            item.branch: item.scrap_cost_pct for item in snapshot.branches
+        }
+        rework_cost_pct_unit_values = {
+            item.branch: item.rework_cost_pct for item in snapshot.branches
+        }
 
         return {
             "items": [
@@ -249,6 +255,36 @@ class QualityIndicatorsSnapshotProvider(
                     ),
                     "source": "quality_audit_5s",
                     "unit_values": audit_5s_unit_values,
+                },
+                {
+                    "department_id": "quality",
+                    "indicator_id": "quality-scrap-cost-pct",
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "scrap_cost_pct_consolidated",
+                            None,
+                        ),
+                        unit_values=scrap_cost_pct_unit_values,
+                        branch=branch,
+                    ),
+                    "source": "quality_scrap_cost_pct",
+                    "unit_values": scrap_cost_pct_unit_values,
+                },
+                {
+                    "department_id": "quality",
+                    "indicator_id": "quality-rework-cost-pct",
+                    "value": self._resolve_ppm_indicator_value(
+                        consolidated_value=getattr(
+                            snapshot,
+                            "rework_cost_pct_consolidated",
+                            None,
+                        ),
+                        unit_values=rework_cost_pct_unit_values,
+                        branch=branch,
+                    ),
+                    "source": "quality_rework_cost_pct",
+                    "unit_values": rework_cost_pct_unit_values,
                 },
             ],
             "errors": [],

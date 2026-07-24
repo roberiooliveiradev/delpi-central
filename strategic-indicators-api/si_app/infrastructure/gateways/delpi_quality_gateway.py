@@ -114,3 +114,43 @@ class DelpiQualityGateway:
                 authorization=bearer_authorization_from_context(),
             ),
         )
+
+    def get_scrap_cost_pct(
+        self,
+        *,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("scrap-cost-pct", branch, date_start, date_end)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_quality_scrap_cost_pct(
+                params={
+                    "branch": branch,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )
+
+    def get_rework_cost_pct(
+        self,
+        *,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+    ) -> dict[str, Any]:
+        key = _cache_key("rework-cost-pct", branch, date_start, date_end)
+        return self._fetch_cached(
+            key,
+            lambda: self._client.get_quality_rework_cost_pct(
+                params={
+                    "branch": branch,
+                    "date_start": date_start,
+                    "date_end": date_end,
+                },
+                authorization=bearer_authorization_from_context(),
+            ),
+        )

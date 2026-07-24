@@ -25,6 +25,8 @@ class QualityBranchSnapshot:
     ppm_external_plugs: float | None = None
     ppm_internal_components: float | None = None
     ppm_external_components: float | None = None
+    scrap_cost_pct: float | None = None
+    rework_cost_pct: float | None = None
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,8 @@ class QualityMetricsSnapshot:
     ppm_external_plugs_consolidated: float | None = None
     ppm_internal_components_consolidated: float | None = None
     ppm_external_components_consolidated: float | None = None
+    scrap_cost_pct_consolidated: float | None = None
+    rework_cost_pct_consolidated: float | None = None
 
 
 class QualityMetricsSnapshotService:
@@ -163,6 +167,19 @@ class QualityMetricsSnapshotService:
             product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
         )
 
+        scrap_cost_pct_consolidated = self._resolve_cost_pct(
+            kind="scrap",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        rework_cost_pct_consolidated = self._resolve_cost_pct(
+            kind="rework",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
         snapshots: list[QualityBranchSnapshot] = []
 
         for branch_code in branches:
@@ -210,6 +227,19 @@ class QualityMetricsSnapshotService:
                 start_date=start_date,
                 end_date=end_date,
                 product_prefix=COMPONENTS_FINISHED_PRODUCT_PREFIX,
+            )
+
+            scrap_cost_pct = self._resolve_cost_pct(
+                kind="scrap",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
+            )
+            rework_cost_pct = self._resolve_cost_pct(
+                kind="rework",
+                branch=branch_code,
+                start_date=start_date,
+                end_date=end_date,
             )
 
             kaizen_summary = self._quality_gateway.get_kaizen_summary(
@@ -270,6 +300,16 @@ class QualityMetricsSnapshotService:
                         if ppm_external_components is not None
                         else None
                     ),
+                    scrap_cost_pct=(
+                        round(scrap_cost_pct, 4)
+                        if scrap_cost_pct is not None
+                        else None
+                    ),
+                    rework_cost_pct=(
+                        round(rework_cost_pct, 4)
+                        if rework_cost_pct is not None
+                        else None
+                    ),
                 )
             )
 
@@ -307,6 +347,16 @@ class QualityMetricsSnapshotService:
                 if ppm_external_components_consolidated is not None
                 else None
             ),
+            scrap_cost_pct_consolidated=(
+                round(scrap_cost_pct_consolidated, 4)
+                if scrap_cost_pct_consolidated is not None
+                else None
+            ),
+            rework_cost_pct_consolidated=(
+                round(rework_cost_pct_consolidated, 4)
+                if rework_cost_pct_consolidated is not None
+                else None
+            ),
         )
 
     def _resolve_ppm(
@@ -332,6 +382,33 @@ class QualityMetricsSnapshotService:
         value = self._extract_first_number(result)
 
         return value
+
+    def _resolve_cost_pct(
+        self,
+        *,
+        kind: str,
+        branch: str | None,
+        start_date: str | None,
+        end_date: str | None,
+    ) -> float | None:
+        if kind == "scrap":
+            result = self._quality_gateway.get_scrap_cost_pct(
+                branch=branch,
+                date_start=start_date,
+                date_end=end_date,
+            )
+            field = "scrap_cost_pct"
+        elif kind == "rework":
+            result = self._quality_gateway.get_rework_cost_pct(
+                branch=branch,
+                date_start=start_date,
+                date_end=end_date,
+            )
+            field = "rework_cost_pct"
+        else:
+            raise ValueError("kind deve ser scrap ou rework")
+
+        return self._extract_named_number(result, field)
 
     def _resolve_branches(
         self,
@@ -413,6 +490,19 @@ class QualityMetricsSnapshotService:
                 continue
 
         return None
+
+    def _extract_named_number(self, result, field: str) -> float | None:
+        payload = result.to_dict() if hasattr(result, "to_dict") else result
+        data = payload.get("data", payload) if isinstance(payload, dict) else {}
+        if not isinstance(data, dict):
+            return None
+        value = data.get(field)
+        if value is None:
+            return None
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def _parse_dashboard_date(value: str | None) -> date | None:

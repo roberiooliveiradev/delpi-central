@@ -2,7 +2,16 @@
 
 **Migration:** `V018__quality_branch_goals_2026.sql`
 
-Indicadores permanecem `scope_type = consolidated` (medição consolidada no painel), com **metas distintas por filial** (`goal_scope_branch` `01` e `02`).
+Indicadores permanecem `scope_type = consolidated` (medição consolidada no painel), com **metas distintas por filial** (`goal_scope_branch` `01` e `02`), exceto indicadores cadastrados como `per_unit` (ex.: plugues e custo de refugo × ROL).
+
+## Perdas — custo × ROL (admin + código)
+
+| `indicator_id` | `source_key` | Fonte HTTP | Escopo típico |
+|----------------|--------------|------------|---------------|
+| `quality-scrap-cost-pct` | `quality_scrap_cost_pct` | `GET /quality/scrap-cost-pct` | Por unidade |
+| `quality-rework-cost-pct` | `quality_rework_cost_pct` | `GET /quality/rework-cost-pct` | Consolidado |
+
+Cálculo: mesmo das rotas `/refugos/scrap_cost_pct` e `/retrabalhos/rework_cost_pct` (custo / ROL com IPI × 100). Snapshot SI preenche `unit_values` 01/02 e consolidado sem `branch`.
 
 ## Metas 2026 (após V018)
 
