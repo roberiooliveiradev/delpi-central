@@ -106,6 +106,39 @@ def test_related_rooms_investimento_with_scope_fans_out_to_processo():
     assert room_key("processo_instancia", "inst-1") in rooms
 
 
+def test_enrich_realtime_scope_payload_revisao_looks_up_processo(monkeypatch):
+    from tm_app.application.services import transformometro_realtime_notify as mod
+
+    class FakeRepo:
+        def get(self, _rid):
+            return {"processo_id": "proc-9", "instancia_id": "inst-9"}
+
+    monkeypatch.setattr(
+        "tm_app.infrastructure.persistence.repositories.revisao_repository.RevisaoRepository",
+        FakeRepo,
+    )
+    body = mod.enrich_realtime_scope_payload("revisao", "rev-9", {"overrides": 2})
+    assert body["processo_id"] == "proc-9"
+    assert body["instancia_id"] == "inst-9"
+
+
+def test_enrich_realtime_scope_payload_instancia_looks_up_processo(monkeypatch):
+    from tm_app.application.services import transformometro_realtime_notify as mod
+
+    class FakeRepo:
+        def get(self, _iid):
+            return {"processo_id": "proc-8"}
+
+    monkeypatch.setattr(
+        "tm_app.infrastructure.persistence.repositories.processo_instancia_repository.ProcessoInstanciaRepository",
+        FakeRepo,
+    )
+    body = mod.enrich_realtime_scope_payload(
+        "processo_instancia", "inst-8", {"inherit_all": True}
+    )
+    assert body["processo_id"] == "proc-8"
+
+
 def test_related_rooms_recurso_custo_fans_out_to_recurso():
     rooms = _related_rooms(
         "recurso_custo",

@@ -7,6 +7,7 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
+import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -89,6 +90,12 @@ export function RevisaoDetailPage({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useWorkspaceKeepAliveReload({
+    embedded,
+    embeddedActive,
+    reload: () => void load(),
+  });
 
   useEffect(() => {
     if (!legacyRevisaoPath || !revisao?.instancia_id) return;

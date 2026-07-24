@@ -26,6 +26,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   resyncVersion?: number;
   onError: (message: string | null) => void;
+  /** Após salvar overlay — invalida macro composto / árvore keep-alive. */
+  onReload?: () => void | Promise<void>;
 };
 
 export function RevisaoDecompositionSection({
@@ -36,6 +38,7 @@ export function RevisaoDecompositionSection({
   embeddedInCard = false,
   resyncVersion = 0,
   onError,
+  onReload,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -82,6 +85,7 @@ export function RevisaoDecompositionSection({
       const overlay = decompositionTreeToOverlay(treeProcessBase, editable);
       await saveRevisaoDecomposicaoOverlay(revisaoId, overlay, getAccessToken);
       await load();
+      await onReload?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar overlay de mapeamento.");
     } finally {

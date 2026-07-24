@@ -51,6 +51,8 @@ type Props = {
   onNavigate?: (path: string) => void;
   rateioExcedeGanho?: boolean;
   resyncVersion?: number;
+  /** Após salvar ajustes manuais — invalida matriz da melhoria/processo. */
+  onSaved?: () => void;
 };
 
 const M = TM_HELP_TOOLTIPS.matriz;
@@ -140,6 +142,7 @@ export function RevisaoMatrizImpactoSection({
   onNavigate,
   rateioExcedeGanho = false,
   resyncVersion = 0,
+  onSaved,
 }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -221,6 +224,7 @@ export function RevisaoMatrizImpactoSection({
       setData(response);
       setModo(modoFromResponse(response));
       setInputs(inputsFromResponse(response));
+      onSaved?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar ajustes da matriz");
     } finally {

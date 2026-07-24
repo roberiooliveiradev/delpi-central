@@ -13,6 +13,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
@@ -103,6 +104,8 @@ export function ProcessoDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  /** Incrementado a cada load — invalida matriz keep-alive do processo. */
+  const [dataEpoch, setDataEpoch] = useState(0);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
   const [processoFormBaseline, setProcessoFormBaseline] = useState<ProcessoFormState | null>(
     null
@@ -152,6 +155,7 @@ export function ProcessoDetailPage({
           )
         )
       );
+      setDataEpoch((epoch) => epoch + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
@@ -168,6 +172,8 @@ export function ProcessoDetailPage({
     enabled: !embedded || embeddedActive,
     onResync: () => void load(),
   });
+  /** WS remoto + load local (tree-refresh) — compostos/matriz não ficam stale. */
+  const panelResyncVersion = sectionEdit.resyncVersion + dataEpoch;
 
   useEffect(() => {
     if (!sectionEdit.resyncVersion) return;
@@ -177,6 +183,12 @@ export function ProcessoDetailPage({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useWorkspaceKeepAliveReload({
+    embedded,
+    embeddedActive,
+    reload: () => void load(),
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -440,7 +452,7 @@ export function ProcessoDetailPage({
               processoNome={processo.nome_processo}
               getAccessToken={getAccessToken}
               onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
+              resyncVersion={panelResyncVersion}
             />
           </div>
           <EditableSectionCard
@@ -458,7 +470,7 @@ export function ProcessoDetailPage({
                 processoNome={processo.nome_processo}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
                 onEntityChanged={() => void loadTimeline()}
               />
             }
@@ -469,7 +481,7 @@ export function ProcessoDetailPage({
                 processoNome={processo.nome_processo}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
                 onEntityChanged={() => void loadTimeline()}
               />
             }
@@ -490,7 +502,7 @@ export function ProcessoDetailPage({
               processoId={processoId}
               getAccessToken={getAccessToken}
               onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
+              resyncVersion={panelResyncVersion}
             />
           </div>
           <EditableSectionCard
@@ -507,7 +519,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
                 onEntityChanged={() => void loadTimeline()}
               />
             }
@@ -517,7 +529,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
                 onEntityChanged={() => void loadTimeline()}
               />
             }
@@ -541,7 +553,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
               />
             }
             editContent={
@@ -550,7 +562,7 @@ export function ProcessoDetailPage({
                 processoId={processoId}
                 getAccessToken={getAccessToken}
                 onError={setError}
-                resyncVersion={sectionEdit.resyncVersion}
+                resyncVersion={panelResyncVersion}
                 onChanged={() => void load()}
               />
             }
@@ -603,6 +615,7 @@ export function ProcessoDetailPage({
               getAccessToken={getAccessToken}
               onError={setError}
               onNavigate={onNavigate}
+              resyncVersion={panelResyncVersion}
             />
           </ProcessoWorkspaceSectionPanel>
         ) : null}

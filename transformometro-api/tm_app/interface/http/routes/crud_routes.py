@@ -845,7 +845,13 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     if not row:
         return fail("Revisão não encontrada.", 404)
 
-    _audit(request, "revisao", revisao_id, "update", payload)
+    _audit(
+        request,
+        "revisao",
+        revisao_id,
+        "update",
+        _payload_with_revisao_scope(payload, revisao_id),
+    )
     _recalc_after_revisao(revisao_id, processo_id=str(row["processo_id"]))
     return ok(row_to_json(row), "Revisão atualizada.")
 

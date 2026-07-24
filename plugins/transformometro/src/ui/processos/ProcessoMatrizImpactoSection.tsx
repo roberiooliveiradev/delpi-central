@@ -41,6 +41,8 @@ type Props = {
   getAccessToken?: () => string | undefined;
   onError: (message: string | null) => void;
   onNavigate?: (path: string) => void;
+  /** Quando muda (ex.: load do processo após medição/investimento), refetch da matriz. */
+  resyncVersion?: number;
 };
 
 const M = TM_HELP_TOOLTIPS.matriz;
@@ -57,6 +59,7 @@ export function ProcessoMatrizImpactoSection({
   getAccessToken,
   onError,
   onNavigate,
+  resyncVersion = 0,
 }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -94,7 +97,7 @@ export function ProcessoMatrizImpactoSection({
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, resyncVersion]);
 
   const scatterPoints = useMemo(
     () => pontos.map((ponto) => matrizPontoToImpactEffortPoint(ponto, { includeMelhoriaInLabel: true })),

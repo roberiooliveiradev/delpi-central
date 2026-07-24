@@ -27,6 +27,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   resyncVersion?: number;
   onError: (message: string | null) => void;
+  /** Após salvar — invalida diagrama composto do processo (keep-alive). */
+  onSaved?: () => void;
 };
 
 export function InstanciaDiagramEscopoSection({
@@ -37,6 +39,7 @@ export function InstanciaDiagramEscopoSection({
   embeddedInCard = false,
   resyncVersion = 0,
   onError,
+  onSaved,
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -106,6 +109,7 @@ export function InstanciaDiagramEscopoSection({
         : escopo;
       await saveInstanciaDiagramEscopo(instanciaId, payload, getAccessToken);
       await load();
+      onSaved?.();
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao salvar escopo.");
     } finally {

@@ -122,6 +122,8 @@ export function RevisaoCadastroPanel({
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
   const [evidenciasCount, setEvidenciasCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  /** Epoch local — invalida matriz da revisão após medição/investimento (mesmo painel). */
+  const [cadastroEpoch, setCadastroEpoch] = useState(0);
   const [savingVigencia, setSavingVigencia] = useState(false);
   const [savingMedicao, setSavingMedicao] = useState(false);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
@@ -245,6 +247,7 @@ export function RevisaoCadastroPanel({
 
   const reloadCadastroAndPropagate = useCallback(async () => {
     await load();
+    setCadastroEpoch((epoch) => epoch + 1);
     // Invalida árvore, comparativo e matriz da melhoria (painéis keep-alive).
     onRevisaoUpdated();
   }, [load, onRevisaoUpdated]);
@@ -367,7 +370,8 @@ export function RevisaoCadastroPanel({
             onError={onError}
             onNavigate={onNavigate}
             rateioExcedeGanho={rateioDiag?.rateio_excede_ganho ?? false}
-            resyncVersion={sectionEdit.resyncVersion}
+            resyncVersion={sectionEdit.resyncVersion + cadastroEpoch}
+            onSaved={onRevisaoUpdated}
           />
         </RevisaoWorkspaceSectionPanel>
       ) : null}
@@ -427,6 +431,7 @@ export function RevisaoCadastroPanel({
             revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}
             onError={onError}
+            onReload={reloadCadastroAndPropagate}
             resyncVersion={sectionEdit.resyncVersion}
           />
         }
@@ -436,6 +441,7 @@ export function RevisaoCadastroPanel({
             revisaoId={revisao.revisao_id}
             getAccessToken={getAccessToken}
             onError={onError}
+            onReload={reloadCadastroAndPropagate}
             resyncVersion={sectionEdit.resyncVersion}
           />
         }
@@ -458,7 +464,7 @@ export function RevisaoCadastroPanel({
             cenarioTipo={revisao.cenario_tipo}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
             resyncVersion={sectionEdit.resyncVersion}
           />
         }
@@ -469,7 +475,7 @@ export function RevisaoCadastroPanel({
             cenarioTipo={revisao.cenario_tipo}
             getAccessToken={getAccessToken}
             onError={onError}
-            onReload={load}
+            onReload={reloadCadastroAndPropagate}
             resyncVersion={sectionEdit.resyncVersion}
           />
         }

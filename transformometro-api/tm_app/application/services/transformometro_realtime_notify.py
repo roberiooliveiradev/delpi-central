@@ -108,6 +108,79 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
     return None
 
 
+def _lookup_revisao_scope(revisao_id: str) -> tuple[str | None, str | None]:
+    """processo_id, instancia_id a partir da revisão (best-effort)."""
+    try:
+        from tm_app.infrastructure.persistence.repositories.revisao_repository import (
+            RevisaoRepository,
+        )
+
+        row = RevisaoRepository().get(str(revisao_id))
+    except Exception:
+        return None, None
+    if not row:
+        return None, None
+    processo_id = row.get("processo_id")
+    instancia_id = row.get("instancia_id")
+    return (
+        str(processo_id) if processo_id else None,
+        str(instancia_id) if instancia_id else None,
+    )
+
+
+def _lookup_instancia_processo_id(instancia_id: str) -> str | None:
+    try:
+        from tm_app.infrastructure.persistence.repositories.processo_instancia_repository import (
+            ProcessoInstanciaRepository,
+        )
+
+        row = ProcessoInstanciaRepository().get(str(instancia_id))
+    except Exception:
+        return None
+    if not row:
+        return None
+    processo_id = row.get("processo_id")
+    return str(processo_id) if processo_id else None
+
+
+def enrich_realtime_scope_payload(
+    entity_type: str,
+    entity_id: str,
+    payload: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """
+    Completa processo_id/instancia_id quando o audit omite (overlay diagrama/WBS,
+    update vigência, escopo da instância). Permite fan-out sem depender de cada rota.
+    """
+    body = dict(payload or {})
+
+    if entity_type == "revisao":
+        if not body.get("processo_id") or not body.get("instancia_id"):
+            processo_id, instancia_id = _lookup_revisao_scope(entity_id)
+            if processo_id and not body.get("processo_id"):
+                body["processo_id"] = processo_id
+            if instancia_id and not body.get("instancia_id"):
+                body["instancia_id"] = instancia_id
+        return body
+
+    if entity_type == "processo_instancia" and not body.get("processo_id"):
+        processo_id = _lookup_instancia_processo_id(entity_id)
+        if processo_id:
+            body["processo_id"] = processo_id
+        return body
+
+    if entity_type in {"medicao", "investimento", "vinculo"}:
+        revisao_id = body.get("revisao_id")
+        if revisao_id and (not body.get("processo_id") or not body.get("instancia_id")):
+            processo_id, instancia_id = _lookup_revisao_scope(str(revisao_id))
+            if processo_id and not body.get("processo_id"):
+                body["processo_id"] = processo_id
+            if instancia_id and not body.get("instancia_id"):
+                body["instancia_id"] = instancia_id
+
+    return body
+
+
 def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) -> list[str]:
     rooms: list[str] = []
     if entity_type != "catalog":
@@ -190,7 +263,7 @@ def notify_entity_updated(
     actor_user_id: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> None:
-    body = payload or {}
+    body = enrich_realtime_scope_payload(entity_type, entity_id, payload)
     event = {
         "type": "entity.updated",
         "entityType": entity_type,
