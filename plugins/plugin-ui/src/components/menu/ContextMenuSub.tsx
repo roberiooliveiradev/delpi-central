@@ -96,6 +96,11 @@ export function ContextMenuSub({
     const panel = panelRef.current;
     if (!root || !panel) return;
     const rootRect = root.getBoundingClientRect();
+    /*
+     * scrollHeight = conteúdo natural (não o box já cortado por max-height CSS).
+     * Assim o clamp sobe o painel quando há espaço acima, em vez de só scrollar.
+     */
+    const naturalHeight = Math.max(panel.scrollHeight, panel.offsetHeight, 160);
     const coords = resolveContextMenuSubFlyout({
       trigger: {
         left: rootRect.left,
@@ -106,7 +111,7 @@ export function ContextMenuSub({
         height: rootRect.height,
       },
       panelWidth: panel.offsetWidth || 200,
-      panelHeight: panel.offsetHeight || 160,
+      panelHeight: naturalHeight,
       viewportWidth: window.innerWidth,
       viewportHeight: window.innerHeight,
     });
@@ -116,6 +121,8 @@ export function ContextMenuSub({
       left: coords.left,
       right: "auto",
       zIndex: 80,
+      maxHeight: coords.maxHeight,
+      overflowY: "auto",
     });
   }, []);
 

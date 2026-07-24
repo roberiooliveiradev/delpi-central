@@ -48,5 +48,21 @@ describe("resolveContextMenuSubFlyout", () => {
     });
     expect(next.top + 280).toBeLessThanOrEqual(800 - 8);
     expect(next.top).toBeGreaterThanOrEqual(8);
+    expect(next.top).toBeLessThan(700);
+    expect(next.maxHeight).toBe(800 - next.top - 8);
+  });
+
+  it("sobe o painel alto perto do fundo para usar o espaço acima (menos scroll)", () => {
+    const next = resolveContextMenuSubFlyout({
+      trigger: { ...trigger, top: 520, bottom: 556 },
+      panelWidth: 220,
+      panelHeight: 480,
+      viewportWidth: 1200,
+      viewportHeight: 800,
+      margin: 8,
+    });
+    expect(next.top).toBeLessThan(520);
+    expect(next.top + Math.min(480, next.maxHeight)).toBeLessThanOrEqual(800 - 8);
+    expect(next.maxHeight).toBeGreaterThanOrEqual(480 - 1);
   });
 });
