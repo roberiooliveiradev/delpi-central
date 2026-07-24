@@ -21,7 +21,7 @@ Plugin: `plugins/lancamento-notas-fiscais` · Roadmap: [docs/12-roadmap-e-evoluc
 **Persistência:** schema Postgres `lancamento_notas_fiscais` (migrations em `api-delpi/migrations/plugins/lancamento-notas-fiscais/`).  
 **ERP (leitura):** fornecedores `SA2`; matching `SF1` (+ confirmação opcional `SD1`).
 
-**Filiais v1:** `01` (SC), `02` (ES) — **sem** gate `.view.filial-*`.
+**Filiais:** `01` (SC), `02` (ES) — gate `.view.filial-01|02` na API; menu MFE com rotas separadas. `view` / `process` / `manage` liberam ambas as filiais na API.
 
 ---
 

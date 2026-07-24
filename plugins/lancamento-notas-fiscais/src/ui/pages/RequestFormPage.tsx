@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { ApiError, formatDuplicateMessage } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import {
@@ -10,12 +16,14 @@ import {
   sanitizeDocumentTyping,
 } from "../../domain/fiscal";
 import type { CreateRequestPayload, Supplier } from "../../domain/types";
+import { branchLabel, type BranchCode } from "../../constants/branch";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { SupplierSearch } from "../components/SupplierSearch";
 
 type Props = {
   mode: "create" | "edit";
   requestId?: string;
+  lockedBranch?: BranchCode;
   onCancel: () => void;
   onSuccess: (requestId: string) => void;
 };
@@ -30,9 +38,9 @@ type FormState = {
   observation: string;
 };
 
-function toLocalInputValue(iso: string | null | undefined): string {
+function toLocalInputValue(iso: string | Date | null | undefined): string {
   if (!iso) return "";
-  const d = new Date(iso);
+  const d = iso instanceof Date ? iso : new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -44,18 +52,65 @@ function fromLocalInputValue(local: string): string {
   return d.toISOString();
 }
 
-const emptyForm: FormState = {
-  branch: "01",
-  document: "",
-  series: "",
-  issue_date: "",
-  amount: "",
-  received_at: "",
-  observation: "",
-};
+function buildCreateForm(lockedBranch?: BranchCode): FormState {
+  return {
+    branch: lockedBranch ?? "01",
+    document: "",
+    series: "",
+    issue_date: "",
+    amount: "",
+    received_at: toLocalInputValue(new Date()),
+    observation: "",
+  };
+}
 
-export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props) {
-  const [form, setForm] = useState<FormState>(emptyForm);
+const FOCUSABLE_SELECTOR = [
+  "input:not([disabled]):not([type='hidden']):not([type='submit'])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  "button:not([disabled])",
+].join(",");
+
+/** Enter avança o foco como Tab (exceto textarea e botão submit). */
+function handleEnterAsTab(e: KeyboardEvent<HTMLFormElement>) {
+  if (e.key !== "Enter" || e.ctrlKey || e.metaKey || e.altKey) return;
+  const target = e.target;
+  if (!(target instanceof HTMLElement)) return;
+  if (target.tagName === "TEXTAREA") return;
+  if (
+    target instanceof HTMLButtonElement &&
+    (target.type === "submit" || target.dataset.testid === "btn-submit-request")
+  ) {
+    return;
+  }
+  e.preventDefault();
+  const form = e.currentTarget;
+  const focusables = Array.from(
+    form.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+  ).filter((el) => {
+    if (el.getAttribute("aria-hidden") === "true") return false;
+    if (el.tabIndex < 0) return false;
+    return true;
+  });
+  const idx = focusables.indexOf(target);
+  if (idx < 0) return;
+  const next = focusables[idx + 1];
+  if (next) {
+    next.focus();
+    if (next instanceof HTMLInputElement && next.type === "text") {
+      next.select();
+    }
+  }
+}
+
+export function RequestFormPage({
+  mode,
+  requestId,
+  lockedBranch,
+  onCancel,
+  onSuccess,
+}: Props) {
+  const [form, setForm] = useState<FormState>(() => buildCreateForm(lockedBranch));
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -68,7 +123,15 @@ export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props)
   );
 
   useEffect(() => {
-    if (mode !== "edit" || !requestId) return;
+    if (mode === "create") {
+      setForm(buildCreateForm(lockedBranch));
+      setSupplier(null);
+      setFieldErrors({});
+      setSubmitError(null);
+      setLoading(false);
+      return;
+    }
+    if (!requestId) return;
     let cancelled = false;
     setLoading(true);
     api
@@ -77,7 +140,7 @@ export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props)
         if (cancelled) return;
         const r = detail.request;
         setForm({
-          branch: r.branch_code,
+          branch: lockedBranch ?? r.branch_code,
           document: r.document_number.replace(/^0+/, "") || r.document_number,
           series: r.series ?? "",
           issue_date: r.issue_date,
@@ -106,29 +169,37 @@ export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props)
     return () => {
       cancelled = true;
     };
-  }, [mode, requestId]);
+  }, [mode, requestId, lockedBranch]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitError(null);
     const errors: Record<string, string> = {};
     const doc = normalizeDocumentInput(form.document);
+    const series = normalizeSeriesInput(form.series);
     if (!doc.digits) errors.document = "Informe o número da nota.";
-    if (!form.branch) errors.branch = "Selecione a filial.";
+    if (!(lockedBranch ?? form.branch)) errors.branch = "Selecione a filial.";
+    if (!series) errors.series = "Informe a série (como no Protheus).";
     if (!supplier) errors.supplier = "Selecione o fornecedor.";
     if (!form.issue_date) errors.issue_date = "Informe a data de emissão.";
     const amountValue = parseAmountInput(form.amount);
     if (amountValue === null) errors.amount = "Informe o valor (use vírgula ou ponto).";
     if (!form.received_at) errors.received_at = "Informe o recebimento físico.";
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0 || !supplier || !doc.digits || amountValue === null) {
+    if (
+      Object.keys(errors).length > 0 ||
+      !supplier ||
+      !doc.digits ||
+      !series ||
+      amountValue === null
+    ) {
       return;
     }
 
     const payload: CreateRequestPayload = {
-      branch: form.branch,
+      branch: lockedBranch ?? form.branch,
       document: doc.digits,
-      series: normalizeSeriesInput(form.series) || undefined,
+      series,
       supplier_code: supplier.supplier_code,
       supplier_store: supplier.supplier_store,
       issue_date: form.issue_date,
@@ -175,24 +246,40 @@ export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props)
         }
       />
 
-      <form className="lnf-form-shell" onSubmit={handleSubmit} noValidate>
+      <form
+        className="lnf-form-shell"
+        onSubmit={handleSubmit}
+        onKeyDown={handleEnterAsTab}
+        noValidate
+      >
         <section className="lnf-card lnf-form-section">
           <h2>Dados da nota</h2>
           <div className="lnf-form-grid">
             <label className="lnf-field">
               Filial
-              <select
-                aria-label="Filial"
-                value={form.branch}
-                onChange={(e) => setForm((f) => ({ ...f, branch: e.target.value }))}
-                aria-required
-              >
-                {BRANCH_OPTIONS.map((b) => (
-                  <option key={b.value} value={b.value}>
-                    {b.label}
-                  </option>
-                ))}
-              </select>
+              {lockedBranch ? (
+                <select
+                  aria-label="Filial"
+                  value={lockedBranch}
+                  disabled
+                  title="Filial definida pela rota do menu"
+                >
+                  <option value={lockedBranch}>{branchLabel(lockedBranch)}</option>
+                </select>
+              ) : (
+                <select
+                  aria-label="Filial"
+                  value={form.branch}
+                  onChange={(e) => setForm((f) => ({ ...f, branch: e.target.value }))}
+                  aria-required
+                >
+                  {BRANCH_OPTIONS.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+              )}
               {fieldErrors.branch ? (
                 <span className="lnf-error">{fieldErrors.branch}</span>
               ) : null}
@@ -235,8 +322,14 @@ export function RequestFormPage({ mode, requestId, onCancel, onSuccess }: Props)
                     series: normalizeSeriesInput(e.target.value),
                   }))
                 }
-                placeholder="Opcional"
+                placeholder="Ex.: 1"
+                aria-required
+                aria-invalid={Boolean(fieldErrors.series)}
               />
+              <span className="lnf-hint">Obrigatória — igual à série no Protheus.</span>
+              {fieldErrors.series ? (
+                <span className="lnf-error">{fieldErrors.series}</span>
+              ) : null}
             </label>
 
             <label className="lnf-field">

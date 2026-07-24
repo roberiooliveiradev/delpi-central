@@ -47,10 +47,14 @@ const sample: InvoicePostingRequest = {
 
 const posted = { ...sample, status: "posted" as const, completion_source: "auto" };
 
-function renderQueue() {
+function renderQueue(branch: "01" | "02" = "01") {
   return render(
     <LnfPermissionsProvider>
-      <QueuePage onCreate={() => undefined} onOpen={() => undefined} />
+      <QueuePage
+        branch={branch}
+        onCreate={() => undefined}
+        onOpen={() => undefined}
+      />
     </LnfPermissionsProvider>,
   );
 }
@@ -134,7 +138,7 @@ describe("QueuePage", () => {
     });
     renderQueue();
     await waitFor(() => expect(api.listRequests).toHaveBeenCalled());
-    fireEvent.change(screen.getByLabelText("Filial"), { target: { value: "02" } });
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "posted" } });
     await waitFor(() => {
       expect(screen.getByTestId("filters-active")).toBeTruthy();
     });
@@ -229,10 +233,10 @@ describe("QueuePage", () => {
     });
     renderQueue();
     await waitFor(() => expect(api.refreshReconciliation).toHaveBeenCalledTimes(1));
-    fireEvent.change(screen.getByLabelText("Filial"), { target: { value: "02" } });
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "posted" } });
     await waitFor(() => {
       expect(api.listRequests).toHaveBeenCalledWith(
-        expect.objectContaining({ branch: "02", page: 1 }),
+        expect.objectContaining({ status: "posted", branch: "01", page: 1 }),
         expect.anything(),
       );
     });

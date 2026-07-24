@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
-from typing import Any
+from typing import Any, Sequence
 
 from app.domain.services.lancamento_notas_fiscais.exceptions import (
     DuplicateFiscalKeyError,
@@ -35,8 +35,21 @@ from app.domain.services.lancamento_notas_fiscais.reconciliation_matching import
     classify_candidates,
     parse_erp_entry_date,
 )
+from app.domain.services.lancamento_notas_fiscais.history_serialization import (
+    history_changes_json_safe,
+)
 
 COMMENT_MAX_LEN = 4000
+_FISCAL_KEY_FIELDS = frozenset(
+    {
+        "branch_code",
+        "document_number",
+        "document_match_key",
+        "series",
+        "supplier_code",
+        "supplier_store",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -62,6 +75,32 @@ class Actor:
             or self.has_process
             or self.has_manage
         )
+
+
+def _field_values_equal(old: Any, new: Any) -> bool:
+    """Compara valor persistido (já serializado na leitura) com valor tipado do update."""
+    if old is None and new is None:
+        return True
+    if isinstance(new, Decimal):
+        try:
+            return Decimal(str(old)) == new
+        except (InvalidOperation, TypeError, ValueError):
+            return False
+    if isinstance(new, datetime):
+        try:
+            parsed = _parse_datetime(old, field="campo")
+        except InvoicePostingValidationError:
+            return False
+        return parsed == new
+    if isinstance(new, date) and not isinstance(new, datetime):
+        try:
+            parsed = _parse_date(old, field="campo")
+        except InvoicePostingValidationError:
+            return False
+        return parsed == new
+    return str(old if old is not None else "") == str(
+        new if new is not None else ""
+    )
 
 
 def _parse_amount(raw: Any) -> Decimal:
@@ -171,7 +210,7 @@ class CreateInvoicePostingRequestUseCase:
             document = normalize_document(
                 payload.get("document_number") or payload.get("document")
             )
-            series = normalize_series(payload.get("series"))
+            series = normalize_series(payload.get("series"), required=True)
         except FiscalNormalizationError as exc:
             raise InvoicePostingValidationError(str(exc)) from exc
 
@@ -298,9 +337,15 @@ class GetInvoicePostingRequestUseCase:
 
 
 class UpdateInvoicePostingRequestUseCase:
-    def __init__(self, requests: Any, suppliers: Any) -> None:
+    def __init__(
+        self,
+        requests: Any,
+        suppliers: Any,
+        reconciler: Any | None = None,
+    ) -> None:
         self._requests = requests
         self._suppliers = suppliers
+        self._reconciler = reconciler
 
     def execute(
         self, request_id: str, payload: dict[str, Any], actor: Actor
@@ -326,7 +371,7 @@ class UpdateInvoicePostingRequestUseCase:
 
         def _set(field: str, new_value: Any) -> None:
             old = current.get(field)
-            if str(old) != str(new_value):
+            if not _field_values_equal(old, new_value):
                 updates[field] = new_value
                 changes[field] = {"from": old, "to": new_value}
 
@@ -346,7 +391,7 @@ class UpdateInvoicePostingRequestUseCase:
                 _set("document_number", document.document_number)
                 _set("document_match_key", document.document_match_key)
             if "series" in payload:
-                _set("series", normalize_series(payload.get("series")))
+                _set("series", normalize_series(payload.get("series"), required=True))
         except FiscalNormalizationError as exc:
             raise InvoicePostingValidationError(str(exc)) from exc
 
@@ -413,26 +458,41 @@ class UpdateInvoicePostingRequestUseCase:
             "actor_name": actor.user_name,
             "from_status": current["status"],
             "to_status": current["status"],
-            "changes": changes,
+            "changes": history_changes_json_safe(changes),
             "justification": None,
         }
         try:
-            return self._requests.update_request_with_history(
+            updated = self._requests.update_request_with_history(
                 request_id=request_id,
                 updates=updates,
                 history_fields=history,
             )
         except DuplicateFiscalKeyError:
-            _raise_duplicate(
-                self._requests.find_active_by_fiscal_key(
-                    branch_code=branch,
-                    supplier_code=supplier_code,
-                    supplier_store=supplier_store,
-                    document_match_key=document_match_key,
-                    series=series,
-                    exclude_id=request_id,
-                )
+            existing = self._requests.find_active_by_fiscal_key(
+                branch_code=branch,
+                supplier_code=supplier_code,
+                supplier_store=supplier_store,
+                document_match_key=document_match_key,
+                series=series,
+                exclude_id=request_id,
             )
+            if existing is None:
+                raise InvoicePostingDuplicateError(
+                    "Já existe solicitação ativa com a mesma chave fiscal."
+                ) from None
+            _raise_duplicate(existing)
+
+        fiscal_changed = bool(_FISCAL_KEY_FIELDS.intersection(updates))
+        if fiscal_changed and self._reconciler is not None:
+            try:
+                self._reconciler.try_reconcile_requests([request_id])
+            except Exception:
+                # Correção já persistida — falha de ERP não deve derrubar o PATCH.
+                pass
+            refreshed = self._requests.get_request(request_id)
+            if refreshed is not None:
+                return refreshed
+        return updated
 
 
 class StartInvoicePostingRequestUseCase:
@@ -749,11 +809,22 @@ class RunInvoicePostingReconciliationUseCase:
         self._requests = requests
         self._sf1 = sf1_query
 
-    def execute_batch(self, *, limit: int | None = None) -> dict[str, int]:
+    def execute_batch(
+        self,
+        *,
+        limit: int | None = None,
+        request_ids: Sequence[str] | None = None,
+        order_by: str = "fifo",
+    ) -> dict[str, int]:
         """Núcleo de matching/persistência — sem lock e sem checagem de permissão."""
         resolved_limit = resolve_reconciliation_limit(limit)
+        if request_ids:
+            resolved_limit = max(resolved_limit, len(list(request_ids)))
+            resolved_limit = min(resolved_limit, MAX_RECONCILIATION_LIMIT)
         candidates = self._requests.list_reconciliation_candidates(
-            limit=resolved_limit
+            limit=resolved_limit,
+            prioritize_ids=list(request_ids) if request_ids else None,
+            order_by=order_by,
         )
         examined = len(candidates)
         empty = {
@@ -823,6 +894,36 @@ class RunInvoicePostingReconciliationUseCase:
             "failed": max(matched - posted, 0),
         }
 
+    def try_reconcile_requests(self, request_ids: Sequence[str]) -> dict[str, int]:
+        """Best-effort para 1+ IDs (ex.: após correção fiscal). Sem permissão manage."""
+        ids = [str(x) for x in request_ids if str(x).strip()]
+        if not ids:
+            return {
+                "examined": 0,
+                "matched": 0,
+                "posted": 0,
+                "not_found": 0,
+                "ambiguous": 0,
+                "failed": 0,
+            }
+        if not self._requests.try_acquire_reconciliation_lock():
+            return {
+                "examined": 0,
+                "matched": 0,
+                "posted": 0,
+                "not_found": 0,
+                "ambiguous": 0,
+                "failed": 0,
+            }
+        try:
+            return self.execute_batch(
+                limit=len(ids),
+                request_ids=ids,
+                order_by="recent",
+            )
+        finally:
+            self._requests.release_reconciliation_lock()
+
     def execute(self, *, actor: Actor, limit: int | None = None) -> dict[str, int]:
         if not actor.has_manage:
             raise InvoicePostingForbiddenError(
@@ -836,7 +937,7 @@ class RunInvoicePostingReconciliationUseCase:
 
         try:
             self._requests.mark_reconciliation_refresh_started()
-            return self.execute_batch(limit=limit)
+            return self.execute_batch(limit=limit, order_by="fifo")
         finally:
             self._requests.release_reconciliation_lock()
 
@@ -877,7 +978,10 @@ class RefreshInvoicePostingReconciliationUseCase:
 
             self._requests.mark_reconciliation_refresh_started()
             try:
-                summary = self._run.execute_batch(limit=DEFAULT_RECONCILIATION_LIMIT)
+                summary = self._run.execute_batch(
+                    limit=DEFAULT_RECONCILIATION_LIMIT,
+                    order_by="recent",
+                )
             except InvoicePostingErpQueryError:
                 return {"status": "failed", "updated": 0}
             except InvoicePostingError:

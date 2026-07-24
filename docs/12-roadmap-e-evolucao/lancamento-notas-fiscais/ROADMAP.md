@@ -13,7 +13,7 @@
 | 3 | MFE (fila, form, detalhe, RBAC UI) | Feito |
 | 4 | UX (header marca, Já lançada, valor BR, layout detalhe) | Feito |
 | 5 | Job agendado de conciliação | Backlog |
-| 6 | Permissões por filial | Backlog (fora v1) |
+| 6 | Permissões por filial | Feito |
 | 7 | KPI/resumo de fila + exposição chat | Backlog |
 
 ## Critérios de “pronto” do MVP

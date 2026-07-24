@@ -29,6 +29,60 @@ describe("RequestFormPage", () => {
     );
   });
 
+  it("pré-preenche recebimento com data/hora atual", () => {
+    render(
+      <RequestFormPage
+        mode="create"
+        onCancel={() => undefined}
+        onSuccess={() => undefined}
+      />,
+    );
+    const received = screen.getByLabelText("Recebimento físico") as HTMLInputElement;
+    expect(received.value).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+  });
+
+  it("exige série no cadastro", async () => {
+    vi.mocked(api.searchSuppliers).mockResolvedValue([
+      {
+        supplier_code: "000001",
+        supplier_store: "01",
+        supplier_name: "Alpha",
+        supplier_short_name: "A",
+        tax_id: "123",
+        state: "SC",
+        blocked: false,
+      },
+    ]);
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    fireEvent.change(screen.getByLabelText("Número da nota"), {
+      target: { value: "123" },
+    });
+    fireEvent.change(screen.getByLabelText("Data de emissão"), {
+      target: { value: "2026-07-01" },
+    });
+    fireEvent.change(screen.getByLabelText("Valor"), { target: { value: "10" } });
+    fireEvent.change(screen.getByPlaceholderText(/mín\. 2 caracteres/i), {
+      target: { value: "Alpha" },
+    });
+    await waitFor(() => expect(screen.getByText(/000001\/01/)).toBeTruthy());
+    fireEvent.click(screen.getByText(/000001\/01/));
+    fireEvent.click(screen.getByTestId("btn-submit-request"));
+    expect(screen.getByText(/Informe a série/i)).toBeTruthy();
+    expect(api.createRequest).not.toHaveBeenCalled();
+  });
+
+  it("Enter avança o foco como Tab", () => {
+    render(
+      <RequestFormPage mode="create" onCancel={() => undefined} onSuccess={() => undefined} />,
+    );
+    const documentInput = screen.getByLabelText("Número da nota");
+    documentInput.focus();
+    fireEvent.keyDown(documentInput, { key: "Enter", bubbles: true });
+    expect(document.activeElement).toBe(screen.getByLabelText("Série"));
+  });
+
   it("cadastra com payload correto", async () => {
     vi.mocked(api.searchSuppliers).mockResolvedValue([
       {
@@ -52,6 +106,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Número da nota"), {
       target: { value: "123" },
     });
+    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText("Data de emissão"), {
       target: { value: "2026-07-01" },
     });
@@ -73,6 +128,7 @@ describe("RequestFormPage", () => {
       expect.objectContaining({
         branch: "01",
         document: "123",
+        series: "1",
         supplier_code: "000001",
         supplier_store: "01",
         amount: "10.5",
@@ -110,6 +166,7 @@ describe("RequestFormPage", () => {
     fireEvent.change(screen.getByLabelText("Número da nota"), {
       target: { value: "1" },
     });
+    fireEvent.change(screen.getByLabelText("Série"), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText("Data de emissão"), {
       target: { value: "2026-07-01" },
     });

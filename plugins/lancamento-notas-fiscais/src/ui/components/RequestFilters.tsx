@@ -3,19 +3,32 @@ import { ChevronDown, Filter, RotateCcw } from "lucide-react";
 import type { ListFilters } from "../../domain/types";
 import { BRANCH_OPTIONS } from "../../domain/fiscal";
 import { STATUS_LABELS } from "../../domain/status";
+import { branchLabel } from "../../constants/branch";
 import { hasActiveFilters } from "../format";
 
 type Props = {
   value: ListFilters;
+  lockedBranch?: string;
   onChange: (next: ListFilters) => void;
   onClear: () => void;
 };
 
-export function RequestFilters({ value, onChange, onClear }: Props) {
+export function RequestFilters({
+  value,
+  lockedBranch,
+  onChange,
+  onClear,
+}: Props) {
   const [open, setOpen] = useState(true);
-  const active = hasActiveFilters(value);
-  const set = (patch: Partial<ListFilters>) =>
-    onChange({ ...value, ...patch, page: 1 });
+  const active = hasActiveFilters(value, {
+    branch: lockedBranch,
+    status: "pending",
+  });
+  const set = (patch: Partial<ListFilters>) => {
+    const next = { ...value, ...patch, page: 1 };
+    if (lockedBranch) next.branch = lockedBranch;
+    onChange(next);
+  };
 
   return (
     <section
@@ -64,21 +77,34 @@ export function RequestFilters({ value, onChange, onClear }: Props) {
           <div className="lnf-filters__row" data-testid="filters-primary">
             <label className="lnf-field">
               Filial
-              <select
-                value={value.branch ?? ""}
-                onChange={(e) => set({ branch: e.target.value || undefined })}
-              >
-                <option value="">Todas</option>
-                {BRANCH_OPTIONS.map((b) => (
-                  <option key={b.value} value={b.value}>
-                    {b.label}
-                  </option>
-                ))}
-              </select>
+              {lockedBranch ? (
+                <select
+                  aria-label="Filial"
+                  value={lockedBranch}
+                  disabled
+                  title="Filial definida pela rota do menu"
+                >
+                  <option value={lockedBranch}>{branchLabel(lockedBranch)}</option>
+                </select>
+              ) : (
+                <select
+                  aria-label="Filial"
+                  value={value.branch ?? ""}
+                  onChange={(e) => set({ branch: e.target.value || undefined })}
+                >
+                  <option value="">Todas</option>
+                  {BRANCH_OPTIONS.map((b) => (
+                    <option key={b.value} value={b.value}>
+                      {b.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
             <label className="lnf-field">
               Status
               <select
+                aria-label="Status"
                 value={value.status ?? ""}
                 onChange={(e) => set({ status: e.target.value || undefined })}
               >

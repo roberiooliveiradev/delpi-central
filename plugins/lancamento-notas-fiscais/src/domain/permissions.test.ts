@@ -3,13 +3,16 @@ import { resolveLnfPermissions } from "./permissions";
 import { hasAction } from "./status";
 
 describe("resolveLnfPermissions", () => {
-  it("libera leitura para create/view/process/manage", () => {
+  it("libera leitura para create/view/process/manage e view.filial", () => {
     expect(resolveLnfPermissions(["lancamento-notas-fiscais.create"]).canRead).toBe(
       true,
     );
     expect(resolveLnfPermissions(["lancamento-notas-fiscais.view"]).canCreate).toBe(
       false,
     );
+    expect(
+      resolveLnfPermissions(["lancamento-notas-fiscais.view.filial-01"]).canAccess,
+    ).toBe(true);
     expect(resolveLnfPermissions([], true).canManage).toBe(true);
   });
 });

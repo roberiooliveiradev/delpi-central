@@ -38,6 +38,9 @@ def test_normalize_series() -> None:
     assert normalize_series("  a1 ") == "A1"
     with pytest.raises(FiscalNormalizationError):
         normalize_series("ABCD")
+    with pytest.raises(FiscalNormalizationError):
+        normalize_series("", required=True)
+    assert normalize_series("1", required=True) == "1"
 
 
 def test_normalize_branch() -> None:

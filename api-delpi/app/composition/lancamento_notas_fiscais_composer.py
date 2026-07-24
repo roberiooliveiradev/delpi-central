@@ -59,9 +59,15 @@ def build_get_invoice_posting_request_use_case() -> GetInvoicePostingRequestUseC
 
 
 def build_update_invoice_posting_request_use_case() -> UpdateInvoicePostingRequestUseCase:
+    repo = build_invoice_posting_request_repository()
+    reconciler = RunInvoicePostingReconciliationUseCase(
+        repo,
+        build_invoice_posting_sf1_repository(),
+    )
     return UpdateInvoicePostingRequestUseCase(
-        build_invoice_posting_request_repository(),
+        repo,
         build_supplier_repository(),
+        reconciler=reconciler,
     )
 
 

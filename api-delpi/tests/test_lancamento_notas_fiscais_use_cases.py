@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import date, datetime, timezone
-from typing import Any
+from typing import Any, Sequence
 from uuid import uuid4
 
 import pytest
@@ -19,6 +19,7 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     ListInvoicePostingRequestsUseCase,
     PostManualInvoicePostingRequestUseCase,
     ResumeInvoicePostingRequestUseCase,
+    RunInvoicePostingReconciliationUseCase,
     SearchSuppliersUseCase,
     StartInvoicePostingRequestUseCase,
     UpdateInvoicePostingRequestUseCase,
@@ -316,6 +317,94 @@ class FakeRequests:
         }
         self.history.setdefault(request_id, []).append(entry)
 
+    def list_reconciliation_candidates(
+        self,
+        *,
+        limit: int,
+        prioritize_ids: Sequence[str] | None = None,
+        order_by: str = "fifo",
+    ) -> list[dict[str, Any]]:
+        eligible = {"pending", "in_progress", "blocked"}
+        items = [r for r in self.rows.values() if r["status"] in eligible]
+        selected: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        if prioritize_ids:
+            wanted = {str(x) for x in prioritize_ids}
+            for row in items:
+                rid = str(row["id"])
+                if rid in wanted and rid not in seen:
+                    seen.add(rid)
+                    selected.append(deepcopy(row))
+        remaining = max(0, int(limit) - len(selected))
+        rest = [r for r in items if str(r["id"]) not in seen]
+        if order_by == "recent":
+            rest.sort(
+                key=lambda r: (r.get("updated_at") or "", r.get("received_at") or ""),
+                reverse=True,
+            )
+        else:
+            rest.sort(
+                key=lambda r: (r.get("received_at") or "", r.get("created_at") or "")
+            )
+        selected.extend(deepcopy(rest[:remaining]))
+        return selected[: max(0, int(limit))]
+
+    def try_acquire_reconciliation_lock(self) -> bool:
+        return True
+
+    def release_reconciliation_lock(self) -> None:
+        return None
+
+    def mark_reconciled_posted_batch(self, items: Sequence[dict[str, Any]]) -> int:
+        posted = 0
+        for item in items:
+            rid = item["request_id"]
+            current = self.rows.get(rid)
+            if current is None or current["status"] not in {
+                "pending",
+                "in_progress",
+                "blocked",
+            }:
+                continue
+            self.rows[rid] = {
+                **current,
+                "status": "posted",
+                "block_reason": None,
+                "block_description": None,
+                "completion_source": "auto",
+                "sf1_recno": item.get("sf1_recno"),
+                "erp_entry_date": (
+                    item["erp_entry_date"].isoformat()
+                    if hasattr(item.get("erp_entry_date"), "isoformat")
+                    else item.get("erp_entry_date")
+                ),
+                "reconciled_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            posted += 1
+        return posted
+
+
+class FakeSf1:
+    def __init__(self, rows: list[dict[str, Any]] | None = None) -> None:
+        self.rows = rows or []
+
+    def find_active_by_fiscal_keys(
+        self, keys: Sequence[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for key in keys:
+            for row in self.rows:
+                if (
+                    row["branch_code"] == key["branch_code"]
+                    and row["supplier_code"] == key["supplier_code"]
+                    and row["supplier_store"] == key["supplier_store"]
+                    and row["document_match_key"] == key["document_match_key"]
+                    and row["series"] == key["series"]
+                ):
+                    out.append(dict(row))
+        return out
+
 
 def _payload(**overrides: Any) -> dict[str, Any]:
     base = {
@@ -451,6 +540,76 @@ def test_update_authorized_and_forbidden() -> None:
         UpdateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
             created["id"], {"amount": "300"}, _creator()
         )
+
+
+def test_update_full_payload_with_series_and_dates() -> None:
+    """Regressão: correção no form envia datas/valor tipados no histórico (JSONB)."""
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(series="X"), _creator()
+    )
+    updated = UpdateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        created["id"],
+        {
+            "branch": "02",
+            "document": "182751",
+            "series": "1",
+            "supplier_code": "000001",
+            "supplier_store": "01",
+            "issue_date": created["issue_date"],
+            "amount": created["amount"],
+            "received_at": created["received_at"],
+            "observation": "série corrigida",
+        },
+        _creator(),
+    )
+    assert updated["series"] == "1"
+    assert updated["document_match_key"] == "000182751"
+    assert updated["branch_code"] == "02"
+    hist = repo.list_history(created["id"])
+    update_events = [h for h in hist if h["event_type"] == "updated"]
+    assert update_events
+    changes = update_events[-1]["changes"]
+    assert changes["series"]["to"] == "1"
+    # payload JSON-serializável (mesmo contrato do Jsonb no Postgres)
+    import json
+
+    json.dumps(changes)
+
+
+def test_update_series_triggers_immediate_reconcile() -> None:
+    """Após corrigir série, tenta casar SF1 na hora (não só no refresh da fila)."""
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(
+            branch="02",
+            document="182751",
+            series="X",
+            supplier_code="000001",
+            supplier_store="01",
+        ),
+        _creator(),
+    )
+    sf1 = FakeSf1(
+        [
+            {
+                "branch_code": "02",
+                "supplier_code": "000001",
+                "supplier_store": "01",
+                "document_match_key": "000182751",
+                "series": "1",
+                "sf1_recno": 105404,
+                "erp_entry_date_raw": "20260722",
+            }
+        ]
+    )
+    reconciler = RunInvoicePostingReconciliationUseCase(repo, sf1)
+    updated = UpdateInvoicePostingRequestUseCase(
+        repo, FakeSuppliers(), reconciler=reconciler
+    ).execute(created["id"], {"series": "1"}, _creator())
+    assert updated["status"] == "posted"
+    assert updated["completion_source"] == "auto"
+    assert updated["sf1_recno"] == 105404
 
 
 def test_update_terminal_forbidden() -> None:

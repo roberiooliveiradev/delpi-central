@@ -48,7 +48,14 @@ Navegação interna (estado React; base do portal `/apps/lancamento-notas-fiscai
 | Nova / Corrigir | Formulário de solicitação |
 | Detalhe | Resumo, dados fiscais, situação, ações, histórico |
 
-Menu Portal: grupo **Financeiro** · permissão `lancamento-notas-fiscais.access`.
+Menu Portal: grupo **Financeiro** · rotas por filial:
+
+| Rota | Permissão de menu |
+|------|-------------------|
+| `/apps/lancamento-notas-fiscais/filial-01` | `lancamento-notas-fiscais.view.filial-01` |
+| `/apps/lancamento-notas-fiscais/filial-02` | `lancamento-notas-fiscais.view.filial-02` |
+
+A filial da rota fica **travada** na fila e no formulário (não mistura SC/ES).
 
 ---
 
@@ -93,14 +100,19 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | Código | Papel |
 |--------|--------|
-| `lancamento-notas-fiscais.access` | Abrir o plugin |
+| `lancamento-notas-fiscais.access` | Legado (abrir plugin) |
 | `lancamento-notas-fiscais.create` | **Solicitante** — cadastrar / corrigir / cancelar próprias |
-| `lancamento-notas-fiscais.view` | Consultar fila (todas as solicitações autorizadas) |
-| `lancamento-notas-fiscais.process` | **Atendente** — start/block/resume/Já lançada/comentar |
+| `lancamento-notas-fiscais.view.filial-01` | Menu + API da **Filial 01 (SC)** |
+| `lancamento-notas-fiscais.view.filial-02` | Menu + API da **Filial 02 (ES)** |
+| `lancamento-notas-fiscais.view` | Consultar fila (API libera **ambas**; atribua também as `.view.filial-*` para o menu) |
+| `lancamento-notas-fiscais.process` | **Atendente** — start/block/resume/Já lançada (API ambas; menu via `.view.filial-*`) |
 | `lancamento-notas-fiscais.manage` | Admin — cancelar não terminais + conciliação em lote |
 
-Escopo de fila: `create` sem `view`/`process`/`manage` vê **somente as próprias**.  
-v1 **sem** `.view.filial-*` (filiais `01`/`02` no formulário; consulta ampla para quem tem view/process/manage).
+**Solicitante (uma filial):** `create` + `view.filial-01` *ou* `view.filial-02`.  
+**Atendente / admin:** `process`/`manage` (+ `create` se cadastram) + **as duas** `.view.filial-*` no papel Keycloak.
+
+Escopo de fila: `create` sem `view`/`process`/`manage` vê **somente as próprias**, filtradas pela filial da rota.  
+Filtro padrão de status: **Aguardando lançamento** (`pending`).
 
 Detalhe solicitante × atendente: [PLAYBOOK.md](../../docs/12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md) § papéis.
 

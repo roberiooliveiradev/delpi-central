@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FilePlus2, Inbox, SearchX } from "lucide-react";
 import { useLnfPermissions } from "../../application/useLnfPermissions";
+import { branchLabel, type BranchCode } from "../../constants/branch";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingRequest, ListFilters } from "../../domain/types";
@@ -16,12 +17,15 @@ import {
 } from "../format";
 
 type Props = {
+  branch: BranchCode;
   highlightId?: string;
   onCreate: () => void;
   onOpen: (requestId: string) => void;
 };
 
-const DEFAULT_FILTERS: ListFilters = { page: 1, page_size: 20 };
+function defaultFilters(branch: BranchCode): ListFilters {
+  return { page: 1, page_size: 20, status: "pending", branch };
+}
 
 type SyncState = "idle" | "checking" | "updated" | "unavailable";
 
@@ -32,10 +36,12 @@ function oldestIds(items: InvoicePostingRequest[], count = 3): Set<string> {
   return new Set(sorted.slice(0, Math.min(count, sorted.length)).map((r) => r.id));
 }
 
-export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
+export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
   const perms = useLnfPermissions();
-  const [filters, setFilters] = useState<ListFilters>(DEFAULT_FILTERS);
-  const [debounced, setDebounced] = useState<ListFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<ListFilters>(() => defaultFilters(branch));
+  const [debounced, setDebounced] = useState<ListFilters>(() =>
+    defaultFilters(branch),
+  );
   const [items, setItems] = useState<InvoicePostingRequest[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -49,6 +55,13 @@ export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
   const refreshStartedRef = useRef(false);
   const mountedRef = useRef(true);
   const debouncedRef = useRef(debounced);
+
+  useEffect(() => {
+    const next = defaultFilters(branch);
+    setFilters(next);
+    setDebounced(next);
+    refreshStartedRef.current = false;
+  }, [branch]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -168,8 +181,10 @@ export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
   }, [perms.loading, perms.canRead]);
 
   const page = debounced.page ?? 1;
-  const filtersActive = hasActiveFilters(debounced);
+  const filterDefaults = { branch, status: "pending" as const };
+  const filtersActive = hasActiveFilters(debounced, filterDefaults);
   const aging = useMemo(() => oldestIds(items), [items]);
+  const resetFilters = () => setFilters(defaultFilters(branch));
 
   const syncLabel =
     syncState === "checking"
@@ -184,7 +199,7 @@ export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
     <div className="lnf-stack" data-testid="queue-page">
       <LnfPageHeader
         title="Lançamento de Notas Fiscais"
-        subtitle="Fila de solicitações por ordem de recebimento físico."
+        subtitle={`Fila · ${branchLabel(branch)} · por ordem de recebimento físico.`}
         meta={
           listLoadedAt
             ? `Fila carregada em ${formatDateTime(listLoadedAt)}`
@@ -232,8 +247,9 @@ export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
 
       <RequestFilters
         value={filters}
+        lockedBranch={branch}
         onChange={setFilters}
-        onClear={() => setFilters(DEFAULT_FILTERS)}
+        onClear={resetFilters}
       />
 
       <section className="lnf-card lnf-queue-panel">
@@ -263,7 +279,7 @@ export function QueuePage({ highlightId, onCreate, onOpen }: Props) {
                 <button
                   type="button"
                   className="lnf-btn lnf-btn--ghost"
-                  onClick={() => setFilters(DEFAULT_FILTERS)}
+                  onClick={resetFilters}
                   data-testid="btn-clear-empty-filters"
                 >
                   Limpar filtros

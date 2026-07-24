@@ -28,10 +28,20 @@ export function formatDocument(
   return serie ? `${display} / ${serie}` : display;
 }
 
-export function hasActiveFilters(filters: ListFilters): boolean {
+export function hasActiveFilters(
+  filters: ListFilters,
+  defaults?: Pick<ListFilters, "branch" | "status">,
+): boolean {
+  const defaultBranch = defaults?.branch;
+  const defaultStatus = defaults?.status ?? "pending";
+  const branchDiffers =
+    defaultBranch != null
+      ? (filters.branch ?? "") !== defaultBranch
+      : Boolean(filters.branch);
+  const statusDiffers = (filters.status ?? "") !== (defaultStatus ?? "");
   return Boolean(
-    filters.branch ||
-      filters.status ||
+    branchDiffers ||
+      statusDiffers ||
       (filters.supplier && filters.supplier.trim()) ||
       (filters.document && filters.document.trim()) ||
       filters.issued_from ||

@@ -20,6 +20,9 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     RECONCILIATION_LOCK_CLASS_ID,
     RECONCILIATION_LOCK_OBJECT_ID,
 )
+from app.domain.services.lancamento_notas_fiscais.history_serialization import (
+    history_changes_json_safe,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -36,6 +39,7 @@ def _is_unique_violation(exc: BaseException) -> bool:
             return True
         current = current.__cause__ or current.__context__  # type: ignore[assignment]
     return False
+
 
 SCHEMA = "lancamento_notas_fiscais"
 
@@ -272,19 +276,68 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         self,
         *,
         limit: int,
+        prioritize_ids: Sequence[str] | None = None,
+        order_by: str = "fifo",
     ) -> list[dict[str, Any]]:
         statuses = tuple(sorted(RECONCILIATION_ELIGIBLE_STATUSES))
-        rows = self.fetch_all(
-            f"""
-            SELECT {_REQUEST_COLUMNS}
-              FROM {SCHEMA}.invoice_posting_requests
-             WHERE status = ANY(%s)
-             ORDER BY received_at ASC, created_at ASC
-             LIMIT %s
-            """,
-            (list(statuses), int(limit)),
-        )
-        return [_serialize_request(r) for r in rows]
+        limit = max(0, int(limit))
+        if limit == 0:
+            return []
+
+        selected: list[dict[str, Any]] = []
+        seen: set[str] = set()
+
+        if prioritize_ids:
+            ids = [str(x) for x in prioritize_ids if str(x).strip()]
+            if ids:
+                rows = self.fetch_all(
+                    f"""
+                    SELECT {_REQUEST_COLUMNS}
+                      FROM {SCHEMA}.invoice_posting_requests
+                     WHERE id = ANY(%s::uuid[])
+                       AND status = ANY(%s)
+                    """,
+                    (ids, list(statuses)),
+                )
+                for row in rows:
+                    item = _serialize_request(row)
+                    rid = str(item["id"])
+                    if rid not in seen:
+                        seen.add(rid)
+                        selected.append(item)
+
+        remaining = limit - len(selected)
+        if remaining > 0:
+            order_sql = (
+                "updated_at DESC, received_at ASC, created_at ASC"
+                if order_by == "recent"
+                else "received_at ASC, created_at ASC"
+            )
+            params: list[Any] = [list(statuses)]
+            exclude_sql = ""
+            if seen:
+                exclude_sql = " AND NOT (id = ANY(%s::uuid[]))"
+                params.append(list(seen))
+            params.append(remaining)
+            rows = self.fetch_all(
+                f"""
+                SELECT {_REQUEST_COLUMNS}
+                  FROM {SCHEMA}.invoice_posting_requests
+                 WHERE status = ANY(%s)
+                   {exclude_sql}
+                 ORDER BY {order_sql}
+                 LIMIT %s
+                """,
+                tuple(params),
+            )
+            for row in rows:
+                item = _serialize_request(row)
+                rid = str(item["id"])
+                if rid not in seen:
+                    seen.add(rid)
+                    selected.append(item)
+
+        return selected[:limit]
 
     def mark_reconciled_posted_batch(
         self,
@@ -540,7 +593,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         *,
         auto_commit: bool,
     ) -> None:
-        changes = fields.get("changes") or {}
+        changes = history_changes_json_safe(fields.get("changes") or {})
         self.execute(
             f"""
             INSERT INTO {SCHEMA}.invoice_posting_history (

@@ -158,11 +158,37 @@ class FakeRequests:
         self.refresh_started_count = 0
         self.last_started_at: datetime | None = None
 
-    def list_reconciliation_candidates(self, *, limit: int) -> list[dict[str, Any]]:
+    def list_reconciliation_candidates(
+        self,
+        *,
+        limit: int,
+        prioritize_ids: Sequence[str] | None = None,
+        order_by: str = "fifo",
+    ) -> list[dict[str, Any]]:
         eligible = {"pending", "in_progress", "blocked"}
         items = [r for r in self.rows.values() if r["status"] in eligible]
-        items.sort(key=lambda r: (r.get("received_at") or "", r.get("created_at") or ""))
-        return deepcopy(items[:limit])
+        selected: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        if prioritize_ids:
+            wanted = {str(x) for x in prioritize_ids}
+            for row in items:
+                rid = str(row["id"])
+                if rid in wanted and rid not in seen:
+                    seen.add(rid)
+                    selected.append(deepcopy(row))
+        remaining = max(0, int(limit) - len(selected))
+        rest = [r for r in items if str(r["id"]) not in seen]
+        if order_by == "recent":
+            rest.sort(
+                key=lambda r: (r.get("updated_at") or "", r.get("received_at") or ""),
+                reverse=True,
+            )
+        else:
+            rest.sort(
+                key=lambda r: (r.get("received_at") or "", r.get("created_at") or "")
+            )
+        selected.extend(deepcopy(rest[:remaining]))
+        return selected[: max(0, int(limit))]
 
     def mark_reconciled_posted_batch(self, items: Sequence[dict[str, Any]]) -> int:
         if self.fail_persist:
@@ -653,9 +679,9 @@ def test_refresh_reuses_execute_batch() -> None:
     calls: list[int] = []
     original = run_uc.execute_batch
 
-    def wrapped(*, limit: int | None = None):
+    def wrapped(*, limit: int | None = None, **kwargs):
         calls.append(1)
-        return original(limit=limit)
+        return original(limit=limit, **kwargs)
 
     run_uc.execute_batch = wrapped  # type: ignore[method-assign]
     RefreshInvoicePostingReconciliationUseCase(repo, run_uc).execute(

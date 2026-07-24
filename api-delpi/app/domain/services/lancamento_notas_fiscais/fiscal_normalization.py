@@ -32,10 +32,14 @@ def normalize_document(raw: str | None) -> NormalizedDocument:
     )
 
 
-def normalize_series(raw: str | None) -> str:
+def normalize_series(raw: str | None, *, required: bool = False) -> str:
     series = str(raw or "").strip().upper()
     if len(series) > 3:
         raise FiscalNormalizationError("Série deve ter no máximo 3 caracteres.")
+    if required and not series:
+        raise FiscalNormalizationError(
+            "Informe a série da nota (como no Protheus)."
+        )
     return series
 
 

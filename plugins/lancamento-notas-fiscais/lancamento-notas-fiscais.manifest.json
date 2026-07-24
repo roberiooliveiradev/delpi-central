@@ -13,7 +13,7 @@
     {
       "code": "lancamento-notas-fiscais.access",
       "name": "Acessar Lançamento de Notas Fiscais",
-      "description": "Acessar o plugin de lançamento de notas fiscais.",
+      "description": "Acessar o plugin de lançamento de notas fiscais (legado).",
       "module": "lancamento-notas-fiscais"
     },
     {
@@ -25,7 +25,19 @@
     {
       "code": "lancamento-notas-fiscais.view",
       "name": "Consultar solicitações de NF",
-      "description": "Consultar todas as solicitações autorizadas.",
+      "description": "Consultar todas as solicitações (ambas as filiais).",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.view.filial-01",
+      "name": "Lançamento de NF — Filial 01",
+      "description": "Acesso à fila e cadastro da filial 01 (SC).",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.view.filial-02",
+      "name": "Lançamento de NF — Filial 02",
+      "description": "Acesso à fila e cadastro da filial 02 (ES).",
       "module": "lancamento-notas-fiscais"
     },
     {
@@ -43,11 +55,20 @@
   ],
   "routes": [
     {
-      "path": "/apps/lancamento-notas-fiscais",
-      "label": "Lançamento de Notas Fiscais",
-      "permission": "lancamento-notas-fiscais.access",
+      "path": "/apps/lancamento-notas-fiscais/filial-01",
+      "label": "Lançamento de NF — Filial 01",
+      "permission": "lancamento-notas-fiscais.view.filial-01",
       "icon": "file-text",
       "order": 30,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    },
+    {
+      "path": "/apps/lancamento-notas-fiscais/filial-02",
+      "label": "Lançamento de NF — Filial 02",
+      "permission": "lancamento-notas-fiscais.view.filial-02",
+      "icon": "file-text",
+      "order": 31,
       "showInMenu": true,
       "menuGroup": "Financeiro"
     }

@@ -24,12 +24,12 @@
 | `01` | Santa Catarina |
 | `02` | Espírito Santo |
 
-**Fora do escopo da primeira versão:** prioridade manual na fila; documentos alfanuméricos novos; agendamento concreto do reconciliador (só contrato de comportamento); registro de manifesto/RBAC no Core (feito em etapa posterior); **permissões por filial** (`.view.filial-01|02`).
+**Fora do escopo da primeira versão:** prioridade manual na fila; documentos alfanuméricos novos; agendamento concreto do reconciliador (só contrato de comportamento); registro de manifesto/RBAC no Core (feito em etapa posterior).
 
-**Escopo de consulta (v1):** quem tem `view` consulta solicitações das filiais `01` e `02` (sem RBAC granular por filial).
+**Escopo de consulta:** quem tem `view` / `process` / `manage` consulta solicitações das filiais `01` e `02` na API. Solicitantes usam rotas de menu por filial (`.view.filial-01|02`) com filial travada na UI e gate na API.
 
-**MVP (atual):** migrations V001–V003, endpoints HTTP, MFE (fila/form/detalhe), conciliação sob demanda (`/reconciliation/refresh` + `/run`).  
-**Backlog:** job agendado de conciliação; RBAC `.view.filial-*`; resumo KPI da fila.
+**MVP (atual):** migrations V001–V003, endpoints HTTP, MFE (fila/form/detalhe por filial), conciliação sob demanda (`/reconciliation/refresh` + `/run`), RBAC `.view.filial-*`.  
+**Backlog:** job agendado de conciliação; resumo KPI da fila.
 
 ---
 
@@ -145,9 +145,9 @@ cancelled   → (nenhuma transição normal)
 
 ### 4.1 Cadastro
 
-**Obrigatórios:** filial (`01`|`02`); número da nota; fornecedor; loja; data de emissão; valor; data/hora do recebimento físico (`received_at`).
+**Obrigatórios:** filial (`01`|`02`); número da nota; **série**; fornecedor; loja; data de emissão; valor; data/hora do recebimento físico (`received_at`).
 
-**Opcionais:** série; observação.
+**Opcionais:** observação.
 
 **Automáticos:** usuário criador; `created_at`; snapshot do fornecedor; `document_number` / `document_match_key` / série normalizada; `status = pending`.
 
@@ -170,7 +170,7 @@ Resposta API: **409 Conflict**, corpo indicando `existing_request_id` (e status 
 ### 4.4 Fila
 
 - Ordenação padrão: `received_at ASC` (FIFO pelo recebimento físico).
-- Filtros mínimos: filial; status; fornecedor; número da nota; período de recebimento; período de emissão.
+- Filtros mínimos: filial (travada pela rota); status (padrão **Aguardando lançamento**); fornecedor; número da nota; período de recebimento; período de emissão.
 - Sem prioridade manual na v1.
 
 ### 4.5 Comentários
@@ -238,13 +238,15 @@ Sem entidades extras na v1 (motivos de bloqueio = enum/campo; sem tabela de prio
 
 | Código | Responsabilidade |
 |--------|------------------|
-| `lancamento-notas-fiscais.access` | Abrir o plugin |
+| `lancamento-notas-fiscais.access` | Abrir o plugin (legado) |
 | `lancamento-notas-fiscais.create` | Cadastrar; corrigir próprias (`pending`/`blocked`); cancelar própria em `pending` |
-| `lancamento-notas-fiscais.view` | Consultar solicitações das filiais `01` e `02` |
+| `lancamento-notas-fiscais.view.filial-01` | Menu + API Filial 01 (SC) |
+| `lancamento-notas-fiscais.view.filial-02` | Menu + API Filial 02 (ES) |
+| `lancamento-notas-fiscais.view` | Consultar solicitações das filiais `01` e `02` (API); menu via `.view.filial-*` |
 | `lancamento-notas-fiscais.process` | Iniciar atendimento, bloquear, retomar, comentar, **Já lançada** |
 | `lancamento-notas-fiscais.manage` | Administrar; cancelar não terminais; conciliação em lote (`/reconciliation/run`) |
 
-**v1:** sem permissões `.view.filial-*`.
+**Menu MFE:** `/apps/lancamento-notas-fiscais/filial-01` e `…/filial-02`. Filtro padrão de status: `pending`.
 
 ---
 

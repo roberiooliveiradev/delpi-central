@@ -41,6 +41,14 @@ from app.composition.lancamento_notas_fiscais_composer import (
 )
 from app.core.responses import error_response, not_found_response
 from app.domain.services.lancamento_notas_fiscais.exceptions import InvoicePostingError
+from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
+    FiscalNormalizationError,
+    normalize_branch,
+)
+from app.interface.http.routes.lancamento_notas_fiscais.lancamento_notas_fiscais_branch_access import (
+    branch_access_error,
+    has_global_branch_access,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
@@ -116,6 +124,32 @@ def _handle_domain(exc: InvoicePostingError):
     )
 
 
+def _gate_payload_branch(branch_raw: str | None):
+    try:
+        branch = normalize_branch(branch_raw)
+    except FiscalNormalizationError as exc:
+        return error_response(
+            str(exc),
+            status_code=422,
+            code="VALIDATION_ERROR",
+            recoverable=True,
+        )
+    return branch_access_error(branch)
+
+
+def _gate_loaded_branch(data: dict[str, Any]):
+    payload = data.get("request") if isinstance(data.get("request"), dict) else data
+    branch = str((payload or {}).get("branch_code") or "").strip()
+    if not branch:
+        return error_response(
+            "Solicitação sem filial.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=False,
+        )
+    return branch_access_error(branch)
+
+
 @router.get("/suppliers", operation_id="search_lancamento_notas_fiscais_suppliers")
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
 def search_suppliers(
@@ -145,6 +179,9 @@ def search_suppliers(
 @require_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE)
 def create_request(body: CreateRequestBody):
     try:
+        branch_error = _gate_payload_branch(body.branch_code)
+        if branch_error is not None:
+            return branch_error
         data = build_create_invoice_posting_request_use_case().execute(
             body.model_dump(by_alias=False),
             _actor(),
@@ -181,6 +218,17 @@ def list_requests(
     page_size: int = Query(20, ge=1, le=100),
 ):
     try:
+        if branch:
+            branch_error = _gate_payload_branch(branch)
+            if branch_error is not None:
+                return branch_error
+        elif not has_global_branch_access():
+            return error_response(
+                "Informe a filial (parâmetro branch).",
+                status_code=400,
+                code="BRANCH_REQUIRED",
+                recoverable=True,
+            )
         filters = {
             "branch": branch,
             "status": status,
@@ -224,6 +272,9 @@ def get_request(request_id: UUID):
         data = build_get_invoice_posting_request_use_case().execute(
             str(request_id), _actor()
         )
+        branch_error = _gate_loaded_branch(data)
+        if branch_error is not None:
+            return branch_error
         return api_delpi_success(
             data,
             operation_id="get_lancamento_notas_fiscais_request",
@@ -248,6 +299,17 @@ def get_request(request_id: UUID):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS)
 def update_request(request_id: UUID, body: dict[str, Any] = Body(...)):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
+        if "branch" in body or "branch_code" in body:
+            target = body.get("branch_code", body.get("branch"))
+            target_error = _gate_payload_branch(target)
+            if target_error is not None:
+                return target_error
         data = build_update_invoice_posting_request_use_case().execute(
             str(request_id), body, _actor()
         )
@@ -275,6 +337,12 @@ def update_request(request_id: UUID, body: dict[str, Any] = Body(...)):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS)
 def start_request(request_id: UUID):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         data = build_start_invoice_posting_request_use_case().execute(
             str(request_id), _actor()
         )
@@ -302,6 +370,12 @@ def start_request(request_id: UUID):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS)
 def block_request(request_id: UUID, body: BlockBody):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         data = build_block_invoice_posting_request_use_case().execute(
             str(request_id),
             actor=_actor(),
@@ -332,6 +406,12 @@ def block_request(request_id: UUID, body: BlockBody):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS)
 def resume_request(request_id: UUID):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         data = build_resume_invoice_posting_request_use_case().execute(
             str(request_id), _actor()
         )
@@ -359,6 +439,12 @@ def resume_request(request_id: UUID):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS)
 def add_comment(request_id: UUID, body: CommentBody):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         data = build_add_invoice_posting_comment_use_case().execute(
             str(request_id), actor=_actor(), body=body.body
         )
@@ -386,6 +472,12 @@ def add_comment(request_id: UUID, body: CommentBody):
 @require_any_permission(LANCAMENTO_NOTAS_FISCAIS_CREATE_PERMISSIONS)
 def cancel_request(request_id: UUID, body: CancelBody):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         data = build_cancel_invoice_posting_request_use_case().execute(
             str(request_id),
             actor=_actor(),
@@ -418,6 +510,12 @@ def post_manual_request(
     body: PostManualBody | None = Body(default=None),
 ):
     try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
         payload = body or PostManualBody()
         data = build_post_manual_invoice_posting_request_use_case().execute(
             str(request_id),

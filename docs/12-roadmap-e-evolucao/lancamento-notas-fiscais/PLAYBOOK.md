@@ -167,11 +167,12 @@ curl -sI http://localhost/apps/lancamento-notas-fiscais/assets/remoteEntry.js | 
 
 ### Keycloak / Portal
 
-Registrar manifesto (permissões + rota menu Financeiro). Atribuir papéis reais:
+Registrar manifesto (permissões + rotas menu Financeiro por filial). Atribuir papéis reais:
 
-- Operação de recebimento → `access` + `create`
-- Fiscal / lançamento → `access` + `view` + `process`
-- Admin do processo → `manage` (+ demais conforme necessidade)
+- Operação SC → `create` + `view.filial-01`
+- Operação ES → `create` + `view.filial-02`
+- Fiscal / lançamento → `view` + `process` + **ambas** `view.filial-01` e `view.filial-02` (menu)
+- Admin do processo → `manage` (+ `create` se cadastra) + ambas `.view.filial-*`
 
 ---
 
@@ -185,7 +186,7 @@ Registrar manifesto (permissões + rota menu Financeiro). Atribuir papéis reais
 | 3 | MFE fila / form / detalhe | Feito |
 | 4 | UX (header IE, Já lançada, doc 9, valor BR) | Feito |
 | 5 | Job agendado de conciliação (cron) | Backlog |
-| 6 | RBAC por filial `.view.filial-*` | Backlog (fora do v1) |
+| 6 | RBAC por filial `.view.filial-*` | Feito (rotas menu + gate API) |
 | 7 | Resumo KPI da fila / chat agent | Backlog |
 
 ---
