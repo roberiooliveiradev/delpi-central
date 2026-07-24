@@ -6,15 +6,16 @@ import delpiLogoSvg from "../assets/logoDelpi.svg?raw";
  * O texto superior reflete o resultado da inspeção.
  */
 function qualitySealSvg(topLabel: string): string {
+  const topSize = topLabel.length > 9 ? 16 : 20;
   return `
 <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Selo ${topLabel} Qualidade">
   <circle cx="70" cy="70" r="66" fill="#ffffff" stroke="#000000" stroke-width="3.5" />
   <circle cx="70" cy="70" r="57" fill="none" stroke="#000000" stroke-width="1.25" />
-  <g transform="translate(46,20) scale(1.9)" fill="#000000">
+  <g transform="translate(47,14) scale(1.75)" fill="#000000">
     <path d="M2 21h4V9H2v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
   </g>
-  <text x="70" y="95" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="15" fill="#000000" letter-spacing="0.5">${topLabel}</text>
-  <text x="70" y="111" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="10.5" fill="#000000" letter-spacing="1.5">QUALIDADE</text>
+  <text x="70" y="94" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="${topSize}" fill="#000000" letter-spacing="0.4">${topLabel}</text>
+  <text x="70" y="114" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="13.5" fill="#000000" letter-spacing="1.2">QUALIDADE</text>
 </svg>`;
 }
 
@@ -85,14 +86,14 @@ function buildLabelStyles(): string {
       align-items: center;
       justify-content: center;
       gap: 0.35mm;
-      padding: 1mm 1.2mm;
+      padding: 1.2mm 3.2mm;
       width: auto;
       max-width: 44mm;
       text-align: center;
     }
     .tag__qr img {
-      width: 23mm;
-      height: 23mm;
+      width: 21mm;
+      height: 21mm;
       display: block;
     }
     .tag__caption {
@@ -125,7 +126,7 @@ function buildLabelStyles(): string {
       justify-content: center;
     }
     .tag__logo svg {
-      width: 11mm;
+      width: 15mm;
       max-width: 100%;
       height: auto;
       display: block;
@@ -138,8 +139,8 @@ function buildLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 14.5mm;
-      height: 14.5mm;
+      width: 15.5mm;
+      height: 15.5mm;
       display: block;
     }
     .hint {
