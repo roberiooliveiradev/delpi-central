@@ -83,6 +83,15 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [quality-action-plans/status-atual.md](./quality-action-plans/status-atual.md) | Snapshot implementação (jun/2026) |
 | [quality-action-plans/HOMOLOGACAO.md](./quality-action-plans/HOMOLOGACAO.md) | Roteiro de homologação com casos reais |
 
+### Lançamento de Notas Fiscais
+
+| Arquivo | Conteúdo |
+|---|---|
+| [lancamento-notas-fiscais/README.md](./lancamento-notas-fiscais/README.md) | Índice do módulo |
+| [lancamento-notas-fiscais/PLAYBOOK.md](./lancamento-notas-fiscais/PLAYBOOK.md) | **Playbook** — papéis, fluxo, deploy, ondas |
+| [lancamento-notas-fiscais/ROADMAP.md](./lancamento-notas-fiscais/ROADMAP.md) | Etapas e status do MVP |
+| [lancamento-notas-fiscais/especificacao-funcional-tecnica.md](./lancamento-notas-fiscais/especificacao-funcional-tecnica.md) | Contrato de domínio |
+
 ### Inspeções de Entrada
 
 | Arquivo | Conteúdo |

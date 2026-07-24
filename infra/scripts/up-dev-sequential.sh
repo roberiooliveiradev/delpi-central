@@ -131,6 +131,7 @@ FASE_MFE=(
   propostas-comerciais
   financeiro-centro-custo
   financeiro-inadimplencia
+  lancamento-notas-fiscais
   strategic-indicators
   customer-experience
   cultura-delpi

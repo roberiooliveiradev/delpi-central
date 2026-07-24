@@ -110,6 +110,28 @@ Legenda de permissões:
 | GET | `/financeiro/inadimplencia/clientes` | A / `financeiro-inadimplencia.access` |
 | GET | `/financeiro/inadimplencia/titulos` | A / `financeiro-inadimplencia.access` |
 
+### Lançamento de Notas Fiscais (`/lancamento-notas-fiscais`)
+
+> Permissões do plugin `lancamento-notas-fiscais.*` — ver [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md).
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/lancamento-notas-fiscais/suppliers` | `create` |
+| POST | `/lancamento-notas-fiscais/requests` | `create` |
+| GET | `/lancamento-notas-fiscais/requests` | LNF read |
+| GET | `/lancamento-notas-fiscais/requests/{id}` | LNF read |
+| PATCH | `/lancamento-notas-fiscais/requests/{id}` | create/process/manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/start` | process/manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/block` | process/manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/resume` | process/manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/comments` | create/process/manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/cancel` | create† / manage |
+| POST | `/lancamento-notas-fiscais/requests/{id}/post-manual` | process/manage |
+| POST | `/lancamento-notas-fiscais/reconciliation/refresh` | LNF read |
+| POST | `/lancamento-notas-fiscais/reconciliation/run` | `manage` |
+
+† `create`: somente própria em `pending`.
+
 ---
 
 ## Comercial (`/commercial`)

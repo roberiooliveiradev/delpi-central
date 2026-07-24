@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "lancamento-notas-fiscais",
+  "name": "Lançamento de Notas Fiscais",
+  "description": "Controle do recebimento, acompanhamento e lançamento de notas fiscais de entrada.",
+  "category": "financeiro",
+  "icon": "file-text",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/lancamento-notas-fiscais",
+  "entry": "/apps/lancamento-notas-fiscais/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "lancamento-notas-fiscais.access",
+      "name": "Acessar Lançamento de Notas Fiscais",
+      "description": "Acessar o plugin de lançamento de notas fiscais.",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.create",
+      "name": "Cadastrar solicitações de NF",
+      "description": "Cadastrar e acompanhar solicitações próprias.",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.view",
+      "name": "Consultar solicitações de NF",
+      "description": "Consultar todas as solicitações autorizadas.",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.process",
+      "name": "Processar solicitações de NF",
+      "description": "Atender, bloquear, retomar e comentar solicitações.",
+      "module": "lancamento-notas-fiscais"
+    },
+    {
+      "code": "lancamento-notas-fiscais.manage",
+      "name": "Administrar Lançamento de Notas Fiscais",
+      "description": "Administrar solicitações e executar ações excepcionais.",
+      "module": "lancamento-notas-fiscais"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/lancamento-notas-fiscais",
+      "label": "Lançamento de Notas Fiscais",
+      "permission": "lancamento-notas-fiscais.access",
+      "icon": "file-text",
+      "order": 30,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}
