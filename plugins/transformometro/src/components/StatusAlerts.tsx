@@ -1,3 +1,4 @@
+import { StateBox } from "./StateBox";
 import { LoadingActivityCard } from "./LoadingActivityCard";
 import {
   EMPTY_REQUEST_PROGRESS,
@@ -11,6 +12,9 @@ type StatusAlertsProps = {
   hasData: boolean;
   requestProgress?: RequestProgress;
   onRetry: () => void;
+  /** Título do loading inicial (quando ainda não há dados). */
+  loadingTitle?: string;
+  loadingDescription?: string;
 };
 
 export function StatusAlerts({
@@ -19,24 +23,26 @@ export function StatusAlerts({
   hasData,
   requestProgress = EMPTY_REQUEST_PROGRESS,
   onRetry,
+  loadingTitle = "Carregando indicadores",
+  loadingDescription = "Buscando economia, evolução mensal e ranking de processos.",
 }: StatusAlertsProps) {
   const loadingProgress = useLoadingProgress(loading && !hasData, requestProgress);
 
   return (
     <>
       {error ? (
-        <div className="ds-state ds-state--error" role="alert">
+        <StateBox variant="error" dismissible={false}>
           <p>{error}</p>
           <button className="ds-primary-btn" type="button" onClick={onRetry}>
             Tentar novamente
           </button>
-        </div>
+        </StateBox>
       ) : null}
 
       {loading && !hasData ? (
         <LoadingActivityCard
-          title="Carregando indicadores"
-          description="Buscando economia, evolução mensal e ranking de processos."
+          title={loadingTitle}
+          description={loadingDescription}
           progressPercent={loadingProgress}
         />
       ) : null}

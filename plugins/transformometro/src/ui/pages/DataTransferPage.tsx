@@ -22,6 +22,7 @@ import {
 } from "../../data/api/transformometroApi";
 import "./DataTransferPage.css";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { StateBox } from "../../components/StateBox";
 
 const tableCn = DS_TABLE_CLASS_NAMES;
 
@@ -218,14 +219,14 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
 
       <div className="tm-data-transfer">
         {error ? (
-          <div className="ds-state ds-state--error" role="alert">
+          <StateBox variant="error" onDismiss={() => setError(null)}>
             <p>{error}</p>
-          </div>
+          </StateBox>
         ) : null}
         {success ? (
-          <div className="ds-state ds-state--success" role="status">
+          <StateBox variant="success" onDismiss={() => setSuccess(null)}>
             <p>{success}</p>
-          </div>
+          </StateBox>
         ) : null}
 
         <div className="tm-data-transfer__grid">
@@ -391,13 +392,13 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
             </div>
 
             {preview && preview.format_compatible === false ? (
-              <div className="ds-state ds-state--error tm-data-transfer__incompatible" role="alert">
+              <StateBox variant="error" className="tm-data-transfer__incompatible" dismissible={false}>
                 <p>
                   <AlertTriangle size={16} aria-hidden style={{ verticalAlign: "text-bottom", marginRight: 6 }} />
                   {(preview.errors ?? []).join(" ") ||
                     "Formato do arquivo não reconhecido. Envie um backup exportado pelo Transformômetro."}
                 </p>
-              </div>
+              </StateBox>
             ) : null}
 
             {preview?.valid && preview.entities ? (

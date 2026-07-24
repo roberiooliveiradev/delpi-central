@@ -13,6 +13,7 @@ import {
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
+import { StateBox } from "../../components/StateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
@@ -215,12 +216,12 @@ export function SetorDetailPage({
 
   if (!isCreate && !setor && !loading) {
     const errorView = (
-      <div className="ds-state ds-state--error" role="alert">
+      <StateBox variant="error" dismissible={false}>
         <p>{loadError ?? "Departamento não encontrado."}</p>
         <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
           Voltar à lista
         </button>
-      </div>
+      </StateBox>
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;

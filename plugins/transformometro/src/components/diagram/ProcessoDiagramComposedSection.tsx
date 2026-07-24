@@ -9,6 +9,7 @@ import { stripFlowchartHighlights } from "../../utils/diffHighlightDisplay";
 import { todayDateInput } from "../../utils/dateInputs";
 import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { DS_GHOST_BTN } from "../ghostChrome";
+import { StateBox } from "../StateBox";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -111,7 +112,7 @@ export function ProcessoDiagramComposedSection({
       ) : null}
 
       {showDiff && composed?.conflicts?.length ? (
-        <div className="ds-state ds-state--warn" role="status">
+        <StateBox variant="warning" dismissible={false}>
           <p>
             Interseções no mesmo nó: o rótulo exibido é o da revisão com início de vigência mais
             recente.
@@ -126,7 +127,7 @@ export function ProcessoDiagramComposedSection({
               </li>
             ))}
           </ul>
-        </div>
+        </StateBox>
       ) : null}
 
       {displayFlowchart ? (

@@ -65,6 +65,13 @@ export {
   type ModalFrameProps,
 } from "./ModalFrame";
 export {
+  StateBox,
+  createDashboardStateBox,
+  type DashboardStateBoxProps,
+  type StateBoxProps,
+  type StateBoxTone,
+} from "./StateBox";
+export {
   StateBoxPanel,
   createStateBoxPanel,
   stateBoxBemClasses,

@@ -21,6 +21,7 @@ import {
   modalShellBemClasses,
   StateBanner,
   stateBannerBemClasses,
+  StateBox,
   StateBoxPanel,
   stateBoxBemClasses,
   StatusBadge,
@@ -107,6 +108,34 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
             <StateBanner classNames={bannerCn} variant="error">
               Falha ao carregar.
             </StateBanner>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback.StateBox",
+    family: "feedback",
+    exportName: "StateBox",
+    title: "StateBox",
+    description: "Aviso inline (info / sucesso / erro / atenção), dismissível.",
+    docAnchor: "statebox",
+    propsSummary: ["variant", "children", "onDismiss", "dismissible"],
+    demos: [
+      {
+        id: "variants",
+        label: "Variantes",
+        render: () => (
+          <div className="puc-stack">
+            <StateBox prefix="puc" variant="success" dismissible={false}>
+              Exportação concluída.
+            </StateBox>
+            <StateBox prefix="puc" variant="error" dismissible={false}>
+              Falha ao importar.
+            </StateBox>
+            <StateBox prefix="puc" variant="warning" dismissible={false}>
+              Há conflitos de vigência.
+            </StateBox>
           </div>
         ),
       },

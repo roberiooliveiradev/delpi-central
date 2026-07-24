@@ -13,6 +13,7 @@ import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { DecompositionRichTree } from "./DecompositionRichTree";
 import { DiffHighlightToggle } from "../DiffHighlightToggle";
+import { StateBox } from "../StateBox";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { todayDateInput } from "../../utils/dateInputs";
 import { DS_GHOST_BTN } from "../ghostChrome";
@@ -124,7 +125,7 @@ export function ProcessoDecompositionComposedSection({
       ) : null}
 
       {showDiff && composed?.conflicts?.length ? (
-        <div className="ds-state ds-state--warn" role="status">
+        <StateBox variant="warning" dismissible={false}>
           <p>
             Interseções no mesmo nó: o rótulo exibido é o da revisão com início de vigência mais
             recente. Revise as melhorias listadas.
@@ -139,7 +140,7 @@ export function ProcessoDecompositionComposedSection({
               </li>
             ))}
           </ul>
-        </div>
+        </StateBox>
       ) : null}
 
       {!composed?.tree?.nodes?.length ? (

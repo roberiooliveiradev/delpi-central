@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
 import { PageHeader } from "../../components/PageHeader";
+import { StateBox } from "../../components/StateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import {
@@ -124,7 +125,7 @@ export function RevisaoDetailPage({
 
   if (!processo || !revisao || !options) {
     const errorView = (
-      <div className="ds-state ds-state--error" role="alert">
+      <StateBox variant="error" dismissible={false}>
         <p>{error ?? "Revisão não encontrada."}</p>
         <button
           type="button"
@@ -133,7 +134,7 @@ export function RevisaoDetailPage({
         >
           Voltar à instância
         </button>
-      </div>
+      </StateBox>
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;

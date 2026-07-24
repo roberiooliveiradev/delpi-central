@@ -9,6 +9,7 @@ import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
+import { StateBox } from "../../components/StateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
@@ -310,12 +311,12 @@ export function RecursoDetailPage({
 
   if (!isCreate && !recurso && !loading) {
     const errorView = (
-      <div className="ds-state ds-state--error" role="alert">
+      <StateBox variant="error" dismissible={false}>
         <p>{error ?? "Recurso não encontrado."}</p>
         <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
           Voltar à lista
         </button>
-      </div>
+      </StateBox>
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;

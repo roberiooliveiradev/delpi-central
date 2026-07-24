@@ -255,16 +255,6 @@
   line-height: 1.5;
 }
 
-.dashboard-transformometro .ds-state--success {
-  border-color: color-mix(in srgb, #22c55e 40%, var(--ds-card-border));
-  background: color-mix(in srgb, #22c55e 10%, var(--ds-card-bg));
-}
-
-.dashboard-transformometro .ds-state--success p {
-  margin: 0;
-  color: color-mix(in srgb, #22c55e 70%, var(--ds-title));
-}
-
 @media (max-width: 960px) {
   .dashboard-transformometro .tm-data-transfer__grid {
     grid-template-columns: 1fr;

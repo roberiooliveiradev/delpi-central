@@ -125,6 +125,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "LoadingState"),
   vc("feedback", "LoadingActivityCard"),
   vc("feedback", "StateBanner"),
+  vc("feedback", "StateBox", {
+    addedAt: "2026-07-24",
+    changeNote: "Aviso inline canônico (success/error/warning) — dual-class state-box",
+  }),
   vc("feedback", "StateBoxPanel"),
   vc("feedback", "InfoStatePanel"),
   vc("feedback", "StatusBadge"),

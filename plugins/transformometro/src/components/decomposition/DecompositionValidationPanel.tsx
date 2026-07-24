@@ -2,6 +2,7 @@ import {
   scrollToDecompositionNode,
   type DecompositionValidationReport,
 } from "../../utils/decompositionValidation";
+import { StateBox } from "../StateBox";
 
 type Props = {
   report: DecompositionValidationReport | null;
@@ -14,9 +15,9 @@ export function DecompositionValidationPanel({ report }: Props) {
 
   return (
     <div className="tm-decomposition-validation" role="alert" aria-live="polite">
-      <p className="ds-state ds-state--warn">
-        Corrija os itens abaixo antes de salvar o mapeamento.
-      </p>
+      <StateBox variant="warning" dismissible={false}>
+        <p>Corrija os itens abaixo antes de salvar o mapeamento.</p>
+      </StateBox>
       <ul className="tm-decomposition-validation__issues">
         {report.issues.map((issue, index) => (
           <li

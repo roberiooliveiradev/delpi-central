@@ -17,6 +17,7 @@ import { formatDiffSummary } from "../../utils/diffHighlightDisplay";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
 import { DiffHighlightToggle } from "../DiffHighlightToggle";
+import { StateBox } from "../StateBox";
 import { TabPanelTransition } from "../TabPanelTransition";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -148,11 +149,11 @@ export function RevisaoDecompositionSection({
       ) : null}
 
       {merged.warnings?.length ? (
-        <div className="ds-state ds-state--warn" role="status">
+        <StateBox variant="warning" dismissible={false}>
           {merged.warnings.map((warning) => (
             <p key={warning}>{warning}</p>
           ))}
-        </div>
+        </StateBox>
       ) : null}
 
       {hasDiff ? (

@@ -17,6 +17,7 @@ import { useScrollToRef } from "../../hooks/useScrollToRef";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { RevisaoComparativoSection } from "../../components/processo/RevisaoComparativoSection";
+import { StateBox } from "../../components/StateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
@@ -447,12 +448,12 @@ export function InstanciaDetailPage({
 
   if (!processo || !instancia || !options) {
     const errorView = (
-      <div className="ds-state ds-state--error" role="alert">
+      <StateBox variant="error" dismissible={false}>
         <p>{error ?? "Instância não encontrada."}</p>
         <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(buildProcessoPath(processoId))}>
           Voltar ao processo
         </button>
-      </div>
+      </StateBox>
     );
     if (embedded) return errorView;
     return <TransformometroShell>{errorView}</TransformometroShell>;

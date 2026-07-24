@@ -29,6 +29,7 @@ import {
 } from "../../utils/diffHighlightDisplay";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 import { DiffHighlightToggle } from "../DiffHighlightToggle";
+import { StateBox } from "../StateBox";
 import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -190,11 +191,11 @@ export function RevisaoDiagramSection({
       ) : null}
 
       {merged.warnings?.length ? (
-        <div className="ds-state ds-state--warn" role="status">
+        <StateBox variant="warning" dismissible={false}>
           {merged.warnings.map((warning) => (
             <p key={warning}>{warning}</p>
           ))}
-        </div>
+        </StateBox>
       ) : null}
 
       {hasDiff ? (

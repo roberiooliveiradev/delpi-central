@@ -17,6 +17,7 @@ import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveRe
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
+import { StateBox } from "../../components/StateBox";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
@@ -343,12 +344,12 @@ export function ProcessoDetailPage({
             Voltar
           </button>
         ) : null}
-        <div className="ds-state ds-state--error" role="alert">
+        <StateBox variant="error" dismissible={false}>
           <p>{error ?? "Processo não encontrado."}</p>
           <button type="button" className="ds-primary-btn" onClick={() => void load()}>
             Tentar novamente
           </button>
-        </div>
+        </StateBox>
       </>
     );
     if (embedded) return errorView;

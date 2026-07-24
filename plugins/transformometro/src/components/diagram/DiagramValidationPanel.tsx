@@ -1,4 +1,5 @@
 import type { DiagramValidationReport } from "../../data/api/transformometroDiagramApi";
+import { StateBox } from "../StateBox";
 
 type Props = {
   report: DiagramValidationReport | null;
@@ -15,11 +16,13 @@ export function DiagramValidationPanel({ report, loading = false }: Props) {
 
   return (
     <div className="tm-diagram-validation">
-      <p className={report.valid ? "ds-hint" : "ds-state ds-state--warn"}>
-        {report.valid
-          ? "Validação estrutural OK."
-          : "Diagrama com erros de validação — revise antes de publicar."}
-      </p>
+      {report.valid ? (
+        <p className="ds-hint">Validação estrutural OK.</p>
+      ) : (
+        <StateBox variant="warning" dismissible={false}>
+          <p>Diagrama com erros de validação — revise antes de publicar.</p>
+        </StateBox>
+      )}
 
       {report.issues.length ? (
         <ul className="tm-diagram-validation__issues">
