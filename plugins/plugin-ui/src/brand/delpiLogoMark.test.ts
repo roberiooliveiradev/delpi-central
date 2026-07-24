@@ -16,9 +16,10 @@ describe("DELPI_LOGO_MARK_SVG", () => {
 });
 
 describe("buildDelpiCableLabelStyles", () => {
-  it("inclui regras canônicas (padding, name, product, meta)", () => {
+  it("inclui padding vertical e logo menor para o código do produto caber", () => {
     const css = buildDelpiCableLabelStyles();
-    expect(css).toContain("padding: 1.2mm 7mm");
+    expect(css).toContain("padding: 2mm 7mm");
+    expect(css).toContain(".tag__logo svg {\n      width: 13mm;");
     expect(css).toContain(".tag__name");
     expect(css).toContain(".tag__product");
     expect(css).toContain(".tag__meta");
@@ -47,7 +48,7 @@ describe("buildDelpiCableLabelDocumentHtml", () => {
       hintHtml: "Dobre no centro.",
     });
     expect(html).toContain("<style>");
-    expect(html).toContain("padding: 1.2mm 7mm");
+    expect(html).toContain("padding: 2mm 7mm");
     expect(html).toContain(".tag__name");
     expect(html).not.toContain("516.792");
     expect(html).toContain("Fulano");

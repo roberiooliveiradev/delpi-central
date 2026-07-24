@@ -50,7 +50,8 @@ export function buildDelpiCableLabelStyles(): string {
       box-sizing: border-box;
       width: 100mm;
       height: 30mm;
-      padding: 1.2mm 7mm;
+      /* Vertical extra: evita corte do código do produto na borda inferior da mídia */
+      padding: 2mm 7mm;
       border: 0.3mm dashed #9fb1c1;
       overflow: hidden;
       background: #ffffff;
@@ -60,15 +61,15 @@ export function buildDelpiCableLabelStyles(): string {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 0.35mm;
+      gap: 0.25mm;
       padding: 0;
       width: auto;
       max-width: 36mm;
       text-align: center;
     }
     .tag__qr img {
-      width: 18mm;
-      height: 18mm;
+      width: 17.5mm;
+      height: 17.5mm;
       display: block;
     }
     .tag__caption {
@@ -95,11 +96,12 @@ export function buildDelpiCableLabelStyles(): string {
       line-height: 1.2;
     }
     .tag__product {
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 900;
       color: #000000;
       line-height: 1.05;
       letter-spacing: 0.2px;
+      padding-top: 0.3mm;
     }
     .tag__fold {
       width: 8mm;
@@ -112,7 +114,7 @@ export function buildDelpiCableLabelStyles(): string {
       align-items: center;
     }
     .tag__logo svg {
-      width: 16mm;
+      width: 13mm;
       max-width: 100%;
       height: auto;
       display: block;
@@ -124,8 +126,8 @@ export function buildDelpiCableLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 16.5mm;
-      height: 16.5mm;
+      width: 15mm;
+      height: 15mm;
       display: block;
     }
     .hint {
@@ -149,7 +151,7 @@ export function buildDelpiCableLabelStyles(): string {
         box-sizing: border-box;
         width: 100mm;
         height: 30mm;
-        padding: 1.2mm 7mm;
+        padding: 2mm 7mm;
       }
       .hint { display: none; }
     }
