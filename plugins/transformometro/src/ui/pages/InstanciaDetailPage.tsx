@@ -60,6 +60,7 @@ import {
   requestWorkspaceTreeRefresh,
 } from "../../utils/navigation";
 import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
 import {
@@ -201,6 +202,13 @@ export function InstanciaDetailPage({
     embedded,
     embeddedActive,
     reload: () => void load(),
+  });
+
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    enabled: !embedded || embeddedActive,
+    onUpdated: () => void load(),
   });
 
   const fallbackSection = useInstanciaWorkspaceSection();

@@ -3,6 +3,9 @@ export type CollaborativeEntityUpdateInput = {
   updatedSectionKey?: string | null;
   actorUserId?: string | null;
   myUserId?: string | null;
+  /** Aba/cliente que originou a mutação (preferido para ignore_own). */
+  actorClientId?: string | null;
+  myClientId?: string | null;
   updatedSectionLabel?: string | null;
 };
 
@@ -17,9 +20,16 @@ const CONFLICT_NOTICE =
 export function resolveCollaborativeEntityUpdate(
   input: CollaborativeEntityUpdateInput
 ): CollaborativeEntityUpdateResult {
-  const { editingSectionKey, updatedSectionKey, actorUserId, myUserId, updatedSectionLabel } = input;
+  const {
+    editingSectionKey,
+    updatedSectionKey,
+    actorClientId,
+    myClientId,
+    updatedSectionLabel,
+  } = input;
 
-  if (actorUserId && myUserId && actorUserId === myUserId) {
+  // Anti-eco só na mesma aba/cliente — outras abas do mesmo user sincronizam via WS.
+  if (actorClientId && myClientId && actorClientId === myClientId) {
     return { kind: "ignore_own" };
   }
 

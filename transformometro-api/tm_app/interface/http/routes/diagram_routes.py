@@ -13,7 +13,7 @@ from tm_app.application.services.diagrama_composition_service import DiagramaCom
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revisao_diagram_merge_service import RevisaoDiagramMergeService
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.domain.diagram.bpmn_mermaid_mapping import build_bpmn_catalog_for_api
@@ -98,6 +98,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
         entity_id=entity_id,
         action=action,
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload=payload,
     )
 

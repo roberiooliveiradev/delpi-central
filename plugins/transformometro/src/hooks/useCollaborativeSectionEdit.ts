@@ -13,6 +13,7 @@ import { useTransformometroRealtime } from "./useTransformometroRealtime";
 import { COLLABORATION_SECTION_LABELS } from "../constants/collaborationSections";
 import type { TransformometroEntityUpdatedEvent } from "../constants/realtime";
 import { getUserIdFromToken } from "../utils/jwt";
+import { getTransformometroClientId } from "../utils/clientId";
 import { isMatchingPresencePayload, presencePayloadEquals } from "../utils/collaborationPresence";
 import { resolveCollaborativeEntityUpdate } from "../utils/collaborativeEntityUpdate";
 
@@ -83,6 +84,7 @@ export function useCollaborativeSectionEdit({
   const handleEntityUpdated = useCallback((event: TransformometroEntityUpdatedEvent) => {
     const token = getAccessTokenRef.current?.();
     const myUserId = getUserIdFromToken(token);
+    const myClientId = getTransformometroClientId();
     const updatedSectionKey = event.sectionKey ?? null;
     const updatedSectionLabel = updatedSectionKey
       ? COLLABORATION_SECTION_LABELS[updatedSectionKey] ?? updatedSectionKey
@@ -94,6 +96,8 @@ export function useCollaborativeSectionEdit({
       updatedSectionLabel,
       actorUserId: event.actorUserId,
       myUserId,
+      actorClientId: event.actorClientId,
+      myClientId,
     });
 
     if (decision.kind === "ignore_own") {

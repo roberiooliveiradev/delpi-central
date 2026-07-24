@@ -13,7 +13,7 @@ from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
 from tm_app.application.services.transformometro_realtime_notify import notify_catalog_updated
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import rows_to_json
@@ -67,6 +67,7 @@ def recalcular_dashboard(
         catalog_id="dashboard",
         action="recalcular",
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload={
             "revisao_id": revisao_id,
             "processo_id": processo_id,

@@ -7,6 +7,8 @@ export type TransformometroEntityUpdatedEvent = {
   action: string;
   sectionKey?: string | null;
   actorUserId?: string | null;
+  /** Aba que originou a mutação HTTP (anti-eco). */
+  actorClientId?: string | null;
   payload?: Record<string, unknown>;
 };
 

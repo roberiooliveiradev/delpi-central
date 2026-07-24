@@ -14,7 +14,8 @@ SECTION_KEY_BY_ACTION: dict[str, str] = {
     "decomposition.updated": "decomposicao",
     "decomposition.scope.updated": "decomposicao_escopo",
     "decomposition.context.updated": "decomposicao_contexto",
-    "decomposition.overlay.updated": "decomposicao_overlay",
+    # Alinhado ao section_key do MFE (RevisaoCadastroPanel / collaborationSections).
+    "decomposition.overlay.updated": "decomposicao_revisao",
     "processo.arquivo.created": "arquivos",
     "processo.arquivo.updated": "arquivos",
     "processo.arquivo.deleted": "arquivos",
@@ -143,6 +144,42 @@ def _lookup_instancia_processo_id(instancia_id: str) -> str | None:
     return str(processo_id) if processo_id else None
 
 
+def _lookup_recurso_vinculo_scopes(
+    recurso_id: str,
+) -> list[tuple[str, str | None, str | None]]:
+    """(revisao_id, processo_id, instancia_id) das revisões que usam o recurso."""
+    try:
+        from tm_app.infrastructure.persistence.repositories.recurso_repository import (
+            RecursoRepository,
+        )
+
+        rows = RecursoRepository().list_by_recurso(str(recurso_id))
+    except Exception:
+        return []
+    scopes: list[tuple[str, str | None, str | None]] = []
+    seen: set[str] = set()
+    for row in rows or []:
+        revisao_id = row.get("revisao_id")
+        if not revisao_id:
+            continue
+        rid = str(revisao_id)
+        if rid in seen:
+            continue
+        seen.add(rid)
+        processo_id = row.get("processo_id")
+        instancia_id = row.get("instancia_id")
+        if not instancia_id:
+            _, instancia_id = _lookup_revisao_scope(rid)
+        scopes.append(
+            (
+                rid,
+                str(processo_id) if processo_id else None,
+                str(instancia_id) if instancia_id else None,
+            )
+        )
+    return scopes
+
+
 def enrich_realtime_scope_payload(
     entity_type: str,
     entity_id: str,
@@ -208,6 +245,14 @@ def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) ->
     recurso_id = payload.get("recurso_compartilhado_id") or payload.get("recurso_id")
     if recurso_id and entity_type == "recurso_custo":
         rooms.append(room_key("recurso", str(recurso_id)))
+        for revisao_id, processo_id_v, instancia_id_v in _lookup_recurso_vinculo_scopes(
+            str(recurso_id)
+        ):
+            rooms.append(room_key("revisao", revisao_id))
+            if instancia_id_v:
+                rooms.append(room_key("processo_instancia", instancia_id_v))
+            if processo_id_v:
+                rooms.append(room_key("processo", processo_id_v))
 
     catalog_id = CATALOG_ROOM_BY_ENTITY.get(entity_type)
     if catalog_id:
@@ -261,6 +306,7 @@ def notify_entity_updated(
     entity_id: str,
     action: str,
     actor_user_id: str | None = None,
+    actor_client_id: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> None:
     body = enrich_realtime_scope_payload(entity_type, entity_id, payload)
@@ -271,6 +317,7 @@ def notify_entity_updated(
         "action": action,
         "sectionKey": infer_section_key(entity_type, action),
         "actorUserId": actor_user_id,
+        "actorClientId": actor_client_id,
         "payload": body,
     }
     for room in _related_rooms(entity_type, entity_id, body):
@@ -282,6 +329,7 @@ def notify_catalog_updated(
     catalog_id: str,
     action: str,
     actor_user_id: str | None = None,
+    actor_client_id: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> None:
     notify_entity_updated(
@@ -289,6 +337,7 @@ def notify_catalog_updated(
         entity_id=catalog_id,
         action=action,
         actor_user_id=actor_user_id,
+        actor_client_id=actor_client_id,
         payload=payload,
     )
 
@@ -300,11 +349,13 @@ def notify_from_audit(
     action: str,
     actor_user_id: str | None,
     payload: dict[str, Any],
+    actor_client_id: str | None = None,
 ) -> None:
     notify_entity_updated(
         entity_type=entity_type,
         entity_id=entity_id,
         action=action,
         actor_user_id=actor_user_id,
+        actor_client_id=actor_client_id,
         payload=payload,
     )

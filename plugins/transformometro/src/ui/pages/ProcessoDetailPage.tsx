@@ -14,6 +14,7 @@ import {
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { useWorkspaceKeepAliveReload } from "../../hooks/useWorkspaceKeepAliveReload";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
@@ -188,6 +189,13 @@ export function ProcessoDetailPage({
     embedded,
     embeddedActive,
     reload: () => void load(),
+  });
+
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    enabled: !embedded || embeddedActive,
+    onUpdated: () => void load(),
   });
 
   useEffect(() => {

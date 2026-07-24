@@ -9,6 +9,7 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import {
   activateRevisao,
@@ -95,6 +96,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   options: OptionsData;
   collaborationActive?: boolean;
   activeSection?: RevisaoWorkspaceSectionId;
+  /** Keep-alive / tree-refresh do Detail — refetch medição/investimentos/rateio. */
+  externalResyncVersion?: number;
   onError: (message: string | null) => void;
   onRevisaoUpdated: () => void;
   onRevisaoDeleted?: () => void;
@@ -108,6 +111,7 @@ export function RevisaoCadastroPanel({
   getAccessToken,
   collaborationActive = true,
   activeSection = "vigencia",
+  externalResyncVersion = 0,
   onError,
   onRevisaoUpdated,
   onRevisaoDeleted,
@@ -203,6 +207,22 @@ export function RevisaoCadastroPanel({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!externalResyncVersion) return;
+    void load();
+  }, [externalResyncVersion, load]);
+
+  // Import JSON / mutações de catálogo enquanto o cadastro está ativo.
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    enabled: collaborationActive,
+    onUpdated: () => {
+      void load();
+      onRevisaoUpdated();
+    },
+  });
 
   async function saveVigencia() {
     setSavingVigencia(true);

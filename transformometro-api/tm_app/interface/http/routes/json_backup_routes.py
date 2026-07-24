@@ -11,7 +11,7 @@ from tm_app.application.services.backup_package_service import (
 )
 from tm_app.application.services.json_backup_service import JsonBackupService
 from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import json_safe
 from tm_app.infrastructure.persistence.repositories.audit_repository import AuditRepository
@@ -110,6 +110,7 @@ async def import_package_apply(
         entity_id="00000000-0000-0000-0000-000000000000",
         action=f"import_{mode}",
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload={"mode": mode, "entities": result.get("entities")},
     )
     return ok(result, "Importação do pacote concluída. Dashboard recalculado.")
@@ -151,6 +152,7 @@ def import_apply(body: JsonImportBody, request: Request):
         entity_id="00000000-0000-0000-0000-000000000000",
         action=f"import_{body.mode}",
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload={"mode": body.mode, "entities": result.get("entities")},
     )
     return ok(result, "Importação concluída. Dashboard recalculado.")

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-import { TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT } from "../utils/navigation";
+import { subscribeWorkspaceTreeRefresh } from "../utils/navigation";
 
 type Options = {
   /** Painel montado em keep-alive no workspace. */
@@ -12,7 +12,7 @@ type Options = {
 };
 
 /**
- * Keep-alive: ao reativar o painel ou receber tree-refresh (mutação em filho),
+ * Keep-alive: ao reativar o painel ou receber tree-refresh (mutação em filho / outra aba),
  * refetcha — evita UI stale até F5 (mesmo padrão da melhoria/revisão).
  */
 export function useWorkspaceKeepAliveReload({
@@ -31,11 +31,6 @@ export function useWorkspaceKeepAliveReload({
   }, [embedded, embeddedActive, reload]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const onTreeRefresh = () => {
-      reload();
-    };
-    window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onTreeRefresh);
-    return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onTreeRefresh);
+    return subscribeWorkspaceTreeRefresh(reload);
   }, [reload]);
 }

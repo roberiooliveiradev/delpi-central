@@ -3,14 +3,43 @@ import { describe, expect, it } from "vitest";
 import { resolveCollaborativeEntityUpdate } from "./collaborativeEntityUpdate";
 
 describe("resolveCollaborativeEntityUpdate", () => {
-  it("ignora evento do próprio usuário", () => {
+  it("ignora evento da mesma aba (clientId)", () => {
+    expect(
+      resolveCollaborativeEntityUpdate({
+        editingSectionKey: null,
+        actorClientId: "c1",
+        myClientId: "c1",
+        actorUserId: "u1",
+        myUserId: "u1",
+      })
+    ).toEqual({ kind: "ignore_own" });
+  });
+
+  it("não ignora só por mesmo userId (multi-aba sincroniza)", () => {
+    expect(
+      resolveCollaborativeEntityUpdate({
+        editingSectionKey: null,
+        updatedSectionKey: "medicao",
+        updatedSectionLabel: "Medição",
+        actorUserId: "u1",
+        myUserId: "u1",
+        actorClientId: "aba-a",
+        myClientId: "aba-b",
+      })
+    ).toEqual({
+      kind: "resync",
+      notice: "Medição atualizado por outro usuário.",
+    });
+  });
+
+  it("legado sem clientId: não ignora por userId", () => {
     expect(
       resolveCollaborativeEntityUpdate({
         editingSectionKey: null,
         actorUserId: "u1",
         myUserId: "u1",
-      })
-    ).toEqual({ kind: "ignore_own" });
+      }).kind
+    ).toBe("resync");
   });
 
   it("recarrega quando ninguém está editando", () => {
@@ -21,6 +50,8 @@ describe("resolveCollaborativeEntityUpdate", () => {
         updatedSectionLabel: "Diagrama macro",
         actorUserId: "u2",
         myUserId: "u1",
+        actorClientId: "c2",
+        myClientId: "c1",
       })
     ).toEqual({
       kind: "resync",
@@ -34,6 +65,8 @@ describe("resolveCollaborativeEntityUpdate", () => {
       updatedSectionKey: "diagrama_macro",
       actorUserId: "u2",
       myUserId: "u1",
+      actorClientId: "c2",
+      myClientId: "c1",
     });
 
     expect(result.kind).toBe("block_editing_conflict");
@@ -47,6 +80,8 @@ describe("resolveCollaborativeEntityUpdate", () => {
         updatedSectionLabel: "Diagrama macro",
         actorUserId: "u2",
         myUserId: "u1",
+        actorClientId: "c2",
+        myClientId: "c1",
       })
     ).toEqual({
       kind: "resync",

@@ -61,6 +61,8 @@ export function RevisaoDetailPage({
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /** Incrementado no keep-alive/tree-refresh — Cadastro refetcha medição/inv/rateio. */
+  const [cadastroResyncToken, setCadastroResyncToken] = useState(0);
 
   const load = useCallback(async () => {
     setError(null);
@@ -80,6 +82,7 @@ export function RevisaoDetailPage({
         revs.items.filter((row) => row.instancia_id === (rev?.instancia_id ?? instanciaId))
       );
       setOptions(opts);
+      setCadastroResyncToken((token) => token + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar");
     } finally {
@@ -146,6 +149,7 @@ export function RevisaoDetailPage({
       getAccessToken={getAccessToken}
       collaborationActive={!embedded || embeddedActive}
       activeSection={activeSection}
+      externalResyncVersion={cadastroResyncToken}
       onError={setError}
       onRevisaoUpdated={() => {
         void load();

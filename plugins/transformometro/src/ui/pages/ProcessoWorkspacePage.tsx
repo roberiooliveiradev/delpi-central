@@ -15,10 +15,11 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
-import { TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT } from "../../utils/navigation";
+import { subscribeWorkspaceTreeRefresh } from "../../utils/navigation";
 import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
 import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { InstanciaDetailPage } from "../pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "../pages/ProcessoDetailPage";
 import { RevisaoDetailPage } from "../pages/RevisaoDetailPage";
@@ -146,12 +147,10 @@ export function ProcessoWorkspacePage({
   }, [reloadWorkspaceTree]);
 
   useEffect(() => {
-    const onRefresh = () => {
+    return subscribeWorkspaceTreeRefresh(() => {
       missingRevisaoRefreshKey.current = null;
       void reloadWorkspaceTree();
-    };
-    window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
-    return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
+    });
   }, [reloadWorkspaceTree]);
 
   // Tempo real: create/update/delete de melhoria/revisão (fan-out na sala do processo).
@@ -160,6 +159,17 @@ export function ProcessoWorkspacePage({
     getAccessToken,
     enabled: Boolean(processoId),
     onEntityUpdated: () => {
+      missingRevisaoRefreshKey.current = null;
+      void reloadWorkspaceTree();
+    },
+  });
+
+  // Import JSON / mutações de catálogo: árvore também escuta catalog:processo.
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    enabled: Boolean(processoId),
+    onUpdated: () => {
       missingRevisaoRefreshKey.current = null;
       void reloadWorkspaceTree();
     },

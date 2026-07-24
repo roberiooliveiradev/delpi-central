@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query, Request
 
 from tm_app.application.services.audit_timeline_service import enrich_timeline_actor_names
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 
 from tm_app.core.catalogs import (
@@ -160,6 +160,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
         entity_id=entity_id,
         action=action,
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload=payload,
     )
 

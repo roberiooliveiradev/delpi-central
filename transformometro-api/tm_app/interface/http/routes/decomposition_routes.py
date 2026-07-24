@@ -22,7 +22,7 @@ from tm_app.application.services.revisao_decomposicao_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.domain.decomposition.decomposition_tree_v1 import (
@@ -109,6 +109,7 @@ def _audit(request: Request, entity_type: str, entity_id: str, action: str, payl
         entity_id=entity_id,
         action=action,
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload=payload,
     )
 

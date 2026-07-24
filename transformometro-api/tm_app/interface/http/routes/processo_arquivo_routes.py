@@ -11,7 +11,7 @@ from tm_app.application.services.processo_arquivo_storage import (
     ProcessoArquivoStorageError,
 )
 from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
-from tm_app.core.auth_actor import actor_from_request
+from tm_app.core.auth_actor import actor_from_request, client_id_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import row_to_json, rows_to_json
 from tm_app.infrastructure.persistence.repositories.processo_arquivo_repository import (
@@ -50,6 +50,7 @@ def _notify_arquivo_change(
         entity_id=processo_id,
         action=action,
         actor_user_id=user_id,
+        actor_client_id=client_id_from_request(request),
         payload=payload,
     )
 

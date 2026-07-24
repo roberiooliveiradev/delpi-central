@@ -18,7 +18,8 @@ def test_infer_section_key_diagram_and_decomposition():
     assert infer_section_key("processo", "diagram.macro.imported_bpmn") == "diagrama_macro"
     assert infer_section_key("processo", "decomposition.updated") == "decomposicao"
     assert infer_section_key("processo_instancia", "decomposition.scope.updated") == "decomposicao_escopo"
-    assert infer_section_key("revisao", "decomposition.overlay.updated") == "decomposicao_overlay"
+    assert infer_section_key("revisao", "decomposition.overlay.updated") == "decomposicao_revisao"
+    assert infer_section_key("revisao", "diagram.overlay.updated") == "diagrama_revisao"
 
 
 def test_infer_section_key_revisao_medicao():
@@ -139,7 +140,14 @@ def test_enrich_realtime_scope_payload_instancia_looks_up_processo(monkeypatch):
     assert body["processo_id"] == "proc-8"
 
 
-def test_related_rooms_recurso_custo_fans_out_to_recurso():
+def test_related_rooms_recurso_custo_fans_out_to_recurso(monkeypatch):
+    from tm_app.application.services import transformometro_realtime_notify as mod
+
+    monkeypatch.setattr(
+        mod,
+        "_lookup_recurso_vinculo_scopes",
+        lambda _rid: [],
+    )
     rooms = _related_rooms(
         "recurso_custo",
         "custo-1",
@@ -147,6 +155,29 @@ def test_related_rooms_recurso_custo_fans_out_to_recurso():
     )
     assert room_key("recurso", "rec-1") in rooms
     assert catalog_room("recurso") in rooms
+
+
+def test_related_rooms_recurso_custo_fans_out_to_linked_revisoes(monkeypatch):
+    from tm_app.application.services import transformometro_realtime_notify as mod
+
+    monkeypatch.setattr(
+        mod,
+        "_lookup_recurso_vinculo_scopes",
+        lambda _rid: [
+            ("rev-a", "proc-a", "inst-a"),
+            ("rev-b", "proc-b", None),
+        ],
+    )
+    rooms = _related_rooms(
+        "recurso_custo",
+        "custo-1",
+        {"recurso_compartilhado_id": "rec-1"},
+    )
+    assert room_key("revisao", "rev-a") in rooms
+    assert room_key("processo", "proc-a") in rooms
+    assert room_key("processo_instancia", "inst-a") in rooms
+    assert room_key("revisao", "rev-b") in rooms
+    assert room_key("processo", "proc-b") in rooms
 
 
 def test_related_rooms_json_backup_fans_out_all_catalogs():

@@ -131,6 +131,7 @@ export function useTransformometroEntityWatch({
             action?: string;
             sectionKey?: string | null;
             actorUserId?: string | null;
+            actorClientId?: string | null;
             payload?: Record<string, unknown>;
           };
 
@@ -145,6 +146,7 @@ export function useTransformometroEntityWatch({
             action: payload.action ?? "updated",
             sectionKey: payload.sectionKey,
             actorUserId: payload.actorUserId,
+            actorClientId: payload.actorClientId,
             payload: payload.payload,
           });
         } catch {
