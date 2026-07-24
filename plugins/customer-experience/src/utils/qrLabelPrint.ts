@@ -1,23 +1,14 @@
-import { DELPI_LOGO_MARK_SVG } from "@delpi/plugin-ui/index";
+import {
+  buildDelpiCableLabelBrandPanelHtml,
+  buildDelpiCableLabelStyles,
+  buildDelpiQualitySealSvg,
+} from "@delpi/plugin-ui/index";
 
 import type { Participant } from "../types";
 
 export type PrintResult = { success: boolean; error?: string };
 
-/**
- * Selo "Aprovado Qualidade" recriado em SVG (não há asset oficial no repo).
- * Troque este markup se a marca fornecer o selo definitivo.
- */
-const QUALITY_SEAL_SVG = `
-<svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Selo Aprovado Qualidade">
-  <circle cx="70" cy="70" r="66" fill="#ffffff" stroke="#000000" stroke-width="3.5" />
-  <circle cx="70" cy="70" r="57" fill="none" stroke="#000000" stroke-width="1.25" />
-  <g transform="translate(47,14) scale(1.75)" fill="#000000">
-    <path d="M2 21h4V9H2v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
-  </g>
-  <text x="70" y="94" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="20" fill="#000000" letter-spacing="0.4">APROVADO</text>
-  <text x="70" y="114" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="13.5" fill="#000000" letter-spacing="1.2">QUALIDADE</text>
-</svg>`;
+const QUALITY_SEAL_SVG = buildDelpiQualitySealSvg("APROVADO");
 
 function escapeHtml(value: string): string {
   return value
@@ -37,127 +28,20 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 }
 
 function buildLabelStyles(): string {
-  // Etiqueta no padrão da impressora: 100mm x 30mm.
-  return `
-    @page { size: 100mm 30mm; margin: 0; }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #013866;
-      background: #ffffff;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 4mm;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .tag {
-      display: flex;
-      align-items: stretch;
-      justify-content: space-between;
-      box-sizing: border-box;
-      width: 100mm;
-      height: 30mm;
-      /* Padding lateral explícito — conteúdo afastado das bordas da mídia */
-      padding: 1.2mm 5.5mm;
-      border: 0.3mm dashed #9fb1c1;
-      overflow: hidden;
-      background: #ffffff;
-    }
-    .tag__panel {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35mm;
-      padding: 0;
-      width: auto;
-      max-width: 38mm;
-      text-align: center;
-    }
-    .tag__qr img {
-      width: 19mm;
-      height: 19mm;
-      display: block;
-    }
-    .tag__caption {
-      font-size: 5.5pt;
-      font-weight: 800;
-      color: #013247;
-      line-height: 1.15;
-      max-width: 44mm;
-    }
+  return buildDelpiCableLabelStyles({
+    extraCss: `
     .tag__name {
       font-size: 5pt;
       font-weight: 800;
       color: #000000;
       line-height: 1.15;
-      max-width: 44mm;
+      max-width: 36mm;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    /* Zona central: espaço de dobra em volta do chicote (frente x verso) */
-    .tag__fold {
-      width: 8mm;
-    }
-    .tag__logo {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .tag__logo svg {
-      width: 16mm;
-      max-width: 100%;
-      height: auto;
-      display: block;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    /* Etiqueta monocromática: logo Delpi em preto */
-    .tag__logo svg path,
-    .tag__logo svg rect {
-      fill: #000000 !important;
-    }
-    .tag__seal svg {
-      width: 15mm;
-      height: 15mm;
-      display: block;
-    }
-    .hint {
-      margin-top: 4mm;
-      font-size: 8pt;
-      color: #64748b;
-      text-align: center;
-      max-width: 100mm;
-    }
-    /* Impressão: só a etiqueta ocupa a mídia 100x30. */
-    @media print {
-      html, body {
-        width: 100mm;
-        height: 30mm;
-        padding: 0;
-        margin: 0;
-        display: block;
-        overflow: hidden;
-      }
-      .tag {
-        border: none;
-        box-sizing: border-box;
-        width: 100mm;
-        height: 30mm;
-        padding: 1.2mm 5.5mm;
-      }
-      .hint { display: none; }
-    }
-  `;
+    `,
+  });
 }
 
 function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
@@ -177,10 +61,7 @@ function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
         <div class="tag__name">${name}</div>
       </div>
       <div class="tag__fold" aria-hidden="true"></div>
-      <div class="tag__panel tag__brand">
-        <div class="tag__logo">${DELPI_LOGO_MARK_SVG}</div>
-        <div class="tag__seal">${QUALITY_SEAL_SVG}</div>
-      </div>
+      ${buildDelpiCableLabelBrandPanelHtml(QUALITY_SEAL_SVG)}
     </div>
     <p class="hint">
       Recorte na linha externa e dobre na faixa central em volta do chicote:
@@ -263,7 +144,6 @@ export async function printQrLabel(participant: Participant, qrBlob: Blob): Prom
   try {
     const qrDataUrl = await blobToDataUrl(qrBlob);
     const html = buildLabelHtml(participant, qrDataUrl);
-    // iframe primeiro: imprime no contexto atual, sem abrir aba "about:blank".
     if (printViaIframe(html) || printViaWindow(html)) {
       return { success: true };
     }

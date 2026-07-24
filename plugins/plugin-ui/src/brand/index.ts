@@ -3,3 +3,9 @@ export {
   DelpiLogoMark,
   type DelpiLogoMarkProps,
 } from "./delpiLogoMark";
+export {
+  buildDelpiCableLabelBrandPanelHtml,
+  buildDelpiCableLabelStyles,
+  buildDelpiQualitySealSvg,
+  type DelpiCableLabelStylesOptions,
+} from "./delpiCableLabel";
