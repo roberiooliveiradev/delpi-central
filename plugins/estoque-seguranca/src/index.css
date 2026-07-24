@@ -349,6 +349,32 @@
   gap: var(--ess-grid-gap);
 }
 
+.dashboard-estoque-seguranca .ess-kpi-card--available-balance {
+  border-color: color-mix(in srgb, var(--ess-accent) 40%, var(--ess-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ess-accent) 10%, var(--ess-surface)) 0%,
+    var(--ess-surface) 70%
+  );
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ess-accent) 12%, transparent);
+}
+
+.dashboard-estoque-seguranca .ess-kpi-card--available-balance .ess-kpi-card__value,
+.dashboard-estoque-seguranca .ess-kpi-card--available-balance .delpi-ui-kpi-value {
+  font-size: clamp(1.85rem, 2.8vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ess-title);
+  line-height: 1.1;
+}
+
+.dashboard-estoque-seguranca .ess-kpi-card--available-balance .ess-kpi-card__subtitle,
+.dashboard-estoque-seguranca .ess-kpi-card--available-balance .delpi-ui-kpi-subtitle {
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--ess-text);
+}
+
 .dashboard-estoque-seguranca .ess-detail__situation {
   margin: 0;
   color: var(--ess-text);
@@ -776,6 +802,17 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.dashboard-estoque-seguranca .ess-projection-timeline__controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.dashboard-estoque-seguranca .ess-projection-timeline__view-tabs {
+  margin: 0;
 }
 
 .dashboard-estoque-seguranca .ess-projection-timeline__title {

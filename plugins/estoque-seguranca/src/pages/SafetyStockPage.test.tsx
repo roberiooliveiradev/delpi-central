@@ -87,6 +87,7 @@ const detailsPayload = {
     work_in_process_committed: 3,
     work_in_process_available: 17,
     deficit_quantity: 35,
+    last_inventory_date: "2026-03-15",
   },
   peer_branch_stock: {
     branch: "02",
@@ -477,6 +478,10 @@ describe("SafetyStockPage", () => {
       expect(screen.getByText("Saldo disponível").closest("article")?.className).toContain(
         "delpi-ui-kpi-card--wide",
       );
+      expect(screen.getByText("Saldo disponível").closest("article")?.className).toContain(
+        "ess-kpi-card--available-balance",
+      );
+      expect(screen.getByText("Último inventário: 15/03/2026")).toBeTruthy();
       expect(screen.getByText("Saldo Filial 02 (ES)")).toBeTruthy();
       expect(screen.getByText("180,00")).toBeTruthy();
       expect(screen.getByText("Último consumo: 20/11/2025")).toBeTruthy();

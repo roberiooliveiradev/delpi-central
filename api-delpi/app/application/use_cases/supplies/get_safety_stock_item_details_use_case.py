@@ -141,6 +141,11 @@ class GetSafetyStockItemDetailsUseCase:
                     "last_consumption_date": last_consumption_date,
                 }
 
+        last_inventory_date = self._repository.fetch_last_inventory_date(
+            branch=request.branch,
+            product_code=request.product_code,
+        )
+
         return {
             "product": {
                 "product_code": detail["product_code"],
@@ -166,6 +171,7 @@ class GetSafetyStockItemDetailsUseCase:
                 "work_in_process_committed": detail["work_in_process_committed"],
                 "work_in_process_available": detail["work_in_process_available"],
                 "deficit_quantity": detail["deficit_quantity"],
+                "last_inventory_date": last_inventory_date,
             },
             "peer_branch_stock": peer_branch_stock,
             "purchase_coverage": coverage,

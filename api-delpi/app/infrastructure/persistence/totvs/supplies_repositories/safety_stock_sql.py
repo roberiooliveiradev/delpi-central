@@ -30,6 +30,7 @@ __all__ = [
     "consumption_analysis_rows_sql",
     "consumption_last_date_sql",
     "consumption_monthly_series_sql",
+    "last_inventory_date_sql",
     "linked_suppliers_sql",
     "materials_base_cte",
     "open_commitments_sql",
@@ -756,6 +757,23 @@ def consumption_last_date_sql(
       AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
       AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
       AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+    """
+
+
+def last_inventory_date_sql(
+    *,
+    branch_param: str = "?",
+    product_param: str = "?",
+) -> str:
+    """Última data de inventário (SB7.B7_DATA) do produto na filial."""
+    return f"""
+    SELECT
+        MAX(RTRIM(SB7.B7_DATA)) AS last_inventory_date
+    FROM SB7010 SB7 WITH (NOLOCK)
+    WHERE SB7.D_E_L_E_T_ = ''
+      AND RTRIM(SB7.B7_FILIAL) = {branch_param}
+      AND RTRIM(SB7.B7_COD) = {product_param}
+      AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
     """
 
 

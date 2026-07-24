@@ -117,6 +117,7 @@ def test_details_use_case_aggregates_coverage_commitments_and_projection() -> No
         }
     ]
     repository.fetch_last_consumption_date.return_value = "2025-11-20"
+    repository.fetch_last_inventory_date.return_value = "2026-03-15"
 
     with patch(
         "app.domain.services.supplies.safety_stock_stock_projection_service._today",
@@ -151,9 +152,14 @@ def test_details_use_case_aggregates_coverage_commitments_and_projection() -> No
     assert result["peer_branch_stock"]["found"] is True
     assert result["peer_branch_stock"]["available_stock"] == 220.0
     assert result["peer_branch_stock"]["last_consumption_date"] == "2025-11-20"
+    assert result["stock"]["last_inventory_date"] == "2026-03-15"
     assert repository.fetch_item_detail.call_count == 2
     repository.fetch_last_consumption_date.assert_called_once_with(
         branch="02",
+        product_code="10010005",
+    )
+    repository.fetch_last_inventory_date.assert_called_once_with(
+        branch="01",
         product_code="10010005",
     )
     repository.fetch_consumption_monthly_series.assert_called_once()

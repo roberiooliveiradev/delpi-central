@@ -149,6 +149,41 @@ describe("buildBalanceTimelineSeries", () => {
     expect(series!.points[1]?.balancePositive).toBe(0);
   });
 
+  it("permite projetar sem entradas de pedidos de compra", () => {
+    const items = [
+      entry({
+        sequence: 1,
+        origin: "initial_balance",
+        running_balance: 100,
+        event_date: "2026-07-20",
+        date_status: "today",
+      }),
+      entry({
+        sequence: 2,
+        origin: "purchase_order",
+        running_balance: 150,
+        event_date: "2026-07-22",
+        date_status: "scheduled",
+        inflow: 50,
+      }),
+    ];
+    const withOrders = buildBalanceTimelineSeries(
+      items,
+      { as_of_date: "2026-07-20", initial_balance: 100 },
+      { averageDailyConsumption: 10, calendarDays: 5, includePurchaseOrders: true },
+    );
+    const withoutOrders = buildBalanceTimelineSeries(
+      items,
+      { as_of_date: "2026-07-20", initial_balance: 100 },
+      { averageDailyConsumption: 10, calendarDays: 5, includePurchaseOrders: false },
+    );
+
+    // 22/07: com pedido 120; sem pedido 70
+    expect(withOrders!.points[2]?.balance).toBeCloseTo(120, 5);
+    expect(withoutOrders!.points[2]?.balance).toBeCloseTo(70, 5);
+    expect(withoutOrders!.firstShortageDate).toBeNull();
+  });
+
   it("preenche monthTick no primeiro ponto", () => {
     const series = buildBalanceTimelineSeries(
       [],

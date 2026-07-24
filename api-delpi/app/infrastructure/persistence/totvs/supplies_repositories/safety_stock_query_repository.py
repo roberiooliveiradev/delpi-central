@@ -19,6 +19,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     consumption_monthly_series_sql,
     linked_suppliers_sql,
     last_inbound_party_names_sql,
+    last_inventory_date_sql,
     materials_base_cte,
     materials_for_projection_batch_sql,
     open_commitments_sql,
@@ -432,6 +433,20 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       if not row:
           return None
       return self._format_protheus_date(row.get("last_consumption_date"))
+
+  def fetch_last_inventory_date(
+      self,
+      *,
+      branch: str,
+      product_code: str,
+  ) -> str | None:
+      code = product_code.strip()
+      sql = last_inventory_date_sql()
+      with self as repo:
+          row = repo.execute_one(sql, [branch, code])
+      if not row:
+          return None
+      return self._format_protheus_date(row.get("last_inventory_date"))
 
   @staticmethod
   def _format_protheus_date(value: Any) -> str | None:

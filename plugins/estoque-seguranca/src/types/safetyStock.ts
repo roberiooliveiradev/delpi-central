@@ -238,6 +238,7 @@ export type SafetyStockItemDetails = {
     work_in_process_committed: number;
     work_in_process_available: number;
     deficit_quantity: number;
+    last_inventory_date?: string | null;
   };
   peer_branch_stock?: {
     branch: string;
