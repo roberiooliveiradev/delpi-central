@@ -121,8 +121,10 @@ export function ContextMenuSub({
       left: coords.left,
       right: "auto",
       zIndex: 80,
-      maxHeight: coords.maxHeight,
-      overflowY: "auto",
+      /* Scroll só quando o resolver indica que o conteúdo não cabe. */
+      ...(coords.overflowY === "auto" && coords.maxHeight != null
+        ? { maxHeight: coords.maxHeight, overflowY: "auto" as const }
+        : { maxHeight: "none", overflowY: "visible" as const }),
     });
   }, []);
 

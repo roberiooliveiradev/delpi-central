@@ -19,9 +19,16 @@ export type ContextMenuSubFlyoutCoords = {
   top: number;
   left: number;
   side: ContextMenuSubFlyoutSide;
-  /** Altura máxima no viewport a partir de `top` (scroll só se o conteúdo passar disso). */
-  maxHeight: number;
+  /**
+   * Só definido quando o conteúdo não cabe no espaço restante —
+   * evita scrollbar fantasma (subpixel / overflow:auto sem necessidade).
+   */
+  maxHeight?: number;
+  overflowY: "auto" | "visible";
 };
+
+/** Folga para arredondamento de layout (scrollHeight vs. box). */
+const FIT_EPSILON_PX = 1;
 
 /**
  * Posiciona o flyout do `ContextMenuSub` (Organizar ▸ / Alinhar ▸ / Girar ▸)
@@ -52,12 +59,23 @@ export function resolveContextMenuSubFlyout(
   const side: ContextMenuSubFlyoutSide =
     coords.placement === "left" ? "left" : "right";
 
-  const maxHeight = Math.max(48, vh - coords.top - margin);
+  const available = Math.max(0, vh - coords.top - margin);
+  const fits = naturalHeight <= available + FIT_EPSILON_PX;
+
+  if (fits) {
+    return {
+      top: coords.top,
+      left: coords.left,
+      side,
+      overflowY: "visible",
+    };
+  }
 
   return {
     top: coords.top,
     left: coords.left,
     side,
-    maxHeight,
+    maxHeight: Math.max(48, available),
+    overflowY: "auto",
   };
 }

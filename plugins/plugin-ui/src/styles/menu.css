@@ -135,8 +135,8 @@
   position: fixed;
   z-index: 2;
   min-width: 200px;
-  /* max-height vem do JS (sobe + usa espaço acima; scroll só se ainda faltar). */
-  overflow-y: auto;
+  /* overflow/max-height só via JS quando o conteúdo não cabe no viewport. */
+  overflow-y: visible;
   /* Painel aninhado: sem sombra dupla pesada no trigger. */
   box-shadow:
     0 4px 6px -1px color-mix(in srgb, #000 10%, transparent),
