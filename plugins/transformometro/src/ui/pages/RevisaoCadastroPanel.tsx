@@ -31,7 +31,9 @@ import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceAp
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { optionalTrimmedText } from "../../utils/optionalTrimmedText";
+import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
+import { parseApiEnvelope } from "../../data/api/transformometroHttp";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
 import { RevisaoDecompositionSection } from "../../components/decomposition/RevisaoDecompositionSection";
@@ -59,8 +61,6 @@ type RateioDiagnostic = {
   message: string;
 };
 
-type ApiEnvelope<T> = { success: boolean; message: string; data: T };
-
 async function fetchRevisaoDiagnosticoRateio(
   revisaoId: string,
   getAccessToken?: () => string | undefined
@@ -69,11 +69,7 @@ async function fetchRevisaoDiagnosticoRateio(
     `${TRANSFORMOMETRO_API_BASE}/revisoes/${revisaoId}/diagnostico-rateio`,
     { headers: buildAuthHeaders(getAccessToken) }
   );
-  const payload = (await response.json()) as ApiEnvelope<RateioDiagnostic>;
-  if (!response.ok || !payload.success) {
-    throw new Error(payload.message || `Erro HTTP ${response.status}`);
-  }
-  return payload.data;
+  return parseApiEnvelope<RateioDiagnostic>(response);
 }
 
 const emptyMedicao = (revisaoId: string): Medicao => ({
@@ -155,43 +151,65 @@ export function RevisaoCadastroPanel({
     revisao.revisao_ativa,
   ]);
 
+  const scheduleLoad = useRef(createCoalescedAsyncRunner()).current;
+  const resyncTimerRef = useRef<number | null>(null);
+
   const load = useCallback(async () => {
-    setLoading(true);
-    onError(null);
-    try {
-      const refId = revisao.revisao_referencia_id || undefined;
-      const [med, inv, vin, rec, ev, diag, medRef] = await Promise.all([
-        fetchMedicao(revisao.revisao_id, getAccessToken),
-        fetchInvestimentos(revisao.revisao_id, getAccessToken),
-        fetchVinculos(revisao.revisao_id, getAccessToken),
-        fetchRecursos(getAccessToken),
-        fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
-        fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
-        refId
-          ? fetchMedicao(refId, getAccessToken).catch(() => null)
-          : Promise.resolve(null),
-      ]);
-      const nextMedicao = med
-        ? { ...med, revisao_id: revisao.revisao_id }
-        : emptyMedicao(revisao.revisao_id);
-      setMedicao(nextMedicao);
-      medicaoSnapshot.current = nextMedicao;
-      setVolumeReferencia(
-        medRef && Number.isFinite(Number(medRef.volume_mensal))
-          ? Number(medRef.volume_mensal)
-          : null
-      );
-      setInvestimentos(inv.items);
-      setVinculos(vin.items);
-      setRecursos(rec.items);
-      setEvidenciasCount(ev.length);
-      setRateioDiag(diag);
-    } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao carregar cadastro da revisão");
-    } finally {
-      setLoading(false);
+    await scheduleLoad(async () => {
+      setLoading(true);
+      try {
+        const refId = revisao.revisao_referencia_id || undefined;
+        const [med, inv, vin, rec, ev, diag, medRef] = await Promise.all([
+          fetchMedicao(revisao.revisao_id, getAccessToken),
+          fetchInvestimentos(revisao.revisao_id, getAccessToken),
+          fetchVinculos(revisao.revisao_id, getAccessToken),
+          fetchRecursos(getAccessToken),
+          fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
+          fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
+          refId
+            ? fetchMedicao(refId, getAccessToken).catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        const nextMedicao = med
+          ? { ...med, revisao_id: revisao.revisao_id }
+          : emptyMedicao(revisao.revisao_id);
+        setMedicao(nextMedicao);
+        medicaoSnapshot.current = nextMedicao;
+        setVolumeReferencia(
+          medRef && Number.isFinite(Number(medRef.volume_mensal))
+            ? Number(medRef.volume_mensal)
+            : null
+        );
+        setInvestimentos(inv.items);
+        setVinculos(vin.items);
+        setRecursos(rec.items);
+        setEvidenciasCount(ev.length);
+        setRateioDiag(diag);
+      } catch (err) {
+        onError(err instanceof Error ? err.message : "Erro ao carregar cadastro da revisão");
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [getAccessToken, onError, revisao.revisao_id, revisao.revisao_referencia_id, scheduleLoad]);
+
+  const scheduleDebouncedLoad = useCallback(() => {
+    if (resyncTimerRef.current != null) {
+      window.clearTimeout(resyncTimerRef.current);
     }
-  }, [getAccessToken, onError, revisao.revisao_id, revisao.revisao_referencia_id]);
+    resyncTimerRef.current = window.setTimeout(() => {
+      resyncTimerRef.current = null;
+      void load();
+    }, 400);
+  }, [load]);
+
+  useEffect(() => {
+    return () => {
+      if (resyncTimerRef.current != null) {
+        window.clearTimeout(resyncTimerRef.current);
+      }
+    };
+  }, []);
 
   const sectionEdit = useCollaborativeSectionEdit({
     entityType: "revisao",
@@ -199,7 +217,6 @@ export function RevisaoCadastroPanel({
     getAccessToken,
     enabled: collaborationActive,
     onResync: () => {
-      void load();
       onRevisaoUpdated();
     },
   });
@@ -210,8 +227,8 @@ export function RevisaoCadastroPanel({
 
   useEffect(() => {
     if (!externalResyncVersion) return;
-    void load();
-  }, [externalResyncVersion, load]);
+    scheduleDebouncedLoad();
+  }, [externalResyncVersion, scheduleDebouncedLoad]);
 
   // Import JSON / mutações de catálogo enquanto o cadastro está ativo.
   useTransformometroCatalogWatch({
@@ -219,7 +236,7 @@ export function RevisaoCadastroPanel({
     getAccessToken,
     enabled: collaborationActive,
     onUpdated: () => {
-      void load();
+      // Um único caminho: Detail debounced → externalResyncVersion → load coalescido.
       onRevisaoUpdated();
     },
   });

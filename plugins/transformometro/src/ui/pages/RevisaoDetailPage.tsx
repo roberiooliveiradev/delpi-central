@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -24,6 +24,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
+import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 import { ProcessoWorkspaceShell, useRevisaoWorkspaceSection } from "../processos/ProcessoWorkspaceShell";
@@ -71,36 +72,60 @@ export function RevisaoDetailPage({
     setErrorTitle(title);
   }, []);
 
+  const scheduleLoad = useRef(createCoalescedAsyncRunner()).current;
+  const revisaoUpdatedTimerRef = useRef<number | null>(null);
+
   const load = useCallback(async () => {
-    try {
-      const [proc, revs, opts, inst] = await Promise.all([
-        fetchProcesso(processoId, getAccessToken),
-        fetchRevisoes(processoId, getAccessToken),
-        fetchOptions(getAccessToken),
-        fetchProcessoInstancias(processoId, getAccessToken),
-      ]);
-      const rev = revs.items.find((row) => row.revisao_id === revisaoId) ?? null;
-      setProcesso(proc);
-      setRevisao(rev);
-      setAllInstancias(inst.items);
-      setAllRevisoes(revs.items);
-      setRevisoesInstancia(
-        revs.items.filter((row) => row.instancia_id === (rev?.instancia_id ?? instanciaId))
-      );
-      setOptions(opts);
-      setCadastroResyncToken((token) => token + 1);
-    } catch (err) {
-      reportError(
-        err instanceof Error ? err.message : "Falha ao carregar a revisão.",
-        "Não foi possível carregar a revisão",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [getAccessToken, instanciaId, processoId, reportError, revisaoId]);
+    await scheduleLoad(async () => {
+      try {
+        const [proc, revs, opts, inst] = await Promise.all([
+          fetchProcesso(processoId, getAccessToken),
+          fetchRevisoes(processoId, getAccessToken),
+          fetchOptions(getAccessToken),
+          fetchProcessoInstancias(processoId, getAccessToken),
+        ]);
+        const rev = revs.items.find((row) => row.revisao_id === revisaoId) ?? null;
+        setProcesso(proc);
+        setRevisao(rev);
+        setAllInstancias(inst.items);
+        setAllRevisoes(revs.items);
+        setRevisoesInstancia(
+          revs.items.filter((row) => row.instancia_id === (rev?.instancia_id ?? instanciaId))
+        );
+        setOptions(opts);
+        setCadastroResyncToken((token) => token + 1);
+      } catch (err) {
+        reportError(
+          err instanceof Error ? err.message : "Falha ao carregar a revisão.",
+          "Não foi possível carregar a revisão",
+        );
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [getAccessToken, instanciaId, processoId, reportError, revisaoId, scheduleLoad]);
 
   useEffect(() => {
     void load();
+  }, [load]);
+
+  useEffect(() => {
+    return () => {
+      if (revisaoUpdatedTimerRef.current != null) {
+        window.clearTimeout(revisaoUpdatedTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleRevisaoUpdated = useCallback(() => {
+    if (revisaoUpdatedTimerRef.current != null) {
+      window.clearTimeout(revisaoUpdatedTimerRef.current);
+    }
+    revisaoUpdatedTimerRef.current = window.setTimeout(() => {
+      revisaoUpdatedTimerRef.current = null;
+      void load();
+      requestWorkspaceTreeRefresh();
+    }, 400);
   }, [load]);
 
   useWorkspaceKeepAliveReload({
@@ -161,10 +186,7 @@ export function RevisaoDetailPage({
       onError={(message) =>
         reportError(message, message ? "Não foi possível salvar" : "Não foi possível carregar")
       }
-      onRevisaoUpdated={() => {
-        void load();
-        requestWorkspaceTreeRefresh();
-      }}
+      onRevisaoUpdated={handleRevisaoUpdated}
       onRevisaoDeleted={() => {
         requestWorkspaceTreeRefresh();
         onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId));

@@ -1,4 +1,5 @@
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
+import { parseApiEnvelope } from "./transformometroHttp";
 import type {
   FlowchartEscopo,
   FlowchartOverlayV1,
@@ -8,11 +9,6 @@ import type {
   ProcessoDiagramResponse,
 } from "../../types/diagram";
 
-type ApiEnvelope<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 export type DiagramValidationIssue = {
   severity: "error" | "warning" | "info";
@@ -42,11 +38,7 @@ export type DiagramValidationReport = {
 };
 
 async function parseEnvelope<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as ApiEnvelope<T>;
-  if (!response.ok || !body.success) {
-    throw new Error(body.message || `Erro HTTP ${response.status}`);
-  }
-  return body.data;
+  return parseApiEnvelope<T>(response);
 }
 
 async function request<T>(

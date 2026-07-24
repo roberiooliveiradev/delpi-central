@@ -1,4 +1,6 @@
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "./transformometroApiBase";
+import { parseApiEnvelope } from "./transformometroHttp";
+import { describeHttpError } from "../../utils/apiErrorMessage";
 import type {
   DecompositionEscopo,
   DecompositionOverlayV1,
@@ -9,18 +11,9 @@ import type {
   ProcessoDecompositionResponse,
 } from "../../types/decomposition";
 
-type ApiEnvelope<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
 
 async function parseEnvelope<T>(response: Response): Promise<T> {
-  const body = (await response.json()) as ApiEnvelope<T>;
-  if (!response.ok || !body.success) {
-    throw new Error(body.message || `Erro HTTP ${response.status}`);
-  }
-  return body.data;
+  return parseApiEnvelope<T>(response);
 }
 
 async function request<T>(
@@ -80,8 +73,11 @@ export async function downloadProcessoDecomposicaoCsv(
     { headers: buildAuthHeaders(getAccessToken) }
   );
   if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as ApiEnvelope<unknown> | null;
-    throw new Error(body?.message || `Erro HTTP ${response.status}`);
+    try {
+      await parseApiEnvelope(response);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error(describeHttpError(response.status));
+    }
   }
   return response.blob();
 }

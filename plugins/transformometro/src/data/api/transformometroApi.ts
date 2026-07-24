@@ -2,32 +2,8 @@ import {
   TRANSFORMOMETRO_API_BASE,
   buildAuthHeaders,
 } from "./transformometroApiBase";
+import { parseApiEnvelope } from "./transformometroHttp";
 import { describeHttpError } from "../../utils/apiErrorMessage";
-
-type ApiEnvelope<T> = {
-  success: boolean;
-  message: string;
-  data: T;
-};
-
-function detailFromBody(body: { message?: string; detail?: unknown }): string {
-  if (typeof body.message === "string" && body.message.trim()) {
-    return body.message.trim();
-  }
-  if (typeof body.detail === "string" && body.detail.trim()) {
-    return body.detail.trim();
-  }
-  if (Array.isArray(body.detail)) {
-    return body.detail
-      .map((item: { msg?: string; loc?: unknown[] }) => {
-        const loc = Array.isArray(item.loc) ? item.loc.join(".") : "";
-        return loc ? `${loc}: ${item.msg ?? ""}` : (item.msg ?? "");
-      })
-      .filter(Boolean)
-      .join("; ");
-  }
-  return "";
-}
 
 async function request<T>(
   path: string,
@@ -42,21 +18,7 @@ async function request<T>(
       ...(init?.headers ?? {}),
     },
   });
-
-  let body: ApiEnvelope<T> & { detail?: unknown };
-  try {
-    body = (await response.json()) as ApiEnvelope<T> & { detail?: unknown };
-  } catch {
-    if (response.ok) {
-      throw new Error("Resposta inválida da API.");
-    }
-    throw new Error(describeHttpError(response.status));
-  }
-
-  if (!response.ok || !body.success) {
-    throw new Error(describeHttpError(response.status, detailFromBody(body)));
-  }
-  return body.data;
+  return parseApiEnvelope<T>(response);
 }
 
 async function downloadFile(
@@ -72,9 +34,12 @@ async function downloadFile(
     let detail = "";
     try {
       const body = (await response.json()) as { message?: string; detail?: string };
-      detail = detailFromBody(body);
+      detail =
+        (typeof body.message === "string" && body.message.trim()) ||
+        (typeof body.detail === "string" && body.detail.trim()) ||
+        "";
     } catch {
-      // resposta pode ser binária/texto
+      // resposta pode ser HTML (429 nginx), binária ou texto
     }
     throw new Error(describeHttpError(response.status, detail));
   }
@@ -1230,17 +1195,7 @@ async function uploadPackageFile<T>(
     body: form,
   });
 
-  const body = (await response.json()) as {
-    success?: boolean;
-    data?: T;
-    message?: string;
-    detail?: string;
-  };
-
-  if (!response.ok || body.success === false) {
-    throw new Error(describeHttpError(response.status, detailFromBody(body)));
-  }
-  return body.data as T;
+  return parseApiEnvelope<T>(response);
 }
 
 export function previewPackageImport(
