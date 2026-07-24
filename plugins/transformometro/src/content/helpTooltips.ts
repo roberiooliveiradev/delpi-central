@@ -171,7 +171,7 @@ export const TM_HELP_TOOLTIPS = {
     modosVisualizacao:
       "Alterne entre ícones grandes (só título), ícones médios (+ código e meta), lista (+ status e preenchimento) e tabela detalhada.",
     visaoOrganizacao:
-      "Alterna a organização da lista (preferência salva neste navegador). Processos: pastas de macroprocesso. Departamentos: pastas por departamento do escopo; o mesmo processo pode aparecer em mais de um. Ao abrir uma pasta de departamento, veja só os processos amarrados a ele.",
+      "Alterna como a lista é visualizada (preferência salva neste navegador). Processos: pastas de macroprocesso. Departamentos: pastas por departamento do escopo; o mesmo processo pode aparecer em mais de um. Ao abrir uma pasta de departamento, veja só os processos amarrados a ele.",
     ordenacaoCampo: "Campo usado para ordenar a lista em todos os modos de visualização.",
     ordenacaoDirecao:
       "Menor → maior (A–Z, 0–100, mais antigo) ou Maior → menor (Z–A, 100–0, mais recente).",

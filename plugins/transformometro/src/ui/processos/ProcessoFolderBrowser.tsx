@@ -355,7 +355,7 @@ export function ProcessoFolderBrowser({
         <div className="tm-processo-browser__browse-label">
           <FieldLabel
             className="tm-field__label"
-            label="Organizar por"
+            label="Visualizar por"
             hint={P.visaoOrganizacao}
           />
           {browseMode === "departamento" && selectedDepartamento ? (
@@ -383,7 +383,7 @@ export function ProcessoFolderBrowser({
         </div>
         <div className="tm-processo-browser__browse-toggle">
           <SegmentToggle
-            ariaLabel="Organizar listagem por processos ou departamentos"
+            ariaLabel="Visualizar listagem por processos ou departamentos"
             idPrefix="tm-proc-browse"
             options={PROCESSO_LIST_BROWSE_MODES.map((mode) => ({
               value: mode.id,
@@ -595,7 +595,7 @@ export function ProcessoFolderBrowser({
 
       <p className="ds-hint tm-processo-browser__mode-hint">
         {modeHint}
-        <HelpTooltip content={P.visaoOrganizacao} ariaLabel="Ajuda: organização da listagem" />
+        <HelpTooltip content={P.visaoOrganizacao} ariaLabel="Ajuda: visualizar por" />
       </p>
     </section>
   );
