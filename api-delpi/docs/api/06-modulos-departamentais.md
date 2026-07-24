@@ -326,6 +326,8 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/ppm/external/series` | Série PPM externo. |
 | GET | `/quality/ppm/internal` | PPM interno (detalhado). |
 | GET | `/quality/ppm/external` | PPM externo (detalhado). |
+| GET | `/quality/scrap-cost-pct` | Custo de refugo / ROL (%) — aba Perdas + SI `quality_scrap_cost_pct` (mesmo cálculo de `/refugos/scrap_cost_pct`; params `branch`/`date_start`/`date_end`). |
+| GET | `/quality/rework-cost-pct` | Custo de retrabalho / ROL (%) — aba Perdas + SI `quality_rework_cost_pct` (mesmo cálculo de `/retrabalhos/rework_cost_pct`). |
 
 **Performance (PPM — jun/2026):**
 
