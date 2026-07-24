@@ -1,7 +1,10 @@
 import { useMemo } from "react";
 
+import { DS_TABLE_CLASS_NAMES } from "../dataTableUi";
 import type { DecompositionFlatRow, DecompositionTreeV1 } from "../../types/decomposition";
 import { sortDecompositionNodes } from "../../types/decomposition";
+
+const tableCn = DS_TABLE_CLASS_NAMES;
 
 type Props = {
   tree: DecompositionTreeV1;
@@ -65,16 +68,16 @@ export function DecompositionFlatPreview({ tree, macroprocesso = "", departament
   }
 
   return (
-    <div className="tm-decomposition-preview">
-      <table className="ds-table ds-table--compact">
+    <div className={`tm-decomposition-preview ${tableCn.wrap}`}>
+      <table className={tableCn.compactTable}>
         <thead>
           <tr>
             <th>Dept.</th>
             <th>Macroprocesso</th>
             <th>nº PK</th>
-            <th>Processo-chave</th>
+            <th className={tableCn.colWide}>Processo-chave</th>
             <th>nº ST</th>
-            <th>Sub-tarefas</th>
+            <th className={tableCn.colWide}>Sub-tarefas</th>
           </tr>
         </thead>
         <tbody>
@@ -83,9 +86,9 @@ export function DecompositionFlatPreview({ tree, macroprocesso = "", departament
               <td>{row.departamento || "—"}</td>
               <td>{row.macroprocesso || "—"}</td>
               <td>{row.num_processo_chave}</td>
-              <td>{row.processo_chave}</td>
+              <td className={tableCn.colWide}>{row.processo_chave}</td>
               <td>{row.num_sub_tarefa || "—"}</td>
-              <td>{row.sub_tarefas}</td>
+              <td className={tableCn.colWide}>{row.sub_tarefas}</td>
             </tr>
           ))}
         </tbody>

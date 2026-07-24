@@ -87,6 +87,14 @@ export type DataTableClassNames = {
   colNumeric?: string;
   /** Coluna larga (descrição / texto). */
   colWide?: string;
+  /** Coluna de ações (nowrap). */
+  colActions?: string;
+  /** Grupo horizontal de botões na célula de ações. */
+  actions?: string;
+  /** Texto secundário dentro da célula. */
+  sub?: string;
+  /** Linha em modo edição inline. */
+  rowEditing?: string;
 };
 
 export type DataTableLabels = {
@@ -170,6 +178,10 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
     compactTable: withBemModifier(tableDual, "compact"),
     colNumeric: delpiUiClass(`${table}__col--numeric`, `${ui}__col--numeric`),
     colWide: delpiUiClass(`${table}__col--wide`, `${ui}__col--wide`),
+    colActions: delpiUiClass(`${table}__actions-col`, `${ui}__actions-col`),
+    actions: delpiUiClass(`${table}__actions`, `${ui}__actions`),
+    sub: delpiUiClass(`${table}__sub`, `${ui}__sub`),
+    rowEditing: delpiUiClass(`${table}__row--editing`, `${ui}__row--editing`),
     empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
     headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
     headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),

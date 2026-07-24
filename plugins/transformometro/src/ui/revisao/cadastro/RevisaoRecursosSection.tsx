@@ -19,7 +19,9 @@ import {
 } from "../../recursos/recursoCatalogForm";
 import { Pagination } from "../../../components/Pagination";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DS_TABLE_CLASS_NAMES } from "../../../components/dataTableUi";
 import { TableHeader } from "../../../components/TableHeader";
+import { TableRowActions } from "../../../components/ui/TableRowActions";
 import { SelectField } from "../../../components/ui/SelectField";
 import { mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
@@ -32,6 +34,7 @@ import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE, DS_FILTER_BOX_
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
+const tableCn = DS_TABLE_CLASS_NAMES;
 
 export const emptyVinculoForm = () => ({
   recurso_compartilhado_id: "",
@@ -174,18 +177,24 @@ export function RevisaoRecursosSection({
     <>
       {vinculos.length > 0 ? (
         <>
-          <div className="ds-table-wrap ds-cadastro-section__table">
-          <table className="ds-table ds-table--compact">
+          <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
+          <table className={tableCn.compactTable}>
             <thead>
               <tr>
-                <th><TableHeader label="Recurso" hint={C.nome} /></th>
-                <th><TableHeader label="Custo/mês" hint={C.custoMesVigente} /></th>
+                <th className={tableCn.colWide}>
+                  <TableHeader label="Recurso" hint={C.nome} />
+                </th>
+                <th className={tableCn.colNumeric}>
+                  <TableHeader label="Custo/mês" hint={C.custoMesVigente} />
+                </th>
                 <th><TableHeader label="Rateio" hint={C.rateio} /></th>
                 <th><TableHeader label="Uso na revisão" hint={C.usoRevisao} /></th>
-                <th><TableHeader label="Peso" hint={C.peso} /></th>
+                <th className={tableCn.colNumeric}>
+                  <TableHeader label="Peso" hint={C.peso} />
+                </th>
                 <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
                 {!readOnly ? (
-                  <th className="ds-table__actions-col">
+                  <th className={tableCn.colActions}>
                     <TableHeader label="Ações" hint={C.acoes} />
                   </th>
                 ) : null}
@@ -194,7 +203,7 @@ export function RevisaoRecursosSection({
             <tbody>
               {slice.map((v) =>
                 !readOnly && editingVinculoId === v.vinculo_id ? (
-                  <tr key={v.vinculo_id} className="ds-table__row--editing">
+                  <tr key={v.vinculo_id} className={tableCn.rowEditing}>
                     <td colSpan={7}>
                       <form className="ds-cadastro-subsection" onSubmit={handleSaveEditVinculo}>
                         <h4 className="ds-cadastro-subsection__title">
@@ -284,40 +293,44 @@ export function RevisaoRecursosSection({
                   </tr>
                 ) : (
                   <tr key={v.vinculo_id}>
-                    <td>
+                    <td className={tableCn.colWide}>
                       <strong>{v.codigo_recurso}</strong>
                       <br />
-                      <span className="ds-table__sub">{v.nome_recurso}</span>
+                      <span className={tableCn.sub}>{v.nome_recurso}</span>
                       {v.fornecedor ? (
-                        <span className="ds-table__sub"> · {v.fornecedor}</span>
+                        <span className={tableCn.sub}> · {v.fornecedor}</span>
                       ) : null}
                     </td>
-                    <td>{formatCurrency(v.valor_total_recorrente)}</td>
+                    <td className={tableCn.colNumeric}>{formatCurrency(v.valor_total_recorrente)}</td>
                     <td>{labelCriterioRateio(v.criterio_rateio)}</td>
                     <td>
                       {toDateInputValue(v.data_inicio_uso) || "…"} →{" "}
                       {toDateInputValue(v.data_fim_uso) || "…"}
                     </td>
-                    <td>{v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}</td>
+                    <td className={tableCn.colNumeric}>
+                      {v.peso_rateio ?? (v.criterio_rateio === "por_peso" ? "1" : "—")}
+                    </td>
                     <td>{labelSimNao(v.ativo)}</td>
                     {!readOnly ? (
-                      <td className="ds-table__actions-col">
-                        <button
-                          type="button"
-                          className={DS_GHOST_BTN}
-                          onClick={() => startEditVinculo(v)}
-                        >
-                          Editar
-                        </button>
-                        <button
-                          type="button"
-                          className={DS_GHOST_BTN}
-                          onClick={() =>
-                            void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
-                          }
-                        >
-                          Desvincular
-                        </button>
+                      <td className={tableCn.colActions}>
+                        <TableRowActions>
+                          <button
+                            type="button"
+                            className={DS_GHOST_BTN}
+                            onClick={() => startEditVinculo(v)}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            className={DS_GHOST_BTN}
+                            onClick={() =>
+                              void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
+                            }
+                          >
+                            Desvincular
+                          </button>
+                        </TableRowActions>
                       </td>
                     ) : null}
                   </tr>

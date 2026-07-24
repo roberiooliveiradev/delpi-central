@@ -12,7 +12,12 @@ import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
+import {
+  DS_TABLE_CLASS_NAMES,
+  DS_TABLE_SECTION_CLASS_NAMES,
+} from "../../components/dataTableUi";
 import { TableHeader } from "../../components/TableHeader";
+import { TableRowActions } from "../../components/ui/TableRowActions";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { CATALOG_CREATE, isCatalogCreateId } from "../../constants/catalogRoutes";
@@ -47,6 +52,8 @@ import {
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
+const tableCn = DS_TABLE_CLASS_NAMES;
+const sectionCn = DS_TABLE_SECTION_CLASS_NAMES;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   recursoId: string;
@@ -428,23 +435,23 @@ export function RecursoDetailPage({
 
         {!isCreate && showSection("vinculos") ? (
           <RecursoWorkspaceSectionPanel active={!embedded || activeSection === "vinculos"} sectionId="vinculos">
-            <section className="ds-card ds-table-section" aria-busy={loading || refreshing}>
-              <div className="ds-table-section__header">
-                <h2 className="ds-section-title">Processos vinculados</h2>
-                <div className="ds-table-section__meta-group">
-                  <span className="ds-table-section__meta">
+            <section className={sectionCn.section} aria-busy={loading || refreshing}>
+              <div className={sectionCn.header}>
+                <h2 className={sectionCn.title}>Processos vinculados</h2>
+                <div className={sectionCn.metaGroup}>
+                  <span className={sectionCn.meta}>
                     Vínculos ativos entram no rateio das revisões
                   </span>
-                  <span className="ds-table-section__meta">{filteredVinculos.length} registro(s)</span>
+                  <span className={sectionCn.meta}>{filteredVinculos.length} registro(s)</span>
                 </div>
               </div>
 
-              <div className="ds-table-toolbar">
-                <div className="ds-table-search" role="search">
-                  <Search size={16} aria-hidden="true" className="ds-table-search__icon" />
+              <div className={sectionCn.toolbar}>
+                <div className={sectionCn.search} role="search">
+                  <Search size={16} aria-hidden="true" className={sectionCn.searchIcon} />
                   <NativeTextControl
                     type="search"
-                    className="ds-table-search__input"
+                    className={sectionCn.searchInput}
                     value={search}
                     placeholder="Código, processo, unidade, departamento…"
                     onChange={setSearch}
@@ -456,18 +463,22 @@ export function RecursoDetailPage({
               {filteredVinculos.length === 0 ? (
                 <p className="ds-state-box">Nenhum processo vinculado a este recurso.</p>
               ) : (
-                <div className="ds-table-wrap ds-cadastro-section__table">
-                  <table className="ds-table ds-table--compact">
+                <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
+                  <table className={tableCn.compactTable}>
                     <thead>
                       <tr>
-                        <th><TableHeader label="Processo" hint={C.processo} /></th>
+                        <th className={tableCn.colWide}>
+                          <TableHeader label="Processo" hint={C.processo} />
+                        </th>
                         <th><TableHeader label="Unidade" hint={C.unidade} /></th>
                         <th><TableHeader label="Departamento" hint={C.setor} /></th>
                         <th><TableHeader label="Revisão" hint={C.revisao} /></th>
                         <th><TableHeader label="Uso no processo" hint={C.usoRevisao} /></th>
-                        <th><TableHeader label="Peso" hint={C.peso} /></th>
+                        <th className={tableCn.colNumeric}>
+                          <TableHeader label="Peso" hint={C.peso} />
+                        </th>
                         <th><TableHeader label="Ativo" hint={C.ativoVinculo} /></th>
-                        <th className="ds-table__actions-col">
+                        <th className={tableCn.colActions}>
                           <TableHeader label="Ações" hint={C.acoes} />
                         </th>
                       </tr>
@@ -475,7 +486,7 @@ export function RecursoDetailPage({
                     <tbody>
                       {filteredVinculos.map((row) =>
                         editingVinculoId === row.vinculo_id && editVinculoForm ? (
-                          <tr key={row.vinculo_id} className="ds-table__row--editing">
+                          <tr key={row.vinculo_id} className={tableCn.rowEditing}>
                             <td colSpan={8}>
                               <form className="ds-cadastro-subsection" onSubmit={saveEditVinculo}>
                                 <h4 className="ds-cadastro-subsection__title">
@@ -555,7 +566,7 @@ export function RecursoDetailPage({
                           </tr>
                         ) : (
                           <tr key={row.vinculo_id}>
-                            <td className="ds-table__col--wide">
+                            <td className={tableCn.colWide}>
                               <button
                                 type="button"
                                 className="ds-link-btn"
@@ -577,23 +588,25 @@ export function RecursoDetailPage({
                               {toDateInputValue(row.data_inicio_uso) || "…"} →{" "}
                               {toDateInputValue(row.data_fim_uso) || "…"}
                             </td>
-                            <td className="ds-table__col--numeric">{row.peso_rateio ?? "—"}</td>
+                            <td className={tableCn.colNumeric}>{row.peso_rateio ?? "—"}</td>
                             <td>{row.ativo ? "Sim" : "Não"}</td>
-                            <td className="ds-table__actions-col">
-                              <button
-                                type="button"
-                                className={DS_GHOST_BTN}
-                                onClick={() => startEditVinculo(row)}
-                              >
-                                Editar
-                              </button>
-                              <button
-                                type="button"
-                                className={DS_GHOST_BTN}
-                                onClick={() => void handleDeleteVinculo(row)}
-                              >
-                                Desvincular
-                              </button>
+                            <td className={tableCn.colActions}>
+                              <TableRowActions>
+                                <button
+                                  type="button"
+                                  className={DS_GHOST_BTN}
+                                  onClick={() => startEditVinculo(row)}
+                                >
+                                  Editar
+                                </button>
+                                <button
+                                  type="button"
+                                  className={DS_GHOST_BTN}
+                                  onClick={() => void handleDeleteVinculo(row)}
+                                >
+                                  Desvincular
+                                </button>
+                              </TableRowActions>
                             </td>
                           </tr>
                         )

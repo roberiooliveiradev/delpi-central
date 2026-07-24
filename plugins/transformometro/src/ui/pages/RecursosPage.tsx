@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
+import { DS_TABLE_CLASS_NAMES } from "../../components/dataTableUi";
 import { DataTableSection } from "../../components/DataTableSection";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
@@ -107,7 +108,9 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
       render: (r) => (
         <>
           <strong>{r.nome_recurso}</strong>
-          {r.fornecedor ? <span className="ds-table__sub"> · {r.fornecedor}</span> : null}
+          {r.fornecedor ? (
+            <span className={DS_TABLE_CLASS_NAMES.sub}> · {r.fornecedor}</span>
+          ) : null}
         </>
       ),
     },

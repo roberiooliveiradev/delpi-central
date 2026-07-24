@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AppProps } from "../../App";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DS_TABLE_CLASS_NAMES } from "../../components/dataTableUi";
 import { TableHeader } from "../../components/TableHeader";
+import { TableRowActions } from "../../components/ui/TableRowActions";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   deleteRecursoCusto,
@@ -18,6 +20,7 @@ import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../c
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
+const tableCn = DS_TABLE_CLASS_NAMES;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   recursoId: string;
@@ -166,16 +169,20 @@ export function RecursoCustosSection({
       {loading ? (
         <p className="ds-state-box">Carregando histórico…</p>
       ) : custos.length > 0 ? (
-        <div className="ds-table-wrap ds-cadastro-section__table">
-          <table className="ds-table ds-table--compact">
+        <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
+          <table className={tableCn.compactTable}>
             <thead>
               <tr>
-                <th><TableHeader label="Valor/mês" hint={C.valorMes} /></th>
+                <th className={tableCn.colNumeric}>
+                  <TableHeader label="Valor/mês" hint={C.valorMes} />
+                </th>
                 <th><TableHeader label="Início" hint={C.custoInicio} /></th>
                 <th><TableHeader label="Fim" hint={C.fim} /></th>
-                <th><TableHeader label="Obs." hint={C.observacoes} /></th>
+                <th className={tableCn.colWide}>
+                  <TableHeader label="Obs." hint={C.observacoes} />
+                </th>
                 {!readOnly ? (
-                  <th className="ds-table__actions-col">
+                  <th className={tableCn.colActions}>
                     <TableHeader label="Ações" hint={C.acoes} />
                   </th>
                 ) : null}
@@ -184,7 +191,7 @@ export function RecursoCustosSection({
             <tbody>
               {custos.map((c) =>
                 !readOnly && editingId === c.recurso_custo_id ? (
-                  <tr key={c.recurso_custo_id} className="ds-table__row--editing">
+                  <tr key={c.recurso_custo_id} className={tableCn.rowEditing}>
                     <td colSpan={5}>
                       <form onSubmit={handleSaveEdit}>
                         <div className={DS_FILTERS_ROW}>
@@ -252,13 +259,13 @@ export function RecursoCustosSection({
                   </tr>
                 ) : (
                   <tr key={c.recurso_custo_id}>
-                    <td>{formatCurrency(c.valor_mensal)}</td>
+                    <td className={tableCn.colNumeric}>{formatCurrency(c.valor_mensal)}</td>
                     <td>{toDateInputValue(c.data_inicio_vigencia) || "—"}</td>
                     <td>{toDateInputValue(c.data_fim_vigencia) || "—"}</td>
-                    <td>{c.observacoes || "—"}</td>
+                    <td className={tableCn.colWide}>{c.observacoes || "—"}</td>
                     {!readOnly ? (
-                      <td>
-                        <div className="ds-table__actions">
+                      <td className={tableCn.colActions}>
+                        <TableRowActions>
                           <button
                             type="button"
                             className={DS_GHOST_BTN}
@@ -273,7 +280,7 @@ export function RecursoCustosSection({
                           >
                             Excluir
                           </button>
-                        </div>
+                        </TableRowActions>
                       </td>
                     ) : null}
                   </tr>

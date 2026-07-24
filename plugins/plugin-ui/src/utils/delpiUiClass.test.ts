@@ -57,6 +57,12 @@ describe("resolveDataTableColumnClassName", () => {
       resolveDataTableColumnClassName("pa-table__col--numeric delpi-ui-table__col--numeric"),
     ).toBe("pa-table__col--numeric delpi-ui-table__col--numeric");
     expect(resolveDataTableColumnClassName(undefined)).toBeUndefined();
+    expect(resolveDataTableColumnClassName("ds-table__actions-col")).toBe(
+      "ds-table__actions-col delpi-ui-table__actions-col",
+    );
+    expect(resolveDataTableColumnClassName("ds-table__actions-col--wide")).toBe(
+      "ds-table__actions-col--wide delpi-ui-table__actions-col--wide",
+    );
   });
 });
 
@@ -98,5 +104,9 @@ describe("kits DataTable/Pagination — classes delpi-ui", () => {
     expect(table.compactTable).toContain("delpi-ui-table--compact");
     expect(table.colNumeric).toContain("delpi-ui-table__col--numeric");
     expect(table.colWide).toContain("delpi-ui-table__col--wide");
+    expect(table.colActions).toContain("delpi-ui-table__actions-col");
+    expect(table.actions).toContain("delpi-ui-table__actions");
+    expect(table.sub).toContain("delpi-ui-table__sub");
+    expect(table.rowEditing).toContain("delpi-ui-table__row--editing");
   });
 });

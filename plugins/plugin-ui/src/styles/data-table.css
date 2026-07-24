@@ -633,6 +633,35 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
   font-size: var(--delpi-ui-font-md, 14px);
 }
 
+/** Coluna e grupo de ações — botões em linha (nunca empilhados). */
+.delpi-ui-table__actions-col {
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.delpi-ui-table__actions {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delpi-ui-table__sub {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-weight: 500;
+}
+
+.delpi-ui-table__row--editing > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 6%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
 /** Ghost compacto em células de ação da tabela. */
 .delpi-ui-table td .delpi-ui-ghost-btn,
 .delpi-ui-table .delpi-ui-table__actions .delpi-ui-ghost-btn {
@@ -642,6 +671,7 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
   font-size: var(--delpi-ui-font-xs, 12px);
   font-weight: 600;
   border-radius: 10px;
+  flex-shrink: 0;
 }
 
 @media print {

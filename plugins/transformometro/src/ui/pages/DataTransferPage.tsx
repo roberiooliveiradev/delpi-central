@@ -3,6 +3,7 @@ import { AlertTriangle, Archive, ArrowDownUp, Download, FileJson, RefreshCw, Upl
 
 import type { AppProps } from "../../App";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { DS_TABLE_CLASS_NAMES } from "../../components/dataTableUi";
 import { TableHeader } from "../../components/TableHeader";
 import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -21,6 +22,8 @@ import {
 } from "../../data/api/transformometroApi";
 import "./DataTransferPage.css";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+
+const tableCn = DS_TABLE_CLASS_NAMES;
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -416,23 +419,31 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                     {preview.legacy_transformed ? " (filiais e instâncias sintéticas geradas)" : ""}
                   </p>
                 ) : null}
-                <div className="ds-table-wrap">
-                  <table className="ds-table">
+                <div className={tableCn.wrap}>
+                  <table className={tableCn.table}>
                     <thead>
                       <tr>
-                        <th><TableHeader label="Entidade" hint={TM_HELP_TOOLTIPS.dataTransfer.previewEntidade} /></th>
-                        <th><TableHeader label="No arquivo" hint={TM_HELP_TOOLTIPS.dataTransfer.previewNoArquivo} /></th>
-                        <th><TableHeader label="Inserir" hint={TM_HELP_TOOLTIPS.dataTransfer.previewInserir} /></th>
-                        <th><TableHeader label="Atualizar" hint={TM_HELP_TOOLTIPS.dataTransfer.previewAtualizar} /></th>
+                        <th className={tableCn.colWide}>
+                          <TableHeader label="Entidade" hint={TM_HELP_TOOLTIPS.dataTransfer.previewEntidade} />
+                        </th>
+                        <th className={tableCn.colNumeric}>
+                          <TableHeader label="No arquivo" hint={TM_HELP_TOOLTIPS.dataTransfer.previewNoArquivo} />
+                        </th>
+                        <th className={tableCn.colNumeric}>
+                          <TableHeader label="Inserir" hint={TM_HELP_TOOLTIPS.dataTransfer.previewInserir} />
+                        </th>
+                        <th className={tableCn.colNumeric}>
+                          <TableHeader label="Atualizar" hint={TM_HELP_TOOLTIPS.dataTransfer.previewAtualizar} />
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {Object.entries(preview.entities).map(([key, stats]) => (
                         <tr key={key}>
-                          <td>{ENTITY_LABELS[key] ?? key}</td>
-                          <td>{stats.total}</td>
-                          <td>{stats.insert}</td>
-                          <td>{stats.update}</td>
+                          <td className={tableCn.colWide}>{ENTITY_LABELS[key] ?? key}</td>
+                          <td className={tableCn.colNumeric}>{stats.total}</td>
+                          <td className={tableCn.colNumeric}>{stats.insert}</td>
+                          <td className={tableCn.colNumeric}>{stats.update}</td>
                         </tr>
                       ))}
                     </tbody>

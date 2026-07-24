@@ -53,9 +53,16 @@ export function resolveDataTableColumnClassName(
 
   for (const token of tokens) {
     push(token);
-    const match = token.match(/^[a-z0-9][\w-]*-table__col--([a-z0-9-]+)$/i);
-    if (match) {
-      push(`delpi-ui-table__col--${match[1]}`);
+    const colMatch = token.match(/^[a-z0-9][\w-]*-table__col--([a-z0-9-]+)$/i);
+    if (colMatch) {
+      push(`delpi-ui-table__col--${colMatch[1]}`);
+      continue;
+    }
+    const actionsColMatch = token.match(
+      /^[a-z0-9][\w-]*-table__(actions-col(?:--[a-z0-9-]+)?)$/i,
+    );
+    if (actionsColMatch) {
+      push(`delpi-ui-table__${actionsColMatch[1]}`);
     }
   }
 

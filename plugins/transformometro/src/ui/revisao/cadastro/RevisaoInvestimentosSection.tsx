@@ -166,7 +166,7 @@ export function RevisaoInvestimentosSection({
                     <TableHeader label="Meses vig." hint={C.mesesVigenciaCurto} />
                   </th>
                   {!readOnly ? (
-                    <th className="ds-table__actions-col">
+                    <th className={tableCn.colActions}>
                       <TableHeader label="Ações" hint={C.acoes} />
                     </th>
                   ) : null}
@@ -178,7 +178,7 @@ export function RevisaoInvestimentosSection({
                   return (
                     <tr
                       key={inv.investimento_id}
-                      className={isEditing ? "ds-table__row--editing" : undefined}
+                      className={isEditing ? tableCn.rowEditing : undefined}
                     >
                       <td>{labelTipoInvestimento(inv.tipo_investimento)}</td>
                       <td className={tableCn.colWide}>{inv.descricao_item}</td>
@@ -188,7 +188,7 @@ export function RevisaoInvestimentosSection({
                       <td>{formatDisplayDate(toDateInputValue(inv.data_investimento))}</td>
                       <td className={tableCn.colNumeric}>{inv.meses_vigencia ?? "—"}</td>
                       {!readOnly ? (
-                        <td className="ds-table__actions-col">
+                        <td className={tableCn.colActions}>
                           <TableRowActions>
                             <button
                               type="button"
