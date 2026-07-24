@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 366,
-  "stableCount": 366,
+  "operationCount": 370,
+  "stableCount": 370,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -2503,6 +2503,34 @@
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
       "path": "/dashboard/indicators/engineering-transforma-plus/meta",
       "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_realized",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/realized",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_scrap_cost_pct_meta",
+      "path": "/dashboard/indicators/quality-scrap-cost-pct/meta",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_realized",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/realized",
+      "method": "GET",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
+      "path": "/dashboard/indicators/quality-rework-cost-pct/meta",
+      "method": "GET",
+      "tag": "Dashboard",
       "stable": true
     }
   ]

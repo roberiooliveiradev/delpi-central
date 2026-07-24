@@ -162,6 +162,18 @@
       "departmentId": "quality"
     },
     {
+      "indicatorId": "quality-scrap-cost-pct",
+      "sourceKey": "quality_scrap_cost_pct",
+      "name": "Custo de Refugo X ROL",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-rework-cost-pct",
+      "sourceKey": "quality_rework_cost_pct",
+      "name": "Custo de Retrabalho X ROL",
+      "departmentId": "quality"
+    },
+    {
       "indicatorId": "supplies-cpv",
       "sourceKey": "supplies_cpv",
       "name": "CPV Consolidado (matriz e filial)",

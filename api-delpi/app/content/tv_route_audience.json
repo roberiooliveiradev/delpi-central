@@ -7123,6 +7123,74 @@
           "label": "Custo de retrabalho / ROL"
         }
       }
+    },
+    "get_si_indicator_quality_scrap_cost_pct_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Custo de Refugo X ROL — actual",
+          "description": "Actual value for SI indicator «Custo de Refugo X ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custo de Refugo X ROL.",
+          "label": "Custo de Refugo X ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "Custo de Refugo X ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custo de Refugo X ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custo de Refugo X ROL.",
+          "label": "Custo de Refugo X ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_scrap_cost_pct_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Custo de Refugo X ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custo de Refugo X ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custo de Refugo X ROL goal.",
+          "label": "Custo de Refugo X ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "Custo de Refugo X ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custo de Refugo X ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custo de Refugo X ROL.",
+          "label": "Custo de Refugo X ROL — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_rework_cost_pct_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Custo de Retrabalho X ROL — actual",
+          "description": "Actual value for SI indicator «Custo de Retrabalho X ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custo de Retrabalho X ROL.",
+          "label": "Custo de Retrabalho X ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "Custo de Retrabalho X ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custo de Retrabalho X ROL.",
+          "label": "Custo de Retrabalho X ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_rework_cost_pct_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Custo de Retrabalho X ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custo de Retrabalho X ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custo de Retrabalho X ROL goal.",
+          "label": "Custo de Retrabalho X ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "Custo de Retrabalho X ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custo de Retrabalho X ROL.",
+          "label": "Custo de Retrabalho X ROL — meta"
+        }
+      }
     }
   }
 }
