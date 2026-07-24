@@ -200,6 +200,14 @@ class TransformometroRealtimeCollaborationHandler:
             )
         except ValueError:
             return
+        except Exception:  # noqa: BLE001 — disconnect WS nunca pode derrubar o ASGI
+            logger.exception(
+                "transformometro_clear_presence_failed entity=%s:%s user=%s",
+                entity_type,
+                entity_id,
+                user_id,
+            )
+            return
         self._broadcast_presence(entity_type, entity_id)
 
     async def _send_presence(
@@ -209,7 +217,22 @@ class TransformometroRealtimeCollaborationHandler:
         entity_type: str,
         entity_id: str,
     ) -> None:
-        payload = self._service.list_presence(entity_type=entity_type, entity_id=entity_id)
+        try:
+            payload = self._service.list_presence(
+                entity_type=entity_type, entity_id=entity_id
+            )
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "transformometro_list_presence_failed entity=%s:%s",
+                entity_type,
+                entity_id,
+            )
+            payload = {
+                "entity_type": entity_type,
+                "entity_id": entity_id,
+                "viewers": [],
+                "editors": [],
+            }
         await websocket.send_json(
             json_safe(
                 {
@@ -228,7 +251,12 @@ class TransformometroRealtimeCollaborationHandler:
                 entity_type=entity_type,
                 entity_id=entity_id,
             )
-        except ValueError:
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "transformometro_broadcast_presence_failed entity=%s:%s",
+                entity_type,
+                entity_id,
+            )
             return
         notify_presence_updated(
             entity_type=entity_type,

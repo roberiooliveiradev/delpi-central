@@ -96,7 +96,14 @@ class TransformometroRealtimeHub:
                 if user_id:
                     remaining_for_user = self.count_user_connections(room_key, user_id)
             if on_user_disconnect is not None and user_id:
-                await on_user_disconnect(room_key, user_id, remaining_for_user)
+                try:
+                    await on_user_disconnect(room_key, user_id, remaining_for_user)
+                except Exception:  # noqa: BLE001 — cleanup não pode derrubar o handler WS
+                    logger.exception(
+                        "transformometro_realtime_on_user_disconnect_failed room=%s user=%s",
+                        room_key,
+                        user_id,
+                    )
 
     async def broadcast_now(self, room_key: str, payload: dict[str, Any]) -> None:
         async with self._lock:

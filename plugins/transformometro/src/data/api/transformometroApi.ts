@@ -27,10 +27,16 @@ async function request<T>(
   try {
     body = (await response.json()) as ApiEnvelope<T> & { detail?: unknown };
   } catch {
+    if (response.ok) {
+      throw new Error("Resposta inválida da API.");
+    }
+    if (response.status === 429) {
+      throw new Error(
+        "Muitas requisições em pouco tempo (HTTP 429). Aguarde alguns segundos e tente novamente."
+      );
+    }
     throw new Error(
-      response.ok
-        ? "Resposta inválida da API."
-        : `Erro HTTP ${response.status} — verifique se transformometro-api está no ar e as migrations V002 foram aplicadas.`
+      `Erro HTTP ${response.status} — verifique se transformometro-api está no ar e as migrations V002 foram aplicadas.`
     );
   }
 

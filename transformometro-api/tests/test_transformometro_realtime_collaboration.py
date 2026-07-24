@@ -166,6 +166,50 @@ async def test_realtime_disconnect_skips_when_other_connections():
     service.clear_user_presence.assert_not_called()
 
 
+@pytest.mark.asyncio
+async def test_realtime_disconnect_catalog_room_does_not_raise(monkeypatch):
+    """Regression: entity_id textual (dashboard/processo) quebrava ::uuid no Postgres."""
+    service = MagicMock()
+    service.clear_user_presence.side_effect = None
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    broadcast = MagicMock()
+    monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+
+    await handler.handle_disconnect(
+        entity_type="catalog",
+        entity_id="dashboard",
+        user_id="u1",
+        remaining_connections=0,
+    )
+
+    service.clear_user_presence.assert_called_once_with(
+        entity_type="catalog",
+        entity_id="dashboard",
+        user_id="u1",
+    )
+    broadcast.assert_called_once_with("catalog", "dashboard")
+
+
+@pytest.mark.asyncio
+async def test_realtime_disconnect_swallows_presence_db_errors(monkeypatch):
+    service = MagicMock()
+    service.clear_user_presence.side_effect = RuntimeError(
+        'invalid input syntax for type uuid: "dashboard"'
+    )
+    handler = TransformometroRealtimeCollaborationHandler(service=service)
+    broadcast = MagicMock()
+    monkeypatch.setattr(handler, "_broadcast_presence", broadcast)
+
+    await handler.handle_disconnect(
+        entity_type="catalog",
+        entity_id="dashboard",
+        user_id="u1",
+        remaining_connections=0,
+    )
+
+    broadcast.assert_not_called()
+
+
 def test_clear_user_presence_http_respects_active_connections(monkeypatch):
     service = MagicMock()
     handler = TransformometroRealtimeCollaborationHandler(service=service)

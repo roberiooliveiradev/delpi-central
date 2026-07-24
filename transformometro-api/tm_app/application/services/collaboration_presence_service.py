@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from typing import Any
+from uuid import UUID
 
 from tm_app.core.serialize import json_safe
 from tm_app.infrastructure.persistence.repositories.collaboration_presence_repository import (
@@ -10,6 +11,10 @@ from tm_app.infrastructure.persistence.repositories.collaboration_presence_repos
     CollaborationPresenceRepository,
 )
 
+# Salas `catalog:<id>` (dashboard, processo, filial…) só fazem fan-out WS.
+# A coluna collaboration_presence.entity_id é UUID — nunca persistir nestas salas.
+PRESENCE_LESS_ENTITY_TYPES = frozenset({"catalog"})
+
 
 class CollaborationPresenceService:
     def __init__(self, repo: CollaborationPresenceRepository | None = None) -> None:
@@ -17,6 +22,8 @@ class CollaborationPresenceService:
 
     def list_presence(self, *, entity_type: str, entity_id: str) -> dict[str, Any]:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            return self._empty_presence(entity_type, entity_id)
         self._repo.purge_stale()
         rows = self._repo.list_active(entity_type=entity_type, entity_id=entity_id)
         viewers: list[dict[str, Any]] = []
@@ -48,6 +55,16 @@ class CollaborationPresenceService:
         mode: str = "viewing",
     ) -> dict[str, Any]:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            return {
+                "user_id": user_id,
+                "user_name": user_name or user_email,
+                "user_email": user_email,
+                "section_key": section_key or "",
+                "mode": "viewing",
+                "lock_active": False,
+                "heartbeat_at": None,
+            }
         if mode not in {"viewing", "editing"}:
             mode = "viewing"
         lock_expires = None
@@ -76,6 +93,10 @@ class CollaborationPresenceService:
         user_email: str | None,
     ) -> dict[str, Any]:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            raise ValueError(
+                "Travas colaborativas não se aplicam a salas de catálogo/listagem."
+            )
         self._repo.purge_stale()
         holder = self._repo.get_active_lock_holder(
             entity_type=entity_type,
@@ -113,6 +134,8 @@ class CollaborationPresenceService:
         user_id: str,
     ) -> None:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            return
         self._repo.release_user_locks(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -122,6 +145,8 @@ class CollaborationPresenceService:
 
     def release_all(self, *, entity_type: str, entity_id: str, user_id: str) -> None:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            return
         self._repo.release_user_locks(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -130,6 +155,8 @@ class CollaborationPresenceService:
 
     def clear_user_presence(self, *, entity_type: str, entity_id: str, user_id: str) -> None:
         self._assert_entity(entity_type)
+        if not self._uses_db_presence(entity_type, entity_id):
+            return
         self._repo.release_user_locks(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -145,6 +172,26 @@ class CollaborationPresenceService:
     def _assert_entity(entity_type: str) -> None:
         if entity_type not in ALLOWED_ENTITY_TYPES:
             raise ValueError(f"entity_type inválido: {entity_type}")
+
+    @staticmethod
+    def _uses_db_presence(entity_type: str, entity_id: str) -> bool:
+        """Presença/locks no Postgres só para entidades com entity_id UUID."""
+        if entity_type in PRESENCE_LESS_ENTITY_TYPES:
+            return False
+        try:
+            UUID(str(entity_id))
+        except (TypeError, ValueError):
+            return False
+        return True
+
+    @staticmethod
+    def _empty_presence(entity_type: str, entity_id: str) -> dict[str, Any]:
+        return {
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "viewers": [],
+            "editors": [],
+        }
 
     @staticmethod
     def _serialize_row(row: dict[str, Any]) -> dict[str, Any]:
