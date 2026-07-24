@@ -37,6 +37,8 @@ Documentação oficial: `api-delpi/docs/api/06-modulos-departamentais.md` (seç�
 | `getKaizenSummary` | GET | `/quality/kaizens/summary` | `title`, `status`, `branch`, `date_start`, `date_end` |
 | `getKaizenById` | GET | `/quality/kaizens/{kaizen_id}` | — |
 | `getAudit5sSummary` | GET | `/quality/audit-5s/summary` | `start_date`, `end_date`, `branch` |
+| `getScrapCostPct` | GET | `/quality/scrap-cost-pct` | `branch`, `date_start`, `date_end` |
+| `getReworkCostPct` | GET | `/quality/rework-cost-pct` | `branch`, `date_start`, `date_end` |
 | `getPpmInternalSummary` | GET | `/quality/ppm/internal/summary` | `branch`, `date_start`, `date_end` |
 | `getPpmExternalSummary` | GET | `/quality/ppm/external/summary` | `branch`, `date_start`, `date_end` |
 | `listPpmInternal` | GET | `/quality/ppm/internal` | `branch`, `date_start`, `date_end`, `page`, `page_size` |

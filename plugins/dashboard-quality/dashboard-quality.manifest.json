@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "dashboard-quality",
   "name": "Dashboard Qualidade",
-  "description": "Painel analítico de qualidade (PPM, kaizen, 5S e NC TOTVS) via api-delpi",
+  "description": "Painel analítico de qualidade (PPM, perdas, kaizen, 5S e NC TOTVS) via api-delpi",
   "icon": "award",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-quality",
@@ -14,7 +14,7 @@
     {
       "code": "dashboard-quality.view",
       "name": "Acesso ao dashboard de qualidade",
-      "description": "Permite visualizar métricas de qualidade (PPM, kaizen, 5S, NC TOTVS)",
+      "description": "Permite visualizar métricas de qualidade (PPM, perdas, kaizen, 5S, NC TOTVS)",
       "module": "dashboard-quality"
     }
   ],
@@ -45,11 +45,19 @@
       "showInMenu": false
     },
     {
+      "path": "/apps/dashboard-quality/perdas",
+      "label": "Perdas",
+      "permission": "dashboard-quality.view",
+      "icon": "award",
+      "order": 13,
+      "showInMenu": false
+    },
+    {
       "path": "/apps/dashboard-quality/kaizen",
       "label": "Kaizen",
       "permission": "dashboard-quality.view",
       "icon": "award",
-      "order": 13,
+      "order": 14,
       "showInMenu": false
     },
     {
@@ -57,7 +65,7 @@
       "label": "Auditoria 5S",
       "permission": "dashboard-quality.view",
       "icon": "award",
-      "order": 14,
+      "order": 15,
       "showInMenu": false
     }
   ],

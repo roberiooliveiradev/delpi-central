@@ -20,8 +20,9 @@ Microfrontend (Module Federation) para visualização de **métricas de qualidad
 | Incluído | Excluído |
 |----------|----------|
 | PPM interno/externo (resumo, série, comparativo) | Workflow de NC em PostgreSQL (removido da api-delpi) |
-| Kaizens e auditoria 5S (resumo) | Cadastro/workflow de NC fora do TOTVS |
-| NC analítica Protheus (`/quality/nonconformities`) | Indicadores estratégicos (outra API) |
+| Perdas (custo refugo/retrabalho × ROL) | Cadastro/workflow de NC fora do TOTVS |
+| Kaizens e auditoria 5S (resumo) | Indicadores estratégicos (outra API) |
+| NC analítica Protheus (`/quality/nonconformities`) | |
 
 ## Rotas
 
@@ -30,6 +31,7 @@ Microfrontend (Module Federation) para visualização de **métricas de qualidad
 | `/apps/dashboard-quality` | Visão geral |
 | `/apps/dashboard-quality/ppm` | PPM |
 | `/apps/dashboard-quality/nonconformities` | NC TOTVS |
+| `/apps/dashboard-quality/perdas` | Perdas (refugo/retrabalho × ROL) |
 | `/apps/dashboard-quality/kaizen` | Kaizens |
 | `/apps/dashboard-quality/audit-5s` | Auditoria 5S |
 

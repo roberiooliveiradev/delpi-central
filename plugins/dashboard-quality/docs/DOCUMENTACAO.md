@@ -38,6 +38,7 @@ O Portal carrega o `remoteEntry.js` e injeta o token Keycloak no cliente HTTP do
 | `/apps/dashboard-quality` | `DashboardQualityPage` | Home com KPIs e atalhos |
 | `/apps/dashboard-quality/ppm` | `PpmPage` | PPM detalhado, gráfico e export CSV |
 | `/apps/dashboard-quality/nonconformities` | `NonconformitiesPage` | NC TOTVS, gráfico de devoluções |
+| `/apps/dashboard-quality/perdas` | `PerdasPage` | Custo refugo/retrabalho × ROL + atalhos |
 | `/apps/dashboard-quality/kaizen` | `KaizenPage` | Kaizens por período, status e setor |
 | `/apps/dashboard-quality/audit-5s` | `Audit5sPage` | Notas 5S por período e área |
 

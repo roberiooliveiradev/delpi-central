@@ -7,6 +7,7 @@ import { KaizenDetailPage } from "./pages/KaizenDetailPage";
 import { KaizenPage } from "./pages/KaizenPage";
 import { NonconformitiesPage } from "./pages/NonconformitiesPage";
 import { NonconformityDetailPage } from "./pages/NonconformityDetailPage";
+import { PerdasPage } from "./pages/PerdasPage";
 import { PpmItemDetailPage } from "./pages/PpmItemDetailPage";
 import { PpmPage } from "./pages/PpmPage";
 import { parseQualityPath } from "./utils/routeParser";
@@ -45,6 +46,10 @@ function renderPage(path: string, pathname?: string) {
 
   if (path === QUALITY_ROUTES.nonconformities) {
     return <NonconformitiesPage pathname={path} />;
+  }
+
+  if (path === QUALITY_ROUTES.perdas) {
+    return <PerdasPage pathname={path} />;
   }
 
   if (path === QUALITY_ROUTES.kaizen) {

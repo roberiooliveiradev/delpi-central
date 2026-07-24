@@ -6,6 +6,7 @@ export const QUALITY_ROUTES = {
   ppmDetail: `${QUALITY_BASE_PATH}/ppm/detail`,
   nonconformities: `${QUALITY_BASE_PATH}/nonconformities`,
   nonconformityDetail: `${QUALITY_BASE_PATH}/nonconformities/detail`,
+  perdas: `${QUALITY_BASE_PATH}/perdas`,
   kaizen: `${QUALITY_BASE_PATH}/kaizen`,
   audit5s: `${QUALITY_BASE_PATH}/audit-5s`,
 } as const;

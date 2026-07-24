@@ -31,6 +31,7 @@ import type {
   PpmSummary,
   PpmType,
 } from "../types/ppm";
+import type { CostPctSummary } from "../types/losses";
 
 export type QualityBranchesResponse = {
   branches: string[];
@@ -116,6 +117,28 @@ export async function getAudit5sSummary(
     params,
     signal
   );
+}
+
+export async function getScrapCostPct(
+  params: DateRangeParams = {},
+  signal?: AbortSignal
+): Promise<CostPctSummary> {
+  return fetchQualityData<CostPctSummary>("/scrap-cost-pct", {
+    branch: params.branch,
+    date_start: params.date_start,
+    date_end: params.date_end,
+  }, signal);
+}
+
+export async function getReworkCostPct(
+  params: DateRangeParams = {},
+  signal?: AbortSignal
+): Promise<CostPctSummary> {
+  return fetchQualityData<CostPctSummary>("/rework-cost-pct", {
+    branch: params.branch,
+    date_start: params.date_start,
+    date_end: params.date_end,
+  }, signal);
 }
 
 export async function getPpmSummary(
