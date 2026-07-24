@@ -26,10 +26,12 @@ describe("buildDelpiCableLabelStyles", () => {
 });
 
 describe("buildDelpiQualitySealSvg", () => {
-  it("renderiza textos em negrito e tamanho maior", () => {
+  it("usa anel amplo e ícone menor para o texto caber", () => {
     const svg = buildDelpiQualitySealSvg("APROVADO");
     expect(svg).toContain('font-weight="900"');
-    expect(svg).toContain('font-size="20"');
+    expect(svg).toContain('font-size="17"');
+    expect(svg).toContain('r="68"');
+    expect(svg).toContain("scale(1.28)");
     expect(svg).toContain("QUALIDADE");
   });
 });

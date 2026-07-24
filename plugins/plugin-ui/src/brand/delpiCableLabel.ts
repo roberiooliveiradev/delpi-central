@@ -5,16 +5,17 @@ export { DELPI_LOGO_MARK_SVG };
 /** Selo circular Aprovado/Qualidade (SVG) para etiquetas 100×30 mm. */
 export function buildDelpiQualitySealSvg(topLabel: string): string {
   const safe = topLabel.replace(/[<>&"]/g, "");
-  const topSize = safe.length > 9 ? 16 : 20;
+  // Textos longos (CONDICIONAL) usam corpo menor; APROVADO cabe com ícone reduzido + anel mais largo.
+  const topSize = safe.length > 9 ? 14 : 17;
   return `
 <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Selo ${safe} Qualidade">
-  <circle cx="70" cy="70" r="66" fill="#ffffff" stroke="#000000" stroke-width="3.5" />
-  <circle cx="70" cy="70" r="57" fill="none" stroke="#000000" stroke-width="1.25" />
-  <g transform="translate(47,14) scale(1.75)" fill="#000000">
+  <circle cx="70" cy="70" r="68" fill="#ffffff" stroke="#000000" stroke-width="3" />
+  <circle cx="70" cy="70" r="61" fill="none" stroke="#000000" stroke-width="1.25" />
+  <g transform="translate(54.5,18) scale(1.28)" fill="#000000">
     <path d="M2 21h4V9H2v12zM23 10c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z" />
   </g>
-  <text x="70" y="94" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="${topSize}" fill="#000000" letter-spacing="0.4">${safe}</text>
-  <text x="70" y="114" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="13.5" fill="#000000" letter-spacing="1.2">QUALIDADE</text>
+  <text x="70" y="90" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="${topSize}" fill="#000000" letter-spacing="0">${safe}</text>
+  <text x="70" y="110" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="12.5" fill="#000000" letter-spacing="0.6">QUALIDADE</text>
 </svg>`;
 }
 
@@ -123,8 +124,8 @@ export function buildDelpiCableLabelStyles(): string {
       fill: #000000 !important;
     }
     .tag__seal svg {
-      width: 15mm;
-      height: 15mm;
+      width: 16.5mm;
+      height: 16.5mm;
       display: block;
     }
     .hint {
