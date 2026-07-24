@@ -18,19 +18,11 @@ export function buildDelpiQualitySealSvg(topLabel: string): string {
 </svg>`;
 }
 
-export type DelpiCableLabelStylesOptions = {
-  /** CSS adicional específico do plugin (ex.: .tag__name / .tag__product). */
-  extraCss?: string;
-};
-
 /**
- * CSS canônico da etiqueta cabo/chicote 100×30 mm (padding lateral, logo, selo).
- * Consumido via Module Federation — atualizar o remote atualiza todos os MFEs.
+ * CSS canônico da etiqueta cabo/chicote 100×30 mm.
+ * Única fonte de verdade — MFEs não devem embutir CSS de etiqueta.
  */
-export function buildDelpiCableLabelStyles(
-  options: DelpiCableLabelStylesOptions = {},
-): string {
-  const extra = options.extraCss?.trim() ?? "";
+export function buildDelpiCableLabelStyles(): string {
   return `
     @page { size: 100mm 30mm; margin: 0; }
     * { box-sizing: border-box; }
@@ -85,6 +77,29 @@ export function buildDelpiCableLabelStyles(
       line-height: 1.15;
       max-width: 36mm;
     }
+    .tag__name {
+      font-size: 5pt;
+      font-weight: 800;
+      color: #000000;
+      line-height: 1.15;
+      max-width: 36mm;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tag__meta {
+      font-size: 5pt;
+      font-weight: 700;
+      color: #1f2937;
+      line-height: 1.2;
+    }
+    .tag__product {
+      font-size: 7.5pt;
+      font-weight: 900;
+      color: #000000;
+      line-height: 1.05;
+      letter-spacing: 0.2px;
+    }
     .tag__fold {
       width: 8mm;
       flex: 0 0 8mm;
@@ -137,7 +152,6 @@ export function buildDelpiCableLabelStyles(
       }
       .hint { display: none; }
     }
-    ${extra}
   `;
 }
 
@@ -154,4 +168,53 @@ export function buildDelpiCableLabelBrandPanelHtml(
         <div class="tag__logo">${DELPI_LOGO_MARK_SVG}</div>
         <div class="tag__seal">${sealSvg}</div>${footer}
       </div>`;
+}
+
+export type DelpiCableLabelDocumentOptions = {
+  title: string;
+  qrDataUrl: string;
+  qrAlt: string;
+  /** Conteúdo abaixo da legenda (ex.: nome ou OP · data) — HTML já escapado. */
+  qrFooterHtml: string;
+  sealTopLabel: string;
+  /** Rodapé do painel da marca (ex.: código do produto) — HTML já escapado. */
+  brandFooterHtml?: string;
+  hintHtml: string;
+  caption?: string;
+};
+
+/**
+ * Documento completo da etiqueta 100×30 mm (CSS + markup).
+ * MFEs só passam dados — sem CSS local de etiqueta.
+ */
+export function buildDelpiCableLabelDocumentHtml(
+  options: DelpiCableLabelDocumentOptions,
+): string {
+  const caption = options.caption?.trim() || "Aponte a câmera do celular";
+  const brandPanel = buildDelpiCableLabelBrandPanelHtml(
+    buildDelpiQualitySealSvg(options.sealTopLabel),
+    options.brandFooterHtml
+      ? { footerHtml: options.brandFooterHtml }
+      : undefined,
+  );
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>${options.title}</title>
+    <style>${buildDelpiCableLabelStyles()}</style>
+  </head>
+  <body>
+    <div class="tag">
+      <div class="tag__panel tag__qr">
+        <img src="${options.qrDataUrl}" alt="${options.qrAlt}" />
+        <div class="tag__caption">${caption}</div>
+        ${options.qrFooterHtml}
+      </div>
+      <div class="tag__fold" aria-hidden="true"></div>
+      ${brandPanel}
+    </div>
+    <p class="hint">${options.hintHtml}</p>
+  </body>
+</html>`;
 }

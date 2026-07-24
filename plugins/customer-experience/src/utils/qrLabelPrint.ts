@@ -1,14 +1,8 @@
-import {
-  buildDelpiCableLabelBrandPanelHtml,
-  buildDelpiCableLabelStyles,
-  buildDelpiQualitySealSvg,
-} from "@delpi/plugin-ui/index";
+import { buildDelpiCableLabelDocumentHtml } from "@delpi/plugin-ui/index";
 
 import type { Participant } from "../types";
 
 export type PrintResult = { success: boolean; error?: string };
-
-const QUALITY_SEAL_SVG = buildDelpiQualitySealSvg("APROVADO");
 
 function escapeHtml(value: string): string {
   return value
@@ -27,48 +21,17 @@ function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-function buildLabelStyles(): string {
-  return buildDelpiCableLabelStyles({
-    extraCss: `
-    .tag__name {
-      font-size: 5pt;
-      font-weight: 800;
-      color: #000000;
-      line-height: 1.15;
-      max-width: 36mm;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    `,
-  });
-}
-
 function buildLabelHtml(participant: Participant, qrDataUrl: string): string {
   const name = escapeHtml(participant.fullName);
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <title>Etiqueta QR — ${name}</title>
-    <style>${buildLabelStyles()}</style>
-  </head>
-  <body>
-    <div class="tag">
-      <div class="tag__panel tag__qr">
-        <img src="${qrDataUrl}" alt="QR code de agradecimento" />
-        <div class="tag__caption">Aponte a câmera do celular</div>
-        <div class="tag__name">${name}</div>
-      </div>
-      <div class="tag__fold" aria-hidden="true"></div>
-      ${buildDelpiCableLabelBrandPanelHtml(QUALITY_SEAL_SVG)}
-    </div>
-    <p class="hint">
-      Recorte na linha externa e dobre na faixa central em volta do chicote:
-      o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).
-    </p>
-  </body>
-</html>`;
+  return buildDelpiCableLabelDocumentHtml({
+    title: `Etiqueta QR — ${name}`,
+    qrDataUrl,
+    qrAlt: "QR code de agradecimento",
+    qrFooterHtml: `<div class="tag__name">${name}</div>`,
+    sealTopLabel: "APROVADO",
+    hintHtml:
+      "Recorte na linha externa e dobre na faixa central em volta do chicote: o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).",
+  });
 }
 
 function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void {

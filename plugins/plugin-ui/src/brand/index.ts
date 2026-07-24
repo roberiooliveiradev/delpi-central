@@ -5,7 +5,8 @@ export {
 } from "./delpiLogoMark";
 export {
   buildDelpiCableLabelBrandPanelHtml,
+  buildDelpiCableLabelDocumentHtml,
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
-  type DelpiCableLabelStylesOptions,
+  type DelpiCableLabelDocumentOptions,
 } from "./delpiCableLabel";

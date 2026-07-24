@@ -1,8 +1,4 @@
-import {
-  buildDelpiCableLabelBrandPanelHtml,
-  buildDelpiCableLabelStyles,
-  buildDelpiQualitySealSvg,
-} from "@delpi/plugin-ui/index";
+import { buildDelpiCableLabelDocumentHtml } from "@delpi/plugin-ui/index";
 
 import type { QualityLabel } from "../types/qualityLabels";
 
@@ -36,58 +32,21 @@ function formatDate(value: string | null): string {
   return date.toLocaleDateString("pt-BR");
 }
 
-function buildLabelStyles(): string {
-  return buildDelpiCableLabelStyles({
-    extraCss: `
-    .tag__product {
-      font-size: 7.5pt;
-      font-weight: 900;
-      color: #000000;
-      line-height: 1.05;
-      letter-spacing: 0.2px;
-    }
-    .tag__meta {
-      font-size: 5pt;
-      font-weight: 700;
-      color: #1f2937;
-      line-height: 1.2;
-    }
-    `,
-  });
-}
-
 function buildLabelHtml(label: QualityLabel, qrDataUrl: string): string {
   const topLabel = RESULT_LABELS[label.result] ?? "QUALIDADE";
   const productCode = escapeHtml(label.productCode);
   const op = escapeHtml(label.productionOrder);
   const date = escapeHtml(formatDate(label.inspectedAt));
-  const brandPanel = buildDelpiCableLabelBrandPanelHtml(
-    buildDelpiQualitySealSvg(topLabel),
-    { footerHtml: `<div class="tag__product">${productCode}</div>` },
-  );
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <title>Etiqueta da Qualidade — ${productCode}</title>
-    <style>${buildLabelStyles()}</style>
-  </head>
-  <body>
-    <div class="tag">
-      <div class="tag__panel tag__qr">
-        <img src="${qrDataUrl}" alt="QR code da inspeção" />
-        <div class="tag__caption">Aponte a câmera do celular</div>
-        <div class="tag__meta">OP ${op} · ${date}</div>
-      </div>
-      <div class="tag__fold" aria-hidden="true"></div>
-      ${brandPanel}
-    </div>
-    <p class="hint">
-      Recorte na linha externa e dobre na faixa central em volta do cabo:
-      o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).
-    </p>
-  </body>
-</html>`;
+  return buildDelpiCableLabelDocumentHtml({
+    title: `Etiqueta da Qualidade — ${productCode}`,
+    qrDataUrl,
+    qrAlt: "QR code da inspeção",
+    qrFooterHtml: `<div class="tag__meta">OP ${op} · ${date}</div>`,
+    sealTopLabel: topLabel,
+    brandFooterHtml: `<div class="tag__product">${productCode}</div>`,
+    hintHtml:
+      "Recorte na linha externa e dobre na faixa central em volta do cabo: o QR code fica de um lado (frente) e a marca com o selo de qualidade do outro (verso).",
+  });
 }
 
 function waitForImagesThenPrint(targetWindow: Window, onDone?: () => void): void {

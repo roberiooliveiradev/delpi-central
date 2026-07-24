@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { DELPI_LOGO_MARK_SVG } from "./delpiLogoMark";
 import {
+  buildDelpiCableLabelDocumentHtml,
   buildDelpiCableLabelStyles,
   buildDelpiQualitySealSvg,
 } from "./delpiCableLabel";
@@ -15,9 +16,12 @@ describe("DELPI_LOGO_MARK_SVG", () => {
 });
 
 describe("buildDelpiCableLabelStyles", () => {
-  it("aplica padding lateral canônico na etiqueta", () => {
+  it("inclui regras canônicas (padding, name, product, meta)", () => {
     const css = buildDelpiCableLabelStyles();
     expect(css).toContain("padding: 1.2mm 7mm");
+    expect(css).toContain(".tag__name");
+    expect(css).toContain(".tag__product");
+    expect(css).toContain(".tag__meta");
   });
 });
 
@@ -27,5 +31,24 @@ describe("buildDelpiQualitySealSvg", () => {
     expect(svg).toContain('font-weight="900"');
     expect(svg).toContain('font-size="20"');
     expect(svg).toContain("QUALIDADE");
+  });
+});
+
+describe("buildDelpiCableLabelDocumentHtml", () => {
+  it("embute o CSS do kit e o wordmark sem slogan", () => {
+    const html = buildDelpiCableLabelDocumentHtml({
+      title: "Etiqueta teste",
+      qrDataUrl: "data:image/png;base64,xx",
+      qrAlt: "QR",
+      qrFooterHtml: '<div class="tag__name">Fulano</div>',
+      sealTopLabel: "APROVADO",
+      hintHtml: "Dobre no centro.",
+    });
+    expect(html).toContain("<style>");
+    expect(html).toContain("padding: 1.2mm 7mm");
+    expect(html).toContain(".tag__name");
+    expect(html).not.toContain("516.792");
+    expect(html).toContain("Fulano");
+    expect(html).toContain("APROVADO");
   });
 });
