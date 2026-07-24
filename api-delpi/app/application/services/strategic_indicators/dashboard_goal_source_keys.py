@@ -42,6 +42,8 @@ QUALITY_PPM_EXTERNAL_COMPONENTS = "quality_ppm_external_components"
 QUALITY_KAIZEN_IDEAS = "quality_kaizen_ideas"
 QUALITY_AUDIT_5S = "quality_audit_5s"
 QUALITY_KAIZEN_FINANCIAL = "quality_kaizen_financial"
+QUALITY_SCRAP_COST_PCT = "quality_scrap_cost_pct"
+QUALITY_REWORK_COST_PCT = "quality_rework_cost_pct"
 
 ENGINEERING_LMP = "lmp"
 ENGINEERING_TRANSFORMA_MAIS = "transforma_mais"

@@ -456,6 +456,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "eficiencia_fabril_appointment", "paged_list"
     ),
     # Qualidade (métricas)
+    "get_quality_scrap_cost_pct": RouteContract("quality_scrap_cost_pct", "scalar"),
+    "get_quality_rework_cost_pct": RouteContract("quality_rework_cost_pct", "scalar"),
     "list_quality_branches": RouteContract("quality_branch", "scalar"),
     "get_nonconformity_series": RouteContract("nonconformity_series", "scalar"),
     "list_nonconformities": RouteContract("nonconformity", "paged_list"),

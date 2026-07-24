@@ -7091,6 +7091,38 @@
           "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — meta"
         }
       }
+    },
+    "get_quality_scrap_cost_pct": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Quality scrap cost / ROL",
+          "description": "Scrap cost over financial ROL (with IPI) for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /refugos/scrap_cost_pct; params use branch/date_start/date_end.",
+          "whenToUse": "Use as the quality dashboard Perdas KPI and SI source quality_scrap_cost_pct."
+        },
+        "pt-BR": {
+          "summary": "Custo de refugo / ROL (qualidade)",
+          "description": "Custo de refugo sobre o ROL financeiro (com IPI) para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /refugos/scrap_cost_pct; parâmetros branch/date_start/date_end.",
+          "whenToUse": "Usar no KPI da aba Perdas e no indicador SI quality_scrap_cost_pct.",
+          "label": "Custo de refugo / ROL"
+        }
+      }
+    },
+    "get_quality_rework_cost_pct": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Quality rework cost / ROL",
+          "description": "Rework cost over financial ROL (with IPI) for the quality dashboard and SI. Branch optional: omit to consolidate. Same calculation as /retrabalhos/rework_cost_pct; params use branch/date_start/date_end.",
+          "whenToUse": "Use as the quality dashboard Perdas KPI and SI source quality_rework_cost_pct."
+        },
+        "pt-BR": {
+          "summary": "Custo de retrabalho / ROL (qualidade)",
+          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) para o dashboard de qualidade e SI. Filial opcional: omitida consolida. Mesmo cálculo de /retrabalhos/rework_cost_pct; parâmetros branch/date_start/date_end.",
+          "whenToUse": "Usar no KPI da aba Perdas e no indicador SI quality_rework_cost_pct.",
+          "label": "Custo de retrabalho / ROL"
+        }
+      }
     }
   }
 }

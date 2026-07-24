@@ -64,6 +64,7 @@ from app.interface.http.routes.quality.audit_5s_operational_router import (
 from app.interface.http.routes.quality.kaizen_records_router import (
     router as kaizen_records_router,
 )
+from app.interface.http.routes.quality.losses_routes import router as losses_router
 from app.interface.http.routes.quality.ppm_routes import router as ppm_router
 from app.interface.http.routes.quality.quality_labels_router import (
     router as quality_labels_router,
@@ -77,6 +78,7 @@ router.include_router(solution_patterns_router)
 router.include_router(audit_5s_operational_router)
 router.include_router(kaizen_records_router)
 router.include_router(ppm_router)
+router.include_router(losses_router)
 router.include_router(quality_labels_router)
 
 
