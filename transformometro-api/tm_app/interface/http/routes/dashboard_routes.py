@@ -271,17 +271,25 @@ def dashboard_evolucao(
     setor_id: str | None = None,
     competencia_inicio: str | None = None,
     competencia_fim: str | None = None,
+    granularity: str = Query(
+        default="month",
+        description="Grain of the series: month (default) or day (vigência-aware).",
+    ),
 ):
     if err := _scope_error_response(request, view, filial_id, setor_id):
         return err
+    grain = (granularity or "month").strip().lower()
+    if grain not in {"day", "month"}:
+        grain = "month"
     rows = _live.query_evolucao(
         view=view,
         filial_id=filial_id,
         setor_id=setor_id,
         competencia_inicio=competencia_inicio,
         competencia_fim=competencia_fim,
+        granularity=grain,
     )
-    return ok({"total": len(rows), "items": rows})
+    return ok({"total": len(rows), "items": rows, "granularity": grain})
 
 
 @router.get("/processos",

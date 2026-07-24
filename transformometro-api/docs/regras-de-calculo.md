@@ -157,6 +157,21 @@ métrica_no_recorte = métrica_mensal × (dias_do_filtro_no_mês / dias_do_mês)
 investimento_unico_mes = integral na competência (sem prorrata por dia)
 ```
 
+## Série diária do gráfico (dashboard `/evolucao?granularity=day`)
+
+Implementação: `calc_rules.build_daily_evolucao_series` · `DashboardLiveService.query_evolucao_diaria`.
+
+O front **não** rateia totais mensais — só renderiza os pontos.
+
+```text
+para cada linha (revisão × competência):
+  dias_ativos = filtro ∩ competência ∩ vigência efetiva da revisão
+  economia/horas/recorrente/recursos = valor_prorratado_do_recorte / dias_ativos
+  investimento_unico = valor integral no 1º dia ativo do recorte
+```
+
+Assim o gráfico reflete início de vigência/implantação (degraus e picos), em vez de uma média plana no mês.
+
 ## Economia diária (ranking “Top economia diária”)
 
 Implementação: `calc_rules.daily_averages_from_period_totals`.

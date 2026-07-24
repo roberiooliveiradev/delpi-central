@@ -144,6 +144,8 @@ function chartHint(
     parts.push("horas economizadas no recorte");
   } else if (granularity === "day" && dayProrated) {
     parts.push("visão diária proporcional aos dias do filtro");
+  } else if (granularity === "day") {
+    parts.push("visão diária por vigência (calculada na API)");
   } else if (granularity === "month") {
     parts.push("competências mensais incluídas no recorte");
   } else {
@@ -265,6 +267,10 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
+      const evolucaoParams = {
+        ...params,
+        granularity: savingsGranularity === "day" ? "day" : "month",
+      };
       const [
         resumoData,
         evolucaoData,
@@ -274,7 +280,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         vencimentosData,
       ] = await Promise.all([
         fetchDashboardResumo(getAccessToken, params),
-        fetchDashboardEvolucao(getAccessToken, params),
+        fetchDashboardEvolucao(getAccessToken, evolucaoParams),
         fetchDashboardProcessos(getAccessToken, params),
         fetchDashboardAlertas(getAccessToken, params),
         fetchDashboardPorFamilia(getAccessToken, params),
@@ -293,7 +299,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [getAccessToken, params]);
+  }, [getAccessToken, params, savingsGranularity]);
 
   useEffect(() => {
     void load();

@@ -1,6 +1,5 @@
 import type { DashboardEvolucaoItem } from "../data/api/transformometroApi";
 import type { ChartGranularity } from "../types/chart";
-import { countDaysInFilterForMonth, isCountedDay, parseIsoDate } from "./businessDays";
 import { buildPeriodBuckets } from "./periodBuckets";
 
 export type SavingsChartPoint = {
@@ -15,7 +14,10 @@ export type SavingsChartPoint = {
 export type EvolucaoChartSeriesResult = {
   points: SavingsChartPoint[];
   truncated: boolean;
-  /** Valores do período distribuídos entre os dias do filtro em cada competência. */
+  /**
+   * true quando a API devolveu média diária plana (legado).
+   * Com `granularity=day` a série já vem atribuída por vigência no backend.
+   */
   dayProrated: boolean;
 };
 
@@ -26,43 +28,8 @@ type MonthTotals = {
   horas: number;
 };
 
-function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
-}
-
-function addDailyFromCompetencia(
-  competencia: string,
-  values: MonthTotals,
-  dateStart: string,
-  dateEnd: string,
-  totals: Map<string, MonthTotals>
-) {
-  const match = competencia.match(/^(\d{4})-(\d{2})$/);
-  if (!match) return;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const dim = daysInMonth(year, month);
-  const daysInFilter = countDaysInFilterForMonth(year, month, dateStart, dateEnd);
-  if (daysInFilter <= 0) return;
-
-  const perDayBruta = values.bruta / daysInFilter;
-  const perDayLiquida = values.liquida / daysInFilter;
-  const perDayInvestimento = values.investimento / daysInFilter;
-  const perDayHoras = values.horas / daysInFilter;
-
-  for (let day = 1; day <= dim; day += 1) {
-    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    if (iso < dateStart || iso > dateEnd) continue;
-    if (!isCountedDay(parseIsoDate(iso))) continue;
-
-    const current = totals.get(iso) ?? { bruta: 0, liquida: 0, investimento: 0, horas: 0 };
-    current.bruta += perDayBruta;
-    current.liquida += perDayLiquida;
-    current.investimento += perDayInvestimento;
-    current.horas += perDayHoras;
-    totals.set(iso, current);
-  }
+function emptyTotals(): MonthTotals {
+  return { bruta: 0, liquida: 0, investimento: 0, horas: 0 };
 }
 
 function pointFromTotals(
@@ -80,6 +47,25 @@ function pointFromTotals(
   };
 }
 
+function totalsFromItem(item: DashboardEvolucaoItem): MonthTotals {
+  return {
+    bruta: Number(item.economia_bruta ?? 0),
+    liquida: Number(item.economia_liquida_mes ?? 0),
+    investimento: Number(
+      item.investimento_total_mes ??
+        Number(item.investimento_unico_mes ?? 0) +
+          Number(item.custo_recorrente_mes ?? 0) +
+          Number(item.custo_recursos_compartilhados_mes ?? 0)
+    ),
+    horas: Number(item.horas_economizadas_mes ?? 0),
+  };
+}
+
+/**
+ * Monta pontos do gráfico a partir da série já calculada pela API.
+ * Visão dia: items com `competencia` YYYY-MM-DD (backend).
+ * Visão mês/ano: agrega competências YYYY-MM no client só para buckets do eixo.
+ */
 export function buildEvolucaoSavingsSeries(
   items: DashboardEvolucaoItem[],
   dateStart: string | undefined,
@@ -90,51 +76,53 @@ export function buildEvolucaoSavingsSeries(
     return { points: [], truncated: false, dayProrated: false };
   }
 
-  const byMonth = new Map<string, MonthTotals>();
-  for (const item of items) {
-    const key = item.competencia?.trim() ?? "";
-    if (!key) continue;
-    const current = byMonth.get(key) ?? { bruta: 0, liquida: 0, investimento: 0, horas: 0 };
-    current.bruta += Number(item.economia_bruta ?? 0);
-    current.liquida += Number(item.economia_liquida_mes ?? 0);
-    current.investimento += Number(
-      item.investimento_total_mes ??
-        Number(item.investimento_unico_mes ?? 0) +
-          Number(item.custo_recorrente_mes ?? 0) +
-          Number(item.custo_recursos_compartilhados_mes ?? 0)
-    );
-    current.horas += Number(item.horas_economizadas_mes ?? 0);
-    byMonth.set(key, current);
-  }
-
   const { buckets, truncated } = buildPeriodBuckets(dateStart, dateEnd, granularity);
 
   if (granularity === "day") {
-    const dailyTotals = new Map<string, MonthTotals>();
-
-    for (const [competencia, values] of byMonth) {
-      addDailyFromCompetencia(competencia, values, dateStart, dateEnd, dailyTotals);
+    const byDay = new Map<string, MonthTotals>();
+    for (const item of items) {
+      const key = item.competencia?.trim() ?? "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) continue;
+      const current = byDay.get(key) ?? emptyTotals();
+      const next = totalsFromItem(item);
+      current.bruta += next.bruta;
+      current.liquida += next.liquida;
+      current.investimento += next.investimento;
+      current.horas += next.horas;
+      byDay.set(key, current);
     }
 
     const points = buckets.map((bucket) =>
-      pointFromTotals(bucket.label, bucket.key, dailyTotals.get(bucket.key))
+      pointFromTotals(bucket.label, bucket.key, byDay.get(bucket.key))
     );
+    return { points, truncated, dayProrated: false };
+  }
 
-    return { points, truncated, dayProrated: true };
+  const byMonth = new Map<string, MonthTotals>();
+  for (const item of items) {
+    const key = item.competencia?.trim() ?? "";
+    const monthKey = /^\d{4}-\d{2}-\d{2}$/.test(key) ? key.slice(0, 7) : key;
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) continue;
+    const current = byMonth.get(monthKey) ?? emptyTotals();
+    const next = totalsFromItem(item);
+    current.bruta += next.bruta;
+    current.liquida += next.liquida;
+    current.investimento += next.investimento;
+    current.horas += next.horas;
+    byMonth.set(monthKey, current);
   }
 
   if (granularity === "month") {
     const points = buckets.map((bucket) =>
       pointFromTotals(bucket.label, bucket.key, byMonth.get(bucket.key))
     );
-
     return { points, truncated, dayProrated: false };
   }
 
   const byYear = new Map<string, MonthTotals>();
   for (const [monthKey, values] of byMonth) {
     const year = monthKey.slice(0, 4);
-    const current = byYear.get(year) ?? { bruta: 0, liquida: 0, investimento: 0, horas: 0 };
+    const current = byYear.get(year) ?? emptyTotals();
     current.bruta += values.bruta;
     current.liquida += values.liquida;
     current.investimento += values.investimento;

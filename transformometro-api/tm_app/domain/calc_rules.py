@@ -15,6 +15,7 @@ from typing import Any, Optional
 from tm_app.core.business_days import (
     business_day_fraction_in_competencia_range,
     count_business_days,
+    is_counted_day,
     total_business_days_for_competencias,
 )
 
@@ -529,3 +530,143 @@ def horas_diaria_fallback_from_bruta(
     if economia_bruta <= 0 or economia_diaria <= 0 or horas_economizadas_mes <= 0:
         return 0.0
     return (horas_economizadas_mes / economia_bruta) * economia_diaria
+
+
+def _empty_daily_bucket() -> dict[str, float]:
+    return {
+        "economia_bruta": 0.0,
+        "economia_liquida_mes": 0.0,
+        "investimento_unico_mes": 0.0,
+        "custo_recorrente_mes": 0.0,
+        "custo_recursos_compartilhados_mes": 0.0,
+        "investimento_total_mes": 0.0,
+        "horas_economizadas_mes": 0.0,
+    }
+
+
+def _iter_competencia_month(competencia: str) -> tuple[date, date] | None:
+    text = (competencia or "").strip()
+    if len(text) < 7 or text[4] != "-":
+        return None
+    try:
+        year = int(text[0:4])
+        month = int(text[5:7])
+    except ValueError:
+        return None
+    if month < 1 or month > 12:
+        return None
+    first = date(year, month, 1)
+    last = date(year, month, calendar.monthrange(year, month)[1])
+    return first, last
+
+
+def build_daily_evolucao_series(
+    calculation_rows: list[dict],
+    *,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    reviews_by_id: dict[str, dict],
+) -> list[dict[str, Any]]:
+    """Série diária do dashboard a partir das linhas mensais × vigência da revisão.
+
+    - Economia, horas, recorrente e recursos: rateio uniforme nos dias ativos
+      (filtro ∩ competência ∩ vigência efetiva).
+    - Investimento único: concentrado no 1º dia ativo do recorte (variação real).
+    - Totais do período preservados (soma dos dias = prorrata mensal do recorte).
+
+    Cada item usa ``competencia`` = ``YYYY-MM-DD`` para o front plotar sem recalcular.
+    """
+    filter_start = parse_date(start_date) if start_date else None
+    filter_end = parse_date(end_date) if end_date else None
+    if filter_start is None or filter_end is None or filter_end < filter_start:
+        return []
+
+    by_day: dict[date, dict[str, float]] = {}
+
+    def bucket_for(day: date) -> dict[str, float]:
+        if day not in by_day:
+            by_day[day] = _empty_daily_bucket()
+        return by_day[day]
+
+    # Eixo contínuo do filtro (zeros onde não há contribuição).
+    cursor = filter_start
+    while cursor <= filter_end:
+        if is_counted_day(cursor):
+            bucket_for(cursor)
+        cursor += timedelta(days=1)
+
+    for row in calculation_rows:
+        month_bounds = _iter_competencia_month(str(row.get("competencia") or ""))
+        if month_bounds is None:
+            continue
+        month_first, month_last = month_bounds
+
+        review_id = str(row.get("revisao_id") or "")
+        review = reviews_by_id.get(review_id) if review_id else None
+        rev_start = review_calculation_start_date(review) if review else month_first
+        if rev_start is None:
+            continue
+        rev_end = review_effective_end_date(review) if review else None
+
+        active_start = max(month_first, rev_start, filter_start)
+        active_end = month_last
+        if rev_end is not None:
+            active_end = min(active_end, rev_end)
+        active_end = min(active_end, filter_end)
+        if active_end < active_start:
+            continue
+
+        active_days = count_business_days(active_start, active_end)
+        if active_days <= 0:
+            continue
+
+        prorated = prorate_dashboard_row_for_period(
+            row,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        if prorated is None:
+            continue
+
+        per_bruta = float(prorated["economia_bruta"]) / active_days
+        per_horas = float(prorated["horas_economizadas_mes"]) / active_days
+        per_recorrente = float(prorated["custo_recorrente_mes"]) / active_days
+        per_recursos = float(prorated["custo_recursos_compartilhados_mes"]) / active_days
+        unico = float(prorated["investimento_unico_mes"])
+
+        day = active_start
+        while day <= active_end:
+            if is_counted_day(day):
+                bucket = bucket_for(day)
+                bucket["economia_bruta"] += per_bruta
+                bucket["horas_economizadas_mes"] += per_horas
+                bucket["custo_recorrente_mes"] += per_recorrente
+                bucket["custo_recursos_compartilhados_mes"] += per_recursos
+                if day == active_start and unico:
+                    bucket["investimento_unico_mes"] += unico
+            day += timedelta(days=1)
+
+    items: list[dict[str, Any]] = []
+    for day in sorted(by_day.keys()):
+        bucket = by_day[day]
+        investimento_total = (
+            bucket["investimento_unico_mes"]
+            + bucket["custo_recorrente_mes"]
+            + bucket["custo_recursos_compartilhados_mes"]
+        )
+        economia_liquida = bucket["economia_bruta"] - investimento_total
+        items.append(
+            {
+                "competencia": day.isoformat(),
+                "economia_bruta": round(bucket["economia_bruta"], 2),
+                "investimento_unico_mes": round(bucket["investimento_unico_mes"], 2),
+                "custo_recorrente_mes": round(bucket["custo_recorrente_mes"], 2),
+                "custo_recursos_compartilhados_mes": round(
+                    bucket["custo_recursos_compartilhados_mes"], 2
+                ),
+                "investimento_total_mes": round(investimento_total, 2),
+                "economia_liquida_mes": round(economia_liquida, 2),
+                "horas_economizadas_mes": round(bucket["horas_economizadas_mes"], 2),
+            }
+        )
+    return items

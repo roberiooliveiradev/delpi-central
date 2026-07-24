@@ -161,7 +161,17 @@ class DashboardLiveService:
         setor_id: str | None = None,
         competencia_inicio: str | None = None,
         competencia_fim: str | None = None,
+        granularity: str = "month",
     ) -> list[dict[str, Any]]:
+        grain = (granularity or "month").strip().lower()
+        if grain == "day":
+            return self.query_evolucao_diaria(
+                view=view,
+                filial_id=filial_id,
+                setor_id=setor_id,
+                competencia_inicio=competencia_inicio,
+                competencia_fim=competencia_fim,
+            )
         summary = self.build_summary(
             view=view,
             filial_id=filial_id,
@@ -170,6 +180,43 @@ class DashboardLiveService:
             competencia_fim=competencia_fim,
         )
         return list(summary.get("evolucao_mensal") or [])
+
+    @_cached_query("evolucao_diaria")
+    def query_evolucao_diaria(
+        self,
+        *,
+        view: str | None = None,
+        filial_id: str | None = None,
+        setor_id: str | None = None,
+        competencia_inicio: str | None = None,
+        competencia_fim: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Série diária (calc_rules) — front apenas renderiza."""
+        if not competencia_inicio or not competencia_fim:
+            return []
+        rows = self.calculation_rows(
+            view=view,
+            filial_id=filial_id,
+            setor_id=setor_id,
+            competencia_inicio=competencia_inicio,
+            competencia_fim=competencia_fim,
+        )
+        if not rows:
+            return []
+        raw = self.load_filtered_raw(
+            view=view, filial_id=filial_id, setor_id=setor_id
+        )
+        reviews_by_id = {
+            str(review.get("revisao_id")): review
+            for review in raw.revisoes
+            if review.get("revisao_id")
+        }
+        return calc_rules.build_daily_evolucao_series(
+            rows,
+            start_date=competencia_inicio,
+            end_date=competencia_fim,
+            reviews_by_id=reviews_by_id,
+        )
 
     @_cached_query("ranking")
     def query_ranking_processos(

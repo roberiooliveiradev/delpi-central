@@ -172,3 +172,71 @@ def test_clamp_period_to_elapsed_days_marks_entirely_future():
     assert entirely_future is True
     assert start == "2026-08-01"
     assert end == "2026-08-31"
+
+
+def test_build_daily_evolucao_series_varies_by_vigencia_start():
+    """Revisão que começa no meio do mês só contribui a partir desse dia."""
+    reviews = {
+        "r-early": {
+            "revisao_id": "r-early",
+            "cenario_tipo": "melhoria",
+            "data_inicio_vigencia": "2026-04-01",
+            "data_implantacao": "2026-04-01",
+        },
+        "r-late": {
+            "revisao_id": "r-late",
+            "cenario_tipo": "automacao",
+            "data_inicio_vigencia": "2026-04-16",
+            "data_implantacao": "2026-04-16",
+        },
+    }
+    rows = [
+        {
+            "revisao_id": "r-early",
+            "competencia": "2026-04",
+            "economia_bruta": 300.0,
+            "economia_liquida_mes": 300.0,
+            "investimento_unico_mes": 0.0,
+            "custo_recorrente_mes": 0.0,
+            "custo_recursos_compartilhados_mes": 0.0,
+            "investimento_total_mes": 0.0,
+            "horas_economizadas_mes": 30.0,
+        },
+        {
+            "revisao_id": "r-late",
+            "competencia": "2026-04",
+            "economia_bruta": 150.0,
+            "economia_liquida_mes": 80.0,
+            "investimento_unico_mes": 70.0,
+            "custo_recorrente_mes": 0.0,
+            "custo_recursos_compartilhados_mes": 0.0,
+            "investimento_total_mes": 70.0,
+            "horas_economizadas_mes": 15.0,
+        },
+    ]
+
+    items = calc_rules.build_daily_evolucao_series(
+        rows,
+        start_date="2026-04-01",
+        end_date="2026-04-30",
+        reviews_by_id=reviews,
+    )
+
+    assert len(items) == 30
+    by_day = {item["competencia"]: item for item in items}
+
+    day_01 = by_day["2026-04-01"]
+    day_15 = by_day["2026-04-15"]
+    day_16 = by_day["2026-04-16"]
+    day_30 = by_day["2026-04-30"]
+
+    # Até 15/04 só r-early (300/30 = 10)
+    assert day_01["economia_bruta"] == 10.0
+    assert day_15["economia_bruta"] == 10.0
+    # A partir de 16/04: early 10 + late 150/15 = 10 → 20
+    assert day_16["economia_bruta"] == 20.0
+    assert day_30["economia_bruta"] == 20.0
+    # Único do late no 1º dia ativo
+    assert day_16["investimento_unico_mes"] == 70.0
+    assert day_01["investimento_unico_mes"] == 0.0
+    assert day_01["economia_bruta"] != day_16["economia_bruta"]
