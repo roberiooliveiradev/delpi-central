@@ -6,9 +6,15 @@ import { BLOCK_RESIZE_HANDLES } from "./BlockSelectionChrome";
 import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 
 type Props = {
+  /** Frame do grupo em % do slide (hit / startFrame do drag). */
   frame: ComunicadoFrame;
-  /** Rotação do GroupTransform (CSS no overlay = mesmo ângulo dos membros bakeados). */
+  /**
+   * Rotação do GroupTransform.
+   * Com `fillParent`, o ângulo fica no `GroupTransformLayer` — não repetir aqui.
+   */
   rotation?: number;
+  /** Preenche o layer pai (inset 0); um só rotate no container. */
+  fillParent?: boolean;
   /** Bloco âncora (id) — frame/style do hit espelham o chrome do grupo. */
   anchorBlock: ComunicadoBlock;
   allowResize?: boolean;
@@ -20,12 +26,13 @@ type Props = {
 };
 
 /**
- * Chrome de seleção pai do grupo — GroupTransform (frame + rotation).
- * Mesmo contrato visual do bloco individual: layout box + CSS rotate.
+ * Chrome de seleção pai do grupo.
+ * Preferir `fillParent` dentro de `GroupTransformLayer` (rotate único no container).
  */
 export function GroupSelectionChrome({
   frame,
   rotation = 0,
+  fillParent = false,
   anchorBlock,
   allowResize = true,
   onPointerDown,
@@ -40,14 +47,23 @@ export function GroupSelectionChrome({
   return (
     <div
       className="td-composer__group-chrome"
-      style={{
-        left: `${frame.x}%`,
-        top: `${frame.y}%`,
-        width: `${frame.w}%`,
-        height: `${frame.h}%`,
-        transform: rotation ? `rotate(${rotation}deg)` : undefined,
-        transformOrigin: "center center",
-      }}
+      style={
+        fillParent
+          ? {
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+            }
+          : {
+              left: `${frame.x}%`,
+              top: `${frame.y}%`,
+              width: `${frame.w}%`,
+              height: `${frame.h}%`,
+              transform: rotation ? `rotate(${rotation}deg)` : undefined,
+              transformOrigin: "center center",
+            }
+      }
       data-group-chrome=""
       data-block-id={anchorBlock.id}
       aria-label="Seleção do grupo"

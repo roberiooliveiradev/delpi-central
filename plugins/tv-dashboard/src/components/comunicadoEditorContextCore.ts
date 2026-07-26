@@ -28,6 +28,7 @@ import type {
 import type { MediaAsset } from "../api/tvDashboardApi";
 import type { ComunicadoSlideTheme } from "../content/comunicadoSlideThemes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
+import type { StageGroupGesture } from "../utils/stageGroupGesture";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 
@@ -234,6 +235,8 @@ export type ComunicadoEditorContextValue = {
   background: ComunicadoConfig["background"];
   canvasRef: RefObject<HTMLDivElement | null>;
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
+  /** Preview de grupo rígido: DOM usa um transform; frames world só no pointerup. */
+  activeGroupGesture: StageGroupGesture | null;
   /** Arma seleção multi antes do drag (evita race com setState). */
   armMultiDragSelection: (ids: string[]) => void;
   /** Marca limpeza de seleção se o toque não virar arraste. */

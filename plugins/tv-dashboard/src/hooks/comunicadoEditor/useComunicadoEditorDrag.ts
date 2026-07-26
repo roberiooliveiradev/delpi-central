@@ -131,6 +131,9 @@ export function useComunicadoEditorDrag({
   getSlideAspectRatioRef.current = getSlideAspectRatio;
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const groupGestureRef = useRef<StageGroupGesture | null>(null);
+  /** Preview DOM rígido: um container transformado; bake nos blocos só no pointerup. */
+  const [activeGroupGesture, setActiveGroupGesture] =
+    useState<StageGroupGesture | null>(null);
   /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
   /** Segundo toque: limpa seleção se soltar sem cruzar o limiar de arraste. */
@@ -193,22 +196,14 @@ export function useComunicadoEditorDrag({
     [applyConfig, configRef],
   );
 
-  const commitGroupGestureLive = useCallback(
-    (gesture: StageGroupGesture) => {
-      const updates = resolveWorldFrames(gesture);
-      const draggedIds = new Set(updates.keys());
-      const nextBlocks = applyWorldUpdatesToBlocks({
-        blocks: configRef.current.blocks ?? [],
-        updates,
-        resolveBaseline: (id) =>
-          dragSnapshotRef.current?.blocks?.find((block) => block.id === id),
-        childExtent: gesture.childExtent,
-        groupFrame: gesture.group.frame,
-      });
-      updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
-    },
-    [configRef, updateBlocksSilent],
-  );
+  const previewGroupGesture = useCallback((gesture: StageGroupGesture) => {
+    /*
+     * Não materializar world frames no live. Fazer isso aplicava `rotate()` em
+     * cada membro, cada um no próprio centro. O DOM recebe um GroupTransform
+     * único e os frames world são materializados somente no pointerup.
+     */
+    setActiveGroupGesture(gesture);
+  }, []);
 
   const handleUpdateStyle = useCallback(
     (blockId: string, patch: NonNullable<ComunicadoBlock["style"]>) => {
@@ -224,7 +219,7 @@ export function useComunicadoEditorDrag({
           gesture.startGroupRotation + pointerDelta,
         );
         groupGestureRef.current = next;
-        commitGroupGestureLive(next);
+        previewGroupGesture(next);
         return;
       }
 
@@ -235,7 +230,7 @@ export function useComunicadoEditorDrag({
       );
       updateBlocksSilent(nextBlocks);
     },
-    [commitGroupGestureLive, configRef, updateBlocksSilent],
+    [configRef, previewGroupGesture, updateBlocksSilent],
   );
 
   const handleUpdateBlock = useCallback(
@@ -286,7 +281,7 @@ export function useComunicadoEditorDrag({
           ? applyGroupScale(gesture, workingFrame, { lockAspect: true })
           : applyGroupMove(gesture, workingFrame);
         groupGestureRef.current = next;
-        commitGroupGestureLive(next);
+        previewGroupGesture(next);
         return;
       }
 
@@ -312,7 +307,7 @@ export function useComunicadoEditorDrag({
       });
       updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
     },
-    [commitGroupGestureLive, configRef, resolveBaseline, snapToObjectsRef, updateBlocksSilent],
+    [configRef, previewGroupGesture, resolveBaseline, snapToObjectsRef, updateBlocksSilent],
   );
 
   const handleInteractionStart = useCallback(
@@ -366,8 +361,10 @@ export function useComunicadoEditorDrag({
         } else {
           groupGestureRef.current = provisional;
         }
+        setActiveGroupGesture(groupGestureRef.current);
       } else {
         groupGestureRef.current = null;
+        setActiveGroupGesture(null);
       }
     },
     [cancelPendingTapDeselect, configRef, selectedId, selectedIds],
@@ -384,6 +381,7 @@ export function useComunicadoEditorDrag({
       dragSnapshotRef.current = null;
       const gesture = groupGestureRef.current;
       groupGestureRef.current = null;
+      setActiveGroupGesture(null);
       if (!before) return;
 
       const recordGestureHistory = () => {
@@ -391,60 +389,18 @@ export function useComunicadoEditorDrag({
         deckHistory?.recordBeforeChange(serializeComunicadoConfig(before));
       };
 
-      if (mode === "rotate" || mode === "adjust" || mode === "endpoint") {
-        const beforeBlock = before.blocks?.find((block) => block.id === blockId);
-        const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
-        const unchanged =
-          mode === "rotate"
-            ? gesture
-              ? gesture.memberIds.every((id) => {
-                  const b = before.blocks?.find((block) => block.id === id);
-                  const a = configRef.current.blocks?.find((block) => block.id === id);
-                  if (!b || !a) return true;
-                  return (
-                    (b.style?.rotation ?? 0) === (a.style?.rotation ?? 0) &&
-                    b.frame.x === a.frame.x &&
-                    b.frame.y === a.frame.y
-                  );
-                })
-              : (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0)
-            : mode === "endpoint"
-              ? JSON.stringify(beforeBlock && "vertices" in beforeBlock ? beforeBlock.vertices : null) ===
-                  JSON.stringify(afterBlock && "vertices" in afterBlock ? afterBlock.vertices : null) &&
-                JSON.stringify(
-                  beforeBlock && "connector" in beforeBlock ? beforeBlock.connector : null,
-                ) ===
-                  JSON.stringify(
-                    afterBlock && "connector" in afterBlock ? afterBlock.connector : null,
-                  )
-            : JSON.stringify({
-                style: beforeBlock?.style,
-                kpiParts: beforeBlock && "kpiParts" in beforeBlock ? beforeBlock.kpiParts : null,
-                chartParts:
-                  beforeBlock && "chartParts" in beforeBlock ? beforeBlock.chartParts : null,
-              }) ===
-              JSON.stringify({
-                style: afterBlock?.style,
-                kpiParts: afterBlock && "kpiParts" in afterBlock ? afterBlock.kpiParts : null,
-                chartParts: afterBlock && "chartParts" in afterBlock ? afterBlock.chartParts : null,
-              });
-        if (unchanged) {
-          applyConfig(configRef.current);
-          return;
-        }
-        recordGestureHistory();
-        applyConfig(configRef.current);
-        return;
-      }
-
-      /* Grupo/multi: snap opcional do group.frame + mesma resolveWorldFrames (nunca applyMultiFrameDelta). */
+      /*
+       * Grupo/multi: snap opcional no GroupTransform e um único bake world.
+       * Este ramo também finaliza rotate — antes rotate saía cedo e dependia
+       * do bake live por membro, reintroduzindo a distorção.
+       */
       if (gesture && gesture.memberIds.length > 1) {
         let finalGesture = gesture;
-        if (snapToGridRef.current) {
+        if (mode !== "rotate" && snapToGridRef.current) {
           const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
           const anchor =
-            configRef.current.blocks?.find((block) => block.id === blockId) ??
-            configRef.current.blocks?.find((block) => block.id === gesture.memberIds[0]);
+            before.blocks?.find((block) => block.id === blockId) ??
+            before.blocks?.find((block) => block.id === gesture.memberIds[0]);
           if (anchor) {
             const snappedGroup = snapComunicadoFrame(
               { ...anchor, frame: gesture.group.frame } as ComunicadoBlock,
@@ -457,7 +413,7 @@ export function useComunicadoEditorDrag({
                 ...gesture,
                 group: { ...gesture.group, frame: snappedGroup },
               };
-            } else {
+            } else if (mode === "resize") {
               finalGesture = applyGroupScale(
                 {
                   ...gesture,
@@ -469,28 +425,27 @@ export function useComunicadoEditorDrag({
               );
             }
           }
-        } else {
+        } else if (mode === "move") {
           const clamped = clampFrameForBlock(
             {
               type: "shape",
               shape: "rect",
               id: "group-chrome",
               frame: gesture.group.frame,
-            } as ComunicadoBlock,
+            } as unknown as ComunicadoBlock,
             gesture.group.frame,
           );
-          if (mode === "move") {
-            finalGesture = {
-              ...gesture,
-              group: { ...gesture.group, frame: clamped },
-            };
-          }
+          finalGesture = {
+            ...gesture,
+            group: { ...gesture.group, frame: clamped },
+          };
         }
 
         const updates = resolveWorldFrames(finalGesture);
         const draggedIds = new Set(updates.keys());
         let nextBlocks = applyWorldUpdatesToBlocks({
-          blocks: configRef.current.blocks ?? [],
+          /* Baseline, não config live: preview não altera os membros. */
+          blocks: before.blocks ?? [],
           updates,
           resolveBaseline: (id) => before.blocks?.find((block) => block.id === id),
           childExtent: finalGesture.childExtent,
@@ -518,6 +473,41 @@ export function useComunicadoEditorDrag({
         }
         recordGestureHistory();
         applyConfig(nextConfig);
+        return;
+      }
+
+      if (mode === "rotate" || mode === "adjust" || mode === "endpoint") {
+        const beforeBlock = before.blocks?.find((block) => block.id === blockId);
+        const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
+        const unchanged =
+          mode === "rotate"
+            ? (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0)
+            : mode === "endpoint"
+              ? JSON.stringify(beforeBlock && "vertices" in beforeBlock ? beforeBlock.vertices : null) ===
+                  JSON.stringify(afterBlock && "vertices" in afterBlock ? afterBlock.vertices : null) &&
+                JSON.stringify(
+                  beforeBlock && "connector" in beforeBlock ? beforeBlock.connector : null,
+                ) ===
+                  JSON.stringify(
+                    afterBlock && "connector" in afterBlock ? afterBlock.connector : null,
+                  )
+            : JSON.stringify({
+                style: beforeBlock?.style,
+                kpiParts: beforeBlock && "kpiParts" in beforeBlock ? beforeBlock.kpiParts : null,
+                chartParts:
+                  beforeBlock && "chartParts" in beforeBlock ? beforeBlock.chartParts : null,
+              }) ===
+              JSON.stringify({
+                style: afterBlock?.style,
+                kpiParts: afterBlock && "kpiParts" in afterBlock ? afterBlock.kpiParts : null,
+                chartParts: afterBlock && "chartParts" in afterBlock ? afterBlock.chartParts : null,
+              });
+        if (unchanged) {
+          applyConfig(configRef.current);
+          return;
+        }
+        recordGestureHistory();
+        applyConfig(configRef.current);
         return;
       }
 
@@ -598,6 +588,7 @@ export function useComunicadoEditorDrag({
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
     groupGestureRef.current = null;
+    setActiveGroupGesture(null);
     multiDragSelectionOverrideRef.current = null;
     cancelPendingTapDeselect();
     setActiveSmartGuides([]);
@@ -625,5 +616,6 @@ export function useComunicadoEditorDrag({
     cancelPendingTapDeselect,
     activeSmartGuides,
     connectionSitesPreview,
+    activeGroupGesture,
   };
 }

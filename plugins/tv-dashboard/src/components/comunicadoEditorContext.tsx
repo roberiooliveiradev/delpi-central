@@ -386,6 +386,7 @@ export function ComunicadoEditorProvider({
     cancelPendingTapDeselect,
     activeSmartGuides,
     connectionSitesPreview,
+    activeGroupGesture,
   } = useComunicadoEditorDrag({
     configRef,
     selectedIds: selection.selectedIds,
@@ -705,6 +706,7 @@ export function ComunicadoEditorProvider({
     background,
     canvasRef,
     startDrag,
+    activeGroupGesture,
     armMultiDragSelection,
     armTapDeselect,
     cancelPendingTapDeselect,

@@ -1,7 +1,6 @@
 import { clampRotationDeg } from "./comunicadoTransform";
 import {
   rotatePointPercentAround,
-  unionFramesPercent,
   type GroupScaleHandle,
   type PercentFrame,
 } from "./slidePercentRotation";
@@ -134,24 +133,51 @@ export function resolveGroupChromeFromMembers(input: {
     return { frame: aabbFromPoints(points), rotation: 0 };
   }
 
-  const layoutUnion = unionFramesPercent(members.map((member) => member.frame));
-  const center = frameCenter(layoutUnion);
-  const unrotated: PercentFrame[] = members.map((member) => {
-    const centerWorld = frameCenter(member.frame);
-    const centerLocal = rotatePointPercentAround(
-      centerWorld,
-      center,
-      -firstRotation,
-      aspect,
-    );
-    return {
-      x: centerLocal.x - member.frame.w / 2,
-      y: centerLocal.y - member.frame.h / 2,
-      w: member.frame.w,
-      h: member.frame.h,
-    };
-  });
-  return { frame: unionFramesPercent(unrotated), rotation: firstRotation };
+  /*
+   * OBB exato do grupo: transforma os cantos visuais para o espaço sem giro,
+   * calcula a união e volta o centro ao mundo. O pivô (0,0) é intencional:
+   * uma rotação rígida global preserva a caixa orientada e evita inferir o
+   * centro pelo AABB dos frames — essa inferência deslocava o chrome.
+   */
+  const origin = { x: 0, y: 0 };
+  const localPoints: Array<{ x: number; y: number }> = [];
+  for (const member of members) {
+    const center = frameCenter(member.frame);
+    const corners = [
+      { x: member.frame.x, y: member.frame.y },
+      { x: member.frame.x + member.frame.w, y: member.frame.y },
+      { x: member.frame.x + member.frame.w, y: member.frame.y + member.frame.h },
+      { x: member.frame.x, y: member.frame.y + member.frame.h },
+    ];
+    for (const corner of corners) {
+      const visual = rotatePointPercentAround(
+        corner,
+        center,
+        firstRotation,
+        aspect,
+      );
+      localPoints.push(
+        rotatePointPercentAround(visual, origin, -firstRotation, aspect),
+      );
+    }
+  }
+  const localBounds = aabbFromPoints(localPoints);
+  const localCenter = frameCenter(localBounds);
+  const worldCenter = rotatePointPercentAround(
+    localCenter,
+    origin,
+    firstRotation,
+    aspect,
+  );
+  return {
+    frame: {
+      x: worldCenter.x - localBounds.w / 2,
+      y: worldCenter.y - localBounds.h / 2,
+      w: localBounds.w,
+      h: localBounds.h,
+    },
+    rotation: firstRotation,
+  };
 }
 
 /** Chrome do gesto = GroupTransform atual. */

@@ -23,7 +23,15 @@ import {
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 
 const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 
@@ -50,7 +58,9 @@ import {
   resolveParentGroupHintFrame,
 } from "../utils/comunicadoGrouping";
 import { buildBlockTransformCss } from "../utils/comunicadoTransform";
-import { resolveGroupChromeFromMembers } from "../utils/stageGroupGesture";
+import {
+  beginGroupGesture,
+} from "../utils/stageGroupGesture";
 import {
   resolveBlockWrapChromeFlags,
   resolveStageSelectionHierarchy,
@@ -76,6 +86,7 @@ import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionContextMenu";
 import { BlockSelectionChrome } from "./BlockSelectionChrome";
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
+import { GroupTransformLayer } from "./GroupTransformLayer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import {
@@ -152,6 +163,7 @@ export function ComunicadoComposerCanvas() {
     showStageGuides,
     activeSmartGuides,
     connectionSitesPreview,
+    activeGroupGesture,
     stageGridSizePercent,
     updateBlock,
     viewportProfile,
@@ -630,6 +642,23 @@ export function ComunicadoComposerCanvas() {
     }
     return ids;
   }, [closedGroupChromeList]);
+  const activeGroupMemberIds = useMemo(
+    () => new Set(activeGroupGesture?.memberIds ?? []),
+    [activeGroupGesture],
+  );
+  const layeredMemberIds = useMemo(() => {
+    const ids = new Set(closedGroupMemberIds);
+    for (const id of activeGroupMemberIds) ids.add(id);
+    return ids;
+  }, [activeGroupMemberIds, closedGroupMemberIds]);
+  /** O grupo ativo substitui a versão idle para não renderizar dois containers. */
+  const idleGroupLayerList = useMemo(
+    () =>
+      closedGroupChromeList.filter(
+        (group) => !group.memberIds.some((id) => activeGroupMemberIds.has(id)),
+      ),
+    [activeGroupMemberIds, closedGroupChromeList],
+  );
   const selectionHierarchy = useMemo(() => {
     const primaryComplex = blocks.find((item) => item.id === selectedId);
     const selectedParts =
@@ -703,6 +732,257 @@ export function ComunicadoComposerCanvas() {
       selectedPart: partForChrome,
     });
     return flags.showHandles;
+  };
+
+  const renderBlock = (
+    block: ComunicadoBlock,
+    groupWrapStyle?: CSSProperties,
+  ) => {
+    if (isBlockHiddenOnStage(block, blocks)) return null;
+    const isSelected = isBlockSelected(block.id);
+    const inClosedGroup = Boolean(isSelected && closedGroupMemberIds.has(block.id));
+    const remoteEditors = remoteSelections.filter((selection) =>
+      selection.selectedIds.includes(block.id),
+    );
+    const isPrimary = block.id === primarySelected;
+    const partForChrome =
+      block.type === "kpi_view"
+        ? selectedKpiPart
+        : block.type === "chart_view"
+          ? selectedChartPart
+          : block.type === "table_view"
+            ? selectedTablePart
+            : block.type === "input"
+              ? selectedInputPart
+              : null;
+    const wrapChrome = resolveBlockWrapChromeFlags({
+      hierarchy: selectionHierarchy,
+      blockId: block.id,
+      blockType: block.type,
+      isSelected,
+      closedGroupActive: inClosedGroup,
+      selectedPart: partForChrome,
+    });
+    const hasPartChrome = wrapChrome.partChildrenActive;
+    const selectionRadius = isSelected || remoteEditors.length > 0
+      ? resolveBlockSelectionBorderRadiusPx(block)
+      : undefined;
+    const wrapTransform = buildBlockTransformCss(block.style);
+    const placementStyle: CSSProperties = groupWrapStyle
+      ? groupWrapStyle
+      : {
+          ...resolveBlockPlacementStyle(block),
+          zIndex: block.style?.zIndex ?? 1,
+          ...(wrapTransform ? { transform: wrapTransform } : {}),
+        };
+
+    return (
+      <div
+        key={block.id}
+        data-block-id={block.id}
+        data-group-layer-member={groupWrapStyle ? "" : undefined}
+        className={[
+          "td-composer__block-wrap",
+          wrapChrome.showOutline ? "td-composer__block-wrap--selected" : "",
+          isSelected && !isPrimary && wrapChrome.showOutline
+            ? "td-composer__block-wrap--multi"
+            : "",
+          wrapChrome.mutedAsGroupMember ? "td-composer__block-wrap--group-member" : "",
+          hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
+          block.type === "text" || block.type === "heading"
+            ? "td-composer__block-wrap--text"
+            : "",
+          block.type === "shape" && isLineShapeKind(block.shape)
+            ? "td-composer__block-wrap--line-shape"
+            : "",
+          block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
+          block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
+          block.type === "input" ? "td-composer__block-wrap--input" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        style={{
+          ...placementStyle,
+          ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
+        }}
+        onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
+        onDoubleClick={(event) => {
+          if (shouldDeferToStagePan(event, stagePanMode)) return;
+          event.stopPropagation();
+          event.preventDefault();
+          cancelPendingTapDeselect();
+          const action = resolveStageDblClickAction({
+            block,
+            blocks,
+            selectedIds,
+          });
+          if (action.type === "enter-text-edit") {
+            enterTextEdit(action.blockId);
+            return;
+          }
+          if (action.type === "isolate-child") {
+            selectBlock(action.blockId, { expandGroup: false });
+          }
+        }}
+        onPointerDown={(event) => {
+          if (event.button !== 0) return;
+          if (
+            (event.ctrlKey || event.metaKey) &&
+            !event.shiftKey &&
+            !stagePanMode
+          ) {
+            event.stopPropagation();
+            event.preventDefault();
+            beginBlockStageMoveDrag({
+              event,
+              block,
+              blocks,
+              isBlockSelected,
+              selectedIds,
+              selectedId,
+              preferGroupChildrenSelection,
+              selectBlock,
+              selectBlocksByIds,
+              armMultiDragSelection,
+              startDrag,
+              armTapDeselect,
+            });
+            return;
+          }
+          if (shouldDeferToStagePan(event, stagePanMode)) return;
+          event.stopPropagation();
+          if (
+            isDataSourceBlockType(block.type) &&
+            selected &&
+            (selected.type === "chart_view" ||
+              selected.type === "kpi_view" ||
+              selected.type === "table_view") &&
+            !selected.dataSourceId?.trim()
+          ) {
+            const resolved = "resolved" in block ? block.resolved : undefined;
+            updateBlock(
+              selected.id,
+              buildViewDataLinkPatch({
+                viewType: selected.type,
+                dataSourceId: block.id,
+                resolved,
+                currentFrame: selected.frame,
+                existing: {
+                  kpiProjection:
+                    "kpiProjection" in selected ? selected.kpiProjection : undefined,
+                  chartProjection:
+                    "chartProjection" in selected ? selected.chartProjection : undefined,
+                  tableProjection:
+                    "tableProjection" in selected ? selected.tableProjection : undefined,
+                },
+              }) as Partial<ComunicadoBlock>,
+            );
+            return;
+          }
+          if (
+            isDataSourceBlockType(block.type) &&
+            selected &&
+            isComunicadoVisualBoxBlock(selected) &&
+            !selected.dataSourceId?.trim()
+          ) {
+            const resolved = "resolved" in block ? block.resolved : undefined;
+            updateBlock(
+              selected.id,
+              buildTextDataLinkPatch({
+                dataSourceId: block.id,
+                resolved,
+                existing: selected.textProjection,
+              }) as Partial<ComunicadoBlock>,
+            );
+            return;
+          }
+          if (
+            isDataSourceBlockType(block.type) &&
+            selected &&
+            isCanvasTableDataBoundBlockType(selected.type) &&
+            selected.type === "canvas_table" &&
+            !selected.dataSourceId?.trim()
+          ) {
+            const resolved = "resolved" in block ? block.resolved : undefined;
+            updateBlock(
+              selected.id,
+              buildCanvasTableDataLinkPatch({
+                dataSourceId: block.id,
+                resolved,
+                existingCells: selected.cells,
+              }) as Partial<ComunicadoBlock>,
+            );
+            return;
+          }
+          if (
+            editingTextId === block.id &&
+            (event.target as HTMLElement).closest(".td-composer__inline-text")
+          ) {
+            return;
+          }
+          beginBlockStageMoveDrag({
+            event,
+            block,
+            blocks,
+            isBlockSelected,
+            selectedIds,
+            selectedId,
+            preferGroupChildrenSelection,
+            selectBlock,
+            selectBlocksByIds,
+            armMultiDragSelection,
+            startDrag,
+            armTapDeselect,
+          });
+        }}
+      >
+        <ComunicadoEditorBlockView
+          block={block}
+          fontScale={1}
+          isSelected={isSelected && !inClosedGroup}
+          isEditingText={editingTextId === block.id}
+          className={[
+            isSelected ? "td-composer__block--selected" : "",
+            block.type === "chart_view" ? "td-composer__block--chart" : "",
+            block.type === "kpi_view" ? "td-composer__block--kpi" : "",
+          ]
+            .filter(Boolean)
+            .join(" ") || undefined}
+          dataLoading={
+            (isFetchableDataBlockType(block.type) || isDataViewBlockType(block.type)) &&
+            !("resolved" in block && block.resolved) &&
+            dataPreviewLoading
+          }
+        />
+        {remoteEditors.length > 0 ? (
+          <RemoteSelectionFrame
+            displayNames={remoteEditors.map((selection) => selection.displayName)}
+          />
+        ) : null}
+        {showSelectionChrome(block.id) ? (
+          <BlockSelectionChrome
+            block={block}
+            designShortSidePx={Math.min(
+              (block.frame.w / 100) * designSize.width,
+              (block.frame.h / 100) * designSize.height,
+            )}
+            allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
+            onPointerDown={startDragRespectingPan}
+          />
+        ) : null}
+        {shouldShowComplexViewFloatToolbar({
+          block,
+          isPrimary,
+          selectedIdsLength: selectedIds.length,
+          selectedChartPart,
+          selectedKpiPart,
+          selectedTablePart,
+          selectedInputPart,
+        }) ? (
+          <ComplexViewFloatToolbar block={block} />
+        ) : null}
+      </div>
+    );
   };
 
   const marqueeStyle = useMemo(() => {
@@ -809,6 +1089,9 @@ export function ComunicadoComposerCanvas() {
               })
             : null}
           {blocks.map((block) => {
+            if (layeredMemberIds.has(block.id)) {
+              return null;
+            }
             if (isBlockHiddenOnStage(block, blocks)) {
               return null;
             }
@@ -1059,10 +1342,11 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
-          {closedGroupChromeList.map((group) => {
+          {idleGroupLayerList.map((group) => {
             const slideAspect = designSize.width / Math.max(designSize.height, 1);
-            const chrome = resolveGroupChromeFromMembers({
+            const gesture = beginGroupGesture({
               members: group.members.map((member) => ({
+                id: member.id,
                 frame: member.frame,
                 rotation: member.style?.rotation ?? 0,
               })),
@@ -1071,17 +1355,52 @@ export function ComunicadoComposerCanvas() {
             const anchor =
               group.members.find((member) => member.id === primarySelected) ??
               group.members[group.members.length - 1];
-            if (!anchor) return null;
+            if (!gesture || !anchor) return null;
             return (
-              <GroupSelectionChrome
+              <GroupTransformLayer
                 key={group.groupId}
-                frame={chrome.frame}
-                rotation={chrome.rotation}
-                anchorBlock={anchor}
-                onPointerDown={startDragRespectingPan}
+                gesture={gesture}
+                members={group.members}
+                renderMember={({ block, wrapStyle }) => renderBlock(block, wrapStyle)}
+                chrome={
+                  <GroupSelectionChrome
+                    frame={gesture.group.frame}
+                    rotation={gesture.group.rotation}
+                    fillParent
+                    anchorBlock={anchor}
+                    onPointerDown={startDragRespectingPan}
+                  />
+                }
               />
             );
           })}
+          {activeGroupGesture ? (
+            <GroupTransformLayer
+              key="active-group-gesture"
+              gesture={activeGroupGesture}
+              members={(blocks ?? []).filter((block) =>
+                activeGroupMemberIds.has(block.id),
+              )}
+              renderMember={({ block, wrapStyle }) => renderBlock(block, wrapStyle)}
+              chrome={(() => {
+                const members = (blocks ?? []).filter((block) =>
+                  activeGroupMemberIds.has(block.id),
+                );
+                const anchor =
+                  members.find((member) => member.id === primarySelected) ??
+                  members[members.length - 1];
+                return anchor ? (
+                  <GroupSelectionChrome
+                    frame={activeGroupGesture.group.frame}
+                    rotation={activeGroupGesture.group.rotation}
+                    fillParent
+                    anchorBlock={anchor}
+                    onPointerDown={startDragRespectingPan}
+                  />
+                ) : null;
+              })()}
+            />
+          ) : null}
           {parentGroupHintFrame ? (
             <div
               className="td-composer__group-chrome td-composer__group-chrome--parent-hint"
