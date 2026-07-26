@@ -125,7 +125,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
 
   useEffect(() => {
     setPage(1);
-  }, [ppmType, apiParams.branch, apiParams.date_start, apiParams.date_end, pageSize]);
+  }, [ppmType, apiParams.branch, apiParams.start_date, apiParams.end_date, pageSize]);
 
   useEffect(() => {
     setPage(1);

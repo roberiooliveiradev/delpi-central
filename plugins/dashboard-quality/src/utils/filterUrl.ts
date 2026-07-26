@@ -19,7 +19,7 @@ export type QualityFilterUrlState = {
   ppmProductScope: PpmProductScope;
 };
 
-const FILTER_KEYS = ["date_start", "date_end", "competence", "branch", "ppm_product"] as const;
+const FILTER_KEYS = ["start_date", "end_date", "competence", "branch", "ppm_product"] as const;
 const SESSION_STORAGE_KEY = "delpi.dashboard-quality.filters";
 
 function isValidIsoDate(value: string): boolean {
@@ -56,8 +56,8 @@ function parseStoredBranches(data: Record<string, unknown>): string[] {
 }
 
 function parseFilterParams(params: URLSearchParams): QualityFilterUrlState | null {
-  const dateStartParam = params.get("date_start") ?? "";
-  const dateEndParam = params.get("date_end") ?? "";
+  const dateStartParam = params.get("start_date") ?? params.get("date_start") ?? "";
+  const dateEndParam = params.get("end_date") ?? params.get("date_end") ?? "";
   const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const ppmProductParam = params.get("ppm_product") ?? "";
@@ -171,11 +171,11 @@ export function buildFilterSearchParams(state: QualityFilterUrlState): string {
   const params = new URLSearchParams();
 
   if (state.dateStart) {
-    params.set("date_start", state.dateStart);
+    params.set("start_date", state.dateStart);
   }
 
   if (state.dateEnd) {
-    params.set("date_end", state.dateEnd);
+    params.set("end_date", state.dateEnd);
   }
 
   if (state.competence) {

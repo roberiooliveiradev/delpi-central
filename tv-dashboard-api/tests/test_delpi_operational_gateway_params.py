@@ -25,16 +25,16 @@ def test_date_range_strategy_forwards_extra_filters():
 
 
 def test_date_range_strategy_uses_schema_date_start_end_for_ppm():
-    """PPM OpenAPI usa date_start/date_end — não start_date/end_date."""
+    """PPM migrado: catálogo emite start_date/end_date (UI pode ainda mandar date_start)."""
     query = _build_query_params(
         {
             "paramStrategy": "date_range",
-            "dateRangeKeys": ["date_start", "date_end"],
+            "dateRangeKeys": ["start_date", "end_date"],
             "defaultParams": {"periodDays": 30},
             "paramSchema": {
                 "branch": {"type": "string"},
-                "date_start": {"type": "string"},
-                "date_end": {"type": "string"},
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
                 "product_prefix": {"type": "string"},
             },
         },
@@ -46,13 +46,13 @@ def test_date_range_strategy_uses_schema_date_start_end_for_ppm():
         },
     )
     assert query == {
-        "date_start": "2026-01-01",
-        "date_end": "2026-07-13",
+        "start_date": "2026-01-01",
+        "end_date": "2026-07-13",
         "branch": "01",
         "product_prefix": "90",
     }
-    assert "start_date" not in query
-    assert "end_date" not in query
+    assert "date_start" not in query
+    assert "date_end" not in query
 
 
 def test_date_range_maps_ui_aliases_to_canonical_start_date():

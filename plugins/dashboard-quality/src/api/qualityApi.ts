@@ -81,8 +81,8 @@ export async function listNonconformities(
     {
       type: params.type ?? "all",
       branch: params.branch,
-      date_start: params.date_start,
-      date_end: params.date_end,
+      start_date: params.start_date,
+      end_date: params.end_date,
       status: params.status,
       item_code: params.item_code,
       description: params.description,
@@ -125,8 +125,8 @@ export async function getScrapCostPct(
 ): Promise<CostPctSummary> {
   return fetchQualityData<CostPctSummary>("/scrap-cost-pct", {
     branch: params.branch,
-    date_start: params.date_start,
-    date_end: params.date_end,
+    start_date: params.start_date,
+    end_date: params.end_date,
   }, signal);
 }
 
@@ -136,8 +136,8 @@ export async function getReworkCostPct(
 ): Promise<CostPctSummary> {
   return fetchQualityData<CostPctSummary>("/rework-cost-pct", {
     branch: params.branch,
-    date_start: params.date_start,
-    date_end: params.date_end,
+    start_date: params.start_date,
+    end_date: params.end_date,
   }, signal);
 }
 
@@ -150,8 +150,8 @@ export async function getPpmSummary(
     `/ppm/${type}/summary`,
     {
       branch: params.branch,
-      date_start: params.date_start,
-      date_end: params.date_end,
+      start_date: params.start_date,
+      end_date: params.end_date,
       product_prefix: params.product_prefix,
     },
     signal
@@ -179,8 +179,8 @@ export async function listPpm(
 ): Promise<Page<PpmItem>> {
   return fetchQualityData<Page<PpmItem>>(`/ppm/${type}`, {
     branch: params.branch,
-    date_start: params.date_start,
-    date_end: params.date_end,
+    start_date: params.start_date,
+    end_date: params.end_date,
     page: params.page,
     page_size: params.page_size,
     product_prefix: params.product_prefix,
@@ -224,8 +224,8 @@ export async function getNonconformitySeries(
     {
       type: params.type ?? "all",
       branch: params.branch,
-      date_start: params.date_start,
-      date_end: params.date_end,
+      start_date: params.start_date,
+      end_date: params.end_date,
       status: params.status,
       item_code: params.item_code,
       description: params.description,
@@ -245,8 +245,8 @@ export async function getPpmSeries(
     `/ppm/${type}/series`,
     {
       branch: params.branch,
-      date_start: params.date_start,
-      date_end: params.date_end,
+      start_date: params.start_date,
+      end_date: params.end_date,
       granularity: params.granularity,
       product_prefix: params.product_prefix,
     },

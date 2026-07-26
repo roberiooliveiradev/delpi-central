@@ -62,8 +62,8 @@ export type SummaryParams = {
 export async function fetchKaizenSummary(params: SummaryParams = {}): Promise<KaizenSummary> {
   const search = new URLSearchParams();
   if (params.branch) search.set("branch", params.branch);
-  if (params.dateStart) search.set("date_start", params.dateStart);
-  if (params.dateEnd) search.set("date_end", params.dateEnd);
+  if (params.dateStart) search.set("start_date", params.dateStart);
+  if (params.dateEnd) search.set("end_date", params.dateEnd);
   const query = search.toString();
   const envelope = await httpGet<ApiEnvelope<KaizenSummary>>(
     `${API_BASE}/summary${query ? `?${query}` : ""}`,
@@ -204,8 +204,8 @@ export async function fetchKaizenSavingsTimeline(
   params: { dateStart?: string; dateEnd?: string } = {},
 ): Promise<KaizenSavingsTimeline> {
   const search = new URLSearchParams();
-  if (params.dateStart) search.set("date_start", params.dateStart);
-  if (params.dateEnd) search.set("date_end", params.dateEnd);
+  if (params.dateStart) search.set("start_date", params.dateStart);
+  if (params.dateEnd) search.set("end_date", params.dateEnd);
   const query = search.toString();
   const envelope = await httpGet<ApiEnvelope<KaizenSavingsTimeline>>(
     `${API_BASE}/${id}/savings-timeline${query ? `?${query}` : ""}`,

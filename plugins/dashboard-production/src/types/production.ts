@@ -33,8 +33,8 @@ export type OtdPctData = DashboardGoalFields & {
 export type ProductionOeeSeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   oee_filial_01: number | null;
   oee_filial_02: number | null;
 };
@@ -49,8 +49,8 @@ export type ProductionOeeSeriesData = {
 export type ProductionOtdSeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   otd_filial_01: number | null;
   otd_filial_02: number | null;
 };

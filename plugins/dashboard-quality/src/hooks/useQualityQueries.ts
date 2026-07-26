@@ -19,7 +19,7 @@ export function usePpmInternalSummary(
 ) {
   return useQualityResource(
     (signal) => getPpmInternalSummary(params, signal),
-    [params.branch, params.date_start, params.date_end],
+    [params.branch, params.start_date, params.end_date],
     { enabled }
   );
 }
@@ -30,7 +30,7 @@ export function usePpmExternalSummary(
 ) {
   return useQualityResource(
     (signal) => getPpmExternalSummary(params, signal),
-    [params.branch, params.date_start, params.date_end],
+    [params.branch, params.start_date, params.end_date],
     { enabled }
   );
 }
@@ -40,8 +40,8 @@ export function usePpmInternalList(params: ListPpmParams = {}, enabled = true) {
     (signal) => listPpmInternal(params, signal),
     [
       params.branch,
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
       params.page,
       params.page_size,
     ],
@@ -54,8 +54,8 @@ export function usePpmExternalList(params: ListPpmParams = {}, enabled = true) {
     (signal) => listPpmExternal(params, signal),
     [
       params.branch,
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
       params.page,
       params.page_size,
     ],
@@ -73,8 +73,8 @@ export function useKaizenSummary(
       params.title,
       params.status,
       params.branch,
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
     ],
     { enabled }
   );
@@ -100,8 +100,8 @@ export function useNonconformities(
     [
       params.type,
       params.branch,
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
       params.status,
       params.item_code,
       params.description,

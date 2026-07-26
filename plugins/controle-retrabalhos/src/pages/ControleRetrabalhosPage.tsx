@@ -68,7 +68,7 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
   const detalhes = useRetrabalhoDetalhes(appliedFilters, page);
 
   const handleApplyPeriod = () => {
-    const error = validatePeriodRange(draftFilters.dataInicio, draftFilters.dataFim);
+    const error = validatePeriodRange(draftFilters.start_date, draftFilters.end_date);
     if (error) {
       setValidationError(error);
       return;
@@ -128,8 +128,8 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
             {resumo?.periodo ? (
               <>
                 {" "}
-                · {formatDatePtBr(resumo.periodo.dataInicio)} a{" "}
-                {formatDatePtBr(resumo.periodo.dataFim)}
+                · {formatDatePtBr((resumo.periodo.start_date ?? resumo.periodo.dataInicio ?? ""))} a{" "}
+                {formatDatePtBr((resumo.periodo.end_date ?? resumo.periodo.dataFim ?? ""))}
               </>
             ) : null}
           </>

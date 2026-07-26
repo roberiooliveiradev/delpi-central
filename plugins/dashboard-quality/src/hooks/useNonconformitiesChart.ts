@@ -26,8 +26,8 @@ export function useNonconformitiesChart({
     filters.type ?? "all",
     granularity,
     filters.branch ?? "",
-    filters.date_start ?? "",
-    filters.date_end ?? "",
+    filters.start_date ?? "",
+    filters.end_date ?? "",
     filters.status ?? "",
     filters.item_code ?? "",
     filters.description ?? "",
@@ -39,8 +39,8 @@ export function useNonconformitiesChart({
         {
           type: filters.type,
           branch: filters.branch,
-          date_start: filters.date_start,
-          date_end: filters.date_end,
+          start_date: filters.start_date,
+          end_date: filters.end_date,
           status: filters.status,
           item_code: filters.item_code,
           description: filters.description,
@@ -52,8 +52,8 @@ export function useNonconformitiesChart({
       filters.type,
       granularity,
       filters.branch,
-      filters.date_start,
-      filters.date_end,
+      filters.start_date,
+      filters.end_date,
       filters.status,
       filters.item_code,
       filters.description,
@@ -65,8 +65,8 @@ export function useNonconformitiesChart({
     data?.points.map((point) => ({
       periodo: point.periodo,
       sortKey: point.sort_key,
-      dateStart: point.date_start,
-      dateEnd: point.date_end,
+      dateStart: point.start_date,
+      dateEnd: point.end_date,
       value: point.value,
     })) ?? [];
 

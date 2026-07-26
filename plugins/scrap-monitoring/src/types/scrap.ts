@@ -1,8 +1,8 @@
 export const DEFAULT_RANKING_LIMIT = 10;
 
 export type FilterFormState = {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
   mp: string;
   pa: string;
   op: string;
@@ -12,8 +12,8 @@ export type FilterFormState = {
 
 export type ScrapQueryFilters = {
   filial: string;
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
   mp?: string;
   pa?: string;
   op?: string;
@@ -22,8 +22,11 @@ export type ScrapQueryFilters = {
 };
 
 export type ScrapPeriodo = {
-  dataInicio: string;
-  dataFim: string;
+  start_date?: string;
+  end_date?: string;
+  /** Legado api-delpi — preferir start_date/end_date na leitura defensiva. */
+  dataInicio?: string;
+  dataFim?: string;
   filial: string;
 };
 

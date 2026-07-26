@@ -24,9 +24,9 @@ AUTH=(-H "Authorization: Bearer $TOKEN")
 QUERY=""
 
 if [ -n "$DATE_START" ]; then
-  QUERY="?date_start=$DATE_START"
+  QUERY="?start_date=$DATE_START"
   if [ -n "$DATE_END" ]; then
-    QUERY="${QUERY}&date_end=$DATE_END"
+    QUERY="${QUERY}&end_date=$DATE_END"
   fi
 fi
 
@@ -38,10 +38,10 @@ curl -fsS "${AUTH[@]}" "$API_PREFIX/ppm/internal/summary$QUERY" | python3 -m jso
 
 SERIES_Q="granularity=month"
 if [ -n "$DATE_START" ]; then
-  SERIES_Q="${SERIES_Q}&date_start=${DATE_START}"
+  SERIES_Q="${SERIES_Q}&start_date=${DATE_START}"
 fi
 if [ -n "$DATE_END" ]; then
-  SERIES_Q="${SERIES_Q}&date_end=${DATE_END}"
+  SERIES_Q="${SERIES_Q}&end_date=${DATE_END}"
 fi
 
 echo "[4/6] PPM interno — série (mês)"

@@ -19,8 +19,8 @@ function buildDetailPathWithPeriod(
 ): string {
   if (!period?.dateStart || !period?.dateEnd) return base;
   const params = new URLSearchParams({
-    date_start: period.dateStart,
-    date_end: period.dateEnd,
+    start_date: period.dateStart,
+    end_date: period.dateEnd,
   });
   return `${base}?${params.toString()}`;
 }
@@ -75,8 +75,8 @@ export function parseAppointmentsPath(pathname: string): ParsedAppointmentsRoute
 export function readDetailPeriodFromUrl(): { dateStart: string; dateEnd: string } | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
-  const dateStart = params.get("date_start")?.trim() ?? "";
-  const dateEnd = params.get("date_end")?.trim() ?? "";
+  const dateStart = (params.get("start_date") ?? params.get("date_start"))?.trim() ?? "";
+  const dateEnd = (params.get("end_date") ?? params.get("date_end"))?.trim() ?? "";
   if (!dateStart || !dateEnd) return null;
   return { dateStart, dateEnd };
 }
@@ -90,8 +90,10 @@ export function withDetailPeriodParams(
 ): string {
   const raw = currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch;
   const params = new URLSearchParams(raw);
-  params.set("date_start", dateStart);
-  params.set("date_end", dateEnd);
+  params.delete("date_start");
+  params.delete("date_end");
+  params.set("start_date", dateStart);
+  params.set("end_date", dateEnd);
   return `${pathname}?${params.toString()}`;
 }
 

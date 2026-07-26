@@ -21,7 +21,7 @@ export function PeriodFilters({
   onApply,
   onQuickRange,
 }: PeriodFiltersProps) {
-  const localError = validatePeriodRange(filters.dataInicio, filters.dataFim);
+  const localError = validatePeriodRange(filters.start_date, filters.end_date);
 
   return (
     <FilterBarShell>
@@ -30,15 +30,15 @@ export function PeriodFilters({
           id="cr-filter-start"
           label="Data inicial"
           type="date"
-          value={filters.dataInicio}
-          onChange={(value) => onChange({ dataInicio: value })}
+          value={filters.start_date}
+          onChange={(value) => onChange({ start_date: value })}
         />
         <FilterInputField
           id="cr-filter-end"
           label="Data final"
           type="date"
-          value={filters.dataFim}
-          onChange={(value) => onChange({ dataFim: value })}
+          value={filters.end_date}
+          onChange={(value) => onChange({ end_date: value })}
         />
       </div>
       {validationError || localError ? (

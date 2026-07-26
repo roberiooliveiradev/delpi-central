@@ -102,8 +102,6 @@ function buildHistoricoQuery(params: FetchHistoricoParams): string {
 
   const optionalKeys = [
     "result",
-    "date_from",
-    "date_to",
     "supplier",
     "product_code",
     "inspector",
@@ -117,6 +115,9 @@ function buildHistoricoQuery(params: FetchHistoricoParams): string {
       search.set(key, value.trim());
     }
   }
+
+  if (params.start_date?.trim()) search.set("start_date", params.start_date.trim());
+  if (params.end_date?.trim()) search.set("end_date", params.end_date.trim());
 
   return search.toString();
 }

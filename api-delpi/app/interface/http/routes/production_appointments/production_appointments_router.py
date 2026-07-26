@@ -21,10 +21,15 @@ from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetada
 from app.interface.http.routes.production_appointments.production_appointments_branch_access import (
     branch_access_error,
 )
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.routes.production_appointments.production_appointments_route_helpers import (
     BRANCH_QUERY,
-    DATE_END_QUERY,
-    DATE_START_QUERY,
     GROUP_BY_QUERY,
     OP_QUERY,
     PAGE_QUERY,
@@ -46,8 +51,8 @@ router = APIRouter(
 def _guard_and_build(
     *,
     branch: str,
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     work_center: Optional[str] = None,
     op: Optional[str] = None,
     product: Optional[str] = None,
@@ -63,8 +68,8 @@ def _guard_and_build(
     try:
         request = build_query_request(
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             work_center=work_center,
             op=op,
             product=product,
@@ -110,8 +115,10 @@ def list_work_centers_route(branch: str = BRANCH_QUERY()):
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def list_appointments_route(
     branch: str = BRANCH_QUERY(),
-    date_start: Optional[str] = DATE_START_QUERY(),
-    date_end: Optional[str] = DATE_END_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
@@ -119,10 +126,16 @@ def list_appointments_route(
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
 ):
-    request, err = _guard_and_build(
-        branch=branch,
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
         date_start=date_start,
         date_end=date_end,
+    )
+    request, err = _guard_and_build(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
         work_center=work_center,
         op=op,
         product=product,
@@ -152,16 +165,24 @@ def list_appointments_route(
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def summary_route(
     branch: str = BRANCH_QUERY(),
-    date_start: Optional[str] = DATE_START_QUERY(),
-    date_end: Optional[str] = DATE_END_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
 ):
-    request, err = _guard_and_build(
-        branch=branch,
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
         date_start=date_start,
         date_end=date_end,
+    )
+    request, err = _guard_and_build(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
         work_center=work_center,
         op=op,
         product=product,
@@ -188,17 +209,25 @@ def summary_route(
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def series_route(
     branch: str = BRANCH_QUERY(),
-    date_start: Optional[str] = DATE_START_QUERY(),
-    date_end: Optional[str] = DATE_END_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
     group_by: str = GROUP_BY_QUERY(),
 ):
-    request, err = _guard_and_build(
-        branch=branch,
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
         date_start=date_start,
         date_end=date_end,
+    )
+    request, err = _guard_and_build(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
         work_center=work_center,
         op=op,
         product=product,
@@ -226,8 +255,10 @@ def series_route(
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def by_op_route(
     branch: str = BRANCH_QUERY(),
-    date_start: Optional[str] = DATE_START_QUERY(),
-    date_end: Optional[str] = DATE_END_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
@@ -235,10 +266,16 @@ def by_op_route(
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
 ):
-    request, err = _guard_and_build(
-        branch=branch,
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
         date_start=date_start,
         date_end=date_end,
+    )
+    request, err = _guard_and_build(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
         work_center=work_center,
         op=op,
         product=product,

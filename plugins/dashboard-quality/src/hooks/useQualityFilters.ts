@@ -56,8 +56,8 @@ export function useQualityFilters() {
 
   const apiParams: DateRangeParams = {
     branch: resolveApiBranch(branches),
-    date_start: inputDateToApi(dateStart),
-    date_end: inputDateToApi(dateEnd),
+    start_date: inputDateToApi(dateStart),
+    end_date: inputDateToApi(dateEnd),
   };
 
   const ppmApiParams: DateRangeParams = {

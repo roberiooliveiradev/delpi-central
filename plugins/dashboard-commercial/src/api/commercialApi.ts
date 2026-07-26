@@ -210,8 +210,8 @@ export function getCommercialProposalHistoryEvents(
   const searchParams = new URLSearchParams();
   searchParams.set("branch", params.branch);
   if (params.revision) searchParams.set("revision", params.revision);
-  if (params.start_date) searchParams.set("date_start", params.start_date);
-  if (params.end_date) searchParams.set("date_end", params.end_date);
+  if (params.start_date) searchParams.set("start_date", params.start_date);
+  if (params.end_date) searchParams.set("end_date", params.end_date);
 
   const encoded = encodeURIComponent(proposalNumber.trim());
   const query = searchParams.toString();

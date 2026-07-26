@@ -62,6 +62,13 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_WORK_CENTER_AVERAGE_PLANNED_TIME,
     PRODUCTION_WORK_CENTER_ORDER_SUMMARY,
 )
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -112,17 +119,25 @@ def get_production_order_by_op(
 @router.get("/consumption/top-items", **PRODUCTION_CONSUMPTION_TOP_ITEMS)
 @require_permission(API_DELPI_ACCESS)
 def get_consumption_top_items(
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
     group_by: str = CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         normalized_group_by = ProductionConsumptionTopItemsGroupByService.normalize(group_by)
         dto = ProductionOperationalRequest(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             limit=limit,
             group_by=normalized_group_by,
@@ -148,18 +163,26 @@ def get_consumption_top_items(
 @require_permission(API_DELPI_ACCESS)
 def list_machine_program_top_intermediates(
     branch: str = BRANCH_QUERY_REQUIRED(),
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         result = build_list_production_machine_program_top_intermediates_use_case().execute(
             ListMachineProgramTopIntermediatesRequest(
                 branch=branch,
-                date_start=date_start,
-                date_end=date_end,
+                date_start=start_date,
+                date_end=end_date,
                 page=page,
                 page_size=page_size,
                 search=search,
@@ -184,16 +207,24 @@ def list_machine_program_top_intermediates(
 @router.get("/losses/records", **PRODUCTION_LOSSES_RECORDS)
 @require_permission(API_DELPI_ACCESS)
 def get_losses_records(
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
     loss_type: str = LOSS_TYPE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductionOperationalRequest(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             limit=limit,
             loss_type=loss_type,
@@ -215,16 +246,24 @@ def get_losses_records(
 @router.get("/losses/top-materials", **PRODUCTION_LOSSES_TOP_MATERIALS)
 @require_permission(API_DELPI_ACCESS)
 def get_losses_top_materials(
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
     loss_type: str = LOSS_TYPE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductionOperationalRequest(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             limit=limit,
             loss_type=loss_type,
@@ -361,16 +400,24 @@ def get_work_center_order_summary(
 )
 @require_permission(API_DELPI_ACCESS)
 def get_consumption_top_items_by_work_center(
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductionOperationalRequest(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             work_center=work_center,
             limit=limit,
@@ -397,15 +444,23 @@ def get_consumption_top_items_by_work_center(
 )
 @require_permission(API_DELPI_ACCESS)
 def get_consumption_top_items_validated(
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductionOperationalRequest(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             limit=limit,
         )
@@ -522,17 +577,25 @@ def get_work_center_average_planned_time(
 @require_permission(API_DELPI_ACCESS)
 def get_consumption_by_item(
     code: str,
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     product_group: Optional[str] = Query(default=None, min_length=4, max_length=4),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductionOperationalRequest(
             item_code=code,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             product_group=product_group,
             limit=limit,

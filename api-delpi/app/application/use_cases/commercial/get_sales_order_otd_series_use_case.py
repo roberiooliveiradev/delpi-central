@@ -38,8 +38,8 @@ class GetSalesOrderOtdSeriesUseCase:
             return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             granularity=request.granularity,
         )
 
@@ -48,15 +48,15 @@ class GetSalesOrderOtdSeriesUseCase:
         for bucket in buckets_result.buckets:
             otd_01 = self._fetch_otd_pct(
                 branch=FILIAL_01,
-                start_date=bucket.date_start,
-                end_date=bucket.date_end,
+                start_date=bucket.start_date,
+                end_date=bucket.end_date,
                 customer_segment=request.customer_segment,
                 include=request.branch in (None, FILIAL_01),
             )
             otd_02 = self._fetch_otd_pct(
                 branch=FILIAL_02,
-                start_date=bucket.date_start,
-                end_date=bucket.date_end,
+                start_date=bucket.start_date,
+                end_date=bucket.end_date,
                 customer_segment=request.customer_segment,
                 include=request.branch in (None, FILIAL_02),
             )
@@ -65,8 +65,8 @@ class GetSalesOrderOtdSeriesUseCase:
                 SalesOrderOtdSeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     otd_filial_01=otd_01,
                     otd_filial_02=otd_02,
                 )

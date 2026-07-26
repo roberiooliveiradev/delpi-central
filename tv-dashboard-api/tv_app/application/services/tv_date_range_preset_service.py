@@ -9,11 +9,13 @@ DATE_RANGE_PRESET_KEY = "dateRangePreset"
 PERIOD_DAYS_KEY = "periodDays"
 
 # Pares canônicos OpenAPI (ordem = preferência ao detectar no schema).
+# Canônico HTTP api-delpi primeiro; aliases legado depois (remoção planejada 2027-01).
 DATE_RANGE_KEY_PAIRS: tuple[tuple[str, str], ...] = (
-    ("date_start", "date_end"),
     ("start_date", "end_date"),
+    ("date_start", "date_end"),
     ("date_from", "date_to"),
     ("dataInicio", "dataFim"),
+    ("data_inicio", "data_fim"),
     ("data_inicial", "data_final"),
     ("issue_date_start", "issue_date_end"),
     ("modified_from", "modified_to"),

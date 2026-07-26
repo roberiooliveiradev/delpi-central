@@ -26,8 +26,8 @@ _DATE_FORMAT_FALLBACK_NAMES = frozenset(
     {
         "start_date",
         "end_date",
-        "date_start",
-        "date_end",
+        "start_date",
+        "end_date",
         "dataInicio",
         "dataFim",
         "data_inicio",

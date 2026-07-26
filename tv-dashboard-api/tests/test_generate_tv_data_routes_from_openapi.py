@@ -126,6 +126,21 @@ def test_openapi_date_start_end_becomes_date_range_with_canonical_keys():
     assert "start_date" not in schema
 
 
+def test_openapi_prefers_start_date_when_both_pairs_present():
+    gen = _load_generator_module()
+    schema, strategy, date_keys = gen.build_param_schema_from_openapi(
+        [
+            {"name": "start_date", "required": False, "type": "string"},
+            {"name": "end_date", "required": False, "type": "string"},
+            {"name": "date_start", "required": False, "type": "string", "deprecated": True},
+            {"name": "date_end", "required": False, "type": "string", "deprecated": True},
+        ]
+    )
+    assert strategy == "date_range"
+    assert date_keys == ("start_date", "end_date")
+    assert "start_date" in schema
+
+
 def test_si_competence_with_dates_still_exposes_date_range_for_tv_presets():
     """PPM Externo/Interno SI: competence opcional + start/end → presets no inspetor TV."""
     gen = _load_generator_module()

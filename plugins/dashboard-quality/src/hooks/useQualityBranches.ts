@@ -2,8 +2,8 @@ import { listQualityBranches } from "../api/qualityApi";
 import { useQualityResource } from "./useQualityResource";
 
 type UseQualityBranchesParams = {
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 export function useQualityBranches(params: UseQualityBranchesParams = {}) {
@@ -11,13 +11,13 @@ export function useQualityBranches(params: UseQualityBranchesParams = {}) {
     (signal) =>
       listQualityBranches(
         {
-          date_start: params.date_start,
-          date_end: params.date_end,
+          start_date: params.start_date,
+          end_date: params.end_date,
         },
         signal
       ),
-    [params.date_start, params.date_end],
-    { cacheKey: `branches:${params.date_start ?? ""}:${params.date_end ?? ""}` }
+    [params.start_date, params.end_date],
+    { cacheKey: `branches:${params.start_date ?? ""}:${params.end_date ?? ""}` }
   );
 
   return {

@@ -38,7 +38,7 @@ class GetProductProductionStatusUseCase:
             {
             "product": header,
             "reference_date": reference_date,
-            "date_start": date_start,
+            "start_date": date_start,
             "date_end_exclusive": date_end_exclusive,
             "items": items,
             "summary": summarize_production(items),

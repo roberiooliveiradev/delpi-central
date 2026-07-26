@@ -5,8 +5,8 @@ from dataclasses import asdict, dataclass
 class SalesOrderOtdSeriesPointDto:
     periodo: str
     sort_key: str
-    date_start: str
-    date_end: str
+    start_date: str
+    end_date: str
     otd_filial_01: float | None
     otd_filial_02: float | None
 

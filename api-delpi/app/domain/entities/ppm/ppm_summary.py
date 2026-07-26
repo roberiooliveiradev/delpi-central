@@ -8,8 +8,8 @@ from typing import Optional
 class PpmSummary:
     type: str
     branch: Optional[str]
-    date_start: Optional[str]
-    date_end: Optional[str]
+    start_date: Optional[str]
+    end_date: Optional[str]
     total_devolvido_un: float
     total_produzido_milheiro: float
     total_produzido_un: float

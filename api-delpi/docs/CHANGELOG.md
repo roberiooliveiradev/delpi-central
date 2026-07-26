@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-07 — Período HTTP canônico `start_date` / `end_date`
+
+Contrato de query para intervalo genérico: **`start_date` / `end_date`**. Rotas que usavam `date_start`/`date_end`, `dataInicio`/`dataFim` (e demais aliases genéricos) passam a expor o canônico e **aceitam o legado** (dual-read) até **2027-01**.
+
+**Resposta JSON:** campos de período genérico em séries/resumo/playbook também usam **`start_date` / `end_date`** (ex.: pontos de série PPM/OEE/OTD/ROL, `PpmSummary`, kaizen summary, histórico de preço). `date_end_exclusive` permanece. `dataInicio`/`dataFim` (refugos/retrabalho) fora deste rename.
+
+| Legado | Canônico | Remoção |
+|-------|----------|---------|
+| `date_start` / `date_end` | `start_date` / `end_date` | 2027-01 |
+| `dataInicio` / `dataFim` | idem | 2027-01 |
+| `date_from` / `date_to`, `data_inicio` / `data_fim`, `data_inicial` / `data_final` | idem | 2027-01 |
+
+**Fora do escopo:** `issue_date_*`, `modified_from`/`modified_to`, scheduling `from`/`to`.
+
+Módulo: `app/interface/http/period_query_params.py`. Gate: `scripts/audit_period_param_pairs.py --check --strict-active` (legado só se `deprecated=True`). **Remoção dos Query legado:** 2027-01 (não antes).
+
+---
+
 ## 2026-07 — Datas de calendário na resposta → ISO (`YYYY-MM-DD`)
 
 Contrato HTTP: datas de calendário (sem hora) serializadas como **`YYYY-MM-DD`** via `ResponseDateFormatService`. Inclui LMP, playbook/produto (`reference_date` primário), produção operacional (`period` / `reference_date` / `loss_date`), supplies (estoque/giro/estimation), despesas CC e propostas comerciais. Companions `*_iso` no playbook permanecem como alias deprecado (remoção planejada 2027-06). SQL/TOTVS e query params inalterados. `meta.dataVersion` → `2026-07`.

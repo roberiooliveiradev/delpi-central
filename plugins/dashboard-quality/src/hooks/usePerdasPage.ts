@@ -15,8 +15,8 @@ import {
 
 export type PerdasFilters = {
   branch?: string;
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 type UsePerdasPageResult = {
@@ -66,8 +66,8 @@ export function usePerdasPage(filters: PerdasFilters): UsePerdasPageResult {
       const consolidated = !filters.branch;
       const baseParams = {
         branch: filters.branch,
-        date_start: filters.date_start,
-        date_end: filters.date_end,
+        start_date: filters.start_date,
+        end_date: filters.end_date,
       };
 
       try {
@@ -176,8 +176,8 @@ export function usePerdasPage(filters: PerdasFilters): UsePerdasPageResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- scrap/rework omitidos de propósito (evita loop)
   }, [
     filters.branch,
-    filters.date_start,
-    filters.date_end,
+    filters.start_date,
+    filters.end_date,
     reloadToken,
   ]);
 

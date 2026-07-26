@@ -38,8 +38,8 @@ export function usePpmChartSeries({
     type,
     granularity,
     filters.branch ?? "",
-    filters.date_start ?? "",
-    filters.date_end ?? "",
+    filters.start_date ?? "",
+    filters.end_date ?? "",
     filters.product_prefix ?? "",
   ].join(":");
 
@@ -49,8 +49,8 @@ export function usePpmChartSeries({
         type,
         {
           branch: filters.branch,
-          date_start: filters.date_start,
-          date_end: filters.date_end,
+          start_date: filters.start_date,
+          end_date: filters.end_date,
           granularity,
           product_prefix: filters.product_prefix,
         },
@@ -60,8 +60,8 @@ export function usePpmChartSeries({
       type,
       granularity,
       filters.branch,
-      filters.date_start,
-      filters.date_end,
+      filters.start_date,
+      filters.end_date,
       filters.product_prefix,
     ],
     { cacheKey, cacheTtlMs: 60_000, enabled }
@@ -71,8 +71,8 @@ export function usePpmChartSeries({
     data?.points.map((point) => ({
       periodo: point.periodo,
       sortKey: point.sort_key,
-      dateStart: point.date_start,
-      dateEnd: point.date_end,
+      dateStart: point.start_date,
+      dateEnd: point.end_date,
       ppm: point.ppm,
     })) ?? [];
 

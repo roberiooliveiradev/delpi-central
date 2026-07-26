@@ -377,8 +377,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
         return {
             "filters": {
                 "branch_code": branch_code,
-                "date_start": date_start,
-                "date_end": date_end,
+                "start_date": date_start,
+                "end_date": date_end,
             },
             "has_period": has_period,
             "total": len(period_rows),
@@ -719,8 +719,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
         current = savings_timeline_service.current_active_savings(revisions)
         return {
             "kaizen_id": kaizen_id,
-            "date_start": date_start,
-            "date_end": date_end,
+            "start_date": date_start,
+            "end_date": date_end,
             "period_savings": total,
             "current": current,
             "improvements": revisions,

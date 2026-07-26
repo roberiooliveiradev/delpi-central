@@ -458,8 +458,8 @@ export async function closeAuditWithoutNcTreatment(auditId: string) {
 function buildDashboardQuery(params: AuditDashboardFilterParams): string {
   const search = new URLSearchParams();
   search.set("branch", params.branch);
-  search.set("date_start", params.date_start);
-  search.set("date_end", params.date_end);
+  search.set("start_date", params.start_date);
+  search.set("end_date", params.end_date);
   search.set("granularity", params.granularity);
   search.set("page", String(params.page));
   search.set("page_size", String(params.page_size));
@@ -483,8 +483,8 @@ function buildNcBoardQuery(params: NcBoardFilterParams): string {
   search.set("branch", params.branch);
   search.set("page", String(params.page));
   search.set("page_size", String(params.page_size));
-  if (params.date_start) search.set("date_start", params.date_start);
-  if (params.date_end) search.set("date_end", params.date_end);
+  if (params.start_date) search.set("start_date", params.start_date);
+  if (params.end_date) search.set("end_date", params.end_date);
   if (params.area_id) search.set("area_id", params.area_id);
   if (params.shift) search.set("shift", params.shift);
   if (params.status) search.set("status", params.status);

@@ -85,7 +85,7 @@ class GetProductFactoryStatusUseCase:
             {
             "product": header,
             "reference_date": reference_date,
-            "date_start": date_start,
+            "start_date": date_start,
             "date_end_exclusive": date_end_exclusive,
             "factory_status": factory_status,
             "structure": {

@@ -64,6 +64,9 @@ def simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
     if description:
         entry["description"] = description
     entry.update(_schema_type_and_meta(schema))
+    # OpenAPI 3: `deprecated` no Parameter Object; FastAPI também pode espelhar no schema.
+    if param.get("deprecated") or schema.get("deprecated"):
+        entry["deprecated"] = True
     return entry
 
 

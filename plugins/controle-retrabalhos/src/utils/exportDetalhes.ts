@@ -29,7 +29,7 @@ function detalheToRow(item: RetrabalhoDetalheItem): (string | number)[] {
 
 function buildFilename(filters: RetrabalhoQueryFilters): string {
   const safe = (value: string) => value.replace(/[^\d-]/g, "");
-  return `controle-retrabalhos_${filters.filial}_${safe(filters.dataInicio)}_${safe(filters.dataFim)}`;
+  return `controle-retrabalhos_${filters.filial}_${safe(filters.start_date)}_${safe(filters.end_date)}`;
 }
 
 function buildExportTable(items: RetrabalhoDetalheItem[]): MatrixExportTable {

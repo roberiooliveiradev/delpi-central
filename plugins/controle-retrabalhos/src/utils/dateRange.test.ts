@@ -12,22 +12,22 @@ describe("dateRange", () => {
   it("default range spans 12 calendar months", () => {
     const ref = new Date(2026, 6, 6);
     const range = getDefaultLast12MonthsRange(ref);
-    expect(range.dataInicio).toBe("2025-08-01");
-    expect(range.dataFim).toBe("2026-07-06");
+    expect(range.start_date).toBe("2025-08-01");
+    expect(range.end_date).toBe("2026-07-06");
   });
 
   it("last 6 months range spans 6 calendar months", () => {
     const ref = new Date(2026, 6, 6);
     const range = getDefaultLast6MonthsRange(ref);
-    expect(range.dataInicio).toBe("2026-02-01");
-    expect(range.dataFim).toBe("2026-07-06");
+    expect(range.start_date).toBe("2026-02-01");
+    expect(range.end_date).toBe("2026-07-06");
   });
 
   it("this month range starts on first day of current month", () => {
     const ref = new Date(2026, 6, 6);
     const range = getThisMonthRange(ref);
-    expect(range.dataInicio).toBe("2026-07-01");
-    expect(range.dataFim).toBe("2026-07-06");
+    expect(range.start_date).toBe("2026-07-01");
+    expect(range.end_date).toBe("2026-07-06");
   });
 
   it("rejects periods longer than 24 months", () => {

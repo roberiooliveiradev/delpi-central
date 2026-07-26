@@ -181,8 +181,8 @@ export function DashboardLmpsPage({
     error,
     reload,
   } = useLmpsDashboard({
-    date_start: debouncedDateStart || undefined,
-    date_end: debouncedDateEnd || undefined,
+    start_date: debouncedDateStart || undefined,
+    end_date: debouncedDateEnd || undefined,
     branch: apiFilters.branch,
     listing_type: apiFilters.listing_type,
     status: apiFilters.status,

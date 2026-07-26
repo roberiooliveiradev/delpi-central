@@ -43,8 +43,8 @@ class GetProductionOeeSeriesUseCase:
             return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             granularity=request.granularity,
         )
 
@@ -66,8 +66,8 @@ class GetProductionOeeSeriesUseCase:
                 resolve_bucket_oee_pct(
                     daily_rows,
                     branch=FILIAL_01,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    date_start=bucket.start_date,
+                    date_end=bucket.end_date,
                 )
                 if include_01
                 else None
@@ -76,8 +76,8 @@ class GetProductionOeeSeriesUseCase:
                 resolve_bucket_oee_pct(
                     daily_rows,
                     branch=FILIAL_02,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    date_start=bucket.start_date,
+                    date_end=bucket.end_date,
                 )
                 if include_02
                 else None
@@ -87,8 +87,8 @@ class GetProductionOeeSeriesUseCase:
                 ProductionOeeSeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     oee_filial_01=oee_01,
                     oee_filial_02=oee_02,
                 )

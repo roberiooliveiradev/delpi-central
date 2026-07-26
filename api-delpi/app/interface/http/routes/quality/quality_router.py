@@ -1,5 +1,12 @@
 from fastapi import APIRouter, Query
 
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     KAIZEN_STATUS_QUERY,
@@ -85,14 +92,22 @@ router.include_router(quality_labels_router)
 @router.get("/branches", operation_id="list_quality_branches")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_quality_branches(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
 ):
     try:
-        use_case = build_list_quality_branches_use_case()
-        result = use_case.execute(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        use_case = build_list_quality_branches_use_case()
+        result = use_case.execute(
+            date_start=start_date,
+            date_end=end_date,
         )
 
         return api_delpi_success(
@@ -118,19 +133,27 @@ def get_nonconformity_series(
     type: str = NONCONFORMITY_TYPE_QUERY(),
     granularity: str = GRANULARITY_QUERY_MONTH(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
     item_code: Optional[str] = None,
     description: Optional[str] = None,
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         dto = NonconformitySeriesRequest(
             type=type,
             granularity=granularity,
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             status=status,
             item_code=item_code,
             description=description,
@@ -158,8 +181,10 @@ def get_nonconformity_series(
 def list_nonconformity_route(
     type: str = NONCONFORMITY_TYPE_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
     item_code: Optional[str] = None,
     description: Optional[str] = None,
@@ -167,11 +192,17 @@ def list_nonconformity_route(
     page_size: int = Query(None, ge=1),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         dto = ListNonconformityRequest(
             type=type,
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             status=status,
             item_code=item_code,
             description=description,
@@ -202,18 +233,26 @@ def get_kaizen_summary(
     title: str | None = Query(default=None),
     status: str | None = KAIZEN_STATUS_QUERY(),
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         use_case = build_get_kaizen_summary_use_case()
 
         request = KaizenSummaryRequest(
             title=title,
             status=status,
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
         )
 
         summary = use_case.execute(request).to_dict()
@@ -223,16 +262,16 @@ def get_kaizen_summary(
         summary = enrich_dashboard_metric(
             summary,
             source_key=goal_keys.QUALITY_KAIZEN_IDEAS,
-            start_date=date_start,
-            end_date=date_end,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
             summary_key="ideas_goal",
         )
         summary = enrich_dashboard_metric(
             summary,
             source_key=goal_keys.QUALITY_KAIZEN_FINANCIAL,
-            start_date=date_start,
-            end_date=date_end,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
         )
 

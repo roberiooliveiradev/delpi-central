@@ -342,12 +342,13 @@ def map_openapi_type(param: dict[str, Any]) -> str:
     return "string"
 
 
-# Pares de período OpenAPI — ordem = preferência (date_start antes de start_date).
+# Pares de período OpenAPI — ordem = preferência (start_date canônico primeiro).
 _DATE_RANGE_KEY_PAIRS: tuple[tuple[str, str], ...] = (
-    ("date_start", "date_end"),
     ("start_date", "end_date"),
+    ("date_start", "date_end"),
     ("date_from", "date_to"),
     ("dataInicio", "dataFim"),
+    ("data_inicio", "data_fim"),
     ("data_inicial", "data_final"),
     ("issue_date_start", "issue_date_end"),
     ("modified_from", "modified_to"),
@@ -382,9 +383,29 @@ def build_param_schema_from_openapi(
     strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
     op = operation if isinstance(operation, dict) else {}
+    # Com par canônico escolhido, não espelhar aliases legado deprecated no schema TV.
+    skip_legacy_aliases: set[str] = set()
+    if date_range_keys == ("start_date", "end_date"):
+        skip_legacy_aliases = {
+            "date_start",
+            "date_end",
+            "date_from",
+            "date_to",
+            "dataInicio",
+            "dataFim",
+            "data_inicio",
+            "data_fim",
+            "data_inicial",
+            "data_final",
+        }
 
     for param in params:
         name = str(param["name"])
+        if name in skip_legacy_aliases and bool(param.get("deprecated")):
+            continue
+        if name in skip_legacy_aliases and date_range_keys:
+            # Alias ativo ainda no baseline antigo: omitir se canônico já no schema.
+            continue
         locale_label, locale_description = extract_param_locale_pt(op, name)
         entry: dict[str, Any] = {
             "type": map_openapi_type(param),
@@ -582,7 +603,37 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 entry.pop("default", None)
             patched_existing[key] = entry
         merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
-    return merged
+    return prune_legacy_period_aliases_from_schema(merged)
+
+
+_LEGACY_PERIOD_SCHEMA_KEYS = frozenset(
+    {
+        "date_start",
+        "date_end",
+        "date_from",
+        "date_to",
+        "dataInicio",
+        "dataFim",
+        "data_inicio",
+        "data_fim",
+        "data_inicial",
+        "data_final",
+    }
+)
+
+
+def prune_legacy_period_aliases_from_schema(route: dict[str, Any]) -> dict[str, Any]:
+    """Com dateRangeKeys canônico, remove aliases legado herdados do catálogo antigo."""
+    keys = route.get("dateRangeKeys")
+    if not (isinstance(keys, list) and len(keys) >= 2 and keys[0] == "start_date" and keys[1] == "end_date"):
+        return route
+    schema = route.get("paramSchema")
+    if not isinstance(schema, dict):
+        return route
+    cleaned = {k: v for k, v in schema.items() if k not in _LEGACY_PERIOD_SCHEMA_KEYS}
+    if cleaned != schema:
+        route = {**route, "paramSchema": cleaned}
+    return route
 
 
 _HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})

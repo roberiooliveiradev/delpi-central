@@ -56,8 +56,8 @@ export type LmpsDashboardResponse = {
 };
 
 export type LmpsDashboardParams = {
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   branch?: string;
   listing_type?: string;
   status?: string;

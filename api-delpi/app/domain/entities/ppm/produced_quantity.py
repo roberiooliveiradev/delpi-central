@@ -35,8 +35,8 @@ class ProducedQuantityByProduct:
 @dataclass
 class ProducedQuantityReport:
     branch: Optional[str]
-    date_start: str
-    date_end: str
+    start_date: str
+    end_date: str
     products: list[str]
     items: list[ProducedQuantityItem]
     total_produced_milheiro: float
@@ -46,8 +46,8 @@ class ProducedQuantityReport:
     def to_dict(self) -> dict:
         return {
             "branch": self.branch,
-            "date_start": self.date_start,
-            "date_end": self.date_end,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
             "products": self.products,
             "items": [item.to_dict() for item in self.items],
             "total_produced_milheiro": self.total_produced_milheiro,

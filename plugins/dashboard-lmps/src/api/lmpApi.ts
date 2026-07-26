@@ -67,11 +67,11 @@ function toApiDate(value?: string): string | undefined {
 function buildQuery(params: ListLmpsParams & { status?: string }): string {
   const searchParams = new URLSearchParams();
 
-  const dateStart = toApiDate(params.date_start);
-  const dateEnd = toApiDate(params.date_end);
+  const dateStart = toApiDate(params.start_date);
+  const dateEnd = toApiDate(params.end_date);
 
-  if (dateStart) searchParams.set("date_start", dateStart);
-  if (dateEnd) searchParams.set("date_end", dateEnd);
+  if (dateStart) searchParams.set("start_date", dateStart);
+  if (dateEnd) searchParams.set("end_date", dateEnd);
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.listing_type && params.listing_type !== "Todos") {
     searchParams.set("listing_type", params.listing_type);
@@ -156,8 +156,8 @@ export type LmpsDashboardItemsResponse = {
 };
 
 export type GetLmpBySaleNumberParams = {
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   branch?: string;
 };
 
@@ -172,11 +172,11 @@ export type LmpHistoryCollectionResponse = {
 
 function buildLmpDetailQuery(params: GetLmpBySaleNumberParams = {}): string {
   const searchParams = new URLSearchParams();
-  const dateStart = toApiDate(params.date_start);
-  const dateEnd = toApiDate(params.date_end);
+  const dateStart = toApiDate(params.start_date);
+  const dateEnd = toApiDate(params.end_date);
 
-  if (dateStart) searchParams.set("date_start", dateStart);
-  if (dateEnd) searchParams.set("date_end", dateEnd);
+  if (dateStart) searchParams.set("start_date", dateStart);
+  if (dateEnd) searchParams.set("end_date", dateEnd);
   if (params.branch) searchParams.set("branch", params.branch);
 
   const query = searchParams.toString();

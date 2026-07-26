@@ -26,7 +26,7 @@ echo "==> GET dashboard analytics (${BRANCH}, ${DATE_START}..${DATE_END})"
 
 BODY="$(curl -sS -w "\n%{http_code}" \
   -H "Authorization: Bearer ${TOKEN}" \
-  "${API}?branch=${BRANCH}&date_start=${DATE_START}&date_end=${DATE_END}&granularity=month&page=1&page_size=20")"
+  "${API}?branch=${BRANCH}&start_date=${DATE_START}&end_date=${DATE_END}&granularity=month&page=1&page_size=20")"
 
 HTTP_CODE="$(echo "$BODY" | tail -n1)"
 JSON="$(echo "$BODY" | sed '$d')"

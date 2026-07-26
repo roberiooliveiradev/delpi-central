@@ -50,8 +50,8 @@ function resolveLinked(
 function parseParams(params: URLSearchParams): DashboardFilterState | null {
   const unit = sanitizeUnits(params.get("unit") ?? "");
   const competence = params.get("competence") ?? "";
-  const dateStart = params.get("date_start") ?? "";
-  const dateEnd = params.get("date_end") ?? "";
+  const dateStart = params.get("start_date") ?? params.get("date_start") ?? "";
+  const dateEnd = params.get("end_date") ?? params.get("date_end") ?? "";
 
   const hasAny =
     unit.length > 0 ||
@@ -95,8 +95,8 @@ function buildSearch(state: DashboardFilterState): string {
   const params = new URLSearchParams();
   if (state.unit) params.set("unit", state.unit);
   if (state.competence) params.set("competence", state.competence);
-  if (state.dateStart) params.set("date_start", state.dateStart);
-  if (state.dateEnd) params.set("date_end", state.dateEnd);
+  if (state.dateStart) params.set("start_date", state.dateStart);
+  if (state.dateEnd) params.set("end_date", state.dateEnd);
   const query = params.toString();
   return query ? `?${query}` : "";
 }

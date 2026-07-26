@@ -52,8 +52,8 @@ function parseStoredBranches(data: Record<string, unknown>): string[] {
 function parseFilterParams(
   params: URLSearchParams
 ): EngineeringFilterUrlState | null {
-  const dateStartParam = params.get("start_date") ?? "";
-  const dateEndParam = params.get("end_date") ?? "";
+  const dateStartParam = params.get("start_date") ?? params.get("date_start") ?? "";
+  const dateEndParam = params.get("end_date") ?? params.get("date_end") ?? "";
   const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const hasAny =

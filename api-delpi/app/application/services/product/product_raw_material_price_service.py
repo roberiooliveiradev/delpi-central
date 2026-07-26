@@ -182,7 +182,7 @@ def build_raw_material_price_intelligence(
 
     return {
         "product": product,
-        "date_start": date_start,
+        "start_date": date_start,
         "date_end_exclusive": date_end_exclusive,
         "branch": branch,
         "warnings": warnings,

@@ -37,8 +37,8 @@ function toApiParams(
   const sensoOrder = filters.sensoOrder ? Number(filters.sensoOrder) : undefined;
   return {
     branch,
-    date_start: filters.dateStart,
-    date_end: filters.dateEnd,
+    start_date: filters.dateStart,
+    end_date: filters.dateEnd,
     area_id: filters.areaId || undefined,
     shift: filters.shift || undefined,
     audit_status: filters.auditStatus || undefined,

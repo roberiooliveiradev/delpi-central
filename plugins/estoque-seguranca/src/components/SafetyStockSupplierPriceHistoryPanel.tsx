@@ -76,7 +76,7 @@ export function SafetyStockSupplierPriceHistoryPanel({
 
   useEffect(() => {
     setExpandedKey(null);
-  }, [supplier.supplier_code, supplier.supplier_store, data?.date_start, data?.date_end_exclusive]);
+  }, [supplier.supplier_code, supplier.supplier_store, data?.start_date, data?.date_end_exclusive]);
 
   const points = items
     .filter((item) => item.purchase_date)

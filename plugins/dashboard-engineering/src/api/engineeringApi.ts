@@ -18,11 +18,11 @@ export const ENGINEERING_API_BASE = "/apps/api-delpi/engineering";
 function buildLmpQuery(params: LmpsDashboardParams = {}): string {
   const searchParams = new URLSearchParams();
 
-  const dateStart = inputDateToLmpApi(params.date_start);
-  const dateEnd = inputDateToLmpApi(params.date_end);
+  const dateStart = inputDateToLmpApi(params.start_date);
+  const dateEnd = inputDateToLmpApi(params.end_date);
 
-  if (dateStart) searchParams.set("date_start", dateStart);
-  if (dateEnd) searchParams.set("date_end", dateEnd);
+  if (dateStart) searchParams.set("start_date", dateStart);
+  if (dateEnd) searchParams.set("end_date", dateEnd);
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.listing_type && params.listing_type !== "Todos") {
     searchParams.set("listing_type", params.listing_type);

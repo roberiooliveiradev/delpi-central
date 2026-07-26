@@ -24,8 +24,8 @@ async function getEnvelope<T>(path: string, options: RequestOptions = {}): Promi
 function baseQuery(filters: AppointmentsQueryFilters) {
   return {
     branch: filters.branch,
-    date_start: filters.dateStart,
-    date_end: filters.dateEnd,
+    start_date: filters.dateStart,
+    end_date: filters.dateEnd,
     work_center: filters.workCenter || undefined,
     op: filters.op || undefined,
     product: filters.product || undefined,

@@ -14,8 +14,8 @@ import {
 } from "../utils/loadingProgress";
 
 type UseLmpsDashboardParams = {
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   branch?: string;
   listing_type?: string;
   status?: string;
@@ -54,15 +54,15 @@ export function useLmpsDashboard(
 
   const filterParams = useMemo(
     () => ({
-      date_start: params.date_start,
-      date_end: params.date_end,
+      start_date: params.start_date,
+      end_date: params.end_date,
       branch: params.branch,
       listing_type: params.listing_type,
       status: params.status,
     }),
     [
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
       params.branch,
       params.listing_type,
       params.status,
@@ -139,8 +139,8 @@ export function useLmpsDashboard(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     filterParams.branch,
-    filterParams.date_end,
-    filterParams.date_start,
+    filterParams.end_date,
+    filterParams.start_date,
     filterParams.listing_type,
     filterParams.status,
     reloadKey,
@@ -190,8 +190,8 @@ export function useLmpsDashboard(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     itemsParams.branch,
-    itemsParams.date_end,
-    itemsParams.date_start,
+    itemsParams.end_date,
+    itemsParams.start_date,
     itemsParams.listing_type,
     itemsParams.status,
     itemsParams.page,

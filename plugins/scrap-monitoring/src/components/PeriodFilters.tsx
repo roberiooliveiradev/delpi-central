@@ -33,7 +33,7 @@ export function PeriodFilters({
   onQuickRange,
   onClearOptional,
 }: PeriodFiltersProps) {
-  const localError = validatePeriodRange(filters.dataInicio, filters.dataFim);
+  const localError = validatePeriodRange(filters.start_date, filters.end_date);
   const busy = loading || optionsLoading;
 
   const mpOptions = options.materiasPrimas.map((item) => ({
@@ -61,16 +61,16 @@ export function PeriodFilters({
           label="Data inicial"
           hint={F.dateStart}
           type="date"
-          value={filters.dataInicio}
-          onChange={(value) => onChange({ dataInicio: value })}
+          value={filters.start_date}
+          onChange={(value) => onChange({ start_date: value })}
         />
         <FilterInputField
           id="sm-filter-end"
           label="Data final"
           hint={F.dateEnd}
           type="date"
-          value={filters.dataFim}
-          onChange={(value) => onChange({ dataFim: value })}
+          value={filters.end_date}
+          onChange={(value) => onChange({ end_date: value })}
         />
         <FilterSelectField
           id="sm-filter-mp"

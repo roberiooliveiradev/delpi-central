@@ -22,7 +22,7 @@ YES_NO_SUMMARY_FIELDS = (
 
 DATE_FIELD_PAIRS = (
     ("reference_date", "reference_date_iso"),
-    ("date_start", "date_start_iso"),
+    ("start_date", "start_date_iso"),
     ("date_end_exclusive", "date_end_exclusive_iso"),
 )
 

@@ -143,6 +143,8 @@ def test_commercial_proposal_history_events_returns_meta(mock_build) -> None:
         proposal_number="OV123",
         branch="01",
         revision=None,
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
     )

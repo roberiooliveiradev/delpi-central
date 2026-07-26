@@ -35,7 +35,7 @@ def test_detect_supplier_detail_plan():
                             "arguments": {
                                 "parameters": {
                                     "code": "10080001",
-                                    "date_start": "20250101",
+                                    "start_date": "20250101",
                                     "date_end_exclusive": "20260701",
                                 }
                             },

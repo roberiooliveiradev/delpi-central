@@ -67,7 +67,7 @@ export const SCRAP_REGISTROS_HEADERS = [
 
 function buildFilename(filters: ScrapQueryFilters): string {
   const safe = (value: string) => value.replace(/[^\d-]/g, "");
-  return `scrap-monitoring_${filters.filial}_${safe(filters.dataInicio)}_${safe(filters.dataFim)}`;
+  return `scrap-monitoring_${filters.filial}_${safe(filters.start_date)}_${safe(filters.end_date)}`;
 }
 
 function resolveExportFields(visibleColumnKeys?: readonly string[]) {

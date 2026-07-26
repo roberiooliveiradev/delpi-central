@@ -14,7 +14,7 @@ if [ -n "$TOKEN" ]; then
   START=$(date -u -d '7 days ago' +%Y-%m-%d 2>/dev/null || date -u -v-7d +%Y-%m-%d)
   echo "[check] dashboard API"
   curl -fsS \
-    "${BASE_URL}/apps/api-delpi/production/eficiencia-fabril/dashboard?date_start=${START}&date_end=${END}&branch=02" \
+    "${BASE_URL}/apps/api-delpi/production/eficiencia-fabril/dashboard?start_date=${START}&end_date=${END}&branch=02" \
     -H "Authorization: Bearer ${TOKEN}" \
     | python3 -c "import json,sys; b=json.load(sys.stdin); assert b.get('success'), b; print('OK', b.get('data',{}).get('summary',{}).get('appointment_count'))"
 else

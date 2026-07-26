@@ -46,6 +46,8 @@ const DATE_PARAM_KEYS = new Set([
   "date",
   "date_from",
   "date_to",
+  "data_inicio",
+  "data_fim",
   "issue_date_start",
   "issue_date_end",
   "modified_from",

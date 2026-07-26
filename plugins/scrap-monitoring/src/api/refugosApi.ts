@@ -23,8 +23,8 @@ async function getEnvelope<T>(path: string, options: RequestOptions = {}): Promi
 function baseQuery(filters: ScrapQueryFilters) {
   return {
     filial: filters.filial,
-    dataInicio: filters.dataInicio,
-    dataFim: filters.dataFim,
+    start_date: filters.start_date,
+    end_date: filters.end_date,
     mp: filters.mp,
     pa: filters.pa,
     op: filters.op,
@@ -33,11 +33,11 @@ function baseQuery(filters: ScrapQueryFilters) {
   };
 }
 
-function periodQuery(filters: Pick<ScrapQueryFilters, "filial" | "dataInicio" | "dataFim">) {
+function periodQuery(filters: Pick<ScrapQueryFilters, "filial" | "start_date" | "end_date">) {
   return {
     filial: filters.filial,
-    dataInicio: filters.dataInicio,
-    dataFim: filters.dataFim,
+    start_date: filters.start_date,
+    end_date: filters.end_date,
   };
 }
 
@@ -84,7 +84,7 @@ export async function fetchScrapRegistros(
 }
 
 export async function fetchScrapFiltros(
-  filters: Pick<ScrapQueryFilters, "filial" | "dataInicio" | "dataFim">,
+  filters: Pick<ScrapQueryFilters, "filial" | "start_date" | "end_date">,
   options: RequestOptions = {},
 ): Promise<ScrapFiltrosData> {
   return getEnvelope<ScrapFiltrosData>(

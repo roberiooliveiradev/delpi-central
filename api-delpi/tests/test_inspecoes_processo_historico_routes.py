@@ -49,6 +49,8 @@ def test_inspecoes_processo_historico_returns_meta(mock_build, _mock_branch) -> 
         ordem_producao=None,
         codigo_produto=None,
         resultado=None,
+        start_date=None,
+        end_date=None,
         data_inicio=None,
         data_fim=None,
     )
@@ -82,6 +84,8 @@ def test_inspecoes_processo_historico_denies_branch_without_permission(
         ordem_producao=None,
         codigo_produto=None,
         resultado=None,
+        start_date=None,
+        end_date=None,
         data_inicio=None,
         data_fim=None,
     )

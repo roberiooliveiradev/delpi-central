@@ -26,7 +26,7 @@ class GetProductShippingStatusUseCase:
 
         return {
             "product": header,
-            "date_start": date_start,
+            "start_date": date_start,
             "date_end_exclusive": date_end_exclusive,
             "items": items,
             "summary": summarize_shipping(items),

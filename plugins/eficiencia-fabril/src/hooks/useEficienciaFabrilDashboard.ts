@@ -52,7 +52,7 @@ function applyScopeFilters(
 ): EficienciaFabrilItem[] {
   return items
     .filter(hasDateRange)
-    .filter((item) => isWithinRange(item.data_producao, params.date_start, params.date_end))
+    .filter((item) => isWithinRange(item.data_producao, params.start_date, params.end_date))
     .filter((item) => (params.branch ? item.filial === params.branch : true))
     .filter((item) => includesSelectedValue(item.op, params.ops))
     .filter((item) => includesSelectedValue(item.centro_trabalho, params.work_centers))
@@ -296,11 +296,11 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
   const isRangeLoaded = useMemo(() => {
     if (!loadedRange) return false;
     return (
-      loadedRange.dateStart <= params.date_start &&
-      loadedRange.dateEnd >= params.date_end &&
+      loadedRange.dateStart <= params.start_date &&
+      loadedRange.dateEnd >= params.end_date &&
       loadedRange.branch === (params.branch ?? "")
     );
-  }, [loadedRange, params.branch, params.date_end, params.date_start]);
+  }, [loadedRange, params.branch, params.end_date, params.start_date]);
 
   useEffect(() => {
     if (isRangeLoaded && reloadKey === 0) return;
@@ -314,8 +314,8 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
       try {
         const items = await fetchAllEficienciaFabrilItems(
           {
-            date_start: params.date_start,
-            date_end: params.date_end,
+            start_date: params.start_date,
+            end_date: params.end_date,
             branch: params.branch,
             status_ok_only: false,
           },
@@ -324,8 +324,8 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
         if (controller.signal.aborted) return;
         setAllItems(items);
         setLoadedRange({
-          dateStart: params.date_start,
-          dateEnd: params.date_end,
+          dateStart: params.start_date,
+          dateEnd: params.end_date,
           branch: params.branch ?? "",
         });
       } catch (err) {
@@ -345,7 +345,7 @@ export function useEficienciaFabrilDashboard(params: EficienciaFabrilFilterParam
     void run();
 
     return () => controller.abort();
-  }, [isRangeLoaded, reloadKey, params.branch, params.date_end, params.date_start]);
+  }, [isRangeLoaded, reloadKey, params.branch, params.end_date, params.start_date]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);

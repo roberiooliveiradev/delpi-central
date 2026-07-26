@@ -113,7 +113,7 @@ class ChatOperationalDataCommentaryStatusService:
     ) -> dict[str, Any]:
         _ = format_quantity
         profile = "shippingStatus"
-        date_start = str(root.get("date_start") or "").strip()
+        date_start = str(root.get("start_date") or root.get("date_start") or "").strip()
         date_end = str(root.get("date_end_exclusive") or "").strip()
         period = f"{date_start} → {date_end}".strip(" →")
         summary = root.get("summary") if isinstance(root.get("summary"), dict) else {}

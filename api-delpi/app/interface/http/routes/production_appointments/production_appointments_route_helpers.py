@@ -78,16 +78,6 @@ def execute_route(
 
 def BRANCH_QUERY():
     return BRANCH_QUERY_REQUIRED()
-def DATE_START_QUERY():
-    return Query(
-    None,
-    description="Start date (YYYY-MM-DD). Default: first day of current month.", json_schema_extra={"format": "date"},
-)
-def DATE_END_QUERY():
-    return Query(
-    None,
-    description="Inclusive end date (YYYY-MM-DD). Default: end of current month.", json_schema_extra={"format": "date"},
-)
 def WORK_CENTER_QUERY():
     return Query(None, description="Work center filter (e.g. CT-70).")
 def OP_QUERY():

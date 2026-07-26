@@ -7,11 +7,22 @@ import {
 } from "./dateRangePresets";
 
 describe("dateRangePresets", () => {
-  it("detecta par date_start/date_end", () => {
+  it("detecta par date_start/date_end legado", () => {
     const pair = findDateRangeKeys(["date_start", "date_end", "branch"]);
     expect(pair).toEqual({ startKey: "date_start", endKey: "date_end" });
     expect(isDateRangePairKey("date_start", pair)).toBe(true);
     expect(isDateRangePairKey("branch", pair)).toBe(false);
+  });
+
+  it("prefere start_date/end_date quando ambos os pares existem", () => {
+    const pair = findDateRangeKeys([
+      "date_start",
+      "date_end",
+      "start_date",
+      "end_date",
+      "branch",
+    ]);
+    expect(pair).toEqual({ startKey: "start_date", endKey: "end_date" });
   });
 
   it("expõe presets relativos e personalizado", () => {

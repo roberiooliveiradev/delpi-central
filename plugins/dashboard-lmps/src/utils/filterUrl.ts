@@ -43,8 +43,8 @@ export function defaultLmpsFilterState(): LmpsFilterUrlState {
 }
 
 function parseFilterParams(params: URLSearchParams): LmpsFilterUrlState | null {
-  const dateStartParam = params.get("date_start") ?? "";
-  const dateEndParam = params.get("date_end") ?? "";
+  const dateStartParam = params.get("start_date") ?? params.get("date_start") ?? "";
+  const dateEndParam = params.get("end_date") ?? params.get("date_end") ?? "";
   const competenceParam = params.get("competence") ?? "";
   const branchParam = params.get("branch") ?? "";
   const listingTypeParam = params.get("listing_type") ?? "";
@@ -85,8 +85,8 @@ export function readLmpsFilters(
 export function buildFilterSearchParams(filters: LmpsFilterUrlState): string {
   const params = new URLSearchParams();
 
-  if (filters.dateStart) params.set("date_start", filters.dateStart);
-  if (filters.dateEnd) params.set("date_end", filters.dateEnd);
+  if (filters.dateStart) params.set("start_date", filters.dateStart);
+  if (filters.dateEnd) params.set("end_date", filters.dateEnd);
   if (filters.competence) params.set("competence", filters.competence);
 
   const branch = serializeCsvParam(filters.branches);

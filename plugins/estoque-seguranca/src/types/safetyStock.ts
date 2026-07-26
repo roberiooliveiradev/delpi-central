@@ -318,7 +318,7 @@ export type SafetyStockSupplierPriceHistoryData = {
   branch: string;
   supplier_code: string;
   supplier_store: string;
-  date_start: string;
+  start_date: string;
   date_end_exclusive: string;
   items: SafetyStockSupplierPriceHistoryPoint[];
   total: number;

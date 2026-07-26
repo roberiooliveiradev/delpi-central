@@ -61,8 +61,8 @@ export function useCommercialRolSeries({
     data?.points.map((point) => ({
       periodo: point.periodo,
       sortKey: point.sort_key,
-      dateStart: point.date_start,
-      dateEnd: point.date_end,
+      dateStart: point.start_date,
+      dateEnd: point.end_date,
       rolMatrix: point.rol_matrix,
       rolBranch: point.rol_branch,
     })) ?? [];

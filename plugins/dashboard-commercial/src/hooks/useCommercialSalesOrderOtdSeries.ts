@@ -61,8 +61,8 @@ export function useCommercialSalesOrderOtdSeries({
     data?.points.map((point) => ({
       periodo: point.periodo,
       sortKey: point.sort_key,
-      dateStart: point.date_start,
-      dateEnd: point.date_end,
+      dateStart: point.start_date,
+      dateEnd: point.end_date,
       otdFilial01: point.otd_filial_01,
       otdFilial02: point.otd_filial_02,
     })) ?? [];

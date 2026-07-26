@@ -123,8 +123,8 @@
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
+        "start_date": "date",
+        "end_date": "date",
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
@@ -168,8 +168,8 @@
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
+        "start_date": "date",
+        "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },

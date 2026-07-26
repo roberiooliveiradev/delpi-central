@@ -66,7 +66,7 @@ class GetProductPurchasePriceHistoryUseCase(_ProductRawMaterialPriceBaseUseCase)
 
         return {
             "product": header,
-            "date_start": date_start,
+            "start_date": date_start,
             "date_end_exclusive": date_end_exclusive,
             "branch": request.branch,
             "items": items,
@@ -91,7 +91,7 @@ class GetProductPurchaseBudgetHistoryUseCase(_ProductRawMaterialPriceBaseUseCase
 
         return {
             "product": header,
-            "date_start": date_start,
+            "start_date": date_start,
             "date_end_exclusive": date_end_exclusive,
             "branch": request.branch,
             "items": items,

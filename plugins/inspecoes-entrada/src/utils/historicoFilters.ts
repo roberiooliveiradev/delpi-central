@@ -2,8 +2,8 @@ import type { FetchHistoricoParams, HistoricoFilters } from "../types/inspecoesE
 
 export const EMPTY_HISTORICO_FILTERS: HistoricoFilters = {
   result: "",
-  date_from: "",
-  date_to: "",
+  start_date: "",
+  end_date: "",
   supplier: "",
   product_code: "",
   inspector: "",
@@ -28,8 +28,8 @@ export function filtersToFetchParams(
   };
 
   if (filters.result) params.result = filters.result;
-  if (filters.date_from.trim()) params.date_from = filters.date_from.trim();
-  if (filters.date_to.trim()) params.date_to = filters.date_to.trim();
+  if (filters.start_date.trim()) params.start_date = filters.start_date.trim();
+  if (filters.end_date.trim()) params.end_date = filters.end_date.trim();
   if (filters.supplier.trim()) params.supplier = filters.supplier.trim();
   if (filters.product_code.trim()) params.product_code = filters.product_code.trim();
   if (filters.inspector.trim()) params.inspector = filters.inspector.trim();

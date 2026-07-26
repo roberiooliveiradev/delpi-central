@@ -95,8 +95,8 @@ export type Page<T> = {
 };
 
 export type ListLmpsParams = {
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   branch?: string;
   listing_type?: string;
   page?: number;

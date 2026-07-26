@@ -20,7 +20,7 @@ export function useScrapRegistros(
   }, []);
 
   useEffect(() => {
-    if (!appliedFilters?.filial || !appliedFilters.dataInicio || !appliedFilters.dataFim) {
+    if (!appliedFilters?.filial || !appliedFilters.start_date || !appliedFilters.end_date) {
       setData(null);
       setError(null);
       setLoading(false);

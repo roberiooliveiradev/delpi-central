@@ -136,9 +136,13 @@ Após deploy com mudanças OpenAPI: [12-procedimento-reimport-openapi.md](./12-p
 | Parâmetro | Descrição |
 |---|---|
 | `branch` | Filial Protheus (geralmente 2 caracteres, ex.: `01`, `02`). |
-| `start_date` / `end_date` / `date_start` / `date_end` | Período; formato conforme integração TOTVS (string). |
+| `start_date` / `end_date` | **Canônico** para período HTTP (YYYY-MM-DD ou formato TOTVS da rota). |
+| `date_start` / `date_end`, `dataInicio` / `dataFim`, … | Aliases **legado** (dual-read); remoção planejada **2027-01**. Preferir o canônico. |
+| `issue_date_*`, `modified_*`, `from`/`to` | Nomes **semânticos** — fora da padronização de período genérico. |
 | `page` / `page_size` | Paginação (limites variam por rota). |
 | `competence` | Competência para Indicadores Estratégicos. |
+
+Gate: `scripts/audit_period_param_pairs.py --report` (inventário); `--check --strict-active` (CI / pós-migração — aliases só com `deprecated=True`). Remoção dos aliases: **2027-01**.
 
 ## CORS e compressão
 

@@ -4,8 +4,8 @@ import { monthKeyToLabel } from "./dates";
 export type PeriodBucket = {
   key: string;
   label: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
 };
 
 export const MAX_PERIOD_BUCKETS = 60;
@@ -93,8 +93,8 @@ function pushBucket(
   buckets.push({
     key,
     label,
-    date_start: toIsoDate(start),
-    date_end: toIsoDate(end),
+    start_date: toIsoDate(start),
+    end_date: toIsoDate(end),
   });
 }
 

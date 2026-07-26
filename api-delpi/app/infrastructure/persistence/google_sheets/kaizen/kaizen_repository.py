@@ -321,8 +321,8 @@ class KaizenRepository(KaizenQueryRepositoryPort):
             savings_kaizens.append(item)
 
         return KaizenSummaryResponse(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             total_kaizens=len(kaizens),
             total_savings=round(total_savings, 2),
             list_kaizen=kaizens,

@@ -27,8 +27,8 @@ class GetPpmSeriesUseCase:
             return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             granularity=request.granularity,
         )
 
@@ -39,8 +39,8 @@ class GetPpmSeriesUseCase:
                 PpmSummaryRequest(
                     type=request.type,
                     branch=request.branch,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    date_start=bucket.start_date,
+                    date_end=bucket.end_date,
                     product_prefix=request.product_prefix,
                 )
             )
@@ -49,8 +49,8 @@ class GetPpmSeriesUseCase:
                 PpmSeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     ppm=round(float(summary.ppm or 0), 2),
                     total_devolvido_un=round(float(summary.total_devolvido_un or 0), 2),
                     total_produzido_un=round(float(summary.total_produzido_un or 0), 2),

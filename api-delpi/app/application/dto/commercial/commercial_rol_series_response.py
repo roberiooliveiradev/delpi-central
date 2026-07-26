@@ -5,8 +5,8 @@ from dataclasses import asdict, dataclass
 class CommercialRolSeriesPointDto:
     periodo: str
     sort_key: str
-    date_start: str
-    date_end: str
+    start_date: str
+    end_date: str
     rol_matrix: float
     rol_branch: float
 

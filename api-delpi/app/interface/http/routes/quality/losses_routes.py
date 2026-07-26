@@ -21,6 +21,13 @@ from app.interface.http.kpi_field_labels import (
     kpi_fields,
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.refugos.refugos_route_helpers import (
@@ -47,14 +54,22 @@ router = APIRouter(tags=["Qualidade — Perdas"])
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_quality_scrap_cost_pct(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         request = build_refugos_query_request(
             filial=branch,
-            data_inicio=date_start,
-            data_fim=date_end,
+            data_inicio=start_date,
+            data_fim=end_date,
             require_filial=False,
         )
     except ValueError as exc:
@@ -67,8 +82,8 @@ def get_quality_scrap_cost_pct(
         result = enrich_dashboard_metric(
             result,
             source_key=goal_keys.QUALITY_SCRAP_COST_PCT,
-            start_date=date_start,
-            end_date=date_end,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
         )
         return api_delpi_success(
@@ -98,14 +113,22 @@ def get_quality_scrap_cost_pct(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_quality_rework_cost_pct(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         request = build_retrabalho_query_request(
             filial=branch,
-            data_inicio=date_start,
-            data_fim=date_end,
+            data_inicio=start_date,
+            data_fim=end_date,
             require_filial=False,
         )
     except ValueError as exc:
@@ -120,8 +143,8 @@ def get_quality_rework_cost_pct(
         result = enrich_dashboard_metric(
             result,
             source_key=goal_keys.QUALITY_REWORK_COST_PCT,
-            start_date=date_start,
-            end_date=date_end,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
         )
         return api_delpi_success(

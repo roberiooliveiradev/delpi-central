@@ -36,8 +36,8 @@ def _expected_pair(route: dict) -> tuple[str, str] | None:
         return str(keys[0]), str(keys[1])
     schema = route.get("paramSchema") or {}
     for start, end in (
-        ("date_start", "date_end"),
         ("start_date", "end_date"),
+        ("date_start", "date_end"),
         ("issue_date_start", "issue_date_end"),
     ):
         if start in schema and end in schema:
@@ -82,9 +82,9 @@ def test_ppm_and_oee_use_distinct_canonical_keys():
     ppm = catalog.get_route("get_ppm_internal_summary")
     oee = catalog.get_route("get_production_oee")
     assert ppm and oee
-    assert ppm.get("dateRangeKeys") == ["date_start", "date_end"]
+    assert ppm.get("dateRangeKeys") == ["start_date", "end_date"]
     assert oee.get("dateRangeKeys") == ["start_date", "end_date"]
     ppm_q = _build_query_params(ppm, {"date_start": "2026-01-01", "date_end": "2026-07-13"})
     oee_q = _build_query_params(oee, {"date_start": "2026-01-01", "date_end": "2026-07-13"})
-    assert "date_start" in ppm_q and "start_date" not in ppm_q
+    assert "start_date" in ppm_q and "date_start" not in ppm_q
     assert "start_date" in oee_q and "date_start" not in oee_q

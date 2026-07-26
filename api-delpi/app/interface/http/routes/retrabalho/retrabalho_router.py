@@ -24,11 +24,16 @@ from app.interface.http.kpi_field_labels import (
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATA_FIM_QUERY,
+    LEGACY_DATA_INICIO_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
     CENTRO_CUSTO_QUERY,
     CODIGO_OPERADOR_QUERY,
-    DATA_FIM_QUERY,
-    DATA_INICIO_QUERY,
     FILIAL_QUERY,
     FILIAL_QUERY_OPTIONAL,
     LIMIT_QUERY,
@@ -86,9 +91,17 @@ def get_retrabalhos_health_route():
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_filtros_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -96,8 +109,8 @@ def get_retrabalhos_filtros_route(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar filtros de retrabalhos: {exc}")
@@ -122,12 +135,20 @@ def get_retrabalhos_filtros_route(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_resumo_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -135,8 +156,8 @@ def get_retrabalhos_resumo_route(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
@@ -164,12 +185,20 @@ def get_retrabalhos_resumo_route(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_rework_cost_pct(
     filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -177,8 +206,8 @@ def get_retrabalhos_rework_cost_pct(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
@@ -218,12 +247,20 @@ def get_retrabalhos_rework_cost_pct(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_mensal_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -231,8 +268,8 @@ def get_retrabalhos_mensal_route(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
@@ -260,14 +297,22 @@ def get_retrabalhos_mensal_route(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_recursos_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
     order_by: str = ORDER_BY_RANKING_QUERY(),
     limit: int = LIMIT_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -275,8 +320,8 @@ def get_retrabalhos_recursos_route(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
@@ -306,14 +351,22 @@ def get_retrabalhos_recursos_route(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_colaboradores_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
     order_by: str = ORDER_BY_RANKING_QUERY(),
     limit: int = LIMIT_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -321,8 +374,8 @@ def get_retrabalhos_colaboradores_route(
     try:
         request = build_retrabalho_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
@@ -352,8 +405,10 @@ def get_retrabalhos_colaboradores_route(
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_detalhes_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
     centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
     codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
@@ -362,6 +417,12 @@ def get_retrabalhos_detalhes_route(
     order_by: str = ORDER_BY_DETALHES_QUERY(),
     order_dir: str = ORDER_DIR_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -369,8 +430,8 @@ def get_retrabalhos_detalhes_route(
     try:
         request = build_retrabalho_detalhes_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,

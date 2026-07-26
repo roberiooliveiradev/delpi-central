@@ -24,8 +24,8 @@ import type { PpmSummary } from "../types/ppm";
 
 export type QualityDashboardFilters = {
   branch?: string;
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 type SectionErrors = {
@@ -105,8 +105,8 @@ export function useQualityDashboard(
 
   const stableFilters = {
     branch: filters.branch || undefined,
-    date_start: inputDateToApi(filters.date_start),
-    date_end: inputDateToApi(filters.date_end),
+    start_date: inputDateToApi(filters.start_date),
+    end_date: inputDateToApi(filters.end_date),
   };
 
   useEffect(() => {
@@ -135,8 +135,8 @@ export function useQualityDashboard(
 
         const basePpmParams = {
           branch: stableFilters.branch,
-          date_start: stableFilters.date_start,
-          date_end: stableFilters.date_end,
+          start_date: stableFilters.start_date,
+          end_date: stableFilters.end_date,
         };
 
         const plugsPpmParams = {
@@ -151,14 +151,14 @@ export function useQualityDashboard(
 
         const kaizenParams = {
           branch: stableFilters.branch,
-          date_start: stableFilters.date_start,
-          date_end: stableFilters.date_end,
+          start_date: stableFilters.start_date,
+          end_date: stableFilters.end_date,
         };
 
         const auditParams = {
           branch: stableFilters.branch,
-          start_date: stableFilters.date_start,
-          end_date: stableFilters.date_end,
+          start_date: stableFilters.start_date,
+          end_date: stableFilters.end_date,
         };
 
         const needsBranchIdd = !stableFilters.branch;
@@ -367,7 +367,7 @@ export function useQualityDashboard(
 
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stableFilters.branch, stableFilters.date_start, stableFilters.date_end, reloadKey]);
+  }, [stableFilters.branch, stableFilters.start_date, stableFilters.end_date, reloadKey]);
 
   const reload = useCallback(() => {
     setReloadKey((prev) => prev + 1);

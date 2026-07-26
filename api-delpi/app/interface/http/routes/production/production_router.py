@@ -24,6 +24,13 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_OTD,
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -594,8 +601,10 @@ def get_on_time_delivery_pct(
 @router.get("/eficiencia-fabril/dashboard", **PRODUCTION_EFICIENCIA_FABRIL_DASHBOARD)
 @require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_dashboard(
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     op: str | None = Query(default=None),
     employee: str | None = Query(default=None),
@@ -604,11 +613,17 @@ def get_eficiencia_fabril_dashboard(
     page: int = Query(default=1, ge=1),
     page_size: int | None = Query(default=None, ge=1, le=500),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         use_case = build_get_eficiencia_fabril_dashboard_use_case()
         result = use_case.execute(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             op=op,
             employee=employee,
@@ -639,19 +654,27 @@ def get_eficiencia_fabril_dashboard(
 @router.get("/eficiencia-fabril/appointments", **PRODUCTION_EFICIENCIA_FABRIL_APPOINTMENTS)
 @require_any_permission(EFICIENCIA_FABRIL_ACCESS)
 def get_eficiencia_fabril_appointments(
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     op: str | None = Query(default=None),
     employee: str | None = Query(default=None),
     work_center: str | None = Query(default=None),
     status_ok_only: bool = Query(default=False),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         use_case = build_get_eficiencia_fabril_appointments_use_case()
         result = use_case.execute(
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             op=op,
             employee=employee,

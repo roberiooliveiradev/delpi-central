@@ -5,8 +5,8 @@ export type NonconformityType = "internal" | "external" | "all";
 export type ListNonconformitiesParams = PaginationParams & {
   type?: NonconformityType;
   branch?: string;
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   status?: string;
   item_code?: string;
   description?: string;
@@ -43,8 +43,8 @@ export type Nonconformity = {
 export type NonconformitySeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   value: number;
   registros: number;
 };

@@ -44,7 +44,7 @@ const emptyDashboard: ScrapDashboardData = {
 function hasRequiredFilters(
   filters: ScrapQueryFilters | null,
 ): filters is ScrapQueryFilters {
-  return Boolean(filters?.filial && filters.dataInicio && filters.dataFim);
+  return Boolean(filters?.filial && filters.start_date && filters.end_date);
 }
 
 export function useScrapDashboard(appliedFilters: ScrapQueryFilters | null) {

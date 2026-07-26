@@ -64,8 +64,8 @@ function toApiParams(
 
   return {
     branch,
-    date_start: dateStart || undefined,
-    date_end: dateEnd || undefined,
+    start_date: dateStart || undefined,
+    end_date: dateEnd || undefined,
     area_id: filters.areaId || undefined,
     status,
     pending_only: pendingOnly || undefined,

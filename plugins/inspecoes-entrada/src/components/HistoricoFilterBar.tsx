@@ -77,15 +77,15 @@ export function HistoricoFilterBar({
         id="ie-filter-date-from"
         label="Data laudo (de)"
         type="date"
-        value={filters.date_from}
-        onChange={(value) => onChange({ date_from: value })}
+        value={filters.start_date}
+        onChange={(value) => onChange({ start_date: value })}
       />
       <FilterInputField
         id="ie-filter-date-to"
         label="Data laudo (até)"
         type="date"
-        value={filters.date_to}
-        onChange={(value) => onChange({ date_to: value })}
+        value={filters.end_date}
+        onChange={(value) => onChange({ end_date: value })}
       />
       <FilterInputField
         id="ie-filter-supplier"

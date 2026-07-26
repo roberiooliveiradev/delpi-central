@@ -17,7 +17,7 @@ export function useRetrabalhoDetalhes(
   const requestIdRef = useRef(0);
 
   const reload = useCallback(async () => {
-    if (!appliedFilters?.filial || !appliedFilters.dataInicio || !appliedFilters.dataFim) {
+    if (!appliedFilters?.filial || !appliedFilters.start_date || !appliedFilters.end_date) {
       setState("idle");
       setData(null);
       setError(null);

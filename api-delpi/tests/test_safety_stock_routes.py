@@ -274,7 +274,7 @@ def test_supplier_price_history_returns_playbook_meta(
         "branch": "01",
         "supplier_code": "F001",
         "supplier_store": "01",
-        "date_start": "20250717",
+        "start_date": "20250717",
         "date_end_exclusive": "20260718",
         "items": [{"unit_price": 10.0, "purchase_date": "2026-01-15"}],
         "total": 1,

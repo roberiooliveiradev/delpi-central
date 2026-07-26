@@ -4,6 +4,13 @@ from typing import Literal, Optional
 
 from fastapi import APIRouter, Query
 
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     GRANULARITY_QUERY_MONTH,
@@ -198,18 +205,26 @@ def _ppm_series_response(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_summary(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_summary_response(
         ppm_type="internal",
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         product_prefix=product_prefix,
     )
 
@@ -218,18 +233,26 @@ def get_internal_ppm_summary(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_summary(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_summary_response(
         ppm_type="external",
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         product_prefix=product_prefix,
     )
 
@@ -239,19 +262,27 @@ def get_external_ppm_summary(
 def get_internal_ppm_series(
     granularity: str = GRANULARITY_QUERY_MONTH(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_series_response(
         ppm_type="internal",
         granularity=granularity,
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         product_prefix=product_prefix,
     )
 
@@ -261,19 +292,27 @@ def get_internal_ppm_series(
 def get_external_ppm_series(
     granularity: str = GRANULARITY_QUERY_MONTH(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     product_prefix: Optional[str] = Query(
         None,
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_series_response(
         ppm_type="external",
         granularity=granularity,
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         product_prefix=product_prefix,
     )
 
@@ -282,8 +321,10 @@ def get_external_ppm_series(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_internal_ppm(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(None, ge=1),
     page_size: int = Query(None, ge=1),
     product_prefix: Optional[str] = Query(
@@ -291,11 +332,17 @@ def list_internal_ppm(
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_list_response(
         ppm_type="internal",
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         page=page,
         page_size=page_size,
         product_prefix=product_prefix,
@@ -306,8 +353,10 @@ def list_internal_ppm(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_external_ppm(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     page: int = Query(None, ge=1),
     page_size: int = Query(None, ge=1),
     product_prefix: Optional[str] = Query(
@@ -315,11 +364,17 @@ def list_external_ppm(
         description="Prefixo do código do produto (QI2_ITEM) para filtrar devoluções; produção permanece geral",
     ),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     return _ppm_list_response(
         ppm_type="external",
         branch=branch,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         page=page,
         page_size=page_size,
         product_prefix=product_prefix,
@@ -334,15 +389,23 @@ def get_produced_quantity(
         description="Código(s) do produto; repetível ou separado por vírgula",
     ),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProducedQuantityRequest(
             products=product,
             branch=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
         )
         use_case = build_get_produced_quantity_use_case()
         result = use_case.execute(dto)

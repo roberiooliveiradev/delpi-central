@@ -36,35 +36,28 @@ export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label:
   { value: "custom", label: "Personalizado (datas fixas)" },
 ];
 
-const START_KEYS = [
-  "date_start",
-  "start_date",
-  "date_from",
-  "dataInicio",
-  "data_inicial",
-  "issue_date_start",
-  "modified_from",
-  "from",
-] as const;
-
-const END_KEYS = [
-  "date_end",
-  "end_date",
-  "date_to",
-  "dataFim",
-  "data_final",
-  "issue_date_end",
-  "modified_to",
-  "to",
-] as const;
+/** Pares canônicos — ordem = preferência (start_date HTTP primeiro). */
+const DATE_RANGE_KEY_PAIRS: ReadonlyArray<readonly [string, string]> = [
+  ["start_date", "end_date"],
+  ["date_start", "date_end"],
+  ["date_from", "date_to"],
+  ["dataInicio", "dataFim"],
+  ["data_inicio", "data_fim"],
+  ["data_inicial", "data_final"],
+  ["issue_date_start", "issue_date_end"],
+  ["modified_from", "modified_to"],
+  ["from", "to"],
+];
 
 export type DateRangeKeyPair = { startKey: string; endKey: string };
 
 export function findDateRangeKeys(schemaKeys: Iterable<string>): DateRangeKeyPair | null {
   const set = new Set(schemaKeys);
-  const startKey = START_KEYS.find((key) => set.has(key));
-  const endKey = END_KEYS.find((key) => set.has(key));
-  if (startKey && endKey) return { startKey, endKey };
+  for (const [startKey, endKey] of DATE_RANGE_KEY_PAIRS) {
+    if (set.has(startKey) && set.has(endKey)) {
+      return { startKey, endKey };
+    }
+  }
   return null;
 }
 

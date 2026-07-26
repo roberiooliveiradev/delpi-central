@@ -41,7 +41,7 @@ def handler(
 | Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
 | Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |
 | Domínio fechado | `enum=` **e** `pattern=` via factories em [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — **sempre** `BRANCH_QUERY_OPTIONAL()` (nova instância); **nunca** reutilizar o mesmo objeto `Query()`. Só `enum=` documenta OpenAPI; **sem `pattern` não há 422 em runtime** |
-| Datas | Params de data em `openapi_param_locale.json` com `"format": "date"` (ou nome canônico); o injector aplica no schema OpenAPI |
+| Datas | **Período genérico:** só `start_date` / `end_date` (factories em [`period_query_params.py`](../../app/interface/http/period_query_params.py)). Aliases legado (`date_start`, `dataInicio`, …) só com `deprecated=True` até **2027-01**. Exclusões semânticas: `issue_date_*`, `modified_*`, scheduling `from`/`to`. Params de data em `openapi_param_locale.json` com `"format": "date"` |
 | Description do Query | Inglês (ou deixar o injector sobrescrever PT com `locale.en`) |
 | Filial consolidável | `BRANCH_QUERY_OPTIONAL` (`01`/`02`) — **não** default HTTP `"01"` |
 
@@ -88,6 +88,7 @@ python3 scripts/generate_tv_data_routes_from_openapi.py --write
 python3 scripts/generate_tv_data_routes_from_openapi.py --check
 python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
 python api-delpi/scripts/audit_openapi_operation_ids.py --check
+python api-delpi/scripts/audit_period_param_pairs.py --check --strict-active
 python3 scripts/sync_tv_data_param_catalog.py --write && --check
 ```
 

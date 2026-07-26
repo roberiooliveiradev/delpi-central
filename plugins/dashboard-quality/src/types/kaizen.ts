@@ -4,8 +4,8 @@ export type KaizenSummaryParams = {
   title?: string;
   status?: string;
   branch?: string;
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 export type Kaizen = {
@@ -37,8 +37,8 @@ export type KaizenIdeasGoalBlock = DashboardGoalFields & {
 };
 
 export type KaizenSummary = DashboardGoalFields & {
-  date_start: string | null;
-  date_end: string | null;
+  start_date: string | null;
+  end_date: string | null;
   total_kaizens: number;
   total_savings: number;
   list_kaizen: Kaizen[];

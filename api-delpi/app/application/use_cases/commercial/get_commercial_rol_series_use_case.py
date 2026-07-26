@@ -35,8 +35,8 @@ class GetCommercialRolSeriesUseCase:
             return self._from_cached_dict(cached)
 
         buckets_result = build_period_buckets(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             granularity=request.granularity,
         )
 
@@ -46,16 +46,16 @@ class GetCommercialRolSeriesUseCase:
             matrix_rol = self._financial_query_repository.get_rol(
                 GetRolRequest(
                     branch=HEAD_OFFICE_BRANCH,
-                    start_date=bucket.date_start,
-                    end_date=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     customer_segment=request.customer_segment,
                 )
             )
             branch_rol = self._financial_query_repository.get_rol(
                 GetRolRequest(
                     branch=BRANCH_OFFICE_BRANCH,
-                    start_date=bucket.date_start,
-                    end_date=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     customer_segment=request.customer_segment,
                 )
             )
@@ -64,8 +64,8 @@ class GetCommercialRolSeriesUseCase:
                 CommercialRolSeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     rol_matrix=round(float(matrix_rol.get("rol_with_ipi") or 0), 2),
                     rol_branch=round(float(branch_rol.get("rol_with_ipi") or 0), 2),
                 )

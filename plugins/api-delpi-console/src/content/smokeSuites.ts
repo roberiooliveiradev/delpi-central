@@ -71,8 +71,8 @@ export const smokeSuites: { suites: SmokeSuite[] } = {
           path: "/quality/produced-quantity",
           query: {
             product: "50232465",
-            date_start: "2026-01-01",
-            date_end: "2026-01-31",
+            start_date: "2026-01-01",
+            end_date: "2026-01-31",
           },
           expectStatus: [200],
           maxDurationMs: 45000,

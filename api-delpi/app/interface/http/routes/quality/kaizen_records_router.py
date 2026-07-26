@@ -27,6 +27,13 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     BRANCH_CODE_VALUES,
     BRANCH_QUERY_OPTIONAL,
@@ -176,20 +183,28 @@ def list_kaizen_records(
     status: str | None = KAIZEN_STATUS_QUERY(),
     savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY(),
     title: str | None = Query(default=None),
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         repo = build_kaizen_repository()
         data = repo.list_records(
             branch_code=branch,
             status=status,
             savings_type=savings_type,
             title=title,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             page=page,
             page_size=page_size,
         )
@@ -282,12 +297,20 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_records_summary(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         repo = build_kaizen_repository()
-        data = repo.summary(branch_code=branch, date_start=date_start, date_end=date_end)
+        data = repo.summary(branch_code=branch, date_start=start_date, date_end=end_date)
         return api_delpi_success(
             data,
             operation_id="get_kaizen_records_summary",
@@ -565,14 +588,22 @@ def list_kaizen_audit_log(record_id: str):
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_savings_timeline(
     record_id: str,
-    date_start: str | None = Query(default=None),
-    date_end: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
         repo = build_kaizen_repository()
         if repo.get_record(record_id, with_participants=False) is None:
             return not_found_response("Kaizen não encontrado.")
-        data = repo.savings_timeline(record_id, date_start=date_start, date_end=date_end)
+        data = repo.savings_timeline(record_id, date_start=start_date, date_end=end_date)
         return api_delpi_success(
             data,
             operation_id="get_kaizen_savings_timeline",

@@ -141,8 +141,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         return PpmSummary(
             type=request.type,
             branch=request.branch,
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             total_devolvido_un=float(row.get("total_devolvido_un") or 0),
             total_produzido_milheiro=float(row.get("total_produzido_milheiro") or 0),
             total_produzido_un=float(row.get("total_produzido_un") or 0),
@@ -218,8 +218,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
 
         return ProducedQuantityReport(
             branch=request.branch,
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             products=request.products,
             items=items,
             total_produced_milheiro=total_milheiro,

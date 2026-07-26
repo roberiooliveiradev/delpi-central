@@ -79,8 +79,8 @@ export type SalesOrderOtdPanelData = {
 export type SalesOrderOtdSeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   otd_filial_01: number | null;
   otd_filial_02: number | null;
 };
@@ -219,8 +219,8 @@ export type CommercialProposalsPage = {
 export type CommercialRolSeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   rol_matrix: number;
   rol_branch: number;
 };

@@ -5,8 +5,8 @@ from dataclasses import asdict, dataclass
 class NonconformitySeriesPointDto:
     periodo: str
     sort_key: str
-    date_start: str
-    date_end: str
+    start_date: str
+    end_date: str
     value: float
     registros: int
 

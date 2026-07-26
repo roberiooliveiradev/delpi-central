@@ -143,7 +143,7 @@ class DelpiProductionGateway:
         ppm = (ppm_type or "internal").strip().lower()
         if ppm not in {"internal", "external"}:
             ppm = "internal"
-        params = {"date_start": start, "date_end": end, "branch": branch}
+        params = {"start_date": start, "end_date": end, "branch": branch}
         envelope = self._client.get_ppm_summary(
             ppm,
             params={k: v for k, v in params.items() if v},
@@ -151,8 +151,8 @@ class DelpiProductionGateway:
         )
         summary = _extract_summary(envelope)
         series_params: dict[str, str] = {
-            "date_start": start,
-            "date_end": end,
+            "start_date": start,
+            "end_date": end,
             "granularity": "day",
         }
         if branch:

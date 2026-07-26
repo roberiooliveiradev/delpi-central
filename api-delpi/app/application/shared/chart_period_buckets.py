@@ -14,8 +14,8 @@ MAX_PERIOD_BUCKETS = 366
 class PeriodBucket:
     key: str
     label: str
-    date_start: str
-    date_end: str
+    start_date: str
+    end_date: str
 
 
 @dataclass(frozen=True)
@@ -70,15 +70,15 @@ def _clamp_range(
 
 def build_period_buckets(
     *,
-    date_start: str | None,
-    date_end: str | None,
+    start_date: str | None,
+    end_date: str | None,
     granularity: str,
 ) -> BuildPeriodBucketsResult:
     if granularity not in {"day", "week", "month", "year"}:
         raise ValueError("granularity deve ser day, week, month ou year")
 
-    range_start = _parse_iso_date(date_start)
-    range_end = _parse_iso_date(date_end)
+    range_start = _parse_iso_date(start_date)
+    range_end = _parse_iso_date(end_date)
 
     if not range_start or not range_end or range_start > range_end:
         return BuildPeriodBucketsResult(buckets=[], truncated=False)
@@ -93,8 +93,8 @@ def build_period_buckets(
                 PeriodBucket(
                     key=iso,
                     label=_format_day_label(iso),
-                    date_start=iso,
-                    date_end=iso,
+                    start_date=iso,
+                    end_date=iso,
                 )
             )
             cursor += timedelta(days=1)
@@ -111,8 +111,8 @@ def build_period_buckets(
                     PeriodBucket(
                         key=start_iso,
                         label=_format_week_label(start_iso, end_iso),
-                        date_start=start_iso,
-                        date_end=end_iso,
+                        start_date=start_iso,
+                        end_date=end_iso,
                     )
                 )
             cursor += timedelta(days=7)
@@ -129,8 +129,8 @@ def build_period_buckets(
                     PeriodBucket(
                         key=month_key,
                         label=_month_key_label(month_key),
-                        date_start=_format_iso(clamped[0]),
-                        date_end=_format_iso(clamped[1]),
+                        start_date=_format_iso(clamped[0]),
+                        end_date=_format_iso(clamped[1]),
                     )
                 )
             if cursor.month == 12:
@@ -148,8 +148,8 @@ def build_period_buckets(
                     PeriodBucket(
                         key=str(year),
                         label=str(year),
-                        date_start=_format_iso(clamped[0]),
-                        date_end=_format_iso(clamped[1]),
+                        start_date=_format_iso(clamped[0]),
+                        end_date=_format_iso(clamped[1]),
                     )
                 )
 

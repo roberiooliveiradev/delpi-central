@@ -5,16 +5,16 @@ export type PpmType = "internal" | "external";
 
 export type DateRangeParams = {
   branch?: string;
-  date_start?: string;
-  date_end?: string;
+  start_date?: string;
+  end_date?: string;
   product_prefix?: string;
 };
 
 export type PpmSummary = DashboardGoalFields & {
   type: PpmType;
   branch: string | null;
-  date_start: string | null;
-  date_end: string | null;
+  start_date: string | null;
+  end_date: string | null;
   total_devolvido_un: number;
   total_produzido_milheiro: number;
   total_produzido_un: number;
@@ -42,8 +42,8 @@ export type ListPpmParams = DateRangeParams & PaginationParams;
 export type PpmSeriesPoint = {
   periodo: string;
   sort_key: string;
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   ppm: number;
   total_devolvido_un: number;
   total_produzido_un: number;

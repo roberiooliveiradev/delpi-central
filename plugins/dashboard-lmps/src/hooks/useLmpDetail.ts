@@ -45,8 +45,8 @@ export function useLmpDetail(
 
       try {
         const requestParams = {
-          date_start: toLmpApiDate(requestScope.dateStart),
-          date_end: toLmpApiDate(requestScope.dateEnd),
+          start_date: toLmpApiDate(requestScope.dateStart),
+          end_date: toLmpApiDate(requestScope.dateEnd),
           branch: requestScope.branch,
         };
 

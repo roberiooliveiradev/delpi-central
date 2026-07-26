@@ -55,6 +55,13 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import Plugin
 from app.interface.http.routes.quality.audit_5s_branch_access import branch_access_error
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     AUDIT_5S_LIFECYCLE_STATUS_QUERY,
     AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN,
@@ -1253,8 +1260,10 @@ async def reopen_nc_action(nc_id: str):
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
     branch: str = BRANCH_QUERY_REQUIRED(),
-    date_start: str | None = Query(None, alias="date_start"),
-    date_end: str | None = Query(None, alias="date_end"),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
     area_id: str | None = Query(None),
     shift: str | None = SHIFT_5S_QUERY(),
     status: str | None = AUDIT_5S_STATUS_QUERY(),
@@ -1273,8 +1282,14 @@ def list_audit_5s_nonconformities_board(
     if denied is not None:
         return denied
 
-    raw_start = (date_start or "").strip()
-    raw_end = (date_end or "").strip()
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    raw_start = (start_date or "").strip()
+    raw_end = (end_date or "").strip()
     parsed_start: date | None = None
     parsed_end: date | None = None
     if raw_start or raw_end:
@@ -1324,8 +1339,10 @@ def list_audit_5s_nonconformities_board(
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit_5s_dashboard(
     branch: str = BRANCH_QUERY_REQUIRED(),
-    date_start: str = Query(..., alias="date_start"),
-    date_end: str = Query(..., alias="date_end"),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
     area_id: str | None = Query(None),
     shift: str | None = SHIFT_5S_QUERY(),
     audit_status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY(),
@@ -1334,12 +1351,23 @@ def get_audit_5s_dashboard(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    if not start_date or not end_date:
+        return error_response(
+            "Informe data inicial e final do período.",
+            status_code=400,
+        )
     try:
         use_case = build_get_audit_5s_dashboard_use_case()
         result = use_case.execute(
             branch_code=branch,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             area_id=area_id,
             shift=shift,
             audit_status=audit_status,

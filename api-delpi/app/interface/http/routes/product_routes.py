@@ -13,6 +13,13 @@ from app.interface.http.query_param_enums import (
     PRODUCT_EXCLUSIVITY_VIEW_QUERY,
     SORT_DIR_QUERY_OPTIONAL,
 )
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.utils.logger import log_error
 
 from app.application.dto.product.list_products_requests import ListProductsRequest
@@ -510,17 +517,25 @@ def get_production_status(
 def get_shipping_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     legacy: bool = Query(False, description="Omite datas ISO normalizadas"),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductPlaybookRequest(
             code=code,
             reference_date=reference_date,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             legacy=legacy,
         )
@@ -555,18 +570,26 @@ def get_shipping_status(
 def get_factory_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
         dto = ProductPlaybookRequest(
             code=code,
             reference_date=reference_date,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             max_depth=max_depth,
             branch=branch,
             legacy=legacy,
@@ -682,8 +705,8 @@ def _raw_material_price_dto(
 ) -> ProductRawMaterialPriceRequest:
     return ProductRawMaterialPriceRequest(
         code=code,
-        date_start=date_start,
-        date_end=date_end,
+        date_start=start_date,
+        date_end=end_date,
         branch=branch,
         history_limit=history_limit,
     )
@@ -727,13 +750,21 @@ def get_last_purchase(
 @require_permission(API_DELPI_ACCESS)
 def get_purchase_price_history(
     code: str,
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     history_limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
-        dto = _raw_material_price_dto(code, date_start, date_end, branch, history_limit)
+        dto = _raw_material_price_dto(code, start_date, end_date, branch, history_limit)
         result = build_get_product_purchase_price_history_use_case().execute(dto)
 
         if not result.get("product"):
@@ -764,12 +795,20 @@ def get_purchase_price_history(
 @require_permission(API_DELPI_ACCESS)
 def get_purchase_budget_history(
     code: str,
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
-        dto = _raw_material_price_dto(code, date_start, date_end, branch, None)
+        dto = _raw_material_price_dto(code, start_date, end_date, branch, None)
         result = build_get_product_purchase_budget_history_use_case().execute(dto)
 
         if not result.get("product"):
@@ -804,13 +843,21 @@ def get_purchase_budget_history(
 @require_permission(API_DELPI_ACCESS)
 def get_raw_material_price_intelligence(
     code: str,
-    date_start: Optional[str] = Query(default=None),
-    date_end: Optional[str] = Query(default=None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     history_limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
-        dto = _raw_material_price_dto(code, date_start, date_end, branch, history_limit)
+        dto = _raw_material_price_dto(code, start_date, end_date, branch, history_limit)
         result = build_get_product_raw_material_price_intelligence_use_case().execute(dto)
 
         if not result.get("product"):
@@ -1088,22 +1135,30 @@ def internal_movements(
     code: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    date_start: Optional[str] = Query(None),
-    date_end: Optional[str] = Query(None),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     location: Optional[str] = Query(None),
     tm: Optional[str] = Query(None),
     op: Optional[str] = Query(None)
 ):
 
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
     try:
 
         dto = ListProductInternalMovementsRequest(
             code=code,
             page=page,
             page_size=page_size,
-            date_start=date_start,
-            date_end=date_end,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             location=location,
             tm=tm,

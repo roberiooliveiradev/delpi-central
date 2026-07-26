@@ -41,8 +41,8 @@ export type HistoricoPagination = {
 
 export type HistoricoFiltersEcho = {
   result: string | null;
-  date_from: string | null;
-  date_to: string | null;
+  start_date: string | null;
+  end_date: string | null;
   supplier: string | null;
   product_code: string | null;
   inspector: string | null;
@@ -61,8 +61,8 @@ export type HistoricoResultFilter = "" | "APROVADA" | "REJEITADA";
 
 export type HistoricoFilters = {
   result: HistoricoResultFilter;
-  date_from: string;
-  date_to: string;
+  start_date: string;
+  end_date: string;
   supplier: string;
   product_code: string;
   inspector: string;
@@ -75,8 +75,8 @@ export type FetchHistoricoParams = {
   page: number;
   page_size: number;
   result?: string;
-  date_from?: string;
-  date_to?: string;
+  start_date?: string;
+  end_date?: string;
   supplier?: string;
   product_code?: string;
   inspector?: string;

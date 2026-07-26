@@ -124,8 +124,8 @@ export type KaizenSavingsTimelineImprovement = KaizenRevision;
 
 export type KaizenSavingsTimeline = {
   kaizen_id: string;
-  date_start: string | null;
-  date_end: string | null;
+  start_date: string | null;
+  end_date: string | null;
   period_savings: number;
   current: {
     revision_number: number | null;
@@ -157,7 +157,7 @@ export type KaizenSummaryRecent = {
 };
 
 export type KaizenSummary = {
-  filters: { branch_code: string | null; date_start: string | null; date_end: string | null };
+  filters: { branch_code: string | null; start_date: string | null; end_date: string | null };
   has_period: boolean;
   total: number;
   implantados: number;

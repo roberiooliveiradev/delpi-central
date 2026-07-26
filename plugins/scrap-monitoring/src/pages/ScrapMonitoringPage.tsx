@@ -88,8 +88,8 @@ function ScrapMonitoringContent({
   const [exportError, setExportError] = useState<string | null>(null);
 
   const periodError = validatePeriodRange(
-    debouncedFilters.dataInicio,
-    debouncedFilters.dataFim,
+    debouncedFilters.start_date,
+    debouncedFilters.end_date,
   );
   const appliedFilters = useMemo(() => {
     if (periodError) return null;
@@ -99,8 +99,8 @@ function ScrapMonitoringContent({
   const appliedFiltersKey = appliedFilters
     ? [
         appliedFilters.filial,
-        appliedFilters.dataInicio,
-        appliedFilters.dataFim,
+        appliedFilters.start_date,
+        appliedFilters.end_date,
         appliedFilters.mp ?? "",
         appliedFilters.pa ?? "",
         appliedFilters.op ?? "",
@@ -182,8 +182,8 @@ function ScrapMonitoringContent({
   const permissionDenied = isPermissionError(dashboardError);
   const branchLabel = BRANCH_ROUTE_LABELS[branchRoute];
   const periodoLabel = resumo?.periodo
-    ? `${formatDatePtBr(resumo.periodo.dataInicio)} — ${formatDatePtBr(resumo.periodo.dataFim)}`
-    : `${formatDatePtBr(debouncedFilters.dataInicio)} — ${formatDatePtBr(debouncedFilters.dataFim)}`;
+    ? `${formatDatePtBr((resumo.periodo.start_date ?? resumo.periodo.dataInicio ?? ""))} — ${formatDatePtBr((resumo.periodo.end_date ?? resumo.periodo.dataFim ?? ""))}`
+    : `${formatDatePtBr(debouncedFilters.start_date)} — ${formatDatePtBr(debouncedFilters.end_date)}`;
 
   return (
     <div className="dashboard-scrap-monitoring dashboard-page sm-page">

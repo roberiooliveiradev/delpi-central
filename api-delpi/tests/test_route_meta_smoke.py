@@ -366,7 +366,14 @@ def test_sale_orders_list_returns_meta(mock_build) -> None:
     mock_use_case.execute.return_value = mock_result
     mock_build.return_value = mock_use_case
 
-    response = list_sale_order_route()
+    response = list_sale_order_route(
+        start_date=None,
+        end_date=None,
+        date_start=None,
+        date_end=None,
+        page=None,
+        page_size=None,
+    )
     _assert_meta(
         _body(response),
         operation_id="list_sale_orders",
@@ -669,6 +676,8 @@ def test_inspecoes_entrada_historico_returns_meta(mock_build, _mock_branch) -> N
         page=1,
         page_size=50,
         result=None,
+        start_date=None,
+        end_date=None,
         date_from=None,
         date_to=None,
         supplier=None,

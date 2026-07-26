@@ -210,8 +210,8 @@ _PLAYBOOK_PRODUCT_HISTORY = [
                         "parameters": {
                             "code": "90269002",
                             "reference_date": "18-06-2026",
-                            "date_start": "18-06-2026",
-                            "date_end": "18-06-2026",
+                            "start_date": "18-06-2026",
+                            "end_date": "18-06-2026",
                         },
                     },
                     "metadata": {

@@ -25,6 +25,13 @@ from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATA_FIM_SNAKE_QUERY,
+    LEGACY_DATA_INICIO_SNAKE_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_REQUIRED,
     INSPECTION_RESULT_QUERY,
@@ -285,9 +292,17 @@ def get_inspecoes_processo_historico_route(
     ordem_producao: str | None = Query(default=None),
     codigo_produto: str | None = Query(default=None),
     resultado: str | None = INSPECTION_RESULT_QUERY(),
-    data_inicio: str | None = Query(default=None),
-    data_fim: str | None = Query(default=None),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    data_inicio: str | None = LEGACY_DATA_INICIO_SNAKE_QUERY(),
+    data_fim: str | None = LEGACY_DATA_FIM_SNAKE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+    )
     branch_error = _branch_access_error(branch)
     if branch_error:
         return branch_error
@@ -301,8 +316,8 @@ def get_inspecoes_processo_historico_route(
             ordem_producao=ordem_producao,
             codigo_produto=codigo_produto,
             resultado=resultado,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
         )
 
         return api_delpi_success(

@@ -70,6 +70,15 @@ from app.interface.http.openapi_agent_metadata import (
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATA_FINAL_QUERY,
+    LEGACY_DATA_INICIAL_QUERY,
+    LEGACY_DATE_END_QUERY,
+    LEGACY_DATE_START_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
@@ -85,8 +94,10 @@ router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 @router.get("/lmps", **LMP_LIST)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_lmps_route(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(None, ge=1),
@@ -97,9 +108,15 @@ def list_lmps_route(
     ),
 ):
     try:
-        dto = build_list_lmp_request(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_list_lmp_request(
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             listing_type=listing_type,
             page=page,
@@ -128,8 +145,10 @@ def list_lmps_route(
 @router.get("/lmps/dashboard", **LMP_DASHBOARD)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_lmps_dashboard_route(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: str = LMP_DASHBOARD_STATUS_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
@@ -137,9 +156,15 @@ def list_lmps_dashboard_route(
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
     try:
-        dto = build_list_lmp_request(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_list_lmp_request(
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             listing_type=listing_type,
             page=page,
@@ -155,8 +180,8 @@ def list_lmps_dashboard_route(
                 "summary": enrich_dashboard_metric(
                     summary,
                     source_key=goal_keys.ENGINEERING_LMP,
-                    start_date=date_start,
-                    end_date=date_end,
+                    start_date=start_date,
+                    end_date=end_date,
                     branch=branch,
                 ),
             }
@@ -184,16 +209,24 @@ def list_lmps_dashboard_route(
 @router.get("/lmps/dashboard/summary", **LMP_DASHBOARD_SUMMARY)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_summary_route(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: str = LMP_DASHBOARD_STATUS_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
 ):
     try:
-        dto = build_list_lmp_request(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_list_lmp_request(
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             listing_type=listing_type,
         )
@@ -203,8 +236,8 @@ def lmps_dashboard_summary_route(
         summary = enrich_dashboard_metric(
             summary,
             source_key=goal_keys.ENGINEERING_LMP,
-            start_date=date_start,
-            end_date=date_end,
+            start_date=start_date,
+            end_date=end_date,
             branch=branch,
         )
 
@@ -230,8 +263,10 @@ def lmps_dashboard_summary_route(
 @router.get("/lmps/dashboard/items", **LMP_DASHBOARD_ITEMS)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_items_route(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: str = LMP_DASHBOARD_STATUS_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
@@ -239,9 +274,15 @@ def lmps_dashboard_items_route(
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
     try:
-        dto = build_list_lmp_request(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_list_lmp_request(
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             listing_type=listing_type,
             page=page,
@@ -272,16 +313,24 @@ def lmps_dashboard_items_route(
 @router.get("/lmps/dashboard/charts", **LMP_DASHBOARD_CHARTS)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def lmps_dashboard_charts_route(
-    date_start: Optional[str] = None,
-    date_end: Optional[str] = None,
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     status: str = LMP_DASHBOARD_STATUS_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
 ):
     try:
-        dto = build_list_lmp_request(
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_list_lmp_request(
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             listing_type=listing_type,
         )
@@ -311,14 +360,10 @@ def lmps_dashboard_charts_route(
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_history_events_route(
     sale_number: str,
-    date_start: Optional[str] = Query(
-        default=None,
-        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
-    date_end: Optional[str] = Query(
-        default=None,
-        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     revision: Optional[str] = Query(
         default=None,
@@ -326,10 +371,16 @@ def get_lmp_history_events_route(
     ),
 ):
     try:
-        dto = build_get_lmp_history_request(
-            sale_number,
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_get_lmp_history_request(
+            sale_number,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             revision=revision,
         )
@@ -361,14 +412,10 @@ def get_lmp_history_events_route(
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_history_flow_route(
     sale_number: str,
-    date_start: Optional[str] = Query(
-        default=None,
-        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
-    date_end: Optional[str] = Query(
-        default=None,
-        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     revision: Optional[str] = Query(
         default=None,
@@ -376,10 +423,16 @@ def get_lmp_history_flow_route(
     ),
 ):
     try:
-        dto = build_get_lmp_history_request(
-            sale_number,
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_get_lmp_history_request(
+            sale_number,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
             revision=revision,
         )
@@ -411,21 +464,23 @@ def get_lmp_history_flow_route(
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_route(
     sale_number: str,
-    date_start: Optional[str] = Query(
-        default=None,
-        description="Início do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
-    date_end: Optional[str] = Query(
-        default=None,
-        description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
-    ),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
-        dto = build_get_lmp_request(
-            sale_number,
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
             date_start=date_start,
             date_end=date_end,
+        )
+        dto = build_get_lmp_request(
+            sale_number,
+            date_start=start_date,
+            date_end=end_date,
             branch=branch,
         )
 
@@ -678,16 +733,29 @@ def list_mini_applicators_pecas_route(codigo: str):
 def get_mini_applicators_golpes_route(
     codigo: str,
     filial: str = BRANCH_QUERY_REQUIRED(),
-    data_inicial: str = Query(...),
-    data_final: str = Query(...),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    data_inicial: Optional[str] = LEGACY_DATA_INICIAL_QUERY(),
+    data_final: Optional[str] = LEGACY_DATA_FINAL_QUERY(),
 ):
     try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            data_inicial=data_inicial,
+            data_final=data_final,
+        )
+        if not start_date or not end_date:
+            return error_response(
+                "Informe data inicial e final do período.",
+                status_code=400,
+            )
         use_case = build_get_mini_applicators_golpes_use_case()
         result = use_case.execute(
             filial=filial,
             codigo_ferramenta=codigo,
-            data_inicial=data_inicial,
-            data_final=data_final,
+            data_inicial=start_date,
+            data_final=end_date,
         )
         return api_delpi_success(
             result,

@@ -120,18 +120,6 @@ def FILIAL_QUERY_OPTIONAL():
     return BRANCH_QUERY_OPTIONAL()
 
 
-def DATA_INICIO_QUERY():
-    return Query(
-    None,
-    alias="dataInicio",
-    description="Start date (YYYY-MM-DD). Default: last 12 months.", json_schema_extra={"format": "date"},
-)
-def DATA_FIM_QUERY():
-    return Query(
-    None,
-    alias="dataFim",
-    description="End date (YYYY-MM-DD). Default: today.", json_schema_extra={"format": "date"},
-)
 def RECURSO_QUERY():
     return Query(None, description="Resource filter.")
 def CENTRO_CUSTO_QUERY():

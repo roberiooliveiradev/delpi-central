@@ -9,8 +9,8 @@ export function formatIsoDate(date: Date): string {
 }
 
 export function getDefaultLast12MonthsRange(referenceDate = new Date()): {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 } {
   const dataFim = new Date(
     referenceDate.getFullYear(),
@@ -20,14 +20,14 @@ export function getDefaultLast12MonthsRange(referenceDate = new Date()): {
   const dataInicio = new Date(dataFim.getFullYear(), dataFim.getMonth() - 11, 1);
 
   return {
-    dataInicio: formatIsoDate(dataInicio),
-    dataFim: formatIsoDate(dataFim),
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
   };
 }
 
 export function getDefaultLast6MonthsRange(referenceDate = new Date()): {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 } {
   const dataFim = new Date(
     referenceDate.getFullYear(),
@@ -37,14 +37,14 @@ export function getDefaultLast6MonthsRange(referenceDate = new Date()): {
   const dataInicio = new Date(dataFim.getFullYear(), dataFim.getMonth() - 5, 1);
 
   return {
-    dataInicio: formatIsoDate(dataInicio),
-    dataFim: formatIsoDate(dataFim),
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
   };
 }
 
 export function getThisMonthRange(referenceDate = new Date()): {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 } {
   const dataFim = new Date(
     referenceDate.getFullYear(),
@@ -54,14 +54,14 @@ export function getThisMonthRange(referenceDate = new Date()): {
   const dataInicio = new Date(dataFim.getFullYear(), dataFim.getMonth(), 1);
 
   return {
-    dataInicio: formatIsoDate(dataInicio),
-    dataFim: formatIsoDate(dataFim),
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
   };
 }
 
 export function getTodayRange(referenceDate = new Date()): {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 } {
   const day = new Date(
     referenceDate.getFullYear(),
@@ -69,13 +69,13 @@ export function getTodayRange(referenceDate = new Date()): {
     referenceDate.getDate(),
   );
   const iso = formatIsoDate(day);
-  return { dataInicio: iso, dataFim: iso };
+  return { start_date: iso, end_date: iso };
 }
 
 /** Semana calendário (segunda → hoje), alinhado aos dashboards departamentais. */
 export function getThisWeekRange(referenceDate = new Date()): {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 } {
   const dataFim = new Date(
     referenceDate.getFullYear(),
@@ -87,8 +87,8 @@ export function getThisWeekRange(referenceDate = new Date()): {
   const dataInicio = new Date(dataFim);
   dataInicio.setDate(dataInicio.getDate() - daysSinceMonday);
   return {
-    dataInicio: formatIsoDate(dataInicio),
-    dataFim: formatIsoDate(dataFim),
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
   };
 }
 
@@ -100,9 +100,9 @@ function parseIsoDate(value: string): Date | null {
   return date;
 }
 
-export function validatePeriodRange(dataInicio: string, dataFim: string): string | null {
-  const start = parseIsoDate(dataInicio);
-  const end = parseIsoDate(dataFim);
+export function validatePeriodRange(start_date: string, end_date: string): string | null {
+  const start = parseIsoDate(start_date);
+  const end = parseIsoDate(end_date);
 
   if (!start || !end) {
     return "Informe datas válidas no formato YYYY-MM-DD.";
@@ -145,8 +145,8 @@ function optionalFilter(value: string | undefined): string | undefined {
 export function filtersFromFormState(
   filial: string,
   state: {
-    dataInicio: string;
-    dataFim: string;
+    start_date: string;
+    end_date: string;
     mp?: string;
     pa?: string;
     op?: string;
@@ -156,8 +156,8 @@ export function filtersFromFormState(
 ) {
   return {
     filial,
-    dataInicio: state.dataInicio,
-    dataFim: state.dataFim,
+    start_date: state.start_date,
+    end_date: state.end_date,
     mp: optionalFilter(state.mp),
     pa: optionalFilter(state.pa),
     op: optionalFilter(state.op),

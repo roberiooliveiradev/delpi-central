@@ -134,7 +134,7 @@ def test_production_commentary_flags_open_op_without_start():
 
 def test_shipping_commentary_reports_shipped_quantity():
     root = {
-        "date_start": "20260604",
+        "start_date": "20260604",
         "date_end_exclusive": "20260605",
         "summary": {
             "total_shipped_quantity": 10,

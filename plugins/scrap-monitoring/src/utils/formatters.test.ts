@@ -40,7 +40,7 @@ describe("dateRange", () => {
     expect(validatePeriodRange("2026-04-01", "2026-04-27")).toBeNull();
     expect(validatePeriodRange("2026-05-01", "2026-04-01")).toMatch(/inicial/);
     const range = getThisMonthRange(new Date(2026, 3, 15));
-    expect(range.dataInicio).toBe("2026-04-01");
-    expect(range.dataFim).toBe("2026-04-15");
+    expect(range.start_date).toBe("2026-04-01");
+    expect(range.end_date).toBe("2026-04-15");
   });
 });

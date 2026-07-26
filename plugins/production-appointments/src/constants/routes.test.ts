@@ -64,7 +64,7 @@ describe("buildOpDetailPath", () => {
         dateEnd: "2026-07-15",
       }),
     ).toBe(
-      "/apps/production-appointments/sc/op/000123?date_start=2026-06-16&date_end=2026-07-15",
+      "/apps/production-appointments/sc/op/000123?start_date=2026-06-16&end_date=2026-07-15",
     );
   });
 });
@@ -77,13 +77,13 @@ describe("buildCtDetailPath", () => {
         dateEnd: "2026-07-15",
       }),
     ).toBe(
-      "/apps/production-appointments/sc/ct/CT-70?date_start=2026-06-16&date_end=2026-07-15",
+      "/apps/production-appointments/sc/ct/CT-70?start_date=2026-06-16&end_date=2026-07-15",
     );
   });
 });
 
 describe("withDetailPeriodParams", () => {
-  it("atualiza date_start/date_end na query", () => {
+  it("atualiza start_date/end_date na query e remove legado", () => {
     expect(
       withDetailPeriodParams(
         "/apps/production-appointments/sc/ct/CT-70",
@@ -92,7 +92,7 @@ describe("withDetailPeriodParams", () => {
         "2026-07-15",
       ),
     ).toBe(
-      "/apps/production-appointments/sc/ct/CT-70?date_start=2026-07-01&date_end=2026-07-15",
+      "/apps/production-appointments/sc/ct/CT-70?start_date=2026-07-01&end_date=2026-07-15",
     );
   });
 });

@@ -24,9 +24,14 @@ from app.interface.http.kpi_field_labels import (
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.refugos.refugos_branch_access import branch_access_error
+from app.interface.http.period_query_params import (
+    END_DATE_QUERY,
+    LEGACY_DATA_FIM_QUERY,
+    LEGACY_DATA_INICIO_QUERY,
+    START_DATE_QUERY,
+    resolve_period_dates,
+)
 from app.interface.http.routes.refugos.refugos_route_helpers import (
-    DATA_FIM_QUERY,
-    DATA_INICIO_QUERY,
     DIMENSION_QUERY,
     FILIAL_QUERY,
     FILIAL_QUERY_OPTIONAL,
@@ -80,9 +85,17 @@ def get_refugos_health_route():
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_filtros_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -90,8 +103,8 @@ def get_refugos_filtros_route(
     try:
         request = build_refugos_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar filtros de refugos: {exc}")
@@ -116,14 +129,22 @@ def get_refugos_filtros_route(
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_resumo_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     mp: Optional[str] = MP_QUERY(),
     pa: Optional[str] = PA_QUERY(),
     op: Optional[str] = OP_QUERY(),
     motivo: Optional[str] = MOTIVO_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -131,8 +152,8 @@ def get_refugos_resumo_route(
     try:
         request = build_refugos_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             mp=mp,
             pa=pa,
             op=op,
@@ -162,14 +183,22 @@ def get_refugos_resumo_route(
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_scrap_cost_pct(
     filial: Optional[str] = FILIAL_QUERY_OPTIONAL(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     mp: Optional[str] = MP_QUERY(),
     pa: Optional[str] = PA_QUERY(),
     op: Optional[str] = OP_QUERY(),
     motivo: Optional[str] = MOTIVO_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -177,8 +206,8 @@ def get_refugos_scrap_cost_pct(
     try:
         request = build_refugos_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             mp=mp,
             pa=pa,
             op=op,
@@ -221,8 +250,10 @@ def get_refugos_scrap_cost_pct(
 def get_refugos_rankings_route(
     filial: str = FILIAL_QUERY(),
     dimension: str = DIMENSION_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     mp: Optional[str] = MP_QUERY(),
     pa: Optional[str] = PA_QUERY(),
     op: Optional[str] = OP_QUERY(),
@@ -230,6 +261,12 @@ def get_refugos_rankings_route(
     recurso: Optional[str] = RECURSO_QUERY(),
     limit: int = LIMIT_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -237,8 +274,8 @@ def get_refugos_rankings_route(
     try:
         request = build_refugos_query_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             dimension=dimension,
             mp=mp,
             pa=pa,
@@ -270,8 +307,10 @@ def get_refugos_rankings_route(
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_serie_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     granularity: Optional[str] = GRANULARITY_QUERY(),
     mp: Optional[str] = MP_QUERY(),
     pa: Optional[str] = PA_QUERY(),
@@ -279,6 +318,12 @@ def get_refugos_serie_route(
     motivo: Optional[str] = MOTIVO_QUERY(),
     recurso: Optional[str] = RECURSO_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -286,8 +331,8 @@ def get_refugos_serie_route(
     try:
         request = build_refugos_serie_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             granularity=granularity,
             mp=mp,
             pa=pa,
@@ -318,8 +363,10 @@ def get_refugos_serie_route(
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_registros_route(
     filial: str = FILIAL_QUERY(),
-    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
-    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    dataInicio: Optional[str] = LEGACY_DATA_INICIO_QUERY(),
+    dataFim: Optional[str] = LEGACY_DATA_FIM_QUERY(),
     mp: Optional[str] = MP_QUERY(),
     pa: Optional[str] = PA_QUERY(),
     op: Optional[str] = OP_QUERY(),
@@ -328,6 +375,12 @@ def get_refugos_registros_route(
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
 ):
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        dataInicio=dataInicio,
+        dataFim=dataFim,
+    )
     filial_error = branch_access_error(filial)
     if filial_error:
         return filial_error
@@ -335,8 +388,8 @@ def get_refugos_registros_route(
     try:
         request = build_refugos_registros_request(
             filial=filial,
-            data_inicio=data_inicio,
-            data_fim=data_fim,
+            data_inicio=start_date,
+            data_fim=end_date,
             mp=mp,
             pa=pa,
             op=op,

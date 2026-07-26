@@ -23,8 +23,8 @@ class GetNonconformitySeriesUseCase:
             raise ValueError("type deve ser internal, external ou all")
 
         buckets_result = build_period_buckets(
-            date_start=request.date_start,
-            date_end=request.date_end,
+            start_date=request.date_start,
+            end_date=request.date_end,
             granularity=request.granularity,
         )
 
@@ -41,16 +41,16 @@ class GetNonconformitySeriesUseCase:
         for bucket in buckets_result.buckets:
             total, registros = self._repository.sum_returned_quantity(
                 list_request,
-                occurrence_date_start=bucket.date_start,
-                occurrence_date_end=bucket.date_end,
+                occurrence_date_start=bucket.start_date,
+                occurrence_date_end=bucket.end_date,
             )
 
             points.append(
                 NonconformitySeriesPointDto(
                     periodo=bucket.label,
                     sort_key=bucket.key,
-                    date_start=bucket.date_start,
-                    date_end=bucket.date_end,
+                    start_date=bucket.start_date,
+                    end_date=bucket.end_date,
                     value=round(total, 2),
                     registros=registros,
                 )

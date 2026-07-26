@@ -75,10 +75,10 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
   const summaryParams = useMemo(
     () => ({
       branch: apiParams.branch,
-      start_date: apiParams.date_start,
-      end_date: apiParams.date_end,
+      start_date: apiParams.start_date,
+      end_date: apiParams.end_date,
     }),
-    [apiParams.branch, apiParams.date_start, apiParams.date_end]
+    [apiParams.branch, apiParams.start_date, apiParams.end_date]
   );
 
   const { data, loading, requestProgress, error, reload } =

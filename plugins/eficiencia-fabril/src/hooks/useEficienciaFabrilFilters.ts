@@ -50,8 +50,8 @@ function toApiFilters(
   page: number
 ): EficienciaFabrilFilterParams {
   return {
-    date_start: filters.dateStart,
-    date_end: filters.dateEnd,
+    start_date: filters.dateStart,
+    end_date: filters.dateEnd,
     branch: filters.branch,
     ops: filters.ops.length > 0 ? filters.ops : undefined,
     employees: filters.employees.length > 0 ? filters.employees : undefined,

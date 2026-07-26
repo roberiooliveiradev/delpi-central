@@ -117,8 +117,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     () => ({
       type,
       branch: apiParams.branch,
-      date_start: apiParams.date_start,
-      date_end: apiParams.date_end,
+      start_date: apiParams.start_date,
+      end_date: apiParams.end_date,
       status: debouncedStatus || undefined,
       item_code: debouncedItemCode || undefined,
       description: debouncedTableSearch || debouncedDescription || undefined,
@@ -126,8 +126,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     [
       type,
       apiParams.branch,
-      apiParams.date_start,
-      apiParams.date_end,
+      apiParams.start_date,
+      apiParams.end_date,
       debouncedStatus,
       debouncedItemCode,
       debouncedDescription,
@@ -150,8 +150,8 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
     setPage(1);
   }, [
     apiParams.branch,
-    apiParams.date_start,
-    apiParams.date_end,
+    apiParams.start_date,
+    apiParams.end_date,
     type,
     status,
     itemCode,

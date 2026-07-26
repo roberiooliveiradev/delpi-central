@@ -177,7 +177,7 @@ function buildTransformaNetWeeklyFromDaily(
   for (const point of daily) {
     const bucket = buckets.find(
       (candidate) =>
-        point.sortKey >= candidate.key && point.sortKey <= candidate.date_end,
+        point.sortKey >= candidate.key && point.sortKey <= candidate.end_date,
     );
     if (!bucket) continue;
     totals.set(bucket.key, (totals.get(bucket.key) ?? 0) + point.net);

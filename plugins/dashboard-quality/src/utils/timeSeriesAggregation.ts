@@ -95,8 +95,8 @@ export function aggregateQuantityByPeriod<T>({
     return {
       periodo: bucket.label,
       sortKey: bucket.key,
-      dateStart: bucket.date_start,
-      dateEnd: bucket.date_end,
+      dateStart: bucket.start_date,
+      dateEnd: bucket.end_date,
       value: Number((aggregate?.value ?? 0).toFixed(2)),
       registros: aggregate?.registros ?? 0,
     };
@@ -157,8 +157,8 @@ export function aggregateAverageByPeriod<T>({
     return {
       periodo: bucket.label,
       sortKey: bucket.key,
-      dateStart: bucket.date_start,
-      dateEnd: bucket.date_end,
+      dateStart: bucket.start_date,
+      dateEnd: bucket.end_date,
       value: Number(average.toFixed(2)),
       registros: aggregate?.count ?? 0,
     };

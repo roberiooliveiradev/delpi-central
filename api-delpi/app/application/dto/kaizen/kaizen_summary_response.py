@@ -6,8 +6,8 @@ from app.domain.entities.kaizen.kaizen import Kaizen
 
 @dataclass
 class KaizenSummaryResponse:
-    date_start: Optional[str]
-    date_end: Optional[str]
+    start_date: Optional[str]
+    end_date: Optional[str]
     total_kaizens: int
     total_savings: float
     list_kaizen: List[Kaizen] = field(default_factory=list)
@@ -16,8 +16,8 @@ class KaizenSummaryResponse:
 
     def to_dict(self) -> dict:
         return {
-            "date_start": self.date_start,
-            "date_end": self.date_end,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
             "total_kaizens": self.total_kaizens,
             "total_savings": self.total_savings,
             "list_kaizen": [item.to_dict() for item in self.list_kaizen],

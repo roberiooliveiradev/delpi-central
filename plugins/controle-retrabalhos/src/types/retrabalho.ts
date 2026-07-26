@@ -1,18 +1,21 @@
 export type RetrabalhoPeriodo = {
-  dataInicio: string;
-  dataFim: string;
+  start_date?: string;
+  end_date?: string;
+  /** Legado api-delpi — preferir start_date/end_date na leitura defensiva. */
+  dataInicio?: string;
+  dataFim?: string;
   filial: string;
 };
 
 export type RetrabalhoQueryFilters = {
   filial: string;
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 };
 
 export type FilterFormState = {
-  dataInicio: string;
-  dataFim: string;
+  start_date: string;
+  end_date: string;
 };
 
 export type RetrabalhoResumo = {

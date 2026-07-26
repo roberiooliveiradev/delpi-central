@@ -41,6 +41,8 @@ def test_product_purchase_price_history_returns_meta(mock_build) -> None:
     )
     response = get_purchase_price_history(
         code="90269001",
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -61,7 +63,12 @@ def test_product_purchase_budget_history_returns_meta(mock_build) -> None:
         execute=MagicMock(return_value=_product_payload(history=[]))
     )
     response = get_purchase_budget_history(
-        code="90269001", date_start=None, date_end=None, branch=None
+        code="90269001",
+        start_date=None,
+        end_date=None,
+        date_start=None,
+        date_end=None,
+        branch=None,
     )
     assert_envelope_meta(
         body_json(response),
@@ -81,6 +88,8 @@ def test_product_raw_material_price_intelligence_returns_meta(mock_build) -> Non
     )
     response = get_raw_material_price_intelligence(
         code="90269001",
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -103,6 +112,8 @@ def test_product_shipping_status_returns_meta(mock_build) -> None:
     response = get_shipping_status(
         code="90269001",
         reference_date=None,
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -209,6 +220,8 @@ def test_production_losses_records_returns_meta(mock_build) -> None:
         execute=MagicMock(return_value={"items": [], "summary": {}})
     )
     response = get_losses_records(
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -251,6 +264,8 @@ def test_production_consumption_top_items_by_work_center_returns_meta(mock_build
         execute=MagicMock(return_value={"items": []})
     )
     response = get_consumption_top_items_by_work_center(
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -291,6 +306,8 @@ def test_eficiencia_fabril_appointments_returns_meta(mock_build) -> None:
         execute=MagicMock(return_value={"items": [], "page": 1, "total": 0})
     )
     response = get_eficiencia_fabril_appointments(
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         branch=None,
@@ -326,6 +343,8 @@ def test_production_machine_program_top_intermediates_returns_meta(mock_build) -
     )
     response = list_machine_program_top_intermediates(
         branch="01",
+        start_date=None,
+        end_date=None,
         date_start=None,
         date_end=None,
         page=1,

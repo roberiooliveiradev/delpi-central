@@ -40,15 +40,15 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
 
   const stableParams = useMemo(
     () => ({
-      date_start: inputDateToLmpApi(params.date_start),
-      date_end: inputDateToLmpApi(params.date_end),
+      start_date: inputDateToLmpApi(params.start_date),
+      end_date: inputDateToLmpApi(params.end_date),
       branch: params.branch,
       listing_type: params.listing_type,
       status: params.status,
     }),
     [
-      params.date_start,
-      params.date_end,
+      params.start_date,
+      params.end_date,
       params.branch,
       params.listing_type,
       params.status,
@@ -59,8 +59,8 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     setPage(1);
   }, [
     stableParams.branch,
-    stableParams.date_end,
-    stableParams.date_start,
+    stableParams.end_date,
+    stableParams.start_date,
     stableParams.listing_type,
     stableParams.status,
   ]);
@@ -113,8 +113,8 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     stableParams.branch,
-    stableParams.date_end,
-    stableParams.date_start,
+    stableParams.end_date,
+    stableParams.start_date,
     stableParams.listing_type,
     stableParams.status,
     reloadKey,
@@ -158,8 +158,8 @@ export function useLmpsDashboard(params: UseLmpsDashboardParams) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     stableParams.branch,
-    stableParams.date_end,
-    stableParams.date_start,
+    stableParams.end_date,
+    stableParams.start_date,
     stableParams.listing_type,
     stableParams.status,
     page,

@@ -3,8 +3,8 @@ import type { EficienciaFabrilShift } from "../constants/shifts";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 
 export type EficienciaFabrilFilterParams = {
-  date_start: string;
-  date_end: string;
+  start_date: string;
+  end_date: string;
   branch?: string;
   ops?: string[];
   employees?: string[];

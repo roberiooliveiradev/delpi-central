@@ -119,8 +119,8 @@ export function LmpPage({ pathname }: LmpPageProps) {
     error,
     reload,
   } = useLmpsDashboard({
-    date_start: dateStart || undefined,
-    date_end: dateEnd || undefined,
+    start_date: dateStart || undefined,
+    end_date: dateEnd || undefined,
     branch: resolveApiBranch(branches),
     listing_type: apiListingType,
     status: apiStatus,
@@ -209,8 +209,8 @@ export function LmpPage({ pathname }: LmpPageProps) {
       if (row.branch) {
         params.set("branch", normalizeOperationalUnitCode(row.branch));
       }
-      if (dateStart) params.set("date_start", dateStart);
-      if (dateEnd) params.set("date_end", dateEnd);
+      if (dateStart) params.set("start_date", dateStart);
+      if (dateEnd) params.set("end_date", dateEnd);
       const query = params.toString();
       const target = `/apps/dashboard-lmps/ov/${encodeURIComponent(row.sale_number)}${
         query ? `?${query}` : ""

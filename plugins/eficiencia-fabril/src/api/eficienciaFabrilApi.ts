@@ -11,8 +11,8 @@ export const EFICIENCIA_FABRIL_API_BASE = "/apps/api-delpi/production";
 function buildQuery(params: EficienciaFabrilFilterParams): string {
   const searchParams = new URLSearchParams();
 
-  searchParams.set("date_start", params.date_start);
-  searchParams.set("date_end", params.date_end);
+  searchParams.set("start_date", params.start_date);
+  searchParams.set("end_date", params.end_date);
 
   if (params.branch) searchParams.set("branch", params.branch);
   if (params.status_ok_only !== undefined) {

@@ -48,8 +48,8 @@ export function useEngineeringDashboard(apiParams: EngineeringFilterParams) {
         else setLoading(true);
 
         const lmpParams = {
-          date_start: inputDateToLmpApi(apiParams.start_date),
-          date_end: inputDateToLmpApi(apiParams.end_date),
+          start_date: inputDateToLmpApi(apiParams.start_date),
+          end_date: inputDateToLmpApi(apiParams.end_date),
           branch: apiParams.branch ?? apiParams.filial_id,
           status: "Todos",
         };

@@ -15,6 +15,12 @@ def test_find_date_range_keys_prefers_schema_names():
     assert find_date_range_keys(["branch"]) is None
 
 
+def test_find_date_range_keys_prefers_canonical_when_both_pairs_present():
+    assert find_date_range_keys(
+        ["date_start", "date_end", "start_date", "end_date", "branch"]
+    ) == ("start_date", "end_date")
+
+
 def test_this_month_and_this_week(today_fixed: date | None = None):
     today = today_fixed or date(2026, 7, 13)  # segunda
     assert compute_preset_range("this_month", today=today) == (date(2026, 7, 1), today)
