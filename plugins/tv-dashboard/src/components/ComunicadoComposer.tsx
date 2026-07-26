@@ -1076,7 +1076,6 @@ export function ComunicadoComposerCanvas() {
               <GroupSelectionChrome
                 key={group.groupId}
                 frame={chrome.frame}
-                rotation={chrome.rotation}
                 anchorBlock={anchor}
                 onPointerDown={startDragRespectingPan}
               />

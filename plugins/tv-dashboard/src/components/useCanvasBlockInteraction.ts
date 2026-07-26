@@ -77,7 +77,11 @@ type Options = {
   onUpdateStyle?: (blockId: string, patch: Partial<ComunicadoBlockStyle>) => void;
   /** Patch arbitrário de bloco (KPI/chart chrome via `applyBlockShapeChromeAdjustment`). */
   onUpdateBlock?: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
-  onInteractionStart?: () => void;
+  onInteractionStart?: (meta?: {
+    blockId: string;
+    mode: BlockDragMode;
+    startFrame: ComunicadoFrame;
+  }) => void;
   onInteractionEnd?: (
     blockId: string,
     frame: ComunicadoFrame,
@@ -334,7 +338,11 @@ export function useCanvasBlockInteraction({
     const dy = event.clientY - pending.startY;
     if (dx * dx + dy * dy < DRAG_THRESHOLD_PX * DRAG_THRESHOLD_PX) return;
 
-    onInteractionStartRef.current?.();
+    onInteractionStartRef.current?.({
+      blockId: pending.blockId,
+      mode: pending.mode,
+      startFrame: pending.startFrame,
+    });
 
     const { pointerId: _pointerId, ...dragState } = pending;
     pendingRef.current = null;
@@ -397,7 +405,12 @@ export function useCanvasBlockInteraction({
         const frame = dragState.startFrame;
         const startLocalX = frame.w > 0 ? ((startPt.x - frame.x) / frame.w) * 100 : 50;
         const startLocalY = frame.h > 0 ? ((startPt.y - frame.y) / frame.h) * 100 : 50;
-        onInteractionStartRef.current?.();
+        const startMeta = {
+          blockId: block.id,
+          mode,
+          startFrame: dragState.startFrame,
+        };
+        onInteractionStartRef.current?.(startMeta);
         dragRef.current = {
           ...dragState,
           adjIndex,
@@ -413,7 +426,11 @@ export function useCanvasBlockInteraction({
 
       const endpointIndex = parseEndpointIndex(mode);
       if (endpointIndex != null && block.type === "shape" && isLineShapeKind(block.shape)) {
-        onInteractionStartRef.current?.();
+        onInteractionStartRef.current?.({
+          blockId: block.id,
+          mode,
+          startFrame: dragState.startFrame,
+        });
         dragRef.current = {
           ...dragState,
           endpointIndex,
@@ -440,7 +457,11 @@ export function useCanvasBlockInteraction({
         const centerClientY = rect
           ? rect.top + (centerY / 100) * rect.height
           : event.clientY;
-        onInteractionStartRef.current?.();
+        onInteractionStartRef.current?.({
+          blockId: block.id,
+          mode,
+          startFrame: dragState.startFrame,
+        });
         dragRef.current = {
           ...dragState,
           centerX,
@@ -457,7 +478,11 @@ export function useCanvasBlockInteraction({
       }
 
       if (mode !== "move") {
-        onInteractionStartRef.current?.();
+        onInteractionStartRef.current?.({
+          blockId: block.id,
+          mode,
+          startFrame: dragState.startFrame,
+        });
         pendingRef.current = null;
         removePointerListeners();
         dragRef.current = dragState;

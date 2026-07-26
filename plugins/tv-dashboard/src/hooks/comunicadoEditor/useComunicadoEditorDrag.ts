@@ -20,9 +20,13 @@ import {
 } from "../../components/useCanvasBlockInteraction";
 import {
   applyGroupRotationDelta,
+  applyGroupScaleFromUnionDelta,
   applyMultiFrameDelta,
   resolveFramesGroupCenter,
+  resolveGroupSelectionChrome,
+  type GroupScaleHandle,
 } from "../../utils/multiFrameTransform";
+import { normalizeResizeHandle } from "../../utils/resizeFrameAspect";
 import {
   peerFramesForSmartGuides,
   snapFrameToPeerBlocks,
@@ -94,6 +98,11 @@ export function useComunicadoEditorDrag({
     startFrames: Map<string, ComunicadoBlock["frame"]>;
     startRotations: Map<string, number>;
     groupCenter: { x: number; y: number };
+    /** Bbox do grupo no pointerdown (layout ou visual). */
+    startUnion: ComunicadoBlock["frame"];
+    /** Gesto partiu do chrome do grupo (frame ≈ union). */
+    dragUsesUnion: boolean;
+    resizeHandle: GroupScaleHandle | null;
   } | null>(null);
   /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
@@ -243,15 +252,40 @@ export function useComunicadoEditorDrag({
       const draggedIds = new Set<string>();
 
       if (multi && multi.startFrames.has(blockId)) {
-        const nextFrames = applyMultiFrameDelta(multi.startFrames, blockId, workingFrame);
+        const start = multi.startFrames.get(blockId)!;
+        const isResize = multi.dragUsesUnion
+          ? workingFrame.w !== multi.startUnion.w || workingFrame.h !== multi.startUnion.h
+          : workingFrame.w !== start.w || workingFrame.h !== start.h;
+
+        let nextFrames: Map<string, ComunicadoBlock["frame"]>;
+        if (multi.dragUsesUnion && multi.resizeHandle && isResize) {
+          nextFrames = applyGroupScaleFromUnionDelta({
+            startFrames: multi.startFrames,
+            startUnion: multi.startUnion,
+            nextUnion: workingFrame,
+            handle: multi.resizeHandle,
+            lockAspect: true,
+          });
+        } else if (multi.dragUsesUnion && !isResize) {
+          const dx = workingFrame.x - multi.startUnion.x;
+          const dy = workingFrame.y - multi.startUnion.y;
+          nextFrames = new Map();
+          for (const [id, frame] of multi.startFrames) {
+            nextFrames.set(id, { ...frame, x: frame.x + dx, y: frame.y + dy });
+          }
+        } else {
+          nextFrames = applyMultiFrameDelta(multi.startFrames, blockId, workingFrame);
+        }
+
         nextBlocks = (configRef.current.blocks ?? []).map((block) => {
           const nextFrame = nextFrames.get(block.id);
           if (!nextFrame) return block;
           draggedIds.add(block.id);
           const base = resolveBaseline(block.id) ?? block;
-          const start = multi.startFrames.get(block.id)!;
-          const isResize = nextFrame.w !== start.w || nextFrame.h !== start.h;
-          if (isResize && isComplexViewBlock(base)) {
+          const memberStart = multi.startFrames.get(block.id)!;
+          const memberResized =
+            nextFrame.w !== memberStart.w || nextFrame.h !== memberStart.h;
+          if (memberResized && isComplexViewBlock(base)) {
             return applyComplexBlockFrameWithTypography(base, nextFrame);
           }
           return { ...block, frame: nextFrame };
@@ -283,40 +317,64 @@ export function useComunicadoEditorDrag({
     [configRef, resolveBaseline, snapToObjectsRef, updateBlocksSilent],
   );
 
-  const handleInteractionStart = useCallback(() => {
-    cancelPendingTapDeselect();
-    setActiveSmartGuides([]);
-    dragSnapshotRef.current = snapshotConfig(configRef.current);
-    const override = multiDragSelectionOverrideRef.current;
-    multiDragSelectionOverrideRef.current = null;
-    const baseIds =
-      override && override.length > 0
-        ? override
-        : selectedIds.length > 0
-          ? selectedIds
-          : selectedId
-            ? [selectedId]
-            : [];
-    /* Filhos isolados: não reexpandir o grupo (senão resize/move afeta todos). */
-    const activeIds = resolveMultiDragBlockIds(configRef.current.blocks ?? [], baseIds);
-    if (activeIds.length > 1) {
-      const startFrames = new Map<string, ComunicadoBlock["frame"]>();
-      const startRotations = new Map<string, number>();
-      for (const id of activeIds) {
-        const block = configRef.current.blocks?.find((item) => item.id === id);
-        if (!block) continue;
-        startFrames.set(id, { ...block.frame });
-        startRotations.set(id, block.style?.rotation ?? 0);
+  const handleInteractionStart = useCallback(
+    (meta?: {
+      blockId: string;
+      mode: string;
+      startFrame: ComunicadoBlock["frame"];
+    }) => {
+      cancelPendingTapDeselect();
+      setActiveSmartGuides([]);
+      dragSnapshotRef.current = snapshotConfig(configRef.current);
+      const override = multiDragSelectionOverrideRef.current;
+      multiDragSelectionOverrideRef.current = null;
+      const baseIds =
+        override && override.length > 0
+          ? override
+          : selectedIds.length > 0
+            ? selectedIds
+            : selectedId
+              ? [selectedId]
+              : [];
+      /* Filhos isolados: não reexpandir o grupo (senão resize/move afeta todos). */
+      const activeIds = resolveMultiDragBlockIds(configRef.current.blocks ?? [], baseIds);
+      if (activeIds.length > 1) {
+        const startFrames = new Map<string, ComunicadoBlock["frame"]>();
+        const startRotations = new Map<string, number>();
+        const members: Array<{ frame: ComunicadoBlock["frame"]; rotation: number }> = [];
+        for (const id of activeIds) {
+          const block = configRef.current.blocks?.find((item) => item.id === id);
+          if (!block) continue;
+          startFrames.set(id, { ...block.frame });
+          const rotation = block.style?.rotation ?? 0;
+          startRotations.set(id, rotation);
+          members.push({ frame: block.frame, rotation });
+        }
+        const slideAspect = getSlideAspectRatioRef.current();
+        const visualChrome = resolveGroupSelectionChrome({ members, slideAspect });
+        const startUnion = visualChrome.frame;
+        const startFrame = meta?.startFrame;
+        const dragUsesUnion = Boolean(
+          startFrame &&
+            Math.abs(startFrame.x - startUnion.x) < 0.05 &&
+            Math.abs(startFrame.y - startUnion.y) < 0.05 &&
+            Math.abs(startFrame.w - startUnion.w) < 0.05 &&
+            Math.abs(startFrame.h - startUnion.h) < 0.05,
+        );
+        multiDragRef.current = {
+          startFrames,
+          startRotations,
+          groupCenter: resolveFramesGroupCenter(startFrames.values()),
+          startUnion,
+          dragUsesUnion,
+          resizeHandle: meta?.mode ? normalizeResizeHandle(meta.mode) : null,
+        };
+      } else {
+        multiDragRef.current = null;
       }
-      multiDragRef.current = {
-        startFrames,
-        startRotations,
-        groupCenter: resolveFramesGroupCenter(startFrames.values()),
-      };
-    } else {
-      multiDragRef.current = null;
-    }
-  }, [cancelPendingTapDeselect, configRef, selectedId, selectedIds]);
+    },
+    [cancelPendingTapDeselect, configRef, selectedId, selectedIds],
+  );
 
   const handleInteractionEnd = useCallback(
     (

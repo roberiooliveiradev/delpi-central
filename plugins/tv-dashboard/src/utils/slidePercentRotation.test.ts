@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyGroupRotationDelta,
+  applyGroupScaleFromUnionDelta,
   resolveFramesGroupCenter,
   resolveGroupSelectionChrome,
+  resolveRotatedFrameCorners,
   rotatePointPercentAround,
 } from "./slidePercentRotation";
 
@@ -76,52 +78,73 @@ describe("applyGroupRotationDelta", () => {
 });
 
 describe("resolveGroupSelectionChrome", () => {
-  it("membro único com rotação: frame local + rotation no chrome", () => {
+  it("membro único sem rotação: frame = layout", () => {
     const chrome = resolveGroupSelectionChrome({
-      members: [{ frame: { x: 20, y: 30, w: 40, h: 40 }, rotation: 35 }],
-      slideAspect: 16 / 9,
+      members: [{ frame: { x: 20, y: 30, w: 40, h: 40 }, rotation: 0 }],
     });
-    expect(chrome.rotation).toBe(35);
+    expect(chrome.rotation).toBe(0);
     expect(chrome.frame).toEqual({ x: 20, y: 30, w: 40, h: 40 });
   });
 
-  it("rotações distintas: AABB sem rotate no overlay", () => {
+  it("membro rotacionado: AABB visual dos cantos (sem CSS rotate no chrome)", () => {
+    const frame = { x: 40, y: 40, w: 20, h: 20 };
     const chrome = resolveGroupSelectionChrome({
-      members: [
-        { frame: { x: 0, y: 0, w: 20, h: 20 }, rotation: 10 },
-        { frame: { x: 40, y: 0, w: 20, h: 20 }, rotation: 40 },
-      ],
+      members: [{ frame, rotation: 45 }],
+      slideAspect: 1,
     });
     expect(chrome.rotation).toBe(0);
-    expect(chrome.frame).toEqual({ x: 0, y: 0, w: 60, h: 20 });
+    const corners = resolveRotatedFrameCorners(frame, 45, 1);
+    const xs = corners.map((p) => p.x);
+    const ys = corners.map((p) => p.y);
+    expect(chrome.frame.x).toBeCloseTo(Math.min(...xs), 5);
+    expect(chrome.frame.y).toBeCloseTo(Math.min(...ys), 5);
+    expect(chrome.frame.w).toBeCloseTo(Math.max(...xs) - Math.min(...xs), 5);
+    expect(chrome.frame.h).toBeCloseTo(Math.max(...ys) - Math.min(...ys), 5);
+    // 45° em quadrado: AABB maior que o frame layout
+    expect(chrome.frame.w).toBeGreaterThan(20);
+    expect(chrome.frame.h).toBeGreaterThan(20);
+  });
+});
+
+describe("applyGroupScaleFromUnionDelta", () => {
+  it("canto SE com lock escala membros de forma uniforme a partir do NW", () => {
+    const startFrames = new Map([
+      ["a", { x: 10, y: 10, w: 20, h: 20 }],
+      ["b", { x: 40, y: 10, w: 10, h: 10 }],
+    ]);
+    const startUnion = { x: 10, y: 10, w: 40, h: 20 };
+    const nextUnion = { x: 10, y: 10, w: 80, h: 40 };
+    const next = applyGroupScaleFromUnionDelta({
+      startFrames,
+      startUnion,
+      nextUnion,
+      handle: "se",
+      lockAspect: true,
+    });
+    const a = next.get("a")!;
+    const b = next.get("b")!;
+    expect(a.w).toBeCloseTo(40, 5);
+    expect(a.h).toBeCloseTo(40, 5);
+    expect(b.w).toBeCloseTo(20, 5);
+    expect(b.h).toBeCloseTo(20, 5);
+    expect(a.x).toBeCloseTo(10, 5);
+    expect(b.x).toBeCloseTo(70, 5);
   });
 
-  it("mesma rotação em grupo: recupera bbox local para o overlay rotacionar", () => {
-    const aspect = 1;
+  it("mantém proporção relativa entre membros (não dw/dh absoluto)", () => {
     const startFrames = new Map([
-      ["a", { x: 0, y: 40, w: 20, h: 20 }],
-      ["b", { x: 80, y: 40, w: 20, h: 20 }],
+      ["small", { x: 0, y: 0, w: 10, h: 10 }],
+      ["big", { x: 20, y: 0, w: 30, h: 30 }],
     ]);
-    const center = resolveFramesGroupCenter(startFrames.values());
-    const rotated = applyGroupRotationDelta({
+    const startUnion = { x: 0, y: 0, w: 50, h: 30 };
+    const nextUnion = { x: 0, y: 0, w: 100, h: 60 };
+    const next = applyGroupScaleFromUnionDelta({
       startFrames,
-      startRotations: new Map([
-        ["a", 0],
-        ["b", 0],
-      ]),
-      center,
-      deltaDeg: 90,
-      slideAspect: aspect,
+      startUnion,
+      nextUnion,
+      handle: "se",
+      lockAspect: true,
     });
-    const members = [...rotated.entries()].map(([, update]) => ({
-      frame: update.frame,
-      rotation: update.rotation,
-    }));
-    const chrome = resolveGroupSelectionChrome({ members, slideAspect: aspect });
-    expect(chrome.rotation).toBe(90);
-    expect(chrome.frame.x).toBeCloseTo(0, 5);
-    expect(chrome.frame.y).toBeCloseTo(40, 5);
-    expect(chrome.frame.w).toBeCloseTo(100, 5);
-    expect(chrome.frame.h).toBeCloseTo(20, 5);
+    expect(next.get("small")!.w / next.get("big")!.w).toBeCloseTo(10 / 30, 5);
   });
 });

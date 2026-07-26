@@ -19,6 +19,21 @@ export function unionFramesPercent(frames: ReadonlyArray<PercentFrame>): Percent
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
+function aabbFromPoints(points: ReadonlyArray<{ x: number; y: number }>): PercentFrame {
+  if (points.length === 0) return { x: 0, y: 0, w: 0, h: 0 };
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    minY = Math.min(minY, point.y);
+    maxX = Math.max(maxX, point.x);
+    maxY = Math.max(maxY, point.y);
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
 /** Centro do bbox unificado dos frames (coords % do slide). */
 export function resolveFramesGroupCenter(
   frames: Iterable<PercentFrame>,
@@ -50,6 +65,26 @@ export function rotatePointPercentAround(
     x: center.x + rx,
     y: center.y + ry * aspect,
   };
+}
+
+/** Cantos do frame após `style.rotation` (espaço % com aspecto do slide). */
+export function resolveRotatedFrameCorners(
+  frame: PercentFrame,
+  rotationDeg: number,
+  slideAspect = 1,
+): Array<{ x: number; y: number }> {
+  const cx = frame.x + frame.w / 2;
+  const cy = frame.y + frame.h / 2;
+  const corners = [
+    { x: frame.x, y: frame.y },
+    { x: frame.x + frame.w, y: frame.y },
+    { x: frame.x + frame.w, y: frame.y + frame.h },
+    { x: frame.x, y: frame.y + frame.h },
+  ];
+  if (!rotationDeg) return corners;
+  return corners.map((point) =>
+    rotatePointPercentAround(point, { x: cx, y: cy }, rotationDeg, slideAspect),
+  );
 }
 
 export type GroupRotateMemberUpdate = {
@@ -94,12 +129,10 @@ export function applyGroupRotationDelta(input: {
   return next;
 }
 
-const ROTATION_EPS = 0.05;
-
 /**
- * Chrome do grupo: quando todos os membros compartilham a mesma rotação,
- * recupera o bbox “local” (pré-giro) e aplica `rotate` no overlay — senão os
- * controles ficam axis-aligned enquanto o conteúdo gira (CSS no wrap).
+ * Chrome do grupo: AABB visual dos membros (cantos após CSS rotate).
+ * Sem `transform` no overlay — o giro CSS no chrome desalinhava o ângulo e
+ * distorcia o bbox “local” reconstruído por inversa.
  */
 export function resolveGroupSelectionChrome(input: {
   members: ReadonlyArray<{ frame: PercentFrame; rotation: number }>;
@@ -110,29 +143,86 @@ export function resolveGroupSelectionChrome(input: {
     return { frame: { x: 0, y: 0, w: 0, h: 0 }, rotation: 0 };
   }
   const aspect = input.slideAspect ?? 1;
-  const rotations = members.map((member) => member.rotation);
-  const shared = rotations[0] ?? 0;
-  const sameRotation = rotations.every((value) => Math.abs(value - shared) < ROTATION_EPS);
-  if (!sameRotation || Math.abs(shared) < ROTATION_EPS) {
-    return {
-      frame: unionFramesPercent(members.map((member) => member.frame)),
-      rotation: 0,
-    };
+  const points: Array<{ x: number; y: number }> = [];
+  for (const member of members) {
+    points.push(
+      ...resolveRotatedFrameCorners(member.frame, member.rotation, aspect),
+    );
   }
-  const center = resolveFramesGroupCenter(members.map((member) => member.frame));
-  const localFrames = members.map((member) => {
-    const cx = member.frame.x + member.frame.w / 2;
-    const cy = member.frame.y + member.frame.h / 2;
-    const local = rotatePointPercentAround({ x: cx, y: cy }, center, -shared, aspect);
-    return {
-      x: local.x - member.frame.w / 2,
-      y: local.y - member.frame.h / 2,
-      w: member.frame.w,
-      h: member.frame.h,
-    };
-  });
-  return {
-    frame: unionFramesPercent(localFrames),
-    rotation: clampRotationDeg(shared),
-  };
+  return { frame: aabbFromPoints(points), rotation: 0 };
+}
+
+export type GroupScaleHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
+
+function oppositeCorner(
+  union: PercentFrame,
+  handle: GroupScaleHandle,
+): { x: number; y: number } {
+  const right = union.x + union.w;
+  const bottom = union.y + union.h;
+  switch (handle) {
+    case "se":
+      return { x: union.x, y: union.y };
+    case "sw":
+      return { x: right, y: union.y };
+    case "ne":
+      return { x: union.x, y: bottom };
+    case "nw":
+      return { x: right, y: bottom };
+    case "e":
+      return { x: union.x, y: union.y + union.h / 2 };
+    case "w":
+      return { x: right, y: union.y + union.h / 2 };
+    case "s":
+      return { x: union.x + union.w / 2, y: union.y };
+    case "n":
+      return { x: union.x + union.w / 2, y: bottom };
+    default:
+      return { x: union.x, y: union.y };
+  }
+}
+
+const MIN_FRAME = 0.05;
+
+/**
+ * Escala proporcional do grupo a partir da mudança do bbox unificado.
+ * Cantos: escala uniforme (mantém proporção). Bordas: escala só no eixo.
+ */
+export function applyGroupScaleFromUnionDelta(input: {
+  startFrames: ReadonlyMap<string, PercentFrame>;
+  startUnion: PercentFrame;
+  nextUnion: PercentFrame;
+  handle: GroupScaleHandle;
+  /** Cantos travam proporção; bordas podem ser livres. */
+  lockAspect: boolean;
+}): Map<string, PercentFrame> {
+  const { startFrames, startUnion, nextUnion, handle, lockAspect } = input;
+  const next = new Map<string, PercentFrame>();
+  if (!(startUnion.w > 0) || !(startUnion.h > 0)) {
+    for (const [id, frame] of startFrames) next.set(id, { ...frame });
+    return next;
+  }
+
+  let scaleX = nextUnion.w / startUnion.w;
+  let scaleY = nextUnion.h / startUnion.h;
+  const isCorner =
+    handle === "nw" || handle === "ne" || handle === "se" || handle === "sw";
+  if (lockAspect || isCorner) {
+    // Escala uniforme: usa o fator do eixo dominante da mudança do union.
+    const dw = Math.abs(nextUnion.w - startUnion.w);
+    const dh = Math.abs(nextUnion.h - startUnion.h);
+    const scale = dw >= dh ? scaleX : scaleY;
+    scaleX = scale;
+    scaleY = scale;
+  }
+
+  const fixed = oppositeCorner(startUnion, handle);
+  for (const [id, start] of startFrames) {
+    const w = Math.max(MIN_FRAME, start.w * scaleX);
+    const h = Math.max(MIN_FRAME, start.h * scaleY);
+    const x = fixed.x + (start.x - fixed.x) * scaleX;
+    const y = fixed.y + (start.y - fixed.y) * scaleY;
+    next.set(id, { x, y, w, h });
+  }
+  return next;
 }

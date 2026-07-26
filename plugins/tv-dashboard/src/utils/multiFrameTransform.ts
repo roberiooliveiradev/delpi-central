@@ -5,15 +5,19 @@ import {
 
 export {
   applyGroupRotationDelta,
+  applyGroupScaleFromUnionDelta,
   resolveFramesGroupCenter,
   resolveGroupSelectionChrome,
   rotatePointPercentAround,
+  unionFramesPercent,
   type GroupRotateMemberUpdate,
+  type GroupScaleHandle,
 } from "./slidePercentRotation";
 
 /**
  * Aplica o mesmo delta do frame “primary” (arrastado) a cada frame inicial da multi-seleção.
- * Move e resize sobem/descem juntos com dx/dy/dw/dh.
+ * Move sobe/desce juntos com dx/dy. Resize absoluto (legado) — preferir
+ * `applyGroupScaleFromUnionDelta` para escala proporcional do grupo.
  */
 export function applyMultiFrameDelta(
   startFrames: ReadonlyMap<string, ComunicadoFrame>,

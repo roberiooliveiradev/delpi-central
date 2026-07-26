@@ -7,9 +7,7 @@ import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 
 type Props = {
   frame: ComunicadoFrame;
-  /** Rotação CSS do overlay (quando membros compartilham o mesmo ângulo). */
-  rotation?: number;
-  /** Bloco âncora para startDrag (primário do grupo). */
+  /** Bloco âncora (id) — frame do hit é o bbox do grupo. */
   anchorBlock: ComunicadoBlock;
   allowResize?: boolean;
   onPointerDown: (
@@ -20,18 +18,16 @@ type Props = {
 };
 
 /**
- * Chrome de seleção pai do grupo — bbox unificado com move + resize + giro
- * (paridade com bloco individual / moldura de KPI).
+ * Chrome de seleção pai do grupo — bbox unificado (AABB visual) com move + resize + giro.
+ * Sem CSS rotate no overlay: o ângulo ficava dessincronizado do conteúdo.
  */
 export function GroupSelectionChrome({
   frame,
-  rotation = 0,
   anchorBlock,
   allowResize = true,
   onPointerDown,
 }: Props) {
-  /** Frame do grupo — centro do giro e bbox dos handles.
-   * Mantém `style.rotation` do âncora (baseline do gesto); o CSS do overlay usa `rotation`. */
+  /** Hit usa o bbox do grupo; id do âncora para multi-drag. */
   const hitBlock: ComunicadoBlock = {
     ...anchorBlock,
     frame,
@@ -45,7 +41,6 @@ export function GroupSelectionChrome({
         top: `${frame.y}%`,
         width: `${frame.w}%`,
         height: `${frame.h}%`,
-        ...(rotation ? { transform: `rotate(${rotation}deg)` } : {}),
       }}
       data-group-chrome=""
       data-block-id={anchorBlock.id}
@@ -54,7 +49,7 @@ export function GroupSelectionChrome({
       <div className="td-composer__block-handles">
         <SelectionMoveHitFrame
           block={hitBlock}
-          onMovePointerDown={(event) => onPointerDown(event, anchorBlock, "move")}
+          onMovePointerDown={(event) => onPointerDown(event, hitBlock, "move")}
         />
         <button
           type="button"
@@ -69,7 +64,7 @@ export function GroupSelectionChrome({
                 type="button"
                 className={`td-composer__resize td-composer__resize--${position}`}
                 aria-label={label}
-                onPointerDown={(event) => onPointerDown(event, anchorBlock, mode)}
+                onPointerDown={(event) => onPointerDown(event, hitBlock, mode)}
               />
             ))
           : null}
