@@ -100,10 +100,7 @@ import {
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
 import { groupBlocks, ungroupBlocks, expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
-import {
-  applyGroupRotationDelta,
-  resolveFramesGroupCenter,
-} from "../../utils/multiFrameTransform";
+import { applyGroupRotationOnce } from "../../utils/stageGroupGesture";
 import {
   flipHorizontalStyle,
   flipVerticalStyle,
@@ -1286,17 +1283,15 @@ export function useComunicadoEditorBlocks({
         return;
       }
 
-      const startFrames = new Map<string, ComunicadoBlock["frame"]>();
-      const startRotations = new Map<string, number>();
-      for (const block of current) {
-        if (!idSet.has(block.id)) continue;
-        startFrames.set(block.id, { ...block.frame });
-        startRotations.set(block.id, block.style?.rotation ?? 0);
-      }
-      const updates = applyGroupRotationDelta({
-        startFrames,
-        startRotations,
-        center: resolveFramesGroupCenter(startFrames.values()),
+      const members = current
+        .filter((block) => idSet.has(block.id))
+        .map((block) => ({
+          id: block.id,
+          frame: { ...block.frame },
+          rotation: block.style?.rotation ?? 0,
+        }));
+      const updates = applyGroupRotationOnce({
+        members,
         deltaDeg,
         slideAspect: getSlideAspectRatioRef.current(),
       });

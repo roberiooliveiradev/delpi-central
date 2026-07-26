@@ -50,7 +50,7 @@ import {
   resolveParentGroupHintFrame,
 } from "../utils/comunicadoGrouping";
 import { buildBlockTransformCss } from "../utils/comunicadoTransform";
-import { resolveGroupSelectionChrome } from "../utils/slidePercentRotation";
+import { resolveGroupChromeFromMembers } from "../utils/stageGroupGesture";
 import {
   resolveBlockWrapChromeFlags,
   resolveStageSelectionHierarchy,
@@ -1061,7 +1061,7 @@ export function ComunicadoComposerCanvas() {
           })}
           {closedGroupChromeList.map((group) => {
             const slideAspect = designSize.width / Math.max(designSize.height, 1);
-            const chrome = resolveGroupSelectionChrome({
+            const chrome = resolveGroupChromeFromMembers({
               members: group.members.map((member) => ({
                 frame: member.frame,
                 rotation: member.style?.rotation ?? 0,
@@ -1076,6 +1076,7 @@ export function ComunicadoComposerCanvas() {
               <GroupSelectionChrome
                 key={group.groupId}
                 frame={chrome.frame}
+                rotation={chrome.rotation}
                 anchorBlock={anchor}
                 onPointerDown={startDragRespectingPan}
               />

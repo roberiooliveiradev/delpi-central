@@ -7,7 +7,9 @@ import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 
 type Props = {
   frame: ComunicadoFrame;
-  /** Bloco âncora (id) — frame do hit é o bbox do grupo. */
+  /** Rotação do GroupTransform (CSS no overlay = mesmo ângulo dos membros bakeados). */
+  rotation?: number;
+  /** Bloco âncora (id) — frame/style do hit espelham o chrome do grupo. */
   anchorBlock: ComunicadoBlock;
   allowResize?: boolean;
   onPointerDown: (
@@ -18,19 +20,21 @@ type Props = {
 };
 
 /**
- * Chrome de seleção pai do grupo — bbox unificado (AABB visual) com move + resize + giro.
- * Sem CSS rotate no overlay: o ângulo ficava dessincronizado do conteúdo.
+ * Chrome de seleção pai do grupo — GroupTransform (frame + rotation).
+ * Mesmo contrato visual do bloco individual: layout box + CSS rotate.
  */
 export function GroupSelectionChrome({
   frame,
+  rotation = 0,
   anchorBlock,
   allowResize = true,
   onPointerDown,
 }: Props) {
-  /** Hit usa o bbox do grupo; id do âncora para multi-drag. */
+  /** Hit usa frame/rotação do grupo; id do âncora para multi-drag. */
   const hitBlock: ComunicadoBlock = {
     ...anchorBlock,
     frame,
+    style: { ...anchorBlock.style, rotation },
   };
 
   return (
@@ -41,6 +45,8 @@ export function GroupSelectionChrome({
         top: `${frame.y}%`,
         width: `${frame.w}%`,
         height: `${frame.h}%`,
+        transform: rotation ? `rotate(${rotation}deg)` : undefined,
+        transformOrigin: "center center",
       }}
       data-group-chrome=""
       data-block-id={anchorBlock.id}

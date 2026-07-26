@@ -5,9 +5,9 @@ import { applyMultiFrameDelta } from "./multiFrameTransform";
 import { snapComunicadoFrame, type SnapGridAxes } from "./comunicadoSnap";
 
 /**
- * No fim do gesto multi/grupo: encaixa só o frame primário e reaplica o delta
- * aos demais a partir do snapshot inicial — preserva o layout relativo.
- * (Snap por membro quebrava alinhamento interno do grupo.)
+ * No fim do gesto **unitário** (1 bloco): encaixa o frame e devolve.
+ * Multi/grupo N>1: `useComunicadoEditorDrag` finaliza via `stageGroupGesture.resolveWorldFrames`
+ * — não chamar este helper no resize de grupo (distorce com `applyMultiFrameDelta`).
  */
 export function finalizeMultiFramesWithSnap(params: {
   blocks: ComunicadoBlock[];

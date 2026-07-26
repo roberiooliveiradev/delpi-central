@@ -16,8 +16,8 @@ export {
 
 /**
  * Aplica o mesmo delta do frame “primary” (arrastado) a cada frame inicial da multi-seleção.
- * Move sobe/desce juntos com dx/dy. Resize absoluto (legado) — preferir
- * `applyGroupScaleFromUnionDelta` para escala proporcional do grupo.
+ * Move sobe/desce juntos com dx/dy. Resize absoluto (legado) — gestos de grupo/multi N>1
+ * usam `stageGroupGesture` (`resolveWorldFrames`), não este helper.
  */
 export function applyMultiFrameDelta(
   startFrames: ReadonlyMap<string, ComunicadoFrame>,
