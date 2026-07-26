@@ -145,4 +145,82 @@ describe("stageGroupGesture", () => {
     expect(chrome.frame.w).toBeGreaterThan(0);
     expect(chrome.frame.h).toBeGreaterThan(0);
   });
+
+  it("após girar, resize pelo chrome (startFrame=chrome) mantém razões e live≡release", () => {
+    const aspect = 16 / 9;
+    const start = [
+      { id: "a", frame: { x: 10, y: 20, w: 20, h: 15 }, rotation: 0 },
+      { id: "b", frame: { x: 45, y: 25, w: 25, h: 20 }, rotation: 0 },
+    ];
+    const rotated = resolveWorldFrames(
+      applyGroupRotate(
+        beginGroupGesture({ members: start, slideAspect: aspect })!,
+        40,
+      ),
+    );
+    const members = [...rotated.entries()].map(([id, update]) => ({
+      id,
+      frame: update.frame,
+      rotation: update.rotation,
+    }));
+    const chrome = resolveGroupChromeFromMembers({
+      members: members.map((m) => ({ frame: m.frame, rotation: m.rotation })),
+      slideAspect: aspect,
+    });
+    const gesture = beginGroupGesture({
+      members,
+      slideAspect: aspect,
+      interactionStartFrame: chrome.frame,
+      resizeHandle: "se",
+    });
+    expect(gesture!.dragFromChrome).toBe(true);
+    expect(gesture!.group.rotation).toBeCloseTo(40, 5);
+
+    const nextChrome = {
+      ...chrome.frame,
+      w: chrome.frame.w * 1.5,
+      h: chrome.frame.h * 1.5,
+    };
+    const scaled = applyGroupScale(gesture!, nextChrome, { lockAspect: true });
+    const live = resolveWorldFrames(scaled);
+    const release = resolveWorldFrames(scaled);
+    const a = live.get("a")!;
+    const b = live.get("b")!;
+    expect(a.frame.w / b.frame.w).toBeCloseTo(20 / 25, 5);
+    expect(release.get("a")!.frame).toEqual(a.frame);
+    expect(a.rotation).toBeCloseTo(40, 5);
+    expect(b.rotation).toBeCloseTo(40, 5);
+  });
+
+  it("round-trip identidade após rotação + move", () => {
+    const aspect = 16 / 9;
+    const start = [
+      { id: "a", frame: { x: 10, y: 20, w: 20, h: 15 }, rotation: 0 },
+      { id: "b", frame: { x: 45, y: 25, w: 25, h: 20 }, rotation: 0 },
+    ];
+    let gesture = beginGroupGesture({ members: start, slideAspect: aspect })!;
+    gesture = applyGroupRotate(gesture, 25);
+    const chrome = resolveGroupChrome(gesture);
+    gesture = beginGroupGesture({
+      members: [...resolveWorldFrames(gesture).entries()].map(([id, u]) => ({
+        id,
+        frame: u.frame,
+        rotation: u.rotation,
+      })),
+      slideAspect: aspect,
+      interactionStartFrame: chrome.frame,
+    })!;
+    const before = resolveWorldFrames(gesture);
+    const moved = applyGroupMove(gesture, {
+      ...gesture.interactionStartFrame,
+      x: gesture.interactionStartFrame.x + 3,
+      y: gesture.interactionStartFrame.y + 2,
+    });
+    const after = resolveWorldFrames(moved);
+    for (const id of ["a", "b"] as const) {
+      expect(after.get(id)!.frame.x - before.get(id)!.frame.x).toBeCloseTo(3, 5);
+      expect(after.get(id)!.frame.y - before.get(id)!.frame.y).toBeCloseTo(2, 5);
+      expect(after.get(id)!.rotation).toBe(before.get(id)!.rotation);
+    }
+  });
 });
