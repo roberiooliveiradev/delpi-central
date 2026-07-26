@@ -137,7 +137,16 @@ export function ComunicadoBlockView({
       }
     : blockCssStyle(block, { fontScale });
   const animClass = blockEntranceAnimationClass(block.animations);
-  const style: CSSProperties = { ...baseStyle, ...blockEntranceAnimationStyle(block.animations) };
+  const style: CSSProperties = {
+    ...baseStyle,
+    ...blockEntranceAnimationStyle(block.animations),
+    /*
+     * O host embutido é responsável pelo transform (editor: wrap + chrome).
+     * Reaplicar rotation aqui gira apenas o conteúdo pela segunda vez e o
+     * desacopla dos handles. Também deve vencer transforms de animação.
+     */
+    ...(embedded ? { transform: undefined, transformOrigin: undefined } : null),
+  };
   const blockClass = (extra = "") =>
     ensureComunicadoDualClass(
       [
