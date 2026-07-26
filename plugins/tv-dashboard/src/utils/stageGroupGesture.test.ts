@@ -123,6 +123,7 @@ describe("stageGroupGesture", () => {
         { id: "b", frame: { x: 40, y: 10, w: 10, h: 10 }, rotation: 0 },
       ],
       slideAspect: 1,
+      groupRotation: 0,
       interactionStartFrame: { x: 10, y: 10, w: 20, h: 20 },
       interactionStartRotation: 10,
     });
@@ -222,5 +223,65 @@ describe("stageGroupGesture", () => {
       expect(after.get(id)!.frame.y - before.get(id)!.frame.y).toBeCloseTo(2, 5);
       expect(after.get(id)!.rotation).toBe(before.get(id)!.rotation);
     }
+  });
+
+  it("preserva ângulo pai no release com rotações locais diferentes", () => {
+    const aspect = 16 / 9;
+    const start = [
+      { id: "card", frame: { x: 10, y: 20, w: 40, h: 30 }, rotation: 0 },
+      { id: "tag", frame: { x: 20, y: 15, w: 18, h: 6 }, rotation: 12 },
+    ];
+    const gesture = applyGroupRotate(
+      beginGroupGesture({
+        members: start,
+        slideAspect: aspect,
+        groupRotation: 0,
+      })!,
+      35,
+    );
+    const baked = [...resolveWorldFrames(gesture).entries()].map(([id, update]) => ({
+      id,
+      frame: update.frame,
+      rotation: update.rotation,
+    }));
+
+    /* Reabre/reseleciona após o pointerup usando o contrato persistido. */
+    const restored = beginGroupGesture({
+      members: baked,
+      slideAspect: aspect,
+      groupRotation: 35,
+    })!;
+    expect(restored.group.rotation).toBeCloseTo(35, 5);
+    expect(restored.localFrames.get("card")!.rotation).toBeCloseTo(0, 5);
+    expect(restored.localFrames.get("tag")!.rotation).toBeCloseTo(12, 5);
+
+    const roundTrip = resolveWorldFrames(restored);
+    for (const member of baked) {
+      const update = roundTrip.get(member.id)!;
+      expect(update.frame.x).toBeCloseTo(member.frame.x, 5);
+      expect(update.frame.y).toBeCloseTo(member.frame.y, 5);
+      expect(update.rotation).toBeCloseTo(member.rotation, 5);
+    }
+  });
+
+  it("migra grupo legado sem metadata pelo ângulo do membro dominante", () => {
+    const gesture = beginGroupGesture({
+      members: [
+        {
+          id: "card",
+          frame: { x: 10, y: 20, w: 50, h: 40 },
+          rotation: 28,
+        },
+        {
+          id: "tag-local",
+          frame: { x: 20, y: 15, w: 16, h: 6 },
+          rotation: 40,
+        },
+      ],
+      slideAspect: 16 / 9,
+    })!;
+    expect(gesture.group.rotation).toBe(28);
+    expect(gesture.localFrames.get("card")!.rotation).toBe(0);
+    expect(gesture.localFrames.get("tag-local")!.rotation).toBe(12);
   });
 });

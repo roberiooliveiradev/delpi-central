@@ -141,6 +141,7 @@ import type {
   ComunicadoTablePreset,
   ComunicadoFrame,
   ComunicadoGeometryVertex,
+  ComunicadoGroupTransform,
   ComunicadoCustomFontRef,
   ComunicadoShapeKind,
   ComunicadoTextDecoration,
@@ -714,6 +715,7 @@ export function parseComunicadoConfig(raw: Record<string, unknown> | undefined |
       subtitle: String(cfg.subtitle ?? ""),
       background: normalizeBackground(cfg.background),
       blocks: blocks.map(normalizeBlock),
+      groupTransforms: normalizeGroupTransforms(cfg.groupTransforms),
       dataFilters: normalizeDataFilters(cfg.dataFilters),
       customFonts: normalizeCustomFonts(cfg.customFonts),
       speakerNotes: typeof cfg.speakerNotes === "string" ? cfg.speakerNotes : undefined,
@@ -792,6 +794,9 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
   };
   if (config.dataFilters && Object.keys(config.dataFilters).length > 0) {
     payload.dataFilters = config.dataFilters;
+  }
+  if (config.groupTransforms && Object.keys(config.groupTransforms).length > 0) {
+    payload.groupTransforms = config.groupTransforms;
   }
   if (config.customFonts?.length) {
     payload.customFonts = config.customFonts.map(({ assetId, familyName }) => ({
@@ -941,6 +946,20 @@ function serializeTextBlockFields(
   const serializedRuns = serializeContentRuns(block.contentRuns);
   if (serializedRuns) payload.contentRuns = serializedRuns;
   return payload;
+}
+
+function normalizeGroupTransforms(
+  value: unknown,
+): Record<string, ComunicadoGroupTransform> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const transforms: Record<string, ComunicadoGroupTransform> = {};
+  for (const [groupId, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!groupId.trim() || !raw || typeof raw !== "object") continue;
+    const rotation = (raw as Record<string, unknown>).rotation;
+    if (typeof rotation !== "number" || !Number.isFinite(rotation)) continue;
+    transforms[groupId] = { rotation };
+  }
+  return Object.keys(transforms).length > 0 ? transforms : undefined;
 }
 
 function normalizeDataFilters(value: unknown): ComunicadoDataFilters | undefined {

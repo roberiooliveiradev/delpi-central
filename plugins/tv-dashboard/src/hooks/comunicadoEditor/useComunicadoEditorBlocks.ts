@@ -102,6 +102,7 @@ import {
 import { groupBlocks, ungroupBlocks, expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { applyGroupRotationOnce } from "../../utils/stageGroupGesture";
 import {
+  clampRotationDeg,
   flipHorizontalStyle,
   flipVerticalStyle,
   rotateBlockStyle,
@@ -214,9 +215,12 @@ export function useComunicadoEditorBlocks({
   );
 
   const updateBlocks = useCallback(
-    (nextBlocks: ComunicadoBlock[]) => {
+    (
+      nextBlocks: ComunicadoBlock[],
+      configPatch?: Pick<ComunicadoConfig, "groupTransforms">,
+    ) => {
       const withConnectors = syncAllConnectors(pruneOrphanConnectors(nextBlocks));
-      commitWithHistory({ ...configRef.current, blocks: withConnectors });
+      commitWithHistory({ ...configRef.current, ...configPatch, blocks: withConnectors });
     },
     [commitWithHistory, configRef],
   );
@@ -588,7 +592,19 @@ export function useComunicadoEditorBlocks({
   const groupSelected = useCallback(() => {
     const ids = getActionSelectedIds();
     if (ids.length < 2) return;
-    updateBlocks(groupBlocks(configRef.current.blocks ?? [], ids));
+    const nextBlocks = groupBlocks(configRef.current.blocks ?? [], ids);
+    const groupId = nextBlocks.find((block) => ids.includes(block.id))?.groupId;
+    updateBlocks(
+      nextBlocks,
+      groupId
+        ? {
+            groupTransforms: {
+              ...(configRef.current.groupTransforms ?? {}),
+              [groupId]: { rotation: 0 },
+            },
+          }
+        : undefined,
+    );
     setLastUngroupedIds([]);
   }, [configRef, getActionSelectedIds, updateBlocks]);
 
@@ -597,9 +613,20 @@ export function useComunicadoEditorBlocks({
     if (ids.length === 0) return;
     const current = configRef.current.blocks ?? [];
     const expanded = expandSelectionWithGroups(current, ids);
+    const removedGroupIds = new Set(
+      current
+        .filter((block) => expanded.includes(block.id))
+        .map((block) => block.groupId)
+        .filter((id): id is string => Boolean(id)),
+    );
     const members = expanded.filter((id) => Boolean(current.find((block) => block.id === id)?.groupId));
     if (members.length >= 2) setLastUngroupedIds(members);
-    updateBlocks(ungroupBlocks(current, expanded));
+    const groupTransforms = { ...(configRef.current.groupTransforms ?? {}) };
+    for (const groupId of removedGroupIds) delete groupTransforms[groupId];
+    updateBlocks(ungroupBlocks(current, expanded), {
+      groupTransforms:
+        Object.keys(groupTransforms).length > 0 ? groupTransforms : undefined,
+    });
   }, [configRef, getActionSelectedIds, updateBlocks]);
 
   const regroupSelected = useCallback(() => {
@@ -607,7 +634,19 @@ export function useComunicadoEditorBlocks({
     const present = new Set(current.map((block) => block.id));
     const ids = lastUngroupedIds.filter((id) => present.has(id));
     if (ids.length < 2) return;
-    updateBlocks(groupBlocks(current, ids));
+    const nextBlocks = groupBlocks(current, ids);
+    const groupId = nextBlocks.find((block) => ids.includes(block.id))?.groupId;
+    updateBlocks(
+      nextBlocks,
+      groupId
+        ? {
+            groupTransforms: {
+              ...(configRef.current.groupTransforms ?? {}),
+              [groupId]: { rotation: 0 },
+            },
+          }
+        : undefined,
+    );
     selectBlocksByIds(ids);
     setLastUngroupedIds([]);
   }, [configRef, lastUngroupedIds, selectBlocksByIds, updateBlocks]);
@@ -1290,10 +1329,21 @@ export function useComunicadoEditorBlocks({
           frame: { ...block.frame },
           rotation: block.style?.rotation ?? 0,
         }));
+      const selectedGroupIds = new Set(
+        current
+          .filter((block) => idSet.has(block.id))
+          .map((block) => block.groupId)
+          .filter((id): id is string => Boolean(id)),
+      );
+      const groupId = selectedGroupIds.size === 1 ? [...selectedGroupIds][0] : undefined;
+      const groupRotation = groupId
+        ? configRef.current.groupTransforms?.[groupId]?.rotation
+        : undefined;
       const updates = applyGroupRotationOnce({
         members,
         deltaDeg,
         slideAspect: getSlideAspectRatioRef.current(),
+        groupRotation,
       });
       updateBlocks(
         current.map((block) => {
@@ -1305,6 +1355,16 @@ export function useComunicadoEditorBlocks({
             style: { ...block.style, rotation: update.rotation },
           } as ComunicadoBlock;
         }),
+        groupId
+          ? {
+              groupTransforms: {
+                ...(configRef.current.groupTransforms ?? {}),
+                [groupId]: {
+                  rotation: clampRotationDeg((groupRotation ?? 0) + deltaDeg),
+                },
+              },
+            }
+          : undefined,
       );
     },
     [configRef, getActionSelectedIds, updateBlocks],

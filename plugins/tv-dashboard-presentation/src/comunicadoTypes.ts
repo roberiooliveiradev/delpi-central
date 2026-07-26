@@ -590,12 +590,22 @@ export type ComunicadoBlock =
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
 
+/**
+ * Transform persistido do grupo.
+ * Os membros continuam bakeados em world frames para paridade com TV/PPT;
+ * o ângulo pai preserva o espaço local ao reabrir/resselecionar no editor.
+ */
+export type ComunicadoGroupTransform = {
+  rotation: number;
+};
+
 export type ComunicadoConfig = {
   version?: number;
   headline?: string;
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  groupTransforms?: Record<string, ComunicadoGroupTransform>;
   dataFilters?: ComunicadoDataFilters;
   /** Notas do apresentador (não exibidas no kiosk TV). */
   speakerNotes?: string;
@@ -617,6 +627,7 @@ export type ComunicadoScreenData = {
   subtitle?: string;
   background?: ComunicadoBackground;
   blocks?: ComunicadoBlock[];
+  groupTransforms?: Record<string, ComunicadoGroupTransform>;
   dataFilters?: ComunicadoDataFilters;
   customFonts?: ComunicadoCustomFontRef[];
 };

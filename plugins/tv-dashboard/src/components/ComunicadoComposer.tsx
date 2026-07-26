@@ -1351,6 +1351,7 @@ export function ComunicadoComposerCanvas() {
                 rotation: member.style?.rotation ?? 0,
               })),
               slideAspect,
+              groupRotation: config.groupTransforms?.[group.groupId]?.rotation,
             });
             const anchor =
               group.members.find((member) => member.id === primarySelected) ??

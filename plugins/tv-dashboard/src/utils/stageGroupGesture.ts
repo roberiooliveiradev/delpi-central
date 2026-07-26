@@ -100,6 +100,8 @@ function aabbFromPoints(points: ReadonlyArray<{ x: number; y: number }>): Percen
 export function resolveGroupChromeFromMembers(input: {
   members: ReadonlyArray<{ frame: PercentFrame; rotation: number }>;
   slideAspect?: number;
+  /** Ângulo pai persistido; necessário quando membros têm rotações locais distintas. */
+  groupRotation?: number;
 }): GroupTransform {
   const members = input.members;
   if (members.length === 0) {
@@ -110,28 +112,18 @@ export function resolveGroupChromeFromMembers(input: {
   const sameRotation = members.every(
     (member) => Math.abs((member.rotation ?? 0) - firstRotation) < 0.05,
   );
-
-  if (!sameRotation || !firstRotation) {
-    const points: Array<{ x: number; y: number }> = [];
-    for (const member of members) {
-      const cx = member.frame.x + member.frame.w / 2;
-      const cy = member.frame.y + member.frame.h / 2;
-      const corners = [
-        { x: member.frame.x, y: member.frame.y },
-        { x: member.frame.x + member.frame.w, y: member.frame.y },
-        { x: member.frame.x + member.frame.w, y: member.frame.y + member.frame.h },
-        { x: member.frame.x, y: member.frame.y + member.frame.h },
-      ];
-      for (const corner of corners) {
-        points.push(
-          member.rotation
-            ? rotatePointPercentAround(corner, { x: cx, y: cy }, member.rotation, aspect)
-            : corner,
-        );
-      }
-    }
-    return { frame: aabbFromPoints(points), rotation: 0 };
-  }
+  const dominantRotation = members.reduce(
+    (dominant, member) =>
+      member.frame.w * member.frame.h > dominant.frame.w * dominant.frame.h
+        ? member
+        : dominant,
+    members[0]!,
+  ).rotation;
+  const groupRotation = Number.isFinite(input.groupRotation)
+    ? input.groupRotation!
+    : sameRotation
+      ? firstRotation
+      : dominantRotation;
 
   /*
    * OBB exato do grupo: transforma os cantos visuais para o espaço sem giro,
@@ -153,11 +145,11 @@ export function resolveGroupChromeFromMembers(input: {
       const visual = rotatePointPercentAround(
         corner,
         center,
-        firstRotation,
+        member.rotation,
         aspect,
       );
       localPoints.push(
-        rotatePointPercentAround(visual, origin, -firstRotation, aspect),
+        rotatePointPercentAround(visual, origin, -groupRotation, aspect),
       );
     }
   }
@@ -166,7 +158,7 @@ export function resolveGroupChromeFromMembers(input: {
   const worldCenter = rotatePointPercentAround(
     localCenter,
     origin,
-    firstRotation,
+    groupRotation,
     aspect,
   );
   return {
@@ -176,7 +168,7 @@ export function resolveGroupChromeFromMembers(input: {
       w: localBounds.w,
       h: localBounds.h,
     },
-    rotation: firstRotation,
+    rotation: groupRotation,
   };
 }
 
@@ -195,6 +187,8 @@ export function beginGroupGesture(input: {
   interactionStartFrame?: PercentFrame;
   /** Rotação do hit no pointerdown (chrome deve passar group.rotation). */
   interactionStartRotation?: number;
+  /** Ângulo pai persistido no config do slide. */
+  groupRotation?: number;
   resizeHandle?: GroupScaleHandle | null;
 }): StageGroupGesture | null {
   if (input.members.length < 2) return null;
@@ -205,6 +199,7 @@ export function beginGroupGesture(input: {
       rotation: member.rotation,
     })),
     slideAspect: aspect,
+    groupRotation: input.groupRotation,
   });
   const childExtent = { ...startChrome.frame };
   if (!(childExtent.w > 0) || !(childExtent.h > 0)) return null;
@@ -417,10 +412,12 @@ export function applyGroupRotationOnce(input: {
   members: ReadonlyArray<{ id: string; frame: PercentFrame; rotation: number }>;
   deltaDeg: number;
   slideAspect: number;
+  groupRotation?: number;
 }): Map<string, WorldMemberUpdate> {
   const gesture = beginGroupGesture({
     members: input.members,
     slideAspect: input.slideAspect,
+    groupRotation: input.groupRotation,
   });
   if (!gesture) return new Map();
   const rotated = applyGroupRotate(

@@ -333,9 +333,11 @@ export function useComunicadoEditorDrag({
       const activeIds = resolveMultiDragBlockIds(configRef.current.blocks ?? [], baseIds);
       if (activeIds.length > 1) {
         const members: Array<{ id: string; frame: ComunicadoFrame; rotation: number }> = [];
+        const groupIds = new Set<string>();
         for (const id of activeIds) {
           const block = configRef.current.blocks?.find((item) => item.id === id);
           if (!block) continue;
+          if (block.groupId) groupIds.add(block.groupId);
           members.push({
             id: block.id,
             frame: { ...block.frame },
@@ -343,9 +345,13 @@ export function useComunicadoEditorDrag({
           });
         }
         const slideAspect = getSlideAspectRatioRef.current();
+        const groupId = groupIds.size === 1 ? [...groupIds][0] : undefined;
         const provisional = beginGroupGesture({
           members,
           slideAspect,
+          groupRotation: groupId
+            ? configRef.current.groupTransforms?.[groupId]?.rotation
+            : undefined,
           interactionStartFrame: meta?.startFrame,
           resizeHandle: meta?.mode ? normalizeResizeHandle(meta.mode) : null,
         });
@@ -453,7 +459,19 @@ export function useComunicadoEditorDrag({
         });
         nextBlocks = reconcileConnectorsAfterDrag(nextBlocks, draggedIds);
 
-        const nextConfig = { ...configRef.current, blocks: nextBlocks };
+        const nextConfig: ComunicadoConfig = { ...configRef.current, blocks: nextBlocks };
+        const groupIds = new Set(
+          gesture.memberIds
+            .map((id) => before.blocks?.find((block) => block.id === id)?.groupId)
+            .filter((id): id is string => Boolean(id)),
+        );
+        if (groupIds.size === 1) {
+          const groupId = [...groupIds][0]!;
+          nextConfig.groupTransforms = {
+            ...(configRef.current.groupTransforms ?? {}),
+            [groupId]: { rotation: finalGesture.group.rotation },
+          };
+        }
         const unchanged = gesture.memberIds.every((id) => {
           const beforeBlock = before.blocks?.find((block) => block.id === id);
           const afterBlock = nextBlocks.find((block) => block.id === id);

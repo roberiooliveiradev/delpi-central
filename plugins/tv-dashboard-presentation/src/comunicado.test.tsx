@@ -44,6 +44,25 @@ describe("comunicadoHelpers", () => {
     expect(roundtrip.blocks).toEqual([]);
   });
 
+  it("preserva groupTransforms no round-trip do slide", () => {
+    const parsed = parseComunicadoConfig({
+      version: 5,
+      blocks: [],
+      groupTransforms: {
+        grp_ppm: { rotation: 37.5 },
+        invalido: { rotation: "x" },
+      },
+    });
+    expect(parsed.groupTransforms).toEqual({
+      grp_ppm: { rotation: 37.5 },
+    });
+
+    const serialized = serializeComunicadoConfig(parsed);
+    expect(serialized.groupTransforms).toEqual({
+      grp_ppm: { rotation: 37.5 },
+    });
+  });
+
   it("mescla estilo padrão quando bloco vem com style vazio", () => {
     const parsed = parseComunicadoConfig({
       version: 2,
