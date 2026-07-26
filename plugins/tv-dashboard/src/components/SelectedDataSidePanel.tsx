@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
@@ -8,9 +8,14 @@ import {
   isDataViewBlockType,
   isTextDataBoundBlockType,
   type ComunicadoBlock,
+  type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
 
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import {
+  buildLabelCatalogFromRoutes,
+  hydrateComunicadoDataBindings,
+} from "../utils/hydrateComunicadoDataBindings";
 import type {
   DataCatalogMode,
   OpenDataCatalogOptions,
@@ -58,6 +63,7 @@ export function SelectedDataSidePanel({
 }: Props) {
   const {
     blocks,
+    config,
     selected,
     selectedIds,
     dataPanelIntent,
@@ -65,6 +71,8 @@ export function SelectedDataSidePanel({
     openDataPanel,
     setDataPanelIntent,
     updateSelected,
+    updateBlocksAtomically,
+    setDataFilters,
   } = useComunicadoEditor();
   const context = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
@@ -75,6 +83,8 @@ export function SelectedDataSidePanel({
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+  const [hydrateHint, setHydrateHint] = useState<string | null>(null);
+  const hydratedFpRef = useRef<string>("");
   const bindingTarget = context.bindingTarget;
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
@@ -84,16 +94,56 @@ export function SelectedDataSidePanel({
     : false;
 
   useEffect(() => {
-    if (isRibbon || showCatalog || !bindingTarget || !("dataBinding" in bindingTarget)) return;
     void listDataRoutes()
       .then(setRoutes)
       .catch(() => setRoutes([]));
-  }, [isRibbon, showCatalog, bindingTarget]);
+  }, []);
+
+  const labelCatalog: DataSourceLabelCatalog = useMemo(
+    () => buildLabelCatalogFromRoutes(routes),
+    [routes],
+  );
+
+  useEffect(() => {
+    if (routes.length === 0) return;
+    const result = hydrateComunicadoDataBindings(config, routes);
+    const fp = JSON.stringify({
+      orphans: result.orphanOperationIds,
+      stripped: result.strippedParamKeys,
+      remapped: result.remappedParamKeys,
+      cleared: result.clearedLabels,
+      changed: result.changed,
+    });
+    if (fp === hydratedFpRef.current) return;
+    hydratedFpRef.current = fp;
+    if (!result.changed) {
+      setHydrateHint(null);
+      return;
+    }
+    updateBlocksAtomically(result.config.blocks ?? []);
+    if (result.config.dataFilters !== config.dataFilters) {
+      setDataFilters(result.config.dataFilters);
+    }
+    if (
+      result.clearedLabels > 0 ||
+      result.remappedParamKeys.length > 0 ||
+      result.strippedParamKeys.length > 0
+    ) {
+      setHydrateHint("Parâmetros atualizados pelo catálogo");
+    } else {
+      setHydrateHint(null);
+    }
+  }, [routes, config, setDataFilters, updateBlocksAtomically]);
 
   const selectedRoute = useMemo(() => {
     if (!bindingTarget || !("dataBinding" in bindingTarget)) return null;
     return routes.find((route) => route.operationId === bindingTarget.dataBinding.operationId) ?? null;
   }, [bindingTarget, routes]);
+
+  const orphanRoute =
+    Boolean(bindingTarget && "dataBinding" in bindingTarget && bindingTarget.dataBinding.operationId) &&
+    routes.length > 0 &&
+    selectedRoute == null;
 
   function linkPrimaryToSource(sourceId: string) {
     if (!primary) return;
@@ -209,6 +259,7 @@ export function SelectedDataSidePanel({
           <ProjectDataSourcesCatalogSection
             blocks={blocks}
             activeSourceId={activeSourceId}
+            labelCatalog={labelCatalog}
             onPickSource={linkPrimaryToSource}
           />
         ) : null}
@@ -238,6 +289,22 @@ export function SelectedDataSidePanel({
 
   return (
     <>
+      {hydrateHint ? <p className="td-deck-inspector__hint">{hydrateHint}</p> : null}
+      {orphanRoute ? (
+        <div className="td-deck-inspector__onboarding" role="alert">
+          <p className="td-deck-inspector__hint">
+            Fonte indisponível no catálogo — troque a rota para continuar salvando e exibindo dados.
+          </p>
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={(event) => openCatalog("replace", { anchor: event.currentTarget })}
+          >
+            Trocar rota
+          </button>
+        </div>
+      ) : null}
+
       {context.kind === "homogeneous" && context.dataBlocks.length > 1 ? (
         <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
           {context.dataBlocks.length} elementos compartilham a mesma fonte — alterações aplicam-se à
@@ -249,6 +316,7 @@ export function SelectedDataSidePanel({
         <VisualDataViewInspector
           pane
           route={selectedRoute}
+          labelCatalog={labelCatalog}
           onOpenDataSources={() => openCatalog("insert")}
         />
       ) : null}
@@ -257,6 +325,7 @@ export function SelectedDataSidePanel({
         <TextDataBindingInspector
           pane
           route={selectedRoute}
+          labelCatalog={labelCatalog}
           onOpenDataSources={() => openCatalog("insert")}
         />
       ) : null}
@@ -265,6 +334,7 @@ export function SelectedDataSidePanel({
         <CanvasTableDataBindingInspector
           pane
           route={selectedRoute}
+          labelCatalog={labelCatalog}
           onOpenDataSources={() => openCatalog("insert")}
         />
       ) : null}

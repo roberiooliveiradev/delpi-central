@@ -41,12 +41,12 @@ def test_validate_params_allows_internal_date_range_preset():
     ) == {"status": "Todos"}
 
 
-def test_validate_params_still_rejects_unknown_api_keys():
-    with pytest.raises(ValueError, match="não permitido"):
-        validate_params_against_schema(
-            {"hack": "1"},
-            {"status": {"type": "string", "optional": True}},
-        )
+def test_validate_params_strips_unknown_api_keys():
+    """Save alinhado ao fetch: chaves fora do schema são ignoradas (hydrate também remove)."""
+    assert validate_params_against_schema(
+        {"hack": "1", "status": "Todos"},
+        {"status": {"type": "string", "optional": True}},
+    ) == {"status": "Todos"}
 
 
 def test_validate_params_skips_required_when_fixed_query_params():

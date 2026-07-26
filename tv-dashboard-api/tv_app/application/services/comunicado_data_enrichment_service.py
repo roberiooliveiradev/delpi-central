@@ -865,7 +865,8 @@ class ComunicadoDataEnrichmentService:
                 continue
             route = self._catalog.get_route(operation_id)
             if not self._catalog.is_allowed(operation_id) or route is None:
-                raise ValueError("Fonte de dados indisponível.")
+                # Soft-fail: não derruba o slide inteiro — o enrich do bloco marca resolved.error.
+                continue
             block_params = (
                 binding.get("params")
                 if isinstance(binding, dict) and isinstance(binding.get("params"), dict)
@@ -1306,6 +1307,15 @@ class ComunicadoDataEnrichmentService:
         )
 
         route = self._catalog.get_route(operation_id)
+        if isinstance(route, dict):
+            route_label = str(route.get("label") or "").strip()
+            stored_label = str(binding.get("label") or "").strip()
+            aliases = route.get("labelAliases") if isinstance(route.get("labelAliases"), list) else []
+            catalog_like = (not stored_label) or (
+                stored_label == route_label
+                or any(str(alias or "").strip() == stored_label for alias in aliases)
+            )
+            result["resolvedRouteLabel"] = route_label if catalog_like else stored_label or route_label
         try:
             validate_data_route_branch(route, merged_params, user=user)
         except ValueError as exc:

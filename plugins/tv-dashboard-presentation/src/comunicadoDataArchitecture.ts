@@ -70,8 +70,55 @@ export function listDataSourceBlocks(blocks: ComunicadoBlock[]): ComunicadoDataS
   return blocks.filter((block): block is ComunicadoDataSourceBlock => block.type === "data_source");
 }
 
-export function resolveDataSourceLabel(block: ComunicadoDataSourceBlock): string {
-  return block.dataBinding.label ?? block.dataBinding.operationId ?? "Fonte de dados";
+/** Entrada mínima do catálogo para resolver rótulo vivo. */
+export type DataSourceLabelRouteInfo = {
+  label?: string | null;
+  labelAliases?: string[] | null;
+};
+
+export type DataSourceLabelCatalog =
+  | ReadonlyMap<string, DataSourceLabelRouteInfo>
+  | Readonly<Record<string, DataSourceLabelRouteInfo>>;
+
+function catalogRouteFor(
+  catalog: DataSourceLabelCatalog | null | undefined,
+  operationId: string,
+): DataSourceLabelRouteInfo | null {
+  if (!catalog || !operationId) return null;
+  if (catalog instanceof Map) return catalog.get(operationId) ?? null;
+  return catalog[operationId] ?? null;
+}
+
+/** True se o rótulo gravado é só eco do catálogo (atual ou alias de renome). */
+export function isCatalogLikeDataSourceLabel(
+  label: string | null | undefined,
+  route: DataSourceLabelRouteInfo | null | undefined,
+): boolean {
+  const trimmed = String(label ?? "").trim();
+  if (!trimmed) return true;
+  if (!route) return false;
+  const current = String(route.label ?? "").trim();
+  if (current && trimmed === current) return true;
+  const aliases = Array.isArray(route.labelAliases) ? route.labelAliases : [];
+  return aliases.some((alias) => String(alias ?? "").trim() === trimmed);
+}
+
+/**
+ * Rótulo exibido da fonte: override do usuário, senão label vivo do catálogo, senão operationId.
+ * `dataBinding.label` só conta como override quando não é catalog-like.
+ */
+export function resolveDataSourceLabel(
+  block: ComunicadoDataSourceBlock,
+  catalog?: DataSourceLabelCatalog | null,
+): string {
+  const operationId = String(block.dataBinding.operationId ?? "").trim();
+  const stored = String(block.dataBinding.label ?? "").trim();
+  const route = catalogRouteFor(catalog, operationId);
+  if (stored && !isCatalogLikeDataSourceLabel(stored, route)) {
+    return stored;
+  }
+  const live = String(route?.label ?? "").trim();
+  return live || operationId || "Fonte de dados";
 }
 
 /**
@@ -95,11 +142,12 @@ export function resolvePreferredDataSourceId(
 export function dataSourceOptionsForInspector(
   blocks: ComunicadoBlock[],
   excludeViewBlockId?: string,
+  catalog?: DataSourceLabelCatalog | null,
 ): Array<{ value: string; label: string }> {
   return listDataSourceBlocks(blocks)
     .filter((block) => block.id !== excludeViewBlockId)
     .map((block) => ({
       value: block.id,
-      label: resolveDataSourceLabel(block),
+      label: resolveDataSourceLabel(block, catalog),
     }));
 }

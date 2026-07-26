@@ -518,6 +518,8 @@ export type TvDataRouteCatalogItem = {
   fixedQueryParams?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;
   metaShape?: string;
+  /** Nomes antigos do catálogo — hydrate limpa snapshots. */
+  labelAliases?: string[];
   /** Preset de steps Power Query sugeridos pelo overlay da rota. */
   suggestedTransformSteps?: Array<Record<string, unknown>>;
 };

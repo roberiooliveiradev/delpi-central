@@ -294,9 +294,10 @@ export function DataBindingInspector({
           id="td-data-label"
           className={compactNative}
           value={binding.label ?? ""}
+          placeholder={route?.label ? String(route.label) : undefined}
           onChange={(value) =>
             applyPatch({
-              dataBinding: { ...binding, label: value || undefined },
+              dataBinding: { ...binding, label: value.trim() || undefined },
             } as Partial<ComunicadoBlock>)
           }
         />

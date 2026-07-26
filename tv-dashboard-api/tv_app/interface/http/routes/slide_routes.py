@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field, field_validator
 
 from tv_app.application.services.comunicado_config_validation_service import (
-    sanitize_comunicado_config,
+    sanitize_and_hydrate_comunicado_config,
     validate_comunicado_native_config,
 )
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
@@ -107,7 +107,7 @@ def _prepare_native_config(
 ) -> dict | None:
     if native_config is None:
         return None
-    cleaned = sanitize_comunicado_config(native_config)
+    cleaned = sanitize_and_hydrate_comunicado_config(native_config)
     validate_comunicado_native_config(cleaned, user=user)
     return cleaned
 

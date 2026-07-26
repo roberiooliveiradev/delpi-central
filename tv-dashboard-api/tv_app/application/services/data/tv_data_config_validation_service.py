@@ -35,7 +35,13 @@ class TvDataConfigValidationService:
         self._catalog = catalog or TvDataRouteCatalogService()
 
     def sanitize(self, cfg: dict[str, Any] | None) -> dict[str, Any]:
-        return sanitize_comunicado_config(cfg)
+        from tv_app.application.services.data.tv_data_binding_hydrate_service import (
+            hydrate_comunicado_data_bindings,
+        )
+
+        cleaned = sanitize_comunicado_config(cfg)
+        hydrated, _ = hydrate_comunicado_data_bindings(cleaned, catalog=self._catalog)
+        return hydrated
 
     def validate(
         self,

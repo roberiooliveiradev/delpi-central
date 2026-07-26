@@ -168,7 +168,6 @@ export function DataRoutesSidePanel({
       }
     }
     const block = createDataSourceBlock(route.operationId, {
-      label: route.label,
       defaultParams,
     });
     if (!block.dataBinding) {
@@ -196,8 +195,13 @@ export function DataRoutesSidePanel({
       wizardView === "source_only"
         ? undefined
         : wizardView;
+    const typedLabel = label.trim();
+    const catalogLabel = String(pickedRoute.label || "").trim();
+    // Só grava override se o usuário digitou algo diferente do label vivo do catálogo.
+    const customLabel =
+      typedLabel && typedLabel !== catalogLabel ? typedLabel : undefined;
     const block = createDataSourceBlock(pickedRoute.operationId, {
-      label: label.trim() || pickedRoute.label,
+      label: customLabel,
       defaultParams,
       refreshSec: refreshSec.trim() ? Number(refreshSec) : undefined,
     });

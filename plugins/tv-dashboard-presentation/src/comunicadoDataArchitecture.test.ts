@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   getLinkedDataSourceIds,
+  isCatalogLikeDataSourceLabel,
+  resolveDataSourceLabel,
   resolvePreferredDataSourceId,
   shouldHideDataSourceOnStage,
 } from "./comunicadoDataArchitecture";
-import type { ComunicadoBlock } from "./comunicadoTypes";
+import type { ComunicadoBlock, ComunicadoDataSourceBlock } from "./comunicadoTypes";
 
 describe("comunicadoDataArchitecture", () => {
   const sourceBlock: ComunicadoBlock = {
@@ -44,5 +46,44 @@ describe("comunicadoDataArchitecture", () => {
         null,
       ),
     ).toBeUndefined();
+  });
+
+  it("resolveDataSourceLabel usa catálogo vivo e ignora snapshot catalog-like", () => {
+    const block = {
+      ...sourceBlock,
+      dataBinding: {
+        operationId: "get_ppm_internal_summary",
+        label: "Qualidade — PPM interno",
+        params: {},
+      },
+    } as ComunicadoDataSourceBlock;
+    const catalog = {
+      get_ppm_internal_summary: {
+        label: "PPM Interno — realizado",
+        labelAliases: ["Qualidade — PPM interno"],
+      },
+    };
+    expect(isCatalogLikeDataSourceLabel("Qualidade — PPM interno", catalog.get_ppm_internal_summary)).toBe(
+      true,
+    );
+    expect(resolveDataSourceLabel(block, catalog)).toBe("PPM Interno — realizado");
+  });
+
+  it("resolveDataSourceLabel preserva override customizado", () => {
+    const block = {
+      ...sourceBlock,
+      dataBinding: {
+        operationId: "get_ppm_internal_summary",
+        label: "Meu KPI",
+        params: {},
+      },
+    } as ComunicadoDataSourceBlock;
+    const catalog = {
+      get_ppm_internal_summary: {
+        label: "PPM Interno — realizado",
+        labelAliases: ["Qualidade — PPM interno"],
+      },
+    };
+    expect(resolveDataSourceLabel(block, catalog)).toBe("Meu KPI");
   });
 });

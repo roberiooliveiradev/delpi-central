@@ -33,6 +33,7 @@ type Props = {
   pane?: boolean;
   layout?: PanelLayout;
   route?: TvDataRouteCatalogItem | null;
+  labelCatalog?: import("@delpi/tv-dashboard-presentation").DataSourceLabelCatalog | null;
   onOpenDataSources?: () => void;
 };
 
@@ -40,6 +41,7 @@ export function TextDataBindingInspector({
   pane = false,
   layout = "pane",
   route = null,
+  labelCatalog = null,
   onOpenDataSources,
 }: Props) {
   const { selected, blocks, updateSelected, openDataCatalog } = useComunicadoEditor();
@@ -153,6 +155,7 @@ export function TextDataBindingInspector({
         sourceId={sourceId}
         compactSelect={compactSelect}
         pane={pane}
+        labelCatalog={labelCatalog}
         onChangeSourceId={linkSource}
         onOpenCatalog={openCatalog}
         catalogLabel="Inserir nova fonte…"

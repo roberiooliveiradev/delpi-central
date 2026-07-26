@@ -49,6 +49,7 @@ OVERLAY_KEYS = frozenset(
         "description",
         "whenToUse",
         "label",
+        "labelAliases",
         "category",
         "paramSchema",  # merge profundo com schema OpenAPI
         "suggestedTransformSteps",

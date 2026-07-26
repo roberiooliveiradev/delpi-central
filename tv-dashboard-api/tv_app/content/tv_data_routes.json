@@ -1365,14 +1365,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "indicators"
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1443,14 +1443,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "items"
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -1505,11 +1505,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1568,11 +1568,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1631,11 +1631,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1694,11 +1694,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1757,11 +1757,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1820,11 +1820,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1883,11 +1883,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -1946,11 +1946,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2009,11 +2009,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2072,11 +2072,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2135,11 +2135,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2198,11 +2198,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2261,11 +2261,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2324,11 +2324,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2387,11 +2387,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2450,11 +2450,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2513,11 +2513,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2576,11 +2576,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2639,11 +2639,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2702,11 +2702,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2765,11 +2765,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2828,11 +2828,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2891,11 +2891,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -2954,11 +2954,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3017,11 +3017,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3080,11 +3080,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3143,11 +3143,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3206,11 +3206,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3269,11 +3269,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3332,11 +3332,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3395,11 +3395,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3458,11 +3458,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3521,11 +3521,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3584,11 +3584,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3647,11 +3647,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3710,11 +3710,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3773,11 +3773,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3836,11 +3836,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3899,11 +3899,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -3962,11 +3962,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4025,11 +4025,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4088,11 +4088,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4151,11 +4151,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4214,11 +4214,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4277,11 +4277,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4340,11 +4340,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4403,11 +4403,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4466,11 +4466,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4529,11 +4529,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4592,11 +4592,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4655,11 +4655,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4718,11 +4718,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4781,11 +4781,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4844,11 +4844,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -4910,11 +4910,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4973,11 +4973,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5036,11 +5036,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5099,11 +5099,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5159,11 +5159,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5222,11 +5222,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5285,11 +5285,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5348,11 +5348,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5411,11 +5411,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5474,11 +5474,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5537,11 +5537,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5600,11 +5600,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5663,11 +5663,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -5726,11 +5726,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       },
       "valueFields": [
         "value"
@@ -9120,10 +9120,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "list_production_appointments",
@@ -10459,6 +10459,9 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10467,6 +10470,14 @@
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10481,17 +10492,6 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
       ]
     },
     {
@@ -10554,14 +10554,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10907,6 +10907,9 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10915,13 +10918,10 @@
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
-      }
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -10983,14 +10983,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -11522,7 +11522,6 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
@@ -11530,7 +11529,8 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_product_detail",
@@ -15514,6 +15514,9 @@
         "value",
         "ppm",
         "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM interno"
       ]
     },
     {
@@ -17950,7 +17953,6 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
@@ -17959,7 +17961,8 @@
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tableFields": "top_products"
     },
     {
       "operationId": "get_caller_stats",

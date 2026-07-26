@@ -102,6 +102,9 @@
         "ppmValue"
       ],
       "label": "PPM Interno — realizado",
+      "labelAliases": [
+        "Qualidade — PPM interno"
+      ],
       "description": "PPM de não conformidades internas no período.",
       "whenToUse": "Usar no card KPI do realizado de PPM Interno (qualidade).",
       "defaultParams": {

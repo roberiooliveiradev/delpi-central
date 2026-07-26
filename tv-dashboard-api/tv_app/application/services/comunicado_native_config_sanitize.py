@@ -11,6 +11,7 @@ def _strip_runtime_fields(block: dict[str, Any]) -> dict[str, Any]:
     cleaned = dict(block)
     cleaned.pop("resolved", None)
     cleaned.pop("url", None)
+    cleaned.pop("resolvedRouteLabel", None)
     if "dataTransform" in cleaned:
         transform = sanitize_data_transform_for_persistence(cleaned.get("dataTransform"))
         if transform is None:

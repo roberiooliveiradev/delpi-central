@@ -8,6 +8,7 @@ import {
   listDataSourceBlocks,
   resolveDataSourceLabel,
   type ComunicadoBlock,
+  type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -37,6 +38,8 @@ type LinkSectionProps = {
   embedded?: boolean;
   sectionTitle?: string;
   emptyHint?: string;
+  /** Catálogo vivo para rótulos (sem snapshot). */
+  labelCatalog?: DataSourceLabelCatalog | null;
   onChangeSourceId: (sourceId: string) => void;
   onOpenCatalog?: () => void;
   catalogLabel?: string;
@@ -55,11 +58,12 @@ export function DataSourceLinkSection({
   embedded = false,
   sectionTitle = "Fonte de dados",
   emptyHint,
+  labelCatalog = null,
   onChangeSourceId,
   onOpenCatalog,
   catalogLabel = "Inserir nova fonte…",
 }: LinkSectionProps) {
-  const sourceOptions = dataSourceOptionsForInspector(blocks, selectedId);
+  const sourceOptions = dataSourceOptionsForInspector(blocks, selectedId, labelCatalog);
   const hint =
     emptyHint ??
     (sourceOptions.length === 0
@@ -105,6 +109,7 @@ type ProjectSourcesListProps = {
   blocks: ComunicadoBlock[];
   /** Destaca a fonte já ligada (opcional). */
   activeSourceId?: string;
+  labelCatalog?: DataSourceLabelCatalog | null;
   onPickSource: (sourceId: string) => void;
   onBrowseCatalog?: () => void;
 };
@@ -115,6 +120,7 @@ type ProjectSourcesListProps = {
 export function ProjectDataSourcesCatalogSection({
   blocks,
   activeSourceId,
+  labelCatalog = null,
   onPickSource,
   onBrowseCatalog,
 }: ProjectSourcesListProps) {
@@ -139,7 +145,7 @@ export function ProjectDataSourcesCatalogSection({
                 onClick={() => onPickSource(source.id)}
               >
                 <span className="td-project-sources-list__label">
-                  {resolveDataSourceLabel(source)}
+                  {resolveDataSourceLabel(source, labelCatalog)}
                 </span>
                 {isDataSourceBlockType(source.type) && source.dataBinding.operationId ? (
                   <span className="td-project-sources-list__meta">

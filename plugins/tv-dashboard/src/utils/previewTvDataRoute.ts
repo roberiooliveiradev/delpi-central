@@ -58,7 +58,7 @@ export async function previewTvDataRoute(
   }
 
   const probe = createDataSourceBlock(route.operationId, {
-    label: binding.label || route.label,
+    label: binding.label?.trim() || undefined,
     defaultParams: params,
     refreshSec: binding.refreshSec,
   });

@@ -106,7 +106,8 @@ def validate_params_against_schema(
         if key in INTERNAL_PARAM_KEYS or key == PERIOD_DAYS_KEY:
             continue
         if key not in schema:
-            raise ValueError(message("dataParamUnknown", f"Parâmetro não permitido: {key}"))
+            # Alinhado ao fetch: strip silencioso (hydrate pré-save também remove).
+            continue
     return normalized
 
 

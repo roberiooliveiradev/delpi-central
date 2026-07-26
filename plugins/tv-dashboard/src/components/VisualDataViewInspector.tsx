@@ -25,6 +25,7 @@ import { ChartAxesProjectionEditor } from "./ChartAxesProjectionEditor";
 import { KpiMetricsProjectionEditor } from "./KpiMetricsProjectionEditor";
 import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
+import type { DataSourceLabelCatalog } from "@delpi/tv-dashboard-presentation";
 
 type Props = {
   pane?: boolean;
@@ -33,6 +34,7 @@ type Props = {
   onOpenDataSources?: () => void;
   /** Rota da fonte ligada (labels de valueFields). */
   route?: TvDataRouteCatalogItem | null;
+  labelCatalog?: DataSourceLabelCatalog | null;
 };
 
 function viewValueFieldOptions(
@@ -61,6 +63,7 @@ export function VisualDataViewInspector({
   layout = "pane",
   onOpenDataSources,
   route = null,
+  labelCatalog = null,
 }: Props) {
   const {
     selected,
@@ -160,6 +163,7 @@ export function VisualDataViewInspector({
         sourceId={selected.dataSourceId ?? ""}
         compactSelect={compactSelect}
         pane={!isRibbon}
+        labelCatalog={labelCatalog}
         onChangeSourceId={(value) => {
             const sourceId = value || undefined;
             if (!sourceId) {

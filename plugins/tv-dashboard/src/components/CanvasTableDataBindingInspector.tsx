@@ -45,6 +45,7 @@ type Props = {
   pane?: boolean;
   layout?: PanelLayout;
   route?: TvDataRouteCatalogItem | null;
+  labelCatalog?: import("@delpi/tv-dashboard-presentation").DataSourceLabelCatalog | null;
   onOpenDataSources?: () => void;
 };
 
@@ -53,6 +54,7 @@ export function CanvasTableDataBindingInspector({
   pane = false,
   layout = "pane",
   route = null,
+  labelCatalog = null,
   onOpenDataSources,
 }: Props) {
   const {
@@ -123,11 +125,11 @@ export function CanvasTableDataBindingInspector({
     const map = new Map<string, string>();
     for (const block of blocks) {
       if (block.type === "data_source") {
-        map.set(block.id, resolveDataSourceLabel(block));
+        map.set(block.id, resolveDataSourceLabel(block, labelCatalog));
       }
     }
     return map;
-  }, [blocks]);
+  }, [blocks, labelCatalog]);
 
   if (!table) return null;
 
@@ -231,6 +233,7 @@ export function CanvasTableDataBindingInspector({
         sourceId={cellSel ? effectiveSourceId : blockSourceId}
         compactSelect={compactSelect}
         pane={pane}
+        labelCatalog={labelCatalog}
         sectionTitle={cellSel ? "Fonte desta célula" : "Fonte padrão da Grade"}
         onChangeSourceId={cellSel ? linkCellSource : linkBlockSource}
         onOpenCatalog={openCatalog}
