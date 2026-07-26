@@ -48,6 +48,8 @@ type Options = {
   snapToObjectsRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
   clearSelection: () => void;
+  /** Largura/altura do palco (design) — órbita de rotação em grupo. */
+  getSlideAspectRatio: () => number;
 };
 
 function resolveDraggedExcludeIds(
@@ -83,7 +85,10 @@ export function useComunicadoEditorDrag({
   snapToObjectsRef,
   stageGridSizePercentRef,
   clearSelection,
+  getSlideAspectRatio,
 }: Options) {
+  const getSlideAspectRatioRef = useRef(getSlideAspectRatio);
+  getSlideAspectRatioRef.current = getSlideAspectRatio;
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{
     startFrames: Map<string, ComunicadoBlock["frame"]>;
@@ -168,6 +173,7 @@ export function useComunicadoEditorDrag({
           startRotations: multi.startRotations,
           center: multi.groupCenter,
           deltaDeg,
+          slideAspect: getSlideAspectRatioRef.current(),
         });
         const draggedIds = new Set(updates.keys());
         const nextBlocks = (configRef.current.blocks ?? []).map((block) => {

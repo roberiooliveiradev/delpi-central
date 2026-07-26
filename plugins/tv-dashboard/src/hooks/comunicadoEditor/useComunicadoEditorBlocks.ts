@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useRef,
   useState,
   type Dispatch,
   type MutableRefObject,
@@ -159,6 +160,8 @@ type Options = {
   /** Resolved atual da fonte (preview) — para materializar projection no link. */
   getSourceResolved?: (sourceId: string) => ComunicadoDataResolved | undefined;
   chooseDataSourceDuplicatePolicy?: () => Promise<DataSourceDuplicatePolicy | null>;
+  /** Largura/altura do palco (design) — órbita de rotação em grupo. */
+  getSlideAspectRatio?: () => number;
 };
 
 /**
@@ -201,8 +204,11 @@ export function useComunicadoEditorBlocks({
   chooseDataSourceDuplicatePolicy,
   canvasRef,
   canvasWrapRef,
+  getSlideAspectRatio,
 }: Options) {
   const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
+  const getSlideAspectRatioRef = useRef(getSlideAspectRatio ?? (() => 1));
+  getSlideAspectRatioRef.current = getSlideAspectRatio ?? (() => 1);
 
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
@@ -1292,6 +1298,7 @@ export function useComunicadoEditorBlocks({
         startRotations,
         center: resolveFramesGroupCenter(startFrames.values()),
         deltaDeg,
+        slideAspect: getSlideAspectRatioRef.current(),
       });
       updateBlocks(
         current.map((block) => {

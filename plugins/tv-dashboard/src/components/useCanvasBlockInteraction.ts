@@ -181,7 +181,12 @@ export function useCanvasBlockInteraction({
 
     if (drag.mode === "rotate") {
       if (drag.centerX == null || drag.centerY == null || drag.startPointerAngle == null) return;
-      const angle = Math.atan2(current.y - drag.centerY, current.x - drag.centerX);
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect || rect.width <= 0 || rect.height <= 0) return;
+      // Ângulo em px do palco (não em % anisotrópico) — senão o giro “pula” em 16:9.
+      const centerClientX = rect.left + (drag.centerX / 100) * rect.width;
+      const centerClientY = rect.top + (drag.centerY / 100) * rect.height;
+      const angle = Math.atan2(event.clientY - centerClientY, event.clientX - centerClientX);
       const deltaDeg = ((angle - drag.startPointerAngle) * 180) / Math.PI;
       onUpdateStyleRef.current?.(drag.blockId, {
         rotation: normalizeRotation((drag.startRotation ?? 0) + deltaDeg),
@@ -428,14 +433,23 @@ export function useCanvasBlockInteraction({
             centerY = geometry.position.y;
           }
         }
-        const startPt = pointerToPercent(event.clientX, event.clientY);
+        const rect = canvasRef.current?.getBoundingClientRect();
+        const centerClientX = rect
+          ? rect.left + (centerX / 100) * rect.width
+          : event.clientX;
+        const centerClientY = rect
+          ? rect.top + (centerY / 100) * rect.height
+          : event.clientY;
         onInteractionStartRef.current?.();
         dragRef.current = {
           ...dragState,
           centerX,
           centerY,
           startRotation: block.style?.rotation ?? 0,
-          startPointerAngle: Math.atan2(startPt.y - centerY, startPt.x - centerX),
+          startPointerAngle: Math.atan2(
+            event.clientY - centerClientY,
+            event.clientX - centerClientX,
+          ),
         };
         window.addEventListener("pointermove", listeners.onPointerMove);
         window.addEventListener("pointerup", listeners.onPointerUp);

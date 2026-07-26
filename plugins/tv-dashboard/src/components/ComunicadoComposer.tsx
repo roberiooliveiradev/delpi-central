@@ -48,8 +48,9 @@ import {
   expandSelectionWithGroups,
   resolveFullySelectedGroups,
   resolveParentGroupHintFrame,
-  unionFramePercent,
 } from "../utils/comunicadoGrouping";
+import { buildBlockTransformCss } from "../utils/comunicadoTransform";
+import { resolveGroupSelectionChrome } from "../utils/slidePercentRotation";
 import {
   resolveBlockWrapChromeFlags,
   resolveStageSelectionHierarchy,
@@ -839,6 +840,7 @@ export function ComunicadoComposerCanvas() {
             const selectionRadius = isSelected || remoteEditors.length > 0
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
+            const wrapTransform = buildBlockTransformCss(block.style);
             return (
               <div
                 key={block.id}
@@ -866,9 +868,7 @@ export function ComunicadoComposerCanvas() {
                 style={{
                   ...resolveBlockPlacementStyle(block),
                   zIndex: block.style?.zIndex ?? 1,
-                  ...(block.style?.rotation
-                    ? { transform: `rotate(${block.style.rotation}deg)` }
-                    : {}),
+                  ...(wrapTransform ? { transform: wrapTransform } : {}),
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
@@ -1060,7 +1060,14 @@ export function ComunicadoComposerCanvas() {
             );
           })}
           {closedGroupChromeList.map((group) => {
-            const frame = unionFramePercent(group.members.map((member) => member.frame));
+            const slideAspect = designSize.width / Math.max(designSize.height, 1);
+            const chrome = resolveGroupSelectionChrome({
+              members: group.members.map((member) => ({
+                frame: member.frame,
+                rotation: member.style?.rotation ?? 0,
+              })),
+              slideAspect,
+            });
             const anchor =
               group.members.find((member) => member.id === primarySelected) ??
               group.members[group.members.length - 1];
@@ -1068,7 +1075,8 @@ export function ComunicadoComposerCanvas() {
             return (
               <GroupSelectionChrome
                 key={group.groupId}
-                frame={frame}
+                frame={chrome.frame}
+                rotation={chrome.rotation}
                 anchorBlock={anchor}
                 onPointerDown={startDragRespectingPan}
               />

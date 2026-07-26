@@ -397,6 +397,8 @@ export function ComunicadoEditorProvider({
     snapToObjectsRef: stage.snapToObjectsRef,
     stageGridSizePercentRef: stage.stageGridSizePercentRef,
     clearSelection: selection.clearSelection,
+    getSlideAspectRatio: () =>
+      designSizeRef.current.width / Math.max(designSizeRef.current.height, 1),
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -497,6 +499,8 @@ export function ComunicadoEditorProvider({
     chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
     canvasRef,
     canvasWrapRef: stage.canvasWrapRef,
+    getSlideAspectRatio: () =>
+      designSizeRef.current.width / Math.max(designSizeRef.current.height, 1),
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;

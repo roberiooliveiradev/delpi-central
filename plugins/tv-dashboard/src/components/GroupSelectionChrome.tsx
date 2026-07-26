@@ -7,6 +7,8 @@ import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 
 type Props = {
   frame: ComunicadoFrame;
+  /** Rotação CSS do overlay (quando membros compartilham o mesmo ângulo). */
+  rotation?: number;
   /** Bloco âncora para startDrag (primário do grupo). */
   anchorBlock: ComunicadoBlock;
   allowResize?: boolean;
@@ -23,11 +25,13 @@ type Props = {
  */
 export function GroupSelectionChrome({
   frame,
+  rotation = 0,
   anchorBlock,
   allowResize = true,
   onPointerDown,
 }: Props) {
-  /** Frame do grupo — centro do giro e bbox dos handles. */
+  /** Frame do grupo — centro do giro e bbox dos handles.
+   * Mantém `style.rotation` do âncora (baseline do gesto); o CSS do overlay usa `rotation`. */
   const hitBlock: ComunicadoBlock = {
     ...anchorBlock,
     frame,
@@ -41,6 +45,7 @@ export function GroupSelectionChrome({
         top: `${frame.y}%`,
         width: `${frame.w}%`,
         height: `${frame.h}%`,
+        ...(rotation ? { transform: `rotate(${rotation}deg)` } : {}),
       }}
       data-group-chrome=""
       data-block-id={anchorBlock.id}
