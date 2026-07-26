@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { DataParamFields, type DataParamSchema } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -22,13 +23,8 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
 
   const schema = useMemo(() => mergeParamSchemas(routes), [routes]);
 
-  function updateFilter(key: string, raw: string) {
-    const next = { ...filters };
-    const fieldType = schema[key]?.type;
-    if (raw === "" || raw === null || raw === undefined) delete next[key];
-    else if (fieldType === "integer" || fieldType === "number") next[key] = Number(raw);
-    else if (fieldType === "boolean") next[key] = raw === "true";
-    else next[key] = String(raw).trim();
+  function updateFilters(updates: Record<string, string>) {
+    const next = applyDataParamRawUpdates(filters, updates, schema);
     setDataFilters(Object.keys(next).length > 0 ? next : undefined);
   }
 
@@ -45,7 +41,7 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
         values={filters}
         branchScope={branchScope}
         idPrefix="td-slide-filter"
-        onChange={updateFilter}
+        onChange={updateFilters}
       />
     </DeckPropertySection>
   );

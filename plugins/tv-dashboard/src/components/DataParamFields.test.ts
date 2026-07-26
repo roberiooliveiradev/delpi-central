@@ -78,4 +78,12 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/portalScopeClassName=\{TV_DASHBOARD_ROOT_CLASS\}/);
     expect(source).not.toMatch(/isDateRangePairKey\(key, datePair\) && !isCustom/);
   });
+
+  it("emite preset + competence em um único onChange (evita race stale)", () => {
+    const base = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/updates: Record<string, string>/);
+    expect(source).toMatch(/updates\.competence = ""/);
+    expect(source).not.toMatch(/onChange\(DATE_RANGE_PRESET_PARAM, value\);\s*\n\s*if \(hasCompetence/);
+  });
 });

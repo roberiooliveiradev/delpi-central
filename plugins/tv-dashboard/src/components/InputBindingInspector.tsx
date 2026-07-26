@@ -172,6 +172,45 @@ export function InputBindingInspector({ pane = false }: Props) {
     }
   };
 
+  const applyFilterUpdates = (updates: Record<string, string>) => {
+    // Preset relativo: um patch atômico (datas/periodDays limpos no mesmo bundle).
+    if (DATE_RANGE_PRESET_PARAM in updates) {
+      applyFilterFieldChange(DATE_RANGE_PRESET_PARAM, updates[DATE_RANGE_PRESET_PARAM] ?? "");
+      return;
+    }
+    const entries = Object.entries(updates);
+    if (entries.length === 0) return;
+    if (entries.length === 1) {
+      applyFilterFieldChange(entries[0][0], entries[0][1]);
+      return;
+    }
+    // Lote (ex.: data + dateRangePreset=custom): um único filterBundle.
+    const filterBundle: Record<string, string | number | boolean | null | undefined> = {};
+    let primaryKey = "";
+    let primaryRaw = "";
+    for (const [key, raw] of entries) {
+      if (!primaryKey) {
+        primaryKey = key;
+        primaryRaw = raw;
+      }
+      filterBundle[key] = parseInputFilterValue(key, raw, valueSchema[key]?.type);
+    }
+    const paramKey = String(block.input.paramKey || "").trim();
+    if (primaryKey === paramKey) {
+      applyInputPatch({ defaultValue: filterBundle[primaryKey] });
+      if (targetScope === "slide") {
+        patchInputBlock(block.id, { defaultValue: filterBundle[primaryKey] }, filterBundle);
+      }
+      return;
+    }
+    if (targetScope === "slide") {
+      patchInputBlock(block.id, {}, filterBundle);
+      scheduleInputFilterRefresh(block);
+    } else {
+      applyFilterFieldChange(primaryKey, primaryRaw);
+    }
+  };
+
   const labelByKey = (key: string): string => {
     if (key === DATE_RANGE_PRESET_PARAM) return "Período relativo";
     for (const schema of schemas) {
@@ -294,7 +333,7 @@ export function InputBindingInspector({ pane = false }: Props) {
             schema={valueSchema}
             values={editorValues}
             idPrefix="td-input-value"
-            onChange={applyFilterFieldChange}
+            onChange={applyFilterUpdates}
           />
         ) : null}
       </DeckPropertySection>

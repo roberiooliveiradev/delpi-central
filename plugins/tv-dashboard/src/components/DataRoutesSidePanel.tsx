@@ -23,6 +23,7 @@ import {
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import type { DataCatalogMode, DataInsertPreferredView } from "./comunicadoEditorContextCore";
@@ -358,21 +359,8 @@ export function DataRoutesSidePanel({
             branchScope={branchScope}
             idPrefix="td-data-source-param"
             layout={layout}
-            onChange={(key, raw) => {
-              setParams((previous) => {
-                const next = { ...(previous ?? {}) };
-                const fieldType = schema[key]?.type;
-                if (!raw.trim()) {
-                  delete next[key];
-                } else if (fieldType === "integer" || fieldType === "number") {
-                  next[key] = Number(raw);
-                } else if (fieldType === "boolean") {
-                  next[key] = raw === "true";
-                } else {
-                  next[key] = raw;
-                }
-                return next;
-              });
+            onChange={(updates) => {
+              setParams((previous) => applyDataParamRawUpdates(previous, updates, schema));
             }}
           />
           <button

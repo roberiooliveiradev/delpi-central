@@ -123,7 +123,11 @@ type Props = {
   idPrefix?: string;
   /** ribbon = grade multi-coluna; pane = empilhado. */
   layout?: "ribbon" | "pane";
-  onChange: (key: string, value: string) => void;
+  /**
+   * Patch atômico de parâmetros. Sempre em lote — evita race quando Período +
+   * competence / datas mudam juntos (binding stale sobrescrevia o preset).
+   */
+  onChange: (updates: Record<string, string>) => void;
 };
 
 export function DataParamFields({
@@ -154,28 +158,30 @@ export function DataParamFields({
   useEffect(() => {
     if (!activeDatePair) return;
     if (String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim()) return;
-    onChange(DATE_RANGE_PRESET_PARAM, "this_month");
+    onChange({ [DATE_RANGE_PRESET_PARAM]: "this_month" });
     // Hidrata preset padrão quando a rota tem intervalo de datas.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
   }, [activeDatePair?.startKey, activeDatePair?.endKey]);
 
   function patchParam(key: string, value: string) {
+    const updates: Record<string, string> = { [key]: value };
     if (key === "competence" && value.trim() && activeDatePair) {
       // Competência (mês fechado SI) → datas manuais; evita conflito com preset relativo.
-      onChange(DATE_RANGE_PRESET_PARAM, "custom");
+      updates[DATE_RANGE_PRESET_PARAM] = "custom";
     }
     if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset !== "custom") {
-      onChange(DATE_RANGE_PRESET_PARAM, "custom");
+      updates[DATE_RANGE_PRESET_PARAM] = "custom";
     }
-    onChange(key, value);
+    onChange(updates);
   }
 
   function patchDateRangePreset(value: string) {
-    onChange(DATE_RANGE_PRESET_PARAM, value);
+    const updates: Record<string, string> = { [DATE_RANGE_PRESET_PARAM]: value };
     if (hasCompetence && value && value !== "custom") {
       // Preset relativo (até hoje) vence competência — limpa o mês SI.
-      onChange("competence", "");
+      updates.competence = "";
     }
+    onChange(updates);
   }
 
   const rangeFields =
@@ -217,7 +223,7 @@ export function DataParamFields({
                     ? "7"
                     : String(values[PERIOD_DAYS_PARAM])
                 }
-                onChange={(value: string) => onChange(PERIOD_DAYS_PARAM, value)}
+                onChange={(value: string) => onChange({ [PERIOD_DAYS_PARAM]: value })}
               />
             </DeckField>
           ) : null,

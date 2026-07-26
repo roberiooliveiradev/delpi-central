@@ -23,6 +23,7 @@ import {
 
 import type { BranchScope, TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import {
@@ -159,18 +160,8 @@ export function DataBindingInspector({
     binding.refreshSec == null ? "" : REFRESH_PRESET_VALUES.has(refreshAsStr) ? refreshAsStr : "__custom__";
   const showCustomRefresh = refreshCustom || refreshSelectValue === "__custom__";
 
-  function updateParam(key: string, raw: string) {
-    const nextParams = { ...(binding.params ?? {}) };
-    const fieldType = (paramSchema[key] as { type?: string } | undefined)?.type;
-    if (!raw.trim()) {
-      delete nextParams[key];
-    } else if (fieldType === "integer" || fieldType === "number") {
-      nextParams[key] = Number(raw);
-    } else if (fieldType === "boolean") {
-      nextParams[key] = raw === "true";
-    } else {
-      nextParams[key] = raw.trim();
-    }
+  function updateParams(updates: Record<string, string>) {
+    const nextParams = applyDataParamRawUpdates(binding.params, updates, paramSchema);
     applyPatch({
       dataBinding: { ...binding, params: nextParams },
     } as Partial<ComunicadoBlock>);
@@ -326,7 +317,7 @@ export function DataBindingInspector({
       inheritedKeys={inheritedKeys}
       branchScope={branchScope}
       layout={layout}
-      onChange={updateParam}
+      onChange={updateParams}
     />
   );
 
@@ -408,7 +399,7 @@ export function DataBindingInspector({
         branchScope={branchScope}
         layout="pane"
         idPrefix="td-data-param-modal"
-        onChange={updateParam}
+        onChange={updateParams}
       />
     </HostContainedDialog>
   );

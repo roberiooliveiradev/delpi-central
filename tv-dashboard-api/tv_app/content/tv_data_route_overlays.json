@@ -101,9 +101,9 @@
         "ppm",
         "ppmValue"
       ],
-      "label": "Qualidade — PPM interno",
+      "label": "PPM Interno — realizado",
       "description": "PPM de não conformidades internas no período.",
-      "whenToUse": "Use para o indicador de qualidade interna na TV — um número de ppm, não a lista de NCs.",
+      "whenToUse": "Usar no card KPI do realizado de PPM Interno (qualidade).",
       "defaultParams": {
         "periodDays": 30
       }
