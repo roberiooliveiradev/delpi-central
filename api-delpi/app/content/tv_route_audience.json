@@ -7128,16 +7128,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Custo de Refugo X ROL — actual",
-          "description": "Actual value for SI indicator «Custo de Refugo X ROL» (IGD view).",
-          "whenToUse": "Use as a KPI card for the actual Custo de Refugo X ROL.",
-          "label": "Custo de Refugo X ROL — actual"
+          "summary": "Custo de Refugo / ROL — actual",
+          "description": "Actual value for SI indicator «Custo de Refugo / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custo de Refugo / ROL.",
+          "label": "Custo de Refugo / ROL — actual"
         },
         "pt-BR": {
-          "summary": "Custo de Refugo X ROL — realizado",
-          "description": "Valor realizado do indicador SI «Custo de Refugo X ROL» (visão IGD).",
-          "whenToUse": "Usar no card KPI do realizado de Custo de Refugo X ROL.",
-          "label": "Custo de Refugo X ROL — realizado"
+          "summary": "Custo de Refugo / ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custo de Refugo / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custo de Refugo / ROL.",
+          "label": "Custo de Refugo / ROL — realizado"
         }
       }
     },
@@ -7145,16 +7145,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Custo de Refugo X ROL — goal",
-          "description": "Goal (comparable) for SI indicator «Custo de Refugo X ROL» (IGD view).",
-          "whenToUse": "Use as a KPI card for the Custo de Refugo X ROL goal.",
-          "label": "Custo de Refugo X ROL — goal"
+          "summary": "Custo de Refugo / ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custo de Refugo / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custo de Refugo / ROL goal.",
+          "label": "Custo de Refugo / ROL — goal"
         },
         "pt-BR": {
-          "summary": "Custo de Refugo X ROL — meta",
-          "description": "Meta (comparable goal) do indicador SI «Custo de Refugo X ROL» (visão IGD).",
-          "whenToUse": "Usar no card KPI da meta de Custo de Refugo X ROL.",
-          "label": "Custo de Refugo X ROL — meta"
+          "summary": "Custo de Refugo / ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custo de Refugo / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custo de Refugo / ROL.",
+          "label": "Custo de Refugo / ROL — meta"
         }
       }
     },
@@ -7162,16 +7162,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Custo de Retrabalho X ROL — actual",
-          "description": "Actual value for SI indicator «Custo de Retrabalho X ROL» (IGD view).",
-          "whenToUse": "Use as a KPI card for the actual Custo de Retrabalho X ROL.",
-          "label": "Custo de Retrabalho X ROL — actual"
+          "summary": "Custo de Retrabalho / ROL — actual",
+          "description": "Actual value for SI indicator «Custo de Retrabalho / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custo de Retrabalho / ROL.",
+          "label": "Custo de Retrabalho / ROL — actual"
         },
         "pt-BR": {
-          "summary": "Custo de Retrabalho X ROL — realizado",
-          "description": "Valor realizado do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
-          "whenToUse": "Usar no card KPI do realizado de Custo de Retrabalho X ROL.",
-          "label": "Custo de Retrabalho X ROL — realizado"
+          "summary": "Custo de Retrabalho / ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custo de Retrabalho / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custo de Retrabalho / ROL.",
+          "label": "Custo de Retrabalho / ROL — realizado"
         }
       }
     },
@@ -7179,16 +7179,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Custo de Retrabalho X ROL — goal",
-          "description": "Goal (comparable) for SI indicator «Custo de Retrabalho X ROL» (IGD view).",
-          "whenToUse": "Use as a KPI card for the Custo de Retrabalho X ROL goal.",
-          "label": "Custo de Retrabalho X ROL — goal"
+          "summary": "Custo de Retrabalho / ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custo de Retrabalho / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custo de Retrabalho / ROL goal.",
+          "label": "Custo de Retrabalho / ROL — goal"
         },
         "pt-BR": {
-          "summary": "Custo de Retrabalho X ROL — meta",
-          "description": "Meta (comparable goal) do indicador SI «Custo de Retrabalho X ROL» (visão IGD).",
-          "whenToUse": "Usar no card KPI da meta de Custo de Retrabalho X ROL.",
-          "label": "Custo de Retrabalho X ROL — meta"
+          "summary": "Custo de Retrabalho / ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custo de Retrabalho / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custo de Retrabalho / ROL.",
+          "label": "Custo de Retrabalho / ROL — meta"
         }
       }
     }

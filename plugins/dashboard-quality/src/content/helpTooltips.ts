@@ -47,9 +47,9 @@ export const QUALITY_HELP_TOOLTIPS = {
     audit5sScore: "Nota média das auditorias 5S realizadas no período.",
     audit5sCount: "Quantidade de auditorias 5S registradas no recorte.",
     scrapCostPct:
-      "Custo de refugo (SBC) dividido pelo ROL financeiro com IPI no período × 100. Meta do indicador Custo de Refugo X ROL (Indicadores Estratégicos). Quanto menor, melhor.",
+      "Custo de refugo (SBC) dividido pelo ROL financeiro com IPI no período × 100. Meta do indicador Custo de Refugo / ROL (Indicadores Estratégicos). Quanto menor, melhor.",
     reworkCostPct:
-      "Custo de retrabalho dividido pelo ROL financeiro com IPI no período × 100. Meta do indicador Custo de Retrabalho X ROL (Indicadores Estratégicos). Quanto menor, melhor.",
+      "Custo de retrabalho dividido pelo ROL financeiro com IPI no período × 100. Meta do indicador Custo de Retrabalho / ROL (Indicadores Estratégicos). Quanto menor, melhor.",
     nonconformities: "Total de não conformidades abertas ou registradas no período.",
     ppmDetail: "PPM calculado com base em unidades devolvidas e produzidas/faturadas.",
     ppmReturned: "Quantidade total de unidades devolvidas no período.",

@@ -164,13 +164,13 @@
     {
       "indicatorId": "quality-scrap-cost-pct",
       "sourceKey": "quality_scrap_cost_pct",
-      "name": "Custo de Refugo X ROL",
+      "name": "Custo de Refugo / ROL",
       "departmentId": "quality"
     },
     {
       "indicatorId": "quality-rework-cost-pct",
       "sourceKey": "quality_rework_cost_pct",
-      "name": "Custo de Retrabalho X ROL",
+      "name": "Custo de Retrabalho / ROL",
       "departmentId": "quality"
     },
     {
