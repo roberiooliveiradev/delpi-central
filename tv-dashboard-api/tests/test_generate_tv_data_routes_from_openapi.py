@@ -126,6 +126,41 @@ def test_openapi_date_start_end_becomes_date_range_with_canonical_keys():
     assert "start_date" not in schema
 
 
+def test_si_competence_with_dates_still_exposes_date_range_for_tv_presets():
+    """PPM Externo/Interno SI: competence opcional + start/end → presets no inspetor TV."""
+    gen = _load_generator_module()
+    schema, strategy, date_keys = gen.build_param_schema_from_openapi(
+        [
+            {"name": "competence", "required": False, "type": "string"},
+            {"name": "start_date", "required": False, "type": "string"},
+            {"name": "end_date", "required": False, "type": "string"},
+            {"name": "branch", "required": False, "type": "string"},
+        ]
+    )
+    assert strategy == "date_range"
+    assert date_keys == ("start_date", "end_date")
+    assert "competence" in schema
+    assert "start_date" in schema
+    # Filial SI: sem default UX «01» (consolidado quando omitida).
+    assert "default" not in (schema.get("branch") or {})
+
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item
+        for item in generated
+        if item["operationId"] == "get_si_indicator_quality_ppm_external_realized"
+    )
+    assert sample.get("paramStrategy") == "date_range"
+    assert sample.get("dateRangeKeys") == ["start_date", "end_date"]
+    assert (sample.get("defaultParams") or {}).get("periodDays") == 30
+    assert "competence" in (sample.get("paramSchema") or {})
+    assert "default" not in ((sample.get("paramSchema") or {}).get("branch") or {})
+
+
 def test_catalog_has_majority_param_schemas_from_openapi():
     routes = json.loads(ROUTES_PATH.read_text(encoding="utf-8")).get("routes") or []
     with_schema = sum(1 for item in routes if item.get("paramSchema"))

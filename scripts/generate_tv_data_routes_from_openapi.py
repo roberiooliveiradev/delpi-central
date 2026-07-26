@@ -371,13 +371,14 @@ def build_param_schema_from_openapi(
     `dateRangeKeys` para o gateway emitir exatamente os nomes HTTP da api-delpi.
     Preferência: enum/default do OpenAPI; label/description de x-delpi.params.locale.pt-BR.
 
-    Rotas com `competence` (SI / IGD): strategy `direct` — não inventa periodDays nem
-    trata o par de datas como date_range TV (competência é o eixo principal).
+    Rotas com `competence` (SI / IGD) + par de datas: strategy `date_range` para o
+    inspetor TV exibir presets (este mês até hoje, semana, ano…). `competence`
+    permanece no schema como eixo opcional de mês fechado. Filial SI sem default UX.
     """
     params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
     names = {str(p["name"]) for p in params}
     competence_first = "competence" in names
-    date_range_keys = None if competence_first else detect_openapi_date_range_keys(names)
+    date_range_keys = detect_openapi_date_range_keys(names)
     strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
     op = operation if isinstance(operation, dict) else {}
@@ -515,11 +516,17 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
 
 
 def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -> dict[str, Any]:
-    """Preserva curadoria TV-only do catálogo; OpenAPI/locale vence em label/description/whenToUse/category."""
+    """Preserva curadoria TV-only do catálogo; OpenAPI/locale vence em label/description/whenToUse/category.
+
+    `paramStrategy` / `dateRangeKeys` também vêm do OpenAPI (par de datas, inclusive SI com
+    competence) — o catálogo antigo não pode congelar `direct` e apagar os presets de período.
+    """
     if not existing:
         return base
     merged = dict(base)
-    openapi_wins = frozenset({"label", "description", "whenToUse", "category"})
+    openapi_wins = frozenset(
+        {"label", "description", "whenToUse", "category", "paramStrategy", "dateRangeKeys"}
+    )
     for key in OVERLAY_KEYS:
         if key == "paramSchema":
             continue
@@ -528,19 +535,23 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
         value = existing.get(key)
         if value not in (None, "", [], {}):
             if key == "defaultParams" and isinstance(value, dict):
+                # OpenAPI date_range já trouxe periodDays — não deixar o legado sobrescrever
+                # a estratégia, mas mesclar outras chaves curadas.
                 merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
             else:
                 merged[key] = value
-    # OpenAPI direct (ex.: SI competence-first): não herdar date_range / periodDays do catálogo antigo.
+    # OpenAPI direct (sem par de datas): não herdar date_range / periodDays do catálogo antigo.
     if merged.get("paramStrategy") == "direct":
         merged.pop("dateRangeKeys", None)
         defaults = merged.get("defaultParams")
         if isinstance(defaults, dict) and "periodDays" in defaults:
-            cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
-            if cleaned:
-                merged["defaultParams"] = cleaned
-            else:
-                merged.pop("defaultParams", None)
+            # Só remove periodDays herdado se o OpenAPI realmente é direct (sem par).
+            if not base.get("dateRangeKeys"):
+                cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
+                if cleaned:
+                    merged["defaultParams"] = cleaned
+                else:
+                    merged.pop("defaultParams", None)
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
         # OpenAPI vence em contrato (optional/type/enum/default); existing só preenche

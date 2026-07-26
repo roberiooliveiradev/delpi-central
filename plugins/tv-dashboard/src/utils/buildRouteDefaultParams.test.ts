@@ -51,13 +51,13 @@ describe("buildRouteDefaultParams", () => {
     expect(params.department_id).toBe("commercial");
   });
 
-  it("SI com competence não injeta dateRangePreset (OpenAPI-first)", () => {
+  it("SI com competence + datas injeta dateRangePreset (mesmo padrão das demais rotas)", () => {
     const params = buildRouteDefaultParams({
-      operationId: "get_si_indicator_quality_scrap_cost_pct_meta",
-      label: "Custo de Refugo X ROL — meta",
+      operationId: "get_si_indicator_quality_ppm_external_realized",
+      label: "PPM Externo — realizado",
       category: "quality",
-      path: "/dashboard/indicators/quality-scrap-cost-pct/meta",
-      paramStrategy: "direct",
+      path: "/dashboard/indicators/quality-ppm-external/realized",
+      paramStrategy: "date_range",
       paramSchema: {
         competence: { type: "string", optional: true, label: "Competência" },
         start_date: { type: "string", optional: true, label: "Data início" },
@@ -65,8 +65,7 @@ describe("buildRouteDefaultParams", () => {
         branch: { type: "string", optional: true, label: "Filial" },
       },
     });
-    expect(params.dateRangePreset).toBeUndefined();
-    expect(params.periodDays).toBeUndefined();
+    expect(params.dateRangePreset).toBe("this_month");
     expect(params.branch).toBeUndefined();
   });
 });

@@ -140,9 +140,10 @@ export function DataParamFields({
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
   const nativeClass = compact ? "delpi-ui-native-control--compact" : undefined;
   const datePair = findDateRangeKeys(Object.keys(schema));
-  /* SI / IGD: competence é o eixo — não injeta Período TV inventado. */
-  const competenceFirst = "competence" in schema;
-  const activeDatePair = competenceFirst ? null : datePair;
+  // SI / IGD também expõem start_date/end_date — o preset relativo (este mês até hoje,
+  // semana, ano…) é o mesmo das demais rotas. `competence` permanece opcional para mês fechado.
+  const hasCompetence = "competence" in schema;
+  const activeDatePair = datePair;
   const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
   const preset = (presetRaw || (activeDatePair ? "this_month" : "")) as DateRangePresetId | "";
   const isCustom = !activeDatePair || preset === "custom";
@@ -157,10 +158,22 @@ export function DataParamFields({
   }, [activeDatePair?.startKey, activeDatePair?.endKey]);
 
   function patchParam(key: string, value: string) {
+    if (key === "competence" && value.trim() && activeDatePair) {
+      // Competência (mês fechado SI) → datas manuais; evita conflito com preset relativo.
+      onChange(DATE_RANGE_PRESET_PARAM, "custom");
+    }
     if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset !== "custom") {
       onChange(DATE_RANGE_PRESET_PARAM, "custom");
     }
     onChange(key, value);
+  }
+
+  function patchDateRangePreset(value: string) {
+    onChange(DATE_RANGE_PRESET_PARAM, value);
+    if (hasCompetence && value && value !== "custom") {
+      // Preset relativo (até hoje) vence competência — limpa o mês SI.
+      onChange("competence", "");
+    }
   }
 
   const rangeFields =
@@ -179,7 +192,7 @@ export function DataParamFields({
               portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
               ariaLabel="Período relativo"
               value={preset || "this_month"}
-              onChange={(value: string) => onChange(DATE_RANGE_PRESET_PARAM, value)}
+              onChange={patchDateRangePreset}
               options={DATE_RANGE_PRESET_OPTIONS}
             />
           </DeckField>,

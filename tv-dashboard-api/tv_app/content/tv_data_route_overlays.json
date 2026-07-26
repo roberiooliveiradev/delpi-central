@@ -13,7 +13,6 @@
         "kpi",
         "auto"
       ],
-      "paramStrategy": "direct",
       "tvConstraints": {
         "maxRows": 1
       }

@@ -777,7 +777,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_commercial_rol_series",
@@ -1272,6 +1279,13 @@
         }
       },
       "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "score",
         "value",
@@ -1279,9 +1293,6 @@
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "defaultParams": {
-        "periodDays": 30
       }
     },
     {
@@ -1347,16 +1358,20 @@
         }
       },
       "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "idd",
         "score"
       ],
+      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
-      },
-      "tableFields": "indicators",
-      "defaultParams": {
-        "periodDays": 30
       }
     },
     {
@@ -1421,16 +1436,20 @@
         }
       },
       "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "idd",
         "score"
       ],
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
-      },
-      "tableFields": "items",
-      "defaultParams": {
-        "periodDays": 30
       }
     },
     {
@@ -1478,15 +1497,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1534,15 +1560,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1590,15 +1623,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1646,15 +1686,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1702,15 +1749,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1758,15 +1812,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1814,15 +1875,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1870,15 +1938,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1926,15 +2001,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -1982,15 +2064,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2038,15 +2127,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2094,15 +2190,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2150,15 +2253,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2206,15 +2316,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2262,15 +2379,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2318,15 +2442,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2374,15 +2505,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2430,15 +2568,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2486,15 +2631,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2542,15 +2694,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2598,15 +2757,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2654,15 +2820,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2710,15 +2883,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2766,15 +2946,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2822,15 +3009,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2878,15 +3072,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2934,15 +3135,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -2990,15 +3198,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3046,15 +3261,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3102,15 +3324,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3158,15 +3387,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3214,15 +3450,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3270,15 +3513,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3326,15 +3576,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3382,15 +3639,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3438,15 +3702,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3494,15 +3765,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3550,15 +3828,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3606,15 +3891,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3662,15 +3954,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3718,15 +4017,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3774,15 +4080,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3830,15 +4143,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3886,15 +4206,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3942,15 +4269,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -3998,15 +4332,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4054,15 +4395,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4110,15 +4458,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4166,15 +4521,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4222,15 +4584,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4278,15 +4647,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4334,15 +4710,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4390,15 +4773,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4446,15 +4836,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4498,15 +4895,22 @@
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4550,15 +4954,22 @@
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4602,15 +5013,22 @@
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4654,15 +5072,22 @@
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4710,15 +5135,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4766,15 +5198,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4822,15 +5261,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4878,15 +5324,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4934,15 +5387,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -4990,15 +5450,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -5046,15 +5513,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -5102,15 +5576,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -5158,15 +5639,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -5214,15 +5702,22 @@
           ]
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFieldTypes": {
-        "value": "number"
       }
     },
     {
@@ -5294,7 +5789,14 @@
           "description": "Inclui quantidade de produto intermediário (PI) no resultado."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_lmps_dashboard",
@@ -5376,7 +5878,14 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_lmps_dashboard_charts",
@@ -5443,7 +5952,14 @@
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_lmps_dashboard_items",
@@ -5524,7 +6040,14 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_lmps_dashboard_summary",
@@ -5594,19 +6117,26 @@
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
-      "paramStrategy": "direct",
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
       ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ]
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -5647,7 +6177,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_lmp_history_events",
@@ -5694,7 +6231,14 @@
           "description": "Número ou código da revisão."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_lmp_history_flow",
@@ -5741,7 +6285,14 @@
           "description": "Número ou código da revisão."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_mini_applicators_ferramentas",
@@ -5922,7 +6473,14 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "data_inicial",
+        "data_final"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_mini_applicators_pecas",
@@ -7647,7 +8205,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_from",
+        "date_to"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_inspecoes_entrada_historico_detalhe",
@@ -8878,7 +9443,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_consumption_top_items",
@@ -8939,7 +9511,14 @@
           "description": "Como agregar o resultado (geral, filial, produto etc.)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_consumption_top_items_by_work_center",
@@ -8992,7 +9571,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_consumption_top_items_validated",
@@ -9039,7 +9625,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_depreciation_pct",
@@ -9223,7 +9816,14 @@
           "description": "Retorna apenas registros com status OK."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -9302,7 +9902,14 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_losses_records",
@@ -9361,7 +9968,14 @@
           "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_production_losses_top_materials",
@@ -9420,7 +10034,14 @@
           "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_production_machine_program_top_intermediates",
@@ -9703,14 +10324,6 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -9719,9 +10332,11 @@
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -9736,7 +10351,13 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -9798,14 +10419,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -10151,10 +10772,6 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10163,8 +10780,12 @@
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -10227,14 +10848,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -10610,7 +11231,14 @@
           "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "modified_from",
+        "modified_to"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_exclusive_raw_materials_catalog",
@@ -10759,14 +11387,14 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": false
-      },
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
+      },
+      "tableFields": "items",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
       }
     },
     {
@@ -10987,7 +11615,14 @@
           "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_guide",
@@ -11093,7 +11728,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "issue_date_start",
+        "issue_date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_inspection",
@@ -11200,7 +11842,14 @@
           "description": "Número da ordem de produção (OP)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_last_purchase",
@@ -11288,7 +11937,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "issue_date_start",
+        "issue_date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_parents",
@@ -11423,7 +12079,14 @@
           "default": "01"
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_purchase_price_history",
@@ -11470,7 +12133,14 @@
           "description": "Máximo de pontos no histórico retornado."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_purchases",
@@ -11547,7 +12217,14 @@
           "description": "Máximo de pontos no histórico retornado."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_sales_summary",
@@ -11641,7 +12318,14 @@
           "description": "Usa comportamento legado da API (campos/alias antigos)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_product_stock",
@@ -11940,7 +12624,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_quality_action_plans",
@@ -13546,7 +14237,14 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "export_kaizen_records",
@@ -13819,7 +14517,14 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -14327,7 +15032,14 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_ppm_external_series",
@@ -14387,7 +15099,14 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_ppm_external_summary",
@@ -14516,7 +15235,14 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_ppm_internal_series",
@@ -14576,7 +15302,14 @@
           "description": "Prefixo do código de produto para filtrar famílias."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_ppm_internal_summary",
@@ -14693,7 +15426,14 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_quality_solution_patterns",
@@ -15490,7 +16230,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_detalhes",
@@ -15586,7 +16333,14 @@
           "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_filtros",
@@ -15627,7 +16381,14 @@
           "description": "Data final do período (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_health",
@@ -15699,7 +16460,14 @@
           "description": "Código do operador no Protheus."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_recursos",
@@ -15776,7 +16544,14 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_resumo",
@@ -15835,7 +16610,14 @@
           "description": "Código do operador no Protheus."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "get_retrabalhos_rework_cost_pct",
@@ -15948,7 +16730,14 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_scheduling_bookings",
@@ -16913,16 +17702,23 @@
         }
       },
       "paramStrategy": "direct",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
       ],
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      },
-      "tableFields": "top_products"
+      }
     },
     {
       "operationId": "get_caller_stats",
