@@ -27,8 +27,10 @@ class EficienciaFabrilDashboardItem:
     filial: Optional[str] = None
     op: Optional[str] = None
     produto: Optional[str] = None
+    produto_acabado: Optional[str] = None
     centro_trabalho: Optional[str] = None
     operacao: Optional[str] = None
+    descricao_operacao: Optional[str] = None
     descricao_produto: Optional[str] = None
     unidade: Optional[str] = None
     cod_operador: Optional[str] = None
@@ -38,6 +40,7 @@ class EficienciaFabrilDashboardItem:
     hora_inicio: Optional[str] = None
     hora_final: Optional[str] = None
     qtd_apontada: Optional[float] = None
+    meta_por_hora: Optional[float] = None
     tempo_real_horas: Optional[float] = None
     tempo_previsto_horas: Optional[float] = None
     eficiencia_percentual: Optional[float] = None

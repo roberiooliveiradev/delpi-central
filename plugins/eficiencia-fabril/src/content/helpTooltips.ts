@@ -7,6 +7,10 @@ export const EF_HELP_TOOLTIPS = {
     operator:
       "Filtra por nome do operador. Permite selecionar vários; vazio = todos os operadores do período.",
     op: "Filtra por ordem de produção (OP). Permite múltipla seleção.",
+    finishedProduct:
+      "Filtra pelo código do produto acabado (PA) da OP mãe. Permite múltipla seleção entre os PAs do período carregado.",
+    operation:
+      "Filtra pela operação apontada. Só fica disponível após selecionar um ou mais PAs — as opções vêm só desses produtos.",
     workCenter:
       "Filtra por centro de trabalho (CT). Permite múltipla seleção entre os CTs presentes nos dados carregados.",
     shift:
@@ -44,9 +48,15 @@ export const EF_HELP_TOOLTIPS = {
     horaInicio: "Horário de início do apontamento.",
     horaFinal: "Horário de término do apontamento.",
     qtdApontada: "Quantidade produzida no apontamento.",
+    metaPorHora:
+      "Meta de produção por hora do roteiro/OP (sem setup): QTD_TOTAL_OP ÷ HY_TEMPOM (fallback G2_TEMPAD/1000). Mesma unidade da quantidade apontada — para confrontar com a eficiência.",
     filial: "Filial TOTVS do registro.",
     op: "Ordem de produção vinculada ao apontamento.",
-    descricaoProduto: "Descrição do produto fabricado.",
+    produtoAcabado:
+      "Código do produto acabado (PA) da OP mãe — LEFT(OP, 6) + 01001 → SC2.C2_PRODUTO.",
+    descricaoProduto: "Descrição do produto fabricado no apontamento (pode ser PI).",
+    descricaoOperacao:
+      "Descrição da operação apontada no roteiro (SG2.G2_DESCRI), mesma base dos tempos previstos.",
     centroTrabalho: "Centro de trabalho (CT) do apontamento.",
     operador: "Nome ou login do operador.",
     eficienciaPercentual:

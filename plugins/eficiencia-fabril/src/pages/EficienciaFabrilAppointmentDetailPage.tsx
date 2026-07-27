@@ -5,6 +5,7 @@ import { ProductStructureTree } from "../components/ProductStructureTree";
 import { AppointmentTimeFindings } from "../components/AppointmentTimeFindings";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
 import { ExportActions } from "../components/ExportActions";
+import { RoutingOperationsTable } from "../components/RoutingOperationsTable";
 import {
   DetailDateTimeValue,
   DetailDateValue,
@@ -26,15 +27,12 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../hooks/useSimulatedLoadingProgress";
-import { formatHours, formatInteger, formatPercent } from "../utils/format";
+import { formatHours, formatPercent } from "../utils/format";
 import { navigateEficienciaFabrilBack } from "../utils/navigation";
 import {
   exportAppointmentDetailExcel,
   exportAppointmentDetailPdf,
 } from "../utils/appointmentDetailExport";
-import { dataTableBemClasses } from "@delpi/plugin-ui/index";
-
-const EF_TABLE = dataTableBemClasses("ef");
 
 type EficienciaFabrilAppointmentDetailPageProps = {
   appointmentId: string;
@@ -417,72 +415,7 @@ export function EficienciaFabrilAppointmentDetailPage({
               </article>
             </section>
 
-            <section className="ef-table-card" aria-label="Roteiro de produção">
-              <header className="ef-table-card__header">
-                <div>
-                  <h2>Roteiro de produção</h2>
-                  <p>SG2010 — operação do apontamento destacada</p>
-                </div>
-              </header>
-              <div className={EF_TABLE.wrap}>
-                <table className="ef-table ef-table--routing">
-                  <thead>
-                    <tr>
-                      <th className="ef-table__col--compact">Operação</th>
-                      <th className="ef-table__col--wide">Descrição</th>
-                      <th className="ef-table__col--compact">CT</th>
-                      <th className="ef-table__col--compact">Recurso</th>
-                      <th className="ef-table__col--numeric">Setup (h)</th>
-                      <th className="ef-table__col--numeric">Tempo padrão (h/peça)</th>
-                      <th className="ef-table__col--numeric">Nível BOM</th>
-                      <th className="ef-table__col--badge">Apontamento</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.routingOperations.length === 0 ? (
-                      <tr>
-                        <td colSpan={8} className="ef-table__empty">
-                          Roteiro não encontrado para o produto.
-                        </td>
-                      </tr>
-                    ) : (
-                      detail.routingOperations.map((row, index) => (
-                        <tr key={`${row.operation_code ?? "op"}-${index}`} className="ef-row">
-                          <td className="ef-table__col--compact" data-label="Operação">
-                            {row.operation_code ?? "—"}
-                          </td>
-                          <td className="ef-table__col--wide" data-label="Descrição">
-                            {row.operation_description ?? "—"}
-                          </td>
-                          <td className="ef-table__col--compact" data-label="CT">
-                            {row.work_center ?? "—"}
-                          </td>
-                          <td className="ef-table__col--compact" data-label="Recurso">
-                            {row.resource_code ?? "—"}
-                          </td>
-                          <td className="ef-table__col--numeric" data-label="Setup (h)">
-                            {formatHours(row.setup_hours ?? null)}
-                          </td>
-                          <td className="ef-table__col--numeric" data-label="Tempo padrão (h/peça)">
-                            {formatHours(row.standard_time_hours_piece ?? null, 4)}
-                          </td>
-                          <td className="ef-table__col--numeric" data-label="Nível BOM">
-                            {formatInteger(row.bom_level ?? null)}
-                          </td>
-                          <td className="ef-table__col--badge" data-label="Apontamento">
-                            {row.is_appointment_operation ? (
-                              <span className="ef-badge ef-badge--success">Operação atual</span>
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <RoutingOperationsTable operations={detail.routingOperations} />
 
             <article className="ef-detail-card ef-detail-card--full">
               <header>

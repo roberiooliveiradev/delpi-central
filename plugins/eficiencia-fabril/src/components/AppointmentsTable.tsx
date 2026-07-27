@@ -1,18 +1,26 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   createTablePaginationNav,
   dataTableBemClasses,
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
   HelpTooltip,
+  TableColumnVisibilityMenu,
+  useTableColumnVisibility,
 } from "@delpi/plugin-ui/index";
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
-import { formatDisplayDate } from "../utils/dates";
+import {
+  APPOINTMENT_COLUMN_EMPTY_FALLBACK,
+  APPOINTMENT_COLUMN_STORAGE_KEY,
+  APPOINTMENT_COLUMN_VISIBILITY_ITEMS,
+  APPOINTMENT_TABLE_COLUMNS,
+  appointmentDisplayCell,
+} from "../utils/appointmentsTableColumns";
 import { exportAppointmentsExcel, exportAppointmentsPdf } from "../utils/exportAppointments";
 import { ExportActions } from "./ExportActions";
-import { formatCurrency, formatPercent, formatProductionQuantity } from "../utils/format";
 
 const EF_TABLE = dataTableBemClasses("ef");
 
@@ -26,31 +34,6 @@ const AppointmentsPaginationNav = createTablePaginationNav({
     infoAfterCurrent: (totalPages) => ` de ${totalPages}`,
   },
 });
-
-type SortableColumn = {
-  id: AppointmentsSortColumn;
-  label: string;
-  hint?: string;
-};
-
-const SORTABLE_COLUMNS: SortableColumn[] = [
-  { id: "data_producao", label: "Data", hint: EF_HELP_TOOLTIPS.table.dataProducao },
-  { id: "hora_inicio", label: "Início", hint: EF_HELP_TOOLTIPS.table.horaInicio },
-  { id: "hora_final", label: "Fim", hint: EF_HELP_TOOLTIPS.table.horaFinal },
-  { id: "qtd_apontada", label: "Qtd. apontada", hint: EF_HELP_TOOLTIPS.table.qtdApontada },
-  { id: "filial", label: "Filial", hint: EF_HELP_TOOLTIPS.table.filial },
-  { id: "op", label: "OP", hint: EF_HELP_TOOLTIPS.table.op },
-  { id: "descricao_produto", label: "Descrição produto", hint: EF_HELP_TOOLTIPS.table.descricaoProduto },
-  { id: "centro_trabalho", label: "CT", hint: EF_HELP_TOOLTIPS.table.centroTrabalho },
-  { id: "operador", label: "Operador", hint: EF_HELP_TOOLTIPS.table.operador },
-  {
-    id: "eficiencia_percentual",
-    label: "Eficiência",
-    hint: EF_HELP_TOOLTIPS.table.eficienciaPercentual,
-  },
-  { id: "resultado_mod", label: "Resultado MOD", hint: EF_HELP_TOOLTIPS.table.resultadoMod },
-  { id: "status", label: "Status", hint: EF_HELP_TOOLTIPS.table.status },
-];
 
 type AppointmentsTableProps = {
   items: EficienciaFabrilItem[];
@@ -89,6 +72,17 @@ function SortIndicator({
   );
 }
 
+function renderStatusCell(item: EficienciaFabrilItem): ReactNode {
+  const statusKind = resolveEficienciaFabrilAppointmentStatus(item);
+  if (statusKind === "verify") {
+    return <span className="ef-badge ef-badge--danger">Verificar</span>;
+  }
+  if (statusKind === "low") {
+    return <span className="ef-badge ef-badge--warning">Eficiência baixa</span>;
+  }
+  return <span className="ef-badge">{item.status_registro ?? "—"}</span>;
+}
+
 export function AppointmentsTable({
   items,
   exportItems,
@@ -107,6 +101,28 @@ export function AppointmentsTable({
 }: AppointmentsTableProps) {
   const [exporting, setExporting] = useState(false);
 
+  const {
+    visibility,
+    visibleColumnCount,
+    setColumnVisible,
+    reset: resetColumnVisibility,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: APPOINTMENT_COLUMN_STORAGE_KEY,
+    columns: APPOINTMENT_COLUMN_VISIBILITY_ITEMS,
+    emptyFallbackKeys: APPOINTMENT_COLUMN_EMPTY_FALLBACK,
+  });
+
+  const visibleColumns = useMemo(
+    () => filterColumns(APPOINTMENT_TABLE_COLUMNS),
+    [filterColumns]
+  );
+
+  const visibleColumnIds = useMemo(
+    () => visibleColumns.map((column) => column.key),
+    [visibleColumns]
+  );
+
   /** TablePaginationNav deriva totalPages de total/pageSize — reconstituir size estável. */
   const pageSize = useMemo(() => {
     if (totalPages <= 0) return Math.max(items.length, 1);
@@ -118,7 +134,12 @@ export function AppointmentsTable({
 
     setExporting(true);
     try {
-      await exportAppointmentsExcel(exportItems, exportDateStart, exportDateEnd);
+      await exportAppointmentsExcel(
+        exportItems,
+        exportDateStart,
+        exportDateEnd,
+        visibleColumnIds
+      );
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Não foi possível exportar o Excel.";
@@ -126,14 +147,27 @@ export function AppointmentsTable({
     } finally {
       setExporting(false);
     }
-  }, [exportDateEnd, exportDateStart, exportItems, exporting, onExportError, total]);
+  }, [
+    exportDateEnd,
+    exportDateStart,
+    exportItems,
+    exporting,
+    onExportError,
+    total,
+    visibleColumnIds,
+  ]);
 
   const handleExportPdf = useCallback(async () => {
     if (exporting || total <= 0) return;
 
     setExporting(true);
     try {
-      await exportAppointmentsPdf(exportItems, exportDateStart, exportDateEnd);
+      await exportAppointmentsPdf(
+        exportItems,
+        exportDateStart,
+        exportDateEnd,
+        visibleColumnIds
+      );
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Não foi possível exportar o PDF.";
@@ -141,7 +175,15 @@ export function AppointmentsTable({
     } finally {
       setExporting(false);
     }
-  }, [exportDateEnd, exportDateStart, exportItems, exporting, onExportError, total]);
+  }, [
+    exportDateEnd,
+    exportDateStart,
+    exportItems,
+    exporting,
+    onExportError,
+    total,
+    visibleColumnIds,
+  ]);
 
   return (
     <section className="ef-table-card" aria-label="Apontamentos">
@@ -165,6 +207,14 @@ export function AppointmentsTable({
             onExportPdf={handleExportPdf}
             excelLabel="Excel"
           />
+          <TableColumnVisibilityMenu
+            columns={APPOINTMENT_COLUMN_VISIBILITY_ITEMS}
+            visibility={visibility}
+            onToggleColumn={setColumnVisible}
+            onReset={resetColumnVisibility}
+            labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+            className="ef-table-columns"
+          />
           <AppointmentsPaginationNav
             page={page}
             pageSize={pageSize}
@@ -178,11 +228,11 @@ export function AppointmentsTable({
         <table className={EF_TABLE.sortableTable ?? EF_TABLE.table}>
           <thead>
             <tr>
-              {SORTABLE_COLUMNS.map((column) => {
-                const isActive = sortBy === column.id;
+              {visibleColumns.map((column) => {
+                const isActive = sortBy === column.key;
                 return (
                   <th
-                    key={column.id}
+                    key={column.key}
                     scope="col"
                     aria-sort={
                       isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"
@@ -192,7 +242,7 @@ export function AppointmentsTable({
                       type="button"
                       className={isActive ? EF_TABLE.sortButtonActive : EF_TABLE.sortButton}
                       disabled={disabled}
-                      onClick={() => onSortChange(column.id)}
+                      onClick={() => onSortChange(column.key)}
                     >
                       <span className={EF_TABLE.headerLabel}>
                         <span className={EF_TABLE.headerText}>{column.label}</span>
@@ -204,7 +254,7 @@ export function AppointmentsTable({
                           />
                         ) : null}
                       </span>
-                      <SortIndicator column={column.id} sortBy={sortBy} sortDir={sortDir} />
+                      <SortIndicator column={column.key} sortBy={sortBy} sortDir={sortDir} />
                     </button>
                   </th>
                 );
@@ -214,7 +264,7 @@ export function AppointmentsTable({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={12} className={EF_TABLE.empty}>
+                <td colSpan={Math.max(visibleColumnCount, 1)} className={EF_TABLE.empty}>
                   Nenhum apontamento para os filtros selecionados.
                 </td>
               </tr>
@@ -254,32 +304,13 @@ export function AppointmentsTable({
                         : undefined
                     }
                   >
-                    <td data-label="Data">{formatDisplayDate(item.data_producao)}</td>
-                    <td data-label="Início">{item.hora_inicio ?? "—"}</td>
-                    <td data-label="Fim">{item.hora_final ?? "—"}</td>
-                    <td data-label="Qtd. apontada">
-                      {formatProductionQuantity(item.qtd_apontada, item.unidade)}
-                    </td>
-                    <td data-label="Filial">{item.filial ?? "—"}</td>
-                    <td data-label="OP">{item.op ?? "—"}</td>
-                    <td data-label="Descrição produto">
-                      {item.descricao_produto?.trim() || item.produto || "—"}
-                    </td>
-                    <td data-label="CT">{item.centro_trabalho ?? "—"}</td>
-                    <td data-label="Operador">
-                      {item.nome_operador ?? item.login_operador ?? "—"}
-                    </td>
-                    <td data-label="Eficiência">{formatPercent(item.eficiencia_percentual)}</td>
-                    <td data-label="Resultado MOD">{formatCurrency(item.resultado_mod)}</td>
-                    <td data-label="Status">
-                      {statusKind === "verify" ? (
-                        <span className="ef-badge ef-badge--danger">Verificar</span>
-                      ) : statusKind === "low" ? (
-                        <span className="ef-badge ef-badge--warning">Eficiência baixa</span>
-                      ) : (
-                        <span className="ef-badge">{item.status_registro ?? "—"}</span>
-                      )}
-                    </td>
+                    {visibleColumns.map((column) => (
+                      <td key={column.key} data-label={column.label}>
+                        {column.key === "status"
+                          ? renderStatusCell(item)
+                          : appointmentDisplayCell(item, column.key)}
+                      </td>
+                    ))}
                   </tr>
                 );
               })

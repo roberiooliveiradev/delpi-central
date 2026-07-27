@@ -21,6 +21,8 @@ export type EficienciaFabrilFilterState = {
   dateEnd: string;
   branch: string;
   ops: string[];
+  finishedProducts: string[];
+  operations: string[];
   employees: string[];
   workCenters: string[];
   shifts: EficienciaFabrilShift[];
@@ -36,6 +38,8 @@ function createInitialFilters(fixedBranch: string): EficienciaFabrilFilterState 
     dateEnd: getTodayInputValue(),
     branch: fixedBranch,
     ops: [],
+    finishedProducts: [],
+    operations: [],
     employees: [],
     workCenters: [],
     shifts: [],
@@ -49,11 +53,17 @@ function toApiFilters(
   filters: EficienciaFabrilFilterState,
   page: number
 ): EficienciaFabrilFilterParams {
+  const hasFinishedProducts = filters.finishedProducts.length > 0;
   return {
     start_date: filters.dateStart,
     end_date: filters.dateEnd,
     branch: filters.branch,
     ops: filters.ops.length > 0 ? filters.ops : undefined,
+    finished_products: hasFinishedProducts ? filters.finishedProducts : undefined,
+    operations:
+      hasFinishedProducts && filters.operations.length > 0
+        ? filters.operations
+        : undefined,
     employees: filters.employees.length > 0 ? filters.employees : undefined,
     work_centers: filters.workCenters.length > 0 ? filters.workCenters : undefined,
     shifts: filters.shifts.length > 0 ? filters.shifts : undefined,
@@ -94,6 +104,8 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
   const clearSecondaryFilters = useCallback(() => {
     patchFilters({
       ops: [],
+      finishedProducts: [],
+      operations: [],
       employees: [],
       workCenters: [],
       shifts: [],
@@ -101,10 +113,23 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
     });
   }, [patchFilters]);
 
+  const setFinishedProducts = useCallback(
+    (value: string[]) => {
+      // Trocar/limpar PA invalida o filtro de operação (opções dependem do PA).
+      patchFilters({
+        finishedProducts: value,
+        operations: [],
+      });
+    },
+    [patchFilters]
+  );
+
   return {
     dateStart: filters.dateStart,
     dateEnd: filters.dateEnd,
     ops: filters.ops,
+    finishedProducts: filters.finishedProducts,
+    operations: filters.operations,
     employees: filters.employees,
     workCenters: filters.workCenters,
     shifts: filters.shifts,
@@ -115,6 +140,8 @@ export function useEficienciaFabrilFilters(fixedBranch: string) {
     setDateStart: (value: string) => patchFilters({ dateStart: value }),
     setDateEnd: (value: string) => patchFilters({ dateEnd: value }),
     setOps: (value: string[]) => patchFilters({ ops: value }),
+    setFinishedProducts,
+    setOperations: (value: string[]) => patchFilters({ operations: value }),
     setEmployees: (value: string[]) => patchFilters({ employees: value }),
     setWorkCenters: (value: string[]) => patchFilters({ workCenters: value }),
     setShifts: (value: EficienciaFabrilShift[]) => patchFilters({ shifts: value }),

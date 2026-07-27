@@ -56,8 +56,8 @@ export function formatInteger(value: number | null | undefined): string {
   });
 }
 
-/** Casas decimais para quantidades de produção (H6_QTDPROD / QTD_APONTADA). */
-export const PRODUCTION_QUANTITY_FRACTION_DIGITS = 6;
+/** Casas decimais padronizadas para qtd. apontada e meta/hora. */
+export const PRODUCTION_QUANTITY_FRACTION_DIGITS = 3;
 
 export function formatProductionQuantity(
   value: number | null | undefined,
@@ -69,11 +69,23 @@ export function formatProductionQuantity(
   }
 
   const qty = value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   });
   const normalizedUnit = unit?.trim();
   return normalizedUnit ? `${qty} ${normalizedUnit}` : qty;
+}
+
+/** Meta de produção por hora (mesma unidade da qtd. apontada). */
+export function formatMetaPerHour(
+  value: number | null | undefined,
+  unit?: string | null
+): string {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "—";
+  }
+  const qty = formatProductionQuantity(value, unit);
+  return qty === "—" ? "—" : `${qty}/h`;
 }
 
 export function formatDecimal(

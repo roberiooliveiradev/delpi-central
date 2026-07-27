@@ -55,6 +55,12 @@ function applyScopeFilters(
     .filter((item) => isWithinRange(item.data_producao, params.start_date, params.end_date))
     .filter((item) => (params.branch ? item.filial === params.branch : true))
     .filter((item) => includesSelectedValue(item.op, params.ops))
+    .filter((item) => includesSelectedValue(item.produto_acabado, params.finished_products))
+    .filter((item) => {
+      // Operação só filtra com PA selecionado (mesma regra da UI).
+      if (!params.finished_products || params.finished_products.length === 0) return true;
+      return includesSelectedValue(item.operacao, params.operations);
+    })
     .filter((item) => includesSelectedValue(item.centro_trabalho, params.work_centers))
     .filter((item) => {
       if (!params.employees || params.employees.length === 0) return true;

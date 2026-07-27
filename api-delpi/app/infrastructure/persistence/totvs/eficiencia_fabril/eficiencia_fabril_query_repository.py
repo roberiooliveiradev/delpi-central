@@ -26,7 +26,6 @@ from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ap
 )
 from app.infrastructure.persistence.totvs.production_fabril.production_fabril_ef_items_sql import (
     EF_FABRIL_ITEMS_FROM,
-    EF_FABRIL_ITEMS_SELECT,
     build_ef_fabril_items_list_sql,
 )
 
@@ -283,10 +282,12 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             filial=_strip_str(row.get("FILIAL")),
             op=_strip_str(row.get("OP")),
             produto=_strip_str(row.get("PRODUTO")),
+            produto_acabado=_strip_str(row.get("PRODUTO_ACABADO")),
             descricao_produto=_strip_str(row.get("DESCRICAO_PRODUTO")),
             unidade=_strip_str(row.get("UNIDADE")),
             centro_trabalho=_strip_str(row.get("CENTRO_TRABALHO")),
             operacao=_strip_str(row.get("OPERACAO")),
+            descricao_operacao=_strip_str(row.get("DESCRICAO_OPERACAO")),
             cod_operador=_strip_str(row.get("COD_OPERADOR")),
             login_operador=_strip_str(row.get("LOGIN_OPERADOR")),
             nome_operador=_strip_str(row.get("NOME_OPERADOR")),
@@ -294,6 +295,7 @@ class EficienciaFabrilQueryRepository(BaseRepository, EficienciaFabrilQueryRepos
             hora_inicio=_strip_str(row.get("HORA_INICIO")),
             hora_final=_strip_str(row.get("HORA_FINAL")),
             qtd_apontada=_to_float(row.get("QTD_APONTADA")),
+            meta_por_hora=_to_float(row.get("META_POR_HORA")),
             tempo_real_horas=_to_float(row.get("TEMPO_REAL_HORAS")),
             tempo_previsto_horas=_to_float(row.get("TEMPO_PREVISTO_HORAS")),
             eficiencia_percentual=_to_float(row.get("EFICIENCIA_PERCENTUAL")),

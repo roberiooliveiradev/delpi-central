@@ -7,6 +7,8 @@ export type EficienciaFabrilFilterParams = {
   end_date: string;
   branch?: string;
   ops?: string[];
+  finished_products?: string[];
+  operations?: string[];
   employees?: string[];
   work_centers?: string[];
   shifts?: EficienciaFabrilShift[];
@@ -87,9 +89,11 @@ export type EficienciaFabrilItem = {
   filial: string | null;
   op: string | null;
   produto: string | null;
+  produto_acabado: string | null;
   descricao_produto: string | null;
   centro_trabalho: string | null;
   operacao: string | null;
+  descricao_operacao: string | null;
   cod_operador: string | null;
   login_operador: string | null;
   nome_operador: string | null;
@@ -97,6 +101,7 @@ export type EficienciaFabrilItem = {
   hora_inicio: string | null;
   hora_final: string | null;
   qtd_apontada: number | null;
+  meta_por_hora: number | null;
   unidade: string | null;
   tempo_real_horas: number | null;
   tempo_previsto_horas: number | null;
