@@ -214,12 +214,15 @@ export function SeriesChartPrimitive({
     "axisTitle",
     getChartPartState(chartParts, { kind: "axisTitle", axis: "y" })?.style,
   );
+  const centeredPlot =
+    chartType === "pie" || chartType === "funnel" || chartType === "radar";
   const layout = buildSeriesChartLayout({
     points: usable,
     axisValues,
     secondaryAxisValues,
-    showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
-    showXAxisTitle: config.showXAxisTitle !== false,
+    showXAxisLabels:
+      !centeredPlot && config.showAxes !== false && config.showXAxisLabels !== false,
+    showXAxisTitle: !centeredPlot && config.showXAxisTitle !== false,
     viewW: viewSize.w,
     viewH: viewSize.h,
     categoryPaddingPercent: config.categoryPaddingPercent,
@@ -228,6 +231,7 @@ export function SeriesChartPrimitive({
       axisFontSize: Math.max(axisXFont, axisYFont),
       axisTitleFontSize: Math.max(axisTitleXFont, axisTitleYFont),
     },
+    centeredPlot,
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);

@@ -80,6 +80,11 @@ export type BuildSeriesChartLayoutInput = {
   plotFrame?: ChartPartFrame | null;
   /** Fontes efetivas (px user units). Default: calibração histórica (eixo 9). */
   typography?: SeriesChartLayoutTypography | null;
+  /**
+   * Pizza / funil / radar: margens simétricas — o desenho fica no centro do plot-host,
+   * sem gutters de eixo cartesiano (Y à esquerda, X embaixo).
+   */
+  centeredPlot?: boolean;
 };
 
 /** Converte margens atuais do layout em frame % (materializar ao selecionar). */
@@ -395,7 +400,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     baseMargin,
     axisFontSize,
   );
-  const autoMargin: SeriesChartMargin = {
+  const cartesianAutoMargin: SeriesChartMargin = {
     top: baseMargin.top,
     left: sides.left,
     right: Math.max(
@@ -411,13 +416,23 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       axisTitleFontSize,
     ),
   };
+  const centeredPad = Math.max(8, Math.round(Math.min(viewW, viewH) * 0.045));
+  const centeredAutoMargin: SeriesChartMargin = {
+    top: centeredPad,
+    right: centeredPad,
+    bottom: centeredPad,
+    left: centeredPad,
+  };
+  const autoMargin = input.centeredPlot ? centeredAutoMargin : cartesianAutoMargin;
   const margin: SeriesChartMargin = clampMarginsForUsablePlot(
     framedEarly
       ? {
           ...framedEarly,
           right: Math.max(
             framedEarly.right,
-            hasSecondaryAxis ? Math.round(axisFontSize * 3.2) + 10 : framedEarly.right,
+            !input.centeredPlot && hasSecondaryAxis
+              ? Math.round(axisFontSize * 3.2) + 10
+              : framedEarly.right,
           ),
         }
       : autoMargin,

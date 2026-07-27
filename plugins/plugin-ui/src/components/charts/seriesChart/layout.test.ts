@@ -55,6 +55,26 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(layout.visibleXLabelIndices.length).toBeGreaterThan(0);
   });
 
+  it("centeredPlot usa margens simétricas (pizza/funil/radar)", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { value: 12, label: "LMP" },
+        { value: 2, label: "AMOSTRA" },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      viewW: 280,
+      viewH: 200,
+      centeredPlot: true,
+    });
+    expect(layout.margin.left).toBe(layout.margin.right);
+    expect(layout.margin.top).toBe(layout.margin.bottom);
+    const cx = layout.margin.left + layout.plotW / 2;
+    const cy = layout.margin.top + layout.plotH / 2;
+    expect(cx).toBeCloseTo(layout.viewW / 2, 5);
+    expect(cy).toBeCloseTo(layout.viewH / 2, 5);
+  });
+
   it("inset mantém primeiro e último ponto dentro do plot", () => {
     const points = [
       { value: 40, label: "11/06/26" },
