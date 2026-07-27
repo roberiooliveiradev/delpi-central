@@ -124,6 +124,32 @@ describe("applyViewProjection", () => {
     expect(fields.some((item) => item.field === "value")).toBe(true);
   });
 
+  it("catálogo curado sobrescreve humanize fraco do runtime", () => {
+    const fields = discoverResolvedFieldOptions(
+      {
+        kpiMetrics: [{ field: "scrap_cost_pct", value: 0.57, label: "scrap cost pct" }],
+      },
+      [{ field: "scrap_cost_pct", label: "Custo de refugo / ROL (%)" }],
+    );
+    expect(fields.find((item) => item.field === "scrap_cost_pct")?.label).toBe(
+      "Custo de refugo / ROL (%)",
+    );
+  });
+
+  it("rótulo PT do kpiMetrics prevalece sobre chave crua do catálogo", () => {
+    const fields = discoverResolvedFieldOptions(
+      {
+        kpiMetrics: [
+          { field: "scrap_cost_pct", value: 0.57, label: "Custo de refugo / ROL (%)" },
+        ],
+      },
+      [{ field: "scrap_cost_pct", label: "scrap_cost_pct" }],
+    );
+    expect(fields.find((item) => item.field === "scrap_cost_pct")?.label).toBe(
+      "Custo de refugo / ROL (%)",
+    );
+  });
+
   it("sugere projeções default ao conectar fonte", () => {
     const suggested = suggestDefaultProjections(sampleResolved);
     expect(suggested.kpiProjection?.metrics?.some((m) => m.field === "oee")).toBe(true);

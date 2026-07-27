@@ -29,7 +29,19 @@ CANVAS_TABLE_DATA_BOUND_BLOCK_TYPES = frozenset({"canvas_table"})
 FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 
 # Campos de overlay aplicados em runtime sem regenerar o catálogo completo.
-_RUNTIME_OVERLAY_KEYS = frozenset({"suggestedTransformSteps", "tvConstraints"})
+# Labels/campos de valor: mesma fonte curada das rotas (overlay), para o picker
+# de «Campo dinâmico» sem esperar sync OpenAPI.
+_RUNTIME_OVERLAY_KEYS = frozenset(
+    {
+        "suggestedTransformSteps",
+        "tvConstraints",
+        "valueFields",
+        "valueFieldLabels",
+        "label",
+        "description",
+        "whenToUse",
+    }
+)
 
 
 @lru_cache(maxsize=1)

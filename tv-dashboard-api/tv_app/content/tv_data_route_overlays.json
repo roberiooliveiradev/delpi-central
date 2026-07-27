@@ -354,6 +354,63 @@
       "tvConstraints": {
         "maxRows": 20
       }
+    },
+    "get_quality_scrap_cost_pct": {
+      "valueFields": [
+        "scrap_cost_pct",
+        "value"
+      ],
+      "valueFieldLabels": {
+        "scrap_cost_pct": "Custo de refugo / ROL (%)",
+        "value": "Valor",
+        "scrap_cost": "Custo de refugo (R$)",
+        "rol_with_ipi": "ROL com IPI (R$)",
+        "rol": "ROL (R$)",
+        "occurrences": "Ocorrências de refugo",
+        "records_without_cost": "Registros sem custo",
+        "quantity": "Quantidade total"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
+    },
+    "get_quality_rework_cost_pct": {
+      "valueFields": [
+        "rework_cost_pct",
+        "value"
+      ],
+      "valueFieldLabels": {
+        "rework_cost_pct": "Custo de retrabalho / ROL (%)",
+        "value": "Valor",
+        "rework_cost": "Custo de retrabalho (R$)",
+        "rol_with_ipi": "ROL com IPI (R$)",
+        "rol": "ROL (R$)",
+        "total_hours": "Horas de retrabalho",
+        "appointment_count": "Apontamentos",
+        "average_cost_per_hour": "Custo médio por hora (R$)",
+        "records_without_cost": "Registros sem custo"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
+    },
+    "get_refugos_scrap_cost_pct": {
+      "valueFields": [
+        "scrap_cost_pct",
+        "value"
+      ],
+      "valueFieldLabels": {
+        "scrap_cost_pct": "Custo de refugo / ROL (%)",
+        "value": "Valor",
+        "scrap_cost": "Custo de refugo (R$)",
+        "rol_with_ipi": "ROL com IPI (R$)",
+        "rol": "ROL (R$)",
+        "occurrences": "Ocorrências de refugo",
+        "records_without_cost": "Registros sem custo",
+        "quantity": "Quantidade total"
+      }
     }
   }
 }

@@ -485,44 +485,71 @@ export function discoverResolvedFieldOptions(
   sourceFieldLabels?: Record<string, string> | null,
 ): Array<{ field: string; label: string }> {
   const out = new Map<string, string>();
-  for (const item of catalogFields ?? []) {
-    const field = item.field.trim();
-    if (field) out.set(field, item.label.trim() || field);
-  }
-  // KPI escalar → campo canônico "value" (mesmo sem kpiMetrics).
+
+  const put = (field: string, label: string, prefer = false) => {
+    const key = field.trim();
+    if (!key) return;
+    const text = label.trim() || key;
+    if (!prefer && out.has(key)) return;
+    out.set(key, text);
+  };
+
+  const isCuratedLabel = (field: string, label: string) => {
+    const text = label.trim();
+    if (!text || text === field) return false;
+    if (text === field.replace(/_/g, " ")) return false;
+    return true;
+  };
+
+  // Runtime primeiro (kpiMetrics / colunas já rotulados pela API).
   if (resolved?.kpi != null && (resolved.kpi.value != null || resolved.kpi.label)) {
     if (![...out.keys()].some((key) => key.toLowerCase() === "value")) {
       const label =
         typeof resolved.kpi.label === "string" && resolved.kpi.label.trim()
           ? resolved.kpi.label.trim()
           : "value";
-      out.set("value", label);
+      put("value", label, true);
     }
   }
   for (const metric of resolved?.kpiMetrics ?? []) {
-    if (metric.field) out.set(metric.field, metric.label || metric.field);
+    if (metric.field) put(metric.field, metric.label || metric.field, true);
   }
   for (const col of resolved?.table?.columns ?? []) {
-    if (col.key) out.set(col.key, col.label || col.key);
+    if (col.key) put(col.key, col.label || col.key, true);
   }
   const firstRow = resolved?.table?.rows?.[0];
   if (firstRow && typeof firstRow === "object") {
     for (const key of Object.keys(firstRow)) {
-      if (!out.has(key)) out.set(key, key);
+      put(key, key, false);
     }
   }
+
+  // Catálogo TV: só sobrescreve com rótulo curado (≠ chave / humanize fraco).
+  for (const item of catalogFields ?? []) {
+    const field = item.field.trim();
+    if (!field) continue;
+    const label = item.label.trim() || field;
+    if (isCuratedLabel(field, label)) {
+      put(field, label, true);
+    } else if (!out.has(field)) {
+      put(field, label, false);
+    }
+  }
+
+  // fieldLabels do bloco data_source — override do usuário.
   if (sourceFieldLabels) {
     for (const [field, label] of Object.entries(sourceFieldLabels)) {
       const key = field.trim();
       if (!key || typeof label !== "string" || !label.trim()) continue;
       const existing = [...out.keys()].find((item) => item.toLowerCase() === key.toLowerCase());
       if (existing) {
-        out.set(existing, label);
+        out.set(existing, label.trim());
       } else {
-        out.set(key, label);
+        out.set(key, label.trim());
       }
     }
   }
+
   return [...out.entries()].map(([field, label]) => ({ field, label }));
 }
 

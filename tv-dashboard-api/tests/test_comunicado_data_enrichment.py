@@ -1595,3 +1595,57 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
         if cell.get("dataRef", {}).get("field")
     ]
     assert body_refs == [("src-1", "rol_target_pct"), ("src-meta", "ppm")]
+
+
+def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
+    """meta.fields dict (api-delpi) rotula kpiMetrics — picker Campo dinâmico em PT."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_quality_scrap_cost_pct",
+            "shape": "scalar",
+            "fields": {
+                "scrap_cost_pct": "Custo de refugo / ROL (%)",
+                "scrap_cost": "Custo de refugo (R$)",
+                "rol_with_ipi": "ROL com IPI (R$)",
+                "occurrences": "Ocorrências de refugo",
+                "value": "Valor",
+            },
+        },
+        "data": {
+            "scrap_cost_pct": 0.57,
+            "scrap_cost": 1200.0,
+            "rol_with_ipi": 210_000.0,
+            "occurrences": 3,
+            "value": 0.57,
+        },
+        "route": {
+            "label": "Custo de refugo / ROL",
+            "valueFields": ["scrap_cost_pct", "value"],
+            "valueFieldLabels": {},
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_quality_scrap_cost_pct",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = {item["field"]: item["label"] for item in blocks[0]["resolved"]["kpiMetrics"]}
+    assert metrics.get("scrap_cost_pct") == "Custo de refugo / ROL (%)"
+    assert metrics.get("scrap_cost") == "Custo de refugo (R$)" or "scrap_cost" not in metrics
+    assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"

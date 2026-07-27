@@ -182,9 +182,52 @@ def _value_field_labels(route_info: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _meta_field_labels(meta: dict[str, Any] | None) -> dict[str, str]:
+    """
+    Rótulos PT de `meta.fields` (api-delpi / kpi_field_labels).
+
+    Aceita dict `{key: label}` (envelope canônico) ou lista `[{key, label}]`.
+    """
+    if not isinstance(meta, dict):
+        return {}
+    fields = meta.get("fields")
+    out: dict[str, str] = {}
+    if isinstance(fields, dict):
+        for key, label in fields.items():
+            field = str(key).strip()
+            text = str(label or "").strip()
+            if field and text:
+                out[field] = text
+        return out
+    if isinstance(fields, list):
+        for item in fields:
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("key") or item.get("name") or "").strip()
+            text = str(item.get("label") or item.get("title") or "").strip()
+            if field and text:
+                out[field] = text
+    return out
+
+
+def _merged_value_field_labels(
+    route_info: dict[str, Any],
+    meta: dict[str, Any] | None = None,
+) -> dict[str, str]:
+    """Catálogo TV + meta.fields da api-delpi (meta vence em chave igual)."""
+    labels = dict(_value_field_labels(route_info))
+    labels.update(_meta_field_labels(meta))
+    return labels
+
+
 def _humanize_value_field(field: str, labels: dict[str, str]) -> str:
     if field in labels:
         return labels[field]
+    # Match case-insensitive no mapa (meta às vezes usa casing diferente).
+    lowered = field.lower()
+    for key, label in labels.items():
+        if key.lower() == lowered:
+            return label
     return field.replace("_", " ").strip()
 
 
@@ -404,9 +447,10 @@ def _extract_kpi_metrics(
     *,
     route_info: dict[str, Any],
     binding: dict[str, Any],
+    meta: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """Extrai métricas escalares; se valueFields do catálogo erram o payload, cai na discovery."""
-    labels = _value_field_labels(route_info)
+    labels = _merged_value_field_labels(route_info, meta)
     catalog = _catalog_value_fields(route_info)
     metrics = _metrics_from_candidates(data, catalog, labels) if catalog else []
     if not metrics:
@@ -543,9 +587,22 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
 
 
 def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    labels = _meta_field_labels(meta)
+    if rows:
+        columns: list[dict[str, str]] = []
+        for key in rows[0].keys():
+            field = str(key)
+            label = labels.get(field)
+            if not label:
+                for map_key, map_label in labels.items():
+                    if map_key.lower() == field.lower():
+                        label = map_label
+                        break
+            columns.append({"key": field, "label": label or field})
+        return columns
     fields = meta.get("fields")
     if isinstance(fields, list):
-        columns: list[dict[str, str]] = []
+        columns = []
         for field in fields:
             if not isinstance(field, dict):
                 continue
@@ -560,8 +617,8 @@ def _build_table_columns(meta: dict[str, Any], rows: list[dict[str, Any]]) -> li
             )
         if columns:
             return columns
-    if rows:
-        return [{"key": str(key), "label": str(key)} for key in rows[0].keys()]
+    if labels:
+        return [{"key": key, "label": label} for key, label in labels.items()]
     return []
 
 
@@ -729,8 +786,9 @@ def _meaningful_kpi_metrics(
     *,
     route_info: dict[str, Any],
     binding: dict[str, Any],
+    meta: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
+    metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding, meta=meta)
     return [metric for metric in metrics if metric.get("field") != "total_records"]
 
 
@@ -759,7 +817,9 @@ def _infer_auto_display_mode(
         series_field=route_info.get("seriesField"),
     )
     if rows:
-        if not _meaningful_kpi_metrics(data, route_info=route_info, binding=binding_payload):
+        if not _meaningful_kpi_metrics(
+            data, route_info=route_info, binding=binding_payload, meta=meta
+        ):
             return "table"
         if len(rows) > 1 and not _rows_have_numeric_cells(rows):
             return "table"
@@ -1170,7 +1230,9 @@ class ComunicadoDataEnrichmentService:
             )
 
         value_fields = _value_fields_for_binding(route_info, binding)
-        metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
+        metrics = _extract_kpi_metrics(
+            data, route_info=route_info, binding=binding, meta=meta
+        )
         branch = merged_params.get("branch")
         branch_str = str(branch).strip() if branch else None
         max_rows = _resolve_table_max_rows(binding, route_info)
