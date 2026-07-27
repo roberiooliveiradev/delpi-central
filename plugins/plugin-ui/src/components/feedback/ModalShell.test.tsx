@@ -216,6 +216,12 @@ describe("ModalShell", () => {
     host.remove();
   });
 
+  it("host-fill body permite scroll vertical (overflow:auto) para formulários longos", () => {
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal--host-fill\s+\.delpi-ui-modal__body[\s\S]*?overflow:\s*auto/s,
+    );
+  });
+
   it("createHostContainedModalShell com layout dialog centraliza o card sem host-fill", () => {
     const host = document.createElement("main");
     host.className = "dashboard-tv-dashboard";

@@ -14,7 +14,11 @@ import {
   updateLmpNonconformity,
 } from "../api/lmpNonconformityApi";
 import { DataTableSection } from "../components/DataTableSection";
-import { FilterInputField, FiltersRow } from "../components/dashboardFiltersUi";
+import {
+  FilterInputField,
+  FilterSelectField,
+  FiltersRow,
+} from "../components/dashboardFiltersUi";
 import { LmpsNav } from "../components/LmpsNav";
 import type { DataTableColumn } from "../components/dataTableUi";
 import {
@@ -22,6 +26,7 @@ import {
   HostContainedDialog,
   HostContainedFill,
   LMPS_CONFIRM_CLASSES,
+  NativeTextField,
   SectionCard,
   SelectField,
   StatusBadge,
@@ -399,7 +404,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       </header>
 
       <FiltersRow>
-        <SelectField
+        <FilterSelectField
           id="lmps-nc-status"
           label="Status"
           value={status}
@@ -407,15 +412,13 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             setPage(1);
             setStatus(v);
           }}
-          options={[
-            { value: "", label: "Todos" },
-            ...LMP_NC_STATUS_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-            })),
-          ]}
+          placeholderOption="Todos"
+          options={LMP_NC_STATUS_OPTIONS.map((o) => ({
+            value: o.value,
+            label: o.label,
+          }))}
         />
-        <SelectField
+        <FilterSelectField
           id="lmps-nc-branch"
           label="Filial"
           value={branch}
@@ -423,8 +426,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             setPage(1);
             setBranch(v);
           }}
+          placeholderOption="Todas"
           options={[
-            { value: "", label: "Todas" },
             { value: "01", label: "01" },
             { value: "02", label: "02" },
           ]}
@@ -511,7 +514,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
 
           <SectionCard title="Identificação">
             <div className="lmps-nc-form-grid">
-              <TextField
+              <NativeTextField
                 id="nc-registered-at"
                 label="Data/hora registro"
                 type="datetime-local"
@@ -535,8 +538,9 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 label="Filial"
                 value={form.branch_code}
                 onChange={setField("branch_code")}
+                allowEmpty
+                emptyLabel="—"
                 options={[
-                  { value: "", label: "—" },
                   { value: "01", label: "01" },
                   { value: "02", label: "02" },
                 ]}
@@ -632,22 +636,22 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           </SectionCard>
 
           <FormActions>
-            <button
+            <ActionButton
               type="button"
-              className="lmps-ghost-btn"
+              variant="ghost"
               disabled={saving}
               onClick={() => setFormOpen(false)}
             >
               Cancelar
-            </button>
-            <button
+            </ActionButton>
+            <ActionButton
               type="button"
-              className="lmps-primary-btn"
+              variant="primary"
               disabled={saving}
               onClick={() => void handleSave()}
             >
               {saving ? "Salvando…" : "Salvar"}
-            </button>
+            </ActionButton>
           </FormActions>
         </div>
       </HostContainedFill>
