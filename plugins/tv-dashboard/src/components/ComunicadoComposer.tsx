@@ -899,6 +899,7 @@ export function ComunicadoComposerCanvas() {
                   tableProjection:
                     "tableProjection" in selected ? selected.tableProjection : undefined,
                 },
+                chartType: selected.type === "chart_view" ? selected.chartType : undefined,
               }) as Partial<ComunicadoBlock>,
             );
             return;
@@ -1222,6 +1223,7 @@ export function ComunicadoComposerCanvas() {
                           tableProjection:
                             "tableProjection" in selected ? selected.tableProjection : undefined,
                         },
+                        chartType: selected.type === "chart_view" ? selected.chartType : undefined,
                       }) as Partial<ComunicadoBlock>,
                     );
                     return;

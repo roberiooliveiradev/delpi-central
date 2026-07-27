@@ -311,6 +311,7 @@ export function useComunicadoEditorBlocks({
           chartProjection: "chartProjection" in block ? block.chartProjection : undefined,
           tableProjection: "tableProjection" in block ? block.tableProjection : undefined,
         },
+        chartType: block.type === "chart_view" ? block.chartType : undefined,
       });
       return { ...block, ...patch } as ComunicadoBlock;
     },

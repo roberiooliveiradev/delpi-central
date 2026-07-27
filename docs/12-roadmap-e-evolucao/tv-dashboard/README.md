@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Políticas de dados por gráfico](./PLAYBOOK-CHART-DATA-POLICIES.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 

@@ -36,7 +36,9 @@ function ChartTypePlaceholder({
   const hint = loading
     ? "Carregando dados…"
     : bound
-      ? "Sem série ou valor — escolha campos na conexão do visual"
+      ? chartType === "pie" || chartType === "doughnut"
+        ? "Sem fatias — escolha a categoria (ex.: Tipo) na conexão do visual"
+        : "Sem série ou valor — escolha campos na conexão do visual"
       : interactive
         ? "Conecte uma fonte de dados"
         : label;
@@ -56,6 +58,7 @@ export function ChartViewBlockView({
 }: Props) {
   const resolved = applyViewProjection(block.resolved, {
     chartProjection: block.chartProjection,
+    chartType: block.chartType,
   });
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;

@@ -4,9 +4,14 @@ import {
   NativeTextControl,
 } from "@delpi/plugin-ui/index";
 import {
+  chartAxesEditorHint,
+  chartCategoryWellLabel,
+  chartSeriesWellLabel,
+  resolveChartDataPolicy,
   VIEW_AGGREGATION_OPTIONS,
   type ChartSeriesProjection,
   type ChartViewProjection,
+  type ComunicadoChartType,
   type ViewAggregation,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -23,6 +28,7 @@ type Props = {
   chartProjection?: ChartViewProjection | null;
   onChange: (next: ChartViewProjection | undefined) => void;
   compact?: boolean;
+  chartType?: ComunicadoChartType;
   /** Série destacada (selecionada no palco). */
   focusedSeriesField?: string | null;
   /** Clique na linha da série → seleciona a parte no palco (Excel-like). */
@@ -45,11 +51,13 @@ export function ChartAxesProjectionEditor({
   chartProjection,
   onChange,
   compact = false,
+  chartType = "line",
   focusedSeriesField = null,
   onSeriesActivate,
 }: Props) {
   if (options.length === 0) return null;
 
+  const policy = resolveChartDataPolicy(chartType);
   const categoryField = chartProjection?.categoryField ?? "";
   const seriesList = chartProjection?.series ?? [];
   const seriesMap = seriesByField(chartProjection);
@@ -84,6 +92,8 @@ export function ChartAxesProjectionEditor({
     persist({ categoryField: categoryField || undefined, series: current });
   };
 
+  const defaultSeriesAgg = policy.defaultAggregation;
+
   return (
     <div
       className={
@@ -95,14 +105,12 @@ export function ChartAxesProjectionEditor({
       aria-label="Eixos do gráfico"
     >
       <p className="td-deck-inspector__hint">
-        {hasProjection
-          ? "X = categoria de referência; Y = séries (arraste para ordenar)"
-          : "Automático (série da rota). Escolha a categoria X e as séries Y."}
+        {chartAxesEditorHint(policy, hasProjection)}
       </p>
       <FormSelectControl
         id={`${idPrefix}-category`}
         className={compact ? "delpi-ui-select--compact" : undefined}
-        ariaLabel="Campo do eixo X (categoria de referência)"
+        ariaLabel={`${chartCategoryWellLabel(policy)}`}
         value={categoryField}
         onChange={(value) => {
           persist({
@@ -111,15 +119,15 @@ export function ChartAxesProjectionEditor({
           });
         }}
         options={[
-          { value: "", label: "Categoria automática" },
+          { value: "", label: `${chartCategoryWellLabel(policy)} automática` },
           ...options.map((opt) => ({
             value: opt.field,
-            label: `X · ${opt.label}${opt.fieldType ? ` (${opt.fieldType})` : ""}`,
+            label: `${chartCategoryWellLabel(policy)} · ${opt.label}${opt.fieldType ? ` (${opt.fieldType})` : ""}`,
           })),
         ]}
       />
 
-      <p className="td-deck-inspector__hint">Séries no eixo Y</p>
+      <p className="td-deck-inspector__hint">{chartSeriesWellLabel(policy)}</p>
       {yOptions.map((option) => {
         const checked = seriesMap.has(option.field);
         const series = seriesMap.get(option.field);
@@ -174,11 +182,18 @@ export function ChartAxesProjectionEditor({
                 id={`${idPrefix}-series-${option.field}`}
                 className="td-deck-inspector__checkbox"
                 checked={checked}
-                label={`Y · ${option.label}`}
+                label={`${chartSeriesWellLabel(policy)} · ${option.label}`}
                 onChange={(nextChecked) => {
                   const current = seriesList.filter((item) => item.field !== option.field);
                   const nextSeries = nextChecked
-                    ? [...current, { field: option.field, label: option.label }]
+                    ? [
+                        ...current,
+                        {
+                          field: option.field,
+                          label: option.label,
+                          aggregation: defaultSeriesAgg,
+                        },
+                      ]
                     : current;
                   persist({
                     categoryField: categoryField || undefined,

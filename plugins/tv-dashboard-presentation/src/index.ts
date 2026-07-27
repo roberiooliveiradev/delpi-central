@@ -958,6 +958,15 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  chartAxesEditorHint,
+  chartCategoryWellLabel,
+  chartSeriesWellLabel,
+  resolveChartDataPolicy,
+  type ChartDataPolicy,
+  type ChartDataRowMode,
+  type ChartDataWellSpec,
+} from "./chartDataPolicy";
+export {
   parseProjectionNumber,
   FIELD_LIST_JOIN,
   TEXT_FIELD_AGGREGATION_OPTIONS,

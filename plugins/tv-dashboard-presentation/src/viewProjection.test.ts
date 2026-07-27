@@ -85,14 +85,92 @@ describe("applyViewProjection", () => {
           { field: "otd", label: "OTD" },
         ],
       },
+      chartType: "line",
     });
     expect(next?.chart?.series).toHaveLength(2);
     expect(next?.chart?.series?.[0]?.points?.[0]).toMatchObject({ label: "Jan", value: 80 });
     expect(next?.chart?.series?.[1]?.points?.[1]).toMatchObject({ label: "Fev", value: 95 });
   });
 
+  it("pizza agrupa por categoria (TIPO) e conta linhas quando medida ausente", () => {
+    const lmpResolved: ComunicadoDataResolved = {
+      table: {
+        columns: [
+          { key: "tipo", label: "Tipo" },
+          { key: "ov", label: "OV" },
+        ],
+        rows: [
+          { tipo: "LMP", ov: "1" },
+          { tipo: "LMP", ov: "2" },
+          { tipo: "AMOSTRA", ov: "3" },
+          { tipo: "OUTRO", ov: "4" },
+          { tipo: "LMP", ov: "5" },
+        ],
+      },
+    };
+    const next = applyViewProjection(lmpResolved, {
+      chartType: "pie",
+      chartProjection: {
+        categoryField: "tipo",
+        series: [{ field: "total_items", label: "total items", aggregation: "first" }],
+      },
+    });
+    const points = next?.chart?.points ?? [];
+    expect(points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "LMP", value: 3 }),
+        expect.objectContaining({ label: "AMOSTRA", value: 1 }),
+        expect.objectContaining({ label: "OUTRO", value: 1 }),
+      ]),
+    );
+    expect(points).toHaveLength(3);
+  });
+
+  it("barra agrupa soma por categoria", () => {
+    const next = applyViewProjection(
+      {
+        table: {
+          columns: [
+            { key: "filial", label: "Filial" },
+            { key: "qtd", label: "Qtd" },
+          ],
+          rows: [
+            { filial: "01", qtd: 10 },
+            { filial: "01", qtd: 5 },
+            { filial: "02", qtd: 3 },
+          ],
+        },
+      },
+      {
+        chartType: "bar",
+        chartProjection: {
+          categoryField: "filial",
+          series: [{ field: "qtd", aggregation: "sum" }],
+        },
+      },
+    );
+    expect(next?.chart?.points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "01", value: 15 }),
+        expect.objectContaining({ label: "02", value: 3 }),
+      ]),
+    );
+  });
+
+  it("linha não agrupa (um ponto por linha)", () => {
+    const next = applyViewProjection(sampleResolved, {
+      chartType: "line",
+      chartProjection: {
+        categoryField: "periodo",
+        series: [{ field: "oee" }],
+      },
+    });
+    expect(next?.chart?.points).toHaveLength(2);
+  });
+
   it("preserva plotOn secondary na série do chart", () => {
     const next = applyViewProjection(sampleResolved, {
+      chartType: "line",
       chartProjection: {
         categoryField: "periodo",
         series: [
@@ -102,6 +180,27 @@ describe("applyViewProjection", () => {
       },
     });
     expect(next?.chart?.series?.[1]?.plotOn).toBe("secondary");
+  });
+
+  it("suggestDefaultProjections pizza sugere count na categoria", () => {
+    const suggested = suggestDefaultProjections(
+      {
+        table: {
+          columns: [
+            { key: "tipo", label: "Tipo" },
+            { key: "qtd", label: "Qtd" },
+          ],
+          rows: [
+            { tipo: "LMP", qtd: 1 },
+            { tipo: "OUTRO", qtd: 2 },
+          ],
+        },
+      },
+      { tipo: "string", qtd: "number" },
+      "pie",
+    );
+    expect(suggested.chartProjection?.categoryField).toBe("tipo");
+    expect(suggested.chartProjection?.series?.[0]?.aggregation).toBe("count");
   });
 
   it("migra selectedValueFields para kpiProjection helper", () => {

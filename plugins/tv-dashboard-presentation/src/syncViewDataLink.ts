@@ -146,6 +146,8 @@ export type BuildViewDataLinkPatchInput = {
     tableProjection?: TableViewProjection;
   };
   fitFrame?: boolean;
+  /** Tipo do gráfico ao sugerir projeção (pizza → group-by). */
+  chartType?: import("./comunicadoTypes").ComunicadoChartType;
 };
 
 /**
@@ -162,9 +164,14 @@ export function buildViewDataLinkPatch(
     currentFrame,
     existing,
     fitFrame = true,
+    chartType,
   } = input;
 
-  const suggested = suggestDefaultProjections(resolved, fieldTypes);
+  const suggested = suggestDefaultProjections(
+    resolved,
+    fieldTypes,
+    viewType === "chart_view" ? chartType : undefined,
+  );
   const patch: Partial<ComunicadoKpiViewBlock & ComunicadoChartViewBlock & ComunicadoTableViewBlock> =
     {
       dataSourceId,
@@ -254,6 +261,7 @@ export function syncDataViewBlocksWithResolved(
           chartProjection: "chartProjection" in block ? block.chartProjection : undefined,
           tableProjection: "tableProjection" in block ? block.tableProjection : undefined,
         },
+        chartType: block.type === "chart_view" ? block.chartType : undefined,
       });
       const wroteProjection =
         Boolean(patch.kpiProjection) ||

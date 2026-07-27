@@ -165,6 +165,7 @@ export function SelectedDataSidePanel({
           chartProjection: "chartProjection" in primary ? primary.chartProjection : undefined,
           tableProjection: "tableProjection" in primary ? primary.tableProjection : undefined,
         },
+        chartType: primary.type === "chart_view" ? primary.chartType : undefined,
       });
       updateSelected(patch as Partial<ComunicadoBlock>);
       setDataPanelIntent("binding");

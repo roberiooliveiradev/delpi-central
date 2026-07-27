@@ -64,6 +64,7 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
           idPrefix="td-select-data"
           options={fieldOptions}
           chartProjection={block.chartProjection}
+          chartType={block.chartType}
           onChange={applyProjection}
           focusedSeriesField={
             selectedChartPart?.kind === "series"

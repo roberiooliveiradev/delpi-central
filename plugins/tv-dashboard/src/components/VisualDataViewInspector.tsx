@@ -188,6 +188,7 @@ export function VisualDataViewInspector({
                 tableProjection:
                   "tableProjection" in selected ? selected.tableProjection : undefined,
               },
+              chartType: selected.type === "chart_view" ? selected.chartType : undefined,
             });
             updateSelected(patch as Partial<ComunicadoBlock>);
           }}
@@ -209,6 +210,7 @@ export function VisualDataViewInspector({
             idPrefix="td-view-chart-axis"
             options={valueFieldOptions}
             chartProjection={"chartProjection" in selected ? selected.chartProjection : undefined}
+            chartType={selected.chartType}
             compact={isRibbon}
             onChange={applyChartProjection}
             focusedSeriesField={

@@ -1,6 +1,11 @@
 import type { DelpiKpiColorRule } from "@delpi/plugin-ui/index";
 
+import {
+  resolveChartDataPolicy,
+  type ChartDataPolicy,
+} from "./chartDataPolicy";
 import type {
+  ComunicadoChartType,
   ComunicadoDataKpiMetric,
   ComunicadoDataResolved,
   ComunicadoDataTableColumn,
@@ -68,6 +73,8 @@ export type ViewProjectionSelection = MetricSelection & {
   kpiProjection?: KpiViewProjection | null;
   chartProjection?: ChartViewProjection | null;
   tableProjection?: TableViewProjection | null;
+  /** Tipo do visual — define policy de group-by / wells (Playbook chart-data-policies). */
+  chartType?: ComunicadoChartType | null;
 };
 
 function asFiniteNumber(value: unknown): number | null {
@@ -305,7 +312,15 @@ function buildSeriesFromTable(
   rows: Array<Record<string, unknown>>,
   categoryField: string | undefined,
   seriesDefs: ChartSeriesProjection[],
+  policy: ChartDataPolicy,
 ): NonNullable<ComunicadoDataResolved["chart"]> {
+  const chartType = policy.chartType;
+
+  if (policy.rowMode === "groupByCategory" && categoryField) {
+    return buildGroupedSeriesFromTable(rows, categoryField, seriesDefs, policy);
+  }
+
+  // scatter/bubble: categoryField guarda a medida X (rótulo numérico).
   const categories = rows.map((row, index) => {
     if (categoryField && row[categoryField] != null) return String(row[categoryField]);
     return String(index + 1);
@@ -316,13 +331,11 @@ function buildSeriesFromTable(
     const field = def?.field;
     const points = rows.map((row, index) => ({
       label: categories[index],
-      value: field
-        ? aggregateValues([row[field]], def?.aggregation ?? "first")
-        : null,
+      value: resolveSeriesPointValue(row, field, def?.aggregation, policy),
     }));
     return {
       points,
-      chartType: "line",
+      chartType,
       series: def
         ? [
             {
@@ -350,27 +363,187 @@ function buildSeriesFromTable(
     plotOn: def.plotOn,
     points: rows.map((row, index) => ({
       label: categories[index],
-      value: aggregateValues([row[def.field]], def.aggregation ?? "first"),
+      value: resolveSeriesPointValue(row, def.field, def.aggregation, policy),
     })),
   }));
 
   return {
     points: series[0]?.points ?? [],
-    chartType: "line",
+    chartType,
     series,
   };
+}
+
+function resolveSeriesPointValue(
+  row: Record<string, unknown>,
+  field: string | undefined,
+  aggregation: ViewAggregation | undefined,
+  policy: ChartDataPolicy,
+): number | null {
+  if (!field) {
+    return policy.defaultAggregation === "count" ? 1 : null;
+  }
+  const agg = aggregation ?? policy.defaultAggregation;
+  if (agg === "count") {
+    return 1;
+  }
+  const parsed = aggregateValues([row[field]], agg);
+  if (parsed != null) return parsed;
+  // Distribuição part-to-whole: medida ausente → conta a linha.
+  if (policy.defaultAggregation === "count") return 1;
+  return null;
+}
+
+function buildGroupedSeriesFromTable(
+  rows: Array<Record<string, unknown>>,
+  categoryField: string,
+  seriesDefs: ChartSeriesProjection[],
+  policy: ChartDataPolicy,
+): NonNullable<ComunicadoDataResolved["chart"]> {
+  const groups = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of rows) {
+    const raw = row[categoryField];
+    const key = raw == null || raw === "" ? "(vazio)" : String(raw);
+    const bucket = groups.get(key);
+    if (bucket) bucket.push(row);
+    else groups.set(key, [row]);
+  }
+
+  let categoryKeys = [...groups.keys()];
+  if (policy.maxCategories != null && categoryKeys.length > policy.maxCategories) {
+    // Mantém as maiores categorias por contagem; resto → Outros.
+    const ranked = categoryKeys
+      .map((key) => ({ key, n: groups.get(key)?.length ?? 0 }))
+      .sort((a, b) => b.n - a.n);
+    const keep = new Set(ranked.slice(0, policy.maxCategories - 1).map((item) => item.key));
+    const others: Array<Record<string, unknown>> = [];
+    for (const key of categoryKeys) {
+      if (keep.has(key)) continue;
+      others.push(...(groups.get(key) ?? []));
+      groups.delete(key);
+    }
+    if (others.length > 0) groups.set("Outros", others);
+    categoryKeys = [...groups.keys()];
+  }
+
+  // Funil: ordenar por valor da 1ª série (desc).
+  if (policy.chartType === "funnel" && seriesDefs[0]) {
+    const def = seriesDefs[0];
+    categoryKeys.sort((a, b) => {
+      const va = aggregateGroupRows(groups.get(a) ?? [], def.field, def.aggregation, policy) ?? 0;
+      const vb = aggregateGroupRows(groups.get(b) ?? [], def.field, def.aggregation, policy) ?? 0;
+      return vb - va;
+    });
+  }
+
+  const effectiveDefs =
+    seriesDefs.length > 0
+      ? seriesDefs
+      : [{ field: categoryField, aggregation: "count" as const, label: "Contagem" }];
+
+  if (effectiveDefs.length <= 1) {
+    const def = effectiveDefs[0]!;
+    const points = categoryKeys.map((key) => ({
+      label: key,
+      value: aggregateGroupRows(groups.get(key) ?? [], def.field, def.aggregation, policy),
+    }));
+    return {
+      points,
+      chartType: policy.chartType,
+      series: [
+        {
+          name: resolveFieldDisplayLabel({
+            field: def.field,
+            projectionLabel: def.label,
+          }),
+          field: def.field,
+          points,
+          color: def.color,
+          plotOn: def.plotOn,
+        },
+      ],
+    };
+  }
+
+  const series = effectiveDefs.map((def) => ({
+    name: resolveFieldDisplayLabel({
+      field: def.field,
+      projectionLabel: def.label,
+    }),
+    field: def.field,
+    color: def.color,
+    plotOn: def.plotOn,
+    points: categoryKeys.map((key) => ({
+      label: key,
+      value: aggregateGroupRows(groups.get(key) ?? [], def.field, def.aggregation, policy),
+    })),
+  }));
+
+  return {
+    points: series[0]?.points ?? [],
+    chartType: policy.chartType,
+    series,
+  };
+}
+
+function aggregateGroupRows(
+  groupRows: Array<Record<string, unknown>>,
+  field: string,
+  aggregation: ViewAggregation | undefined,
+  policy: ChartDataPolicy,
+): number | null {
+  const agg = aggregation ?? policy.defaultAggregation;
+  if (agg === "count") return groupRows.length;
+  const values = groupRows.map((row) => row[field]);
+  const hasFinite = values.some((value) => asFiniteNumber(value) != null);
+  if (!hasFinite) {
+    // Part-to-whole / comparação: medida fantasma ou ausente → conta linhas do grupo.
+    if (
+      policy.rowMode === "groupByCategory" &&
+      (policy.defaultAggregation === "count" ||
+        policy.family === "distribution" ||
+        policy.family === "comparison")
+    ) {
+      return groupRows.length;
+    }
+    return null;
+  }
+  return aggregateValues(values, agg);
 }
 
 function applyChartProjection(
   resolved: ComunicadoDataResolved,
   projection: ChartViewProjection | undefined,
   fallbackSelection: MetricSelection,
+  chartType: ComunicadoChartType = "line",
 ): ComunicadoDataResolved {
   const rows = resolved.table?.rows ?? [];
   const seriesDefs = projection?.series ?? [];
+  const policy = resolveChartDataPolicy(chartType);
 
   if (seriesDefs.length > 0 && rows.length > 0) {
-    const chart = buildSeriesFromTable(rows, projection?.categoryField, seriesDefs);
+    const chart = buildSeriesFromTable(
+      rows,
+      projection?.categoryField,
+      seriesDefs,
+      policy,
+    );
+    return { ...resolved, chart };
+  }
+
+  // Pizza/barra sem série explícita: só categoria → contagem por grupo.
+  if (
+    policy.rowMode === "groupByCategory" &&
+    projection?.categoryField &&
+    rows.length > 0 &&
+    seriesDefs.length === 0
+  ) {
+    const chart = buildSeriesFromTable(
+      rows,
+      projection.categoryField,
+      [{ field: projection.categoryField, aggregation: "count", label: "Contagem" }],
+      policy,
+    );
     return { ...resolved, chart };
   }
 
@@ -398,7 +571,7 @@ function applyChartProjection(
         ...resolved,
         chart: {
           points: series.flatMap((item) => item.points),
-          chartType: "bar",
+          chartType: policy.chartType === "line" ? "bar" : policy.chartType,
           series,
         },
       };
@@ -472,7 +645,12 @@ export function applyViewProjection(
   }
 
   if (selection.chartProjection?.series?.length || selection.chartProjection?.categoryField) {
-    next = applyChartProjection(next, selection.chartProjection, fallback);
+    next = applyChartProjection(
+      next,
+      selection.chartProjection,
+      fallback,
+      selection.chartType ?? "line",
+    );
   }
 
   return next;
@@ -557,6 +735,7 @@ export function discoverResolvedFieldOptions(
 export function suggestDefaultProjections(
   resolved: ComunicadoDataResolved | undefined,
   fieldTypes?: Record<string, "number" | "string" | "date"> | null,
+  chartType?: ComunicadoChartType | null,
 ): {
   kpiProjection?: KpiViewProjection;
   chartProjection?: ChartViewProjection;
@@ -566,6 +745,7 @@ export function suggestDefaultProjections(
   const fields = discoverResolvedFieldOptions(resolved);
   const typeOf = (field: string): "number" | "string" | "date" | undefined =>
     fieldTypes?.[field];
+  const policy = resolveChartDataPolicy(chartType ?? "line");
 
   const numericFields = fields.filter((item) => {
     const declared = typeOf(item.field);
@@ -610,16 +790,81 @@ export function suggestDefaultProjections(
         }
       : undefined;
 
-  const chartProjection: ChartViewProjection | undefined =
-    numericFields.length > 0
-      ? {
-          categoryField: categoryCandidate,
-          series: numericFields.slice(0, 6).map((item) => ({
-            field: item.field,
-            label: item.label,
-          })),
-        }
-      : undefined;
+  let chartProjection: ChartViewProjection | undefined;
+  if (policy.chartType === "scatter" || policy.chartType === "bubble") {
+    const xField = numericFields[0]?.field;
+    const yField = numericFields[1]?.field ?? numericFields[0]?.field;
+    if (xField && yField) {
+      chartProjection = {
+        categoryField: xField,
+        series: [
+          {
+            field: yField,
+            label: numericFields.find((item) => item.field === yField)?.label,
+            aggregation: "first",
+          },
+          ...(policy.chartType === "bubble" && numericFields[2]
+            ? [
+                {
+                  field: numericFields[2].field,
+                  label: numericFields[2].label,
+                  aggregation: "first" as const,
+                },
+              ]
+            : []),
+        ],
+      };
+    }
+  } else if (policy.chartType === "histogram") {
+    const measure = numericFields[0];
+    if (measure) {
+      chartProjection = {
+        series: [
+          {
+            field: measure.field,
+            label: measure.label,
+            aggregation: "first",
+          },
+        ],
+      };
+    }
+  } else if (policy.rowMode === "groupByCategory") {
+    if (categoryCandidate) {
+      const measure = numericFields[0];
+      chartProjection = {
+        categoryField: categoryCandidate,
+        series: measure
+          ? [
+              {
+                field: measure.field,
+                label: measure.label,
+                aggregation: policy.defaultAggregation,
+              },
+              ...numericFields.slice(1, policy.maxSeries).map((item) => ({
+                field: item.field,
+                label: item.label,
+                aggregation: policy.defaultAggregation,
+              })),
+            ].slice(0, policy.maxSeries)
+          : [
+              {
+                field: categoryCandidate,
+                label: "Contagem",
+                aggregation: "count" as const,
+              },
+            ],
+      };
+    }
+  } else if (numericFields.length > 0) {
+    chartProjection = {
+      categoryField: categoryCandidate,
+      series: numericFields.slice(0, policy.maxSeries).map((item) => ({
+        field: item.field,
+        label: item.label,
+        aggregation: policy.defaultAggregation,
+      })),
+    };
+  }
 
   const tableProjection: TableViewProjection | undefined =
     fields.length > 0
