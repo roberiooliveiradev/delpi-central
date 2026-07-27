@@ -1,16 +1,8 @@
 import type { InvoicePostingStatus } from "../../domain/types";
-import { statusLabel } from "../../domain/status";
-
-const TONE: Record<string, string> = {
-  pending: "pending",
-  in_progress: "progress",
-  blocked: "blocked",
-  posted: "posted",
-  cancelled: "cancelled",
-};
+import { statusLabel, statusTone } from "../../domain/status";
 
 export function StatusBadge({ status }: { status: InvoicePostingStatus | string }) {
-  const tone = TONE[status] ?? "pending";
+  const tone = statusTone(status);
   return (
     <span
       className={`lnf-status lnf-status--${tone}`}

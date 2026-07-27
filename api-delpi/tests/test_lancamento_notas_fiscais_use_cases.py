@@ -36,6 +36,9 @@ from app.domain.services.lancamento_notas_fiscais.exceptions import (
     SupplierBlockedError,
     SupplierNotFoundError,
 )
+from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
+    resolve_list_status_filter,
+)
 
 
 def _creator(**kwargs: Any) -> Actor:
@@ -213,7 +216,9 @@ class FakeRequests:
         if filters.get("branch"):
             items = [r for r in items if r["branch_code"] == filters["branch"]]
         if filters.get("status"):
-            items = [r for r in items if r["status"] == filters["status"]]
+            statuses = resolve_list_status_filter(filters.get("status"))
+            if statuses is not None:
+                items = [r for r in items if r["status"] in statuses]
         if filters.get("document"):
             dig = "".join(ch for ch in str(filters["document"]) if ch.isdigit())
             items = [

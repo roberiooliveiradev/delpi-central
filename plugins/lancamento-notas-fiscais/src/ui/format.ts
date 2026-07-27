@@ -33,7 +33,7 @@ export function hasActiveFilters(
   defaults?: Pick<ListFilters, "branch" | "status">,
 ): boolean {
   const defaultBranch = defaults?.branch;
-  const defaultStatus = defaults?.status ?? "pending";
+  const defaultStatus = defaults?.status ?? "open";
   const branchDiffers =
     defaultBranch != null
       ? (filters.branch ?? "") !== defaultBranch

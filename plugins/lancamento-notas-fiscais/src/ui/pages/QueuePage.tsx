@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FilePlus2, Inbox, SearchX } from "lucide-react";
 import { useLnfPermissions } from "../../application/useLnfPermissions";
 import { branchLabel, type BranchCode } from "../../constants/branch";
+import { statusTone } from "../../domain/status";
 import { ApiError } from "../../data/api/httpClient";
 import * as api from "../../data/api/invoicePostingApi";
 import type { InvoicePostingRequest, ListFilters } from "../../domain/types";
@@ -24,16 +25,22 @@ type Props = {
 };
 
 function defaultFilters(branch: BranchCode): ListFilters {
-  return { page: 1, page_size: 20, status: "pending", branch };
+  return { page: 1, page_size: 20, status: "open", branch };
 }
 
 type SyncState = "idle" | "checking" | "updated" | "unavailable";
 
-function oldestIds(items: InvoicePostingRequest[], count = 3): Set<string> {
-  const sorted = [...items].sort((a, b) =>
-    String(a.received_at).localeCompare(String(b.received_at)),
-  );
-  return new Set(sorted.slice(0, Math.min(count, sorted.length)).map((r) => r.id));
+function queueRowClassName(
+  row: InvoicePostingRequest,
+  highlightId: string | undefined,
+): string {
+  return [
+    highlightId === row.id ? "lnf-row--highlight" : "",
+    `lnf-row--status-${statusTone(row.status)}`,
+    "lnf-row--clickable",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
@@ -181,9 +188,8 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
   }, [perms.loading, perms.canRead]);
 
   const page = debounced.page ?? 1;
-  const filterDefaults = { branch, status: "pending" as const };
+  const filterDefaults = { branch, status: "open" as const };
   const filtersActive = hasActiveFilters(debounced, filterDefaults);
-  const aging = useMemo(() => oldestIds(items), [items]);
   const resetFilters = () => setFilters(defaultFilters(branch));
 
   const syncLabel =
@@ -329,14 +335,9 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                   {items.map((row) => (
                     <tr
                       key={row.id}
-                      className={[
-                        highlightId === row.id ? "lnf-row--highlight" : "",
-                        aging.has(row.id) ? "lnf-row--aging" : "",
-                        "lnf-row--clickable",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
+                      className={queueRowClassName(row, highlightId)}
                       data-testid={`queue-row-${row.id}`}
+                      data-status={row.status}
                       tabIndex={0}
                       onClick={() => onOpen(row.id)}
                       onKeyDown={(e) => {
@@ -387,11 +388,12 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                   key={row.id}
                   className={[
                     "lnf-queue-card",
-                    aging.has(row.id) ? "lnf-row--aging" : "",
+                    `lnf-row--status-${statusTone(row.status)}`,
                     highlightId === row.id ? "lnf-row--highlight" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
+                  data-status={row.status}
                 >
                   <button
                     type="button"

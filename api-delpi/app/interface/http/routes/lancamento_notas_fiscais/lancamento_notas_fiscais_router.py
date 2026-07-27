@@ -44,6 +44,7 @@ from app.domain.services.lancamento_notas_fiscais.exceptions import InvoicePosti
 from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     FiscalNormalizationError,
     normalize_branch,
+    resolve_list_status_filter,
 )
 from app.interface.http.routes.lancamento_notas_fiscais.lancamento_notas_fiscais_branch_access import (
     branch_access_error,
@@ -227,6 +228,15 @@ def list_requests(
                 "Informe a filial (parâmetro branch).",
                 status_code=400,
                 code="BRANCH_REQUIRED",
+                recoverable=True,
+            )
+        try:
+            resolve_list_status_filter(status)
+        except ValueError as exc:
+            return error_response(
+                str(exc),
+                status_code=400,
+                code="INVALID_STATUS_FILTER",
                 recoverable=True,
             )
         filters = {

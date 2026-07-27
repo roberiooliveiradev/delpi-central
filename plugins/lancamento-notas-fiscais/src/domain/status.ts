@@ -8,6 +8,26 @@ export const STATUS_LABELS: Record<InvoicePostingStatus, string> = {
   cancelled: "Cancelada",
 };
 
+/** Tom visual compartilhado (badge + faixa lateral da fila). */
+export const STATUS_TONES: Record<InvoicePostingStatus, string> = {
+  pending: "pending",
+  in_progress: "progress",
+  blocked: "blocked",
+  posted: "posted",
+  cancelled: "cancelled",
+};
+
+/** Filtro de listagem: fila aberta (pending + in_progress + blocked). */
+export const LIST_STATUS_FILTER_OPEN = "open";
+
+export const STATUS_FILTER_OPTIONS: { value: string; label: string }[] = [
+  {
+    value: LIST_STATUS_FILTER_OPEN,
+    label: "Em aberto",
+  },
+  ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
+];
+
 export const BLOCK_REASON_LABELS: Record<BlockReason, string> = {
   purchase_order: "Aguardando pedido de compra",
   supplier_registration: "Aguardando cadastro de fornecedor",
@@ -21,6 +41,10 @@ export const BLOCK_REASON_OPTIONS = (
 
 export function statusLabel(status: string): string {
   return STATUS_LABELS[status as InvoicePostingStatus] ?? status;
+}
+
+export function statusTone(status: string): string {
+  return STATUS_TONES[status as InvoicePostingStatus] ?? "pending";
 }
 
 export function blockReasonLabel(reason: string | null | undefined): string {

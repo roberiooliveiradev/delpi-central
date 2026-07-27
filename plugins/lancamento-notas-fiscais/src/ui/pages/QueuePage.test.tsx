@@ -233,6 +233,10 @@ describe("QueuePage", () => {
     });
     renderQueue();
     await waitFor(() => expect(api.refreshReconciliation).toHaveBeenCalledTimes(1));
+    expect(api.listRequests).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "open", branch: "01", page: 1 }),
+      expect.anything(),
+    );
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "posted" } });
     await waitFor(() => {
       expect(api.listRequests).toHaveBeenCalledWith(
@@ -282,5 +286,39 @@ describe("QueuePage", () => {
     await waitFor(() => {
       expect(screen.getByTestId("queue-error").textContent).toMatch(/permissão/i);
     });
+  });
+
+  it("pinta a faixa lateral de todas as linhas conforme o status", async () => {
+    const rows = [
+      { ...sample, id: "a", received_at: "2026-07-01T10:00:00+00:00", status: "pending" as const },
+      { ...sample, id: "b", received_at: "2026-07-02T10:00:00+00:00", status: "posted" as const },
+      { ...sample, id: "c", received_at: "2026-07-03T10:00:00+00:00", status: "blocked" as const },
+      { ...sample, id: "d", received_at: "2026-07-04T10:00:00+00:00", status: "in_progress" as const },
+    ];
+    vi.mocked(api.listRequests).mockResolvedValue({
+      items: rows,
+      total: 4,
+      page: 1,
+      page_size: 20,
+      total_pages: 1,
+    });
+
+    renderQueue();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("queue-row-a").className).toContain(
+        "lnf-row--status-pending",
+      );
+      expect(screen.getByTestId("queue-row-b").className).toContain(
+        "lnf-row--status-posted",
+      );
+      expect(screen.getByTestId("queue-row-c").className).toContain(
+        "lnf-row--status-blocked",
+      );
+      expect(screen.getByTestId("queue-row-d").className).toContain(
+        "lnf-row--status-progress",
+      );
+    });
+    expect(screen.getByTestId("queue-row-b").className).not.toContain("lnf-row--aging");
   });
 });
