@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dados de migração/importação local (não versionar)
+fixtures/
