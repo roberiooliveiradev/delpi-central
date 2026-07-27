@@ -523,6 +523,53 @@
         "records_without_cost": "Registros sem custo",
         "quantity": "Quantidade total"
       }
+    },
+    "get_transforma_mais_summary": {
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count"
+      ],
+      "valueFieldLabels": {
+        "total_investment_in_period": "Investimento total",
+        "total_gross_costs_until_now": "Investimento total",
+        "total_gross_savings_in_period": "Economia bruta",
+        "total_hours_saved_until_now": "Horas economizadas",
+        "implemented_solutions_count": "Soluções iniciadas no período",
+        "total_net_savings_until_now": "Economia líquida",
+        "average_roi": "ROI médio"
+      },
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "label": "Resumo Transforma Mais",
+      "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
+      "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos.",
+      "paramSchema": {
+        "filial_id": {
+          "label": "Filial",
+          "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+          "optional": true
+        },
+        "start_date": {
+          "label": "Data início",
+          "description": "Início do período do resumo (AAAA-MM-DD).",
+          "optional": true
+        },
+        "end_date": {
+          "label": "Data fim",
+          "description": "Fim do período do resumo (AAAA-MM-DD).",
+          "optional": true
+        }
+      }
     }
   }
 }

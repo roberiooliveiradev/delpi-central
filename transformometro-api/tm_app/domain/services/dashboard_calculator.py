@@ -304,9 +304,12 @@ class DashboardCalculatorService:
         total_hours_saved = period_totals["horas_economizadas_mes"]
         total_capacity_gain = period_totals.get("ganho_capacidade", 0.0)
 
-        implemented_solutions_count = calc_rules.count_active_implemented_improvements(
+        # Soluções que começaram no recorte (não o snapshot de «ainda ativas»).
+        implemented_solutions_count = calc_rules.count_improvements_started_in_period(
             instancias=filtered_raw.processo_instancias,
             revisoes=filtered_raw.revisoes,
+            start_date=clamped_start,
+            end_date=clamped_end,
         )
 
         consolidated_roi = (

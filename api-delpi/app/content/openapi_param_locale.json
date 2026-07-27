@@ -650,7 +650,7 @@
         },
         "pt-BR": {
           "label": "Data fim",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "format": "date"
@@ -746,8 +746,8 @@
           "description": "Branch ID query parameter."
         },
         "pt-BR": {
-          "label": "ID da filial",
-          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+          "label": "Filial",
+          "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado."
         }
       }
     },
@@ -1969,7 +1969,7 @@
         },
         "pt-BR": {
           "label": "Data início",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         }
       },
       "format": "date"

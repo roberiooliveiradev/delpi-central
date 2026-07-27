@@ -365,8 +365,10 @@ TRANSFORMA_MAIS_LIST = agent_route(
 TRANSFORMA_MAIS_SUMMARY = agent_route(
     summary="Resumo Transforma Mais",
     description=(
-        "KPIs agregados dos processos Transforma Mais por filial e período. "
-        "Preferir no chat para resumo de melhoria contínua vs listagem completa de processos."
+        "Aggregated Transforma Mais KPIs by branch and period: "
+        "total investment, gross savings, hours saved, and solutions that started "
+        "in the period (not the snapshot of currently active solutions). "
+        "Prefer for continuous-improvement pulse before listing processes."
     ),
     operation_id="get_transforma_mais_summary",
 )

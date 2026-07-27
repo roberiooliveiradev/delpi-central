@@ -265,6 +265,46 @@ def count_active_implemented_improvements(
     return len(active)
 
 
+def count_improvements_started_in_period(
+    *,
+    instancias: list[dict[str, Any]],
+    revisoes: list[dict[str, Any]],
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> int:
+    """Conta melhorias cuja data de início de cálculo cai no período.
+
+    Usa ``review_calculation_start_date`` (implantação/vigência). Não exige
+    ``revisao_ativa`` — o recorte é «começou no período», não «ainda ativa».
+    Sem datas, conta todas as melhorias comparáveis com data de início.
+    """
+    period_start = parse_date(start_date)
+    period_end = parse_date(end_date)
+    allowed_instancias = {
+        str(row.get("instancia_id"))
+        for row in instancias
+        if row.get("instancia_id") and not _is_deleted(row)
+    }
+    started: set[str] = set()
+    for review in revisoes:
+        if _is_deleted(review):
+            continue
+        if not is_comparable_scenario(review.get("cenario_tipo")):
+            continue
+        instancia_id = str(review.get("instancia_id") or "")
+        if instancia_id not in allowed_instancias:
+            continue
+        began = review_calculation_start_date(review)
+        if began is None:
+            continue
+        if period_start is not None and began < period_start:
+            continue
+        if period_end is not None and began > period_end:
+            continue
+        started.add(instancia_id)
+    return len(started)
+
+
 def review_calculation_start_date(review: dict) -> Optional[date]:
     start_date = parse_date(review.get("data_inicio_vigencia"))
     implementation_date = parse_date(review.get("data_implantacao"))

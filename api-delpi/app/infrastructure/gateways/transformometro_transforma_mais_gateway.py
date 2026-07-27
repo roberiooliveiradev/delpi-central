@@ -97,6 +97,12 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
             total_net_savings_until_now=float(data.get("total_net_savings_until_now") or 0),
             total_hours_saved_until_now=float(data.get("total_hours_saved_until_now") or 0),
             total_gross_costs_until_now=float(data.get("total_gross_costs_until_now") or 0),
+            total_investment_in_period=float(
+                data.get("total_investment_in_period")
+                if data.get("total_investment_in_period") is not None
+                else data.get("total_gross_costs_until_now")
+                or 0
+            ),
             total_gross_savings_in_period=float(data.get("total_gross_savings_in_period") or 0),
             average_roi=float(data.get("average_roi") or 0),
             monthly_breakdown=monthly,

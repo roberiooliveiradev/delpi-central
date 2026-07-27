@@ -123,11 +123,13 @@ def _map_summary(summary: dict) -> dict:
         "accumulated_net_savings_until_now": periodo.get("economia_liquida_acumulada", 0),
     }
 
+    investment_total = float(summary.get("investimento_total") or 0)
     return {
         "implemented_solutions_count": int(summary.get("solucoes_implementadas") or 0),
         "total_net_savings_until_now": float(summary.get("economia_liquida_total") or 0),
         "total_hours_saved_until_now": float(summary.get("horas_economizadas_total") or 0),
-        "total_gross_costs_until_now": 0.0,
+        "total_gross_costs_until_now": investment_total,
+        "total_investment_in_period": investment_total,
         "total_gross_savings_in_period": float(summary.get("economia_bruta_total") or 0),
         "average_roi": float(summary.get("roi_medio") or 0),
         "monthly_breakdown": monthly,

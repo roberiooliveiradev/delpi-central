@@ -106,12 +106,18 @@ def test_summary_legacy_contract_fields(mock_load, _mock_filiais):
 
     assert "implemented_solutions_count" in data
     assert "total_gross_savings_in_period" in data
+    assert "total_investment_in_period" in data
+    assert "total_hours_saved_until_now" in data
     assert "monthly_breakdown" in data
     assert isinstance(data["monthly_breakdown"], list)
     if data["monthly_breakdown"]:
         month = data["monthly_breakdown"][0]
         assert "gross_savings_month" in month
         assert "net_savings_month" in month
+    # Investimento do período alinhado ao motor (não mais 0 fixo).
+    assert data["total_investment_in_period"] == data["total_gross_costs_until_now"]
+    assert data["total_investment_in_period"] >= 0
+    assert data["implemented_solutions_count"] >= 0
 
 
 @patch(_LIVE_SERVICE)

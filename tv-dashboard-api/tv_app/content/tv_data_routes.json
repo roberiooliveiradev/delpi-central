@@ -18,14 +18,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -66,14 +66,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -124,14 +124,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -184,14 +184,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -246,14 +246,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -294,14 +294,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -352,14 +352,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -411,14 +411,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -480,14 +480,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -535,14 +535,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -594,14 +594,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -756,14 +756,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "filial": {
           "type": "string",
@@ -817,14 +817,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -882,14 +882,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -936,14 +936,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -1001,14 +1001,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_segment": {
           "type": "string",
@@ -1109,14 +1109,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1258,14 +1258,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1337,14 +1337,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1365,14 +1365,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
       ],
       "tvConstraints": {
         "maxRows": 20
-      }
+      },
+      "tableFields": "indicators"
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1400,14 +1400,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1443,14 +1443,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
       ],
       "tvConstraints": {
         "maxRows": 20
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -1477,14 +1477,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1505,14 +1505,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1540,14 +1540,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1568,14 +1568,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1603,14 +1603,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1631,14 +1631,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1666,14 +1666,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1694,14 +1694,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1729,14 +1729,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1757,14 +1757,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1792,14 +1792,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1820,14 +1820,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1855,14 +1855,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1883,14 +1883,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1918,14 +1918,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -1946,14 +1946,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -1981,14 +1981,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2009,14 +2009,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2044,14 +2044,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2072,14 +2072,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2107,14 +2107,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2135,14 +2135,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2170,14 +2170,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2198,14 +2198,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2233,14 +2233,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2261,14 +2261,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2296,14 +2296,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2324,14 +2324,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2359,14 +2359,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2387,14 +2387,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2422,14 +2422,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2450,14 +2450,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2485,14 +2485,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2513,14 +2513,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2548,14 +2548,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2576,14 +2576,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2611,14 +2611,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2639,14 +2639,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2674,14 +2674,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2702,14 +2702,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2737,14 +2737,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2765,14 +2765,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2800,14 +2800,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2828,14 +2828,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2863,14 +2863,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2891,14 +2891,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2926,14 +2926,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -2954,14 +2954,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -2989,14 +2989,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3017,14 +3017,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3052,14 +3052,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3080,14 +3080,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3115,14 +3115,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3143,14 +3143,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3178,14 +3178,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3206,14 +3206,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3241,14 +3241,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3269,14 +3269,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3304,14 +3304,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3332,14 +3332,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3367,14 +3367,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3395,14 +3395,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3430,14 +3430,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3458,14 +3458,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3493,14 +3493,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3521,14 +3521,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3556,14 +3556,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3584,14 +3584,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3619,14 +3619,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3647,14 +3647,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3682,14 +3682,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3710,14 +3710,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3745,14 +3745,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3773,14 +3773,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3808,14 +3808,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3836,14 +3836,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3871,14 +3871,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3899,14 +3899,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3934,14 +3934,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -3962,14 +3962,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -3997,14 +3997,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4025,14 +4025,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4060,14 +4060,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4088,14 +4088,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4123,14 +4123,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4151,14 +4151,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4186,14 +4186,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4214,14 +4214,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4249,14 +4249,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4277,14 +4277,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4312,14 +4312,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4340,14 +4340,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4375,14 +4375,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4403,14 +4403,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4438,14 +4438,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4466,14 +4466,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4501,14 +4501,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4529,14 +4529,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4564,14 +4564,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4592,14 +4592,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4627,14 +4627,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4655,14 +4655,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4690,14 +4690,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4718,14 +4718,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4753,14 +4753,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4781,14 +4781,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4816,14 +4816,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4844,14 +4844,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4879,14 +4879,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4910,11 +4910,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -4942,14 +4942,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -4973,11 +4973,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5005,14 +5005,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5036,11 +5036,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5068,14 +5068,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5099,11 +5099,11 @@
       "valueFields": [
         "value"
       ],
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5131,14 +5131,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5159,14 +5159,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5194,14 +5194,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5222,14 +5222,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5257,14 +5257,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5285,14 +5285,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5320,14 +5320,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5348,14 +5348,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5383,14 +5383,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5411,14 +5411,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5446,14 +5446,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5474,14 +5474,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5509,14 +5509,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5537,14 +5537,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5572,14 +5572,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5600,14 +5600,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5635,14 +5635,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5663,14 +5663,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5698,14 +5698,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5726,14 +5726,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldTypes": {
-        "value": "number"
-      },
       "valueFields": [
         "value"
       ],
       "tvConstraints": {
         "maxRows": 1
+      },
+      "valueFieldTypes": {
+        "value": "number"
       }
     },
     {
@@ -5754,14 +5754,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -5833,14 +5833,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -5921,14 +5921,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -5995,14 +5995,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -6086,14 +6086,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -6141,18 +6141,124 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      }
+    },
+    {
+      "operationId": "list_lmp_nonconformities",
+      "httpMethod": "GET",
+      "label": "Listar não conformidades LMP",
+      "category": "engineering",
+      "path": "/engineering/lmps/nonconformities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listagem paginada de não conformidades operacionais do contexto LMP.",
+      "paramSchema": {
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "open",
+            "in_progress",
+            "done"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "sale_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro parcial pela OV (= LMP).",
+          "description": "Filtro parcial pela OV (= LMP)."
+        },
+        "customer_name": {
+          "type": "string",
+          "optional": true,
+          "label": "Nome do cliente",
+          "description": "Nome (ou parte do nome) do cliente."
+        },
+        "product_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_lmp_nonconformity_streak",
+      "httpMethod": "GET",
+      "label": "Streak sem NC em LMPs",
+      "category": "engineering",
+      "path": "/engineering/lmps/nonconformities/streak",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Dias corridos atuais e recorde histórico sem não conformidade em LMPs."
+    },
+    {
+      "operationId": "get_lmp_nonconformity",
+      "httpMethod": "GET",
+      "label": "Obter não conformidade LMP",
+      "category": "engineering",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Detalhe de uma não conformidade LMP por id."
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -6172,14 +6278,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -6220,14 +6326,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -6274,14 +6380,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -6479,14 +6585,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -6598,8 +6704,8 @@
         "filial_id": {
           "type": "string",
           "optional": true,
-          "label": "ID da filial",
-          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+          "label": "Filial",
+          "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado."
         },
         "sector_name": {
           "type": "string",
@@ -6625,14 +6731,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -6662,28 +6768,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
-      "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos.",
+      "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
+      "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos.",
       "paramSchema": {
         "filial_id": {
           "type": "string",
           "optional": true,
-          "label": "ID da filial",
-          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+          "label": "Filial",
+          "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado."
         },
         "start_date": {
           "type": "string",
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -6700,6 +6806,27 @@
       ],
       "defaultParams": {
         "periodDays": 30
+      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count"
+      ],
+      "valueFieldLabels": {
+        "total_investment_in_period": "Investimento total",
+        "total_gross_costs_until_now": "Investimento total",
+        "total_gross_savings_in_period": "Economia bruta",
+        "total_hours_saved_until_now": "Horas economizadas",
+        "implemented_solutions_count": "Soluções iniciadas no período",
+        "total_net_savings_until_now": "Economia líquida",
+        "average_roi": "ROI médio"
+      },
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number"
       }
     },
     {
@@ -6726,8 +6853,8 @@
         "filial_id": {
           "type": "string",
           "optional": true,
-          "label": "ID da filial",
-          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+          "label": "Filial",
+          "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado."
         },
         "setor_id": {
           "type": "string",
@@ -6740,14 +6867,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "granularity": {
           "type": "string",
@@ -6766,6 +6893,10 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6781,12 +6912,7 @@
           "direction": "asc"
         }
       ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
-      "tableFields": "points",
+      "openEndedDateRange": true,
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
@@ -6794,11 +6920,12 @@
         "economia_liquida": "number",
         "horas_economizadas": "number"
       },
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "openEndedDateRange": true
+      "tableFields": "points",
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      }
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -6818,14 +6945,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -6879,14 +7006,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -6990,14 +7117,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -7064,14 +7191,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -7132,14 +7259,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -7205,14 +7332,14 @@
           "optional": false,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": false,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -7279,14 +7406,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -7361,14 +7488,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -7399,14 +7526,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_code": {
           "type": "string",
@@ -7462,14 +7589,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -7500,14 +7627,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "customer_code": {
           "type": "string",
@@ -7615,14 +7742,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -7674,14 +7801,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -7733,14 +7860,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -7789,14 +7916,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -8066,14 +8193,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -8134,14 +8261,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -8189,14 +8316,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -8269,14 +8396,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "supplier": {
           "type": "string",
@@ -8711,14 +8838,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "filial": {
           "type": "string",
@@ -9219,10 +9346,10 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "list_production_appointments",
@@ -9254,14 +9381,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "work_center": {
           "type": "string",
@@ -9352,14 +9479,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "work_center": {
           "type": "string",
@@ -9450,14 +9577,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "work_center": {
           "type": "string",
@@ -9539,14 +9666,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "work_center": {
           "type": "string",
@@ -9644,14 +9771,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -9704,14 +9831,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -9772,14 +9899,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -9832,14 +9959,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -9897,14 +10024,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -9956,14 +10083,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -10004,14 +10131,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -10077,14 +10204,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -10163,14 +10290,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -10229,14 +10356,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -10307,14 +10434,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -10375,14 +10502,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -10522,14 +10649,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -10558,6 +10685,11 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10573,6 +10705,12 @@
           "direction": "asc"
         }
       ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10580,17 +10718,6 @@
         "end_date": "date",
         "oee_filial_01": "number",
         "oee_filial_02": "number"
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10623,14 +10750,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -10653,14 +10780,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -10884,14 +11011,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -10970,14 +11097,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -11006,6 +11133,13 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "seriesField": "points",
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -11013,13 +11147,6 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
       }
     },
     {
@@ -11052,14 +11179,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -11082,14 +11209,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -11167,14 +11294,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -11625,11 +11752,11 @@
         "page": 1,
         "page_size": 5
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_product_detail",
@@ -11815,14 +11942,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "max_depth": {
           "type": "integer",
@@ -12037,14 +12164,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -12292,14 +12419,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -12340,14 +12467,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -12424,14 +12551,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -12524,14 +12651,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -12831,14 +12958,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -13720,14 +13847,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "area_id": {
           "type": "string",
@@ -14126,14 +14253,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "area_id": {
           "type": "string",
@@ -14320,14 +14447,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "branch": {
           "type": "string",
@@ -14349,18 +14476,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldLabels": {
-        "value": "Valor",
-        "average_score": "Nota média 5S",
-        "comparable_goal": "Meta"
-      },
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
       "valueFields": [
         "value",
         "average_score"
       ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
-      ]
+      "valueFieldLabels": {
+        "value": "Valor",
+        "average_score": "Nota média 5S",
+        "comparable_goal": "Meta"
+      }
     },
     {
       "operationId": "list_quality_branches",
@@ -14380,14 +14507,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -14460,14 +14587,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -14535,14 +14662,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -14687,14 +14814,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -14755,14 +14882,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -14773,21 +14900,21 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "labelAliases": [
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ],
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
         "total_kaizens": "Total kaizens",
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
-      },
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ]
+      }
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -15084,14 +15211,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -15194,14 +15321,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "status": {
           "type": "string",
@@ -15267,14 +15394,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -15346,14 +15473,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
@@ -15401,14 +15528,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
@@ -15431,6 +15558,18 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15440,18 +15579,6 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -15483,14 +15610,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -15562,14 +15689,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
@@ -15617,14 +15744,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "product_prefix": {
           "type": "string",
@@ -15647,6 +15774,19 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15656,19 +15796,6 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -15706,14 +15833,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -15755,14 +15882,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -15819,14 +15946,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -15930,14 +16057,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -16006,14 +16133,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "mp": {
           "type": "string",
@@ -16092,14 +16219,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "mp": {
           "type": "string",
@@ -16185,14 +16312,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "mp": {
           "type": "string",
@@ -16264,14 +16391,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "mp": {
           "type": "string",
@@ -16357,14 +16484,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "granularity": {
           "type": "string",
@@ -16611,14 +16738,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -16695,14 +16822,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -16798,14 +16925,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         }
       },
       "paramStrategy": "date_range",
@@ -16859,14 +16986,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -16925,14 +17052,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -17009,14 +17136,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -17076,14 +17203,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "recurso": {
           "type": "string",
@@ -17135,14 +17262,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "page": {
           "type": "integer",
@@ -17346,14 +17473,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "top_limit": {
           "type": "integer",
@@ -17414,14 +17541,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "strict_idd_period": {
           "type": "boolean",
@@ -17476,14 +17603,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "periodDays": {
           "type": "integer",
@@ -17531,14 +17658,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "top_limit": {
           "type": "integer",
@@ -18084,14 +18211,14 @@
           "optional": true,
           "label": "Data início",
           "format": "date",
-          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Início do período (AAAA-MM-DD)."
         },
         "end_date": {
           "type": "string",
           "optional": true,
           "label": "Data fim",
           "format": "date",
-          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+          "description": "Fim do período (AAAA-MM-DD)."
         },
         "top_limit": {
           "type": "integer",
@@ -18136,7 +18263,6 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
@@ -18145,7 +18271,8 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      }
+      },
+      "tableFields": "top_products"
     },
     {
       "operationId": "get_caller_stats",

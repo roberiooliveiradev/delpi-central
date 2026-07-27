@@ -39,6 +39,59 @@ def test_count_active_implemented_improvements_counts_distinct_instancias():
     ) == 1
 
 
+def test_count_improvements_started_in_period_filters_by_start_date():
+    instancias = [
+        {"instancia_id": "i1", "deletado": False},
+        {"instancia_id": "i2", "deletado": False},
+        {"instancia_id": "i3", "deletado": False},
+    ]
+    revisoes = [
+        {
+            "instancia_id": "i1",
+            "cenario_tipo": "melhoria",
+            "revisao_ativa": False,
+            "deletado": False,
+            "data_implantacao": "2025-02-10",
+            "data_inicio_vigencia": "2025-02-10",
+        },
+        {
+            "instancia_id": "i2",
+            "cenario_tipo": "automacao",
+            "revisao_ativa": True,
+            "deletado": False,
+            "data_implantacao": "2025-03-01",
+            "data_inicio_vigencia": "2025-03-01",
+        },
+        {
+            "instancia_id": "i3",
+            "cenario_tipo": "melhoria",
+            "revisao_ativa": True,
+            "deletado": False,
+            "data_implantacao": "2024-12-01",
+            "data_inicio_vigencia": "2024-12-01",
+        },
+    ]
+    # Ativas no cadastro: i2 (+ i3 se ativa) — mas no período fev só i1 (mesmo inativa).
+    assert (
+        calc_rules.count_improvements_started_in_period(
+            instancias=instancias,
+            revisoes=revisoes,
+            start_date="2025-02-01",
+            end_date="2025-02-28",
+        )
+        == 1
+    )
+    assert (
+        calc_rules.count_improvements_started_in_period(
+            instancias=instancias,
+            revisoes=revisoes,
+            start_date="2025-02-01",
+            end_date="2025-03-31",
+        )
+        == 2
+    )
+
+
 def test_review_vigencia_open_review_full_month():
     review = {
         "cenario_tipo": "melhoria",

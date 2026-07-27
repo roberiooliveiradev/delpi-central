@@ -4023,8 +4023,8 @@
         "pt-BR": {
           "label": "Resumo Transforma Mais",
           "summary": "Resumo Transforma Mais",
-          "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
-          "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos."
+          "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
+          "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos."
         }
       },
       "category": "engineering"
