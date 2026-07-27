@@ -180,13 +180,17 @@
 .delpi-ui-series-chart__legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4em;
 }
 
+/**
+ * Swatch escala com o font-size da legenda (chartParts.legend.style.fontSize /
+ * --delpi-ui-series-chart-legend-font-size). Fixo em px quebrava TV/resize tipográfico.
+ */
 .delpi-ui-series-chart__legend-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
+  width: var(--delpi-ui-series-chart-legend-swatch-size, 0.85em);
+  height: var(--delpi-ui-series-chart-legend-swatch-size, 0.85em);
+  border-radius: 0.15em;
   flex-shrink: 0;
 }
 
