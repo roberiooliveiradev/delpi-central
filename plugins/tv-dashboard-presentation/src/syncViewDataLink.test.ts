@@ -71,6 +71,43 @@ describe("syncViewDataLink", () => {
     expect(next.h).toBeGreaterThan(20);
   });
 
+  it("chart_view não redimensiona o frame ao ligar dados (preserva modelo)", () => {
+    const current = { x: 20, y: 15, w: 28, h: 22 };
+    expect(suggestViewFrameSize("chart_view", 6, current)).toEqual(current);
+    const patch = buildViewDataLinkPatch({
+      viewType: "chart_view",
+      dataSourceId: "src-1",
+      resolved: multiResolved,
+      fieldTypes: {
+        periodo: "date",
+        oee_filial_01: "number",
+        oee_filial_02: "number",
+        quantidade: "number",
+      },
+      currentFrame: current,
+    });
+    expect(patch.chartProjection?.series?.length).toBeGreaterThan(0);
+    expect(patch.frame).toBeUndefined();
+  });
+
+  it("buildViewFrameFitPatch não altera frame de chart_view", () => {
+    const block = {
+      id: "c1",
+      type: "chart_view" as const,
+      chartType: "pie",
+      frame: { x: 20, y: 15, w: 28, h: 22 },
+      style: { zIndex: 1 },
+      chartProjection: {
+        series: [
+          { field: "a", visible: true },
+          { field: "b", visible: true },
+          { field: "c", visible: true },
+        ],
+      },
+    } as ComunicadoBlock;
+    expect(buildViewFrameFitPatch(block)).toBeNull();
+  });
+
   it("buildViewFrameFitPatch amplia KPI multi no frame default", () => {
     const block = {
       id: "k1",
@@ -112,12 +149,13 @@ describe("syncViewDataLink", () => {
   });
 
   it("sync também cobre chart_view e table_view", () => {
+    const chartFrame = { x: 10, y: 28, w: 28, h: 22 };
     const blocks: ComunicadoBlock[] = [
       {
         id: "c1",
         type: "chart_view",
         chartType: "line",
-        frame: { x: 10, y: 28, w: 80, h: 45 },
+        frame: { ...chartFrame },
         style: { zIndex: 1 },
         dataSourceId: "src-1",
       } as ComunicadoBlock,
@@ -140,6 +178,7 @@ describe("syncViewDataLink", () => {
     expect(chart && "chartProjection" in chart && chart.chartProjection?.series?.length).toBeGreaterThan(
       0,
     );
+    expect(chart && "frame" in chart && chart.frame).toEqual(chartFrame);
     expect(table && "tableProjection" in table && table.tableProjection?.columns?.length).toBeGreaterThan(
       0,
     );

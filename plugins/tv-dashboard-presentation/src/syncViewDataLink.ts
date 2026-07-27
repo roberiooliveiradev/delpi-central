@@ -1,9 +1,9 @@
 /**
  * Fluxo universal: ao ligar fonte ↔ visual (ou quando o resolved chega),
- * materializa *Projection e dimensiona o frame do bloco.
+ * materializa *Projection e, quando couber, dimensiona o frame do bloco.
  *
- * Único ponto de verdade — não espalhar suggestDefaultProjections + resize
- * só no inspector.
+ * chart_view: nunca redimensiona — o conteúdo cabe no frame do modelo.
+ * KPI/tabela: default compacto → substitui; senão grow-only.
  */
 
 import { isDataViewBlockType } from "./comunicadoDataArchitecture";
@@ -78,7 +78,10 @@ export function isNearDefaultKpiFrame(frame: ComunicadoFrame): boolean {
 
 /**
  * Sugere w/h do frame (% do slide) para caber o visual.
- * Política: default compacto → substitui; senão grow-only.
+ * Política:
+ * - chart_view: preserva o frame do modelo (conteúdo ajusta dentro)
+ * - kpi_view: default compacto → substitui; senão grow-only
+ * - table_view: grow-only
  */
 export function suggestViewFrameSize(
   viewType: DataViewBlockType,
@@ -86,6 +89,10 @@ export function suggestViewFrameSize(
   current: ComunicadoFrame,
 ): ComunicadoFrame {
   const count = Math.max(1, Math.round(itemCount));
+
+  if (viewType === "chart_view") {
+    return { ...current };
+  }
 
   if (viewType === "kpi_view") {
     if (count <= 1) return { ...current };
@@ -106,16 +113,6 @@ export function suggestViewFrameSize(
       ...current,
       w: Math.max(current.w, targetW),
       h: Math.max(current.h, targetH),
-    };
-  }
-
-  if (viewType === "chart_view") {
-    const targetW = count > 1 ? 80 : current.w;
-    const targetH = count > 1 ? Math.max(current.h, 45) : current.h;
-    return {
-      ...current,
-      w: Math.max(current.w, Math.min(92, targetW)),
-      h: Math.max(current.h, Math.min(70, targetH)),
     };
   }
 

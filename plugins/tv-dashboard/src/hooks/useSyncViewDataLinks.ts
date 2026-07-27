@@ -16,7 +16,8 @@ import {
 
 /**
  * Quando o preview da fonte chega (ou visual/texto ligado sem projection),
- * materializa projeção e dimensiona o frame — mesmo fluxo do link manual.
+ * materializa projeção — mesmo fluxo do link manual.
+ * chart_view preserva o frame do modelo; KPI/tabela podem ajustar tamanho.
  */
 export function useSyncViewDataLinks({
   configRef,
