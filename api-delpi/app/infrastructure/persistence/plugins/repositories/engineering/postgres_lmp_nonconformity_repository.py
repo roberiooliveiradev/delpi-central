@@ -657,15 +657,32 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         }
 
     def delete_record(self, record_id: str) -> bool:
-        row = self.execute_returning_one(
-            """
-            DELETE FROM engineering.lmp_nonconformities
-             WHERE id = %s
-         RETURNING id
-            """,
-            (record_id,),
-        )
-        return row is not None
+        """Exclui a NC; libera CASCADE do histórico via GUC de sessão (V008)."""
+        try:
+            with self.connection.cursor() as cursor:
+                # Permite DELETE no histórico append-only durante o CASCADE.
+                cursor.execute(
+                    "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
+                )
+                cursor.execute(
+                    """
+                    DELETE FROM engineering.lmp_nonconformities
+                     WHERE id = %s
+                 RETURNING id
+                    """,
+                    (record_id,),
+                )
+                row = cursor.fetchone()
+            self.commit()
+            return row is not None
+        except PluginsRepositoryError:
+            self.rollback()
+            raise
+        except Exception as exc:
+            self.rollback()
+            raise PluginsRepositoryError(
+                "Falha ao excluir não conformidade LMP."
+            ) from exc
 
     def list_occurrence_dates(self) -> list:
         """Datas distintas de registro de NC (para streak sem NC)."""
