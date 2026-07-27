@@ -36,8 +36,12 @@ export const COMUNICADO_POINT_HIT_SIZE_PCT = 2;
  */
 export const COMUNICADO_LINE_VISUAL_PAD_PCT = 2;
 
-function clampPct(value: number): number {
-  return Math.max(0, Math.min(100, value));
+/**
+ * Posição de vértice — mesmo soft bound do frame (pode sair do slide 0–100%).
+ * Antes clampava em 0–100 e as linhas ficavam «presas» na tela.
+ */
+function clampVertexPct(value: number): number {
+  return clampFramePositionPercent(value);
 }
 
 export function minimumVertexCount(primitive: ComunicadoVisualPrimitive): number {
@@ -181,8 +185,8 @@ export function applyLinePolyline(
     return applyLinePolyline(block, [a, b]);
   }
   const vertices = points.map((point) => ({
-    x: clampPct(point.x),
-    y: clampPct(point.y),
+    x: clampVertexPct(point.x),
+    y: clampVertexPct(point.y),
   }));
   return {
     ...block,
@@ -226,11 +230,76 @@ export function applyLineEndpointAt(
   }
   const points = geometry.points.map((vertex) => ({ ...vertex }));
   if (endpointIndex === 0) {
-    points[0] = { x: clampPct(point.x), y: clampPct(point.y) };
+    points[0] = { x: clampVertexPct(point.x), y: clampVertexPct(point.y) };
   } else {
-    points[points.length - 1] = { x: clampPct(point.x), y: clampPct(point.y) };
+    points[points.length - 1] = {
+      x: clampVertexPct(point.x),
+      y: clampVertexPct(point.y),
+    };
   }
   return applyLinePolyline(block, points);
+}
+
+/**
+ * Aplica um frame alvo a uma linha (vertices-first): translada ou escala os
+ * vértices a partir da bbox geométrica atual e recalcula o frame.
+ * Usado pela ribbon «Tamanho e posição», align e demais editores de frame.
+ */
+export function applyLineBlockFrame(
+  block: ComunicadoShapeBlock,
+  nextFrame: ComunicadoFrame,
+): ComunicadoShapeBlock {
+  if (!isLineShapeKind(block.shape)) {
+    return { ...block, frame: clampFrameForShapeBlock(block, nextFrame) };
+  }
+
+  const current = geometryBoundingFrame(resolveShapeGeometry(block));
+  const target = clampFrameForShapeBlock(block, nextFrame);
+  const sameSize =
+    Math.abs(target.w - current.w) < 0.01 && Math.abs(target.h - current.h) < 0.01;
+
+  if (sameSize) {
+    return translateLineEndpoints(block, target.x - current.x, target.y - current.y);
+  }
+
+  const geometry = resolveShapeGeometry(block);
+  if (geometry.primitive !== "line" || geometry.points.length < 2) {
+    return applyLinePolyline(block, lineEndpointsFromFrame(target));
+  }
+
+  const sx = current.w > 0 ? target.w / current.w : 1;
+  const sy = current.h > 0 ? target.h / current.h : 1;
+  return applyLinePolyline(
+    block,
+    geometry.points.map((point) => ({
+      x: target.x + (point.x - current.x) * sx,
+      y: target.y + (point.y - current.y) * sy,
+    })),
+  );
+}
+
+/**
+ * Aplica frame a shape: linha → `applyLineBlockFrame`; ponto → posição; área → frame.
+ */
+export function applyShapeBlockFrame(
+  block: ComunicadoShapeBlock,
+  nextFrame: ComunicadoFrame,
+): ComunicadoShapeBlock {
+  if (isPointShapeKind(block.shape)) {
+    const frame = clampFrameForShapeBlock(block, nextFrame);
+    return {
+      ...block,
+      frame,
+      vertices: [{ x: frame.x, y: frame.y }],
+    };
+  }
+  if (isLineShapeKind(block.shape)) {
+    return applyLineBlockFrame(block, nextFrame);
+  }
+  return {
+    ...block,
+    frame: clampFrameForShapeBlock(block, nextFrame),
+  };
 }
 
 /** Frame persistido: ponto só posição (w=h=0); demais primitivos usam bbox da geometria. */
@@ -336,18 +405,9 @@ export function syncLineVerticesFromFrame(
   block: ComunicadoShapeBlock,
   frame: ComunicadoFrame,
 ): ComunicadoGeometryVertex[] {
-  const [a, b] = resolveLineEndpoints(block);
-  const sameSize =
-    Math.abs(frame.w - block.frame.w) < 0.01 && Math.abs(frame.h - block.frame.h) < 0.01;
-  if (sameSize) {
-    const dx = frame.x - block.frame.x;
-    const dy = frame.y - block.frame.y;
-    return [
-      { x: clampPct(a.x + dx), y: clampPct(a.y + dy) },
-      { x: clampPct(b.x + dx), y: clampPct(b.y + dy) },
-    ];
-  }
-  return lineEndpointsFromFrame(frame);
+  const next = applyLineBlockFrame(block, frame);
+  const [a, b] = resolveLineEndpoints(next);
+  return [a, b];
 }
 
 /** Vertices iniciais para um bloco linha a partir do frame default. */

@@ -1,4 +1,9 @@
-import type { ComunicadoBlock, ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import {
+  isLineShapeKind,
+  translateLineEndpoints,
+  type ComunicadoBlock,
+  type ComunicadoFrame,
+} from "@delpi/tv-dashboard-presentation";
 
 import {
   partitionSelectionIntoLayoutUnits,
@@ -53,7 +58,13 @@ function applyUnitOrigins(
   if (frameById.size === 0) return blocks;
   return blocks.map((block) => {
     const frame = frameById.get(block.id);
-    return frame ? { ...block, frame } : block;
+    if (!frame) return block;
+    if (block.type === "shape" && isLineShapeKind(block.shape)) {
+      const dx = frame.x - block.frame.x;
+      const dy = frame.y - block.frame.y;
+      return translateLineEndpoints(block, dx, dy);
+    }
+    return { ...block, frame };
   });
 }
 

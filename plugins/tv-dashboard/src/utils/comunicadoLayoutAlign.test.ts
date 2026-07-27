@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  applyLineEndpoints,
+  createBlock,
+  createShapeBlock,
+  resolveLineEndpoints,
+} from "@delpi/tv-dashboard-presentation";
 
 import { alignComunicadoBlocks } from "./comunicadoLayoutAlign";
 
@@ -12,6 +17,26 @@ describe("alignComunicadoBlocks", () => {
     b.frame = { x: 40, y: 20, w: 20, h: 10 };
     const next = alignComunicadoBlocks([a, b], [a.id, b.id], "align-left");
     expect(next.find((block) => block.id === b.id)?.frame.x).toBe(10);
+  });
+
+  it("alinha linha movendo vertices (não só frame)", () => {
+    const a = createBlock("text", "A");
+    a.frame = { x: 10, y: 10, w: 20, h: 10 };
+    let line = createShapeBlock("line");
+    if (line.type !== "shape") throw new Error("expected shape");
+    line = applyLineEndpoints(line, { x: 40, y: 20 }, { x: 70, y: 20 });
+    const before = resolveLineEndpoints(line);
+    const next = alignComunicadoBlocks([a, line], [a.id, line.id], "align-left");
+    const moved = next.find((block) => block.id === line.id);
+    expect(moved?.type).toBe("shape");
+    if (moved?.type !== "shape") return;
+    const [from, to] = resolveLineEndpoints(moved);
+    const dx = from.x - before[0].x;
+    expect(dx).toBeLessThan(0);
+    expect(to.x - before[1].x).toBeCloseTo(dx, 5);
+    expect(from.y).toBe(20);
+    expect(to.y).toBe(20);
+    expect(moved.frame.x).toBeCloseTo(10, 5);
   });
 
   it("distribui horizontalmente com 3 blocos", () => {

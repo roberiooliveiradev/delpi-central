@@ -4,6 +4,7 @@ import { createShapeBlock } from "./comunicadoHelpers";
 import {
   COMUNICADO_LINE_VISUAL_PAD_PCT,
   COMUNICADO_POINT_HIT_SIZE_PCT,
+  applyLineBlockFrame,
   applyLineEndpoints,
   geometryBoundingFrame,
   geometryToPersistedFrame,
@@ -58,6 +59,47 @@ describe("comunicadoShapeGeometry", () => {
     const [ma, mb] = resolveLineEndpoints(moved);
     expect(ma).toEqual({ x: 15, y: 5 });
     expect(mb).toEqual({ x: 85, y: 65 });
+  });
+
+  it("translateLineEndpoints permite sair do slide (soft clamp)", () => {
+    const block = createShapeBlock("line");
+    if (block.type !== "shape") return;
+    const base = applyLineEndpoints(block, { x: 5, y: 5 }, { x: 20, y: 5 });
+    const off = translateLineEndpoints(base, -30, -40);
+    const [a, b] = resolveLineEndpoints(off);
+    expect(a.x).toBeLessThan(0);
+    expect(a.y).toBeLessThan(0);
+    expect(b.x).toBeLessThan(0);
+  });
+
+  it("applyLineBlockFrame translada vertices quando só muda X/Y", () => {
+    const block = createShapeBlock("line");
+    if (block.type !== "shape") return;
+    const diagonal = applyLineEndpoints(block, { x: 10, y: 20 }, { x: 40, y: 50 });
+    const current = geometryBoundingFrame(resolveShapeGeometry(diagonal));
+    const shifted = applyLineBlockFrame(diagonal, {
+      ...current,
+      x: current.x + 12,
+      y: current.y - 8,
+    });
+    const [a, b] = resolveLineEndpoints(shifted);
+    expect(a).toEqual({ x: 22, y: 12 });
+    expect(b).toEqual({ x: 52, y: 42 });
+  });
+
+  it("applyLineBlockFrame com frame stale ainda move a geometria real", () => {
+    const block = createShapeBlock("line");
+    if (block.type !== "shape") return;
+    const diagonal = applyLineEndpoints(block, { x: 20, y: 30 }, { x: 60, y: 30 });
+    const stale = {
+      ...diagonal,
+      frame: { x: 0, y: 0, w: 1, h: 1 },
+    };
+    const hit = geometryBoundingFrame(resolveShapeGeometry(stale));
+    const moved = applyLineBlockFrame(stale, { ...hit, x: hit.x + 10, y: hit.y });
+    const [a, b] = resolveLineEndpoints(moved);
+    expect(a).toEqual({ x: 30, y: 30 });
+    expect(b).toEqual({ x: 70, y: 30 });
   });
 
   it("bbox de linha horizontal inclui padding para seta/espessura", () => {

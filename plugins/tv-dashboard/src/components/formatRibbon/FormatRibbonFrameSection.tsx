@@ -21,9 +21,13 @@ import {
   mergeKpiPartsWithOptions,
   partsToChartOptions,
   partsToKpiOptions,
+  applyShapeBlockFrame,
+  detachConnector,
+  isLineShapeKind,
   patchComunicadoFrame,
   patchComunicadoFramePageBottomLeftPx,
   patchHostRelativeFramePageBottomLeftPx,
+  resolveBlockHitFrame,
   resolveViewportPixelSize,
   scaleChartPartTypographyOnResize,
   scaleComplexBlockOnResize,
@@ -38,6 +42,7 @@ import {
   type ComunicadoFrame,
   type ComunicadoInputBlock,
   type ComunicadoKpiViewBlock,
+  type ComunicadoShapeBlock,
   type KpiFramePartKind,
   type ViewportPixelSize,
 } from "@delpi/tv-dashboard-presentation";
@@ -459,11 +464,13 @@ export function FormatRibbonFrameSection({
     ? POSITION_KEYS
     : ([...POSITION_KEYS, ...SIZE_KEYS] as const);
 
-  const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
+  /* Linha/ponto: UI lê a bbox geométrica (vertices), não o frame persistido stale. */
+  const editorFrame = resolveBlockHitFrame(selected);
+  const framePx = framePercentToPageBottomLeftPx(editorFrame, slideDesign);
 
   const setFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
     const nextFrame = patchComunicadoFramePageBottomLeftPx(
-      selected.frame,
+      editorFrame,
       key,
       rawPx,
       slideDesign,
@@ -476,7 +483,7 @@ export function FormatRibbonFrameSection({
     ) {
       const scaled = scaleComplexBlockOnResize(
         { ...selected, frame: nextFrame },
-        selected.frame,
+        editorFrame,
         nextFrame,
       );
       updateSelected({
@@ -484,6 +491,20 @@ export function FormatRibbonFrameSection({
         ...(scaled.type === "kpi_view" ? { kpiParts: scaled.kpiParts } : {}),
         ...(scaled.type === "chart_view" ? { chartParts: scaled.chartParts } : {}),
         ...(scaled.type === "table_view" ? { tableOptions: scaled.tableOptions } : {}),
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    if (selected.type === "shape") {
+      const shape = selected as ComunicadoShapeBlock;
+      let next = applyShapeBlockFrame(shape, nextFrame);
+      /* Edição explícita de posição solta o snap no ponto. */
+      if (isLineShapeKind(shape.shape) && next.connector) {
+        next = detachConnector(next);
+      }
+      updateSelected({
+        frame: next.frame,
+        vertices: next.vertices,
+        connector: next.connector,
       } as Partial<ComunicadoBlock>);
       return;
     }

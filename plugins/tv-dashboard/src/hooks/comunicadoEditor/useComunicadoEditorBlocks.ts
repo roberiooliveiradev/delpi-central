@@ -59,7 +59,9 @@ import {
   duplicateBlocksWithDataPolicy,
   enrichClipboardWithLinkedDataSources,
   isComunicadoVisualBoxBlock,
+  isLineShapeKind,
   resolveBlockPasteDataPolicy,
+  translateLineEndpoints,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -1254,6 +1256,10 @@ export function useComunicadoEditorBlocks({
       const idSet = new Set(targets.map((block) => block.id));
       const moved = (configRef.current.blocks ?? []).map((block) => {
         if (!idSet.has(block.id)) return block;
+        /* Linha: mover vertices (frame sozinho não muda o desenho). */
+        if (block.type === "shape" && isLineShapeKind(block.shape)) {
+          return translateLineEndpoints(block, dx, dy);
+        }
         return {
           ...block,
           frame: {
