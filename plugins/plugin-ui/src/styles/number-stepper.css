@@ -1,0 +1,170 @@
+/**
+ * Stepper numérico unificado (− / combobox / +).
+ * Tokens --delpi-ui-* com fallback portal / TV.
+ */
+
+.delpi-ui-number-stepper {
+  --delpi-ui-stepper-bg: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
+  --delpi-ui-stepper-text: var(--delpi-ui-text, var(--td-text, var(--text, #111111)));
+  --delpi-ui-stepper-border: var(--delpi-ui-border, var(--td-border, var(--border, #d0d7de)));
+  --delpi-ui-stepper-muted: var(
+    --delpi-ui-text-muted,
+    var(--td-muted, color-mix(in srgb, var(--delpi-ui-stepper-text) 55%, transparent))
+  );
+  --delpi-ui-stepper-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
+  --delpi-ui-stepper-radius: 8px;
+  --delpi-ui-stepper-height: 32px;
+  --delpi-ui-stepper-font-size: 13px;
+
+  display: inline-flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  height: var(--delpi-ui-stepper-height);
+  min-height: var(--delpi-ui-stepper-height);
+  border: 1px solid var(--delpi-ui-stepper-border);
+  border-radius: var(--delpi-ui-stepper-radius);
+  background: var(--delpi-ui-stepper-bg);
+  color: var(--delpi-ui-stepper-text);
+  overflow: hidden;
+  vertical-align: middle;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.delpi-ui-number-stepper--square {
+  --delpi-ui-stepper-radius: 0;
+}
+
+.delpi-ui-number-stepper--compact {
+  --delpi-ui-stepper-height: 28px;
+  --delpi-ui-stepper-font-size: 13px;
+}
+
+.delpi-ui-number-stepper:hover {
+  border-color: color-mix(in srgb, var(--delpi-ui-stepper-accent) 40%, var(--delpi-ui-stepper-border));
+}
+
+.delpi-ui-number-stepper:focus-within {
+  border-color: var(--delpi-ui-stepper-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-stepper-accent) 22%, transparent);
+}
+
+.delpi-ui-number-stepper__step {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--delpi-ui-stepper-height);
+  min-width: var(--delpi-ui-stepper-height);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--delpi-ui-stepper-muted);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.delpi-ui-number-stepper__step:hover:not(:disabled) {
+  color: var(--delpi-ui-stepper-text);
+  background: color-mix(in srgb, var(--delpi-ui-stepper-text) 7%, transparent);
+}
+
+.delpi-ui-number-stepper__step:active:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-stepper-accent) 14%, transparent);
+  color: var(--delpi-ui-stepper-accent);
+}
+
+.delpi-ui-number-stepper__step:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delpi-ui-number-stepper__step:focus-visible {
+  outline: 2px solid var(--delpi-ui-stepper-accent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.delpi-ui-number-stepper__step--down {
+  border-right: 1px solid var(--delpi-ui-stepper-border);
+}
+
+.delpi-ui-number-stepper__step--up {
+  border-left: 1px solid var(--delpi-ui-stepper-border);
+}
+
+/* Combobox embutido: sem chrome próprio — o grupo carrega a borda. */
+.delpi-ui-number-stepper .delpi-ui-number-stepper__combobox,
+.delpi-ui-number-stepper .delpi-ui-combobox-number {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  align-self: stretch;
+}
+
+.delpi-ui-number-stepper .delpi-ui-combobox-number__field {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.delpi-ui-number-stepper .delpi-ui-combobox-number:hover:not(:has(:disabled)) .delpi-ui-combobox-number__field,
+.delpi-ui-number-stepper .delpi-ui-combobox-number--open .delpi-ui-combobox-number__field,
+.delpi-ui-number-stepper .delpi-ui-combobox-number:focus-within .delpi-ui-combobox-number__field {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.delpi-ui-number-stepper .delpi-ui-combobox-number__input {
+  width: 3.75rem;
+  min-width: 3.75rem;
+  min-height: 100%;
+  height: 100%;
+  padding: 0 2px 0 6px;
+  font-size: var(--delpi-ui-stepper-font-size);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Placeholder textual (ex.: Misto) precisa de mais espaço que um número. */
+.delpi-ui-number-stepper .delpi-ui-combobox-number__input:placeholder-shown {
+  width: 4.75rem;
+  min-width: 4.75rem;
+  font-weight: 500;
+  color: var(--delpi-ui-stepper-muted);
+}
+
+.delpi-ui-number-stepper .delpi-ui-combobox-number__toggle {
+  width: 20px;
+  border-left-color: color-mix(in srgb, var(--delpi-ui-stepper-border) 70%, transparent);
+}
+
+/* HintAction / wrappers não quebram o layout em linha. */
+.delpi-ui-number-stepper > * {
+  display: inline-flex;
+  align-items: stretch;
+  height: 100%;
+  min-height: 100%;
+}
+
+.delpi-ui-number-stepper > .delpi-ui-help-tooltip--wrap {
+  flex: 0 0 auto;
+}
+
+.delpi-ui-number-stepper > .delpi-ui-help-tooltip--wrap:has(.delpi-ui-number-stepper__combobox),
+.delpi-ui-number-stepper > .delpi-ui-help-tooltip--wrap:has(.delpi-ui-combobox-number) {
+  flex: 1 1 auto;
+  min-width: 0;
+}

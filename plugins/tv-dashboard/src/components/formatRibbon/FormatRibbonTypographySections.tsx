@@ -10,8 +10,6 @@ import {
   Italic,
   List,
   ListOrdered,
-  Minus,
-  Plus,
   RemoveFormatting,
   Strikethrough,
   Underline,
@@ -42,7 +40,7 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
-  ComboboxNumberControl,
+  NumberStepperControl,
   HintAction,
   isAutomaticTextColor,
 } from "@delpi/plugin-ui/index";
@@ -655,76 +653,77 @@ export function FormatRibbonTypographySections({
                 if (file) void uploadCustomFont(file);
               }}
             />
-            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
+            <NumberStepperControl
+              className="td-deck-ribbon__font-size"
+              groupAriaLabel="Tamanho da fonte"
+              compact
+              aria-label={
+                fontSizeMixed
+                  ? "Tamanho da fonte (Misto)"
+                  : fontSizeAuto
+                    ? "Tamanho da fonte (Automático)"
+                    : "Tamanho da fonte"
+              }
+              value={fontSizeMixed ? null : currentFontSize}
+              placeholder={fontSizeMixed ? "Misto" : undefined}
+              options={COMUNICADO_FONT_SIZE_PRESETS}
+              min={COMUNICADO_FONT_SIZE_MIN}
+              clamp={clampFontSize}
+              portalScopeClassName="dashboard-tv-dashboard"
+              onChange={(next) =>
+                applyTextFormatStyle({
+                  fontSize: clampFontSize(next),
+                  fontSizeAuto: false,
+                })
+              }
+              onStepDown={() =>
+                applyTextFormatStyle({
+                  fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
+                  fontSizeAuto: false,
+                })
+              }
+              onStepUp={() =>
+                applyTextFormatStyle({
+                  fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
+                  fontSizeAuto: false,
+                })
+              }
+              stepDownDisabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
+              stepDownAriaLabel="Diminuir fonte"
+              stepUpAriaLabel="Aumentar fonte"
+              renderStepDown={(button) => (
+                <HintAction hint={H.fontSizeDown} ariaLabel="Diminuir fonte">
+                  {button}
+                </HintAction>
+              )}
+              renderStepUp={(button) => (
+                <HintAction hint={H.fontSizeUp} ariaLabel="Aumentar fonte">
+                  {button}
+                </HintAction>
+              )}
+              renderValue={(control) => (
+                <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+                  {control}
+                </HintAction>
+              )}
+            />
+            {textFormatTarget.mode === "part" && textFormatTarget.source === "kpi" ? (
               <TdRibbonIconButton
-                hint={H.fontSizeDown}
-                ariaLabel="Diminuir fonte"
-                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
+                hint="Ajusta o texto ao quadro da parte (automático)."
+                ariaLabel={fontSizeAuto ? "Fonte automática ativa" : "Usar fonte automática"}
+                active={fontSizeAuto}
                 onClick={() =>
-                  applyTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                    fontSizeAuto: false,
+                  updateSelectedTextFormatStyle({
+                    fontSizeAuto: !fontSizeAuto,
+                    ...(fontSizeAuto
+                      ? { fontSize: clampFontSize(currentFontSize) }
+                      : {}),
                   })
                 }
               >
-                <Minus size={16} aria-hidden="true" />
+                Auto
               </TdRibbonIconButton>
-              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-                <ComboboxNumberControl
-                  className="td-deck-ribbon__font-size-combobox"
-                  compact
-                  square
-                  aria-label={
-                    fontSizeMixed
-                      ? "Tamanho da fonte (Misto)"
-                      : fontSizeAuto
-                        ? "Tamanho da fonte (Automático)"
-                        : "Tamanho da fonte"
-                  }
-                  value={fontSizeMixed ? null : currentFontSize}
-                  placeholder={fontSizeMixed ? "Misto" : undefined}
-                  options={COMUNICADO_FONT_SIZE_PRESETS}
-                  min={COMUNICADO_FONT_SIZE_MIN}
-                  clamp={clampFontSize}
-                  portalScopeClassName="dashboard-tv-dashboard"
-                  onChange={(next) =>
-                    applyTextFormatStyle({
-                      fontSize: clampFontSize(next),
-                      fontSizeAuto: false,
-                    })
-                  }
-                />
-              </HintAction>
-              <TdRibbonIconButton
-                hint={H.fontSizeUp}
-                ariaLabel="Aumentar fonte"
-                onClick={() =>
-                  applyTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                    fontSizeAuto: false,
-                  })
-                }
-              >
-                <Plus size={16} aria-hidden="true" />
-              </TdRibbonIconButton>
-              {textFormatTarget.mode === "part" && textFormatTarget.source === "kpi" ? (
-                <TdRibbonIconButton
-                  hint="Ajusta o texto ao quadro da parte (automático)."
-                  ariaLabel={fontSizeAuto ? "Fonte automática ativa" : "Usar fonte automática"}
-                  active={fontSizeAuto}
-                  onClick={() =>
-                    updateSelectedTextFormatStyle({
-                      fontSizeAuto: !fontSizeAuto,
-                      ...(fontSizeAuto
-                        ? { fontSize: clampFontSize(currentFontSize) }
-                        : {}),
-                    })
-                  }
-                >
-                  Auto
-                </TdRibbonIconButton>
-              ) : null}
-            </div>
+            ) : null}
           </div>
           <div className="td-deck-ribbon__toolbar-row">
             <DynamicContentInsertControl variant="ribbon" />

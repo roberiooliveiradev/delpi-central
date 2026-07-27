@@ -623,6 +623,25 @@ Input + lista de presets (escolher ou digitar). Confirma no blur/Enter; seleçã
 />
 ```
 
+### `NumberStepperControl`
+
+Grupo unificado **− / combobox / +** (`.delpi-ui-number-stepper*`). Preferir na ribbon de tipografia em vez de três controles com borda própria. Aceita `renderStepDown` / `renderStepUp` / `renderValue` para `HintAction`. CSS: `styles/number-stepper.css`.
+
+```tsx
+<NumberStepperControl
+  value={fontSize}
+  options={[12, 14, 16, 18, 24]}
+  clamp={(n) => Math.min(120, Math.max(12, Math.round(n)))}
+  onChange={setFontSize}
+  onStepDown={() => setFontSize((n) => n - 1)}
+  onStepUp={() => setFontSize((n) => n + 1)}
+  stepDownAriaLabel="Diminuir"
+  stepUpAriaLabel="Aumentar"
+  groupAriaLabel="Tamanho da fonte"
+  portalScopeClassName="dashboard-tv-dashboard"
+/>
+```
+
 ### `RangeField`
 
 Campo contínuo canônico: rótulo + slider + input numérico abaixo (digitar). Aceita `displayValue` com `%`/vírgula; valores negativos ficam em tom vermelho no texto e no slider (`.delpi-ui-range-field--negative`). CSS: `styles/range-field.css` (`.delpi-ui-range-field*`).

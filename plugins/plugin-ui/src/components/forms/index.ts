@@ -186,6 +186,11 @@ export {
 } from "./ComboboxNumberControl";
 
 export {
+  NumberStepperControl,
+  type NumberStepperControlProps,
+} from "./NumberStepperControl";
+
+export {
   RANGE_FIELD_CLASS,
   RangeField,
   parseRangeFieldNumber,

@@ -211,6 +211,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     changeNote: "flex-direction row explícito (defesa contra label column do portal)",
   }),
   vc("forms", "ComboboxNumberControl"),
+  vc("forms", "NumberStepperControl", {
+    addedAt: "2026-07-27",
+    changeNote: "grupo unificado − / combobox / + para ribbons densas",
+  }),
+
   vc("forms", "EditableTableCell"),
   vc("forms", "LucideIconPicker"),
   vc("forms", "LucideIconPickerPopover"),
