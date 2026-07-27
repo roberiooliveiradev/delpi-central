@@ -36,12 +36,14 @@ class ProcessSummaryResponse:
     total_gross_savings_in_period: float
     average_roi: float
     total_investment_in_period: float = 0.0
+    solutions_started_in_period_count: int = 0
     monthly_breakdown: List[MonthlySummaryItem] = field(default_factory=list)
     range_summary: Optional[RangeSummary] = None
 
     def to_dict(self) -> dict:
         return {
             "implemented_solutions_count": self.implemented_solutions_count,
+            "solutions_started_in_period_count": self.solutions_started_in_period_count,
             "total_net_savings_until_now": self.total_net_savings_until_now,
             "total_hours_saved_until_now": self.total_hours_saved_until_now,
             "total_gross_costs_until_now": self.total_gross_costs_until_now,

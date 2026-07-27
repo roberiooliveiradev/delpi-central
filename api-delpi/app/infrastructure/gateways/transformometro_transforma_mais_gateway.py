@@ -94,6 +94,9 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
 
         return ProcessSummaryResponse(
             implemented_solutions_count=int(data.get("implemented_solutions_count") or 0),
+            solutions_started_in_period_count=int(
+                data.get("solutions_started_in_period_count") or 0
+            ),
             total_net_savings_until_now=float(data.get("total_net_savings_until_now") or 0),
             total_hours_saved_until_now=float(data.get("total_hours_saved_until_now") or 0),
             total_gross_costs_until_now=float(data.get("total_gross_costs_until_now") or 0),

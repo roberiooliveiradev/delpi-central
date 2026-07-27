@@ -105,6 +105,7 @@ def test_summary_legacy_contract_fields(mock_load, _mock_filiais):
     )
 
     assert "implemented_solutions_count" in data
+    assert "solutions_started_in_period_count" in data
     assert "total_gross_savings_in_period" in data
     assert "total_investment_in_period" in data
     assert "total_hours_saved_until_now" in data
@@ -118,6 +119,7 @@ def test_summary_legacy_contract_fields(mock_load, _mock_filiais):
     assert data["total_investment_in_period"] == data["total_gross_costs_until_now"]
     assert data["total_investment_in_period"] >= 0
     assert data["implemented_solutions_count"] >= 0
+    assert data["solutions_started_in_period_count"] >= 0
 
 
 @patch(_LIVE_SERVICE)

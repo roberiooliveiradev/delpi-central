@@ -300,18 +300,21 @@ ENGINEERING_LMP_FIELD_LABELS: dict[str, str] = {
 }
 
 ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS: dict[str, str] = {
-    "implemented_solutions_count": "Soluções iniciadas no período",
+    "implemented_solutions_count": "Soluções ativas",
+    "solutions_started_in_period_count": "Soluções iniciadas no período",
     "total_net_savings_until_now": "Economia líquida no período",
     "total_hours_saved_until_now": "Horas economizadas",
     "total_gross_costs_until_now": "Investimento total",
     "total_investment_in_period": "Investimento total",
     "total_gross_savings_in_period": "Economia bruta",
     "average_roi": "ROI médio",
+    "month": "Mês",
     "gross_savings_month": "Economia bruta (mês)",
     "gross_costs_month": "Custos brutos (mês)",
     "gross_investment_month": "Investimento bruto (mês)",
     "gross_recurring_investment_month": "Invest. recorrente (mês)",
     "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
+    "investment_total_month": "Investimento total (mês)",
     "net_savings_month": "Economia líquida (mês)",
     "accumulated_net_savings_until_now": "Economia líquida acumulada (período)",
 }

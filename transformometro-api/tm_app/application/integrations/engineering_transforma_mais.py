@@ -126,6 +126,9 @@ def _map_summary(summary: dict) -> dict:
     investment_total = float(summary.get("investimento_total") or 0)
     return {
         "implemented_solutions_count": int(summary.get("solucoes_implementadas") or 0),
+        "solutions_started_in_period_count": int(
+            summary.get("solucoes_iniciadas_periodo") or 0
+        ),
         "total_net_savings_until_now": float(summary.get("economia_liquida_total") or 0),
         "total_hours_saved_until_now": float(summary.get("horas_economizadas_total") or 0),
         "total_gross_costs_until_now": investment_total,

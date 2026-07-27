@@ -529,30 +529,49 @@
         "total_investment_in_period",
         "total_gross_savings_in_period",
         "total_hours_saved_until_now",
-        "implemented_solutions_count"
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
       ],
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
         "total_gross_savings_in_period": "Economia bruta",
         "total_hours_saved_until_now": "Horas economizadas",
-        "implemented_solutions_count": "Soluções iniciadas no período",
+        "implemented_solutions_count": "Soluções ativas",
+        "solutions_started_in_period_count": "Soluções iniciadas no período",
         "total_net_savings_until_now": "Economia líquida",
-        "average_roi": "ROI médio"
+        "average_roi": "ROI médio",
+        "month": "Mês",
+        "gross_savings_month": "Economia bruta (mês)",
+        "gross_costs_month": "Custos brutos (mês)",
+        "gross_investment_month": "Investimento bruto (mês)",
+        "gross_recurring_investment_month": "Invest. recorrente (mês)",
+        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
+        "investment_total_month": "Investimento total (mês)",
+        "net_savings_month": "Economia líquida (mês)"
       },
       "valueFieldTypes": {
         "total_investment_in_period": "number",
         "total_gross_savings_in_period": "number",
         "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number"
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
       },
       "allowedDisplayModes": [
         "kpi",
         "auto"
       ],
       "label": "Resumo Transforma Mais",
-      "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
-      "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos.",
+      "description": "KPIs do período: investimento total, economia bruta, horas economizadas, soluções ativas e soluções iniciadas no período.",
+      "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas, ativas e iniciadas) antes de listar processos.",
       "paramSchema": {
         "filial_id": {
           "label": "Filial",

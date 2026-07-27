@@ -4023,8 +4023,8 @@
         "pt-BR": {
           "label": "Resumo Transforma Mais",
           "summary": "Resumo Transforma Mais",
-          "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
-          "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos."
+          "description": "KPIs do período: investimento total, economia bruta, horas economizadas, soluções ativas e soluções iniciadas no período.",
+          "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas, ativas e iniciadas) antes de listar processos."
         }
       },
       "category": "engineering"
@@ -7275,6 +7275,21 @@
           "label": "Obter não conformidade LMP",
           "summary": "Obter não conformidade LMP",
           "description": "Detalhe de uma não conformidade LMP por id."
+        }
+      },
+      "category": "engineering"
+    },
+    "list_lmp_nonconformity_history": {
+      "locale": {
+        "en": {
+          "summary": "List LMP nonconformity change history",
+          "description": "Append-only change history with actor id, e-mail, name and field diffs.",
+          "label": "LMP NC history"
+        },
+        "pt-BR": {
+          "label": "Histórico da NC LMP",
+          "summary": "Listar histórico de alterações da NC LMP",
+          "description": "Histórico imutável de criação/alteração com id, e-mail e nome do usuário e diffs dos campos."
         }
       },
       "category": "engineering"

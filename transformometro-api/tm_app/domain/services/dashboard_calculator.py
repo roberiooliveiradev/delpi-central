@@ -304,8 +304,13 @@ class DashboardCalculatorService:
         total_hours_saved = period_totals["horas_economizadas_mes"]
         total_capacity_gain = period_totals.get("ganho_capacidade", 0.0)
 
-        # Soluções que começaram no recorte (não o snapshot de «ainda ativas»).
-        implemented_solutions_count = calc_rules.count_improvements_started_in_period(
+        # Snapshot de soluções ainda ativas no cadastro (independente do período).
+        implemented_solutions_count = calc_rules.count_active_implemented_improvements(
+            instancias=filtered_raw.processo_instancias,
+            revisoes=filtered_raw.revisoes,
+        )
+        # Soluções cuja data de início cai no recorte (pode incluir inativas).
+        solutions_started_in_period_count = calc_rules.count_improvements_started_in_period(
             instancias=filtered_raw.processo_instancias,
             revisoes=filtered_raw.revisoes,
             start_date=clamped_start,
@@ -325,6 +330,7 @@ class DashboardCalculatorService:
 
         return {
             "solucoes_implementadas": implemented_solutions_count,
+            "solucoes_iniciadas_periodo": solutions_started_in_period_count,
             "economia_liquida_total": self._round_final(total_net_savings),
             "economia_bruta_total": self._round_final(total_gross_savings),
             "horas_economizadas_total": self._round_final(total_hours_saved),

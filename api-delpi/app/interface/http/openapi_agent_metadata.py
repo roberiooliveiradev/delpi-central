@@ -366,8 +366,8 @@ TRANSFORMA_MAIS_SUMMARY = agent_route(
     summary="Resumo Transforma Mais",
     description=(
         "Aggregated Transforma Mais KPIs by branch and period: "
-        "total investment, gross savings, hours saved, and solutions that started "
-        "in the period (not the snapshot of currently active solutions). "
+        "total investment, gross savings, hours saved, active solutions, "
+        "and solutions that started in the period. "
         "Prefer for continuous-improvement pulse before listing processes."
     ),
     operation_id="get_transforma_mais_summary",
@@ -499,6 +499,15 @@ LMP_NONCONFORMITY_BY_ID = agent_route(
     summary="Get LMP nonconformity by id",
     description="Returns one LMP nonconformity including product lines (code + description).",
     operation_id="get_lmp_nonconformity",
+)
+
+LMP_NONCONFORMITY_HISTORY = agent_route(
+    summary="List LMP nonconformity change history",
+    description=(
+        "Append-only change history for one LMP nonconformity: event type, field diffs, "
+        "and actor user id, e-mail and name."
+    ),
+    operation_id="list_lmp_nonconformity_history",
 )
 
 LMP_NONCONFORMITY_CREATE = agent_route(
