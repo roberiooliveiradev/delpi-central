@@ -12,7 +12,7 @@ Microfrontend com indicadores de produção via **api-delpi** (`/production`).
 | OEE (%) | `GET /production/overall_equipment_effectiveness_pct` | View fabril (`EFICIENCIA_PERCENTUAL` — tempo previsto ÷ real) |
 | **OEE — painel** | `GET /production/oee` | Resumo, evolução e listagem de apontamentos |
 | **OEE — detalhe** | `GET /production/oee/appointments/{id}` | Roteiro, estrutura, tempos e alertas (`time_analysis.findings`) |
-| OTD (%) | `GET /production/on_time_delivery_pct` | TOTVS SC2010 (OP mãe sequência `001`) |
+| OTD (%) | `GET /production/on_time_delivery_pct` | TOTVS SC2010 (OP mãe `001`; finalizadas + abertas já atrasadas) |
 | **OTD — painel** | `GET /production/otd` | Resumo e listagem de OPs mãe (`C2_SEQUEN = 001`) |
 
 Rotas no Portal: `/apps/dashboard-production/oee`, `/apps/dashboard-production/otd`, etc.

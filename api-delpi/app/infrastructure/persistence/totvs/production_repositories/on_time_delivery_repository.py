@@ -1,6 +1,14 @@
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.pagination import paginate
+from app.infrastructure.persistence.totvs.production_repositories.production_otd_sql_filters import (
+    sc2_otd_days_diff_select_sql,
+    sc2_otd_finish_date_select_sql,
+    sc2_otd_late_sql,
+    sc2_otd_on_time_sql,
+    sc2_otd_status_case_sql,
+    sc2_otd_universe_sql,
+)
 from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
     SC2_MOTHER_OP_SEQUENCE_SQL,
 )
@@ -19,7 +27,7 @@ from app.domain.ports.production.on_time_delivery_repository_port import (
     OnTimeDeliveryRepositoryPort,
 )
 
-_LIST_OPS_CTE = """
+_LIST_OPS_CTE = f"""
     OPS_KEYS AS (
         SELECT
             OP.C2_FILIAL AS branch,
@@ -30,7 +38,7 @@ _LIST_OPS_CTE = """
             OP.C2_DATRF,
             MIN(RTRIM(LTRIM(OP.C2_PRODUTO))) AS product_code
         FROM SC2010 OP WITH (NOLOCK)
-        WHERE {where_clause}
+        WHERE {{where_clause}}
         GROUP BY
             OP.C2_FILIAL,
             OP.C2_NUM,
@@ -47,23 +55,18 @@ _LIST_OPS_CTE = """
             k.product_code,
             RTRIM(LTRIM(P_PA.B1_DESC)) AS product_description,
             CONVERT(VARCHAR(10), CONVERT(DATE, k.C2_DATPRF, 112), 23) AS due_date,
-            CONVERT(VARCHAR(10), CONVERT(DATE, k.C2_DATRF, 112), 23) AS finish_date,
-            DATEDIFF(
-                DAY,
-                CONVERT(DATE, k.C2_DATPRF, 112),
-                CONVERT(DATE, k.C2_DATRF, 112)
-            ) AS days_diff,
-            CASE
-                WHEN CONVERT(DATE, k.C2_DATRF, 112) <= CONVERT(DATE, k.C2_DATPRF, 112)
-                THEN 'on_time'
-                ELSE 'late'
-            END AS status
+            {sc2_otd_finish_date_select_sql("k")} AS finish_date,
+            {sc2_otd_days_diff_select_sql("k")} AS days_diff,
+            {sc2_otd_status_case_sql("k")} AS status
         FROM OPS_KEYS k
         LEFT JOIN SB1010 P_PA WITH (NOLOCK)
             ON P_PA.B1_COD = k.product_code
            AND P_PA.D_E_L_E_T_ = ''
     )
 """
+
+_ON_TIME_AGG = sc2_otd_on_time_sql("")
+_LATE_AGG = sc2_otd_late_sql("")
 
 
 class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
@@ -82,7 +85,8 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             qb.eq("OP.C2_FILIAL", branch)
 
         qb.raw("OP.C2_DATPRF IS NOT NULL")
-        qb.raw("OP.C2_DATRF IS NOT NULL")
+        qb.raw("LTRIM(RTRIM(OP.C2_DATPRF)) <> ''")
+        qb.raw(sc2_otd_universe_sql("OP"))
         qb.date_range("OP.C2_DATPRF", start_date, end_date)
         qb.raw(SC2_MOTHER_OP_SEQUENCE_SQL)
 
@@ -168,10 +172,10 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             )
             SELECT
                 COUNT(*) AS total_ops_finished,
-                SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) AS on_time_ops,
-                SUM(CASE WHEN C2_DATRF > C2_DATPRF THEN 1 ELSE 0 END) AS late_ops,
+                SUM(CASE WHEN {_ON_TIME_AGG} THEN 1 ELSE 0 END) AS on_time_ops,
+                SUM(CASE WHEN {_LATE_AGG} THEN 1 ELSE 0 END) AS late_ops,
                 CAST(
-                    SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) * 100.0
+                    SUM(CASE WHEN {_ON_TIME_AGG} THEN 1 ELSE 0 END) * 100.0
                     / NULLIF(COUNT(*), 0)
                     AS DECIMAL(10, 2)
                 ) AS on_time_delivery_pct
@@ -225,10 +229,10 @@ class OnTimeDeliveryRepository(BaseRepository, OnTimeDeliveryRepositoryPort):
             SELECT
                 branch,
                 COUNT(*) AS total_ops_finished,
-                SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) AS on_time_ops,
-                SUM(CASE WHEN C2_DATRF > C2_DATPRF THEN 1 ELSE 0 END) AS late_ops,
+                SUM(CASE WHEN {_ON_TIME_AGG} THEN 1 ELSE 0 END) AS on_time_ops,
+                SUM(CASE WHEN {_LATE_AGG} THEN 1 ELSE 0 END) AS late_ops,
                 CAST(
-                    SUM(CASE WHEN C2_DATRF <= C2_DATPRF THEN 1 ELSE 0 END) * 100.0
+                    SUM(CASE WHEN {_ON_TIME_AGG} THEN 1 ELSE 0 END) * 100.0
                     / NULLIF(COUNT(*), 0)
                     AS DECIMAL(10, 2)
                 ) AS on_time_delivery_pct

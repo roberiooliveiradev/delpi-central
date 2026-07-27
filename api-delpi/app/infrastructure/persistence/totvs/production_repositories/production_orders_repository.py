@@ -2,6 +2,11 @@ from app.domain.ports.production.production_orders_repository_port import (
     ProductionOrdersRepositoryPort,
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
+from app.infrastructure.persistence.totvs.production_repositories.production_otd_sql_filters import (
+    sc2_otd_days_diff_select_sql,
+    sc2_otd_finish_date_select_sql,
+    sc2_otd_status_case_sql,
+)
 from app.infrastructure.persistence.totvs.production_repositories.production_pa_sql_filters import (
     LINKED_PA_OR_PREFIX_FILTER_SQL,
     SC2_PA_PRODUCT_CODE_PREFIX_SQL,
@@ -420,27 +425,9 @@ class ProductionOrdersRepository(
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_EMISSAO, 112), 23) AS issue_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRI, 112), 23) AS planned_start_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATPRF, 112), 23) AS due_date,
-            CASE
-                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
-                THEN NULL
-                ELSE CONVERT(VARCHAR(10), CONVERT(DATE, OP.C2_DATRF, 112), 23)
-            END AS finish_date,
-            CASE
-                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
-                THEN NULL
-                ELSE DATEDIFF(
-                    DAY,
-                    CONVERT(DATE, OP.C2_DATPRF, 112),
-                    CONVERT(DATE, OP.C2_DATRF, 112)
-                )
-            END AS days_diff,
-            CASE
-                WHEN OP.C2_DATRF IS NULL OR LTRIM(RTRIM(OP.C2_DATRF)) = ''
-                THEN 'open'
-                WHEN CONVERT(DATE, OP.C2_DATRF, 112) <= CONVERT(DATE, OP.C2_DATPRF, 112)
-                THEN 'on_time'
-                ELSE 'late'
-            END AS otd_status
+            {sc2_otd_finish_date_select_sql("OP")} AS finish_date,
+            {sc2_otd_days_diff_select_sql("OP")} AS days_diff,
+            {sc2_otd_status_case_sql("OP")} AS otd_status
         FROM SC2010 OP WITH (NOLOCK)
         INNER JOIN SB1010 P WITH (NOLOCK)
             ON P.B1_COD = OP.C2_PRODUTO
@@ -547,27 +534,9 @@ class ProductionOrdersRepository(
             CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_EMISSAO, 112), 23) AS issue_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATPRI, 112), 23) AS planned_start_date,
             CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATPRF, 112), 23) AS due_date,
-            CASE
-                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
-                THEN NULL
-                ELSE CONVERT(VARCHAR(10), CONVERT(DATE, LINKED.C2_DATRF, 112), 23)
-            END AS finish_date,
-            CASE
-                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
-                THEN NULL
-                ELSE DATEDIFF(
-                    DAY,
-                    CONVERT(DATE, LINKED.C2_DATPRF, 112),
-                    CONVERT(DATE, LINKED.C2_DATRF, 112)
-                )
-            END AS days_diff,
-            CASE
-                WHEN LINKED.C2_DATRF IS NULL OR LTRIM(RTRIM(LINKED.C2_DATRF)) = ''
-                THEN 'open'
-                WHEN CONVERT(DATE, LINKED.C2_DATRF, 112) <= CONVERT(DATE, LINKED.C2_DATPRF, 112)
-                THEN 'on_time'
-                ELSE 'late'
-            END AS otd_status
+            {sc2_otd_finish_date_select_sql("LINKED")} AS finish_date,
+            {sc2_otd_days_diff_select_sql("LINKED")} AS days_diff,
+            {sc2_otd_status_case_sql("LINKED")} AS otd_status
         FROM PARENT_OP PO
         INNER JOIN SC2010 LINKED WITH (NOLOCK)
             ON LINKED.C2_FILIAL = PO.branch
