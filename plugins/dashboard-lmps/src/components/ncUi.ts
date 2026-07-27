@@ -2,6 +2,7 @@ import {
   createHostContainedModalShell,
   confirmModalBemClasses,
   createDashboardFormActions,
+  createDashboardFormGrid,
   createDashboardNativeFormFields,
   createDashboardSectionCard,
   createDashboardSelectField,
@@ -11,6 +12,7 @@ import {
   delpiUiClass,
   formActionsBemClasses,
   formFieldShellBemClasses,
+  formGridBemClasses,
   sectionCardKaizenBemClasses,
   selectFieldPacClasses,
   textAreaFieldPacClasses,
@@ -40,6 +42,10 @@ export const SectionCard = createDashboardSectionCard({
 
 export const FormActions = createDashboardFormActions({
   classNames: formActionsBemClasses("lmps"),
+});
+
+export const FormGrid = createDashboardFormGrid({
+  classNames: formGridBemClasses("lmps"),
 });
 
 /** Campos de texto/área — dual-class `delpi-ui-filter-box` (kit). */

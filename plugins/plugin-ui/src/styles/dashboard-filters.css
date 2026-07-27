@@ -64,6 +64,7 @@
 .delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]),
 .delpi-ui-filter-box select,
 .delpi-ui-filter-box textarea {
+  width: 100%;
   min-height: var(--delpi-ui-control-height, 42px);
   box-sizing: border-box;
   border-radius: var(--delpi-ui-control-radius, 10px);
@@ -75,7 +76,7 @@
 }
 
 .delpi-ui-filter-box textarea {
-  min-height: calc(var(--delpi-ui-control-height, 42px) * 1.6);
+  min-height: calc(var(--delpi-ui-control-height, 42px) * 2.4);
   resize: vertical;
 }
 

@@ -24,6 +24,7 @@ import { LmpsNav } from "../components/LmpsNav";
 import type { DataTableColumn } from "../components/dataTableUi";
 import {
   FormActions,
+  FormGrid,
   HostContainedDialog,
   HostContainedFill,
   LMPS_CONFIRM_CLASSES,
@@ -552,7 +553,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             title="Identificação"
             hint={NC_HELP.form.sectionIdentification}
           >
-            <div className="lmps-nc-form-grid">
+            <FormGrid>
               <NativeTextField
                 id="nc-registered-at"
                 label="Data/hora registro"
@@ -593,21 +594,23 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.saleNumber}
                 value={form.sale_number}
                 onChange={setField("sale_number")}
+                fullWidth
               />
-            </div>
+            </FormGrid>
           </SectionCard>
 
           <SectionCard
             title="Documento / material"
             hint={NC_HELP.form.sectionDocument}
           >
-            <div className="lmps-nc-form-grid">
+            <FormGrid>
               <TextField
                 id="nc-material"
                 label="Código material"
                 hint={NC_HELP.form.material}
                 value={form.material_code}
                 onChange={setField("material_code")}
+                fullWidth
               />
               <TextField
                 id="nc-supplier"
@@ -615,6 +618,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.supplier}
                 value={form.supplier_name}
                 onChange={setField("supplier_name")}
+                fullWidth
               />
               <TextField
                 id="nc-oc"
@@ -622,6 +626,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.purchaseOrder}
                 value={form.purchase_order}
                 onChange={setField("purchase_order")}
+                fullWidth
               />
               <TextField
                 id="nc-nf"
@@ -629,6 +634,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.invoice}
                 value={form.invoice_number}
                 onChange={setField("invoice_number")}
+                fullWidth
               />
               <TextField
                 id="nc-qty-rec"
@@ -636,6 +642,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.qtyReceived}
                 value={form.qty_received}
                 onChange={setField("qty_received")}
+                fullWidth
               />
               <TextField
                 id="nc-qty-acc"
@@ -643,6 +650,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.qtyAccepted}
                 value={form.qty_accepted}
                 onChange={setField("qty_accepted")}
+                fullWidth
               />
               <TextField
                 id="nc-qty-rej"
@@ -650,51 +658,60 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                 hint={NC_HELP.form.qtyRejected}
                 value={form.qty_rejected}
                 onChange={setField("qty_rejected")}
+                fullWidth
               />
-            </div>
+            </FormGrid>
           </SectionCard>
 
           <SectionCard
             title="Produtos (opcional)"
             hint={NC_HELP.form.sectionProducts}
           >
-            <TextField
-              id="nc-products"
-              label="Códigos de produto"
-              hint={NC_HELP.form.productCodes}
-              value={form.product_codes}
-              onChange={setField("product_codes")}
-            />
+            <FormGrid className="lmps-form-grid--stack">
+              <TextField
+                id="nc-products"
+                label="Códigos de produto"
+                hint={NC_HELP.form.productCodes}
+                value={form.product_codes}
+                onChange={setField("product_codes")}
+                fullWidth
+              />
+            </FormGrid>
           </SectionCard>
 
           <SectionCard title="Descrição" hint={NC_HELP.form.sectionDescription}>
-            <TextAreaField
-              id="nc-defect"
-              label="Descrição do defeito"
-              hint={NC_HELP.form.defectDescription}
-              value={form.defect_description}
-              onChange={setField("defect_description")}
-              rows={3}
-            />
-            <TextAreaField
-              id="nc-actions"
-              label="Ações / ação corretiva"
-              hint={NC_HELP.form.correctiveActions}
-              value={form.corrective_actions}
-              onChange={setField("corrective_actions")}
-              rows={3}
-            />
-            <TextAreaField
-              id="nc-opinion"
-              label="Parecer técnico"
-              hint={NC_HELP.form.technicalOpinion}
-              value={form.technical_opinion}
-              onChange={setField("technical_opinion")}
-              rows={3}
-            />
+            <FormGrid className="lmps-form-grid--stack">
+              <TextAreaField
+                id="nc-defect"
+                label="Descrição do defeito"
+                hint={NC_HELP.form.defectDescription}
+                value={form.defect_description}
+                onChange={setField("defect_description")}
+                rows={4}
+                fullWidth
+              />
+              <TextAreaField
+                id="nc-actions"
+                label="Ações / ação corretiva"
+                hint={NC_HELP.form.correctiveActions}
+                value={form.corrective_actions}
+                onChange={setField("corrective_actions")}
+                rows={4}
+                fullWidth
+              />
+              <TextAreaField
+                id="nc-opinion"
+                label="Parecer técnico"
+                hint={NC_HELP.form.technicalOpinion}
+                value={form.technical_opinion}
+                onChange={setField("technical_opinion")}
+                rows={4}
+                fullWidth
+              />
+            </FormGrid>
           </SectionCard>
 
-          <FormActions>
+          <FormActions align="end">
             <ActionButton
               type="button"
               variant="ghost"
