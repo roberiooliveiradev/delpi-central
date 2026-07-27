@@ -356,8 +356,8 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
   const ticks = resolveSeriesChartTicks(dataMin, dataMax);
-  const axisMin = ticks[0] ?? dataMin;
-  const axisMax = ticks[ticks.length - 1] ?? dataMax;
+  const axisMin = Math.min(ticks[0] ?? dataMin, dataMin);
+  const axisMax = Math.max(ticks[ticks.length - 1] ?? dataMax, dataMax);
   const axisRange = Math.max(axisMax - axisMin, 1e-6);
 
   const secondaryValues = (input.secondaryAxisValues ?? [])
@@ -367,8 +367,13 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const secondaryTicks = hasSecondaryAxis
     ? resolveSeriesChartTicks(Math.min(...secondaryValues), Math.max(...secondaryValues))
     : undefined;
-  const secondaryMin = secondaryTicks?.[0] ?? 0;
-  const secondaryMax = secondaryTicks?.[secondaryTicks.length - 1] ?? 1;
+  const secondaryDataMin = hasSecondaryAxis ? Math.min(...secondaryValues) : 0;
+  const secondaryDataMax = hasSecondaryAxis ? Math.max(...secondaryValues) : 1;
+  const secondaryMin = Math.min(secondaryTicks?.[0] ?? secondaryDataMin, secondaryDataMin);
+  const secondaryMax = Math.max(
+    secondaryTicks?.[secondaryTicks.length - 1] ?? secondaryDataMax,
+    secondaryDataMax,
+  );
   const secondaryRange = Math.max(secondaryMax - secondaryMin, 1e-6);
 
   const viewW = Math.max(120, input.viewW ?? SERIES_CHART_VIEW_W);

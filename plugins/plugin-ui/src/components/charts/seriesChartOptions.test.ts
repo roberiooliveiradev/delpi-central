@@ -5,6 +5,7 @@ import {
   SERIES_CHART_CHROME_VERSION,
   migrateSeriesChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions,
+  resolveSeriesChartTicks,
 } from "./seriesChartOptions";
 
 describe("seriesChartOptions — títulos de eixo", () => {
@@ -66,5 +67,24 @@ describe("seriesChartOptions — títulos de eixo", () => {
     });
     expect(migrated.showXAxisTitle).toBe(false);
     expect(migrated.showYAxisTitle).toBe(false);
+  });
+});
+
+describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
+  it("não trunca economia ~875 com piso ~100 (regressão clip no teto)", () => {
+    const ticks = resolveSeriesChartTicks(100, 875);
+    expect(ticks[0]!).toBeLessThanOrEqual(100);
+    expect(ticks[ticks.length - 1]!).toBeGreaterThanOrEqual(875);
+  });
+
+  it("cobre max quando cai entre ticks nice", () => {
+    const ticks = resolveSeriesChartTicks(0, 875);
+    expect(ticks[ticks.length - 1]!).toBeGreaterThanOrEqual(875);
+  });
+
+  it("mantém ticks estáveis quando max já é nice", () => {
+    const ticks = resolveSeriesChartTicks(0, 800);
+    expect(ticks[0]).toBe(0);
+    expect(ticks[ticks.length - 1]).toBe(800);
   });
 });

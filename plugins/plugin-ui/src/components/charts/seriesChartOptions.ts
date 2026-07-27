@@ -317,13 +317,20 @@ export function resolveSeriesChartTicks(min: number, max: number, count = 5): nu
   const rawStep = range / Math.max(count - 1, 1);
   const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
   const step = Math.ceil(rawStep / magnitude) * magnitude || 1;
+  // Domínio "nice" que sempre cobre [min, max] — evita clipar série no teto do plot
+  // (ex.: economia ~875 com ticks até 800 → área plana no topo).
   const niceMin = Math.floor(min / step) * step;
+  const niceMax = Math.ceil(max / step) * step;
   const ticks: number[] = [];
-  for (let value = niceMin; value <= max + step * 0.001; value += step) {
+  for (let value = niceMin; value <= niceMax + step * 0.001; value += step) {
     ticks.push(Number(value.toFixed(6)));
-    if (ticks.length >= count + 2) break;
+    if (ticks.length >= count + 4) break;
   }
   if (ticks.length < 2) return [min, max];
+  const first = ticks[0]!;
+  const last = ticks[ticks.length - 1]!;
+  if (first > min) ticks.unshift(Number((first - step).toFixed(6)));
+  if (last < max) ticks.push(Number(niceMax.toFixed(6)));
   return ticks;
 }
 

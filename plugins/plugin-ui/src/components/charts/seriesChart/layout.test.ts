@@ -270,6 +270,24 @@ describe("golden layout fixture OTD", () => {
     expect(snapshot.margin.right).toBeGreaterThanOrEqual(18);
     expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
+  it("axisMax cobre dataMax para não clipar série no teto (economia vs investimento)", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "01", value: 120 },
+        { label: "15", value: 875 },
+        { label: "27", value: 890 },
+      ],
+      axisValues: [120, 200, 875, 890, 150],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+    });
+    expect(layout.axisMax).toBeGreaterThanOrEqual(890);
+    // Variação acima de 800 (antigo teto clipado) continua distinguível no plot
+    expect(layout.toY(800)).toBeGreaterThan(layout.toY(875));
+    expect(layout.toY(875)).toBeGreaterThan(layout.toY(890));
+  });
 });
 
 describe("buildSeriesChartLayout secondary axis", () => {
