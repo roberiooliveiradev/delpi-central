@@ -44,9 +44,15 @@ class LmpListingKindSemanticsService:
         has_lmp_finalized: bool,
         min_residence_minutes: int,
         strict_residence_after_homolog: bool,
+        has_engineering_stage: bool = False,
     ) -> bool:
+        """Filtro de permanência na listagem.
+
+        - Amostra / Outro: sem piso de minutos, mas exigem estágio de engenharia.
+        - LMP: ≥ ``min_residence_minutes`` (ou bypass de marcador amostra, se não strict).
+        """
         if listing_kind in (LISTING_KIND_SAMPLE, LISTING_KIND_OTHER):
-            return True
+            return has_engineering_stage
         if listing_kind != LISTING_KIND_LMP:
             return True
         if total_minutes >= min_residence_minutes:

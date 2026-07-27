@@ -91,6 +91,7 @@ def test_listing_kind_regression_cases(case: dict) -> None:
         has_lmp_finalized=case["has_lmp_finalized"],
         min_residence_minutes=30,
         strict_residence_after_homolog=case["strict"],
+        has_engineering_stage=case.get("has_engineering_stage", False),
     )
     assert kind == case["expected_kind"]
     assert passes == case["passes_residence"]

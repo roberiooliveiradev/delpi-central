@@ -106,12 +106,20 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return sql, params_ad1
 
     def _engineering_residence_filter_sql(self) -> str:
-        """Tempo mínimo em engenharia aplica somente a LMP; Amostra e Outro listam sempre."""
+        """Permanência na listagem: LMP ≥ N min; Amostra/Outro só exigem estágio de engenharia.
+
+        ``H`` (EngenhariaResumo) só existe quando há evento de suporte de engenharia
+        no AIJ010 — tempo pode ser 0 (passagem pontual).
+        """
         minutes = self._min_engineering_residence_minutes()
+        has_eng_stage = "H.AIJ_FILIAL IS NOT NULL"
         if self.settings.strict_residence_after_homolog:
             return f"""
             WHERE
-                C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                (
+                    C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                    AND {has_eng_stage}
+                )
                 OR (
                     C.LISTING_KIND = '{LISTING_KIND_LMP}'
                     AND ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= {minutes}
@@ -119,7 +127,10 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         """
         return f"""
             WHERE
-                C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                (
+                    C.LISTING_KIND IN ('{LISTING_KIND_SAMPLE}', '{LISTING_KIND_OTHER}')
+                    AND {has_eng_stage}
+                )
                 OR (
                     C.LISTING_KIND = '{LISTING_KIND_LMP}'
                     AND (

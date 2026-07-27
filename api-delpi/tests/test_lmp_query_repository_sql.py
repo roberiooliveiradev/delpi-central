@@ -223,6 +223,7 @@ def test_staged_batch_applies_minimum_engineering_residence_filter_only_for_lmp(
 
     assert f"'{LISTING_KIND_SAMPLE}'" in batch_sql
     assert f"'{LISTING_KIND_OTHER}'" in batch_sql
+    assert "H.AIJ_FILIAL IS NOT NULL" in batch_sql
     assert "C.LISTING_KIND = 'LMP'" in batch_sql
     assert "C.HAS_SAMPLE_ANCHOR = 1" in batch_sql
     assert "ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in batch_sql
@@ -232,13 +233,14 @@ def test_staged_batch_applies_minimum_engineering_residence_filter_only_for_lmp(
     assert batch_params[-2:] == (30, 30)
 
 
-def test_engineering_residence_filter_sql_allows_sample_and_other_without_minutes() -> None:
+def test_engineering_residence_filter_sql_requires_eng_stage_for_sample_and_other() -> None:
     repo = _repository()
 
     sql = repo._engineering_residence_filter_sql()
 
     assert f"'{LISTING_KIND_SAMPLE}'" in sql
     assert f"'{LISTING_KIND_OTHER}'" in sql
+    assert "H.AIJ_FILIAL IS NOT NULL" in sql
     assert "C.LISTING_KIND = 'LMP'" in sql
     assert "ISNULL(H.TEMPO_TOTAL_MINUTOS_ENG, 0) >= ?" in sql
 
@@ -664,6 +666,8 @@ def test_strict_residence_filter_drops_sample_bypass() -> None:
 
     assert "HAS_SAMPLE_ANCHOR" not in sql
     assert "TEMPO_TOTAL_MINUTOS_ENG" in sql
+    assert "H.AIJ_FILIAL IS NOT NULL" in sql
+    assert f"'{LISTING_KIND_SAMPLE}'" in sql
 
 
 def test_work_month_lmp_candidates_union_revision_and_anchor() -> None:
