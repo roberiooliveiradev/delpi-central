@@ -90,6 +90,8 @@
         "ppmValue": "PPM",
         "total_produzido_un": "Total produzido (un.)",
         "total_produzido_milheiro": "Total produzido (milheiro)",
+        "total_devolvido_un": "Total devolvido (un.)",
+        "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
       "label": "PPM Externo",
@@ -118,6 +120,8 @@
         "ppmValue": "PPM",
         "total_produzido_un": "Total produzido (un.)",
         "total_produzido_milheiro": "Total produzido (milheiro)",
+        "total_devolvido_un": "Total devolvido (un.)",
+        "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
       "label": "PPM Interno",

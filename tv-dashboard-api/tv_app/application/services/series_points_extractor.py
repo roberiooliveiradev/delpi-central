@@ -152,8 +152,31 @@ def envelope_meta(envelope: dict[str, Any] | Any) -> dict[str, Any]:
     return meta if isinstance(meta, dict) else {}
 
 
-def response_fields_from_meta(meta: dict[str, Any]) -> list[dict[str, Any]]:
+def response_fields_from_meta(
+    meta: dict[str, Any],
+) -> dict[str, str] | list[dict[str, Any]]:
+    """
+    Extrai rótulos de ``meta.fields`` do envelope api-delpi.
+
+    Formato canônico: dict ``{campo: rótulo PT}``.
+    Legado: lista ``[{key|name, label|title}, ...]``.
+    """
     fields = meta.get("fields")
+    if isinstance(fields, dict):
+        out: dict[str, str] = {}
+        for key, label in fields.items():
+            field = str(key).strip()
+            if not field:
+                continue
+            if isinstance(label, dict):
+                text = str(label.get("label") or label.get("title") or "").strip()
+            elif isinstance(label, (list, tuple)):
+                text = ""
+            else:
+                text = str(label or "").strip()
+            if text:
+                out[field] = text
+        return out
     if isinstance(fields, list):
         return [field for field in fields if isinstance(field, dict)]
-    return []
+    return {}

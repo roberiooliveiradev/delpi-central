@@ -181,13 +181,14 @@ class DelpiOperationalGateway:
         api_meta = envelope_meta(envelope)
         business_data = unwrap_operational_data(envelope)
         response_fields = response_fields_from_meta(api_meta)
+        # Nunca cair em paramSchema: é schema de query, não rótulos de campos do payload.
         return {
             "operationId": canonical_operation_id,
             "meta": {
                 "operationId": canonical_operation_id,
                 "entity": api_meta.get("entity") or route.get("metaShape") or "scalar",
                 "shape": api_meta.get("shape") or route.get("metaShape") or "scalar",
-                "fields": response_fields or route.get("paramSchema") or {},
+                "fields": response_fields or {},
             },
             "data": business_data,
             "route": {

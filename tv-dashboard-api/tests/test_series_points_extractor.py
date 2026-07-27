@@ -1,6 +1,7 @@
 from tv_app.application.services.series_points_extractor import (
     envelope_data,
     extract_series_points,
+    response_fields_from_meta,
     unwrap_operational_data,
 )
 
@@ -80,3 +81,38 @@ def test_extract_series_points_preserves_zero_label():
     assert extract_series_points(
         {"points": [{"label": 0, "periodo": "substituto", "value": 10}]}
     ) == [{"label": 0, "value": 10}]
+
+
+def test_response_fields_from_meta_accepts_dict_canonical_api_delpi():
+    """api-delpi grava meta.fields como dict {campo: rótulo} — não pode ser descartado."""
+    fields = response_fields_from_meta(
+        {
+            "fields": {
+                "ppm": "PPM",
+                "target": "Meta PPM",
+                "total_devolvido_un": "Total devolvido (un.)",
+                "value": "Valor",
+            }
+        }
+    )
+    assert fields == {
+        "ppm": "PPM",
+        "target": "Meta PPM",
+        "total_devolvido_un": "Total devolvido (un.)",
+        "value": "Valor",
+    }
+
+
+def test_response_fields_from_meta_keeps_list_legacy():
+    fields = response_fields_from_meta(
+        {
+            "fields": [
+                {"key": "ppm", "label": "PPM"},
+                {"name": "target", "title": "Meta PPM"},
+            ]
+        }
+    )
+    assert fields == [
+        {"key": "ppm", "label": "PPM"},
+        {"name": "target", "title": "Meta PPM"},
+    ]
