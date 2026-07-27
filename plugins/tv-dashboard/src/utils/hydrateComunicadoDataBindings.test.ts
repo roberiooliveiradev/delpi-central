@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
-import { hydrateComunicadoDataBindings } from "./hydrateComunicadoDataBindings";
+import {
+  buildLabelCatalogFromRoutes,
+  hydrateComunicadoDataBindings,
+} from "./hydrateComunicadoDataBindings";
 
 const ppmRoute: TvDataRouteCatalogItem = {
   operationId: "get_ppm_internal_summary",
@@ -80,5 +83,15 @@ describe("hydrateComunicadoDataBindings", () => {
     );
     expect(result.orphanOperationIds).toEqual(["get_gone_route"]);
     expect(result.config.blocks).toHaveLength(1);
+  });
+});
+
+describe("buildLabelCatalogFromRoutes", () => {
+  it("expõe label vivo por operationId (mesmo input da aba Dados no Elemento)", () => {
+    const catalog = buildLabelCatalogFromRoutes([ppmRoute]);
+    expect(catalog.get_ppm_internal_summary).toEqual({
+      label: "PPM Interno — realizado",
+      labelAliases: ["Qualidade — PPM interno"],
+    });
   });
 });

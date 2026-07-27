@@ -6,11 +6,13 @@ import {
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
   type ComunicadoBlock,
+  type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
 
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { buildLabelCatalogFromRoutes } from "../../utils/hydrateComunicadoDataBindings";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { DataPreparePanel } from "../DataPreparePanel";
@@ -78,6 +80,12 @@ export function ComunicadoElementInspector({
     if (!isDataBlock && !isVisualBoxData) return;
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, [isDataBlock, isVisualBoxData]);
+
+  /** Mesmo catálogo vivo da aba Dados — sem isso o select mostra só operationId. */
+  const labelCatalog: DataSourceLabelCatalog = useMemo(
+    () => buildLabelCatalogFromRoutes(routes),
+    [routes],
+  );
 
   const selectedRoute = useMemo(() => {
     if (isDataBlock && selected && "dataBinding" in selected) {
@@ -157,6 +165,7 @@ export function ComunicadoElementInspector({
         <VisualDataViewInspector
           pane={pane}
           route={selectedRoute}
+          labelCatalog={labelCatalog}
           onOpenDataSources={onOpenDataSources}
         />
       ) : null}
@@ -164,6 +173,7 @@ export function ComunicadoElementInspector({
         <TextDataBindingInspector
           pane={pane}
           route={selectedRoute}
+          labelCatalog={labelCatalog}
           onOpenDataSources={onOpenDataSources}
         />
       ) : null}
