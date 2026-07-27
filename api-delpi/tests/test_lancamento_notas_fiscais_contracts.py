@@ -10,6 +10,8 @@ OPERATION_IDS = {
     "create_lancamento_notas_fiscais_request",
     "list_lancamento_notas_fiscais_requests",
     "get_lancamento_notas_fiscais_request",
+    "list_lancamento_notas_fiscais_request_purchase_orders",
+    "link_lancamento_notas_fiscais_request_purchase_order",
     "update_lancamento_notas_fiscais_request",
     "start_lancamento_notas_fiscais_request",
     "block_lancamento_notas_fiscais_request",

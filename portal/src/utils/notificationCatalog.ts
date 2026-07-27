@@ -5,6 +5,7 @@ import {
   Calendar,
   ClipboardCheck,
   ClipboardList,
+  FileText,
   KeyRound,
   Megaphone,
   MessageCircle,
@@ -93,6 +94,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       sourceApps: ["cadastro-kaizen"],
       pluginId: "cadastro-kaizen",
     },
+    {
+      id: "lancamento_notas_fiscais",
+      label: "Lançamento de Notas Fiscais",
+      icon: "file-text",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["lancamento-notas-fiscais"],
+      pluginId: "lancamento-notas-fiscais",
+    },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
@@ -110,6 +120,7 @@ const ICON_BY_NAME: Record<string, LucideIcon> = {
   activity: Activity,
   "clipboard-list": ClipboardList,
   "clipboard-check": ClipboardCheck,
+  "file-text": FileText,
 };
 
 export function resolveNotificationCategoryId(

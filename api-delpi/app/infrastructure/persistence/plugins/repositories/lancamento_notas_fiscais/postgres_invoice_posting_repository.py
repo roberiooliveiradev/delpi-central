@@ -53,6 +53,9 @@ _REQUEST_COLUMNS = """
     cancelled_at, cancelled_by_user_id, cancelled_by_name, cancel_justification,
     completion_source, sf1_recno, erp_entry_date, reconciled_at,
     divergence_alert, divergence_detected_at, divergence_detail,
+    linked_po_number, linked_po_delivery_date, linked_po_issue_date,
+    linked_po_open_value, linked_po_product_count,
+    linked_po_linked_at, linked_po_linked_by_user_id, linked_po_linked_by_name,
     created_at, updated_at
 """
 
@@ -636,12 +639,17 @@ def _serialize_request(row: dict[str, Any]) -> dict[str, Any]:
         "cancelled_at",
         "reconciled_at",
         "divergence_detected_at",
+        "linked_po_delivery_date",
+        "linked_po_issue_date",
+        "linked_po_linked_at",
         "created_at",
         "updated_at",
     ):
         out[key] = _iso(out.get(key))
     if isinstance(out.get("amount"), Decimal):
         out["amount"] = float(out["amount"])
+    if isinstance(out.get("linked_po_open_value"), Decimal):
+        out["linked_po_open_value"] = float(out["linked_po_open_value"])
     return out
 
 

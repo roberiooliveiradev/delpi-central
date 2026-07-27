@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-27",
-  "baselineOperationCount": 475,
-  "operationCount": 475,
-  "coveredCount": 473,
+  "baselineOperationCount": 482,
+  "operationCount": 482,
+  "coveredCount": 480,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 17,
-      "covered": 17,
+      "total": 22,
+      "covered": 22,
       "gap": 0,
       "exempt": 0
     },
@@ -92,8 +92,8 @@
       "exempt": 0
     },
     "lancamento-notas-fiscais": {
-      "total": 13,
-      "covered": 13,
+      "total": 15,
+      "covered": 15,
       "gap": 0,
       "exempt": 0
     },
@@ -1075,6 +1075,51 @@
       "status": "covered"
     },
     {
+      "operationId": "list_lmp_nonconformities",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_lmp_nonconformity",
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_lmp_nonconformity",
+      "method": "DELETE",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_nonconformity",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_lmp_nonconformity",
+      "method": "PUT",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_lmp_by_sale_number",
       "method": "GET",
       "path": "/engineering/lmps/{sale_number}",
@@ -1844,6 +1889,24 @@
       "operationId": "post_manual_lancamento_notas_fiscais_request",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_purchase_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
       "module": "lancamento-notas-fiscais",
       "entity": "invoice_posting_request",
       "shape": "scalar",

@@ -1,0 +1,43 @@
+---
+description: Migrations de plugins — só up em prod; reset apaga dados (DROP SCHEMA)
+alwaysApply: true
+---
+
+# Migrations de plugins — nunca reset em produção
+
+## Princípio
+
+Em **qualquer ambiente com dados reais** (produção e, em geral, dev compartilhado), aplicar migrations de plugins **somente** com `up`. O comando `reset` faz `DROP SCHEMA … CASCADE` e **apaga todas as solicitações/histórico** do plugin.
+
+Incidente jul/2026 (LNF): após rebuild, `V001`–`V004` reaplicadas no mesmo segundo → fila de `invoice_posting_requests` zerada. `V004` em si só faz `ADD COLUMN`; a perda veio de **recriação do schema**, não do `ALTER`.
+
+## Deploy / produção (obrigatório)
+
+```bash
+# Certo — só pendentes (ex.: V004)
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
+
+# Conferir que V001…Vn-1 já estavam aplicadas e só a nova ficou pendente antes do up
+```
+
+Checklist antes do `up` em prod:
+
+1. `status` — migrations antigas = **APLICADA**; só a nova = pendente.
+2. **Não** rodar `reset --plugin …`.
+3. **Não** recriar volume `postgres_plugins_data` / `DROP SCHEMA` como “atalho” de migration.
+4. Rebuild de `api-delpi` / MFE **não** exige reset de schema.
+
+## O que NÃO fazer
+
+- `run_plugins_migrations.py reset --plugin <slug>` em produção (nem “para garantir”).
+- Orientar o operador a resetar o schema do plugin para aplicar `V00N` nova.
+- Confundir `up` (incremental) com `reset` + `up` (wipe + recria).
+
+## Onde `reset` é aceitável
+
+Só em sandbox local **sem** dados a preservar, e com confirmação explícita (`--confirm-drop-schema` no runner). Documentar que é destrutivo.
+
+## Escopo
+
+Todos os plugins sob `api-delpi/migrations/plugins/` via `run_plugins_migrations.py`. Complementa `migrations-immutable-checksum.mdc` (imutabilidade de arquivo ≠ preservação de dados).

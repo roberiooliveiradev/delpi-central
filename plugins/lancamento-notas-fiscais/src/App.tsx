@@ -17,15 +17,36 @@ type View =
   | { name: "detail"; requestId: string }
   | { name: "edit"; requestId: string };
 
+function readRequestIdFromSearch(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const value = new URLSearchParams(window.location.search).get("requestId");
+    const trimmed = value?.trim() ?? "";
+    return trimmed || null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App({ getAccessToken, pathname }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   const routeBranch = branchFromPathname(pathname);
-  const [view, setView] = useState<View>({ name: "queue" });
+  const [view, setView] = useState<View>(() => {
+    const deepRequestId = readRequestIdFromSearch();
+    return deepRequestId
+      ? { name: "detail", requestId: deepRequestId }
+      : { name: "queue" };
+  });
   const [trackedBranch, setTrackedBranch] = useState(routeBranch);
 
   if (routeBranch !== trackedBranch) {
     setTrackedBranch(routeBranch);
-    setView({ name: "queue" });
+    const deepRequestId = readRequestIdFromSearch();
+    setView(
+      deepRequestId
+        ? { name: "detail", requestId: deepRequestId }
+        : { name: "queue" },
+    );
   }
 
   const goQueue = useCallback((highlightId?: string) => {

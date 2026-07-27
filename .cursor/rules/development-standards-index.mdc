@@ -19,6 +19,7 @@ alwaysApply: true
 | `infra-sequential-container-startup.mdc` | **Deploy / docker up / rebuild** — orientar scripts sequenciais dev/prod |
 | `mf-federation-patch-safety.mdc` | **Patch MF / `federationReactProxyFix`** — sem ReDoS; validar `plugin-ui` vite build |
 | `migrations-immutable-checksum.mdc` | **Migrations SQL** — nunca editar arquivo já aplicado/commitado (checksum) |
+| `plugins-migrations-no-reset-prod.mdc` | **Migrations de plugins** — só `up` em prod; `reset` = DROP SCHEMA (apaga dados) |
 
 ## Infra / Docker
 
@@ -28,6 +29,7 @@ alwaysApply: true
 | `persistent-upload-storage.mdc` | Volumes persistentes no Compose |
 | `mf-federation-patch-safety.mdc` | Alterar patch React MF — testes + build `plugin-ui` obrigatórios |
 | `migrations-immutable-checksum.mdc` | Migrations versionadas — imutáveis após apply/commit |
+| `plugins-migrations-no-reset-prod.mdc` | Plugins Postgres — `up` só; nunca `reset` em prod |
 
 Doc: `infra/README-ambiente.md`.
 
@@ -104,6 +106,7 @@ Deploy / subir stack / rebuild Docker → infra-sequential-container-startup →
 OOM ou build MF em prod → infra-sequential-container-startup → fase remote antes de mfe
 Patch MF / federationReactProxyFix → mf-federation-patch-safety → teste + plugin-ui vite build (nunca ReDoS)
 Migration SQL nova/ajuste         → migrations-immutable-checksum → sempre V0NN novo (nunca editar aplicada)
+Migration plugin em prod          → plugins-migrations-no-reset-prod → só `up` (nunca `reset` / DROP SCHEMA)
 IDD engenharia 0 com KPIs em 10   → si-consolidated-department-idd + docs/ENGINEERING_IDD_REGRESSION.md (não MFE)
 TV Dashboard F5/WS perde fontes   → tv-dashboard-persist-local-edits → applyServerPlaylistPreservingLocalEdits + clearIfCoveredBySave
 TV Dashboard corta logo/borda no editor → tv-dashboard-editor-pasteboard → overflow:visible no canvas (não «WYSIWYG clip»)

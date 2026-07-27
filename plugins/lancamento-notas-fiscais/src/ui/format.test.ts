@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   formatDocument,
   formatDurationMs,
+  historyAssigneeName,
+  historyEventLabel,
+  historyTimelineTone,
+  linkedPurchaseOrderLabel,
   postingLeadTimeLabel,
   resolvePostedAt,
 } from "./format";
@@ -15,10 +19,78 @@ describe("formatDocument", () => {
 
 describe("formatDurationMs", () => {
   it("formata minutos, horas e dias", () => {
-    expect(formatDurationMs(45_000)).toBe("menos de 1 min");
+    // 45s → arredonda para 1 min (Math.round)
+    expect(formatDurationMs(45_000)).toBe("1min");
+    expect(formatDurationMs(20_000)).toBe("menos de 1 min");
     expect(formatDurationMs(45 * 60_000)).toBe("45min");
     expect(formatDurationMs(2 * 60 * 60_000 + 15 * 60_000)).toBe("2h 15min");
     expect(formatDurationMs(2 * 24 * 60 * 60_000 + 3 * 60 * 60_000)).toBe("2d 3h");
+  });
+});
+
+describe("historyEventLabel", () => {
+  it("especializa status_changed pelo destino", () => {
+    expect(historyEventLabel("status_changed", "blocked")).toBe("Pendência registrada");
+    expect(historyEventLabel("status_changed", "in_progress", "pending")).toBe(
+      "Atendimento iniciado",
+    );
+    expect(historyEventLabel("status_changed", "in_progress", "blocked")).toBe(
+      "Atendimento retomado",
+    );
+  });
+
+  it("rotula amarração de pedido", () => {
+    expect(historyEventLabel("purchase_order_linked")).toBe(
+      "Pedido de compra amarrado",
+    );
+  });
+});
+
+describe("historyTimelineTone", () => {
+  it("usa o status de destino para a faixa lateral", () => {
+    expect(
+      historyTimelineTone({
+        event_type: "status_changed",
+        to_status: "blocked",
+      }),
+    ).toBe("blocked");
+    expect(
+      historyTimelineTone({
+        event_type: "status_changed",
+        to_status: "posted",
+      }),
+    ).toBe("posted");
+    expect(
+      historyTimelineTone({
+        event_type: "status_changed",
+        to_status: "cancelled",
+      }),
+    ).toBe("cancelled");
+    expect(historyTimelineTone({ event_type: "comment_added" })).toBe("comment");
+    expect(historyTimelineTone({ event_type: "purchase_order_linked" })).toBe(
+      "progress",
+    );
+  });
+});
+
+describe("linkedPurchaseOrderLabel", () => {
+  it("formata PC com e sem data", () => {
+    expect(linkedPurchaseOrderLabel("000123", null)).toBe(
+      "PC 000123 · sem data de entrega",
+    );
+    expect(linkedPurchaseOrderLabel("000123", "2026-07-20")).toContain("PC 000123");
+  });
+});
+
+describe("historyAssigneeName", () => {
+  it("lê assignee_name.to do payload de changes", () => {
+    expect(
+      historyAssigneeName({
+        assignee_name: { from: "A", to: "Compras Delpi" },
+      }),
+    ).toBe("Compras Delpi");
+    expect(historyAssigneeName({ assignee_name: "Ana" })).toBe("Ana");
+    expect(historyAssigneeName({})).toBeNull();
   });
 });
 

@@ -7,13 +7,17 @@ import { BlockModal } from "../components/BlockModal";
 import { CancelModal } from "../components/CancelModal";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { ManualPostModal } from "../components/ManualPostModal";
+import { PurchaseOrdersModal } from "../components/PurchaseOrdersModal";
 import { StatusBadge } from "../components/StatusBadge";
 import {
   formatDate,
   formatDateTime,
   formatDocument,
   formatMoney,
+  historyAssigneeName,
   historyEventLabel,
+  historyTimelineTone,
+  linkedPurchaseOrderLabel,
   postingLeadTimeLabel,
 } from "../format";
 
@@ -32,6 +36,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   const [blockOpen, setBlockOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [manualPostOpen, setManualPostOpen] = useState(false);
+  const [purchaseOrdersOpen, setPurchaseOrdersOpen] = useState(false);
   const [comment, setComment] = useState("");
 
   const load = useCallback(async () => {
@@ -198,6 +203,15 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   Cancelar
                 </button>
               ) : null}
+              <button
+                type="button"
+                className="lnf-btn lnf-btn--ghost"
+                disabled={busy}
+                onClick={() => setPurchaseOrdersOpen(true)}
+                data-testid="btn-purchase-orders"
+              >
+                Incluir Pedido de Compras
+              </button>
             </div>
             {actionError ? (
               <p className="lnf-error" role="alert">
@@ -266,6 +280,27 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   <dt>Responsável</dt>
                   <dd>{request.assignee_name || "—"}</dd>
                 </div>
+                {request.linked_po_number ? (
+                  <div className="lnf-dl__span" data-testid="linked-po-summary">
+                    <dt>Pedido de compra</dt>
+                    <dd>
+                      <div className="lnf-cell-strong">
+                        {linkedPurchaseOrderLabel(
+                          request.linked_po_number,
+                          request.linked_po_delivery_date,
+                        )}
+                      </div>
+                      <div className="lnf-muted lnf-cell-sub">
+                        {request.linked_po_product_count != null
+                          ? `${request.linked_po_product_count} produto(s)`
+                          : null}
+                        {request.linked_po_open_value != null
+                          ? ` · ${formatMoney(Number(request.linked_po_open_value))}`
+                          : null}
+                      </div>
+                    </dd>
+                  </div>
+                ) : null}
                 {completionLabel ? (
                   <div>
                     <dt>Conclusão</dt>
@@ -334,30 +369,41 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
             <p className="lnf-muted">Sem eventos ou comentários.</p>
           ) : (
             <ol className="lnf-timeline">
-              {history.map((event) => (
-                <li
-                  key={event.id}
-                  className={
-                    event.actor_origin === "system"
-                      ? "lnf-timeline__item lnf-timeline__item--system"
-                      : "lnf-timeline__item lnf-timeline__item--user"
-                  }
-                >
-                  <div className="lnf-timeline__meta">
-                    <strong>{historyEventLabel(event.event_type)}</strong>
-                    <span className="lnf-muted">{formatDateTime(event.created_at)}</span>
-                  </div>
-                  <div className="lnf-muted">
-                    {event.actor_origin === "system"
-                      ? "Sistema"
-                      : event.actor_name || "Usuário"}
-                    {event.from_status || event.to_status
-                      ? ` · ${statusLabel(event.from_status || "")} → ${statusLabel(event.to_status || "")}`
-                      : ""}
-                  </div>
-                  {event.justification ? <p>{event.justification}</p> : null}
-                </li>
-              ))}
+              {history.map((event) => {
+                const tone = historyTimelineTone(event);
+                const responsible = historyAssigneeName(event.changes);
+                return (
+                  <li
+                    key={event.id}
+                    className={`lnf-timeline__item lnf-timeline__item--${tone}`}
+                  >
+                    <div className="lnf-timeline__meta">
+                      <strong>
+                        {historyEventLabel(
+                          event.event_type,
+                          event.to_status,
+                          event.from_status,
+                        )}
+                      </strong>
+                      <span className="lnf-muted">{formatDateTime(event.created_at)}</span>
+                    </div>
+                    <div className="lnf-muted">
+                      {event.actor_origin === "system"
+                        ? "Sistema"
+                        : event.actor_name || "Usuário"}
+                      {event.from_status || event.to_status
+                        ? ` · ${statusLabel(event.from_status || "")} → ${statusLabel(event.to_status || "")}`
+                        : ""}
+                    </div>
+                    {event.justification ? <p>{event.justification}</p> : null}
+                    {responsible ? (
+                      <p className="lnf-timeline__responsible">
+                        Responsável: {responsible}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              })}
               {comments.map((c) => (
                 <li key={c.id} className="lnf-timeline__item lnf-timeline__item--comment">
                   <div className="lnf-timeline__meta">
@@ -431,6 +477,17 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
         onConfirm={async () => {
           await runAction(() => api.postManualRequest(requestId));
           setManualPostOpen(false);
+        }}
+      />
+      <PurchaseOrdersModal
+        open={purchaseOrdersOpen}
+        requestId={requestId}
+        supplierName={request.supplier_name}
+        branchCode={request.branch_code}
+        canLink={hasAction(allowed_actions, "link_purchase_order")}
+        onClose={() => setPurchaseOrdersOpen(false)}
+        onLinked={() => {
+          void load();
         }}
       />
     </div>

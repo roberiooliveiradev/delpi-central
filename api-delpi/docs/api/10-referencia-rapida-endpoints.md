@@ -120,6 +120,8 @@ Legenda de permissões:
 | POST | `/lancamento-notas-fiscais/requests` | `create` |
 | GET | `/lancamento-notas-fiscais/requests` | LNF read |
 | GET | `/lancamento-notas-fiscais/requests/{id}` | LNF read |
+| GET | `/lancamento-notas-fiscais/requests/{id}/purchase-orders` | LNF read |
+| POST | `/lancamento-notas-fiscais/requests/{id}/purchase-orders/link` | LNF process/manage |
 | PATCH | `/lancamento-notas-fiscais/requests/{id}` | create/process/manage |
 | POST | `/lancamento-notas-fiscais/requests/{id}/start` | process/manage |
 | POST | `/lancamento-notas-fiscais/requests/{id}/block` | process/manage |
