@@ -19,6 +19,7 @@ export type SeriesChartElementId =
   | "gridlines"
   | "legend"
   | "markers"
+  | "smoothLines"
   | "series";
 
 export type SeriesChartElementDefinition = {
@@ -88,6 +89,12 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     hint: "Pontos sobre a linha do gráfico.",
     chartTypes: ["line", "area", "combo", "scatter", "bubble"],
   },
+  {
+    id: "smoothLines",
+    label: "Linhas suaves",
+    hint: "Suaviza o traço entre os pontos (linha e área).",
+    chartTypes: ["line", "area", "combo"],
+  },
   { id: "dataLabels", label: "Rótulos de dados", hint: "Valor, %, categoria, posição e linhas guia." },
   { id: "dataTable", label: "Tabela de dados", hint: "Grade com períodos e valores abaixo do gráfico." },
 ];
@@ -124,6 +131,8 @@ export function isSeriesChartElementEnabled(
       return options.showLegend !== false && options.legendPosition !== "hidden";
     case "markers":
       return options.showMarkers !== false;
+    case "smoothLines":
+      return Boolean(options.smoothLines);
     default:
       return false;
   }
@@ -180,6 +189,8 @@ export function setSeriesChartElementEnabled(
     }
     case "markers":
       return { showMarkers: enabled };
+    case "smoothLines":
+      return { smoothLines: enabled };
     case "chartArea":
     case "plotArea":
     case "series":
@@ -219,6 +230,9 @@ export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPart
       return [{ kind: "dataTable" }];
     case "markers":
       return [{ kind: "marker", seriesIndex: 0, pointIndex: 0 }];
+    case "smoothLines":
+      /* Opção de traço — sem parte selecionável no palco. */
+      return [];
     case "dataLabels":
       return [{ kind: "dataLabels" }];
     default:

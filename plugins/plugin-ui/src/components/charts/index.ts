@@ -212,3 +212,10 @@ export {
   type SeriesChartLayout,
 } from "./seriesChart";
 export * from "./seriesChart";
+
+export {
+  densifySeriesChartCurve,
+  resolveSeriesChartStrokePoints,
+  seriesChartPointsAttr,
+  type SeriesChartCurvePoint,
+} from "./seriesChartCurve";

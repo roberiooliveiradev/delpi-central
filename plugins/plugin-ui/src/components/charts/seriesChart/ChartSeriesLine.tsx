@@ -7,6 +7,10 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import {
+  resolveSeriesChartStrokePoints,
+  seriesChartPointsAttr,
+} from "../seriesChartCurve";
 import type { SeriesChartSharedProps } from "./types";
 
 export type ChartSeriesLineProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
@@ -16,6 +20,8 @@ export type ChartSeriesLineProps = Pick<SeriesChartSharedProps, "layout" | "poin
   interaction?: SeriesChartInteraction | null;
   seriesIndex?: number;
   chartParts?: ChartPartsMap | null;
+  /** Curva suave (Catmull-Rom densificada). */
+  smooth?: boolean;
 };
 
 export function ChartSeriesLine({
@@ -28,6 +34,7 @@ export function ChartSeriesLine({
   interaction,
   seriesIndex = 0,
   chartParts,
+  smooth = false,
 }: ChartSeriesLineProps) {
   const cn = useSeriesChartClasses();
   const { toX, toY, toYSecondary } = layout;
@@ -48,11 +55,15 @@ export function ChartSeriesLine({
     moveWhenSelected: false,
   });
 
+  const anchors = visiblePoints.map((point) => ({
+    x: toX(point.sourceIndex, points.length),
+    y: mapY(Number(point.value)),
+  }));
+  const strokePoints = resolveSeriesChartStrokePoints(anchors, smooth);
+
   return (
     <polyline
-      points={visiblePoints
-        .map((point) => `${toX(point.sourceIndex, points.length)},${mapY(Number(point.value))}`)
-        .join(" ")}
+      points={seriesChartPointsAttr(strokePoints)}
       fill="none"
       stroke={seriesColor}
       strokeWidth={effectiveWidth}

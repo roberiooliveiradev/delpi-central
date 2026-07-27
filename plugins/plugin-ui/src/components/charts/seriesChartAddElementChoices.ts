@@ -40,7 +40,9 @@ export type ChartAddElementChoiceId =
   | "legend:left"
   | "legend:bottom"
   | "markers:none"
-  | "markers:show";
+  | "markers:show"
+  | "smoothLines:none"
+  | "smoothLines:show";
 
 const DATA_LABEL_CHOICE_PRESET: Record<
   Extract<ChartAddElementChoiceId, `dataLabels:${string}`>,
@@ -64,6 +66,7 @@ export function chartAddElementChoiceRootId(
   const root = choiceId.split(":")[0];
   if (root === "grid") return "gridlines";
   if (root === "markers") return "markers";
+  if (root === "smoothLines") return "smoothLines";
   if (root === "axes") return "axes";
   if (root === "axisTitles") return "axisTitles";
   if (root === "chartTitle") return "chartTitle";
@@ -216,6 +219,10 @@ export function applyChartAddElementChoice(
       return mergeSeriesChartOptions({ ...base, showMarkers: false });
     case "markers:show":
       return mergeSeriesChartOptions({ ...base, showMarkers: true });
+    case "smoothLines:none":
+      return mergeSeriesChartOptions({ ...base, smoothLines: false });
+    case "smoothLines:show":
+      return mergeSeriesChartOptions({ ...base, smoothLines: true });
     default: {
       const _exhaustive: never = choiceId;
       return _exhaustive;
@@ -306,6 +313,10 @@ export function isChartAddElementChoiceActive(
       return base.showMarkers === false;
     case "markers:show":
       return base.showMarkers !== false;
+    case "smoothLines:none":
+      return !base.smoothLines;
+    case "smoothLines:show":
+      return Boolean(base.smoothLines);
     default: {
       const _exhaustive: never = choiceId;
       return _exhaustive;

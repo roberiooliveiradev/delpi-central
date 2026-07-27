@@ -67,6 +67,7 @@ export function ChartPlotAreaGroup({
   strokeWidth,
   pieInnerRadiusRatio = 0,
 }: ChartPlotAreaGroupProps) {
+  const smoothLines = Boolean(config.smoothLines);
   const skipCartesian = NON_CARTESIAN.has(chartType);
   const cartesianAxes = showAxes && !skipCartesian;
   const cartesianGrid = showGrid && !skipCartesian;
@@ -203,6 +204,7 @@ export function ChartPlotAreaGroup({
           points={points}
           seriesColor={seriesColor}
           strokeWidth={strokeWidth}
+          smooth={smoothLines}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -234,6 +236,7 @@ export function ChartPlotAreaGroup({
             points={points}
             seriesColor={seriesColor}
             strokeWidth={strokeWidth}
+            smooth={smoothLines}
             interaction={interaction}
             chartParts={chartParts}
             seriesIndex={1}
@@ -262,6 +265,7 @@ export function ChartPlotAreaGroup({
                     points={series.points}
                     seriesColor={color}
                     strokeWidth={strokeWidth}
+                    smooth={smoothLines}
                     plotOn={series.plotOn}
                     interaction={interaction}
                     chartParts={chartParts}
@@ -288,6 +292,7 @@ export function ChartPlotAreaGroup({
               points={points}
               seriesColor={seriesColor}
               strokeWidth={strokeWidth}
+              smooth={smoothLines}
               interaction={interaction}
               chartParts={chartParts}
             />
@@ -315,6 +320,7 @@ export function ChartPlotAreaGroup({
                   points={series.points}
                   seriesColor={color}
                   strokeWidth={strokeWidth}
+                  smooth={smoothLines}
                   interaction={interaction}
                   chartParts={chartParts}
                   seriesIndex={index}

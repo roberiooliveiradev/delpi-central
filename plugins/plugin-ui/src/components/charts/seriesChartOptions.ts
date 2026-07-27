@@ -50,6 +50,11 @@ export type SeriesChartOptions = {
   showGrid?: boolean;
   showVerticalGrid?: boolean;
   showMarkers?: boolean;
+  /**
+   * Linha/área com curva suave (Catmull-Rom). Default false = segmentos retos.
+   * Só aplica a `line`, `area` e traço de `combo`.
+   */
+  smoothLines?: boolean;
   valueFormat?: SeriesChartValueFormat;
   seriesColor?: string;
   /**
@@ -125,6 +130,7 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showGrid: true,
   showVerticalGrid: false,
   showMarkers: true,
+  smoothLines: false,
   valueFormat: "auto",
   seriesColor: OFFICE_CHART_SERIES_COLOR,
   theme: "light",

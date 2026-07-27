@@ -35,6 +35,19 @@ describe("seriesChartElementCatalog", () => {
     expect(isSeriesChartElementApplicable(markers!, "bar")).toBe(false);
   });
 
+  it("linhas suaves em line/area/combo e desligadas por padrão", () => {
+    const smooth = SERIES_CHART_ELEMENT_CATALOG.find((entry) => entry.id === "smoothLines");
+    expect(smooth).toBeTruthy();
+    expect(isSeriesChartElementApplicable(smooth!, "line")).toBe(true);
+    expect(isSeriesChartElementApplicable(smooth!, "area")).toBe(true);
+    expect(isSeriesChartElementApplicable(smooth!, "combo")).toBe(true);
+    expect(isSeriesChartElementApplicable(smooth!, "bar")).toBe(false);
+    expect(isSeriesChartElementEnabled("smoothLines", DEFAULT_SERIES_CHART_OPTIONS)).toBe(false);
+    const on = mergeSeriesChartOptions(setSeriesChartElementEnabled("smoothLines", true));
+    expect(isSeriesChartElementEnabled("smoothLines", on)).toBe(true);
+    expect(on.smoothLines).toBe(true);
+  });
+
   it("ativa e desativa legenda", () => {
     const enabled = mergeSeriesChartOptions(setSeriesChartElementEnabled("legend", true));
     expect(isSeriesChartElementEnabled("legend", enabled)).toBe(true);

@@ -7,6 +7,7 @@ import {
   BarChart3,
   CircleDot,
   Grid3x3,
+  Spline,
   Heading,
   ListOrdered,
   MoveHorizontal,
@@ -52,6 +53,7 @@ const ROOT_META: Record<
   gridlines: { icon: Grid3x3, moreOptionsLabel: "Mais opções de linhas de grade…" },
   legend: { icon: ListOrdered, moreOptionsLabel: "Mais opções de legenda…" },
   markers: { icon: CircleDot, moreOptionsLabel: "Mais opções de marcadores…" },
+  smoothLines: { icon: Spline, moreOptionsLabel: "Mais opções de linhas suaves…" },
 };
 
 /** Ordem PPT-ish dos itens raiz do flyout. */
@@ -64,6 +66,7 @@ const ROOT_ORDER: Array<keyof typeof ROOT_META> = [
   "gridlines",
   "legend",
   "markers",
+  "smoothLines",
 ];
 
 const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoice[]> = {
@@ -111,6 +114,10 @@ const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoic
   markers: [
     { id: "markers:none", label: "Nenhum", icon: X },
     { id: "markers:show", label: "Mostrar", icon: CircleDot },
+  ],
+  smoothLines: [
+    { id: "smoothLines:none", label: "Retas", icon: X },
+    { id: "smoothLines:show", label: "Suaves", icon: Spline },
   ],
 };
 

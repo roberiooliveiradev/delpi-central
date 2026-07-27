@@ -45,3 +45,27 @@ describe("ChartAddElementMenu", () => {
     expect(screen.getByRole("menuitem", { name: "Eixos" })).toBeTruthy();
   });
 });
+
+  it("oferece linhas suaves em gráfico de linha e omite em barras", () => {
+    const { unmount } = render(
+      <ChartAddElementMenu
+        options={{}}
+        chartKind="line"
+        onApplyChoice={() => undefined}
+        onMoreOptions={() => undefined}
+      />,
+    );
+    expect(screen.getByRole("menuitem", { name: "Linhas suaves" })).toBeTruthy();
+    unmount();
+
+    render(
+      <ChartAddElementMenu
+        options={{}}
+        chartKind="bar"
+        onApplyChoice={() => undefined}
+        onMoreOptions={() => undefined}
+      />,
+    );
+    expect(screen.queryByRole("menuitem", { name: "Linhas suaves" })).toBeNull();
+  });
+

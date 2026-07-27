@@ -167,6 +167,26 @@ describe("ConfigurableSeriesChart", () => {
     expect(tableHost.textContent).toContain("66,7%");
   });
 
+  it("linhas suaves densificam o polyline da série", () => {
+    const points = [
+      { label: "a", value: 1 },
+      { label: "b", value: 5 },
+      { label: "c", value: 2 },
+      { label: "d", value: 4 },
+    ];
+    const straight = render(
+      <ConfigurableSeriesChart chartType="line" points={points} options={{ showMarkers: false, smoothLines: false }} />,
+    );
+    const straightPts = straight.container.querySelector(".delpi-ui-series-chart__series-line")?.getAttribute("points") ?? "";
+    straight.unmount();
+
+    const smooth = render(
+      <ConfigurableSeriesChart chartType="line" points={points} options={{ showMarkers: false, smoothLines: true }} />,
+    );
+    const smoothPts = smooth.container.querySelector(".delpi-ui-series-chart__series-line")?.getAttribute("points") ?? "";
+    expect(smoothPts.split(" ").length).toBeGreaterThan(straightPts.split(" ").length);
+  });
+
   it("aplica classes modulares nos elementos do gráfico", () => {
     const { container } = render(
       <ConfigurableSeriesChart
