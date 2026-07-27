@@ -32,6 +32,9 @@ def test_build_cron_daily_and_weekly() -> None:
     assert build_cron_expression(
         schedule_kind="weekly", hour=7, minute=0, weekday=6
     ) == "0 7 * * 0"
+    assert build_cron_expression(
+        schedule_kind="weekdays", hour=8, minute=0
+    ) == "0 8 * * 1-5"
 
 
 def test_parse_schedule_fields_roundtrip() -> None:
@@ -40,6 +43,14 @@ def test_parse_schedule_fields_roundtrip() -> None:
     )
     fields = parse_schedule_fields(schedule_kind="weekly", cron_expression=cron)
     assert fields == {"hour": 9, "minute": 15, "weekday": 2}
+
+    weekdays_cron = build_cron_expression(
+        schedule_kind="weekdays", hour=8, minute=30
+    )
+    weekdays_fields = parse_schedule_fields(
+        schedule_kind="weekdays", cron_expression=weekdays_cron
+    )
+    assert weekdays_fields == {"hour": 8, "minute": 30, "weekday": None}
 
 
 def test_compute_next_run_daily_rolls_forward() -> None:
@@ -53,6 +64,48 @@ def test_compute_next_run_daily_rolls_forward() -> None:
         after=after,
     )
     assert next_at == datetime(2026, 7, 22, 8, 0, tzinfo=tz)
+
+
+def test_compute_next_run_weekdays_skips_weekend() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    # Friday 2026-07-24 10:00 → próximo útil é segunda 08:00
+    after = datetime(2026, 7, 24, 10, 0, tzinfo=tz)
+    next_at = compute_next_run_at(
+        schedule_kind="weekdays",
+        hour=8,
+        minute=0,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at.weekday() == 0
+    assert next_at == datetime(2026, 7, 27, 8, 0, tzinfo=tz)
+
+
+def test_compute_next_run_weekdays_from_saturday() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    after = datetime(2026, 7, 25, 7, 0, tzinfo=tz)  # Saturday
+    next_at = compute_next_run_at(
+        schedule_kind="weekdays",
+        hour=8,
+        minute=0,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at == datetime(2026, 7, 27, 8, 0, tzinfo=tz)
+
+
+def test_compute_next_run_weekdays_same_weekday_before_hour() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    # Monday before schedule hour → same day
+    after = datetime(2026, 7, 27, 7, 0, tzinfo=tz)
+    next_at = compute_next_run_at(
+        schedule_kind="weekdays",
+        hour=8,
+        minute=0,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at == datetime(2026, 7, 27, 8, 0, tzinfo=tz)
 
 
 def test_compute_next_run_weekly() -> None:

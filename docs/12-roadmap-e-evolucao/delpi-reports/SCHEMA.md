@@ -48,7 +48,7 @@ python scripts/run_plugins_migrations.py up --plugin reports
 |--------|------|--------|
 | `id` | UUID PK | |
 | `definition_id` | UUID FK | CASCADE |
-| `schedule_kind` | VARCHAR(20) | `daily` \| `weekly` |
+| `schedule_kind` | VARCHAR(20) | `daily` \| `weekly` \| `weekdays` |
 | `cron_expression` | VARCHAR(100) | opcional |
 | `timezone` | VARCHAR(64) | default `America/Sao_Paulo` |
 | `next_run_at` | TIMESTAMPTZ | avançado no **claim** (anti-duplicata) |

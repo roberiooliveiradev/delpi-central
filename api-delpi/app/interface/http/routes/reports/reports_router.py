@@ -109,8 +109,8 @@ class UpsertScheduleBody(BaseModel):
     @classmethod
     def normalize_kind(cls, value: object) -> str:
         text = str(value or "").strip().lower()
-        if text not in {"daily", "weekly"}:
-            raise ValueError("scheduleKind deve ser daily ou weekly")
+        if text not in {"daily", "weekly", "weekdays"}:
+            raise ValueError("scheduleKind deve ser daily, weekly ou weekdays")
         return text
 
 

@@ -25,7 +25,7 @@ export type ReportRecipient = {
 export type ReportSchedule = {
   id: string;
   definitionId: string;
-  scheduleKind: "daily" | "weekly" | string;
+  scheduleKind: "daily" | "weekly" | "weekdays" | string;
   cronExpression: string | null;
   timezone: string;
   nextRunAt: string | null;
