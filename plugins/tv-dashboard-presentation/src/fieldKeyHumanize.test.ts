@@ -10,6 +10,7 @@ describe("fieldKeyHumanize", () => {
   it("usa rótulo curado por chave completa", () => {
     expect(humanizeFieldKey("gross_savings_month")).toBe("Economia bruta (mês)");
     expect(humanizeFieldKey("month")).toBe("Mês");
+    expect(humanizeFieldKey("goal_value")).toBe("Valor da meta");
     expect(humanizeFieldKey("solutions_started_in_period_count")).toBe(
       "Soluções iniciadas no período",
     );
@@ -17,6 +18,7 @@ describe("fieldKeyHumanize", () => {
 
   it("traduz tokens com _ como espaço quando não há chave completa", () => {
     expect(humanizeFieldKey("gross_cost_rate")).toBe("Bruto custo taxa");
+    expect(humanizeFieldKey("goal_amount")).toBe("Meta valor");
     expect(humanizeFieldKey("unknown_field_xyz")).toBe("Unknown field xyz");
   });
 

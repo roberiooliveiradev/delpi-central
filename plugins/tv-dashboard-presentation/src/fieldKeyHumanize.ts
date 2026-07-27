@@ -34,6 +34,15 @@ export const FIELD_KEY_LABELS: Record<string, string> = {
   investimento: "Investimento",
   economia_liquida: "Economia líquida",
   horas_economizadas: "Horas economizadas",
+  goal: "Meta",
+  goal_value: "Valor da meta",
+  goal_label: "Meta",
+  goal_periodicity: "Periodicidade da meta",
+  goal_mode: "Modo da meta",
+  goal_scope_branch: "Filial da meta",
+  goal_scope_label: "Escopo da meta",
+  goal_scope_hint: "Observação da meta",
+  comparable_goal: "Meta comparável",
 };
 
 /**
@@ -85,6 +94,8 @@ export const FIELD_TOKEN_LABELS: Record<string, string> = {
   percent: "%",
   percentage: "%",
   roi: "ROI",
+  goal: "meta",
+  target: "meta",
   branch: "filial",
   filial: "filial",
   sector: "setor",

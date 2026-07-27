@@ -31,6 +31,15 @@ FIELD_KEY_LABELS: dict[str, str] = {
     "investimento": "Investimento",
     "economia_liquida": "Economia líquida",
     "horas_economizadas": "Horas economizadas",
+    "goal": "Meta",
+    "goal_value": "Valor da meta",
+    "goal_label": "Meta",
+    "goal_periodicity": "Periodicidade da meta",
+    "goal_mode": "Modo da meta",
+    "goal_scope_branch": "Filial da meta",
+    "goal_scope_label": "Escopo da meta",
+    "goal_scope_hint": "Observação da meta",
+    "comparable_goal": "Meta comparável",
 }
 
 FIELD_TOKEN_LABELS: dict[str, str] = {
@@ -78,6 +87,8 @@ FIELD_TOKEN_LABELS: dict[str, str] = {
     "percent": "%",
     "percentage": "%",
     "roi": "ROI",
+    "goal": "meta",
+    "target": "meta",
     "branch": "filial",
     "filial": "filial",
     "sector": "setor",
