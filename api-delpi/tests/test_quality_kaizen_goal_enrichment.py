@@ -75,8 +75,16 @@ def test_get_kaizen_summary_enriches_financial_and_ideas_goals(
     data = body["data"]
     assert data["comparable_goal"] == 4500.0
     assert data["total_savings"] == 1940.0
+    assert data["value"] == 1940.0
     assert data["ideas_goal"]["comparable_goal"] == 8.0
     assert data["ideas_goal"]["total_kaizens"] == 1
+    assert data["ideas_goal"]["value"] == 1
+    summary = data["summary"]
+    assert summary["branch_filter_applied"] is True
+    assert summary["consolidated_across_branches"] is False
+    assert summary["is_complete"] is True
+    assert summary["total_savings"] == 1940.0
+    assert summary["total_kaizens"] == 1
 
     assert mock_enrich.call_count == 2
     first_call = mock_enrich.call_args_list[0].kwargs

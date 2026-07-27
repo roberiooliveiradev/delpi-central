@@ -84,9 +84,20 @@
         "ppm",
         "ppmValue"
       ],
-      "label": "Qualidade — PPM externo",
-      "description": "PPM de reclamações/defeitos externos (cliente) no período.",
-      "whenToUse": "Mostre na TV de qualidade quando quiser um KPI de reclamações de campo, sem tabela detalhada.",
+      "valueFieldLabels": {
+        "value": "Valor",
+        "ppm": "PPM",
+        "ppmValue": "PPM",
+        "total_produzido_un": "Total produzido (un.)",
+        "total_produzido_milheiro": "Total produzido (milheiro)",
+        "comparable_goal": "Meta"
+      },
+      "label": "PPM Externo",
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
+      "description": "Hub de PPM de reclamações/defeitos externos: KPI, totais produzidos e meta SI no período.",
+      "whenToUse": "Use no painel rico de qualidade externa (realizado + meta + totais produzidos), não no card SI só de realizado.",
       "defaultParams": {
         "periodDays": 30
       }
@@ -101,12 +112,21 @@
         "ppm",
         "ppmValue"
       ],
-      "label": "PPM Interno — realizado",
+      "valueFieldLabels": {
+        "value": "Valor",
+        "ppm": "PPM",
+        "ppmValue": "PPM",
+        "total_produzido_un": "Total produzido (un.)",
+        "total_produzido_milheiro": "Total produzido (milheiro)",
+        "comparable_goal": "Meta"
+      },
+      "label": "PPM Interno",
       "labelAliases": [
-        "Qualidade — PPM interno"
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
       ],
-      "description": "PPM de não conformidades internas no período.",
-      "whenToUse": "Usar no card KPI do realizado de PPM Interno (qualidade).",
+      "description": "Hub de PPM de não conformidades internas: KPI, totais produzidos e meta SI no período.",
+      "whenToUse": "Use no painel rico de qualidade interna (realizado + meta + totais produzidos), não no card SI só de realizado.",
       "defaultParams": {
         "periodDays": 30
       }
@@ -354,6 +374,51 @@
       "tvConstraints": {
         "maxRows": 20
       }
+    },
+    "get_kaizen_summary": {
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "total_savings": "Economia total",
+        "total_kaizens": "Total kaizens",
+        "comparable_goal": "Meta financeira",
+        "ideas_goal": "Ideias / meta"
+      },
+      "label": "Kaizen — resumo",
+      "labelAliases": [
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ],
+      "description": "Hub Kaizen com ideias, ganhos financeiros, listagem e metas SI.",
+      "whenToUse": "Use como painel consolidado de Kaizen; cards separados de meta/realizado usam as rotas SI.",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
+    },
+    "get_audit_5s_summary": {
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "average_score": "Nota média 5S",
+        "comparable_goal": "Meta"
+      },
+      "label": "Auditoria 5S",
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
+      "description": "Hub de Auditoria 5S com nota média, listagem e meta SI.",
+      "whenToUse": "Use no painel rico de Auditoria 5S (nota + lista + meta), não no card SI só de realizado.",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ]
     },
     "get_quality_scrap_cost_pct": {
       "valueFields": [

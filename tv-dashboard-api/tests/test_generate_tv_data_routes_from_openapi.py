@@ -221,6 +221,30 @@ def test_si_indicator_prefix_overlay_applies_kpi_value_fields():
     assert sample["label"] == "PPM Interno — realizado"
 
 
+def test_quality_ppm_hub_overlay_label_is_not_realized_suffix():
+    from scripts.generate_tv_data_routes_from_openapi import (
+        generate_routes,
+        OPENAPI_BASELINE_PATH,
+    )
+
+    generated = generate_routes(
+        baseline_path=OPENAPI_BASELINE_PATH,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    hub = next(
+        item for item in generated if item["operationId"] == "get_ppm_internal_summary"
+    )
+    assert hub["label"] == "PPM Interno"
+    assert "— realizado" not in hub["label"]
+    realized = next(
+        item
+        for item in generated
+        if item["operationId"] == "get_si_indicator_quality_ppm_internal_realized"
+    )
+    assert realized["label"] == "PPM Interno — realizado"
+
+
 def test_merge_with_existing_openapi_wins_on_optional():
     """Catálogo antigo com optional:false não pode congelar após OpenAPI tornar opcional."""
     gen = _load_generator_module()

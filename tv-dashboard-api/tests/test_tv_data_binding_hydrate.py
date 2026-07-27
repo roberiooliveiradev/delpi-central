@@ -22,7 +22,7 @@ class _FakeCatalog:
 def test_hydrate_clears_catalog_like_label_and_remaps_dates():
     route = {
         "operationId": "get_ppm_internal_summary",
-        "label": "PPM Interno — realizado",
+        "label": "PPM Interno",
         "labelAliases": ["Qualidade — PPM interno"],
         "paramSchema": {
             "start_date": {"type": "string"},

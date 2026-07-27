@@ -37,6 +37,9 @@ from app.application.dto.nonconformity.nonconformity_series_request import (
     NonconformitySeriesRequest,
 )
 
+from app.application.services.quality.quality_kpi_parity_service import (
+    attach_quality_kpi_parity,
+)
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.quality_composer import (
     build_get_audit_5s_summary_use_case,
@@ -274,6 +277,15 @@ def get_kaizen_summary(
             end_date=end_date,
             branch=branch,
         )
+        summary = attach_quality_kpi_parity(
+            summary,
+            primary_field="total_savings",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            summary_extra_fields=("total_kaizens", "total_savings"),
+            nested_blocks={"ideas_goal": "total_kaizens"},
+        )
 
         return api_delpi_success(
             summary,
@@ -339,6 +351,14 @@ def get_audit_5s_summary(
             start_date=start_date,
             end_date=end_date,
             branch=branch,
+        )
+        summary = attach_quality_kpi_parity(
+            summary,
+            primary_field="average_score",
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            summary_extra_fields=("average_score",),
         )
 
         return api_delpi_success(

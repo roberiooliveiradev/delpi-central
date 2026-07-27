@@ -982,14 +982,16 @@
     "get_audit_5s_summary": {
       "locale": {
         "en": {
-          "summary": "Get Audit 5S Summary",
-          "description": "Audit 5s summary.",
-          "label": "Audit 5s summary"
+          "summary": "Audit 5S",
+          "description": "Audit 5S hub with average score, audit list and SI goal.",
+          "label": "Audit 5S",
+          "whenToUse": "Use as the rich Audit 5S panel (score + list + goal), not the SI-only realized card."
         },
         "pt-BR": {
-          "label": "Auditoria 5S — resumo",
-          "summary": "Auditoria 5S — resumo",
-          "description": "Indicador numérico para «Auditoria 5S — resumo»."
+          "label": "Auditoria 5S",
+          "summary": "Auditoria 5S",
+          "description": "Hub de Auditoria 5S com nota média, listagem e meta SI.",
+          "whenToUse": "Use no painel rico de Auditoria 5S (nota + lista + meta), não no card SI só de realizado."
         }
       },
       "category": "quality"
@@ -1990,13 +1992,15 @@
       "locale": {
         "en": {
           "summary": "Kaizen summary",
-          "description": "Kaizen summary.",
-          "label": "Kaizen summary"
+          "description": "Kaizen hub with ideas count, financial savings, listing and SI goals.",
+          "label": "Kaizen summary",
+          "whenToUse": "Use as the consolidated Kaizen panel; separate meta/realized KPI cards use the SI routes."
         },
         "pt-BR": {
-          "label": "Kaizens — resumo e listagem (Google Sheets)",
-          "summary": "Kaizens — resumo e listagem (Google Sheets)",
-          "description": "Indicador numérico para «Kaizens — resumo e listagem (Google Sheets)»."
+          "label": "Kaizen — resumo",
+          "summary": "Kaizen — resumo",
+          "description": "Hub Kaizen com ideias, ganhos financeiros, listagem e metas SI.",
+          "whenToUse": "Use como painel consolidado de Kaizen; cards separados de meta/realizado usam as rotas SI."
         }
       },
       "category": "quality"
@@ -2275,14 +2279,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "External PPM summary",
-          "description": "External (customer) complaints/defects PPM for the period.",
-          "whenToUse": "Show on the quality TV when you want a field-complaint KPI without a detail table."
+          "summary": "External PPM",
+          "description": "External (customer) PPM hub: KPI, production totals and SI goal for the period.",
+          "whenToUse": "Use for the rich external quality panel (realized + goal + produced totals), not the SI-only realized card.",
+          "label": "External PPM"
         },
         "pt-BR": {
-          "summary": "PPM externo (resumo)",
-          "description": "PPM de reclamações/defeitos externos (cliente) no período.",
-          "whenToUse": "Mostre na TV de qualidade quando quiser um KPI de reclamações de campo, sem tabela detalhada."
+          "summary": "PPM Externo",
+          "description": "Hub de PPM de reclamações/defeitos externos: KPI, totais produzidos e meta SI no período.",
+          "whenToUse": "Use no painel rico de qualidade externa (realizado + meta + totais produzidos), não no card SI só de realizado.",
+          "label": "PPM Externo"
         }
       }
     },
@@ -2305,14 +2311,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Internal PPM summary",
-          "description": "Internal nonconformity PPM for the period.",
-          "whenToUse": "Use for the internal quality indicator on the TV — one ppm number, not the NC list."
+          "summary": "Internal PPM",
+          "description": "Internal nonconformity PPM hub: KPI, production totals and SI goal for the period.",
+          "whenToUse": "Use for the rich internal quality panel (realized + goal + produced totals), not the SI-only realized card.",
+          "label": "Internal PPM"
         },
         "pt-BR": {
-          "summary": "PPM interno (resumo)",
-          "description": "PPM de não conformidades internas no período.",
-          "whenToUse": "Use para o indicador de qualidade interna na TV — um número de ppm, não a lista de NCs."
+          "summary": "PPM Interno",
+          "description": "Hub de PPM de não conformidades internas: KPI, totais produzidos e meta SI no período.",
+          "whenToUse": "Use no painel rico de qualidade interna (realizado + meta + totais produzidos), não no card SI só de realizado.",
+          "label": "PPM Interno"
         }
       }
     },

@@ -23,6 +23,9 @@ from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
 from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
 from app.application.security.api_delpi_permissions import KPI_QUALITY_ACCESS
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
+from app.application.services.quality.quality_kpi_parity_service import (
+    attach_quality_kpi_parity,
+)
 from app.composition.quality_composer import (
     build_get_ppm_series_use_case,
     build_get_ppm_summary_use_case,
@@ -77,7 +80,8 @@ def _resolve_ppm_goal_key(ppm_type: PpmType, product_prefix: str | None) -> str:
 
 
 def _parse_product_prefix(product_prefix: str | None) -> tuple[str | None, str | None]:
-    if product_prefix is None:
+    # Chamada direta a handlers: default Query() é FieldInfo, não str.
+    if product_prefix is None or not isinstance(product_prefix, str):
         return None, None
 
     try:
@@ -113,6 +117,18 @@ def _ppm_summary_response(
             start_date=date_start,
             end_date=date_end,
             branch=branch,
+        )
+        result = attach_quality_kpi_parity(
+            result,
+            primary_field="ppm",
+            branch=branch,
+            start_date=date_start,
+            end_date=date_end,
+            summary_extra_fields=(
+                "ppm",
+                "total_produzido_un",
+                "total_produzido_milheiro",
+            ),
         )
         return api_delpi_success(
             result,
