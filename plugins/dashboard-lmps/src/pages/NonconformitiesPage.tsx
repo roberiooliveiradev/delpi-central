@@ -36,7 +36,6 @@ import {
 } from "../types/lmpNonconformity";
 import { readLmpsFilters } from "../utils/filterUrl";
 import {
-  formatDisplayDate,
   formatDisplayDateOnly,
   problemTagsSummary,
   productsSummary,
@@ -78,7 +77,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [productCode, setProductCode] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
-  const [sortKey, setSortKey] = useState<string | null>("registered_at");
+  const [sortKey, setSortKey] = useState<string | null>("occurrence_date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -165,7 +164,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           items as Array<Record<string, unknown>>,
         );
         setIoMessage(
-          `Importação concluída: ${result.created} criada(s), ${result.skipped} ignorada(s), ${result.errors} erro(s).`,
+          `Importação concluída (substituição total): ${result.deleted ?? 0} removida(s), ${result.created} criada(s), ${result.skipped} ignorada(s), ${result.errors} erro(s).`,
         );
         await load();
       } catch (err) {
@@ -211,12 +210,13 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const columns = useMemo<DataTableColumn<LmpNonconformity>[]>(
     () => [
       {
-        key: "registered_at",
-        header: "Registro",
-        headerHint: NC_HELP.table.registeredAt,
+        key: "occurrence_date",
+        header: "Ocorrência",
+        headerHint: NC_HELP.table.occurrenceDate,
         sortable: true,
-        sortValue: (row) => row.registered_at ?? "",
-        render: (row) => formatDisplayDate(row.registered_at),
+        sortValue: (row) => row.occurrence_date ?? row.registered_at ?? "",
+        render: (row) =>
+          formatDisplayDateOnly(row.occurrence_date ?? row.registered_at),
       },
       {
         key: "sale_number",
@@ -464,7 +464,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           }}
         />
         <FilterInputField
-          label="Data início"
+          label="Ocorrência início"
           hint={NC_HELP.filters.dateStart}
           type="date"
           value={dateStart}
@@ -474,7 +474,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           }}
         />
         <FilterInputField
-          label="Data fim"
+          label="Ocorrência fim"
           hint={NC_HELP.filters.dateEnd}
           type="date"
           value={dateEnd}

@@ -8,6 +8,8 @@ export type LmpNcProductLine = {
 export type LmpNonconformity = {
   id: string;
   registered_at: string;
+  /** Data em que o problema foi encontrado (YYYY-MM-DD). */
+  occurrence_date?: string | null;
   sale_number?: string | null;
   lmp_number?: string | null;
   customer_name?: string | null;
@@ -64,6 +66,7 @@ export type LmpNonconformityPayload = {
   sale_number?: string | null;
   lmp_number?: string | null;
   customer_name?: string | null;
+  occurrence_date?: string | null;
   launch_date?: string | null;
   last_revision_date?: string | null;
   executed_by?: string | null;
@@ -106,10 +109,11 @@ export type LmpNonconformityExportFile = {
 };
 
 export type ImportLmpNonconformitiesResult = {
+  deleted?: number;
   created: number;
   skipped: number;
   errors: number;
-  items: Array<Record<string, unknown>>;
+  items?: Array<Record<string, unknown>>;
 };
 
 export const LMP_NC_STATUS_OPTIONS: { value: LmpNcStatus; label: string }[] = [

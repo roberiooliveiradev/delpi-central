@@ -481,7 +481,7 @@ LMP_NONCONFORMITY_STREAK = agent_route(
     summary="LMP nonconformity days-without streak",
     description=(
         "Returns current calendar days without LMP nonconformity and the historical record streak. "
-        "Based on distinct registered_at dates of engineering.lmp_nonconformities. "
+        "Based on distinct occurrence_date values of engineering.lmp_nonconformities. "
         "When there are no NCs, anchors the streak on the earliest OV date (AD1_DATA)."
     ),
     operation_id="get_lmp_nonconformity_streak",
@@ -499,8 +499,9 @@ LMP_NONCONFORMITIES_EXPORT = agent_route(
 LMP_NONCONFORMITIES_IMPORT = agent_route(
     summary="Import LMP nonconformities from JSON",
     description=(
-        "Create-only bulk import of LMP nonconformities from export JSON. "
-        "Skips duplicates by exported id or natural key (OV + description + tags)."
+        "Full replace of LMP nonconformities from export/migration JSON. "
+        "Deletes all existing NCs first, then creates every item from the payload "
+        "(no merge / no skip-duplicates)."
     ),
     operation_id="import_lmp_nonconformities",
 )
@@ -532,7 +533,7 @@ LMP_NONCONFORMITY_HISTORY = agent_route(
 LMP_NONCONFORMITY_CREATE = agent_route(
     summary="Create LMP nonconformity",
     description=(
-        "Creates an LMP nonconformity. registered_at is set by the server; "
+        "Creates an LMP nonconformity. occurrence_date is when the problem was found; registered_at is set by the server; "
         "sale_number is the OV (= LMP id); products are line items with material codes."
     ),
     operation_id="create_lmp_nonconformity",

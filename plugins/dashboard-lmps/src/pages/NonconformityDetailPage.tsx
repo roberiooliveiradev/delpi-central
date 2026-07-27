@@ -511,6 +511,16 @@ export function NonconformityDetailPage({
         fullWidth
       />
       <TextField
+        id="nc-occurrence"
+        label="Data de ocorrência"
+        hint={NC_HELP.form.occurrenceDate}
+        type="date"
+        required
+        value={form.occurrence_date}
+        onChange={setField("occurrence_date")}
+        fullWidth
+      />
+      <TextField
         id="nc-launch"
         label="Data lançamento"
         hint={NC_HELP.form.launchDate}
@@ -558,6 +568,12 @@ export function NonconformityDetailPage({
         value={form.customer_name}
       />
       <ReadOnlyField
+        id="nc-ro-occurrence"
+        label="Data de ocorrência"
+        hint={NC_HELP.form.occurrenceDate}
+        value={formatDisplayDateOnly(form.occurrence_date || null)}
+      />
+      <ReadOnlyField
         id="nc-ro-launch"
         label="Data lançamento"
         hint={NC_HELP.form.launchDate}
@@ -572,7 +588,7 @@ export function NonconformityDetailPage({
       {record?.registered_at ? (
         <ReadOnlyField
           id="nc-ro-registered"
-          label="Registro"
+          label="Entrada no sistema"
           hint={NC_HELP.table.registeredAt}
           value={formatDisplayDate(record.registered_at)}
         />

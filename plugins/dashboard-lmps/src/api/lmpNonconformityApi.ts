@@ -128,14 +128,13 @@ export async function exportLmpNonconformities(): Promise<LmpNonconformityExport
 
 export async function importLmpNonconformities(
   items: Array<Record<string, unknown>>,
-  options: { dryRun?: boolean; skipExisting?: boolean } = {},
+  options: { dryRun?: boolean } = {},
 ): Promise<ImportLmpNonconformitiesResult> {
   const response = await httpPost<ApiSuccessResponse<ImportLmpNonconformitiesResult>>(
     `${API_BASE}/import`,
     {
       items,
       dry_run: options.dryRun ?? false,
-      skip_existing: options.skipExisting ?? true,
     },
   );
   return unwrapApiDelpiEnvelope(response, "Erro ao importar não conformidades");

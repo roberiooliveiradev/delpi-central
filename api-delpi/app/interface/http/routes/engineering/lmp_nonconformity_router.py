@@ -72,6 +72,7 @@ _STATUS_ENUM = ["open", "in_progress", "done"]
 _DATE_PATTERN = r"^(\d{4}-\d{2}-\d{2})?$"
 _SORT_BY_ENUM = [
     "registered_at",
+    "occurrence_date",
     "sale_number",
     "lmp_number",
     "customer_name",
@@ -84,7 +85,7 @@ _SORT_BY_ENUM = [
     "problem_tags",
     "products",
 ]
-_SORT_BY_PATTERN = "^(registered_at|sale_number|lmp_number|customer_name|launch_date|last_revision_date|executed_by|released_by|status|defect_description|problem_tags|products)?$"
+_SORT_BY_PATTERN = "^(registered_at|occurrence_date|sale_number|lmp_number|customer_name|launch_date|last_revision_date|executed_by|released_by|status|defect_description|problem_tags|products)?$"
 _SORT_DIR_PATTERN = "^(asc|desc)?$"
 _SORT_DIR_ENUM = ["asc", "desc"]
 
@@ -120,6 +121,12 @@ class LmpNonconformityBody(BaseModel):
         description="Número da LMP (legado / opcional).",
     )
     customer_name: str | None = Field(default=None, max_length=200)
+    occurrence_date: str | None = Field(
+        default=None,
+        max_length=10,
+        pattern=_DATE_PATTERN,
+        description="Data de ocorrência / quando o problema foi encontrado (YYYY-MM-DD).",
+    )
     launch_date: str | None = Field(
         default=None,
         max_length=10,
@@ -153,6 +160,7 @@ class LmpNonconformityBody(BaseModel):
         "sale_number",
         "lmp_number",
         "customer_name",
+        "occurrence_date",
         "launch_date",
         "last_revision_date",
         "executed_by",
@@ -195,7 +203,8 @@ class LmpNonconformityBody(BaseModel):
 class ImportLmpNonconformitiesBody(BaseModel):
     items: list[dict] = Field(default_factory=list)
     dry_run: bool = False
-    skip_existing: bool = True
+    # Legado: ignorado. Importação sempre substitui todo o acervo.
+    skip_existing: bool = False
 
 
 def _current_actor() -> dict[str, str | None]:
@@ -418,7 +427,7 @@ def export_lmp_nonconformities():
 @router.post("/import", **LMP_NONCONFORMITIES_IMPORT)
 @require_any_permission(ENGINEERING_LMP_NC_WRITE)
 def import_lmp_nonconformities(body: ImportLmpNonconformitiesBody = Body(...)):
-    """Importa NCs LMP a partir de JSON (create-only; dedupe por id ou chave natural)."""
+    """Importa NCs LMP a partir de JSON (substituição total do acervo)."""
     try:
         if not body.items:
             return error_response(
@@ -518,6 +527,7 @@ def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
             sale_number=body.sale_number,
             lmp_number=body.lmp_number,
             customer_name=body.customer_name,
+            occurrence_date=body.occurrence_date,
             launch_date=body.launch_date,
             last_revision_date=body.last_revision_date,
             executed_by=body.executed_by,
@@ -562,6 +572,7 @@ def update_lmp_nonconformity(
             sale_number=body.sale_number,
             lmp_number=body.lmp_number,
             customer_name=body.customer_name,
+            occurrence_date=body.occurrence_date,
             launch_date=body.launch_date,
             last_revision_date=body.last_revision_date,
             executed_by=body.executed_by,

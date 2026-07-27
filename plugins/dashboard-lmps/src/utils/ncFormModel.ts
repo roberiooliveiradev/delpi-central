@@ -10,6 +10,7 @@ export type NcFormState = {
   sale_number: string;
   lmp_number: string;
   customer_name: string;
+  occurrence_date: string;
   launch_date: string;
   last_revision_date: string;
   executed_by: string;
@@ -60,6 +61,7 @@ export function emptyNcForm(): NcFormState {
     sale_number: "",
     lmp_number: "",
     customer_name: "",
+    occurrence_date: new Date().toISOString().slice(0, 10),
     launch_date: "",
     last_revision_date: "",
     executed_by: "",
@@ -88,6 +90,7 @@ export function recordToNcForm(record: LmpNonconformity): NcFormState {
     sale_number: record.sale_number ?? "",
     lmp_number: record.lmp_number ?? "",
     customer_name: record.customer_name ?? "",
+    occurrence_date: toDateInput(record.occurrence_date) || toDateInput(record.registered_at),
     launch_date: toDateInput(record.launch_date),
     last_revision_date: toDateInput(record.last_revision_date),
     executed_by: record.executed_by ?? "",
@@ -106,6 +109,7 @@ export function ncFormToPayload(form: NcFormState): LmpNonconformityPayload {
     sale_number: form.sale_number.trim() || null,
     lmp_number: form.lmp_number.trim() || null,
     customer_name: form.customer_name.trim() || null,
+    occurrence_date: form.occurrence_date.trim() || null,
     launch_date: form.launch_date.trim() || null,
     last_revision_date: form.last_revision_date.trim() || null,
     executed_by: form.executed_by.trim() || null,

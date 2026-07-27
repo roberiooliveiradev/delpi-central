@@ -4,6 +4,7 @@ from __future__ import annotations
 
 _SORT_COLUMNS: dict[str, str] = {
     "registered_at": "n.registered_at",
+    "occurrence_date": "n.occurrence_date",
     "sale_number": "n.sale_number",
     "lmp_number": "n.lmp_number",
     "customer_name": "n.customer_name",
@@ -26,7 +27,7 @@ _SORT_COLUMNS: dict[str, str] = {
     ),
 }
 
-_DEFAULT_SORT_KEY = "registered_at"
+_DEFAULT_SORT_KEY = "occurrence_date"
 _DEFAULT_SORT_DIR = "desc"
 
 

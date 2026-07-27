@@ -23,6 +23,7 @@ _STATUS_VALUES = frozenset({"open", "in_progress", "done"})
 _NC_SELECT = """
     SELECT n.id,
            n.registered_at,
+           n.occurrence_date,
            n.sale_number,
            n.lmp_number,
            n.customer_name,
@@ -89,6 +90,7 @@ def _history_snapshot(
     sale_number: str | None,
     lmp_number: str | None,
     customer_name: str | None,
+    occurrence_date: str | None,
     launch_date: str | None,
     last_revision_date: str | None,
     executed_by: str | None,
@@ -104,6 +106,7 @@ def _history_snapshot(
         "sale_number": sale_number,
         "lmp_number": lmp_number,
         "customer_name": customer_name,
+        "occurrence_date": occurrence_date,
         "launch_date": launch_date,
         "last_revision_date": last_revision_date,
         "executed_by": executed_by,
@@ -176,10 +179,10 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             )
             params.append(f"%{problem_tag.strip()}%")
         if date_start:
-            filters.append("n.registered_at::date >= %s::date")
+            filters.append("n.occurrence_date >= %s::date")
             params.append(date_start)
         if date_end:
-            filters.append("n.registered_at::date <= %s::date")
+            filters.append("n.occurrence_date <= %s::date")
             params.append(date_end)
 
         where_sql = " AND ".join(filters)
@@ -350,6 +353,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         sale_number: str | None = None,
         lmp_number: str | None = None,
         customer_name: str | None = None,
+        occurrence_date: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
         executed_by: str | None = None,
@@ -374,6 +378,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         sale = _blank_to_none(sale_number)
         lmp = _blank_to_none(lmp_number)
         customer = _blank_to_none(customer_name)
+        occurred = _blank_to_none(occurrence_date)
         launch = _blank_to_none(launch_date)
         revision = _blank_to_none(last_revision_date)
         executed = _blank_to_none(executed_by)
@@ -387,14 +392,15 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 cursor.execute(
                     """
                     INSERT INTO engineering.lmp_nonconformities (
-                        registered_at, sale_number, lmp_number, customer_name,
-                        launch_date, last_revision_date,
+                        registered_at, occurrence_date, sale_number, lmp_number,
+                        customer_name, launch_date, last_revision_date,
                         executed_by, released_by, status,
                         defect_description, corrective_actions, technical_opinion,
                         created_by, updated_by
                     ) VALUES (
-                        COALESCE(%s::timestamptz, NOW()), %s, %s, %s,
-                        %s::date, %s::date,
+                        COALESCE(%s::timestamptz, NOW()),
+                        COALESCE(%s::date, CURRENT_DATE),
+                        %s, %s, %s, %s::date, %s::date,
                         %s, %s, %s,
                         %s, %s, %s,
                         %s, %s
@@ -403,6 +409,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     """,
                     (
                         registered,
+                        occurred,
                         sale,
                         lmp,
                         customer,
@@ -429,6 +436,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     sale_number=sale,
                     lmp_number=lmp,
                     customer_name=customer,
+                    occurrence_date=occurred,
                     launch_date=launch,
                     last_revision_date=revision,
                     executed_by=executed,
@@ -471,6 +479,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         sale_number: str | None = None,
         lmp_number: str | None = None,
         customer_name: str | None = None,
+        occurrence_date: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
         executed_by: str | None = None,
@@ -498,6 +507,9 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         sale = _blank_to_none(sale_number)
         lmp = _blank_to_none(lmp_number)
         customer = _blank_to_none(customer_name)
+        occurred = _blank_to_none(occurrence_date)
+        if occurred is None:
+            raise PluginsRepositoryError("occurrence_date é obrigatória.")
         launch = _blank_to_none(launch_date)
         revision = _blank_to_none(last_revision_date)
         executed = _blank_to_none(executed_by)
@@ -514,6 +526,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                        SET sale_number = %s,
                            lmp_number = %s,
                            customer_name = %s,
+                           occurrence_date = %s::date,
                            launch_date = %s::date,
                            last_revision_date = %s::date,
                            executed_by = %s,
@@ -530,6 +543,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                         sale,
                         lmp,
                         customer,
+                        occurred,
                         launch,
                         revision,
                         executed,
@@ -556,6 +570,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     sale_number=sale,
                     lmp_number=lmp,
                     customer_name=customer,
+                    occurrence_date=occurred,
                     launch_date=launch,
                     last_revision_date=revision,
                     executed_by=executed,
@@ -687,13 +702,38 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 "Falha ao excluir não conformidade LMP."
             ) from exc
 
+    def delete_all_records(self) -> int:
+        """Remove todas as NCs (substituição total na importação)."""
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT set_config('app.allow_lmp_nc_history_delete', 'true', true)"
+                )
+                cursor.execute(
+                    """
+                    DELETE FROM engineering.lmp_nonconformities
+                 RETURNING id
+                    """
+                )
+                rows = cursor.fetchall()
+            self.commit()
+            return len(rows or [])
+        except PluginsRepositoryError:
+            self.rollback()
+            raise
+        except Exception as exc:
+            self.rollback()
+            raise PluginsRepositoryError(
+                "Falha ao excluir todas as não conformidades LMP."
+            ) from exc
+
     def list_occurrence_dates(self) -> list:
-        """Datas distintas de registro de NC (para streak sem NC)."""
+        """Datas distintas de ocorrência de NC (para streak sem NC)."""
         from datetime import date as date_cls
 
         rows = self.fetch_all(
             """
-            SELECT DISTINCT registered_at::date AS occurrence_date
+            SELECT DISTINCT occurrence_date
               FROM engineering.lmp_nonconformities
              ORDER BY occurrence_date ASC
             """,
@@ -855,6 +895,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         payload: dict[str, Any] = {
             "id": record_id,
             "registered_at": _iso(row.get("registered_at")),
+            "occurrence_date": _iso(row.get("occurrence_date")),
             "sale_number": row.get("sale_number"),
             "lmp_number": row.get("lmp_number"),
             "customer_name": row.get("customer_name"),

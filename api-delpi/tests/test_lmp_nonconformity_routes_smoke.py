@@ -26,6 +26,7 @@ _NC_ID = UUID("22222222-2222-2222-2222-222222222222")
 _RECORD = {
     "id": str(_NC_ID),
     "registered_at": "2026-07-27T10:00:00+00:00",
+    "occurrence_date": "2026-07-26",
     "sale_number": "123456",
     "lmp_number": "LMP-001",
     "customer_name": "Cliente Exemplo",
@@ -254,10 +255,14 @@ def test_import_lmp_nonconformities_returns_meta(mock_build) -> None:
     use_case = MagicMock()
     use_case.execute.return_value = MagicMock(
         to_dict=lambda: {
+            "deleted": 3,
             "created": 1,
             "skipped": 0,
             "errors": 0,
-            "items": [{"index": 0, "result": "created", "record_id": str(_NC_ID)}],
+            "items": [
+                {"index": -1, "result": "deleted_all", "deleted": 3},
+                {"index": 0, "result": "created", "record_id": str(_NC_ID)},
+            ],
         }
     )
     mock_build.return_value = use_case
@@ -268,6 +273,7 @@ def test_import_lmp_nonconformities_returns_meta(mock_build) -> None:
                 {
                     "status": "open",
                     "sale_number": "123456",
+                    "occurrence_date": "2026-07-26",
                     "defect_description": "Caso",
                     "problem_tags": ["Medida"],
                     "products": [
@@ -276,7 +282,6 @@ def test_import_lmp_nonconformities_returns_meta(mock_build) -> None:
                 }
             ],
             dry_run=False,
-            skip_existing=True,
         )
     )
     body = body_json(response)
@@ -286,6 +291,7 @@ def test_import_lmp_nonconformities_returns_meta(mock_build) -> None:
         shape="scalar",
     )
     assert body["meta"]["entity"] == "lmp_nonconformity_import"
+    assert body["data"]["deleted"] == 3
     assert body["data"]["created"] == 1
     use_case.execute.assert_called_once()
     assert "actor_user_id" in use_case.execute.call_args.kwargs

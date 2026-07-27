@@ -1,4 +1,4 @@
-"""Importação em lote de NCs LMP a partir de JSON (backup/migração)."""
+"""Importação em lote de NCs LMP a partir de JSON (substituição total)."""
 
 from __future__ import annotations
 
@@ -16,18 +16,11 @@ _STRIP_KEYS = frozenset(
         "product_codes",
     }
 )
+_REGISTERED_AT_TZ_SUFFIX = "T00:00:00-03:00"
 
 
 class LmpNonconformityImportRepository(Protocol):
-    def get_record(self, record_id: str) -> dict[str, Any] | None: ...
-
-    def find_import_duplicate(
-        self,
-        *,
-        sale_number: str | None,
-        defect_description: str | None,
-        problem_tags: list[str] | None,
-    ) -> dict[str, Any] | None: ...
+    def delete_all_records(self) -> int: ...
 
     def create_record(
         self,
@@ -36,6 +29,7 @@ class LmpNonconformityImportRepository(Protocol):
         sale_number: str | None = None,
         lmp_number: str | None = None,
         customer_name: str | None = None,
+        occurrence_date: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
         executed_by: str | None = None,
@@ -55,6 +49,7 @@ class LmpNonconformityImportRepository(Protocol):
 
 @dataclass(frozen=True)
 class ImportLmpNonconformitiesResult:
+    deleted: int
     created: int
     skipped: int
     errors: int
@@ -62,6 +57,7 @@ class ImportLmpNonconformitiesResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "deleted": self.deleted,
             "created": self.created,
             "skipped": self.skipped,
             "errors": self.errors,
@@ -127,12 +123,36 @@ def _normalize_tags(raw: Any) -> list[str]:
     return out
 
 
-def _normalize_registered_at(value: Any) -> str | None:
-    """Aceita ISO datetime; vazio → None (create usa NOW())."""
+def _normalize_occurrence_date(value: Any, registered_at: Any = None) -> str | None:
+    """YYYY-MM-DD; se ausente, deriva da data de registered_at."""
     text = _blank(value)
-    if text is None:
-        return None
-    return text
+    if text:
+        return text[:10]
+    registered = _blank(registered_at)
+    if registered:
+        return registered[:10]
+    return None
+
+
+def _normalize_registered_at(
+    value: Any,
+    *,
+    occurrence_date: str | None = None,
+) -> str | None:
+    """
+    Data/hora de registro alinhada à ocorrência.
+
+    Se há ``occurrence_date``, ``registered_at`` fica no mesmo dia
+    (mantém horário do JSON se já for do mesmo dia; senão 00:00 -03).
+    """
+    occ = _blank(occurrence_date)
+    if occ:
+        occ_day = occ[:10]
+        text = _blank(value)
+        if text and text[:10] == occ_day:
+            return text
+        return f"{occ_day}{_REGISTERED_AT_TZ_SUFFIX}"
+    return _blank(value)
 
 
 def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
@@ -144,12 +164,17 @@ def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
     status = str(source.get("status") or "open").strip().lower() or "open"
     products = _normalize_products(source.get("products"), raw.get("product_codes") if raw else None)
     tags = _normalize_tags(source.get("problem_tags"))
+    occurrence_date = _normalize_occurrence_date(
+        source.get("occurrence_date"),
+        source.get("registered_at"),
+    )
 
     return {
         "status": status,
         "sale_number": _blank(source.get("sale_number")),
         "lmp_number": _blank(source.get("lmp_number")),
         "customer_name": _blank(source.get("customer_name")),
+        "occurrence_date": occurrence_date,
         "launch_date": _blank(source.get("launch_date")),
         "last_revision_date": _blank(source.get("last_revision_date")),
         "executed_by": _blank(source.get("executed_by")),
@@ -159,13 +184,15 @@ def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
         "technical_opinion": _blank(source.get("technical_opinion")),
         "products": products,
         "problem_tags": tags,
-        "registered_at": _normalize_registered_at(source.get("registered_at")),
-        "source_id": _blank((raw or {}).get("id")),
+        "registered_at": _normalize_registered_at(
+            source.get("registered_at"),
+            occurrence_date=occurrence_date,
+        ),
     }
 
 
 class ImportLmpNonconformitiesUseCase:
-    """Importa NCs LMP (create-only) com dedupe por id exportado ou chave natural."""
+    """Importa NCs LMP substituindo todo o acervo existente (sem merge)."""
 
     def __init__(self, repository: LmpNonconformityImportRepository) -> None:
         self._repository = repository
@@ -179,12 +206,34 @@ class ImportLmpNonconformitiesUseCase:
         actor_email: str | None = None,
         actor_name: str | None = None,
         dry_run: bool = False,
-        skip_existing: bool = True,
+        skip_existing: bool = False,  # legado; ignorado — importação é replace-all
     ) -> ImportLmpNonconformitiesResult:
+        del skip_existing  # API antiga ainda pode enviar; comportamento é sempre replace.
+
         created = 0
         skipped = 0
         errors = 0
         report: list[dict[str, Any]] = []
+        deleted = 0
+
+        if dry_run:
+            deleted = 0
+            report.append(
+                {
+                    "index": -1,
+                    "result": "would_replace_all",
+                    "reason": "dry_run",
+                }
+            )
+        else:
+            deleted = self._repository.delete_all_records()
+            report.append(
+                {
+                    "index": -1,
+                    "result": "deleted_all",
+                    "deleted": deleted,
+                }
+            )
 
         for index, raw in enumerate(items):
             if not isinstance(raw, dict):
@@ -213,27 +262,6 @@ class ImportLmpNonconformitiesUseCase:
                 )
                 continue
 
-            source_id = fields.pop("source_id", None)
-            if skip_existing:
-                existing = self._find_existing(
-                    source_id=source_id,
-                    sale_number=fields["sale_number"],
-                    defect_description=fields["defect_description"],
-                    problem_tags=fields["problem_tags"],
-                )
-                if existing is not None:
-                    skipped += 1
-                    report.append(
-                        {
-                            "index": index,
-                            "result": "skipped",
-                            "reason": "already_exists",
-                            "record_id": existing.get("id"),
-                            "sale_number": fields["sale_number"],
-                        }
-                    )
-                    continue
-
             if dry_run:
                 created += 1
                 report.append(
@@ -241,6 +269,7 @@ class ImportLmpNonconformitiesUseCase:
                         "index": index,
                         "result": "would_create",
                         "sale_number": fields["sale_number"],
+                        "occurrence_date": fields["occurrence_date"],
                         "status": status,
                     }
                 )
@@ -252,6 +281,7 @@ class ImportLmpNonconformitiesUseCase:
                     sale_number=fields["sale_number"],
                     lmp_number=fields["lmp_number"],
                     customer_name=fields["customer_name"],
+                    occurrence_date=fields["occurrence_date"],
                     launch_date=fields["launch_date"],
                     last_revision_date=fields["last_revision_date"],
                     executed_by=fields["executed_by"],
@@ -274,6 +304,7 @@ class ImportLmpNonconformitiesUseCase:
                         "result": "created",
                         "record_id": record.get("id"),
                         "sale_number": record.get("sale_number"),
+                        "occurrence_date": record.get("occurrence_date"),
                     }
                 )
             except Exception as exc:  # noqa: BLE001 — reporta por item
@@ -288,28 +319,9 @@ class ImportLmpNonconformitiesUseCase:
                 )
 
         return ImportLmpNonconformitiesResult(
+            deleted=deleted,
             created=created,
             skipped=skipped,
             errors=errors,
             items=report,
-        )
-
-    def _find_existing(
-        self,
-        *,
-        source_id: str | None,
-        sale_number: str | None,
-        defect_description: str | None,
-        problem_tags: list[str],
-    ) -> dict[str, Any] | None:
-        if source_id:
-            by_id = self._repository.get_record(source_id)
-            if by_id is not None:
-                return by_id
-        if not sale_number and not defect_description and not problem_tags:
-            return None
-        return self._repository.find_import_duplicate(
-            sale_number=sale_number,
-            defect_description=defect_description,
-            problem_tags=problem_tags,
         )

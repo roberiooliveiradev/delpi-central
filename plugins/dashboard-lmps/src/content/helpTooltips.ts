@@ -38,7 +38,7 @@ export const LMPS_HELP_TOOLTIPS = {
     totalProposals:
       "Quantidade de propostas/OVs no período após filtros. Meta exibida quando configurada na API.",
     ncStreak:
-      "Dias corridos desde a última não conformidade registrada em LMPs, e o maior intervalo histórico entre NCs (recorde). Sem NCs, a contagem usa a data da primeira OV no Protheus como referência. Independente dos filtros de período do dashboard.",
+      "Dias corridos desde a última ocorrência de NC em LMPs (data em que o problema foi encontrado), e o maior intervalo histórico entre ocorrências (recorde). Sem NCs, a contagem usa a data da primeira OV no Protheus como referência. Independente dos filtros de período do dashboard.",
   },
   charts: {
     countByLevel:
@@ -174,7 +174,7 @@ export const LMPS_HELP_TOOLTIPS = {
     exportJson:
       "Baixa um JSON com todas as não conformidades (listagem completa: campos, produtos e tags).",
     importJson:
-      "Importa NCs a partir de um JSON de exportação. Cria novos registros e ignora duplicados (mesmo id ou OV + descrição + tags).",
+      "Substitui TODAS as NCs cadastradas pelo conteúdo do JSON (não mescla). Remove o acervo atual e recria a partir do arquivo. Use com cuidado.",
     filters: {
       status:
         "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",
@@ -187,17 +187,19 @@ export const LMPS_HELP_TOOLTIPS = {
       product:
         "Código de material/produto Protheus nas linhas da NC.",
       dateStart:
-        "Início do intervalo pela data/hora de registro da NC (automática).",
+        "Início do intervalo pela data de ocorrência (quando o problema foi encontrado).",
       dateEnd:
-        "Fim do intervalo pela data/hora de registro da NC.",
+        "Fim do intervalo pela data de ocorrência.",
     },
     table: {
       section:
         "Lista paginada de não conformidades. Clique na linha para abrir o detalhe. Use Colunas para mostrar/ocultar campos (Descrição oculta por padrão). Exclusão somente na página da NC.",
       search:
         "Busca local nos registros já carregados na página (texto das colunas visíveis).",
+      occurrenceDate:
+        "Data em que o problema foi encontrado (ocorrência da NC).",
       registeredAt:
-        "Data e hora em que a NC foi registrada no sistema (definida automaticamente).",
+        "Data e hora em que a NC foi registrada no sistema Delpi (auditoria).",
       saleNumber: "Número da OV (Protheus).",
       lmpNumber: "Número legado da LMP (opcional).",
       customer: "Cliente associado à LMP/OV (snapshot editável).",
@@ -215,7 +217,7 @@ export const LMPS_HELP_TOOLTIPS = {
     },
     form: {
       sectionIdentification:
-        "OV, número legado da LMP (opcional), status, cliente e datas. Ao informar uma OV válida, cliente, data de lançamento e produtos são preenchidos automaticamente (editáveis).",
+        "OV, número legado da LMP (opcional), status, cliente, data de ocorrência e datas da LMP. Ao informar uma OV válida, cliente, data de lançamento e produtos são preenchidos automaticamente (editáveis).",
       sectionPeople:
         "Responsáveis: quem executou e quem liberou (texto livre).",
       sectionProducts:
@@ -234,6 +236,8 @@ export const LMPS_HELP_TOOLTIPS = {
         "Consulta a LMP no TOTVS pela OV e preenche cliente, datas e produtos amarrados. Você pode editar depois.",
       customer:
         "Nome do cliente (snapshot). Hidratado do TOTVS e editável.",
+      occurrenceDate:
+        "Data em que o problema foi encontrado. Usada no placar de dias sem NC e nos filtros de período.",
       launchDate:
         "Data de lançamento da LMP/OV (snapshot editável).",
       lastRevisionDate:

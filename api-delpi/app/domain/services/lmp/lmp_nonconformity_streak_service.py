@@ -13,7 +13,7 @@ def compute_lmp_nc_streak(
     reference_start_date: date | None = None,
 ) -> dict[str, Any]:
     """
-    Calcula streak a partir das datas de ocorrência (``registered_at`` por dia).
+    Calcula streak a partir das datas de ocorrência (``occurrence_date``).
 
     - ``current_days_without_nc``: dias desde a última NC até ``as_of``
       (NC no próprio ``as_of`` → 0).

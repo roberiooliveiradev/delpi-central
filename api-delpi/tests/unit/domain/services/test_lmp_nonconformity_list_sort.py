@@ -7,16 +7,16 @@ from app.domain.services.lmp.lmp_nonconformity_list_sort import (
 )
 
 
-def test_default_sort_is_registered_at_desc() -> None:
+def test_default_sort_is_occurrence_date_desc() -> None:
     key, direction, sql = resolve_lmp_nc_order_by(None, None)
-    assert key == "registered_at"
+    assert key == "occurrence_date"
     assert direction == "desc"
-    assert "n.registered_at DESC" in sql
+    assert "n.occurrence_date DESC" in sql
 
 
 def test_unknown_sort_falls_back() -> None:
     key, direction, _sql = resolve_lmp_nc_order_by("hack);--", "up")
-    assert key == "registered_at"
+    assert key == "occurrence_date"
     assert direction == "desc"
 
 
