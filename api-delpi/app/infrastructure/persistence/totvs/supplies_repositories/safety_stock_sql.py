@@ -35,6 +35,7 @@ __all__ = [
     "materials_base_cte",
     "open_commitments_sql",
     "open_purchase_orders_sql",
+    "compute_open_purchase_order_item_value",
     "materials_for_projection_batch_sql",
     "last_inbound_party_names_sql",
     "product_detail_sql",
@@ -234,6 +235,40 @@ def resolve_order_by(sort_by: str, sort_direction: str) -> str:
     return f"{column} {direction}, product_code ASC"
 
 
+def compute_open_purchase_order_item_value(
+    *,
+    quantity: float,
+    delivered_quantity: float,
+    merchandise_total: float,
+    ipi_value: float,
+    freight_value: float,
+    discount_value: float,
+) -> float:
+    """Espelho Python do open_value em open_purchase_orders_sql (SC7).
+
+    Fator = (C7_QUANT - C7_QUJE) / C7_QUANT
+    open_value = round(C7_TOTAL*f,2) + round(C7_VALIPI*f,2)
+                 + round(C7_VALFRE*f,2) - round(C7_VLDESC*f,2)
+    Não inclui C7_VALICM / C7_ICMCOMP / C7_FRETE.
+    """
+    qty = float(quantity or 0)
+    delivered = float(delivered_quantity or 0)
+    if qty <= 0 or qty <= delivered:
+        return 0.0
+    factor = (qty - delivered) / qty
+
+    def _component(raw: float) -> float:
+        return round(float(raw or 0) * factor, 2)
+
+    return round(
+        _component(merchandise_total)
+        + _component(ipi_value)
+        + _component(freight_value)
+        - _component(discount_value),
+        2,
+    )
+
+
 def open_purchase_orders_sql(
     *,
     branch_param: str = "?",
@@ -241,7 +276,13 @@ def open_purchase_orders_sql(
     supplier_code_param: str | None = None,
     supplier_store_param: str | None = None,
 ) -> str:
-    """Pedidos de compra em aberto (SC7) por filial (+ produto e/ou fornecedor opcionais)."""
+    """Pedidos de compra em aberto (SC7) por filial (+ produto e/ou fornecedor opcionais).
+
+    ``open_value`` é proporcional ao saldo do item:
+    fator = (C7_QUANT - C7_QUJE) / C7_QUANT;
+    total = ROUND(C7_TOTAL*f,2) + ROUND(C7_VALIPI*f,2)
+            + ROUND(C7_VALFRE*f,2) - ROUND(C7_VLDESC*f,2).
+    """
     product_clause = ""
     if product_param is not None:
         product_clause = f"AND RTRIM(SC7.C7_PRODUTO) = {product_param}"
@@ -277,8 +318,28 @@ def open_purchase_orders_sql(
         CAST(ISNULL(SC7.C7_PRECO, 0) AS FLOAT) AS unit_price,
         CAST(
             CASE
-                WHEN SC7.C7_QUANT > SC7.C7_QUJE
-                THEN (SC7.C7_QUANT - SC7.C7_QUJE) * ISNULL(SC7.C7_PRECO, 0)
+                WHEN ISNULL(SC7.C7_QUANT, 0) <= 0 THEN 0
+                WHEN SC7.C7_QUANT > SC7.C7_QUJE THEN
+                    ROUND(
+                        ISNULL(SC7.C7_TOTAL, 0)
+                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
+                        2
+                    )
+                    + ROUND(
+                        ISNULL(SC7.C7_VALIPI, 0)
+                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
+                        2
+                    )
+                    + ROUND(
+                        ISNULL(SC7.C7_VALFRE, 0)
+                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
+                        2
+                    )
+                    - ROUND(
+                        ISNULL(SC7.C7_VLDESC, 0)
+                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
+                        2
+                    )
                 ELSE 0
             END AS FLOAT
         ) AS open_value

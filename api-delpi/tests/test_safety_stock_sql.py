@@ -6,6 +6,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     WORK_IN_PROCESS_WAREHOUSES,
     build_consumption_analysis_where_clauses,
     build_where_clauses,
+    compute_open_purchase_order_item_value,
     consumption_agg_cte,
     consumption_analysis_rows_sql,
     consumption_last_date_sql,
@@ -144,6 +145,55 @@ def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
     assert "SA2010" in sql
     assert "C7_QTDACLA" in sql
     assert "C7_PRODUTO) =" in sql
+    assert "C7_TOTAL" in sql
+    assert "C7_VALIPI" in sql
+    assert "C7_VALFRE" in sql
+    assert "C7_VLDESC" in sql
+    assert "C7_VALICM" not in sql
+    assert "C7_ICMCOMP" not in sql
+    assert "ROUND(" in sql
+    assert "(SC7.C7_QUANT - SC7.C7_QUJE) * ISNULL(SC7.C7_PRECO, 0)" not in sql
+
+
+def test_open_purchase_order_item_value_pc_061518_filial_01() -> None:
+    """Pedido 061518 / filial 01: mercadoria 364 + IPI 11,83 = 375,83."""
+    assert (
+        compute_open_purchase_order_item_value(
+            quantity=1,
+            delivered_quantity=0,
+            merchandise_total=364.0,
+            ipi_value=11.83,
+            freight_value=0.0,
+            discount_value=0.0,
+        )
+        == 375.83
+    )
+
+
+def test_open_purchase_order_item_value_partial_balance_and_zero_quantity() -> None:
+    # Metade do saldo: mercadoria 100 + IPI 10 - desc 4 → 53.00
+    assert (
+        compute_open_purchase_order_item_value(
+            quantity=10,
+            delivered_quantity=5,
+            merchandise_total=100.0,
+            ipi_value=10.0,
+            freight_value=0.0,
+            discount_value=4.0,
+        )
+        == 53.0
+    )
+    assert (
+        compute_open_purchase_order_item_value(
+            quantity=0,
+            delivered_quantity=0,
+            merchandise_total=364.0,
+            ipi_value=11.83,
+            freight_value=0.0,
+            discount_value=0.0,
+        )
+        == 0.0
+    )
 
 
 def test_open_purchase_orders_sql_branch_only_omits_product_filter() -> None:
