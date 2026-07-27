@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, type MutableRefObject } from "react";
 
 import {
   applyComplexBlockFrameWithTypography,
+  applyLineBlockFrame,
   clampFrameForBlock,
   isComplexViewBlock,
   isLineShapeKind,
@@ -94,11 +95,19 @@ function applyWorldUpdatesToBlocks(input: {
     const update = updates.get(block.id);
     if (!update) return block;
     const base = resolveBaseline(block.id) ?? block;
-    let next: ComunicadoBlock = {
-      ...block,
-      frame: update.frame,
-      style: { ...block.style, rotation: update.rotation },
-    } as ComunicadoBlock;
+    let next: ComunicadoBlock;
+    if (base.type === "shape" && isLineShapeKind(base.shape)) {
+      next = {
+        ...applyLineBlockFrame(base, update.frame),
+        style: { ...base.style, rotation: update.rotation },
+      } as ComunicadoBlock;
+    } else {
+      next = {
+        ...block,
+        frame: update.frame,
+        style: { ...block.style, rotation: update.rotation },
+      } as ComunicadoBlock;
+    }
     if (scaled && isComplexViewBlock(base)) {
       next = applyComplexBlockFrameWithTypography(base, update.frame);
       next = {
@@ -564,6 +573,9 @@ export function useComunicadoEditorDrag({
         let updated: ComunicadoBlock;
         if (mode === "resize" && beforeBlock && isComplexViewBlock(beforeBlock)) {
           updated = applyComplexBlockFrameWithTypography(beforeBlock, snappedFrame);
+        } else if (current.type === "shape" && isLineShapeKind(current.shape)) {
+          /* Frame sozinho não move a linha — vertices-first. */
+          updated = applyLineBlockFrame(current, snappedFrame);
         } else {
           updated = { ...current, frame: snappedFrame };
         }

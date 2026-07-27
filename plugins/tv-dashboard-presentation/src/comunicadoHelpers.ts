@@ -695,9 +695,10 @@ function normalizeVertices(value: unknown): ComunicadoGeometryVertex[] | undefin
     const x = Number(raw.x);
     const y = Number(raw.y);
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    /* Soft bound — igual ao frame: linha pode ficar no pasteboard fora do slide. */
     points.push({
-      x: Math.max(0, Math.min(100, x)),
-      y: Math.max(0, Math.min(100, y)),
+      x: clampFramePositionPercent(x),
+      y: clampFramePositionPercent(y),
     });
   }
   return points.length > 0 ? points : undefined;

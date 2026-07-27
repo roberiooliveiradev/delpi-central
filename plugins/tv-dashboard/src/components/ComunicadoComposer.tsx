@@ -474,7 +474,8 @@ export function ComunicadoComposerCanvas() {
         return;
       }
 
-      // Marquee só no fundo do slide — não iniciar sobre um bloco.
+      // Marquee / desenho no pasteboard (zoom-sizer) — o slide só exibe; fora do
+      // retângulo 0–100% também inicia gesto (não só no fundo azul).
       const target = event.target as HTMLElement | null;
       if (
         target &&
@@ -1007,6 +1008,7 @@ export function ComunicadoComposerCanvas() {
           height: designSize.height * stageZoom,
           padding: `${panGutter.y}px ${panGutter.x}px`,
         }}
+        onPointerDown={handleCanvasPointerDown}
         onContextMenu={handleCanvasContextMenu}
       >
         <div
@@ -1031,7 +1033,6 @@ export function ComunicadoComposerCanvas() {
             transformOrigin: "top left",
             ...(isDrawToolActive ? { cursor: "crosshair" } : {}),
           }}
-          onPointerDown={handleCanvasPointerDown}
           onContextMenu={handleCanvasContextMenu}
         >
           {/*

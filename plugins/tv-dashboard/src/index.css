@@ -1599,6 +1599,11 @@
   flex-shrink: 0;
   /* content-box: padding do gutter entra no scrollWidth/scrollHeight. */
   box-sizing: content-box;
+  /* Pasteboard: área clicável inclui o gutter (padding) ao redor do slide. */
+  touch-action: none;
+}
+.dashboard-tv-dashboard .td-composer__canvas-zoom-sizer:has(.td-composer__canvas--draw-tool){
+  cursor: crosshair;
 }
 .dashboard-tv-dashboard .td-composer__block-wrap{
   position: absolute;
@@ -1726,11 +1731,16 @@ body.td-composer--marqueeing *{
 /*
  * Camada de conteúdo do palco: isola z-index dos blocos.
  * Sem isso, guias (z≈3) somem sob qualquer bloco com style.zIndex ≥ 3.
+ * overflow visível — elementos no pasteboard (fora 0–100%) não são clipados.
  */
 .dashboard-tv-dashboard .td-composer__stage-content{
   position: absolute;
   inset: 0;
   z-index: 1;
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-composer__stage{
+  overflow: visible;
 }
 .dashboard-tv-dashboard .td-composer__stage-guide{
   position: absolute;
