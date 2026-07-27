@@ -1,4 +1,4 @@
-"""Smoke e unidade — evolução Transformômetro via api-delpi."""
+"""Smoke e unidade — série Transformômetro via api-delpi."""
 
 from __future__ import annotations
 
@@ -19,9 +19,9 @@ from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 _ENGINEERING = "app.interface.http.routes.engineering.engineering_router"
 
 
-def test_transformometro_dashboard_evolucao_returns_meta() -> None:
+def test_transformometro_savings_investment_series_returns_meta() -> None:
     from app.interface.http.routes.engineering.engineering_router import (
-        get_transformometro_dashboard_evolucao_route,
+        get_transformometro_savings_investment_series_route,
     )
 
     payload = DashboardEvolucaoResponse(
@@ -42,27 +42,28 @@ def test_transformometro_dashboard_evolucao_returns_meta() -> None:
     )
 
     with patch(
-        f"{_ENGINEERING}.build_engineering_get_transformometro_dashboard_evolucao_use_case"
+        f"{_ENGINEERING}.build_engineering_get_transformometro_savings_investment_series_use_case"
     ) as mock_build:
         mock_build.return_value = MagicMock(execute=MagicMock(return_value=payload))
-        response = get_transformometro_dashboard_evolucao_route(
+        response = get_transformometro_savings_investment_series_route(
             view=None,
             filial_id="01",
             setor_id=None,
-            competencia_inicio="2026-07-01",
-            competencia_fim="2026-07-27",
+            start_date="2026-07-01",
+            end_date="2026-07-27",
             granularity="day",
         )
 
     body = body_json(response)
     assert_envelope_meta(
         body,
-        operation_id="get_transformometro_dashboard_evolucao",
-        shape="paged_list",
+        operation_id="get_transformometro_savings_investment_series",
+        shape="scalar",
     )
     assert body["data"]["total"] == 1
     assert body["data"]["granularity"] == "day"
-    assert body["data"]["items"][0]["economia_bruta"] == 100.0
+    assert body["data"]["points"][0]["economia_bruta"] == 100.0
+    assert "items" not in body["data"]
 
 
 def test_transformometro_dashboard_gateway_maps_items() -> None:
@@ -87,8 +88,8 @@ def test_transformometro_dashboard_gateway_maps_items() -> None:
     gateway = TransformometroDashboardGateway(client=client)
     result = gateway.get_evolucao(
         DashboardEvolucaoRequest(
-            competencia_inicio="2026-07",
-            competencia_fim="2026-07",
+            start_date="2026-07-01",
+            end_date="2026-07-31",
             granularity="month",
         ),
         authorization="Bearer x",
@@ -97,3 +98,7 @@ def test_transformometro_dashboard_gateway_maps_items() -> None:
     assert result.granularity == "month"
     assert result.items[0].ganho_capacidade == 1.5
     client.get_dashboard_evolucao.assert_called_once()
+    call_params = client.get_dashboard_evolucao.call_args.kwargs["params"]
+    assert call_params["competencia_inicio"] == "2026-07-01"
+    assert call_params["competencia_fim"] == "2026-07-31"
+    assert "start_date" not in call_params

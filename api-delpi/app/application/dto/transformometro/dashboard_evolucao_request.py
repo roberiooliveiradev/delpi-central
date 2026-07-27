@@ -8,6 +8,6 @@ class DashboardEvolucaoRequest:
     view: str | None = None
     filial_id: str | None = None
     setor_id: str | None = None
-    competencia_inicio: str | None = None
-    competencia_fim: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
     granularity: str = "month"

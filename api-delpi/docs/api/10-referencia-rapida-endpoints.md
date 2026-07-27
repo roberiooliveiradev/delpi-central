@@ -247,7 +247,7 @@ Legenda de permissões:
 | GET | `/engineering/lmps/{sale_number}` | A ou L |
 | GET | `/engineering/transforma-mais/processes` | A ou L |
 | GET | `/engineering/transforma-mais/processes/summary` | A ou L |
-| GET | `/engineering/transformometro/dashboard/evolucao` | A ou L |
+| GET | `/engineering/transformometro/savings-investment/series` | A ou L |
 
 ---
 

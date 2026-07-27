@@ -4029,19 +4029,19 @@
       },
       "category": "engineering"
     },
-    "get_transformometro_dashboard_evolucao": {
+    "get_transformometro_savings_investment_series": {
       "locale": {
         "en": {
-          "summary": "Transformômetro economy vs investment series",
-          "description": "Daily or monthly series for gross savings versus investment (Transformômetro dashboard chart).",
-          "label": "Transformômetro evolution series",
-          "whenToUse": "Use for the Economia bruta vs Investimento chart with period, branch, department and granularity filters."
+          "summary": "Transformômetro savings vs investment series",
+          "description": "Daily or monthly series of gross savings versus investment from the Transformômetro dashboard.",
+          "label": "Transformômetro — savings vs investment",
+          "whenToUse": "Use for the Economia bruta vs Investimento trend chart with period, branch, department and granularity filters."
         },
         "pt-BR": {
-          "summary": "Série Economia bruta vs Investimento",
+          "summary": "Série Economia bruta vs Investimento (Transformômetro)",
           "description": "Série diária ou mensal de economia bruta versus investimento do dashboard Transformômetro.",
-          "label": "Evolução Transformômetro",
-          "whenToUse": "Use no gráfico Economia bruta vs Investimento com filtros de período, filial, setor e granularidade."
+          "label": "Transformômetro — Economia bruta vs Investimento",
+          "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento com filtros de período, filial, setor e granularidade."
         }
       },
       "category": "engineering"

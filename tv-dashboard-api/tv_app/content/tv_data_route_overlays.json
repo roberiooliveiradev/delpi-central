@@ -184,6 +184,47 @@
         }
       ]
     },
+    "get_transformometro_savings_investment_series": {
+      "seriesField": "points",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "valueFields": [
+        "economia_bruta",
+        "investimento_total_mes",
+        "economia_liquida_mes",
+        "horas_economizadas_mes"
+      ],
+      "valueFieldTypes": {
+        "competencia": "date",
+        "economia_bruta": "number",
+        "investimento_unico_mes": "number",
+        "custo_recorrente_mes": "number",
+        "custo_recursos_compartilhados_mes": "number",
+        "investimento_total_mes": "number",
+        "economia_liquida_mes": "number",
+        "horas_economizadas_mes": "number"
+      },
+      "label": "Transformômetro — Economia bruta vs Investimento",
+      "description": "Série diária ou mensal de economia bruta versus investimento do dashboard Transformômetro.",
+      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento com filtros de período, filial, setor e granularidade.",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "competencia",
+            "economia_bruta",
+            "investimento_total_mes"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "competencia",
+          "direction": "asc"
+        }
+      ]
+    },
     "get_production_otd_series": {
       "seriesField": "points",
       "fixedQueryParams": {

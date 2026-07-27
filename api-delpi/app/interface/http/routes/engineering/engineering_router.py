@@ -31,7 +31,7 @@ from app.composition.engineering_composer import (
     build_engineering_get_lmp_history_flow_use_case,
     build_engineering_get_lmp_use_case,
     build_engineering_get_transforma_mais_summary_use_case,
-    build_engineering_get_transformometro_dashboard_evolucao_use_case,
+    build_engineering_get_transformometro_savings_investment_series_use_case,
     build_engineering_list_lmps_dashboard_use_case,
     build_engineering_list_lmps_use_case,
     build_engineering_list_transforma_mais_processes_use_case,
@@ -67,7 +67,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_LIST,
     TRANSFORMA_MAIS_LIST,
     TRANSFORMA_MAIS_SUMMARY,
-    TRANSFORMOMETRO_DASHBOARD_EVOLUCAO,
+    TRANSFORMOMETRO_SAVINGS_INVESTMENT_SERIES,
     MINI_APPLICATORS_FERRAMENTAS_LIST,
     MINI_APPLICATORS_FERRAMENTA_GET,
     MINI_APPLICATORS_PECAS_LIST,
@@ -613,45 +613,45 @@ def get_process_summary(
 
 
 @router.get(
-    "/transformometro/dashboard/evolucao",
-    **TRANSFORMOMETRO_DASHBOARD_EVOLUCAO,
+    "/transformometro/savings-investment/series",
+    **TRANSFORMOMETRO_SAVINGS_INVESTMENT_SERIES,
 )
 @require_any_permission(ENGINEERING_TRANSFORMOMETRO_ACCESS)
-def get_transformometro_dashboard_evolucao_route(
+def get_transformometro_savings_investment_series_route(
     view: str | None = Query(default=None),
     filial_id: str | None = Query(default=None),
     setor_id: str | None = Query(default=None),
-    competencia_inicio: str | None = Query(default=None),
-    competencia_fim: str | None = Query(default=None),
+    start_date: str | None = Query(default=None),
+    end_date: str | None = Query(default=None),
     granularity: str = TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY(),
 ):
     try:
-        use_case = build_engineering_get_transformometro_dashboard_evolucao_use_case()
+        use_case = build_engineering_get_transformometro_savings_investment_series_use_case()
         result = use_case.execute(
             DashboardEvolucaoRequest(
                 view=view,
                 filial_id=filial_id,
                 setor_id=setor_id,
-                competencia_inicio=competencia_inicio,
-                competencia_fim=competencia_fim,
+                start_date=start_date,
+                end_date=end_date,
                 granularity=granularity,
             )
         )
         return api_delpi_success(
             result.to_dict(),
-            operation_id="get_transformometro_dashboard_evolucao",
+            operation_id="get_transformometro_savings_investment_series",
             message="Série Economia bruta vs Investimento carregada com sucesso.",
             fields=kpi_fields(ENGINEERING_TRANSFORMOMETRO_EVOLUCAO_FIELD_LABELS),
         )
     except ValueError as exc:
         log_error(
-            f"Erro de validação ao buscar evolução do Transformômetro: {exc}"
+            f"Erro de validação ao buscar série do Transformômetro: {exc}"
         )
         return error_response(str(exc), status_code=400)
     except Exception as exc:
-        log_error(f"Erro ao buscar evolução do Transformômetro: {exc}")
+        log_error(f"Erro ao buscar série do Transformômetro: {exc}")
         return error_response(
-            "Erro interno ao buscar evolução do Transformômetro.",
+            "Erro interno ao buscar série Economia bruta vs Investimento.",
             status_code=500,
         )
 

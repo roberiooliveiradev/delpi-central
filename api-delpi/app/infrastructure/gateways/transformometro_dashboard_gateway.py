@@ -45,13 +45,15 @@ class TransformometroDashboardGateway(TransformometroDashboardPort):
         if granularity not in {"day", "month"}:
             raise ValueError("granularity inválida. Valores aceitos: day, month.")
 
+        # Fachada api-delpi: start_date/end_date (padrão TV/OpenAPI).
+        # Upstream TM-API ainda espera competencia_inicio/competencia_fim.
         data = self._client.get_dashboard_evolucao(
             params={
                 "view": request.view,
                 "filial_id": request.filial_id,
                 "setor_id": request.setor_id,
-                "competencia_inicio": request.competencia_inicio,
-                "competencia_fim": request.competencia_fim,
+                "competencia_inicio": request.start_date,
+                "competencia_fim": request.end_date,
                 "granularity": granularity,
             },
             authorization=authorization,

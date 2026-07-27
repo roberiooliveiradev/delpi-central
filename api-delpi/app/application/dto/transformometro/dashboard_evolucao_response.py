@@ -29,8 +29,9 @@ class DashboardEvolucaoResponse:
     granularity: str
 
     def to_dict(self) -> dict[str, Any]:
+        """Envelope alinhado às séries de produção (`points`, não `items`)."""
         return {
-            "total": self.total,
-            "items": [item.to_dict() for item in self.items],
             "granularity": self.granularity,
+            "total": self.total,
+            "points": [item.to_dict() for item in self.items],
         }

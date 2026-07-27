@@ -85,7 +85,7 @@ def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummar
     return GetProcessSummaryUseCase(_build_transforma_mais_gateway())
 
 
-def build_engineering_get_transformometro_dashboard_evolucao_use_case() -> (
+def build_engineering_get_transformometro_savings_investment_series_use_case() -> (
     GetDashboardEvolucaoUseCase
 ):
     return GetDashboardEvolucaoUseCase(_build_transformometro_dashboard_gateway())
