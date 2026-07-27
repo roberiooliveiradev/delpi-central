@@ -21,6 +21,7 @@ export type SeriesChartClassNames = {
   axisTitleX: string;
   axisTitleY: string;
   dataLabel: string;
+  dataLabelLeader: string;
   seriesLine: string;
   seriesBar: string;
   seriesArea: string;
@@ -66,6 +67,7 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     axisTitleX: `${prefix}__axis-title--x`,
     axisTitleY: `${prefix}__axis-title--y`,
     dataLabel: `${prefix}__data-label`,
+    dataLabelLeader: `${prefix}__data-label-leader`,
     seriesLine: `${prefix}__series-line`,
     seriesBar: `${prefix}__series-bar`,
     seriesArea: `${prefix}__series-area`,

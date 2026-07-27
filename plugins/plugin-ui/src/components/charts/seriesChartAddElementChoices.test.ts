@@ -48,6 +48,25 @@ describe("applyChartAddElementChoice", () => {
     expect(next.showDataLabels).toBe(false);
   });
 
+  it("dataLabels:categoryPercent aplica Label Contains PPT", () => {
+    const next = applyChartAddElementChoice("dataLabels:categoryPercent", {});
+    expect(next.showDataLabels).toBe(true);
+    expect(next.dataLabels).toMatchObject({
+      showCategoryName: true,
+      showPercentage: true,
+      showValue: false,
+      position: "outsideEnd",
+      showLeaderLines: true,
+    });
+    expect(isChartAddElementChoiceActive("dataLabels:categoryPercent", next)).toBe(true);
+  });
+
+  it("dataLabels:outsideEnd posiciona fora com linhas guia", () => {
+    const next = applyChartAddElementChoice("dataLabels:outsideEnd", {});
+    expect(next.dataLabels?.position).toBe("outsideEnd");
+    expect(next.dataLabels?.showLeaderLines).toBe(true);
+  });
+
   it("WithParts sincroniza chartParts com options", () => {
     const result = applyChartAddElementChoiceWithParts("legend:bottom", {}, null);
     expect(result.options.legendPosition).toBe("bottom");

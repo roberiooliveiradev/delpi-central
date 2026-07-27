@@ -85,6 +85,8 @@ export type BuildSeriesChartLayoutInput = {
    * sem gutters de eixo cartesiano (Y à esquerda, X embaixo).
    */
   centeredPlot?: boolean;
+  /** Folga extra (px) quando rótulos ficam fora do anel/área (evita clip). */
+  plotPadExtraPx?: number;
 };
 
 /** Converte margens atuais do layout em frame % (materializar ao selecionar). */
@@ -416,7 +418,10 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       axisTitleFontSize,
     ),
   };
-  const centeredPad = Math.max(8, Math.round(Math.min(viewW, viewH) * 0.045));
+  const centeredPad = Math.max(
+    8,
+    Math.round(Math.min(viewW, viewH) * 0.045) + Math.max(0, input.plotPadExtraPx ?? 0),
+  );
   const centeredAutoMargin: SeriesChartMargin = {
     top: centeredPad,
     right: centeredPad,

@@ -18,6 +18,8 @@ describe("resolveChartAddElementMenuRoots", () => {
     ]);
     const allIds = roots.flatMap((r) => r.choices.map((c) => c.id));
     expect(allIds).toContain("legend:left");
+    expect(allIds).toContain("dataLabels:categoryPercent");
+    expect(allIds).toContain("dataLabels:outsideEnd");
     expect(allIds).not.toContain("trendline");
     expect(allIds).not.toContain("errorBars");
   });

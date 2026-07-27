@@ -146,6 +146,13 @@
   font-weight: 600;
 }
 
+.delpi-ui-series-chart__data-label-leader {
+  fill: none;
+  stroke: var(--delpi-ui-series-chart-muted, #64748b);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .delpi-ui-series-chart__legend {
   flex: 0 1 auto;
   max-height: 18%;

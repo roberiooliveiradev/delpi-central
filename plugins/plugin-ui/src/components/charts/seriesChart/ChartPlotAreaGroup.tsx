@@ -20,6 +20,7 @@ import { ChartSeriesStackedBar } from "./ChartSeriesStackedBar";
 import { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartValueLabels } from "./ChartValueLabels";
+import type { SeriesChartDataLabelsResolved } from "../seriesChartDataLabels";
 import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
 
@@ -29,6 +30,7 @@ export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
   showVerticalGrid: boolean;
   showMarkers: boolean;
   showDataLabels: boolean;
+  dataLabels?: SeriesChartDataLabelsResolved | null;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
   strokeWidth?: number;
@@ -55,6 +57,7 @@ export function ChartPlotAreaGroup({
   showVerticalGrid,
   showMarkers,
   showDataLabels,
+  dataLabels = null,
   interaction,
   chartParts,
   strokeWidth,
@@ -405,11 +408,14 @@ export function ChartPlotAreaGroup({
             layout={layout}
             points={entry.points}
             valueFormat={valueFormat}
+            config={config}
             visible={showDataLabels}
             chartParts={chartParts}
             interaction={interaction}
             seriesIndex={index}
             seriesCount={seriesList.length}
+            seriesName={entry.name}
+            dataLabels={dataLabels}
           />
         ))
       ) : showDataLabels && multiLine && seriesList ? (
@@ -420,10 +426,13 @@ export function ChartPlotAreaGroup({
             layout={layout}
             points={entry.points}
             valueFormat={valueFormat}
+            config={config}
             visible={showDataLabels}
             chartParts={chartParts}
             interaction={interaction}
             seriesIndex={index}
+            seriesName={entry.name}
+            dataLabels={dataLabels}
           />
         ))
       ) : showDataLabels && !(multiStacked && seriesList) ? (
@@ -432,10 +441,12 @@ export function ChartPlotAreaGroup({
           layout={layout}
           points={points}
           valueFormat={valueFormat}
+          config={config}
           visible={showDataLabels}
           chartParts={chartParts}
           interaction={interaction}
           pieInnerRadiusRatio={pieInnerRadiusRatio}
+          dataLabels={dataLabels}
         />
       ) : null}
 

@@ -226,6 +226,38 @@ describe("ConfigurableSeriesChart", () => {
     );
   });
 
+  it("pizza: categoria e % fora com linhas guia", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="pie"
+        points={[
+          { label: "Pontual", value: 57 },
+          { label: "Andamento", value: 43 },
+        ]}
+        options={{
+          showTitle: false,
+          showLegend: false,
+          legendPosition: "hidden",
+          showDataLabels: true,
+          dataLabels: {
+            showCategoryName: true,
+            showPercentage: true,
+            showValue: false,
+            position: "outsideEnd",
+            showLeaderLines: true,
+            colorFromCategory: true,
+          },
+          showAxes: false,
+        }}
+      />,
+    );
+    const labels = Array.from(container.querySelectorAll(".delpi-ui-series-chart__data-label")).map(
+      (node) => node.textContent,
+    );
+    expect(labels).toEqual(expect.arrayContaining(["Pontual 57%", "Andamento 43%"]));
+    expect(container.querySelectorAll(".delpi-ui-series-chart__data-label-leader").length).toBe(2);
+  });
+
   it("funil: legenda por estágio e rótulos de dados", () => {
     const { container } = render(
       <ConfigurableSeriesChart

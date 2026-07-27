@@ -88,7 +88,7 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     hint: "Pontos sobre a linha do gráfico.",
     chartTypes: ["line", "area", "combo", "scatter", "bubble"],
   },
-  { id: "dataLabels", label: "Rótulos de dados", hint: "Valor exibido em cada ponto ou barra." },
+  { id: "dataLabels", label: "Rótulos de dados", hint: "Valor, %, categoria, posição e linhas guia." },
   { id: "dataTable", label: "Tabela de dados", hint: "Grade com períodos e valores abaixo do gráfico." },
 ];
 

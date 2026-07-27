@@ -5,6 +5,7 @@ import {
   OFFICE_CHART_AREA_FILL,
   OFFICE_CHART_SERIES_COLOR,
 } from "../../theme/deckColorCatalog";
+import type { SeriesChartDataLabelsConfig } from "./seriesChartDataLabels";
 
 export type SeriesChartValueFormat =
   | "auto"
@@ -40,6 +41,11 @@ export type SeriesChartOptions = {
   xAxisTitle?: string;
   yAxisTitle?: string;
   showDataLabels?: boolean;
+  /**
+   * Conteúdo/posição dos rótulos (Excel/PPT Label Options).
+   * Só aplica com `showDataLabels: true`.
+   */
+  dataLabels?: SeriesChartDataLabelsConfig;
   showDataTable?: boolean;
   showGrid?: boolean;
   showVerticalGrid?: boolean;

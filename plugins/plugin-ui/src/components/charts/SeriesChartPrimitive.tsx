@@ -17,6 +17,11 @@ import {
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
 import { buildSeriesChartLegendItems } from "./seriesChartLegendItems";
+import {
+  dataLabelOutsideGutterPx,
+  resolveSeriesChartDataLabels,
+  type SeriesChartDataLabelsResolved,
+} from "./seriesChartDataLabels";
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
   chartPartAllowsMove,
@@ -63,6 +68,7 @@ export type SeriesPlotRenderProps = {
   showVerticalGrid: boolean;
   showMarkers: boolean;
   showDataLabels: boolean;
+  dataLabels: SeriesChartDataLabelsResolved | null;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
   strokeWidth?: number;
@@ -216,6 +222,10 @@ export function SeriesChartPrimitive({
   );
   const centeredPlot =
     chartType === "pie" || chartType === "funnel" || chartType === "radar";
+  const resolvedDataLabels = resolveSeriesChartDataLabels({
+    showDataLabels: Boolean(config.showDataLabels),
+    dataLabels: config.dataLabels,
+  });
   const layout = buildSeriesChartLayout({
     points: usable,
     axisValues,
@@ -232,6 +242,11 @@ export function SeriesChartPrimitive({
       axisTitleFontSize: Math.max(axisTitleXFont, axisTitleYFont),
     },
     centeredPlot,
+    plotPadExtraPx: centeredPlot
+      ? dataLabelOutsideGutterPx(resolvedDataLabels, chartType)
+      : dataLabelOutsideGutterPx(resolvedDataLabels, chartType) > 0
+        ? 8
+        : 0,
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);
@@ -300,6 +315,7 @@ export function SeriesChartPrimitive({
     showVerticalGrid: Boolean(config.showVerticalGrid),
     showMarkers: config.showMarkers !== false,
     showDataLabels: Boolean(config.showDataLabels),
+    dataLabels: resolvedDataLabels,
     interaction,
     chartParts,
     strokeWidth,

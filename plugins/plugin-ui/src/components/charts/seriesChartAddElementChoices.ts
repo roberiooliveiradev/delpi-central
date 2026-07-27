@@ -2,6 +2,11 @@ import type { SeriesChartElementId } from "./seriesChartElementCatalog";
 import { chartElementPrimaryPartRef } from "./seriesChartElementCatalog";
 import type { SeriesChartOptions } from "./seriesChartOptions";
 import { mergeSeriesChartOptions } from "./seriesChartOptions";
+import {
+  dataLabelsConfigFromPreset,
+  matchDataLabelsPreset,
+  type SeriesChartDataLabelsPresetId,
+} from "./seriesChartDataLabels";
 import { mergeChartPartsWithOptions, type ChartPartRef, type ChartPartsMap } from "./seriesChartParts";
 
 /** Preset do flyout «Adicionar elemento» (PPT-like, só efeitos reais). */
@@ -16,6 +21,14 @@ export type ChartAddElementChoiceId =
   | "chartTitle:show"
   | "dataLabels:none"
   | "dataLabels:show"
+  | "dataLabels:center"
+  | "dataLabels:insideEnd"
+  | "dataLabels:outsideEnd"
+  | "dataLabels:bestFit"
+  | "dataLabels:categoryPercent"
+  | "dataLabels:valuePercent"
+  | "dataLabels:percent"
+  | "dataLabels:category"
   | "dataTable:none"
   | "dataTable:show"
   | "grid:none"
@@ -28,6 +41,22 @@ export type ChartAddElementChoiceId =
   | "legend:bottom"
   | "markers:none"
   | "markers:show";
+
+const DATA_LABEL_CHOICE_PRESET: Record<
+  Extract<ChartAddElementChoiceId, `dataLabels:${string}`>,
+  SeriesChartDataLabelsPresetId
+> = {
+  "dataLabels:none": "none",
+  "dataLabels:show": "show",
+  "dataLabels:center": "center",
+  "dataLabels:insideEnd": "insideEnd",
+  "dataLabels:outsideEnd": "outsideEnd",
+  "dataLabels:bestFit": "bestFit",
+  "dataLabels:categoryPercent": "categoryPercent",
+  "dataLabels:valuePercent": "valuePercent",
+  "dataLabels:percent": "percent",
+  "dataLabels:category": "category",
+};
 
 export function chartAddElementChoiceRootId(
   choiceId: ChartAddElementChoiceId,
@@ -51,6 +80,19 @@ function axisLabelsOn(options: SeriesChartOptions, axis: "x" | "y"): boolean {
 
 function axisTitleOn(options: SeriesChartOptions, axis: "x" | "y"): boolean {
   return axis === "x" ? options.showXAxisTitle !== false : options.showYAxisTitle !== false;
+}
+
+function applyDataLabelsChoice(
+  choiceId: Extract<ChartAddElementChoiceId, `dataLabels:${string}`>,
+  base: SeriesChartOptions,
+): SeriesChartOptions {
+  const preset = DATA_LABEL_CHOICE_PRESET[choiceId];
+  const next = dataLabelsConfigFromPreset(preset);
+  return mergeSeriesChartOptions({
+    ...base,
+    showDataLabels: next.showDataLabels,
+    dataLabels: next.showDataLabels ? next.dataLabels : undefined,
+  });
 }
 
 /** Aplica preset flat; sincronizar parts via `applyChartAddElementChoiceWithParts`. */
@@ -107,9 +149,16 @@ export function applyChartAddElementChoice(
     case "chartTitle:show":
       return mergeSeriesChartOptions({ ...base, showTitle: true });
     case "dataLabels:none":
-      return mergeSeriesChartOptions({ ...base, showDataLabels: false });
     case "dataLabels:show":
-      return mergeSeriesChartOptions({ ...base, showDataLabels: true });
+    case "dataLabels:center":
+    case "dataLabels:insideEnd":
+    case "dataLabels:outsideEnd":
+    case "dataLabels:bestFit":
+    case "dataLabels:categoryPercent":
+    case "dataLabels:valuePercent":
+    case "dataLabels:percent":
+    case "dataLabels:category":
+      return applyDataLabelsChoice(choiceId, base);
     case "dataTable:none":
       return mergeSeriesChartOptions({ ...base, showDataTable: false });
     case "dataTable:show":
@@ -206,9 +255,27 @@ export function isChartAddElementChoiceActive(
     case "chartTitle:show":
       return base.showTitle !== false;
     case "dataLabels:none":
-      return !base.showDataLabels;
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "none";
     case "dataLabels:show":
-      return Boolean(base.showDataLabels);
+    case "dataLabels:center":
+      return (
+        matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "center" ||
+        matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "show"
+      );
+    case "dataLabels:insideEnd":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "insideEnd";
+    case "dataLabels:outsideEnd":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "outsideEnd";
+    case "dataLabels:bestFit":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "bestFit";
+    case "dataLabels:categoryPercent":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "categoryPercent";
+    case "dataLabels:valuePercent":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "valuePercent";
+    case "dataLabels:percent":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "percent";
+    case "dataLabels:category":
+      return matchDataLabelsPreset(base.showDataLabels, base.dataLabels) === "category";
     case "dataTable:none":
       return !base.showDataTable;
     case "dataTable:show":

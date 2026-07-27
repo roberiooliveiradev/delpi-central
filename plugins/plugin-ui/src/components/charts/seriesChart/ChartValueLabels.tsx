@@ -1,3 +1,14 @@
+import {
+  formatSeriesChartDataLabelText,
+  resolveDataLabelPosition,
+  resolveSeriesChartDataLabels,
+  shouldHideDataLabel,
+  type SeriesChartDataLabelsResolved,
+} from "../seriesChartDataLabels";
+import {
+  SERIES_CHART_CATEGORY_PALETTE,
+  resolveSeriesCategoryColor,
+} from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
@@ -7,21 +18,20 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
-import { formatChartTick } from "./layout";
 import type { SeriesChartKindProps } from "./types";
 
 export type ChartValueLabelsProps = Pick<
   SeriesChartKindProps,
-  "chartType" | "layout" | "points" | "valueFormat"
+  "chartType" | "layout" | "points" | "valueFormat" | "config"
 > & {
   visible?: boolean;
   chartParts?: ChartPartsMap | null;
   seriesIndex?: number;
-  /** Barras agrupadas: total de séries no slot da categoria. */
   seriesCount?: number;
+  seriesName?: string;
   interaction?: SeriesChartInteraction | null;
-  /** Rosca: raio interno relativo (só `pie`). */
   pieInnerRadiusRatio?: number;
+  dataLabels?: SeriesChartDataLabelsResolved | null;
 };
 
 function polar(cx: number, cy: number, r: number, angleRad: number) {
@@ -32,6 +42,7 @@ function DataLabelText({
   x,
   y,
   text,
+  fill,
   textAnchor = "middle",
   dominantBaseline,
   seriesIndex,
@@ -45,6 +56,7 @@ function DataLabelText({
   x: number;
   y: number;
   text: string;
+  fill?: string;
   textAnchor?: "start" | "middle" | "end";
   dominantBaseline?: "auto" | "middle" | "hanging" | "central";
   seriesIndex: number;
@@ -61,7 +73,11 @@ function DataLabelText({
     pointIndex,
   };
   const selected = isChartPartInteractionSelected(ref, interaction?.selectedPart);
-  const pointStyle = chartPartTypographyStyle(chartParts, ref);
+  const pointStyle = {
+    ...chartPartTypographyStyle(chartParts, ref),
+    ...(fill ? { fill } : {}),
+  };
+  const lines = text.split("\n");
 
   return (
     <text
@@ -90,7 +106,13 @@ function DataLabelText({
           : undefined
       }
     >
-      {text}
+      {lines.length <= 1
+        ? text
+        : lines.map((line, i) => (
+            <tspan key={`dl-${pointIndex}-${i}`} x={x} dy={i === 0 ? 0 : "1.15em"}>
+              {line}
+            </tspan>
+          ))}
     </text>
   );
 }
@@ -100,19 +122,31 @@ export function ChartValueLabels({
   layout,
   points,
   valueFormat,
+  config,
   visible = true,
   chartParts,
   seriesIndex = 0,
   seriesCount = 1,
+  seriesName,
   interaction,
   pieInnerRadiusRatio = 0,
+  dataLabels: dataLabelsProp,
 }: ChartValueLabelsProps) {
   const cn = useSeriesChartClasses();
-  if (!visible) return null;
+  const dataLabels =
+    dataLabelsProp ??
+    resolveSeriesChartDataLabels({
+      showDataLabels: visible,
+      dataLabels: config.dataLabels,
+    });
+  if (!visible || !dataLabels) return null;
 
   const { margin, plotW, plotH, plotInset, toX, toY, axisMin, axisMax } = layout;
   const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const position = resolveDataLabelPosition(chartType, dataLabels.position);
+  const total = visiblePoints.reduce((sum, p) => sum + Math.max(0, Number(p.value) || 0), 0);
+  const resolvedSeriesName = seriesName?.trim() || config.seriesName?.trim() || "";
   const labelShared = {
     seriesIndex,
     chartParts,
@@ -122,16 +156,37 @@ export function ChartValueLabels({
     selectedClassName: `${cn.root}__part--selected`,
   } as const;
 
+  const labelText = (point: (typeof visiblePoints)[number], value: number) =>
+    formatSeriesChartDataLabelText({
+      config: dataLabels,
+      categoryLabel: point.label,
+      seriesName: resolvedSeriesName,
+      value,
+      total,
+      valueFormat,
+    });
+
+  const categoryFill = (index: number) =>
+    dataLabels.colorFromCategory
+      ? resolveSeriesCategoryColor(
+          index,
+          config.seriesColor,
+          config.categoryColors,
+          SERIES_CHART_CATEGORY_PALETTE,
+        )
+      : undefined;
+
   if (chartType === "pie") {
     const values = visiblePoints.map((p) => Math.max(0, Number(p.value) || 0));
-    const total = values.reduce((sum, v) => sum + v, 0);
     if (total <= 0) return null;
 
     const cx = margin.left + plotW / 2;
     const cy = margin.top + plotH / 2;
     const outerR = Math.max(8, Math.min(plotW, plotH) / 2 - 4);
     const innerR = Math.max(0, outerR * Math.min(0.9, Math.max(0, pieInnerRadiusRatio)));
-    const labelR = innerR > 0 ? (innerR + outerR) / 2 : outerR * 0.62;
+    const midR = innerR > 0 ? (innerR + outerR) / 2 : outerR * 0.62;
+    const insideEndR = innerR > 0 ? innerR + (outerR - innerR) * 0.78 : outerR * 0.78;
+    const outsideR = outerR + Math.min(36, Math.max(16, Math.min(plotW, plotH) * 0.08));
 
     let angle = -Math.PI / 2;
     return (
@@ -141,18 +196,55 @@ export function ChartValueLabels({
           const sweep = (value / total) * Math.PI * 2;
           const mid = angle + sweep / 2;
           angle += sweep;
-          if (value <= 0 || sweep < 0.08) return null;
+          if (
+            shouldHideDataLabel({ config: dataLabels, value, total }) ||
+            (value <= 0 && sweep < 0.02)
+          ) {
+            return null;
+          }
+          const text = labelText(point, value);
+          if (!text) return null;
+
+          let labelR = midR;
+          if (position === "insideEnd") labelR = insideEndR;
+          if (position === "outsideEnd") labelR = outsideR;
+
           const pos = polar(cx, cy, labelR, mid);
+          const edge = polar(cx, cy, outerR, mid);
+          const fill = categoryFill(i);
+          const anchor =
+            position === "outsideEnd"
+              ? Math.cos(mid) > 0.15
+                ? "start"
+                : Math.cos(mid) < -0.15
+                  ? "end"
+                  : "middle"
+              : "middle";
+
           return (
-            <DataLabelText
-              key={`pie-label-${point.sourceIndex}`}
-              x={pos.x}
-              y={pos.y}
-              text={formatChartTick(value, valueFormat)}
-              dominantBaseline="middle"
-              pointIndex={point.sourceIndex}
-              {...labelShared}
-            />
+            <g key={`pie-label-${point.sourceIndex}`}>
+              {position === "outsideEnd" && dataLabels.showLeaderLines ? (
+                <line
+                  x1={edge.x}
+                  y1={edge.y}
+                  x2={pos.x}
+                  y2={pos.y}
+                  className={cn.dataLabelLeader}
+                  stroke={fill || "currentColor"}
+                  strokeWidth={1}
+                />
+              ) : null}
+              <DataLabelText
+                x={pos.x}
+                y={pos.y}
+                text={text}
+                fill={fill}
+                textAnchor={anchor}
+                dominantBaseline="middle"
+                pointIndex={point.sourceIndex}
+                {...labelShared}
+              />
+            </g>
           );
         })}
       </>
@@ -166,21 +258,46 @@ export function ChartValueLabels({
     const innerH = Math.max(1, plotH - 2 * plotInset);
     const stageH = innerH / n;
     const cx = margin.left + plotW / 2;
+    const maxV = Math.max(...values, 1e-6);
+    const innerW = Math.max(1, plotW - 2 * plotInset);
 
     return (
       <>
         {visiblePoints.map((point, i) => {
+          const value = values[i]!;
+          if (shouldHideDataLabel({ config: dataLabels, value, total })) return null;
+          const text = labelText(point, value);
+          if (!text) return null;
           const y = margin.top + plotInset + i * stageH + stageH / 2;
+          const stageW = (value / maxV) * innerW;
+          let x = cx;
+          if (position === "outsideEnd") x = cx + stageW / 2 + 10;
+          if (position === "insideEnd") x = cx + Math.max(0, stageW / 2 - 12);
+          const fill = categoryFill(i);
           return (
-            <DataLabelText
-              key={`funnel-label-${point.sourceIndex}`}
-              x={cx}
-              y={y}
-              text={formatChartTick(values[i]!, valueFormat)}
-              dominantBaseline="middle"
-              pointIndex={point.sourceIndex}
-              {...labelShared}
-            />
+            <g key={`funnel-label-${point.sourceIndex}`}>
+              {position === "outsideEnd" && dataLabels.showLeaderLines ? (
+                <line
+                  x1={cx + stageW / 2}
+                  y1={y}
+                  x2={x - 2}
+                  y2={y}
+                  className={cn.dataLabelLeader}
+                  stroke={fill || "currentColor"}
+                  strokeWidth={1}
+                />
+              ) : null}
+              <DataLabelText
+                x={x}
+                y={y}
+                text={text}
+                fill={fill}
+                textAnchor={position === "outsideEnd" ? "start" : "middle"}
+                dominantBaseline="middle"
+                pointIndex={point.sourceIndex}
+                {...labelShared}
+              />
+            </g>
           );
         })}
       </>
@@ -199,15 +316,21 @@ export function ChartValueLabels({
     return (
       <>
         {visiblePoints.map((point, i) => {
+          const value = values[i]!;
+          if (shouldHideDataLabel({ config: dataLabels, value, total })) return null;
+          const text = labelText(point, value);
+          if (!text) return null;
           const angle = -Math.PI / 2 + (i / n) * Math.PI * 2;
-          const r = outerR * (values[i]! / maxV) + 10;
-          const pos = polar(cx, cy, r, angle);
+          const valueR = outerR * (value / maxV);
+          const labelR =
+            position === "outsideEnd" ? valueR + 14 : position === "insideEnd" ? valueR * 0.85 : valueR + 8;
+          const pos = polar(cx, cy, labelR, angle);
           return (
             <DataLabelText
               key={`radar-label-${point.sourceIndex}`}
               x={pos.x}
               y={pos.y}
-              text={formatChartTick(values[i]!, valueFormat)}
+              text={text}
               dominantBaseline="middle"
               pointIndex={point.sourceIndex}
               {...labelShared}
@@ -220,7 +343,6 @@ export function ChartValueLabels({
 
   if (chartType === "stacked_bar") {
     const values = visiblePoints.map((p) => Math.max(0, Number(p.value) || 0));
-    const total = values.reduce((sum, v) => sum + v, 0);
     if (total <= 0) return null;
     const innerH = Math.max(1, plotH - 2 * plotInset);
     const barW = Math.max(12, Math.min(plotW * 0.28, 64));
@@ -233,15 +355,19 @@ export function ChartValueLabels({
         {visiblePoints.map((point, i) => {
           const value = values[i]!;
           const segH = (value / total) * innerH;
-          const y = baseY - fromBottom - segH / 2;
+          const yCenter = baseY - fromBottom - segH / 2;
           fromBottom += segH;
-          if (segH < 8) return null;
+          if (shouldHideDataLabel({ config: dataLabels, value, total }) || segH < 6) return null;
+          const text = labelText(point, value);
+          if (!text) return null;
+          const fill = categoryFill(i);
           return (
             <DataLabelText
               key={`stack-label-${point.sourceIndex}`}
               x={x}
-              y={y}
-              text={formatChartTick(value, valueFormat)}
+              y={yCenter}
+              text={text}
+              fill={fill}
               dominantBaseline="middle"
               pointIndex={point.sourceIndex}
               {...labelShared}
@@ -255,12 +381,17 @@ export function ChartValueLabels({
   if (chartType === "bar" || chartType === "histogram" || chartType === "waterfall") {
     const count = Math.max(1, seriesCount);
     const safeIndex = Math.min(Math.max(0, seriesIndex), count - 1);
+    const baseline = margin.top + plotH;
 
     return (
       <>
         {visiblePoints.map((point) => {
           const raw = Number(point.value);
-          const value = Number.isFinite(raw)
+          const value = Number.isFinite(raw) ? raw : 0;
+          if (shouldHideDataLabel({ config: dataLabels, value, total })) return null;
+          const text = labelText(point, value);
+          if (!text) return null;
+          const clamped = Number.isFinite(raw)
             ? Math.min(axisMax, Math.max(axisMin, raw))
             : axisMin;
           const slotW = plotW / Math.max(points.length, 1);
@@ -279,14 +410,17 @@ export function ChartValueLabels({
             clusterOffset +
             safeIndex * (barW + innerGap) +
             barW / 2;
-          const y = toY(value) - 4;
-
+          const yTop = toY(clamped);
+          let y = yTop - 6;
+          if (position === "center") y = (yTop + baseline) / 2;
+          if (position === "insideEnd") y = yTop + 12;
           return (
             <DataLabelText
               key={`bar-label-${seriesIndex}-${point.sourceIndex}`}
               x={x}
               y={y}
-              text={formatChartTick(Number(point.value), valueFormat)}
+              text={text}
+              dominantBaseline={position === "center" || position === "insideEnd" ? "middle" : undefined}
               pointIndex={point.sourceIndex}
               {...labelShared}
             />
@@ -298,16 +432,28 @@ export function ChartValueLabels({
 
   return (
     <>
-      {visiblePoints.map((point) => (
-        <DataLabelText
-          key={`line-label-${seriesIndex}-${point.sourceIndex}`}
-          x={toX(point.sourceIndex, points.length)}
-          y={toY(Number(point.value)) - 6}
-          text={formatChartTick(Number(point.value), valueFormat)}
-          pointIndex={point.sourceIndex}
-          {...labelShared}
-        />
-      ))}
+      {visiblePoints.map((point) => {
+        const value = Number(point.value);
+        if (!Number.isFinite(value)) return null;
+        if (shouldHideDataLabel({ config: dataLabels, value, total })) return null;
+        const text = labelText(point, value);
+        if (!text) return null;
+        const yPoint = toY(value);
+        let y = yPoint - 8;
+        if (position === "center") y = yPoint;
+        if (position === "insideEnd") y = yPoint + 10;
+        return (
+          <DataLabelText
+            key={`line-label-${seriesIndex}-${point.sourceIndex}`}
+            x={toX(point.sourceIndex, points.length)}
+            y={y}
+            text={text}
+            dominantBaseline={position === "center" ? "middle" : undefined}
+            pointIndex={point.sourceIndex}
+            {...labelShared}
+          />
+        );
+      })}
     </>
   );
 }

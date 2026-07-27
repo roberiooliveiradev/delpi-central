@@ -88,6 +88,22 @@ export {
   type SeriesChartLegendItem,
 } from "./seriesChartLegendItems";
 export {
+  DEFAULT_SERIES_CHART_DATA_LABELS,
+  dataLabelOutsideGutterPx,
+  dataLabelsConfigFromPreset,
+  formatSeriesChartDataLabelText,
+  matchDataLabelsPreset,
+  mergeSeriesChartDataLabels,
+  resolveDataLabelPosition,
+  resolveSeriesChartDataLabels,
+  shouldHideDataLabel,
+  type SeriesChartDataLabelPosition,
+  type SeriesChartDataLabelSeparator,
+  type SeriesChartDataLabelsConfig,
+  type SeriesChartDataLabelsPresetId,
+  type SeriesChartDataLabelsResolved,
+} from "./seriesChartDataLabels";
+export {
   SERIES_CHART_ELEMENT_CATALOG,
   CHART_ELEMENT_CATALOG,
   isSeriesChartElementApplicable,
