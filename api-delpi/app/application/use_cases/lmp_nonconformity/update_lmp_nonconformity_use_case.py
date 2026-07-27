@@ -19,6 +19,7 @@ class LmpNonconformityUpdateRepository(Protocol):
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
         products: list[dict[str, Any]] | None = None,
+        problem_tags: list[str] | None = None,
         updated_by: str | None = None,
     ) -> dict[str, Any] | None: ...
 
@@ -42,6 +43,7 @@ class UpdateLmpNonconformityUseCase:
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
         products: list[dict[str, Any]] | None = None,
+        problem_tags: list[str] | None = None,
         updated_by: str | None = None,
     ) -> dict[str, Any] | None:
         return self._repository.update_record(
@@ -57,5 +59,6 @@ class UpdateLmpNonconformityUseCase:
             corrective_actions=corrective_actions,
             technical_opinion=technical_opinion,
             products=products if products is not None else [],
+            problem_tags=problem_tags if problem_tags is not None else [],
             updated_by=updated_by,
         )

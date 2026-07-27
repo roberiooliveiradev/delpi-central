@@ -7249,6 +7249,21 @@
       },
       "category": "engineering"
     },
+    "list_lmp_problem_tags": {
+      "locale": {
+        "en": {
+          "summary": "List LMP problem tags",
+          "description": "Shared catalog of identified-problem tags for LMP nonconformities.",
+          "label": "LMP problem tags"
+        },
+        "pt-BR": {
+          "label": "Tags de problema LMP",
+          "summary": "Listar tags de problema identificado",
+          "description": "Catálogo compartilhado de tags de problema identificado das NCs LMP."
+        }
+      },
+      "category": "engineering"
+    },
     "get_lmp_nonconformity": {
       "locale": {
         "en": {

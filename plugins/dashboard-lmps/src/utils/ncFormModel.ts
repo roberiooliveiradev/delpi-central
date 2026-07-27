@@ -13,7 +13,10 @@ export type NcFormState = {
   last_revision_date: string;
   executed_by: string;
   released_by: string;
+  /** Texto livre: descrição do caso. */
   defect_description: string;
+  /** Tags amarradas (catálogo compartilhado). */
+  problem_tags: string[];
   corrective_actions: string;
   technical_opinion: string;
   products: LmpNcProductLine[];
@@ -60,6 +63,7 @@ export function emptyNcForm(): NcFormState {
     executed_by: "",
     released_by: "",
     defect_description: "",
+    problem_tags: [],
     corrective_actions: "",
     technical_opinion: "",
     products: [],
@@ -86,6 +90,7 @@ export function recordToNcForm(record: LmpNonconformity): NcFormState {
     executed_by: record.executed_by ?? "",
     released_by: record.released_by ?? "",
     defect_description: record.defect_description ?? "",
+    problem_tags: [...(record.problem_tags ?? [])],
     corrective_actions: record.corrective_actions ?? "",
     technical_opinion: record.technical_opinion ?? "",
     products,
@@ -102,6 +107,7 @@ export function ncFormToPayload(form: NcFormState): LmpNonconformityPayload {
     executed_by: form.executed_by.trim() || null,
     released_by: form.released_by.trim() || null,
     defect_description: form.defect_description.trim() || null,
+    problem_tags: form.problem_tags.map((t) => t.trim()).filter(Boolean),
     corrective_actions: form.corrective_actions.trim() || null,
     technical_opinion: form.technical_opinion.trim() || null,
     products: form.products
@@ -121,4 +127,11 @@ export function productsSummary(row: LmpNonconformity): string {
   if (!codes.length) return "—";
   if (codes.length <= 2) return codes.join(", ");
   return `${codes.slice(0, 2).join(", ")} +${codes.length - 2}`;
+}
+
+export function problemTagsSummary(row: LmpNonconformity): string {
+  const tags = row.problem_tags ?? [];
+  if (!tags.length) return "—";
+  if (tags.length <= 3) return tags.join(", ");
+  return `${tags.slice(0, 3).join(", ")} +${tags.length - 3}`;
 }

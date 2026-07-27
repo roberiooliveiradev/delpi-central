@@ -199,7 +199,9 @@ export const LMPS_HELP_TOOLTIPS = {
       executedBy: "Quem executou o trabalho/análise.",
       releasedBy: "Quem liberou a NC ou o desenho.",
       products: "Códigos de material/produto vinculados à NC.",
-      problem: "Problema identificado (resumo).",
+      problemTags:
+        "Tags de classificação do problema (busca e casos semelhantes).",
+      problem: "Descrição livre do caso (resumo na listagem).",
       status: "Andamento da NC: Aberta, Em andamento ou Concluída.",
       actions: "Abrir o detalhe da NC ou excluí-la definitivamente (com permissão).",
     },
@@ -211,7 +213,7 @@ export const LMPS_HELP_TOOLTIPS = {
       sectionProducts:
         "Tabela de materiais/produtos. LMPs finalizadas já trazem a listagem ao hidratar a OV; busque por código ou descrição para incluir mais itens.",
       sectionDescription:
-        "Problema identificado, ações corretivas e parecer técnico.",
+        "Problema identificado (tags), descrição do caso, ações corretivas e parecer técnico.",
       status:
         "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
       saleNumber:
@@ -232,7 +234,10 @@ export const LMPS_HELP_TOOLTIPS = {
       productDescription: "Descrição do produto (snapshot / edição manual).",
       addProduct: "Inclui uma linha vazia na tabela de produtos.",
       removeProduct: "Remove a linha da tabela de produtos.",
-      defectDescription: "Problema identificado na LMP/desenho.",
+      problemTags:
+        "Tags compartilhadas (Medida, Desenho, Terminal…). Use para filtrar e achar casos semelhantes. Tags novas entram no catálogo ao salvar.",
+      defectDescription:
+        "Texto livre explicando o caso (o que ocorreu, contexto e detalhes).",
       correctiveActions:
         "Ações já tomadas ou plano de ação corretiva.",
       technicalOpinion: "Parecer técnico / conclusão da análise.",

@@ -12,6 +12,7 @@ from app.interface.http.routes.engineering.lmp_nonconformity_router import (
     get_lmp_nonconformity,
     get_lmp_nonconformity_streak,
     list_lmp_nonconformities,
+    list_lmp_problem_tags,
     update_lmp_nonconformity,
 )
 from tests.support.route_contract_smoke import assert_envelope_meta, body_json
@@ -28,7 +29,8 @@ _RECORD = {
     "executed_by": "Eng. A",
     "released_by": "Eng. B",
     "status": "open",
-    "defect_description": "Problema identificado",
+    "defect_description": "Folga fora da tolerância no terminal X",
+    "problem_tags": ["Medida", "Terminal"],
     "corrective_actions": "Ação",
     "technical_opinion": "Parecer",
     "products": [
@@ -60,6 +62,23 @@ def test_list_lmp_nonconformities_returns_meta(mock_build) -> None:
         body_json(response),
         operation_id="list_lmp_nonconformities",
         shape="paged_list",
+    )
+
+
+@patch(f"{_ROUTER}.build_list_lmp_problem_tags_use_case")
+def test_list_lmp_problem_tags_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [{"id": "1", "label": "Medida", "usage_count": 2}],
+        "total": 1,
+    }
+    mock_build.return_value = use_case
+
+    response = list_lmp_problem_tags()
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="list_lmp_problem_tags",
+        shape="list",
     )
 
 
@@ -112,6 +131,8 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
             status="open",
             sale_number="123456",
             customer_name="Cliente Exemplo",
+            defect_description="Folga no terminal",
+            problem_tags=["Medida", "Terminal"],
             products=[
                 {"product_code": "90001234", "product_description": "Produto X"},
             ],
@@ -126,6 +147,8 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
     kwargs = use_case.execute.call_args.kwargs
     assert "registered_at" not in kwargs
     assert kwargs["sale_number"] == "123456"
+    assert kwargs["problem_tags"] == ["Medida", "Terminal"]
+    assert kwargs["defect_description"] == "Folga no terminal"
     assert kwargs["products"][0]["product_code"] == "90001234"
 
 
@@ -140,6 +163,7 @@ def test_update_lmp_nonconformity_returns_meta(mock_build) -> None:
         body=LmpNonconformityBody(
             status="in_progress",
             executed_by="Eng. A",
+            problem_tags=["Desenho"],
         ),
     )
     assert_envelope_meta(
@@ -147,6 +171,7 @@ def test_update_lmp_nonconformity_returns_meta(mock_build) -> None:
         operation_id="update_lmp_nonconformity",
         shape="scalar",
     )
+    assert use_case.execute.call_args.kwargs["problem_tags"] == ["Desenho"]
 
 
 @patch(f"{_ROUTER}.build_delete_lmp_nonconformity_use_case")

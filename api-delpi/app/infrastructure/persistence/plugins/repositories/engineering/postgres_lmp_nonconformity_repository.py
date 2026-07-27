@@ -3,6 +3,9 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import Any
 
+from app.domain.services.lmp.lmp_problem_tag_normalize import (
+    normalize_problem_tag_labels,
+)
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -82,6 +85,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         sale_number: str | None = None,
         customer_name: str | None = None,
         product_code: str | None = None,
+        problem_tag: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
         page: int = 1,
@@ -111,6 +115,19 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 """
             )
             params.append(f"%{product_code.strip()}%")
+        if problem_tag:
+            filters.append(
+                """
+                EXISTS (
+                    SELECT 1
+                      FROM engineering.lmp_nonconformity_problem_tags npt
+                      JOIN engineering.lmp_problem_tags t ON t.id = npt.tag_id
+                     WHERE npt.nonconformity_id = n.id
+                       AND t.label ILIKE %s
+                )
+                """
+            )
+            params.append(f"%{problem_tag.strip()}%")
         if date_start:
             filters.append("n.registered_at::date >= %s::date")
             params.append(date_start)
@@ -143,7 +160,16 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             tuple([*params, page_size, offset]),
         )
 
-        items = [self._to_payload(row, include_products=True) for row in rows]
+        record_ids = [str(row["id"]) for row in rows]
+        tags_by_id = self._list_problem_tags_for_ids(record_ids)
+        items = [
+            self._to_payload(
+                row,
+                include_products=True,
+                problem_tags=tags_by_id.get(str(row["id"]), []),
+            )
+            for row in rows
+        ]
         return {
             "items": items,
             "total": total,
@@ -161,7 +187,34 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         )
         if row is None:
             return None
-        return self._to_payload(row, include_products=True)
+        return self._to_payload(
+            row,
+            include_products=True,
+            problem_tags=self._list_problem_tags(record_id),
+        )
+
+    def list_problem_tag_catalog(self) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT t.id,
+                   t.label,
+                   COUNT(npt.nonconformity_id)::int AS usage_count
+              FROM engineering.lmp_problem_tags t
+              LEFT JOIN engineering.lmp_nonconformity_problem_tags npt
+                     ON npt.tag_id = t.id
+             GROUP BY t.id, t.label
+             ORDER BY t.label ASC
+            """,
+            (),
+        )
+        return [
+            {
+                "id": str(row["id"]),
+                "label": str(row["label"]),
+                "usage_count": int(row.get("usage_count") or 0),
+            }
+            for row in rows
+        ]
 
     def create_record(
         self,
@@ -177,6 +230,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
         products: list[dict[str, Any]] | None = None,
+        problem_tags: list[str] | None = None,
         created_by: str | None = None,
     ) -> dict[str, Any]:
         status_norm = (status or "open").strip().lower()
@@ -184,6 +238,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             raise PluginsRepositoryError(f"Status inválido: {status}")
 
         lines = _normalize_products(products)
+        tags = normalize_problem_tag_labels(problem_tags)
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
@@ -223,6 +278,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     raise PluginsRepositoryError("Falha ao criar não conformidade LMP.")
                 record_id = str(dict(row)["id"])
                 self._replace_products(cursor, record_id, lines)
+                self._replace_problem_tags(cursor, record_id, tags, created_by=created_by)
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -253,6 +309,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
         products: list[dict[str, Any]] | None = None,
+        problem_tags: list[str] | None = None,
         updated_by: str | None = None,
     ) -> dict[str, Any] | None:
         current = self.fetch_one(
@@ -270,6 +327,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             raise PluginsRepositoryError(f"Status inválido: {status}")
 
         lines = _normalize_products(products)
+        tags = normalize_problem_tag_labels(problem_tags)
 
         try:
             with self.connection.cursor() as cursor:
@@ -313,6 +371,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     (record_id,),
                 )
                 self._replace_products(cursor, record_id, lines)
+                self._replace_problem_tags(cursor, record_id, tags, created_by=updated_by)
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -381,6 +440,74 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             ],
         )
 
+    def _replace_problem_tags(
+        self,
+        cursor: Any,
+        record_id: str,
+        labels: list[str],
+        *,
+        created_by: str | None,
+    ) -> None:
+        cursor.execute(
+            """
+            DELETE FROM engineering.lmp_nonconformity_problem_tags
+             WHERE nonconformity_id = %s
+            """,
+            (record_id,),
+        )
+        if not labels:
+            return
+        tag_ids = self._ensure_problem_tag_ids(
+            cursor, labels, created_by=created_by
+        )
+        cursor.executemany(
+            """
+            INSERT INTO engineering.lmp_nonconformity_problem_tags (
+                nonconformity_id, tag_id
+            ) VALUES (%s, %s)
+            ON CONFLICT DO NOTHING
+            """,
+            [(record_id, tag_id) for tag_id in tag_ids],
+        )
+
+    @staticmethod
+    def _ensure_problem_tag_ids(
+        cursor: Any,
+        labels: list[str],
+        *,
+        created_by: str | None,
+    ) -> list[str]:
+        ids: list[str] = []
+        for label in labels:
+            cursor.execute(
+                """
+                SELECT id
+                  FROM engineering.lmp_problem_tags
+                 WHERE LOWER(TRIM(label)) = LOWER(TRIM(%s))
+                 LIMIT 1
+                """,
+                (label,),
+            )
+            existing = cursor.fetchone()
+            if existing is not None:
+                ids.append(str(dict(existing)["id"]))
+                continue
+            cursor.execute(
+                """
+                INSERT INTO engineering.lmp_problem_tags (label, created_by)
+                VALUES (%s, %s)
+                RETURNING id
+                """,
+                (label, created_by),
+            )
+            inserted = cursor.fetchone()
+            if inserted is None:
+                raise PluginsRepositoryError(
+                    f"Falha ao criar tag de problema: {label}"
+                )
+            ids.append(str(dict(inserted)["id"]))
+        return ids
+
     def _list_products(self, record_id: str) -> list[dict[str, str | None]]:
         rows = self.fetch_all(
             """
@@ -399,11 +526,38 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             for r in rows
         ]
 
+    def _list_problem_tags(self, record_id: str) -> list[str]:
+        return self._list_problem_tags_for_ids([record_id]).get(record_id, [])
+
+    def _list_problem_tags_for_ids(
+        self, record_ids: list[str]
+    ) -> dict[str, list[str]]:
+        if not record_ids:
+            return {}
+        rows = self.fetch_all(
+            """
+            SELECT npt.nonconformity_id::text AS nonconformity_id,
+                   t.label
+              FROM engineering.lmp_nonconformity_problem_tags npt
+              JOIN engineering.lmp_problem_tags t ON t.id = npt.tag_id
+             WHERE npt.nonconformity_id = ANY(%s::uuid[])
+             ORDER BY t.label ASC
+            """,
+            (record_ids,),
+        )
+        out: dict[str, list[str]] = {rid: [] for rid in record_ids}
+        for row in rows:
+            rid = str(row["nonconformity_id"])
+            label = str(row["label"])
+            out.setdefault(rid, []).append(label)
+        return out
+
     def _to_payload(
         self,
         row: dict[str, Any],
         *,
         include_products: bool = False,
+        problem_tags: list[str] | None = None,
     ) -> dict[str, Any]:
         record_id = str(row["id"])
         payload: dict[str, Any] = {
@@ -417,6 +571,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             "released_by": row.get("released_by"),
             "status": row.get("status"),
             "defect_description": row.get("defect_description"),
+            "problem_tags": list(problem_tags or []),
             "corrective_actions": row.get("corrective_actions"),
             "technical_opinion": row.get("technical_opinion"),
             "created_by": row.get("created_by"),

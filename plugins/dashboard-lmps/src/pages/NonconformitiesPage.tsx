@@ -39,6 +39,7 @@ import { readLmpsFilters } from "../utils/filterUrl";
 import {
   formatDisplayDate,
   formatDisplayDateOnly,
+  problemTagsSummary,
   productsSummary,
 } from "../utils/ncFormModel";
 import { navigateLmps } from "../utils/navigation";
@@ -175,13 +176,19 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         render: (row) => productsSummary(row),
       },
       {
+        key: "problem_tags",
+        header: "Problema identificado",
+        headerHint: NC_HELP.table.problemTags,
+        render: (row) => problemTagsSummary(row),
+      },
+      {
         key: "defect_description",
-        header: "Problema",
+        header: "Descrição",
         headerHint: NC_HELP.table.problem,
         render: (row) => {
           const text = (row.defect_description || "").trim();
           if (!text) return "—";
-          return text.length > 48 ? `${text.slice(0, 48)}…` : text;
+          return text.length > 56 ? `${text.slice(0, 56)}…` : text;
         },
       },
       {

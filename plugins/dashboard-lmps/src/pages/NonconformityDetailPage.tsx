@@ -20,6 +20,7 @@ import {
   type ProductSearchItem,
 } from "../api/productApi";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { NcProblemTagsField } from "../components/NcProblemTagsField";
 import {
   EditableSectionCard,
   FormActions,
@@ -719,9 +720,16 @@ export function NonconformityDetailPage({
 
   const descriptionEdit = (
     <FormGrid className="lmps-form-grid--stack">
+      <NcProblemTagsField
+        id="nc-problem-tags"
+        selectedValues={form.problem_tags}
+        onChange={(problem_tags) =>
+          setForm((prev) => ({ ...prev, problem_tags }))
+        }
+      />
       <TextAreaField
         id="nc-defect"
-        label="Problema identificado"
+        label="Descrição do problema"
         hint={NC_HELP.form.defectDescription}
         value={form.defect_description}
         onChange={setField("defect_description")}
@@ -751,9 +759,29 @@ export function NonconformityDetailPage({
 
   const descriptionRead = (
     <ReadOnlyGrid className="lmps-form-grid--stack">
+      <div className="lmps-ficha-field lmps-span-2">
+        <span className="lmps-field__label">
+          Problema identificado
+          <HelpTooltip
+            content={NC_HELP.form.problemTags}
+            ariaLabel="Ajuda: problema identificado"
+          />
+        </span>
+        {form.problem_tags.length ? (
+          <div className="lmps-tag-list lmps-tag-list--readonly" aria-label="Tags do problema">
+            {form.problem_tags.map((tag) => (
+              <span key={tag} className="lmps-tag-chip">
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="lmps-ficha-field__value lmps-muted">—</p>
+        )}
+      </div>
       <ReadOnlyField
         id="nc-ro-defect"
-        label="Problema identificado"
+        label="Descrição do problema"
         hint={NC_HELP.form.defectDescription}
         value={form.defect_description}
         multiline

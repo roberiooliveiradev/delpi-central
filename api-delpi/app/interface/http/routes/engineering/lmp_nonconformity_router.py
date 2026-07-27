@@ -19,6 +19,7 @@ from app.composition.engineering_composer import (
     build_get_lmp_nonconformity_streak_use_case,
     build_get_lmp_nonconformity_use_case,
     build_list_lmp_nonconformities_use_case,
+    build_list_lmp_problem_tags_use_case,
     build_update_lmp_nonconformity_use_case,
 )
 from app.core.responses import error_response, not_found_response
@@ -32,6 +33,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_NONCONFORMITY_DELETE,
     LMP_NONCONFORMITY_STREAK,
     LMP_NONCONFORMITY_UPDATE,
+    LMP_PROBLEM_TAGS_LIST,
 )
 from app.interface.http.period_query_params import (
     END_DATE_QUERY,
@@ -103,7 +105,14 @@ class LmpNonconformityBody(BaseModel):
     released_by: str | None = Field(default=None, max_length=200)
     defect_description: str | None = Field(
         default=None,
-        description="Problema identificado.",
+        description="Descrição livre do caso (texto do usuário).",
+    )
+    problem_tags: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Tags de problema identificado (catálogo compartilhado; "
+            "ex.: Medida, Desenho, Terminal). Labels novas são criadas no catálogo."
+        ),
     )
     corrective_actions: str | None = None
     technical_opinion: str | None = None
@@ -135,6 +144,20 @@ class LmpNonconformityBody(BaseModel):
         if not isinstance(value, list):
             raise ValueError("products deve ser uma lista")
         return value
+
+    @field_validator("problem_tags", mode="before")
+    @classmethod
+    def normalize_problem_tags(cls, value: object) -> list:
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise ValueError("problem_tags deve ser uma lista")
+        out: list[str] = []
+        for item in value:
+            text = str(item or "").strip()
+            if text:
+                out.append(text[:80])
+        return out
 
 
 def _current_user_label() -> str | None:
@@ -178,6 +201,11 @@ def list_lmp_nonconformities(
         max_length=60,
         description="Filtro por código de produto/material nas linhas.",
     ),
+    problem_tag: Optional[str] = Query(
+        None,
+        max_length=80,
+        description="Filtro parcial por tag de problema identificado.",
+    ),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
@@ -197,6 +225,7 @@ def list_lmp_nonconformities(
             sale_number=sale_number,
             customer_name=customer_name,
             product_code=product_code,
+            problem_tag=problem_tag,
             date_start=start_date,
             date_end=end_date,
             page=page,
@@ -220,6 +249,31 @@ def list_lmp_nonconformities(
         log_error(f"Erro inesperado ao listar NCs LMP: {exc}")
         return error_response(
             "Erro interno ao listar não conformidades.",
+            status_code=500,
+        )
+
+
+@router.get("/problem-tags", **LMP_PROBLEM_TAGS_LIST)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def list_lmp_problem_tags():
+    """Catálogo compartilhado de tags de problema identificado."""
+    try:
+        data = build_list_lmp_problem_tags_use_case().execute()
+        return api_delpi_success(
+            data,
+            operation_id="list_lmp_problem_tags",
+            message="Tags de problema LMP listadas com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar tags de problema LMP: {exc}")
+        return error_response(
+            "Erro interno ao listar tags de problema.",
+            status_code=500,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado ao listar tags de problema LMP: {exc}")
+        return error_response(
+            "Erro interno ao listar tags de problema.",
             status_code=500,
         )
 
@@ -294,6 +348,7 @@ def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
             corrective_actions=body.corrective_actions,
             technical_opinion=body.technical_opinion,
             products=_products_payload(body),
+            problem_tags=body.problem_tags,
             created_by=_current_user_label(),
         )
         return api_delpi_success(
@@ -332,6 +387,7 @@ def update_lmp_nonconformity(
             corrective_actions=body.corrective_actions,
             technical_opinion=body.technical_opinion,
             products=_products_payload(body),
+            problem_tags=body.problem_tags,
             updated_by=_current_user_label(),
         )
         if data is None:

@@ -8,6 +8,7 @@ import type {
   LmpNonconformityListResponse,
   LmpNonconformityPayload,
   LmpNonconformityStreak,
+  LmpProblemTagListResponse,
 } from "../types/lmpNonconformity";
 
 const API_BASE = "/apps/api-delpi/engineering/lmps/nonconformities";
@@ -42,6 +43,13 @@ export async function fetchLmpNonconformityStreak(): Promise<LmpNonconformityStr
     `${API_BASE}/streak`,
   );
   return unwrapApiDelpiEnvelope(response, "Erro ao carregar dias sem NC");
+}
+
+export async function fetchLmpProblemTags(): Promise<LmpProblemTagListResponse> {
+  const response = await httpGet<ApiSuccessResponse<LmpProblemTagListResponse>>(
+    `${API_BASE}/problem-tags`,
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar tags de problema");
 }
 
 export async function fetchLmpNonconformities(

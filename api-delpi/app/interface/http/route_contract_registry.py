@@ -166,6 +166,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_lmp_nonconformity_streak": RouteContract(
         "lmp_nonconformity_streak", "scalar"
     ),
+    "list_lmp_problem_tags": RouteContract("lmp_problem_tag", "list"),
     "get_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "create_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "update_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),

@@ -484,6 +484,15 @@ LMP_NONCONFORMITY_STREAK = agent_route(
     operation_id="get_lmp_nonconformity_streak",
 )
 
+LMP_PROBLEM_TAGS_LIST = agent_route(
+    summary="List LMP problem tags",
+    description=(
+        "Shared catalog of identified-problem tags for LMP nonconformities "
+        "(used for search and similar-case grouping)."
+    ),
+    operation_id="list_lmp_problem_tags",
+)
+
 LMP_NONCONFORMITY_BY_ID = agent_route(
     summary="Get LMP nonconformity by id",
     description="Returns one LMP nonconformity including product lines (code + description).",

@@ -16,6 +16,7 @@ export type LmpNonconformity = {
   released_by?: string | null;
   status: LmpNcStatus | string;
   defect_description?: string | null;
+  problem_tags?: string[];
   corrective_actions?: string | null;
   technical_opinion?: string | null;
   products?: LmpNcProductLine[];
@@ -42,6 +43,17 @@ export type LmpNonconformityStreak = {
   nc_count: number;
 };
 
+export type LmpProblemTag = {
+  id: string;
+  label: string;
+  usage_count: number;
+};
+
+export type LmpProblemTagListResponse = {
+  items: LmpProblemTag[];
+  total: number;
+};
+
 export type LmpNonconformityPayload = {
   status: LmpNcStatus;
   sale_number?: string | null;
@@ -51,6 +63,7 @@ export type LmpNonconformityPayload = {
   executed_by?: string | null;
   released_by?: string | null;
   defect_description?: string | null;
+  problem_tags?: string[];
   corrective_actions?: string | null;
   technical_opinion?: string | null;
   products?: LmpNcProductLine[];
