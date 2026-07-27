@@ -537,13 +537,12 @@ export function DashboardLmpsPage({
         />
       ) : null}
 
-      <NcStreakCard
-        streak={ncStreak}
-        loading={ncStreakLoading}
-        error={ncStreakError}
-      />
-
       <section className="lmps-kpi-grid" aria-busy={isBusy}>
+        <NcStreakCard
+          streak={ncStreak}
+          loading={ncStreakLoading}
+          error={ncStreakError}
+        />
         <KpiCard
           title="% LMP Dentro do Prazo"
           titleHint={LMPS_HELP_TOOLTIPS.kpis.percentOnTime}

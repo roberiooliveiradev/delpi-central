@@ -434,82 +434,9 @@
    KPI CARDS
 ========================================= */.dashboard-lmps .lmps-kpi-grid{
   display: grid;
-  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
   gap: var(--lmps-grid-gap);
   margin-bottom: var(--lmps-section-gap);
-}.dashboard-lmps .lmps-nc-streak{
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: var(--lmps-section-gap);
-  padding: 1.1rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--lmps-card-radius);
-  box-shadow: var(--shadow);
-}.dashboard-lmps .lmps-nc-streak--loading{
-  opacity: 0.72;
-}.dashboard-lmps .lmps-nc-streak__icon{
-  display: grid;
-  place-items: center;
-  width: var(--lmps-kpi-icon-size);
-  height: var(--lmps-kpi-icon-size);
-  border-radius: var(--lmps-kpi-icon-radius);
-  background: color-mix(in srgb, var(--lmps-accent, #089bdb) 14%, transparent);
-  color: var(--lmps-accent, #089bdb);
-  flex-shrink: 0;
-}.dashboard-lmps .lmps-nc-streak__body{
-  flex: 1;
-  min-width: 0;
-}.dashboard-lmps .lmps-nc-streak__eyebrow{
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--lmps-font-sm);
-  color: var(--lmps-muted, #64748b);
-}.dashboard-lmps .lmps-nc-streak__current{
-  margin: 0.15rem 0 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  line-height: 1;
-}.dashboard-lmps .lmps-nc-streak__days{
-  font-size: 2.5rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--lmps-title, #003866);
-  letter-spacing: -0.02em;
-}.dashboard-lmps .lmps-nc-streak__unit{
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--lmps-title, #003866);
-}.dashboard-lmps .lmps-nc-streak__label{
-  margin: 0.35rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--lmps-title, #003866);
-}.dashboard-lmps .lmps-nc-streak__record{
-  margin: 0.45rem 0 0;
-  font-size: var(--lmps-font-sm);
-  color: var(--lmps-muted, #64748b);
-}.dashboard-lmps .lmps-nc-streak__record strong{
-  color: var(--lmps-title, #003866);
-  font-weight: 700;
-}.dashboard-lmps .lmps-nc-streak__error{
-  margin: 0.35rem 0 0;
-  color: var(--lmps-danger, #b91c1c);
-  font-size: var(--lmps-font-sm);
-}.dashboard-lmps .lmps-nc-streak__link{
-  flex-shrink: 0;
-  align-self: flex-start;
-}@media (max-width: 640px){
-  .dashboard-lmps .lmps-nc-streak{
-    flex-wrap: wrap;
-  }
-  .dashboard-lmps .lmps-nc-streak__link{
-    width: 100%;
-  }
 }.dashboard-lmps .lmps-card{
   min-width: 0;
   background: var(--surface);
