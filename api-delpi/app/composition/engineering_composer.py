@@ -152,7 +152,10 @@ def build_get_lmp_nonconformity_streak_use_case():
         GetLmpNonconformityStreakUseCase,
     )
 
-    return GetLmpNonconformityStreakUseCase(_build_lmp_nonconformity_repository())
+    return GetLmpNonconformityStreakUseCase(
+        _build_lmp_nonconformity_repository(),
+        lmp_repository=_build_lmp_repository(),
+    )
 
 
 def build_get_lmp_nonconformity_use_case():

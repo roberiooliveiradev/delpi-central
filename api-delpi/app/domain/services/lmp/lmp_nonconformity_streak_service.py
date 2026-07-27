@@ -10,6 +10,7 @@ def compute_lmp_nc_streak(
     occurrence_dates: list[date],
     *,
     as_of: date,
+    reference_start_date: date | None = None,
 ) -> dict[str, Any]:
     """
     Calcula streak a partir das datas de ocorrência (``registered_at`` por dia).
@@ -19,16 +20,33 @@ def compute_lmp_nc_streak(
     - ``record_days_without_nc``: maior intervalo entre NCs consecutivas
       (diferença em dias) ou o streak atual, o que for maior.
 
-    Sem NCs: ambos 0 e ``last_nc_date`` nulo.
+    Sem NCs: usa ``reference_start_date`` (ex.: data da primeira OV) como
+    âncora do streak; se também ausente, ambos ficam 0.
     """
     unique = sorted({d for d in occurrence_dates if isinstance(d, date)})
     as_of_date = as_of
+    reference = (
+        reference_start_date
+        if isinstance(reference_start_date, date)
+        else None
+    )
 
     if not unique:
+        if reference is None:
+            return {
+                "current_days_without_nc": 0,
+                "record_days_without_nc": 0,
+                "last_nc_date": None,
+                "reference_start_date": None,
+                "as_of_date": as_of_date.isoformat(),
+                "nc_count": 0,
+            }
+        current = max(0, (as_of_date - reference).days)
         return {
-            "current_days_without_nc": 0,
-            "record_days_without_nc": 0,
+            "current_days_without_nc": current,
+            "record_days_without_nc": current,
             "last_nc_date": None,
+            "reference_start_date": reference.isoformat(),
             "as_of_date": as_of_date.isoformat(),
             "nc_count": 0,
         }
@@ -46,6 +64,7 @@ def compute_lmp_nc_streak(
         "current_days_without_nc": current,
         "record_days_without_nc": record,
         "last_nc_date": last.isoformat(),
+        "reference_start_date": reference.isoformat() if reference else None,
         "as_of_date": as_of_date.isoformat(),
         "nc_count": len(unique),
     }

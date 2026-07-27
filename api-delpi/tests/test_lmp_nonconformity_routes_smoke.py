@@ -94,6 +94,7 @@ def test_get_lmp_nonconformity_streak_returns_meta(mock_build) -> None:
         "current_days_without_nc": 1,
         "record_days_without_nc": 55,
         "last_nc_date": "2026-07-26",
+        "reference_start_date": None,
         "as_of_date": "2026-07-27",
         "nc_count": 2,
     }

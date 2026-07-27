@@ -38,7 +38,7 @@ export const LMPS_HELP_TOOLTIPS = {
     totalProposals:
       "Quantidade de propostas/OVs no período após filtros. Meta exibida quando configurada na API.",
     ncStreak:
-      "Dias corridos desde a última não conformidade registrada em LMPs, e o maior intervalo histórico entre NCs (recorde). Independente dos filtros de período do dashboard.",
+      "Dias corridos desde a última não conformidade registrada em LMPs, e o maior intervalo histórico entre NCs (recorde). Sem NCs, a contagem usa a data da primeira OV no Protheus como referência. Independente dos filtros de período do dashboard.",
   },
   charts: {
     countByLevel:

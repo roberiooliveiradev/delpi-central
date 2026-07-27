@@ -9,11 +9,25 @@ from app.domain.services.lmp.lmp_nonconformity_streak_service import (
 )
 
 
-def test_streak_empty() -> None:
+def test_streak_empty_without_reference() -> None:
     result = compute_lmp_nc_streak([], as_of=date(2026, 7, 27))
     assert result["current_days_without_nc"] == 0
     assert result["record_days_without_nc"] == 0
     assert result["last_nc_date"] is None
+    assert result["reference_start_date"] is None
+    assert result["nc_count"] == 0
+
+
+def test_streak_empty_uses_first_ov_reference() -> None:
+    result = compute_lmp_nc_streak(
+        [],
+        as_of=date(2026, 7, 27),
+        reference_start_date=date(2026, 1, 1),
+    )
+    assert result["current_days_without_nc"] == 207
+    assert result["record_days_without_nc"] == 207
+    assert result["last_nc_date"] is None
+    assert result["reference_start_date"] == "2026-01-01"
     assert result["nc_count"] == 0
 
 

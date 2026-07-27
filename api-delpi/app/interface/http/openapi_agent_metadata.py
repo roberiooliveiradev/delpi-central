@@ -481,7 +481,8 @@ LMP_NONCONFORMITY_STREAK = agent_route(
     summary="LMP nonconformity days-without streak",
     description=(
         "Returns current calendar days without LMP nonconformity and the historical record streak. "
-        "Based on distinct registered_at dates of engineering.lmp_nonconformities."
+        "Based on distinct registered_at dates of engineering.lmp_nonconformities. "
+        "When there are no NCs, anchors the streak on the earliest OV date (AD1_DATA)."
     ),
     operation_id="get_lmp_nonconformity_streak",
 )

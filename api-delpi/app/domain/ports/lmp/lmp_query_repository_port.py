@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import List
 
 from app.application.dto.lmp.get_lmp_history_request import GetLmpHistoryRequest
@@ -67,3 +68,7 @@ class LMPQueryRepositoryPort(ABC):
     @abstractmethod
     def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
         raise NotImplementedError
+
+    def get_earliest_ov_date(self) -> date | None:
+        """Opcional: data da primeira OV (AD1). Default None para stubs de teste."""
+        return None

@@ -39,6 +39,19 @@ def _work_month_repository() -> LMPQueryRepository:
     )
 
 
+def test_earliest_ov_date_sql_uses_min_ad1_data() -> None:
+    from datetime import date
+
+    repo = _repository()
+    sql, params = repo._sql_earliest_ov_date()
+    assert "MIN(AD1.AD1_DATA)" in sql
+    assert "FROM AD1010 AD1" in sql
+    assert sql.count("?") == len(params)
+    assert repo._parse_protheus_calendar_date("20260115") == date(2026, 1, 15)
+    assert repo._parse_protheus_calendar_date(None) is None
+    assert repo._parse_protheus_calendar_date("        ") is None
+
+
 def test_listing_anchor_marker_prioritizes_lmp_over_sample() -> None:
     repo = _repository()
 

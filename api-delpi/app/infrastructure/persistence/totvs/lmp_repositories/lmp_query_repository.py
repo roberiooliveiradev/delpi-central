@@ -3635,6 +3635,65 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     # =========================
     # PUBLIC METHODS
     # =========================
+    def get_earliest_ov_date(self):
+        """Data da primeira OV cadastrada (MIN AD1_DATA), para streak sem NC."""
+        from datetime import date as date_cls
+
+        from app.composition.query_cache_composer import build_query_cache
+
+        cache_key = "lmp-earliest-ov-date"
+        cached = build_query_cache().get(cache_key)
+        if cached is not None:
+            if cached == "":
+                return None
+            if isinstance(cached, date_cls):
+                return cached
+            try:
+                return date_cls.fromisoformat(str(cached)[:10])
+            except ValueError:
+                pass
+
+        sql, params = self._sql_earliest_ov_date()
+        with self as repo:
+            rows = repo.execute_query(sql, params)
+        raw = rows[0].get("first_ov_date") if rows else None
+        parsed = self._parse_protheus_calendar_date(raw)
+        build_query_cache().set(
+            cache_key,
+            parsed.isoformat() if parsed is not None else "",
+        )
+        return parsed
+
+    def _sql_earliest_ov_date(self) -> Tuple[str, tuple]:
+        where_ad1, params_ad1 = self._sql_filter_ad1_active_branch("AD1")
+        sql = f"""
+            SELECT MIN(AD1.AD1_DATA) AS first_ov_date
+              FROM AD1010 AD1
+             WHERE {where_ad1}
+               AND ISNULL(AD1.AD1_DATA, '') <> ''
+               AND AD1.AD1_DATA <> '        '
+        """
+        return sql, params_ad1
+
+    @staticmethod
+    def _parse_protheus_calendar_date(value):
+        from datetime import date as date_cls
+        from datetime import datetime as datetime_cls
+
+        if value is None:
+            return None
+        if isinstance(value, date_cls) and not isinstance(value, datetime_cls):
+            return value
+        if isinstance(value, datetime_cls):
+            return value.date()
+        raw = str(value).strip()
+        if len(raw) >= 8 and raw[:8].isdigit():
+            try:
+                return date_cls(int(raw[0:4]), int(raw[4:6]), int(raw[6:8]))
+            except ValueError:
+                return None
+        return None
+
     def list_lmps(self, request: ListLMPRequest) -> List[LMP]:
         include_qtd_pi = self._resolve_include_qtd_pi(request)
         final_select = self._staged_final_select(

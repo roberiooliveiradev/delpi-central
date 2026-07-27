@@ -42,6 +42,8 @@ export type LmpNonconformityStreak = {
   current_days_without_nc: number;
   record_days_without_nc: number;
   last_nc_date: string | null;
+  /** Âncora (primeira OV) quando não há NC cadastrada. */
+  reference_start_date?: string | null;
   as_of_date: string;
   nc_count: number;
 };

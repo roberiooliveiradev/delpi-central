@@ -60,6 +60,7 @@ _STREAK_FIELDS = {
     "current_days_without_nc": "Dias atuais sem NC em LMPs",
     "record_days_without_nc": "Recorde de dias sem NC em LMPs",
     "last_nc_date": "Data da última NC",
+    "reference_start_date": "Data âncora (primeira OV) quando não há NC",
     "as_of_date": "Data de referência do cálculo",
     "nc_count": "Quantidade de dias com NC registrada",
 }
