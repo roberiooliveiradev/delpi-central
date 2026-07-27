@@ -1039,7 +1039,6 @@ export function ComunicadoComposerCanvas() {
            * Blocos/logo posicionam no stage — paridade de containing block.
            */}
           <div className={ensureComunicadoDualClass(`td-composer__stage ${COMPOSER_STAGE_BEM.stage}`)}>
-          <MasterLogoOverlay />
           {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
             <div
               className="td-composer__stage-grid"
@@ -1049,45 +1048,12 @@ export function ComunicadoComposerCanvas() {
               }}
             />
           ) : null}
-          {showStageGuides ? (
-            <>
-              <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
-              <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
-            </>
-          ) : null}
-          {activeSmartGuides.length > 0
-            ? activeSmartGuides.map((guide, index) => (
-                <div
-                  key={`smart-${guide.orientation}-${guide.position}-${index}`}
-                  className={`td-composer__smart-guide td-composer__smart-guide--${guide.orientation}`}
-                  style={
-                    guide.orientation === "v"
-                      ? { left: `${guide.position}%` }
-                      : { top: `${guide.position}%` }
-                  }
-                  aria-hidden="true"
-                />
-              ))
-            : null}
-          {connectionSitesPreview
-            ? connectionSitesPreview.sites.map((site) => {
-                const isActive =
-                  connectionSitesPreview.activeSite?.blockId === site.blockId &&
-                  connectionSitesPreview.activeSite?.id === site.id;
-                return (
-                  <div
-                    key={`${site.blockId}-${site.id}`}
-                    className={
-                      isActive
-                        ? "td-composer__connection-site td-composer__connection-site--active"
-                        : "td-composer__connection-site"
-                    }
-                    style={{ left: `${site.x}%`, top: `${site.y}%` }}
-                    aria-hidden="true"
-                  />
-                );
-              })
-            : null}
+          {/*
+           * Conteúdo isolado (z-index próprio): blocos não cobrem guias/overlays.
+           * Guias e sites de conexão ficam como irmãos com z-index maior.
+           */}
+          <div className="td-composer__stage-content">
+          <MasterLogoOverlay />
           {blocks.map((block) => {
             if (layeredMemberIds.has(block.id)) {
               return null;
@@ -1415,6 +1381,46 @@ export function ComunicadoComposerCanvas() {
               aria-hidden="true"
             />
           ) : null}
+          </div>
+          {showStageGuides ? (
+            <>
+              <div className="td-composer__stage-guide td-composer__stage-guide--v" aria-hidden="true" />
+              <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
+            </>
+          ) : null}
+          {activeSmartGuides.length > 0
+            ? activeSmartGuides.map((guide, index) => (
+                <div
+                  key={`smart-${guide.orientation}-${guide.position}-${index}`}
+                  className={`td-composer__smart-guide td-composer__smart-guide--${guide.orientation}`}
+                  style={
+                    guide.orientation === "v"
+                      ? { left: `${guide.position}%` }
+                      : { top: `${guide.position}%` }
+                  }
+                  aria-hidden="true"
+                />
+              ))
+            : null}
+          {connectionSitesPreview
+            ? connectionSitesPreview.sites.map((site) => {
+                const isActive =
+                  connectionSitesPreview.activeSite?.blockId === site.blockId &&
+                  connectionSitesPreview.activeSite?.id === site.id;
+                return (
+                  <div
+                    key={`${site.blockId}-${site.id}`}
+                    className={
+                      isActive
+                        ? "td-composer__connection-site td-composer__connection-site--active"
+                        : "td-composer__connection-site"
+                    }
+                    style={{ left: `${site.x}%`, top: `${site.y}%` }}
+                    aria-hidden="true"
+                  />
+                );
+              })
+            : null}
           {marqueeStyle ? (
             <div
               className={[

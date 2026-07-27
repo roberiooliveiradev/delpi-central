@@ -1723,6 +1723,15 @@ body.td-composer--marqueeing *{
   /* Fallback; o tamanho real vem de style.backgroundSize (px de design). */
   background-size: 96px 96px;
 }
+/*
+ * Camada de conteúdo do palco: isola z-index dos blocos.
+ * Sem isso, guias (z≈3) somem sob qualquer bloco com style.zIndex ≥ 3.
+ */
+.dashboard-tv-dashboard .td-composer__stage-content{
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
 .dashboard-tv-dashboard .td-composer__stage-guide{
   position: absolute;
   z-index: 3;
