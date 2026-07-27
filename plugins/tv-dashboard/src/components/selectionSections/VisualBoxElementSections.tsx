@@ -2,16 +2,23 @@ import { FormatRibbonTypographySections } from "../formatRibbon/FormatRibbonTypo
 import { VisualBoxFormaChrome } from "../formatRibbon/VisualBoxFormaChrome";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import type { SelectionSectionLayout } from "./types";
-import { resolveVisualBoxElementCapabilities } from "./visualBoxElementCapabilities";
+import { resolveVisualBoxElementCapabilitiesForSelection } from "./visualBoxElementCapabilities";
 
 /**
  * Faixa Elemento da caixa visual (texto / título / forma) — ordem fixa:
  * tipografia → Forma (com flags por tipo). Rabo display/organize/actions
  * continua em `withCommonTail` via seção `visualBox`.
+ * Multi-seleção: capabilities = AND de todos os blocos selecionados.
  */
 export function VisualBoxElementSections({ layout }: { layout: SelectionSectionLayout }) {
-  const { selected } = useComunicadoEditor();
-  const caps = resolveVisualBoxElementCapabilities(selected);
+  const { selected, selectedBlocks, selectedIds } = useComunicadoEditor();
+  const blocks =
+    selectedIds.length > 1
+      ? selectedBlocks
+      : selected
+        ? [selected]
+        : [];
+  const caps = resolveVisualBoxElementCapabilitiesForSelection(blocks);
   if (!caps) return null;
 
   return (

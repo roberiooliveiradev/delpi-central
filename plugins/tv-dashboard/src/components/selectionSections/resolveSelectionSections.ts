@@ -1,38 +1,39 @@
+/**
+ * Lista ordenada de seções Elemento para ribbon e painel (paridade).
+ * Parte selecionada → prioriza seções da parte; bloco sem parte → seções do tipo.
+ * Multi-seleção → interseção das seções single de cada bloco (padrão Figma).
+ * O rabo transversal (display/organize[/animation/actions]) vem de `withCommonTail`.
+ */
+
 import {
   chartPartAllowsFrame,
   inputPartAllowsFrame,
   isDataBoundEditorBlockType,
   isFetchableDataBlockType,
   kpiPartAllowsFrame,
+  type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { withCommonTail } from "./commonSectionPresets";
-import type { SelectionSectionContext, SelectionSectionId } from "./types";
+import {
+  MULTI_SELECTION_EXCLUDED_SECTIONS,
+  type SelectionSectionContext,
+  type SelectionSectionId,
+} from "./types";
+import {
+  filterMultiExcludedSections,
+  intersectOrderedIds,
+} from "../../utils/selectionSectionIntersect";
 
-/**
- * Lista ordenada de seções Elemento para ribbon e painel (paridade).
- * Parte selecionada → prioriza seções da parte; bloco sem parte → seções do tipo.
- * O rabo transversal (display/organize[/animation/actions]) vem de `withCommonTail`.
- */
-export function resolveSelectionSections(
+function resolveSingleBlockSections(
+  selected: ComunicadoBlock,
   ctx: SelectionSectionContext,
 ): SelectionSectionId[] {
-  const { selected, selectedIds } = ctx;
-  if (!selected) return [];
-  /* Seleção única sem ids (mocks / race) → trata o bloco selecionado. */
-  const ids =
-    selectedIds && selectedIds.length > 0 ? selectedIds : [selected.id];
-
-  if (ids.length >= 2) {
-    return ["organize", "actions"];
-  }
-
   if (selected.type === "chart_view" && ctx.selectedChartPart) {
     const head: SelectionSectionId[] = ["partFormat", "typography"];
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
       return withCommonTail(head, "light");
     }
-    /* Sem frame: Exibição (opacidade), sem Posição vazia. */
     return [...head, "appearance", "organize", "actions"];
   }
 
@@ -63,7 +64,6 @@ export function resolveSelectionSections(
     case "text":
     case "heading":
     case "shape":
-      /* Tipografia → Forma (flags por tipo via VisualBoxElementSections). */
       return withCommonTail(["visualBox"]);
     case "icon":
       return withCommonTail(["iconEditor"]);
@@ -76,7 +76,6 @@ export function resolveSelectionSections(
     case "input":
       return withCommonTail(["shapeChrome", "inputBinding"]);
     case "kpi_view":
-      /* Opacidade do bloco (sem parte) em Exibição — não em Posição. */
       return withCommonTail(["kpiAppearance", "appearance"]);
     case "chart_view":
       return withCommonTail([
@@ -107,6 +106,66 @@ export function resolveSelectionSections(
       }
       return withCommonTail([]);
   }
+}
+
+function resolveBlocksForMulti(ctx: SelectionSectionContext, ids: string[]): ComunicadoBlock[] {
+  const fromCtx = ctx.selectedBlocks?.filter((block) => ids.includes(block.id)) ?? [];
+  if (fromCtx.length === ids.length) {
+    return ids
+      .map((id) => fromCtx.find((block) => block.id === id))
+      .filter((block): block is ComunicadoBlock => Boolean(block));
+  }
+  if (ctx.selected && ids.includes(ctx.selected.id) && fromCtx.length === 0) {
+    return [ctx.selected];
+  }
+  return fromCtx.length > 0 ? fromCtx : ctx.selected ? [ctx.selected] : [];
+}
+
+/**
+ * Lista ordenada de seções Elemento para ribbon e painel (paridade).
+ */
+export function resolveSelectionSections(
+  ctx: SelectionSectionContext,
+): SelectionSectionId[] {
+  const { selected, selectedIds } = ctx;
+  if (!selected) return [];
+  const ids =
+    selectedIds && selectedIds.length > 0 ? selectedIds : [selected.id];
+
+  if (ids.length >= 2) {
+    const blocks = resolveBlocksForMulti(ctx, ids);
+    if (blocks.length < 2) {
+      return filterMultiExcludedSections(
+        ["organize", "actions"],
+        MULTI_SELECTION_EXCLUDED_SECTIONS,
+      );
+    }
+    const perBlock = blocks.map((block) =>
+      resolveSingleBlockSections(block, {
+        ...ctx,
+        selected: block,
+        selectedIds: [block.id],
+        selectedBlocks: [block],
+        /* Multi de blocos soltos: partes KPI/chart/table não aplicam à interseção. */
+        selectedChartPart: null,
+        selectedKpiPart: null,
+        selectedTablePart: null,
+        selectedInputPart: null,
+      }),
+    );
+    const intersected = intersectOrderedIds(perBlock);
+    const withOrganizeActions = intersected.includes("organize")
+      ? intersected
+      : [...intersected.filter((id) => id !== "actions"), "organize", "actions"];
+    return filterMultiExcludedSections(
+      withOrganizeActions.includes("actions")
+        ? withOrganizeActions
+        : [...withOrganizeActions, "actions"],
+      MULTI_SELECTION_EXCLUDED_SECTIONS,
+    );
+  }
+
+  return resolveSingleBlockSections(selected, ctx);
 }
 
 /** Seções já migradas para host compartilhado (ribbon + pane). */

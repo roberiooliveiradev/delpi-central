@@ -140,6 +140,7 @@ export function SelectionSectionsHost({
   const {
     selected,
     selectedIds,
+    selectedBlocks,
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
@@ -150,6 +151,7 @@ export function SelectionSectionsHost({
     const resolved = resolveSelectionSections({
       selected,
       selectedIds,
+      selectedBlocks,
       selectedChartPart,
       selectedKpiPart,
       selectedTablePart,
@@ -164,6 +166,7 @@ export function SelectionSectionsHost({
   }, [
     selected,
     selectedIds,
+    selectedBlocks,
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,

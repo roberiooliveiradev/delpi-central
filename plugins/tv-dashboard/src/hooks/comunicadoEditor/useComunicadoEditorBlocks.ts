@@ -867,7 +867,7 @@ export function useComunicadoEditorBlocks({
     [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
   );
 
-  /** Tipografia da ribbon Formatar — bloco text/heading ou parte textual KPI/chart. */
+  /** Tipografia da ribbon Formatar — bloco text/heading/shape (batch via updateSelectedStyle) ou parte textual KPI/chart. */
   const updateSelectedTextFormatStyle = useCallback(
     (patch: TextFormatStyleSnapshot) => {
       if (!selected) return;

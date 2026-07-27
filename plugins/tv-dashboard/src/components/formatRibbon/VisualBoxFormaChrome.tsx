@@ -26,7 +26,8 @@ import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { SelectionPaneSection } from "../selectionSections/SelectionPaneSection";
 import { ShapeChangeControl } from "../selectionSections/ShapeGallerySection";
 import type { SelectionSectionLayout } from "../selectionSections/types";
-import { resolveVisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
+import { resolveVisualBoxElementCapabilitiesForSelection } from "../selectionSections/visualBoxElementCapabilities";
+import { aggregateEqualValues } from "../../utils/selectionSectionIntersect";
 import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "./ShapeMenuHint";
 
@@ -94,13 +95,14 @@ function resolveFormaStrokeWidth(
 /**
  * Patch de estilo da caixa visual — texto espelha fill/stroke em backgroundColor/border*
  * (legado do paint); forma usa as chaves canônicas.
+ * Em multi-seleção (ou quando há texto na seleção), espelha sempre para cobrir ambos.
  */
 function patchVisualBoxStyle(
-  isTextMode: boolean,
+  mirrorTextAliases: boolean,
   updateSelectedStyle: (patch: Partial<ComunicadoBlockStyle>) => void,
   patch: Partial<ComunicadoBlockStyle>,
 ): void {
-  if (!isTextMode) {
+  if (!mirrorTextAliases) {
     updateSelectedStyle(patch);
     return;
   }
@@ -129,33 +131,78 @@ type VisualBoxFormaChromeProps = {
 /**
  * Forma unificada (texto/título e shape) — mesmas opções; Alterar forma e ajustes
  * conforme o kind geométrico (`resolveVisualBoxShapeKind`).
+ * Multi-seleção: capabilities AND + valores agregados («Misto» via controles).
  */
 export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChromeProps) {
-  const { selected, updateSelectedStyle } = useComunicadoEditor();
-  if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
+  const { selected, selectedBlocks, selectedIds, updateSelectedStyle } = useComunicadoEditor();
+  const blocks =
+    selectedIds.length > 1
+      ? selectedBlocks
+      : selected
+        ? [selected]
+        : [];
+  if (blocks.length === 0 || !blocks.every((block) => isComunicadoVisualBoxBlock(block))) {
+    return null;
+  }
 
-  const caps = resolveVisualBoxElementCapabilities(selected);
+  const caps = resolveVisualBoxElementCapabilitiesForSelection(blocks);
   if (!caps?.shapeChrome) return null;
 
-  const block = selected;
+  const primary = blocks[blocks.length - 1]!;
+  const block = primary;
   const profile = resolveVisualBoxProfile(block);
   const isTextMode = profile.mode === "text";
+  const anyTextMode = blocks.some(
+    (item) => resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).mode === "text",
+  );
+  const mirrorAliases = selectedIds.length > 1 || anyTextMode;
   const primitive = profile.primitive;
   const shapeKind = profile.shapeKind;
 
   const showFill = shapeSupportsFill(primitive);
   const showStroke = shapeSupportsStroke(primitive);
   const showCornerRadius = primitive !== "point";
-  const showShapeAdjustments = caps.shapeAdjustments;
-  const showMarker = caps.shapeMarker;
+  const showShapeAdjustments = caps.shapeAdjustments && selectedIds.length === 1;
+  const showMarker = caps.shapeMarker && selectedIds.length === 1;
 
-  const fillValue = resolveFormaFill(block, isTextMode);
-  const strokeValue = resolveFormaStroke(block, isTextMode, primitive);
-  const strokeWidth = resolveFormaStrokeWidth(block, isTextMode, primitive);
-  const borderRadius = block.style?.borderRadius ?? 0;
+  const fillAgg = aggregateEqualValues(
+    blocks.map((item) =>
+      resolveFormaFill(item as ComunicadoVisualBoxBlock, resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).mode === "text"),
+    ),
+  );
+  const strokeAgg = aggregateEqualValues(
+    blocks.map((item) =>
+      resolveFormaStroke(
+        item as ComunicadoVisualBoxBlock,
+        resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).mode === "text",
+        resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).primitive,
+      ),
+    ),
+  );
+  const strokeWidthAgg = aggregateEqualValues(
+    blocks.map((item) =>
+      resolveFormaStrokeWidth(
+        item as ComunicadoVisualBoxBlock,
+        resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).mode === "text",
+        resolveVisualBoxProfile(item as ComunicadoVisualBoxBlock).primitive,
+      ),
+    ),
+  );
+  const radiusAgg = aggregateEqualValues(
+    blocks.map((item) => item.style?.borderRadius ?? 0),
+  );
+
+  const fillValue = fillAgg === "mixed" ? "transparent" : (fillAgg ?? resolveFormaFill(block, isTextMode));
+  const strokeValue =
+    strokeAgg === "mixed" ? "transparent" : (strokeAgg ?? resolveFormaStroke(block, isTextMode, primitive));
+  const strokeWidth =
+    strokeWidthAgg === "mixed"
+      ? 0
+      : (strokeWidthAgg ?? resolveFormaStrokeWidth(block, isTextMode, primitive));
+  const borderRadius = radiusAgg === "mixed" ? 0 : (radiusAgg ?? 0);
 
   const patchStyle = (patch: Partial<ComunicadoBlockStyle>) =>
-    patchVisualBoxStyle(isTextMode, updateSelectedStyle, patch);
+    patchVisualBoxStyle(mirrorAliases, updateSelectedStyle, patch);
 
   const stylesMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">

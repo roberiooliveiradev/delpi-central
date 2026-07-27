@@ -83,18 +83,83 @@ describe("resolveSelectionSections", () => {
     ).toEqual(expect.arrayContaining(["dataSourceHint", "display", "organize", "actions"]));
   });
 
-  it("multi-seleção: alinhar + organize + actions", () => {
+  it("multi-seleção visual-box homogênea: Fonte/Forma + organize + actions", () => {
+    const a = {
+      id: "a",
+      type: "text" as const,
+      content: "A",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+    };
+    const b = {
+      id: "b",
+      type: "text" as const,
+      content: "B",
+      frame: { x: 10, y: 0, w: 10, h: 10 },
+    };
     expect(
       resolveSelectionSections({
-        selected: {
-          id: "a",
-          type: "text",
-          content: "A",
-          frame: { x: 0, y: 0, w: 10, h: 10 },
-        } as SelectionSectionContext["selected"],
+        selected: a as SelectionSectionContext["selected"],
         selectedIds: ["a", "b"],
+        selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
       }),
-    ).toEqual(["organize", "actions"]);
+    ).toEqual(
+      expect.arrayContaining(["visualBox", "display", "organize", "actions"]),
+    );
+    expect(
+      resolveSelectionSections({
+        selected: a as SelectionSectionContext["selected"],
+        selectedIds: ["a", "b"],
+        selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
+      }),
+    ).not.toContain("animation");
+  });
+
+  it("multi-seleção text+shape: interseção mantém visualBox", () => {
+    const a = {
+      id: "a",
+      type: "text" as const,
+      content: "A",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+    };
+    const b = {
+      id: "b",
+      type: "shape" as const,
+      shape: "rect",
+      content: "",
+      frame: { x: 10, y: 0, w: 10, h: 10 },
+    };
+    const sections = resolveSelectionSections({
+      selected: b as SelectionSectionContext["selected"],
+      selectedIds: ["a", "b"],
+      selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
+    });
+    expect(sections).toContain("visualBox");
+    expect(sections).toContain("organize");
+    expect(sections).toContain("actions");
+  });
+
+  it("multi-seleção text+image: sem visualBox; organize + actions", () => {
+    const a = {
+      id: "a",
+      type: "text" as const,
+      content: "A",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+    };
+    const b = {
+      id: "b",
+      type: "image" as const,
+      src: "x.png",
+      frame: { x: 10, y: 0, w: 10, h: 10 },
+    };
+    const sections = resolveSelectionSections({
+      selected: a as SelectionSectionContext["selected"],
+      selectedIds: ["a", "b"],
+      selectedBlocks: [a, b] as SelectionSectionContext["selectedBlocks"],
+    });
+    expect(sections).not.toContain("visualBox");
+    expect(sections).toContain("organize");
+    expect(sections).toContain("actions");
+    expect(sections).toContain("display");
   });
 
   it("parte de gráfico prioriza partFormat + tipografia", () => {

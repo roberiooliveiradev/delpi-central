@@ -38,6 +38,8 @@ const HIDDEN: VisualBoxElementCapabilities = {
   shapeMarker: false,
 };
 
+const CAP_KEYS = Object.keys(HIDDEN) as Array<keyof VisualBoxElementCapabilities>;
+
 export function resolveVisualBoxElementCapabilities(
   block: ComunicadoBlock | null | undefined,
 ): VisualBoxElementCapabilities | null {
@@ -61,6 +63,27 @@ export function resolveVisualBoxElementCapabilities(
     shapeAdjustments,
     shapeMarker: primitive === "point",
   };
+}
+
+/**
+ * AND booleano das capacidades de todos os blocos.
+ * Retorna null se algum não for visual-box (seleção heterogênea).
+ */
+export function resolveVisualBoxElementCapabilitiesForSelection(
+  blocks: readonly ComunicadoBlock[],
+): VisualBoxElementCapabilities | null {
+  if (blocks.length === 0) return null;
+  const perBlock = blocks.map((block) => resolveVisualBoxElementCapabilities(block));
+  if (perBlock.some((caps) => caps == null)) return null;
+  const list = perBlock as VisualBoxElementCapabilities[];
+  const out = { ...list[0]! };
+  for (let i = 1; i < list.length; i += 1) {
+    const caps = list[i]!;
+    for (const key of CAP_KEYS) {
+      out[key] = Boolean(out[key] && caps[key]);
+    }
+  }
+  return out;
 }
 
 /** Capacidades vazias (não-visual-box). */

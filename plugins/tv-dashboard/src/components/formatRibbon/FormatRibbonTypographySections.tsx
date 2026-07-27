@@ -53,6 +53,10 @@ import {
   resolveSelectedTextFormatTarget,
   textFormatTargetSupportsParagraphAlign,
 } from "../../utils/selectedTextFormatTarget";
+import {
+  aggregateVisualBoxTextFormatStyle,
+  isHomogeneousVisualBoxSelection,
+} from "../../utils/selectionStyleAggregate";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { DynamicContentInsertControl } from "../DynamicContentInsertControl";
@@ -115,6 +119,8 @@ export function FormatRibbonTypographySections({
 } = {}) {
   const {
     selected,
+    selectedBlocks,
+    selectedIds,
     config,
     selectedKpiPart,
     selectedChartPart,
@@ -161,6 +167,12 @@ export function FormatRibbonTypographySections({
     selectedChartPart,
   });
   if (!textFormatTarget) return null;
+
+  const multiVisualBox =
+    selectedIds.length > 1 && isHomogeneousVisualBoxSelection(selectedBlocks);
+  const aggregatedStyle = multiVisualBox
+    ? aggregateVisualBoxTextFormatStyle(selectedBlocks)
+    : null;
 
   const visualCaps =
     capabilitiesProp ??
@@ -223,23 +235,26 @@ export function FormatRibbonTypographySections({
         ? lastPartialTextEditSelection
         : null;
   const partEditBridgeActive =
+    !multiVisualBox &&
     textFormatTarget.mode === "part" &&
     Boolean(selected) &&
     effectivePartialSelection &&
     effectivePartialSelection.blockId === selected?.id;
   const partialTextSelectionActive = Boolean(
-    (visualBoxBlock &&
-      editingTextId === visualBoxBlock.id &&
-      effectivePartialSelection &&
-      effectivePartialSelection.blockId === visualBoxBlock.id) ||
-      partEditBridgeActive,
+    !multiVisualBox &&
+      ((visualBoxBlock &&
+        editingTextId === visualBoxBlock.id &&
+        effectivePartialSelection &&
+        effectivePartialSelection.blockId === visualBoxBlock.id) ||
+        partEditBridgeActive),
   );
   /*
    * Seleção de todo o texto = tipografia de container: sobrepõe estilos pontuais
    * (contentRuns) via updateSelectedTextFormatStyle + strip nos runs.
    */
   const fullContentSelectionActive = Boolean(
-    visualBoxBlock &&
+    !multiVisualBox &&
+      visualBoxBlock &&
       effectivePartialSelection &&
       effectivePartialSelection.blockId === visualBoxBlock.id &&
       isFullContentTextSelection(
@@ -250,6 +265,10 @@ export function FormatRibbonTypographySections({
       ),
   );
   const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
+    if (multiVisualBox) {
+      updateSelectedTextFormatStyle(patch);
+      return;
+    }
     if (fullContentSelectionActive) {
       updateSelectedTextFormatStyle(patch);
       return;
@@ -303,7 +322,7 @@ export function FormatRibbonTypographySections({
     toggleKey: "fontWeight" | "fontStyle" | "underline" | "strikethrough",
     containerPatch: Parameters<typeof updateSelectedTextFormatStyle>[0],
   ) {
-    if (fullContentSelectionActive) {
+    if (multiVisualBox || fullContentSelectionActive) {
       updateSelectedTextFormatStyle(containerPatch);
       return;
     }
@@ -321,62 +340,117 @@ export function FormatRibbonTypographySections({
     updateSelectedTextFormatStyle(containerPatch);
   }
   const fontSizeAuto = Boolean(formatStyle?.fontSizeAuto);
+  const aggregatedFontSize = aggregatedStyle?.fontSize;
+  const aggregatedFontFamily = aggregatedStyle?.fontFamily;
+  const aggregatedColor = aggregatedStyle?.color;
+  const aggregatedHighlight = aggregatedStyle?.textHighlight;
+  const aggregatedWeight = aggregatedStyle?.fontWeight;
+  const aggregatedStyleItalic = aggregatedStyle?.fontStyle;
+  const aggregatedDecoration = aggregatedStyle?.textDecoration;
+  const aggregatedAlign = aggregatedStyle?.textAlign;
+  const aggregatedVertical = aggregatedStyle?.verticalAlign;
+
   const currentFontSize =
-    partialTextSelectionActive &&
-    textEditSelectionStyle?.fontSize != null &&
-    textEditSelectionStyle.fontSize !== "mixed"
-      ? textEditSelectionStyle.fontSize
-      : (formatStyle?.fontSize ?? fontSizeDefault);
+    multiVisualBox && aggregatedFontSize === "mixed"
+      ? fontSizeDefault
+      : multiVisualBox && typeof aggregatedFontSize === "number"
+        ? aggregatedFontSize
+        : partialTextSelectionActive &&
+            textEditSelectionStyle?.fontSize != null &&
+            textEditSelectionStyle.fontSize !== "mixed"
+          ? textEditSelectionStyle.fontSize
+          : (formatStyle?.fontSize ?? fontSizeDefault);
+  const fontSizeMixed = multiVisualBox && aggregatedFontSize === "mixed";
   const currentFontFamily =
-    partialTextSelectionActive &&
-    textEditSelectionStyle?.fontFamily != null &&
-    textEditSelectionStyle.fontFamily !== "mixed"
-      ? textEditSelectionStyle.fontFamily
-      : (formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]);
+    multiVisualBox && aggregatedFontFamily === "mixed"
+      ? ""
+      : multiVisualBox && typeof aggregatedFontFamily === "string"
+        ? aggregatedFontFamily
+        : partialTextSelectionActive &&
+            textEditSelectionStyle?.fontFamily != null &&
+            textEditSelectionStyle.fontFamily !== "mixed"
+          ? textEditSelectionStyle.fontFamily
+          : (formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0]);
   const currentTextColor =
-    partialTextSelectionActive &&
-    textEditSelectionStyle?.color != null &&
-    textEditSelectionStyle.color !== "mixed"
-      ? textEditSelectionStyle.color
-      : formatStyle?.color;
+    multiVisualBox && aggregatedColor === "mixed"
+      ? undefined
+      : multiVisualBox && typeof aggregatedColor === "string"
+        ? aggregatedColor
+        : partialTextSelectionActive &&
+            textEditSelectionStyle?.color != null &&
+            textEditSelectionStyle.color !== "mixed"
+          ? textEditSelectionStyle.color
+          : formatStyle?.color;
   const currentTextHighlight =
-    partialTextSelectionActive &&
-    textEditSelectionStyle?.textHighlight != null &&
-    textEditSelectionStyle.textHighlight !== "mixed"
-      ? textEditSelectionStyle.textHighlight
-      : formatStyle?.textHighlight;
+    multiVisualBox && aggregatedHighlight === "mixed"
+      ? undefined
+      : multiVisualBox && typeof aggregatedHighlight === "string"
+        ? aggregatedHighlight
+        : partialTextSelectionActive &&
+            textEditSelectionStyle?.textHighlight != null &&
+            textEditSelectionStyle.textHighlight !== "mixed"
+          ? textEditSelectionStyle.textHighlight
+          : formatStyle?.textHighlight;
   const textAlignActive =
-    textFormatTarget.textAlign ??
-    formatStyle?.textAlign ??
-    textBlock?.style?.textAlign;
+    multiVisualBox && aggregatedAlign === "mixed"
+      ? undefined
+      : multiVisualBox && typeof aggregatedAlign === "string"
+        ? aggregatedAlign
+        : (textFormatTarget.textAlign ??
+          formatStyle?.textAlign ??
+          textBlock?.style?.textAlign);
   const textVerticalAlign =
-    textFormatTarget.verticalAlign ??
-    formatStyle?.verticalAlign ??
-    (textBlock
-      ? (textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type))
-      : isShapeTextTarget
-        ? "middle"
-        : "middle");
-  const blockFontWeightActive = formatStyle?.fontWeight === "bold";
-  const blockFontStyleActive = formatStyle?.fontStyle === "italic";
+    multiVisualBox && aggregatedVertical === "mixed"
+      ? "middle"
+      : multiVisualBox && typeof aggregatedVertical === "string"
+        ? aggregatedVertical
+        : (textFormatTarget.verticalAlign ??
+          formatStyle?.verticalAlign ??
+          (textBlock
+            ? (textBlock.style?.verticalAlign ?? defaultVerticalAlignForBlock(textBlock.type))
+            : isShapeTextTarget
+              ? "middle"
+              : "middle"));
+  const blockFontWeightActive =
+    multiVisualBox && aggregatedWeight === "mixed"
+      ? false
+      : multiVisualBox
+        ? aggregatedWeight === "bold"
+        : formatStyle?.fontWeight === "bold";
+  const blockFontStyleActive =
+    multiVisualBox && aggregatedStyleItalic === "mixed"
+      ? false
+      : multiVisualBox
+        ? aggregatedStyleItalic === "italic"
+        : formatStyle?.fontStyle === "italic";
   const blockDecorationFlags = parseTextDecorationFlags(
-    formatStyle?.textDecoration as Parameters<typeof parseTextDecorationFlags>[0],
+    (multiVisualBox && aggregatedDecoration !== "mixed"
+      ? aggregatedDecoration
+      : formatStyle?.textDecoration) as Parameters<typeof parseTextDecorationFlags>[0],
   );
-  const fontWeightActive = partialTextSelectionActive
-    ? textEditSelectionStyle?.fontWeight === "bold" ||
-      textEditSelectionStyle?.fontWeight === "mixed"
-    : blockFontWeightActive;
-  const fontStyleActive = partialTextSelectionActive
-    ? textEditSelectionStyle?.fontStyle === "italic" ||
-      textEditSelectionStyle?.fontStyle === "mixed"
-    : blockFontStyleActive;
-  const underlineActive = partialTextSelectionActive
-    ? textEditSelectionStyle?.underline === true || textEditSelectionStyle?.underline === "mixed"
-    : blockDecorationFlags.underline;
-  const strikethroughActive = partialTextSelectionActive
-    ? textEditSelectionStyle?.strikethrough === true ||
-      textEditSelectionStyle?.strikethrough === "mixed"
-    : blockDecorationFlags.strikethrough;
+  const fontWeightActive = multiVisualBox
+    ? aggregatedWeight === "bold" || aggregatedWeight === "mixed"
+    : partialTextSelectionActive
+      ? textEditSelectionStyle?.fontWeight === "bold" ||
+        textEditSelectionStyle?.fontWeight === "mixed"
+      : blockFontWeightActive;
+  const fontStyleActive = multiVisualBox
+    ? aggregatedStyleItalic === "italic" || aggregatedStyleItalic === "mixed"
+    : partialTextSelectionActive
+      ? textEditSelectionStyle?.fontStyle === "italic" ||
+        textEditSelectionStyle?.fontStyle === "mixed"
+      : blockFontStyleActive;
+  const underlineActive = multiVisualBox
+    ? aggregatedDecoration === "mixed" || blockDecorationFlags.underline
+    : partialTextSelectionActive
+      ? textEditSelectionStyle?.underline === true || textEditSelectionStyle?.underline === "mixed"
+      : blockDecorationFlags.underline;
+  const strikethroughActive = multiVisualBox
+    ? aggregatedDecoration === "mixed" || blockDecorationFlags.strikethrough
+    : partialTextSelectionActive
+      ? textEditSelectionStyle?.strikethrough === true ||
+        textEditSelectionStyle?.strikethrough === "mixed"
+      : blockDecorationFlags.strikethrough;
   const listSelectionState = visualBoxBlock
     ? editingTextId === visualBoxBlock.id && textEditListSelection
       ? textEditListSelection
@@ -551,10 +625,15 @@ export function FormatRibbonTypographySections({
                 className="td-deck-ribbon__select--font-family"
                 value={currentFontFamily}
                 onChange={(value) => {
+                  if (!value) return;
                   ensureComunicadoGoogleFontsLoaded([value]);
                   applyTextFormatStyle({ fontFamily: value });
                 }}
-                options={fontFamilySelectOptions}
+                options={
+                  multiVisualBox && aggregatedFontFamily === "mixed"
+                    ? [{ value: "", label: "Misto" }, ...fontFamilySelectOptions]
+                    : fontFamilySelectOptions
+                }
               />
             </HintAction>
             <TdRibbonIconButton
@@ -595,8 +674,15 @@ export function FormatRibbonTypographySections({
                   className="td-deck-ribbon__font-size-combobox"
                   compact
                   square
-                  aria-label={fontSizeAuto ? "Tamanho da fonte (Automático)" : "Tamanho da fonte"}
-                  value={currentFontSize}
+                  aria-label={
+                    fontSizeMixed
+                      ? "Tamanho da fonte (Misto)"
+                      : fontSizeAuto
+                        ? "Tamanho da fonte (Automático)"
+                        : "Tamanho da fonte"
+                  }
+                  value={fontSizeMixed ? null : currentFontSize}
+                  placeholder={fontSizeMixed ? "Misto" : undefined}
                   options={COMUNICADO_FONT_SIZE_PRESETS}
                   min={COMUNICADO_FONT_SIZE_MIN}
                   clamp={clampFontSize}
@@ -648,7 +734,7 @@ export function FormatRibbonTypographySections({
               active={Boolean(fontWeightActive)}
               onClick={() =>
                 applyToggleOrContainer("fontWeight", {
-                  fontWeight: formatStyle?.fontWeight === "bold" ? "normal" : "bold",
+                  fontWeight: blockFontWeightActive ? "normal" : "bold",
                 })
               }
             >
@@ -660,7 +746,7 @@ export function FormatRibbonTypographySections({
               active={Boolean(fontStyleActive)}
               onClick={() =>
                 applyToggleOrContainer("fontStyle", {
-                  fontStyle: formatStyle?.fontStyle === "italic" ? "normal" : "italic",
+                  fontStyle: blockFontStyleActive ? "normal" : "italic",
                 })
               }
             >
@@ -673,7 +759,9 @@ export function FormatRibbonTypographySections({
               onClick={() =>
                 applyToggleOrContainer("underline", {
                   textDecoration: buildTextDecoration(
-                    !blockDecorationFlags.underline,
+                    multiVisualBox && aggregatedDecoration === "mixed"
+                      ? true
+                      : !blockDecorationFlags.underline,
                     blockDecorationFlags.strikethrough,
                   ),
                 })
@@ -689,7 +777,9 @@ export function FormatRibbonTypographySections({
                 applyToggleOrContainer("strikethrough", {
                   textDecoration: buildTextDecoration(
                     blockDecorationFlags.underline,
-                    !blockDecorationFlags.strikethrough,
+                    multiVisualBox && aggregatedDecoration === "mixed"
+                      ? true
+                      : !blockDecorationFlags.strikethrough,
                   ),
                 })
               }

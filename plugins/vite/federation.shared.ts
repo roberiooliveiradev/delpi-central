@@ -80,7 +80,25 @@ export function pluginUiTestAliases(pluginDir: string) {
   const uiRoot = path.resolve(pluginDir, "../plugin-ui/src");
   const indexTs = path.join(uiRoot, "index.ts");
   const stylesCss = path.join(uiRoot, "styles.css");
+  const logoMarkStub = path.resolve(pluginDir, "src/test-stubs/delpiLogoMark.stub.ts");
+  const logoRawStub = path.resolve(pluginDir, "src/test-stubs/logoDelpiMark.svg.raw.js");
   return [
+    {
+      find: path.join(uiRoot, "brand/delpiLogoMark.ts"),
+      replacement: logoMarkStub,
+    },
+    {
+      find: /[/\\]brand[/\\]delpiLogoMark\.ts$/,
+      replacement: logoMarkStub,
+    },
+    {
+      find: path.join(uiRoot, "assets/logoDelpiMark.svg?raw"),
+      replacement: logoRawStub,
+    },
+    {
+      find: /logoDelpiMark\.svg\?raw$/,
+      replacement: logoRawStub,
+    },
     { find: "@delpi/plugin-ui/index", replacement: indexTs },
     { find: "@delpi/plugin-ui/styles", replacement: stylesCss },
     { find: "@delpi/plugin-ui", replacement: indexTs },
