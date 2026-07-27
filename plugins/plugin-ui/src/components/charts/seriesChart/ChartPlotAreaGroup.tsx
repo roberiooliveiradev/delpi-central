@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import { SERIES_CHART_CATEGORY_PALETTE } from "../seriesChartOptions";
+import { orderSeriesIndicesForOverlappingPaint } from "../seriesChartPaintOrder";
 import { ChartAxisLines } from "./ChartAxisLines";
 import { ChartAxisX } from "./ChartAxisX";
 import { ChartAxisY } from "./ChartAxisY";
@@ -298,7 +299,8 @@ export function ChartPlotAreaGroup({
 
       {chartType === "area" && multiLine && seriesList ? (
         <>
-          {seriesList.map((series, index) => {
+          {orderSeriesIndicesForOverlappingPaint(seriesList).map((index) => {
+            const series = seriesList[index]!;
             const color = resolveSeriesColor(index, series.color);
             return (
               <g key={`series-area-${series.name}-${index}`}>

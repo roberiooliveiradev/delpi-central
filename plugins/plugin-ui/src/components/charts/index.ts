@@ -88,6 +88,11 @@ export {
   type SeriesChartLegendItem,
 } from "./seriesChartLegendItems";
 export {
+  orderSeriesIndicesForOverlappingPaint,
+  seriesPaintMagnitude,
+  type SeriesPaintMagnitudeSource,
+} from "./seriesChartPaintOrder";
+export {
   DEFAULT_SERIES_CHART_DATA_LABELS,
   dataLabelOutsideGutterPx,
   dataLabelsConfigFromPreset,
