@@ -178,6 +178,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 """
             )
             params.append(f"%{problem_tag.strip()}%")
+        # Período opcional: sem date_start/date_end → lista todas as NCs.
         if date_start:
             filters.append("n.occurrence_date >= %s::date")
             params.append(date_start)

@@ -65,6 +65,14 @@ function statusVariant(status: string): StatusBadgeVariant {
 
 export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const filterState = readLmpsFilters();
+  // Listagem de NCs: período só vale se o usuário preencher os filtros da própria
+  // página. Não herdar o mês default do dashboard na URL da aba de NCs.
+  const ncNavFilters = {
+    ...filterState,
+    dateStart: "",
+    dateEnd: "",
+    competence: "",
+  };
   const [items, setItems] = useState<LmpNonconformity[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -335,7 +343,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
               className="lmps-page-subtitle__help"
             />
           </span>
-          <LmpsNav currentPath={pathname} filterState={filterState} />
+          <LmpsNav currentPath={pathname} filterState={ncNavFilters} />
         </div>
         <div className="lmps-header-actions">
           <div className="lmps-header-action">

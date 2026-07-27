@@ -187,9 +187,9 @@ export const LMPS_HELP_TOOLTIPS = {
       product:
         "Código de material/produto Protheus nas linhas da NC.",
       dateStart:
-        "Início do intervalo pela data de ocorrência (quando o problema foi encontrado).",
+        "Início do intervalo pela data de ocorrência (quando o problema foi encontrado). Vazio = sem filtro de início (lista todas se o fim também estiver vazio).",
       dateEnd:
-        "Fim do intervalo pela data de ocorrência.",
+        "Fim do intervalo pela data de ocorrência. Vazio = sem filtro de fim (lista todas se o início também estiver vazio).",
     },
     table: {
       section:

@@ -472,7 +472,9 @@ LMP_NONCONFORMITIES_LIST = agent_route(
     summary="List LMP nonconformities",
     description=(
         "Paged list of engineering LMP nonconformities (OV/LMP, customer, products, problem). "
-        "Optional filters: status, sale_number (OV), customer_name, product_code, period."
+        "Optional filters: status, sale_number (OV), lmp_number, customer_name, product_code, "
+        "problem_tag, start_date/end_date (occurrence_date). "
+        "When start_date and end_date are omitted, returns all records (still paginated)."
     ),
     operation_id="list_lmp_nonconformities",
 )

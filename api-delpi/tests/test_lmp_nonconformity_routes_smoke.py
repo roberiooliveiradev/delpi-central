@@ -69,6 +69,27 @@ def test_list_lmp_nonconformities_returns_meta(mock_build) -> None:
         operation_id="list_lmp_nonconformities",
         shape="paged_list",
     )
+    # Sem start_date/end_date → sem filtro de período (lista todas, paginado).
+    kwargs = use_case.execute.call_args.kwargs
+    assert kwargs.get("date_start") is None
+    assert kwargs.get("date_end") is None
+
+
+@patch(f"{_ROUTER}.build_list_lmp_nonconformities_use_case")
+def test_list_lmp_nonconformities_applies_period_when_provided(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [],
+        "total": 0,
+        "page": 1,
+        "page_size": 50,
+    }
+    mock_build.return_value = use_case
+
+    list_lmp_nonconformities(start_date="2026-01-01", end_date="2026-07-31")
+    kwargs = use_case.execute.call_args.kwargs
+    assert kwargs.get("date_start") == "2026-01-01"
+    assert kwargs.get("date_end") == "2026-07-31"
 
 
 @patch(f"{_ROUTER}.build_list_lmp_problem_tags_use_case")
