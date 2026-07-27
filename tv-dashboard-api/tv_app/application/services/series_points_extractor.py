@@ -109,6 +109,7 @@ def extract_series_points(
                 "label",
                 "bucket",
                 "periodo",
+                "competencia",
                 "date",
                 "name",
                 "centro_custo",
@@ -129,6 +130,15 @@ def extract_series_points(
                     f"otd_filial_{branch_key}",
                     f"oee_pct_filial_{branch_key}",
                     f"ppm_filial_{branch_key}",
+                ),
+            )
+        if value is None:
+            value = _first_non_null(
+                row,
+                (
+                    "economia_bruta",
+                    "investimento_total_mes",
+                    "economia_liquida_mes",
                 ),
             )
         if value is None:

@@ -31,12 +31,18 @@ FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 # Campos de overlay aplicados em runtime sem regenerar o catálogo completo.
 # Labels/campos de valor: mesma fonte curada das rotas (overlay), para o picker
 # de «Campo dinâmico» sem esperar sync OpenAPI.
+# seriesField/tableFields: necessários para extrair pontos/linhas (senão a TV
+# cai em total/granularity ou campo/valor).
 _RUNTIME_OVERLAY_KEYS = frozenset(
     {
         "suggestedTransformSteps",
         "tvConstraints",
         "valueFields",
         "valueFieldLabels",
+        "valueFieldTypes",
+        "seriesField",
+        "tableFields",
+        "allowedDisplayModes",
         "label",
         "description",
         "whenToUse",

@@ -185,19 +185,23 @@
       ]
     },
     "get_transformometro_savings_investment_series": {
-      "seriesField": "points",
+      "tableFields": "points",
       "allowedDisplayModes": [
         "line_chart",
+        "table",
         "auto"
       ],
       "valueFields": [
         "economia_bruta",
-        "investimento_total_mes",
-        "economia_liquida_mes",
-        "horas_economizadas_mes"
+        "investimento_total_mes"
       ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento_total_mes": "Investimento"
+      },
       "valueFieldTypes": {
-        "competencia": "date",
+        "periodo": "date",
         "economia_bruta": "number",
         "investimento_unico_mes": "number",
         "custo_recorrente_mes": "number",
@@ -213,14 +217,14 @@
         {
           "op": "select",
           "columns": [
-            "competencia",
+            "periodo",
             "economia_bruta",
             "investimento_total_mes"
           ]
         },
         {
           "op": "sort",
-          "column": "competencia",
+          "column": "periodo",
           "direction": "asc"
         }
       ]

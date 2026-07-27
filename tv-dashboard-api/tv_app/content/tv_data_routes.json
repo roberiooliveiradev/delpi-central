@@ -1365,14 +1365,14 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ],
-      "tableFields": "indicators"
+      ]
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1443,14 +1443,14 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ],
-      "tableFields": "items"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -1490,11 +1490,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1553,11 +1553,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1616,11 +1616,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1679,11 +1679,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1742,11 +1742,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1805,11 +1805,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1868,11 +1868,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1931,11 +1931,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -1994,11 +1994,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2057,11 +2057,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2120,11 +2120,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2183,11 +2183,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2246,11 +2246,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2309,11 +2309,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2372,11 +2372,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2435,11 +2435,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2498,11 +2498,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2561,11 +2561,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2624,11 +2624,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2687,11 +2687,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2750,11 +2750,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2813,11 +2813,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2876,11 +2876,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -2939,11 +2939,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3002,11 +3002,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3065,11 +3065,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3128,11 +3128,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3191,11 +3191,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3254,11 +3254,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3317,11 +3317,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3380,11 +3380,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3443,11 +3443,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3506,11 +3506,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3569,11 +3569,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3632,11 +3632,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3695,11 +3695,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3758,11 +3758,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3821,11 +3821,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3884,11 +3884,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -3947,11 +3947,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4010,11 +4010,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4073,11 +4073,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4136,11 +4136,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4199,11 +4199,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4262,11 +4262,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4325,11 +4325,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4388,11 +4388,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4451,11 +4451,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4514,11 +4514,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4577,11 +4577,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4640,11 +4640,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4703,11 +4703,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4766,11 +4766,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4829,11 +4829,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4892,11 +4892,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -4955,11 +4955,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5018,11 +5018,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5081,11 +5081,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5144,11 +5144,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5207,11 +5207,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5270,11 +5270,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5333,11 +5333,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5396,11 +5396,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5459,11 +5459,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5522,11 +5522,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5585,11 +5585,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5648,11 +5648,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -5711,11 +5711,11 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -6141,18 +6141,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ]
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -6662,7 +6662,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Resumo Transforma Mais».",
+      "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
+      "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos.",
       "paramSchema": {
         "filial_id": {
           "type": "string",
@@ -6700,6 +6701,109 @@
       "defaultParams": {
         "periodDays": 30
       }
+    },
+    {
+      "operationId": "get_transformometro_savings_investment_series",
+      "httpMethod": "GET",
+      "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+      "category": "engineering",
+      "path": "/engineering/transformometro/savings-investment/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "table",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI.",
+      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento do TRANSFORMA+ DELPI com filtros de período, filial, setor e granularidade.",
+      "paramSchema": {
+        "view": {
+          "type": "string",
+          "optional": true,
+          "label": "Visão",
+          "description": "Modo de visualização dos dados retornados."
+        },
+        "filial_id": {
+          "type": "string",
+          "optional": true,
+          "label": "ID da filial",
+          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+        },
+        "setor_id": {
+          "type": "string",
+          "optional": true,
+          "label": "ID do setor",
+          "description": "Identificador do setor no Transformômetro."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month",
+          "enum": [
+            "day",
+            "month"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "tableFields": "points",
+      "valueFields": [
+        "economia_bruta",
+        "investimento_total_mes"
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento_total_mes": "Investimento"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento_unico_mes": "number",
+        "custo_recorrente_mes": "number",
+        "custo_recursos_compartilhados_mes": "number",
+        "investimento_total_mes": "number",
+        "economia_liquida_mes": "number",
+        "horas_economizadas_mes": "number"
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "economia_bruta",
+            "investimento_total_mes"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "periodo",
+          "direction": "asc"
+        }
+      ]
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -10459,6 +10563,9 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10470,6 +10577,10 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "seriesField": "points",
       "suggestedTransformSteps": [
         {
@@ -10485,13 +10596,6 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
       ]
     },
     {
@@ -10907,6 +11011,9 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10918,10 +11025,7 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      }
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -11522,15 +11626,15 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": false
-      },
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
-      "tableFields": "items"
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -14250,18 +14354,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "labelAliases": [
-        "Auditoria 5S — resumo"
-      ],
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta"
-      }
+      },
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ]
     },
     {
       "operationId": "list_quality_branches",
@@ -14674,21 +14778,21 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "labelAliases": [
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ],
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
         "total_kaizens": "Total kaizens",
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
-      }
+      },
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
+      "labelAliases": [
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ]
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -15332,18 +15436,10 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15353,7 +15449,15 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      }
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -15548,19 +15652,10 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15570,7 +15665,16 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      }
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -18037,6 +18141,7 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
@@ -18045,8 +18150,7 @@
         "value",
         "stockValue",
         "total"
-      ],
-      "tableFields": "top_products"
+      ]
     },
     {
       "operationId": "get_caller_stats",

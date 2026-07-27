@@ -83,6 +83,21 @@ def test_extract_series_points_preserves_zero_label():
     ) == [{"label": 0, "value": 10}]
 
 
+def test_extract_series_points_competencia_and_economia_bruta():
+    """Série Transformômetro legado: eixo `competencia` + métrica `economia_bruta`."""
+    assert extract_series_points(
+        {
+            "points": [
+                {
+                    "competencia": "2026-07-01",
+                    "economia_bruta": 730.85,
+                    "investimento_total_mes": 177.54,
+                }
+            ]
+        }
+    ) == [{"label": "2026-07-01", "value": 730.85}]
+
+
 def test_response_fields_from_meta_accepts_dict_canonical_api_delpi():
     """api-delpi grava meta.fields como dict {campo: rótulo} — não pode ser descartado."""
     fields = response_fields_from_meta(

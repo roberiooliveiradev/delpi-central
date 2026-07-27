@@ -19,6 +19,10 @@ class DashboardEvolucaoItem:
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
+        # Contrato TV/séries (OEE/OTD): eixo temporal = `periodo`.
+        # Upstream TM ainda envia `competencia`; a fachada normaliza na saída.
+        competencia = str(payload.pop("competencia", "") or "")
+        payload["periodo"] = competencia
         return {key: value for key, value in payload.items() if value is not None}
 
 

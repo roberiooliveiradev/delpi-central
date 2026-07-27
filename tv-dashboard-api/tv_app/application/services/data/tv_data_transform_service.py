@@ -78,7 +78,7 @@ def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
                     columns.append(key_s)
         return {"columns": columns, "rows": rows}
     if isinstance(data, dict):
-        for key in ("items", "rows", "data", "results", "values", "records", "entries", "flow", "history"):
+        for key in ("items", "rows", "points", "data", "results", "values", "records", "entries", "flow", "history"):
             inner = data.get(key)
             if isinstance(inner, list):
                 nested = coerce_payload_to_table(inner)
