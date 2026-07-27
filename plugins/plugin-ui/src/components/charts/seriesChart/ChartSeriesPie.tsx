@@ -1,10 +1,9 @@
-import { DECK_CATEGORY_PALETTE } from "../../../theme/deckColorCatalog";
-import { resolveSeriesCategoryColor } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   bindChartPartPointer,
   filterVisibleSeriesPoints,
   getChartPartState,
+  resolveCategorySlicePaintColor,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -107,9 +106,14 @@ export function ChartSeriesPie({
           seriesIndex,
           pointIndex: point.sourceIndex,
         };
-        const fill =
-          getChartPartState(chartParts, markerRef)?.style?.fill ??
-          resolveSeriesCategoryColor(i, seriesColor, categoryColors, DECK_CATEGORY_PALETTE);
+        const fill = resolveCategorySlicePaintColor({
+          index: i,
+          sourceIndex: point.sourceIndex,
+          seriesColor,
+          categoryColors,
+          parts: chartParts,
+          parentSeriesIndex: seriesIndex,
+        });
         const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(
           markerRef,
           interaction,

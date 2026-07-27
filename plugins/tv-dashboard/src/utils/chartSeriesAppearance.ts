@@ -6,6 +6,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   serializeChartPartRef,
+  toSeriesChartKind,
   upsertChartPartState,
   type ComunicadoChartPartsMap,
   type ComunicadoChartViewBlock,
@@ -62,7 +63,10 @@ function chartUsesCategoryIndexedColors(
   block: Pick<ComunicadoChartViewBlock, "chartType" | "chartProjection">,
 ): boolean {
   const seriesCount = block.chartProjection?.series?.length ?? 1;
-  return seriesChartUsesCategoryLegend(block.chartType as SeriesChartKind, seriesCount);
+  /* Rosca (`doughnut`) renderiza como `pie` — sem isso o patch não grava categoryColors/marker. */
+  const kind =
+    toSeriesChartKind(block.chartType) ?? (block.chartType as SeriesChartKind);
+  return seriesChartUsesCategoryLegend(kind, seriesCount);
 }
 
 /** Grava cor (e opcionalmente strokeWidth) na série/categoria N — projection + parts + options. */

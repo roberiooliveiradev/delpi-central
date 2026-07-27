@@ -941,6 +941,33 @@ export function resolveSeriesPaintColor(args: {
   );
 }
 
+/**
+ * Cor de fatia/categoria (pizza, rosca, funil, empilhado) — mesma ordem da legenda.
+ * Marcador da fatia → série/categoria N → categoryColors → paleta.
+ */
+export function resolveCategorySlicePaintColor(args: {
+  index: number;
+  sourceIndex?: number;
+  seriesColor: string;
+  categoryColors?: string[] | null;
+  parts?: ChartPartsMap | null;
+  parentSeriesIndex?: number;
+}): string {
+  const pointIndex = args.sourceIndex ?? args.index;
+  const markerFill = getChartPartState(args.parts, {
+    kind: "marker",
+    seriesIndex: args.parentSeriesIndex ?? 0,
+    pointIndex,
+  })?.style?.fill?.trim();
+  if (markerFill) return markerFill;
+  return resolveSeriesPaintColor({
+    seriesIndex: args.index,
+    seriesColor: args.seriesColor,
+    categoryColors: args.categoryColors,
+    parts: args.parts,
+  });
+}
+
 export function resolveSeriesStrokeWidth(parts?: ChartPartsMap | null): number {
   const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
   const primitive = "line" as const;

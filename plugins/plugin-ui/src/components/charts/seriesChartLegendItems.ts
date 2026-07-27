@@ -1,11 +1,10 @@
 import {
-  resolveSeriesCategoryColor,
   type SeriesChartKind,
   type SeriesChartPoint,
   type SeriesChartSeriesSpec,
 } from "./seriesChartOptions";
 import {
-  getChartPartState,
+  resolveCategorySlicePaintColor,
   resolveSeriesPaintColor,
   type ChartPartsMap,
 } from "./seriesChartParts";
@@ -70,23 +69,14 @@ export function buildSeriesChartLegendItems(args: {
   }
 
   const categoryPoints = seriesWithData?.[0]?.points ?? points;
-  return categoryPoints.map((point, index) => {
-    const markerFill = getChartPartState(chartParts, {
-      kind: "marker",
-      seriesIndex: 0,
-      pointIndex: point.sourceIndex ?? index,
-    })?.style?.fill?.trim();
-    return {
-      name: point.label?.trim() || `Categoria ${index + 1}`,
-      color:
-        markerFill ||
-        resolveSeriesPaintColor({
-          seriesIndex: index,
-          seriesColor,
-          categoryColors,
-          parts: chartParts,
-        }) ||
-        resolveSeriesCategoryColor(index, seriesColor, categoryColors),
-    };
-  });
+  return categoryPoints.map((point, index) => ({
+    name: point.label?.trim() || `Categoria ${index + 1}`,
+    color: resolveCategorySlicePaintColor({
+      index,
+      sourceIndex: point.sourceIndex ?? index,
+      seriesColor,
+      categoryColors,
+      parts: chartParts,
+    }),
+  }));
 }

@@ -180,6 +180,7 @@ export {
   resolvePlotAreaStyle,
   resolveSeriesLineStyle,
   resolveChartLinePartStroke,
+  resolveCategorySlicePaintColor,
   resolveSeriesPaintColor,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,

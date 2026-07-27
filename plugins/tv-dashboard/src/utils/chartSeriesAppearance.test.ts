@@ -91,6 +91,23 @@ describe("chartSeriesAppearance", () => {
     expect(next.chartParts?.["marker:0:1"]?.style?.fill).toBe("#ff5500");
     expect(next.chartParts?.["series:1"]?.style?.fill).toBe("#ff5500");
   });
+
+  it("patch em rosca (doughnut) também sincroniza fatia — não só a legenda", () => {
+    const next = patchChartSeriesAppearance(
+      {
+        chartType: "doughnut",
+        chartProjection: {
+          series: [{ field: "status", label: "Status" }],
+        },
+        chartParts: {},
+        chartOptions: {},
+      },
+      1,
+      { color: "#e11d48" },
+    );
+    expect(next.chartOptions?.categoryColors?.[1]).toBe("#e11d48");
+    expect(next.chartParts?.["marker:0:1"]?.style?.fill).toBe("#e11d48");
+  });
 });
 
 describe("resolveChartSeriesColorIndex", () => {

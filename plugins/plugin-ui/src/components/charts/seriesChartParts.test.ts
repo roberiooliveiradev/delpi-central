@@ -31,6 +31,7 @@ import {
   resolveChartLinePartStroke,
   resolveChartPartFontSize,
   resolveMarkerStyle,
+  resolveCategorySlicePaintColor,
   resolveSeriesPaintColor,
   resolveSeriesStrokeColor,
   serializeChartPartRef,
@@ -82,6 +83,30 @@ describe("seriesChartParts", () => {
         parts,
       }),
     ).toBe("#aabbcc");
+  });
+
+  it("resolveCategorySlicePaintColor alinha fatia à série/categoria (rosca/pizza)", () => {
+    const parts = upsertChartPartState({}, { kind: "series", seriesIndex: 1 }, {
+      style: { fill: "#e11d48" },
+    });
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 1,
+        seriesColor: "#089bdb",
+        parts,
+      }),
+    ).toBe("#e11d48");
+    const withMarker = upsertChartPartState(parts, { kind: "marker", seriesIndex: 0, pointIndex: 1 }, {
+      style: { fill: "#22c55e" },
+    });
+    expect(
+      resolveCategorySlicePaintColor({
+        index: 1,
+        sourceIndex: 1,
+        seriesColor: "#089bdb",
+        parts: withMarker,
+      }),
+    ).toBe("#22c55e");
   });
 
   it("resolve cor e marcador a partir de primitivos (stroke/fill)", () => {

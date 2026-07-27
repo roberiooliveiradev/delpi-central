@@ -1,13 +1,10 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
-import {
-  SERIES_CHART_CATEGORY_PALETTE,
-  OFFICE_CHART_SERIES_COLOR,
-  resolveSeriesCategoryColor,
-} from "../seriesChartOptions";
+import { OFFICE_CHART_SERIES_COLOR } from "../seriesChartOptions";
 import {
   bindChartPartPointer,
   filterVisibleSeriesPoints,
   getChartPartState,
+  resolveCategorySlicePaintColor,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -74,12 +71,14 @@ export function ChartSeriesFunnel({
           `L ${cx - botW / 2} ${y1}`,
           "Z",
         ].join(" ");
-        const fill = resolveSeriesCategoryColor(
-          i,
-          seriesColor || OFFICE_CHART_SERIES_COLOR,
+        const fill = resolveCategorySlicePaintColor({
+          index: i,
+          sourceIndex: point.sourceIndex,
+          seriesColor: seriesColor || OFFICE_CHART_SERIES_COLOR,
           categoryColors,
-          SERIES_CHART_CATEGORY_PALETTE,
-        );
+          parts: chartParts,
+          parentSeriesIndex: seriesIndex,
+        });
         return (
           <path
             key={`funnel-${point.sourceIndex}`}
