@@ -55,7 +55,7 @@ def test_normalize_import_item_strips_server_fields() -> None:
     fields = normalize_import_item(
         {
             "id": "abc",
-            "registered_at": "2026-01-01T00:00:00Z",
+            "registered_at": "2026-01-01T00:00:00-03:00",
             "created_by": "x",
             "product_codes": ["90001"],
             "status": "done",
@@ -69,6 +69,7 @@ def test_normalize_import_item_strips_server_fields() -> None:
     assert fields["status"] == "done"
     assert fields["sale_number"] == "123"
     assert fields["lmp_number"] == "LEG-9"
+    assert fields["registered_at"] == "2026-01-01T00:00:00-03:00"
     assert fields["products"] == [{"product_code": "90001", "product_description": ""}]
     assert fields["problem_tags"] == ["Medida"]
 

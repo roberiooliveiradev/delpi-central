@@ -360,6 +360,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         created_by: str | None = None,
+        registered_at: str | None = None,
         actor_user_id: str | None = None,
         actor_email: str | None = None,
         actor_name: str | None = None,
@@ -380,6 +381,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         defect = _blank_to_none(defect_description)
         corrective = _blank_to_none(corrective_actions)
         opinion = _blank_to_none(technical_opinion)
+        registered = _blank_to_none(registered_at)
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
@@ -391,7 +393,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                         defect_description, corrective_actions, technical_opinion,
                         created_by, updated_by
                     ) VALUES (
-                        NOW(), %s, %s, %s,
+                        COALESCE(%s::timestamptz, NOW()), %s, %s, %s,
                         %s::date, %s::date,
                         %s, %s, %s,
                         %s, %s, %s,
@@ -400,6 +402,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     RETURNING id
                     """,
                     (
+                        registered,
                         sale,
                         lmp,
                         customer,

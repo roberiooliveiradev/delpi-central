@@ -1,0 +1,1029 @@
+{
+  "version": 1,
+  "exported_at": "2026-07-27T17:50:00-03:00",
+  "source": {
+    "file": "nc - lmps.xlsx",
+    "sheet": "Planilha1",
+    "mapping": {
+      "Data Registro+Hora Registro": "registered_at (America/Sao_Paulo)",
+      "Codigo Material": "products[].product_code",
+      "Numero da OV": "sale_number (pad 6 se numérico; - / -- / --- → null)",
+      "Numero da LMP": "lmp_number",
+      "Quem Executou": "executed_by",
+      "Quem Liberou": "released_by",
+      "Data Lançamento": "launch_date",
+      "Data Ultima Revisão": "last_revision_date",
+      "Cliente": "customer_name",
+      "Problema Identificado": "problem_tags[]",
+      "Descrição do Registro": "defect_description",
+      "status": "done (histórico migrado)"
+    },
+    "notes": [],
+    "enrichment": "defect_description, corrective_actions e technical_opinion gerados a partir do registro legado (tag + descrição curta)."
+  },
+  "count": 40,
+  "items": [
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "020 23",
+      "customer_name": "Weg",
+      "launch_date": "2023-02-10",
+      "last_revision_date": null,
+      "executed_by": "Marcio",
+      "released_by": "Emelly",
+      "defect_description": "Divergência dimensional no produto 90263664 (LMP 020 23). Registro original: Cota menor que desenho WEG. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 020 23 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263664",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:19:35-03:00",
+      "source_row": 1,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "062 17",
+      "customer_name": "Weg",
+      "launch_date": "2017-05-09",
+      "last_revision_date": "2021-12-07",
+      "executed_by": "Marcio",
+      "released_by": "Marcelo",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90262605 (LMP 062 17). Registro original: Não alterado desenho PDF na pasta. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 062 17 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90262605",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:21:39-03:00",
+      "source_row": 2,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "062 17",
+      "customer_name": "Weg",
+      "launch_date": "2017-05-09",
+      "last_revision_date": "2021-12-07",
+      "executed_by": "Marcio",
+      "released_by": "Marcelo",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90262606 (LMP 062 17). Registro original: Desenho não salvo na pasta em PDF. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 062 17 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90262606",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:24:39-03:00",
+      "source_row": 3,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "170 24",
+      "customer_name": "Weg",
+      "launch_date": "2024-10-23",
+      "last_revision_date": null,
+      "executed_by": "William",
+      "released_by": "Mateus",
+      "defect_description": "Divergência dimensional no produto 90263985 (LMP 170 24). Registro original: Cabo ficou 5mm maior que especificado em projeto WEG. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 170 24 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263985",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:26:41-03:00",
+      "source_row": 4,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "004 23",
+      "customer_name": "Weg",
+      "launch_date": "2023-01-20",
+      "last_revision_date": "2025-08-18",
+      "executed_by": "Marcio",
+      "released_by": "Emelly",
+      "defect_description": "Terminal aplicado divergente do projeto no produto 90263651 (LMP 004 23). Registro original: Terminal divergente com projeto WEG. O componente de ponta não corresponde à especificação do desenho WEG/cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: componente de ponta em desacordo com o projeto. Risco de incompatibilidade elétrica/mecânica no cliente Weg. Aprovar apenas após troca do terminal e atualização da BOM.",
+      "problem_tags": [
+        "Terminal"
+      ],
+      "products": [
+        {
+          "product_code": "90263651",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:31:23-03:00",
+      "source_row": 5,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "064 24",
+      "customer_name": "Weg",
+      "launch_date": "2024-04-16",
+      "last_revision_date": "2025-08-09",
+      "executed_by": "Vanusa",
+      "released_by": "Mateus",
+      "defect_description": "Divergência dimensional no produto 90263909 (LMP 064 24). Registro original: Medida do cabo vermelho ficou 3mm maior que projeto WEG. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 064 24 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263909",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:33:20-03:00",
+      "source_row": 6,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "037 09",
+      "customer_name": "Weg",
+      "launch_date": "2009-05-06",
+      "last_revision_date": "2025-09-05",
+      "executed_by": "Marcelo",
+      "released_by": "Valmor",
+      "defect_description": "Divergência dimensional no produto 90280022 (LMP 037 09). Registro original: Divergencia de medida entre desenho e estrutura. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente com base no registro legado. Concluir correção documental/processual da LMP 037 09 e manter evidência na revisão liberada.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90280022",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-09-23T16:34:46-03:00",
+      "source_row": 7,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "109 25",
+      "customer_name": "Novos Negócios",
+      "launch_date": "2025-10-20",
+      "last_revision_date": "2025-10-20",
+      "executed_by": "William",
+      "released_by": "Gabriela",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90480113 (LMP 109 25). Registro original: Novos Negócios - Desenho - Identificação das letras no desenhos trocadas. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Novos Negócios.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 109 25 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90480113",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-10-29T10:32:14-03:00",
+      "source_row": 8,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "102 22",
+      "customer_name": "Novos Negócios",
+      "launch_date": "2022-08-08",
+      "last_revision_date": "2025-03-13",
+      "executed_by": "Mateus",
+      "released_by": "William",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90263572 (LMP 102 22). Registro original: Um material com o código errado na estrutura em planilha, conector cadastrado como 1008 sendo que correto é 1009. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Novos Negócios.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 102 22 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90263572",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-10-29T14:53:59-03:00",
+      "source_row": 9,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "131 21",
+      "customer_name": "Weg",
+      "launch_date": "2021-11-29",
+      "last_revision_date": "2023-03-29",
+      "executed_by": "Julieli",
+      "released_by": "Marcio",
+      "defect_description": "Não conformidade de medida identificada no produto 90263468 (LMP 131 21, cliente Weg): divergência dimensional em relação ao desenho/projeto do cliente, sem detalhe adicional no registro legado.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 131 21 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263468",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-11-18T16:23:07-03:00",
+      "source_row": 10,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "131 21",
+      "customer_name": "Weg",
+      "launch_date": "2021-11-29",
+      "last_revision_date": "2023-03-29",
+      "executed_by": "Julieli",
+      "released_by": "Marcio",
+      "defect_description": "Divergência dimensional no produto 90263468 (LMP 131 21). Registro original: Medida do cabo menor que o projeto do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 131 21 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263468",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-11-18T16:23:27-03:00",
+      "source_row": 11,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "131 21",
+      "customer_name": "Weg",
+      "launch_date": "2021-12-01",
+      "last_revision_date": "2025-11-20",
+      "executed_by": "Juliele",
+      "released_by": "Marcio",
+      "defect_description": "Divergência dimensional no produto 90263474 (LMP 131 21). Registro original: Medida do cabo menor que o projeto do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 131 21 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263474",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2025-11-24T07:19:19-03:00",
+      "source_row": 12,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "027 10",
+      "customer_name": "Weg",
+      "launch_date": "2010-03-30",
+      "last_revision_date": "2018-07-18",
+      "executed_by": "Marcelo",
+      "released_by": "Adriano",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90261606 (LMP 027 10). Registro original: Quantidade da etiqueta no desenho divergente com a estrutura. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 027 10 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90261606",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-01-13T07:19:00-03:00",
+      "source_row": 13,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "060 13",
+      "customer_name": "Weg",
+      "launch_date": "2006-11-24",
+      "last_revision_date": "2026-01-19",
+      "executed_by": "Marcelo",
+      "released_by": "Valmor",
+      "defect_description": "Divergência dimensional no produto 90260883 (LMP 060 13). Registro original: Comprimento do cabo e decape divergente com desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 060 13 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90260883",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-02T10:16:54-03:00",
+      "source_row": 14,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "002966",
+      "lmp_number": "003 26",
+      "customer_name": "Weg",
+      "launch_date": "2026-01-14",
+      "last_revision_date": "2026-01-14",
+      "executed_by": "William",
+      "released_by": "Gabriella",
+      "defect_description": "Divergência dimensional no produto 90264171 (LMP 003 26). Registro original: Comprimento do cabo divergente com desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 003 26 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90264171",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-10-03T09:53:36-03:00",
+      "source_row": 15,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "003213",
+      "lmp_number": "014 26",
+      "customer_name": "Weg",
+      "launch_date": "2026-02-03",
+      "last_revision_date": "2026-02-03",
+      "executed_by": "Gabriella",
+      "released_by": "William",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90264178 (LMP 014 26). Registro original: Descrição do desenho divergente com estrutura. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 014 26 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90264178",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-10-03T09:56:10-03:00",
+      "source_row": 16,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "060 18",
+      "customer_name": "Weg",
+      "launch_date": "2018-04-29",
+      "last_revision_date": "2019-10-23",
+      "executed_by": "Marcio",
+      "released_by": "Max",
+      "defect_description": "Divergência dimensional no produto 90262834 (LMP 060 18). Registro original: Comprimento do cabo abaixo do especificado do desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 060 18 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262834",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-04-05T08:41:14-03:00",
+      "source_row": 17,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "060 18",
+      "customer_name": "Weg",
+      "launch_date": "2018-04-29",
+      "last_revision_date": "2019-10-23",
+      "executed_by": "Marcio",
+      "released_by": "Max",
+      "defect_description": "Divergência dimensional no produto 90262834 (LMP 060 18). Registro original: Comprimento do cabo abaixo do especificado do desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 060 18 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262834",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-04-05T08:41:26-03:00",
+      "source_row": 18,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "241 17",
+      "customer_name": "Weg",
+      "launch_date": "2017-12-22",
+      "last_revision_date": "2026-05-04",
+      "executed_by": "Marcio",
+      "released_by": "Max",
+      "defect_description": "Divergência dimensional no produto 90262751 (LMP 241 17). Registro original: Comprimento do cabo abaixo do especificado no desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 241 17 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262751",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-05T05:09:10-03:00",
+      "source_row": 19,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "000061",
+      "lmp_number": "064 26",
+      "customer_name": "Weg",
+      "launch_date": "2026-04-22",
+      "last_revision_date": null,
+      "executed_by": "Gabriella",
+      "released_by": "William",
+      "defect_description": "Divergência dimensional no produto 90264222 (LMP 064 26). Registro original: Intermediários MENOR QUE DESENHO DO CLIENTE. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 064 26 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90264222",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T07:32:53-03:00",
+      "source_row": 20,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "000061",
+      "lmp_number": "064 26",
+      "customer_name": "Weg",
+      "launch_date": "2026-04-22",
+      "last_revision_date": null,
+      "executed_by": "Gabriella",
+      "released_by": "William",
+      "defect_description": "Divergência dimensional no produto 90264223 (LMP 064 26). Registro original: Comprimento cabos menor que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 064 26 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90264223",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T07:35:05-03:00",
+      "source_row": 21,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "096 2022",
+      "customer_name": "Weg",
+      "launch_date": "2022-07-22",
+      "last_revision_date": null,
+      "executed_by": "Marcio",
+      "released_by": "José",
+      "defect_description": "Divergência dimensional no produto 90263571 (LMP 096 2022). Registro original: Comprimento cabo preto maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 096 2022 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263571",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T07:38:43-03:00",
+      "source_row": 22,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "045 19",
+      "customer_name": "Weg",
+      "launch_date": "2019-04-29",
+      "last_revision_date": "2024-11-27",
+      "executed_by": "Marcio",
+      "released_by": "Max",
+      "defect_description": "Divergência dimensional no produto 90262982 (LMP 045 19). Registro original: Comprimento cabo azul maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 045 19 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262982",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T08:11:42-03:00",
+      "source_row": 23,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "111 20",
+      "customer_name": "Weg",
+      "launch_date": "2020-09-25",
+      "last_revision_date": null,
+      "executed_by": "Marcio",
+      "released_by": "Alessandro",
+      "defect_description": "Divergência dimensional no produto 90263288 (LMP 111 20). Registro original: Cabos menor que desenhos dos clientes. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 111 20 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263288",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T08:15:07-03:00",
+      "source_row": 24,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "033 19",
+      "customer_name": "Weg",
+      "launch_date": "2019-04-01",
+      "last_revision_date": "2024-11-06",
+      "executed_by": "Marcio",
+      "released_by": "Max",
+      "defect_description": "Divergência dimensional no produto 90262965 (LMP 033 19). Registro original: Cabos preto e vermelho maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 033 19 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262965",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-18T09:17:41-03:00",
+      "source_row": 25,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "041 25",
+      "customer_name": "Weg",
+      "launch_date": "2025-03-18",
+      "last_revision_date": null,
+      "executed_by": "William",
+      "released_by": "Mateus",
+      "defect_description": "Divergência dimensional no produto 90264043 (LMP 041 25). Registro original: Tolerancia cabo marrom maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 041 25 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90264043",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-05-19T07:28:46-03:00",
+      "source_row": 26,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "135 13",
+      "customer_name": "Weg",
+      "launch_date": "2013-11-27",
+      "last_revision_date": "2026-06-04",
+      "executed_by": "Victor",
+      "released_by": "Dennis",
+      "defect_description": "Divergência dimensional no produto 90262126 (LMP 135 13). Registro original: Cabo laranja menor que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 135 13 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262126",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-08-06T09:54:44-03:00",
+      "source_row": 27,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "000061",
+      "lmp_number": "086 26",
+      "customer_name": "Weg",
+      "launch_date": "2026-05-27",
+      "last_revision_date": null,
+      "executed_by": "Gabriella",
+      "released_by": "William",
+      "defect_description": "Decape incorreto identificado no produto 90264236 (LMP 086 26). Registro original: Decape errado olhal. O comprimento/posição do decape (olhal) não está conforme o desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: decape fora de especificação compromete crimpagem/contato no olhal. Ajustar processo e revalidar amostra da LMP 086 26 antes de seguir produção.",
+      "problem_tags": [
+        "Decape"
+      ],
+      "products": [
+        {
+          "product_code": "90264236",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-08-06T09:59:35-03:00",
+      "source_row": 28,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "035 15",
+      "customer_name": "Weg",
+      "launch_date": "2015-04-14",
+      "last_revision_date": "2018-06-16",
+      "executed_by": "Victor",
+      "released_by": "Valmor",
+      "defect_description": "Divergência dimensional no produto 90262379 (LMP 035 15). Registro original: Cabo azul cota divergente do desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 035 15 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262379",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-08-06T10:01:32-03:00",
+      "source_row": 29,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "039 17",
+      "customer_name": "Weg",
+      "launch_date": "2017-03-27",
+      "last_revision_date": "2026-06-15",
+      "executed_by": "Marcio",
+      "released_by": "Denniis",
+      "defect_description": "Divergência dimensional no produto 90262593 (LMP 039 17). Registro original: Comprimento maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 039 17 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262593",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-06-15T14:08:23-03:00",
+      "source_row": 30,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": "003331",
+      "lmp_number": "125 25",
+      "customer_name": "Novos Negócios",
+      "launch_date": "2025-11-28",
+      "last_revision_date": "2026-04-16",
+      "executed_by": "William",
+      "released_by": "Gabriella",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90264255 (LMP 125 25). Registro original: DESCRIÇÃO intermediário DIVERGENTE. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Novos Negócios.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 125 25 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90264255",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-06-17T09:49:52-03:00",
+      "source_row": 31,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "042 22",
+      "customer_name": "Weg",
+      "launch_date": "2022-04-25",
+      "last_revision_date": "2025-09-24",
+      "executed_by": "Marcio",
+      "released_by": "Julielle",
+      "defect_description": "Inconsistência de documentação/desenho no produto 90263520 (LMP 042 22). Registro original: Letra dos balões trocados. Há desalinhamento entre desenho, estrutura ou arquivos publicados para o cliente Weg.",
+      "corrective_actions": "1) Revisar desenho PDF e arquivos na pasta da OV/LMP; 2) corrigir balões, letras, quantidades e descrições divergentes; 3) republicar PDF revisado na pasta oficial; 4) alinhar estrutura (BOM) ao desenho aprovado e comunicar produção.",
+      "technical_opinion": "Parecer técnico: falha de controle documental. O desenho/estrutura publicados para a LMP 042 22 não estavam consistentes. Necessária revisão formal e republicação antes de nova liberação.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90263520",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-06-30T15:02:22-03:00",
+      "source_row": 32,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "074 11",
+      "customer_name": "Novos Negócios",
+      "launch_date": "2011-06-21",
+      "last_revision_date": "2026-06-29",
+      "executed_by": "Marcelo",
+      "released_by": "Dennis",
+      "defect_description": "Divergência dimensional no produto 90261834 (LMP 074 11). Registro original: Comprimento 12mm maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Novos Negócios.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 074 11 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Novos Negócios.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90261834",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-01-07T07:12:30-03:00",
+      "source_row": 33,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "074 11",
+      "customer_name": "Novos Negócios",
+      "launch_date": "2011-06-21",
+      "last_revision_date": "2026-06-29",
+      "executed_by": "Marcelo",
+      "released_by": "Dennis",
+      "defect_description": "Divergência dimensional no produto 90261834 (LMP 074 11). Registro original: Comprimento 12mm maior que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Novos Negócios.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 074 11 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Novos Negócios.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90261834",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-01-07T07:17:29-03:00",
+      "source_row": 34,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "121 22",
+      "customer_name": "Weg",
+      "launch_date": "2022-09-09",
+      "last_revision_date": "2026-02-07",
+      "executed_by": "Marcio",
+      "released_by": "Julielle",
+      "defect_description": "Divergência dimensional no produto 90260596 (LMP 121 22). Registro original: Comprimentos cabos cinzas menor. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 121 22 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90260596",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-06-07T07:25:58-03:00",
+      "source_row": 35,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "008 23",
+      "customer_name": "Weg",
+      "launch_date": "2023-01-27",
+      "last_revision_date": "2026-05-27",
+      "executed_by": "Marcio",
+      "released_by": "Emelly",
+      "defect_description": "Divergência dimensional no produto 90263655 (LMP 008 23). Registro original: Comprimento do cabo trocado. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 008 23 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90263655",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-07-13T09:30:37-03:00",
+      "source_row": 36,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "008 23",
+      "customer_name": "Weg",
+      "launch_date": "2023-01-27",
+      "last_revision_date": "2026-05-27",
+      "executed_by": "Marcio",
+      "released_by": "Emelly",
+      "defect_description": "Divergência dimensional no produto 90263655 (LMP 008 23). Registro original: Comprimento do cabo trocado. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 008 23 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Desenho"
+      ],
+      "products": [
+        {
+          "product_code": "90263655",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-07-13T09:31:16-03:00",
+      "source_row": 37,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "079 22",
+      "customer_name": "Weg",
+      "launch_date": "2022-06-24",
+      "last_revision_date": "2026-07-09",
+      "executed_by": "Marcio",
+      "released_by": "Julielle",
+      "defect_description": "Divergência dimensional no produto 90263555 (LMP 079 22). Registro original: Comprimento dos cabos AR/LA/AL//MR maior. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 079 22 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90263555",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-07-13T09:32:17-03:00",
+      "source_row": 38,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "034 16",
+      "customer_name": "Weg",
+      "launch_date": "2016-03-10",
+      "last_revision_date": "2026-07-16",
+      "executed_by": "Marcio",
+      "released_by": "Dennis",
+      "defect_description": "Divergência dimensional no produto 90262524 (LMP 034 16). Registro original: Cabo ar 2mm menor que desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: NC procedente por desvio dimensional. Recomenda-se travar a cota no desenho/estrutura da LMP 034 16 e garantir verificação na liberação de engenharia antes da próxima entrega ao cliente Weg.",
+      "problem_tags": [
+        "Medida"
+      ],
+      "products": [
+        {
+          "product_code": "90262524",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-07-20T07:03:22-03:00",
+      "source_row": 39,
+      "source_file": "nc - lmps.xlsx"
+    },
+    {
+      "status": "done",
+      "sale_number": null,
+      "lmp_number": "058 21",
+      "customer_name": "Weg",
+      "launch_date": "2021-06-07",
+      "last_revision_date": "2026-07-16",
+      "executed_by": "Marcio",
+      "released_by": "Julielle",
+      "defect_description": "Divergência dimensional no produto 90263381 (LMP 058 21). Registro original: Medida da abraçadeira divergente com o desenho do cliente. A cota encontrada na conferência não atende ao especificado no desenho do cliente Weg.",
+      "corrective_actions": "1) Conferir cotas no desenho vigente e na estrutura BOM; 2) ajustar comprimento do cabo/intermediário conforme projeto do cliente; 3) atualizar LMP/estrutura se a divergência for de engenharia; 4) revalidar amostra e liberar nova revisão antes da produção.",
+      "technical_opinion": "Parecer técnico: montagem fora do desenho. Corrigir instrução e inspecionar 100% do lote afetado da LMP 058 21.",
+      "problem_tags": [
+        "Montagem"
+      ],
+      "products": [
+        {
+          "product_code": "90263381",
+          "product_description": ""
+        }
+      ],
+      "registered_at": "2026-07-20T07:05:31-03:00",
+      "source_row": 40,
+      "source_file": "nc - lmps.xlsx"
+    }
+  ],
+  "dry_run": false,
+  "skip_existing": true
+}

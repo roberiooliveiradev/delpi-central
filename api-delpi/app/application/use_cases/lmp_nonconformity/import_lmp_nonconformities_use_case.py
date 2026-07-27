@@ -9,7 +9,6 @@ _VALID_STATUS = frozenset({"open", "in_progress", "done"})
 _STRIP_KEYS = frozenset(
     {
         "id",
-        "registered_at",
         "created_at",
         "updated_at",
         "created_by",
@@ -47,6 +46,7 @@ class LmpNonconformityImportRepository(Protocol):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         created_by: str | None = None,
+        registered_at: str | None = None,
         actor_user_id: str | None = None,
         actor_email: str | None = None,
         actor_name: str | None = None,
@@ -127,6 +127,14 @@ def _normalize_tags(raw: Any) -> list[str]:
     return out
 
 
+def _normalize_registered_at(value: Any) -> str | None:
+    """Aceita ISO datetime; vazio → None (create usa NOW())."""
+    text = _blank(value)
+    if text is None:
+        return None
+    return text
+
+
 def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
     """Extrai campos aceitos por ``create_record`` a partir de um item exportado."""
     source = dict(raw or {})
@@ -151,6 +159,7 @@ def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
         "technical_opinion": _blank(source.get("technical_opinion")),
         "products": products,
         "problem_tags": tags,
+        "registered_at": _normalize_registered_at(source.get("registered_at")),
         "source_id": _blank((raw or {}).get("id")),
     }
 
@@ -252,6 +261,7 @@ class ImportLmpNonconformitiesUseCase:
                     technical_opinion=fields["technical_opinion"],
                     products=fields["products"],
                     problem_tags=fields["problem_tags"],
+                    registered_at=fields.get("registered_at"),
                     created_by=created_by,
                     actor_user_id=actor_user_id,
                     actor_email=actor_email,
