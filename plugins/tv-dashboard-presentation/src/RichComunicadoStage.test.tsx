@@ -34,4 +34,14 @@ describe("RichComunicadoStage (canônico editor ≡ TV)", () => {
     const { container } = render(<RichComunicadoMasterLogo url={null} />);
     expect(container.firstChild).toBeNull();
   });
+
+  it("RichComunicadoMasterLogo usa url() com aspas (query string segura)", () => {
+    const { container } = render(
+      <RichComunicadoMasterLogo url="/apps/tv-dashboard-api/public/present/t/media/a?x=1" />,
+    );
+    const node = container.firstElementChild as HTMLElement;
+    expect(node.style.backgroundImage).toContain(
+      'url("/apps/tv-dashboard-api/public/present/t/media/a?x=1")',
+    );
+  });
 });

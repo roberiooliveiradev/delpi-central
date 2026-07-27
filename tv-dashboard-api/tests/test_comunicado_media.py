@@ -146,6 +146,58 @@ def test_comunicado_enrichment_resolves_media_url():
     assert data["blocks"][0]["url"] == f"/apps/tv-dashboard-api/playlists/{playlist_id}/media/{asset_id}"
 
 
+def test_comunicado_enrichment_resolves_public_media_url_for_preview_parity():
+    """Prévia e /present/ usam a mesma URL pública (sem JWT no <img>/CSS)."""
+    asset_id = str(uuid4())
+    playlist_id = str(uuid4())
+    token = "share-token-preview"
+    repo = MagicMock()
+    repo.get_for_token.return_value = {"id": asset_id}
+    service = ComunicadoEnrichmentService(media_repo=repo)
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "b1",
+                    "type": "image",
+                    "assetId": asset_id,
+                    "frame": {"x": 0, "y": 0, "w": 50, "h": 50},
+                }
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=playlist_id,
+        public_token=token,
+    )
+    assert data["blocks"][0]["url"] == (
+        f"/apps/tv-dashboard-api/public/present/{token}/media/{asset_id}"
+    )
+    repo.get_for_token.assert_called_once()
+    repo.get_for_playlist.assert_not_called()
+
+
+def test_enrich_master_logo_uses_public_media_url():
+    asset_id = str(uuid4())
+    playlist_id = str(uuid4())
+    token = "tok-master"
+    repo = MagicMock()
+    repo.get_for_token.return_value = {"id": asset_id}
+    service = ComunicadoEnrichmentService(media_repo=repo)
+    master = service.enrich_master_config(
+        {
+            "enabled": True,
+            "logo": {"assetId": asset_id, "frame": {"x": 2, "y": 2, "w": 12, "h": 10}},
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=playlist_id,
+        public_token=token,
+    )
+    assert master is not None
+    assert master["logo"]["url"] == (
+        f"/apps/tv-dashboard-api/public/present/{token}/media/{asset_id}"
+    )
+
+
 def test_comunicado_enrichment_resolves_custom_font_url():
     asset_id = str(uuid4())
     playlist_id = str(uuid4())
@@ -325,3 +377,27 @@ def test_enrich_preserves_input_param_key_for_preview():
     assert passed[0]["input"]["label"] == "Filial"
     assert passed[0]["inputParts"]["control"]["visible"] is True
     assert data["blocks"][0]["input"]["paramKey"] == "branch"
+
+
+def test_build_by_id_uses_public_media_urls_like_present():
+    """Prévia admin e /present/ compartilham URLs /public/present/.../media/."""
+    from unittest.mock import patch
+    from uuid import UUID
+
+    from tv_app.application.services.presentation_payload_service import PresentationPayloadService
+
+    playlist_id = UUID("00000000-0000-0000-0000-000000000001")
+    repo = MagicMock()
+    repo.get_by_id.return_value = {
+        "id": str(playlist_id),
+        "isActive": True,
+        "publicToken": "tok-preview",
+        "defaultDurationSec": 30,
+        "name": "Demo",
+    }
+    repo.list_slides.return_value = []
+    service = PresentationPayloadService(repository=repo, native_data=MagicMock())
+    with patch.object(service, "_assemble_payload", return_value={"slides": []}) as assemble:
+        service.build_by_id(playlist_id, authorization="Bearer x")
+    assert assemble.call_args.kwargs["public_media_urls"] is True
+    assert assemble.call_args.kwargs["authorization"] == "Bearer x"

@@ -69,13 +69,20 @@ class PresentationPayloadService:
         user: Any | None = None,
         filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """
+        Payload da prévia admin (`/preview-payload`).
+
+        `public_media_urls=True` — mesmo contrato de mídia do `/present/`
+        (`/public/present/{token}/media/...`). `<img>`/CSS na prévia não enviam
+        Authorization; URL admin + `access_token` é frágil e divergia da TV.
+        """
         playlist = self._repo.get_by_id(playlist_id)
         if not playlist:
             raise PlaylistNotFoundError
         return self._assemble_payload(
             playlist,
             authorization=authorization,
-            public_media_urls=False,
+            public_media_urls=True,
             user=user,
             filter_overrides=filter_overrides,
         )

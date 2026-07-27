@@ -28,7 +28,8 @@ export function RichComunicadoMasterLogo({
     opacity,
     zIndex: 0,
     pointerEvents: "none",
-    backgroundImage: `url(${url})`,
+    /* Aspas: URLs com query (`?access_token=`) ou caracteres especiais. */
+    backgroundImage: `url(${JSON.stringify(url)})`,
     backgroundSize: "contain",
     backgroundRepeat: "no-repeat",
     backgroundPosition: "center",
