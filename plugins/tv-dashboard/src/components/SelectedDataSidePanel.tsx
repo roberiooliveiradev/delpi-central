@@ -6,7 +6,8 @@ import {
   isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
-  isTextDataBoundBlockType,
+  isTextDataBoundBlock,
+  staticLabelFromTextBoundBlock,
   type ComunicadoBlock,
   type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
@@ -169,11 +170,12 @@ export function SelectedDataSidePanel({
       setDataPanelIntent("binding");
       return;
     }
-    if (isTextDataBoundBlockType(primary.type)) {
+    if (isTextDataBoundBlock(primary)) {
       const patch = buildTextDataLinkPatch({
         dataSourceId: sourceId,
         resolved,
-        existing: "textProjection" in primary ? primary.textProjection : undefined,
+        existing: primary.textProjection,
+        staticContent: staticLabelFromTextBoundBlock(primary),
       });
       updateSelected(patch as Partial<ComunicadoBlock>);
       setDataPanelIntent("binding");

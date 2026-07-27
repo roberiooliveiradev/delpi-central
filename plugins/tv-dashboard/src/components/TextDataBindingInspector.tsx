@@ -4,7 +4,9 @@ import {
   buildTextDataLinkPatch,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
+  staticLabelFromTextBoundBlock,
   suggestDefaultTextProjection,
+  textProjectionPrefixFromStaticLabel,
   type ComunicadoTextProjection,
   type TextProjectionFormat,
 } from "@delpi/tv-dashboard-presentation";
@@ -95,12 +97,16 @@ export function TextDataBindingInspector({
     const suggested = suggestDefaultTextProjection(resolved, catalogFields);
     const field = suggested?.field?.trim() || firstFieldOption;
     const current = projectionRef.current;
+    const labelPrefix =
+      current.prefix ??
+      (visualBox ? textProjectionPrefixFromStaticLabel(staticLabelFromTextBoundBlock(visualBox)) : undefined);
     updateSelected({
       textProjection: {
         ...current,
         field,
         aggregation: current.aggregation ?? suggested?.aggregation ?? "first",
         format: current.format ?? suggested?.format ?? "number",
+        ...(labelPrefix ? { prefix: labelPrefix } : {}),
       },
     });
   }, [
@@ -111,6 +117,7 @@ export function TextDataBindingInspector({
     selectedBlockId,
     sourceId,
     updateSelected,
+    visualBox,
   ]);
 
   if (!visualBox) return null;
@@ -141,6 +148,7 @@ export function TextDataBindingInspector({
       resolved: sourceResolved,
       existing: visualBox.textProjection,
       catalogFields,
+      staticContent: staticLabelFromTextBoundBlock(visualBox),
     });
     updateSelected(patch as Partial<typeof visualBox>);
   }

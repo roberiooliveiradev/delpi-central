@@ -92,6 +92,27 @@ describe("textViewProjection", () => {
     expect(["value", "oee"]).toContain(patch.textProjection?.field);
   });
 
+  it("buildTextDataLinkPatch preserva rótulo estático como prefixo (não substitui)", () => {
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: "src-1",
+      resolved,
+      staticContent: "Realizado",
+    });
+    expect(patch.textProjection?.prefix).toBe("Realizado ");
+    const display = resolveTextDisplayValue(resolved, patch.textProjection);
+    expect(display.text.startsWith("Realizado ")).toBe(true);
+    expect(display.text).toMatch(/42/);
+  });
+
+  it("buildTextDataLinkPatch não duplica espaço quando o rótulo já termina com :", () => {
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: "src-1",
+      resolved,
+      staticContent: "Meta:",
+    });
+    expect(patch.textProjection?.prefix).toBe("Meta:");
+  });
+
   it("suggestDefaultTextProjection usa primeiro campo do catálogo", () => {
     const suggested = suggestDefaultTextProjection(undefined, [
       { field: "value", label: "value" },

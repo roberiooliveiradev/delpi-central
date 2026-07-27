@@ -20,6 +20,7 @@ import {
   resolveBlockPlacementStyle,
   RichComunicadoMasterLogo,
   shapeBlockAllowsResize,
+  staticLabelFromTextBoundBlock,
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -893,6 +894,7 @@ export function ComunicadoComposerCanvas() {
                 dataSourceId: block.id,
                 resolved,
                 existing: selected.textProjection,
+                staticContent: staticLabelFromTextBoundBlock(selected),
               }) as Partial<ComunicadoBlock>,
             );
             return;
@@ -1216,6 +1218,7 @@ export function ComunicadoComposerCanvas() {
                         dataSourceId: block.id,
                         resolved,
                         existing: selected.textProjection,
+                        staticContent: staticLabelFromTextBoundBlock(selected),
                       }) as Partial<ComunicadoBlock>,
                     );
                     return;

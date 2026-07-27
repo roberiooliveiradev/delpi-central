@@ -61,6 +61,7 @@ import {
   isComunicadoVisualBoxBlock,
   isLineShapeKind,
   resolveBlockPasteDataPolicy,
+  staticLabelFromTextBoundBlock,
   translateLineEndpoints,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
@@ -283,6 +284,7 @@ export function useComunicadoEditorBlocks({
           dataSourceId: sourceId,
           resolved,
           existing: block.textProjection,
+          staticContent: staticLabelFromTextBoundBlock(block),
         });
         return { ...block, ...patch } as ComunicadoBlock;
       }

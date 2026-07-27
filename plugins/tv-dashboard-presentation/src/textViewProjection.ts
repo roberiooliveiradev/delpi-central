@@ -282,22 +282,63 @@ export function viewHasTextProjectionConfigured(
   return Boolean(block.contentRuns?.some((run) => run.dataRef?.field?.trim()));
 }
 
+/**
+ * Texto estático do bloco (content / runs sem dataRef) — usado como rótulo ao ligar dado.
+ */
+export function staticLabelFromTextBoundBlock(
+  block: Pick<TextDataBoundBlock, "content" | "contentRuns">,
+): string {
+  if (block.contentRuns?.length && !block.contentRuns.some((run) => run.dataRef?.field?.trim())) {
+    return plainTextFromContentRuns(block.contentRuns);
+  }
+  return typeof block.content === "string" ? block.content : "";
+}
+
+/**
+ * Rótulo estático vira `prefix` da projeção: valor dinâmico no final, sem substituir o texto.
+ * Acrescenta espaço (ou preserva `:` / quebra) entre rótulo e valor.
+ */
+export function textProjectionPrefixFromStaticLabel(
+  label: string | undefined | null,
+): string | undefined {
+  const trimmedEnd = String(label ?? "").replace(/\s+$/u, "");
+  if (!trimmedEnd) return undefined;
+  if (/[\s:：\-–—(/[{]$/u.test(trimmedEnd)) return trimmedEnd;
+  return `${trimmedEnd} `;
+}
+
 export type BuildTextDataLinkPatchInput = {
   dataSourceId: string;
   resolved?: ComunicadoDataResolved;
   existing?: ComunicadoTextProjection;
   /** Campos do catálogo da rota — fallback quando o resolved ainda não listou fields. */
   catalogFields?: Array<{ field: string; label: string }>;
+  /**
+   * Conteúdo estático atual (ex.: «Realizado»). Vira `textProjection.prefix`
+   * na 1ª ligação — o valor dinâmico é acrescentado no final, não substitui.
+   */
+  staticContent?: string;
 };
 
 export function buildTextDataLinkPatch(
   input: BuildTextDataLinkPatchInput,
 ): Partial<TextDataBoundBlock> {
-  const { dataSourceId, resolved, existing, catalogFields } = input;
+  const { dataSourceId, resolved, existing, catalogFields, staticContent } = input;
   const patch: Partial<TextDataBoundBlock> = { dataSourceId };
   if (!textProjectionHasField(existing)) {
     const suggested = suggestDefaultTextProjection(resolved, catalogFields);
-    if (suggested) patch.textProjection = suggested;
+    if (suggested) {
+      const next: ComunicadoTextProjection = { ...suggested };
+      if (existing?.prefix) next.prefix = existing.prefix;
+      else {
+        const fromLabel = textProjectionPrefixFromStaticLabel(staticContent);
+        if (fromLabel) next.prefix = fromLabel;
+      }
+      if (existing?.suffix) next.suffix = existing.suffix;
+      if (existing?.fallback) next.fallback = existing.fallback;
+      if (existing?.colorRules?.length) next.colorRules = [...existing.colorRules];
+      patch.textProjection = next;
+    }
   }
   return patch;
 }
@@ -317,8 +358,12 @@ export function syncTextBlocksWithResolved(
     if (!textProjectionHasField(block.textProjection) && !block.contentRuns?.some((r) => r.dataRef)) {
       const suggested = suggestDefaultTextProjection(resolved);
       if (!suggested) return block;
+      const fromLabel = textProjectionPrefixFromStaticLabel(staticLabelFromTextBoundBlock(block));
+      const textProjection: ComunicadoTextProjection = fromLabel
+        ? { ...suggested, prefix: fromLabel }
+        : suggested;
       changedIds.push(block.id);
-      return { ...block, textProjection: suggested } as ComunicadoBlock;
+      return { ...block, textProjection } as ComunicadoBlock;
     }
     return block;
   });
