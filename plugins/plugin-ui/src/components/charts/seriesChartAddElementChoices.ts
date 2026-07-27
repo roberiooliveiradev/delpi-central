@@ -88,10 +88,14 @@ function applyDataLabelsChoice(
 ): SeriesChartOptions {
   const preset = DATA_LABEL_CHOICE_PRESET[choiceId];
   const next = dataLabelsConfigFromPreset(preset);
+  if (!next.showDataLabels) {
+    /* Só desliga o flag — mantém dataLabels custom (categoria/%, posição, etc.). */
+    return mergeSeriesChartOptions({ ...base, showDataLabels: false });
+  }
   return mergeSeriesChartOptions({
     ...base,
-    showDataLabels: next.showDataLabels,
-    dataLabels: next.showDataLabels ? next.dataLabels : undefined,
+    showDataLabels: true,
+    dataLabels: next.dataLabels,
   });
 }
 
@@ -183,7 +187,6 @@ export function applyChartAddElementChoice(
       return mergeSeriesChartOptions({
         ...base,
         showLegend: false,
-        legendPosition: "hidden",
       });
     case "legend:right":
       return mergeSeriesChartOptions({

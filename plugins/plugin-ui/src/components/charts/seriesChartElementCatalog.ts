@@ -1,7 +1,7 @@
 import type { SeriesChartOptions, SeriesChartKind } from "./seriesChartOptions";
 import { mergeSeriesChartOptions } from "./seriesChartOptions";
 import {
-  chartOptionsToParts,
+  mergeChartPartsWithOptions,
   serializeChartPartRef,
   upsertChartPartState,
   type ChartPartRef,
@@ -129,25 +129,36 @@ export function isSeriesChartElementEnabled(
   }
 }
 
+/**
+ * Liga/desliga elemento sem apagar preferências (posição da legenda, conteúdo
+ * dos rótulos, eixos individuais, tipografia nas parts).
+ * `current` = options antes do toggle — usado para restaurar com segurança.
+ */
 export function setSeriesChartElementEnabled(
   elementId: SeriesChartElementId,
   enabled: boolean,
+  current?: SeriesChartOptions | null,
 ): Partial<SeriesChartOptions> {
   switch (elementId) {
     case "axes":
-      return {
-        showAxes: enabled,
-        showXAxisLabels: enabled,
-        showYAxisLabels: enabled,
-      };
+      if (!enabled) return { showAxes: false };
+      if (current?.showXAxisLabels === false && current?.showYAxisLabels === false) {
+        return { showAxes: true, showXAxisLabels: true, showYAxisLabels: true };
+      }
+      return { showAxes: true };
     case "axisTitles":
+      if (!enabled) return { showXAxisTitle: false, showYAxisTitle: false };
+      if (current?.showXAxisTitle === false && current?.showYAxisTitle === false) {
+        return { showXAxisTitle: true, showYAxisTitle: true };
+      }
       return {
-        showXAxisTitle: enabled,
-        showYAxisTitle: enabled,
+        ...(current?.showXAxisTitle === false ? {} : { showXAxisTitle: true }),
+        ...(current?.showYAxisTitle === false ? {} : { showYAxisTitle: true }),
       };
     case "chartTitle":
       return { showTitle: enabled };
     case "dataLabels":
+      /* Só o flag — preserva `dataLabels` (posição/conteúdo/linhas guia). */
       return { showDataLabels: enabled };
     case "dataTable":
       return { showDataTable: enabled };
@@ -156,10 +167,17 @@ export function setSeriesChartElementEnabled(
       return enabled
         ? { showGrid: true }
         : { showGrid: false, showVerticalGrid: false };
-    case "legend":
-      return enabled
-        ? { showLegend: true, legendPosition: "bottom" }
-        : { showLegend: false, legendPosition: "hidden" };
+    case "legend": {
+      if (!enabled) {
+        /* Não gravar legendPosition:"hidden" — apagaria left/right/top ao religar. */
+        return { showLegend: false };
+      }
+      const pos = current?.legendPosition;
+      if (pos === "hidden" || pos == null) {
+        return { showLegend: true, legendPosition: "bottom" };
+      }
+      return { showLegend: true };
+    }
     case "markers":
       return { showMarkers: enabled };
     case "chartArea":
@@ -216,6 +234,7 @@ export function chartElementPrimaryPartRef(elementId: SeriesChartElementId): Cha
 /**
  * Liga/desliga elemento sincronizando `chartOptions` flat e `chartParts`.
  * Fonte canônica para o inspetor (sem duplicar toggles só em options).
+ * Preserva estilo/frame/conteúdo das parts e configs detalhadas (rótulos, posição da legenda).
  */
 export function applyChartElementVisibility(
   elementId: SeriesChartElementId,
@@ -223,15 +242,12 @@ export function applyChartElementVisibility(
   options: SeriesChartOptions,
   parts?: ChartPartsMap | null,
 ): { options: SeriesChartOptions; parts: ChartPartsMap } {
-  const optionPatch = setSeriesChartElementEnabled(elementId, enabled);
+  const optionPatch = setSeriesChartElementEnabled(elementId, enabled, options);
   const nextOptions = mergeSeriesChartOptions({ ...options, ...optionPatch });
-  let nextParts: ChartPartsMap = { ...(parts ?? {}), ...chartOptionsToParts(options) };
-
+  let nextParts = mergeChartPartsWithOptions(parts, nextOptions);
   for (const ref of chartElementPartRefs(elementId)) {
     nextParts = upsertChartPartState(nextParts, ref, { visible: enabled });
   }
-
-  nextParts = { ...nextParts, ...chartOptionsToParts(nextOptions) };
   return { options: nextOptions, parts: nextParts };
 }
 

@@ -81,6 +81,50 @@ describe("seriesChartElementCatalog", () => {
     expect(on.parts.legend?.visible).toBe(false);
   });
 
+  it("desligar/ligar legenda preserva posição e não usa hidden", () => {
+    const base = mergeSeriesChartOptions({
+      showLegend: true,
+      legendPosition: "left",
+      seriesName: "LMP",
+    });
+    const off = applyChartElementVisibility("legend", false, base, {
+      legend: { visible: true, content: "LMP", style: { fill: "#eee" } },
+    });
+    expect(off.options.showLegend).toBe(false);
+    expect(off.options.legendPosition).toBe("left");
+    expect(off.parts.legend?.content).toBe("LMP");
+    expect(off.parts.legend?.style?.fill).toBe("#eee");
+
+    const on = applyChartElementVisibility("legend", true, off.options, off.parts);
+    expect(on.options.showLegend).toBe(true);
+    expect(on.options.legendPosition).toBe("left");
+    expect(on.parts.legend?.content).toBe("LMP");
+    expect(on.parts.legend?.style?.fill).toBe("#eee");
+  });
+
+  it("desligar/ligar rótulos preserva dataLabels custom", () => {
+    const base = mergeSeriesChartOptions({
+      showDataLabels: true,
+      dataLabels: {
+        showCategoryName: true,
+        showPercentage: true,
+        showValue: false,
+        position: "outsideEnd",
+        showLeaderLines: true,
+      },
+    });
+    const off = applyChartElementVisibility("dataLabels", false, base, null);
+    expect(off.options.showDataLabels).toBe(false);
+    expect(off.options.dataLabels).toMatchObject({
+      showCategoryName: true,
+      showPercentage: true,
+      position: "outsideEnd",
+    });
+    const on = applyChartElementVisibility("dataLabels", true, off.options, off.parts);
+    expect(on.options.showDataLabels).toBe(true);
+    expect(on.options.dataLabels?.position).toBe("outsideEnd");
+  });
+
   it("gridlines liga só horizontal sem forçar vertical no catálogo", () => {
     const off = mergeSeriesChartOptions(setSeriesChartElementEnabled("gridlines", false));
     expect(off.showGrid).toBe(false);

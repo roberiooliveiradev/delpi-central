@@ -699,7 +699,8 @@ export function mergeChartPartsWithOptions(
     const prevState = prev[key];
     const projectedState = projected[key];
     if (!prevState) continue;
-    if (key === "chartArea" || key === "plotArea" || key === "dataLabels" || key.startsWith("dataLabel:")) {
+    /* dataLabels: visibilidade segue showDataLabels flat (toggle ribbon). */
+  if (key === "chartArea" || key === "plotArea" || key.startsWith("dataLabel:")) {
       merged[key] = {
         ...projectedState,
         ...prevState,
@@ -712,6 +713,16 @@ export function mergeChartPartsWithOptions(
           ...(key === "plotArea" && chartAreaFillChanged && nextChartAreaFill
             ? { fill: nextChartAreaFill }
             : {}),
+        },
+      };
+    } else if (key === "dataLabels") {
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        visible: Boolean(options?.showDataLabels),
+        style: {
+          ...projectedState?.style,
+          ...prevState.style,
         },
       };
     } else if (key.startsWith("marker:")) {
@@ -796,10 +807,9 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   if (legend) {
     if (legend.visible === false) {
       patch.showLegend = false;
-      patch.legendPosition = "hidden";
+      /* Não forçar legendPosition:"hidden" — preserva left/right/top/bottom. */
     } else if (legend.visible === true) {
       patch.showLegend = true;
-      if (patch.legendPosition === "hidden") patch.legendPosition = "bottom";
     }
     if (legend.content !== undefined) patch.seriesName = legend.content;
   }

@@ -48,6 +48,32 @@ describe("applyChartAddElementChoice", () => {
     expect(next.showDataLabels).toBe(false);
   });
 
+  it("dataLabels:none preserva config detalhada ao desligar", () => {
+    const next = applyChartAddElementChoice("dataLabels:none", {
+      showDataLabels: true,
+      dataLabels: {
+        showCategoryName: true,
+        showPercentage: true,
+        position: "outsideEnd",
+      },
+    });
+    expect(next.showDataLabels).toBe(false);
+    expect(next.dataLabels).toMatchObject({
+      showCategoryName: true,
+      showPercentage: true,
+      position: "outsideEnd",
+    });
+  });
+
+  it("legend:none não apaga legendPosition", () => {
+    const next = applyChartAddElementChoice("legend:none", {
+      showLegend: true,
+      legendPosition: "right",
+    });
+    expect(next.showLegend).toBe(false);
+    expect(next.legendPosition).toBe("right");
+  });
+
   it("dataLabels:categoryPercent aplica Label Contains PPT", () => {
     const next = applyChartAddElementChoice("dataLabels:categoryPercent", {});
     expect(next.showDataLabels).toBe(true);
