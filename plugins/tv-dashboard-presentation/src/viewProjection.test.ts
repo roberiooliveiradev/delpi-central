@@ -126,6 +126,60 @@ describe("applyViewProjection", () => {
     expect(points).toHaveLength(3);
   });
 
+  it("com serverProjectionApplied ainda agrupa pizza (não confia no bake rowwise)", () => {
+    const bakedWrong: ComunicadoDataResolved = {
+      serverProjectionApplied: true,
+      chart: {
+        chartType: "line",
+        points: [
+          { label: "LMP", value: 1 },
+          { label: "LMP", value: 1 },
+          { label: "AMOSTRA", value: 1 },
+          { label: "LMP", value: 1 },
+        ],
+        series: [
+          {
+            name: "Dashboard de LMPs",
+            points: [
+              { label: "LMP", value: 1 },
+              { label: "LMP", value: 1 },
+              { label: "AMOSTRA", value: 1 },
+              { label: "LMP", value: 1 },
+            ],
+          },
+        ],
+      },
+      table: {
+        columns: [
+          { key: "tipo", label: "Tipo" },
+          { key: "ov", label: "OV" },
+        ],
+        rows: [
+          { tipo: "LMP", ov: "1" },
+          { tipo: "LMP", ov: "2" },
+          { tipo: "AMOSTRA", ov: "3" },
+          { tipo: "LMP", ov: "4" },
+        ],
+      },
+    };
+    const next = applyViewProjection(bakedWrong, {
+      chartType: "doughnut",
+      chartProjection: {
+        categoryField: "tipo",
+        series: [{ field: "tipo", aggregation: "count", label: "Contagem" }],
+      },
+    });
+    const points = next?.chart?.points ?? [];
+    expect(points).toHaveLength(2);
+    expect(points).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "LMP", value: 3 }),
+        expect.objectContaining({ label: "AMOSTRA", value: 1 }),
+      ]),
+    );
+    expect(next?.chart?.chartType).toBe("doughnut");
+  });
+
   it("barra agrupa soma por categoria", () => {
     const next = applyViewProjection(
       {

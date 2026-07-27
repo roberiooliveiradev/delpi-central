@@ -49,14 +49,46 @@ def test_apply_chart_projection_builds_multi_series():
     }
     block = {
         "type": "chart_view",
+        "chartType": "line",
         "chartProjection": {
             "categoryField": "periodo",
             "series": [{"field": "oee", "label": "OEE"}, {"field": "otd", "label": "OTD"}],
         },
     }
     next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["chart"]["chartType"] == "line"
     assert next_resolved["chart"]["series"][0]["points"][0]["label"] == "Jan"
     assert next_resolved["chart"]["series"][1]["points"][1]["value"] == 95
+
+
+def test_apply_chart_projection_doughnut_groups_by_category():
+    """Paridade com chartDataPolicy groupByCategory — evita N fatias LMP×1 na TV."""
+    resolved = {
+        "table": {
+            "columns": [{"key": "tipo", "label": "Tipo"}, {"key": "ov", "label": "OV"}],
+            "rows": [
+                {"tipo": "LMP", "ov": "1"},
+                {"tipo": "LMP", "ov": "2"},
+                {"tipo": "AMOSTRA", "ov": "3"},
+                {"tipo": "LMP", "ov": "4"},
+            ],
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "doughnut",
+        "chartProjection": {
+            "categoryField": "tipo",
+            "series": [{"field": "tipo", "aggregation": "count", "label": "Contagem"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    points = next_resolved["chart"]["points"]
+    assert next_resolved["chart"]["chartType"] == "doughnut"
+    assert len(points) == 2
+    by_label = {p["label"]: p["value"] for p in points}
+    assert by_label["LMP"] == 3
+    assert by_label["AMOSTRA"] == 1
 
 
 def test_apply_field_labels_to_resolved_preserves_row_keys():

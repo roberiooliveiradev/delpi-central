@@ -79,7 +79,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 | `tv-dashboard-persist-local-edits.mdc` | **TV Dashboard** — draft versionado; F5/WS nunca sobrescrevem edições locais sem merge |
 | `tv-dashboard-editor-pasteboard.mdc` | **TV Dashboard** — editor `overflow:visible` (pasteboard); TV/prévia clipam |
 | `mfe-modal-host-contained.mdc` | **Modais MFE** — nunca cobrir sidebar do portal; `HostContainedDialog` / `fill` |
-| `tv-dashboard-presentation-parity.mdc` | **TV Dashboard** — `RichComunicadoStage` único; flush + overlay antes da prévia |
+| `tv-dashboard-presentation-parity.mdc` | **TV Dashboard** — `RichComunicadoStage` único; flush + overlay; gráfico via `applyViewProjection`/`chartDataPolicy` (nunca bake `serverProjectionApplied` como verdade visual) |
 | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | **Scaffold MF** — vite, bootstrap, Docker, compose |
 
 ## Fluxo por tipo de tarefa
@@ -108,7 +108,7 @@ IDD engenharia 0 com KPIs em 10   → si-consolidated-department-idd + docs/ENGI
 TV Dashboard F5/WS perde fontes   → tv-dashboard-persist-local-edits → applyServerPlaylistPreservingLocalEdits + clearIfCoveredBySave
 TV Dashboard corta logo/borda no editor → tv-dashboard-editor-pasteboard → overflow:visible no canvas (não «WYSIWYG clip»)
 Modal MFE cobre sidebar do portal → mfe-modal-host-contained → HostContainedDialog / createHostContainedModalShell
-TV Dashboard prévia ≠ editor / stale → tv-dashboard-presentation-parity → RichComunicadoStage + preparePreviewNavigation
+TV Dashboard prévia ≠ editor / gráfico errado → tv-dashboard-presentation-parity → RichComunicadoStage + applyViewProjection (não confiar em serverProjectionApplied para chart)
 ```
 
 ## Ordem de prioridade em conflito

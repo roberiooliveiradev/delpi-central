@@ -592,6 +592,11 @@ function applyChartProjection(
 /**
  * Aplica projeção do visual sobre o resolved compartilhado da fonte.
  * Sem projeção, preserva `applyMetricSelectionToResolved` (legado).
+ *
+ * Encoding de gráfico (groupBy / chartType) é sempre canônico no cliente via
+ * `chartDataPolicy` + `applyChartProjection` quando há `table.rows` — mesmo com
+ * `serverProjectionApplied`. O bake do enrichment pode ser rowwise/legado e não
+ * substitui o visual do editor (ver `tv-dashboard-presentation-parity.mdc`).
  */
 export function applyViewProjection(
   resolved: ComunicadoDataResolved | undefined,
@@ -599,7 +604,14 @@ export function applyViewProjection(
 ): ComunicadoDataResolved | undefined {
   if (!resolved) return resolved;
 
-  // Servidor já projetou (enrichment) — só filtra métricas visíveis se necessário.
+  const fallback: MetricSelection = {
+    selectedValueFields: selection.selectedValueFields,
+    valueField: selection.valueField,
+  };
+
+  let next = { ...resolved };
+
+  // Enrichment já agregou KPIs — só filtra métricas visíveis (não re-agrega).
   if (resolved.serverProjectionApplied) {
     if (selection.kpiProjection?.metrics?.length) {
       const visible = new Set(
@@ -609,24 +621,14 @@ export function applyViewProjection(
       );
       const metrics = (resolved.kpiMetrics ?? []).filter((metric) => visible.has(metric.field));
       if (metrics.length > 0) {
-        return {
-          ...resolved,
+        next = {
+          ...next,
           kpiMetrics: metrics,
           kpi: { value: metrics[0]?.value, label: metrics[0]?.label },
         };
       }
     }
-    return resolved;
-  }
-
-  const fallback: MetricSelection = {
-    selectedValueFields: selection.selectedValueFields,
-    valueField: selection.valueField,
-  };
-
-  let next = { ...resolved };
-
-  if (selection.kpiProjection?.metrics?.length) {
+  } else if (selection.kpiProjection?.metrics?.length) {
     const metrics = resolveKpiMetricsWithProjection(next, selection.kpiProjection, fallback);
     const primary = metrics[0];
     next = {
@@ -644,13 +646,18 @@ export function applyViewProjection(
     next = applyTableProjection(next, selection.tableProjection);
   }
 
+  // Chart: sempre reaplicar a partir das rows + chartType quando a projeção existe.
+  // Evita TV/prévia travadas no bake rowwise do servidor após mudar pizza/rosca no editor.
   if (selection.chartProjection?.series?.length || selection.chartProjection?.categoryField) {
-    next = applyChartProjection(
-      next,
-      selection.chartProjection,
-      fallback,
-      selection.chartType ?? "line",
-    );
+    const rows = next.table?.rows ?? [];
+    if (rows.length > 0 || !resolved.serverProjectionApplied) {
+      next = applyChartProjection(
+        next,
+        selection.chartProjection,
+        fallback,
+        selection.chartType ?? "line",
+      );
+    }
   }
 
   return next;

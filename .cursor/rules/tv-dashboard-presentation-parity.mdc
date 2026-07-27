@@ -24,11 +24,15 @@ alwaysApply: false
 2. Abrir prévia **sem** `flush` do autosave / sem limpar `previewPayloadCache`.
 3. Confiar só no `preview-payload` do servidor durante edição (stale) — filmstrip e prévia devem overlay do shell local.
 4. Duplicar `PresentationPreview` vs public-hub com lógica de slide diferente (unificar no pacote presentation).
+5. **Gráfico editor ≠ TV/prévia** — confiar em `resolved.chart` bakeado pelo enrichment (`serverProjectionApplied`) e **pular** `applyViewProjection` / `chartDataPolicy` no cliente. O bake do servidor (historicamente rowwise + `chartType: line`) **não** é o visual do editor; fatias LMP/AMOSTRA viram N×1 e a legenda explode.
+6. Segundo renderer de gráfico (SVG/markup) só na prévia ou só no `/present/` — TV e editor passam por `ChartViewBlockView` → `TvDataSeriesChartWidget` com o **mesmo** `chartOptions` / `chartParts` do bloco.
 
-Incidente jul/2026: prévia com cards vazios/duplicados e layout ≠ editor por payload stale + logo duplicado.
+Incidente jul/2026: prévia com cards vazios/duplicados e layout ≠ editor por payload stale + logo duplicado.  
+Incidente jul/2026 (gráfico): pizza/rosca correta no editor, errada em `/preview` e `/present/` porque `applyViewProjection` retornava cedo com `serverProjectionApplied` e ignorava `groupByCategory`.
 
 ## O que fazer
 
 - Mudança visual do comunicado → `RichComunicadoStage` (ou `ComunicadoBlockView`).
+- Gráfico: encoding em `viewProjection` + `chartDataPolicy`; opções de exibição no bloco (`chartOptions`) — nunca pontos “congelados” do enrichment como fonte de verdade.
 - Antes de prévia → `preparePreviewNavigation(playlistId)`.
-- Teste: `RichComunicadoStage.test.tsx`, `overlayLivePreviewPayload.test.ts`.
+- Teste: `RichComunicadoStage.test.tsx`, `overlayLivePreviewPayload.test.ts`, `viewProjection.test.ts` (caso `serverProjectionApplied` + pizza agrupada).

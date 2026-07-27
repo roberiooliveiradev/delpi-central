@@ -262,47 +262,30 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
 
     if block_type == "chart_view":
         projection = block.get("chartProjection")
+        chart_type = str(block.get("chartType") or "line").strip() or "line"
         if isinstance(projection, dict) and rows:
             series_cfg = projection.get("series") if isinstance(projection.get("series"), list) else []
             category = str(projection.get("categoryField") or "").strip()
-            if series_cfg:
-                categories = [
-                    str(row.get(category)) if category and row.get(category) is not None else str(idx + 1)
-                    for idx, row in enumerate(rows)
+            # Sem série explícita + categoria + pizza/rosca → contagem por grupo.
+            if not series_cfg and category and chart_type in _COUNT_DEFAULT_CHART_TYPES:
+                series_cfg = [
+                    {
+                        "field": category,
+                        "aggregation": "count",
+                        "label": "Contagem",
+                    }
                 ]
-                series_out: list[dict[str, Any]] = []
-                for item in series_cfg:
-                    if not isinstance(item, dict):
-                        continue
-                    field = str(item.get("field") or "").strip()
-                    if not field:
-                        continue
-                    agg = str(item.get("aggregation") or "first")
-                    points = [
-                        {
-                            "label": categories[idx],
-                            "value": aggregate_values([row.get(field)], agg),
-                        }
-                        for idx, row in enumerate(rows)
-                    ]
-                    proj_label = str(item.get("label") or "")
-                    name = (
-                        proj_label
-                        if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field)
-                        else field
-                    )
-                    series_out.append(
-                        {
-                            "name": name,
-                            "field": field,
-                            "color": item.get("color"),
-                            "points": points,
-                        }
-                    )
+            if series_cfg:
+                series_out = _build_chart_series(
+                    rows=rows,
+                    category=category,
+                    series_cfg=series_cfg,
+                    chart_type=chart_type,
+                )
                 if series_out:
                     next_resolved["chart"] = {
                         "points": series_out[0]["points"],
-                        "chartType": "line" if len(series_out) == 1 else "bar",
+                        "chartType": chart_type,
                         "series": series_out,
                     }
                     applied = True
@@ -310,3 +293,132 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
     if applied:
         next_resolved["serverProjectionApplied"] = True
     return next_resolved
+
+
+# Tipos alinhados a chartDataPolicy.ts (rowMode: groupByCategory).
+_GROUP_BY_CHART_TYPES = frozenset(
+    {
+        "bar",
+        "stacked_bar",
+        "pie",
+        "doughnut",
+        "radar",
+        "combo",
+        "waterfall",
+        "funnel",
+    }
+)
+_COUNT_DEFAULT_CHART_TYPES = frozenset({"pie", "doughnut"})
+
+
+def _series_display_name(item: dict[str, Any], field: str) -> str:
+    proj_label = str(item.get("label") or "")
+    if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
+        return proj_label
+    return field
+
+
+def _aggregate_group_rows(
+    group_rows: list[dict[str, Any]],
+    field: str,
+    aggregation: str,
+    *,
+    count_fallback: bool,
+) -> float | None:
+    agg = aggregation if aggregation in _AGG_FNS else "first"
+    if agg == "count":
+        return float(len(group_rows))
+    values = _column_values(group_rows, field)
+    nums = [n for n in (_as_float(v) for v in values) if n is not None]
+    if nums:
+        return aggregate_values(nums, agg)
+    # Pizza/rosca: medida ausente → conta linhas do grupo (paridade com viewProjection.ts).
+    if count_fallback:
+        return float(len(group_rows))
+    if agg == "first" and values:
+        return _as_float(values[0])
+    return None
+
+
+def _build_chart_series(
+    *,
+    rows: list[dict[str, Any]],
+    category: str,
+    series_cfg: list[Any],
+    chart_type: str,
+) -> list[dict[str, Any]]:
+    count_fallback = chart_type in _COUNT_DEFAULT_CHART_TYPES
+    default_agg = "count" if count_fallback else "first"
+    group_by = bool(category) and chart_type in _GROUP_BY_CHART_TYPES
+
+    if group_by:
+        groups: dict[str, list[dict[str, Any]]] = {}
+        order: list[str] = []
+        for row in rows:
+            raw = row.get(category)
+            key = "(vazio)" if raw is None or raw == "" else str(raw)
+            if key not in groups:
+                groups[key] = []
+                order.append(key)
+            groups[key].append(row)
+
+        series_out: list[dict[str, Any]] = []
+        for item in series_cfg:
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("field") or "").strip()
+            if not field:
+                continue
+            agg = str(item.get("aggregation") or default_agg)
+            points = [
+                {
+                    "label": key,
+                    "value": _aggregate_group_rows(
+                        groups[key],
+                        field,
+                        agg,
+                        count_fallback=count_fallback,
+                    ),
+                }
+                for key in order
+            ]
+            series_out.append(
+                {
+                    "name": _series_display_name(item, field),
+                    "field": field,
+                    "color": item.get("color"),
+                    "points": points,
+                }
+            )
+        return series_out
+
+    categories = [
+        str(row.get(category)) if category and row.get(category) is not None else str(idx + 1)
+        for idx, row in enumerate(rows)
+    ]
+    series_out = []
+    for item in series_cfg:
+        if not isinstance(item, dict):
+            continue
+        field = str(item.get("field") or "").strip()
+        if not field:
+            continue
+        agg = str(item.get("aggregation") or default_agg)
+        points = []
+        for idx, row in enumerate(rows):
+            if agg == "count":
+                value: float | None = 1.0
+            else:
+                value = aggregate_values([row.get(field)], agg)
+                if value is None and count_fallback:
+                    value = 1.0
+            points.append({"label": categories[idx], "value": value})
+        series_out.append(
+            {
+                "name": _series_display_name(item, field),
+                "field": field,
+                "color": item.get("color"),
+                "points": points,
+            }
+        )
+    return series_out

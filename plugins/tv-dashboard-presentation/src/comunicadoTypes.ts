@@ -524,7 +524,12 @@ export type ComunicadoDataResolved = {
   statusCode?: number | null;
   displayMode?: string;
   label?: string;
-  /** Enrichment já aplicou *Projection no servidor — cliente não re-agrega. */
+  /**
+   * Enrichment já aplicou *Projection no servidor.
+   * KPI: cliente só filtra métricas visíveis (não re-agrega).
+   * Chart/table: cliente **reaplica** encoding visual a partir de `table.rows` +
+   * projeção do bloco (`chartDataPolicy`) — o bake do servidor não é autoridade do gráfico.
+   */
   serverProjectionApplied?: boolean;
   /** Enrichment aplicou dataTransform.steps antes da View. */
   serverTransformApplied?: boolean;
