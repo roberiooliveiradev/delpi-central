@@ -91,7 +91,7 @@ def test_extract_series_points_competencia_and_economia_bruta():
                 {
                     "competencia": "2026-07-01",
                     "economia_bruta": 730.85,
-                    "investimento_total_mes": 177.54,
+                    "investimento": 177.54,
                 }
             ]
         }

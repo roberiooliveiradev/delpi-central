@@ -137,7 +137,9 @@ def extract_series_points(
                 row,
                 (
                     "economia_bruta",
+                    "investimento",
                     "investimento_total_mes",
+                    "economia_liquida",
                     "economia_liquida_mes",
                 ),
             )

@@ -193,22 +193,19 @@
       ],
       "valueFields": [
         "economia_bruta",
-        "investimento_total_mes"
+        "investimento"
       ],
       "valueFieldLabels": {
         "periodo": "Período",
         "economia_bruta": "Economia",
-        "investimento_total_mes": "Investimento"
+        "investimento": "Investimento"
       },
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
-        "investimento_unico_mes": "number",
-        "custo_recorrente_mes": "number",
-        "custo_recursos_compartilhados_mes": "number",
-        "investimento_total_mes": "number",
-        "economia_liquida_mes": "number",
-        "horas_economizadas_mes": "number"
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
       },
       "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
       "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI.",
@@ -219,7 +216,7 @@
           "columns": [
             "periodo",
             "economia_bruta",
-            "investimento_total_mes"
+            "investimento"
           ]
         },
         {

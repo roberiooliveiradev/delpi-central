@@ -878,13 +878,21 @@ export type DashboardResumo = {
 };
 
 export type DashboardEvolucaoItem = {
-  competencia: string;
+  /** Legado TM (`competencia`); fachada api-delpi usa `periodo`. */
+  competencia?: string;
+  periodo?: string;
   economia_bruta: number;
+  investimento?: number;
+  investimento_unico?: number;
   investimento_unico_mes?: number;
-  custo_recorrente_mes: number;
+  custo_recorrente?: number;
+  custo_recorrente_mes?: number;
   investimento_total_mes?: number;
+  custo_recursos_compartilhados?: number;
   custo_recursos_compartilhados_mes?: number;
-  economia_liquida_mes: number;
+  economia_liquida?: number;
+  economia_liquida_mes?: number;
+  horas_economizadas?: number;
   horas_economizadas_mes?: number;
 };
 

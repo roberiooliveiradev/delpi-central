@@ -219,14 +219,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -1286,14 +1286,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      }
     },
     {
       "operationId": "get_dashboard_department_indicators",
@@ -1365,14 +1365,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "indicators",
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "indicators",
+      "tvConstraints": {
+        "maxRows": 20
+      }
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1443,14 +1443,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "items",
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "items",
+      "tvConstraints": {
+        "maxRows": 20
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -1505,15 +1505,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -1568,15 +1568,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -1631,15 +1631,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -1694,15 +1694,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -1757,15 +1757,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -1820,15 +1820,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -1883,15 +1883,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -1946,15 +1946,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -2009,15 +2009,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -2072,15 +2072,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -2135,15 +2135,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -2198,15 +2198,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -2261,15 +2261,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -2324,15 +2324,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -2387,15 +2387,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -2450,15 +2450,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -2513,15 +2513,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -2576,15 +2576,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -2639,15 +2639,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -2702,15 +2702,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -2765,15 +2765,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -2828,15 +2828,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -2891,15 +2891,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -2954,15 +2954,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -3017,15 +3017,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -3080,15 +3080,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -3143,15 +3143,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -3206,15 +3206,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -3269,15 +3269,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -3332,15 +3332,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -3395,15 +3395,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -3458,15 +3458,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -3521,15 +3521,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -3584,15 +3584,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -3647,15 +3647,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -3710,15 +3710,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -3773,15 +3773,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -3836,15 +3836,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -3899,15 +3899,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -3962,15 +3962,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -4025,15 +4025,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -4088,15 +4088,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -4151,15 +4151,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -4214,15 +4214,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -4277,15 +4277,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -4340,15 +4340,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -4403,15 +4403,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -4466,15 +4466,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -4529,15 +4529,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -4592,15 +4592,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -4655,15 +4655,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -4718,15 +4718,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -4781,15 +4781,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -4844,15 +4844,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
@@ -5159,15 +5159,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -5222,15 +5222,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -5285,15 +5285,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -5348,15 +5348,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -5411,15 +5411,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -5474,15 +5474,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -5537,15 +5537,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -5600,15 +5600,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -5663,15 +5663,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -5726,15 +5726,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value"
+      ],
       "valueFieldTypes": {
         "value": "number"
       },
       "tvConstraints": {
         "maxRows": 1
-      },
-      "valueFields": [
-        "value"
-      ]
+      }
     },
     {
       "operationId": "list_lmps",
@@ -6141,18 +6141,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      }
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -6769,33 +6769,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "points",
       "valueFields": [
         "economia_bruta",
-        "investimento_total_mes"
+        "investimento"
       ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento_total_mes": "Investimento"
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento_unico_mes": "number",
-        "custo_recorrente_mes": "number",
-        "custo_recursos_compartilhados_mes": "number",
-        "investimento_total_mes": "number",
-        "economia_liquida_mes": "number",
-        "horas_economizadas_mes": "number"
-      },
+      "tableFields": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
           "columns": [
             "periodo",
             "economia_bruta",
-            "investimento_total_mes"
+            "investimento"
           ]
         },
         {
@@ -6803,7 +6788,19 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      }
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -10563,25 +10560,13 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "seriesField": "points",
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10596,7 +10581,19 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "seriesField": "points",
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -11014,6 +11011,7 @@
       "fixedQueryParams": {
         "granularity": "day"
       },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -11024,8 +11022,7 @@
       },
       "tvConstraints": {
         "requiresBranchPermission": true
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -14354,15 +14351,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "labelAliases": [
         "Auditoria 5S — resumo"
       ]
@@ -14778,6 +14775,11 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -14785,11 +14787,6 @@
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
       },
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "labelAliases": [
         "Kaizens — resumo e listagem (Google Sheets)"
       ]
@@ -15436,10 +15433,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15450,11 +15448,10 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "labelAliases": [
         "Qualidade — PPM externo"
       ]
@@ -15652,10 +15649,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15666,11 +15664,10 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "labelAliases": [
         "Qualidade — PPM interno",
         "PPM Interno — realizado"
@@ -18141,16 +18138,16 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "top_products",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tableFields": "top_products",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_caller_stats",

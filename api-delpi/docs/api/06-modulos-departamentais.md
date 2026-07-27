@@ -294,7 +294,7 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 |---|---|---|
 | GET | `/engineering/transforma-mais/processes` | Lista processos de melhoria. |
 | GET | `/engineering/transforma-mais/processes/summary` | Resumo agregado. |
-| GET | `/engineering/transformometro/savings-investment/series` | Série Economia bruta vs Investimento do TRANSFORMA+ DELPI (`granularity=day\|month`; filtros `view`, `filial_id`, `setor_id`, `start_date`, `end_date`). Proxy do `transformometro-api` (`dashboard_evolucao`; mapeia datas → `competencia_*`). |
+| GET | `/engineering/transformometro/savings-investment/series` | Série Economia bruta vs Investimento do TRANSFORMA+ DELPI (`granularity=day\|month`; pontos com `periodo`, `economia_bruta`, `investimento`; filtros `view`, `filial_id`, `setor_id`, `start_date`, `end_date`). Proxy do `transformometro-api` (`dashboard_evolucao`). |
 
 Filtros de processos: `id`, `name_process`, `filial_id`, `sector_name`, `status`, `start_date`, `end_date`.
 

@@ -802,6 +802,40 @@ def test_source_table_for_series_route_uses_normalized_points():
     assert "campo" not in table["columns"] and "valor" not in table["columns"]
 
 
+def test_source_table_for_table_fields_prefers_wide_metrics_over_series_collapse():
+    """TRANSFORMA+ economia vs investimento: tableFields preserva colunas largas."""
+    data = {
+        "granularity": "day",
+        "total": 2,
+        "points": [
+            {
+                "periodo": "2026-07-01",
+                "economia_bruta": 100.0,
+                "investimento": 20.0,
+            },
+            {
+                "periodo": "2026-07-02",
+                "economia_bruta": 110.0,
+                "investimento": 22.0,
+            },
+        ],
+    }
+    route_info = {
+        "tableFields": "points",
+        "seriesField": "points",
+        "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+        "valueFields": ["economia_bruta", "investimento"],
+    }
+    table = _source_table_for_route(data, route_info)
+    assert table is not None
+    assert "periodo" in table["columns"]
+    assert "economia_bruta" in table["columns"]
+    assert "investimento" in table["columns"]
+    assert "value" not in table["columns"]
+    assert table["rows"][0]["economia_bruta"] == 100.0
+    assert table["rows"][0]["investimento"] == 20.0
+
+
 def test_source_table_for_non_series_route_defers_to_generic_coerce():
     """Sem seriesField, retorna None para o executor usar o coerce genérico."""
     assert _source_table_for_route({"items": [{"a": 1}]}, {"shape": "list"}) is None

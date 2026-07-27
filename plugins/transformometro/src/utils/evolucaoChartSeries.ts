@@ -50,15 +50,26 @@ function pointFromTotals(
 function totalsFromItem(item: DashboardEvolucaoItem): MonthTotals {
   return {
     bruta: Number(item.economia_bruta ?? 0),
-    liquida: Number(item.economia_liquida_mes ?? 0),
-    investimento: Number(
-      item.investimento_total_mes ??
-        Number(item.investimento_unico_mes ?? 0) +
-          Number(item.custo_recorrente_mes ?? 0) +
-          Number(item.custo_recursos_compartilhados_mes ?? 0)
+    liquida: Number(
+      item.economia_liquida ?? item.economia_liquida_mes ?? 0
     ),
-    horas: Number(item.horas_economizadas_mes ?? 0),
+    investimento: Number(
+      item.investimento ??
+        item.investimento_total_mes ??
+        Number(item.investimento_unico_mes ?? item.investimento_unico ?? 0) +
+          Number(item.custo_recorrente_mes ?? item.custo_recorrente ?? 0) +
+          Number(
+            item.custo_recursos_compartilhados_mes ??
+              item.custo_recursos_compartilhados ??
+              0
+          )
+    ),
+    horas: Number(item.horas_economizadas ?? item.horas_economizadas_mes ?? 0),
   };
+}
+
+function itemPeriodKey(item: DashboardEvolucaoItem): string {
+  return String(item.periodo ?? item.competencia ?? "").trim();
 }
 
 /**
@@ -81,7 +92,7 @@ export function buildEvolucaoSavingsSeries(
   if (granularity === "day") {
     const byDay = new Map<string, MonthTotals>();
     for (const item of items) {
-      const key = item.competencia?.trim() ?? "";
+      const key = itemPeriodKey(item);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) continue;
       const current = byDay.get(key) ?? emptyTotals();
       const next = totalsFromItem(item);
@@ -100,7 +111,7 @@ export function buildEvolucaoSavingsSeries(
 
   const byMonth = new Map<string, MonthTotals>();
   for (const item of items) {
-    const key = item.competencia?.trim() ?? "";
+    const key = itemPeriodKey(item);
     const monthKey = /^\d{4}-\d{2}-\d{2}$/.test(key) ? key.slice(0, 7) : key;
     if (!/^\d{4}-\d{2}$/.test(monthKey)) continue;
     const current = byMonth.get(monthKey) ?? emptyTotals();

@@ -65,8 +65,9 @@ def test_transformometro_savings_investment_series_returns_meta() -> None:
     point = body["data"]["points"][0]
     assert point["periodo"] == "2026-07-01"
     assert point["economia_bruta"] == 100.0
-    assert point["investimento_total_mes"] == 15.0
+    assert point["investimento"] == 15.0
     assert "competencia" not in point
+    assert "investimento_total_mes" not in point
     assert "items" not in body["data"]
 
 

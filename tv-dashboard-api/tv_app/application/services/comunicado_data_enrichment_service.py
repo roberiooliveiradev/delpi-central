@@ -721,13 +721,25 @@ def _extract_table_rows(
     branch: str | None = None,
     value_label: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
-    # Rotas de série (seriesField no catálogo) têm a série como fonte canônica: normaliza
-    # os pontos (label/valor por filial) antes do caminho de lista genérico e nunca vaza
-    # metadados internos (granularity, truncated, sort_key…) como colunas ou campo/valor.
+    # Multi-métrica (ex.: economia + investimento): `tableFields` preserva colunas largas.
+    # `seriesField` só colapsa para periodo/value quando NÃO há tableFields — evita tabela
+    # com coluna «rótulo da rota» preenchida e economia/investimento vazios.
     # Exceção: quando os dados já são uma lista tabular (ex.: saída de uma transformação M
-    # sobre a série), eles já são a tabela canônica — usa o caminho de lista genérico e não
-    # tenta reextrair a série (que não existe mais na lista) e zerar a apresentação.
+    # sobre a série), eles já são a tabela canônica.
     already_tabular = isinstance(unwrap_operational_data(data), list)
+    table_key = str(table_field or "").strip()
+    if table_key and not already_tabular:
+        raw_rows = _list_from_data(data, table_field)
+        rows: list[dict[str, Any]] = []
+        for row in raw_rows[:max_rows]:
+            if isinstance(row, dict):
+                rows.append(dict(row))
+            elif isinstance(row, (str, int, float, bool)):
+                rows.append({"value": row})
+        columns = _build_table_columns(meta or {}, rows)
+        if rows:
+            return rows, columns
+
     if series_field and str(series_field).strip() and not already_tabular:
         series_rows, series_columns = _series_to_table_rows(
             data,
@@ -739,7 +751,7 @@ def _extract_table_rows(
         return series_rows, series_columns
 
     raw_rows = _list_from_data(data, table_field)
-    rows: list[dict[str, Any]] = []
+    rows = []
     for row in raw_rows[:max_rows]:
         if isinstance(row, dict):
             rows.append(dict(row))
@@ -770,12 +782,27 @@ def _source_table_for_route(
 ) -> dict[str, Any] | None:
     """Tabela-fonte canônica (`Fonte`) para transformações M.
 
-    Rotas de série usam a série normalizada (periodo/value), a mesma que alimenta
-    gráfico/tabela — nunca o fallback escalar campo/valor, que vazaria metadados
-    internos (granularity, truncated) como se fossem os dados. Fora de séries,
-    retorna None e o executor cai no coerce genérico do payload.
+    Com `tableFields`, usa as linhas largas do payload (periodo/economia/investimento).
+    Com só `seriesField`, normaliza para periodo/value. Fora disso, None → coerce genérico.
     """
-    series_field = route_info.get("seriesField") if isinstance(route_info, dict) else None
+    if not isinstance(route_info, dict):
+        return None
+    table_field = route_info.get("tableFields")
+    if table_field and str(table_field).strip():
+        rows, columns = _extract_table_rows(
+            data,
+            table_field,
+            10_000,
+            meta={},
+            series_field=None,
+            branch=branch,
+        )
+        if rows:
+            return {
+                "columns": [str(col.get("key") or "") for col in columns if col.get("key")],
+                "rows": rows,
+            }
+    series_field = route_info.get("seriesField")
     if not (series_field and str(series_field).strip()):
         return None
     points = _extract_series(data, series_field, branch=branch)
