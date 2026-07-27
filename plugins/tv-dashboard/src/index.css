@@ -2057,7 +2057,8 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__group-chrome{
   position: absolute;
-  z-index: 40;
+  /* Acima do floor de seleção de blocos (handles do grupo clicáveis). */
+  z-index: 13000;
   box-sizing: border-box;
   pointer-events: none;
   outline: var(--td-selection-outline-width, 1.5px) solid
@@ -2075,7 +2076,7 @@ body.td-composer--marqueeing *{
 }
 /* Contorno do pai enquanto um filho está isolado (cinza, sem handles). */
 .dashboard-tv-dashboard .td-composer__group-chrome--parent-hint{
-  z-index: 35;
+  z-index: 12500;
   outline-width: var(--td-selection-outline-width, 1.5px);
   outline-style: solid;
   outline-color: var(--td-selection-parent-hint, #94a3b8);

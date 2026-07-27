@@ -287,7 +287,7 @@ export function useComunicadoEditorDrag({
         const isResize =
           workingFrame.w !== startRef.w || workingFrame.h !== startRef.h;
         const next = isResize
-          ? applyGroupScale(gesture, workingFrame, { lockAspect: true })
+          ? applyGroupScale(gesture, workingFrame)
           : applyGroupMove(gesture, workingFrame);
         groupGestureRef.current = next;
         previewGroupGesture(next);
@@ -436,7 +436,6 @@ export function useComunicadoEditorDrag({
                   interactionStartFrame: { ...gesture.childExtent },
                 },
                 snappedGroup,
-                { lockAspect: true },
               );
             }
           }

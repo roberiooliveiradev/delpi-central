@@ -297,7 +297,8 @@ export function applyGroupRotate(
 
 /**
  * Scale: `workingFrame` é o próximo group.frame (chrome) ou frame do membro.
- * Cantos: escala uniforme. Bordas: eixos livres.
+ * Cantos: escala uniforme. Bordas: eixos livres (como item único sem Shift).
+ * `lockAspect` (Shift) força uniforme também nas bordas.
  */
 export function applyGroupScale(
   gesture: StageGroupGesture,
@@ -305,7 +306,9 @@ export function applyGroupScale(
   options?: { lockAspect?: boolean },
 ): StageGroupGesture {
   const handle = gesture.resizeHandle ?? "se";
-  const lockAspect = options?.lockAspect ?? true;
+  const lockAspect = options?.lockAspect === true;
+  const isCorner =
+    handle === "nw" || handle === "ne" || handle === "se" || handle === "sw";
   const startUnion = gesture.childExtent;
   let nextUnion: PercentFrame;
 
@@ -317,8 +320,6 @@ export function applyGroupScale(
       startMember.w > 0 ? workingFrame.w / startMember.w : 1;
     const scaleY =
       startMember.h > 0 ? workingFrame.h / startMember.h : 1;
-    const isCorner =
-      handle === "nw" || handle === "ne" || handle === "se" || handle === "sw";
     let sx = scaleX;
     let sy = scaleY;
     if (lockAspect || isCorner) {
@@ -337,7 +338,7 @@ export function applyGroupScale(
     };
   }
 
-  if (lockAspect || handle === "nw" || handle === "ne" || handle === "se" || handle === "sw") {
+  if (lockAspect || isCorner) {
     if (startUnion.w > 0 && startUnion.h > 0) {
       let scaleX = nextUnion.w / startUnion.w;
       let scaleY = nextUnion.h / startUnion.h;

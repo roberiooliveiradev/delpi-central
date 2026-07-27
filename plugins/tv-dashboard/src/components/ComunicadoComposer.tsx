@@ -38,6 +38,7 @@ import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { useStageLineDraw } from "../hooks/useStageLineDraw";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
+import { resolveBlockWrapStackZIndex } from "../utils/resolveBlockWrapStackZIndex";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
@@ -796,7 +797,11 @@ export function ComunicadoComposerCanvas() {
       ? groupWrapStyle
       : {
           ...resolveBlockPlacementStyle(block),
-          zIndex: block.style?.zIndex ?? 1,
+          zIndex: resolveBlockWrapStackZIndex({
+            modelZIndex: block.style?.zIndex,
+            selectionChromeVisible: wrapChrome.showOutline,
+            isPrimarySelection: isPrimary,
+          }),
           ...(wrapTransform ? { transform: wrapTransform } : {}),
         };
 
@@ -1142,7 +1147,11 @@ export function ComunicadoComposerCanvas() {
                   .join(" ")}
                 style={{
                   ...resolveBlockPlacementStyle(block),
-                  zIndex: block.style?.zIndex ?? 1,
+                  zIndex: resolveBlockWrapStackZIndex({
+                    modelZIndex: block.style?.zIndex,
+                    selectionChromeVisible: wrapChrome.showOutline,
+                    isPrimarySelection: isPrimary,
+                  }),
                   ...(wrapTransform ? { transform: wrapTransform } : {}),
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
                 }}

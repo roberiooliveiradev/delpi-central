@@ -285,3 +285,69 @@ describe("stageGroupGesture", () => {
     expect(gesture.localFrames.get("tag-local")!.rotation).toBe(12);
   });
 });
+
+describe("applyGroupScale eixos livres (multi-seleção)", () => {
+  const members = [
+    { id: "a", frame: { x: 10, y: 10, w: 20, h: 10 }, rotation: 0 },
+    { id: "b", frame: { x: 10, y: 25, w: 30, h: 10 }, rotation: 0 },
+  ];
+
+  it("borda sul: altera só altura do grupo (não trava aspecto)", () => {
+    const gesture = beginGroupGesture({
+      members,
+      slideAspect: 16 / 9,
+      interactionStartFrame: { ...members[0]!.frame },
+      resizeHandle: "s",
+    });
+    expect(gesture).not.toBeNull();
+    const start = gesture!;
+    const startW = start.group.frame.w;
+    const startH = start.group.frame.h;
+    const tallerMember = {
+      ...members[0]!.frame,
+      h: members[0]!.frame.h * 1.5,
+    };
+    const next = applyGroupScale(start, tallerMember);
+    expect(next.group.frame.w).toBeCloseTo(startW, 5);
+    expect(next.group.frame.h).toBeGreaterThan(startH);
+  });
+
+  it("borda leste: altera só largura do grupo", () => {
+    const gesture = beginGroupGesture({
+      members,
+      slideAspect: 16 / 9,
+      interactionStartFrame: { ...members[0]!.frame },
+      resizeHandle: "e",
+    });
+    expect(gesture).not.toBeNull();
+    const start = gesture!;
+    const startW = start.group.frame.w;
+    const startH = start.group.frame.h;
+    const widerMember = {
+      ...members[0]!.frame,
+      w: members[0]!.frame.w * 1.5,
+    };
+    const next = applyGroupScale(start, widerMember);
+    expect(next.group.frame.h).toBeCloseTo(startH, 5);
+    expect(next.group.frame.w).toBeGreaterThan(startW);
+  });
+
+  it("borda com lockAspect: força uniforme", () => {
+    const gesture = beginGroupGesture({
+      members,
+      slideAspect: 16 / 9,
+      interactionStartFrame: { ...members[0]!.frame },
+      resizeHandle: "s",
+    });
+    expect(gesture).not.toBeNull();
+    const start = gesture!;
+    const aspect = start.group.frame.w / start.group.frame.h;
+    const next = applyGroupScale(
+      start,
+      { ...members[0]!.frame, h: members[0]!.frame.h * 2 },
+      { lockAspect: true },
+    );
+    expect(next.group.frame.w / next.group.frame.h).toBeCloseTo(aspect, 4);
+  });
+});
+
