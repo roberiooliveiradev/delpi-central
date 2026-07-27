@@ -231,3 +231,44 @@ def test_date_range_strategy_respects_partial_end_date():
     )
     assert query["end_date"] == "2026-07-10"
     assert query["start_date"] == "2026-07-04"
+
+
+def test_open_ended_date_range_omits_dates_when_custom_empty():
+    """Personalizado sem datas + openEndedDateRange → não injeta últimos N dias."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "granularity": {"type": "string", "default": "month"},
+                "filial_id": {"type": "string"},
+            },
+        },
+        {"dateRangePreset": "custom", "granularity": "month", "filial_id": "01"},
+    )
+    assert "start_date" not in query
+    assert "end_date" not in query
+    assert query["granularity"] == "month"
+    assert query["filial_id"] == "01"
+
+
+def test_open_ended_still_honors_explicit_period_days():
+    today = date.today()
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+            },
+        },
+        {"periodDays": 14},
+    )
+    assert query["end_date"] == today.isoformat()
+    assert query["start_date"] == (today.fromordinal(today.toordinal() - 13)).isoformat()
+

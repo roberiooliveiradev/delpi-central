@@ -305,3 +305,21 @@ def test_scrap_cost_pct_filial_optional_in_generated_catalog():
         if isinstance(value, dict) and value.get("optional") is False
     ]
     assert required == []
+
+
+def test_transformometro_savings_series_is_open_ended_without_period_days():
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item
+        for item in generated
+        if item["operationId"] == "get_transformometro_savings_investment_series"
+    )
+    assert sample.get("openEndedDateRange") is True
+    assert "periodDays" not in (sample.get("defaultParams") or {})
+    assert sample.get("paramStrategy") == "date_range"
+

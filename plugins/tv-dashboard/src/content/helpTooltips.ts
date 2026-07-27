@@ -292,7 +292,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     testRoute:
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
-      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo.",
+      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
     dateRangeFixed:
       "Datas fixas (AAAA-MM-DD). Disponíveis quando Período = Personalizado. Editar uma data também muda para Personalizado.",
     lastNDays: "Quantidade de dias corridos até hoje (inclusivo). Ex.: 15 = de 15 dias atrás até hoje.",

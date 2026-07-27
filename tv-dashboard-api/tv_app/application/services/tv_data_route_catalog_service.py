@@ -46,6 +46,8 @@ _RUNTIME_OVERLAY_KEYS = frozenset(
         "label",
         "description",
         "whenToUse",
+        "openEndedDateRange",
+        "defaultParams",
     }
 )
 
@@ -111,6 +113,14 @@ def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
                 merged[key] = {**merged[key], **overlay[key]}
             else:
                 merged[key] = overlay[key]
+    if merged.get("openEndedDateRange"):
+        defaults = merged.get("defaultParams")
+        if isinstance(defaults, dict) and "periodDays" in defaults:
+            cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
+            if cleaned:
+                merged["defaultParams"] = cleaned
+            else:
+                merged.pop("defaultParams", None)
     return merged
 
 

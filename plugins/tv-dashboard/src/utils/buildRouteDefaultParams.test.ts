@@ -68,4 +68,22 @@ describe("buildRouteDefaultParams", () => {
     expect(params.dateRangePreset).toBe("this_month");
     expect(params.branch).toBeUndefined();
   });
+
+  it("rota openEndedDateRange usa Personalizado sem periodDays (histórico completo)", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_transformometro_savings_investment_series",
+      label: "Economia bruta vs Investimento",
+      category: "engineering",
+      openEndedDateRange: true,
+      defaultParams: { periodDays: 30 },
+      paramSchema: {
+        start_date: { type: "string", optional: true },
+        end_date: { type: "string", optional: true },
+        granularity: { type: "string", optional: true, default: "month" },
+      },
+    });
+    expect(params.dateRangePreset).toBe("custom");
+    expect(params.periodDays).toBeUndefined();
+    expect(params.granularity).toBe("month");
+  });
 });

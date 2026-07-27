@@ -56,7 +56,12 @@ def _build_query_params(
         assert pair is not None  # strategy date_range sempre resolve
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
-        if not start or not end:
+        open_ended = bool(route.get("openEndedDateRange"))
+        has_period_days = merged.get(PERIOD_DAYS_KEY) not in (None, "")
+        # Rota open-ended + sem datas e sem periodDays explícito → omite o par
+        # (api-delpi/TM devolvem o histórico completo). Preset custom vazio cai aqui.
+        omit_date_range = open_ended and not start and not end and not has_period_days
+        if not omit_date_range and (not start or not end):
             # Respeita data parcial do filtro/input (ex.: só end_date) em vez de
             # forçar fim=hoje e apagar o valor do usuário.
             period_days = int(
@@ -77,8 +82,9 @@ def _build_query_params(
             except ValueError:
                 start_d = end_d - timedelta(days=max(period_days, 1) - 1)
             start, end = start_d.isoformat(), end_d.isoformat()
-        query[start_key] = str(start)
-        query[end_key] = str(end)
+        if not omit_date_range:
+            query[start_key] = str(start)
+            query[end_key] = str(end)
         branch = merged.get("branch")
         if branch:
             query["branch"] = str(branch).strip()
@@ -89,7 +95,10 @@ def _build_query_params(
             if value is None or value == "":
                 continue
             query[str(key)] = str(value)
-        return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow={start_key, end_key, "branch"})
+        always_allow = {start_key, end_key, "branch"} if not omit_date_range else {"branch"}
+        return _filter_query_to_route_schema(
+            query, schema=schema, fixed=fixed, always_allow=always_allow
+        )
 
     # direct: emite schema + extras, mas se há par de datas canônico, remove aliases
     pair = resolve_output_date_range_keys(

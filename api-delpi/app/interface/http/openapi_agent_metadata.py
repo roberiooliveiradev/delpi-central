@@ -377,6 +377,8 @@ TRANSFORMOMETRO_SAVINGS_INVESTMENT_SERIES = agent_route(
         "Time series for TRANSFORMA+ DELPI chart «Economia bruta vs Investimento» "
         "(day by vigência or month). Filters: view, filial_id, setor_id, "
         "start_date, end_date, granularity. "
+        "When start_date and end_date are omitted, returns the full available history "
+        "(month grain recommended for long ranges). "
         "Primary use: MFE/TV chart; for chat KPIs prefer Transforma Mais summary."
     ),
     operation_id="get_transformometro_savings_investment_series",

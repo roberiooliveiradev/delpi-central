@@ -517,6 +517,8 @@ export type TvDataRouteCatalogItem = {
   paramSchema?: Record<string, unknown>;
   fixedQueryParams?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;
+  /** Sem datas na query → API devolve histórico completo (não força últimos N dias). */
+  openEndedDateRange?: boolean;
   metaShape?: string;
   /** Nomes antigos do catálogo — hydrate limpa snapshots. */
   labelAliases?: string[];

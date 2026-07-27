@@ -107,3 +107,44 @@ def test_transformometro_dashboard_gateway_maps_items() -> None:
     assert call_params["competencia_inicio"] == "2026-07-01"
     assert call_params["competencia_fim"] == "2026-07-31"
     assert "start_date" not in call_params
+
+
+def test_transformometro_dashboard_gateway_omits_dates_for_full_history() -> None:
+    """Sem start/end → TM recebe None e devolve o histórico completo (mês)."""
+    client = MagicMock()
+    client.get_dashboard_evolucao.return_value = {
+        "total": 2,
+        "granularity": "month",
+        "items": [
+            {
+                "competencia": "2025-01",
+                "economia_bruta": 10,
+                "investimento_unico_mes": 0,
+                "custo_recorrente_mes": 0,
+                "custo_recursos_compartilhados_mes": 0,
+                "investimento_total_mes": 1,
+                "economia_liquida_mes": 9,
+                "horas_economizadas_mes": 0,
+            },
+            {
+                "competencia": "2026-07",
+                "economia_bruta": 20,
+                "investimento_unico_mes": 0,
+                "custo_recorrente_mes": 0,
+                "custo_recursos_compartilhados_mes": 0,
+                "investimento_total_mes": 2,
+                "economia_liquida_mes": 18,
+                "horas_economizadas_mes": 0,
+            },
+        ],
+    }
+    gateway = TransformometroDashboardGateway(client=client)
+    result = gateway.get_evolucao(
+        DashboardEvolucaoRequest(granularity="month"),
+        authorization="Bearer x",
+    )
+    assert result.total == 2
+    call_params = client.get_dashboard_evolucao.call_args.kwargs["params"]
+    assert call_params["competencia_inicio"] is None
+    assert call_params["competencia_fim"] is None
+    assert call_params["granularity"] == "month"

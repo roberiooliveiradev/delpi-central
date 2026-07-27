@@ -5,6 +5,22 @@ from tv_app.application.services.data.tv_data_param_validation_service import va
 from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_query_params
 
 
+
+def test_apply_defaults_skips_period_days_for_open_ended_route():
+    route = {
+        "openEndedDateRange": True,
+        "paramSchema": {
+            "start_date": {"type": "string", "optional": True},
+            "end_date": {"type": "string", "optional": True},
+        },
+        "dateRangeKeys": ["start_date", "end_date"],
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert "periodDays" not in merged
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+
 def test_apply_defaults_fills_required_branch_and_schema_default():
     route = {
         "defaultParams": {"periodDays": 30},

@@ -16,7 +16,7 @@ Campos do OpenAPI (sempre regenerados / mergeados):
 Overlays TV (preservados / arquivo overlays):
   valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
   defaultParams, label, description, whenToUse, category, allowedDisplayModes,
-  paramStrategy (se explícito), ajustes pontuais de paramSchema
+  paramStrategy (se explícito), openEndedDateRange, ajustes pontuais de paramSchema
 """
 
 from __future__ import annotations
@@ -53,6 +53,8 @@ OVERLAY_KEYS = frozenset(
         "category",
         "paramSchema",  # merge profundo com schema OpenAPI
         "suggestedTransformSteps",
+        # Sem datas na query → API devolve o histórico completo (não injeta periodDays).
+        "openEndedDateRange",
     }
 )
 
@@ -521,12 +523,29 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     return route
 
 
+def _clear_period_days_defaults(route: dict[str, Any]) -> None:
+    """Rotas open-ended: omitir datas = histórico completo — sem periodDays padrão."""
+    if not route.get("openEndedDateRange"):
+        return
+    defaults = route.get("defaultParams")
+    if not isinstance(defaults, dict) or "periodDays" not in defaults:
+        return
+    cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
+    if cleaned:
+        route["defaultParams"] = cleaned
+    else:
+        route.pop("defaultParams", None)
+
+
 def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[str, Any]:
     if not overlay:
         return base
     merged = dict(base)
     for key, value in overlay.items():
-        if key not in OVERLAY_KEYS or value in (None, "", [], {}):
+        if key not in OVERLAY_KEYS:
+            continue
+        # bool False / 0 são válidos; só skip de vazio típico de string/coleção.
+        if value in (None, "", [], {}):
             continue
         if key == "paramSchema" and isinstance(value, dict):
             merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, value)
@@ -534,6 +553,7 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
             merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
         else:
             merged[key] = value
+    _clear_period_days_defaults(merged)
     return merged
 
 

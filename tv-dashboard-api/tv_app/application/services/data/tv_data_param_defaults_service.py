@@ -102,7 +102,13 @@ def apply_catalog_param_defaults(
         has_period_intent = _has_value(merged, DATE_RANGE_PRESET_KEY) or _has_value(
             merged, PERIOD_DAYS_KEY
         )
-        if not alias_start and not alias_end and not has_period_intent:
+        # openEndedDateRange: sem datas/preset → não injeta periodDays (histórico completo).
+        if (
+            not alias_start
+            and not alias_end
+            and not has_period_intent
+            and not route_map.get("openEndedDateRange")
+        ):
             period_default = catalog_defaults.get(PERIOD_DAYS_KEY)
             merged[PERIOD_DAYS_KEY] = int(period_default) if period_default not in (None, "") else 30
 

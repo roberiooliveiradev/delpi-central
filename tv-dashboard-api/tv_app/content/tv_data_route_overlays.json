@@ -208,8 +208,8 @@
         "horas_economizadas": "number"
       },
       "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
-      "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI.",
-      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento do TRANSFORMA+ DELPI com filtros de período, filial, setor e granularidade.",
+      "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI. Sem Data início/fim (Personalizado vazio) retorna todo o histórico disponível.",
+      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento do TRANSFORMA+ DELPI. Deixe as datas vazias para o período completo; use presets ou datas fixas para recortar.",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -224,7 +224,8 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "openEndedDateRange": true
     },
     "get_production_otd_series": {
       "seriesField": "points",
