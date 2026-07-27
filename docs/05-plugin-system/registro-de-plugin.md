@@ -116,7 +116,7 @@ Exemplo mínimo para **microfrontend** (ver manifesto real em `plugins/strategic
 }
 ```
 
-Exemplo **iframe** (LMPs no repositório — `plugins/dashboard-lmps/dash-lmps.manifest.json`): `id` `dash-lmps`, `basePath` `/dash-lmps`, `type` `iframe`, permission `dash-lmps.access`.
+Exemplo **microfrontend** (LMPs — `plugins/dashboard-lmps/dash-lmps-microfrontend.manifest.json`): `id` `dashboard-lmps`, `basePath` `/apps/dashboard-lmps`, permissions `dashboard-lmps.view` / `dashboard-lmps.nc.write`.
 
 Se o body não for um objeto JSON, a API deve retornar erro de validação.
 

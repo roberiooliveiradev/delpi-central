@@ -41,4 +41,4 @@
 - Modelo de dados: [../09-banco-de-dados/modelo-plugin-system.md](../09-banco-de-dados/modelo-plugin-system.md)
 - Portal (consumo): [../06-portal-frontend/consumo-de-plugins.md](../06-portal-frontend/consumo-de-plugins.md)
 
-**Nota:** plugin LMPs no repositório usa `id` **`dash-lmps`** (iframe, `basePath` `/dash-lmps`), não `dashboard-lmps`.
+**Nota:** plugin LMPs no repositório usa `id` **`dashboard-lmps`** (microfrontend, `basePath` `/apps/dashboard-lmps`). O manifesto iframe legado `dash-lmps` foi removido.

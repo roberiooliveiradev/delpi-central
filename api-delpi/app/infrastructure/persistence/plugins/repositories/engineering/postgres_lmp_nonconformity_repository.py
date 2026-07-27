@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from decimal import Decimal
 from typing import Any
 
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
@@ -15,14 +14,11 @@ _NC_SELECT = """
     SELECT n.id,
            n.registered_at,
            n.sale_number,
-           n.branch_code,
-           n.material_code,
-           n.supplier_name,
-           n.purchase_order,
-           n.invoice_number,
-           n.qty_received,
-           n.qty_accepted,
-           n.qty_rejected,
+           n.customer_name,
+           n.launch_date,
+           n.last_revision_date,
+           n.executed_by,
+           n.released_by,
            n.status,
            n.defect_description,
            n.corrective_actions,
@@ -45,19 +41,6 @@ def _iso(value: Any) -> str | None:
     return str(value)
 
 
-def _num(value: Any) -> float | None:
-    if value is None:
-        return None
-    if isinstance(value, Decimal):
-        return float(value)
-    if isinstance(value, (int, float)):
-        return float(value)
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return None
-
-
 def _blank_to_none(value: str | None) -> str | None:
     if value is None:
         return None
@@ -65,30 +48,39 @@ def _blank_to_none(value: str | None) -> str | None:
     return text or None
 
 
-def _normalize_product_codes(codes: list[str] | None) -> list[str]:
-    if not codes:
+def _normalize_products(products: list[dict[str, Any]] | None) -> list[dict[str, str]]:
+    if not products:
         return []
     seen: set[str] = set()
-    out: list[str] = []
-    for raw in codes:
-        code = str(raw or "").strip().upper()
+    out: list[dict[str, str]] = []
+    for raw in products:
+        if not isinstance(raw, dict):
+            continue
+        code = str(raw.get("product_code") or raw.get("code") or "").strip().upper()
         if not code or code in seen:
             continue
         seen.add(code)
-        out.append(code)
+        description = str(
+            raw.get("product_description") or raw.get("description") or ""
+        ).strip()
+        out.append(
+            {
+                "product_code": code,
+                "product_description": description[:255] if description else "",
+            }
+        )
     return out
 
 
 class PostgresLmpNonconformityRepository(PluginBaseRepository):
-    """Persistência de NCs LMP (schema ``engineering``)."""
+    """Persistência de NCs LMP (schema ``engineering``) — domínio engenharia."""
 
     def list_records(
         self,
         *,
         status: str | None = None,
-        branch_code: str | None = None,
         sale_number: str | None = None,
-        material_code: str | None = None,
+        customer_name: str | None = None,
         product_code: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
@@ -101,15 +93,12 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         if status:
             filters.append("n.status = %s")
             params.append(status)
-        if branch_code:
-            filters.append("n.branch_code = %s")
-            params.append(branch_code)
         if sale_number:
             filters.append("n.sale_number ILIKE %s")
             params.append(f"%{sale_number.strip()}%")
-        if material_code:
-            filters.append("n.material_code ILIKE %s")
-            params.append(f"%{material_code.strip()}%")
+        if customer_name:
+            filters.append("n.customer_name ILIKE %s")
+            params.append(f"%{customer_name.strip()}%")
         if product_code:
             filters.append(
                 """
@@ -177,62 +166,50 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
     def create_record(
         self,
         *,
-        registered_at: str,
         status: str = "open",
         sale_number: str | None = None,
-        branch_code: str | None = None,
-        material_code: str | None = None,
-        supplier_name: str | None = None,
-        purchase_order: str | None = None,
-        invoice_number: str | None = None,
-        qty_received: float | None = None,
-        qty_accepted: float | None = None,
-        qty_rejected: float | None = None,
+        customer_name: str | None = None,
+        launch_date: str | None = None,
+        last_revision_date: str | None = None,
+        executed_by: str | None = None,
+        released_by: str | None = None,
         defect_description: str | None = None,
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
-        product_codes: list[str] | None = None,
+        products: list[dict[str, Any]] | None = None,
         created_by: str | None = None,
     ) -> dict[str, Any]:
         status_norm = (status or "open").strip().lower()
         if status_norm not in _STATUS_VALUES:
             raise PluginsRepositoryError(f"Status inválido: {status}")
 
-        codes = _normalize_product_codes(product_codes)
+        lines = _normalize_products(products)
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
                     """
                     INSERT INTO engineering.lmp_nonconformities (
-                        registered_at, sale_number, branch_code, material_code,
-                        supplier_name, purchase_order, invoice_number,
-                        qty_received, qty_accepted, qty_rejected, status,
+                        registered_at, sale_number, customer_name,
+                        launch_date, last_revision_date,
+                        executed_by, released_by, status,
                         defect_description, corrective_actions, technical_opinion,
                         created_by, updated_by
                     ) VALUES (
-                        %s, %s, %s, %s,
+                        NOW(), %s, %s,
+                        %s::date, %s::date,
                         %s, %s, %s,
-                        %s, %s, %s, %s,
                         %s, %s, %s,
                         %s, %s
                     )
-                    RETURNING id, registered_at, sale_number, branch_code, material_code,
-                              supplier_name, purchase_order, invoice_number,
-                              qty_received, qty_accepted, qty_rejected, status,
-                              defect_description, corrective_actions, technical_opinion,
-                              created_by, updated_by, created_at, updated_at
+                    RETURNING id
                     """,
                     (
-                        registered_at,
                         _blank_to_none(sale_number),
-                        _blank_to_none(branch_code),
-                        _blank_to_none(material_code),
-                        _blank_to_none(supplier_name),
-                        _blank_to_none(purchase_order),
-                        _blank_to_none(invoice_number),
-                        qty_received,
-                        qty_accepted,
-                        qty_rejected,
+                        _blank_to_none(customer_name),
+                        _blank_to_none(launch_date),
+                        _blank_to_none(last_revision_date),
+                        _blank_to_none(executed_by),
+                        _blank_to_none(released_by),
                         status_norm,
                         _blank_to_none(defect_description),
                         _blank_to_none(corrective_actions),
@@ -245,15 +222,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 if row is None:
                     raise PluginsRepositoryError("Falha ao criar não conformidade LMP.")
                 record_id = str(dict(row)["id"])
-                if codes:
-                    cursor.executemany(
-                        """
-                        INSERT INTO engineering.lmp_nonconformity_products (
-                            nonconformity_id, product_code
-                        ) VALUES (%s, %s)
-                        """,
-                        [(record_id, code) for code in codes],
-                    )
+                self._replace_products(cursor, record_id, lines)
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -273,21 +242,17 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         self,
         *,
         record_id: str,
-        registered_at: str,
         status: str,
         sale_number: str | None = None,
-        branch_code: str | None = None,
-        material_code: str | None = None,
-        supplier_name: str | None = None,
-        purchase_order: str | None = None,
-        invoice_number: str | None = None,
-        qty_received: float | None = None,
-        qty_accepted: float | None = None,
-        qty_rejected: float | None = None,
+        customer_name: str | None = None,
+        launch_date: str | None = None,
+        last_revision_date: str | None = None,
+        executed_by: str | None = None,
+        released_by: str | None = None,
         defect_description: str | None = None,
         corrective_actions: str | None = None,
         technical_opinion: str | None = None,
-        product_codes: list[str] | None = None,
+        products: list[dict[str, Any]] | None = None,
         updated_by: str | None = None,
     ) -> dict[str, Any] | None:
         current = self.fetch_one(
@@ -304,23 +269,19 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         if status_norm not in _STATUS_VALUES:
             raise PluginsRepositoryError(f"Status inválido: {status}")
 
-        codes = _normalize_product_codes(product_codes)
+        lines = _normalize_products(products)
 
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
                     """
                     UPDATE engineering.lmp_nonconformities
-                       SET registered_at = %s,
-                           sale_number = %s,
-                           branch_code = %s,
-                           material_code = %s,
-                           supplier_name = %s,
-                           purchase_order = %s,
-                           invoice_number = %s,
-                           qty_received = %s,
-                           qty_accepted = %s,
-                           qty_rejected = %s,
+                       SET sale_number = %s,
+                           customer_name = %s,
+                           launch_date = %s::date,
+                           last_revision_date = %s::date,
+                           executed_by = %s,
+                           released_by = %s,
                            status = %s,
                            defect_description = %s,
                            corrective_actions = %s,
@@ -330,16 +291,12 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                      WHERE id = %s
                     """,
                     (
-                        registered_at,
                         _blank_to_none(sale_number),
-                        _blank_to_none(branch_code),
-                        _blank_to_none(material_code),
-                        _blank_to_none(supplier_name),
-                        _blank_to_none(purchase_order),
-                        _blank_to_none(invoice_number),
-                        qty_received,
-                        qty_accepted,
-                        qty_rejected,
+                        _blank_to_none(customer_name),
+                        _blank_to_none(launch_date),
+                        _blank_to_none(last_revision_date),
+                        _blank_to_none(executed_by),
+                        _blank_to_none(released_by),
                         status_norm,
                         _blank_to_none(defect_description),
                         _blank_to_none(corrective_actions),
@@ -355,15 +312,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     """,
                     (record_id,),
                 )
-                if codes:
-                    cursor.executemany(
-                        """
-                        INSERT INTO engineering.lmp_nonconformity_products (
-                            nonconformity_id, product_code
-                        ) VALUES (%s, %s)
-                        """,
-                        [(record_id, code) for code in codes],
-                    )
+                self._replace_products(cursor, record_id, lines)
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -387,17 +336,43 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         )
         return row is not None
 
-    def _list_product_codes(self, record_id: str) -> list[str]:
+    @staticmethod
+    def _replace_products(cursor: Any, record_id: str, lines: list[dict[str, str]]) -> None:
+        if not lines:
+            return
+        cursor.executemany(
+            """
+            INSERT INTO engineering.lmp_nonconformity_products (
+                nonconformity_id, product_code, product_description
+            ) VALUES (%s, %s, %s)
+            """,
+            [
+                (
+                    record_id,
+                    line["product_code"],
+                    _blank_to_none(line.get("product_description")),
+                )
+                for line in lines
+            ],
+        )
+
+    def _list_products(self, record_id: str) -> list[dict[str, str | None]]:
         rows = self.fetch_all(
             """
-            SELECT product_code
+            SELECT product_code, product_description
               FROM engineering.lmp_nonconformity_products
              WHERE nonconformity_id = %s
              ORDER BY product_code ASC
             """,
             (record_id,),
         )
-        return [str(r["product_code"]) for r in rows]
+        return [
+            {
+                "product_code": str(r["product_code"]),
+                "product_description": r.get("product_description"),
+            }
+            for r in rows
+        ]
 
     def _to_payload(
         self,
@@ -410,14 +385,11 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             "id": record_id,
             "registered_at": _iso(row.get("registered_at")),
             "sale_number": row.get("sale_number"),
-            "branch_code": row.get("branch_code"),
-            "material_code": row.get("material_code"),
-            "supplier_name": row.get("supplier_name"),
-            "purchase_order": row.get("purchase_order"),
-            "invoice_number": row.get("invoice_number"),
-            "qty_received": _num(row.get("qty_received")),
-            "qty_accepted": _num(row.get("qty_accepted")),
-            "qty_rejected": _num(row.get("qty_rejected")),
+            "customer_name": row.get("customer_name"),
+            "launch_date": _iso(row.get("launch_date")),
+            "last_revision_date": _iso(row.get("last_revision_date")),
+            "executed_by": row.get("executed_by"),
+            "released_by": row.get("released_by"),
             "status": row.get("status"),
             "defect_description": row.get("defect_description"),
             "corrective_actions": row.get("corrective_actions"),
@@ -428,5 +400,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             "updated_at": _iso(row.get("updated_at")),
         }
         if include_products:
-            payload["product_codes"] = self._list_product_codes(record_id)
+            products = self._list_products(record_id)
+            payload["products"] = products
+            payload["product_codes"] = [p["product_code"] for p in products]
         return payload

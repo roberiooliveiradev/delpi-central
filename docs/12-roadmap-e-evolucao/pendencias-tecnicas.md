@@ -123,12 +123,12 @@ Pendência:
 Padronizar permission code do dashboard-lmps.
 ```
 
-Manifesto atual do repositório (`plugins/dashboard-lmps/dash-lmps.manifest.json`): permission `dash-lmps.access`, `id` `dash-lmps`.
+Manifesto canônico (`plugins/dashboard-lmps/dash-lmps-microfrontend.manifest.json`): `id` `dashboard-lmps`, permissions `dashboard-lmps.view` e `dashboard-lmps.nc.write`. O iframe legado `dash-lmps` / `dash-lmps.access` foi removido do repositório.
 
-Códigos legados que podem aparecer em docs ou código antigo:
+Códigos legados que podem aparecer em docs ou ambiente antigo:
 
 ```text
-dashboard-lmps.view
+dash-lmps.access
 dashboard-lmps.access
 dashboard-lmps.read
 ```
@@ -152,7 +152,7 @@ Confirmar rotas reais do Gateway para todos os plugins e API DELPI.
 Verificar (conferir `gateway/nginx.conf` e manifestos):
 
 - `/apps/strategic-indicators`;
-- `/dash-lmps` (plugin iframe `dash-lmps` — não usar `/apps/dashboard-lmps` salvo novo manifesto);
+- `/apps/dashboard-lmps` (MFE `dashboard-lmps`);
 - `/apps/minha-delpi-chat`;
 - `/apps/minha-delpi-ai/api/`;
 - `/apps/api-delpi`;

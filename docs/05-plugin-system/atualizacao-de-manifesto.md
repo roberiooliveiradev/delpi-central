@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/05-plugin-system/atualizacao-de-manifesto.md`  
 > **Status:** documentação oficial (maio/2026)  
 
-URLs de admin usam o `id` do manifesto (ex.: `PUT /core-api/admin/apps/dash-lmps/manifest`). Exemplos com `dashboard-lmps` podem ser legado MFE — ver manifesto atual em `plugins/dashboard-lmps/dash-lmps.manifest.json`.
+URLs de admin usam o `id` do manifesto (ex.: `PUT /core-api/admin/apps/dashboard-lmps/manifest`). Manifesto LMPs: `plugins/dashboard-lmps/dash-lmps-microfrontend.manifest.json`.
 > **Produto:** Minha DELPI  
 > **Escopo:** atualização não estrutural de manifesto de plugin
 

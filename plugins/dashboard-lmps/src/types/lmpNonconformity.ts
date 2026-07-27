@@ -1,21 +1,24 @@
 export type LmpNcStatus = "open" | "in_progress" | "done";
 
+export type LmpNcProductLine = {
+  product_code: string;
+  product_description?: string | null;
+};
+
 export type LmpNonconformity = {
   id: string;
   registered_at: string;
   sale_number?: string | null;
-  branch_code?: string | null;
-  material_code?: string | null;
-  supplier_name?: string | null;
-  purchase_order?: string | null;
-  invoice_number?: string | null;
-  qty_received?: number | null;
-  qty_accepted?: number | null;
-  qty_rejected?: number | null;
+  customer_name?: string | null;
+  launch_date?: string | null;
+  last_revision_date?: string | null;
+  executed_by?: string | null;
+  released_by?: string | null;
   status: LmpNcStatus | string;
   defect_description?: string | null;
   corrective_actions?: string | null;
   technical_opinion?: string | null;
+  products?: LmpNcProductLine[];
   product_codes?: string[];
   created_by?: string | null;
   updated_by?: string | null;
@@ -31,21 +34,17 @@ export type LmpNonconformityListResponse = {
 };
 
 export type LmpNonconformityPayload = {
-  registered_at: string;
   status: LmpNcStatus;
   sale_number?: string | null;
-  branch_code?: string | null;
-  material_code?: string | null;
-  supplier_name?: string | null;
-  purchase_order?: string | null;
-  invoice_number?: string | null;
-  qty_received?: number | null;
-  qty_accepted?: number | null;
-  qty_rejected?: number | null;
+  customer_name?: string | null;
+  launch_date?: string | null;
+  last_revision_date?: string | null;
+  executed_by?: string | null;
+  released_by?: string | null;
   defect_description?: string | null;
   corrective_actions?: string | null;
   technical_opinion?: string | null;
-  product_codes?: string[];
+  products?: LmpNcProductLine[];
 };
 
 export const LMP_NC_STATUS_OPTIONS: { value: LmpNcStatus; label: string }[] = [

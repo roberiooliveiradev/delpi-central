@@ -18,7 +18,8 @@ Microfrontend (Module Federation) para **acompanhamento de LMPs** (engenharia), 
 | ID | `dashboard-lmps` |
 | URL | `/apps/dashboard-lmps` |
 | Manifesto | `dash-lmps-microfrontend.manifest.json` |
-| Permissão | `dashboard-lmps.view` (leitura) · `dashboard-lmps.nc.write` (CRUD de NCs) |
+| Permissão | `dashboard-lmps.view` (dashboard, detalhe OV, listagem NC + hydrate LMP) · `dashboard-lmps.nc.write` (CRUD de NCs) |
+| Rotas UI | `/apps/dashboard-lmps` · `/apps/dashboard-lmps/nonconformities` (manifesto) |
 
 ## API
 
@@ -61,7 +62,7 @@ Testes e registro na Core API: [docs/TESTING.md](./docs/TESTING.md).
 - KPIs: % dentro do prazo, lead time médio, total de propostas
 - Gráficos: nível, status, lead por nível, evolução temporal
 - Tabela detalhada das LMPs filtradas (clique na linha → detalhe da OV)
-- CRUD de NCs operacionais (Postgres plugins / schema `engineering`)
+- CRUD de NCs de engenharia (OV/LMP, cliente, produtos em tabela, hydrate TOTVS)
 - **Detalhe:** produtos, BOM, histórico AIJ010 com timeline, Gantt (por evento + global), filtros, preferências e tooltips completos
 - Filtros do dashboard **sincronizados na URL** (compartilhável)
 - Impressão básica (`Ctrl+P`) via `@media print`

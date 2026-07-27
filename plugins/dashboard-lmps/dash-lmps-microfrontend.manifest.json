@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "dashboard-lmps",
   "name": "Dashboard LMPs",
-  "description": "Dashboard analítico de LMPs e registro de não conformidades",
+  "description": "Dashboard analítico de LMPs (engenharia) e registro de não conformidades",
   "icon": "bar-chart3-icon",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-lmps",
@@ -14,13 +14,13 @@
     {
       "code": "dashboard-lmps.view",
       "name": "Acesso ao dashboard LMPs",
-      "description": "Permite acessar o dashboard e listar não conformidades",
+      "description": "Permite acessar o dashboard, detalhe da OV/LMP e listar não conformidades. Inclui leitura das rotas api-delpi usadas no formulário de NC (GET /engineering/lmps/{sale_number} e listagem de produtos da OV).",
       "module": "dashboard-lmps"
     },
     {
       "code": "dashboard-lmps.nc.write",
       "name": "Editar não conformidades LMP",
-      "description": "Permite criar, editar e excluir não conformidades no dashboard LMPs",
+      "description": "Permite criar, editar e excluir não conformidades (POST/PUT/DELETE /engineering/lmps/nonconformities). A hidratação de cliente, datas e produtos da OV usa as rotas de leitura cobertas por dashboard-lmps.view.",
       "module": "dashboard-lmps"
     }
   ],
@@ -32,6 +32,14 @@
       "permission": "dashboard-lmps.view",
       "icon": "bar-chart3-icon",
       "order": 1,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-lmps/nonconformities",
+      "label": "Registro de não conformidades",
+      "permission": "dashboard-lmps.view",
+      "icon": "clipboard-list-icon",
+      "order": 2,
       "showInMenu": true
     }
   ],

@@ -21,18 +21,18 @@ _RECORD = {
     "id": str(_NC_ID),
     "registered_at": "2026-07-27T10:00:00+00:00",
     "sale_number": "123456",
-    "branch_code": "01",
-    "material_code": "MAT-01",
-    "supplier_name": "Fornecedor X",
-    "purchase_order": "OC-1",
-    "invoice_number": "NF-1",
-    "qty_received": 10.0,
-    "qty_accepted": 8.0,
-    "qty_rejected": 2.0,
+    "customer_name": "Cliente Exemplo",
+    "launch_date": "2026-01-10",
+    "last_revision_date": "2026-06-01",
+    "executed_by": "Eng. A",
+    "released_by": "Eng. B",
     "status": "open",
-    "defect_description": "Defeito",
+    "defect_description": "Problema identificado",
     "corrective_actions": "Ação",
     "technical_opinion": "Parecer",
+    "products": [
+        {"product_code": "90001234", "product_description": "Produto X"},
+    ],
     "product_codes": ["90001234"],
     "created_by": "user@delpi",
     "updated_by": "user@delpi",
@@ -84,10 +84,12 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
 
     response = create_lmp_nonconformity(
         body=LmpNonconformityBody(
-            registered_at="2026-07-27T10:00:00+00:00",
             status="open",
             sale_number="123456",
-            product_codes=["90001234"],
+            customer_name="Cliente Exemplo",
+            products=[
+                {"product_code": "90001234", "product_description": "Produto X"},
+            ],
         )
     )
     assert_envelope_meta(
@@ -95,6 +97,11 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
         operation_id="create_lmp_nonconformity",
         shape="scalar",
     )
+    use_case.execute.assert_called_once()
+    kwargs = use_case.execute.call_args.kwargs
+    assert "registered_at" not in kwargs
+    assert kwargs["sale_number"] == "123456"
+    assert kwargs["products"][0]["product_code"] == "90001234"
 
 
 @patch(f"{_ROUTER}.build_update_lmp_nonconformity_use_case")
@@ -106,8 +113,8 @@ def test_update_lmp_nonconformity_returns_meta(mock_build) -> None:
     response = update_lmp_nonconformity(
         record_id=_NC_ID,
         body=LmpNonconformityBody(
-            registered_at="2026-07-27T10:00:00+00:00",
             status="in_progress",
+            executed_by="Eng. A",
         ),
     )
     assert_envelope_meta(

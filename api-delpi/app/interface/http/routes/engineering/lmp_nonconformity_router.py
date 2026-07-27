@@ -38,7 +38,6 @@ from app.interface.http.period_query_params import (
     START_DATE_QUERY,
     resolve_period_dates,
 )
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 
@@ -49,45 +48,64 @@ router = APIRouter(
 
 _STATUS_PATTERN = "^(open|in_progress|done)$"
 _STATUS_ENUM = ["open", "in_progress", "done"]
+_DATE_PATTERN = r"^(\d{4}-\d{2}-\d{2})?$"
+
+
+class LmpNcProductBody(BaseModel):
+    product_code: str = Field(..., min_length=1, max_length=60)
+    product_description: str | None = Field(default=None, max_length=255)
+
+    @field_validator("product_code", "product_description", mode="before")
+    @classmethod
+    def strip_text(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip()
+        return value
 
 
 class LmpNonconformityBody(BaseModel):
-    registered_at: str = Field(
-        ...,
-        min_length=8,
-        max_length=40,
-        description="Data/hora do registro (ISO 8601).",
-    )
+    """Body de create/update — ``registered_at`` é definido pelo servidor no create."""
+
     status: str = Field(
         default="open",
         pattern=_STATUS_PATTERN,
         json_schema_extra={"enum": _STATUS_ENUM},
     )
-    sale_number: str | None = Field(default=None, max_length=20)
-    branch_code: str | None = Field(
+    sale_number: str | None = Field(
         default=None,
-        pattern="^(01|02)$",
-        json_schema_extra={"enum": ["01", "02"]},
+        max_length=20,
+        description="Número da OV (= identificador da LMP).",
     )
-    material_code: str | None = Field(default=None, max_length=60)
-    supplier_name: str | None = Field(default=None, max_length=200)
-    purchase_order: str | None = Field(default=None, max_length=40)
-    invoice_number: str | None = Field(default=None, max_length=40)
-    qty_received: float | None = Field(default=None, ge=0)
-    qty_accepted: float | None = Field(default=None, ge=0)
-    qty_rejected: float | None = Field(default=None, ge=0)
-    defect_description: str | None = None
+    customer_name: str | None = Field(default=None, max_length=200)
+    launch_date: str | None = Field(
+        default=None,
+        max_length=10,
+        pattern=_DATE_PATTERN,
+        description="Data de lançamento (YYYY-MM-DD), snapshot editável.",
+    )
+    last_revision_date: str | None = Field(
+        default=None,
+        max_length=10,
+        pattern=_DATE_PATTERN,
+        description="Data da última revisão (YYYY-MM-DD), snapshot editável.",
+    )
+    executed_by: str | None = Field(default=None, max_length=200)
+    released_by: str | None = Field(default=None, max_length=200)
+    defect_description: str | None = Field(
+        default=None,
+        description="Problema identificado.",
+    )
     corrective_actions: str | None = None
     technical_opinion: str | None = None
-    product_codes: list[str] = Field(default_factory=list)
+    products: list[LmpNcProductBody] = Field(default_factory=list)
 
     @field_validator(
         "sale_number",
-        "branch_code",
-        "material_code",
-        "supplier_name",
-        "purchase_order",
-        "invoice_number",
+        "customer_name",
+        "launch_date",
+        "last_revision_date",
+        "executed_by",
+        "released_by",
         "defect_description",
         "corrective_actions",
         "technical_opinion",
@@ -99,19 +117,14 @@ class LmpNonconformityBody(BaseModel):
             return None
         return value
 
-    @field_validator("product_codes", mode="before")
+    @field_validator("products", mode="before")
     @classmethod
-    def normalize_codes(cls, value: object) -> list[str]:
+    def normalize_products(cls, value: object) -> list:
         if value is None:
             return []
         if not isinstance(value, list):
-            raise ValueError("product_codes deve ser uma lista")
-        out: list[str] = []
-        for item in value:
-            text = str(item or "").strip()
-            if text:
-                out.append(text)
-        return out
+            raise ValueError("products deve ser uma lista")
+        return value
 
 
 def _current_user_label() -> str | None:
@@ -125,6 +138,16 @@ def _current_user_label() -> str | None:
     return None
 
 
+def _products_payload(body: LmpNonconformityBody) -> list[dict[str, str | None]]:
+    return [
+        {
+            "product_code": item.product_code,
+            "product_description": item.product_description,
+        }
+        for item in body.products
+    ]
+
+
 @router.get("", **LMP_NONCONFORMITIES_LIST)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def list_lmp_nonconformities(
@@ -134,10 +157,17 @@ def list_lmp_nonconformities(
         json_schema_extra={"enum": _STATUS_ENUM},
         description="Filtro por status (open, in_progress, done).",
     ),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
-    sale_number: Optional[str] = Query(None, max_length=20),
-    material_code: Optional[str] = Query(None, max_length=60),
-    product_code: Optional[str] = Query(None, max_length=60),
+    sale_number: Optional[str] = Query(
+        None,
+        max_length=20,
+        description="Filtro parcial pela OV (= LMP).",
+    ),
+    customer_name: Optional[str] = Query(None, max_length=200),
+    product_code: Optional[str] = Query(
+        None,
+        max_length=60,
+        description="Filtro por código de produto/material nas linhas.",
+    ),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
@@ -154,9 +184,8 @@ def list_lmp_nonconformities(
         )
         data = build_list_lmp_nonconformities_use_case().execute(
             status=status,
-            branch_code=branch,
             sale_number=sale_number,
-            material_code=material_code,
+            customer_name=customer_name,
             product_code=product_code,
             date_start=start_date,
             date_end=end_date,
@@ -218,21 +247,17 @@ def get_lmp_nonconformity(
 def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
     try:
         data = build_create_lmp_nonconformity_use_case().execute(
-            registered_at=body.registered_at,
             status=body.status,
             sale_number=body.sale_number,
-            branch_code=body.branch_code,
-            material_code=body.material_code,
-            supplier_name=body.supplier_name,
-            purchase_order=body.purchase_order,
-            invoice_number=body.invoice_number,
-            qty_received=body.qty_received,
-            qty_accepted=body.qty_accepted,
-            qty_rejected=body.qty_rejected,
+            customer_name=body.customer_name,
+            launch_date=body.launch_date,
+            last_revision_date=body.last_revision_date,
+            executed_by=body.executed_by,
+            released_by=body.released_by,
             defect_description=body.defect_description,
             corrective_actions=body.corrective_actions,
             technical_opinion=body.technical_opinion,
-            product_codes=body.product_codes,
+            products=_products_payload(body),
             created_by=_current_user_label(),
         )
         return api_delpi_success(
@@ -260,21 +285,17 @@ def update_lmp_nonconformity(
     try:
         data = build_update_lmp_nonconformity_use_case().execute(
             record_id=str(record_id),
-            registered_at=body.registered_at,
             status=body.status,
             sale_number=body.sale_number,
-            branch_code=body.branch_code,
-            material_code=body.material_code,
-            supplier_name=body.supplier_name,
-            purchase_order=body.purchase_order,
-            invoice_number=body.invoice_number,
-            qty_received=body.qty_received,
-            qty_accepted=body.qty_accepted,
-            qty_rejected=body.qty_rejected,
+            customer_name=body.customer_name,
+            launch_date=body.launch_date,
+            last_revision_date=body.last_revision_date,
+            executed_by=body.executed_by,
+            released_by=body.released_by,
             defect_description=body.defect_description,
             corrective_actions=body.corrective_actions,
             technical_opinion=body.technical_opinion,
-            product_codes=body.product_codes,
+            products=_products_payload(body),
             updated_by=_current_user_label(),
         )
         if data is None:

@@ -35,10 +35,15 @@ Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_rou
 | `createLmpNonconformity` | POST | `/engineering/lmps/nonconformities` | Criar NC (`dashboard-lmps.nc.write`) |
 | `updateLmpNonconformity` | PUT | `/engineering/lmps/nonconformities/{id}` | Atualizar NC |
 | `deleteLmpNonconformity` | DELETE | `/engineering/lmps/nonconformities/{id}` | Excluir NC |
+| `getLmpBySaleNumber` | GET | `/engineering/lmps/{sale_number}` | Detalhe OV + **hydrate** no formulário de NC |
 
-**Detalhe da OV:** o MFE chama **`getLmpBySaleNumber`** + **`getLmpHistoryEvents`** + **`getLmpHistoryFlow`** em paralelo (`useLmpDetail`) e mescla fluxo nos eventos para badges na timeline.
+**NCs (domínio engenharia):** CRUD em `lmpNonconformityApi.ts`. Cabeçalho: OV (= LMP), cliente, datas lançamento/revisão, quem executou/liberou, status, problema, ações, parecer. `registered_at` é automático no create. Produtos = linhas (`product_code` + `product_description`).
 
-**NCs:** CRUD em `lmpNonconformityApi.ts`; leitura com `dashboard-lmps.view` / `ENGINEERING_LMP_ACCESS`; escrita com `dashboard-lmps.nc.write`.
+**Hidratação:** ao informar a OV e clicar «Buscar LMP», o MFE consome `getLmpBySaleNumber` e preenche cliente, datas e tabela de produtos (campos editáveis). Material só nas linhas.
+
+Rotas de UI no manifesto: `/apps/dashboard-lmps` (dashboard) e `/apps/dashboard-lmps/nonconformities` (CRUD de NCs).
+
+Leitura: `dashboard-lmps.view` / `ENGINEERING_LMP_ACCESS`. Escrita: `dashboard-lmps.nc.write`.
 
 ---
 

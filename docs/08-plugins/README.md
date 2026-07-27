@@ -64,7 +64,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/dashboard-supplies` | `dashboard-supplies` | microfrontend | plugin | `/apps/dashboard-supplies` | `delpi-dashboard-supplies` |
 | `plugins/dashboard-engineering` | `dashboard-engineering` | microfrontend | plugin | `/apps/dashboard-engineering` | `delpi-dashboard-engineering` |
 | `plugins/minha-delpi-chat` | `minha-delpi-chat` | microfrontend | plugin | `/apps/minha-delpi-chat` | `delpi-minha-delpi-chat` |
-| `plugins/dashboard-lmps` | `dash-lmps` | iframe | plugin | `/dash-lmps` | `delpi-dashboard-lmps` |
+| `plugins/dashboard-lmps` | `dashboard-lmps` | microfrontend | plugin | `/apps/dashboard-lmps` | `delpi-dashboard-lmps` |
 | `plugins/dashboard-quality` | `dashboard-quality` | microfrontend | plugin | `/apps/dashboard-quality` | `delpi-dashboard-quality` |
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | plugin | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
@@ -189,7 +189,7 @@ Declaradas no manifesto e persistidas na Core API:
 | Plugin | Permissões (exemplos) |
 |---|---|
 | strategic-indicators | `strategic-indicators.view`, `strategic-indicators.settings.manage`, … |
-| dash-lmps | `dash-lmps.access` |
+| dashboard-lmps | `dashboard-lmps.view`, `dashboard-lmps.nc.write` |
 | dashboard-quality | `dashboard-quality.view` (+ `api-delpi.quality.access` na API) |
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
 | central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc`, `central-agendamento.approve.filial-es|sc` |

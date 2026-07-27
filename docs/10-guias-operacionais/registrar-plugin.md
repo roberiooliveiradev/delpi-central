@@ -34,7 +34,7 @@ O nome do arquivo **varia**; o campo `id` no JSON é a chave estável.
 |---|---|
 | Indicadores Estratégicos | `plugins/strategic-indicators/strategic-indicators.manifest.json` |
 | Minha DELPI Chat | `plugins/minha-delpi-chat/delpi.manifest.json` |
-| Dashboard LMPs | `plugins/dashboard-lmps/dash-lmps.manifest.json` |
+| Dashboard LMPs | `plugins/dashboard-lmps/dash-lmps-microfrontend.manifest.json` |
 | Dashboard Qualidade | `plugins/dashboard-quality/dashboard-quality.manifest.json` |
 | Eficiência Fabril | `plugins/eficiencia-fabril/eficiencia-fabril.manifest.json` |
 | Auditoria 5S | `plugins/auditoria-5s/auditoria-5s.manifest.json` |

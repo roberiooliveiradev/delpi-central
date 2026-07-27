@@ -13,9 +13,8 @@ const API_BASE = "/apps/api-delpi/engineering/lmps/nonconformities";
 
 export type ListLmpNcParams = {
   status?: string;
-  branch?: string;
   sale_number?: string;
-  material_code?: string;
+  customer_name?: string;
   product_code?: string;
   start_date?: string;
   end_date?: string;
@@ -26,9 +25,8 @@ export type ListLmpNcParams = {
 function buildQuery(params: ListLmpNcParams): string {
   const search = new URLSearchParams();
   if (params.status) search.set("status", params.status);
-  if (params.branch) search.set("branch", params.branch);
   if (params.sale_number) search.set("sale_number", params.sale_number);
-  if (params.material_code) search.set("material_code", params.material_code);
+  if (params.customer_name) search.set("customer_name", params.customer_name);
   if (params.product_code) search.set("product_code", params.product_code);
   if (params.start_date) search.set("start_date", params.start_date);
   if (params.end_date) search.set("end_date", params.end_date);

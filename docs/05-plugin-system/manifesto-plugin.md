@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/05-plugin-system/manifesto-plugin.md`  
 > **Status:** documentação oficial (maio/2026)  
 
-**Exemplos de plugin id no repositório:** `strategic-indicators` (microfrontend), `dash-lmps` (iframe, `basePath` `/dash-lmps`). Trechos genéricos com `dashboard-lmps` ilustram MFE — não confundir com o manifesto atual de LMPs.
+**Exemplos de plugin id no repositório:** `strategic-indicators` (microfrontend), `dashboard-lmps` (microfrontend, `basePath` `/apps/dashboard-lmps`).
 > **Produto:** Minha DELPI  
 > **Escopo:** contrato JSON de manifesto, validações e regras de domínio do Plugin System
 

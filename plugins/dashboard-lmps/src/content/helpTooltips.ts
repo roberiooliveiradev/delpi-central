@@ -166,22 +166,20 @@ export const LMPS_HELP_TOOLTIPS = {
     "Filtra os registros da tabela pelo texto digitado (proposta, descrição, status, etc.).",
   nonconformities: {
     pageSubtitle:
-      "Cadastro operacional de não conformidades no contexto LMP: material, fornecedor, quantidades, status e vínculo opcional com OV/produtos.",
+      "Registro de não conformidades de engenharia (LMP/OV): cliente, datas, executor/liberador, problema e produtos do projeto.",
     newButton:
       "Abre o formulário para registrar uma nova não conformidade. Requer permissão de escrita.",
     filters: {
       status:
         "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",
-      branch:
-        "Filial TOTVS associada ao registro (01 ou 02). Vazio = todas as filiais.",
       saleNumber:
-        "Filtra pelo número da ordem de venda (OV/proposta), quando a NC estiver amarrada a uma LMP.",
-      material:
-        "Código do material/item informado na NC (busca parcial).",
+        "Filtra pelo número da OV (= LMP).",
+      customer:
+        "Filtra pelo nome do cliente (busca parcial).",
       product:
-        "Código de produto Protheus vinculado à NC (tabela de produtos).",
+        "Código de material/produto Protheus nas linhas da NC.",
       dateStart:
-        "Início do intervalo pela data/hora de registro da NC.",
+        "Início do intervalo pela data/hora de registro da NC (automática).",
       dateEnd:
         "Fim do intervalo pela data/hora de registro da NC.",
     },
@@ -190,51 +188,52 @@ export const LMPS_HELP_TOOLTIPS = {
         "Lista paginada de não conformidades com os filtros aplicados. Use Editar/Excluir nas ações quando tiver permissão.",
       search:
         "Busca local nos registros já carregados na página (texto das colunas visíveis).",
-      registeredAt: "Data e hora em que a não conformidade foi registrada.",
-      saleNumber: "OV/proposta vinculada, quando informada.",
-      material: "Código do material/item da ocorrência.",
-      supplier: "Nome do fornecedor relacionado à NC.",
-      purchaseOrder: "Número da ordem de compra (OC).",
-      invoice: "Número da nota fiscal (NF).",
-      qtyReceived: "Quantidade recebida no recebimento/inspeção.",
-      qtyAccepted: "Quantidade aceita após análise.",
-      qtyRejected: "Quantidade reprovada / não conforme.",
+      registeredAt:
+        "Data e hora em que a NC foi registrada no sistema (definida automaticamente).",
+      saleNumber: "Número da OV (= identificador da LMP).",
+      customer: "Cliente associado à LMP/OV (snapshot editável).",
+      launchDate: "Data de lançamento da LMP/OV.",
+      lastRevisionDate: "Data da última revisão informada na NC.",
+      executedBy: "Quem executou o trabalho/análise.",
+      releasedBy: "Quem liberou a NC ou o desenho.",
+      products: "Códigos de material/produto vinculados à NC.",
+      problem: "Problema identificado (resumo).",
       status: "Andamento da NC: Aberta, Em andamento ou Concluída.",
       actions: "Editar o registro ou excluí-lo definitivamente.",
     },
     form: {
       sectionIdentification:
-        "Quando e em que contexto a NC foi registrada (data/hora, status, filial e OV opcional).",
-      sectionDocument:
-        "Dados do documento/material: fornecedor, OC, NF e quantidades do recebimento.",
+        "OV (= LMP), status, cliente e datas de lançamento/revisão. Informe a OV e use «Buscar LMP» para hidratar do TOTVS (campos editáveis).",
+      sectionPeople:
+        "Responsáveis: quem executou e quem liberou (texto livre).",
       sectionProducts:
-        "Códigos Protheus opcionais amarrados à NC (podem vir da LMP/OV).",
+        "Tabela de materiais/produtos da NC. Pode ser preenchida automaticamente a partir dos produtos da OV no TOTVS.",
       sectionDescription:
-        "Narrativa técnica: defeito encontrado, ações tomadas e parecer.",
+        "Problema identificado, ações corretivas e parecer técnico.",
       registeredAt:
-        "Data e hora do registro da ocorrência. Campo obrigatório.",
+        "Preenchida automaticamente pelo servidor no momento da criação. Não é editável.",
       status:
         "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
-      branch:
-        "Filial TOTVS (01/02) do contexto operacional. Opcional.",
       saleNumber:
-        "Número da OV/proposta LMP para amarrar a NC. Opcional.",
-      material:
-        "Código do material/item envolvido na não conformidade.",
-      supplier: "Fornecedor do material ou serviço relacionado.",
-      purchaseOrder: "Número da ordem de compra no TOTVS/ERP.",
-      invoice: "Número da nota fiscal de entrada.",
-      qtyReceived: "Quantidade total recebida no lote/inspeção.",
-      qtyAccepted: "Quantidade aceita após conferência.",
-      qtyRejected: "Quantidade reprovada / segregada.",
-      productCodes:
-        "Lista de códigos de produto Protheus, separados por vírgula ou espaço.",
-      defectDescription:
-        "Descrição objetiva do defeito ou desvio encontrado.",
+        "Número da OV (= LMP). Usado para buscar cliente, datas e produtos no TOTVS.",
+      hydrateLmp:
+        "Consulta GET /engineering/lmps/{OV} e preenche cliente, datas e linhas de produto. Você pode editar depois.",
+      customer:
+        "Nome do cliente (snapshot). Hidratado do TOTVS e editável.",
+      launchDate:
+        "Data de lançamento da LMP/OV (snapshot editável).",
+      lastRevisionDate:
+        "Data da última revisão (snapshot editável).",
+      executedBy: "Nome de quem executou.",
+      releasedBy: "Nome de quem liberou.",
+      productCode: "Código do material/produto Protheus na linha.",
+      productDescription: "Descrição do produto (snapshot / edição manual).",
+      addProduct: "Inclui uma linha vazia na tabela de produtos.",
+      removeProduct: "Remove a linha da tabela de produtos.",
+      defectDescription: "Problema identificado na LMP/desenho.",
       correctiveActions:
         "Ações já tomadas ou plano de ação corretiva.",
-      technicalOpinion:
-        "Parecer técnico / conclusão da análise.",
+      technicalOpinion: "Parecer técnico / conclusão da análise.",
     },
   },
 } as const;

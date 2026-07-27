@@ -60,7 +60,7 @@ Documentação técnica do monorepo **delpi-central** (produto **Minha DELPI**).
 | `/apps/api-delpi/*` | API DELPI |
 | `/apps/minha-delpi-ai/api/*` | AI API |
 | `/apps/<plugin-id>/*` | Assets MFE |
-| `/dash-lmps` | Plugin iframe LMPs |
+| `/apps/dashboard-lmps` | MFE Dashboard LMPs |
 
 ---
 

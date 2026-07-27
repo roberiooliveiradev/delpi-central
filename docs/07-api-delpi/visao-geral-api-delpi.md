@@ -70,8 +70,8 @@ Strategic Indicators: JSON direto / `HTTPException`.
 | `api-delpi.system` / `api-delpi.data` | Sistema + SQL |
 | `api-delpi.quality.access` | `/quality/*` |
 | `strategic-indicators.*` | Módulo SI |
-| `dash-lmps.access` | Plugin LMPs (manifesto iframe) |
-| `dashboard-lmps.view` | Legado — preferir `dash-lmps.access` |
+| `dashboard-lmps.view` | MFE Dashboard LMPs (leitura + hydrate) |
+| `dashboard-lmps.nc.write` | CRUD de não conformidades LMP |
 
 Cadastradas na Core API via manifestos de plugin ou seed.
 
