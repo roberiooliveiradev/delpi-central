@@ -376,6 +376,32 @@ export function createModalShell(config: CreateModalShellConfig) {
  * Anti-padrão: `createModalShell` + portal no `document.body` com overlay
  * `position:fixed; inset:0` — escurece e bloqueia a sidebar do portal.
  */
+
+/** Host utilizável: não está em `[hidden]` / `aria-hidden` (abas keep-alive). */
+export function isUsableHostContainedPortalTarget(el: HTMLElement): boolean {
+  if (el.closest("[hidden]")) return false;
+  if (el.closest('[aria-hidden="true"]')) return false;
+  if (typeof window === "undefined") return true;
+  const style = window.getComputedStyle(el);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  return true;
+}
+
+/**
+ * Resolve o root do MFE para portal host-contained.
+ * Com várias matches (ex.: dashboard keep-alive + outra aba), prefere o host visível.
+ */
+export function resolveHostContainedPortalTarget(
+  hostSelector: string,
+  root: ParentNode = document,
+): HTMLElement | null {
+  const candidates = root.querySelectorAll<HTMLElement>(hostSelector);
+  for (const el of candidates) {
+    if (isUsableHostContainedPortalTarget(el)) return el;
+  }
+  return null;
+}
+
 export function createHostContainedModalShell(
   config: CreateModalShellConfig & { portalScopeClassName: string },
 ) {
@@ -386,7 +412,7 @@ export function createHostContainedModalShell(
   return function HostContainedModalShell(props: DashboardModalShellProps) {
     const portalTarget =
       typeof document !== "undefined"
-        ? document.querySelector<HTMLElement>(hostSelector)
+        ? resolveHostContainedPortalTarget(hostSelector)
         : null;
     return (
       <Modal

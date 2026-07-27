@@ -119,6 +119,8 @@ export {
   ModalShell,
   createModalShell,
   createHostContainedModalShell,
+  resolveHostContainedPortalTarget,
+  isUsableHostContainedPortalTarget,
   modalShellBemClasses,
   DELPI_MODAL_HOST_ATTR,
   type CreateModalShellConfig,

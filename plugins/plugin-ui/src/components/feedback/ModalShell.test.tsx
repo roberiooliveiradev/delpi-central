@@ -9,6 +9,7 @@ import {
   createModalShell,
   ModalShell,
   modalShellBemClasses,
+  resolveHostContainedPortalTarget,
 } from "./ModalShell";
 
 const modalCss = readFileSync(resolve(process.cwd(), "src/styles/modal.css"), "utf8");
@@ -220,6 +221,41 @@ describe("ModalShell", () => {
     expect(modalShellCss).toMatch(
       /\.delpi-ui-modal--host-fill\s+\.delpi-ui-modal__body[\s\S]*?overflow:\s*auto/s,
     );
+  });
+
+  it("resolveHostContainedPortalTarget ignora host keep-alive hidden (abas MFE)", () => {
+    const keepAlive = document.createElement("div");
+    keepAlive.setAttribute("hidden", "");
+    const hiddenHost = document.createElement("main");
+    hiddenHost.className = "dashboard-lmps";
+    keepAlive.appendChild(hiddenHost);
+
+    const visibleHost = document.createElement("main");
+    visibleHost.className = "dashboard-lmps";
+
+    document.body.appendChild(keepAlive);
+    document.body.appendChild(visibleHost);
+
+    expect(resolveHostContainedPortalTarget(".dashboard-lmps")).toBe(visibleHost);
+
+    const HostModal = createHostContainedModalShell({
+      prefix: "lmps",
+      portalScopeClassName: "dashboard-lmps",
+    });
+
+    const { unmount } = render(
+      <HostModal open title="Nova não conformidade" onClose={vi.fn()}>
+        <p>Formulário</p>
+      </HostModal>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Nova não conformidade" });
+    expect(visibleHost.contains(dialog)).toBe(true);
+    expect(hiddenHost.contains(dialog)).toBe(false);
+
+    unmount();
+    keepAlive.remove();
+    visibleHost.remove();
   });
 
   it("createHostContainedModalShell com layout dialog centraliza o card sem host-fill", () => {
