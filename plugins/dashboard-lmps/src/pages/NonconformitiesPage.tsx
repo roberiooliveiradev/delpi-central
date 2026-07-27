@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   ConfirmModalPanel,
@@ -6,7 +6,7 @@ import {
   useConfirmDialogController,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 
 import { getLmpBySaleNumber } from "../api/lmpApi";
 import {
@@ -15,6 +15,10 @@ import {
   fetchLmpNonconformities,
   updateLmpNonconformity,
 } from "../api/lmpNonconformityApi";
+import {
+  searchProducts,
+  type ProductSearchItem,
+} from "../api/productApi";
 import { DataTableSection } from "../components/DataTableSection";
 import {
   FilterInputField,
@@ -50,6 +54,12 @@ import { readLmpsFilters } from "../utils/filterUrl";
 
 const NC_HELP = LMPS_HELP_TOOLTIPS.nonconformities;
 
+/** OV tipicamente numérica (ex.: 000160); evita hydrate a cada tecla em texto livre. */
+function looksLikeOvCode(value: string): boolean {
+  const trimmed = value.trim();
+  return /^\d{4,20}$/.test(trimmed);
+}
+
 type Props = {
   pathname: string;
   canWrite?: boolean;
@@ -67,7 +77,6 @@ type FormState = {
   corrective_actions: string;
   technical_opinion: string;
   products: LmpNcProductLine[];
-  registered_at_display: string;
 };
 
 function toDateInput(iso: string | null | undefined): string {
@@ -109,7 +118,6 @@ function emptyForm(): FormState {
     corrective_actions: "",
     technical_opinion: "",
     products: [],
-    registered_at_display: "",
   };
 }
 
@@ -136,7 +144,6 @@ function recordToForm(record: LmpNonconformity): FormState {
     corrective_actions: record.corrective_actions ?? "",
     technical_opinion: record.technical_opinion ?? "",
     products,
-    registered_at_display: formatDisplayDate(record.registered_at),
   };
 }
 
@@ -196,7 +203,16 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [saving, setSaving] = useState(false);
   const [hydrating, setHydrating] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [productQuery, setProductQuery] = useState("");
+  const [productHits, setProductHits] = useState<ProductSearchItem[]>([]);
+  const [productSearching, setProductSearching] = useState(false);
+  const [lmpProductCandidates, setLmpProductCandidates] = useState<
+    LmpNcProductLine[]
+  >([]);
   const [pendingDelete, setPendingDelete] = useState<LmpNonconformity | null>(null);
+  const hydrateAbortRef = useRef<AbortController | null>(null);
+  const hydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastHydratedOvRef = useRef<string>("");
   const { confirm, pending, confirmPending, cancelPending } = useConfirmDialogController();
 
   const load = useCallback(async () => {
@@ -226,38 +242,22 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
     void load();
   }, [load]);
 
-  const openCreate = () => {
-    setEditing(null);
-    setForm(emptyForm());
-    setFormError(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (record: LmpNonconformity) => {
-    setEditing(record);
-    setForm(recordToForm(record));
-    setFormError(null);
-    setFormOpen(true);
-  };
-
-  const handleHydrateFromLmp = async () => {
-    const ov = form.sale_number.trim();
-    if (!ov) {
-      setFormError("Informe o número da OV (= LMP) para buscar no TOTVS.");
-      return;
-    }
-    setHydrating(true);
-    setFormError(null);
-    try {
-      const lmp = await getLmpBySaleNumber(ov);
-      const products: LmpNcProductLine[] = (lmp.list_products ?? []).map((p) => ({
-        product_code: p.code ?? "",
-        product_description: p.description ?? "",
-      }));
+  const applyLmpHydration = useCallback(
+    (ov: string, lmp: Awaited<ReturnType<typeof getLmpBySaleNumber>>) => {
+      const products: LmpNcProductLine[] = (lmp.list_products ?? [])
+        .map((p) => ({
+          product_code: (p.code ?? "").trim(),
+          product_description: p.description ?? "",
+        }))
+        .filter((p) => p.product_code);
+      setLmpProductCandidates(products);
+      lastHydratedOvRef.current = (lmp.sale_number || ov).trim();
       setForm((prev) => ({
         ...prev,
         sale_number: lmp.sale_number || ov,
-        customer_name: lmp.costumer_name ?? prev.customer_name,
+        customer_name: lmp.costumer_name?.trim()
+          ? lmp.costumer_name
+          : prev.customer_name,
         launch_date: toDateInput(lmp.start_date) || prev.launch_date,
         last_revision_date:
           toDateInput(lmp.homolog_date) ||
@@ -265,13 +265,83 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           prev.last_revision_date,
         products: products.length ? products : prev.products,
       }));
-    } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Erro ao buscar LMP no TOTVS.",
-      );
-    } finally {
-      setHydrating(false);
-    }
+    },
+    [],
+  );
+
+  const handleHydrateFromLmp = useCallback(
+    async (ovRaw?: string, opts?: { silent?: boolean }) => {
+      const ov = (ovRaw ?? form.sale_number).trim();
+      if (!ov) {
+        if (!opts?.silent) {
+          setFormError("Informe o número da OV (= LMP) para buscar no TOTVS.");
+        }
+        return;
+      }
+      if (ov === lastHydratedOvRef.current && opts?.silent) {
+        return;
+      }
+      hydrateAbortRef.current?.abort();
+      const controller = new AbortController();
+      hydrateAbortRef.current = controller;
+      setHydrating(true);
+      if (!opts?.silent) setFormError(null);
+      try {
+        const lmp = await getLmpBySaleNumber(ov, {}, controller.signal);
+        if (controller.signal.aborted) return;
+        applyLmpHydration(ov, lmp);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        if (!opts?.silent) {
+          setFormError(
+            err instanceof Error ? err.message : "Erro ao buscar LMP no TOTVS.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) setHydrating(false);
+      }
+    },
+    [applyLmpHydration, form.sale_number],
+  );
+
+  const scheduleAutoHydrate = useCallback(
+    (ov: string) => {
+      if (hydrateTimerRef.current) clearTimeout(hydrateTimerRef.current);
+      if (!looksLikeOvCode(ov)) return;
+      hydrateTimerRef.current = setTimeout(() => {
+        void handleHydrateFromLmp(ov, { silent: true });
+      }, 450);
+    },
+    [handleHydrateFromLmp],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (hydrateTimerRef.current) clearTimeout(hydrateTimerRef.current);
+      hydrateAbortRef.current?.abort();
+    };
+  }, []);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm());
+    setFormError(null);
+    setProductQuery("");
+    setProductHits([]);
+    setLmpProductCandidates([]);
+    lastHydratedOvRef.current = "";
+    setFormOpen(true);
+  };
+
+  const openEdit = (record: LmpNonconformity) => {
+    setEditing(record);
+    setForm(recordToForm(record));
+    setFormError(null);
+    setProductQuery("");
+    setProductHits([]);
+    setLmpProductCandidates([]);
+    lastHydratedOvRef.current = (record.sale_number ?? "").trim();
+    setFormOpen(true);
   };
 
   const handleSave = async () => {
@@ -337,6 +407,76 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       ...prev,
       products: prev.products.filter((_, i) => i !== index),
     }));
+  };
+
+  const addProductFromHit = (hit: ProductSearchItem) => {
+    const code = hit.code.trim().toUpperCase();
+    if (!code) return;
+    setForm((prev) => {
+      if (
+        prev.products.some(
+          (p) => p.product_code.trim().toUpperCase() === code,
+        )
+      ) {
+        return prev;
+      }
+      return {
+        ...prev,
+        products: [
+          ...prev.products,
+          {
+            product_code: hit.code,
+            product_description: hit.description || "",
+          },
+        ],
+      };
+    });
+    setProductHits((prev) => prev.filter((p) => p.code !== hit.code));
+  };
+
+  const handleProductSearch = async () => {
+    const q = productQuery.trim();
+    if (q.length < 2) {
+      setFormError("Digite ao menos 2 caracteres para buscar produto.");
+      return;
+    }
+    setProductSearching(true);
+    setFormError(null);
+    try {
+      const local = lmpProductCandidates.filter((p) => {
+        const code = (p.product_code || "").toLowerCase();
+        const desc = (p.product_description || "").toLowerCase();
+        const needle = q.toLowerCase();
+        return code.includes(needle) || desc.includes(needle);
+      });
+      let remote: ProductSearchItem[] = [];
+      try {
+        remote = await searchProducts(q);
+      } catch {
+        remote = [];
+      }
+      const merged = new Map<string, ProductSearchItem>();
+      for (const p of local) {
+        merged.set(p.product_code.toUpperCase(), {
+          code: p.product_code,
+          description: p.product_description || "",
+        });
+      }
+      for (const p of remote) {
+        merged.set(p.code.toUpperCase(), p);
+      }
+      setProductHits(Array.from(merged.values()));
+      if (merged.size === 0) {
+        setFormError("Nenhum produto encontrado para essa busca.");
+      }
+    } finally {
+      setProductSearching(false);
+    }
+  };
+
+  const setSaleNumberField = (value: string) => {
+    setForm((prev) => ({ ...prev, sale_number: value }));
+    scheduleAutoHydrate(value);
   };
 
   const columns = useMemo<DataTableColumn<LmpNonconformity>[]>(() => {
@@ -590,33 +730,30 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             hint={NC_HELP.form.sectionIdentification}
           >
             <FormGrid>
-              {editing ? (
-                <div className="lmps-field lmps-field--readonly">
-                  <span className="lmps-field__label">
-                    Data/hora registro
-                    <HelpTooltip
-                      content={NC_HELP.form.registeredAt}
-                      ariaLabel="Ajuda: data de registro"
-                    />
-                  </span>
-                  <p className="lmps-field__readonly-value">
-                    {form.registered_at_display || "—"}
-                  </p>
+              <div className="lmps-nc-ov-row lmps-span-2">
+                <TextField
+                  id="nc-sale"
+                  label="OV / LMP"
+                  hint={NC_HELP.form.saleNumber}
+                  value={form.sale_number}
+                  onChange={setSaleNumberField}
+                  fullWidth
+                />
+                <div className="lmps-nc-hydrate">
+                  <ActionButton
+                    type="button"
+                    variant="ghost"
+                    disabled={hydrating || saving || !form.sale_number.trim()}
+                    onClick={() => void handleHydrateFromLmp()}
+                  >
+                    {hydrating ? "Buscando…" : "Buscar LMP"}
+                  </ActionButton>
+                  <HelpTooltip
+                    content={NC_HELP.form.hydrateLmp}
+                    ariaLabel="Ajuda: buscar LMP no TOTVS"
+                  />
                 </div>
-              ) : (
-                <div className="lmps-field lmps-field--readonly">
-                  <span className="lmps-field__label">
-                    Data/hora registro
-                    <HelpTooltip
-                      content={NC_HELP.form.registeredAt}
-                      ariaLabel="Ajuda: data de registro"
-                    />
-                  </span>
-                  <p className="lmps-field__readonly-value">
-                    Será definida automaticamente ao salvar
-                  </p>
-                </div>
-              )}
+              </div>
               <SelectField
                 id="nc-status"
                 label="Status"
@@ -629,28 +766,6 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                   label: o.label,
                 }))}
               />
-              <TextField
-                id="nc-sale"
-                label="OV / LMP"
-                hint={NC_HELP.form.saleNumber}
-                value={form.sale_number}
-                onChange={setField("sale_number")}
-                fullWidth
-              />
-              <div className="lmps-nc-hydrate">
-                <ActionButton
-                  type="button"
-                  variant="ghost"
-                  disabled={hydrating || saving || !form.sale_number.trim()}
-                  onClick={() => void handleHydrateFromLmp()}
-                >
-                  {hydrating ? "Buscando…" : "Buscar LMP"}
-                </ActionButton>
-                <HelpTooltip
-                  content={NC_HELP.form.hydrateLmp}
-                  ariaLabel="Ajuda: buscar LMP no TOTVS"
-                />
-              </div>
               <TextField
                 id="nc-customer"
                 label="Cliente"
@@ -703,6 +818,44 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
 
           <SectionCard title="Produtos" hint={NC_HELP.form.sectionProducts}>
             <div className="lmps-nc-products">
+              <div className="lmps-nc-product-search">
+                <TextField
+                  id="nc-product-search"
+                  label="Buscar produto"
+                  hint={NC_HELP.form.productSearch}
+                  value={productQuery}
+                  onChange={setProductQuery}
+                  fullWidth
+                  placeholder="Código ou descrição"
+                />
+                <div className="lmps-nc-hydrate">
+                  <ActionButton
+                    type="button"
+                    variant="ghost"
+                    disabled={productSearching || productQuery.trim().length < 2}
+                    onClick={() => void handleProductSearch()}
+                  >
+                    <Search size={14} />
+                    {productSearching ? "Buscando…" : "Buscar"}
+                  </ActionButton>
+                </div>
+              </div>
+              {productHits.length > 0 ? (
+                <ul className="lmps-nc-product-hits" aria-label="Resultados da busca">
+                  {productHits.map((hit) => (
+                    <li key={hit.code}>
+                      <button
+                        type="button"
+                        className="lmps-nc-product-hits__item"
+                        onClick={() => addProductFromHit(hit)}
+                      >
+                        <strong>{hit.code}</strong>
+                        <span>{hit.description || "—"}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <table className="lmps-nc-products__table">
                 <thead>
                   <tr>
@@ -727,7 +880,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
                   {form.products.length === 0 ? (
                     <tr>
                       <td colSpan={3} className="lmps-nc-products__empty">
-                        Nenhum produto. Busque a LMP ou adicione linhas.
+                        Nenhum produto. Informe a OV para trazer os da LMP, ou busque/adicione linhas.
                       </td>
                     </tr>
                   ) : (

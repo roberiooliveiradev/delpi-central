@@ -3,9 +3,12 @@ from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 
 from typing import Optional
-from delpi_auth.authorization import require_permission
+from delpi_auth.authorization import require_any_permission, require_permission
 
-from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
+from app.application.security.api_delpi_permissions import (
+    API_DELPI_ACCESS,
+    ENGINEERING_LMP_ACCESS,
+)
 from app.core.responses import error_response, not_found_response
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
@@ -154,7 +157,7 @@ router = APIRouter()
     response_model=ProductSearchResponse,
     openapi_extra=openapi_example_response(PRODUCT_SEARCH_EXAMPLE),
 )
-@require_permission(API_DELPI_ACCESS)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
 def search_products_route(
     code: Optional[str] = Query(None),
     group_code: Optional[str] = Query(None),

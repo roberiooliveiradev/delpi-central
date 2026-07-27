@@ -203,21 +203,19 @@ export const LMPS_HELP_TOOLTIPS = {
     },
     form: {
       sectionIdentification:
-        "OV (= LMP), status, cliente e datas de lançamento/revisão. Informe a OV e use «Buscar LMP» para hidratar do TOTVS (campos editáveis).",
+        "OV (= LMP), status, cliente e datas. Ao informar uma OV válida, cliente, data de lançamento e produtos da LMP são preenchidos automaticamente (editáveis).",
       sectionPeople:
         "Responsáveis: quem executou e quem liberou (texto livre).",
       sectionProducts:
-        "Tabela de materiais/produtos da NC. Pode ser preenchida automaticamente a partir dos produtos da OV no TOTVS.",
+        "Tabela de materiais/produtos. LMPs finalizadas já trazem a listagem ao hidratar a OV; busque por código ou descrição para incluir mais itens.",
       sectionDescription:
         "Problema identificado, ações corretivas e parecer técnico.",
-      registeredAt:
-        "Preenchida automaticamente pelo servidor no momento da criação. Não é editável.",
       status:
         "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
       saleNumber:
-        "Número da OV (= LMP). Usado para buscar cliente, datas e produtos no TOTVS.",
+        "Número da OV (= LMP). Com código compatível, preenche cliente, data de lançamento e produtos automaticamente.",
       hydrateLmp:
-        "Consulta GET /engineering/lmps/{OV} e preenche cliente, datas e linhas de produto. Você pode editar depois.",
+        "Consulta a LMP no TOTVS e preenche cliente, datas e produtos amarrados. Você pode editar depois.",
       customer:
         "Nome do cliente (snapshot). Hidratado do TOTVS e editável.",
       launchDate:
@@ -226,6 +224,8 @@ export const LMPS_HELP_TOOLTIPS = {
         "Data da última revisão (snapshot editável).",
       executedBy: "Nome de quem executou.",
       releasedBy: "Nome de quem liberou.",
+      productSearch:
+        "Busca produto por código ou descrição (TOTVS e produtos da LMP já carregada). Clique no resultado para incluir na tabela.",
       productCode: "Código do material/produto Protheus na linha.",
       productDescription: "Descrição do produto (snapshot / edição manual).",
       addProduct: "Inclui uma linha vazia na tabela de produtos.",
