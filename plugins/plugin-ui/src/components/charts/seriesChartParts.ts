@@ -17,6 +17,7 @@ import {
   OFFICE_CHART_PLOT_FILL,
   OFFICE_CHART_PLOT_STROKE,
   OFFICE_CHART_SERIES_COLOR,
+  SERIES_CHART_CATEGORY_PALETTE,
   type SeriesChartKind,
 } from "./seriesChartOptions";
 import { DECK_CHART_DEFAULTS, DECK_THEME_DARK } from "../../theme/deckColorCatalog";
@@ -907,8 +908,37 @@ export function resolveSeriesStrokeColor(
   options: SeriesChartOptions,
   parts?: ChartPartsMap | null,
 ): string {
-  const series = getChartPartState(parts, { kind: "series", seriesIndex: 0 });
-  return series?.style?.stroke ?? series?.style?.fill ?? options.seriesColor ?? OFFICE_CHART_SERIES_COLOR;
+  return resolveSeriesPaintColor({
+    seriesIndex: 0,
+    seriesColor: options.seriesColor ?? OFFICE_CHART_SERIES_COLOR,
+    categoryColors: options.categoryColors,
+    parts,
+  });
+}
+
+/**
+ * Cor efetiva da série N (plot + swatch da legenda).
+ * Ordem: projection/explicit → chartParts série → categoryColors → paleta → seriesColor.
+ */
+export function resolveSeriesPaintColor(args: {
+  seriesIndex: number;
+  explicit?: string | null;
+  seriesColor: string;
+  categoryColors?: string[] | null;
+  parts?: ChartPartsMap | null;
+}): string {
+  const explicit = args.explicit?.trim();
+  if (explicit) return explicit;
+  const series = getChartPartState(args.parts, { kind: "series", seriesIndex: args.seriesIndex });
+  const fromPart = series?.style?.stroke?.trim() || series?.style?.fill?.trim();
+  if (fromPart) return fromPart;
+  const fromCat = args.categoryColors?.[args.seriesIndex]?.trim();
+  if (fromCat) return fromCat;
+  return (
+    SERIES_CHART_CATEGORY_PALETTE[args.seriesIndex % SERIES_CHART_CATEGORY_PALETTE.length] ||
+    args.seriesColor ||
+    OFFICE_CHART_SERIES_COLOR
+  );
 }
 
 export function resolveSeriesStrokeWidth(parts?: ChartPartsMap | null): number {

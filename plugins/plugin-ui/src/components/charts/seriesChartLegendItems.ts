@@ -1,10 +1,14 @@
 import {
-  SERIES_CHART_CATEGORY_PALETTE,
   resolveSeriesCategoryColor,
   type SeriesChartKind,
   type SeriesChartPoint,
   type SeriesChartSeriesSpec,
 } from "./seriesChartOptions";
+import {
+  getChartPartState,
+  resolveSeriesPaintColor,
+  type ChartPartsMap,
+} from "./seriesChartParts";
 
 export type SeriesChartLegendItem = {
   name: string;
@@ -41,19 +45,22 @@ export function buildSeriesChartLegendItems(args: {
   seriesColor: string;
   seriesList?: SeriesChartSeriesSpec[] | null;
   categoryColors?: string[] | null;
+  chartParts?: ChartPartsMap | null;
 }): SeriesChartLegendItem[] | undefined {
-  const { chartType, points, seriesColor, seriesList, categoryColors } = args;
+  const { chartType, points, seriesColor, seriesList, categoryColors, chartParts } = args;
   const seriesWithData = seriesList?.filter((series) => series.points.length > 0);
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
 
   if (multiSeries && seriesWithData) {
     return seriesWithData.map((series, index) => ({
       name: series.name?.trim() || `Série ${index + 1}`,
-      color:
-        series.color?.trim() ||
-        categoryColors?.[index] ||
-        SERIES_CHART_CATEGORY_PALETTE[index % SERIES_CHART_CATEGORY_PALETTE.length] ||
+      color: resolveSeriesPaintColor({
+        seriesIndex: index,
+        explicit: series.color,
         seriesColor,
+        categoryColors,
+        parts: chartParts,
+      }),
     }));
   }
 
@@ -63,8 +70,23 @@ export function buildSeriesChartLegendItems(args: {
   }
 
   const categoryPoints = seriesWithData?.[0]?.points ?? points;
-  return categoryPoints.map((point, index) => ({
-    name: point.label?.trim() || `Categoria ${index + 1}`,
-    color: resolveSeriesCategoryColor(index, seriesColor, categoryColors),
-  }));
+  return categoryPoints.map((point, index) => {
+    const markerFill = getChartPartState(chartParts, {
+      kind: "marker",
+      seriesIndex: 0,
+      pointIndex: point.sourceIndex ?? index,
+    })?.style?.fill?.trim();
+    return {
+      name: point.label?.trim() || `Categoria ${index + 1}`,
+      color:
+        markerFill ||
+        resolveSeriesPaintColor({
+          seriesIndex: index,
+          seriesColor,
+          categoryColors,
+          parts: chartParts,
+        }) ||
+        resolveSeriesCategoryColor(index, seriesColor, categoryColors),
+    };
+  });
 }

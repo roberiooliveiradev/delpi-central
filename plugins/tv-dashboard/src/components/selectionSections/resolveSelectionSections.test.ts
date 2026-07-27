@@ -178,6 +178,35 @@ describe("resolveSelectionSections", () => {
     expect(sections).toContain("organize");
   });
 
+  it("série/legenda selecionada expõe chartSeries + seções gerais do gráfico", () => {
+    for (const selectedChartPart of [
+      { kind: "series" as const, seriesIndex: 0 },
+      { kind: "legend" as const },
+    ]) {
+      const sections = resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "c-series",
+            type: "chart_view",
+            frame: { x: 0, y: 0, w: 40, h: 30 },
+          } as SelectionSectionContext["selected"],
+          selectedChartPart,
+        }),
+      );
+      expect(sections).toEqual(
+        expect.arrayContaining([
+          "partFormat",
+          "chartSeries",
+          "chartLayout",
+          "chartType",
+          "chartAxes",
+          "display",
+          "organize",
+        ]),
+      );
+    }
+  });
+
   it("gráfico tipado inclui layout/estilos/tipo/rótulos/eixos/série", () => {
     expect(
       resolveSelectionSections(

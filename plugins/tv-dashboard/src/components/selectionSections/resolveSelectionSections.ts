@@ -30,8 +30,15 @@ function resolveSingleBlockSections(
   ctx: SelectionSectionContext,
 ): SelectionSectionId[] {
   if (selected.type === "chart_view" && ctx.selectedChartPart) {
+    const part = ctx.selectedChartPart;
+    const seriesColorPart =
+      part.kind === "series" || part.kind === "legend" || part.kind === "marker";
     const head: SelectionSectionId[] = ["partFormat", "typography"];
-    if (chartPartAllowsFrame(ctx.selectedChartPart)) {
+    if (seriesColorPart) {
+      head.push("chartSeries", "chartLayout", "chartStyles", "chartType", "chartLabels", "chartAxes");
+      return withCommonTail(head, "light");
+    }
+    if (chartPartAllowsFrame(part)) {
       return withCommonTail(head, "light");
     }
     return [...head, "appearance", "organize", "actions"];

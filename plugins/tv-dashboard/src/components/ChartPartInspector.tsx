@@ -37,6 +37,7 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 import {
   patchChartSeriesAppearance,
   resolveChartSeriesAppearanceColor,
+  resolveChartSeriesColorIndex,
 } from "../utils/chartSeriesAppearance";
 import { chartPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
@@ -77,10 +78,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   });
   const displayOptions = resolveChartDisplayOptions(options, block.resolved);
   const primitive = chartPartVisualPrimitive(selectedChartPart);
-  const activeSeriesIndex =
-    selectedChartPart.kind === "series" || selectedChartPart.kind === "marker"
-      ? selectedChartPart.seriesIndex
-      : 0;
+  const activeSeriesIndex = resolveChartSeriesColorIndex(selectedChartPart);
   const seriesColor = resolveChartSeriesAppearanceColor(block, activeSeriesIndex);
   const partKey = serializeChartPartRef(selectedChartPart);
   const partState = block.chartParts?.[partKey];

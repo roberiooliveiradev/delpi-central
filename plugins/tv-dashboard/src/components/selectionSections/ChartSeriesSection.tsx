@@ -1,14 +1,15 @@
 import {
-  mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
-  OFFICE_CHART_SERIES_COLOR,
-  partsToChartOptions,
   type ComunicadoBlock,
-  type ComunicadoChartOptions,
   type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import {
+  patchChartSeriesAppearance,
+  resolveChartSeriesAppearanceColor,
+  resolveChartSeriesColorIndex,
+} from "../../utils/chartSeriesAppearance";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { DeckField } from "../deck/DeckField";
@@ -19,36 +20,52 @@ import type { SelectionSectionLayout } from "./types";
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /**
- * Série do gráfico (cor principal) — seção tipada ribbon + painel.
+ * Cor da série/categoria — mesma fonte que plot e swatch da legenda.
+ * Visível no bloco (série 0) ou com parte série / legenda / fatia selecionada.
  */
 export function ChartSeriesSection({ layout }: { layout: SelectionSectionLayout }) {
   const { selected, selectedChartPart, updateSelected } = useComunicadoEditor();
   if (!selected || selected.type !== "chart_view") return null;
-  /* Com parte selecionada o chrome da série fica em partFormat. */
-  if (selectedChartPart) return null;
+
+  if (
+    selectedChartPart &&
+    selectedChartPart.kind !== "series" &&
+    selectedChartPart.kind !== "legend" &&
+    selectedChartPart.kind !== "marker"
+  ) {
+    return null;
+  }
 
   const block = selected as ComunicadoChartViewBlock;
-  const options = mergeComunicadoChartOptions({
-    ...block.chartOptions,
-    ...partsToChartOptions(block.chartParts),
-  });
+  const seriesIndex = resolveChartSeriesColorIndex(selectedChartPart);
+  const color = resolveChartSeriesAppearanceColor(block, seriesIndex);
+  const label =
+    selectedChartPart?.kind === "marker" ||
+    (selectedChartPart?.kind === "series" && seriesIndex > 0)
+      ? `Cor ${seriesIndex + 1}`
+      : "Cor da série";
 
-  const setSeriesColor = (color: string) => {
-    const nextOptions: ComunicadoChartOptions = {
-      ...options,
-      seriesColor: color,
-    };
+  const setSeriesColor = (nextColor: string) => {
+    const appearance = patchChartSeriesAppearance(block, seriesIndex, { color: nextColor });
     updateSelected({
-      chartOptions: nextOptions,
-      chartParts: mergeChartPartsWithOptions(block.chartParts, nextOptions),
+      ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+      ...(appearance.chartParts ? { chartParts: appearance.chartParts } : {}),
+      ...(appearance.chartOptions
+        ? {
+            chartOptions: mergeComunicadoChartOptions({
+              ...block.chartOptions,
+              ...appearance.chartOptions,
+            }),
+          }
+        : {}),
     } as Partial<ComunicadoBlock>);
   };
 
   const picker = (
     <TvRibbonColorPicker
       inline={layout === "pane"}
-      label="Cor da série"
-      value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
+      label={label}
+      value={color}
       onChange={setSeriesColor}
     />
   );
@@ -57,7 +74,7 @@ export function ChartSeriesSection({ layout }: { layout: SelectionSectionLayout 
     return (
       <div id="td-chart-pane-series">
         <SelectionPaneSection title="Série" hint={H.chartSeriesColor} defaultOpen={false}>
-          <DeckField id="td-chart-series-color" label="Cor da série" hint={H.chartSeriesColor}>
+          <DeckField id="td-chart-series-color" label={label} hint={H.chartSeriesColor}>
             {picker}
           </DeckField>
         </SelectionPaneSection>

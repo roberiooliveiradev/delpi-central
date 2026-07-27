@@ -31,6 +31,7 @@ import {
   resolveChartLinePartStroke,
   resolveChartPartFontSize,
   resolveMarkerStyle,
+  resolveSeriesPaintColor,
   resolveSeriesStrokeColor,
   serializeChartPartRef,
   upsertChartPartState,
@@ -68,6 +69,19 @@ describe("seriesChartParts", () => {
     const parts = upsertChartPartState({}, { kind: "title" }, { content: "Novo título", visible: true });
     const merged = mergeSeriesChartOptionsWithParts({ title: "Antigo" }, parts);
     expect(merged.title).toBe("Novo título");
+  });
+
+  it("resolveSeriesPaintColor lê chartParts da série N", () => {
+    const parts = upsertChartPartState({}, { kind: "series", seriesIndex: 1 }, {
+      style: { stroke: "#aabbcc" },
+    });
+    expect(
+      resolveSeriesPaintColor({
+        seriesIndex: 1,
+        seriesColor: "#000000",
+        parts,
+      }),
+    ).toBe("#aabbcc");
   });
 
   it("resolve cor e marcador a partir de primitivos (stroke/fill)", () => {

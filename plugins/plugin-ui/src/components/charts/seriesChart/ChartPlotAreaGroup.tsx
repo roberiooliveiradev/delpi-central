@@ -1,6 +1,5 @@
 import { useId } from "react";
 
-import { SERIES_CHART_CATEGORY_PALETTE } from "../seriesChartOptions";
 import { orderSeriesIndicesForOverlappingPaint } from "../seriesChartPaintOrder";
 import { ChartAxisLines } from "./ChartAxisLines";
 import { ChartAxisX } from "./ChartAxisX";
@@ -22,7 +21,11 @@ import { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartValueLabels } from "./ChartValueLabels";
 import type { SeriesChartDataLabelsResolved } from "../seriesChartDataLabels";
-import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
+import {
+  resolveSeriesPaintColor,
+  type ChartPartsMap,
+  type SeriesChartInteraction,
+} from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
 
 export type ChartPlotAreaGroupProps = SeriesChartKindProps & {
@@ -71,10 +74,13 @@ export function ChartPlotAreaGroup({
   const plotClipId = `delpi-series-plot-clip-${clipRawId}`;
 
   const resolveSeriesColor = (index: number, explicit?: string) =>
-    explicit?.trim() ||
-    config.categoryColors?.[index] ||
-    SERIES_CHART_CATEGORY_PALETTE[index % SERIES_CHART_CATEGORY_PALETTE.length] ||
-    seriesColor;
+    resolveSeriesPaintColor({
+      seriesIndex: index,
+      explicit,
+      seriesColor,
+      categoryColors: config.categoryColors,
+      parts: chartParts,
+    });
 
   const multiLine =
     (chartType === "line" || chartType === "area") &&

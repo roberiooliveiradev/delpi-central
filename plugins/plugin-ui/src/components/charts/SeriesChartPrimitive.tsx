@@ -263,6 +263,7 @@ export function SeriesChartPrimitive({
     seriesColor,
     seriesList: seriesWithData,
     categoryColors: config.categoryColors,
+    chartParts,
   });
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);

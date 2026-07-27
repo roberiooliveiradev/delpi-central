@@ -44,6 +44,21 @@ describe("seriesChartLegendItems", () => {
     expect(items).toBeUndefined();
   });
 
+  it("pizza prioriza fill do marker e chartParts na cor da legenda", () => {
+    const items = buildSeriesChartLegendItems({
+      chartType: "pie",
+      seriesColor: "#089bdb",
+      points: [
+        { label: "LMP", value: 12, sourceIndex: 0 },
+        { label: "AMOSTRA", value: 2, sourceIndex: 1 },
+      ],
+      chartParts: {
+        "marker:0:1": { style: { fill: "#ff00aa" } },
+      },
+    });
+    expect(items?.[1]?.color).toBe("#ff00aa");
+  });
+
   it("multi-série prioriza nomes das séries", () => {
     const items = buildSeriesChartLegendItems({
       chartType: "pie",

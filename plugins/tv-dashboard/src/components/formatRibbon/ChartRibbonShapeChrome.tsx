@@ -26,6 +26,11 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
+import {
+  patchChartSeriesAppearance,
+  resolveChartSeriesAppearanceColor,
+  resolveChartSeriesColorIndex,
+} from "../../utils/chartSeriesAppearance";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
@@ -61,6 +66,10 @@ function resolveEffectiveChartPart(
   return { kind: "chartArea" };
 }
 
+function isSeriesPaintPart(part: ComunicadoChartPartRef): boolean {
+  return part.kind === "series" || part.kind === "marker" || part.kind === "legend";
+}
+
 /**
  * Chrome de forma do gráfico na aba Elemento (estilo / preenchimento / contorno / raio).
  * Alvo: parte selecionada com primitivo visual, ou chartArea por padrão.
@@ -81,6 +90,8 @@ export function ChartRibbonShapeChrome({
   const partState = getChartPartState(block.chartParts, effectiveChartPart);
   const showFill = chartPrimitiveSupportsFill(chartPartPrimitive);
   const showStroke = chartPrimitiveSupportsStroke(chartPartPrimitive);
+  const seriesPaintIndex = resolveChartSeriesColorIndex(effectiveChartPart);
+  const seriesPaintColor = resolveChartSeriesAppearanceColor(block, seriesPaintIndex);
   const areaChrome =
     effectiveChartPart.kind === "chartArea"
       ? resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts)
@@ -90,8 +101,14 @@ export function ChartRibbonShapeChrome({
             borderRadius: partState?.style?.borderRadius ?? 0,
           }
         : null;
-  const fillValue = areaChrome?.fill ?? partState?.style?.fill ?? DECK_COLOR_ACCENT;
-  const strokeValue = areaChrome?.stroke ?? partState?.style?.stroke ?? DECK_COLOR_ACCENT;
+  const fillValue =
+    isSeriesPaintPart(effectiveChartPart) && effectiveChartPart.kind !== "legend"
+      ? seriesPaintColor
+      : (areaChrome?.fill ?? partState?.style?.fill ?? DECK_COLOR_ACCENT);
+  const strokeValue =
+    isSeriesPaintPart(effectiveChartPart) && effectiveChartPart.kind !== "legend"
+      ? seriesPaintColor
+      : (areaChrome?.stroke ?? partState?.style?.stroke ?? DECK_COLOR_ACCENT);
   const strokeWidth =
     areaChrome?.strokeWidth ??
     partState?.style?.strokeWidth ??
@@ -100,7 +117,40 @@ export function ChartRibbonShapeChrome({
   const showCorners =
     effectiveChartPart.kind === "chartArea" || effectiveChartPart.kind === "plotArea";
 
+  const applySeriesPaint = (patch: { color?: string; strokeWidth?: number }) => {
+    const appearance = patchChartSeriesAppearance(block, seriesPaintIndex, patch);
+    updateSelected({
+      ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+      ...(appearance.chartParts ? { chartParts: appearance.chartParts } : {}),
+      ...(appearance.chartOptions
+        ? {
+            chartOptions: mergeComunicadoChartOptions({
+              ...block.chartOptions,
+              ...appearance.chartOptions,
+            }),
+          }
+        : {}),
+    } as Partial<ComunicadoBlock>);
+  };
+
   const patchPartStyle = (style: Record<string, unknown>) => {
+    const paintColor =
+      typeof style.fill === "string"
+        ? style.fill
+        : typeof style.stroke === "string"
+          ? style.stroke
+          : undefined;
+    if (
+      isSeriesPaintPart(effectiveChartPart) &&
+      effectiveChartPart.kind !== "legend" &&
+      (paintColor != null || style.strokeWidth != null)
+    ) {
+      applySeriesPaint({
+        color: paintColor,
+        strokeWidth: typeof style.strokeWidth === "number" ? style.strokeWidth : undefined,
+      });
+      return;
+    }
     const nextParts = upsertChartPartState(block.chartParts, effectiveChartPart, {
       style: style as never,
     });
@@ -108,8 +158,22 @@ export function ChartRibbonShapeChrome({
       ...block.chartOptions,
       ...partsToChartOptions(nextParts),
     });
-    if (effectiveChartPart.kind === "series" && typeof style.stroke === "string") {
-      nextOptions.seriesColor = style.stroke;
+    if (effectiveChartPart.kind === "legend" && typeof style.fill === "string") {
+      /* Preenchimento da caixa da legenda: sincroniza também a série 0 (swatch ↔ série). */
+      const appearance = patchChartSeriesAppearance(
+        { ...block, chartParts: nextParts, chartOptions: nextOptions },
+        0,
+        { color: style.fill },
+      );
+      updateSelected({
+        chartParts: appearance.chartParts ?? nextParts,
+        chartOptions: mergeComunicadoChartOptions({
+          ...nextOptions,
+          ...appearance.chartOptions,
+        }),
+        ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+      } as Partial<ComunicadoBlock>);
+      return;
     }
     if (effectiveChartPart.kind === "chartArea" && typeof style.fill === "string") {
       nextOptions.backgroundColor = style.fill;
