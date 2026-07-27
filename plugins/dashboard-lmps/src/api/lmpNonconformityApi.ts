@@ -4,6 +4,7 @@ import {
   type ApiSuccessResponse,
 } from "../types/lmp";
 import type {
+  LmpNcHistoryListResponse,
   LmpNonconformity,
   LmpNonconformityListResponse,
   LmpNonconformityPayload,
@@ -18,8 +19,11 @@ export type ListLmpNcParams = {
   sale_number?: string;
   customer_name?: string;
   product_code?: string;
+  problem_tag?: string;
   start_date?: string;
   end_date?: string;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc";
   page?: number;
   page_size?: number;
 };
@@ -30,8 +34,11 @@ function buildQuery(params: ListLmpNcParams): string {
   if (params.sale_number) search.set("sale_number", params.sale_number);
   if (params.customer_name) search.set("customer_name", params.customer_name);
   if (params.product_code) search.set("product_code", params.product_code);
+  if (params.problem_tag) search.set("problem_tag", params.problem_tag);
   if (params.start_date) search.set("start_date", params.start_date);
   if (params.end_date) search.set("end_date", params.end_date);
+  if (params.sort_by) search.set("sort_by", params.sort_by);
+  if (params.sort_dir) search.set("sort_dir", params.sort_dir);
   if (params.page) search.set("page", String(params.page));
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();
@@ -66,6 +73,18 @@ export async function fetchLmpNonconformity(id: string): Promise<LmpNonconformit
     `${API_BASE}/${encodeURIComponent(id)}`,
   );
   return unwrapApiDelpiEnvelope(response, "Erro ao carregar não conformidade");
+}
+
+export async function fetchLmpNonconformityHistory(
+  id: string,
+): Promise<LmpNcHistoryListResponse> {
+  const response = await httpGet<ApiSuccessResponse<LmpNcHistoryListResponse>>(
+    `${API_BASE}/${encodeURIComponent(id)}/history`,
+  );
+  return unwrapApiDelpiEnvelope(
+    response,
+    "Erro ao carregar histórico da não conformidade",
+  );
 }
 
 export async function createLmpNonconformity(

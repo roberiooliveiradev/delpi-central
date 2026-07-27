@@ -186,6 +186,10 @@
   padding: 4px 0 16px;
   width: 100%;
   box-sizing: border-box;
+}.dashboard-lmps .lmps-nc-history-diffs{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }.dashboard-lmps .lmps-form-grid,
 .dashboard-lmps .lmps-nc-form-grid{
   display: grid;

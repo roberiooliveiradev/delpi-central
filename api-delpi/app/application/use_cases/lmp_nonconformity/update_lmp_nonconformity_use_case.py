@@ -21,6 +21,9 @@ class LmpNonconformityUpdateRepository(Protocol):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         updated_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any] | None: ...
 
 
@@ -45,6 +48,9 @@ class UpdateLmpNonconformityUseCase:
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         updated_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any] | None:
         return self._repository.update_record(
             record_id=record_id,
@@ -61,4 +67,7 @@ class UpdateLmpNonconformityUseCase:
             products=products if products is not None else [],
             problem_tags=problem_tags if problem_tags is not None else [],
             updated_by=updated_by,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+            actor_name=actor_name,
         )

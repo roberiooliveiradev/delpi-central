@@ -20,6 +20,9 @@ class LmpNonconformityCreateRepository(Protocol):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         created_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any]: ...
 
 
@@ -43,6 +46,9 @@ class CreateLmpNonconformityUseCase:
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         created_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any]:
         return self._repository.create_record(
             status=status,
@@ -58,4 +64,7 @@ class CreateLmpNonconformityUseCase:
             products=products,
             problem_tags=problem_tags,
             created_by=created_by,
+            actor_user_id=actor_user_id,
+            actor_email=actor_email,
+            actor_name=actor_name,
         )

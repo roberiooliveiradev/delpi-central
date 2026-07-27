@@ -32,6 +32,8 @@ export type LmpNonconformityListResponse = {
   total: number;
   page: number;
   page_size: number;
+  sort_by?: string;
+  sort_dir?: "asc" | "desc" | string;
 };
 
 /** Placar: dias atuais e recorde sem NC em LMPs. */
@@ -67,6 +69,29 @@ export type LmpNonconformityPayload = {
   corrective_actions?: string | null;
   technical_opinion?: string | null;
   products?: LmpNcProductLine[];
+};
+
+export type LmpNcHistoryChangeField = {
+  field: string;
+  label: string;
+  old: unknown;
+  new: unknown;
+};
+
+export type LmpNcHistoryEvent = {
+  id: string;
+  nonconformity_id: string;
+  event_type: "created" | "updated" | string;
+  changes: { fields?: LmpNcHistoryChangeField[] };
+  actor_user_id: string;
+  actor_email?: string | null;
+  actor_name?: string | null;
+  created_at: string;
+};
+
+export type LmpNcHistoryListResponse = {
+  items: LmpNcHistoryEvent[];
+  total: number;
 };
 
 export const LMP_NC_STATUS_OPTIONS: { value: LmpNcStatus; label: string }[] = [

@@ -1,17 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
-  ConfirmModalPanel,
   HelpTooltip,
-  useConfirmDialogController,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
-import { Eye, Plus, Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
-import {
-  deleteLmpNonconformity,
-  fetchLmpNonconformities,
-} from "../api/lmpNonconformityApi";
+import { fetchLmpNonconformities } from "../api/lmpNonconformityApi";
 import { DataTableSection } from "../components/DataTableSection";
 import {
   FilterInputField,
@@ -20,11 +15,7 @@ import {
 } from "../components/dashboardFiltersUi";
 import { LmpsNav } from "../components/LmpsNav";
 import type { DataTableColumn } from "../components/dataTableUi";
-import {
-  HostContainedDialog,
-  LMPS_CONFIRM_CLASSES,
-  StatusBadge,
-} from "../components/ncUi";
+import { StatusBadge } from "../components/ncUi";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   buildNcDetailPath,
@@ -45,6 +36,14 @@ import {
 import { navigateLmps } from "../utils/navigation";
 
 const NC_HELP = LMPS_HELP_TOOLTIPS.nonconformities;
+
+const COLUMN_PREFERENCES_KEY =
+  "dashboard-lmps:NonconformitiesPage:listagem:v2";
+
+/** Descrição disponível no menu Colunas, oculta por padrão. */
+const DEFAULT_COLUMN_VISIBILITY: Record<string, boolean> = {
+  defect_description: false,
+};
 
 type Props = {
   pathname: string;
@@ -70,11 +69,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [productCode, setProductCode] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
-  const [pendingDelete, setPendingDelete] = useState<LmpNonconformity | null>(
-    null,
-  );
-  const { confirm, pending, confirmPending, cancelPending } =
-    useConfirmDialogController();
+  const [sortKey, setSortKey] = useState<string | null>("registered_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -87,6 +83,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         product_code: productCode || undefined,
         start_date: dateStart || undefined,
         end_date: dateEnd || undefined,
+        sort_by: sortKey || undefined,
+        sort_dir: sortDirection,
         page,
         page_size: 50,
       });
@@ -97,7 +95,17 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [status, saleNumber, customerName, productCode, dateStart, dateEnd, page]);
+  }, [
+    status,
+    saleNumber,
+    customerName,
+    productCode,
+    dateStart,
+    dateEnd,
+    sortKey,
+    sortDirection,
+    page,
+  ]);
 
   useEffect(() => {
     void load();
@@ -107,84 +115,100 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
     navigateLmps(buildNcDetailPath(record.id));
   };
 
-  const requestDelete = async (record: LmpNonconformity) => {
-    setPendingDelete(record);
-    const ok = await confirm({
-      title: "Excluir não conformidade",
-      message: "Excluir esta não conformidade? Esta ação não pode ser desfeita.",
-      confirmLabel: "Excluir",
-      variant: "danger",
+  const handleSortChange = useCallback((columnKey: string) => {
+    setPage(1);
+    setSortKey((currentKey) => {
+      if (currentKey === columnKey) {
+        setSortDirection((currentDirection) =>
+          currentDirection === "asc" ? "desc" : "asc",
+        );
+        return currentKey;
+      }
+      setSortDirection("asc");
+      return columnKey;
     });
-    setPendingDelete(null);
-    if (!ok) return;
-    try {
-      await deleteLmpNonconformity(record.id);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao excluir.");
-    }
-  };
+  }, []);
 
-  const columns = useMemo<DataTableColumn<LmpNonconformity>[]>(() => {
-    const cols: DataTableColumn<LmpNonconformity>[] = [
+  const columns = useMemo<DataTableColumn<LmpNonconformity>[]>(
+    () => [
       {
         key: "registered_at",
         header: "Registro",
         headerHint: NC_HELP.table.registeredAt,
+        sortable: true,
+        sortValue: (row) => row.registered_at ?? "",
         render: (row) => formatDisplayDate(row.registered_at),
       },
       {
         key: "sale_number",
         header: "OV / LMP",
         headerHint: NC_HELP.table.saleNumber,
+        sortable: true,
+        sortValue: (row) => row.sale_number ?? "",
         render: (row) => row.sale_number || "—",
       },
       {
         key: "customer_name",
         header: "Cliente",
         headerHint: NC_HELP.table.customer,
+        sortable: true,
+        sortValue: (row) => row.customer_name ?? "",
         render: (row) => row.customer_name || "—",
       },
       {
         key: "launch_date",
         header: "Lançamento",
         headerHint: NC_HELP.table.launchDate,
+        sortable: true,
+        sortValue: (row) => row.launch_date ?? "",
         render: (row) => formatDisplayDateOnly(row.launch_date),
       },
       {
         key: "last_revision_date",
         header: "Últ. revisão",
         headerHint: NC_HELP.table.lastRevisionDate,
+        sortable: true,
+        sortValue: (row) => row.last_revision_date ?? "",
         render: (row) => formatDisplayDateOnly(row.last_revision_date),
       },
       {
         key: "executed_by",
         header: "Executou",
         headerHint: NC_HELP.table.executedBy,
+        sortable: true,
+        sortValue: (row) => row.executed_by ?? "",
         render: (row) => row.executed_by || "—",
       },
       {
         key: "released_by",
         header: "Liberou",
         headerHint: NC_HELP.table.releasedBy,
+        sortable: true,
+        sortValue: (row) => row.released_by ?? "",
         render: (row) => row.released_by || "—",
       },
       {
         key: "products",
         header: "Produtos",
         headerHint: NC_HELP.table.products,
+        sortable: true,
+        sortValue: (row) => productsSummary(row),
         render: (row) => productsSummary(row),
       },
       {
         key: "problem_tags",
         header: "Problema identificado",
         headerHint: NC_HELP.table.problemTags,
+        sortable: true,
+        sortValue: (row) => problemTagsSummary(row),
         render: (row) => problemTagsSummary(row),
       },
       {
         key: "defect_description",
         header: "Descrição",
         headerHint: NC_HELP.table.problem,
+        sortable: true,
+        sortValue: (row) => row.defect_description ?? "",
         render: (row) => {
           const text = (row.defect_description || "").trim();
           if (!text) return "—";
@@ -195,6 +219,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         key: "status",
         header: "Status",
         headerHint: NC_HELP.table.status,
+        sortable: true,
+        sortValue: (row) => String(row.status ?? ""),
         render: (row) => (
           <StatusBadge
             label={lmpNcStatusLabel(String(row.status))}
@@ -202,40 +228,9 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           />
         ),
       },
-      {
-        key: "actions",
-        header: "Ações",
-        headerHint: NC_HELP.table.actions,
-        render: (row) => (
-          <div
-            className="lmps-nc-actions"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="lmps-ghost-btn lmps-btn--sm"
-              onClick={() => openDetail(row)}
-              aria-label="Abrir detalhe"
-            >
-              <Eye size={14} />
-            </button>
-            {canWrite ? (
-              <button
-                type="button"
-                className="lmps-ghost-btn lmps-btn--sm"
-                onClick={() => void requestDelete(row)}
-                aria-label="Excluir"
-              >
-                <Trash2 size={14} />
-              </button>
-            ) : null}
-          </div>
-        ),
-      },
-    ];
-    return cols;
-  }, [canWrite]);
+    ],
+    [],
+  );
 
   return (
     <div className="dashboard-page dashboard-lmps">
@@ -353,6 +348,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       <DataTableSection
         title="Não conformidades"
         titleHint={NC_HELP.table.section}
+        hint="Clique na linha para abrir o detalhe. Exclusão somente na página da NC."
         searchHint={NC_HELP.table.search}
         columns={columns}
         rows={items}
@@ -360,6 +356,14 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         loading={loading}
         emptyMessage="Nenhuma não conformidade encontrada."
         onRowClick={openDetail}
+        getRowClassName={() => "lmps-table__row--clickable"}
+        columnPreferencesKey={COLUMN_PREFERENCES_KEY}
+        defaultColumnVisibility={DEFAULT_COLUMN_VISIBILITY}
+        serverSort={{
+          sortKey,
+          sortDirection,
+          onSortChange: handleSortChange,
+        }}
         serverPagination={{
           page,
           pageSize: 50,
@@ -367,27 +371,6 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           onPageChange: setPage,
         }}
       />
-
-      <HostContainedDialog
-        open={pending !== null}
-        onClose={cancelPending}
-        title={pending?.title || "Confirmar"}
-      >
-        <ConfirmModalPanel
-          message={
-            pending?.message ??
-            (pendingDelete
-              ? "Excluir esta não conformidade?"
-              : "Confirmar ação?")
-          }
-          confirmLabel={pending?.confirmLabel}
-          cancelLabel={pending?.cancelLabel ?? "Cancelar"}
-          variant={pending?.variant}
-          onConfirm={confirmPending}
-          onCancel={cancelPending}
-          classNames={LMPS_CONFIRM_CLASSES}
-        />
-      </HostContainedDialog>
     </div>
   );
 }

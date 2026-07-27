@@ -20,6 +20,7 @@ import {
   type ProductSearchItem,
 } from "../api/productApi";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { NcChangeHistory } from "../components/NcChangeHistory";
 import { NcProblemTagsField } from "../components/NcProblemTagsField";
 import {
   EditableSectionCard,
@@ -111,6 +112,7 @@ export function NonconformityDetailPage({
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [historyReloadKey, setHistoryReloadKey] = useState(0);
   const [hydrating, setHydrating] = useState(false);
   const [productQuery, setProductQuery] = useState("");
   const [productHits, setProductHits] = useState<ProductSearchItem[]>([]);
@@ -416,6 +418,7 @@ export function NonconformityDetailPage({
       setForm(next);
       setBaseline(next);
       lastHydratedOvRef.current = (updated.sale_number ?? "").trim();
+      setHistoryReloadKey((value) => value + 1);
       if (saveKey !== "create") {
         stopEdit(saveKey);
       }
@@ -982,6 +985,8 @@ export function NonconformityDetailPage({
                 {saving === "create" ? "Salvando…" : "Salvar"}
               </ActionButton>
             </FormActions>
+          ) : recordId ? (
+            <NcChangeHistory recordId={recordId} reloadKey={historyReloadKey} />
           ) : null}
         </div>
       ) : null}

@@ -163,6 +163,14 @@ def build_get_lmp_nonconformity_use_case():
     return GetLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
 
 
+def build_list_lmp_nonconformity_history_use_case():
+    from app.application.use_cases.lmp_nonconformity.list_lmp_nonconformity_history_use_case import (
+        ListLmpNonconformityHistoryUseCase,
+    )
+
+    return ListLmpNonconformityHistoryUseCase(_build_lmp_nonconformity_repository())
+
+
 def build_create_lmp_nonconformity_use_case():
     from app.application.use_cases.lmp_nonconformity.create_lmp_nonconformity_use_case import (
         CreateLmpNonconformityUseCase,

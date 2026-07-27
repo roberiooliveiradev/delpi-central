@@ -12,6 +12,7 @@ from app.interface.http.routes.engineering.lmp_nonconformity_router import (
     get_lmp_nonconformity,
     get_lmp_nonconformity_streak,
     list_lmp_nonconformities,
+    list_lmp_nonconformity_history,
     list_lmp_problem_tags,
     update_lmp_nonconformity,
 )
@@ -120,6 +121,48 @@ def test_get_lmp_nonconformity_returns_meta(mock_build) -> None:
     )
 
 
+@patch(f"{_ROUTER}.build_list_lmp_nonconformity_history_use_case")
+def test_list_lmp_nonconformity_history_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [
+            {
+                "id": "33333333-3333-3333-3333-333333333333",
+                "nonconformity_id": str(_NC_ID),
+                "event_type": "updated",
+                "changes": {
+                    "fields": [
+                        {
+                            "field": "status",
+                            "label": "Status",
+                            "old": "open",
+                            "new": "done",
+                        }
+                    ]
+                },
+                "actor_user_id": "user-1",
+                "actor_email": "user@delpi.com.br",
+                "actor_name": "Usuário Teste",
+                "created_at": "2026-07-27T11:00:00+00:00",
+            }
+        ],
+        "total": 1,
+    }
+    mock_build.return_value = use_case
+
+    response = list_lmp_nonconformity_history(record_id=_NC_ID)
+    body = body_json(response)
+    assert_envelope_meta(
+        body,
+        operation_id="list_lmp_nonconformity_history",
+        shape="list",
+    )
+    assert body["meta"]["entity"] == "lmp_nonconformity_history"
+    assert body["data"]["items"][0]["actor_email"] == "user@delpi.com.br"
+    assert body["data"]["items"][0]["actor_name"] == "Usuário Teste"
+    assert body["data"]["items"][0]["actor_user_id"] == "user-1"
+
+
 @patch(f"{_ROUTER}.build_create_lmp_nonconformity_use_case")
 def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
     use_case = MagicMock()
@@ -150,6 +193,9 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
     assert kwargs["problem_tags"] == ["Medida", "Terminal"]
     assert kwargs["defect_description"] == "Folga no terminal"
     assert kwargs["products"][0]["product_code"] == "90001234"
+    assert "actor_user_id" in kwargs
+    assert "actor_email" in kwargs
+    assert "actor_name" in kwargs
 
 
 @patch(f"{_ROUTER}.build_update_lmp_nonconformity_use_case")
@@ -172,7 +218,7 @@ def test_update_lmp_nonconformity_returns_meta(mock_build) -> None:
         shape="scalar",
     )
     assert use_case.execute.call_args.kwargs["problem_tags"] == ["Desenho"]
-
+    assert "actor_user_id" in use_case.execute.call_args.kwargs
 
 @patch(f"{_ROUTER}.build_delete_lmp_nonconformity_use_case")
 def test_delete_lmp_nonconformity_returns_meta(mock_build) -> None:

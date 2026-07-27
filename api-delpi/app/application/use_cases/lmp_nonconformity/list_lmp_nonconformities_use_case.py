@@ -14,6 +14,8 @@ class LmpNonconformityListRepository(Protocol):
         problem_tag: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]: ...
@@ -33,6 +35,8 @@ class ListLmpNonconformitiesUseCase:
         problem_tag: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -44,6 +48,8 @@ class ListLmpNonconformitiesUseCase:
             problem_tag=problem_tag,
             date_start=date_start,
             date_end=date_end,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
             page=page,
             page_size=page_size,
         )

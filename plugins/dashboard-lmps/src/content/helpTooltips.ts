@@ -187,7 +187,7 @@ export const LMPS_HELP_TOOLTIPS = {
     },
     table: {
       section:
-        "Lista paginada de não conformidades com os filtros aplicados. Clique na linha ou no olho para abrir o detalhe; Excluir exige permissão de escrita.",
+        "Lista paginada de não conformidades. Clique na linha para abrir o detalhe. Use Colunas para mostrar/ocultar campos (Descrição oculta por padrão). Exclusão somente na página da NC.",
       search:
         "Busca local nos registros já carregados na página (texto das colunas visíveis).",
       registeredAt:
@@ -201,9 +201,10 @@ export const LMPS_HELP_TOOLTIPS = {
       products: "Códigos de material/produto vinculados à NC.",
       problemTags:
         "Tags de classificação do problema (busca e casos semelhantes).",
-      problem: "Descrição livre do caso (resumo na listagem).",
+      problem: "Descrição livre do caso (opcional na listagem — ative em Colunas).",
       status: "Andamento da NC: Aberta, Em andamento ou Concluída.",
-      actions: "Abrir o detalhe da NC ou excluí-la definitivamente (com permissão).",
+      actions:
+        "Exclusão disponível apenas na página de detalhe da NC (clique na linha para abrir).",
     },
     form: {
       sectionIdentification:
@@ -214,6 +215,8 @@ export const LMPS_HELP_TOOLTIPS = {
         "Tabela de materiais/produtos. LMPs finalizadas já trazem a listagem ao hidratar a OV; busque por código ou descrição para incluir mais itens.",
       sectionDescription:
         "Problema identificado (tags), descrição do caso, ações corretivas e parecer técnico.",
+      sectionHistory:
+        "Linha do tempo das alterações desta NC: quem alterou (nome, e-mail e id) e quais campos mudaram.",
       status:
         "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
       saleNumber:

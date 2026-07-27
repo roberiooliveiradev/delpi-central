@@ -131,6 +131,11 @@ export type DataTableSectionProps<T> = {
    * Quando definida, exibe o menu “Colunas” e filtra a tabela.
    */
   columnPreferencesKey?: string;
+  /**
+   * Visibilidade inicial (antes de preferências salvas).
+   * Ex.: `{ defect_description: false }` oculta a coluna por padrão.
+   */
+  defaultColumnVisibility?: Record<string, boolean>;
   /** Notifica chaves visíveis (export Excel, etc.). */
   onVisibleColumnKeysChange?: (keys: string[]) => void;
   onRowClick?: (row: T) => void;
@@ -255,6 +260,7 @@ export function DataTableSection<T>({
   serverSearch,
   toolbarExtra,
   columnPreferencesKey,
+  defaultColumnVisibility,
   onVisibleColumnKeysChange,
   onRowClick,
   getRowClassName,
@@ -305,6 +311,7 @@ export function DataTableSection<T>({
     storageKey: columnPreferencesKey ?? "",
     columns: columnCatalog,
     enabled: columnVisibilityEnabled,
+    defaultVisibility: defaultColumnVisibility,
   });
 
   const visibleColumns = useMemo(

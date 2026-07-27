@@ -19,6 +19,7 @@ from app.composition.engineering_composer import (
     build_get_lmp_nonconformity_streak_use_case,
     build_get_lmp_nonconformity_use_case,
     build_list_lmp_nonconformities_use_case,
+    build_list_lmp_nonconformity_history_use_case,
     build_list_lmp_problem_tags_use_case,
     build_update_lmp_nonconformity_use_case,
 )
@@ -31,6 +32,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_NONCONFORMITY_BY_ID,
     LMP_NONCONFORMITY_CREATE,
     LMP_NONCONFORMITY_DELETE,
+    LMP_NONCONFORMITY_HISTORY,
     LMP_NONCONFORMITY_STREAK,
     LMP_NONCONFORMITY_UPDATE,
     LMP_PROBLEM_TAGS_LIST,
@@ -61,6 +63,22 @@ _STREAK_FIELDS = {
 _STATUS_PATTERN = "^(open|in_progress|done)$"
 _STATUS_ENUM = ["open", "in_progress", "done"]
 _DATE_PATTERN = r"^(\d{4}-\d{2}-\d{2})?$"
+_SORT_BY_ENUM = [
+    "registered_at",
+    "sale_number",
+    "customer_name",
+    "launch_date",
+    "last_revision_date",
+    "executed_by",
+    "released_by",
+    "status",
+    "defect_description",
+    "problem_tags",
+    "products",
+]
+_SORT_BY_PATTERN = "^(registered_at|sale_number|customer_name|launch_date|last_revision_date|executed_by|released_by|status|defect_description|problem_tags|products)?$"
+_SORT_DIR_PATTERN = "^(asc|desc)?$"
+_SORT_DIR_ENUM = ["asc", "desc"]
 
 
 class LmpNcProductBody(BaseModel):
@@ -160,15 +178,35 @@ class LmpNonconformityBody(BaseModel):
         return out
 
 
-def _current_user_label() -> str | None:
+def _current_actor() -> dict[str, str | None]:
+    """Ator autenticado para auditoria (id, e-mail, nome + label legado)."""
     user = get_current_user()
     if user is None:
-        return None
-    for attr in ("email", "name", "id"):
+        return {
+            "user_id": "unknown",
+            "email": None,
+            "name": None,
+            "label": None,
+        }
+    user_id = getattr(user, "id", None)
+    email_raw = getattr(user, "email", None)
+    name_raw = None
+    for attr in ("name", "full_name", "username"):
         value = getattr(user, attr, None)
-        if value:
-            return str(value)[:120]
-    return None
+        if isinstance(value, str) and value.strip():
+            name_raw = value.strip()
+            break
+    email = email_raw.strip() if isinstance(email_raw, str) and email_raw.strip() else None
+    name = name_raw[:300] if name_raw else None
+    label = (name or email or (str(user_id) if user_id else None) or None)
+    if label:
+        label = label[:120]
+    return {
+        "user_id": str(user_id) if user_id else "unknown",
+        "email": email[:255] if email else None,
+        "name": name,
+        "label": label,
+    }
 
 
 def _products_payload(body: LmpNonconformityBody) -> list[dict[str, str | None]]:
@@ -206,6 +244,18 @@ def list_lmp_nonconformities(
         max_length=80,
         description="Filtro parcial por tag de problema identificado.",
     ),
+    sort_by: Optional[str] = Query(
+        None,
+        pattern=_SORT_BY_PATTERN,
+        json_schema_extra={"enum": _SORT_BY_ENUM},
+        description="Coluna de ordenação da listagem.",
+    ),
+    sort_dir: Optional[str] = Query(
+        None,
+        pattern=_SORT_DIR_PATTERN,
+        json_schema_extra={"enum": _SORT_DIR_ENUM},
+        description="Direção da ordenação (asc|desc). Default: desc.",
+    ),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
@@ -226,6 +276,8 @@ def list_lmp_nonconformities(
             customer_name=customer_name,
             product_code=product_code,
             problem_tag=problem_tag,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
             date_start=start_date,
             date_end=end_date,
             page=page,
@@ -304,6 +356,34 @@ def get_lmp_nonconformity_streak():
         )
 
 
+@router.get("/{record_id}/history", **LMP_NONCONFORMITY_HISTORY)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def list_lmp_nonconformity_history(
+    record_id: Annotated[UUID, Path(description="ID da não conformidade")],
+):
+    try:
+        data = build_list_lmp_nonconformity_history_use_case().execute(str(record_id))
+        if data is None:
+            return not_found_response("Não conformidade não encontrada.")
+        return api_delpi_success(
+            data,
+            operation_id="list_lmp_nonconformity_history",
+            message="Histórico da não conformidade LMP listado com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar histórico NC LMP: {exc}")
+        return error_response(
+            "Erro interno ao listar histórico da não conformidade.",
+            status_code=500,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado ao listar histórico NC LMP: {exc}")
+        return error_response(
+            "Erro interno ao listar histórico da não conformidade.",
+            status_code=500,
+        )
+
+
 @router.get("/{record_id}", **LMP_NONCONFORMITY_BY_ID)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_lmp_nonconformity(
@@ -336,6 +416,7 @@ def get_lmp_nonconformity(
 @require_any_permission(ENGINEERING_LMP_NC_WRITE)
 def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
     try:
+        actor = _current_actor()
         data = build_create_lmp_nonconformity_use_case().execute(
             status=body.status,
             sale_number=body.sale_number,
@@ -349,7 +430,10 @@ def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
             technical_opinion=body.technical_opinion,
             products=_products_payload(body),
             problem_tags=body.problem_tags,
-            created_by=_current_user_label(),
+            created_by=actor["label"],
+            actor_user_id=actor["user_id"],
+            actor_email=actor["email"],
+            actor_name=actor["name"],
         )
         return api_delpi_success(
             data,
@@ -374,6 +458,7 @@ def update_lmp_nonconformity(
     body: LmpNonconformityBody = Body(...),
 ):
     try:
+        actor = _current_actor()
         data = build_update_lmp_nonconformity_use_case().execute(
             record_id=str(record_id),
             status=body.status,
@@ -388,7 +473,10 @@ def update_lmp_nonconformity(
             technical_opinion=body.technical_opinion,
             products=_products_payload(body),
             problem_tags=body.problem_tags,
-            updated_by=_current_user_label(),
+            updated_by=actor["label"],
+            actor_user_id=actor["user_id"],
+            actor_email=actor["email"],
+            actor_name=actor["name"],
         )
         if data is None:
             return not_found_response("Não conformidade não encontrada.")

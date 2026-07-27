@@ -36,6 +36,12 @@ export type ClientSortConfig = {
   onSortChange: (columnKey: string) => void;
 };
 
+export type ServerSortConfig = {
+  sortKey: string | null;
+  sortDirection: "asc" | "desc";
+  onSortChange: (columnKey: string) => void;
+};
+
 function buildSearchText<T>(row: T, columns: DataTableColumn<T>[]): string {
   return columns
     .map((column) => {
@@ -67,9 +73,12 @@ export type DataTableSectionProps<T> = {
   hideSearch?: boolean;
   serverPagination?: ServerPaginationConfig;
   clientSort?: ClientSortConfig;
+  serverSort?: ServerSortConfig;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   columnPreferencesKey?: string;
+  /** Visibilidade inicial antes de preferências salvas no localStorage. */
+  defaultColumnVisibility?: Record<string, boolean>;
   onVisibleColumnKeysChange?: (keys: string[]) => void;
 };
 
@@ -90,9 +99,11 @@ export function DataTableSection<T>({
   hideSearch = false,
   serverPagination,
   clientSort,
+  serverSort,
   onRowClick,
   getRowClassName,
   columnPreferencesKey,
+  defaultColumnVisibility,
   onVisibleColumnKeysChange,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
@@ -112,6 +123,7 @@ export function DataTableSection<T>({
     storageKey: columnPreferencesKey ?? "",
     columns: columnCatalog,
     enabled: columnVisibilityEnabled,
+    defaultVisibility: defaultColumnVisibility,
   });
   const visibleColumns = useMemo(
     () => (columnVisibilityEnabled ? filterColumns(columns) : columns),
@@ -135,8 +147,10 @@ export function DataTableSection<T>({
     });
   }, [rows, search, columns, getSearchText]);
 
+  const activeSort = serverSort ?? clientSort;
+
   const sortedRows = useMemo(() => {
-    if (!clientSort) return filteredRows;
+    if (serverSort || !clientSort) return filteredRows;
 
     return sortTableRows(
       filteredRows,
@@ -144,7 +158,7 @@ export function DataTableSection<T>({
       clientSort.sortKey,
       clientSort.sortDirection
     );
-  }, [filteredRows, columns, clientSort]);
+  }, [filteredRows, columns, clientSort, serverSort]);
 
   const { page, setPage, slice, total } = useClientPagination(
     sortedRows,
@@ -265,9 +279,9 @@ export function DataTableSection<T>({
             emptyMessage={emptyMessage}
             onRowClick={onRowClick}
             getRowClassName={getRowClassName}
-            sortKey={clientSort?.sortKey}
-            sortDirection={clientSort?.sortDirection}
-            onSortChange={clientSort?.onSortChange}
+            sortKey={activeSort?.sortKey}
+            sortDirection={activeSort?.sortDirection}
+            onSortChange={activeSort?.onSortChange}
             layout="section"
           />
 

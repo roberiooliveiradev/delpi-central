@@ -1,8 +1,15 @@
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
 from typing import Any
 
+from app.domain.services.lmp.lmp_nonconformity_history_diff import (
+    build_nc_history_changes,
+)
+from app.domain.services.lmp.lmp_nonconformity_list_sort import (
+    resolve_lmp_nc_order_by,
+)
 from app.domain.services.lmp.lmp_problem_tag_normalize import (
     normalize_problem_tag_labels,
 )
@@ -75,6 +82,37 @@ def _normalize_products(products: list[dict[str, Any]] | None) -> list[dict[str,
     return out
 
 
+def _history_snapshot(
+    *,
+    status: str,
+    sale_number: str | None,
+    customer_name: str | None,
+    launch_date: str | None,
+    last_revision_date: str | None,
+    executed_by: str | None,
+    released_by: str | None,
+    defect_description: str | None,
+    corrective_actions: str | None,
+    technical_opinion: str | None,
+    products: list[dict[str, str]],
+    problem_tags: list[str],
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "sale_number": sale_number,
+        "customer_name": customer_name,
+        "launch_date": launch_date,
+        "last_revision_date": last_revision_date,
+        "executed_by": executed_by,
+        "released_by": released_by,
+        "defect_description": defect_description,
+        "corrective_actions": corrective_actions,
+        "technical_opinion": technical_opinion,
+        "products": list(products),
+        "problem_tags": list(problem_tags),
+    }
+
+
 class PostgresLmpNonconformityRepository(PluginBaseRepository):
     """Persistência de NCs LMP (schema ``engineering``) — domínio engenharia."""
 
@@ -88,6 +126,8 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         problem_tag: str | None = None,
         date_start: str | None = None,
         date_end: str | None = None,
+        sort_by: str | None = None,
+        sort_dir: str | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> dict[str, Any]:
@@ -139,6 +179,9 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         page = max(1, int(page))
         page_size = max(1, min(int(page_size), 200))
         offset = (page - 1) * page_size
+        resolved_sort_by, resolved_sort_dir, order_sql = resolve_lmp_nc_order_by(
+            sort_by, sort_dir
+        )
 
         count_row = self.fetch_one(
             f"""
@@ -154,7 +197,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             f"""
             {_NC_SELECT}
              WHERE {where_sql}
-             ORDER BY n.registered_at DESC, n.created_at DESC
+             ORDER BY {order_sql}
              LIMIT %s OFFSET %s
             """,
             tuple([*params, page_size, offset]),
@@ -175,6 +218,8 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             "total": total,
             "page": page,
             "page_size": page_size,
+            "sort_by": resolved_sort_by,
+            "sort_dir": resolved_sort_dir,
         }
 
     def get_record(self, record_id: str) -> dict[str, Any] | None:
@@ -232,6 +277,9 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         created_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any]:
         status_norm = (status or "open").strip().lower()
         if status_norm not in _STATUS_VALUES:
@@ -239,6 +287,15 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
 
         lines = _normalize_products(products)
         tags = normalize_problem_tag_labels(problem_tags)
+        sale = _blank_to_none(sale_number)
+        customer = _blank_to_none(customer_name)
+        launch = _blank_to_none(launch_date)
+        revision = _blank_to_none(last_revision_date)
+        executed = _blank_to_none(executed_by)
+        released = _blank_to_none(released_by)
+        defect = _blank_to_none(defect_description)
+        corrective = _blank_to_none(corrective_actions)
+        opinion = _blank_to_none(technical_opinion)
         try:
             with self.connection.cursor() as cursor:
                 cursor.execute(
@@ -259,16 +316,16 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     RETURNING id
                     """,
                     (
-                        _blank_to_none(sale_number),
-                        _blank_to_none(customer_name),
-                        _blank_to_none(launch_date),
-                        _blank_to_none(last_revision_date),
-                        _blank_to_none(executed_by),
-                        _blank_to_none(released_by),
+                        sale,
+                        customer,
+                        launch,
+                        revision,
+                        executed,
+                        released,
                         status_norm,
-                        _blank_to_none(defect_description),
-                        _blank_to_none(corrective_actions),
-                        _blank_to_none(technical_opinion),
+                        defect,
+                        corrective,
+                        opinion,
                         created_by,
                         created_by,
                     ),
@@ -279,6 +336,29 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 record_id = str(dict(row)["id"])
                 self._replace_products(cursor, record_id, lines)
                 self._replace_problem_tags(cursor, record_id, tags, created_by=created_by)
+                after = _history_snapshot(
+                    status=status_norm,
+                    sale_number=sale,
+                    customer_name=customer,
+                    launch_date=launch,
+                    last_revision_date=revision,
+                    executed_by=executed,
+                    released_by=released,
+                    defect_description=defect,
+                    corrective_actions=corrective,
+                    technical_opinion=opinion,
+                    products=lines,
+                    problem_tags=tags,
+                )
+                self._append_history(
+                    cursor,
+                    record_id,
+                    event_type="created",
+                    changes=build_nc_history_changes(None, after),
+                    actor_user_id=actor_user_id,
+                    actor_email=actor_email,
+                    actor_name=actor_name,
+                )
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -311,15 +391,12 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         products: list[dict[str, Any]] | None = None,
         problem_tags: list[str] | None = None,
         updated_by: str | None = None,
+        actor_user_id: str | None = None,
+        actor_email: str | None = None,
+        actor_name: str | None = None,
     ) -> dict[str, Any] | None:
-        current = self.fetch_one(
-            f"""
-            {_NC_SELECT}
-             WHERE n.id = %s
-            """,
-            (record_id,),
-        )
-        if current is None:
+        before = self.get_record(record_id)
+        if before is None:
             return None
 
         status_norm = (status or "").strip().lower()
@@ -328,6 +405,15 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
 
         lines = _normalize_products(products)
         tags = normalize_problem_tag_labels(problem_tags)
+        sale = _blank_to_none(sale_number)
+        customer = _blank_to_none(customer_name)
+        launch = _blank_to_none(launch_date)
+        revision = _blank_to_none(last_revision_date)
+        executed = _blank_to_none(executed_by)
+        released = _blank_to_none(released_by)
+        defect = _blank_to_none(defect_description)
+        corrective = _blank_to_none(corrective_actions)
+        opinion = _blank_to_none(technical_opinion)
 
         try:
             with self.connection.cursor() as cursor:
@@ -349,16 +435,16 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                      WHERE id = %s
                     """,
                     (
-                        _blank_to_none(sale_number),
-                        _blank_to_none(customer_name),
-                        _blank_to_none(launch_date),
-                        _blank_to_none(last_revision_date),
-                        _blank_to_none(executed_by),
-                        _blank_to_none(released_by),
+                        sale,
+                        customer,
+                        launch,
+                        revision,
+                        executed,
+                        released,
                         status_norm,
-                        _blank_to_none(defect_description),
-                        _blank_to_none(corrective_actions),
-                        _blank_to_none(technical_opinion),
+                        defect,
+                        corrective,
+                        opinion,
                         updated_by,
                         record_id,
                     ),
@@ -372,6 +458,31 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 )
                 self._replace_products(cursor, record_id, lines)
                 self._replace_problem_tags(cursor, record_id, tags, created_by=updated_by)
+                after = _history_snapshot(
+                    status=status_norm,
+                    sale_number=sale,
+                    customer_name=customer,
+                    launch_date=launch,
+                    last_revision_date=revision,
+                    executed_by=executed,
+                    released_by=released,
+                    defect_description=defect,
+                    corrective_actions=corrective,
+                    technical_opinion=opinion,
+                    products=lines,
+                    problem_tags=tags,
+                )
+                changes = build_nc_history_changes(before, after)
+                if changes.get("fields"):
+                    self._append_history(
+                        cursor,
+                        record_id,
+                        event_type="updated",
+                        changes=changes,
+                        actor_user_id=actor_user_id,
+                        actor_email=actor_email,
+                        actor_name=actor_name,
+                    )
             self.commit()
         except PluginsRepositoryError:
             self.rollback()
@@ -383,6 +494,76 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             ) from exc
 
         return self.get_record(record_id)
+
+    def list_history(self, record_id: str) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            """
+            SELECT id,
+                   nonconformity_id,
+                   event_type,
+                   changes,
+                   actor_user_id,
+                   actor_email,
+                   actor_name,
+                   created_at
+              FROM engineering.lmp_nonconformity_history
+             WHERE nonconformity_id = %s
+             ORDER BY created_at DESC
+             LIMIT 200
+            """,
+            (record_id,),
+        )
+        return [self._history_to_payload(row) for row in rows]
+
+    def _append_history(
+        self,
+        cursor: Any,
+        record_id: str,
+        *,
+        event_type: str,
+        changes: dict[str, Any],
+        actor_user_id: str | None,
+        actor_email: str | None,
+        actor_name: str | None,
+    ) -> None:
+        cursor.execute(
+            """
+            INSERT INTO engineering.lmp_nonconformity_history (
+                nonconformity_id, event_type, changes,
+                actor_user_id, actor_email, actor_name
+            ) VALUES (%s, %s, %s::jsonb, %s, %s, %s)
+            """,
+            (
+                record_id,
+                event_type,
+                json.dumps(changes or {}, ensure_ascii=False),
+                (actor_user_id or "unknown")[:100],
+                (actor_email or None),
+                (actor_name or None),
+            ),
+        )
+
+    def _history_to_payload(self, row: dict[str, Any]) -> dict[str, Any]:
+        raw_changes = row.get("changes")
+        if isinstance(raw_changes, str):
+            try:
+                changes = json.loads(raw_changes)
+            except json.JSONDecodeError:
+                changes = {"fields": []}
+        elif isinstance(raw_changes, dict):
+            changes = raw_changes
+        else:
+            changes = {"fields": []}
+        return {
+            "id": str(row["id"]),
+            "nonconformity_id": str(row["nonconformity_id"]),
+            "event_type": str(row["event_type"]),
+            "changes": changes,
+            "actor_user_id": str(row.get("actor_user_id") or ""),
+            "actor_email": row.get("actor_email"),
+            "actor_name": row.get("actor_name"),
+            "created_at": _iso(row.get("created_at")),
+        }
 
     def delete_record(self, record_id: str) -> bool:
         row = self.execute_returning_one(
