@@ -460,18 +460,18 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     Math.max(4, insetFromPercent),
   );
   const innerW = Math.max(1, plotW - 2 * plotInset);
-  const innerH = Math.max(1, plotH - 2 * plotInset);
+  // Inset só no X: o domínio Y usa o plot inteiro para o zero coincidir com o eixo X.
 
   const toX = (index: number, count: number) =>
     margin.left + plotInset + (count > 1 ? (index / (count - 1)) * innerW : innerW / 2);
   const toY = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
-    return margin.top + plotInset + (1 - t) * innerH;
+    return margin.top + (1 - t) * plotH;
   };
   const toYSecondary = hasSecondaryAxis
     ? (value: number) => {
         const t = Math.min(1, Math.max(0, (value - secondaryMin) / secondaryRange));
-        return margin.top + plotInset + (1 - t) * innerH;
+        return margin.top + (1 - t) * plotH;
       }
     : undefined;
 

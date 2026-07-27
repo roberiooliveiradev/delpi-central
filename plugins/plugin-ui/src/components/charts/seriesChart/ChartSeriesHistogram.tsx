@@ -26,7 +26,7 @@ export function ChartSeriesHistogram({
   chartParts,
 }: ChartSeriesHistogramProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH, plotInset } = layout;
+  const { margin, plotW, plotH } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -48,7 +48,7 @@ export function ChartSeriesHistogram({
     counts[idx] = (counts[idx] ?? 0) + 1;
   }
   const maxCount = Math.max(...counts, 1);
-  const innerH = Math.max(1, plotH - 2 * plotInset);
+  const innerH = Math.max(1, plotH);
   const slotW = plotW / binCount;
   const gap = Math.min(slotW * 0.15, 6);
 
@@ -69,7 +69,7 @@ export function ChartSeriesHistogram({
         const height = (count / maxCount) * innerH;
         const width = Math.max(slotW - gap, 2);
         const x = margin.left + index * slotW + gap / 2;
-        const y = margin.top + plotInset + innerH - height;
+        const y = margin.top + plotH - height;
         return (
           <rect
             key={`hist-${index}`}

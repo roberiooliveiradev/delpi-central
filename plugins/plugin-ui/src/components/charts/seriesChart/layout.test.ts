@@ -97,8 +97,9 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     const yMin = layout.toY(layout.axisMin);
     expect(x0).toBeGreaterThanOrEqual(layout.margin.left + layout.plotInset - 0.01);
     expect(xLast).toBeLessThanOrEqual(layout.margin.left + layout.plotW - layout.plotInset + 0.01);
-    expect(yMax).toBeGreaterThanOrEqual(layout.margin.top + layout.plotInset - 0.01);
-    expect(yMin).toBeLessThanOrEqual(layout.margin.top + layout.plotH - layout.plotInset + 0.01);
+    expect(yMax).toBeGreaterThanOrEqual(layout.margin.top - 0.01);
+    expect(yMin).toBeLessThanOrEqual(layout.margin.top + layout.plotH + 0.01);
+    expect(yMin).toBeCloseTo(layout.margin.top + layout.plotH, 5);
   });
 
   it("categoryPaddingPercent maior afasta os extremos", () => {
@@ -270,6 +271,21 @@ describe("golden layout fixture OTD", () => {
     expect(snapshot.margin.right).toBeGreaterThanOrEqual(18);
     expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
+  it("toY(axisMin) alinha ao eixo X (sem gap do plotInset vertical)", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "a", value: 0 },
+        { label: "b", value: 100 },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+    });
+    expect(layout.toY(layout.axisMin)).toBeCloseTo(layout.margin.top + layout.plotH, 5);
+    expect(layout.toY(layout.axisMax)).toBeCloseTo(layout.margin.top, 5);
+  });
+
   it("axisMax cobre dataMax para não clipar série no teto (economia vs investimento)", () => {
     const layout = buildSeriesChartLayout({
       points: [

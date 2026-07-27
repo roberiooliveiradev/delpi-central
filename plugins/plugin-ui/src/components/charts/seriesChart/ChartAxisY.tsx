@@ -94,12 +94,8 @@ export function ChartAxisY({
       {showLabels
         ? ticks.map((tick, tickIndex) => {
             const y = toY(tick);
-            const baseline =
-              tickIndex === ticks.length - 1
-                ? "hanging"
-                : tickIndex === 0
-                  ? "auto"
-                  : "middle";
+            // Topo: hanging evita cortar no clip; demais: middle (0 alinhado ao eixo X).
+            const baseline = tickIndex === ticks.length - 1 ? "hanging" : "middle";
             return (
               <text
                 key={`y-${tick}`}
@@ -121,9 +117,7 @@ export function ChartAxisY({
             const baseline =
               tickIndex === layout.secondaryTicks!.length - 1
                 ? "hanging"
-                : tickIndex === 0
-                  ? "auto"
-                  : "middle";
+                : "middle";
             return (
               <text
                 key={`y2-${tick}`}

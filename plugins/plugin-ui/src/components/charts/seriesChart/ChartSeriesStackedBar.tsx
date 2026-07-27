@@ -32,7 +32,7 @@ export function ChartSeriesStackedBar({
   categoryColors,
 }: ChartSeriesStackedBarProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH, plotInset } = layout;
+  const { margin, plotW, plotH } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -44,10 +44,10 @@ export function ChartSeriesStackedBar({
   const total = values.reduce((sum, v) => sum + v, 0);
   if (total <= 0) return null;
 
-  const innerH = Math.max(1, plotH - 2 * plotInset);
+  const innerH = Math.max(1, plotH);
   const barW = Math.max(12, Math.min(plotW * 0.28, 64));
   const x = margin.left + (plotW - barW) / 2;
-  const baseY = margin.top + plotInset + innerH;
+  const baseY = margin.top + plotH;
 
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(seriesRef, interaction, {
     moveWhenSelected: false,

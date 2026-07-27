@@ -344,10 +344,10 @@ export function ChartValueLabels({
   if (chartType === "stacked_bar") {
     const values = visiblePoints.map((p) => Math.max(0, Number(p.value) || 0));
     if (total <= 0) return null;
-    const innerH = Math.max(1, plotH - 2 * plotInset);
+    const innerH = Math.max(1, plotH);
     const barW = Math.max(12, Math.min(plotW * 0.28, 64));
     const x = margin.left + (plotW - barW) / 2 + barW / 2;
-    const baseY = margin.top + plotInset + innerH;
+    const baseY = margin.top + plotH;
     let fromBottom = 0;
 
     return (

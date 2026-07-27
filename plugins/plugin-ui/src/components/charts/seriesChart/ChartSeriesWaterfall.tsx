@@ -30,7 +30,7 @@ export function ChartSeriesWaterfall({
   chartParts,
 }: ChartSeriesWaterfallProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH, plotInset } = layout;
+  const { margin, plotW, plotH } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -55,8 +55,8 @@ export function ChartSeriesWaterfall({
   const yMin = Math.min(0, ...ys);
   const yMax = Math.max(0, ...ys);
   const yRange = Math.max(yMax - yMin, 1e-6);
-  const innerH = Math.max(1, plotH - 2 * plotInset);
-  const toLocalY = (v: number) => margin.top + plotInset + (1 - (v - yMin) / yRange) * innerH;
+  const innerH = Math.max(1, plotH);
+  const toLocalY = (v: number) => margin.top + (1 - (v - yMin) / yRange) * innerH;
 
   const slotW = plotW / steps.length;
   const gap = Math.min(slotW * 0.2, 8);
