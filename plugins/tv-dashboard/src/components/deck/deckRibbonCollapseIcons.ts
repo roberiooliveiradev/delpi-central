@@ -89,6 +89,7 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "table-style-options": ListChecks,
   "table-styles": Table,
   "table-shading": PaintBucket,
+  "table-typography": Type,
   "table-borders": Grid3x3,
   "table-effects": Sparkles,
   "table-forma": Square,

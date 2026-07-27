@@ -1,21 +1,39 @@
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
-import { Database, Grid3x3, ListChecks, Square, Shapes } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Database,
+  Grid3x3,
+  Italic,
+  ListChecks,
+  Square,
+  Shapes,
+} from "lucide-react";
 import {
   AnchoredPanelPortal,
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
   HintAction,
+  NumberStepperControl,
   ShapeShadowMenu,
   TableStyleRibbonStrip,
   ToolbarSelectField,
   useRibbonSectionPopoverSurface,
   type TableStylePreset,
 } from "@delpi/plugin-ui/index";
-import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import {
+  COMUNICADO_FONT_SIZE_MIN,
+  COMUNICADO_FONT_SIZE_PRESETS,
+  COMUNICADO_FONT_SIZE_STEP,
+  TABLE_VIEW_DEFAULT_FONT_SIZE_PX,
+  clampFontSize,
+  ensureComunicadoGoogleFontsLoaded,
   isTableElementEnabled,
+  listComunicadoFontFamilyOptions,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
   presetDefaultTableOptions,
@@ -27,6 +45,7 @@ import {
   type ComunicadoTableViewBlock,
   type TableElementId,
 } from "@delpi/tv-dashboard-presentation";
+import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 
 import {
   findTableStyleRecipe,
@@ -40,6 +59,8 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { TdRibbonSelect } from "../tdRibbonUi";
+import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
@@ -379,6 +400,157 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
       </DeckRibbonGroup>
     </>
   );
+}
+
+/** Tipografia global da grade (família, tamanho, B/I, cor, alinhamento). */
+export function TableTypographySection({ layout }: { layout: SelectionSectionLayout }) {
+  const ctrl = useTableDesignControls();
+  const { config } = useComunicadoEditor();
+  const fontFamilyOptions = useMemo(
+    () =>
+      listComunicadoFontFamilyOptions(config.customFonts).map((font) => ({
+        value: font.value,
+        label:
+          font.source === "google"
+            ? `${font.label} · Google`
+            : font.source === "custom"
+              ? `${font.label} · Personalizada`
+              : font.label,
+      })),
+    [config.customFonts],
+  );
+
+  useEffect(() => {
+    ensureComunicadoGoogleFontsLoaded(fontFamilyOptions.map((option) => option.value));
+  }, [fontFamilyOptions]);
+
+  if (!ctrl) return null;
+
+  const fontSize = ctrl.options.fontSize ?? TABLE_VIEW_DEFAULT_FONT_SIZE_PX;
+  const fontFamily = ctrl.options.fontFamily?.trim() || fontFamilyOptions[0]?.value || "";
+  const bold =
+    ctrl.options.fontWeight === "bold" ||
+    ctrl.options.fontWeight === "700" ||
+    ctrl.options.fontWeight === 700;
+  const italic = ctrl.options.fontStyle === "italic";
+  const textAlign = ctrl.options.textAlign ?? "left";
+  const textColor = ctrl.options.cellTextColor ?? "#334155";
+
+  const body = (
+    <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--font">
+      <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
+        <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
+          <TdRibbonSelect
+            aria-label="Família da fonte da tabela"
+            className="td-deck-ribbon__select--font-family"
+            value={fontFamily}
+            onChange={(value) => {
+              if (!value) return;
+              ensureComunicadoGoogleFontsLoaded([value]);
+              ctrl.applyOptions({ fontFamily: value });
+            }}
+            options={fontFamilyOptions}
+          />
+        </HintAction>
+        <NumberStepperControl
+          className="td-deck-ribbon__font-size"
+          groupAriaLabel="Tamanho da fonte da tabela"
+          compact
+          aria-label="Tamanho da fonte da tabela"
+          value={fontSize}
+          options={COMUNICADO_FONT_SIZE_PRESETS}
+          min={COMUNICADO_FONT_SIZE_MIN}
+          clamp={clampFontSize}
+          portalScopeClassName="dashboard-tv-dashboard"
+          onChange={(next) => ctrl.applyOptions({ fontSize: clampFontSize(next) })}
+          onStepDown={() =>
+            ctrl.applyOptions({
+              fontSize: clampFontSize(fontSize - COMUNICADO_FONT_SIZE_STEP),
+            })
+          }
+          onStepUp={() =>
+            ctrl.applyOptions({
+              fontSize: clampFontSize(fontSize + COMUNICADO_FONT_SIZE_STEP),
+            })
+          }
+          stepDownDisabled={fontSize <= COMUNICADO_FONT_SIZE_MIN}
+          stepDownAriaLabel="Diminuir fonte"
+          stepUpAriaLabel="Aumentar fonte"
+          renderStepDown={(button) => (
+            <HintAction hint={H.fontSizeDown} ariaLabel="Diminuir fonte">
+              {button}
+            </HintAction>
+          )}
+          renderStepUp={(button) => (
+            <HintAction hint={H.fontSizeUp} ariaLabel="Aumentar fonte">
+              {button}
+            </HintAction>
+          )}
+          renderValue={(control) => (
+            <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+              {control}
+            </HintAction>
+          )}
+        />
+      </div>
+      <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Estilo tipográfico da tabela">
+        <button
+          type="button"
+          className={`td-btn td-btn--sm${bold ? " td-btn--active" : ""}`}
+          aria-pressed={bold}
+          aria-label="Negrito"
+          title="Negrito"
+          onClick={() => ctrl.applyOptions({ fontWeight: bold ? "normal" : "bold" })}
+        >
+          <Bold size={14} aria-hidden />
+        </button>
+        <button
+          type="button"
+          className={`td-btn td-btn--sm${italic ? " td-btn--active" : ""}`}
+          aria-pressed={italic}
+          aria-label="Itálico"
+          title="Itálico"
+          onClick={() => ctrl.applyOptions({ fontStyle: italic ? "normal" : "italic" })}
+        >
+          <Italic size={14} aria-hidden />
+        </button>
+        <TvRibbonColorPicker
+          inline
+          variant="text"
+          contrastBackground={ctrl.options.cellBg ?? "#ffffff"}
+          label="Cor do texto"
+          value={textColor}
+          onChange={(color) =>
+            ctrl.applyOptions({
+              cellTextColor: color,
+              headerTextColor: color,
+            })
+          }
+        />
+        {(
+          [
+            ["left", AlignLeft, "Alinhar à esquerda"],
+            ["center", AlignCenter, "Centralizar"],
+            ["right", AlignRight, "Alinhar à direita"],
+          ] as const
+        ).map(([align, Icon, label]) => (
+          <button
+            key={align}
+            type="button"
+            className={`td-btn td-btn--sm${textAlign === align ? " td-btn--active" : ""}`}
+            aria-pressed={textAlign === align}
+            aria-label={label}
+            title={label}
+            onClick={() => ctrl.applyOptions({ textAlign: align })}
+          >
+            <Icon size={14} aria-hidden />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return wrapPane("Fonte", H.tableTypography ?? H.font, layout, body, true, "table-typography");
 }
 
 /** Bordas, efeitos da moldura, atalhos Forma/Dados. */

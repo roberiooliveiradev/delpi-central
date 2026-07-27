@@ -162,6 +162,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
     tableStyleOptions:
       "Opções de estilo da tabela: cabeçalho, totais, listras, primeira/última coluna e bordas.",
+    tableTypography:
+      "Tipografia global da tabela: família, tamanho, negrito/itálico, cor do texto e alinhamento.",
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
     tableBorders: "Visibilidade, cor, peso e estilo da grade (caneta).",
     tableOpenFrameShape: "Seleciona a moldura e abre preenchimento/contorno na aba Forma.",

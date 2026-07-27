@@ -29,6 +29,7 @@ import {
   TableBordersSection,
   TableStyleOptionsSection,
   TableStylesSection,
+  TableTypographySection,
 } from "./TableDesignSections";
 import {
   TableLayoutAlignSection,
@@ -85,6 +86,8 @@ function renderSection(
       return <TableStyleOptionsSection key={id} layout={layout} />;
     case "tableStyles":
       return <TableStylesSection key={id} layout={layout} />;
+    case "tableTypography":
+      return <TableTypographySection key={id} layout={layout} />;
     case "tableBorders":
       return <TableBordersSection key={id} layout={layout} />;
     case "tableLayoutData":

@@ -255,6 +255,7 @@ describe("resolveSelectionSections", () => {
     ).toEqual([
       "tableStyleOptions",
       "tableStyles",
+      "tableTypography",
       "tableBorders",
       "tableLayoutData",
       "tableLayoutSize",
@@ -276,6 +277,7 @@ describe("resolveSelectionSections", () => {
       "shapeChrome",
       "tableStyleOptions",
       "tableStyles",
+      "tableTypography",
       "tableBorders",
       "tableLayoutData",
       "tableLayoutSize",

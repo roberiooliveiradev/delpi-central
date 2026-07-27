@@ -40,6 +40,12 @@ export type ConfigurableTableOptions = {
   /** Estilo de traço da grade (sólido / tracejado / pontilhado). */
   borderStyle?: ConfigurableTableBorderStyle;
   fontSize?: number;
+  /** Família tipográfica da grade (global). */
+  fontFamily?: string;
+  /** Peso tipográfico global (`bold` / `normal` / número CSS). */
+  fontWeight?: string | number;
+  /** Estilo tipográfico global (`italic` / `normal`). */
+  fontStyle?: string;
   textAlign?: ConfigurableTableTextAlign;
   /** Listras nas linhas (Excel → Banded Rows). */
   zebraStripe?: boolean;
@@ -188,6 +194,11 @@ export function configurableTableOptionsCssVars(
   }
   if (options.borderStyle) vars[`--${cssVarPrefix}-border-style`] = options.borderStyle;
   if (options.fontSize != null && options.fontSize > 0) vars[`--${cssVarPrefix}-font-size`] = `${options.fontSize}px`;
+  if (options.fontFamily?.trim()) vars[`--${cssVarPrefix}-font-family`] = options.fontFamily.trim();
+  if (options.fontWeight != null && options.fontWeight !== "") {
+    vars[`--${cssVarPrefix}-font-weight`] = String(options.fontWeight);
+  }
+  if (options.fontStyle?.trim()) vars[`--${cssVarPrefix}-font-style`] = options.fontStyle.trim();
   if (options.rowHeightPx != null && options.rowHeightPx > 0) {
     vars[`--${cssVarPrefix}-row-height`] = `${Math.max(16, Math.min(200, options.rowHeightPx))}px`;
   }

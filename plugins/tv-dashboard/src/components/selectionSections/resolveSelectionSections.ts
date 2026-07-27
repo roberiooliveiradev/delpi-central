@@ -92,6 +92,7 @@ function resolveSingleBlockSections(
       return withCommonTail([
         "tableStyleOptions",
         "tableStyles",
+        "tableTypography",
         "tableBorders",
         "tableLayoutData",
         "tableLayoutSize",
@@ -183,6 +184,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "iconEditor",
   "tableStyleOptions",
   "tableStyles",
+  "tableTypography",
   "tableBorders",
   "tableLayoutData",
   "tableLayoutSize",

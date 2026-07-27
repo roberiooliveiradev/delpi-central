@@ -853,6 +853,9 @@
   min-width: 0;
   box-sizing: border-box;
   background: var(--tdp-table-bg, #ffffff);
+  font-family: var(--tdp-table-font-family, inherit);
+  font-weight: var(--tdp-table-font-weight, inherit);
+  font-style: var(--tdp-table-font-style, normal);
   /* Moldura = chrome Delpi (raio/sombra/contorno); grade = --tdp-table-border-color. */
   border-radius: var(--tdp-table-frame-radius, 16px);
   border: var(--tdp-table-frame-border-width, 1px) solid

@@ -8,6 +8,9 @@
   box-sizing: border-box;
   background: var(--delpi-ui-config-table-bg, #ffffff);
   color: var(--delpi-ui-config-table-text, #1e293b);
+  font-family: var(--delpi-ui-config-table-font-family, inherit);
+  font-weight: var(--delpi-ui-config-table-font-weight, inherit);
+  font-style: var(--delpi-ui-config-table-font-style, normal);
   /* Moldura — DECK_TABLE_DEFAULTS (raio/sombra/contorno, paridade KPI/gráfico). */
   border-radius: var(--delpi-ui-config-table-frame-radius, 16px);
   border: var(--delpi-ui-config-table-frame-border-width, 1px) solid

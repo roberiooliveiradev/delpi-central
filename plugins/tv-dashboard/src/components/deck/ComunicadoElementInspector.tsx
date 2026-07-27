@@ -190,10 +190,11 @@ export function ComunicadoElementInspector({
               panelFocus === "tableLayout"
                 ? ["tableLayoutData", "tableLayoutSize", "tableLayoutAlign"]
                 : panelFocus === "tableDesign"
-                  ? ["tableStyleOptions", "tableStyles", "tableBorders"]
+                  ? ["tableStyleOptions", "tableStyles", "tableTypography", "tableBorders"]
                   : [
                       "tableStyleOptions",
                       "tableStyles",
+                      "tableTypography",
                       "tableBorders",
                       "tableLayoutData",
                       "tableLayoutSize",

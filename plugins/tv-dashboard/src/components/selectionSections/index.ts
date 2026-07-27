@@ -41,6 +41,7 @@ export {
   TableBordersSection,
   TableStyleOptionsSection,
   TableStylesSection,
+  TableTypographySection,
 } from "./TableDesignSections";
 export {
   TableLayoutAlignSection,

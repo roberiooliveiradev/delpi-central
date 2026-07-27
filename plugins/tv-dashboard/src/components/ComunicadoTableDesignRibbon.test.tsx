@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { ComunicadoTableViewBlock } from "@delpi/tv-dashboard-presentation";
 
@@ -27,19 +27,32 @@ vi.mock("./comunicadoEditorContext", () => ({
     selected: tableBlock,
     selectedIds: [tableBlock.id],
     selectedTablePart: null,
+    blocks: [tableBlock],
+    config: { blocks: [tableBlock], customFonts: [] },
+    lastUngroupedIds: [],
     updateSelected,
+    updateSelectedStyle: vi.fn(),
     selectTablePart,
     openDataPanel,
     requestRibbonTab: vi.fn(),
+    groupSelected: vi.fn(),
+    ungroupSelected: vi.fn(),
+    regroupLastUngroup: vi.fn(),
+    bringForward: vi.fn(),
+    sendBackward: vi.fn(),
+    bringToFront: vi.fn(),
+    sendToBack: vi.fn(),
   }),
 }));
 
 describe("ComunicadoTableDesignRibbon", () => {
-  it("oferece strip de estilos com Mais e Forma seleciona moldura", () => {
+  it("oferece strip de estilos e seção Fonte global da tabela", () => {
     render(<ComunicadoTableDesignRibbon />);
     expect(screen.getByRole("list", { name: "Estilos de tabela" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Galeria de estilos de tabela" })).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /^Forma$/i }));
-    expect(selectTablePart).toHaveBeenCalledWith("t1", { kind: "frame" });
+    expect(screen.getByLabelText("Família da fonte da tabela")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Tamanho da fonte da tabela" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Negrito" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Itálico" })).toBeTruthy();
   });
 });

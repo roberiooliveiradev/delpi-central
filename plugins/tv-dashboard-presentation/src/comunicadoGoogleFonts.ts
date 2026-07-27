@@ -118,6 +118,9 @@ export function collectFontFamiliesFromComunicadoConfig(
     if (block.type === "heading" || block.type === "text") {
       collectFontFamiliesFromTextBlock(block, families);
     }
+    if (block.type === "table_view" && block.tableOptions?.fontFamily?.trim()) {
+      families.add(block.tableOptions.fontFamily.trim());
+    }
   }
   return [...families];
 }

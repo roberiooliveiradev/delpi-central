@@ -17,4 +17,18 @@ describe("configurableTableOptionsCssVars", () => {
     expect(vars["--delpi-ui-config-table-border-style"]).toBe("dashed");
     expect(vars["--delpi-ui-config-table-border-color"]).toBe("#aabbcc");
   });
+
+  it("emite tipografia global (família, peso, estilo, tamanho)", () => {
+    const options = mergeConfigurableTableOptions({
+      fontSize: 14,
+      fontFamily: "Inter, sans-serif",
+      fontWeight: "bold",
+      fontStyle: "italic",
+    });
+    const vars = configurableTableOptionsCssVars(options);
+    expect(vars["--delpi-ui-config-table-font-size"]).toBe("14px");
+    expect(vars["--delpi-ui-config-table-font-family"]).toBe("Inter, sans-serif");
+    expect(vars["--delpi-ui-config-table-font-weight"]).toBe("bold");
+    expect(vars["--delpi-ui-config-table-font-style"]).toBe("italic");
+  });
 });
