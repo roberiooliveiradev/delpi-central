@@ -9,6 +9,7 @@ class LmpNonconformityCreateRepository(Protocol):
         *,
         status: str = "open",
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
@@ -35,6 +36,7 @@ class CreateLmpNonconformityUseCase:
         *,
         status: str = "open",
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
@@ -53,6 +55,7 @@ class CreateLmpNonconformityUseCase:
         return self._repository.create_record(
             status=status,
             sale_number=sale_number,
+            lmp_number=lmp_number,
             customer_name=customer_name,
             launch_date=launch_date,
             last_revision_date=last_revision_date,

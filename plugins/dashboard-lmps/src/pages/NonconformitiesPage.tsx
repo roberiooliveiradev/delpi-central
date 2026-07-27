@@ -73,6 +73,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [saleNumber, setSaleNumber] = useState("");
+  const [lmpNumber, setLmpNumber] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [productCode, setProductCode] = useState("");
   const [dateStart, setDateStart] = useState("");
@@ -91,6 +92,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       const data = await fetchLmpNonconformities({
         status: status || undefined,
         sale_number: saleNumber || undefined,
+        lmp_number: lmpNumber || undefined,
         customer_name: customerName || undefined,
         product_code: productCode || undefined,
         start_date: dateStart || undefined,
@@ -110,6 +112,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   }, [
     status,
     saleNumber,
+    lmpNumber,
     customerName,
     productCode,
     dateStart,
@@ -217,11 +220,19 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       },
       {
         key: "sale_number",
-        header: "OV / LMP",
+        header: "OV",
         headerHint: NC_HELP.table.saleNumber,
         sortable: true,
         sortValue: (row) => row.sale_number ?? "",
         render: (row) => row.sale_number || "—",
+      },
+      {
+        key: "lmp_number",
+        header: "Número da LMP",
+        headerHint: NC_HELP.table.lmpNumber,
+        sortable: true,
+        sortValue: (row) => row.lmp_number ?? "",
+        render: (row) => row.lmp_number || "—",
       },
       {
         key: "customer_name",
@@ -413,13 +424,23 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           }))}
         />
         <FilterInputField
-          label="OV / LMP"
+          label="OV"
           hint={NC_HELP.filters.saleNumber}
           type="text"
           value={saleNumber}
           onChange={(v) => {
             setPage(1);
             setSaleNumber(v);
+          }}
+        />
+        <FilterInputField
+          label="Número da LMP"
+          hint={NC_HELP.filters.lmpNumber}
+          type="text"
+          value={lmpNumber}
+          onChange={(v) => {
+            setPage(1);
+            setLmpNumber(v);
           }}
         />
         <FilterInputField

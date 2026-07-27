@@ -461,7 +461,7 @@ export function NonconformityDetailPage({
       <div className="lmps-nc-ov-row lmps-span-2">
         <TextField
           id="nc-sale"
-          label="OV / LMP"
+          label="OV"
           hint={NC_HELP.form.saleNumber}
           value={form.sale_number}
           onChange={setSaleNumberField}
@@ -482,6 +482,14 @@ export function NonconformityDetailPage({
           />
         </div>
       </div>
+      <TextField
+        id="nc-lmp-number"
+        label="Número da LMP"
+        hint={NC_HELP.form.lmpNumber}
+        value={form.lmp_number}
+        onChange={setField("lmp_number")}
+        fullWidth
+      />
       <SelectField
         id="nc-status"
         label="Status"
@@ -527,9 +535,15 @@ export function NonconformityDetailPage({
     <ReadOnlyGrid>
       <ReadOnlyField
         id="nc-ro-sale"
-        label="OV / LMP"
+        label="OV"
         hint={NC_HELP.form.saleNumber}
         value={form.sale_number}
+      />
+      <ReadOnlyField
+        id="nc-ro-lmp-number"
+        label="Número da LMP"
+        hint={NC_HELP.form.lmpNumber}
+        value={form.lmp_number}
       />
       <ReadOnlyField
         id="nc-ro-status"

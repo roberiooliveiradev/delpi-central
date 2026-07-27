@@ -27,6 +27,7 @@ _RECORD = {
     "id": str(_NC_ID),
     "registered_at": "2026-07-27T10:00:00+00:00",
     "sale_number": "123456",
+    "lmp_number": "LMP-001",
     "customer_name": "Cliente Exemplo",
     "launch_date": "2026-01-10",
     "last_revision_date": "2026-06-01",
@@ -176,6 +177,7 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
         body=LmpNonconformityBody(
             status="open",
             sale_number="123456",
+            lmp_number="LMP-001",
             customer_name="Cliente Exemplo",
             defect_description="Folga no terminal",
             problem_tags=["Medida", "Terminal"],
@@ -193,6 +195,7 @@ def test_create_lmp_nonconformity_returns_meta(mock_build) -> None:
     kwargs = use_case.execute.call_args.kwargs
     assert "registered_at" not in kwargs
     assert kwargs["sale_number"] == "123456"
+    assert kwargs["lmp_number"] == "LMP-001"
     assert kwargs["problem_tags"] == ["Medida", "Terminal"]
     assert kwargs["defect_description"] == "Folga no terminal"
     assert kwargs["products"][0]["product_code"] == "90001234"

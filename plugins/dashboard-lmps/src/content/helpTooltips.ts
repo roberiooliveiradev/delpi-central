@@ -179,7 +179,9 @@ export const LMPS_HELP_TOOLTIPS = {
       status:
         "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",
       saleNumber:
-        "Filtra pelo número da OV (= LMP).",
+        "Filtra pelo número da OV (Protheus).",
+      lmpNumber:
+        "Filtra pelo número legado da LMP.",
       customer:
         "Filtra pelo nome do cliente (busca parcial).",
       product:
@@ -196,7 +198,8 @@ export const LMPS_HELP_TOOLTIPS = {
         "Busca local nos registros já carregados na página (texto das colunas visíveis).",
       registeredAt:
         "Data e hora em que a NC foi registrada no sistema (definida automaticamente).",
-      saleNumber: "Número da OV (= identificador da LMP).",
+      saleNumber: "Número da OV (Protheus).",
+      lmpNumber: "Número legado da LMP (opcional).",
       customer: "Cliente associado à LMP/OV (snapshot editável).",
       launchDate: "Data de lançamento da LMP/OV.",
       lastRevisionDate: "Data da última revisão informada na NC.",
@@ -212,7 +215,7 @@ export const LMPS_HELP_TOOLTIPS = {
     },
     form: {
       sectionIdentification:
-        "OV (= LMP), status, cliente e datas. Ao informar uma OV válida, cliente, data de lançamento e produtos da LMP são preenchidos automaticamente (editáveis).",
+        "OV, número legado da LMP (opcional), status, cliente e datas. Ao informar uma OV válida, cliente, data de lançamento e produtos são preenchidos automaticamente (editáveis).",
       sectionPeople:
         "Responsáveis: quem executou e quem liberou (texto livre).",
       sectionProducts:
@@ -224,9 +227,11 @@ export const LMPS_HELP_TOOLTIPS = {
       status:
         "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
       saleNumber:
-        "Número da OV (= LMP). Com código compatível, preenche cliente, data de lançamento e produtos automaticamente.",
+        "Número da OV no Protheus. Distinto do número legado da LMP.",
+      lmpNumber:
+        "Número legado da LMP (opcional). Use para cadastros antigos que não usavam OV.",
       hydrateLmp:
-        "Consulta a LMP no TOTVS e preenche cliente, datas e produtos amarrados. Você pode editar depois.",
+        "Consulta a LMP no TOTVS pela OV e preenche cliente, datas e produtos amarrados. Você pode editar depois.",
       customer:
         "Nome do cliente (snapshot). Hidratado do TOTVS e editável.",
       launchDate:

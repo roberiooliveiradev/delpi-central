@@ -72,6 +72,7 @@ _DATE_PATTERN = r"^(\d{4}-\d{2}-\d{2})?$"
 _SORT_BY_ENUM = [
     "registered_at",
     "sale_number",
+    "lmp_number",
     "customer_name",
     "launch_date",
     "last_revision_date",
@@ -82,7 +83,7 @@ _SORT_BY_ENUM = [
     "problem_tags",
     "products",
 ]
-_SORT_BY_PATTERN = "^(registered_at|sale_number|customer_name|launch_date|last_revision_date|executed_by|released_by|status|defect_description|problem_tags|products)?$"
+_SORT_BY_PATTERN = "^(registered_at|sale_number|lmp_number|customer_name|launch_date|last_revision_date|executed_by|released_by|status|defect_description|problem_tags|products)?$"
 _SORT_DIR_PATTERN = "^(asc|desc)?$"
 _SORT_DIR_ENUM = ["asc", "desc"]
 
@@ -110,7 +111,12 @@ class LmpNonconformityBody(BaseModel):
     sale_number: str | None = Field(
         default=None,
         max_length=20,
-        description="Número da OV (= identificador da LMP).",
+        description="Número da OV (Protheus).",
+    )
+    lmp_number: str | None = Field(
+        default=None,
+        max_length=40,
+        description="Número da LMP (legado / opcional).",
     )
     customer_name: str | None = Field(default=None, max_length=200)
     launch_date: str | None = Field(
@@ -144,6 +150,7 @@ class LmpNonconformityBody(BaseModel):
 
     @field_validator(
         "sale_number",
+        "lmp_number",
         "customer_name",
         "launch_date",
         "last_revision_date",
@@ -243,7 +250,12 @@ def list_lmp_nonconformities(
     sale_number: Optional[str] = Query(
         None,
         max_length=20,
-        description="Filtro parcial pela OV (= LMP).",
+        description="Filtro parcial pela OV.",
+    ),
+    lmp_number: Optional[str] = Query(
+        None,
+        max_length=40,
+        description="Filtro parcial pelo número legado da LMP.",
     ),
     customer_name: Optional[str] = Query(None, max_length=200),
     product_code: Optional[str] = Query(
@@ -285,6 +297,7 @@ def list_lmp_nonconformities(
         data = build_list_lmp_nonconformities_use_case().execute(
             status=status,
             sale_number=sale_number,
+            lmp_number=lmp_number,
             customer_name=customer_name,
             product_code=product_code,
             problem_tag=problem_tag,
@@ -502,6 +515,7 @@ def create_lmp_nonconformity(body: LmpNonconformityBody = Body(...)):
         data = build_create_lmp_nonconformity_use_case().execute(
             status=body.status,
             sale_number=body.sale_number,
+            lmp_number=body.lmp_number,
             customer_name=body.customer_name,
             launch_date=body.launch_date,
             last_revision_date=body.last_revision_date,
@@ -545,6 +559,7 @@ def update_lmp_nonconformity(
             record_id=str(record_id),
             status=body.status,
             sale_number=body.sale_number,
+            lmp_number=body.lmp_number,
             customer_name=body.customer_name,
             launch_date=body.launch_date,
             last_revision_date=body.last_revision_date,

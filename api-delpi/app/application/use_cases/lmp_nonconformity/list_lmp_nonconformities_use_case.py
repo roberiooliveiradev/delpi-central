@@ -9,6 +9,7 @@ class LmpNonconformityListRepository(Protocol):
         *,
         status: str | None = None,
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         product_code: str | None = None,
         problem_tag: str | None = None,
@@ -30,6 +31,7 @@ class ListLmpNonconformitiesUseCase:
         *,
         status: str | None = None,
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         product_code: str | None = None,
         problem_tag: str | None = None,
@@ -43,6 +45,7 @@ class ListLmpNonconformitiesUseCase:
         return self._repository.list_records(
             status=status,
             sale_number=sale_number,
+            lmp_number=lmp_number,
             customer_name=customer_name,
             product_code=product_code,
             problem_tag=problem_tag,

@@ -6,7 +6,8 @@ from typing import Any
 
 FIELD_LABELS: dict[str, str] = {
     "status": "Status",
-    "sale_number": "OV / LMP",
+    "sale_number": "OV",
+    "lmp_number": "Número da LMP",
     "customer_name": "Cliente",
     "launch_date": "Data de lançamento",
     "last_revision_date": "Última revisão",
@@ -22,6 +23,7 @@ FIELD_LABELS: dict[str, str] = {
 _TRACKED_SCALAR = (
     "status",
     "sale_number",
+    "lmp_number",
     "customer_name",
     "launch_date",
     "last_revision_date",

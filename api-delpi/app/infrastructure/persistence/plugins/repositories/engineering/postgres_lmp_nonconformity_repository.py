@@ -24,6 +24,7 @@ _NC_SELECT = """
     SELECT n.id,
            n.registered_at,
            n.sale_number,
+           n.lmp_number,
            n.customer_name,
            n.launch_date,
            n.last_revision_date,
@@ -86,6 +87,7 @@ def _history_snapshot(
     *,
     status: str,
     sale_number: str | None,
+    lmp_number: str | None,
     customer_name: str | None,
     launch_date: str | None,
     last_revision_date: str | None,
@@ -100,6 +102,7 @@ def _history_snapshot(
     return {
         "status": status,
         "sale_number": sale_number,
+        "lmp_number": lmp_number,
         "customer_name": customer_name,
         "launch_date": launch_date,
         "last_revision_date": last_revision_date,
@@ -121,6 +124,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         *,
         status: str | None = None,
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         product_code: str | None = None,
         problem_tag: str | None = None,
@@ -140,6 +144,9 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         if sale_number:
             filters.append("n.sale_number ILIKE %s")
             params.append(f"%{sale_number.strip()}%")
+        if lmp_number:
+            filters.append("n.lmp_number ILIKE %s")
+            params.append(f"%{lmp_number.strip()}%")
         if customer_name:
             filters.append("n.customer_name ILIKE %s")
             params.append(f"%{customer_name.strip()}%")
@@ -341,6 +348,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         *,
         status: str = "open",
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
@@ -363,6 +371,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         lines = _normalize_products(products)
         tags = normalize_problem_tag_labels(problem_tags)
         sale = _blank_to_none(sale_number)
+        lmp = _blank_to_none(lmp_number)
         customer = _blank_to_none(customer_name)
         launch = _blank_to_none(launch_date)
         revision = _blank_to_none(last_revision_date)
@@ -376,13 +385,13 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 cursor.execute(
                     """
                     INSERT INTO engineering.lmp_nonconformities (
-                        registered_at, sale_number, customer_name,
+                        registered_at, sale_number, lmp_number, customer_name,
                         launch_date, last_revision_date,
                         executed_by, released_by, status,
                         defect_description, corrective_actions, technical_opinion,
                         created_by, updated_by
                     ) VALUES (
-                        NOW(), %s, %s,
+                        NOW(), %s, %s, %s,
                         %s::date, %s::date,
                         %s, %s, %s,
                         %s, %s, %s,
@@ -392,6 +401,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     """,
                     (
                         sale,
+                        lmp,
                         customer,
                         launch,
                         revision,
@@ -414,6 +424,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 after = _history_snapshot(
                     status=status_norm,
                     sale_number=sale,
+                    lmp_number=lmp,
                     customer_name=customer,
                     launch_date=launch,
                     last_revision_date=revision,
@@ -455,6 +466,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         record_id: str,
         status: str,
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
@@ -481,6 +493,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         lines = _normalize_products(products)
         tags = normalize_problem_tag_labels(problem_tags)
         sale = _blank_to_none(sale_number)
+        lmp = _blank_to_none(lmp_number)
         customer = _blank_to_none(customer_name)
         launch = _blank_to_none(launch_date)
         revision = _blank_to_none(last_revision_date)
@@ -496,6 +509,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     """
                     UPDATE engineering.lmp_nonconformities
                        SET sale_number = %s,
+                           lmp_number = %s,
                            customer_name = %s,
                            launch_date = %s::date,
                            last_revision_date = %s::date,
@@ -511,6 +525,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                     """,
                     (
                         sale,
+                        lmp,
                         customer,
                         launch,
                         revision,
@@ -536,6 +551,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
                 after = _history_snapshot(
                     status=status_norm,
                     sale_number=sale,
+                    lmp_number=lmp,
                     customer_name=customer,
                     launch_date=launch,
                     last_revision_date=revision,
@@ -820,6 +836,7 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             "id": record_id,
             "registered_at": _iso(row.get("registered_at")),
             "sale_number": row.get("sale_number"),
+            "lmp_number": row.get("lmp_number"),
             "customer_name": row.get("customer_name"),
             "launch_date": _iso(row.get("launch_date")),
             "last_revision_date": _iso(row.get("last_revision_date")),

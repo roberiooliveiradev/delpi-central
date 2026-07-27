@@ -11,6 +11,7 @@ def test_build_nc_history_changes_on_create_lists_initial_values() -> None:
         {
             "status": "open",
             "sale_number": "123456",
+            "lmp_number": "LMP-LEG",
             "customer_name": None,
             "problem_tags": ["Medida"],
             "products": [
@@ -21,6 +22,7 @@ def test_build_nc_history_changes_on_create_lists_initial_values() -> None:
     fields = {item["field"]: item for item in changes["fields"]}
     assert fields["status"]["new"] == "open"
     assert fields["sale_number"]["new"] == "123456"
+    assert fields["lmp_number"]["new"] == "LMP-LEG"
     assert fields["problem_tags"]["new"] == ["Medida"]
     assert fields["products"]["new"][0]["product_code"] == "90001234"
     assert "customer_name" not in fields

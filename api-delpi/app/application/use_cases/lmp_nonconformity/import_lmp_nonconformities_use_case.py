@@ -35,6 +35,7 @@ class LmpNonconformityImportRepository(Protocol):
         *,
         status: str = "open",
         sale_number: str | None = None,
+        lmp_number: str | None = None,
         customer_name: str | None = None,
         launch_date: str | None = None,
         last_revision_date: str | None = None,
@@ -139,6 +140,7 @@ def normalize_import_item(raw: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "status": status,
         "sale_number": _blank(source.get("sale_number")),
+        "lmp_number": _blank(source.get("lmp_number")),
         "customer_name": _blank(source.get("customer_name")),
         "launch_date": _blank(source.get("launch_date")),
         "last_revision_date": _blank(source.get("last_revision_date")),
@@ -239,6 +241,7 @@ class ImportLmpNonconformitiesUseCase:
                 record = self._repository.create_record(
                     status=status,
                     sale_number=fields["sale_number"],
+                    lmp_number=fields["lmp_number"],
                     customer_name=fields["customer_name"],
                     launch_date=fields["launch_date"],
                     last_revision_date=fields["last_revision_date"],

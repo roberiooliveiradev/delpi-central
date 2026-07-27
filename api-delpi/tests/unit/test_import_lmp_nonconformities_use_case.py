@@ -60,6 +60,7 @@ def test_normalize_import_item_strips_server_fields() -> None:
             "product_codes": ["90001"],
             "status": "done",
             "sale_number": "123",
+            "lmp_number": "LEG-9",
             "problem_tags": ["Medida"],
             "products": [],
         }
@@ -67,6 +68,7 @@ def test_normalize_import_item_strips_server_fields() -> None:
     assert "id" not in fields or fields.get("source_id") == "abc"
     assert fields["status"] == "done"
     assert fields["sale_number"] == "123"
+    assert fields["lmp_number"] == "LEG-9"
     assert fields["products"] == [{"product_code": "90001", "product_description": ""}]
     assert fields["problem_tags"] == ["Medida"]
 

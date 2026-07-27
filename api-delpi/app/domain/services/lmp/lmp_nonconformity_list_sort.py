@@ -5,6 +5,7 @@ from __future__ import annotations
 _SORT_COLUMNS: dict[str, str] = {
     "registered_at": "n.registered_at",
     "sale_number": "n.sale_number",
+    "lmp_number": "n.lmp_number",
     "customer_name": "n.customer_name",
     "launch_date": "n.launch_date",
     "last_revision_date": "n.last_revision_date",

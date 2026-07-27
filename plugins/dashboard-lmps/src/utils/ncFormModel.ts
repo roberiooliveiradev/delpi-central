@@ -8,6 +8,7 @@ import type {
 export type NcFormState = {
   status: LmpNcStatus;
   sale_number: string;
+  lmp_number: string;
   customer_name: string;
   launch_date: string;
   last_revision_date: string;
@@ -57,6 +58,7 @@ export function emptyNcForm(): NcFormState {
   return {
     status: "open",
     sale_number: "",
+    lmp_number: "",
     customer_name: "",
     launch_date: "",
     last_revision_date: "",
@@ -84,6 +86,7 @@ export function recordToNcForm(record: LmpNonconformity): NcFormState {
   return {
     status: (record.status as LmpNcStatus) || "open",
     sale_number: record.sale_number ?? "",
+    lmp_number: record.lmp_number ?? "",
     customer_name: record.customer_name ?? "",
     launch_date: toDateInput(record.launch_date),
     last_revision_date: toDateInput(record.last_revision_date),
@@ -101,6 +104,7 @@ export function ncFormToPayload(form: NcFormState): LmpNonconformityPayload {
   return {
     status: form.status,
     sale_number: form.sale_number.trim() || null,
+    lmp_number: form.lmp_number.trim() || null,
     customer_name: form.customer_name.trim() || null,
     launch_date: form.launch_date.trim() || null,
     last_revision_date: form.last_revision_date.trim() || null,

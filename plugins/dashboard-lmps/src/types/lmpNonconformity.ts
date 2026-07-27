@@ -9,6 +9,7 @@ export type LmpNonconformity = {
   id: string;
   registered_at: string;
   sale_number?: string | null;
+  lmp_number?: string | null;
   customer_name?: string | null;
   launch_date?: string | null;
   last_revision_date?: string | null;
@@ -59,6 +60,7 @@ export type LmpProblemTagListResponse = {
 export type LmpNonconformityPayload = {
   status: LmpNcStatus;
   sale_number?: string | null;
+  lmp_number?: string | null;
   customer_name?: string | null;
   launch_date?: string | null;
   last_revision_date?: string | null;
