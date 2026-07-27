@@ -18,6 +18,7 @@ DASHBOARD_QUALITY_VIEW = "dashboard-quality.view"
 DASHBOARD_HR_VIEW = "dashboard-hr.view"
 DASHBOARD_ENGINEERING_VIEW = "dashboard-engineering.view"
 DASHBOARD_LMPS_VIEW = "dashboard-lmps.view"
+DASHBOARD_LMPS_NC_WRITE = "dashboard-lmps.nc.write"
 
 # --- cadastro kaizen ---
 CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"
@@ -147,6 +148,10 @@ ENGINEERING_LMP_ACCESS = [
     API_DELPI_ACCESS,
     DASHBOARD_ENGINEERING_VIEW,
     DASHBOARD_LMPS_VIEW,
+]
+ENGINEERING_LMP_NC_WRITE = [
+    API_DELPI_ACCESS,
+    DASHBOARD_LMPS_NC_WRITE,
 ]
 TRANSFORMOMETRO_VIEW = "transformometro.view"
 ENGINEERING_TRANSFORMOMETRO_ACCESS = [

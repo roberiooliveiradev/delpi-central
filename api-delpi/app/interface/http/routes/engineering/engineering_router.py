@@ -56,6 +56,9 @@ from app.interface.http.routes.engineering.lmp_route_helpers import (
     build_get_lmp_request,
     build_list_lmp_request,
 )
+from app.interface.http.routes.engineering.lmp_nonconformity_router import (
+    router as lmp_nonconformity_router,
+)
 from app.interface.http.openapi_agent_metadata import (
     LMP_BY_SALE,
     LMP_HISTORY_EVENTS,
@@ -97,6 +100,7 @@ from app.interface.http.query_param_enums import (
 )
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
+router.include_router(lmp_nonconformity_router)
 
 
 @router.get("/lmps", **LMP_LIST)

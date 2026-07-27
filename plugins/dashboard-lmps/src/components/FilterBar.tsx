@@ -10,9 +10,11 @@ import {
 } from "../constants/filterOptions";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { DepartmentIddBadge } from "./DepartmentIddBadge";
+import { LmpsNav } from "./LmpsNav";
 import { MultiSelectField } from "./MultiSelectField";
 import { FilterInputField, FiltersRow } from "./dashboardFiltersUi";
 import { OPERATIONAL_UNIT_FIELD_LABEL } from "../utils/operationalUnitLabels";
+import type { LmpsFilterUrlState } from "../utils/filterUrl";
 
 type FilterBarProps = {
   competence: string;
@@ -30,6 +32,8 @@ type FilterBarProps = {
   onRefresh: () => void;
   exportActions?: ReactNode;
   disabled?: boolean;
+  pathname?: string;
+  filterState?: LmpsFilterUrlState;
 };
 
 export function FilterBar({
@@ -48,6 +52,8 @@ export function FilterBar({
   onRefresh,
   exportActions,
   disabled = false,
+  pathname,
+  filterState,
 }: FilterBarProps) {
   return (
     <>
@@ -70,6 +76,7 @@ export function FilterBar({
               className="lmps-page-subtitle__help"
             />
           </span>
+          <LmpsNav currentPath={pathname} filterState={filterState} />
         </div>
 
         <div className="lmps-header-actions">

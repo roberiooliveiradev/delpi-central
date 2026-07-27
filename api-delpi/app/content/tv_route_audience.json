@@ -7218,6 +7218,81 @@
           "label": "Custo de Retrabalho / ROL — meta"
         }
       }
+    },
+    "list_lmp_nonconformities": {
+      "locale": {
+        "en": {
+          "summary": "List LMP nonconformities",
+          "description": "Paged list of LMP operational nonconformities.",
+          "label": "List LMP nonconformities"
+        },
+        "pt-BR": {
+          "label": "Listar não conformidades LMP",
+          "summary": "Listar não conformidades LMP",
+          "description": "Listagem paginada de não conformidades operacionais do contexto LMP."
+        }
+      },
+      "category": "engineering"
+    },
+    "get_lmp_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Get LMP nonconformity by id",
+          "description": "Single LMP nonconformity detail.",
+          "label": "Get LMP nonconformity"
+        },
+        "pt-BR": {
+          "label": "Obter não conformidade LMP",
+          "summary": "Obter não conformidade LMP",
+          "description": "Detalhe de uma não conformidade LMP por id."
+        }
+      },
+      "category": "engineering"
+    },
+    "create_lmp_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Create LMP nonconformity",
+          "description": "Create an LMP nonconformity record.",
+          "label": "Create LMP nonconformity"
+        },
+        "pt-BR": {
+          "label": "Criar não conformidade LMP",
+          "summary": "Criar não conformidade LMP",
+          "description": "Cria registro de não conformidade no contexto LMP."
+        }
+      },
+      "category": "engineering"
+    },
+    "update_lmp_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Update LMP nonconformity",
+          "description": "Update an LMP nonconformity record.",
+          "label": "Update LMP nonconformity"
+        },
+        "pt-BR": {
+          "label": "Atualizar não conformidade LMP",
+          "summary": "Atualizar não conformidade LMP",
+          "description": "Atualiza registro de não conformidade LMP."
+        }
+      },
+      "category": "engineering"
+    },
+    "delete_lmp_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Delete LMP nonconformity",
+          "description": "Delete an LMP nonconformity record.",
+          "label": "Delete LMP nonconformity"
+        },
+        "pt-BR": {
+          "label": "Excluir não conformidade LMP",
+          "summary": "Excluir não conformidade LMP",
+          "description": "Exclui registro de não conformidade LMP."
+        }
+      },
+      "category": "engineering"
     }
   }
 }

@@ -464,6 +464,42 @@ LMP_HISTORY_FLOW = agent_route(
     operation_id="get_lmp_history_flow",
 )
 
+LMP_NONCONFORMITIES_LIST = agent_route(
+    summary="List LMP nonconformities",
+    description=(
+        "Paged list of LMP operational nonconformities (defects, supplier, OC/NF, quantities). "
+        "Optional filters: status, branch, sale_number (OV), material, product_code, period."
+    ),
+    operation_id="list_lmp_nonconformities",
+)
+
+LMP_NONCONFORMITY_BY_ID = agent_route(
+    summary="Get LMP nonconformity by id",
+    description="Returns one LMP nonconformity including optional linked product_codes.",
+    operation_id="get_lmp_nonconformity",
+)
+
+LMP_NONCONFORMITY_CREATE = agent_route(
+    summary="Create LMP nonconformity",
+    description=(
+        "Creates an LMP nonconformity record. registered_at and status are required; "
+        "sale_number (OV) and product_codes are optional."
+    ),
+    operation_id="create_lmp_nonconformity",
+)
+
+LMP_NONCONFORMITY_UPDATE = agent_route(
+    summary="Update LMP nonconformity",
+    description="Full update of an LMP nonconformity and its product_codes list.",
+    operation_id="update_lmp_nonconformity",
+)
+
+LMP_NONCONFORMITY_DELETE = agent_route(
+    summary="Delete LMP nonconformity",
+    description="Deletes an LMP nonconformity and cascaded product links.",
+    operation_id="delete_lmp_nonconformity",
+)
+
 SUPPLIES_CPV = agent_route(
     summary="CPV — custo de produto vendido (Kardex / suprimentos)",
     description=(

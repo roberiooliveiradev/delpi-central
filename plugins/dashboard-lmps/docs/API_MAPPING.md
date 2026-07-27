@@ -31,8 +31,14 @@ Router backend: `api-delpi/app/interface/http/routes/engineering/engineering_rou
 | `getLmpHistoryFlow` | GET | `/engineering/lmps/{sale_number}/history/flow` | Transições engenharia (idas/voltas) |
 | `getLmpsDashboard` | GET | `/engineering/lmps/dashboard` | Legado (fallback monolítico) |
 | `listLmps` | GET | `/engineering/lmps` | Listagem paginada (não usada na página atual) |
+| `fetchLmpNonconformities` | GET | `/engineering/lmps/nonconformities` | Aba Registro de NCs |
+| `createLmpNonconformity` | POST | `/engineering/lmps/nonconformities` | Criar NC (`dashboard-lmps.nc.write`) |
+| `updateLmpNonconformity` | PUT | `/engineering/lmps/nonconformities/{id}` | Atualizar NC |
+| `deleteLmpNonconformity` | DELETE | `/engineering/lmps/nonconformities/{id}` | Excluir NC |
 
 **Detalhe da OV:** o MFE chama **`getLmpBySaleNumber`** + **`getLmpHistoryEvents`** + **`getLmpHistoryFlow`** em paralelo (`useLmpDetail`) e mescla fluxo nos eventos para badges na timeline.
+
+**NCs:** CRUD em `lmpNonconformityApi.ts`; leitura com `dashboard-lmps.view` / `ENGINEERING_LMP_ACCESS`; escrita com `dashboard-lmps.nc.write`.
 
 ---
 

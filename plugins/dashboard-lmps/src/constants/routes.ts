@@ -5,6 +5,7 @@ export const LMPS_BASE_PATH = "/apps/dashboard-lmps";
 
 export const LMPS_ROUTES = {
   home: LMPS_BASE_PATH,
+  nonconformities: `${LMPS_BASE_PATH}/nonconformities`,
 } as const;
 
 export function buildLmpDetailPath(

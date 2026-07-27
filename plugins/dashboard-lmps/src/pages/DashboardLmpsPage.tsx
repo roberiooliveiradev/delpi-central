@@ -493,6 +493,8 @@ export function DashboardLmpsPage({
           />
         }
         disabled={loading}
+        pathname={pathname}
+        filterState={filterState}
       />
 
       {refreshing && hasData ? (

@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "dashboard-lmps",
   "name": "Dashboard LMPs",
-  "description": "Dashboard analítico de LMPs",
+  "description": "Dashboard analítico de LMPs e registro de não conformidades",
   "icon": "bar-chart3-icon",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-lmps",
@@ -14,7 +14,13 @@
     {
       "code": "dashboard-lmps.view",
       "name": "Acesso ao dashboard LMPs",
-      "description": "Permite acessar o dashboard",
+      "description": "Permite acessar o dashboard e listar não conformidades",
+      "module": "dashboard-lmps"
+    },
+    {
+      "code": "dashboard-lmps.nc.write",
+      "name": "Editar não conformidades LMP",
+      "description": "Permite criar, editar e excluir não conformidades no dashboard LMPs",
       "module": "dashboard-lmps"
     }
   ],

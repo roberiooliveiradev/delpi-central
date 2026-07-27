@@ -162,6 +162,11 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_lmp_by_sale_number": RouteContract("lmp", "product_snapshot"),
     "get_lmp_history_events": RouteContract("lmp_history", "paged_list"),
     "get_lmp_history_flow": RouteContract("lmp_history_flow", "list"),
+    "list_lmp_nonconformities": RouteContract("lmp_nonconformity", "paged_list"),
+    "get_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
+    "create_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
+    "update_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
+    "delete_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "list_transforma_mais_processes": RouteContract(
         "transforma_mais_process", "paged_list"
     ),

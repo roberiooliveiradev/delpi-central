@@ -1,6 +1,6 @@
 import { LMPS_BASE_PATH } from "../constants/routes";
 
-export type LmpsView = "dashboard" | "ov-detail";
+export type LmpsView = "dashboard" | "nonconformities" | "ov-detail";
 
 export type ParsedLmpsRoute = {
   view: LmpsView;
@@ -26,6 +26,13 @@ export function parseLmpsPath(pathname: string): ParsedLmpsRoute {
       view: "ov-detail",
       saleNumber: decodeURIComponent(ovMatch[1]),
     };
+  }
+
+  if (
+    path === `${LMPS_BASE_PATH}/nonconformities` ||
+    path.startsWith(`${LMPS_BASE_PATH}/nonconformities/`)
+  ) {
+    return { view: "nonconformities" };
   }
 
   return { view: "dashboard" };

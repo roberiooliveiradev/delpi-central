@@ -121,3 +121,51 @@ def build_list_mini_applicators_componentes_use_case() -> ListMiniApplicatorsCom
 
 def build_list_mini_applicators_pecas_reposicao_use_case() -> ListMiniApplicatorsPecasReposicaoUseCase:
     return ListMiniApplicatorsPecasReposicaoUseCase(_build_mini_applicators_repository())
+
+
+def _build_lmp_nonconformity_repository():
+    from app.infrastructure.persistence.plugins.repositories.engineering.postgres_lmp_nonconformity_repository import (
+        PostgresLmpNonconformityRepository,
+    )
+
+    return PostgresLmpNonconformityRepository()
+
+
+def build_list_lmp_nonconformities_use_case():
+    from app.application.use_cases.lmp_nonconformity.list_lmp_nonconformities_use_case import (
+        ListLmpNonconformitiesUseCase,
+    )
+
+    return ListLmpNonconformitiesUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_get_lmp_nonconformity_use_case():
+    from app.application.use_cases.lmp_nonconformity.get_lmp_nonconformity_use_case import (
+        GetLmpNonconformityUseCase,
+    )
+
+    return GetLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_create_lmp_nonconformity_use_case():
+    from app.application.use_cases.lmp_nonconformity.create_lmp_nonconformity_use_case import (
+        CreateLmpNonconformityUseCase,
+    )
+
+    return CreateLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_update_lmp_nonconformity_use_case():
+    from app.application.use_cases.lmp_nonconformity.update_lmp_nonconformity_use_case import (
+        UpdateLmpNonconformityUseCase,
+    )
+
+    return UpdateLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_delete_lmp_nonconformity_use_case():
+    from app.application.use_cases.lmp_nonconformity.delete_lmp_nonconformity_use_case import (
+        DeleteLmpNonconformityUseCase,
+    )
+
+    return DeleteLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
