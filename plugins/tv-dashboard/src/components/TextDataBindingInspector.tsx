@@ -2,6 +2,7 @@ import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   TEXT_FIELD_AGGREGATION_OPTIONS,
   buildTextDataLinkPatch,
+  catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
   staticLabelFromTextBoundBlock,
@@ -52,11 +53,7 @@ export function TextDataBindingInspector({
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
   const catalogFields = useMemo(
-    () =>
-      (route?.valueFields ?? []).map((field) => ({
-        field: String(field),
-        label: route?.valueFieldLabels?.[String(field)] ?? String(field),
-      })),
+    () => catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels),
     [route?.valueFieldLabels, route?.valueFields],
   );
 

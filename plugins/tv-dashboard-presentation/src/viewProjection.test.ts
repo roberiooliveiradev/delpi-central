@@ -303,6 +303,22 @@ describe("applyViewProjection", () => {
     );
   });
 
+  it("humaniza chaves descobertas sem catálogo (picker Campo)", () => {
+    const fields = discoverResolvedFieldOptions({
+      table: {
+        columns: [
+          { key: "month", label: "month" },
+          { key: "gross_savings_month", label: "gross_savings_month" },
+        ],
+        rows: [{ month: "2026-01", gross_savings_month: 1 }],
+      },
+    });
+    expect(fields.find((item) => item.field === "month")?.label).toBe("Mês");
+    expect(fields.find((item) => item.field === "gross_savings_month")?.label).toBe(
+      "Economia bruta (mês)",
+    );
+  });
+
   it("sugere projeções default ao conectar fonte", () => {
     const suggested = suggestDefaultProjections(sampleResolved);
     expect(suggested.kpiProjection?.metrics?.some((m) => m.field === "oee")).toBe(true);

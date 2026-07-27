@@ -16,6 +16,7 @@ import {
   parseProjectionNumber,
   type ViewAggregation,
 } from "./fieldValueProjection";
+import { humanizeFieldKey, isWeakFieldLabel } from "./fieldKeyHumanize";
 import { resolveFieldDisplayLabel } from "./fieldLabelRegistry";
 import {
   applyMetricSelectionToResolved,
@@ -679,12 +680,7 @@ export function discoverResolvedFieldOptions(
     out.set(key, text);
   };
 
-  const isCuratedLabel = (field: string, label: string) => {
-    const text = label.trim();
-    if (!text || text === field) return false;
-    if (text === field.replace(/_/g, " ")) return false;
-    return true;
-  };
+  const isCuratedLabel = (field: string, label: string) => !isWeakFieldLabel(field, label);
 
   // Runtime primeiro (kpiMetrics / colunas já rotulados pela API).
   if (resolved?.kpi != null && (resolved.kpi.value != null || resolved.kpi.label)) {
@@ -735,7 +731,10 @@ export function discoverResolvedFieldOptions(
     }
   }
 
-  return [...out.entries()].map(([field, label]) => ({ field, label }));
+  return [...out.entries()].map(([field, label]) => ({
+    field,
+    label: isWeakFieldLabel(field, label) ? humanizeFieldKey(field) : label,
+  }));
 }
 
 /** Sugere projeções iniciais ao conectar uma fonte (sem sobrescrever config existente). */

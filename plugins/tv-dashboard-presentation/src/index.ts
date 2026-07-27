@@ -995,6 +995,13 @@ export {
   type ResolveFieldDisplayLabelInput,
 } from "./fieldLabelRegistry";
 export {
+  FIELD_KEY_LABELS,
+  FIELD_TOKEN_LABELS,
+  catalogFieldsFromRouteLabels,
+  humanizeFieldKey,
+  isWeakFieldLabel,
+} from "./fieldKeyHumanize";
+export {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,

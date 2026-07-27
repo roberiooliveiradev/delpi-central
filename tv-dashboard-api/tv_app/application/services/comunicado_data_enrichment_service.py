@@ -38,6 +38,7 @@ from tv_app.application.services.tv_dashboard_content_service import (
     message,
     tv_dashboard_setting_int,
 )
+from tv_app.domain.services.field_key_humanize import humanize_field_key
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     DATA_VIEW_BLOCK_TYPES,
@@ -228,7 +229,7 @@ def _humanize_value_field(field: str, labels: dict[str, str]) -> str:
     for key, label in labels.items():
         if key.lower() == lowered:
             return label
-    return field.replace("_", " ").strip()
+    return humanize_field_key(field)
 
 
 def _binding_selected_fields(binding: dict[str, Any]) -> list[str] | None:

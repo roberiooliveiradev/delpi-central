@@ -1,6 +1,7 @@
 import {
   chartTypeLabel,
   discoverResolvedFieldOptions,
+  catalogFieldsFromRouteLabels,
   isDataSourceBlockType,
   buildViewDataLinkPatch,
   buildViewFrameFitPatch,
@@ -37,29 +38,11 @@ type Props = {
   labelCatalog?: DataSourceLabelCatalog | null;
 };
 
-function routeFieldCatalog(route: TvDataRouteCatalogItem | null | undefined): ValueFieldOption[] {
-  const labels = route?.valueFieldLabels ?? {};
-  const fields = new Set<string>();
-  for (const field of route?.valueFields ?? []) {
-    const key = String(field).trim();
-    if (key) fields.add(key);
-  }
-  // Inclui chaves só em labels (ex.: colunas descobertas do payload mensal).
-  for (const field of Object.keys(labels)) {
-    const key = String(field).trim();
-    if (key) fields.add(key);
-  }
-  return [...fields].map((field) => ({
-    field,
-    label: labels[field]?.trim() || field,
-  }));
-}
-
 function viewValueFieldOptions(
   route: TvDataRouteCatalogItem | null | undefined,
   source: ComunicadoBlock | null,
 ): ValueFieldOption[] {
-  const catalog = routeFieldCatalog(route);
+  const catalog = catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels);
   const resolved =
     source && "resolved" in source && source.resolved ? source.resolved : undefined;
   const sourceFieldLabels =

@@ -5,13 +5,14 @@
  *   1. label na projeção do visual (só se for override real — não igual à chave)
  *   2. data_source.fieldLabels[field] (lookup case-insensitive)
  *   3. catálogo / resolved atual
- *   4. field (chave bruta)
+ *   4. humanizeFieldKey (snake_case → PT) — nunca chave bruta no display
  */
 
 import type {
   ComunicadoDataResolved,
   ComunicadoDataTableColumn,
 } from "./comunicadoTypes";
+import { humanizeFieldKey } from "./fieldKeyHumanize";
 
 export type FieldLabelsMap = Record<string, string>;
 
@@ -93,10 +94,22 @@ export function resolveFieldDisplayLabel(input: ResolveFieldDisplayLabelInput): 
   const fromSource = lookupFieldLabel(input.sourceFieldLabels, field);
   if (fromSource?.trim()) return fromSource;
   const catalog = input.catalogLabel;
-  if (typeof catalog === "string" && catalog.trim()) return catalog;
+  if (
+    typeof catalog === "string" &&
+    catalog.trim() &&
+    !isAutoBakedFieldLabel(catalog, field)
+  ) {
+    return catalog;
+  }
   const resolved = input.resolvedLabel;
-  if (typeof resolved === "string" && resolved.trim()) return resolved;
-  return field;
+  if (
+    typeof resolved === "string" &&
+    resolved.trim() &&
+    !isAutoBakedFieldLabel(resolved, field)
+  ) {
+    return resolved;
+  }
+  return humanizeFieldKey(field);
 }
 
 /**

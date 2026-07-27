@@ -4,6 +4,7 @@ import {
   applyCanvasTableCellDataSourceId,
   applyCanvasTableDataRef,
   buildCanvasTableDataLinkPatch,
+  catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
   formatCanvasTableDataBindingLabel,
   listCanvasTableDataBindings,
@@ -96,11 +97,7 @@ export function CanvasTableDataBindingInspector({
       : table?.resolved);
 
   const catalogFields = useMemo(
-    () =>
-      (route?.valueFields ?? []).map((field) => ({
-        field: String(field),
-        label: route?.valueFieldLabels?.[String(field)] ?? String(field),
-      })),
+    () => catalogFieldsFromRouteLabels(route?.valueFields, route?.valueFieldLabels),
     [route?.valueFieldLabels, route?.valueFields],
   );
 

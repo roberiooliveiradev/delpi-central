@@ -28,7 +28,7 @@ const resolved: ComunicadoDataResolved = {
 };
 
 describe("fieldLabelRegistry", () => {
-  it("cascata: projeção > fonte > catálogo > key", () => {
+  it("cascata: projeção > fonte > catálogo > humanize (nunca chave bruta)", () => {
     expect(
       resolveFieldDisplayLabel({
         field: "ITEM_CODE",
@@ -50,7 +50,10 @@ describe("fieldLabelRegistry", () => {
         catalogLabel: "Código item",
       }),
     ).toBe("Código item");
-    expect(resolveFieldDisplayLabel({ field: "ITEM_CODE" })).toBe("ITEM_CODE");
+    expect(resolveFieldDisplayLabel({ field: "ITEM_CODE" })).toBe("Item código");
+    expect(resolveFieldDisplayLabel({ field: "gross_savings_month" })).toBe(
+      "Economia bruta (mês)",
+    );
   });
 
   it("ignora projeção assada com a chave (case-insensitive)", () => {

@@ -32,13 +32,6 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
   const fieldOptions: ChartAxisFieldOption[] = useMemo(() => {
     const resolved = source?.resolved ?? block.resolved;
     if (!resolved) return [];
-    const columns = resolved.table?.columns ?? [];
-    if (columns.length) {
-      return columns.map((col) => ({
-        field: col.key,
-        label: col.label?.trim() || col.key,
-      }));
-    }
     return discoverResolvedFieldOptions(resolved).map((item) => ({
       field: item.field,
       label: item.label,
