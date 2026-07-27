@@ -206,9 +206,9 @@
         "economia_liquida_mes": "number",
         "horas_economizadas_mes": "number"
       },
-      "label": "Transformômetro — Economia bruta vs Investimento",
-      "description": "Série diária ou mensal de economia bruta versus investimento do dashboard Transformômetro.",
-      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento com filtros de período, filial, setor e granularidade.",
+      "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+      "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI.",
+      "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento do TRANSFORMA+ DELPI com filtros de período, filial, setor e granularidade.",
       "suggestedTransformSteps": [
         {
           "op": "select",

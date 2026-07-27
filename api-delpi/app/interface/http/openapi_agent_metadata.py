@@ -372,9 +372,9 @@ TRANSFORMA_MAIS_SUMMARY = agent_route(
 )
 
 TRANSFORMOMETRO_SAVINGS_INVESTMENT_SERIES = agent_route(
-    summary="Transformômetro savings vs investment series",
+    summary="Economia bruta vs Investimento do TRANSFORMA+ DELPI",
     description=(
-        "Time series for Transformômetro chart «Economia bruta vs Investimento» "
+        "Time series for TRANSFORMA+ DELPI chart «Economia bruta vs Investimento» "
         "(day by vigência or month). Filters: view, filial_id, setor_id, "
         "start_date, end_date, granularity. "
         "Primary use: MFE/TV chart; for chat KPIs prefer Transforma Mais summary."

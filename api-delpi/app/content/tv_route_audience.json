@@ -4032,16 +4032,16 @@
     "get_transformometro_savings_investment_series": {
       "locale": {
         "en": {
-          "summary": "Transformômetro savings vs investment series",
-          "description": "Daily or monthly series of gross savings versus investment from the Transformômetro dashboard.",
-          "label": "Transformômetro — savings vs investment",
-          "whenToUse": "Use for the Economia bruta vs Investimento trend chart with period, branch, department and granularity filters."
+          "summary": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+          "description": "Daily or monthly series of gross savings versus investment for TRANSFORMA+ DELPI.",
+          "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+          "whenToUse": "Use for the Economia bruta vs Investimento trend chart of TRANSFORMA+ DELPI with period, branch, department and granularity filters."
         },
         "pt-BR": {
-          "summary": "Série Economia bruta vs Investimento (Transformômetro)",
-          "description": "Série diária ou mensal de economia bruta versus investimento do dashboard Transformômetro.",
-          "label": "Transformômetro — Economia bruta vs Investimento",
-          "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento com filtros de período, filial, setor e granularidade."
+          "summary": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+          "description": "Série diária ou mensal de economia bruta versus investimento do TRANSFORMA+ DELPI.",
+          "label": "Economia bruta vs Investimento do TRANSFORMA+ DELPI",
+          "whenToUse": "Use no gráfico de tendência Economia bruta vs Investimento do TRANSFORMA+ DELPI com filtros de período, filial, setor e granularidade."
         }
       },
       "category": "engineering"
