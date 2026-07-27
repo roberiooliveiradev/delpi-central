@@ -6,7 +6,7 @@ import {
   useConfirmDialogController,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
-import { ArrowLeft, Plus, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 
 import { getLmpBySaleNumber } from "../api/lmpApi";
 import {
@@ -120,7 +120,13 @@ export function NonconformityDetailPage({
 
   const hydrateAbortRef = useRef<AbortController | null>(null);
   const hydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const productSearchAbortRef = useRef<AbortController | null>(null);
+  const productSearchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const lastHydratedOvRef = useRef<string>("");
+  const lmpProductCandidatesRef = useRef(lmpProductCandidates);
+  lmpProductCandidatesRef.current = lmpProductCandidates;
 
   const load = useCallback(async (id: string) => {
     setLoading(true);
@@ -312,16 +318,21 @@ export function NonconformityDetailPage({
     setProductHits((prev) => prev.filter((p) => p.code !== hit.code));
   };
 
-  const handleProductSearch = async () => {
-    const q = productQuery.trim();
+  const runProductSearch = useCallback(async (rawQuery: string) => {
+    const q = rawQuery.trim();
     if (q.length < 2) {
-      setFormError("Digite ao menos 2 caracteres para buscar produto.");
+      setProductHits([]);
+      setProductSearching(false);
       return;
     }
+
+    productSearchAbortRef.current?.abort();
+    const controller = new AbortController();
+    productSearchAbortRef.current = controller;
     setProductSearching(true);
-    setFormError(null);
+
     try {
-      const local = lmpProductCandidates.filter((p) => {
+      const local = lmpProductCandidatesRef.current.filter((p) => {
         const code = (p.product_code || "").toLowerCase();
         const desc = (p.product_description || "").toLowerCase();
         const needle = q.toLowerCase();
@@ -329,10 +340,13 @@ export function NonconformityDetailPage({
       });
       let remote: ProductSearchItem[] = [];
       try {
-        remote = await searchProducts(q);
+        remote = await searchProducts(q, controller.signal);
       } catch {
+        if (controller.signal.aborted) return;
         remote = [];
       }
+      if (controller.signal.aborted) return;
+
       const merged = new Map<string, ProductSearchItem>();
       for (const p of local) {
         merged.set(p.product_code.toUpperCase(), {
@@ -344,13 +358,43 @@ export function NonconformityDetailPage({
         merged.set(p.code.toUpperCase(), p);
       }
       setProductHits(Array.from(merged.values()));
-      if (merged.size === 0) {
-        setFormError("Nenhum produto encontrado para essa busca.");
-      }
     } finally {
-      setProductSearching(false);
+      if (!controller.signal.aborted) {
+        setProductSearching(false);
+      }
     }
+  }, []);
+
+  const onProductQueryChange = (value: string) => {
+    setProductQuery(value);
+    if (productSearchTimerRef.current) {
+      clearTimeout(productSearchTimerRef.current);
+    }
+    const trimmed = value.trim();
+    if (!trimmed) {
+      productSearchAbortRef.current?.abort();
+      setProductHits([]);
+      setProductSearching(false);
+      return;
+    }
+    if (trimmed.length < 2) {
+      setProductHits([]);
+      setProductSearching(false);
+      return;
+    }
+    productSearchTimerRef.current = setTimeout(() => {
+      void runProductSearch(value);
+    }, 280);
   };
+
+  useEffect(() => {
+    return () => {
+      if (productSearchTimerRef.current) {
+        clearTimeout(productSearchTimerRef.current);
+      }
+      productSearchAbortRef.current?.abort();
+    };
+  }, []);
 
   const persistForm = async (saveKey: string) => {
     setSaving(saveKey);
@@ -564,21 +608,15 @@ export function NonconformityDetailPage({
           label="Buscar produto"
           hint={NC_HELP.form.productSearch}
           value={productQuery}
-          onChange={setProductQuery}
+          onChange={onProductQueryChange}
           fullWidth
           placeholder="Código ou descrição"
         />
-        <div className="lmps-nc-hydrate">
-          <ActionButton
-            type="button"
-            variant="ghost"
-            disabled={productSearching || productQuery.trim().length < 2}
-            onClick={() => void handleProductSearch()}
-          >
-            <Search size={14} />
-            {productSearching ? "Buscando…" : "Buscar"}
-          </ActionButton>
-        </div>
+        {productSearching ? (
+          <span className="lmps-nc-product-search__status" aria-live="polite">
+            Buscando…
+          </span>
+        ) : null}
       </div>
       {productHits.length > 0 ? (
         <ul className="lmps-nc-product-hits" aria-label="Resultados da busca">

@@ -228,10 +228,13 @@
   width: 100%;
 }.dashboard-lmps .lmps-nc-product-search{
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   align-items: end;
   width: 100%;
+}.dashboard-lmps .lmps-nc-product-search__status{
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
 }.dashboard-lmps .lmps-nc-product-hits{
   list-style: none;
   margin: 0;
@@ -268,8 +271,7 @@
   min-width: 0;
   padding-bottom: 2px;
 }@media (max-width: 720px){
-  .dashboard-lmps .lmps-nc-ov-row,
-  .dashboard-lmps .lmps-nc-product-search{
+  .dashboard-lmps .lmps-nc-ov-row{
     grid-template-columns: minmax(0, 1fr);
   }
 }.dashboard-lmps .lmps-nc-products{

@@ -225,7 +225,7 @@ export const LMPS_HELP_TOOLTIPS = {
       executedBy: "Nome de quem executou.",
       releasedBy: "Nome de quem liberou.",
       productSearch:
-        "Busca produto por código ou descrição (TOTVS e produtos da LMP já carregada). Clique no resultado para incluir na tabela.",
+        "Digite código ou descrição para buscar (TOTVS e produtos da LMP). Os resultados aparecem ao digitar; apague o texto para limpar a lista. Clique no resultado para incluir na tabela.",
       productCode: "Código do material/produto Protheus na linha.",
       productDescription: "Descrição do produto (snapshot / edição manual).",
       addProduct: "Inclui uma linha vazia na tabela de produtos.",
