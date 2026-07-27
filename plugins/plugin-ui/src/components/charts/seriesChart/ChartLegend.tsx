@@ -130,14 +130,22 @@ export function ChartLegend({
               .filter(Boolean)
               .join(" ")}
             {...seriesDom}
-            onPointerDown={(event) => {
-              event.stopPropagation();
-              onSeriesPointerDown?.(event);
-            }}
-            onDoubleClick={(event) => {
-              event.stopPropagation();
-              onSeriesDoubleClick?.(event);
-            }}
+            onPointerDown={
+              onSeriesPointerDown
+                ? (event) => {
+                    event.stopPropagation();
+                    onSeriesPointerDown(event);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              onSeriesDoubleClick
+                ? (event) => {
+                    event.stopPropagation();
+                    onSeriesDoubleClick(event);
+                  }
+                : undefined
+            }
           >
             <span className={cn.legendSwatch} style={{ background: entry.color }} aria-hidden />
             <span>{entry.name}</span>

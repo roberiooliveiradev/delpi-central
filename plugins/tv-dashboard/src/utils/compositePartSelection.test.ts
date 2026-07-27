@@ -4,9 +4,18 @@ import {
   isCompositeContentPart,
   isMolduraPartSelection,
   resolveCompositePartPointerAction,
+  shouldAttachCompositePartInteraction,
   shouldUsePartChromeInsteadOfBlock,
   toggleCompositePartSelection,
 } from "./compositePartSelection";
+
+describe("shouldAttachCompositePartInteraction", () => {
+  it("sempre liga handlers no editor (fluxo composto unificado)", () => {
+    expect(shouldAttachCompositePartInteraction("chart_view")).toBe(true);
+    expect(shouldAttachCompositePartInteraction("kpi_view")).toBe(true);
+    expect(shouldAttachCompositePartInteraction("table_view")).toBe(true);
+  });
+});
 
 describe("resolveCompositePartPointerAction", () => {
   it("primeiro clique (bloco não selecionado) arrasta o bloco", () => {

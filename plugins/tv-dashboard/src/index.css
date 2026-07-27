@@ -2382,14 +2382,14 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__shape-block .tdp-comunicado__shape-line{
   pointer-events: none;
 }
-/* Onda 4G — hit de partes do gráfico no palco */
+/* Onda 4G — hit de partes do gráfico no palco (cursor = move do bloco, paridade KPI/tabela). */
 .dashboard-tv-dashboard .td-composer__chart-view,
 .dashboard-tv-dashboard .td-composer__block-wrap .tdp-comunicado__block--chart-view{
   pointer-events: auto;
 }
 .dashboard-tv-dashboard .td-composer__chart-view [data-chart-part]{
   pointer-events: auto;
-  cursor: pointer;
+  cursor: move;
 }
 .dashboard-tv-dashboard .td-chart-part-inspector__actions{
   display: flex;

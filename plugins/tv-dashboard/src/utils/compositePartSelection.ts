@@ -10,6 +10,16 @@
 export type CompositePartPointerAction = "drag-block" | "part-move" | "select-part";
 
 /**
+ * Widgets compostos no editor sempre expõem handlers de parte.
+ * Clique simples → `resolveCompositePartPointerAction` → arrasta/seleciona o bloco;
+ * parte só move quando já está selecionada (`part-move`).
+ * Sem isso, hit-test em fatias/séries com stopPropagation engole o clique do wrap.
+ */
+export function shouldAttachCompositePartInteraction(_blockType?: string): boolean {
+  return true;
+}
+
+/**
  * - Parte já selecionada e móvel → arrastar a parte.
  * - Demais cliques no palco → arrastar/selecionar o bloco (como componente comum).
  */

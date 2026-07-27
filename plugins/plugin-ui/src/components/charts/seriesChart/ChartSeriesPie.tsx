@@ -127,14 +127,22 @@ export function ChartSeriesPie({
               .filter(Boolean)
               .join(" ")}
             {...dom}
-            onPointerDown={(event) => {
-              event.stopPropagation();
-              onPointerDown?.(event);
-            }}
-            onDoubleClick={(event) => {
-              event.stopPropagation();
-              onDoubleClick?.(event);
-            }}
+            onPointerDown={
+              onPointerDown
+                ? (event) => {
+                    event.stopPropagation();
+                    onPointerDown(event);
+                  }
+                : undefined
+            }
+            onDoubleClick={
+              onDoubleClick
+                ? (event) => {
+                    event.stopPropagation();
+                    onDoubleClick(event);
+                  }
+                : undefined
+            }
           />
         );
       })}

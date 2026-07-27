@@ -253,10 +253,10 @@
   z-index: 1;
 }
 
-/* Onda 4G — subseleção de partes no editor */
+/* Onda 4G — subseleção de partes no editor (1º clique = move do bloco). */
 .delpi-ui-series-chart--interactive [data-chart-part] {
   pointer-events: auto;
-  cursor: pointer;
+  cursor: move;
 }
 
 .delpi-ui-series-chart__part--framed {

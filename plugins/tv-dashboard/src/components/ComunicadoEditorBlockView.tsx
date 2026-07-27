@@ -84,7 +84,7 @@ import { renameTableColumnFieldLabel } from "../utils/renameTableColumnFieldLabe
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { resolveCompositePartPointerAction, isCompositeContentPart } from "../utils/compositePartSelection";
+import { resolveCompositePartPointerAction, isCompositeContentPart, shouldAttachCompositePartInteraction } from "../utils/compositePartSelection";
 import { resolveCanvasTableCellPointerAction } from "../utils/canvasTableCellSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture";
@@ -501,12 +501,11 @@ function EditorChartViewBlock({
     [block.chartParts, block.id, updateBlock],
   );
 
-  /** Partes interceptam ponteiro com o grupo já selecionado. */
-  const interaction =
-    selectedId === block.id
-      ? {
-          selectedPart: selectedChartPart,
-          editingPart: editingChartPart,
+  /** Partes interceptam ponteiro sempre — fluxo composto (1º clique = bloco). */
+  const interaction = shouldAttachCompositePartInteraction("chart_view")
+    ? {
+          selectedPart: selectedId === block.id ? selectedChartPart : null,
+          editingPart: selectedId === block.id ? editingChartPart : null,
           onPartPointerDown,
           onPartDoubleClick,
           onPartContentCommit,
@@ -523,7 +522,7 @@ function EditorChartViewBlock({
           parsePartEditorRuns: (_ref: ComunicadoChartPartRef, root: HTMLElement) =>
             parsePartEditorRuns(root),
         }
-      : null;
+    : null;
 
   return (
     <div
@@ -695,12 +694,11 @@ function EditorTableViewBlock({
   const sourceId = block.dataSourceId?.trim();
   const loadingMoreRows = Boolean(sourceId && loadingMoreSourceIds.includes(sourceId));
 
-  const interaction =
-    selectedId === block.id
-      ? {
-          selectedPart: selectedTablePart,
-          selectedParts: selectedTableParts,
-          editingPart: editingTablePart,
+  const interaction = shouldAttachCompositePartInteraction("table_view")
+    ? {
+          selectedPart: selectedId === block.id ? selectedTablePart : null,
+          selectedParts: selectedId === block.id ? selectedTableParts : null,
+          editingPart: selectedId === block.id ? editingTablePart : null,
           onPartPointerDown,
           onPartDoubleClick,
           onPartContentCommit,
@@ -1108,12 +1106,11 @@ function EditorKpiViewBlock({
     ],
   );
 
-  const interaction =
-    selectedId === block.id
-      ? {
-          selectedPart: selectedKpiPart,
-          selectedParts: selectedKpiParts,
-          editingPart: editingKpiPart,
+  const interaction = shouldAttachCompositePartInteraction("kpi_view")
+    ? {
+          selectedPart: selectedId === block.id ? selectedKpiPart : null,
+          selectedParts: selectedId === block.id ? selectedKpiParts : null,
+          editingPart: selectedId === block.id ? editingKpiPart : null,
           onPartPointerDown,
           onPartDoubleClick,
           onPartContentCommit,

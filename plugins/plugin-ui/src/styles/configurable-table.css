@@ -183,7 +183,7 @@
 /* Onda 4G.8 — subseleção de partes */
 .delpi-ui-config-table--interactive [data-table-part] {
   pointer-events: auto;
-  cursor: pointer;
+  cursor: move;
 }
 
 .delpi-ui-config-table__part--selected,
