@@ -309,6 +309,18 @@ export function upsertInputPartState(
   };
 }
 
+/** Replica tipografia em label/badge/control (tipografia global do filtro). */
+export function applyInputTextStyleToSiblingParts(
+  parts: InputPartsMap | null | undefined,
+  style: InputPartStyle,
+): InputPartsMap {
+  let next = parts ?? {};
+  for (const kind of INPUT_TEXT_PART_KINDS) {
+    next = upsertInputPartState(next, { kind }, { style });
+  }
+  return next;
+}
+
 /**
  * Aplica frames default a todas as partes visíveis ainda sem frame.
  * Nunca uma parte isolada — evita híbrido flex+absolute que quebra o stack.

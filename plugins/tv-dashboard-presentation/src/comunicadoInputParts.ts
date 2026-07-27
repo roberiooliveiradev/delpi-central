@@ -20,6 +20,7 @@ export {
   INPUT_PART_RESIZE_HANDLES,
   INPUT_TEXT_PART_KINDS,
   INPUT_ELEMENT_CATALOG,
+  applyInputTextStyleToSiblingParts,
   bindInputPartPointer,
   isInputFilterFormControlTarget,
   clearInputPartsFreeLayoutFrames,

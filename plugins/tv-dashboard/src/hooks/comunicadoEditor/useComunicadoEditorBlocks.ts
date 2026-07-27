@@ -111,11 +111,8 @@ import {
   rotateBlockStyle,
 } from "../../utils/comunicadoTransform";
 import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
-import {
-  isChartTextFormatPart,
-  isKpiTextFormatPart,
-  type TextFormatStyleSnapshot,
-} from "../../utils/selectedTextFormatTarget";
+import type { TextFormatStyleSnapshot } from "../../utils/selectedTextFormatTarget";
+import { buildSelectedTextFormatBlockPatch } from "../../utils/applySelectedTextFormatStyle";
 
 type Options = {
   canvasRef?: RefObject<HTMLElement | null>;
@@ -868,108 +865,21 @@ export function useComunicadoEditorBlocks({
     [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
   );
 
-  /** Tipografia da ribbon Formatar — bloco text/heading/shape (batch via updateSelectedStyle) ou parte textual KPI/chart. */
+  /** Tipografia da ribbon Formatar — bloco text/heading/shape ou tipografia de complexo/parte. */
   const updateSelectedTextFormatStyle = useCallback(
     (patch: TextFormatStyleSnapshot) => {
       if (!selected) return;
 
-      if (selected.type === "kpi_view" && isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
-        const prev = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
-        const nextFontSize =
-          patch.fontSizeAuto === true
-            ? undefined
-            : patch.fontSize != null
-              ? patch.fontSize
-              : prev?.fontSize;
-        const nextTypographyMode =
-          patch.fontSizeAuto === true
-            ? ("auto" as const)
-            : patch.fontSize != null
-              ? ("fixed" as const)
-              : prev?.typographyMode;
-        const nextParts = upsertKpiPartState(selected.kpiParts, selectedKpiPart, {
-          style: {
-            ...prev,
-            fontFamily: patch.fontFamily ?? prev?.fontFamily,
-            fontSize: nextFontSize,
-            typographyMode: nextTypographyMode,
-            fontWeight: patch.fontWeight ?? prev?.fontWeight,
-            fontStyle: patch.fontStyle ?? prev?.fontStyle,
-            color: patch.color ?? prev?.color,
-            textDecoration: patch.textDecoration ?? prev?.textDecoration,
-            textShadow: patch.textShadow ?? prev?.textShadow,
-            textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
-            textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
-            textReflection: patch.textReflection ?? prev?.textReflection,
-            textAlign:
-              patch.textAlign === "left" ||
-              patch.textAlign === "center" ||
-              patch.textAlign === "right" ||
-              patch.textAlign === "justify"
-                ? patch.textAlign
-                : prev?.textAlign,
-            verticalAlign:
-              patch.verticalAlign === "top" ||
-              patch.verticalAlign === "middle" ||
-              patch.verticalAlign === "bottom"
-                ? patch.verticalAlign
-                : prev?.verticalAlign,
-          },
-        });
-        const options = mergeComunicadoKpiOptions({
-          ...selected.kpiOptions,
-          ...partsToKpiOptions(nextParts),
-        });
-        if (selectedKpiPart.kind === "value" && patch.color) {
-          options.valueColor = patch.color;
-        }
-        updateSelected({
-          kpiParts: mergeKpiPartsWithOptions(nextParts, options),
-          kpiOptions: options,
-        } as Partial<ComunicadoBlock>);
-        return;
-      }
-
-      if (
-        selected.type === "chart_view" &&
-        isChartTextFormatPart(selectedChartPart) &&
-        selectedChartPart
-      ) {
-        const prev = getChartPartState(selected.chartParts, selectedChartPart)?.style;
-        const nextParts = upsertChartPartState(selected.chartParts, selectedChartPart, {
-          style: {
-            ...prev,
-            fontFamily: patch.fontFamily ?? prev?.fontFamily,
-            fontSize: patch.fontSize ?? prev?.fontSize,
-            fontWeight:
-              patch.fontWeight === "bold" || patch.fontWeight === "normal"
-                ? patch.fontWeight
-                : prev?.fontWeight,
-            fontStyle:
-              patch.fontStyle === "italic" || patch.fontStyle === "normal"
-                ? patch.fontStyle
-                : prev?.fontStyle,
-            color: patch.color ?? prev?.color,
-            textShadow: patch.textShadow ?? prev?.textShadow,
-            textStrokeColor: patch.textStrokeColor ?? prev?.textStrokeColor,
-            textStrokeWidth: patch.textStrokeWidth ?? prev?.textStrokeWidth,
-            textReflection: patch.textReflection ?? prev?.textReflection,
-            textAlign:
-              patch.textAlign === "left" ||
-              patch.textAlign === "center" ||
-              patch.textAlign === "right" ||
-              patch.textAlign === "justify"
-                ? patch.textAlign
-                : prev?.textAlign,
-            verticalAlign:
-              patch.verticalAlign === "top" ||
-              patch.verticalAlign === "middle" ||
-              patch.verticalAlign === "bottom"
-                ? patch.verticalAlign
-                : prev?.verticalAlign,
-          },
-        });
-        updateSelected({ chartParts: nextParts } as Partial<ComunicadoBlock>);
+      const complexPatch = buildSelectedTextFormatBlockPatch({
+        selected,
+        patch,
+        selectedKpiPart,
+        selectedChartPart,
+        selectedTablePart,
+        selectedInputPart,
+      });
+      if (complexPatch) {
+        updateSelected(complexPatch);
         return;
       }
 
@@ -978,7 +888,9 @@ export function useComunicadoEditorBlocks({
     [
       selected,
       selectedChartPart,
+      selectedInputPart,
       selectedKpiPart,
+      selectedTablePart,
       updateSelected,
       updateSelectedStyle,
     ],

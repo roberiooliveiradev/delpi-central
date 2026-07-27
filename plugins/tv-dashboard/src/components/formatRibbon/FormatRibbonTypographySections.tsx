@@ -122,6 +122,8 @@ export function FormatRibbonTypographySections({
     config,
     selectedKpiPart,
     selectedChartPart,
+    selectedTablePart,
+    selectedInputPart,
     background,
     updateSelectedStyle,
     updateSelectedTextFormatStyle,
@@ -163,6 +165,8 @@ export function FormatRibbonTypographySections({
     selected,
     selectedKpiPart,
     selectedChartPart,
+    selectedTablePart,
+    selectedInputPart,
   });
   if (!textFormatTarget) return null;
 

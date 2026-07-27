@@ -26,12 +26,17 @@ vi.mock("./comunicadoEditorContext", () => ({
   useComunicadoEditor: () => ({
     selected: tableBlock,
     selectedIds: [tableBlock.id],
+    selectedBlocks: [tableBlock],
     selectedTablePart: null,
+    selectedKpiPart: null,
+    selectedChartPart: null,
+    selectedInputPart: null,
     blocks: [tableBlock],
     config: { blocks: [tableBlock], customFonts: [] },
     lastUngroupedIds: [],
     updateSelected,
     updateSelectedStyle: vi.fn(),
+    updateSelectedTextFormatStyle: vi.fn(),
     selectTablePart,
     openDataPanel,
     requestRibbonTab: vi.fn(),
@@ -42,6 +47,19 @@ vi.mock("./comunicadoEditorContext", () => ({
     sendBackward: vi.fn(),
     bringToFront: vi.fn(),
     sendToBack: vi.fn(),
+    editingTextId: null,
+    textEditSelection: null,
+    lastPartialTextEditSelection: null,
+    textEditSelectionStyle: null,
+    toggleEditingTextRunStyle: vi.fn(),
+    applyEditingTextRunStylePatch: vi.fn(),
+    textEditListSelection: null,
+    toggleSelectedTextListType: vi.fn(),
+    textEditNamedStyleSelection: null,
+    applySelectedNamedTextStyle: vi.fn(),
+    uploadCustomFont: vi.fn(),
+    uploading: false,
+    background: "#ffffff",
   }),
 }));
 
@@ -50,8 +68,7 @@ describe("ComunicadoTableDesignRibbon", () => {
     render(<ComunicadoTableDesignRibbon />);
     expect(screen.getByRole("list", { name: "Estilos de tabela" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Galeria de estilos de tabela" })).toBeTruthy();
-    expect(screen.getByLabelText("Família da fonte da tabela")).toBeTruthy();
-    expect(screen.getByRole("group", { name: "Tamanho da fonte da tabela" })).toBeTruthy();
+    expect(screen.getByLabelText("Família da fonte")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Negrito" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Itálico" })).toBeTruthy();
   });

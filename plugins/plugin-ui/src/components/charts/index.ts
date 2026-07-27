@@ -184,6 +184,7 @@ export {
   resolveSeriesPaintColor,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,
+  applyChartTextStyleToSiblingParts,
   serializeChartPartRef,
   upsertChartPartState,
   CHART_PART_RESIZE_HANDLES,

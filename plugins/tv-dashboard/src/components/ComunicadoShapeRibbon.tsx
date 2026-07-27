@@ -8,13 +8,22 @@ import { SelectionSectionsHost } from "./selectionSections";
  * Chart/tabela Design usam ribbons tipadas; partes chart/tabela também via host no ElementRibbon.
  */
 export function ComunicadoShapeRibbon() {
-  const { selected, selectedIds, selectedKpiPart, selectedChartPart } = useComunicadoEditor();
+  const {
+    selected,
+    selectedIds,
+    selectedKpiPart,
+    selectedChartPart,
+    selectedTablePart,
+    selectedInputPart,
+  } = useComunicadoEditor();
 
   const multiSelected = selectedIds.length >= 2;
   const textFormatTarget = resolveSelectedTextFormatTarget({
     selected,
     selectedKpiPart,
     selectedChartPart,
+    selectedTablePart,
+    selectedInputPart,
   });
 
   if (!multiSelected && !selected && textFormatTarget == null) {

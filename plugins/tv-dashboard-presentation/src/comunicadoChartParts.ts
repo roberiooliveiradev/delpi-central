@@ -3,6 +3,7 @@ export {
   CHART_PART_DATA_ATTR,
   CHART_SERIES_LINE_STROKE_WIDTH,
   applyMarkerStyleToAll,
+  applyChartTextStyleToSiblingParts,
   bindChartPartPointer,
   chartOptionsToParts,
   chartPartAllowsDelete,

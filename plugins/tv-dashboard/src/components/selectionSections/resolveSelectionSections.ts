@@ -61,6 +61,13 @@ function resolveSingleBlockSections(
 
   if (selected.type === "input" && ctx.selectedInputPart) {
     const head: SelectionSectionId[] = ["shapeChrome", "inputBinding"];
+    if (
+      ctx.selectedInputPart.kind === "label" ||
+      ctx.selectedInputPart.kind === "badge" ||
+      ctx.selectedInputPart.kind === "control"
+    ) {
+      head.splice(1, 0, "typography");
+    }
     if (inputPartAllowsFrame(ctx.selectedInputPart)) {
       return withCommonTail(head, "light");
     }
@@ -79,11 +86,11 @@ function resolveSingleBlockSections(
     case "video":
       return withCommonTail(["media", "appearance"]);
     case "canvas_table":
-      return withCommonTail(["canvasTable"]);
+      return withCommonTail(["typography", "canvasTable"]);
     case "input":
-      return withCommonTail(["shapeChrome", "inputBinding"]);
+      return withCommonTail(["typography", "shapeChrome", "inputBinding"]);
     case "kpi_view":
-      return withCommonTail(["kpiAppearance", "appearance"]);
+      return withCommonTail(["typography", "kpiAppearance", "appearance"]);
     case "chart_view":
       return withCommonTail([
         "typography",

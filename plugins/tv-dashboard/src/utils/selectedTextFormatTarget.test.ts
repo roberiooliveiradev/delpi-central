@@ -170,13 +170,57 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
-  it("não resolve tipografia quando KPI está no card", () => {
+  it("com card KPI selecionado resolve tipografia global do KPI", () => {
+    const target = resolveSelectedTextFormatTarget({
+      selected: kpiBlock,
+      selectedKpiPart: { kind: "card" },
+    });
+    expect(target?.mode).toBe("complexGlobal");
+    if (target?.mode === "complexGlobal") {
+      expect(target.source).toBe("kpi");
+      expect(target.style.fontSize).toBe(14);
+    }
+  });
+
+  it("gráfico/tabela/input/canvas sem parte textual usam tipografia global", () => {
+    expect(resolveSelectedTextFormatTarget({ selected: chartBlock })?.mode).toBe("complexGlobal");
     expect(
       resolveSelectedTextFormatTarget({
-        selected: kpiBlock,
-        selectedKpiPart: { kind: "card" },
-      }),
-    ).toBeNull();
+        selected: {
+          id: "tb1",
+          type: "table_view",
+          frame: { x: 0, y: 0, w: 40, h: 30 },
+          tableOptions: { fontSize: 18, fontFamily: "Inter", cellTextColor: "#111" },
+        } as ComunicadoBlock,
+      })?.mode,
+    ).toBe("complexGlobal");
+    expect(
+      resolveSelectedTextFormatTarget({
+        selected: {
+          id: "in1",
+          type: "input",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          inputKind: "select",
+          inputParts: { label: { style: { fontSize: 12 } } },
+        } as ComunicadoBlock,
+      })?.mode,
+    ).toBe("complexGlobal");
+    expect(
+      resolveSelectedTextFormatTarget({
+        selected: {
+          id: "ct1",
+          type: "canvas_table",
+          frame: { x: 0, y: 0, w: 30, h: 20 },
+          rows: 2,
+          cols: 2,
+          cells: [
+            [{ kind: "text", text: "A" }, { kind: "text", text: "B" }],
+            [{ kind: "text", text: "C" }, { kind: "text", text: "D" }],
+          ],
+          canvasTableOptions: { fontSize: 20 },
+        } as ComunicadoBlock,
+      })?.mode,
+    ).toBe("complexGlobal");
   });
 
   it("resolve tipografia de forma (ponto/área com texto)", () => {

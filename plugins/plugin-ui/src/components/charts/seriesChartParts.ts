@@ -521,6 +521,32 @@ export function resolveChartPartFontSize(
   return CHART_PART_FONT_SIZE_DEFAULTS[kind];
 }
 
+/**
+ * Replica tipografia em todas as partes textuais do gráfico (Excel: Format Chart → Font).
+ * `dataLabel` individual herda de `dataLabels`; eixos/axisTitle cobrem X e Y.
+ */
+export function applyChartTextStyleToSiblingParts(
+  parts: ChartPartsMap | null | undefined,
+  style: ChartPartStyle,
+): ChartPartsMap {
+  let next = parts ?? {};
+  for (const kind of Object.keys(CHART_PART_FONT_SIZE_DEFAULTS) as ChartTextPartKind[]) {
+    if (kind === "dataLabel") continue;
+    if (kind === "axis") {
+      next = upsertChartPartState(next, { kind: "axis", axis: "x" }, { style });
+      next = upsertChartPartState(next, { kind: "axis", axis: "y" }, { style });
+      continue;
+    }
+    if (kind === "axisTitle") {
+      next = upsertChartPartState(next, { kind: "axisTitle", axis: "x" }, { style });
+      next = upsertChartPartState(next, { kind: "axisTitle", axis: "y" }, { style });
+      continue;
+    }
+    next = upsertChartPartState(next, { kind }, { style });
+  }
+  return next;
+}
+
 /** Tipografia declarada em chartParts — sempre emite fontSize canônico (paridade DelpiKpiCard). */
 export function chartPartTypographyStyle(
   parts: ChartPartsMap | null | undefined,

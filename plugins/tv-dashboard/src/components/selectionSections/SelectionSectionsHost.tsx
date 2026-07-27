@@ -29,8 +29,8 @@ import {
   TableBordersSection,
   TableStyleOptionsSection,
   TableStylesSection,
-  TableTypographySection,
 } from "./TableDesignSections";
+import { TableTypographySection } from "./TableTypographySection";
 import {
   TableLayoutAlignSection,
   TableLayoutDataSection,

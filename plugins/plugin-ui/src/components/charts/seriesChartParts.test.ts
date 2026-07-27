@@ -34,6 +34,7 @@ import {
   resolveCategorySlicePaintColor,
   resolveSeriesPaintColor,
   resolveSeriesStrokeColor,
+  applyChartTextStyleToSiblingParts,
   serializeChartPartRef,
   upsertChartPartState,
 } from "./seriesChartParts";
@@ -70,6 +71,15 @@ describe("seriesChartParts", () => {
     const parts = upsertChartPartState({}, { kind: "title" }, { content: "Novo título", visible: true });
     const merged = mergeSeriesChartOptionsWithParts({ title: "Antigo" }, parts);
     expect(merged.title).toBe("Novo título");
+  });
+
+  it("applyChartTextStyleToSiblingParts replica tipografia em título/legenda/eixos", () => {
+    const next = applyChartTextStyleToSiblingParts({}, { fontSize: 20, color: "#111" });
+    expect(next.title?.style?.fontSize).toBe(20);
+    expect(next.legend?.style?.color).toBe("#111");
+    expect(next["axis:x"]?.style?.fontSize).toBe(20);
+    expect(next["axisTitle:y"]?.style?.color).toBe("#111");
+    expect(next.dataLabels?.style?.fontSize).toBe(20);
   });
 
   it("resolveSeriesPaintColor lê chartParts da série N", () => {

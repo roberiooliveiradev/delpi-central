@@ -314,6 +314,7 @@ export {
   INPUT_PART_FONT_SIZE_DEFAULTS,
   INPUT_PART_RESIZE_HANDLES,
   INPUT_TEXT_PART_KINDS,
+  applyInputTextStyleToSiblingParts,
   bindInputPartPointer,
   isInputFilterFormControlTarget,
   clearInputPartsFreeLayoutFrames,

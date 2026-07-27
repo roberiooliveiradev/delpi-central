@@ -249,6 +249,46 @@ describe("resolveSelectionSections", () => {
     ).toEqual(expect.arrayContaining(["shapeChrome", "typography", "display", "organize", "actions"]));
   });
 
+  it("KPI/input/canvas tipados incluem tipografia global", () => {
+    expect(
+      resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "k2",
+            type: "kpi_view",
+            frame: { x: 0, y: 0, w: 20, h: 15 },
+          } as SelectionSectionContext["selected"],
+        }),
+      ),
+    ).toContain("typography");
+    expect(
+      resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "in1",
+            type: "input",
+            frame: { x: 0, y: 0, w: 20, h: 10 },
+            inputKind: "select",
+          } as SelectionSectionContext["selected"],
+        }),
+      ),
+    ).toContain("typography");
+    expect(
+      resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "ct1",
+            type: "canvas_table",
+            frame: { x: 0, y: 0, w: 30, h: 20 },
+            rows: 2,
+            cols: 2,
+            cells: [],
+          } as SelectionSectionContext["selected"],
+        }),
+      ),
+    ).toContain("typography");
+  });
+
   it("forma tipada: mesma ordem visualBox (tipografia→forma) + display", () => {
     expect(
       resolveSelectionSections(
