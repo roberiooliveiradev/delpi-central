@@ -11,8 +11,6 @@ from typing import Any, Mapping
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
-    find_date_range_keys,
-    read_date_range_values,
 )
 
 # Valores seguros para campos obrigatórios recorrentes quando ausentes.
@@ -59,7 +57,8 @@ def apply_catalog_param_defaults(
     """Mescla defaultParams do catálogo + defaults do schema + convenções de obrigatórios.
 
     Ordem (mais específico ganha): convenient/schema ← route.defaultParams ← params.
-    `periodDays` / `dateRangePreset` do catálogo só entram se ainda não houver datas.
+    `periodDays` / `dateRangePreset` nunca são injetados automaticamente (nem via
+    defaultParams do catálogo nem schema.default) — só entram nos params do caller.
     """
     route_map = route if isinstance(route, Mapping) else {}
     schema = route_map.get("paramSchema") if isinstance(route_map.get("paramSchema"), dict) else {}
@@ -84,6 +83,9 @@ def apply_catalog_param_defaults(
     for key, spec in schema.items():
         if not isinstance(spec, dict):
             continue
+        if key in _CATALOG_PERIOD_KEYS:
+            # periodDays/dateRangePreset: nunca default mágico via schema — só params do caller.
+            continue
         if _has_value(merged, key):
             continue
         default = spec.get("default")
@@ -95,21 +97,5 @@ def apply_catalog_param_defaults(
             if convenient is not None:
                 merged[str(key)] = convenient
 
-    pair = find_date_range_keys(schema) or find_date_range_keys(route_map.get("dateRangeKeys"))
-    if pair:
-        start_key, end_key = pair
-        alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
-        has_period_intent = _has_value(merged, DATE_RANGE_PRESET_KEY) or _has_value(
-            merged, PERIOD_DAYS_KEY
-        )
-        # openEndedDateRange: sem datas/preset → não injeta periodDays (histórico completo).
-        if (
-            not alias_start
-            and not alias_end
-            and not has_period_intent
-            and not route_map.get("openEndedDateRange")
-        ):
-            period_default = catalog_defaults.get(PERIOD_DAYS_KEY)
-            merged[PERIOD_DAYS_KEY] = int(period_default) if period_default not in (None, "") else 30
-
+    # Sem datas/preset/periodDays explícitos → não injeta janela (histórico completo).
     return merged

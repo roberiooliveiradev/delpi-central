@@ -46,6 +46,8 @@ export function buildRouteDefaultParams(
   const catalogDefaults = route.defaultParams ?? {};
   for (const [key, value] of Object.entries(catalogDefaults)) {
     if (value === undefined || value === null || value === "") continue;
+    // periodDays nunca como default de catálogo — evita «últimos N dias» implícito.
+    if (key === PERIOD_DAYS_PARAM) continue;
     defaults[key] = value as ParamValue;
   }
 
@@ -53,6 +55,7 @@ export function buildRouteDefaultParams(
   for (const [key, raw] of Object.entries(schema)) {
     const spec = raw as { default?: ParamValue; optional?: boolean };
     if (defaults[key] !== undefined && defaults[key] !== "") continue;
+    if (key === PERIOD_DAYS_PARAM) continue;
     if (spec?.default !== undefined) {
       defaults[key] = spec.default;
       continue;
@@ -66,7 +69,7 @@ export function buildRouteDefaultParams(
   }
 
   const pair = findDateRangeKeys(Object.keys(schema));
-  // Rotas open-ended (ex.: série TRANSFORMA+): Personalizado sem datas = histórico completo.
+  // Rotas open-ended (ex.: série TRANSFORMA+ / listagens): Personalizado sem datas = histórico completo.
   if (route.openEndedDateRange && pair) {
     defaults[DATE_RANGE_PRESET_PARAM] = "custom";
     delete defaults[PERIOD_DAYS_PARAM];

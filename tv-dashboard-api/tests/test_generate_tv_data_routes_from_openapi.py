@@ -171,7 +171,7 @@ def test_si_competence_with_dates_still_exposes_date_range_for_tv_presets():
     )
     assert sample.get("paramStrategy") == "date_range"
     assert sample.get("dateRangeKeys") == ["start_date", "end_date"]
-    assert (sample.get("defaultParams") or {}).get("periodDays") == 30
+    assert "periodDays" not in (sample.get("defaultParams") or {})
     assert "competence" in (sample.get("paramSchema") or {})
     assert "default" not in ((sample.get("paramSchema") or {}).get("branch") or {})
 
@@ -318,6 +318,21 @@ def test_transformometro_savings_series_is_open_ended_without_period_days():
         item
         for item in generated
         if item["operationId"] == "get_transformometro_savings_investment_series"
+    )
+    assert sample.get("openEndedDateRange") is True
+    assert "periodDays" not in (sample.get("defaultParams") or {})
+    assert sample.get("paramStrategy") == "date_range"
+
+
+def test_list_lmp_nonconformities_is_open_ended_without_period_days():
+    gen = _load_generator_module()
+    generated = gen.generate_routes(
+        baseline_path=BASELINE,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item for item in generated if item["operationId"] == "list_lmp_nonconformities"
     )
     assert sample.get("openEndedDateRange") is True
     assert "periodDays" not in (sample.get("defaultParams") or {})

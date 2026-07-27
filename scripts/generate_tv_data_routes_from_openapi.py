@@ -203,15 +203,17 @@ def enrich_param_schema_entry(
     if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
         enriched["enum"] = list(KNOWN_PARAM_ENUMS[name])
         _note_param_fallback("enum", name)
-    # Período em dias: input numérico livre — nunca enum/select.
+    # Período em dias: input numérico livre — nunca enum/select nem default mágico.
     if name == "periodDays":
         enriched.pop("enum", None)
+        enriched.pop("default", None)
     if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
         enriched["optional"] = True
         _note_param_fallback("default", name)
     elif (
-        not skip_ux_default
+        name != "periodDays"
+        and not skip_ux_default
         and name in _TV_PARAM_UX_DEFAULTS
         and enriched.get("default") is None
     ):
@@ -514,9 +516,7 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
         route["paramStrategy"] = param_strategy
         if date_range_keys:
             route["dateRangeKeys"] = list(date_range_keys)
-            route["defaultParams"] = {"periodDays": 30}
-        elif param_strategy == "date_range":
-            route["defaultParams"] = {"periodDays": 30}
+        # Sem default periodDays: datas vazias = sem filtro de período (histórico completo).
     value_fields = infer_value_fields(operation_id)
     if value_fields:
         route["valueFields"] = value_fields
@@ -524,17 +524,23 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
 
 
 def _clear_period_days_defaults(route: dict[str, Any]) -> None:
-    """Rotas open-ended: omitir datas = histórico completo — sem periodDays padrão."""
-    if not route.get("openEndedDateRange"):
-        return
+    """Nunca gravar periodDays como default — evita injetar «últimos N dias»."""
     defaults = route.get("defaultParams")
-    if not isinstance(defaults, dict) or "periodDays" not in defaults:
-        return
-    cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
-    if cleaned:
-        route["defaultParams"] = cleaned
-    else:
-        route.pop("defaultParams", None)
+    if isinstance(defaults, dict) and "periodDays" in defaults:
+        cleaned = {k: v for k, v in defaults.items() if k != "periodDays"}
+        if cleaned:
+            route["defaultParams"] = cleaned
+        else:
+            route.pop("defaultParams", None)
+    schema = route.get("paramSchema")
+    if isinstance(schema, dict):
+        entry = schema.get("periodDays")
+        if isinstance(entry, dict) and "default" in entry:
+            cleaned_entry = {k: v for k, v in entry.items() if k != "default"}
+            schema = dict(schema)
+            schema["periodDays"] = cleaned_entry
+            route["paramSchema"] = schema
+
 
 
 def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[str, Any]:
@@ -553,6 +559,7 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
             merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
         else:
             merged[key] = value
+    # Overlay também não grava periodDays como default (histórico completo sem filtro).
     _clear_period_days_defaults(merged)
     return merged
 
@@ -577,8 +584,8 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
         value = existing.get(key)
         if value not in (None, "", [], {}):
             if key == "defaultParams" and isinstance(value, dict):
-                # OpenAPI date_range já trouxe periodDays — não deixar o legado sobrescrever
-                # a estratégia, mas mesclar outras chaves curadas.
+                # Mesclar chaves curadas; periodDays legado é removido ao final
+                # (_clear_period_days_defaults) — overlay pode recolocar depois.
                 merged["defaultParams"] = {**(merged.get("defaultParams") or {}), **value}
             else:
                 merged[key] = value
@@ -624,6 +631,7 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 entry.pop("default", None)
             patched_existing[key] = entry
         merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
+    _clear_period_days_defaults(merged)
     return prune_legacy_period_aliases_from_schema(merged)
 
 

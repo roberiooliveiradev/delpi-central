@@ -40,7 +40,6 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "default": 30,
           "label": "Período (dias)"
         }
       }
@@ -63,13 +62,9 @@
       "label": "OEE — visão geral",
       "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
       "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade.",
-      "defaultParams": {
-        "periodDays": 7
-      },
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "default": 7,
           "label": "Período (dias)"
         }
       }
@@ -99,10 +94,7 @@
         "Qualidade — PPM externo"
       ],
       "description": "Hub de PPM de reclamações/defeitos externos: KPI, totais produzidos e meta SI no período.",
-      "whenToUse": "Use no painel rico de qualidade externa (realizado + meta + totais produzidos), não no card SI só de realizado.",
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "whenToUse": "Use no painel rico de qualidade externa (realizado + meta + totais produzidos), não no card SI só de realizado."
     },
     "get_ppm_internal_summary": {
       "tvConstraints": {
@@ -130,10 +122,7 @@
         "PPM Interno — realizado"
       ],
       "description": "Hub de PPM de não conformidades internas: KPI, totais produzidos e meta SI no período.",
-      "whenToUse": "Use no painel rico de qualidade interna (realizado + meta + totais produzidos), não no card SI só de realizado.",
-      "defaultParams": {
-        "periodDays": 30
-      }
+      "whenToUse": "Use no painel rico de qualidade interna (realizado + meta + totais produzidos), não no card SI só de realizado."
     },
     "get_production_oee_series": {
       "seriesField": "points",
@@ -158,13 +147,9 @@
       "label": "OEE — série temporal",
       "description": "Evolução diária do OEE ao longo do período.",
       "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
-      "defaultParams": {
-        "periodDays": 7
-      },
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "default": 7,
           "label": "Período (dias)"
         }
       },
@@ -249,7 +234,6 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "default": 30,
           "label": "Período (dias)"
         }
       }
@@ -269,7 +253,6 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "default": 30,
           "label": "Período (dias)"
         }
       }
@@ -325,6 +308,43 @@
       "label": "LMPs — resumo do painel",
       "description": "KPIs agregados do painel de LMPs (volume, prazo e lead time).",
       "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais e % no prazo. Depois escolha no visual quais métricas exibir."
+    },
+    "list_lmp_nonconformities": {
+      "openEndedDateRange": true,
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "label": "Listar não conformidades LMP",
+      "description": "Listagem paginada de não conformidades LMP. Sem Data início/fim (Personalizado vazio) retorna todo o histórico disponível.",
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
+      "valueFieldLabels": {
+        "occurrence_date": "Data da ocorrência",
+        "sale_number": "Número da OV",
+        "lmp_number": "Nº LMP",
+        "problem_tags": "Tags do problema",
+        "customer_name": "Cliente",
+        "product_code": "Código do produto",
+        "status": "Status"
+      },
+      "paramSchema": {
+        "start_date": {
+          "label": "Data início",
+          "description": "Início do período (AAAA-MM-DD). Vazio = sem filtro de início.",
+          "optional": true
+        },
+        "end_date": {
+          "label": "Data fim",
+          "description": "Fim do período (AAAA-MM-DD). Vazio = sem filtro de fim.",
+          "optional": true
+        },
+        "page_size": {
+          "label": "Tamanho da página",
+          "description": "Linhas por página (máx. 200).",
+          "optional": true,
+          "default": 50
+        }
+      }
     },
     "get_production_allocation_gaps": {
       "allowedDisplayModes": [

@@ -6,6 +6,23 @@ from tv_app.infrastructure.gateways.delpi_operational_gateway import _build_quer
 
 
 
+def test_apply_defaults_never_injects_period_days():
+    """Sem datas/preset → não inventa periodDays (histórico completo)."""
+    route = {
+        "paramSchema": {
+            "start_date": {"type": "string", "optional": True},
+            "end_date": {"type": "string", "optional": True},
+            "periodDays": {"type": "integer", "optional": True, "default": 30},
+        },
+        "dateRangeKeys": ["start_date", "end_date"],
+        "defaultParams": {"periodDays": 30},
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert "periodDays" not in merged
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+
 def test_apply_defaults_skips_period_days_for_open_ended_route():
     route = {
         "openEndedDateRange": True,

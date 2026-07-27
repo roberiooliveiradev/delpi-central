@@ -56,11 +56,10 @@ def _build_query_params(
         assert pair is not None  # strategy date_range sempre resolve
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
-        open_ended = bool(route.get("openEndedDateRange"))
         has_period_days = merged.get(PERIOD_DAYS_KEY) not in (None, "")
-        # Rota open-ended + sem datas e sem periodDays explícito → omite o par
-        # (api-delpi/TM devolvem o histórico completo). Preset custom vazio cai aqui.
-        omit_date_range = open_ended and not start and not end and not has_period_days
+        # Sem datas e sem periodDays → omite o par (histórico completo na API).
+        # periodDays / datas parciais / preset resolvido ainda preenchem o intervalo.
+        omit_date_range = not start and not end and not has_period_days
         if not omit_date_range and (not start or not end):
             # Respeita data parcial do filtro/input (ex.: só end_date) em vez de
             # forçar fim=hoje e apagar o valor do usuário.

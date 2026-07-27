@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildRouteDefaultParams, CONVENIENT_REQUIRED_DEFAULTS } from "./buildRouteDefaultParams";
 
 describe("buildRouteDefaultParams", () => {
-  it("aplica defaultParams, schema.default, filial e preset de datas", () => {
+  it("aplica schema.default, filial e preset de datas (sem periodDays implícito)", () => {
     const params = buildRouteDefaultParams({
       operationId: "get_retrabalhos_resumo",
       label: "Retrabalhos",
@@ -17,7 +17,7 @@ describe("buildRouteDefaultParams", () => {
       },
     });
     expect(params.filial).toBe(CONVENIENT_REQUIRED_DEFAULTS.filial);
-    expect(params.periodDays).toBe(30);
+    expect(params.periodDays).toBeUndefined();
     expect(params.granularity).toBe("day");
     expect(params.dateRangePreset).toBe("this_month");
   });

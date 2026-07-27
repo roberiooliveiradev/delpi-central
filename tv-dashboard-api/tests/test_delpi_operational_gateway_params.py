@@ -233,8 +233,27 @@ def test_date_range_strategy_respects_partial_end_date():
     assert query["start_date"] == "2026-07-04"
 
 
+def test_date_range_omits_dates_when_no_period_without_open_ended_flag():
+    """Sem datas e sem periodDays → omite o par (não depende de openEndedDateRange)."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "branch": {"type": "string"},
+            },
+        },
+        {"branch": "01"},
+    )
+    assert "start_date" not in query
+    assert "end_date" not in query
+    assert query["branch"] == "01"
+
+
 def test_open_ended_date_range_omits_dates_when_custom_empty():
-    """Personalizado sem datas + openEndedDateRange → não injeta últimos N dias."""
+    """Personalizado sem datas → não injeta últimos N dias."""
     query = _build_query_params(
         {
             "paramStrategy": "date_range",
