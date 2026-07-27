@@ -27,6 +27,16 @@ Doc: `api-delpi/docs/api/delpi-reports.md`
 
 Provider atual: `safety_stock_shortage_30d`.
 
+## Agenda
+
+Frequências em `scheduleKind`:
+
+| Valor | UI | Comportamento |
+|-------|-----|----------------|
+| `daily` | Diário (todos os dias) | Inclui sábado e domingo |
+| `weekdays` | Dias úteis (seg–sex) | Pula fim de semana (**não** considera feriados) |
+| `weekly` | Semanal | Um dia da semana |
+
 ## Cron
 
 ```bash

@@ -49,7 +49,7 @@
 
 ```json
 {
-  "scheduleKind": "daily",
+  "scheduleKind": "weekdays",
   "hour": 8,
   "minute": 0,
   "weekday": null,
@@ -57,6 +57,14 @@
   "timezone": "America/Sao_Paulo"
 }
 ```
+
+`scheduleKind`:
+
+| Valor | Comportamento |
+|-------|----------------|
+| `daily` | Todos os dias (inclui sábado e domingo) |
+| `weekdays` | Segunda a sexta (pula fim de semana; **não** considera feriados) |
+| `weekly` | Um dia da semana (`weekday` obrigatório) |
 
 `weekday`: 0=segunda … 6=domingo (obrigatório se `weekly`).
 

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 DEFAULT_TIMEZONE = "America/Sao_Paulo"
-VALID_SCHEDULE_KINDS = frozenset({"daily", "weekly"})
+VALID_SCHEDULE_KINDS = frozenset({"daily", "weekly", "weekdays"})
 
 
 def build_cron_expression(
@@ -20,10 +20,11 @@ def build_cron_expression(
 
     ``weekday`` API: 0=segunda … 6=domingo.
     ``dow`` cron: 0=domingo, 1=segunda … 6=sábado.
+    ``weekdays``: cron ``1-5`` (segunda a sexta).
     """
     kind = str(schedule_kind or "").strip().lower()
     if kind not in VALID_SCHEDULE_KINDS:
-        raise ValueError("scheduleKind deve ser daily ou weekly.")
+        raise ValueError("scheduleKind deve ser daily, weekly ou weekdays.")
     if not (0 <= int(hour) <= 23):
         raise ValueError("hour deve estar entre 0 e 23.")
     if not (0 <= int(minute) <= 59):
@@ -31,6 +32,9 @@ def build_cron_expression(
 
     if kind == "daily":
         return f"{int(minute)} {int(hour)} * * *"
+
+    if kind == "weekdays":
+        return f"{int(minute)} {int(hour)} * * 1-5"
 
     if weekday is None:
         raise ValueError("weekday é obrigatório para agenda weekly.")
@@ -68,6 +72,13 @@ def parse_schedule_fields(
     return {"hour": hour, "minute": minute, "weekday": weekday}
 
 
+def _advance_to_weekday(candidate: datetime) -> datetime:
+    """Avança até segunda–sexta (Python weekday: 0=seg … 6=dom)."""
+    while candidate.weekday() >= 5:
+        candidate += timedelta(days=1)
+    return candidate
+
+
 def compute_next_run_at(
     *,
     schedule_kind: str,
@@ -80,7 +91,7 @@ def compute_next_run_at(
     """Próximo instante >= after+ε no fuso informado."""
     kind = str(schedule_kind or "").strip().lower()
     if kind not in VALID_SCHEDULE_KINDS:
-        raise ValueError("scheduleKind deve ser daily ou weekly.")
+        raise ValueError("scheduleKind deve ser daily, weekly ou weekdays.")
     if not (0 <= int(hour) <= 23):
         raise ValueError("hour deve estar entre 0 e 23.")
     if not (0 <= int(minute) <= 59):
@@ -104,6 +115,11 @@ def compute_next_run_at(
         if candidate <= now:
             candidate += timedelta(days=1)
         return candidate
+
+    if kind == "weekdays":
+        if candidate <= now:
+            candidate += timedelta(days=1)
+        return _advance_to_weekday(candidate)
 
     if weekday is None:
         raise ValueError("weekday é obrigatório para agenda weekly.")

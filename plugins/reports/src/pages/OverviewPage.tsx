@@ -46,6 +46,7 @@ function dayKey(value: string | null | undefined): string | null {
 function scheduleFrequencyLabel(schedule: ReportSchedule | null | undefined): string {
   if (!schedule) return "—";
   if (schedule.scheduleKind === "weekly") return "Semanal";
+  if (schedule.scheduleKind === "weekdays") return "Dias úteis";
   if (schedule.scheduleKind === "daily") return "Diária";
   return schedule.scheduleKind || "—";
 }

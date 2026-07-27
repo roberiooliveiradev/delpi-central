@@ -73,7 +73,9 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   const [horizonDays, setHorizonDays] = useState(30);
   const [active, setActive] = useState(true);
 
-  const [scheduleKind, setScheduleKind] = useState<"daily" | "weekly">("daily");
+  const [scheduleKind, setScheduleKind] = useState<
+    "daily" | "weekly" | "weekdays"
+  >("daily");
   const [hour, setHour] = useState(8);
   const [minute, setMinute] = useState(0);
   const [weekday, setWeekday] = useState(0);
@@ -106,8 +108,9 @@ export function DefinitionDetailPage({ definitionId }: Props) {
         );
         setSchedule(schedulePayload);
         if (schedulePayload) {
+          const kind = schedulePayload.scheduleKind;
           setScheduleKind(
-            schedulePayload.scheduleKind === "weekly" ? "weekly" : "daily",
+            kind === "weekly" || kind === "weekdays" ? kind : "daily",
           );
           setHour(schedulePayload.hour ?? 8);
           setMinute(schedulePayload.minute ?? 0);
@@ -442,11 +445,12 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       value={scheduleKind}
                       onChange={(e) =>
                         setScheduleKind(
-                          e.target.value === "weekly" ? "weekly" : "daily",
+                          e.target.value as "daily" | "weekly" | "weekdays",
                         )
                       }
                     >
-                      <option value="daily">Diário</option>
+                      <option value="daily">Diário (todos os dias)</option>
+                      <option value="weekdays">Dias úteis (seg–sex)</option>
                       <option value="weekly">Semanal</option>
                     </select>
                   </label>
