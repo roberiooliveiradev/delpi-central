@@ -26,6 +26,53 @@ export function buildOpFilterOptions(items: EficienciaFabrilItem[]): MultiSelect
   return sortOptions([...values].map((value) => ({ value, label: value })));
 }
 
+export function buildFinishedProductFilterOptions(
+  items: EficienciaFabrilItem[]
+): MultiSelectOption[] {
+  const values = new Set<string>();
+
+  for (const item of items) {
+    const product = item.produto_acabado?.trim();
+    if (product) values.add(product);
+  }
+
+  return sortOptions([...values].map((value) => ({ value, label: value })));
+}
+
+/**
+ * Opções de operação só a partir dos apontamentos dos PAs selecionados
+ * (evita lista enorme / custo alto sem PA).
+ */
+export function buildOperationFilterOptions(
+  items: EficienciaFabrilItem[],
+  finishedProducts: string[]
+): MultiSelectOption[] {
+  if (finishedProducts.length === 0) return [];
+
+  const selectedPas = new Set(finishedProducts);
+  const options = new Map<string, string>();
+
+  for (const item of items) {
+    const pa = item.produto_acabado?.trim();
+    if (!pa || !selectedPas.has(pa)) continue;
+
+    const code = item.operacao?.trim();
+    if (!code) continue;
+
+    if (!options.has(code)) {
+      const description = item.descricao_operacao?.trim();
+      options.set(code, description ? `${code} — ${description}` : code);
+    }
+  }
+
+  return sortOptions(
+    [...options.entries()].map(([value, label]) => ({
+      value,
+      label,
+    }))
+  );
+}
+
 export function buildWorkCenterFilterOptions(items: EficienciaFabrilItem[]): MultiSelectOption[] {
   const values = new Set<string>();
 

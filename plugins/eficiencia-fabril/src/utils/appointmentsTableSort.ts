@@ -6,9 +6,12 @@ export type AppointmentsSortColumn =
   | "hora_inicio"
   | "hora_final"
   | "qtd_apontada"
+  | "meta_por_hora"
   | "filial"
   | "op"
+  | "produto_acabado"
   | "descricao_produto"
+  | "descricao_operacao"
   | "centro_trabalho"
   | "operador"
   | "eficiencia_percentual"
@@ -64,12 +67,18 @@ function compareItem(
       return compareText(left.hora_final ?? "", right.hora_final ?? "");
     case "qtd_apontada":
       return compareNullableNumber(left.qtd_apontada, right.qtd_apontada);
+    case "meta_por_hora":
+      return compareNullableNumber(left.meta_por_hora, right.meta_por_hora);
     case "filial":
       return compareText(left.filial ?? "", right.filial ?? "");
     case "op":
       return compareText(left.op ?? "", right.op ?? "");
+    case "produto_acabado":
+      return compareText(left.produto_acabado ?? "", right.produto_acabado ?? "");
     case "descricao_produto":
       return compareText(readProductDescription(left), readProductDescription(right));
+    case "descricao_operacao":
+      return compareText(left.descricao_operacao ?? "", right.descricao_operacao ?? "");
     case "centro_trabalho":
       return compareText(left.centro_trabalho ?? "", right.centro_trabalho ?? "");
     case "operador":

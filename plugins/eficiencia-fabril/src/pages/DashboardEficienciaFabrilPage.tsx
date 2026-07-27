@@ -41,7 +41,9 @@ import { EFFICIENCY_BAND_FILTER_OPTIONS } from "../constants/efficiencyBands";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   buildEmployeeFilterOptions,
+  buildFinishedProductFilterOptions,
   buildOpFilterOptions,
+  buildOperationFilterOptions,
   buildShiftFilterOptions,
   buildWorkCenterFilterOptions,
 } from "../utils/filterOptions";
@@ -95,6 +97,8 @@ function DashboardEficienciaFabrilContent({
     appliedDateStart,
     appliedDateEnd,
     ops,
+    finishedProducts,
+    operations,
     employees,
     workCenters,
     shifts,
@@ -105,6 +109,8 @@ function DashboardEficienciaFabrilContent({
     setDateStart,
     setDateEnd,
     setOps,
+    setFinishedProducts,
+    setOperations,
     setEmployees,
     setWorkCenters,
     setShifts,
@@ -141,6 +147,14 @@ function DashboardEficienciaFabrilContent({
   const shiftOptions = useMemo(() => buildShiftFilterOptions(), []);
   const efficiencyBandOptions = useMemo(() => EFFICIENCY_BAND_FILTER_OPTIONS, []);
   const opOptions = useMemo(() => buildOpFilterOptions(loadedItems), [loadedItems]);
+  const finishedProductOptions = useMemo(
+    () => buildFinishedProductFilterOptions(loadedItems),
+    [loadedItems]
+  );
+  const operationOptions = useMemo(
+    () => buildOperationFilterOptions(loadedItems, finishedProducts),
+    [finishedProducts, loadedItems]
+  );
   const employeeOptions = useMemo(
     () => buildEmployeeFilterOptions(loadedItems),
     [loadedItems]
@@ -192,11 +206,15 @@ function DashboardEficienciaFabrilContent({
         dateStart={dateStart}
         dateEnd={dateEnd}
         ops={ops}
+        finishedProducts={finishedProducts}
+        operations={operations}
         employees={employees}
         workCenters={workCenters}
         shifts={shifts}
         efficiencyBands={efficiencyBands}
         opOptions={opOptions}
+        finishedProductOptions={finishedProductOptions}
+        operationOptions={operationOptions}
         employeeOptions={employeeOptions}
         workCenterOptions={workCenterOptions}
         shiftOptions={shiftOptions}
@@ -204,6 +222,8 @@ function DashboardEficienciaFabrilContent({
         onDateStartChange={setDateStart}
         onDateEndChange={setDateEnd}
         onOpsChange={setOps}
+        onFinishedProductsChange={setFinishedProducts}
+        onOperationsChange={setOperations}
         onEmployeesChange={setEmployees}
         onWorkCentersChange={setWorkCenters}
         onShiftsChange={setShifts}

@@ -22,7 +22,7 @@ export function DetailQuantityValue({
   if (value == null || Number.isNaN(value)) return "—";
 
   const number = value.toLocaleString("pt-BR", {
-    minimumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   });
   const normalizedUnit = unit?.trim();

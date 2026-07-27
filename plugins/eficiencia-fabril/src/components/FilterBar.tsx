@@ -15,11 +15,15 @@ type FilterBarProps = {
   dateStart: string;
   dateEnd: string;
   ops: string[];
+  finishedProducts: string[];
+  operations: string[];
   employees: string[];
   workCenters: string[];
   shifts: EficienciaFabrilShift[];
   efficiencyBands: EficienciaFabrilEfficiencyBand[];
   opOptions: MultiSelectOption[];
+  finishedProductOptions: MultiSelectOption[];
+  operationOptions: MultiSelectOption[];
   employeeOptions: MultiSelectOption[];
   workCenterOptions: MultiSelectOption[];
   shiftOptions: MultiSelectOption[];
@@ -27,6 +31,8 @@ type FilterBarProps = {
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onOpsChange: (value: string[]) => void;
+  onFinishedProductsChange: (value: string[]) => void;
+  onOperationsChange: (value: string[]) => void;
   onEmployeesChange: (value: string[]) => void;
   onWorkCentersChange: (value: string[]) => void;
   onShiftsChange: (value: EficienciaFabrilShift[]) => void;
@@ -38,11 +44,15 @@ export function FilterBar({
   dateStart,
   dateEnd,
   ops,
+  finishedProducts,
+  operations,
   employees,
   workCenters,
   shifts,
   efficiencyBands,
   opOptions,
+  finishedProductOptions,
+  operationOptions,
   employeeOptions,
   workCenterOptions,
   shiftOptions,
@@ -50,12 +60,16 @@ export function FilterBar({
   onDateStartChange,
   onDateEndChange,
   onOpsChange,
+  onFinishedProductsChange,
+  onOperationsChange,
   onEmployeesChange,
   onWorkCentersChange,
   onShiftsChange,
   onEfficiencyBandsChange,
   disabled = false,
 }: FilterBarProps) {
+  const operationFilterEnabled = finishedProducts.length > 0;
+
   return (
     <FilterBarShell ariaLabel="Filtros do dashboard">
         <label className="ef-field">
@@ -98,6 +112,28 @@ export function FilterBar({
           selectedValues={ops}
           onChange={onOpsChange}
           disabled={disabled}
+        />
+
+        <MultiSelectField
+          label="PA (produto acabado)"
+          labelHint={EF_HELP_TOOLTIPS.filters.finishedProduct}
+          emptyLabel="Todos"
+          searchable
+          options={finishedProductOptions}
+          selectedValues={finishedProducts}
+          onChange={onFinishedProductsChange}
+          disabled={disabled}
+        />
+
+        <MultiSelectField
+          label="Operação"
+          labelHint={EF_HELP_TOOLTIPS.filters.operation}
+          emptyLabel={operationFilterEnabled ? "Todas" : "Selecione um PA"}
+          searchable={operationFilterEnabled}
+          options={operationOptions}
+          selectedValues={operations}
+          onChange={onOperationsChange}
+          disabled={disabled || !operationFilterEnabled}
         />
 
         <MultiSelectField
