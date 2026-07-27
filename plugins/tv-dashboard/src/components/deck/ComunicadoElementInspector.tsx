@@ -1,18 +1,19 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   isDataBlockType,
+  isDataBoundEditorBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
   type ComunicadoBlock,
-  type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../../api/tvDashboardApi";
+import type { BranchScope } from "../../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { buildLabelCatalogFromRoutes } from "../../utils/hydrateComunicadoDataBindings";
+import { useTvDataRouteLabelCatalog } from "../../hooks/useTvDataRouteLabelCatalog";
+import { resolveRouteForDataBoundBlock } from "../../utils/resolveDataBoundBlockRoute";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { DataPreparePanel } from "../DataPreparePanel";
@@ -74,31 +75,14 @@ export function ComunicadoElementInspector({
   const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const isVisualBoxData = selected ? canShowTextDataBindingInspector(selected) : false;
-  const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+  /** Qualquer bloco que usa dados (fonte, view, texto, grade) — não só texto/legado. */
+  const needsRouteCatalog = selected ? isDataBoundEditorBlockType(selected.type) : false;
+  const { routes, labelCatalog } = useTvDataRouteLabelCatalog({ enabled: needsRouteCatalog });
 
-  useEffect(() => {
-    if (!isDataBlock && !isVisualBoxData) return;
-    void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
-  }, [isDataBlock, isVisualBoxData]);
-
-  /** Mesmo catálogo vivo da aba Dados — sem isso o select mostra só operationId. */
-  const labelCatalog: DataSourceLabelCatalog = useMemo(
-    () => buildLabelCatalogFromRoutes(routes),
-    [routes],
+  const selectedRoute = useMemo(
+    () => resolveRouteForDataBoundBlock(selected, blocks, routes),
+    [blocks, routes, selected],
   );
-
-  const selectedRoute = useMemo(() => {
-    if (isDataBlock && selected && "dataBinding" in selected) {
-      return routes.find((route) => route.operationId === selected.dataBinding.operationId) ?? null;
-    }
-    if (isVisualBoxData && selected?.dataSourceId) {
-      const source = blocks.find((block) => block.id === selected.dataSourceId);
-      if (source && "dataBinding" in source) {
-        return routes.find((route) => route.operationId === source.dataBinding.operationId) ?? null;
-      }
-    }
-    return null;
-  }, [blocks, isDataBlock, isVisualBoxData, routes, selected]);
 
   if (selectedIds.length === 0 || !selected) {
     return (

@@ -9,14 +9,12 @@ import {
   isTextDataBoundBlock,
   staticLabelFromTextBoundBlock,
   type ComunicadoBlock,
-  type DataSourceLabelCatalog,
 } from "@delpi/tv-dashboard-presentation";
 
-import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
-import {
-  buildLabelCatalogFromRoutes,
-  hydrateComunicadoDataBindings,
-} from "../utils/hydrateComunicadoDataBindings";
+import type { BranchScope } from "../api/tvDashboardApi";
+import { useTvDataRouteLabelCatalog } from "../hooks/useTvDataRouteLabelCatalog";
+import { hydrateComunicadoDataBindings } from "../utils/hydrateComunicadoDataBindings";
+import { resolveRouteForDataBoundBlock } from "../utils/resolveDataBoundBlockRoute";
 import type {
   DataCatalogMode,
   OpenDataCatalogOptions,
@@ -83,7 +81,6 @@ export function SelectedDataSidePanel({
   const isRibbon = layout === "ribbon";
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
-  const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [hydrateHint, setHydrateHint] = useState<string | null>(null);
   const hydratedFpRef = useRef<string>("");
   const bindingTarget = context.bindingTarget;
@@ -94,16 +91,7 @@ export function SelectedDataSidePanel({
     ? canShowCanvasTableDataBindingInspector(primary)
     : false;
 
-  useEffect(() => {
-    void listDataRoutes()
-      .then(setRoutes)
-      .catch(() => setRoutes([]));
-  }, []);
-
-  const labelCatalog: DataSourceLabelCatalog = useMemo(
-    () => buildLabelCatalogFromRoutes(routes),
-    [routes],
-  );
+  const { routes, labelCatalog } = useTvDataRouteLabelCatalog();
 
   useEffect(() => {
     if (routes.length === 0) return;
@@ -136,10 +124,10 @@ export function SelectedDataSidePanel({
     }
   }, [routes, config, setDataFilters, updateBlocksAtomically]);
 
-  const selectedRoute = useMemo(() => {
-    if (!bindingTarget || !("dataBinding" in bindingTarget)) return null;
-    return routes.find((route) => route.operationId === bindingTarget.dataBinding.operationId) ?? null;
-  }, [bindingTarget, routes]);
+  const selectedRoute = useMemo(
+    () => resolveRouteForDataBoundBlock(bindingTarget, blocks, routes),
+    [bindingTarget, blocks, routes],
+  );
 
   const orphanRoute =
     Boolean(bindingTarget && "dataBinding" in bindingTarget && bindingTarget.dataBinding.operationId) &&
