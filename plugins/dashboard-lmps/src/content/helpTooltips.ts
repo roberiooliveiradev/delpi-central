@@ -168,7 +168,7 @@ export const LMPS_HELP_TOOLTIPS = {
     pageSubtitle:
       "Registro de não conformidades de engenharia (LMP/OV): cliente, datas, executor/liberador, problema e produtos do projeto.",
     newButton:
-      "Abre o formulário para registrar uma nova não conformidade. Requer permissão de escrita.",
+      "Abre a página para registrar uma nova não conformidade. Requer permissão de escrita.",
     filters: {
       status:
         "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",
@@ -185,7 +185,7 @@ export const LMPS_HELP_TOOLTIPS = {
     },
     table: {
       section:
-        "Lista paginada de não conformidades com os filtros aplicados. Use Editar/Excluir nas ações quando tiver permissão.",
+        "Lista paginada de não conformidades com os filtros aplicados. Clique na linha ou no olho para abrir o detalhe; Excluir exige permissão de escrita.",
       search:
         "Busca local nos registros já carregados na página (texto das colunas visíveis).",
       registeredAt:
@@ -199,7 +199,7 @@ export const LMPS_HELP_TOOLTIPS = {
       products: "Códigos de material/produto vinculados à NC.",
       problem: "Problema identificado (resumo).",
       status: "Andamento da NC: Aberta, Em andamento ou Concluída.",
-      actions: "Editar o registro ou excluí-lo definitivamente.",
+      actions: "Abrir o detalhe da NC ou excluí-la definitivamente (com permissão).",
     },
     form: {
       sectionIdentification:

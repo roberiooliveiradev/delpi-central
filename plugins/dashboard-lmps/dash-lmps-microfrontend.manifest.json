@@ -4,7 +4,7 @@
   "name": "Dashboard LMPs",
   "description": "Dashboard analítico de LMPs (engenharia) e registro de não conformidades",
   "icon": "bar-chart3-icon",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "microfrontend",
 
   "basePath": "/apps/dashboard-lmps",
@@ -41,6 +41,14 @@
       "icon": "clipboard-list-icon",
       "order": 2,
       "showInMenu": true
+    },
+    {
+      "path": "/apps/dashboard-lmps/nonconformities/new",
+      "label": "Nova não conformidade",
+      "permission": "dashboard-lmps.nc.write",
+      "icon": "clipboard-list-icon",
+      "order": 3,
+      "showInMenu": false
     }
   ],
 

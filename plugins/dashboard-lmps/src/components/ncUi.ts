@@ -1,9 +1,11 @@
 import {
   createHostContainedModalShell,
   confirmModalBemClasses,
+  createDashboardEditableSectionCardPac,
   createDashboardFormActions,
   createDashboardFormGrid,
   createDashboardNativeFormFields,
+  createDashboardReadOnlyField,
   createDashboardSectionCard,
   createDashboardSelectField,
   createDashboardStatusBadge,
@@ -13,6 +15,7 @@ import {
   formActionsBemClasses,
   formFieldShellBemClasses,
   formGridBemClasses,
+  readOnlyFieldPacBemClasses,
   sectionCardKaizenBemClasses,
   selectFieldPacClasses,
   textAreaFieldPacClasses,
@@ -40,12 +43,35 @@ export const SectionCard = createDashboardSectionCard({
   },
 });
 
+export const EditableSectionCard = createDashboardEditableSectionCardPac({
+  prefix: "lmps",
+  labels: {
+    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
+    edit: "Editar",
+    cancel: "Cancelar",
+  },
+});
+
 export const FormActions = createDashboardFormActions({
   classNames: formActionsBemClasses("lmps"),
 });
 
 export const FormGrid = createDashboardFormGrid({
   classNames: formGridBemClasses("lmps"),
+});
+
+export const ReadOnlyGrid = createDashboardFormGrid({
+  classNames: formGridBemClasses("lmps"),
+});
+
+export const ReadOnlyField = createDashboardReadOnlyField({
+  classNames: readOnlyFieldPacBemClasses("lmps"),
+  labels: {
+    emptyDisplay: "—",
+    fieldHelpAriaLabel: (label) => `Ajuda: ${label}`,
+  },
+  labelMode: "fieldLabel",
+  defaultAppearance: "ficha",
 });
 
 /** Campos de texto/área — dual-class `delpi-ui-filter-box` (kit). */

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   ConfirmModalPanel,
@@ -6,19 +6,12 @@ import {
   useConfirmDialogController,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
-import { Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
 
-import { getLmpBySaleNumber } from "../api/lmpApi";
 import {
-  createLmpNonconformity,
   deleteLmpNonconformity,
   fetchLmpNonconformities,
-  updateLmpNonconformity,
 } from "../api/lmpNonconformityApi";
-import {
-  searchProducts,
-  type ProductSearchItem,
-} from "../api/productApi";
 import { DataTableSection } from "../components/DataTableSection";
 import {
   FilterInputField,
@@ -28,160 +21,39 @@ import {
 import { LmpsNav } from "../components/LmpsNav";
 import type { DataTableColumn } from "../components/dataTableUi";
 import {
-  FormActions,
-  FormGrid,
   HostContainedDialog,
-  HostContainedFill,
   LMPS_CONFIRM_CLASSES,
-  SectionCard,
-  SelectField,
   StatusBadge,
-  TextAreaField,
-  TextField,
 } from "../components/ncUi";
 import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
-import type {
-  LmpNcProductLine,
-  LmpNcStatus,
-  LmpNonconformity,
-  LmpNonconformityPayload,
-} from "../types/lmpNonconformity";
+import {
+  buildNcDetailPath,
+  LMPS_ROUTES,
+} from "../constants/routes";
+import type { LmpNonconformity } from "../types/lmpNonconformity";
 import {
   LMP_NC_STATUS_OPTIONS,
   lmpNcStatusLabel,
 } from "../types/lmpNonconformity";
 import { readLmpsFilters } from "../utils/filterUrl";
+import {
+  formatDisplayDate,
+  formatDisplayDateOnly,
+  productsSummary,
+} from "../utils/ncFormModel";
+import { navigateLmps } from "../utils/navigation";
 
 const NC_HELP = LMPS_HELP_TOOLTIPS.nonconformities;
-
-/** OV tipicamente numérica (ex.: 000160); evita hydrate a cada tecla em texto livre. */
-function looksLikeOvCode(value: string): boolean {
-  const trimmed = value.trim();
-  return /^\d{4,20}$/.test(trimmed);
-}
 
 type Props = {
   pathname: string;
   canWrite?: boolean;
 };
 
-type FormState = {
-  status: LmpNcStatus;
-  sale_number: string;
-  customer_name: string;
-  launch_date: string;
-  last_revision_date: string;
-  executed_by: string;
-  released_by: string;
-  defect_description: string;
-  corrective_actions: string;
-  technical_opinion: string;
-  products: LmpNcProductLine[];
-};
-
-function toDateInput(iso: string | null | undefined): string {
-  if (!iso) return "";
-  return iso.slice(0, 10);
-}
-
-function formatDisplayDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDisplayDateOnly(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  const text = iso.slice(0, 10);
-  const [y, m, d] = text.split("-");
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
-}
-
-function emptyForm(): FormState {
-  return {
-    status: "open",
-    sale_number: "",
-    customer_name: "",
-    launch_date: "",
-    last_revision_date: "",
-    executed_by: "",
-    released_by: "",
-    defect_description: "",
-    corrective_actions: "",
-    technical_opinion: "",
-    products: [],
-  };
-}
-
-function recordToForm(record: LmpNonconformity): FormState {
-  const products =
-    record.products?.length
-      ? record.products.map((p) => ({
-          product_code: p.product_code ?? "",
-          product_description: p.product_description ?? "",
-        }))
-      : (record.product_codes ?? []).map((code) => ({
-          product_code: code,
-          product_description: "",
-        }));
-  return {
-    status: (record.status as LmpNcStatus) || "open",
-    sale_number: record.sale_number ?? "",
-    customer_name: record.customer_name ?? "",
-    launch_date: toDateInput(record.launch_date),
-    last_revision_date: toDateInput(record.last_revision_date),
-    executed_by: record.executed_by ?? "",
-    released_by: record.released_by ?? "",
-    defect_description: record.defect_description ?? "",
-    corrective_actions: record.corrective_actions ?? "",
-    technical_opinion: record.technical_opinion ?? "",
-    products,
-  };
-}
-
-function formToPayload(form: FormState): LmpNonconformityPayload {
-  return {
-    status: form.status,
-    sale_number: form.sale_number.trim() || null,
-    customer_name: form.customer_name.trim() || null,
-    launch_date: form.launch_date.trim() || null,
-    last_revision_date: form.last_revision_date.trim() || null,
-    executed_by: form.executed_by.trim() || null,
-    released_by: form.released_by.trim() || null,
-    defect_description: form.defect_description.trim() || null,
-    corrective_actions: form.corrective_actions.trim() || null,
-    technical_opinion: form.technical_opinion.trim() || null,
-    products: form.products
-      .map((p) => ({
-        product_code: p.product_code.trim(),
-        product_description: (p.product_description ?? "").trim() || null,
-      }))
-      .filter((p) => p.product_code),
-  };
-}
-
 function statusVariant(status: string): StatusBadgeVariant {
   if (status === "done") return "success";
   if (status === "in_progress") return "info";
   return "warning";
-}
-
-function productsSummary(row: LmpNonconformity): string {
-  const codes =
-    row.products?.map((p) => p.product_code).filter(Boolean) ??
-    row.product_codes ??
-    [];
-  if (!codes.length) return "—";
-  if (codes.length <= 2) return codes.join(", ");
-  return `${codes.slice(0, 2).join(", ")} +${codes.length - 2}`;
 }
 
 export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
@@ -197,23 +69,11 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [productCode, setProductCode] = useState("");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<LmpNonconformity | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [hydrating, setHydrating] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [productQuery, setProductQuery] = useState("");
-  const [productHits, setProductHits] = useState<ProductSearchItem[]>([]);
-  const [productSearching, setProductSearching] = useState(false);
-  const [lmpProductCandidates, setLmpProductCandidates] = useState<
-    LmpNcProductLine[]
-  >([]);
-  const [pendingDelete, setPendingDelete] = useState<LmpNonconformity | null>(null);
-  const hydrateAbortRef = useRef<AbortController | null>(null);
-  const hydrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastHydratedOvRef = useRef<string>("");
-  const { confirm, pending, confirmPending, cancelPending } = useConfirmDialogController();
+  const [pendingDelete, setPendingDelete] = useState<LmpNonconformity | null>(
+    null,
+  );
+  const { confirm, pending, confirmPending, cancelPending } =
+    useConfirmDialogController();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -242,125 +102,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
     void load();
   }, [load]);
 
-  const applyLmpHydration = useCallback(
-    (ov: string, lmp: Awaited<ReturnType<typeof getLmpBySaleNumber>>) => {
-      const products: LmpNcProductLine[] = (lmp.list_products ?? [])
-        .map((p) => ({
-          product_code: (p.code ?? "").trim(),
-          product_description: p.description ?? "",
-        }))
-        .filter((p) => p.product_code);
-      setLmpProductCandidates(products);
-      lastHydratedOvRef.current = (lmp.sale_number || ov).trim();
-      setForm((prev) => ({
-        ...prev,
-        sale_number: lmp.sale_number || ov,
-        customer_name: lmp.costumer_name?.trim()
-          ? lmp.costumer_name
-          : prev.customer_name,
-        launch_date: toDateInput(lmp.start_date) || prev.launch_date,
-        last_revision_date:
-          toDateInput(lmp.homolog_date) ||
-          toDateInput(lmp.end_date) ||
-          prev.last_revision_date,
-        products: products.length ? products : prev.products,
-      }));
-    },
-    [],
-  );
-
-  const handleHydrateFromLmp = useCallback(
-    async (ovRaw?: string, opts?: { silent?: boolean }) => {
-      const ov = (ovRaw ?? form.sale_number).trim();
-      if (!ov) {
-        if (!opts?.silent) {
-          setFormError("Informe o número da OV (= LMP) para buscar no TOTVS.");
-        }
-        return;
-      }
-      if (ov === lastHydratedOvRef.current && opts?.silent) {
-        return;
-      }
-      hydrateAbortRef.current?.abort();
-      const controller = new AbortController();
-      hydrateAbortRef.current = controller;
-      setHydrating(true);
-      if (!opts?.silent) setFormError(null);
-      try {
-        const lmp = await getLmpBySaleNumber(ov, {}, controller.signal);
-        if (controller.signal.aborted) return;
-        applyLmpHydration(ov, lmp);
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        if (!opts?.silent) {
-          setFormError(
-            err instanceof Error ? err.message : "Erro ao buscar LMP no TOTVS.",
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) setHydrating(false);
-      }
-    },
-    [applyLmpHydration, form.sale_number],
-  );
-
-  const scheduleAutoHydrate = useCallback(
-    (ov: string) => {
-      if (hydrateTimerRef.current) clearTimeout(hydrateTimerRef.current);
-      if (!looksLikeOvCode(ov)) return;
-      hydrateTimerRef.current = setTimeout(() => {
-        void handleHydrateFromLmp(ov, { silent: true });
-      }, 450);
-    },
-    [handleHydrateFromLmp],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (hydrateTimerRef.current) clearTimeout(hydrateTimerRef.current);
-      hydrateAbortRef.current?.abort();
-    };
-  }, []);
-
-  const openCreate = () => {
-    setEditing(null);
-    setForm(emptyForm());
-    setFormError(null);
-    setProductQuery("");
-    setProductHits([]);
-    setLmpProductCandidates([]);
-    lastHydratedOvRef.current = "";
-    setFormOpen(true);
-  };
-
-  const openEdit = (record: LmpNonconformity) => {
-    setEditing(record);
-    setForm(recordToForm(record));
-    setFormError(null);
-    setProductQuery("");
-    setProductHits([]);
-    setLmpProductCandidates([]);
-    lastHydratedOvRef.current = (record.sale_number ?? "").trim();
-    setFormOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setFormError(null);
-    try {
-      const payload = formToPayload(form);
-      if (editing) {
-        await updateLmpNonconformity(editing.id, payload);
-      } else {
-        await createLmpNonconformity(payload);
-      }
-      setFormOpen(false);
-      await load();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Erro ao salvar.");
-    } finally {
-      setSaving(false);
-    }
+  const openDetail = (record: LmpNonconformity) => {
+    navigateLmps(buildNcDetailPath(record.id));
   };
 
   const requestDelete = async (record: LmpNonconformity) => {
@@ -379,104 +122,6 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir.");
     }
-  };
-
-  const updateProduct =
-    (index: number, key: keyof LmpNcProductLine) =>
-    (value: string) => {
-      setForm((prev) => {
-        const products = prev.products.map((row, i) =>
-          i === index ? { ...row, [key]: value } : row,
-        );
-        return { ...prev, products };
-      });
-    };
-
-  const addProductRow = () => {
-    setForm((prev) => ({
-      ...prev,
-      products: [
-        ...prev.products,
-        { product_code: "", product_description: "" },
-      ],
-    }));
-  };
-
-  const removeProductRow = (index: number) => {
-    setForm((prev) => ({
-      ...prev,
-      products: prev.products.filter((_, i) => i !== index),
-    }));
-  };
-
-  const addProductFromHit = (hit: ProductSearchItem) => {
-    const code = hit.code.trim().toUpperCase();
-    if (!code) return;
-    setForm((prev) => {
-      if (
-        prev.products.some(
-          (p) => p.product_code.trim().toUpperCase() === code,
-        )
-      ) {
-        return prev;
-      }
-      return {
-        ...prev,
-        products: [
-          ...prev.products,
-          {
-            product_code: hit.code,
-            product_description: hit.description || "",
-          },
-        ],
-      };
-    });
-    setProductHits((prev) => prev.filter((p) => p.code !== hit.code));
-  };
-
-  const handleProductSearch = async () => {
-    const q = productQuery.trim();
-    if (q.length < 2) {
-      setFormError("Digite ao menos 2 caracteres para buscar produto.");
-      return;
-    }
-    setProductSearching(true);
-    setFormError(null);
-    try {
-      const local = lmpProductCandidates.filter((p) => {
-        const code = (p.product_code || "").toLowerCase();
-        const desc = (p.product_description || "").toLowerCase();
-        const needle = q.toLowerCase();
-        return code.includes(needle) || desc.includes(needle);
-      });
-      let remote: ProductSearchItem[] = [];
-      try {
-        remote = await searchProducts(q);
-      } catch {
-        remote = [];
-      }
-      const merged = new Map<string, ProductSearchItem>();
-      for (const p of local) {
-        merged.set(p.product_code.toUpperCase(), {
-          code: p.product_code,
-          description: p.product_description || "",
-        });
-      }
-      for (const p of remote) {
-        merged.set(p.code.toUpperCase(), p);
-      }
-      setProductHits(Array.from(merged.values()));
-      if (merged.size === 0) {
-        setFormError("Nenhum produto encontrado para essa busca.");
-      }
-    } finally {
-      setProductSearching(false);
-    }
-  };
-
-  const setSaleNumberField = (value: string) => {
-    setForm((prev) => ({ ...prev, sale_number: value }));
-    scheduleAutoHydrate(value);
   };
 
   const columns = useMemo<DataTableColumn<LmpNonconformity>[]>(() => {
@@ -550,42 +195,40 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           />
         ),
       },
-    ];
-    if (canWrite) {
-      cols.push({
+      {
         key: "actions",
         header: "Ações",
         headerHint: NC_HELP.table.actions,
         render: (row) => (
-          <div className="lmps-nc-actions">
+          <div
+            className="lmps-nc-actions"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="lmps-ghost-btn lmps-btn--sm"
-              onClick={() => openEdit(row)}
-              aria-label="Editar"
+              onClick={() => openDetail(row)}
+              aria-label="Abrir detalhe"
             >
-              <Pencil size={14} />
+              <Eye size={14} />
             </button>
-            <button
-              type="button"
-              className="lmps-ghost-btn lmps-btn--sm"
-              onClick={() => void requestDelete(row)}
-              aria-label="Excluir"
-            >
-              <Trash2 size={14} />
-            </button>
+            {canWrite ? (
+              <button
+                type="button"
+                className="lmps-ghost-btn lmps-btn--sm"
+                onClick={() => void requestDelete(row)}
+                aria-label="Excluir"
+              >
+                <Trash2 size={14} />
+              </button>
+            ) : null}
           </div>
         ),
-      });
-    }
+      },
+    ];
     return cols;
   }, [canWrite]);
-
-  const setField =
-    (key: keyof FormState) =>
-    (value: string) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
-    };
 
   return (
     <div className="dashboard-page dashboard-lmps">
@@ -608,7 +251,11 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         <div className="lmps-header-actions">
           {canWrite ? (
             <div className="lmps-header-action">
-              <ActionButton type="button" variant="primary" onClick={openCreate}>
+              <ActionButton
+                type="button"
+                variant="primary"
+                onClick={() => navigateLmps(LMPS_ROUTES.nonconformityNew)}
+              >
                 <Plus size={16} />
                 Nova não conformidade
               </ActionButton>
@@ -705,6 +352,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         rowKey={(row) => row.id}
         loading={loading}
         emptyMessage="Nenhuma não conformidade encontrada."
+        onRowClick={openDetail}
         serverPagination={{
           page,
           pageSize: 50,
@@ -712,288 +360,6 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           onPageChange: setPage,
         }}
       />
-
-      <HostContainedFill
-        open={formOpen}
-        onClose={() => !saving && setFormOpen(false)}
-        title={editing ? "Editar não conformidade" : "Nova não conformidade"}
-      >
-        <div className="lmps-nc-form">
-          {formError ? (
-            <div className="lmps-refreshing-banner" role="alert">
-              {formError}
-            </div>
-          ) : null}
-
-          <SectionCard
-            title="Identificação"
-            hint={NC_HELP.form.sectionIdentification}
-          >
-            <FormGrid>
-              <div className="lmps-nc-ov-row lmps-span-2">
-                <TextField
-                  id="nc-sale"
-                  label="OV / LMP"
-                  hint={NC_HELP.form.saleNumber}
-                  value={form.sale_number}
-                  onChange={setSaleNumberField}
-                  fullWidth
-                />
-                <div className="lmps-nc-hydrate">
-                  <ActionButton
-                    type="button"
-                    variant="ghost"
-                    disabled={hydrating || saving || !form.sale_number.trim()}
-                    onClick={() => void handleHydrateFromLmp()}
-                  >
-                    {hydrating ? "Buscando…" : "Buscar LMP"}
-                  </ActionButton>
-                  <HelpTooltip
-                    content={NC_HELP.form.hydrateLmp}
-                    ariaLabel="Ajuda: buscar LMP no TOTVS"
-                  />
-                </div>
-              </div>
-              <SelectField
-                id="nc-status"
-                label="Status"
-                hint={NC_HELP.form.status}
-                required
-                value={form.status}
-                onChange={(v) => setForm((p) => ({ ...p, status: v as LmpNcStatus }))}
-                options={LMP_NC_STATUS_OPTIONS.map((o) => ({
-                  value: o.value,
-                  label: o.label,
-                }))}
-              />
-              <TextField
-                id="nc-customer"
-                label="Cliente"
-                hint={NC_HELP.form.customer}
-                value={form.customer_name}
-                onChange={setField("customer_name")}
-                fullWidth
-              />
-              <TextField
-                id="nc-launch"
-                label="Data lançamento"
-                hint={NC_HELP.form.launchDate}
-                type="date"
-                value={form.launch_date}
-                onChange={setField("launch_date")}
-                fullWidth
-              />
-              <TextField
-                id="nc-revision"
-                label="Data última revisão"
-                hint={NC_HELP.form.lastRevisionDate}
-                type="date"
-                value={form.last_revision_date}
-                onChange={setField("last_revision_date")}
-                fullWidth
-              />
-            </FormGrid>
-          </SectionCard>
-
-          <SectionCard title="Responsáveis" hint={NC_HELP.form.sectionPeople}>
-            <FormGrid>
-              <TextField
-                id="nc-executed"
-                label="Quem executou"
-                hint={NC_HELP.form.executedBy}
-                value={form.executed_by}
-                onChange={setField("executed_by")}
-                fullWidth
-              />
-              <TextField
-                id="nc-released"
-                label="Quem liberou"
-                hint={NC_HELP.form.releasedBy}
-                value={form.released_by}
-                onChange={setField("released_by")}
-                fullWidth
-              />
-            </FormGrid>
-          </SectionCard>
-
-          <SectionCard title="Produtos" hint={NC_HELP.form.sectionProducts}>
-            <div className="lmps-nc-products">
-              <div className="lmps-nc-product-search">
-                <TextField
-                  id="nc-product-search"
-                  label="Buscar produto"
-                  hint={NC_HELP.form.productSearch}
-                  value={productQuery}
-                  onChange={setProductQuery}
-                  fullWidth
-                  placeholder="Código ou descrição"
-                />
-                <div className="lmps-nc-hydrate">
-                  <ActionButton
-                    type="button"
-                    variant="ghost"
-                    disabled={productSearching || productQuery.trim().length < 2}
-                    onClick={() => void handleProductSearch()}
-                  >
-                    <Search size={14} />
-                    {productSearching ? "Buscando…" : "Buscar"}
-                  </ActionButton>
-                </div>
-              </div>
-              {productHits.length > 0 ? (
-                <ul className="lmps-nc-product-hits" aria-label="Resultados da busca">
-                  {productHits.map((hit) => (
-                    <li key={hit.code}>
-                      <button
-                        type="button"
-                        className="lmps-nc-product-hits__item"
-                        onClick={() => addProductFromHit(hit)}
-                      >
-                        <strong>{hit.code}</strong>
-                        <span>{hit.description || "—"}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <table className="lmps-nc-products__table">
-                <thead>
-                  <tr>
-                    <th>
-                      Código material
-                      <HelpTooltip
-                        content={NC_HELP.form.productCode}
-                        ariaLabel="Ajuda: código material"
-                      />
-                    </th>
-                    <th>
-                      Descrição
-                      <HelpTooltip
-                        content={NC_HELP.form.productDescription}
-                        ariaLabel="Ajuda: descrição do produto"
-                      />
-                    </th>
-                    <th aria-label="Ações" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {form.products.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} className="lmps-nc-products__empty">
-                        Nenhum produto. Informe a OV para trazer os da LMP, ou busque/adicione linhas.
-                      </td>
-                    </tr>
-                  ) : (
-                    form.products.map((row, index) => (
-                      <tr key={`nc-product-${index}`}>
-                        <td>
-                          <input
-                            className="delpi-ui-native-control"
-                            value={row.product_code}
-                            onChange={(e) =>
-                              updateProduct(index, "product_code")(e.target.value)
-                            }
-                            aria-label={`Código material linha ${index + 1}`}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            className="delpi-ui-native-control"
-                            value={row.product_description ?? ""}
-                            onChange={(e) =>
-                              updateProduct(
-                                index,
-                                "product_description",
-                              )(e.target.value)
-                            }
-                            aria-label={`Descrição linha ${index + 1}`}
-                          />
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="lmps-ghost-btn lmps-btn--sm"
-                            onClick={() => removeProductRow(index)}
-                            aria-label={NC_HELP.form.removeProduct}
-                            title={NC_HELP.form.removeProduct}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              <div className="lmps-nc-products__toolbar">
-                <ActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={addProductRow}
-                >
-                  <Plus size={14} />
-                  Adicionar produto
-                </ActionButton>
-                <HelpTooltip
-                  content={NC_HELP.form.addProduct}
-                  ariaLabel="Ajuda: adicionar produto"
-                />
-              </div>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Descrição" hint={NC_HELP.form.sectionDescription}>
-            <FormGrid className="lmps-form-grid--stack">
-              <TextAreaField
-                id="nc-defect"
-                label="Problema identificado"
-                hint={NC_HELP.form.defectDescription}
-                value={form.defect_description}
-                onChange={setField("defect_description")}
-                rows={4}
-                fullWidth
-              />
-              <TextAreaField
-                id="nc-actions"
-                label="Ações / ação corretiva"
-                hint={NC_HELP.form.correctiveActions}
-                value={form.corrective_actions}
-                onChange={setField("corrective_actions")}
-                rows={4}
-                fullWidth
-              />
-              <TextAreaField
-                id="nc-opinion"
-                label="Parecer técnico"
-                hint={NC_HELP.form.technicalOpinion}
-                value={form.technical_opinion}
-                onChange={setField("technical_opinion")}
-                rows={4}
-                fullWidth
-              />
-            </FormGrid>
-          </SectionCard>
-
-          <FormActions align="end">
-            <ActionButton
-              type="button"
-              variant="ghost"
-              disabled={saving}
-              onClick={() => setFormOpen(false)}
-            >
-              Cancelar
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant="primary"
-              disabled={saving || hydrating}
-              onClick={() => void handleSave()}
-            >
-              {saving ? "Salvando…" : "Salvar"}
-            </ActionButton>
-          </FormActions>
-        </div>
-      </HostContainedFill>
 
       <HostContainedDialog
         open={pending !== null}

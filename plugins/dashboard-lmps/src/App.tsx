@@ -4,6 +4,7 @@ import { useLmpsRouterPath } from "./hooks/useLmpsRouterPath";
 import { DashboardLmpsPage } from "./pages/DashboardLmpsPage";
 import { LmpDetailPage } from "./pages/LmpDetailPage";
 import { NonconformitiesPage } from "./pages/NonconformitiesPage";
+import { NonconformityDetailPage } from "./pages/NonconformityDetailPage";
 import { normalizeLmpsPath, parseLmpsPath, readOvBranchFromUrl } from "./utils/routeParser";
 
 export type AppProps = {
@@ -24,6 +25,8 @@ export default function App({
   const route = parseLmpsPath(path);
   const showDashboard = route.view === "dashboard";
   const showNonconformities = route.view === "nonconformities";
+  const showNcNew = route.view === "nonconformity-new";
+  const showNcDetail = route.view === "nonconformity-detail" && Boolean(route.ncId);
   const showDetail = route.view === "ov-detail" && Boolean(route.saleNumber);
   const canWriteNc =
     typeof hasPermission === "function"
@@ -48,6 +51,18 @@ export default function App({
 
       {showNonconformities ? (
         <NonconformitiesPage pathname={path} canWrite={canWriteNc} />
+      ) : null}
+
+      {showNcNew ? (
+        <NonconformityDetailPage mode="create" canWrite={canWriteNc} />
+      ) : null}
+
+      {showNcDetail && route.ncId ? (
+        <NonconformityDetailPage
+          mode="detail"
+          recordId={route.ncId}
+          canWrite={canWriteNc}
+        />
       ) : null}
 
       {showDetail && route.saleNumber ? (

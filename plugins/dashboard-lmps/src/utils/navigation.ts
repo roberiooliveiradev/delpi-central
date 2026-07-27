@@ -9,7 +9,7 @@ let lmpsNavStackDepth = 0;
 let suppressPopstateDepthChange = false;
 
 function isLmpsDetailPath(basePath: string): boolean {
-  return /\/ov\/[^/]+$/.test(basePath);
+  return /\/ov\/[^/]+$/.test(basePath) || /\/nonconformities\/[^/]+$/.test(basePath);
 }
 
 if (typeof window !== "undefined") {

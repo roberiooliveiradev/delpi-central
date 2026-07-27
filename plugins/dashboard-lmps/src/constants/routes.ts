@@ -6,6 +6,7 @@ export const LMPS_BASE_PATH = "/apps/dashboard-lmps";
 export const LMPS_ROUTES = {
   home: LMPS_BASE_PATH,
   nonconformities: `${LMPS_BASE_PATH}/nonconformities`,
+  nonconformityNew: `${LMPS_BASE_PATH}/nonconformities/new`,
 } as const;
 
 export function buildLmpDetailPath(
@@ -14,4 +15,8 @@ export function buildLmpDetailPath(
 ): string {
   const encoded = encodeURIComponent(String(saleNumber).trim());
   return appendFiltersToPath(`${LMPS_BASE_PATH}/ov/${encoded}`, filters);
+}
+
+export function buildNcDetailPath(recordId: string): string {
+  return `${LMPS_ROUTES.nonconformities}/${encodeURIComponent(recordId)}`;
 }
