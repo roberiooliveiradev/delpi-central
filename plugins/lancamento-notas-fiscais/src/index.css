@@ -432,9 +432,29 @@
   background: color-mix(in srgb, var(--lnf-accent) 12%, transparent);
 }
 
-.lnf-row--aging td:first-child,
-.lnf-queue-card.lnf-row--aging {
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lnf-warning) 70%, transparent);
+.lnf-row--status-pending td:first-child,
+.lnf-queue-card.lnf-row--status-pending {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, #b54708 75%, transparent);
+}
+
+.lnf-row--status-progress td:first-child,
+.lnf-queue-card.lnf-row--status-progress {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lnf-info) 75%, transparent);
+}
+
+.lnf-row--status-blocked td:first-child,
+.lnf-queue-card.lnf-row--status-blocked {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lnf-warning) 75%, transparent);
+}
+
+.lnf-row--status-posted td:first-child,
+.lnf-queue-card.lnf-row--status-posted {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--lnf-success) 80%, transparent);
+}
+
+.lnf-row--status-cancelled td:first-child,
+.lnf-queue-card.lnf-row--status-cancelled {
+  box-shadow: inset 3px 0 0 color-mix(in srgb, #667085 70%, transparent);
 }
 
 .lnf-cell-strong {

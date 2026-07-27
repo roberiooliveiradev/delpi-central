@@ -63,6 +63,33 @@ TERMINAL_STATUSES = frozenset({"posted", "cancelled"})
 NON_TERMINAL_STATUSES = frozenset({"pending", "in_progress", "blocked"})
 RECONCILIATION_ELIGIBLE_STATUSES = NON_TERMINAL_STATUSES
 
+# Filtro de listagem: fila aberta (não confundir com status persistido `pending`).
+LIST_STATUS_FILTER_OPEN = "open"
+VALID_LIST_STATUS_FILTERS = frozenset(
+    {*NON_TERMINAL_STATUSES, *TERMINAL_STATUSES, LIST_STATUS_FILTER_OPEN}
+)
+
+
+def resolve_list_status_filter(status: str | None) -> tuple[str, ...] | None:
+    """Converte o query ``status`` da listagem em tupla de status persistidos.
+
+    ``open`` → pending + in_progress + blocked.
+    Status individual → singleton.
+    Vazio → sem filtro de status.
+    """
+    if status is None:
+        return None
+    normalized = str(status).strip().lower()
+    if not normalized:
+        return None
+    if normalized not in VALID_LIST_STATUS_FILTERS:
+        raise ValueError(
+            "status inválido. Use open, pending, in_progress, blocked, posted ou cancelled."
+        )
+    if normalized == LIST_STATUS_FILTER_OPEN:
+        return tuple(sorted(NON_TERMINAL_STATUSES))
+    return (normalized,)
+
 DEFAULT_RECONCILIATION_LIMIT = 50
 MAX_RECONCILIATION_LIMIT = 200
 RECONCILIATION_REFRESH_COOLDOWN_SECONDS = 45

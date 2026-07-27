@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ChevronDown, Filter, RotateCcw } from "lucide-react";
 import type { ListFilters } from "../../domain/types";
 import { BRANCH_OPTIONS } from "../../domain/fiscal";
-import { STATUS_LABELS } from "../../domain/status";
+import { STATUS_FILTER_OPTIONS } from "../../domain/status";
 import { branchLabel } from "../../constants/branch";
 import { hasActiveFilters } from "../format";
 
@@ -22,7 +22,7 @@ export function RequestFilters({
   const [open, setOpen] = useState(true);
   const active = hasActiveFilters(value, {
     branch: lockedBranch,
-    status: "pending",
+    status: "open",
   });
   const set = (patch: Partial<ListFilters>) => {
     const next = { ...value, ...patch, page: 1 };
@@ -109,9 +109,9 @@ export function RequestFilters({
                 onChange={(e) => set({ status: e.target.value || undefined })}
               >
                 <option value="">Todos</option>
-                {Object.entries(STATUS_LABELS).map(([k, label]) => (
-                  <option key={k} value={k}>
-                    {label}
+                {STATUS_FILTER_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>

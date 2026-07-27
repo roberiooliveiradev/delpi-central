@@ -108,7 +108,7 @@ Cria em `pending` com snapshot do fornecedor.
 
 ## GET `/requests`
 
-**Query:** `branch`, `status`, `supplier`, `document`, `issued_from`/`issued_to`, `received_from`/`received_to`, `page`, `page_size` (máx. 100).
+**Query:** `branch`, `status` (`open` = fila aberta: pending/in_progress/blocked; ou status individual), `supplier`, `document`, `issued_from`/`issued_to`, `received_from`/`received_to`, `page`, `page_size` (máx. 100).
 
 **Escopo:** quem só tem `create` (sem view/process/manage) vê **somente as próprias**.  
 Ordenação padrão da fila: `received_at ASC` (FIFO).

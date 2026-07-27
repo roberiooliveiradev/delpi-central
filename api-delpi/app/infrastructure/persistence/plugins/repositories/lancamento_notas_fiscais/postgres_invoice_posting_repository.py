@@ -19,6 +19,7 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     RECONCILIATION_ELIGIBLE_STATUSES,
     RECONCILIATION_LOCK_CLASS_ID,
     RECONCILIATION_LOCK_OBJECT_ID,
+    resolve_list_status_filter,
 )
 from app.domain.services.lancamento_notas_fiscais.history_serialization import (
     history_changes_json_safe,
@@ -212,9 +213,14 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         if filters.get("branch"):
             where.append("branch_code = %s")
             params.append(filters["branch"])
-        if filters.get("status"):
-            where.append("status = %s")
-            params.append(filters["status"])
+        status_values = resolve_list_status_filter(filters.get("status"))
+        if status_values is not None:
+            if len(status_values) == 1:
+                where.append("status = %s")
+                params.append(status_values[0])
+            else:
+                where.append("status = ANY(%s)")
+                params.append(list(status_values))
         if filters.get("supplier"):
             where.append(
                 "(supplier_code ILIKE %s OR supplier_name ILIKE %s)"
