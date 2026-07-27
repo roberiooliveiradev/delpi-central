@@ -475,6 +475,15 @@ LMP_NONCONFORMITIES_LIST = agent_route(
     operation_id="list_lmp_nonconformities",
 )
 
+LMP_NONCONFORMITY_STREAK = agent_route(
+    summary="LMP nonconformity days-without streak",
+    description=(
+        "Returns current calendar days without LMP nonconformity and the historical record streak. "
+        "Based on distinct registered_at dates of engineering.lmp_nonconformities."
+    ),
+    operation_id="get_lmp_nonconformity_streak",
+)
+
 LMP_NONCONFORMITY_BY_ID = agent_route(
     summary="Get LMP nonconformity by id",
     description="Returns one LMP nonconformity including product lines (code + description).",

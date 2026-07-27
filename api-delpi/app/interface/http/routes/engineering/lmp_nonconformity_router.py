@@ -16,6 +16,7 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.engineering_composer import (
     build_create_lmp_nonconformity_use_case,
     build_delete_lmp_nonconformity_use_case,
+    build_get_lmp_nonconformity_streak_use_case,
     build_get_lmp_nonconformity_use_case,
     build_list_lmp_nonconformities_use_case,
     build_update_lmp_nonconformity_use_case,
@@ -29,6 +30,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_NONCONFORMITY_BY_ID,
     LMP_NONCONFORMITY_CREATE,
     LMP_NONCONFORMITY_DELETE,
+    LMP_NONCONFORMITY_STREAK,
     LMP_NONCONFORMITY_UPDATE,
 )
 from app.interface.http.period_query_params import (
@@ -45,6 +47,14 @@ router = APIRouter(
     prefix="/lmps/nonconformities",
     tags=["Engenharia — NC LMP"],
 )
+
+_STREAK_FIELDS = {
+    "current_days_without_nc": "Dias atuais sem NC em LMPs",
+    "record_days_without_nc": "Recorde de dias sem NC em LMPs",
+    "last_nc_date": "Data da última NC",
+    "as_of_date": "Data de referência do cálculo",
+    "nc_count": "Quantidade de dias com NC registrada",
+}
 
 _STATUS_PATTERN = "^(open|in_progress|done)$"
 _STATUS_ENUM = ["open", "in_progress", "done"]
@@ -210,6 +220,32 @@ def list_lmp_nonconformities(
         log_error(f"Erro inesperado ao listar NCs LMP: {exc}")
         return error_response(
             "Erro interno ao listar não conformidades.",
+            status_code=500,
+        )
+
+
+@router.get("/streak", **LMP_NONCONFORMITY_STREAK)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def get_lmp_nonconformity_streak():
+    """Dias atuais e recorde sem NC em LMPs (placar do dashboard)."""
+    try:
+        data = build_get_lmp_nonconformity_streak_use_case().execute()
+        return api_delpi_success(
+            data,
+            operation_id="get_lmp_nonconformity_streak",
+            message="Streak sem NC em LMPs calculado com sucesso.",
+            fields=_STREAK_FIELDS,
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao calcular streak NC LMP: {exc}")
+        return error_response(
+            "Erro interno ao calcular dias sem NC.",
+            status_code=500,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado ao calcular streak NC LMP: {exc}")
+        return error_response(
+            "Erro interno ao calcular dias sem NC.",
             status_code=500,
         )
 

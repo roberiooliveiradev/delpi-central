@@ -10,6 +10,7 @@ from app.interface.http.routes.engineering.lmp_nonconformity_router import (
     create_lmp_nonconformity,
     delete_lmp_nonconformity,
     get_lmp_nonconformity,
+    get_lmp_nonconformity_streak,
     list_lmp_nonconformities,
     update_lmp_nonconformity,
 )
@@ -60,6 +61,30 @@ def test_list_lmp_nonconformities_returns_meta(mock_build) -> None:
         operation_id="list_lmp_nonconformities",
         shape="paged_list",
     )
+
+
+@patch(f"{_ROUTER}.build_get_lmp_nonconformity_streak_use_case")
+def test_get_lmp_nonconformity_streak_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "current_days_without_nc": 1,
+        "record_days_without_nc": 55,
+        "last_nc_date": "2026-07-26",
+        "as_of_date": "2026-07-27",
+        "nc_count": 2,
+    }
+    mock_build.return_value = use_case
+
+    response = get_lmp_nonconformity_streak()
+    body = body_json(response)
+    assert_envelope_meta(
+        body,
+        operation_id="get_lmp_nonconformity_streak",
+        shape="scalar",
+    )
+    assert body["data"]["current_days_without_nc"] == 1
+    assert body["data"]["record_days_without_nc"] == 55
+    assert body["meta"]["entity"] == "lmp_nonconformity_streak"
 
 
 @patch(f"{_ROUTER}.build_get_lmp_nonconformity_use_case")

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 475,
+  "operation_count": 481,
   "operations": [
     {
       "method": "POST",
@@ -12069,6 +12069,399 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Aggregated LMP panel KPIs (volume, on-time rate and lead time)."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities",
+      "operationId": "list_lmp_nonconformities",
+      "summary": "List LMP nonconformities",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "status",
+          "required": false,
+          "description": "Status query parameter.",
+          "enum": [
+            "open",
+            "in_progress",
+            "done"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "sale_number",
+          "required": false,
+          "description": "Filtro parcial pela OV (= LMP).",
+          "type": "string"
+        },
+        {
+          "name": "customer_name",
+          "required": false,
+          "description": "Customer name query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "product_code",
+          "required": false,
+          "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "page",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "lmp_nonconformity",
+        "shape": "paged_list",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "List LMP nonconformities",
+            "description": "Paged list of LMP operational nonconformities.",
+            "label": "List LMP nonconformities"
+          },
+          "pt-BR": {
+            "summary": "Listar não conformidades LMP",
+            "description": "Listagem paginada de não conformidades operacionais do contexto LMP.",
+            "label": "Listar não conformidades LMP"
+          }
+        },
+        "params": {
+          "customer_name": {
+            "locale": {
+              "en": {
+                "description": "Customer name query parameter.",
+                "label": "Customer name"
+              },
+              "pt-BR": {
+                "description": "Nome (ou parte do nome) do cliente.",
+                "label": "Nome do cliente"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product_code": {
+            "locale": {
+              "en": {
+                "description": "Product code query parameter.",
+                "label": "Product code"
+              },
+              "pt-BR": {
+                "description": "Código do produto no Protheus (ex.: 90xxxxxx).",
+                "label": "Código do produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "status": {
+            "locale": {
+              "en": {
+                "description": "Status query parameter.",
+                "label": "Status"
+              },
+              "pt-BR": {
+                "description": "Status do registro no fluxo.",
+                "label": "Status"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Listagem paginada de não conformidades operacionais do contexto LMP.",
+          "label": "Listar não conformidades LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Paged list of LMP operational nonconformities."
+    },
+    {
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities",
+      "operationId": "create_lmp_nonconformity",
+      "summary": "Create LMP nonconformity",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_nonconformity",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Create LMP nonconformity",
+            "description": "Create an LMP nonconformity record.",
+            "label": "Create LMP nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Criar não conformidade LMP",
+            "description": "Cria registro de não conformidade no contexto LMP.",
+            "label": "Criar não conformidade LMP"
+          }
+        },
+        "tv": {
+          "description": "Cria registro de não conformidade no contexto LMP.",
+          "label": "Criar não conformidade LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Create an LMP nonconformity record."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/streak",
+      "operationId": "get_lmp_nonconformity_streak",
+      "summary": "LMP nonconformity days-without streak",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_nonconformity_streak",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "LMP nonconformity days-without streak",
+            "description": "Current and record calendar days without LMP nonconformity.",
+            "label": "LMP NC streak"
+          },
+          "pt-BR": {
+            "summary": "Dias e recorde sem NC em LMPs",
+            "description": "Dias corridos atuais e recorde histórico sem não conformidade em LMPs.",
+            "label": "Streak sem NC em LMPs"
+          }
+        },
+        "tv": {
+          "description": "Dias corridos atuais e recorde histórico sem não conformidade em LMPs.",
+          "label": "Streak sem NC em LMPs"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Current and record calendar days without LMP nonconformity."
+    },
+    {
+      "method": "DELETE",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "operationId": "delete_lmp_nonconformity",
+      "summary": "Delete LMP nonconformity",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_nonconformity",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Delete LMP nonconformity",
+            "description": "Delete an LMP nonconformity record.",
+            "label": "Delete LMP nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Excluir não conformidade LMP",
+            "description": "Exclui registro de não conformidade LMP.",
+            "label": "Excluir não conformidade LMP"
+          }
+        },
+        "tv": {
+          "description": "Exclui registro de não conformidade LMP.",
+          "label": "Excluir não conformidade LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Delete an LMP nonconformity record."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "operationId": "get_lmp_nonconformity",
+      "summary": "Get LMP nonconformity by id",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_nonconformity",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Get LMP nonconformity by id",
+            "description": "Single LMP nonconformity detail.",
+            "label": "Get LMP nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Obter não conformidade LMP",
+            "description": "Detalhe de uma não conformidade LMP por id.",
+            "label": "Obter não conformidade LMP"
+          }
+        },
+        "tv": {
+          "description": "Detalhe de uma não conformidade LMP por id.",
+          "label": "Obter não conformidade LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Single LMP nonconformity detail."
+    },
+    {
+      "method": "PUT",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "operationId": "update_lmp_nonconformity",
+      "summary": "Update LMP nonconformity",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_nonconformity",
+        "shape": "scalar",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "Update LMP nonconformity",
+            "description": "Update an LMP nonconformity record.",
+            "label": "Update LMP nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Atualizar não conformidade LMP",
+            "description": "Atualiza registro de não conformidade LMP.",
+            "label": "Atualizar não conformidade LMP"
+          }
+        },
+        "tv": {
+          "description": "Atualiza registro de não conformidade LMP.",
+          "label": "Atualizar não conformidade LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Update an LMP nonconformity record."
     },
     {
       "method": "GET",

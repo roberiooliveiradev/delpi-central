@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import { KpiCard } from "../components/KpiCard";
+import { NcStreakCard } from "../components/NcStreakCard";
 import { ChartCard } from "../components/ChartCard";
 import { ChartToolbar } from "../components/ChartToolbar";
 import { FilterBar } from "../components/FilterBar";
@@ -34,6 +35,8 @@ import { useClientTableSort } from "../hooks/useClientTableSort";
 import { useLmpsDashboard } from "../hooks/useLmpsDashboard";
 import { useLoadingProgress } from "../hooks/useSimulatedLoadingProgress";
 import type { LmpDashboardItem } from "../types/lmp";
+import type { LmpNonconformityStreak } from "../types/lmpNonconformity";
+import { fetchLmpNonconformityStreak } from "../api/lmpNonconformityApi";
 import { formatLmpApiDate } from "../utils/dates";
 import { buildLmpFallbackCharts, parseLmpDateNumber } from "../utils/lmpCharts";
 import {
@@ -125,6 +128,33 @@ export function DashboardLmpsPage({
   const [branches, setBranches] = useState(initialFilters.branches);
   const [listingTypes, setListingTypes] = useState(initialFilters.listingTypes);
   const [statuses, setStatuses] = useState(initialFilters.statuses);
+  const [ncStreak, setNcStreak] = useState<LmpNonconformityStreak | null>(null);
+  const [ncStreakLoading, setNcStreakLoading] = useState(true);
+  const [ncStreakError, setNcStreakError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+    let cancelled = false;
+    setNcStreakLoading(true);
+    setNcStreakError(null);
+    fetchLmpNonconformityStreak()
+      .then((data) => {
+        if (!cancelled) setNcStreak(data);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setNcStreakError(
+            err instanceof Error ? err.message : "Não foi possível carregar o placar de NC.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setNcStreakLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isActive]);
 
   const multiFilters = useMemo(
     () => ({ branches, listingTypes, statuses }),
@@ -506,6 +536,12 @@ export function DashboardLmpsPage({
           progressPercent={refreshLoadingProgress}
         />
       ) : null}
+
+      <NcStreakCard
+        streak={ncStreak}
+        loading={ncStreakLoading}
+        error={ncStreakError}
+      />
 
       <section className="lmps-kpi-grid" aria-busy={isBusy}>
         <KpiCard

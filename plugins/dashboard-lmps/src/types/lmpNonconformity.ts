@@ -33,6 +33,15 @@ export type LmpNonconformityListResponse = {
   page_size: number;
 };
 
+/** Placar: dias atuais e recorde sem NC em LMPs. */
+export type LmpNonconformityStreak = {
+  current_days_without_nc: number;
+  record_days_without_nc: number;
+  last_nc_date: string | null;
+  as_of_date: string;
+  nc_count: number;
+};
+
 export type LmpNonconformityPayload = {
   status: LmpNcStatus;
   sale_number?: string | null;

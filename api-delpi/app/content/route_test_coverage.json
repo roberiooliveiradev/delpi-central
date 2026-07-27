@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-27",
-  "baselineOperationCount": 475,
-  "operationCount": 475,
-  "coveredCount": 473,
+  "baselineOperationCount": 481,
+  "operationCount": 481,
+  "coveredCount": 479,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 17,
-      "covered": 17,
+      "total": 23,
+      "covered": 23,
       "gap": 0,
       "exempt": 0
     },
@@ -1071,6 +1071,60 @@
       "path": "/engineering/lmps/dashboard/summary",
       "module": "engineering",
       "entity": "lmp_dashboard_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lmp_nonconformities",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_lmp_nonconformity",
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_nonconformity_streak",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/streak",
+      "module": "engineering",
+      "entity": "lmp_nonconformity_streak",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_lmp_nonconformity",
+      "method": "DELETE",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_lmp_nonconformity",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_lmp_nonconformity",
+      "method": "PUT",
+      "path": "/engineering/lmps/nonconformities/{record_id}",
+      "module": "engineering",
+      "entity": "lmp_nonconformity",
       "shape": "scalar",
       "status": "covered"
     },

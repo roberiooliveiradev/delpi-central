@@ -336,6 +336,31 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
         )
         return row is not None
 
+    def list_occurrence_dates(self) -> list:
+        """Datas distintas de registro de NC (para streak sem NC)."""
+        from datetime import date as date_cls
+
+        rows = self.fetch_all(
+            """
+            SELECT DISTINCT registered_at::date AS occurrence_date
+              FROM engineering.lmp_nonconformities
+             ORDER BY occurrence_date ASC
+            """,
+            (),
+        )
+        out: list = []
+        for row in rows:
+            value = row.get("occurrence_date")
+            if isinstance(value, date_cls):
+                out.append(value)
+            elif value is not None:
+                text = str(value)[:10]
+                try:
+                    out.append(date_cls.fromisoformat(text))
+                except ValueError:
+                    continue
+        return out
+
     @staticmethod
     def _replace_products(cursor: Any, record_id: str, lines: list[dict[str, str]]) -> None:
         if not lines:

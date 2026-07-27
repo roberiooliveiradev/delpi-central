@@ -7,6 +7,7 @@ import type {
   LmpNonconformity,
   LmpNonconformityListResponse,
   LmpNonconformityPayload,
+  LmpNonconformityStreak,
 } from "../types/lmpNonconformity";
 
 const API_BASE = "/apps/api-delpi/engineering/lmps/nonconformities";
@@ -34,6 +35,13 @@ function buildQuery(params: ListLmpNcParams): string {
   if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();
   return query ? `?${query}` : "";
+}
+
+export async function fetchLmpNonconformityStreak(): Promise<LmpNonconformityStreak> {
+  const response = await httpGet<ApiSuccessResponse<LmpNonconformityStreak>>(
+    `${API_BASE}/streak`,
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao carregar dias sem NC");
 }
 
 export async function fetchLmpNonconformities(

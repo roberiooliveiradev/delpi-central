@@ -163,6 +163,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_lmp_history_events": RouteContract("lmp_history", "paged_list"),
     "get_lmp_history_flow": RouteContract("lmp_history_flow", "list"),
     "list_lmp_nonconformities": RouteContract("lmp_nonconformity", "paged_list"),
+    "get_lmp_nonconformity_streak": RouteContract(
+        "lmp_nonconformity_streak", "scalar"
+    ),
     "get_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "create_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),
     "update_lmp_nonconformity": RouteContract("lmp_nonconformity", "scalar"),

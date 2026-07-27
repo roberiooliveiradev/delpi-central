@@ -7234,6 +7234,21 @@
       },
       "category": "engineering"
     },
+    "get_lmp_nonconformity_streak": {
+      "locale": {
+        "en": {
+          "summary": "LMP nonconformity days-without streak",
+          "description": "Current and record calendar days without LMP nonconformity.",
+          "label": "LMP NC streak"
+        },
+        "pt-BR": {
+          "label": "Streak sem NC em LMPs",
+          "summary": "Dias e recorde sem NC em LMPs",
+          "description": "Dias corridos atuais e recorde histórico sem não conformidade em LMPs."
+        }
+      },
+      "category": "engineering"
+    },
     "get_lmp_nonconformity": {
       "locale": {
         "en": {

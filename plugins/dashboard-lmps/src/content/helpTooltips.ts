@@ -37,6 +37,8 @@ export const LMPS_HELP_TOOLTIPS = {
       "Média de lead time útil (dias) das propostas no recorte filtrado.",
     totalProposals:
       "Quantidade de propostas/OVs no período após filtros. Meta exibida quando configurada na API.",
+    ncStreak:
+      "Dias corridos desde a última não conformidade registrada em LMPs, e o maior intervalo histórico entre NCs (recorde). Independente dos filtros de período do dashboard.",
   },
   charts: {
     countByLevel:
