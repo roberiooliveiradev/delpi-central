@@ -7,12 +7,16 @@ from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
     ENGINEERING_LMP_ACCESS,
+    ENGINEERING_TRANSFORMOMETRO_ACCESS,
     MINI_APPLICATORS_ACCESS,
 )
 
 from app.application.dto.transforma_mais.process_request import ProcessRequest
 from app.application.dto.transforma_mais.process_summary_request import (
     ProcessSummaryRequest,
+)
+from app.application.dto.transformometro.dashboard_evolucao_request import (
+    DashboardEvolucaoRequest,
 )
 from app.application.dto.mini_applicators.list_ferramentas_request import (
     ListMiniApplicatorsFerramentasRequest,
@@ -27,6 +31,7 @@ from app.composition.engineering_composer import (
     build_engineering_get_lmp_history_flow_use_case,
     build_engineering_get_lmp_use_case,
     build_engineering_get_transforma_mais_summary_use_case,
+    build_engineering_get_transformometro_dashboard_evolucao_use_case,
     build_engineering_list_lmps_dashboard_use_case,
     build_engineering_list_lmps_use_case,
     build_engineering_list_transforma_mais_processes_use_case,
@@ -42,6 +47,7 @@ from app.interface.http.kpi_field_labels import (
     ENGINEERING_LMP_DETAIL_FIELD_LABELS,
     ENGINEERING_LMP_FIELD_LABELS,
     ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS,
+    ENGINEERING_TRANSFORMOMETRO_EVOLUCAO_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -61,6 +67,7 @@ from app.interface.http.openapi_agent_metadata import (
     LMP_LIST,
     TRANSFORMA_MAIS_LIST,
     TRANSFORMA_MAIS_SUMMARY,
+    TRANSFORMOMETRO_DASHBOARD_EVOLUCAO,
     MINI_APPLICATORS_FERRAMENTAS_LIST,
     MINI_APPLICATORS_FERRAMENTA_GET,
     MINI_APPLICATORS_PECAS_LIST,
@@ -86,6 +93,7 @@ from app.interface.http.query_param_enums import (
     LMP_DASHBOARD_STATUS_QUERY_OPTIONAL,
     LMP_LISTING_TYPE_QUERY,
     SORT_DIR_QUERY,
+    TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY,
 )
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
@@ -600,6 +608,50 @@ def get_process_summary(
         log_error(f"Erro ao gerar resumo do Transforma Mais: {exc}")
         return error_response(
             "Erro interno ao gerar resumo dos processos do Transforma Mais.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/transformometro/dashboard/evolucao",
+    **TRANSFORMOMETRO_DASHBOARD_EVOLUCAO,
+)
+@require_any_permission(ENGINEERING_TRANSFORMOMETRO_ACCESS)
+def get_transformometro_dashboard_evolucao_route(
+    view: str | None = Query(default=None),
+    filial_id: str | None = Query(default=None),
+    setor_id: str | None = Query(default=None),
+    competencia_inicio: str | None = Query(default=None),
+    competencia_fim: str | None = Query(default=None),
+    granularity: str = TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY(),
+):
+    try:
+        use_case = build_engineering_get_transformometro_dashboard_evolucao_use_case()
+        result = use_case.execute(
+            DashboardEvolucaoRequest(
+                view=view,
+                filial_id=filial_id,
+                setor_id=setor_id,
+                competencia_inicio=competencia_inicio,
+                competencia_fim=competencia_fim,
+                granularity=granularity,
+            )
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_transformometro_dashboard_evolucao",
+            message="Série Economia bruta vs Investimento carregada com sucesso.",
+            fields=kpi_fields(ENGINEERING_TRANSFORMOMETRO_EVOLUCAO_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(
+            f"Erro de validação ao buscar evolução do Transformômetro: {exc}"
+        )
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao buscar evolução do Transformômetro: {exc}")
+        return error_response(
+            "Erro interno ao buscar evolução do Transformômetro.",
             status_code=500,
         )
 

@@ -371,6 +371,17 @@ TRANSFORMA_MAIS_SUMMARY = agent_route(
     operation_id="get_transforma_mais_summary",
 )
 
+TRANSFORMOMETRO_DASHBOARD_EVOLUCAO = agent_route(
+    summary="Transformômetro economy vs investment series",
+    description=(
+        "Time series for Transformômetro chart «Economia bruta vs Investimento» "
+        "(day by vigência or month). Filters: view, filial_id, setor_id, "
+        "competencia_inicio, competencia_fim, granularity. "
+        "Primary use: MFE/TV; for chat KPIs prefer Transforma Mais summary."
+    ),
+    operation_id="get_transformometro_dashboard_evolucao",
+)
+
 MINI_APPLICATORS_FERRAMENTAS_LIST = agent_route(
     summary="Listar ferramentas mini-aplicadores",
     description=(

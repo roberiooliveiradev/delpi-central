@@ -315,6 +315,21 @@ ENGINEERING_TRANSFORMA_MAIS_FIELD_LABELS: dict[str, str] = {
     "accumulated_net_savings_until_now": "Economia líquida acumulada (período)",
 }
 
+ENGINEERING_TRANSFORMOMETRO_EVOLUCAO_FIELD_LABELS: dict[str, str] = {
+    "total": "Total de pontos",
+    "granularity": "Granularidade",
+    "competencia": "Competência",
+    "economia_bruta": "Economia bruta",
+    "investimento_unico_mes": "Investimento único",
+    "custo_recorrente_mes": "Custo recorrente",
+    "custo_recursos_compartilhados_mes": "Custo recursos compartilhados",
+    "investimento_total_mes": "Investimento total",
+    "economia_liquida_mes": "Economia líquida",
+    "horas_economizadas_mes": "Horas economizadas",
+    "ganho_capacidade": "Ganho de capacidade",
+    "economia_reducao_volume": "Economia por redução de volume",
+}
+
 
 def merge_kpi_field_labels(*bundles: dict[str, str] | None) -> dict[str, str]:
     merged: dict[str, str] = {}

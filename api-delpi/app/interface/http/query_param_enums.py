@@ -377,6 +377,16 @@ def GRANULARITY_QUERY_DAY_MONTH_AUTO():
     pattern=_enum_pattern(GRANULARITY_DAY_MONTH_AUTO_VALUES),
     enum=list(GRANULARITY_DAY_MONTH_AUTO_VALUES),
 )
+TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES = ("day", "month")
+
+
+def TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY():
+    return Query(
+        "month",
+        description="Transformômetro evolution grain: day (vigência) or month.",
+        pattern=_enum_pattern(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
+        enum=list(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
+    )
 def INSPECTION_RESULT_QUERY():
     return Query(
     None,

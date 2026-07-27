@@ -219,6 +219,32 @@
         }
       }
     },
+    "competencia_fim": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Competence end",
+          "description": "End of the competence window (YYYY-MM-DD or YYYY-MM)."
+        },
+        "pt-BR": {
+          "label": "Competência final",
+          "description": "Fim da janela de competência (AAAA-MM-DD ou AAAA-MM)."
+        }
+      }
+    },
+    "competencia_inicio": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Competence start",
+          "description": "Start of the competence window (YYYY-MM-DD or YYYY-MM)."
+        },
+        "pt-BR": {
+          "label": "Competência inicial",
+          "description": "Início da janela de competência (AAAA-MM-DD ou AAAA-MM)."
+        }
+      }
+    },
     "cost_center": {
       "locale": {
         "en": {
@@ -1824,6 +1850,18 @@
         "pt-BR": {
           "label": "Setor",
           "description": "Nome do setor."
+        }
+      }
+    },
+    "setor_id": {
+      "locale": {
+        "en": {
+          "label": "Department ID",
+          "description": "Transformômetro department (setor) identifier."
+        },
+        "pt-BR": {
+          "label": "ID do setor",
+          "description": "Identificador do setor no Transformômetro."
         }
       }
     },

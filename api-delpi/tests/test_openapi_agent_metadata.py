@@ -24,6 +24,7 @@ EXPECTED_CHAT_OPERATION_IDS = {
     "get_lmps_dashboard_charts",
     "list_transforma_mais_processes",
     "get_transforma_mais_summary",
+    "get_transformometro_dashboard_evolucao",
     "list_lmps",
     "list_lmps_dashboard",
     "get_lmp_by_sale_number",

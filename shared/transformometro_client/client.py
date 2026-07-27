@@ -54,6 +54,19 @@ class TransformometroApiClient:
             authorization=authorization,
         )
 
+    def get_dashboard_evolucao(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        """Série Economia bruta vs Investimento (`granularity=day|month`)."""
+        return self._get(
+            "/transformometro/dashboard/evolucao",
+            params=params,
+            authorization=authorization,
+        )
+
     def _get(
         self,
         path: str,

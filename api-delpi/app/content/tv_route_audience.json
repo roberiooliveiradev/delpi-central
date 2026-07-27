@@ -4016,13 +4016,32 @@
       "locale": {
         "en": {
           "summary": "Transforma mais summary",
-          "description": "Transforma mais summary.",
-          "label": "Transforma mais summary"
+          "description": "Aggregated Transforma Mais KPIs by branch and period.",
+          "label": "Transforma mais summary",
+          "whenToUse": "Use for continuous improvement KPI pulse before listing processes."
         },
         "pt-BR": {
           "label": "Resumo Transforma Mais",
           "summary": "Resumo Transforma Mais",
-          "description": "Indicador numérico para «Resumo Transforma Mais»."
+          "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
+          "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos."
+        }
+      },
+      "category": "engineering"
+    },
+    "get_transformometro_dashboard_evolucao": {
+      "locale": {
+        "en": {
+          "summary": "Transformômetro economy vs investment series",
+          "description": "Daily or monthly series for gross savings versus investment (Transformômetro dashboard chart).",
+          "label": "Transformômetro evolution series",
+          "whenToUse": "Use for the Economia bruta vs Investimento chart with period, branch, department and granularity filters."
+        },
+        "pt-BR": {
+          "summary": "Série Economia bruta vs Investimento",
+          "description": "Série diária ou mensal de economia bruta versus investimento do dashboard Transformômetro.",
+          "label": "Evolução Transformômetro",
+          "whenToUse": "Use no gráfico Economia bruta vs Investimento com filtros de período, filial, setor e granularidade."
         }
       },
       "category": "engineering"

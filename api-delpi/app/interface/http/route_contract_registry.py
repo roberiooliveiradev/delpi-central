@@ -166,6 +166,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "transforma_mais_process", "paged_list"
     ),
     "get_transforma_mais_summary": RouteContract("transforma_mais_summary", "scalar"),
+    "get_transformometro_dashboard_evolucao": RouteContract(
+        "transformometro_dashboard_evolucao", "paged_list"
+    ),
     "list_mini_applicators_ferramentas": RouteContract(
         "mini_applicators_ferramenta", "paged_list"
     ),

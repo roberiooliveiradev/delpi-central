@@ -17,8 +17,14 @@ from app.application.use_cases.transforma_mais.get_process_summary_use_case impo
 from app.application.use_cases.transforma_mais.list_process_use_case import (
     ListProcessUseCase,
 )
+from app.application.use_cases.transformometro.get_dashboard_evolucao_use_case import (
+    GetDashboardEvolucaoUseCase,
+)
 from app.application.use_cases.lmp.get_lmp_dashboard_summary_use_case import (
     GetLMPDashboardSummaryUseCase,
+)
+from app.infrastructure.gateways.transformometro_dashboard_gateway import (
+    TransformometroDashboardGateway,
 )
 from app.infrastructure.gateways.transformometro_transforma_mais_gateway import (
     TransformometroTransformaMaisGateway,
@@ -47,6 +53,10 @@ def _build_transforma_mais_gateway() -> TransformometroTransformaMaisGateway:
     return TransformometroTransformaMaisGateway()
 
 
+def _build_transformometro_dashboard_gateway() -> TransformometroDashboardGateway:
+    return TransformometroDashboardGateway()
+
+
 def build_engineering_list_lmps_use_case() -> ListLMPUseCase:
     return ListLMPUseCase(_build_lmp_repository())
 
@@ -73,6 +83,12 @@ def build_engineering_list_transforma_mais_processes_use_case() -> ListProcessUs
 
 def build_engineering_get_transforma_mais_summary_use_case() -> GetProcessSummaryUseCase:
     return GetProcessSummaryUseCase(_build_transforma_mais_gateway())
+
+
+def build_engineering_get_transformometro_dashboard_evolucao_use_case() -> (
+    GetDashboardEvolucaoUseCase
+):
+    return GetDashboardEvolucaoUseCase(_build_transformometro_dashboard_gateway())
 
 
 def build_engineering_get_lmp_dashboard_summary_use_case() -> GetLMPDashboardSummaryUseCase:
