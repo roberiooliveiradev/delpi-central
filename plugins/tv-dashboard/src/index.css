@@ -1656,6 +1656,12 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block:has(.tdp-comunicado__input-block){
   overflow: visible;
 }
+/* Tabela: pan nativo no frame (scroll) — ancestral touch-action:none bloqueava gesto. */
+.dashboard-tv-dashboard .td-composer__block-wrap--table{
+  overflow: visible;
+  touch-action: pan-x pan-y;
+  cursor: default;
+}
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.tdp-comunicado__visual-box--primitive-line){
   overflow: visible;
 }

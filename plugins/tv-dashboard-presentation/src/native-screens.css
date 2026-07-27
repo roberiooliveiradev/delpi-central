@@ -643,7 +643,8 @@
   padding: 0;
   overflow: visible;
   align-items: stretch;
-  justify-content: stretch;
+  /* flex: stretch é inválido em justify-content — usava o center do .tdp-data-block. */
+  justify-content: flex-start;
   text-align: left;
   background: transparent;
   color: var(--tdp-data-text, #1e293b);
@@ -672,7 +673,7 @@
   padding: 0;
   overflow: visible;
   align-items: stretch;
-  justify-content: stretch;
+  justify-content: flex-start;
   text-align: left;
   background: transparent;
   color: var(--delpi-ui-series-chart-text, #1e293b);
@@ -685,7 +686,7 @@
   padding: 0;
   overflow: visible;
   align-items: stretch;
-  justify-content: stretch;
+  justify-content: flex-start;
   text-align: left;
   background: transparent;
   color: var(--tdp-data-text, #1e293b);
@@ -877,6 +878,7 @@
   text-overflow: ellipsis;
 }
 
+/* Espelha `.delpi-ui-config-table__frame` — TV usa classes `tdp-*` (sem dual-class no frame). */
 .tdp-table-frame {
   flex: 1 1 auto;
   min-height: 0;
@@ -884,7 +886,33 @@
   width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--tdp-table-border-color, #94a3b8) 75%, transparent)
+    transparent;
   border-radius: max(0px, calc(var(--tdp-table-frame-radius, 0px) - 0.25rem));
+}
+
+.tdp-table-frame::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.tdp-table-frame::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tdp-table-frame::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--tdp-table-border-color, #94a3b8) 75%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tdp-table-frame::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--tdp-table-border-color, #64748b) 90%, transparent);
+  background-clip: padding-box;
 }
 
 .tdp-table-header-cell,

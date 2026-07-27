@@ -38,7 +38,8 @@
   color: var(--delpi-ui-config-table-text-strong, #0f172a);
 }
 
-/* Scroll interno — linhas/colunas além do bloco; radius herda p/ scrollbar não “quadrar” o canto. */
+/* Scroll interno — linhas/colunas além do bloco; radius herda p/ scrollbar não “quadrar” o canto.
+ * Scrollbar thin no frame (não depender do * global do portal) — paridade editor ↔ /present/. */
 .delpi-ui-config-table__frame {
   flex: 1 1 auto;
   min-height: 0;
@@ -46,10 +47,36 @@
   width: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  touch-action: pan-x pan-y;
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--delpi-ui-config-table-border-color, #94a3b8) 75%, transparent)
+    transparent;
   border-radius: max(
     0px,
     calc(var(--delpi-ui-config-table-frame-radius, 0px) - 0.25rem)
   );
+}
+
+.delpi-ui-config-table__frame::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.delpi-ui-config-table__frame::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.delpi-ui-config-table__frame::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--delpi-ui-config-table-border-color, #94a3b8) 75%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.delpi-ui-config-table__frame::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--delpi-ui-config-table-border-color, #64748b) 90%, transparent);
+  background-clip: padding-box;
 }
 
 .delpi-ui-config-table__data-table {

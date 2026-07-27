@@ -826,6 +826,7 @@ export function ComunicadoComposerCanvas() {
             : "",
           block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
           block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
+          block.type === "table_view" ? "td-composer__block-wrap--table" : "",
           block.type === "input" ? "td-composer__block-wrap--input" : "",
         ]
           .filter(Boolean)
@@ -1141,6 +1142,7 @@ export function ComunicadoComposerCanvas() {
                     : "",
                   block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
                   block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
+                  block.type === "table_view" ? "td-composer__block-wrap--table" : "",
                   block.type === "input" ? "td-composer__block-wrap--input" : "",
                 ]
                   .filter(Boolean)
