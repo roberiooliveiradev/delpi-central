@@ -171,6 +171,10 @@ export const LMPS_HELP_TOOLTIPS = {
       "Registro de não conformidades de engenharia (LMP/OV): cliente, datas, executor/liberador, problema e produtos do projeto.",
     newButton:
       "Abre a página para registrar uma nova não conformidade. Requer permissão de escrita.",
+    exportJson:
+      "Baixa um JSON com todas as não conformidades (listagem completa: campos, produtos e tags).",
+    importJson:
+      "Importa NCs a partir de um JSON de exportação. Cria novos registros e ignora duplicados (mesmo id ou OV + descrição + tags).",
     filters: {
       status:
         "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",

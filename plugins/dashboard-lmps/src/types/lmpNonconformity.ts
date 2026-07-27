@@ -94,6 +94,20 @@ export type LmpNcHistoryListResponse = {
   total: number;
 };
 
+export type LmpNonconformityExportFile = {
+  version: number;
+  generated_at?: string;
+  count: number;
+  items: LmpNonconformity[];
+};
+
+export type ImportLmpNonconformitiesResult = {
+  created: number;
+  skipped: number;
+  errors: number;
+  items: Array<Record<string, unknown>>;
+};
+
 export const LMP_NC_STATUS_OPTIONS: { value: LmpNcStatus; label: string }[] = [
   { value: "open", label: "Aberta" },
   { value: "in_progress", label: "Em andamento" },

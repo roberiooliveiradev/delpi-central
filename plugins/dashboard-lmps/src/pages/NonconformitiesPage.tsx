@@ -1,12 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActionButton,
   HelpTooltip,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
-import { Plus } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 
-import { fetchLmpNonconformities } from "../api/lmpNonconformityApi";
+import {
+  exportLmpNonconformities,
+  fetchLmpNonconformities,
+  importLmpNonconformities,
+} from "../api/lmpNonconformityApi";
 import { DataTableSection } from "../components/DataTableSection";
 import {
   FilterInputField,
@@ -21,7 +25,11 @@ import {
   buildNcDetailPath,
   LMPS_ROUTES,
 } from "../constants/routes";
-import type { LmpNonconformity } from "../types/lmpNonconformity";
+import { triggerBlobDownload } from "../export/primitives";
+import type {
+  LmpNonconformity,
+  LmpNonconformityExportFile,
+} from "../types/lmpNonconformity";
 import {
   LMP_NC_STATUS_OPTIONS,
   lmpNcStatusLabel,
@@ -71,6 +79,10 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   const [dateEnd, setDateEnd] = useState("");
   const [sortKey, setSortKey] = useState<string | null>("registered_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [ioMessage, setIoMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,6 +122,70 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const handleExport = useCallback(async () => {
+    setExporting(true);
+    setError(null);
+    setIoMessage(null);
+    try {
+      const data = await exportLmpNonconformities();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      });
+      const stamp = new Date().toISOString().slice(0, 10);
+      triggerBlobDownload(blob, `lmp-nonconformities-${stamp}.json`);
+      setIoMessage(`Exportação concluída: ${data.count} NC(s) no arquivo.`);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Erro ao exportar não conformidades.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, []);
+
+  const handleImportFile = useCallback(
+    async (file: File) => {
+      setImporting(true);
+      setError(null);
+      setIoMessage(null);
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text) as
+          | LmpNonconformityExportFile
+          | Array<Record<string, unknown>>;
+        const items = Array.isArray(parsed) ? parsed : parsed.items;
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error('Arquivo JSON sem NCs (campo "items" vazio).');
+        }
+        const result = await importLmpNonconformities(
+          items as Array<Record<string, unknown>>,
+        );
+        setIoMessage(
+          `Importação concluída: ${result.created} criada(s), ${result.skipped} ignorada(s), ${result.errors} erro(s).`,
+        );
+        await load();
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Erro ao importar não conformidades do arquivo JSON.",
+        );
+      } finally {
+        setImporting(false);
+      }
+    },
+    [load],
+  );
+
+  const handleImportChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = "";
+      if (file) void handleImportFile(file);
+    },
+    [handleImportFile],
+  );
 
   const openDetail = (record: LmpNonconformity) => {
     navigateLmps(buildNcDetailPath(record.id));
@@ -251,11 +327,55 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           <LmpsNav currentPath={pathname} filterState={filterState} />
         </div>
         <div className="lmps-header-actions">
+          <div className="lmps-header-action">
+            <ActionButton
+              type="button"
+              variant="ghost"
+              disabled={exporting || importing}
+              onClick={() => void handleExport()}
+            >
+              <Download size={16} />
+              {exporting ? "Exportando…" : "Exportar JSON"}
+            </ActionButton>
+            <HelpTooltip
+              content={NC_HELP.exportJson}
+              ariaLabel="Ajuda: exportar NCs em JSON"
+              className="lmps-header-action__help"
+            />
+          </div>
+          {canWrite ? (
+            <div className="lmps-header-action">
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="lmps-sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
+                onChange={handleImportChange}
+              />
+              <ActionButton
+                type="button"
+                variant="ghost"
+                disabled={exporting || importing}
+                onClick={() => importInputRef.current?.click()}
+              >
+                <Upload size={16} />
+                {importing ? "Importando…" : "Importar JSON"}
+              </ActionButton>
+              <HelpTooltip
+                content={NC_HELP.importJson}
+                ariaLabel="Ajuda: importar NCs de JSON"
+                className="lmps-header-action__help"
+              />
+            </div>
+          ) : null}
           {canWrite ? (
             <div className="lmps-header-action">
               <ActionButton
                 type="button"
                 variant="primary"
+                disabled={exporting || importing}
                 onClick={() => navigateLmps(LMPS_ROUTES.nonconformityNew)}
               >
                 <Plus size={16} />
@@ -271,6 +391,11 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         </div>
       </header>
 
+      {ioMessage ? (
+        <div className="lmps-refreshing-banner" role="status">
+          {ioMessage}
+        </div>
+      ) : null}
       <FiltersRow>
         <FilterSelectField
           id="lmps-nc-status"

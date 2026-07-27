@@ -7249,6 +7249,36 @@
       },
       "category": "engineering"
     },
+    "export_lmp_nonconformities": {
+      "locale": {
+        "en": {
+          "summary": "Export LMP nonconformities as JSON",
+          "description": "Full unpaginated dump of LMP nonconformities for backup/migration.",
+          "label": "Export LMP NCs"
+        },
+        "pt-BR": {
+          "label": "Exportar NCs LMP",
+          "summary": "Exportar não conformidades LMP em JSON",
+          "description": "Dump completo (sem paginação) das NCs LMP com produtos e tags."
+        }
+      },
+      "category": "engineering"
+    },
+    "import_lmp_nonconformities": {
+      "locale": {
+        "en": {
+          "summary": "Import LMP nonconformities from JSON",
+          "description": "Create-only bulk import of LMP nonconformities from export JSON.",
+          "label": "Import LMP NCs"
+        },
+        "pt-BR": {
+          "label": "Importar NCs LMP",
+          "summary": "Importar não conformidades LMP de JSON",
+          "description": "Importação em lote (somente criação) a partir do JSON de exportação."
+        }
+      },
+      "category": "engineering"
+    },
     "list_lmp_problem_tags": {
       "locale": {
         "en": {

@@ -6,11 +6,14 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 from app.interface.http.routes.engineering.lmp_nonconformity_router import (
+    ImportLmpNonconformitiesBody,
     LmpNonconformityBody,
     create_lmp_nonconformity,
     delete_lmp_nonconformity,
+    export_lmp_nonconformities,
     get_lmp_nonconformity,
     get_lmp_nonconformity_streak,
+    import_lmp_nonconformities,
     list_lmp_nonconformities,
     list_lmp_nonconformity_history,
     list_lmp_problem_tags,
@@ -219,6 +222,70 @@ def test_update_lmp_nonconformity_returns_meta(mock_build) -> None:
     )
     assert use_case.execute.call_args.kwargs["problem_tags"] == ["Desenho"]
     assert "actor_user_id" in use_case.execute.call_args.kwargs
+
+
+@patch(f"{_ROUTER}.build_export_lmp_nonconformities_use_case")
+def test_export_lmp_nonconformities_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = [_RECORD]
+    mock_build.return_value = use_case
+
+    response = export_lmp_nonconformities()
+    body = body_json(response)
+    assert_envelope_meta(
+        body,
+        operation_id="export_lmp_nonconformities",
+        shape="scalar",
+    )
+    assert body["meta"]["entity"] == "lmp_nonconformity_export"
+    assert body["data"]["count"] == 1
+    assert body["data"]["version"] == 1
+    assert body["data"]["items"][0]["id"] == str(_NC_ID)
+    assert body["data"]["items"][0]["problem_tags"] == ["Medida", "Terminal"]
+    assert body["data"]["items"][0]["products"][0]["product_code"] == "90001234"
+
+
+@patch(f"{_ROUTER}.build_import_lmp_nonconformities_use_case")
+def test_import_lmp_nonconformities_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = MagicMock(
+        to_dict=lambda: {
+            "created": 1,
+            "skipped": 0,
+            "errors": 0,
+            "items": [{"index": 0, "result": "created", "record_id": str(_NC_ID)}],
+        }
+    )
+    mock_build.return_value = use_case
+
+    response = import_lmp_nonconformities(
+        body=ImportLmpNonconformitiesBody(
+            items=[
+                {
+                    "status": "open",
+                    "sale_number": "123456",
+                    "defect_description": "Caso",
+                    "problem_tags": ["Medida"],
+                    "products": [
+                        {"product_code": "90001234", "product_description": "X"},
+                    ],
+                }
+            ],
+            dry_run=False,
+            skip_existing=True,
+        )
+    )
+    body = body_json(response)
+    assert_envelope_meta(
+        body,
+        operation_id="import_lmp_nonconformities",
+        shape="scalar",
+    )
+    assert body["meta"]["entity"] == "lmp_nonconformity_import"
+    assert body["data"]["created"] == 1
+    use_case.execute.assert_called_once()
+    assert "actor_user_id" in use_case.execute.call_args.kwargs
+
 
 @patch(f"{_ROUTER}.build_delete_lmp_nonconformity_use_case")
 def test_delete_lmp_nonconformity_returns_meta(mock_build) -> None:

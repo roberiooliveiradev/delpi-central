@@ -486,6 +486,24 @@ LMP_NONCONFORMITY_STREAK = agent_route(
     operation_id="get_lmp_nonconformity_streak",
 )
 
+LMP_NONCONFORMITIES_EXPORT = agent_route(
+    summary="Export LMP nonconformities as JSON",
+    description=(
+        "Full unpaginated dump of LMP nonconformities including products and problem tags "
+        "(backup / migration JSON)."
+    ),
+    operation_id="export_lmp_nonconformities",
+)
+
+LMP_NONCONFORMITIES_IMPORT = agent_route(
+    summary="Import LMP nonconformities from JSON",
+    description=(
+        "Create-only bulk import of LMP nonconformities from export JSON. "
+        "Skips duplicates by exported id or natural key (OV + description + tags)."
+    ),
+    operation_id="import_lmp_nonconformities",
+)
+
 LMP_PROBLEM_TAGS_LIST = agent_route(
     summary="List LMP problem tags",
     description=(

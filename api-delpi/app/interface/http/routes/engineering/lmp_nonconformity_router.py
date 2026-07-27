@@ -16,8 +16,10 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.engineering_composer import (
     build_create_lmp_nonconformity_use_case,
     build_delete_lmp_nonconformity_use_case,
+    build_export_lmp_nonconformities_use_case,
     build_get_lmp_nonconformity_streak_use_case,
     build_get_lmp_nonconformity_use_case,
+    build_import_lmp_nonconformities_use_case,
     build_list_lmp_nonconformities_use_case,
     build_list_lmp_nonconformity_history_use_case,
     build_list_lmp_problem_tags_use_case,
@@ -28,6 +30,8 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
 from app.interface.http.openapi_agent_metadata import (
+    LMP_NONCONFORMITIES_EXPORT,
+    LMP_NONCONFORMITIES_IMPORT,
     LMP_NONCONFORMITIES_LIST,
     LMP_NONCONFORMITY_BY_ID,
     LMP_NONCONFORMITY_CREATE,
@@ -59,6 +63,8 @@ _STREAK_FIELDS = {
     "as_of_date": "Data de referência do cálculo",
     "nc_count": "Quantidade de dias com NC registrada",
 }
+
+LMP_NC_EXPORT_VERSION = 1
 
 _STATUS_PATTERN = "^(open|in_progress|done)$"
 _STATUS_ENUM = ["open", "in_progress", "done"]
@@ -176,6 +182,12 @@ class LmpNonconformityBody(BaseModel):
             if text:
                 out.append(text[:80])
         return out
+
+
+class ImportLmpNonconformitiesBody(BaseModel):
+    items: list[dict] = Field(default_factory=list)
+    dry_run: bool = False
+    skip_existing: bool = True
 
 
 def _current_actor() -> dict[str, str | None]:
@@ -352,6 +364,76 @@ def get_lmp_nonconformity_streak():
         log_error(f"Erro inesperado ao calcular streak NC LMP: {exc}")
         return error_response(
             "Erro interno ao calcular dias sem NC.",
+            status_code=500,
+        )
+
+
+@router.get("/export", **LMP_NONCONFORMITIES_EXPORT)
+@require_any_permission(ENGINEERING_LMP_ACCESS)
+def export_lmp_nonconformities():
+    """Exporta todas as NCs LMP em JSON (listagem completa, sem paginação)."""
+    try:
+        from datetime import datetime, timezone
+
+        items = build_export_lmp_nonconformities_use_case().execute()
+        return api_delpi_success(
+            {
+                "version": LMP_NC_EXPORT_VERSION,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "count": len(items),
+                "items": items,
+            },
+            operation_id="export_lmp_nonconformities",
+            message="Não conformidades LMP exportadas com sucesso.",
+            shape="scalar",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao exportar NCs LMP: {exc}")
+        return error_response(
+            "Erro interno ao exportar não conformidades.",
+            status_code=500,
+        )
+    except Exception as exc:
+        log_error(f"Erro inesperado ao exportar NCs LMP: {exc}")
+        return error_response(
+            "Erro interno ao exportar não conformidades.",
+            status_code=500,
+        )
+
+
+@router.post("/import", **LMP_NONCONFORMITIES_IMPORT)
+@require_any_permission(ENGINEERING_LMP_NC_WRITE)
+def import_lmp_nonconformities(body: ImportLmpNonconformitiesBody = Body(...)):
+    """Importa NCs LMP a partir de JSON (create-only; dedupe por id ou chave natural)."""
+    try:
+        if not body.items:
+            return error_response(
+                "Nenhuma não conformidade para importar (items vazio).",
+                status_code=400,
+            )
+        actor = _current_actor()
+        result = build_import_lmp_nonconformities_use_case().execute(
+            body.items,
+            created_by=actor["label"],
+            actor_user_id=actor["user_id"],
+            actor_email=actor["email"],
+            actor_name=actor["name"],
+            dry_run=body.dry_run,
+            skip_existing=body.skip_existing,
+        )
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="import_lmp_nonconformities",
+            message="Importação de não conformidades LMP concluída.",
+            shape="scalar",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao importar NCs LMP: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro inesperado ao importar NCs LMP: {exc}")
+        return error_response(
+            "Erro interno ao importar não conformidades.",
             status_code=500,
         )
 

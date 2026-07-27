@@ -4,8 +4,10 @@ import {
   type ApiSuccessResponse,
 } from "../types/lmp";
 import type {
+  ImportLmpNonconformitiesResult,
   LmpNcHistoryListResponse,
   LmpNonconformity,
+  LmpNonconformityExportFile,
   LmpNonconformityListResponse,
   LmpNonconformityPayload,
   LmpNonconformityStreak,
@@ -113,4 +115,26 @@ export async function deleteLmpNonconformity(id: string): Promise<void> {
     `${API_BASE}/${encodeURIComponent(id)}`,
   );
   unwrapApiDelpiEnvelope(response, "Erro ao excluir não conformidade");
+}
+
+export async function exportLmpNonconformities(): Promise<LmpNonconformityExportFile> {
+  const response = await httpGet<ApiSuccessResponse<LmpNonconformityExportFile>>(
+    `${API_BASE}/export`,
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao exportar não conformidades");
+}
+
+export async function importLmpNonconformities(
+  items: Array<Record<string, unknown>>,
+  options: { dryRun?: boolean; skipExisting?: boolean } = {},
+): Promise<ImportLmpNonconformitiesResult> {
+  const response = await httpPost<ApiSuccessResponse<ImportLmpNonconformitiesResult>>(
+    `${API_BASE}/import`,
+    {
+      items,
+      dry_run: options.dryRun ?? false,
+      skip_existing: options.skipExisting ?? true,
+    },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao importar não conformidades");
 }

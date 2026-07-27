@@ -238,6 +238,81 @@ class PostgresLmpNonconformityRepository(PluginBaseRepository):
             problem_tags=self._list_problem_tags(record_id),
         )
 
+    def export_records(self) -> list[dict[str, Any]]:
+        """Listagem completa de NCs (todos os campos, produtos e tags) para backup JSON."""
+        rows = self.fetch_all(
+            f"""
+            {_NC_SELECT}
+             ORDER BY n.registered_at ASC, n.id ASC
+            """,
+            (),
+        )
+        if not rows:
+            return []
+        record_ids = [str(row["id"]) for row in rows]
+        tags_by_id = self._list_problem_tags_for_ids(record_ids)
+        return [
+            self._to_payload(
+                row,
+                include_products=True,
+                problem_tags=tags_by_id.get(str(row["id"]), []),
+            )
+            for row in rows
+        ]
+
+    def find_import_duplicate(
+        self,
+        *,
+        sale_number: str | None,
+        defect_description: str | None,
+        problem_tags: list[str] | None,
+    ) -> dict[str, Any] | None:
+        """Localiza NC já existente pela chave natural (OV + descrição + tags)."""
+        sale = (sale_number or "").strip()
+        defect = (defect_description or "").strip()
+        wanted_tags = {
+            str(tag).strip().casefold()
+            for tag in (problem_tags or [])
+            if str(tag).strip()
+        }
+        if not sale and not defect and not wanted_tags:
+            return None
+
+        filters = ["TRUE"]
+        params: list[Any] = []
+        if sale:
+            filters.append("COALESCE(n.sale_number, '') = %s")
+            params.append(sale)
+        else:
+            filters.append("COALESCE(n.sale_number, '') = ''")
+        if defect:
+            filters.append("COALESCE(n.defect_description, '') = %s")
+            params.append(defect)
+        else:
+            filters.append("COALESCE(n.defect_description, '') = ''")
+
+        rows = self.fetch_all(
+            f"""
+            {_NC_SELECT}
+             WHERE {" AND ".join(filters)}
+             ORDER BY n.registered_at DESC
+             LIMIT 20
+            """,
+            tuple(params),
+        )
+        for row in rows:
+            record_id = str(row["id"])
+            existing_tags = {
+                tag.casefold() for tag in self._list_problem_tags(record_id)
+            }
+            if existing_tags == wanted_tags:
+                return self._to_payload(
+                    row,
+                    include_products=True,
+                    problem_tags=self._list_problem_tags(record_id),
+                )
+        return None
+
     def list_problem_tag_catalog(self) -> list[dict[str, Any]]:
         rows = self.fetch_all(
             """

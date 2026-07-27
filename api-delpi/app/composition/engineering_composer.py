@@ -193,3 +193,19 @@ def build_delete_lmp_nonconformity_use_case():
     )
 
     return DeleteLmpNonconformityUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_import_lmp_nonconformities_use_case():
+    from app.application.use_cases.lmp_nonconformity.import_lmp_nonconformities_use_case import (
+        ImportLmpNonconformitiesUseCase,
+    )
+
+    return ImportLmpNonconformitiesUseCase(_build_lmp_nonconformity_repository())
+
+
+def build_export_lmp_nonconformities_use_case():
+    from app.application.use_cases.lmp_nonconformity.export_lmp_nonconformities_use_case import (
+        ExportLmpNonconformitiesUseCase,
+    )
+
+    return ExportLmpNonconformitiesUseCase(_build_lmp_nonconformity_repository())
