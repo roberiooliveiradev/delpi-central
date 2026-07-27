@@ -79,7 +79,7 @@ export type SeriesChartOptions = {
 };
 
 /** Chrome atual: títulos de eixo ligados por padrão + fallback da rota. */
-export const SERIES_CHART_CHROME_VERSION = 1;
+export const SERIES_CHART_CHROME_VERSION = 2;
 
 export type SeriesChartPoint = {
   label?: string;
@@ -114,7 +114,7 @@ export type SeriesChartKind =
 export const SERIES_CHART_CATEGORY_PALETTE = DECK_CATEGORY_PALETTE;
 
 /** Padding padrão de categoria (~3% de cada lado do plot). */
-export const DEFAULT_CATEGORY_PADDING_PERCENT = 6;
+export const DEFAULT_CATEGORY_PADDING_PERCENT = 0;
 
 export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showTitle: true,
@@ -148,7 +148,8 @@ export function migrateSeriesChartOptionsOnLoad(
   raw?: SeriesChartOptions | null,
 ): SeriesChartOptions {
   const merged = mergeSeriesChartOptions(raw);
-  if ((raw?.chromeVersion ?? 0) >= SERIES_CHART_CHROME_VERSION) {
+  const rawVersion = raw?.chromeVersion ?? 0;
+  if (rawVersion >= SERIES_CHART_CHROME_VERSION) {
     return merged;
   }
   const legacyAxisTitlesOff =
@@ -158,7 +159,11 @@ export function migrateSeriesChartOptionsOnLoad(
     !trimChartText(raw?.yAxisTitle);
   return {
     ...merged,
-    ...(legacyAxisTitlesOff ? { showXAxisTitle: true, showYAxisTitle: true } : {}),
+    ...(legacyAxisTitlesOff && rawVersion < 1
+      ? { showXAxisTitle: true, showYAxisTitle: true }
+      : {}),
+    // v2: extremos do eixo X no plot (remove padding padrão legado de 6%).
+    ...(rawVersion < 2 ? { categoryPaddingPercent: 0 } : {}),
     chromeVersion: SERIES_CHART_CHROME_VERSION,
   };
 }

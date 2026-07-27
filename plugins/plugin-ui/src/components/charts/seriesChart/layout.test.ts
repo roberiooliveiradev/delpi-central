@@ -8,7 +8,6 @@ import {
   resolveXLabelTextAnchor,
   SERIES_CHART_MIN_PLOT_FRACTION,
   SERIES_CHART_MIN_PLOT_PX,
-  SERIES_CHART_PLOT_INSET,
 } from "./layout";
 import { OTD_SERIES_LAYOUT_GOLDEN as otdGolden } from "./__fixtures__/otdSeriesLayout.golden";
 
@@ -75,7 +74,7 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(cy).toBeCloseTo(layout.viewH / 2, 5);
   });
 
-  it("inset mantém primeiro e último ponto dentro do plot", () => {
+  it("sem padding: primeiro e último ponto nas bordas do plot", () => {
     const points = [
       { value: 40, label: "11/06/26" },
       { value: 70, label: "15/06/26" },
@@ -87,16 +86,15 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
       showXAxisTitle: false,
       viewW: 600,
       viewH: 280,
-      categoryPaddingPercent: 3,
+      categoryPaddingPercent: 0,
     });
-    expect(layout.plotInset).toBeGreaterThan(0);
-    expect(layout.plotInset).toBeLessThanOrEqual(SERIES_CHART_PLOT_INSET * 4);
+    expect(layout.plotInset).toBe(0);
     const x0 = layout.toX(0, points.length);
     const xLast = layout.toX(points.length - 1, points.length);
     const yMax = layout.toY(layout.axisMax);
     const yMin = layout.toY(layout.axisMin);
-    expect(x0).toBeGreaterThanOrEqual(layout.margin.left + layout.plotInset - 0.01);
-    expect(xLast).toBeLessThanOrEqual(layout.margin.left + layout.plotW - layout.plotInset + 0.01);
+    expect(x0).toBeCloseTo(layout.margin.left, 5);
+    expect(xLast).toBeCloseTo(layout.margin.left + layout.plotW, 5);
     expect(yMax).toBeGreaterThanOrEqual(layout.margin.top - 0.01);
     expect(yMin).toBeLessThanOrEqual(layout.margin.top + layout.plotH + 0.01);
     expect(yMin).toBeCloseTo(layout.margin.top + layout.plotH, 5);
@@ -261,16 +259,32 @@ describe("golden layout fixture OTD", () => {
       lastAnchor: resolveXLabelTextAnchor(n - 1, n, layout.xLabelsRotated),
     };
 
-    expect(snapshot.x0).toBeGreaterThanOrEqual(snapshot.margin.left + snapshot.plotInset - 0.05);
-    expect(snapshot.xLast).toBeLessThanOrEqual(
-      snapshot.margin.left + snapshot.plotW - snapshot.plotInset + 0.05,
-    );
+    expect(snapshot.x0).toBeCloseTo(snapshot.margin.left, 1);
+    expect(snapshot.xLast).toBeCloseTo(snapshot.margin.left + snapshot.plotW, 1);
     expect(snapshot.firstAnchor).toBe("start");
     expect(snapshot.lastAnchor).toBe("end");
-    expect(snapshot.plotInset).toBeGreaterThanOrEqual(14);
+    expect(snapshot.plotInset).toBe(0);
     expect(snapshot.margin.right).toBeGreaterThanOrEqual(18);
     expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
+
+  it("toX(0)/toX(last) alinham às bordas do plot (sem gap do plotInset)", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "a", value: 10 },
+        { label: "b", value: 20 },
+        { label: "c", value: 30 },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+      categoryPaddingPercent: 0,
+    });
+    expect(layout.toX(0, 3)).toBeCloseTo(layout.margin.left, 5);
+    expect(layout.toX(2, 3)).toBeCloseTo(layout.margin.left + layout.plotW, 5);
+  });
+
   it("toY(axisMin) alinha ao eixo X (sem gap do plotInset vertical)", () => {
     const layout = buildSeriesChartLayout({
       points: [

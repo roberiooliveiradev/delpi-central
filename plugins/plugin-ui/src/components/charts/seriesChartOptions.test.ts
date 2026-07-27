@@ -68,6 +68,15 @@ describe("seriesChartOptions — títulos de eixo", () => {
     expect(migrated.showXAxisTitle).toBe(false);
     expect(migrated.showYAxisTitle).toBe(false);
   });
+
+  it("migrate v2 zera categoryPaddingPercent legado (extremos no eixo X)", () => {
+    const migrated = migrateSeriesChartOptionsOnLoad({
+      categoryPaddingPercent: 6,
+      chromeVersion: 1,
+    });
+    expect(migrated.categoryPaddingPercent).toBe(0);
+    expect(migrated.chromeVersion).toBe(SERIES_CHART_CHROME_VERSION);
+  });
 });
 
 describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {

@@ -3,7 +3,7 @@ export const OTD_SERIES_LAYOUT_GOLDEN = {
   name: "OTD — série temporal (golden layout)",
   viewW: 640,
   viewH: 320,
-  categoryPaddingPercent: 3,
+  categoryPaddingPercent: 0,
   showXAxisLabels: true,
   showXAxisTitle: false,
   points: [

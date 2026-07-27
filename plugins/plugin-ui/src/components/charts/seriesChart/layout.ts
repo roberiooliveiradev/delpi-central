@@ -70,7 +70,7 @@ export type BuildSeriesChartLayoutInput = {
   viewH?: number;
   /**
    * Padding de categoria no eixo X (% da largura do plot em cada lado).
-   * Default: usa SERIES_CHART_PLOT_INSET como piso em px se omitido.
+   * Default 0: primeiro/último ponto alinhados às bordas do plot (como o zero no Y).
    */
   categoryPaddingPercent?: number;
   /**
@@ -453,17 +453,24 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);
   const padPct = Math.max(0, Math.min(40, input.categoryPaddingPercent ?? 0));
+  // Cartesiano: inset 0 por padrão (extremos no eixo Y / borda direita).
+  // Plot centralizado (pizza/funil) mantém folga mínima para não colar na moldura.
   const insetFromPercent =
-    padPct > 0 ? Math.round((plotW * padPct) / 100) : SERIES_CHART_PLOT_INSET;
-  const plotInset = Math.min(
-    Math.floor(Math.min(plotW, plotH) / 6),
-    Math.max(4, insetFromPercent),
-  );
+    padPct > 0
+      ? Math.round((plotW * padPct) / 100)
+      : input.centeredPlot
+        ? SERIES_CHART_PLOT_INSET
+        : 0;
+  const plotInset =
+    insetFromPercent > 0
+      ? Math.min(Math.floor(Math.min(plotW, plotH) / 6), Math.max(4, insetFromPercent))
+      : 0;
   const innerW = Math.max(1, plotW - 2 * plotInset);
-  // Inset só no X: o domínio Y usa o plot inteiro para o zero coincidir com o eixo X.
 
   const toX = (index: number, count: number) =>
-    margin.left + plotInset + (count > 1 ? (index / (count - 1)) * innerW : innerW / 2);
+    count > 1
+      ? margin.left + plotInset + (index / (count - 1)) * innerW
+      : margin.left + plotW / 2;
   const toY = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
     return margin.top + (1 - t) * plotH;
