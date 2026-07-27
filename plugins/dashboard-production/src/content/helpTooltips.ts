@@ -17,7 +17,7 @@ export const DP_HELP_TOOLTIPS = {
     depreciation:
       "Percentual da depreciação fabril sobre a ROL no período.",
     oee: "Média de eficiência dos apontamentos válidos (0–199%) na view fabril compartilhada.",
-    otd: "Percentual de OPs mãe (sequência 001) finalizadas dentro do prazo previsto.",
+    otd: "Percentual de OPs mãe (sequência 001) no prazo. Inclui finalizadas até o due date e OPs em andamento já atrasadas (sem data real de fim, com prevista vencida).",
     comparisonChart:
       "Comparativo dos cinco indicadores principais do painel no período e unidade selecionados.",
     oeeEvolution:
@@ -65,16 +65,20 @@ export const DP_HELP_TOOLTIPS = {
     },
   },
   otd: {
-    kpiOtd: "Percentual de OPs mãe (sequência 001) finalizadas no prazo em relação ao total encerrado no período.",
-    kpiOnTime: "Quantidade de ordens finalizadas até a data prevista (due date).",
-    kpiLate: "Quantidade de ordens finalizadas após a data prevista.",
+    kpiOtd:
+      "Percentual de OPs mãe (sequência 001) no prazo sobre o universo do período (finalizadas + em andamento já atrasadas).",
+    kpiOnTime: "Ordens finalizadas até a data prevista (due date).",
+    kpiLate:
+      "Ordens finalizadas após a data prevista ou ainda em andamento com due date já vencida (sem C2_DATRF).",
     chartEvolution: "Evolução do OTD no tempo conforme a granularidade escolhida.",
     filters: {
       status: "Restringe a listagem a OPs no prazo, atrasadas ou exibe todas.",
     },
     table: {
-      section: "Ordens de produção mãe (sequência 001) finalizadas no período. OPs vinculadas (002+) não entram no OTD.",
-      status: "No prazo ou atrasada conforme comparação entre data de conclusão e data prevista.",
+      section:
+        "OPs mãe (sequência 001) do período pela data prevista: finalizadas ou em andamento já atrasadas. OPs vinculadas (002+) não entram no OTD.",
+      status:
+        "No prazo ou atrasada. Em andamento sem data real de fim e com due vencido conta como atrasada.",
       branch: "Unidade TOTVS da ordem.",
       productionOrder: "Identificador da ordem de produção.",
       orderNumber: "Número da OP no Protheus.",
@@ -82,8 +86,10 @@ export const DP_HELP_TOOLTIPS = {
       productCode: "Código do produto fabricado.",
       productDescription: "Descrição do produto da OP.",
       dueDate: "Data prevista para conclusão da ordem.",
-      finishDate: "Data em que a ordem foi efetivamente finalizada.",
-      daysDiff: "Diferença em dias entre a data de finalização e a data prevista.",
+      finishDate:
+        "Data em que a ordem foi efetivamente finalizada. Vazio = ainda em andamento.",
+      daysDiff:
+        "Diferença em dias entre a finalização (ou hoje, se ainda aberta) e a data prevista.",
       producedQty: "Quantidade produzida na ordem.",
       otdStatus: "Situação calculada de entrega no prazo (OTD).",
     },

@@ -133,7 +133,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 - SQL: CTE `H6_RANKED` (uma varredura em SH6010 por período) + join na view — evita `OUTER APPLY` correlacionado em bulk.
 - Cache: resposta completa em `query_cache` (namespace `eficiencia-fabril-appointments`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=list_eficiencia_fabril_appointments`; caller `eficiencia-fabril` — após o primeiro load do período, recargas devem ser cache hit (&lt; 500 ms).
-| GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no período. |
+| GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no prazo **ou** em andamento já atrasadas (`C2_DATRF` vazio e `C2_DATPRF` &lt; hoje); período por data prevista. |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs mãe (sequência `001`) e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
 
