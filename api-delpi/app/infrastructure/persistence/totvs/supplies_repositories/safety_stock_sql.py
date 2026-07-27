@@ -238,11 +238,18 @@ def open_purchase_orders_sql(
     *,
     branch_param: str = "?",
     product_param: str | None = "?",
+    supplier_code_param: str | None = None,
+    supplier_store_param: str | None = None,
 ) -> str:
-    """Pedidos de compra em aberto (SC7) por filial (+ produto opcional)."""
+    """Pedidos de compra em aberto (SC7) por filial (+ produto e/ou fornecedor opcionais)."""
     product_clause = ""
     if product_param is not None:
         product_clause = f"AND RTRIM(SC7.C7_PRODUTO) = {product_param}"
+    supplier_clause = ""
+    if supplier_code_param is not None:
+        supplier_clause += f"\n      AND RTRIM(SC7.C7_FORNECE) = {supplier_code_param}"
+    if supplier_store_param is not None:
+        supplier_clause += f"\n      AND RTRIM(SC7.C7_LOJA) = {supplier_store_param}"
     return f"""
     SELECT
         RTRIM(SC7.C7_FILIAL) AS branch,
@@ -288,6 +295,7 @@ def open_purchase_orders_sql(
       AND SC7.C7_QUANT > SC7.C7_QUJE
       AND RTRIM(SC7.C7_FILIAL) = {branch_param}
       {product_clause}
+      {supplier_clause}
     ORDER BY
         CASE WHEN RTRIM(SC7.C7_DATPRF) = '' THEN 1 ELSE 0 END,
         SC7.C7_DATPRF ASC,

@@ -20,6 +20,15 @@ export type UserDirectoryPickerProps = {
    * Passe false quando o consumidor já renderiza a própria lista (evita duplicação).
    */
   showSelectedList?: boolean;
+  /**
+   * Quando true (default), resultados e selecionados mostram «Nome · e-mail».
+   * Passe false para listar apenas o nome de exibição.
+   */
+  showEmail?: boolean;
+  /**
+   * Limite de selecionados. Com `1`, a próxima escolha substitui a atual (single-select).
+   */
+  maxSelected?: number;
   labels?: {
     title?: string;
     hint?: string;
@@ -28,12 +37,22 @@ export type UserDirectoryPickerProps = {
   className?: string;
 };
 
+function directoryUserLabel(user: DirectoryUserOption, showEmail: boolean): string {
+  const name = (user.name || "").trim() || user.email;
+  if (!showEmail || !user.email || user.email === name) {
+    return name;
+  }
+  return `${name} · ${user.email}`;
+}
+
 export function UserDirectoryPicker({
   value,
   onChange,
   searchUsers,
   disabled = false,
   showSelectedList = true,
+  showEmail = true,
+  maxSelected,
   labels,
   className,
 }: UserDirectoryPickerProps) {
@@ -68,6 +87,8 @@ export function UserDirectoryPicker({
   }, [query, searchUsers]);
 
   const selectedIds = new Set(value.map((item) => item.id));
+  const atLimit =
+    typeof maxSelected === "number" && maxSelected > 0 && value.length >= maxSelected;
 
   return (
     <div className={["delpi-ui-user-directory-picker", className].filter(Boolean).join(" ")}>
@@ -83,7 +104,10 @@ export function UserDirectoryPicker({
         className="delpi-ui-user-directory-picker__input"
         value={query}
         disabled={disabled}
-        placeholder={labels?.placeholder || "Buscar por nome ou e-mail"}
+        placeholder={
+          labels?.placeholder ||
+          (showEmail ? "Buscar por nome ou e-mail" : "Buscar por nome")
+        }
         onChange={(e) => setQuery(e.target.value)}
       />
       {searching ? (
@@ -95,16 +119,25 @@ export function UserDirectoryPicker({
             <li key={user.id}>
               <button
                 type="button"
-                disabled={disabled || selectedIds.has(user.id)}
+                disabled={
+                  disabled ||
+                  selectedIds.has(user.id) ||
+                  (atLimit && maxSelected !== 1)
+                }
                 onClick={() => {
                   if (selectedIds.has(user.id)) return;
-                  onChange([...value, user]);
+                  if (maxSelected === 1) {
+                    onChange([user]);
+                  } else if (atLimit) {
+                    return;
+                  } else {
+                    onChange([...value, user]);
+                  }
                   setQuery("");
                   setResults([]);
                 }}
               >
-                {user.name || user.email}
-                {user.email ? ` · ${user.email}` : ""}
+                {directoryUserLabel(user, showEmail)}
               </button>
             </li>
           ))}
@@ -114,7 +147,7 @@ export function UserDirectoryPicker({
         <ul className="delpi-ui-user-directory-picker__selected">
           {value.map((user) => (
             <li key={user.id}>
-              <span>{user.name || user.email}</span>
+              <span>{directoryUserLabel(user, showEmail)}</span>
               <button
                 type="button"
                 disabled={disabled}

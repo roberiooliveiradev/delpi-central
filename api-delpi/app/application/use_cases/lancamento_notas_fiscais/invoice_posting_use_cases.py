@@ -6,6 +6,11 @@ from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any, Sequence
 
+from app.domain.services.lancamento_notas_fiscais.history_serialization import (
+    history_changes_json_safe,
+)
+from app.application.services.lnf_portal_notification_service import notify_block_assignee
+from app.shared.utils.person_name import format_person_name
 from app.domain.services.lancamento_notas_fiscais.exceptions import (
     DuplicateFiscalKeyError,
     InvoicePostingConflictError,
@@ -31,12 +36,15 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_document,
     normalize_series,
 )
+from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
+    find_purchase_order_group,
+    format_linked_po_label,
+    group_open_purchase_order_lines,
+    linked_po_snapshot_from_request,
+)
 from app.domain.services.lancamento_notas_fiscais.reconciliation_matching import (
     classify_candidates,
     parse_erp_entry_date,
-)
-from app.domain.services.lancamento_notas_fiscais.history_serialization import (
-    history_changes_json_safe,
 )
 
 COMMENT_MAX_LEN = 4000
@@ -177,6 +185,7 @@ def allowed_actions(request: dict[str, Any], actor: Actor) -> list[str]:
         actions.append("resume")
     if status not in TERMINAL_STATUSES and (actor.has_process or actor.has_manage):
         actions.append("post_manual")
+        actions.append("link_purchase_order")
     if (actor.has_create and is_owner and status == "pending") or (
         actor.has_manage and status not in TERMINAL_STATUSES
     ):
@@ -334,6 +343,172 @@ class GetInvoicePostingRequestUseCase:
             "comments": self._requests.list_comments(request_id),
             "allowed_actions": allowed_actions(request, actor),
         }
+
+
+class ListRequestOpenPurchaseOrdersUseCase:
+    """Lista pedidos de compra abertos (SC7) agrupados por PC + data de entrega."""
+
+    def __init__(self, requests: Any, purchase_orders: Any) -> None:
+        self._requests = requests
+        self._purchase_orders = purchase_orders
+
+    def execute(self, request_id: str, actor: Actor) -> dict[str, Any]:
+        request = self._requests.get_request(request_id)
+        if request is None:
+            raise InvoicePostingNotFoundError("Solicitação não encontrada.")
+        is_owner = request.get("created_by_user_id") == actor.user_id
+        if not actor.can_view_all and not (actor.has_create and is_owner):
+            raise InvoicePostingForbiddenError(
+                "Sem permissão para consultar pedidos desta solicitação."
+            )
+
+        branch = str(request.get("branch_code") or "").strip()
+        supplier_code = str(request.get("supplier_code") or "").strip()
+        supplier_store = str(request.get("supplier_store") or "").strip()
+        items = self._purchase_orders.list_open_purchase_orders_by_supplier(
+            branch_code=branch,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+        )
+        groups = group_open_purchase_order_lines(items)
+        order_numbers = sorted(
+            {
+                str(group.get("order_number") or "").strip()
+                for group in groups
+                if group.get("order_number")
+            }
+        )
+        return {
+            "request_id": request_id,
+            "branch_code": branch,
+            "supplier_code": supplier_code,
+            "supplier_store": supplier_store,
+            "supplier_name": request.get("supplier_name"),
+            "order_count": len(order_numbers),
+            "group_count": len(groups),
+            "item_count": len(items),
+            "groups": groups,
+            "linked": linked_po_snapshot_from_request(request),
+            "can_link": "link_purchase_order" in allowed_actions(request, actor),
+        }
+
+
+class LinkRequestPurchaseOrderUseCase:
+    """Amartha um grupo de PC (número + data de entrega) à solicitação."""
+
+    def __init__(self, requests: Any, purchase_orders: Any) -> None:
+        self._requests = requests
+        self._purchase_orders = purchase_orders
+
+    def execute(
+        self,
+        request_id: str,
+        actor: Actor,
+        *,
+        order_number: str,
+        delivery_date: str | None,
+    ) -> dict[str, Any]:
+        current = self._requests.get_request(request_id)
+        if current is None:
+            raise InvoicePostingNotFoundError("Solicitação não encontrada.")
+        if current["status"] in TERMINAL_STATUSES:
+            raise InvoicePostingInvalidTransitionError(
+                "Solicitação terminal não pode amarrar pedido de compra."
+            )
+        if not (actor.has_process or actor.has_manage):
+            raise InvoicePostingForbiddenError(
+                "Sem permissão para amarrar pedido de compra."
+            )
+
+        wanted_order = str(order_number or "").strip()
+        if not wanted_order:
+            raise InvoicePostingValidationError("Informe o número do pedido de compra.")
+
+        raw_delivery = delivery_date
+        if raw_delivery is not None and str(raw_delivery).strip() == "":
+            raw_delivery = None
+        parsed_delivery: date | None = None
+        if raw_delivery is not None:
+            parsed_delivery = _parse_date(
+                raw_delivery, field="Data de entrega do pedido"
+            )
+
+        branch = str(current.get("branch_code") or "").strip()
+        supplier_code = str(current.get("supplier_code") or "").strip()
+        supplier_store = str(current.get("supplier_store") or "").strip()
+        items = self._purchase_orders.list_open_purchase_orders_by_supplier(
+            branch_code=branch,
+            supplier_code=supplier_code,
+            supplier_store=supplier_store,
+        )
+        groups = group_open_purchase_order_lines(items)
+        delivery_key = parsed_delivery.isoformat() if parsed_delivery else None
+        group = find_purchase_order_group(
+            groups,
+            order_number=wanted_order,
+            delivery_date=delivery_key,
+        )
+        if group is None:
+            raise InvoicePostingValidationError(
+                "Pedido de compra informado não está aberto para este fornecedor."
+            )
+
+        previous = linked_po_snapshot_from_request(current)
+        linked_at = datetime.now(timezone.utc)
+        issue_raw = group.get("issue_date")
+        issue_date = (
+            _parse_date(issue_raw, field="Data de emissão do pedido")
+            if issue_raw
+            else None
+        )
+        to_snapshot = {
+            "order_number": group["order_number"],
+            "delivery_date": delivery_key,
+            "issue_date": issue_date.isoformat() if issue_date else None,
+            "open_value": group.get("open_value"),
+            "product_count": group.get("product_count"),
+            "linked_at": linked_at.isoformat(),
+            "linked_by_user_id": actor.user_id,
+            "linked_by_name": actor.user_name,
+        }
+        label_to = format_linked_po_label(
+            order_number=str(group["order_number"]),
+            delivery_date=delivery_key,
+        )
+        if previous:
+            label_from = format_linked_po_label(
+                order_number=str(previous.get("order_number") or ""),
+                delivery_date=previous.get("delivery_date"),
+            )
+            justification = f"Pedido amarrado: {label_from} → {label_to}"
+        else:
+            justification = f"Pedido amarrado: {label_to}"
+
+        return self._requests.update_request_with_history(
+            request_id=request_id,
+            updates={
+                "linked_po_number": group["order_number"],
+                "linked_po_delivery_date": parsed_delivery,
+                "linked_po_issue_date": issue_date,
+                "linked_po_open_value": group.get("open_value"),
+                "linked_po_product_count": group.get("product_count"),
+                "linked_po_linked_at": linked_at,
+                "linked_po_linked_by_user_id": actor.user_id,
+                "linked_po_linked_by_name": actor.user_name,
+            },
+            history_fields={
+                "event_type": "purchase_order_linked",
+                "actor_origin": "user",
+                "actor_user_id": actor.user_id,
+                "actor_name": actor.user_name,
+                "from_status": current["status"],
+                "to_status": current["status"],
+                "changes": history_changes_json_safe(
+                    {"linked_po": {"from": previous, "to": to_snapshot}}
+                ),
+                "justification": justification,
+            },
+        )
 
 
 class UpdateInvoicePostingRequestUseCase:
@@ -557,15 +732,23 @@ class BlockInvoicePostingRequestUseCase:
         actor: Actor,
         block_reason: str,
         block_description: str,
+        assignee_user_id: str,
+        assignee_name: str,
     ) -> dict[str, Any]:
         if not (actor.has_process or actor.has_manage):
             raise InvoicePostingForbiddenError("Sem permissão para bloquear.")
         reason = str(block_reason or "").strip()
         description = str(block_description or "").strip()
+        responsible_id = str(assignee_user_id or "").strip()
+        responsible_name = format_person_name(str(assignee_name or "").strip())
         if reason not in BLOCK_REASONS:
             raise InvoicePostingValidationError("Motivo de bloqueio inválido.")
         if not description:
             raise InvoicePostingValidationError("Descrição do bloqueio é obrigatória.")
+        if not responsible_id or not responsible_name:
+            raise InvoicePostingValidationError(
+                "Responsável pela correção da pendência é obrigatório."
+            )
 
         current = self._requests.get_request(request_id)
         if current is None:
@@ -579,10 +762,9 @@ class BlockInvoicePostingRequestUseCase:
             "status": "blocked",
             "block_reason": reason,
             "block_description": description,
+            "assignee_user_id": responsible_id,
+            "assignee_name": responsible_name,
         }
-        if not current.get("assignee_user_id"):
-            updates["assignee_user_id"] = actor.user_id
-            updates["assignee_name"] = actor.user_name
 
         history = {
             "event_type": "status_changed",
@@ -594,12 +776,26 @@ class BlockInvoicePostingRequestUseCase:
             "changes": {
                 "block_reason": reason,
                 "block_description": description,
+                "assignee_user_id": {
+                    "from": current.get("assignee_user_id"),
+                    "to": responsible_id,
+                },
+                "assignee_name": {
+                    "from": current.get("assignee_name"),
+                    "to": responsible_name,
+                },
             },
             "justification": description,
         }
-        return self._requests.update_request_with_history(
+        updated = self._requests.update_request_with_history(
             request_id=request_id, updates=updates, history_fields=history
         )
+        notify_block_assignee(
+            request=updated,
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+        )
+        return updated
 
 
 class ResumeInvoicePostingRequestUseCase:

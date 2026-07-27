@@ -63,10 +63,85 @@ const EVENT_LABELS: Record<string, string> = {
   blocked: "Pendência registrada",
   resumed: "Atendimento retomado",
   started: "Atendimento iniciado",
+  purchase_order_linked: "Pedido de compra amarrado",
 };
 
-export function historyEventLabel(eventType: string): string {
+export function historyEventLabel(
+  eventType: string,
+  toStatus?: string | null,
+  fromStatus?: string | null,
+): string {
+  if (eventType === "status_changed" && toStatus) {
+    if (toStatus === "blocked") return EVENT_LABELS.blocked;
+    if (toStatus === "in_progress") {
+      return fromStatus === "blocked" ? EVENT_LABELS.resumed : EVENT_LABELS.started;
+    }
+    if (toStatus === "posted") return "Lançada";
+    if (toStatus === "cancelled") return EVENT_LABELS.cancelled;
+    if (toStatus === "pending") return EVENT_LABELS.created;
+  }
   return EVENT_LABELS[eventType] ?? eventType;
+}
+
+/**
+ * Tom da faixa lateral do histórico — alinhado aos tons de status (`STATUS_TONES`)
+ * e a eventos especiais (comentário, divergência, sistema).
+ */
+export function historyTimelineTone(event: {
+  event_type: string;
+  actor_origin?: string | null;
+  to_status?: string | null;
+}): string {
+  const type = event.event_type;
+  if (type === "comment_added") return "comment";
+  if (type === "divergence_detected") return "danger";
+  if (type === "cancelled") return "cancelled";
+  if (type === "reconciled" || type === "manual_posted") return "posted";
+  if (type === "purchase_order_linked") return "progress";
+  if (type === "updated") return "updated";
+  if (type === "created") return "pending";
+
+  if (event.to_status) {
+    if (event.to_status === "pending") return "pending";
+    if (event.to_status === "in_progress") return "progress";
+    if (event.to_status === "blocked") return "blocked";
+    if (event.to_status === "posted") return "posted";
+    if (event.to_status === "cancelled") return "cancelled";
+  }
+
+  if (event.actor_origin === "system") return "system";
+  return "user";
+}
+
+/** Rótulo amigável de PC + data de entrega. */
+export function linkedPurchaseOrderLabel(
+  orderNumber: string | null | undefined,
+  deliveryDate: string | null | undefined,
+): string {
+  const number = String(orderNumber ?? "").trim() || "—";
+  const delivery = String(deliveryDate ?? "").trim();
+  if (!delivery) return `PC ${number} · sem data de entrega`;
+  return `PC ${number} · entrega ${formatDate(delivery)}`;
+}
+
+/** Nome do responsável gravado em `changes.assignee_name` (string ou `{ to }`). */
+export function historyAssigneeName(
+  changes: Record<string, unknown> | null | undefined,
+): string | null {
+  if (!changes || typeof changes !== "object") return null;
+  const raw = changes.assignee_name;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    return trimmed || null;
+  }
+  if (raw && typeof raw === "object" && "to" in raw) {
+    const to = (raw as { to?: unknown }).to;
+    if (typeof to === "string") {
+      const trimmed = to.trim();
+      return trimmed || null;
+    }
+  }
+  return null;
 }
 
 /** Formata duração em linguagem curta (ex.: `2d 3h`, `45min`). */

@@ -32,7 +32,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 - Cadastro de solicitação após recebimento físico (filial, nota, série, fornecedor, valor, data/hora)
 - Fila FIFO por `received_at` (mais antigas primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
-- Atendimento: iniciar, bloquear, retomar, comentar, **Já lançada** (confirmação sem justificativa)
+- Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega)
 - Detalhe em layout denso (resumo + dados fiscais/situação + histórico sticky)
 - Documento com **9 dígitos** (zeros à esquerda); valor aceita **vírgula** (formato BR)
 
@@ -69,6 +69,8 @@ Base HTTP: **`/apps/api-delpi/lancamento-notas-fiscais`**
 | POST | `/requests` | Criar |
 | GET | `/requests` | Fila paginada |
 | GET | `/requests/{id}` | Detalhe + timeline + `allowed_actions` |
+| GET | `/requests/{id}/purchase-orders` | Pedidos de compra abertos (grupos PC + entrega) |
+| POST | `/requests/{id}/purchase-orders/link` | Amarrar grupo à solicitação |
 | PATCH | `/requests/{id}` | Corrigir dados |
 | POST | `/requests/{id}/start` | Iniciar atendimento |
 | POST | `/requests/{id}/block` | Bloquear |
@@ -153,9 +155,10 @@ npm run dev
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```
 
-Migrations do plugin (startup da api-delpi ou manual):
+Migrations do plugin (startup da api-delpi ou manual). Em **produção**: só `up` — **nunca** `reset` (apaga a fila):
 
 ```bash
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
 ```
 
@@ -196,6 +199,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 ```bash
 git pull
 ./infra/scripts/up-prod-sequential.sh --fase api --build api-delpi
+# Conferir status: V001–V00N-1 já APLICADA; só a nova pendente. NUNCA reset.
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build lancamento-notas-fiscais
 ```

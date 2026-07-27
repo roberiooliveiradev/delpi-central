@@ -7,7 +7,9 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     CancelInvoicePostingRequestUseCase,
     CreateInvoicePostingRequestUseCase,
     GetInvoicePostingRequestUseCase,
+    LinkRequestPurchaseOrderUseCase,
     ListInvoicePostingRequestsUseCase,
+    ListRequestOpenPurchaseOrdersUseCase,
     PostManualInvoicePostingRequestUseCase,
     RefreshInvoicePostingReconciliationUseCase,
     ResumeInvoicePostingRequestUseCase,
@@ -18,6 +20,9 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
 )
 from app.infrastructure.persistence.plugins.repositories.lancamento_notas_fiscais.postgres_invoice_posting_repository import (
     PostgresInvoicePostingRepository,
+)
+from app.infrastructure.persistence.totvs.invoice_posting_repositories.totvs_invoice_posting_sc7_repository import (
+    TotvsInvoicePostingSc7Repository,
 )
 from app.infrastructure.persistence.totvs.invoice_posting_repositories.totvs_invoice_posting_sf1_repository import (
     TotvsInvoicePostingSf1Repository,
@@ -54,8 +59,28 @@ def build_list_invoice_posting_requests_use_case() -> ListInvoicePostingRequests
     return ListInvoicePostingRequestsUseCase(build_invoice_posting_request_repository())
 
 
+def build_invoice_posting_sc7_repository() -> TotvsInvoicePostingSc7Repository:
+    return TotvsInvoicePostingSc7Repository()
+
+
 def build_get_invoice_posting_request_use_case() -> GetInvoicePostingRequestUseCase:
     return GetInvoicePostingRequestUseCase(build_invoice_posting_request_repository())
+
+
+def build_list_request_open_purchase_orders_use_case() -> (
+    ListRequestOpenPurchaseOrdersUseCase
+):
+    return ListRequestOpenPurchaseOrdersUseCase(
+        build_invoice_posting_request_repository(),
+        build_invoice_posting_sc7_repository(),
+    )
+
+
+def build_link_request_purchase_order_use_case() -> LinkRequestPurchaseOrderUseCase:
+    return LinkRequestPurchaseOrderUseCase(
+        build_invoice_posting_request_repository(),
+        build_invoice_posting_sc7_repository(),
+    )
 
 
 def build_update_invoice_posting_request_use_case() -> UpdateInvoicePostingRequestUseCase:

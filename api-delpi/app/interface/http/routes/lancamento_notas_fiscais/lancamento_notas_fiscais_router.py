@@ -31,6 +31,8 @@ from app.composition.lancamento_notas_fiscais_composer import (
     build_create_invoice_posting_request_use_case,
     build_get_invoice_posting_request_use_case,
     build_list_invoice_posting_requests_use_case,
+    build_link_request_purchase_order_use_case,
+    build_list_request_open_purchase_orders_use_case,
     build_post_manual_invoice_posting_request_use_case,
     build_refresh_invoice_posting_reconciliation_use_case,
     build_resume_invoice_posting_request_use_case,
@@ -77,6 +79,8 @@ class CreateRequestBody(BaseModel):
 class BlockBody(BaseModel):
     block_reason: str
     block_description: str
+    assignee_user_id: str
+    assignee_name: str
 
 
 class CancelBody(BaseModel):
@@ -89,6 +93,11 @@ class PostManualBody(BaseModel):
 
 class CommentBody(BaseModel):
     body: str
+
+
+class LinkPurchaseOrderBody(BaseModel):
+    order_number: str
+    delivery_date: str | None = None
 
 
 class ReconciliationRunBody(BaseModel):
@@ -302,6 +311,72 @@ def get_request(request_id: UUID):
         )
 
 
+@router.get(
+    "/requests/{request_id}/purchase-orders",
+    operation_id="list_lancamento_notas_fiscais_request_purchase_orders",
+)
+@require_any_permission(LANCAMENTO_NOTAS_FISCAIS_READ_PERMISSIONS)
+def list_request_purchase_orders(request_id: UUID):
+    try:
+        data = build_list_request_open_purchase_orders_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = branch_access_error(str(data.get("branch_code") or ""))
+        if branch_error is not None:
+            return branch_error
+        return api_delpi_success(
+            data,
+            operation_id="list_lancamento_notas_fiscais_request_purchase_orders",
+            message="Pedidos de compra carregados.",
+        )
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao listar pedidos de compra LNF: {exc}")
+        return error_response(
+            "Erro ao consultar pedidos de compra no Protheus.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
+@router.post(
+    "/requests/{request_id}/purchase-orders/link",
+    operation_id="link_lancamento_notas_fiscais_request_purchase_order",
+)
+@require_any_permission(LANCAMENTO_NOTAS_FISCAIS_PROCESS_PERMISSIONS)
+def link_request_purchase_order(request_id: UUID, body: LinkPurchaseOrderBody):
+    try:
+        current = build_get_invoice_posting_request_use_case().execute(
+            str(request_id), _actor()
+        )
+        branch_error = _gate_loaded_branch(current)
+        if branch_error is not None:
+            return branch_error
+        data = build_link_request_purchase_order_use_case().execute(
+            str(request_id),
+            _actor(),
+            order_number=body.order_number,
+            delivery_date=body.delivery_date,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="link_lancamento_notas_fiscais_request_purchase_order",
+            message="Pedido de compra amarrado à solicitação.",
+        )
+    except InvoicePostingError as exc:
+        return _handle_domain(exc)
+    except Exception as exc:
+        log_error(f"Erro ao amarrar pedido de compra LNF: {exc}")
+        return error_response(
+            "Erro ao amarrar pedido de compra.",
+            status_code=500,
+            code="INTERNAL_ERROR",
+            recoverable=True,
+        )
+
+
 @router.patch(
     "/requests/{request_id}",
     operation_id="update_lancamento_notas_fiscais_request",
@@ -391,6 +466,8 @@ def block_request(request_id: UUID, body: BlockBody):
             actor=_actor(),
             block_reason=body.block_reason,
             block_description=body.block_description,
+            assignee_user_id=body.assignee_user_id,
+            assignee_name=body.assignee_name,
         )
         return api_delpi_success(
             data,

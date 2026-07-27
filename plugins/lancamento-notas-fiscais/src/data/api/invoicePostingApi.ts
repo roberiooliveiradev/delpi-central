@@ -6,6 +6,7 @@ import type {
   InvoicePostingListResponse,
   InvoicePostingRequest,
   ListFilters,
+  OpenPurchaseOrdersResponse,
   Supplier,
   UpdateRequestPayload,
 } from "../../domain/types";
@@ -57,6 +58,26 @@ export async function getRequest(
   });
 }
 
+export async function listRequestPurchaseOrders(
+  requestId: string,
+  signal?: AbortSignal,
+): Promise<OpenPurchaseOrdersResponse> {
+  return httpGet<OpenPurchaseOrdersResponse>(
+    `${API_BASE}/requests/${requestId}/purchase-orders`,
+    { signal },
+  );
+}
+
+export async function linkRequestPurchaseOrder(
+  requestId: string,
+  body: { order_number: string; delivery_date: string | null },
+): Promise<InvoicePostingRequest> {
+  return httpPost<InvoicePostingRequest>(
+    `${API_BASE}/requests/${requestId}/purchase-orders/link`,
+    body,
+  );
+}
+
 export async function createRequest(
   payload: CreateRequestPayload,
 ): Promise<InvoicePostingRequest> {
@@ -84,7 +105,12 @@ export async function startRequest(
 
 export async function blockRequest(
   requestId: string,
-  body: { block_reason: string; block_description: string },
+  body: {
+    block_reason: string;
+    block_description: string;
+    assignee_user_id: string;
+    assignee_name: string;
+  },
 ): Promise<InvoicePostingRequest> {
   return httpPost<InvoicePostingRequest>(
     `${API_BASE}/requests/${requestId}/block`,

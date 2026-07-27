@@ -9,7 +9,7 @@ Fila operacional de **solicitações de lançamento de NF de entrada** no Prothe
 | `lancamento-notas-fiscais.access` | Abrir o MFE / refresh de fila |
 | `lancamento-notas-fiscais.create` | Criar, corrigir próprias, comentar, cancelar própria `pending` |
 | `lancamento-notas-fiscais.view` | Consultar todas as solicitações |
-| `lancamento-notas-fiscais.process` | Atender, bloquear, retomar, **Já lançada**, editar |
+| `lancamento-notas-fiscais.process` | Atender, bloquear, retomar, **Já lançada**, amarrar PC, editar |
 | `lancamento-notas-fiscais.manage` | Admin + cancelar não terminais + `reconciliation/run` |
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
@@ -32,7 +32,8 @@ Plugin: `plugins/lancamento-notas-fiscais` · Roadmap: [docs/12-roadmap-e-evoluc
 | GET | `/lancamento-notas-fiscais/suppliers` | `search_lancamento_notas_fiscais_suppliers` | `create` |
 | POST | `/lancamento-notas-fiscais/requests` | `create_lancamento_notas_fiscais_request` | `create` |
 | GET | `/lancamento-notas-fiscais/requests` | `list_lancamento_notas_fiscais_requests` | qualquer read* |
-| GET | `/lancamento-notas-fiscais/requests/{id}` | `get_lancamento_notas_fiscais_request` | qualquer read* |
+| GET | `/lancamento-notas-fiscais/requests/{id}/purchase-orders` | `list_lancamento_notas_fiscais_request_purchase_orders` | qualquer read* |
+| POST | `/lancamento-notas-fiscais/requests/{id}/purchase-orders/link` | `link_lancamento_notas_fiscais_request_purchase_order` | process / manage |
 | PATCH | `/lancamento-notas-fiscais/requests/{id}` | `update_lancamento_notas_fiscais_request` | create / process / manage |
 | POST | `/lancamento-notas-fiscais/requests/{id}/start` | `start_lancamento_notas_fiscais_request` | process / manage |
 | POST | `/lancamento-notas-fiscais/requests/{id}/block` | `block_lancamento_notas_fiscais_request` | process / manage |
@@ -127,6 +128,20 @@ Ordenação padrão da fila: `received_at ASC` (FIFO).
 
 Corrige dados fiscais/operacionais em `pending` ou `blocked` (donos com `create`, ou process/manage). Não permite `PATCH` livre de `status`.
 
+### GET `.../purchase-orders`
+
+Lista **pedidos de compra em aberto** no Protheus (`SC7`) da filial e fornecedor da solicitação, **agrupados por PC + data de entrega**.
+
+Filtros ERP (mesmo critério do estoque de segurança): `D_E_L_E_T_=''`, `C7_RESIDUO<>'S'`, `C7_QUANT > C7_QUJE`, `C7_FILIAL`, `C7_FORNECE`, `C7_LOJA`.
+
+Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item_count, groups[], linked, can_link }` — cada grupo com `order_number`, `delivery_date` (null = sem data), `issue_date`, `product_count`, `open_value` (soma), `items[]`.
+
+### POST `.../purchase-orders/link`
+
+Body: `{ "order_number": "...", "delivery_date": "YYYY-MM-DD" | null }`
+
+Amarrar **um** grupo à solicitação (process/manage). Substitui vínculo anterior; grava `linked_po_*` e histórico `purchase_order_linked` com `changes.linked_po.from/to`.
+
 ---
 
 ## Ações de atendimento
@@ -137,8 +152,11 @@ Corrige dados fiscais/operacionais em `pending` ou `blocked` (donos com `create`
 
 ### POST `.../block`
 
-Body: `{ "block_reason": "...", "block_description": "..." }`  
-`pending` \| `in_progress` → `blocked`.
+Body: `{ "block_reason": "...", "block_description": "...", "assignee_user_id": "...", "assignee_name": "..." }`
+
+`pending` \| `in_progress` → `blocked`. Define o **responsável pela correção da pendência** (`assignee_*`) a partir do usuário selecionado no diretório Minha Delpi.
+
+Após o bloqueio, a api-delpi envia notificação in-app (sino do portal) ao responsável — com motivo, descrição, nota, fornecedor, filial e link para `/apps/lancamento-notas-fiscais/filial-0x?requestId={id}`. Requer `CORE_API_BASE_URL` + `CORE_API_INTEGRATIONS_SERVICE_TOKEN` e `LNF_NOTIFICATIONS_ENABLED=true` (default). Não notifica se o responsável for o próprio ator.
 
 ### POST `.../resume`
 
@@ -202,10 +220,15 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | `V001__create_invoice_posting_core.sql` | Tabelas requests / history / comments |
 | `V002__reconciliation_refresh_control.sql` | Controle de cooldown do refresh |
 | `V003__document_number_pad_9.sql` | Backfill de documento com 9 dígitos |
+| `V004__linked_purchase_order.sql` | Colunas `linked_po_*` (amarração PC + entrega) |
 
 ```bash
+# Produção / ambiente com dados: SOMENTE up (nunca reset)
+docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --plugin lancamento-notas-fiscais
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
 ```
+
+**⚠ `reset --plugin …` faz `DROP SCHEMA CASCADE` e apaga solicitações/histórico.** Em produção use só `up` após conferir no `status` que `V001`–`V003` já estão aplicadas e só `V004` (ou a nova) está pendente. Rebuild de API/MFE **não** exige reset de schema.
 
 ---
 

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-27",
-  "baselineOperationCount": 481,
-  "operationCount": 481,
-  "coveredCount": 479,
+  "baselineOperationCount": 484,
+  "operationCount": 484,
+  "coveredCount": 482,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 23,
-      "covered": 23,
+      "total": 24,
+      "covered": 24,
       "gap": 0,
       "exempt": 0
     },
@@ -92,8 +92,8 @@
       "exempt": 0
     },
     "lancamento-notas-fiscais": {
-      "total": 13,
-      "covered": 13,
+      "total": 15,
+      "covered": 15,
       "gap": 0,
       "exempt": 0
     },
@@ -1093,6 +1093,15 @@
       "status": "covered"
     },
     {
+      "operationId": "list_lmp_problem_tags",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/problem-tags",
+      "module": "engineering",
+      "entity": "lmp_problem_tag",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
       "operationId": "get_lmp_nonconformity_streak",
       "method": "GET",
       "path": "/engineering/lmps/nonconformities/streak",
@@ -1898,6 +1907,24 @@
       "operationId": "post_manual_lancamento_notas_fiscais_request",
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/post-manual",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_request",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
+      "module": "lancamento-notas-fiscais",
+      "entity": "invoice_posting_purchase_order",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
       "module": "lancamento-notas-fiscais",
       "entity": "invoice_posting_request",
       "shape": "scalar",

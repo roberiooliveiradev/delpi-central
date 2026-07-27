@@ -1,22 +1,39 @@
 import { useState } from "react";
+import { UserDirectoryPicker } from "@delpi/plugin-ui/index";
+import {
+  searchDirectoryUsers,
+  type DirectoryUser,
+} from "../../data/api/directoryApi";
 import { BLOCK_REASON_OPTIONS } from "../../domain/status";
+
+export type BlockModalPayload = {
+  block_reason: string;
+  block_description: string;
+  assignee_user_id: string;
+  assignee_name: string;
+};
 
 type Props = {
   open: boolean;
   busy?: boolean;
   onClose: () => void;
-  onConfirm: (payload: {
-    block_reason: string;
-    block_description: string;
-  }) => Promise<void> | void;
+  onConfirm: (payload: BlockModalPayload) => Promise<void> | void;
 };
 
 export function BlockModal({ open, busy, onClose, onConfirm }: Props) {
   const [reason, setReason] = useState("purchase_order");
   const [description, setDescription] = useState("");
+  const [responsible, setResponsible] = useState<DirectoryUser[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const resetForm = () => {
+    setDescription("");
+    setResponsible([]);
+    setReason("purchase_order");
+    setError(null);
+  };
 
   return (
     <div className="lnf-modal-backdrop" role="presentation">
@@ -37,6 +54,21 @@ export function BlockModal({ open, busy, onClose, onConfirm }: Props) {
             ))}
           </select>
         </label>
+        <div className="lnf-field">
+          <UserDirectoryPicker
+            value={responsible}
+            onChange={setResponsible}
+            searchUsers={searchDirectoryUsers}
+            disabled={busy}
+            showEmail={false}
+            maxSelected={1}
+            labels={{
+              title: "Responsável pela correção",
+              hint: "Selecione um usuário do Minha Delpi. Apenas o nome é exibido.",
+              placeholder: "Buscar por nome",
+            }}
+          />
+        </div>
         <label className="lnf-field">
           Descrição
           <textarea
@@ -55,7 +87,10 @@ export function BlockModal({ open, busy, onClose, onConfirm }: Props) {
           <button
             type="button"
             className="lnf-btn lnf-btn--ghost"
-            onClick={onClose}
+            onClick={() => {
+              resetForm();
+              onClose();
+            }}
             disabled={busy}
           >
             Cancelar
@@ -66,6 +101,11 @@ export function BlockModal({ open, busy, onClose, onConfirm }: Props) {
             disabled={busy}
             onClick={async () => {
               const text = description.trim();
+              const selected = responsible[0];
+              if (!selected) {
+                setError("Selecione o responsável pela correção da pendência.");
+                return;
+              }
               if (!text) {
                 setError("Informe a descrição da pendência.");
                 return;
@@ -74,8 +114,10 @@ export function BlockModal({ open, busy, onClose, onConfirm }: Props) {
               await onConfirm({
                 block_reason: reason,
                 block_description: text,
+                assignee_user_id: selected.id,
+                assignee_name: (selected.name || "").trim() || selected.email,
               });
-              setDescription("");
+              resetForm();
             }}
           >
             Bloquear

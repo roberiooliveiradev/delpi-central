@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 481,
+  "operation_count": 484,
   "operations": [
     {
       "method": "POST",
@@ -90,7 +90,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -103,7 +103,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -189,7 +189,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -202,7 +202,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -266,7 +266,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -279,7 +279,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -387,7 +387,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -400,7 +400,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -465,7 +465,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -478,7 +478,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -564,7 +564,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -577,7 +577,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -641,7 +641,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -654,7 +654,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -762,7 +762,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -775,7 +775,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -861,7 +861,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -874,7 +874,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -960,7 +960,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -973,7 +973,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1128,7 +1128,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -1201,7 +1201,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1424,7 +1424,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -1449,7 +1449,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1547,7 +1547,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -1572,7 +1572,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1680,7 +1680,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -1693,7 +1693,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1779,7 +1779,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -1792,7 +1792,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -1941,7 +1941,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2002,7 +2002,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -2134,7 +2134,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2159,7 +2159,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -2492,7 +2492,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2505,7 +2505,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -2639,7 +2639,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2652,7 +2652,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -2786,7 +2786,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2799,7 +2799,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -2906,7 +2906,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -2919,7 +2919,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3026,7 +3026,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3039,7 +3039,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3146,7 +3146,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3159,7 +3159,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3266,7 +3266,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3279,7 +3279,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3386,7 +3386,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3399,7 +3399,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3506,7 +3506,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3519,7 +3519,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3626,7 +3626,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3639,7 +3639,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3746,7 +3746,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3759,7 +3759,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3866,7 +3866,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3879,7 +3879,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -3986,7 +3986,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -3999,7 +3999,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4106,7 +4106,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4119,7 +4119,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4226,7 +4226,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4239,7 +4239,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4346,7 +4346,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4359,7 +4359,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4466,7 +4466,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4479,7 +4479,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4586,7 +4586,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4599,7 +4599,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4706,7 +4706,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4719,7 +4719,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4826,7 +4826,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4839,7 +4839,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -4946,7 +4946,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -4959,7 +4959,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5066,7 +5066,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5079,7 +5079,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5186,7 +5186,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5199,7 +5199,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5306,7 +5306,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5319,7 +5319,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5426,7 +5426,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5439,7 +5439,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5546,7 +5546,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5559,7 +5559,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5666,7 +5666,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5679,7 +5679,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5786,7 +5786,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5799,7 +5799,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -5906,7 +5906,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -5919,7 +5919,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6026,7 +6026,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6039,7 +6039,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6146,7 +6146,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6159,7 +6159,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6266,7 +6266,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6279,7 +6279,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6386,7 +6386,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6399,7 +6399,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6506,7 +6506,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6519,7 +6519,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6626,7 +6626,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6639,7 +6639,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6746,7 +6746,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6759,7 +6759,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6866,7 +6866,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6879,7 +6879,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -6986,7 +6986,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -6999,7 +6999,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7106,7 +7106,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7119,7 +7119,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7226,7 +7226,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7239,7 +7239,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7346,7 +7346,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7359,7 +7359,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7466,7 +7466,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7479,7 +7479,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7586,7 +7586,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7599,7 +7599,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7706,7 +7706,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7719,7 +7719,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7826,7 +7826,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7839,7 +7839,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -7946,7 +7946,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -7959,7 +7959,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8066,7 +8066,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8079,7 +8079,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8186,7 +8186,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8199,7 +8199,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8306,7 +8306,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8319,7 +8319,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8426,7 +8426,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8439,7 +8439,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8546,7 +8546,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8559,7 +8559,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8666,7 +8666,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8679,7 +8679,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8786,7 +8786,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8799,7 +8799,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -8906,7 +8906,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -8919,7 +8919,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9026,7 +9026,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9039,7 +9039,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9146,7 +9146,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9159,7 +9159,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9266,7 +9266,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9279,7 +9279,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9386,7 +9386,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9399,7 +9399,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9506,7 +9506,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9519,7 +9519,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9626,7 +9626,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9639,7 +9639,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9746,7 +9746,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9759,7 +9759,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9866,7 +9866,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9879,7 +9879,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -9986,7 +9986,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -9999,7 +9999,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10106,7 +10106,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10119,7 +10119,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10226,7 +10226,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10239,7 +10239,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10346,7 +10346,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10359,7 +10359,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10466,7 +10466,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10479,7 +10479,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10586,7 +10586,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10599,7 +10599,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10706,7 +10706,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10719,7 +10719,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10826,7 +10826,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10839,7 +10839,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -10946,7 +10946,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -10959,7 +10959,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -11150,7 +11150,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -11211,7 +11211,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -11381,7 +11381,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -11430,7 +11430,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -11597,7 +11597,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -11622,7 +11622,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -11802,7 +11802,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -11851,7 +11851,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -12017,7 +12017,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -12042,7 +12042,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -12108,6 +12108,12 @@
           "name": "product_code",
           "required": false,
           "description": "Product code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "problem_tag",
+          "required": false,
+          "description": "Filtro parcial por tag de problema identificado.",
           "type": "string"
         },
         {
@@ -12217,7 +12223,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -12266,7 +12272,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -12326,6 +12332,40 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Create an LMP nonconformity record."
+    },
+    {
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/problem-tags",
+      "operationId": "list_lmp_problem_tags",
+      "summary": "List LMP problem tags",
+      "tags": [
+        "Engenharia",
+        "Engenharia — NC LMP"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "lmp_problem_tag",
+        "shape": "list",
+        "category": "engineering",
+        "locale": {
+          "en": {
+            "summary": "List LMP problem tags",
+            "description": "Shared catalog of identified-problem tags for LMP nonconformities.",
+            "label": "LMP problem tags"
+          },
+          "pt-BR": {
+            "summary": "Listar tags de problema identificado",
+            "description": "Catálogo compartilhado de tags de problema identificado das NCs LMP.",
+            "label": "Tags de problema LMP"
+          }
+        },
+        "tv": {
+          "description": "Catálogo compartilhado de tags de problema identificado das NCs LMP.",
+          "label": "Tags de problema LMP"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Shared catalog of identified-problem tags for LMP nonconformities."
     },
     {
       "method": "GET",
@@ -12576,7 +12616,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -12589,7 +12629,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -12723,7 +12763,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -12748,7 +12788,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -12882,7 +12922,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -12907,7 +12947,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -13344,7 +13384,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -13369,7 +13409,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -13655,7 +13695,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -13668,8 +13708,8 @@
                 "label": "Branch ID"
               },
               "pt-BR": {
-                "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch.",
-                "label": "ID da filial"
+                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "label": "Filial"
               }
             }
           },
@@ -13716,7 +13756,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -13787,8 +13827,8 @@
           },
           "pt-BR": {
             "summary": "Resumo Transforma Mais",
-            "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
-            "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos.",
+            "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
+            "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos.",
             "label": "Resumo Transforma Mais"
           }
         },
@@ -13800,7 +13840,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -13813,8 +13853,8 @@
                 "label": "Branch ID"
               },
               "pt-BR": {
-                "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch.",
-                "label": "ID da filial"
+                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "label": "Filial"
               }
             }
           },
@@ -13825,7 +13865,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -13833,8 +13873,8 @@
           }
         },
         "tv": {
-          "whenToUse": "Use para o pulso de melhoria contínua antes de listar processos.",
-          "description": "KPIs agregados dos processos Transforma Mais por filial e período.",
+          "whenToUse": "Use para o pulso de melhoria contínua (investimento, economia, horas e soluções iniciadas) antes de listar processos.",
+          "description": "KPIs do período: investimento total, economia bruta, horas economizadas e soluções iniciadas no período.",
           "label": "Resumo Transforma Mais"
         },
         "presentationStrategy": "as_delivered"
@@ -13921,7 +13961,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -13934,8 +13974,8 @@
                 "label": "Branch ID"
               },
               "pt-BR": {
-                "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch.",
-                "label": "ID da filial"
+                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "label": "Filial"
               }
             }
           },
@@ -13970,7 +14010,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14087,7 +14127,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14100,7 +14140,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14254,7 +14294,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14327,7 +14367,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14456,7 +14496,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14481,7 +14521,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14616,7 +14656,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14641,7 +14681,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14757,7 +14797,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14770,7 +14810,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -14910,7 +14950,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -14923,7 +14963,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15056,7 +15096,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15141,7 +15181,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15207,7 +15247,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15220,7 +15260,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15335,7 +15375,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15360,7 +15400,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15438,7 +15478,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15451,7 +15491,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15608,7 +15648,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15681,7 +15721,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15793,7 +15833,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15806,7 +15846,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15893,7 +15933,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -15906,7 +15946,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -15993,7 +16033,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -16006,7 +16046,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -16095,7 +16135,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -16108,7 +16148,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -17336,7 +17376,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -17349,7 +17389,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -17468,7 +17508,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -17481,7 +17521,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -17567,7 +17607,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -17580,7 +17620,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -17763,7 +17803,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -17860,7 +17900,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -18598,7 +18638,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -18647,7 +18687,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -19433,6 +19473,36 @@
       }
     },
     {
+      "method": "GET",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders",
+      "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
+      "summary": "List Request Purchase Orders",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "invoice_posting_purchase_order",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/lancamento-notas-fiscais/requests/{request_id}/purchase-orders/link",
+      "operationId": "link_lancamento_notas_fiscais_request_purchase_order",
+      "summary": "Link Request Purchase Order",
+      "tags": [
+        "Lançamento de Notas Fiscais"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "invoice_posting_request",
+        "shape": "scalar",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
       "method": "POST",
       "path": "/lancamento-notas-fiscais/requests/{request_id}/resume",
       "operationId": "resume_lancamento_notas_fiscais_request",
@@ -19839,7 +19909,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -19912,7 +19982,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -20092,7 +20162,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -20165,7 +20235,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -20336,7 +20406,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -20385,7 +20455,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -20545,7 +20615,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -20582,7 +20652,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -20796,7 +20866,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -20833,7 +20903,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -20981,7 +21051,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21018,7 +21088,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21158,7 +21228,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21183,7 +21253,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21329,7 +21399,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21354,7 +21424,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21440,7 +21510,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21453,7 +21523,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21539,7 +21609,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21552,7 +21622,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21717,7 +21787,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21742,7 +21812,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -21944,7 +22014,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -21993,7 +22063,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -22163,7 +22233,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -22200,7 +22270,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -22346,7 +22416,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -22383,7 +22453,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -22533,7 +22603,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -22582,7 +22652,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -22756,7 +22826,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -22853,7 +22923,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -23034,7 +23104,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -23059,7 +23129,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -23146,7 +23216,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -23159,7 +23229,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -23754,7 +23824,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -23815,7 +23885,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -23925,7 +23995,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -23950,7 +24020,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -24037,7 +24107,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -24050,7 +24120,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -24252,7 +24322,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -24265,7 +24335,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -25886,7 +25956,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -25936,7 +26006,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -26455,7 +26525,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -26516,7 +26586,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -27110,7 +27180,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -27123,7 +27193,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -27257,7 +27327,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -27282,7 +27352,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -27491,7 +27561,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -27516,7 +27586,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -27757,7 +27827,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -27795,7 +27865,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -28638,7 +28708,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -28663,7 +28733,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -31604,7 +31674,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -31677,7 +31747,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -33043,7 +33113,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -33188,7 +33258,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -33574,7 +33644,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -33587,7 +33657,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -33694,7 +33764,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -33707,7 +33777,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -33882,7 +33952,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -33931,7 +34001,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -34192,7 +34262,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -34205,7 +34275,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -34794,7 +34864,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -34807,7 +34877,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -35104,7 +35174,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -35117,7 +35187,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -36209,7 +36279,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -36258,7 +36328,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -36472,7 +36542,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -36509,7 +36579,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -36680,7 +36750,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -36729,7 +36799,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -36877,7 +36947,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -36914,7 +36984,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37051,7 +37121,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37076,7 +37146,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37224,7 +37294,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37273,7 +37343,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37421,7 +37491,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37458,7 +37528,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37595,7 +37665,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37620,7 +37690,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37756,7 +37826,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37781,7 +37851,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -37911,7 +37981,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -37924,7 +37994,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -38055,7 +38125,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -38068,7 +38138,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -38316,7 +38386,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -38341,7 +38411,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -38568,7 +38638,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -38653,7 +38723,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -38827,7 +38897,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -38924,7 +38994,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -39084,7 +39154,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -39157,7 +39227,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -39317,7 +39387,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -39390,7 +39460,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -39562,7 +39632,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -39647,7 +39717,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -40248,7 +40318,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -40309,7 +40379,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -40504,7 +40574,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -40589,7 +40659,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -40705,7 +40775,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -40730,7 +40800,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -40921,7 +40991,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -40958,7 +41028,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -41134,7 +41204,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -41195,7 +41265,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -41353,7 +41423,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -41390,7 +41460,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -41549,7 +41619,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -41586,7 +41656,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -41705,7 +41775,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -41742,7 +41812,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -42441,7 +42511,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -42454,7 +42524,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -42565,7 +42635,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -42590,7 +42660,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -42688,7 +42758,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -42701,7 +42771,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -42813,7 +42883,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -42826,7 +42896,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },
@@ -44036,7 +44106,7 @@
                 "label": "End date"
               },
               "pt-BR": {
-                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Fim do período (AAAA-MM-DD).",
                 "label": "Data fim"
               }
             },
@@ -44061,7 +44131,7 @@
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "description": "Início do período (AAAA-MM-DD).",
                 "label": "Data início"
               }
             },

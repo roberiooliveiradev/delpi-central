@@ -344,6 +344,14 @@ def main() -> None:
         help="Slug do plugin. Ex.: quality, scheduling, strategic-indicators.",
         default=None,
     )
+    parser.add_argument(
+        "--confirm-drop-schema",
+        action="store_true",
+        help=(
+            "Obrigatório com 'reset': confirma DROP SCHEMA CASCADE "
+            "(apaga todos os dados do plugin). Nunca usar em produção."
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -365,6 +373,12 @@ def main() -> None:
         if not args.plugin:
             raise MigrationError(
                 "O comando reset exige --plugin para evitar remoção acidental de todos os schemas."
+            )
+        if not args.confirm_drop_schema:
+            raise MigrationError(
+                "reset apaga TODOS os dados do plugin (DROP SCHEMA CASCADE). "
+                "Em produção use apenas 'up'. Para sandbox local, passe "
+                "--confirm-drop-schema explicitamente."
             )
         reset_plugin_migrations(args.plugin)
         return

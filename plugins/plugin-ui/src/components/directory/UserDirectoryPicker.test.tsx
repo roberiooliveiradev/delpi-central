@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { UserDirectoryPicker } from "./UserDirectoryPicker";
@@ -19,7 +19,7 @@ describe("UserDirectoryPicker", () => {
       <UserDirectoryPicker value={users} onChange={() => {}} searchUsers={searchUsers} />,
     );
 
-    expect(screen.getByText("Ana Lima")).toBeTruthy();
+    expect(screen.getByText("Ana Lima · ana@delpi.com.br")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Remover" })).toHaveLength(2);
   });
 
@@ -35,5 +35,49 @@ describe("UserDirectoryPicker", () => {
 
     expect(screen.queryByText("Ana Lima")).toBeNull();
     expect(screen.queryByRole("button", { name: "Remover" })).toBeNull();
+  });
+
+  it("com showEmail=false lista só o nome", () => {
+    render(
+      <UserDirectoryPicker
+        value={users}
+        onChange={() => {}}
+        searchUsers={searchUsers}
+        showEmail={false}
+      />,
+    );
+
+    expect(screen.getByText("Ana Lima")).toBeTruthy();
+    expect(screen.queryByText(/ana@delpi\.com\.br/)).toBeNull();
+  });
+
+  it("com maxSelected=1 substitui a seleção ao escolher outro", async () => {
+    const onChange = vi.fn();
+    searchUsers.mockResolvedValueOnce([
+      { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },
+    ]);
+
+    render(
+      <UserDirectoryPicker
+        value={[users[0]]}
+        onChange={onChange}
+        searchUsers={searchUsers}
+        maxSelected={1}
+        showEmail={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByPlaceholderText("Buscar por nome"), {
+      target: { value: "Carla" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Carla Dias" })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Carla Dias" }));
+    expect(onChange).toHaveBeenCalledWith([
+      { id: "u3", name: "Carla Dias", email: "carla@delpi.com.br" },
+    ]);
   });
 });

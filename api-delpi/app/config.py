@@ -242,6 +242,13 @@ class Settings:
     )
 
     # ==========================
+    # Lançamento NF — notificações in-app (responsável da pendência)
+    # ==========================
+    LNF_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("LNF_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+
+    # ==========================
     # Central de Agendamento — aprovação + notificações
     # ==========================
     SCHEDULING_NOTIFICATIONS_ENABLED: bool = (

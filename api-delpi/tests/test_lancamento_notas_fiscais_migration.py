@@ -1,7 +1,7 @@
 """Schema / migration — lancamento-notas-fiscais (Etapa 2A).
 
 Upgrade: run_plugins_migrations up --plugin lancamento-notas-fiscais
-Downgrade (padrão do projeto): reset --plugin (DROP SCHEMA CASCADE)
+Downgrade (padrão do projeto): reset --plugin --confirm-drop-schema (DROP SCHEMA CASCADE; só sandbox)
 
 Testes live usam somente o schema do plugin; não executam docker compose down -v.
 """
@@ -36,6 +36,13 @@ MIGRATION_V003 = (
     / "plugins"
     / PLUGIN_SLUG
     / "V003__document_number_pad_9.sql"
+)
+MIGRATION_V004 = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "plugins"
+    / PLUGIN_SLUG
+    / "V004__linked_purchase_order.sql"
 )
 
 
@@ -87,6 +94,15 @@ def test_v003_migration_pads_document_number_to_9() -> None:
     assert "lpad(" in sql
     assert "document_number" in sql
     assert "9" in sql
+
+
+def test_v004_migration_declares_linked_purchase_order() -> None:
+    sql = MIGRATION_V004.read_text(encoding="utf-8")
+    assert "linked_po_number" in sql
+    assert "linked_po_delivery_date" in sql
+    assert "linked_po_open_value" in sql
+    assert "linked_po_product_count" in sql
+    assert "linked_po_linked_at" in sql
 
 
 def _drop_plugin_schema_only(conn) -> None:

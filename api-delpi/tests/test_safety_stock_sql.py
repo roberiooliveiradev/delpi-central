@@ -154,6 +154,18 @@ def test_open_purchase_orders_sql_branch_only_omits_product_filter() -> None:
     assert sql.count("?") == 1
 
 
+def test_open_purchase_orders_sql_filters_supplier() -> None:
+    sql = open_purchase_orders_sql(
+        product_param=None,
+        supplier_code_param="?",
+        supplier_store_param="?",
+    )
+    assert "C7_FORNECE) =" in sql
+    assert "C7_LOJA) =" in sql
+    assert "C7_PRODUTO) =" not in sql
+    assert sql.count("?") == 3
+
+
 def test_open_commitments_sql_branch_only_omits_product_filter() -> None:
     sql = open_commitments_sql(product_param=None)
     assert "SD4010" in sql

@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import date, datetime, timezone
 from typing import Any, Sequence
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -16,7 +17,9 @@ from app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_case
     CancelInvoicePostingRequestUseCase,
     CreateInvoicePostingRequestUseCase,
     GetInvoicePostingRequestUseCase,
+    LinkRequestPurchaseOrderUseCase,
     ListInvoicePostingRequestsUseCase,
+    ListRequestOpenPurchaseOrdersUseCase,
     PostManualInvoicePostingRequestUseCase,
     ResumeInvoicePostingRequestUseCase,
     RunInvoicePostingReconciliationUseCase,
@@ -39,6 +42,16 @@ from app.domain.services.lancamento_notas_fiscais.exceptions import (
 from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     resolve_list_status_filter,
 )
+
+
+@pytest.fixture(autouse=True)
+def _stub_lnf_block_notification():
+    with patch(
+        "app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases.notify_block_assignee",
+        return_value=False,
+    ) as mocked:
+        yield mocked
+
 
 
 def _creator(**kwargs: Any) -> Actor:
@@ -173,6 +186,14 @@ class FakeRequests:
             "cancelled_by_user_id": None,
             "cancelled_by_name": None,
             "cancel_justification": None,
+            "linked_po_number": None,
+            "linked_po_delivery_date": None,
+            "linked_po_issue_date": None,
+            "linked_po_open_value": None,
+            "linked_po_product_count": None,
+            "linked_po_linked_at": None,
+            "linked_po_linked_by_user_id": None,
+            "linked_po_linked_by_name": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -257,8 +278,22 @@ class FakeRequests:
             candidate["cancelled_at"] = candidate["cancelled_at"].isoformat()
         if isinstance(candidate.get("reconciled_at"), datetime):
             candidate["reconciled_at"] = candidate["reconciled_at"].isoformat()
+        if isinstance(candidate.get("linked_po_delivery_date"), date):
+            candidate["linked_po_delivery_date"] = candidate[
+                "linked_po_delivery_date"
+            ].isoformat()
+        if isinstance(candidate.get("linked_po_issue_date"), date):
+            candidate["linked_po_issue_date"] = candidate[
+                "linked_po_issue_date"
+            ].isoformat()
+        if isinstance(candidate.get("linked_po_linked_at"), datetime):
+            candidate["linked_po_linked_at"] = candidate[
+                "linked_po_linked_at"
+            ].isoformat()
         if hasattr(candidate.get("amount"), "quantize"):
             candidate["amount"] = float(candidate["amount"])
+        if hasattr(candidate.get("linked_po_open_value"), "quantize"):
+            candidate["linked_po_open_value"] = float(candidate["linked_po_open_value"])
         duplicate = self.find_active_by_fiscal_key(
             branch_code=candidate["branch_code"],
             supplier_code=candidate["supplier_code"],
@@ -631,6 +666,196 @@ def test_update_terminal_forbidden() -> None:
         )
 
 
+def test_list_open_purchase_orders_for_request() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            assert kwargs["branch_code"] == "01"
+            assert kwargs["supplier_code"] == "000001"
+            assert kwargs["supplier_store"] == "01"
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_quantity": 10,
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+                {
+                    "order_number": "000123",
+                    "order_item": "0002",
+                    "product_code": "10080002",
+                    "open_quantity": 5,
+                    "open_value": 50.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+                {
+                    "order_number": "000123",
+                    "order_item": "0003",
+                    "product_code": "10080003",
+                    "open_quantity": 1,
+                    "open_value": 10.0,
+                    "issue_date": "2026-07-02",
+                    "expected_delivery_date": "2026-07-25",
+                },
+            ]
+
+    result = ListRequestOpenPurchaseOrdersUseCase(repo, FakePurchaseOrders()).execute(
+        created["id"], _processor()
+    )
+    assert result["order_count"] == 1
+    assert result["group_count"] == 2
+    assert result["item_count"] == 3
+    assert result["supplier_code"] == "000001"
+    assert result["linked"] is None
+    assert result["can_link"] is True
+    assert len(result["groups"]) == 2
+    first = next(g for g in result["groups"] if g["delivery_date"] == "2026-07-20")
+    assert first["product_count"] == 2
+    assert first["open_value"] == 150.0
+    assert len(first["items"]) == 2
+
+
+def test_link_purchase_order_sets_fields_and_history() -> None:
+    """operation_id link_lancamento_notas_fiscais_request_purchase_order."""
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+                {
+                    "order_number": "000123",
+                    "order_item": "0002",
+                    "product_code": "10080002",
+                    "open_value": 50.5,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+            ]
+
+    pos = FakePurchaseOrders()
+    linked = LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(),
+        order_number="000123",
+        delivery_date="2026-07-20",
+    )
+    assert linked["linked_po_number"] == "000123"
+    assert linked["linked_po_delivery_date"] == "2026-07-20"
+    assert linked["linked_po_open_value"] == 150.5
+    assert linked["linked_po_product_count"] == 2
+    assert linked["linked_po_linked_by_user_id"] == "u-process"
+    history = repo.list_history(created["id"])
+    event = next(h for h in history if h["event_type"] == "purchase_order_linked")
+    assert event["changes"]["linked_po"]["from"] is None
+    assert event["changes"]["linked_po"]["to"]["order_number"] == "000123"
+    assert "PC 000123" in (event.get("justification") or "")
+
+
+def test_link_purchase_order_replaces_previous() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000111",
+                    "product_code": "A",
+                    "open_value": 10.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-10",
+                },
+                {
+                    "order_number": "000222",
+                    "product_code": "B",
+                    "open_value": 20.0,
+                    "issue_date": "2026-07-02",
+                    "expected_delivery_date": None,
+                },
+            ]
+
+    pos = FakePurchaseOrders()
+    LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(),
+        order_number="000111",
+        delivery_date="2026-07-10",
+    )
+    replaced = LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(),
+        order_number="000222",
+        delivery_date=None,
+    )
+    assert replaced["linked_po_number"] == "000222"
+    assert replaced["linked_po_delivery_date"] is None
+    history = repo.list_history(created["id"])
+    events = [h for h in history if h["event_type"] == "purchase_order_linked"]
+    assert len(events) == 2
+    assert events[-1]["changes"]["linked_po"]["from"]["order_number"] == "000111"
+    assert events[-1]["changes"]["linked_po"]["to"]["order_number"] == "000222"
+    assert "→" in (events[-1].get("justification") or "")
+
+
+def test_link_purchase_order_rejects_missing_group_and_terminal() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "product_code": "A",
+                    "open_value": 10.0,
+                    "expected_delivery_date": "2026-07-20",
+                }
+            ]
+
+    pos = FakePurchaseOrders()
+    with pytest.raises(InvoicePostingValidationError):
+        LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+            created["id"],
+            _processor(),
+            order_number="000999",
+            delivery_date="2026-07-20",
+        )
+
+    PostManualInvoicePostingRequestUseCase(repo).execute(
+        created["id"], actor=_manager()
+    )
+    with pytest.raises(InvoicePostingInvalidTransitionError):
+        LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+            created["id"],
+            _processor(),
+            order_number="000123",
+            delivery_date="2026-07-20",
+        )
+
+
 def test_transitions_start_block_resume() -> None:
     repo = FakeRequests()
     created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
@@ -650,14 +875,39 @@ def test_transitions_start_block_resume() -> None:
         actor=_processor(),
         block_reason="purchase_order",
         block_description="Falta pedido",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
     )
     assert blocked["status"] == "blocked"
+    assert blocked["assignee_user_id"] == "u-compras"
+    assert blocked["assignee_name"] == "Compras Delpi"
     resumed = ResumeInvoicePostingRequestUseCase(repo).execute(
         created["id"], _processor()
     )
     assert resumed["status"] == "in_progress"
     assert resumed["block_reason"] is None
-    assert resumed["assignee_user_id"] == "u-process"
+    assert resumed["assignee_user_id"] == "u-compras"
+
+
+def test_block_notifies_assignee(_stub_lnf_block_notification) -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="other",
+        block_description="Falta o PC",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+    assert _stub_lnf_block_notification.called
+    request_arg = _stub_lnf_block_notification.call_args.kwargs["request"]
+    assert request_arg["assignee_user_id"] == "u-compras"
+    assert request_arg["block_description"] == "Falta o PC"
+    assert _stub_lnf_block_notification.call_args.kwargs["actor_user_id"] == "u-process"
 
 
 def test_start_conflict_other_assignee() -> None:
@@ -692,9 +942,28 @@ def test_invalid_transitions() -> None:
         actor=_processor(),
         block_reason="other",
         block_description="pendência",
+        assignee_user_id="u-process",
+        assignee_name="Processador",
     )
     with pytest.raises(InvoicePostingInvalidTransitionError):
         StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+
+
+def test_block_requires_assignee() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    with pytest.raises(InvoicePostingValidationError):
+        BlockInvoicePostingRequestUseCase(repo).execute(
+            created["id"],
+            actor=_processor(),
+            block_reason="other",
+            block_description="pendência",
+            assignee_user_id="",
+            assignee_name="",
+        )
 
 
 def test_cancel_by_creator_and_manage() -> None:

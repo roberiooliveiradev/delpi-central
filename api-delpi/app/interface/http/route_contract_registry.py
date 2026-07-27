@@ -843,6 +843,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_lancamento_notas_fiscais_request": RouteContract(
         "invoice_posting_request", "scalar"
     ),
+    "list_lancamento_notas_fiscais_request_purchase_orders": RouteContract(
+        "invoice_posting_purchase_order", "paged_list"
+    ),
+    "link_lancamento_notas_fiscais_request_purchase_order": RouteContract(
+        "invoice_posting_request", "scalar"
+    ),
     "update_lancamento_notas_fiscais_request": RouteContract(
         "invoice_posting_request", "scalar"
     ),
