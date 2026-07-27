@@ -2041,15 +2041,10 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__block-wrap--selected{
   /*
-   * Outline sólido + pad — visual tipo Figma/Canva (prints de referência).
-   * Espessura/tamanho via --td-selection-* (dinâmico com zoom no canvas).
-   * Cor via --td-selection-outline (contraste com o fundo do slide).
+   * Outline visual fica em `.td-composer__block-chrome` (overlay no palco).
+   * Wrap mantém só overflow — conteúdo permanece no zIndex do modelo.
    */
-  outline: var(--td-selection-outline-width, 1.5px) solid
-    var(--td-selection-outline, var(--td-accent, #089bdb));
-  outline-offset: var(--td-global-selection-pad, 4px);
   overflow: visible;
-  isolation: isolate;
 }
 /* Filho(s) do complexo ativos: wrap do pai sem outline (paridade com grupo). */
 .dashboard-tv-dashboard .td-composer__block-wrap--selected.td-composer__block-wrap--part-chrome,
@@ -2060,6 +2055,29 @@ body.td-composer--marqueeing *{
 /* Membros na seleção pai do grupo: sem outline individual (chrome unificado). */
 .dashboard-tv-dashboard .td-composer__block-wrap--group-member{
   outline: none;
+}
+/*
+ * Overlay de handles/outline do bloco — irmão dos wraps, acima do conteúdo.
+ * Anti-padrão: subir z-index do wrap selecionado (corpo cobria vizinhos).
+ */
+.dashboard-tv-dashboard .td-composer__block-chrome{
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  overflow: visible;
+  outline: var(--td-selection-outline-width, 1.5px) solid
+    var(--td-selection-outline, var(--td-accent, #089bdb));
+  outline-offset: var(--td-global-selection-pad, 4px);
+}
+.dashboard-tv-dashboard .td-composer__block-chrome--multi{
+  outline-style: solid;
+  outline-color: var(
+    --td-selection-outline-multi,
+    color-mix(in srgb, var(--td-accent) 55%, #fff)
+  );
+}
+.dashboard-tv-dashboard .td-composer__block-chrome .td-composer__block-handles{
+  pointer-events: none;
 }
 .dashboard-tv-dashboard .td-composer__group-chrome{
   position: absolute;
@@ -2268,13 +2286,6 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__block-handles > .td-composer__adjust,
 .dashboard-tv-dashboard .td-composer__block-wrap--line-shape .td-composer__selection-move-edge{
   pointer-events: auto;
-}
-.dashboard-tv-dashboard .td-composer__block-wrap--multi{
-  outline-style: solid;
-  outline-color: var(
-    --td-selection-outline-multi,
-    color-mix(in srgb, var(--td-accent) 55%, #fff)
-  );
 }
 .dashboard-tv-dashboard .td-composer__marquee{
   position: absolute;

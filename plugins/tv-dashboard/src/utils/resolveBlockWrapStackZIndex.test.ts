@@ -2,39 +2,35 @@ import { describe, expect, it } from "vitest";
 
 import {
   resolveBlockWrapStackZIndex,
+  resolveSelectionChromeOverlayZIndex,
   SELECTION_CHROME_STACK_FLOOR,
 } from "./resolveBlockWrapStackZIndex";
 
 describe("resolveBlockWrapStackZIndex", () => {
-  it("sem chrome: preserva z do modelo", () => {
-    expect(
-      resolveBlockWrapStackZIndex({ modelZIndex: 7, selectionChromeVisible: false }),
-    ).toBe(7);
+  it("sempre preserva z do modelo (seleção não eleva o conteúdo)", () => {
+    expect(resolveBlockWrapStackZIndex({ modelZIndex: 7 })).toBe(7);
+    expect(resolveBlockWrapStackZIndex({ modelZIndex: null })).toBe(1);
   });
+});
 
-  it("com chrome: sobe acima de qualquer z de vizinho não selecionado", () => {
-    const selected = resolveBlockWrapStackZIndex({
+describe("resolveSelectionChromeOverlayZIndex", () => {
+  it("overlay fica acima de qualquer z de conteúdo do modelo", () => {
+    const chrome = resolveSelectionChromeOverlayZIndex({
       modelZIndex: 2,
-      selectionChromeVisible: true,
       isPrimarySelection: true,
     });
-    const neighbor = resolveBlockWrapStackZIndex({
-      modelZIndex: 99,
-      selectionChromeVisible: false,
-    });
-    expect(selected).toBeGreaterThan(neighbor);
-    expect(selected).toBeGreaterThan(SELECTION_CHROME_STACK_FLOOR);
+    const content = resolveBlockWrapStackZIndex({ modelZIndex: 99 });
+    expect(chrome).toBeGreaterThan(content);
+    expect(chrome).toBeGreaterThan(SELECTION_CHROME_STACK_FLOOR);
   });
 
-  it("primário fica acima de multi-selecionado secundário", () => {
-    const primary = resolveBlockWrapStackZIndex({
+  it("primário fica acima do multi-selecionado secundário", () => {
+    const primary = resolveSelectionChromeOverlayZIndex({
       modelZIndex: 1,
-      selectionChromeVisible: true,
       isPrimarySelection: true,
     });
-    const secondary = resolveBlockWrapStackZIndex({
+    const secondary = resolveSelectionChromeOverlayZIndex({
       modelZIndex: 50,
-      selectionChromeVisible: true,
       isPrimarySelection: false,
     });
     expect(primary).toBeGreaterThan(secondary);

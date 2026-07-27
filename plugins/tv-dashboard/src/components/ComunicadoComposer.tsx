@@ -19,7 +19,6 @@ import {
   isLineShapeKind,
   resolveBlockPlacementStyle,
   RichComunicadoMasterLogo,
-  shapeBlockAllowsResize,
   staticLabelFromTextBoundBlock,
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
@@ -39,6 +38,7 @@ import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticated
 import { useStageLineDraw } from "../hooks/useStageLineDraw";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 import { resolveBlockWrapStackZIndex } from "../utils/resolveBlockWrapStackZIndex";
+import { BlockSelectionChromeOverlay } from "./BlockSelectionChromeOverlay";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContextMenuAnchor";
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
@@ -84,7 +84,6 @@ import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../ut
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { ComunicadoTextSelectionContextMenu } from "./ComunicadoTextSelectionContextMenu";
-import { BlockSelectionChrome } from "./BlockSelectionChrome";
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { GroupTransformLayer } from "./GroupTransformLayer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -799,8 +798,6 @@ export function ComunicadoComposerCanvas() {
           ...resolveBlockPlacementStyle(block),
           zIndex: resolveBlockWrapStackZIndex({
             modelZIndex: block.style?.zIndex,
-            selectionChromeVisible: wrapChrome.showOutline,
-            isPrimarySelection: isPrimary,
           }),
           ...(wrapTransform ? { transform: wrapTransform } : {}),
         };
@@ -991,17 +988,6 @@ export function ComunicadoComposerCanvas() {
             displayNames={remoteEditors.map((selection) => selection.displayName)}
           />
         ) : null}
-        {showSelectionChrome(block.id) ? (
-          <BlockSelectionChrome
-            block={block}
-            designShortSidePx={Math.min(
-              (block.frame.w / 100) * designSize.width,
-              (block.frame.h / 100) * designSize.height,
-            )}
-            allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
-            onPointerDown={startDragRespectingPan}
-          />
-        ) : null}
         {shouldShowComplexViewFloatToolbar({
           block,
           isPrimary,
@@ -1151,8 +1137,6 @@ export function ComunicadoComposerCanvas() {
                   ...resolveBlockPlacementStyle(block),
                   zIndex: resolveBlockWrapStackZIndex({
                     modelZIndex: block.style?.zIndex,
-                    selectionChromeVisible: wrapChrome.showOutline,
-                    isPrimarySelection: isPrimary,
                   }),
                   ...(wrapTransform ? { transform: wrapTransform } : {}),
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
@@ -1322,17 +1306,6 @@ export function ComunicadoComposerCanvas() {
                     displayNames={remoteEditors.map((selection) => selection.displayName)}
                   />
                 ) : null}
-                {showSelectionChrome(block.id) ? (
-                  <BlockSelectionChrome
-                    block={block}
-                    designShortSidePx={Math.min(
-                      (block.frame.w / 100) * designSize.width,
-                      (block.frame.h / 100) * designSize.height,
-                    )}
-                    allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
-                    onPointerDown={startDragRespectingPan}
-                  />
-                ) : null}
                 {shouldShowComplexViewFloatToolbar({
                   block,
                   isPrimary,
@@ -1345,6 +1318,21 @@ export function ComunicadoComposerCanvas() {
                   <ComplexViewFloatToolbar block={block} />
                 ) : null}
               </div>
+            );
+          })}
+          {/* Chrome de seleção acima do conteúdo — não eleva o wrap (ordem do modelo). */}
+          {blocks.map((block) => {
+            if (layeredMemberIds.has(block.id)) return null;
+            if (!showSelectionChrome(block.id)) return null;
+            return (
+              <BlockSelectionChromeOverlay
+                key={`block-chrome-${block.id}`}
+                block={block}
+                designWidth={designSize.width}
+                designHeight={designSize.height}
+                isPrimarySelection={block.id === primarySelected}
+                onPointerDown={startDragRespectingPan}
+              />
             );
           })}
           {idleGroupLayerList.map((group) => {
