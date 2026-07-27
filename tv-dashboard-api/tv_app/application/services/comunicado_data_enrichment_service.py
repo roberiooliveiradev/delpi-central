@@ -442,6 +442,22 @@ def _list_count_metric(
     }
 
 
+def _merge_kpi_metrics_catalog_first(
+    preferred: list[dict[str, Any]],
+    discovered: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Catálogo ordena o primário; discovery acrescenta o restante (sem limitar o picker)."""
+    merged: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for metric in preferred + discovered:
+        field = str(metric.get("field") or "").strip()
+        if not field or field in seen:
+            continue
+        seen.add(field)
+        merged.append(metric)
+    return merged
+
+
 def _extract_kpi_metrics(
     data: Any,
     *,
@@ -449,12 +465,20 @@ def _extract_kpi_metrics(
     binding: dict[str, Any],
     meta: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Extrai métricas escalares; se valueFields do catálogo erram o payload, cai na discovery."""
+    """
+    Extrai métricas escalares do payload.
+
+    `valueFields` / labels do catálogo priorizam ordem e tradução — **não** restringem
+    o conjunto. Só `selectedValueFields` no binding filtra (escolha explícita do usuário).
+    """
     labels = _merged_value_field_labels(route_info, meta)
     catalog = _catalog_value_fields(route_info)
-    metrics = _metrics_from_candidates(data, catalog, labels) if catalog else []
-    if not metrics:
-        metrics = _metrics_from_candidates(data, _discover_candidates(data), labels)
+    discovered = _metrics_from_candidates(data, _discover_candidates(data), labels)
+    if catalog:
+        preferred = _metrics_from_candidates(data, catalog, labels)
+        metrics = _merge_kpi_metrics_catalog_first(preferred, discovered)
+    else:
+        metrics = discovered
     if not metrics:
         count_metric = _list_count_metric(data, route_info=route_info, labels=labels)
         if count_metric is not None:

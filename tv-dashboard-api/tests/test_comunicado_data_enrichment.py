@@ -1647,5 +1647,16 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
     )
     metrics = {item["field"]: item["label"] for item in blocks[0]["resolved"]["kpiMetrics"]}
     assert metrics.get("scrap_cost_pct") == "Custo de refugo / ROL (%)"
-    assert metrics.get("scrap_cost") == "Custo de refugo (R$)" or "scrap_cost" not in metrics
+    assert metrics.get("scrap_cost") == "Custo de refugo (R$)"
+    assert metrics.get("rol_with_ipi") == "ROL com IPI (R$)"
+    assert metrics.get("occurrences") == "Ocorrências de refugo"
+    assert metrics.get("value") == "Valor"
+    # valueFields do catálogo prioriza ordem — não limita o picker.
+    assert set(metrics) >= {
+        "scrap_cost_pct",
+        "scrap_cost",
+        "rol_with_ipi",
+        "occurrences",
+        "value",
+    }
     assert blocks[0]["resolved"]["kpi"]["label"] == "Custo de refugo / ROL (%)"
