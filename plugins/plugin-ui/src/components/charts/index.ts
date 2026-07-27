@@ -83,6 +83,11 @@ export {
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
 export {
+  buildSeriesChartLegendItems,
+  seriesChartUsesCategoryLegend,
+  type SeriesChartLegendItem,
+} from "./seriesChartLegendItems";
+export {
   SERIES_CHART_ELEMENT_CATALOG,
   CHART_ELEMENT_CATALOG,
   isSeriesChartElementApplicable,

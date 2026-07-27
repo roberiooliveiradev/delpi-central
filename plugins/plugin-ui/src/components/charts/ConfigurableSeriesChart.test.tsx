@@ -195,6 +195,59 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
+  it("pizza: legenda lista categorias e rótulos de dados nas fatias", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="pie"
+        points={[
+          { label: "LMP", value: 12 },
+          { label: "AMOSTRA", value: 2 },
+        ]}
+        options={{
+          title: "Dashboard de LMPs",
+          seriesName: "Dashboard de LMPs",
+          showTitle: true,
+          showLegend: true,
+          legendPosition: "bottom",
+          showDataLabels: true,
+          showAxes: false,
+          categoryColors: ["#089bdb", "#22c55e"],
+        }}
+      />,
+    );
+    const legend = container.querySelector(".delpi-ui-series-chart__legend");
+    expect(legend?.textContent).toContain("LMP");
+    expect(legend?.textContent).toContain("AMOSTRA");
+    expect(legend?.textContent).not.toContain("Dashboard de LMPs");
+    const labels = container.querySelectorAll(".delpi-ui-series-chart__data-label");
+    expect(labels.length).toBe(2);
+    expect(Array.from(labels).map((node) => node.textContent)).toEqual(
+      expect.arrayContaining(["12", "2"]),
+    );
+  });
+
+  it("funil: legenda por estágio e rótulos de dados", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="funnel"
+        points={[
+          { label: "Lead", value: 100 },
+          { label: "Qualificado", value: 40 },
+        ]}
+        options={{
+          seriesName: "Funil",
+          showLegend: true,
+          legendPosition: "bottom",
+          showDataLabels: true,
+          showTitle: false,
+        }}
+      />,
+    );
+    expect(screen.getByText("Lead")).toBeTruthy();
+    expect(screen.getByText("Qualificado")).toBeTruthy();
+    expect(container.querySelectorAll(".delpi-ui-series-chart__data-label").length).toBe(2);
+  });
+
   it("pinta plotArea antes da grade (grade não fica coberta pelo fill)", () => {
     const { container } = render(
       <ConfigurableSeriesChart

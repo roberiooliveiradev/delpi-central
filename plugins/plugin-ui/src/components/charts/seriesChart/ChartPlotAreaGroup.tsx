@@ -397,7 +397,36 @@ export function ChartPlotAreaGroup({
         series
       )}
 
-      {!skipCartesian ? (
+      {showDataLabels && multiBar && seriesList ? (
+        seriesList.map((entry, index) => (
+          <ChartValueLabels
+            key={`labels-bar-${entry.name}-${index}`}
+            chartType={chartType}
+            layout={layout}
+            points={entry.points}
+            valueFormat={valueFormat}
+            visible={showDataLabels}
+            chartParts={chartParts}
+            interaction={interaction}
+            seriesIndex={index}
+            seriesCount={seriesList.length}
+          />
+        ))
+      ) : showDataLabels && multiLine && seriesList ? (
+        seriesList.map((entry, index) => (
+          <ChartValueLabels
+            key={`labels-line-${entry.name}-${index}`}
+            chartType={chartType}
+            layout={layout}
+            points={entry.points}
+            valueFormat={valueFormat}
+            visible={showDataLabels}
+            chartParts={chartParts}
+            interaction={interaction}
+            seriesIndex={index}
+          />
+        ))
+      ) : showDataLabels && !(multiStacked && seriesList) ? (
         <ChartValueLabels
           chartType={chartType}
           layout={layout}
@@ -406,6 +435,7 @@ export function ChartPlotAreaGroup({
           visible={showDataLabels}
           chartParts={chartParts}
           interaction={interaction}
+          pieInnerRadiusRatio={pieInnerRadiusRatio}
         />
       ) : null}
 

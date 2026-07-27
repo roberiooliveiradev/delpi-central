@@ -10,13 +10,13 @@ import {
 import {
   seriesChartThemeStyle,
   usableSeriesChartPoints,
-  SERIES_CHART_CATEGORY_PALETTE,
   type SeriesChartKind,
   type SeriesChartOptions,
   type SeriesChartPoint,
   type SeriesChartSeriesSpec,
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
+import { buildSeriesChartLegendItems } from "./seriesChartLegendItems";
 import { useSeriesChartClasses } from "./seriesChartClasses";
 import {
   chartPartAllowsMove,
@@ -238,17 +238,13 @@ export function SeriesChartPrimitive({
   const showLegend = config.showLegend !== false && config.legendPosition !== "hidden";
   const showAxes = config.showAxes !== false;
   const ariaLabel = title || seriesName;
-  const legendItems =
-    multiSeries && seriesWithData
-      ? seriesWithData.map((series, index) => ({
-          name: series.name,
-          color:
-            series.color?.trim() ||
-            config.categoryColors?.[index] ||
-            SERIES_CHART_CATEGORY_PALETTE[index % SERIES_CHART_CATEGORY_PALETTE.length] ||
-            seriesColor,
-        }))
-      : undefined;
+  const legendItems = buildSeriesChartLegendItems({
+    chartType,
+    points: usable,
+    seriesColor,
+    seriesList: seriesWithData,
+    categoryColors: config.categoryColors,
+  });
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
   const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
