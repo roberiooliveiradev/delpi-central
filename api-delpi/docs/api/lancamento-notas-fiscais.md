@@ -134,7 +134,12 @@ Lista **pedidos de compra em aberto** no Protheus (`SC7`) da filial e fornecedor
 
 Filtros ERP (mesmo critério do estoque de segurança): `D_E_L_E_T_=''`, `C7_RESIDUO<>'S'`, `C7_QUANT > C7_QUJE`, `C7_FILIAL`, `C7_FORNECE`, `C7_LOJA`.
 
-Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item_count, groups[], linked, can_link }` — cada grupo com `order_number`, `delivery_date` (null = sem data), `issue_date`, `product_count`, `open_value` (soma), `items[]`.
+Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item_count, groups[], linked, can_link }` — cada grupo com `order_number`, `delivery_date` (null = sem data), `issue_date`, `product_count`, `open_value` (soma dos itens), `items[]`.
+
+Valor em aberto por item SC7 (proporcional ao saldo):  
+`fator = (C7_QUANT - C7_QUJE) / C7_QUANT`;  
+`open_value = ROUND(C7_TOTAL×f,2) + ROUND(C7_VALIPI×f,2) + ROUND(C7_VALFRE×f,2) - ROUND(C7_VLDESC×f,2)`  
+(não inclui `C7_VALICM` / `C7_ICMCOMP` / `C7_FRETE`).
 
 ### POST `.../purchase-orders/link`
 
