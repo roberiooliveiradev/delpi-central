@@ -542,7 +542,9 @@ export async function previewDataBlockV2(body: {
     maxRows?: number;
     includeColumnProfile?: boolean;
   };
+  signal?: AbortSignal;
 }) {
+  const { signal, ...payload } = body;
   return unwrap(
     httpPost<ApiEnvelope<{
       block: Record<string, unknown>;
@@ -550,7 +552,8 @@ export async function previewDataBlockV2(body: {
       preview?: Record<string, unknown>;
     }>>(
       `${API_BASE}/data/preview-block`,
-      body,
+      payload,
+      { signal },
     ),
   );
 }

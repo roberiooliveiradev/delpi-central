@@ -598,6 +598,36 @@
   animation: tdp-data-pulse 1.2s ease-in-out infinite;
 }
 
+.tdp-data-block--refreshing {
+  position: relative;
+}
+
+.tdp-data-block--refreshing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--tdp-surface, #0f172a) 28%, transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tdp-data-block__refresh-badge {
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  z-index: 2;
+  padding: 0.2em 0.55em;
+  border-radius: 999px;
+  font-size: clamp(9px, 1vw, 11px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--tdp-data-text, #e2e8f0);
+  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 85%, #0f172a);
+  box-shadow: 0 1px 4px color-mix(in srgb, #000 35%, transparent);
+  animation: tdp-data-pulse 1.2s ease-in-out infinite;
+}
+
 @keyframes tdp-data-pulse {
   0%,
   100% {

@@ -9,6 +9,10 @@ import {
 } from "./comunicadoKpiParts";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
+import {
+  DataBlockRefreshBadge,
+  withDataBlockLoadingClass,
+} from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyViewProjection } from "./viewProjection";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
@@ -60,8 +64,14 @@ export function KpiViewBlockView({
   const errorText = resolveDataBlockErrorText(resolved);
   if (errorText) {
     return (
-      <div className="tdp-data-block tdp-data-block--error">
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--error",
+          loading,
+        )}
+      >
         <span>{errorText}</span>
+        <DataBlockRefreshBadge loading={loading} />
       </div>
     );
   }
@@ -146,7 +156,13 @@ export function KpiViewBlockView({
         ? kpiInteraction.editingPart.field
         : null;
     return (
-      <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi">
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi",
+          loading,
+        )}
+      >
+        <DataBlockRefreshBadge loading={loading} />
         {metrics.map((metric) => {
           const metricRef = { kind: "metricCard" as const, field: metric.field };
           const selected = selectedMetricField === metric.field;
@@ -212,7 +228,13 @@ export function KpiViewBlockView({
   }
 
   return (
-    <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view">
+    <div
+      className={withDataBlockLoadingClass(
+        "tdp-data-block tdp-data-block--kpi tdp-kpi-view",
+        loading,
+      )}
+    >
+      <DataBlockRefreshBadge loading={loading} />
       {renderCard(resolved, metrics[0]?.field)}
     </div>
   );

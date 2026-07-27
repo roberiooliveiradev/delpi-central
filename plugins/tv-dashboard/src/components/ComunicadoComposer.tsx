@@ -34,8 +34,6 @@ import {
   type CSSProperties,
 } from "react";
 
-const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
-
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { useStageLineDraw } from "../hooks/useStageLineDraw";
@@ -97,7 +95,30 @@ import {
 import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
+const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
+
 const MARQUEE_THRESHOLD_PX = 4;
+
+/** Loading do bloco: sem resolved na carga inicial, ou fonte em refresh. */
+function resolveComposerBlockDataLoading(
+  block: ComunicadoBlock,
+  dataPreviewLoading: boolean,
+  refreshingSourceIds: readonly string[],
+): boolean {
+  if (!isFetchableDataBlockType(block.type) && !isDataViewBlockType(block.type)) {
+    return false;
+  }
+  const sourceId =
+    isDataViewBlockType(block.type) &&
+    "dataSourceId" in block &&
+    typeof block.dataSourceId === "string" &&
+    block.dataSourceId
+      ? block.dataSourceId
+      : block.id;
+  if (refreshingSourceIds.includes(sourceId)) return true;
+  const hasResolved = "resolved" in block && Boolean(block.resolved);
+  return !hasResolved && dataPreviewLoading;
+}
 
 function useCanvasBackgroundStyle() {
   const { background } = useComunicadoEditor();
@@ -160,6 +181,7 @@ export function ComunicadoComposerCanvas() {
     openTextFormatContextMenu,
     closeTextFormatContextMenu,
     dataPreviewLoading,
+    refreshingSourceIds,
     showStageGrid,
     showStageGuides,
     activeSmartGuides,
@@ -951,11 +973,11 @@ export function ComunicadoComposerCanvas() {
           ]
             .filter(Boolean)
             .join(" ") || undefined}
-          dataLoading={
-            (isFetchableDataBlockType(block.type) || isDataViewBlockType(block.type)) &&
-            !("resolved" in block && block.resolved) &&
-            dataPreviewLoading
-          }
+          dataLoading={resolveComposerBlockDataLoading(
+            block,
+            dataPreviewLoading,
+            refreshingSourceIds,
+          )}
         />
         {remoteEditors.length > 0 ? (
           <RemoteSelectionFrame
@@ -1276,11 +1298,11 @@ export function ComunicadoComposerCanvas() {
                   ]
                     .filter(Boolean)
                     .join(" ") || undefined}
-                  dataLoading={
-                    (isFetchableDataBlockType(block.type) || isDataViewBlockType(block.type)) &&
-                    !("resolved" in block && block.resolved) &&
-                    dataPreviewLoading
-                  }
+                  dataLoading={resolveComposerBlockDataLoading(
+                    block,
+                    dataPreviewLoading,
+                    refreshingSourceIds,
+                  )}
                 />
                 {remoteEditors.length > 0 ? (
                   <RemoteSelectionFrame

@@ -314,6 +314,7 @@ describe("useComunicadoDataPreview", () => {
     });
 
     expect(result.current.loadingProgressPercent).toBe(0);
+    expect(result.current.loadingProgressLabel).toMatch(/Carregando/);
 
     await act(async () => {
       resolveA({
@@ -323,6 +324,7 @@ describe("useComunicadoDataPreview", () => {
     });
 
     expect(result.current.loadingProgressPercent).toBe(50);
+    expect(result.current.loadingProgressLabel).toContain("1/2");
 
     await act(async () => {
       resolveB({
@@ -405,5 +407,47 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.resolvedByBlockId["metric-1"]?.error).toBe("Unauthorized");
     expect(result.current.resolvedByBlockId["metric-2"]?.kpi?.value).toBe(88);
     expect(result.current.error).toBe("Unauthorized");
+  });
+
+  it("timeout do preview grava erro e libera a barra de loading", async () => {
+    vi.useFakeTimers();
+    mockedPreview.mockImplementation((payload) => {
+      return new Promise((_, reject) => {
+        const signal = payload.signal;
+        if (!signal) {
+          reject(new Error("signal ausente"));
+          return;
+        }
+        if (signal.aborted) {
+          reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+          return;
+        }
+        signal.addEventListener(
+          "abort",
+          () => {
+            reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+          },
+          { once: true },
+        );
+      });
+    });
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({
+        playlistId: "pl-timeout",
+        config: configWithDataBlock,
+      }),
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000);
+      await Promise.resolve();
+    });
+
+    expect(result.current.resolvedByBlockId["metric-1"]?.error).toMatch(/Tempo esgotado/);
+    expect(result.current.error).toMatch(/Tempo esgotado/);
+    expect(result.current.loadingProgressPercent).toBeNull();
+    expect(result.current.refreshingSourceIds).toEqual([]);
+    vi.useRealTimers();
   });
 });

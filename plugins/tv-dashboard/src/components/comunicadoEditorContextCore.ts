@@ -455,6 +455,8 @@ export type ComunicadoEditorContextValue = {
   loadingMoreSourceIds: string[];
   /** Percentual 0–100 do fetch de dados em curso; `null` quando ocioso. */
   dataPreviewLoadingProgress: number | null;
+  /** Rótulo do progresso (fonte / contagem); `null` quando ocioso. */
+  dataPreviewLoadingLabel: string | null;
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
   loadMoreDataPreview: (blockId: string) => Promise<void>;
   globalRefreshSec: number;

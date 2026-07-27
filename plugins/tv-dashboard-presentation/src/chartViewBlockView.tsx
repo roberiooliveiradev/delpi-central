@@ -5,6 +5,10 @@ import {
 } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
+import {
+  DataBlockRefreshBadge,
+  withDataBlockLoadingClass,
+} from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyViewProjection } from "./viewProjection";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
@@ -60,8 +64,14 @@ export function ChartViewBlockView({
   const errorText = resolveDataBlockErrorText(resolved);
   if (errorText) {
     return (
-      <div className="tdp-data-block tdp-data-block--error">
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--error",
+          loading,
+        )}
+      >
         <span>{errorText}</span>
+        <DataBlockRefreshBadge loading={loading} />
       </div>
     );
   }
@@ -123,7 +133,13 @@ export function ChartViewBlockView({
   const kind = toSeriesChartKind(block.chartType)!;
 
   return (
-    <div className={`tdp-data-block tdp-data-block--chart tdp-data-block--chart-${kind}`}>
+    <div
+      className={withDataBlockLoadingClass(
+        `tdp-data-block tdp-data-block--chart tdp-data-block--chart-${kind}`,
+        loading,
+      )}
+    >
+      <DataBlockRefreshBadge loading={loading} />
       <TvDataSeriesChartWidget
         resolved={resolved}
         chartOptions={block.chartOptions}

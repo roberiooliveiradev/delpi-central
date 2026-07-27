@@ -168,6 +168,7 @@ function ComunicadoStageStatusBar() {
     dataPreviewError,
     dataPreviewLoading,
     dataPreviewLoadingProgress,
+    dataPreviewLoadingLabel,
     refreshDataPreview,
   } = useComunicadoEditor();
 
@@ -191,7 +192,7 @@ function ComunicadoStageStatusBar() {
           <div className="td-stage-statusbar__loading-slot">
             <InlineLoadingProgress
               percent={dataPreviewLoadingProgress!}
-              label="Carregando dados"
+              label={dataPreviewLoadingLabel ?? "Carregando dados"}
               classNames={TD_INLINE_LOADING_PROGRESS_CN}
             />
           </div>

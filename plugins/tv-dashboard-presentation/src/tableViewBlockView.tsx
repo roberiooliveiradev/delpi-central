@@ -3,6 +3,10 @@ import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import {
+  DataBlockRefreshBadge,
+  withDataBlockLoadingClass,
+} from "./dataBlockRefreshChrome";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyViewProjection } from "./viewProjection";
 import { resolveTableColumns } from "./tvDataPresentation";
@@ -29,8 +33,14 @@ export function TableViewBlockView({
   const errorText = resolveDataBlockErrorText(resolved);
   if (errorText) {
     return (
-      <div className="tdp-data-block tdp-data-block--error">
+      <div
+        className={withDataBlockLoadingClass(
+          "tdp-data-block tdp-data-block--error",
+          loading,
+        )}
+      >
         <span>{errorText}</span>
+        <DataBlockRefreshBadge loading={loading} />
       </div>
     );
   }
@@ -66,7 +76,10 @@ export function TableViewBlockView({
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 
   return (
-    <div className="tdp-data-block tdp-data-block--table">
+    <div
+      className={withDataBlockLoadingClass("tdp-data-block tdp-data-block--table", loading)}
+    >
+      <DataBlockRefreshBadge loading={loading} />
       <div className="tdp-data-table-wrap">
         <ConfigurableTable
           columns={columns}

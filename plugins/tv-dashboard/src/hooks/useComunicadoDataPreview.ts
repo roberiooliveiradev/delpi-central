@@ -16,6 +16,13 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import {
+  createLinkedTimeoutSignal,
+  DATA_PREVIEW_BLOCK_TIMEOUT_MS,
+  formatDataPreviewLoadingLabel,
+  resolveDataSourceProgressLabel,
+  resolvePreviewAbortMessage,
+} from "../utils/dataPreviewFetchGuard";
 import { readDataPreviewCache, writeDataPreviewCache } from "../utils/editorSessionCache";
 
 export type RefreshDataPreviewOptions = {
@@ -86,6 +93,7 @@ export function collectPreviewErrorMessages(
 /**
  * Preview de dados do editor — refetch automático quando filtros ou fontes mudam.
  * Botão «Atualizar visual» permanece para refresh manual com bypass de cache.
+ * Cada fonte tem timeout; lote anterior é abortado ao iniciar um novo fetch.
  */
 export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
@@ -100,12 +108,14 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const [loadingProgress, setLoadingProgress] = useState<{
     completed: number;
     total: number;
+    pendingLabels: string[];
   } | null>(null);
 
   const configRef = useRef(config);
   configRef.current = config;
 
   const requestIdRef = useRef(0);
+  const batchAbortRef = useRef<AbortController | null>(null);
   const resolvedRef = useRef(resolvedByBlockId);
   resolvedRef.current = resolvedByBlockId;
   const playlistIdRef = useRef(playlistId);
@@ -131,6 +141,8 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   useEffect(() => {
     return () => {
       if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
+      batchAbortRef.current?.abort();
+      batchAbortRef.current = null;
     };
   }, []);
 
@@ -145,6 +157,8 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     setInitialLoading(false);
     setError(null);
     setLoadingProgress(null);
+    batchAbortRef.current?.abort();
+    batchAbortRef.current = null;
     requestIdRef.current += 1;
     fingerprintRef.current = fp;
     syncedFingerprintRef.current = fp;
@@ -197,32 +211,51 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
         setInitialLoading(true);
       }
 
+      batchAbortRef.current?.abort();
+      const batchAbort = new AbortController();
+      batchAbortRef.current = batchAbort;
+
       const requestId = ++requestIdRef.current;
       setError(null);
       setRefreshingSourceIds([...targetIds]);
       setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
-      setLoadingProgress({ completed: 0, total: targets.length });
+
+      const pendingIds = new Set(targets.map((block) => block.id));
+      setLoadingProgress({
+        completed: 0,
+        total: targets.length,
+        pendingLabels: targets.map(resolveDataSourceProgressLabel),
+      });
 
       const nativeConfig = serializeComunicadoConfig(configRef.current);
       const fetchFingerprint = fingerprintRef.current;
 
-      const bumpProgress = () => {
+      const bumpProgressById = (finishedId: string) => {
         if (requestIdRef.current !== requestId) return;
-        setLoadingProgress((prev) => {
-          if (!prev) return prev;
-          return { ...prev, completed: Math.min(prev.total, prev.completed + 1) };
+        pendingIds.delete(finishedId);
+        setLoadingProgress({
+          completed: targets.length - pendingIds.size,
+          total: targets.length,
+          pendingLabels: targets
+            .filter((block) => pendingIds.has(block.id))
+            .map(resolveDataSourceProgressLabel),
         });
       };
 
       try {
         const pairs = await Promise.all(
           targets.map(async (block) => {
+            const { signal, cleanup } = createLinkedTimeoutSignal(
+              DATA_PREVIEW_BLOCK_TIMEOUT_MS,
+              batchAbort.signal,
+            );
             try {
               const response = await previewDataBlockV2({
                 block: stripResolved(block),
                 nativeConfig,
                 playlistId: playlistIdRef.current,
                 forceRefresh: Boolean(options.force),
+                signal,
               });
               const resolved = response.block?.resolved;
               if (resolved && typeof resolved === "object") {
@@ -233,11 +266,19 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
                 { error: "Resposta de preview sem dados resolvidos." },
               ] as const;
             } catch (err) {
-              const message =
-                err instanceof Error ? err.message : "Falha ao carregar dados.";
+              const superseded = requestIdRef.current !== requestId;
+              const message = resolvePreviewAbortMessage(err, superseded);
+              if (!message) {
+                const previous = resolvedRef.current[block.id];
+                return [
+                  block.id,
+                  previous ?? { error: "Carregamento cancelado." },
+                ] as const;
+              }
               return [block.id, { error: message }] as const;
             } finally {
-              bumpProgress();
+              cleanup();
+              bumpProgressById(block.id);
             }
           }),
         );
@@ -257,6 +298,9 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
           setInitialLoading(false);
           setRefreshingSourceIds([]);
           setLoadingProgress(null);
+          if (batchAbortRef.current === batchAbort) {
+            batchAbortRef.current = null;
+          }
         }
       }
     },
@@ -305,16 +349,30 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       };
       loadingMoreRef.current.add(blockId);
       setLoadingMoreSourceIds((current) => [...new Set([...current, blockId])]);
-      setLoadingProgress({ completed: 0, total: 1 });
+      setLoadingProgress({
+        completed: 0,
+        total: 1,
+        pendingLabels: [resolveDataSourceProgressLabel(block)],
+      });
+      const { signal, cleanup } = createLinkedTimeoutSignal(DATA_PREVIEW_BLOCK_TIMEOUT_MS);
       try {
         const response = await previewDataBlockV2({
           block: stripResolved(requestBlock),
           nativeConfig: serializeComunicadoConfig(configRef.current),
           playlistId: playlistIdRef.current,
           forceRefresh: false,
+          signal,
         });
         const nextPage = response.block?.resolved;
-        if (!nextPage || typeof nextPage !== "object") return;
+        if (!nextPage || typeof nextPage !== "object") {
+          setError("Resposta de preview sem dados resolvidos.");
+          return;
+        }
+        const pageError = resolveDataBlockErrorText(nextPage as ComunicadoDataResolved);
+        if (pageError) {
+          setError(pageError);
+          return;
+        }
         setResolvedByBlockId((current) => {
           const merged = mergeComunicadoDataPages(
             current[blockId] ?? previous,
@@ -325,10 +383,16 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
           writeDataPreviewCache(playlistIdRef.current, fingerprintRef.current, next);
           return next;
         });
-        setLoadingProgress({ completed: 1, total: 1 });
+        setLoadingProgress({
+          completed: 1,
+          total: 1,
+          pendingLabels: [],
+        });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Falha ao carregar mais dados.");
+        const message = resolvePreviewAbortMessage(err, false);
+        setError(message ?? "Falha ao carregar mais dados.");
       } finally {
+        cleanup();
         loadingMoreRef.current.delete(blockId);
         setLoadingMoreSourceIds((current) => current.filter((id) => id !== blockId));
         setLoadingProgress(null);
@@ -410,6 +474,11 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     );
   }, [loadingProgress]);
 
+  const loadingProgressLabel = useMemo(() => {
+    if (!loadingProgress || loadingProgress.total <= 0) return null;
+    return formatDataPreviewLoadingLabel(loadingProgress);
+  }, [loadingProgress]);
+
   const clearStaleForSourceIds = useCallback((blockIds: string[]) => {
     if (blockIds.length === 0) return;
     const idSet = new Set(blockIds);
@@ -426,6 +495,8 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     loadingMoreSourceIds,
     /** Percentual real 0–100 enquanto há fetch; `null` quando ocioso. */
     loadingProgressPercent,
+    /** Rótulo com fonte pendente / contagem (barra do palco). */
+    loadingProgressLabel,
     refreshDataPreview,
     loadMoreDataPreview,
     clearStaleForSourceIds,

@@ -60,9 +60,17 @@ export function DataSourceBlockView({
   const errorText = resolveDataBlockErrorText(block.resolved);
   if (errorText) {
     return (
-      <div className="tdp-data-block tdp-data-block--error tdp-data-source" style={paintStyle}>
+      <div
+        className={`tdp-data-block tdp-data-block--error tdp-data-source${loading ? " tdp-data-block--refreshing" : ""}`}
+        style={paintStyle}
+      >
         <Database size={28} aria-hidden="true" />
         <span>{errorText}</span>
+        {loading ? (
+          <span className="tdp-data-block__refresh-badge" aria-live="polite">
+            Atualizando…
+          </span>
+        ) : null}
       </div>
     );
   }
