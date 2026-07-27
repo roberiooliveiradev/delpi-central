@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   ConfirmModalPanel,
+  HelpTooltip,
   useConfirmDialogController,
   type StatusBadgeVariant,
 } from "@delpi/plugin-ui/index";
@@ -33,6 +34,7 @@ import {
   TextAreaField,
   TextField,
 } from "../components/ncUi";
+import { LMPS_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
   LmpNcStatus,
   LmpNonconformity,
@@ -43,6 +45,8 @@ import {
   lmpNcStatusLabel,
 } from "../types/lmpNonconformity";
 import { readLmpsFilters } from "../utils/filterUrl";
+
+const NC_HELP = LMPS_HELP_TOOLTIPS.nonconformities;
 
 type Props = {
   pathname: string;
@@ -292,51 +296,61 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       {
         key: "registered_at",
         header: "Data",
+        headerHint: NC_HELP.table.registeredAt,
         render: (row) => formatDisplayDate(row.registered_at),
       },
       {
         key: "sale_number",
         header: "OV",
+        headerHint: NC_HELP.table.saleNumber,
         render: (row) => row.sale_number || "—",
       },
       {
         key: "material_code",
         header: "Material",
+        headerHint: NC_HELP.table.material,
         render: (row) => row.material_code || "—",
       },
       {
         key: "supplier_name",
         header: "Fornecedor",
+        headerHint: NC_HELP.table.supplier,
         render: (row) => row.supplier_name || "—",
       },
       {
         key: "purchase_order",
         header: "OC",
+        headerHint: NC_HELP.table.purchaseOrder,
         render: (row) => row.purchase_order || "—",
       },
       {
         key: "invoice_number",
         header: "NF",
+        headerHint: NC_HELP.table.invoice,
         render: (row) => row.invoice_number || "—",
       },
       {
         key: "qty_received",
         header: "Rec",
+        headerHint: NC_HELP.table.qtyReceived,
         render: (row) => (row.qty_received != null ? String(row.qty_received) : "—"),
       },
       {
         key: "qty_accepted",
         header: "Ace",
+        headerHint: NC_HELP.table.qtyAccepted,
         render: (row) => (row.qty_accepted != null ? String(row.qty_accepted) : "—"),
       },
       {
         key: "qty_rejected",
         header: "Rep",
+        headerHint: NC_HELP.table.qtyRejected,
         render: (row) => (row.qty_rejected != null ? String(row.qty_rejected) : "—"),
       },
       {
         key: "status",
         header: "Status",
+        headerHint: NC_HELP.table.status,
         render: (row) => (
           <StatusBadge
             label={lmpNcStatusLabel(String(row.status))}
@@ -349,6 +363,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
       cols.push({
         key: "actions",
         header: "Ações",
+        headerHint: NC_HELP.table.actions,
         render: (row) => (
           <div className="lmps-nc-actions">
             <button
@@ -388,17 +403,29 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
           <div className="lmps-page-header__title-row">
             <h1>Acompanhamento de LMPs</h1>
           </div>
-          <span className="lmps-page-subtitle">
+          <span className="lmps-page-subtitle lmps-page-subtitle--with-help">
             Registro operacional de não conformidades
+            <HelpTooltip
+              content={NC_HELP.pageSubtitle}
+              ariaLabel="Ajuda: escopo do registro de NCs"
+              className="lmps-page-subtitle__help"
+            />
           </span>
           <LmpsNav currentPath={pathname} filterState={filterState} />
         </div>
         <div className="lmps-header-actions">
           {canWrite ? (
-            <ActionButton type="button" variant="primary" onClick={openCreate}>
-              <Plus size={16} />
-              Nova não conformidade
-            </ActionButton>
+            <div className="lmps-header-action">
+              <ActionButton type="button" variant="primary" onClick={openCreate}>
+                <Plus size={16} />
+                Nova não conformidade
+              </ActionButton>
+              <HelpTooltip
+                content={NC_HELP.newButton}
+                ariaLabel="Ajuda: nova não conformidade"
+                className="lmps-header-action__help"
+              />
+            </div>
           ) : null}
         </div>
       </header>
@@ -407,6 +434,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         <FilterSelectField
           id="lmps-nc-status"
           label="Status"
+          hint={NC_HELP.filters.status}
           value={status}
           onChange={(v) => {
             setPage(1);
@@ -421,6 +449,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         <FilterSelectField
           id="lmps-nc-branch"
           label="Filial"
+          hint={NC_HELP.filters.branch}
           value={branch}
           onChange={(v) => {
             setPage(1);
@@ -434,6 +463,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         />
         <FilterInputField
           label="OV"
+          hint={NC_HELP.filters.saleNumber}
           type="text"
           value={saleNumber}
           onChange={(v) => {
@@ -443,6 +473,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         />
         <FilterInputField
           label="Material"
+          hint={NC_HELP.filters.material}
           type="text"
           value={materialCode}
           onChange={(v) => {
@@ -452,6 +483,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         />
         <FilterInputField
           label="Produto"
+          hint={NC_HELP.filters.product}
           type="text"
           value={productCode}
           onChange={(v) => {
@@ -461,6 +493,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         />
         <FilterInputField
           label="Data início"
+          hint={NC_HELP.filters.dateStart}
           type="date"
           value={dateStart}
           onChange={(v) => {
@@ -470,6 +503,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
         />
         <FilterInputField
           label="Data fim"
+          hint={NC_HELP.filters.dateEnd}
           type="date"
           value={dateEnd}
           onChange={(v) => {
@@ -487,6 +521,8 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
 
       <DataTableSection
         title="Não conformidades"
+        titleHint={NC_HELP.table.section}
+        searchHint={NC_HELP.table.search}
         columns={columns}
         rows={items}
         rowKey={(row) => row.id}
@@ -512,11 +548,15 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             </div>
           ) : null}
 
-          <SectionCard title="Identificação">
+          <SectionCard
+            title="Identificação"
+            hint={NC_HELP.form.sectionIdentification}
+          >
             <div className="lmps-nc-form-grid">
               <NativeTextField
                 id="nc-registered-at"
                 label="Data/hora registro"
+                hint={NC_HELP.form.registeredAt}
                 type="datetime-local"
                 required
                 value={form.registered_at}
@@ -525,6 +565,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
               <SelectField
                 id="nc-status"
                 label="Status"
+                hint={NC_HELP.form.status}
                 required
                 value={form.status}
                 onChange={(v) => setForm((p) => ({ ...p, status: v as LmpNcStatus }))}
@@ -536,6 +577,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
               <SelectField
                 id="nc-branch"
                 label="Filial"
+                hint={NC_HELP.form.branch}
                 value={form.branch_code}
                 onChange={setField("branch_code")}
                 allowEmpty
@@ -548,73 +590,88 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
               <TextField
                 id="nc-sale"
                 label="OV (opcional)"
+                hint={NC_HELP.form.saleNumber}
                 value={form.sale_number}
                 onChange={setField("sale_number")}
               />
             </div>
           </SectionCard>
 
-          <SectionCard title="Documento / material">
+          <SectionCard
+            title="Documento / material"
+            hint={NC_HELP.form.sectionDocument}
+          >
             <div className="lmps-nc-form-grid">
               <TextField
                 id="nc-material"
                 label="Código material"
+                hint={NC_HELP.form.material}
                 value={form.material_code}
                 onChange={setField("material_code")}
               />
               <TextField
                 id="nc-supplier"
                 label="Fornecedor"
+                hint={NC_HELP.form.supplier}
                 value={form.supplier_name}
                 onChange={setField("supplier_name")}
               />
               <TextField
                 id="nc-oc"
                 label="Nº OC"
+                hint={NC_HELP.form.purchaseOrder}
                 value={form.purchase_order}
                 onChange={setField("purchase_order")}
               />
               <TextField
                 id="nc-nf"
                 label="Nº NF"
+                hint={NC_HELP.form.invoice}
                 value={form.invoice_number}
                 onChange={setField("invoice_number")}
               />
               <TextField
                 id="nc-qty-rec"
                 label="Qtde recebida"
+                hint={NC_HELP.form.qtyReceived}
                 value={form.qty_received}
                 onChange={setField("qty_received")}
               />
               <TextField
                 id="nc-qty-acc"
                 label="Qtde aceita"
+                hint={NC_HELP.form.qtyAccepted}
                 value={form.qty_accepted}
                 onChange={setField("qty_accepted")}
               />
               <TextField
                 id="nc-qty-rej"
                 label="Qtde reprovada"
+                hint={NC_HELP.form.qtyRejected}
                 value={form.qty_rejected}
                 onChange={setField("qty_rejected")}
               />
             </div>
           </SectionCard>
 
-          <SectionCard title="Produtos (opcional)">
+          <SectionCard
+            title="Produtos (opcional)"
+            hint={NC_HELP.form.sectionProducts}
+          >
             <TextField
               id="nc-products"
               label="Códigos de produto"
-              hint="Separe por vírgula ou espaço (códigos Protheus)."
+              hint={NC_HELP.form.productCodes}
               value={form.product_codes}
               onChange={setField("product_codes")}
             />
           </SectionCard>
 
-          <SectionCard title="Descrição">
+          <SectionCard title="Descrição" hint={NC_HELP.form.sectionDescription}>
             <TextAreaField
               id="nc-defect"
               label="Descrição do defeito"
+              hint={NC_HELP.form.defectDescription}
               value={form.defect_description}
               onChange={setField("defect_description")}
               rows={3}
@@ -622,6 +679,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             <TextAreaField
               id="nc-actions"
               label="Ações / ação corretiva"
+              hint={NC_HELP.form.correctiveActions}
               value={form.corrective_actions}
               onChange={setField("corrective_actions")}
               rows={3}
@@ -629,6 +687,7 @@ export function NonconformitiesPage({ pathname, canWrite = true }: Props) {
             <TextAreaField
               id="nc-opinion"
               label="Parecer técnico"
+              hint={NC_HELP.form.technicalOpinion}
               value={form.technical_opinion}
               onChange={setField("technical_opinion")}
               rows={3}

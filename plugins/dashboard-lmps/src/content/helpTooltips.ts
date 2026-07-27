@@ -164,4 +164,77 @@ export const LMPS_HELP_TOOLTIPS = {
   },
   tableSearch:
     "Filtra os registros da tabela pelo texto digitado (proposta, descrição, status, etc.).",
+  nonconformities: {
+    pageSubtitle:
+      "Cadastro operacional de não conformidades no contexto LMP: material, fornecedor, quantidades, status e vínculo opcional com OV/produtos.",
+    newButton:
+      "Abre o formulário para registrar uma nova não conformidade. Requer permissão de escrita.",
+    filters: {
+      status:
+        "Filtra pelo andamento da NC: Aberta, Em andamento ou Concluída. Vazio = todas.",
+      branch:
+        "Filial TOTVS associada ao registro (01 ou 02). Vazio = todas as filiais.",
+      saleNumber:
+        "Filtra pelo número da ordem de venda (OV/proposta), quando a NC estiver amarrada a uma LMP.",
+      material:
+        "Código do material/item informado na NC (busca parcial).",
+      product:
+        "Código de produto Protheus vinculado à NC (tabela de produtos).",
+      dateStart:
+        "Início do intervalo pela data/hora de registro da NC.",
+      dateEnd:
+        "Fim do intervalo pela data/hora de registro da NC.",
+    },
+    table: {
+      section:
+        "Lista paginada de não conformidades com os filtros aplicados. Use Editar/Excluir nas ações quando tiver permissão.",
+      search:
+        "Busca local nos registros já carregados na página (texto das colunas visíveis).",
+      registeredAt: "Data e hora em que a não conformidade foi registrada.",
+      saleNumber: "OV/proposta vinculada, quando informada.",
+      material: "Código do material/item da ocorrência.",
+      supplier: "Nome do fornecedor relacionado à NC.",
+      purchaseOrder: "Número da ordem de compra (OC).",
+      invoice: "Número da nota fiscal (NF).",
+      qtyReceived: "Quantidade recebida no recebimento/inspeção.",
+      qtyAccepted: "Quantidade aceita após análise.",
+      qtyRejected: "Quantidade reprovada / não conforme.",
+      status: "Andamento da NC: Aberta, Em andamento ou Concluída.",
+      actions: "Editar o registro ou excluí-lo definitivamente.",
+    },
+    form: {
+      sectionIdentification:
+        "Quando e em que contexto a NC foi registrada (data/hora, status, filial e OV opcional).",
+      sectionDocument:
+        "Dados do documento/material: fornecedor, OC, NF e quantidades do recebimento.",
+      sectionProducts:
+        "Códigos Protheus opcionais amarrados à NC (podem vir da LMP/OV).",
+      sectionDescription:
+        "Narrativa técnica: defeito encontrado, ações tomadas e parecer.",
+      registeredAt:
+        "Data e hora do registro da ocorrência. Campo obrigatório.",
+      status:
+        "Situação atual da NC: Aberta (nova), Em andamento (tratamento) ou Concluída.",
+      branch:
+        "Filial TOTVS (01/02) do contexto operacional. Opcional.",
+      saleNumber:
+        "Número da OV/proposta LMP para amarrar a NC. Opcional.",
+      material:
+        "Código do material/item envolvido na não conformidade.",
+      supplier: "Fornecedor do material ou serviço relacionado.",
+      purchaseOrder: "Número da ordem de compra no TOTVS/ERP.",
+      invoice: "Número da nota fiscal de entrada.",
+      qtyReceived: "Quantidade total recebida no lote/inspeção.",
+      qtyAccepted: "Quantidade aceita após conferência.",
+      qtyRejected: "Quantidade reprovada / segregada.",
+      productCodes:
+        "Lista de códigos de produto Protheus, separados por vírgula ou espaço.",
+      defectDescription:
+        "Descrição objetiva do defeito ou desvio encontrado.",
+      correctiveActions:
+        "Ações já tomadas ou plano de ação corretiva.",
+      technicalOpinion:
+        "Parecer técnico / conclusão da análise.",
+    },
+  },
 } as const;
