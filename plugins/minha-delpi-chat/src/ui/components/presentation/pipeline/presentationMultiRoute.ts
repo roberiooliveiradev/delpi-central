@@ -134,12 +134,6 @@ export function isMultiRouteProductPresentation(toolCalls: ChatToolCall[]): bool
   return !analyserOnly;
 }
 
-export function isStockFocusedPresentation(toolCalls: ChatToolCall[]): boolean {
-  const blocks = collectProductRouteBlocks(toolCalls);
-
-  return blocks.length === 1 && blocks[0]?.routeKey === "stock";
-}
-
 export function resolveMultiRouteStackPlan(_toolCalls: ChatToolCall[]): StackPresentationPlan {
   return {
     profileFirst: false,

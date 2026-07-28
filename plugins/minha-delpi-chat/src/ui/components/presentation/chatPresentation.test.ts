@@ -14,8 +14,6 @@ import {
   getChartPresentationFromPair,
   getPresentationPairFromToolCalls,
   getPresentationTitle,
-  isStructureLikeToolCalls,
-  resolveDefaultRichViewMode,
   resolveRichFormatToggles,
   isShortPresentationCaption,
   resolveRichTextBody,
@@ -231,22 +229,8 @@ describe("getAvailableFormatsFromToolCalls", () => {
   });
 });
 
-describe("isStructureLikeToolCalls", () => {
-  it("detecta rotas de estrutura", () => {
-    expect(
-      isStructureLikeToolCalls(
-        fixtureToolCalls([
-          {
-            metadata: { path: "/products/90260174/analyser" },
-          },
-        ]),
-      ),
-    ).toBe(true);
-  });
-});
-
 describe("resolveRichFormatToggles", () => {
-  it("expõe Texto, Árvore e Tabela e oculta gráfico quando há árvore", () => {
+  it("expõe Texto, Árvore, Tabela e gráfico quando há árvore (não esconde chart)", () => {
     expect(
       resolveRichFormatToggles({
         hasText: true,
@@ -259,7 +243,7 @@ describe("resolveRichFormatToggles", () => {
       showText: true,
       showTree: true,
       showTable: true,
-      showChart: false,
+      showChart: true,
     });
   });
 
@@ -273,6 +257,24 @@ describe("resolveRichFormatToggles", () => {
         isCommentaryVisual: false,
       }).showChart,
     ).toBe(true);
+  });
+
+  it("respeita availableViews da API", () => {
+    expect(
+      resolveRichFormatToggles({
+        hasText: true,
+        hasChart: true,
+        hasTable: true,
+        hasTree: true,
+        isCommentaryVisual: false,
+        availableViews: ["text", "table", "tree"],
+      }),
+    ).toEqual({
+      showText: true,
+      showTree: true,
+      showTable: true,
+      showChart: false,
+    });
   });
 });
 
@@ -368,12 +370,9 @@ describe("presentationDecision (Playbook 09)", () => {
     ]);
 
     expect(
-      resolveDefaultRichViewMode(toolCalls, {
-        hasText: false,
-        hasChart: true,
-        hasTable: true,
-        hasTree: false,
-      }),
+      mapPresentationDecisionToViewFormat(
+        getPresentationDecisionFromToolCalls(toolCalls)?.selected,
+      ),
     ).toBe("chart");
 
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe(
@@ -414,40 +413,6 @@ describe("presentationDecision (Playbook 09)", () => {
     ]);
 
     expect(getPresentationInsightFromToolCalls(toolCalls)).toBe("");
-  });
-});
-
-describe("resolveDefaultRichViewMode", () => {
-  it("inicia em árvore quando há apresentação em árvore", () => {
-    const toolCalls = fixtureToolCalls([
-      {
-        metadata: {
-          path: "/products/1/analyser",
-          preferredFormat: "table",
-          presentation: {
-            type: "tree",
-            title: "Estrutura",
-            root: { id: "1", label: "1" },
-          },
-          tablePresentation: {
-            type: "table",
-            title: "Tabela",
-            columns: [{ key: "c", label: "C" }],
-            rows: [{ c: "1" }],
-          },
-        },
-      },
-    ]);
-
-    expect(
-      resolveDefaultRichViewMode(toolCalls, {
-        hasText: true,
-        hasChart: false,
-        hasTable: true,
-        hasTree: true,
-        commentaryVisual: true,
-      }),
-    ).toBe("tree");
   });
 });
 

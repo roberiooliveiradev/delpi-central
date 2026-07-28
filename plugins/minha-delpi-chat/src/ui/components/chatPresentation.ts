@@ -428,16 +428,6 @@ export function stripRichUiRedundantProseFromMarkdown(
 }
 
 
-export function isStructureLikeToolCalls(toolCalls?: ChatToolCall[]): boolean {
-  const path = getPathFromToolCalls(toolCalls).toLowerCase();
-
-  return (
-    path.includes("/structure") ||
-    path.includes("/parents") ||
-    path.includes("/analyser")
-  );
-}
-
 export function hasTreePresentationAvailable(
   toolCalls?: ChatToolCall[],
   pair?: PresentationPair,
@@ -454,90 +444,50 @@ export type RichFormatToggleOptions = {
   showChart: boolean;
 };
 
-/** Texto + árvore + tabela; oculta gráfico quando há árvore hierárquica. */
+function availableViewsAllow(
+  availableViews: string[] | null | undefined,
+  candidates: string[],
+): boolean {
+  if (!Array.isArray(availableViews) || !availableViews.length) {
+    return true;
+  }
+
+  const allowed = new Set(
+    availableViews.map((view) => String(view || "").trim().toLowerCase()).filter(Boolean),
+  );
+
+  return candidates.some((candidate) => allowed.has(candidate));
+}
+
+/** Toggles da toolbar: presença de dado + availableViews da API (sem esconder chart por tree). */
 export function resolveRichFormatToggles(options: {
   hasText: boolean;
   hasChart: boolean;
   hasTable: boolean;
   hasTree: boolean;
   isCommentaryVisual: boolean;
+  availableViews?: string[] | null;
 }): RichFormatToggleOptions {
-  const { hasText, hasChart, hasTable, hasTree, isCommentaryVisual } = options;
-  const hierarchyWithTree = hasTree;
+  const {
+    hasText,
+    hasChart,
+    hasTable,
+    hasTree,
+    isCommentaryVisual,
+    availableViews,
+  } = options;
 
   return {
-    showText: !isCommentaryVisual && hasText,
-    showTree: hasTree,
-    showTable: hasTable,
-    showChart: hasChart && !hierarchyWithTree,
+    showText:
+      !isCommentaryVisual && hasText && availableViewsAllow(availableViews, ["text"]),
+    showTree: hasTree && availableViewsAllow(availableViews, ["tree"]),
+    showTable: hasTable && availableViewsAllow(availableViews, ["table"]),
+    showChart: hasChart && availableViewsAllow(availableViews, ["chart", "line_chart", "bar_chart"]),
   };
 }
 
 export function countRichVisualFormats(toggles: RichFormatToggleOptions): number {
   return [toggles.showTree, toggles.showTable, toggles.showChart].filter(Boolean).length;
-}
-
-/** Modo visual inicial: árvore quando existir; texto só se não houver árvore. */
-export function resolveDefaultRichViewMode(
-  toolCalls: ChatToolCall[] | undefined,
-  options: {
-    hasText: boolean;
-    hasChart: boolean;
-    hasTable: boolean;
-    hasTree: boolean;
-    commentaryVisual?: boolean;
-  },
-): ViewFormat {
-  const { hasText, hasChart, hasTable, hasTree, commentaryVisual = false } = options;
-  const preferred = getPreferredFormatFromToolCalls(toolCalls);
-  const decision = getPresentationDecisionFromToolCalls(toolCalls);
-  const decisionView = mapPresentationDecisionToViewFormat(decision?.selected);
-
-  if (decisionView === "tree" && hasTree) {
-    return "tree";
-  }
-
-  if (decisionView === "chart" && hasChart) {
-    return "chart";
-  }
-
-  if (decisionView === "table" && hasTable) {
-    return "table";
-  }
-
-  if (!commentaryVisual && decisionView === "text" && hasText && !hasTree) {
-    return "text";
-  }
-
-  if (!commentaryVisual && preferred === "text" && hasText && !hasTree) {
-    return "text";
-  }
-
-  if (hasTree && (!decisionView || decisionView === "tree")) {
-    return "tree";
-  }
-
-  if (preferred === "chart" && hasChart) {
-    return "chart";
-  }
-
-  if (preferred === "table" && hasTable) {
-    return "table";
-  }
-
-  if (hasChart) {
-    return "chart";
-  }
-
-  if (hasTable) {
-    return "table";
-  }
-
-  if (!commentaryVisual && hasText) {
-    return "text";
-  }
-
-  return "tree";
 }
 
 export function hasInspectionTablePresentation(toolCalls?: ChatToolCall[]): boolean {
