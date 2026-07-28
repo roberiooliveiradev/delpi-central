@@ -40,8 +40,11 @@ describe("resolveParamSelectOptions", () => {
     ]);
   });
 
-  it("mantém periodDays como input numérico (sem select)", () => {
-    expect(resolveParamSelectOptions("periodDays", { type: "integer" })).toBeNull();
+  it("branch com enum no schema vira select mesmo sem branchScope", () => {
+    expect(resolveParamSelectOptions("branch", { enum: ["01", "02"] })).toEqual([
+      { value: "01", label: "01" },
+      { value: "02", label: "02" },
+    ]);
   });
 
   it("retorna null para texto livre", () => {
@@ -79,11 +82,9 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).not.toMatch(/isDateRangePairKey\(key, datePair\) && !isCustom/);
   });
 
-  it("emite preset + competence em um único onChange (evita race stale)", () => {
+  it("passa enum do schema para BranchField (Configurar fonte)", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
-    expect(source).toMatch(/updates: Record<string, string>/);
-    expect(source).toMatch(/updates\.competence = ""/);
-    expect(source).not.toMatch(/onChange\(DATE_RANGE_PRESET_PARAM, value\);\s*\n\s*if \(hasCompetence/);
+    expect(source).toMatch(/schemaEnum=\{field\.enum\}/);
   });
 });

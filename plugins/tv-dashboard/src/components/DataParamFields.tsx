@@ -254,6 +254,7 @@ export function DataParamFields({
           label={label}
           hint={hint}
           scope={branchScope}
+          schemaEnum={field.enum}
           value={displayValue}
           onChange={(value) => patchParam(key, value)}
           placeholder={inherited ? "Herdado do slide" : "Ex.: 01"}
