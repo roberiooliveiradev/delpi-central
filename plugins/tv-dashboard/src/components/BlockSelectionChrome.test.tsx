@@ -94,4 +94,24 @@ describe("BlockSelectionChrome", () => {
       screen.getAllByLabelText("Redimensionar canto superior esquerdo").length,
     ).toBeGreaterThanOrEqual(1);
   });
+
+  it("duplo clique no handle dispara hug (não inicia resize no 2º clique)", () => {
+    const onPointerDown = vi.fn();
+    const onResizeHandleDoubleClick = vi.fn();
+    const block = createShapeBlock("rectangle");
+    render(
+      <BlockSelectionChrome
+        block={block}
+        designShortSidePx={64}
+        allowResize
+        onPointerDown={onPointerDown}
+        onResizeHandleDoubleClick={onResizeHandleDoubleClick}
+      />,
+    );
+    const handle = screen.getByLabelText("Redimensionar borda direita");
+    expect(handle.getAttribute("title")).toMatch(/ajustar ao texto/i);
+    handle.dispatchEvent(new MouseEvent("dblclick", { bubbles: true, cancelable: true }));
+    expect(onResizeHandleDoubleClick).toHaveBeenCalledTimes(1);
+    expect(onResizeHandleDoubleClick.mock.calls[0]?.[2]).toBe("resize-e");
+  });
 });

@@ -19,6 +19,11 @@ type Props = {
     block: ComunicadoBlock,
     mode: BlockDragMode,
   ) => void;
+  onResizeHandleDoubleClick?: (
+    event: ReactPointerEvent<HTMLElement>,
+    block: ComunicadoBlock,
+    mode: Extract<BlockDragMode, `resize-${string}`>,
+  ) => void;
 };
 
 /**
@@ -31,6 +36,7 @@ export function BlockSelectionChromeOverlay({
   designHeight,
   isPrimarySelection,
   onPointerDown,
+  onResizeHandleDoubleClick,
 }: Props) {
   const wrapTransform = buildBlockTransformCss(block.style);
   const style: CSSProperties = {
@@ -68,6 +74,7 @@ export function BlockSelectionChromeOverlay({
         )}
         allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
         onPointerDown={onPointerDown}
+        onResizeHandleDoubleClick={onResizeHandleDoubleClick}
       />
     </div>
   );

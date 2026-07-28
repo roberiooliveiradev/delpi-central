@@ -16,12 +16,11 @@ import {
 import {
   clampFramePositionPercent,
   clampFrameSizePercent,
-  DEFAULT_HEADING_INSERT_SIZE_PX,
   DEFAULT_ICON_INSERT_SIZE_PX,
   DEFAULT_SHAPE_INSERT_SIZE_PX,
-  DEFAULT_TEXT_INSERT_SIZE_PX,
   squareFrameFromDesignPx,
 } from "./frameDesignPixels";
+import { textBoxFrameFromContent } from "./visualBoxTextHug";
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   COMUNICADO_MARKER_RADIUS_DEFAULT,
@@ -467,10 +466,21 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "input") return { ...DECK_INPUT_DEFAULTS.frame };
   if (type === "kpi_view") return { ...DECK_KPI_DEFAULTS.frame };
   if (type === "heading") {
-    return squareFrameFromDesignPx(DEFAULT_HEADING_INSERT_SIZE_PX, { x: 5, y: 12 });
+    /* Hug ao placeholder — não o quadrado das formas (Figma text / PPT auto-box). */
+    return textBoxFrameFromContent({
+      content: "Novo título",
+      fontSize: 56,
+      lineHeight: 1.15,
+      origin: { x: 5, y: 12 },
+    });
   }
   if (type === "text") {
-    return squareFrameFromDesignPx(DEFAULT_TEXT_INSERT_SIZE_PX, { x: 5, y: 34 });
+    return textBoxFrameFromContent({
+      content: "Texto",
+      fontSize: 28,
+      lineHeight: 1.15,
+      origin: { x: 5, y: 34 },
+    });
   }
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
@@ -632,7 +642,16 @@ export function createBlock(
     style: defaultStyle(type, shape),
   };
   if (type === "heading" || type === "text") {
-    return { ...base, type, content };
+    const style = defaultStyle(type, shape);
+    const placeholder =
+      content.trim() || (type === "heading" ? "Novo título" : "Texto");
+    const frame = textBoxFrameFromContent({
+      content: placeholder,
+      fontSize: typeof style.fontSize === "number" ? style.fontSize : type === "heading" ? 56 : 28,
+      lineHeight: typeof style.lineHeight === "number" ? style.lineHeight : 1.15,
+      origin: type === "heading" ? { x: 5, y: 12 } : { x: 5, y: 34 },
+    });
+    return { ...base, type, content, style, frame };
   }
   if (type === "shape") {
     const kind = shape ?? "rectangle";

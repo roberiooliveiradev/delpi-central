@@ -67,16 +67,22 @@ describe("frameDesignPixels", () => {
     expect(frame.h).toBeGreaterThan(frame.w);
   });
 
-  it("inserts de forma, texto e ícone vêm quadrados em px de design", () => {
+  it("inserts de forma e ícone vêm quadrados; texto/heading abraçam o conteúdo", () => {
     expectSquareDesignPx(defaultFrame("shape", "rectangle"), DEFAULT_SHAPE_INSERT_SIZE_PX);
     expectSquareDesignPx(defaultFrame("shape", "ellipse"), DEFAULT_SHAPE_INSERT_SIZE_PX);
     expectSquareDesignPx(defaultFrame("shape", "arrow-right"), DEFAULT_SHAPE_INSERT_SIZE_PX);
     expectSquareDesignPx(defaultFrame("shape", "callout-rect"), DEFAULT_SHAPE_INSERT_SIZE_PX);
-    expectSquareDesignPx(defaultFrame("text"), DEFAULT_TEXT_INSERT_SIZE_PX);
-    expectSquareDesignPx(defaultFrame("heading"), DEFAULT_HEADING_INSERT_SIZE_PX);
     expectSquareDesignPx(defaultFrame("icon"), DEFAULT_ICON_INSERT_SIZE_PX);
     expectSquareDesignPx(createShapeBlock("rounded-rect").frame, DEFAULT_SHAPE_INSERT_SIZE_PX);
-    expectSquareDesignPx(createBlock("text", "Olá").frame, DEFAULT_TEXT_INSERT_SIZE_PX);
+
+    const textPx = framePercentToDesignPx(createBlock("text", "Texto").frame, FULL_HD);
+    const headingPx = framePercentToDesignPx(createBlock("heading", "Novo título").frame, FULL_HD);
+    expect(textPx.w).toBeLessThan(DEFAULT_TEXT_INSERT_SIZE_PX);
+    expect(textPx.h).toBeLessThan(DEFAULT_TEXT_INSERT_SIZE_PX);
+    expect(headingPx.w).toBeLessThan(DEFAULT_HEADING_INSERT_SIZE_PX);
+    expect(headingPx.h).toBeLessThan(DEFAULT_HEADING_INSERT_SIZE_PX);
+    expect(textPx.w).toBeGreaterThan(40);
+    expect(headingPx.h).toBeGreaterThan(textPx.h);
   });
 
   it("patchComunicadoFrame só exige tamanho > 0 e permite posição fora do slide", () => {

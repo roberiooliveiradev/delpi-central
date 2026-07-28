@@ -29,6 +29,8 @@ export const BLOCK_RESIZE_HANDLES: Array<{
   { mode: "resize-se", position: "se", label: "Redimensionar canto inferior direito" },
 ];
 
+const RESIZE_HUG_TITLE = "Duplo clique: ajustar ao texto";
+
 type Props = {
   block: ComunicadoBlock;
   /** Lado curto do frame em px de design (handles de ajuste). */
@@ -38,6 +40,12 @@ type Props = {
     event: ReactPointerEvent<HTMLElement>,
     block: ComunicadoBlock,
     mode: BlockDragMode,
+  ) => void;
+  /** Figma/PPT: duplo clique no handle → hug ao texto interno. */
+  onResizeHandleDoubleClick?: (
+    event: ReactPointerEvent<HTMLElement>,
+    block: ComunicadoBlock,
+    mode: Extract<BlockDragMode, `resize-${string}`>,
   ) => void;
 };
 
@@ -62,6 +70,7 @@ export function BlockSelectionChrome({
   designShortSidePx,
   allowResize,
   onPointerDown,
+  onResizeHandleDoubleClick,
 }: Props) {
   /* KPI incluso — `comunicadoBlockShapeChrome` já resolve cantos da parte `card`. */
   const showAdjust = blockSupportsShapeChromeHandles(block);
@@ -106,7 +115,22 @@ export function BlockSelectionChrome({
               type="button"
               className={`td-composer__resize td-composer__resize--${position}`}
               aria-label={label}
-              onPointerDown={(event) => onPointerDown(event, block, mode)}
+              title={onResizeHandleDoubleClick ? RESIZE_HUG_TITLE : undefined}
+              onPointerDown={(event) => {
+                /* 2º clique do dblclick não inicia resize (senão “puxa” a caixa). */
+                if (event.detail >= 2) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return;
+                }
+                onPointerDown(event, block, mode);
+              }}
+              onDoubleClick={(event) => {
+                if (!onResizeHandleDoubleClick) return;
+                event.preventDefault();
+                event.stopPropagation();
+                onResizeHandleDoubleClick(event, block, mode);
+              }}
             />
           ))
         : null}

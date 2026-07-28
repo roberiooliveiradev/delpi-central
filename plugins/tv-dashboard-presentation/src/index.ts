@@ -56,6 +56,20 @@ export {
   squareFrameFromDesignPx,
 } from "./frameDesignPixels";
 export {
+  DEFAULT_TEXT_INSERT_MAX_WIDTH_PX,
+  TEXT_BOX_HUG_INSET_PX,
+  TEXT_BOX_HUG_MIN_HEIGHT_PX,
+  TEXT_BOX_HUG_MIN_WIDTH_PX,
+  TEXT_CHAR_WIDTH_FACTOR,
+  estimateTextContentSizePx,
+  hugFrameToContentSizePx,
+  resizeHandleToHugAxes,
+  resizeModeToHandlePosition,
+  textBoxFrameFromContent,
+  type VisualBoxHugAxes,
+  type VisualBoxResizeHandlePosition,
+} from "./visualBoxTextHug";
+export {
   TABLE_VIEW_DEFAULT_FONT_SIZE_PX,
   applyComplexBlockFrameWithTypography,
   contentFillFrameScale,

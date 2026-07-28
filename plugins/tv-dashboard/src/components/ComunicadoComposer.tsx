@@ -7,6 +7,7 @@ import {
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
+  hugFrameToContentSizePx,
   isClickPathDrawTool,
   isComunicadoVisualBoxBlock,
   isCanvasTableDataBoundBlockType,
@@ -14,6 +15,8 @@ import {
   isDataViewBlockType,
   isFetchableDataBlockType,
   isBlockHiddenOnStage,
+  resizeHandleToHugAxes,
+  resizeModeToHandlePosition,
   resolveBlockSelectionBorderRadiusPx,
   resolveViewportPixelSize,
   isLineShapeKind,
@@ -44,6 +47,10 @@ import { resolveStageContextMenuAnchorClient } from "../utils/resolveStageContex
 import { resolveStageContextMenuHit } from "../utils/resolveStageContextMenuHit";
 import { resolveContextMenuSessionSelectedIds } from "../utils/contextMenuSelectionGuard";
 import { resolveStageDblClickAction } from "../utils/stageInteractionPolicy";
+import {
+  measureVisualBoxContentSizePx,
+  visualBoxBlockHasHugableText,
+} from "../utils/measureVisualBoxContentSize";
 import {
   blocksInMarquee,
   mergeMarqueeSelection,
@@ -485,6 +492,44 @@ export function ComunicadoComposerCanvas() {
       startDrag(event, block, mode);
     },
     [armMultiDragSelection, isBlockSelected, selectedIds, stagePanMode, startDrag],
+  );
+
+  /** Duplo clique no handle de resize → hug ao texto (Figma edge hug). */
+  const hugSelectedVisualBoxToText = useCallback(
+    (
+      event: React.PointerEvent<HTMLElement>,
+      block: ComunicadoBlock,
+      mode: Extract<BlockDragMode, `resize-${string}`>,
+    ) => {
+      if (!isComunicadoVisualBoxBlock(block)) return;
+      if (!visualBoxBlockHasHugableText(block)) return;
+      const handle = resizeModeToHandlePosition(mode);
+      if (!handle) return;
+      const axes = resizeHandleToHugAxes(handle);
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const wrap = canvas.querySelector<HTMLElement>(
+        `.td-composer__block-wrap[data-block-id="${block.id}"]`,
+      );
+      if (!wrap) return;
+      const currentWidthPx = (block.frame.w / 100) * designSize.width;
+      const measured = measureVisualBoxContentSizePx(wrap, {
+        axes,
+        currentWidthPx,
+      });
+      if (!measured) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const nextFrame = hugFrameToContentSizePx(
+        block.frame,
+        measured,
+        designSize,
+        axes,
+        handle,
+      );
+      updateBlock(block.id, { frame: nextFrame });
+    },
+    [canvasRef, designSize, updateBlock],
   );
 
   const handleCanvasPointerDown = useCallback(
@@ -1332,6 +1377,9 @@ export function ComunicadoComposerCanvas() {
                 designHeight={designSize.height}
                 isPrimarySelection={block.id === primarySelected}
                 onPointerDown={startDragRespectingPan}
+                onResizeHandleDoubleClick={
+                  isComunicadoVisualBoxBlock(block) ? hugSelectedVisualBoxToText : undefined
+                }
               />
             );
           })}
