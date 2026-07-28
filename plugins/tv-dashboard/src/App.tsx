@@ -4,6 +4,7 @@ import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
 import { DataSourceDuplicateChoiceProvider } from "./context/DataSourceDuplicateChoiceProvider";
 import { NoticeDialogProvider } from "./context/NoticeDialogProvider";
+import { useSuppressBrowserContextMenu } from "./hooks/useSuppressBrowserContextMenu";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
@@ -23,6 +24,7 @@ import {
   shouldKeepEditorUnderPreview,
 } from "./utils/editorSurface";
 import { preparePreviewNavigation } from "./utils/previewHandoff";
+import { TV_DASHBOARD_ROOT_CLASS } from "./constants/pluginRootClass";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -33,6 +35,7 @@ export { isDeckEditorSurfaceActive, shouldKeepEditorUnderPreview } from "./utils
 
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
+  useSuppressBrowserContextMenu(true);
 
   const pathname = useTvDashboardPath(pathnameFromHost);
   const path = normalizeTvDashboardPath(pathname);
@@ -153,7 +156,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         <DataSourceDuplicateChoiceProvider>
         <div
           className={[
-            "dashboard-tv-dashboard",
+            TV_DASHBOARD_ROOT_CLASS,
             "dashboard-page",
             isFullscreenView ? "td-app-shell--preview" : null,
             deckChrome ? "dashboard-page--deck-edit" : null,
