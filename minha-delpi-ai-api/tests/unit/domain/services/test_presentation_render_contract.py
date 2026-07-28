@@ -654,6 +654,57 @@ def test_render_pipeline_finalize_prunes_and_builds_render_plan():
     assert any(segment.get("kind") == "tree" for segment in render_plan.get("segments") or [])
 
 
+def test_render_pipeline_finalize_sets_structure_dedup_and_single_selected_only():
+    """finalize delivered sempre aplica structure dedup antes do renderPlan."""
+    from app.domain.services.chat_presentation_render_pipeline_service import (
+        ChatPresentationRenderPipelineService,
+    )
+
+    structure_table = {
+        "type": "table",
+        "title": "Componentes da estrutura 90261565",
+        "columns": [
+            {"key": "level", "label": "Nível"},
+            {"key": "component_code", "label": "Componente"},
+        ],
+        "rows": [{"level": 1, "component_code": "A"}],
+    }
+    tree = {
+        "type": "tree",
+        "title": "Estrutura do produto 90261565",
+        "root": {"id": "90261565", "label": "90261565", "children": []},
+    }
+    metadata = {
+        "path": "/products/90261565/structure",
+        "apiDelpiResponseMeta": {"entity": "product_structure", "shape": "hierarchy"},
+        "preferredFormat": "tree",
+        "presentationDecision": {
+            "selected": "tree",
+            "layoutMode": "single",
+            "availableViews": ["text", "tree", "table"],
+        },
+        "treePresentation": tree,
+        "presentation": tree,
+        "tablePresentation": structure_table,
+        "availableFormats": ["text", "table", "tree"],
+        "textPresentation": {"markdown": "### Estrutura\n\nBOM."},
+    }
+
+    ChatPresentationRenderPipelineService.finalize(metadata)
+
+    assert metadata.get("structureDedupApplied") is True
+    render_plan = metadata.get("renderPlan")
+    assert isinstance(render_plan, dict)
+    assert render_plan.get("layoutMode") == "single"
+    visual_kinds = [
+        str(segment.get("kind") or "").strip().lower()
+        for segment in render_plan.get("segments") or []
+        if str(segment.get("kind") or "").strip().lower()
+        in {"tree", "table", "chart", "kpi", "dashboard"}
+    ]
+    assert visual_kinds == ["tree"]
+
+
 def test_render_plan_explicit_modes_include_primary_visual_segment():
     from app.domain.services.chat_presentation_render_pipeline_service import (
         ChatPresentationRenderPipelineService,

@@ -1,4 +1,4 @@
-"""Playbook 13 P6 — pipeline final de apresentação (prune + renderPlan)."""
+"""Playbook 13 P6 — pipeline final de apresentação (structure dedup + prune + renderPlan)."""
 
 from __future__ import annotations
 
@@ -10,10 +10,13 @@ from app.domain.services.chat_presentation_payload_pruning_service import (
 from app.domain.services.chat_presentation_render_plan_service import (
     ChatPresentationRenderPlanService,
 )
+from app.domain.services.chat_presentation_structure_dedup_service import (
+    ChatPresentationStructureDedupService,
+)
 
 
 class ChatPresentationRenderPipelineService:
-    """Ponto canônico pós-markdown/embeds: payload pruned e plano de renderização."""
+    """Ponto canônico pós-markdown/embeds: dedupe estrutural, payload pruned e plano de renderização."""
 
     @classmethod
     def finalize(cls, metadata: dict[str, Any]) -> None:
@@ -22,6 +25,8 @@ class ChatPresentationRenderPipelineService:
 
         cls._sync_explicit_session_before_render(metadata)
         cls._sync_stack_layout_policy_before_render(metadata)
+        # Structure dedup antes do prune/renderPlan — MFE confia em structureDedupApplied + plan.
+        ChatPresentationStructureDedupService.dedupe_metadata(metadata)
         ChatPresentationPayloadPruningService.prune(metadata)
         ChatPresentationRenderPlanService.build(metadata)
 
