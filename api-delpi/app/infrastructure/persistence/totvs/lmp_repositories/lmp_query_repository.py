@@ -3358,6 +3358,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     _TEMP_CANDIDATES = "#Delpi_CandidateLMPs"
     _TEMP_ENG_RESUMO = "#Delpi_EngResumo"
     _TEMP_PI_COUNT = "#Delpi_PICount"
+    _TEMP_PI_SCOPE = "#Delpi_PiScope"
 
     def _build_staged_batch(
         self,
@@ -4034,8 +4035,30 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             requested_branch=requested_branch,
         )
 
-    def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
-        include_qtd_pi = self._resolve_include_qtd_pi(request)
+    @staticmethod
+    def _map_dashboard_summary_row(row: dict) -> dict:
+        return {
+            "branch": row.get("branch"),
+            "sale_number": row.get("sale_number"),
+            "sale_description": (row.get("sale_description") or "").strip(),
+            "listing_kind": row.get("listing_kind"),
+            "start_date": row.get("start_date"),
+            "end_date": row.get("end_date"),
+            "homolog_revision": row.get("homolog_revision"),
+            "measurement_revision": row.get("measurement_revision"),
+            "homolog_date": row.get("homolog_date"),
+            "cycle_index": int(row.get("cycle_index") or 1),
+            "engineering_status": row.get("engineering_status"),
+            "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
+            "qtd_pi": int(row.get("qtd_pi") or 0),
+        }
+
+    def _fetch_dashboard_summary_rows(
+        self,
+        request: ListLMPRequest,
+        *,
+        include_qtd_pi: bool,
+    ) -> list[dict]:
         cache_key = lmp_dashboard_summary_rows_cache_key(
             date_start=request.date_start,
             date_end=request.date_end,
@@ -4070,23 +4093,121 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             with self as repo:
                 rows = repo.execute_batch_query(batch_sql, batch_params)
 
-            return [
-                {
-                    "branch": row.get("branch"),
-                    "sale_number": row.get("sale_number"),
-                    "sale_description": (row.get("sale_description") or "").strip(),
-                    "listing_kind": row.get("listing_kind"),
-                    "start_date": row.get("start_date"),
-                    "end_date": row.get("end_date"),
-                    "homolog_revision": row.get("homolog_revision"),
-                    "measurement_revision": row.get("measurement_revision"),
-                    "homolog_date": row.get("homolog_date"),
-                    "cycle_index": int(row.get("cycle_index") or 1),
-                    "engineering_status": row.get("engineering_status"),
-                    "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
-                    "qtd_pi": int(row.get("qtd_pi") or 0),
-                }
-                for row in rows
-            ]
+            return [self._map_dashboard_summary_row(row) for row in rows]
 
         return get_or_set_cached_lmp_dashboard_summary_rows(cache_key, compute)
+
+    def get_lmp_dashboard_summary_facts(self, request: ListLMPRequest) -> list[dict]:
+        """Fatos do summary sem BOM/PI (`#Delpi_PICount` / Recursive_BOM)."""
+        return self._fetch_dashboard_summary_rows(request, include_qtd_pi=False)
+
+    def _normalize_pi_ov_keys(
+        self,
+        ov_keys: list[dict],
+    ) -> list[tuple[str, str, str]]:
+        unique: list[tuple[str, str, str]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for key in ov_keys:
+            branch = str(key.get("branch") or "").strip()
+            sale_number = str(key.get("sale_number") or "").strip()
+            revision = str(
+                key.get("revision")
+                or key.get("homolog_revision")
+                or key.get("measurement_revision")
+                or ""
+            ).strip()
+            if not branch or not sale_number or not revision:
+                continue
+            triple = (branch, sale_number, revision)
+            if triple in seen:
+                continue
+            seen.add(triple)
+            unique.append(triple)
+        return unique
+
+    def _build_pi_counts_by_ovs_batch(
+        self,
+        ov_keys: list[tuple[str, str, str]],
+        *,
+        requested_branch: str | None = None,
+    ) -> Tuple[str, tuple]:
+        """Batch scoped: temp com OVs pedidas + ProdutosLMP + BOM/PI."""
+        values_sql = ",".join(["(?,?,?)"] * len(ov_keys))
+        insert_params: list = []
+        for branch, sale_number, revision in ov_keys:
+            insert_params.extend([branch, sale_number, revision])
+
+        cte_prod, params_prod = self._sql_produtos_lmp_cte(
+            scope_cte_name=self._TEMP_PI_SCOPE,
+            requested_branch=requested_branch,
+        )
+        cte_pi, params_pi = self._sql_pi_total_by_ov_ctes_from_produtos_lmp()
+
+        sql = "\n".join(
+            [
+                "SET NOCOUNT ON;",
+                f"DROP TABLE IF EXISTS {self._TEMP_PI_COUNT};",
+                f"DROP TABLE IF EXISTS {self._TEMP_PI_SCOPE};",
+                (
+                    f"CREATE TABLE {self._TEMP_PI_SCOPE} ("
+                    "AD1_FILIAL VARCHAR(8) NOT NULL, "
+                    "AD1_NROPOR VARCHAR(20) NOT NULL, "
+                    "AD1_REVISA VARCHAR(8) NOT NULL"
+                    ");"
+                ),
+                (
+                    f"INSERT INTO {self._TEMP_PI_SCOPE} "
+                    f"(AD1_FILIAL, AD1_NROPOR, AD1_REVISA) VALUES {values_sql};"
+                ),
+                (
+                    f"WITH\n{cte_prod},\n{cte_pi}\n"
+                    f"SELECT * INTO {self._TEMP_PI_COUNT} FROM PI_COUNT_BY_OV;"
+                ),
+                "SET NOCOUNT OFF;",
+                (
+                    "SELECT "
+                    "ADJ_FILIAL AS branch, "
+                    "ADJ_NROPOR AS sale_number, "
+                    "ADJ_REVISA AS revision, "
+                    "ISNULL(QTD_PI, 0) AS qtd_pi "
+                    f"FROM {self._TEMP_PI_COUNT};"
+                ),
+            ]
+        )
+        params = (*insert_params, *params_prod, *params_pi)
+        return sql, params
+
+    def get_lmp_pi_counts_by_ovs(
+        self,
+        *,
+        ov_keys: list[dict],
+        requested_branch: str | None = None,
+    ) -> dict[tuple[str, str, str], int]:
+        """Contagem de PI só para o conjunto de OVs informado (sem candidatos do período)."""
+        unique = self._normalize_pi_ov_keys(ov_keys)
+        if not unique:
+            return {}
+
+        batch_sql, batch_params = self._build_pi_counts_by_ovs_batch(
+            unique,
+            requested_branch=requested_branch,
+        )
+        with self as repo:
+            rows = repo.execute_batch_query(batch_sql, batch_params)
+
+        result: dict[tuple[str, str, str], int] = {}
+        for row in rows:
+            branch = str(row.get("branch") or "").strip()
+            sale_number = str(row.get("sale_number") or "").strip()
+            revision = str(row.get("revision") or "").strip()
+            if not branch or not sale_number or not revision:
+                continue
+            result[(branch, sale_number, revision)] = int(row.get("qtd_pi") or 0)
+        return result
+
+    def get_lmp_dashboard_summary(self, request: ListLMPRequest) -> list[dict]:
+        """Fachada: fatos sem PI, ou batch completo com BOM/PI quando `include_qtd_pi`."""
+        include_qtd_pi = self._resolve_include_qtd_pi(request)
+        if not include_qtd_pi:
+            return self.get_lmp_dashboard_summary_facts(request)
+        return self._fetch_dashboard_summary_rows(request, include_qtd_pi=True)

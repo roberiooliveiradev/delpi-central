@@ -141,6 +141,7 @@ LMP_DASHBOARD_STATUS_VALUES = (
     "Andamento",
     "Retornada",
 )
+LMP_SUMMARY_MODE_VALUES = ("kpi", "full")
 PRODUCT_EXCLUSIVITY_VIEW_VALUES = ("by_material", "by_finished_product")
 PRODUCT_DETAIL_VIEW_VALUES = ("full", "summary")
 
@@ -523,6 +524,16 @@ def LMP_DASHBOARD_STATUS_QUERY_OPTIONAL():
     description="LMP dashboard status: Todos, Pontual, Atrasado, Andamento or Retornada.",
     pattern=_enum_pattern(LMP_DASHBOARD_STATUS_VALUES),
     enum=list(LMP_DASHBOARD_STATUS_VALUES),
+)
+def LMP_SUMMARY_MODE_QUERY():
+    return Query(
+    "kpi",
+    description=(
+        "LMP dashboard summary mode: kpi (PI only for FINALIZADA OVs) or "
+        "full (PI for all candidate OVs)."
+    ),
+    pattern=_enum_pattern(LMP_SUMMARY_MODE_VALUES),
+    enum=list(LMP_SUMMARY_MODE_VALUES),
 )
 def PRODUCT_EXCLUSIVITY_VIEW_QUERY():
     return Query(

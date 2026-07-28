@@ -1,7 +1,6 @@
 # app/application/use_cases/lmp/list_lmp_dashboard_use_case.py
 from dataclasses import asdict, fields, replace
-from datetime import date
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from app.application.dto.lmp.list_lmp_request import (
     DASHBOARD_STATUS_VALUES,
@@ -22,7 +21,9 @@ from app.domain.entities.lmp.lmp import LMP
 from app.domain.ports.lmp.lmp_query_repository_port import LMPQueryRepositoryPort
 
 DEFAULT_DASHBOARD_PAGE_SIZE = 50
-_SUMMARY_ROWS_CACHE_SUFFIX = "|summary-rows|pi1"
+SummaryLoadMode = Literal["kpi", "full"]
+_SUMMARY_ROWS_CACHE_SUFFIX_KPI = "|summary-rows|kpi"
+_SUMMARY_ROWS_CACHE_SUFFIX_FULL = "|summary-rows|pi1"
 
 
 class ListLMPDashboardUseCase:
@@ -178,8 +179,18 @@ class ListLMPDashboardUseCase:
             "avg_lead_time": round(avg_lead_time, 2),
         }
 
-    def _summary_rows_cache_key(self, request: ListLMPRequest) -> str:
-        return self._build_base_cache_key(request, "Todos") + _SUMMARY_ROWS_CACHE_SUFFIX
+    def _summary_rows_cache_key(
+        self,
+        request: ListLMPRequest,
+        *,
+        mode: SummaryLoadMode,
+    ) -> str:
+        suffix = (
+            _SUMMARY_ROWS_CACHE_SUFFIX_KPI
+            if mode == "kpi"
+            else _SUMMARY_ROWS_CACHE_SUFFIX_FULL
+        )
+        return self._build_base_cache_key(request, "Todos") + suffix
 
     def _deserialize_dashboard_items(
         self,
@@ -191,48 +202,112 @@ class ListLMPDashboardUseCase:
             for row in rows
         ]
 
+    def _enrich_summary_row(self, row: dict[str, Any]) -> LMPDashboardItem:
+        nivel, sla_days, sla_minutes, data_limite, lead_time_util, status = (
+            LMPBusinessRules.get_dashboard_status(
+                start_date_str=row.get("start_date"),
+                end_date_str=row.get("end_date"),
+                qtd_pi=row.get("qtd_pi"),
+                engineering_status=row.get("engineering_status"),
+                engineering_total_minutes=row.get("engineering_total_minutes"),
+            )
+        )
+        return LMPDashboardItem(
+            branch=row.get("branch"),
+            sale_number=row.get("sale_number"),
+            sale_description=row.get("sale_description") or "",
+            listing_kind=row.get("listing_kind"),
+            start_date=row.get("start_date"),
+            end_date=row.get("end_date"),
+            nivel=nivel,
+            dias_uteis_sla=sla_days,
+            sla_minutos=sla_minutes,
+            engineering_total_minutes=int(row.get("engineering_total_minutes") or 0),
+            data_limite=data_limite,
+            lead_time_util=lead_time_util,
+            status=status,
+            homolog_revision=row.get("homolog_revision"),
+            measurement_revision=row.get("measurement_revision"),
+            homolog_date=row.get("homolog_date") or row.get("start_date"),
+            cycle_index=int(row.get("cycle_index") or 1),
+            engineering_status=row.get("engineering_status"),
+            qtd_pi=int(row.get("qtd_pi") or 0),
+        )
+
+    def _ov_key_from_summary_row(self, row: dict[str, Any]) -> dict[str, str] | None:
+        branch = str(row.get("branch") or "").strip()
+        sale_number = str(row.get("sale_number") or "").strip()
+        revision = str(
+            row.get("homolog_revision")
+            or row.get("measurement_revision")
+            or ""
+        ).strip()
+        if not branch or not sale_number or not revision:
+            return None
+        return {
+            "branch": branch,
+            "sale_number": sale_number,
+            "revision": revision,
+        }
+
+    def _load_raw_summary_rows_kpi(self, request: ListLMPRequest) -> list[dict[str, Any]]:
+        """Fatos sem PI + BOM só para OVs FINALIZADA (cards SI / summary)."""
+        facts = self._repository.get_lmp_dashboard_summary_facts(request)
+        finished_keys: list[dict[str, str]] = []
+        for row in facts:
+            if not LMPBusinessRules.is_engineering_finished(row.get("engineering_status")):
+                continue
+            key = self._ov_key_from_summary_row(row)
+            if key is not None:
+                finished_keys.append(key)
+
+        pi_map: dict[tuple[str, str, str], int] = {}
+        if finished_keys:
+            pi_map = self._repository.get_lmp_pi_counts_by_ovs(
+                ov_keys=finished_keys,
+                requested_branch=request.branch,
+            )
+
+        merged: list[dict[str, Any]] = []
+        for row in facts:
+            item = dict(row)
+            key = self._ov_key_from_summary_row(row)
+            if (
+                key is not None
+                and LMPBusinessRules.is_engineering_finished(row.get("engineering_status"))
+            ):
+                item["qtd_pi"] = int(
+                    pi_map.get(
+                        (key["branch"], key["sale_number"], key["revision"]),
+                        0,
+                    )
+                )
+            else:
+                item["qtd_pi"] = 0
+            merged.append(item)
+        return merged
+
+    def _load_raw_summary_rows_full(self, request: ListLMPRequest) -> list[dict[str, Any]]:
+        """Batch completo com PI em todas as candidatas (charts / items / nível)."""
+        query_request = replace(request, include_qtd_pi=True)
+        return self._repository.get_lmp_dashboard_summary(query_request)
+
     def _load_summary_rows(
         self,
         request: ListLMPRequest,
+        *,
+        mode: SummaryLoadMode = "full",
     ) -> List[LMPDashboardItem]:
         """Carrega campos de KPI via query summary; singleflight no cold path."""
-        cache_key = self._summary_rows_cache_key(request)
+        cache_key = self._summary_rows_cache_key(request, mode=mode)
 
         def compute() -> dict[str, list[dict[str, Any]]]:
-            query_request = replace(request, include_qtd_pi=True)
-            raw_rows = self._repository.get_lmp_dashboard_summary(query_request)
-            items: List[LMPDashboardItem] = []
-            for row in raw_rows:
-                nivel, sla_days, sla_minutes, data_limite, lead_time_util, status = (
-                    LMPBusinessRules.get_dashboard_status(
-                        start_date_str=row.get("start_date"),
-                        end_date_str=row.get("end_date"),
-                        qtd_pi=row.get("qtd_pi"),
-                        engineering_status=row.get("engineering_status"),
-                        engineering_total_minutes=row.get("engineering_total_minutes"),
-                    )
-                )
-                items.append(LMPDashboardItem(
-                    branch=row.get("branch"),
-                    sale_number=row.get("sale_number"),
-                    sale_description=row.get("sale_description") or "",
-                    listing_kind=row.get("listing_kind"),
-                    start_date=row.get("start_date"),
-                    end_date=row.get("end_date"),
-                    nivel=nivel,
-                    dias_uteis_sla=sla_days,
-                    sla_minutos=sla_minutes,
-                    engineering_total_minutes=int(row.get("engineering_total_minutes") or 0),
-                    data_limite=data_limite,
-                    lead_time_util=lead_time_util,
-                    status=status,
-                    homolog_revision=row.get("homolog_revision"),
-                    measurement_revision=row.get("measurement_revision"),
-                    homolog_date=row.get("homolog_date") or row.get("start_date"),
-                    cycle_index=int(row.get("cycle_index") or 1),
-                    engineering_status=row.get("engineering_status"),
-                    qtd_pi=int(row.get("qtd_pi") or 0),
-                ))
+            raw_rows = (
+                self._load_raw_summary_rows_kpi(request)
+                if mode == "kpi"
+                else self._load_raw_summary_rows_full(request)
+            )
+            items = [self._enrich_summary_row(row) for row in raw_rows]
             return {"rows": [asdict(item) for item in items]}
 
         cached = get_or_set_cached_lmp_dashboard(cache_key, compute)
@@ -245,12 +320,17 @@ class ListLMPDashboardUseCase:
         self,
         request: ListLMPRequest,
         status_filter: str = "Todos",
+        *,
+        summary_mode: SummaryLoadMode = "kpi",
     ) -> Dict[str, Any]:
-        """Fase 1: apenas KPIs (summary) — usa query leve sem carregar items completos."""
-        cache_key = self._build_base_cache_key(request, status_filter) + "|summary-response"
+        """Fase 1: KPIs — default `kpi` (PI só FINALIZADA)."""
+        cache_key = (
+            self._build_base_cache_key(request, status_filter)
+            + f"|summary-response|{summary_mode}"
+        )
 
         def compute() -> Dict[str, Any]:
-            items = self._load_summary_rows(request)
+            items = self._load_summary_rows(request, mode=summary_mode)
             lmp_only = [i for i in items if i.listing_kind == LISTING_KIND_LMP]
             resolved_status = resolve_dashboard_status_filter(status_filter)
             filtered = self._filter_items_by_status(items, resolved_status)
@@ -263,11 +343,11 @@ class ListLMPDashboardUseCase:
         request: ListLMPRequest,
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
-        """Fase 2: dados dos gráficos — reutiliza summary rows (query leve)."""
+        """Fase 2: gráficos — precisa de nível/PI completo (`full`)."""
         cache_key = self._build_base_cache_key(request, status_filter) + "|charts-response"
 
         def compute() -> Dict[str, Any]:
-            items = self._load_summary_rows(request)
+            items = self._load_summary_rows(request, mode="full")
             resolved_status = resolve_dashboard_status_filter(status_filter)
             filtered = self._filter_items_by_status(items, resolved_status)
             return self._build_charts(filtered)
@@ -282,8 +362,8 @@ class ListLMPDashboardUseCase:
         request: ListLMPRequest,
         status_filter: str = "Todos",
     ) -> Dict[str, Any]:
-        """Fase 3: itens paginados — reutiliza summary rows (query leve, cacheada)."""
-        items = self._load_summary_rows(request)
+        """Fase 3: itens paginados — reutiliza summary rows em modo `full`."""
+        items = self._load_summary_rows(request, mode="full")
         resolved_status = resolve_dashboard_status_filter(status_filter)
         filtered = self._filter_items_by_status(items, resolved_status)
         total = len(filtered)

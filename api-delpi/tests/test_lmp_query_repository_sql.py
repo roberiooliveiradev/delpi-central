@@ -748,6 +748,68 @@ def test_dashboard_summary_staged_batch_param_count_matches_markers() -> None:
     assert batch_sql.count("?") == len(params)
 
 
+def test_dashboard_summary_facts_batch_omits_pi_bom() -> None:
+    repo = _work_month_repository()
+    request = ListLMPRequest(
+        date_start="20260601",
+        date_end="20260625",
+        listing_type="lmp",
+        include_qtd_pi=False,
+    )
+    final_select = repo._staged_final_select(
+        include_qtd_pi=False,
+        order_by=False,
+        summary_only=True,
+    )
+    batch_sql, params = repo._build_staged_batch(
+        request,
+        include_qtd_pi=False,
+        eng_resumo_lite=True,
+        final_select=final_select,
+        final_params=repo._staged_residence_final_params(
+            residence_filter_count=1,
+            listing_kind_reclass_count=1,
+        ),
+    )
+
+    assert "SELECT * INTO #Delpi_PICount" not in batch_sql
+    assert "Recursive_BOM" not in batch_sql
+    assert "#Delpi_CandidateLMPs" in batch_sql
+    assert batch_sql.count("?") == len(params)
+
+
+def test_pi_counts_by_ovs_batch_scopes_keys_and_param_count() -> None:
+    repo = _work_month_repository()
+    ov_keys = [
+        ("01", "OV001", "001"),
+        ("01", "OV002", "002"),
+    ]
+    batch_sql, params = repo._build_pi_counts_by_ovs_batch(
+        ov_keys,
+        requested_branch="01",
+    )
+
+    assert "#Delpi_PiScope" in batch_sql
+    assert "Recursive_BOM" in batch_sql
+    assert "SELECT * INTO #Delpi_PICount" in batch_sql
+    assert "VALUES (?,?,?),(?,?,?)" in batch_sql
+    assert batch_sql.count("?") == len(params)
+    assert params[0:6] == ("01", "OV001", "001", "01", "OV002", "002")
+
+
+def test_normalize_pi_ov_keys_dedupes_and_skips_incomplete() -> None:
+    repo = _work_month_repository()
+    keys = repo._normalize_pi_ov_keys(
+        [
+            {"branch": "01", "sale_number": "OV1", "revision": "001"},
+            {"branch": "01", "sale_number": "OV1", "homolog_revision": "001"},
+            {"branch": "01", "sale_number": "OV2"},
+            {"branch": "", "sale_number": "OV3", "revision": "001"},
+        ]
+    )
+    assert keys == [("01", "OV1", "001")]
+
+
 def test_dashboard_summary_select_exposes_revision_fields() -> None:
     repo = _anchor_repository()
 

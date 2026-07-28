@@ -908,6 +908,18 @@
         }
       }
     },
+    "summary_mode": {
+      "locale": {
+        "en": {
+          "label": "Summary mode",
+          "description": "kpi loads PI only for finished OVs; full loads PI for all candidates (charts/items)."
+        },
+        "pt-BR": {
+          "label": "Modo do summary",
+          "description": "kpi carrega PI só em OVs FINALIZADA; full carrega PI em todas as candidatas (gráficos/itens)."
+        }
+      }
+    },
     "include_test_products": {
       "locale": {
         "en": {

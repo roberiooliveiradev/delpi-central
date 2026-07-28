@@ -95,6 +95,7 @@ from app.interface.http.query_param_enums import (
     LMP_DASHBOARD_STATUS_QUERY,
     LMP_DASHBOARD_STATUS_QUERY_OPTIONAL,
     LMP_LISTING_TYPE_QUERY,
+    LMP_SUMMARY_MODE_QUERY,
     SORT_DIR_QUERY,
     TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY,
     TRANSFORMOMETRO_VIEW_QUERY,
@@ -229,6 +230,7 @@ def lmps_dashboard_summary_route(
     status: str = LMP_DASHBOARD_STATUS_QUERY(),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
+    summary_mode: str = LMP_SUMMARY_MODE_QUERY(),
 ):
     try:
         start_date, end_date = resolve_period_dates(
@@ -244,8 +246,13 @@ def lmps_dashboard_summary_route(
             listing_type=listing_type,
         )
 
+        mode = "full" if str(summary_mode or "").strip().lower() == "full" else "kpi"
         use_case = build_engineering_list_lmps_dashboard_use_case()
-        summary = use_case.execute_summary(dto, status_filter=status)
+        summary = use_case.execute_summary(
+            dto,
+            status_filter=status,
+            summary_mode=mode,
+        )
         summary = enrich_dashboard_metric(
             summary,
             source_key=goal_keys.ENGINEERING_LMP,

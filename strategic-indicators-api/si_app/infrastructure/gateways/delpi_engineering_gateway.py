@@ -21,6 +21,7 @@ class DelpiEngineeringGateway:
                 "date_end": date_end,
                 "branch": branch,
                 "listing_type": "LMP",
+                "summary_mode": "kpi",
             },
             authorization=bearer_authorization_from_context(),
         )

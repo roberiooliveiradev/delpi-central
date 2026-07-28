@@ -18,6 +18,30 @@ def test_open_lmp_stays_in_progress_even_when_sla_would_have_been_exceeded() -> 
     assert status == LMPBusinessRules.DASHBOARD_STATUS_IN_PROGRESS
 
 
+def test_qtd_pi_ignored_for_non_finished_status() -> None:
+    """PI só entra no veredito após FINALIZADA — Andamento/Retornada não precisam de PI."""
+    status_open = LMPBusinessRules.resolve_dashboard_status(
+        start_date_str="20260101",
+        end_date_str=None,
+        qtd_pi=99,
+        engineering_status="EM_ANDAMENTO",
+        engineering_total_minutes=99_999,
+        today=date(2026, 7, 15),
+    )
+    status_returned = LMPBusinessRules.resolve_dashboard_status(
+        start_date_str="20260101",
+        end_date_str=None,
+        qtd_pi=99,
+        engineering_status="RETORNADA",
+        engineering_total_minutes=99_999,
+        today=date(2026, 7, 15),
+    )
+    assert status_open == LMPBusinessRules.DASHBOARD_STATUS_IN_PROGRESS
+    assert status_returned == LMPBusinessRules.DASHBOARD_STATUS_RETURNED
+    assert LMPBusinessRules.is_engineering_finished("FINALIZADA") is True
+    assert LMPBusinessRules.is_engineering_finished("EM_ANDAMENTO") is False
+
+
 def test_partial_lmp_stays_in_progress() -> None:
     status = LMPBusinessRules.resolve_dashboard_status(
         start_date_str="20260101",

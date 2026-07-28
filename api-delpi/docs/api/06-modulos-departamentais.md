@@ -213,7 +213,7 @@ Parâmetros adicionais:
 |---|---|---|
 | GET | `/engineering/lmps` | Lista LMPs com filtros de data/filial. |
 | GET | `/engineering/lmps/dashboard` | Dashboard agregado (`status` default `Todos`). Dados completos com items paginados. |
-| GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (`total_lmps`, `total_items`, `percent_dentro_prazo`, `avg_lead_time`). Query leve (`eng_resumo_lite`, sem `ORDER BY`). Fase 1 do carregamento progressivo. |
+| GET | `/engineering/lmps/dashboard/summary` | Apenas KPIs (`total_lmps`, `total_items`, `percent_dentro_prazo`, `avg_lead_time`). Default `summary_mode=kpi`: fatos sem BOM + PI só em OVs `FINALIZADA`. Fase 1 do carregamento progressivo. |
 | GET | `/engineering/lmps/dashboard/items` | Itens paginados do dashboard (tabela). |
 | GET | `/engineering/lmps/dashboard/charts` | Dados de gráficos (levelData, statusData, leadByLevel, evolutionData). Fase 2 do carregamento progressivo. |
 | GET | `/engineering/lmps/{sale_number}` | Detalhe por número de venda/ordem (OV). Cabeçalho, produtos, KPIs — **sem** histórico AIJ010 (lista vazia). Mesmo escopo do dashboard com `date_start`, `date_end` e `branch`. |
@@ -277,18 +277,22 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 | `branch` | Filial. |
 | `listing_type` | `Todos` (default), `LMP`, `Amostra` ou `Outro`. Com `LMP`, a SQL omite OVs «Outro» sem âncora de listagem (`EngSupportOvRef`). |
 | `status` | Filtro de status do dashboard (`Todos`, `Pontual`, `Atrasado`, `Andamento`, `Retornada`). **Regra:** LMPs em aberto ficam em `Andamento`; `Pontual`/`Atrasado` só após `FINALIZADA` (`LMPBusinessRules.resolve_dashboard_status`). |
+| `summary_mode` | *(apenas `/dashboard/summary`)* `kpi` (default) ou `full`. Em `kpi`, a API carrega fatos sem BOM e consulta PI **só** nas OVs `FINALIZADA` (cards SI/TV). Em `full`, mantém batch com PI em todas as candidatas (paridade com charts/items). |
 | `page`, `page_size` | Paginação (apenas `/dashboard` e `/items`). |
 
 **Performance (`/dashboard/summary`, `/dashboard/charts`, `/dashboard/items`):**
 
 - Repositório: batch com temp tables, `eng_resumo_lite=True`, sem ordenação final.
-- Integradores que só precisam de KPI de LMP (ex.: Strategic Indicators) devem enviar `listing_type=lmp`.
+- **Cold path do summary (`summary_mode=kpi`, default):** `get_lmp_dashboard_summary_facts` (sem `#Delpi_PICount` / Recursive_BOM) + `get_lmp_pi_counts_by_ovs` só para OVs `FINALIZADA`; a API classifica status e agrega `percent_dentro_prazo` / `avg_lead_time` / `total_lmps`. Meta: cold SI bem abaixo do limiar `slow_sql` (2500 ms) — tipicamente fatos + PI parcial, sem BOM em OVs abertas.
+- **Charts/items:** `summary_mode` implícito `full` — batch único com PI em todas as candidatas (nível/completeness).
+- Integradores que só precisam de KPI de LMP (ex.: Strategic Indicators) devem enviar `listing_type=lmp` (e opcionalmente `summary_mode=kpi`).
 - Cache: `query_cache` (namespace `lmp-dashboard`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300s):
-  - `|summary-rows|pi1` — linhas enriquecidas compartilhadas entre summary, charts e items (formato `{"rows": [...]}`).
-  - `|summary-response` e `|charts-response` — respostas finais por filtro de status.
-  - **Singleflight** (`QueryCachePort.get_or_set`): miss concorrente (summary+charts+items no cold path) dispara **um** SQL; demais awaiters reutilizam o resultado.
+  - `|summary-rows|kpi` — linhas enriquecidas do modo KPI (PI parcial).
+  - `|summary-rows|pi1` — linhas enriquecidas do modo full (PI completo), compartilhadas entre charts e items.
+  - `|summary-response|kpi` / `|summary-response|full` e `|charts-response` — respostas finais por filtro de status.
+  - **Singleflight** (`QueryCachePort.get_or_set`): miss concorrente no cold path dispara **um** SQL por chave; demais awaiters reutilizam o resultado.
   - BOM/PI: vigência `G1_FIM` com parâmetro bind (sem `CONVERT(GETDATE())` na coluna).
-- Console: `operation_id=get_lmps_dashboard_charts` / `get_lmps_dashboard_summary`; alerta `slow_sql` acima de 2500 ms — após o primeiro carregamento do período, chamadas subsequentes devem ser cache hit (&lt; 500 ms).
+- Console Saúde SQL: `operation_id=get_lmps_dashboard_summary` — podem aparecer **dois hashes** (fatos sem PI vs PI scoped / batch full). Após o primeiro carregamento do período, chamadas subsequentes devem ser cache hit (&lt; 500 ms). Medir média/máx e hit rate no container `delpi-api-delpi` após deploy.
 
 ### Transforma Mais
 
