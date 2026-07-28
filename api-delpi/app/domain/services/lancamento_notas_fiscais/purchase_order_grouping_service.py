@@ -82,7 +82,40 @@ def find_purchase_order_group(
     return None
 
 
+def linked_po_snapshot_from_row(row: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not row:
+        return None
+    number = str(row.get("order_number") or "").strip()
+    if not number:
+        return None
+    return {
+        "order_number": number,
+        "delivery_date": row.get("delivery_date"),
+        "issue_date": row.get("issue_date"),
+        "open_value": row.get("open_value"),
+        "product_count": row.get("product_count"),
+        "linked_at": row.get("linked_at"),
+        "linked_by_user_id": row.get("linked_by_user_id"),
+        "linked_by_name": row.get("linked_by_name"),
+    }
+
+
+def linked_po_snapshots_from_rows(
+    rows: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in rows or []:
+        snap = linked_po_snapshot_from_row(row)
+        if snap:
+            out.append(snap)
+    return out
+
+
 def linked_po_snapshot_from_request(request: dict[str, Any]) -> dict[str, Any] | None:
+    """Legado: primeiro vínculo da lista ou colunas singular V004."""
+    linked_list = request.get("linked_purchase_orders")
+    if isinstance(linked_list, list) and linked_list:
+        return linked_po_snapshot_from_row(linked_list[0])
     number = str(request.get("linked_po_number") or "").strip()
     if not number:
         return None
@@ -96,6 +129,14 @@ def linked_po_snapshot_from_request(request: dict[str, Any]) -> dict[str, Any] |
         "linked_by_user_id": request.get("linked_po_linked_by_user_id"),
         "linked_by_name": request.get("linked_po_linked_by_name"),
     }
+
+
+def linked_po_snapshots_from_request(request: dict[str, Any]) -> list[dict[str, Any]]:
+    linked_list = request.get("linked_purchase_orders")
+    if isinstance(linked_list, list):
+        return linked_po_snapshots_from_rows(linked_list)
+    single = linked_po_snapshot_from_request(request)
+    return [single] if single else []
 
 
 def format_linked_po_label(
@@ -112,3 +153,15 @@ def format_linked_po_label(
         year, month, day = delivery.split("-")
         return f"PC {number} · entrega {day}/{month}/{year}"
     return f"PC {number} · entrega {delivery}"
+
+
+def format_linked_po_labels(snapshots: list[dict[str, Any]]) -> str:
+    if not snapshots:
+        return "(nenhum)"
+    return ", ".join(
+        format_linked_po_label(
+            order_number=str(s.get("order_number") or ""),
+            delivery_date=s.get("delivery_date"),
+        )
+        for s in snapshots
+    )

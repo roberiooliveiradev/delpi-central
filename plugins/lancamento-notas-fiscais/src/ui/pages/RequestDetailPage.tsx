@@ -7,6 +7,7 @@ import { BlockModal } from "../components/BlockModal";
 import { CancelModal } from "../components/CancelModal";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { ManualPostModal } from "../components/ManualPostModal";
+import { LinkedPurchaseOrderReceipt } from "../components/LinkedPurchaseOrderReceipt";
 import { PurchaseOrdersModal } from "../components/PurchaseOrdersModal";
 import { StatusBadge } from "../components/StatusBadge";
 import {
@@ -210,7 +211,11 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                 onClick={() => setPurchaseOrdersOpen(true)}
                 data-testid="btn-purchase-orders"
               >
-                Incluir Pedido de Compras
+                {(Array.isArray(request.linked_purchase_orders) &&
+                  request.linked_purchase_orders.length > 0) ||
+                request.linked_po_number
+                  ? "Editar Pedido de Compras"
+                  : "Incluir Pedido de Compras"}
               </button>
             </div>
             {actionError ? (
@@ -220,8 +225,8 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
             ) : null}
           </section>
 
-          <div className="lnf-detail-board__split">
-            <section className="lnf-card lnf-detail-panel">
+          <section className="lnf-card lnf-detail-panel lnf-detail-twin">
+            <div className="lnf-detail-twin__col">
               <h2>Dados fiscais</h2>
               <dl className="lnf-dl lnf-dl--dense">
                 <div>
@@ -261,9 +266,9 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   </div>
                 ) : null}
               </dl>
-            </section>
+            </div>
 
-            <section className="lnf-card lnf-detail-panel">
+            <div className="lnf-detail-twin__col">
               <h2>Situação atual</h2>
               <dl className="lnf-dl lnf-dl--dense">
                 <div>
@@ -280,27 +285,73 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   <dt>Responsável</dt>
                   <dd>{request.assignee_name || "—"}</dd>
                 </div>
-                {request.linked_po_number ? (
-                  <div className="lnf-dl__span" data-testid="linked-po-summary">
-                    <dt>Pedido de compra</dt>
-                    <dd>
-                      <div className="lnf-cell-strong">
-                        {linkedPurchaseOrderLabel(
-                          request.linked_po_number,
-                          request.linked_po_delivery_date,
-                        )}
-                      </div>
-                      <div className="lnf-muted lnf-cell-sub">
-                        {request.linked_po_product_count != null
-                          ? `${request.linked_po_product_count} produto(s)`
-                          : null}
-                        {request.linked_po_open_value != null
-                          ? ` · ${formatMoney(Number(request.linked_po_open_value))}`
-                          : null}
-                      </div>
-                    </dd>
-                  </div>
-                ) : null}
+                {(() => {
+                  const linkedOrders =
+                    Array.isArray(request.linked_purchase_orders) &&
+                    request.linked_purchase_orders.length > 0
+                      ? request.linked_purchase_orders
+                      : request.linked_po_number
+                        ? [
+                            {
+                              order_number: request.linked_po_number,
+                              delivery_date: request.linked_po_delivery_date,
+                              open_value: request.linked_po_open_value,
+                              product_count: request.linked_po_product_count,
+                            },
+                          ]
+                        : [];
+                  if (linkedOrders.length === 0) return null;
+                  const totalOpen = linkedOrders.reduce(
+                    (acc, item) => acc + Number(item.open_value || 0),
+                    0,
+                  );
+                  const productSum = linkedOrders.reduce(
+                    (acc, item) => acc + Number(item.product_count || 0),
+                    0,
+                  );
+                  return (
+                    <div className="lnf-dl__span" data-testid="linked-po-summary">
+                      <dt>
+                        {linkedOrders.length === 1
+                          ? "Pedido de compra"
+                          : "Pedidos de compra"}
+                      </dt>
+                      <dd>
+                        <div className="lnf-cell-strong">
+                          {linkedOrders.length === 1
+                            ? linkedPurchaseOrderLabel(
+                                linkedOrders[0].order_number,
+                                linkedOrders[0].delivery_date,
+                              )
+                            : `${linkedOrders.length} pedidos amarrados`}
+                        </div>
+                        {linkedOrders.length > 1 ? (
+                          <ul className="lnf-linked-po-list">
+                            {linkedOrders.map((item) => (
+                              <li
+                                key={`${item.order_number}|${item.delivery_date ?? ""}`}
+                              >
+                                {linkedPurchaseOrderLabel(
+                                  item.order_number,
+                                  item.delivery_date,
+                                )}
+                                {item.open_value != null
+                                  ? ` · ${formatMoney(Number(item.open_value))}`
+                                  : null}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        <div className="lnf-muted lnf-cell-sub">
+                          {productSum > 0 ? `${productSum} produto(s)` : null}
+                          {totalOpen > 0
+                            ? `${productSum > 0 ? " · " : ""}${formatMoney(totalOpen)}`
+                            : null}
+                        </div>
+                      </dd>
+                    </div>
+                  );
+                })()}
                 {completionLabel ? (
                   <div>
                     <dt>Conclusão</dt>
@@ -359,8 +410,10 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                   {request.divergence_detail || "Há alerta de divergência com o Protheus."}
                 </p>
               ) : null}
-            </section>
-          </div>
+            </div>
+          </section>
+
+          <LinkedPurchaseOrderReceipt requestId={requestId} request={request} />
         </div>
 
         <section className="lnf-card lnf-detail-history">

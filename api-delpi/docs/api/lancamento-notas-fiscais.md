@@ -134,7 +134,7 @@ Lista **pedidos de compra em aberto** no Protheus (`SC7`) da filial e fornecedor
 
 Filtros ERP (mesmo critério do estoque de segurança): `D_E_L_E_T_=''`, `C7_RESIDUO<>'S'`, `C7_QUANT > C7_QUJE`, `C7_FILIAL`, `C7_FORNECE`, `C7_LOJA`.
 
-Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item_count, groups[], linked, can_link }` — cada grupo com `order_number`, `delivery_date` (null = sem data), `issue_date`, `product_count`, `open_value` (soma dos itens), `items[]`.
+Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item_count, groups[], linked[], can_link }` — cada grupo com `order_number`, `delivery_date` (null = sem data), `issue_date`, `product_count`, `open_value` (soma dos itens), `items[]`. `linked` é a lista dos grupos já amarrados à solicitação.
 
 Valor em aberto por item SC7 (proporcional ao saldo):  
 `fator = (C7_QUANT - C7_QUJE) / C7_QUANT`;  
@@ -143,9 +143,10 @@ Valor em aberto por item SC7 (proporcional ao saldo):
 
 ### POST `.../purchase-orders/link`
 
-Body: `{ "order_number": "...", "delivery_date": "YYYY-MM-DD" | null }`
+Body preferencial: `{ "groups": [{ "order_number": "...", "delivery_date": "YYYY-MM-DD" | null }, ...] }`  
+Compat: `{ "order_number": "...", "delivery_date": "..." }` (um grupo).
 
-Amarrar **um** grupo à solicitação (process/manage). Substitui vínculo anterior; grava `linked_po_*` e histórico `purchase_order_linked` com `changes.linked_po.from/to`.
+Substitui o **conjunto** amarrado (process/manage). `groups: []` desamarra todos. Persiste em `invoice_posting_request_linked_pos` (V005), espelha o primeiro em `linked_po_*` e grava histórico `purchase_order_linked` com `changes.linked_po.from/to` como **arrays**.
 
 ---
 
@@ -226,6 +227,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | `V002__reconciliation_refresh_control.sql` | Controle de cooldown do refresh |
 | `V003__document_number_pad_9.sql` | Backfill de documento com 9 dígitos |
 | `V004__linked_purchase_order.sql` | Colunas `linked_po_*` (amarração PC + entrega) |
+| `V005__linked_purchase_orders_many.sql` | Tabela `invoice_posting_request_linked_pos` (N PCs por solicitação) |
 
 ```bash
 # Produção / ambiente com dados: SOMENTE up (nunca reset)
@@ -233,7 +235,7 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py status --pl
 docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin lancamento-notas-fiscais
 ```
 
-**⚠ `reset --plugin …` faz `DROP SCHEMA CASCADE` e apaga solicitações/histórico.** Em produção use só `up` após conferir no `status` que `V001`–`V003` já estão aplicadas e só `V004` (ou a nova) está pendente. Rebuild de API/MFE **não** exige reset de schema.
+**⚠ `reset --plugin …` faz `DROP SCHEMA CASCADE` e apaga solicitações/histórico.** Em produção use só `up` após conferir no `status` que migrations anteriores já estão aplicadas e só a nova está pendente. Rebuild de API/MFE **não** exige reset de schema.
 
 ---
 

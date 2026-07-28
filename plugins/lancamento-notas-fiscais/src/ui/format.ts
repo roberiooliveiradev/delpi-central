@@ -124,6 +124,25 @@ export function linkedPurchaseOrderLabel(
   return `PC ${number} · entrega ${formatDate(delivery)}`;
 }
 
+/** Números de PC amarrados para listagem (fila). */
+export function linkedPurchaseOrderNumbersLabel(request: {
+  linked_purchase_orders?: Array<{ order_number?: string | null }> | null;
+  linked_po_number?: string | null;
+}): string {
+  const fromList = (request.linked_purchase_orders ?? [])
+    .map((item) => String(item?.order_number ?? "").trim())
+    .filter(Boolean);
+  const numbers =
+    fromList.length > 0
+      ? Array.from(new Set(fromList))
+      : String(request.linked_po_number ?? "").trim()
+        ? [String(request.linked_po_number).trim()]
+        : [];
+  if (numbers.length === 0) return "—";
+  if (numbers.length <= 2) return numbers.join(" · ");
+  return `${numbers[0]} · +${numbers.length - 1}`;
+}
+
 /** Nome do responsável gravado em `changes.assignee_name` (string ou `{ to }`). */
 export function historyAssigneeName(
   changes: Record<string, unknown> | null | undefined,

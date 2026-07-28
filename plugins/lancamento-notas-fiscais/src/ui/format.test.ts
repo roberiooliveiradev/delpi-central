@@ -6,6 +6,7 @@ import {
   historyEventLabel,
   historyTimelineTone,
   linkedPurchaseOrderLabel,
+  linkedPurchaseOrderNumbersLabel,
   postingLeadTimeLabel,
   resolvePostedAt,
 } from "./format";
@@ -79,6 +80,32 @@ describe("linkedPurchaseOrderLabel", () => {
       "PC 000123 · sem data de entrega",
     );
     expect(linkedPurchaseOrderLabel("000123", "2026-07-20")).toContain("PC 000123");
+  });
+});
+
+describe("linkedPurchaseOrderNumbersLabel", () => {
+  it("lista números amarrados para a fila", () => {
+    expect(linkedPurchaseOrderNumbersLabel({})).toBe("—");
+    expect(
+      linkedPurchaseOrderNumbersLabel({ linked_po_number: "040606" }),
+    ).toBe("040606");
+    expect(
+      linkedPurchaseOrderNumbersLabel({
+        linked_purchase_orders: [
+          { order_number: "040606" },
+          { order_number: "040607" },
+        ],
+      }),
+    ).toBe("040606 · 040607");
+    expect(
+      linkedPurchaseOrderNumbersLabel({
+        linked_purchase_orders: [
+          { order_number: "A" },
+          { order_number: "B" },
+          { order_number: "C" },
+        ],
+      }),
+    ).toBe("A · +2");
   });
 });
 

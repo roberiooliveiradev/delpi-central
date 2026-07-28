@@ -15,6 +15,7 @@ import {
   formatDocument,
   formatMoney,
   hasActiveFilters,
+  linkedPurchaseOrderNumbersLabel,
 } from "../format";
 
 type Props = {
@@ -323,6 +324,7 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                     <th>Recebimento</th>
                     <th>Filial</th>
                     <th>Nota</th>
+                    <th>Nº do pedido</th>
                     <th>Fornecedor</th>
                     <th>Emissão</th>
                     <th>Valor</th>
@@ -351,6 +353,9 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                       <td>{row.branch_code}</td>
                       <td className="lnf-cell-strong">
                         {formatDocument(row.document_number, row.series)}
+                      </td>
+                      <td data-testid={`queue-po-${row.id}`}>
+                        {linkedPurchaseOrderNumbersLabel(row)}
                       </td>
                       <td>
                         <div className="lnf-cell-strong">{row.supplier_name}</div>
@@ -408,6 +413,12 @@ export function QueuePage({ branch, highlightId, onCreate, onOpen }: Props) {
                     <div className="lnf-muted lnf-cell-sub">
                       {row.supplier_code}/{row.supplier_store} · Filial {row.branch_code}
                     </div>
+                    {(() => {
+                      const poLabel = linkedPurchaseOrderNumbersLabel(row);
+                      return poLabel !== "—" ? (
+                        <div className="lnf-muted lnf-cell-sub">Pedido {poLabel}</div>
+                      ) : null;
+                    })()}
                     <div className="lnf-queue-card__meta">
                       <span>Recebido {formatDateTime(row.received_at)}</span>
                       <span>{formatMoney(Number(row.amount))}</span>

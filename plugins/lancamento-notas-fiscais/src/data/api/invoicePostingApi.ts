@@ -70,7 +70,9 @@ export async function listRequestPurchaseOrders(
 
 export async function linkRequestPurchaseOrder(
   requestId: string,
-  body: { order_number: string; delivery_date: string | null },
+  body:
+    | { groups: Array<{ order_number: string; delivery_date: string | null }> }
+    | { order_number: string; delivery_date: string | null },
 ): Promise<InvoicePostingRequest> {
   return httpPost<InvoicePostingRequest>(
     `${API_BASE}/requests/${requestId}/purchase-orders/link`,

@@ -95,8 +95,16 @@ class CommentBody(BaseModel):
     body: str
 
 
-class LinkPurchaseOrderBody(BaseModel):
+class LinkPurchaseOrderGroupBody(BaseModel):
     order_number: str
+    delivery_date: str | None = None
+
+
+class LinkPurchaseOrderBody(BaseModel):
+    """Aceita `groups[]` (N) ou body legado com um único order_number."""
+
+    groups: list[LinkPurchaseOrderGroupBody] | None = None
+    order_number: str | None = None
     delivery_date: str | None = None
 
 
@@ -357,13 +365,18 @@ def link_request_purchase_order(request_id: UUID, body: LinkPurchaseOrderBody):
         data = build_link_request_purchase_order_use_case().execute(
             str(request_id),
             _actor(),
+            groups=(
+                [g.model_dump() for g in body.groups]
+                if body.groups is not None
+                else None
+            ),
             order_number=body.order_number,
             delivery_date=body.delivery_date,
         )
         return api_delpi_success(
             data,
             operation_id="link_lancamento_notas_fiscais_request_purchase_order",
-            message="Pedido de compra amarrado à solicitação.",
+            message="Pedidos de compra amarrados à solicitação.",
         )
     except InvoicePostingError as exc:
         return _handle_domain(exc)

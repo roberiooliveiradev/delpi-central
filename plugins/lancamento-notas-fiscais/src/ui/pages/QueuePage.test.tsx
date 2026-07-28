@@ -49,6 +49,7 @@ const sample: InvoicePostingRequest = {
   linked_po_linked_at: null,
   linked_po_linked_by_user_id: null,
   linked_po_linked_by_name: null,
+  linked_purchase_orders: [],
   created_at: "2026-07-02T10:00:00+00:00",
   updated_at: "2026-07-02T10:00:00+00:00",
 };
@@ -117,6 +118,38 @@ describe("QueuePage", () => {
       screen.getAllByTestId("status-badge")[0].textContent,
     ).toContain("Aguardando lançamento");
     expect(screen.getByTestId("btn-new-request")).toBeTruthy();
+    expect(screen.getByTestId("queue-po-req-1").textContent).toBe("—");
+  });
+
+  it("mostra Nº do pedido quando há PC amarrado", async () => {
+    vi.mocked(api.listRequests).mockResolvedValue({
+      items: [
+        {
+          ...sample,
+          linked_po_number: "040606",
+          linked_purchase_orders: [
+            {
+              order_number: "040606",
+              delivery_date: "2026-07-31",
+              issue_date: null,
+              open_value: 1000,
+              product_count: 1,
+              linked_at: null,
+              linked_by_user_id: null,
+              linked_by_name: null,
+            },
+          ],
+        },
+      ],
+      page: 1,
+      page_size: 20,
+      total: 1,
+      total_pages: 1,
+    });
+    renderQueue();
+    await waitFor(() => expect(screen.getByTestId("queue-po-req-1")).toBeTruthy());
+    expect(screen.getByTestId("queue-po-req-1").textContent).toBe("040606");
+    expect(screen.getByText("Nº do pedido")).toBeTruthy();
   });
 
   it("estado vazio sem filtros orienta cadastro", async () => {

@@ -39,8 +39,9 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
 from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
     find_purchase_order_group,
     format_linked_po_label,
+    format_linked_po_labels,
     group_open_purchase_order_lines,
-    linked_po_snapshot_from_request,
+    linked_po_snapshots_from_request,
 )
 from app.domain.services.lancamento_notas_fiscais.reconciliation_matching import (
     classify_candidates,
@@ -388,13 +389,13 @@ class ListRequestOpenPurchaseOrdersUseCase:
             "group_count": len(groups),
             "item_count": len(items),
             "groups": groups,
-            "linked": linked_po_snapshot_from_request(request),
+            "linked": linked_po_snapshots_from_request(request),
             "can_link": "link_purchase_order" in allowed_actions(request, actor),
         }
 
 
 class LinkRequestPurchaseOrderUseCase:
-    """Amartha um grupo de PC (número + data de entrega) à solicitação."""
+    """Substitui o conjunto de grupos de PC amarrados à solicitação."""
 
     def __init__(self, requests: Any, purchase_orders: Any) -> None:
         self._requests = requests
@@ -405,8 +406,9 @@ class LinkRequestPurchaseOrderUseCase:
         request_id: str,
         actor: Actor,
         *,
-        order_number: str,
-        delivery_date: str | None,
+        groups: list[dict[str, Any]] | None = None,
+        order_number: str | None = None,
+        delivery_date: str | None = None,
     ) -> dict[str, Any]:
         current = self._requests.get_request(request_id)
         if current is None:
@@ -420,95 +422,192 @@ class LinkRequestPurchaseOrderUseCase:
                 "Sem permissão para amarrar pedido de compra."
             )
 
-        wanted_order = str(order_number or "").strip()
-        if not wanted_order:
-            raise InvoicePostingValidationError("Informe o número do pedido de compra.")
+        wanted = self._normalize_wanted_groups(
+            groups=groups,
+            order_number=order_number,
+            delivery_date=delivery_date,
+        )
 
-        raw_delivery = delivery_date
-        if raw_delivery is not None and str(raw_delivery).strip() == "":
-            raw_delivery = None
-        parsed_delivery: date | None = None
-        if raw_delivery is not None:
-            parsed_delivery = _parse_date(
-                raw_delivery, field="Data de entrega do pedido"
-            )
-
+        previous = linked_po_snapshots_from_request(current)
         branch = str(current.get("branch_code") or "").strip()
         supplier_code = str(current.get("supplier_code") or "").strip()
         supplier_store = str(current.get("supplier_store") or "").strip()
-        items = self._purchase_orders.list_open_purchase_orders_by_supplier(
-            branch_code=branch,
-            supplier_code=supplier_code,
-            supplier_store=supplier_store,
-        )
-        groups = group_open_purchase_order_lines(items)
-        delivery_key = parsed_delivery.isoformat() if parsed_delivery else None
-        group = find_purchase_order_group(
-            groups,
-            order_number=wanted_order,
-            delivery_date=delivery_key,
-        )
-        if group is None:
-            raise InvoicePostingValidationError(
-                "Pedido de compra informado não está aberto para este fornecedor."
-            )
 
-        previous = linked_po_snapshot_from_request(current)
-        linked_at = datetime.now(timezone.utc)
-        issue_raw = group.get("issue_date")
-        issue_date = (
-            _parse_date(issue_raw, field="Data de emissão do pedido")
-            if issue_raw
-            else None
-        )
-        to_snapshot = {
-            "order_number": group["order_number"],
-            "delivery_date": delivery_key,
-            "issue_date": issue_date.isoformat() if issue_date else None,
-            "open_value": group.get("open_value"),
-            "product_count": group.get("product_count"),
-            "linked_at": linked_at.isoformat(),
-            "linked_by_user_id": actor.user_id,
-            "linked_by_name": actor.user_name,
-        }
-        label_to = format_linked_po_label(
-            order_number=str(group["order_number"]),
-            delivery_date=delivery_key,
-        )
-        if previous:
-            label_from = format_linked_po_label(
-                order_number=str(previous.get("order_number") or ""),
-                delivery_date=previous.get("delivery_date"),
+        resolved_rows: list[dict[str, Any]] = []
+        if wanted:
+            items = self._purchase_orders.list_open_purchase_orders_by_supplier(
+                branch_code=branch,
+                supplier_code=supplier_code,
+                supplier_store=supplier_store,
             )
-            justification = f"Pedido amarrado: {label_from} → {label_to}"
-        else:
-            justification = f"Pedido amarrado: {label_to}"
+            open_groups = group_open_purchase_order_lines(items)
+            linked_at = datetime.now(timezone.utc)
+            seen: set[tuple[str, str | None]] = set()
+            for item in wanted:
+                key = (item["order_number"], item["delivery_date"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                group = find_purchase_order_group(
+                    open_groups,
+                    order_number=item["order_number"],
+                    delivery_date=item["delivery_date"],
+                )
+                if group is None:
+                    label = format_linked_po_label(
+                        order_number=item["order_number"],
+                        delivery_date=item["delivery_date"],
+                    )
+                    raise InvoicePostingValidationError(
+                        f"Pedido de compra informado não está aberto para este fornecedor: {label}."
+                    )
+                issue_raw = group.get("issue_date")
+                issue_date = (
+                    _parse_date(issue_raw, field="Data de emissão do pedido")
+                    if issue_raw
+                    else None
+                )
+                delivery_key = item["delivery_date"]
+                parsed_delivery = (
+                    _parse_date(delivery_key, field="Data de entrega do pedido")
+                    if delivery_key
+                    else None
+                )
+                resolved_rows.append(
+                    {
+                        "order_number": group["order_number"],
+                        "delivery_date": parsed_delivery,
+                        "issue_date": issue_date,
+                        "open_value": group.get("open_value"),
+                        "product_count": group.get("product_count"),
+                        "linked_at": linked_at,
+                        "linked_by_user_id": actor.user_id,
+                        "linked_by_name": actor.user_name,
+                    }
+                )
 
-        return self._requests.update_request_with_history(
-            request_id=request_id,
-            updates={
-                "linked_po_number": group["order_number"],
-                "linked_po_delivery_date": parsed_delivery,
-                "linked_po_issue_date": issue_date,
-                "linked_po_open_value": group.get("open_value"),
-                "linked_po_product_count": group.get("product_count"),
-                "linked_po_linked_at": linked_at,
-                "linked_po_linked_by_user_id": actor.user_id,
-                "linked_po_linked_by_name": actor.user_name,
-            },
-            history_fields={
-                "event_type": "purchase_order_linked",
-                "actor_origin": "user",
-                "actor_user_id": actor.user_id,
-                "actor_name": actor.user_name,
-                "from_status": current["status"],
-                "to_status": current["status"],
-                "changes": history_changes_json_safe(
-                    {"linked_po": {"from": previous, "to": to_snapshot}}
+        to_snapshots = [
+            {
+                "order_number": row["order_number"],
+                "delivery_date": (
+                    row["delivery_date"].isoformat()
+                    if isinstance(row.get("delivery_date"), date)
+                    else row.get("delivery_date")
                 ),
-                "justification": justification,
-            },
+                "issue_date": (
+                    row["issue_date"].isoformat()
+                    if isinstance(row.get("issue_date"), date)
+                    else row.get("issue_date")
+                ),
+                "open_value": row.get("open_value"),
+                "product_count": row.get("product_count"),
+                "linked_at": (
+                    row["linked_at"].isoformat()
+                    if isinstance(row.get("linked_at"), datetime)
+                    else row.get("linked_at")
+                ),
+                "linked_by_user_id": row.get("linked_by_user_id"),
+                "linked_by_name": row.get("linked_by_name"),
+            }
+            for row in resolved_rows
+        ]
+
+        label_from = format_linked_po_labels(previous)
+        label_to = format_linked_po_labels(to_snapshots)
+        if previous and to_snapshots:
+            justification = f"Pedidos amarrados: {label_from} → {label_to}"
+        elif to_snapshots:
+            justification = f"Pedidos amarrados: {label_to}"
+        elif previous:
+            justification = f"Pedidos desamarrados: {label_from}"
+        else:
+            justification = "Pedidos amarrados: (nenhum)"
+
+        first = resolved_rows[0] if resolved_rows else None
+        mirror_updates = {
+            "linked_po_number": first["order_number"] if first else None,
+            "linked_po_delivery_date": first.get("delivery_date") if first else None,
+            "linked_po_issue_date": first.get("issue_date") if first else None,
+            "linked_po_open_value": first.get("open_value") if first else None,
+            "linked_po_product_count": first.get("product_count") if first else None,
+            "linked_po_linked_at": first.get("linked_at") if first else None,
+            "linked_po_linked_by_user_id": first.get("linked_by_user_id") if first else None,
+            "linked_po_linked_by_name": first.get("linked_by_name") if first else None,
+        }
+
+        history_fields = {
+            "event_type": "purchase_order_linked",
+            "actor_origin": "user",
+            "actor_user_id": actor.user_id,
+            "actor_name": actor.user_name,
+            "from_status": current["status"],
+            "to_status": current["status"],
+            "changes": history_changes_json_safe(
+                {"linked_po": {"from": previous, "to": to_snapshots}}
+            ),
+            "justification": justification,
+        }
+
+        if hasattr(self._requests, "replace_linked_purchase_orders"):
+            return self._requests.replace_linked_purchase_orders(
+                request_id=request_id,
+                rows=resolved_rows,
+                history_fields=history_fields,
+                mirror_updates=mirror_updates,
+            )
+
+        # Fallback (testes sem junction): espelha só o primeiro e lista em memória
+        updated = self._requests.update_request_with_history(
+            request_id=request_id,
+            updates=mirror_updates,
+            history_fields=history_fields,
         )
+        if hasattr(self._requests, "set_linked_purchase_orders"):
+            self._requests.set_linked_purchase_orders(request_id, to_snapshots)
+            refreshed = self._requests.get_request(request_id)
+            return refreshed or updated
+        updated["linked_purchase_orders"] = to_snapshots
+        return updated
+
+    @staticmethod
+    def _normalize_wanted_groups(
+        *,
+        groups: list[dict[str, Any]] | None,
+        order_number: str | None,
+        delivery_date: str | None,
+    ) -> list[dict[str, str | None]]:
+        raw_groups: list[dict[str, Any]]
+        if groups is not None:
+            raw_groups = list(groups)
+        elif order_number is not None:
+            raw_groups = [
+                {"order_number": order_number, "delivery_date": delivery_date}
+            ]
+        else:
+            raise InvoicePostingValidationError(
+                "Informe os pedidos de compra a amarrar."
+            )
+
+        wanted: list[dict[str, str | None]] = []
+        for item in raw_groups:
+            number = str(item.get("order_number") or "").strip()
+            if not number:
+                raise InvoicePostingValidationError(
+                    "Informe o número do pedido de compra."
+                )
+            raw_delivery = item.get("delivery_date")
+            if raw_delivery is not None and str(raw_delivery).strip() == "":
+                raw_delivery = None
+            delivery_key: str | None = None
+            if raw_delivery is not None:
+                parsed = _parse_date(
+                    raw_delivery, field="Data de entrega do pedido"
+                )
+                delivery_key = parsed.isoformat()
+            wanted.append(
+                {"order_number": number, "delivery_date": delivery_key}
+            )
+        return wanted
 
 
 class UpdateInvoicePostingRequestUseCase:
