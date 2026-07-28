@@ -2,6 +2,7 @@ import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTy
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import { buildInterleavedStackSegments } from "../../message/assistantContentInterleave";
 import { orderVisualSegments, resolveStackLayoutOrderFromToolCalls } from "../../message/assistantContentLayout";
+import { hasRenderPlanContract } from "../presentationMetadataReaders";
 import { buildMultiRouteStackSegments } from "../pipeline/presentationMultiRoute";
 import { dedupeTablePresentations } from "../pipeline/presentationTableDedup";
 import { appendVisualSegment } from "./segmentDedupe";
@@ -18,14 +19,17 @@ export function buildStackedSegments(
   const visualOrder = layoutOrder.filter((slot) => slot !== "text");
   const orderedVisuals = orderVisualSegments(visuals, visualOrder);
 
-  const multiRoute = buildMultiRouteStackSegments(
-    commentary,
-    toolCalls,
-    appendVisualSegment,
-  );
+  // Com renderPlan, o blueprint/executor canônico monta os segmentos — não multi-rota por path.
+  if (!hasRenderPlanContract(toolCalls)) {
+    const multiRoute = buildMultiRouteStackSegments(
+      commentary,
+      toolCalls,
+      appendVisualSegment,
+    );
 
-  if (multiRoute?.length) {
-    return multiRoute;
+    if (multiRoute?.length) {
+      return multiRoute;
+    }
   }
 
   return buildInterleavedStackSegments(

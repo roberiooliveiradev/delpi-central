@@ -166,6 +166,54 @@ describe("presentationMultiRoute", () => {
     );
   });
 
+  it("com renderPlan em multi-rota, buildAssistantContentSegments segue o plan (sem seções de rota)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/products/90260149/guide",
+          presentationDecision: { layoutMode: "stack", selected: "table" },
+          tablePresentation: {
+            type: "table",
+            title: "Roteiro",
+            columns: [{ key: "op", label: "Op" }],
+            rows: [{ op: "01" }],
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentation" },
+              { kind: "tree", slot: "tailVisuals", source: "treePresentation" },
+            ],
+          },
+        },
+      },
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          path: "/products/90260149/structure",
+          presentationDecision: { layoutMode: "stack", selected: "tree" },
+          presentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "1", label: "1", children: [] },
+          },
+        },
+      },
+    ]);
+
+    const segments = buildAssistantContentSegments("### Roteiro\n\nTexto.\n\n### Estrutura\n\nBOM.", toolCalls);
+    const kinds = segments.map((segment) => segment.kind);
+
+    expect(kinds).not.toContain("stackSection");
+    expect(kinds).toContain("table");
+    expect(kinds).toContain("tree");
+  });
+
   it("mapeia segmentos de path", () => {
     expect(routeKeyFromPath("/products/1/stock")).toBe("stock");
     expect(routeKeyFromPath("/products/1/guide")).toBe("guide");

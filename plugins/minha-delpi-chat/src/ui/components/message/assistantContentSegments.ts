@@ -106,8 +106,8 @@ export function buildAssistantContentSegments(
   const proseOnlyRenderPlan =
     renderPlan?.version === 1 && renderPlanHasOnlyProseSegments(renderPlan);
 
+  // Com plan: só prosa se o próprio plan for prose-only — não reinterpretar selected.
   if (
-    selected === "text" &&
     proseOnlyRenderPlan &&
     !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
   ) {

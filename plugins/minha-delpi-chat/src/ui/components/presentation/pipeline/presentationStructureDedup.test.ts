@@ -52,6 +52,63 @@ describe("presentationStructureDedup", () => {
     expect(segments.some((segment) => segment.kind === "table")).toBe(true);
   });
 
+  it("com renderPlan, não remove tabela mesmo sem structureDedupApplied", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentation: tree,
+          tablePresentation: structureTable,
+          presentationDecision: { layoutMode: "single", selected: "table" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "table", source: "presentation" }],
+          },
+        },
+      },
+    ]);
+
+    const segments = filterSegmentsWithoutHierarchyTableDuplicates(
+      [
+        { kind: "table", presentation: structureTable },
+      ],
+      toolCalls,
+    );
+
+    expect(segments).toHaveLength(1);
+    expect(segments[0]?.kind).toBe("table");
+  });
+
+  it("com renderPlan single table + keep-bundle tree, buildAssistantContentSegments mantém a tabela", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          path: "/products/90260149/structure",
+          treePresentation: tree,
+          presentation: structureTable,
+          tablePresentation: structureTable,
+          presentationDecision: { layoutMode: "single", selected: "table" },
+          stackPresentationPlan: {
+            renderHints: { suppressedKinds: ["tree", "chart"] },
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "table", source: "presentation" }],
+          },
+        },
+      },
+    ]);
+
+    const segments = buildAssistantContentSegments("", toolCalls);
+    const kinds = segments.map((segment) => segment.kind);
+
+    expect(kinds).toContain("table");
+    expect(kinds).not.toContain("tree");
+  });
+
   it("não monta tabela de estrutura quando a árvore já está no turno", () => {
     const toolCalls = fixtureToolCalls([
       {

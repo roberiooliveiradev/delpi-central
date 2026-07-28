@@ -6,6 +6,7 @@ import {
 } from "../../../../content/presentationVocabulary";
 
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
+import { hasRenderPlanContract } from "../presentationMetadataReaders";
 
 function metadataStructureDedupApplied(toolCalls: ChatToolCall[]): boolean {
   return toolCalls.some((toolCall) => toolCall.metadata?.structureDedupApplied === true);
@@ -95,7 +96,12 @@ export function filterSegmentsWithoutHierarchyTableDuplicates(
   segments: AssistantContentSegment[],
   toolCalls: ChatToolCall[],
 ): AssistantContentSegment[] {
-  if (metadataStructureDedupApplied(toolCalls) || !toolCallsHaveTree(toolCalls)) {
+  // renderPlan / structureDedupApplied: API já decidiu; não refiltrar no cliente.
+  if (
+    hasRenderPlanContract(toolCalls) ||
+    metadataStructureDedupApplied(toolCalls) ||
+    !toolCallsHaveTree(toolCalls)
+  ) {
     return segments;
   }
 

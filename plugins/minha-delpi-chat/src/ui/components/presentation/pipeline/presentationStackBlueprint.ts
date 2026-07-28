@@ -3,6 +3,7 @@ import type { ChatToolCall } from "../../../../data/api/chatTypes";
 import { stripPresentationSectionMarkers } from "../../message/chatMarkdown";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
 import type { CommentarySections } from "../../message/assistantContentInterleave";
+import { hasRenderPlanContract } from "../presentationMetadataReaders";
 import { buildMultiRouteStackSegments } from "./presentationMultiRoute";
 import { buildSegmentsFromRenderPlan } from "../segmentBuilders/renderPlanSegmentBuilder";
 
@@ -31,26 +32,42 @@ export function buildCanonicalStackSegments(
   toolCalls: ChatToolCall[] = [],
 ): AssistantContentSegment[] {
   const trimmedCommentary = String(commentary || "").trim();
-  const multiRoute = buildMultiRouteStackSegments(
-    trimmedCommentary,
-    toolCalls,
-    appendUnique,
-  );
 
-  if (multiRoute?.length) {
-    return multiRoute;
-  }
+  // renderPlan v1 manda — multi-rota por path só no legado sem contrato.
+  if (hasRenderPlanContract(toolCalls)) {
+    const fromRenderPlan = buildSegmentsFromRenderPlan(
+      trimmedCommentary,
+      orderedVisuals,
+      parseMarkdown,
+      appendUnique,
+      toolCalls,
+    );
 
-  const fromRenderPlan = buildSegmentsFromRenderPlan(
-    trimmedCommentary,
-    orderedVisuals,
-    parseMarkdown,
-    appendUnique,
-    toolCalls,
-  );
+    if (fromRenderPlan?.length) {
+      return fromRenderPlan;
+    }
+  } else {
+    const multiRoute = buildMultiRouteStackSegments(
+      trimmedCommentary,
+      toolCalls,
+      appendUnique,
+    );
 
-  if (fromRenderPlan?.length) {
-    return fromRenderPlan;
+    if (multiRoute?.length) {
+      return multiRoute;
+    }
+
+    const fromRenderPlan = buildSegmentsFromRenderPlan(
+      trimmedCommentary,
+      orderedVisuals,
+      parseMarkdown,
+      appendUnique,
+      toolCalls,
+    );
+
+    if (fromRenderPlan?.length) {
+      return fromRenderPlan;
+    }
   }
 
   if (trimmedCommentary) {
