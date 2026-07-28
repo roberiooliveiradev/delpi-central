@@ -59,6 +59,19 @@ _COMPETING_ACTIONS = [
         "parametersSchema": [{"name": "code", "in": "path", "required": True}],
     },
     {
+        "actionId": "by-supplier-part-number-action",
+        "method": "GET",
+        "path": "/products/by-supplier-part-number",
+        "operationId": "search_products_by_supplier_part_number",
+        "summary": "Products by supplier part number",
+        "parametersSchema": [
+            {"name": "supplier_part_number", "in": "query", "required": True},
+            {"name": "supplier_code", "in": "query"},
+            {"name": "page", "in": "query"},
+            {"name": "page_size", "in": "query"},
+        ],
+    },
+    {
         "actionId": "stock-action",
         "method": "GET",
         "path": "/products/{code}/stock",
@@ -132,3 +145,12 @@ def test_agora_fornecedores_uses_code_from_conversation_context():
     assert selected is not None
     assert selected["arguments"]["actionId"] == "suppliers-action"
     assert selected["arguments"]["parameters"]["code"] == "10080001"
+
+
+def test_liste_produto_por_part_number_fornecedor_selects_by_supplier_part_number():
+    selected = _select("liste produto com part number do fornecedor 008700056")
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "by-supplier-part-number-action"
+    assert selected["arguments"]["parameters"]["supplier_part_number"] == "008700056"
+    assert "code" not in selected["arguments"]["parameters"]

@@ -220,6 +220,9 @@ class OperationalRouteActionResolverService:
         if strategy == "product_search" or domain == "domainProductSearch":
             return "/products/" in path and "search" in path
 
+        if strategy == "supplier_part_number":
+            return "/products/" in path and "by-supplier-part-number" in path
+
         if strategy == "product_code" or requires_product or route_segment:
             if "{code}" in path or "{identifier}" in path:
                 return "/products/" in path
@@ -319,6 +322,24 @@ class OperationalRouteActionResolverService:
                 return merge_date_parameters(action, message, parameters)
 
             return parameters
+
+        if strategy == "supplier_part_number":
+            from app.domain.services.chat_operational_identifier_resolution_service import (
+                ChatOperationalIdentifierResolutionService,
+            )
+
+            part_number = ChatOperationalIdentifierResolutionService.primary_supplier_part_number(
+                message or ""
+            )
+            if not part_number:
+                return None
+
+            parameters: dict = {
+                "supplier_part_number": part_number,
+                "page": 1,
+                "page_size": 50,
+            }
+            return self._catalog.filter_parameters_to_schema(action, parameters)
 
         if strategy == "product_code":
             if not identifier:

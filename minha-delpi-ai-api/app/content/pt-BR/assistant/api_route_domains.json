@@ -150,9 +150,13 @@
       "method": "GET"
     }
   },
-  "parameterStrategies": {
+    "parameterStrategies": {
     "product_code": {
       "description": "Código de produto com paginação, filial e armazém",
+      "registryOnly": true
+    },
+    "supplier_part_number": {
+      "description": "Busca produto pelo part number do fornecedor (A5_CODPRF)",
       "registryOnly": true
     },
     "date_branch": {

@@ -82,6 +82,28 @@ class OperationalRouteMatcherService:
             if not identifier:
                 return False
 
+        accepted_roles = match_spec.get("acceptedIdentifierRoles")
+        if isinstance(accepted_roles, list) and accepted_roles:
+            from app.domain.services.chat_operational_identifier_resolution_service import (
+                ChatOperationalIdentifierResolutionService,
+            )
+
+            roles = {str(item).strip() for item in accepted_roles if str(item).strip()}
+            resolved = ChatOperationalIdentifierResolutionService.resolve(message or "")
+            primary_role = resolved.primary.role if resolved.primary else None
+            if primary_role and primary_role not in roles:
+                return False
+            if primary_role is None and "supplier_part_number" in roles:
+                # Predicate matched; allow route if a single PN token exists.
+                pn = ChatOperationalIdentifierResolutionService.primary_supplier_part_number(
+                    message or ""
+                )
+                if not pn:
+                    return False
+            elif primary_role is None and "delpi_product_code" in roles:
+                if not ChatProductQueryIntentService.extract_product_code(message or ""):
+                    return False
+
         return True
 
     @classmethod

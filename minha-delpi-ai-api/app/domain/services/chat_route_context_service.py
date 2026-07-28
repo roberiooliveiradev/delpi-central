@@ -71,6 +71,20 @@ class ChatRouteContextService:
     )
 
     _MESSAGE_SEGMENT_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
+        (
+            "by-supplier-part-number",
+            (
+                "part number do fornecedor",
+                "partnumber do fornecedor",
+                "part number fornecedor",
+                "partnumber fornecedor",
+                "part number",
+                "partnumber",
+                "codigo do fornecedor",
+                "código do fornecedor",
+                "codprf",
+            ),
+        ),
         ("purchases", ("ultima compra", "últimas compras", "ultimas compras", "compra", "purchase")),
         ("suppliers", ("fornecedor", "fornecedore", "supplier")),
         ("stock", ("estoque", "stock", "saldo em estoque", "saldo de estoque")),

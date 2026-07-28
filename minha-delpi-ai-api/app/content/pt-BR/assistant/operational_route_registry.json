@@ -405,13 +405,41 @@
       }
     },
     {
+      "id": "productBySupplierPartNumber",
+      "domain": "product",
+      "priority": 125,
+      "routeSegment": "by-supplier-part-number",
+      "match": {
+        "customPredicate": "supplierPartNumberLookup",
+        "acceptedIdentifierRoles": ["supplier_part_number"]
+      },
+      "route": {
+        "pathMarkers": [
+          "/products/"
+        ],
+        "pathSuffix": "/by-supplier-part-number",
+        "operationIdMarkers": [
+          "search_products_by_supplier_part_number"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "supplier_part_number"
+      },
+      "presentation": {
+        "reasonKey": "productOperational",
+        "promoteCanonicalProductFromResult": true
+      }
+    },
+    {
       "id": "productSuppliers",
       "domain": "product",
       "priority": 121,
       "routeSegment": "suppliers",
       "match": {
         "customPredicate": "suppliersRoute",
-        "requiresProductIdentifier": true
+        "requiresProductIdentifier": true,
+        "acceptedIdentifierRoles": ["delpi_product_code"]
       },
       "route": {
         "pathMarkers": [
