@@ -8,7 +8,7 @@
     <link rel="icon" type="image/svg+xml" href="/p/logoMinhaDelpi.svg" />
     <title>Minha DELPI</title>
     <style>
-      /* Critical path: splash antes do bundle (espelha ScreenLoading do kit). */
+      /* Critical path: glow + marca estática (sem raios JS até o remote ScreenLoading). */
       html,
       body,
       #root {
@@ -46,35 +46,15 @@
         gap: 18px;
         text-align: center;
       }
-      .pub-splash--boot .pub-splash__orbit {
-        position: relative;
-        width: 64px;
-        height: 64px;
+      .pub-splash--boot .pub-splash__mark {
+        width: min(168px, 52vw);
+        animation: pub-splash-mark 2.6s ease-in-out infinite;
       }
-      .pub-splash--boot .pub-splash__ring {
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        border-top-color: #30b8ec;
-        border-right-color: rgba(48, 184, 236, 0.35);
-        animation: pub-splash-spin 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-      }
-      .pub-splash--boot .pub-splash__ring--delayed {
-        inset: 8px;
-        border-top-color: rgba(8, 155, 219, 0.85);
-        border-right-color: transparent;
-        border-bottom-color: rgba(8, 155, 219, 0.4);
-        animation-duration: 1.55s;
-        animation-direction: reverse;
-      }
-      .pub-splash--boot .pub-splash__core {
-        position: absolute;
-        inset: 22px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, #7ad7f5, #089bdb 55%, #003866);
-        box-shadow: 0 0 18px rgba(48, 184, 236, 0.55);
-        animation: pub-splash-core 1.8s ease-in-out infinite;
+      .pub-splash--boot .pub-splash__mark svg {
+        width: 100%;
+        height: auto;
+        display: block;
+        filter: drop-shadow(0 0 18px rgba(48, 184, 236, 0.35));
       }
       .pub-splash--boot .pub-splash__label {
         margin: 0;
@@ -98,11 +78,6 @@
         background: linear-gradient(90deg, transparent, #30b8ec, #089bdb, transparent);
         animation: pub-splash-bar 1.35s ease-in-out infinite;
       }
-      @keyframes pub-splash-spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
       @keyframes pub-splash-breathe {
         0%,
         100% {
@@ -114,11 +89,11 @@
           transform: scale(1.04);
         }
       }
-      @keyframes pub-splash-core {
+      @keyframes pub-splash-mark {
         0%,
         100% {
-          transform: scale(0.92);
-          opacity: 0.85;
+          transform: scale(0.98);
+          opacity: 0.92;
         }
         50% {
           transform: scale(1);
@@ -135,8 +110,7 @@
       }
       @media (prefers-reduced-motion: reduce) {
         .pub-splash--boot .pub-splash__glow,
-        .pub-splash--boot .pub-splash__ring,
-        .pub-splash--boot .pub-splash__core,
+        .pub-splash--boot .pub-splash__mark,
         .pub-splash--boot .pub-splash__bar-fill {
           animation: none;
         }
@@ -147,8 +121,6 @@
       }
     </style>
     <script>
-      // Aplica o tema salvo antes da renderização (evita flash). Sem escolha
-      // fixada, o CSS segue a preferência do sistema operacional.
       (function () {
         try {
           var t = localStorage.getItem("pub-theme");
@@ -170,10 +142,40 @@
       >
         <div class="pub-splash__glow" aria-hidden="true"></div>
         <div class="pub-splash__stage">
-          <div class="pub-splash__orbit" aria-hidden="true">
-            <span class="pub-splash__ring"></span>
-            <span class="pub-splash__ring pub-splash__ring--delayed"></span>
-            <span class="pub-splash__core"></span>
+          <div class="pub-splash__mark" aria-hidden="true">
+            <svg viewBox="0 0 320 200" focusable="false">
+              <defs>
+                <linearGradient id="pub-boot-swoosh" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#089bdb" />
+                  <stop offset="45%" stop-color="#30b8ec" />
+                  <stop offset="100%" stop-color="#089bdb" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M248 168C330 98 255 -18 138 58C248 -38 372 96 248 168Z"
+                fill="url(#pub-boot-swoosh)"
+              />
+              <text
+                x="20"
+                y="78"
+                fill="#30b8ec"
+                font-family="system-ui, -apple-system, sans-serif"
+                font-size="28"
+                font-weight="700"
+              >
+                minha
+              </text>
+              <text
+                x="20"
+                y="128"
+                fill="#e8f4fb"
+                font-family="system-ui, -apple-system, sans-serif"
+                font-size="36"
+                font-weight="800"
+              >
+                delpi
+              </text>
+            </svg>
           </div>
           <p class="pub-splash__label">Carregando</p>
           <div class="pub-splash__bar" aria-hidden="true">

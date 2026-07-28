@@ -125,7 +125,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "LoadingState"),
   vc("feedback", "ScreenLoading", {
     addedAt: "2026-07-28",
-    changeNote: "Splash de carregamento de tela (orbit + barra) — fullscreen/embedded",
+    updatedAt: "2026-07-28",
+    changeNote: "Marca Minha DELPI + raios brandados a partir do swoosh (login energia)",
   }),
   vc("feedback", "LoadingActivityCard"),
   vc("feedback", "StateBanner"),

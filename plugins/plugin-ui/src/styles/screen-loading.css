@@ -1,5 +1,5 @@
 /**
- * ScreenLoading — splash de tela cheia / embutido.
+ * ScreenLoading — splash de tela (marca + raios brandados).
  * Classes canônicas: .delpi-ui-screen-loading*
  */
 
@@ -12,6 +12,7 @@
   padding: 32px 20px;
   isolation: isolate;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .delpi-ui-screen-loading--fullscreen {
@@ -60,6 +61,47 @@
     );
 }
 
+.delpi-ui-screen-loading__lightning {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.delpi-ui-screen-loading__lightning-line,
+.delpi-ui-screen-loading__lightning-branch {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0;
+}
+
+.delpi-ui-screen-loading__lightning-line {
+  stroke: #30b8ec;
+  stroke-width: 2;
+  filter:
+    drop-shadow(0 0 4px rgba(0, 207, 255, 0.55))
+    drop-shadow(0 0 12px rgba(0, 153, 220, 0.42));
+  animation: delpi-ui-screen-loading-lightning 2.2s ease-out;
+}
+
+.delpi-ui-screen-loading__lightning-branch {
+  stroke: #089bdb;
+  stroke-width: 1.4;
+  filter: drop-shadow(0 0 3px rgba(0, 207, 255, 0.4));
+  animation: delpi-ui-screen-loading-lightning 2.2s ease-out;
+}
+
+.delpi-ui-screen-loading--brand .delpi-ui-screen-loading__lightning-line {
+  stroke: var(--delpi-ui-accent, #0c6fb0);
+}
+
+.delpi-ui-screen-loading--brand .delpi-ui-screen-loading__lightning-branch {
+  stroke: var(--delpi-ui-accent, #089bdb);
+}
+
 .delpi-ui-screen-loading__stage {
   position: relative;
   z-index: 1;
@@ -71,59 +113,19 @@
   text-align: center;
 }
 
-.delpi-ui-screen-loading__orbit {
-  position: relative;
-  width: 64px;
-  height: 64px;
+.delpi-ui-screen-loading__mark {
+  width: min(168px, 52vw);
+  height: auto;
+  display: grid;
+  place-items: center;
+  animation: delpi-ui-screen-loading-mark 2.6s ease-in-out infinite;
 }
 
-.delpi-ui-screen-loading__ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  border-top-color: #30b8ec;
-  border-right-color: color-mix(in srgb, #30b8ec 35%, transparent);
-  animation: delpi-ui-screen-loading-spin 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95)
-    infinite;
-}
-
-.delpi-ui-screen-loading__ring--delayed {
-  inset: 8px;
-  border-top-color: color-mix(in srgb, #089bdb 70%, white);
-  border-right-color: transparent;
-  border-bottom-color: color-mix(in srgb, #089bdb 40%, transparent);
-  animation-duration: 1.55s;
-  animation-direction: reverse;
-}
-
-.delpi-ui-screen-loading--brand .delpi-ui-screen-loading__ring {
-  border-top-color: var(--delpi-ui-accent, #0c6fb0);
-  border-right-color: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, #0c6fb0) 35%,
-    transparent
-  );
-}
-
-.delpi-ui-screen-loading--brand .delpi-ui-screen-loading__ring--delayed {
-  border-top-color: var(--delpi-ui-accent, #089bdb);
-  border-bottom-color: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, #089bdb) 40%,
-    transparent
-  );
-}
-
-.delpi-ui-screen-loading__core {
-  position: absolute;
-  inset: 22px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #7ad7f5, #089bdb 55%, #003866);
-  box-shadow:
-    0 0 18px rgba(48, 184, 236, 0.55),
-    0 0 2px rgba(255, 255, 255, 0.35) inset;
-  animation: delpi-ui-screen-loading-core 1.8s ease-in-out infinite;
+.delpi-ui-screen-loading__mark svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 0 18px rgba(48, 184, 236, 0.35));
 }
 
 .delpi-ui-screen-loading__label {
@@ -166,12 +168,6 @@
   );
 }
 
-@keyframes delpi-ui-screen-loading-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 @keyframes delpi-ui-screen-loading-breathe {
   0%,
   100% {
@@ -184,15 +180,31 @@
   }
 }
 
-@keyframes delpi-ui-screen-loading-core {
+@keyframes delpi-ui-screen-loading-mark {
   0%,
   100% {
-    transform: scale(0.92);
-    opacity: 0.85;
+    transform: scale(0.98);
+    opacity: 0.92;
   }
   50% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@keyframes delpi-ui-screen-loading-lightning {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.9;
+  }
+  16% {
+    opacity: 0.45;
+  }
+  32%,
+  100% {
+    opacity: 0;
   }
 }
 
@@ -207,10 +219,16 @@
 
 @media (prefers-reduced-motion: reduce) {
   .delpi-ui-screen-loading__glow,
-  .delpi-ui-screen-loading__ring,
-  .delpi-ui-screen-loading__core,
+  .delpi-ui-screen-loading__mark,
+  .delpi-ui-screen-loading__lightning-line,
+  .delpi-ui-screen-loading__lightning-branch,
   .delpi-ui-screen-loading__bar-fill {
     animation: none;
+  }
+
+  .delpi-ui-screen-loading__lightning-line,
+  .delpi-ui-screen-loading__lightning-branch {
+    opacity: 0;
   }
 
   .delpi-ui-screen-loading__bar-fill {

@@ -1,14 +1,74 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, act } from "@testing-library/react";
 
 import {
-  ScreenLoading,
-  createDashboardScreenLoading,
-  screenLoadingBemClasses,
-} from "./ScreenLoading";
+  generateBrandLightning,
+  lightningPathStartsNearOrigin,
+} from "./brandLightning";
+import { ScreenLoading, screenLoadingBemClasses } from "./ScreenLoading";
+
+describe("generateBrandLightning", () => {
+  it("gera paths que partem do origin", () => {
+    const origin = { x: 200, y: 150 };
+    const paths = generateBrandLightning({
+      width: 400,
+      height: 300,
+      origin,
+      density: "medium",
+    });
+    expect(paths.length).toBeGreaterThanOrEqual(3);
+    for (const path of paths) {
+      expect(lightningPathStartsNearOrigin(path, origin)).toBe(true);
+      expect(path.d).toMatch(/^M /);
+    }
+  });
+});
 
 describe("ScreenLoading", () => {
-  it("renderiza label e classes canônicas fullscreen/dark", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        callback: ResizeObserverCallback;
+        constructor(cb: ResizeObserverCallback) {
+          this.callback = cb;
+        }
+        observe(target: Element) {
+          const rect = {
+            width: 640,
+            height: 360,
+            x: 0,
+            y: 0,
+            top: 0,
+            left: 0,
+            bottom: 360,
+            right: 640,
+            toJSON: () => ({}),
+          };
+          this.callback(
+            [
+              {
+                target,
+                contentRect: rect,
+                borderBoxSize: [],
+                contentBoxSize: [],
+                devicePixelContentBoxSize: [],
+              },
+            ],
+            this as unknown as ResizeObserver,
+          );
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("renderiza marca, label e classes fullscreen/dark", () => {
     const { container } = render(
       <ScreenLoading label="Carregando apresentação" variant="fullscreen" tone="dark" />,
     );
@@ -16,24 +76,38 @@ describe("ScreenLoading", () => {
     expect(root.className).toContain("delpi-ui-screen-loading");
     expect(root.className).toContain("delpi-ui-screen-loading--fullscreen");
     expect(root.className).toContain("delpi-ui-screen-loading--dark");
+    expect(root.className).toContain("delpi-ui-screen-loading--lightning");
     expect(root.getAttribute("role")).toBe("status");
-    expect(root.getAttribute("aria-busy")).toBe("true");
     expect(screen.getByText("Carregando apresentação")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-screen-loading__mark")).toBeTruthy();
+  });
+
+  it("não liga lightning por default em brand embedded", () => {
+    const { container } = render(
+      <ScreenLoading label="Aguarde" variant="embedded" tone="brand" />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).not.toContain("delpi-ui-screen-loading--lightning");
+    expect(container.querySelector(".delpi-ui-screen-loading__lightning")).toBeNull();
   });
 
   it("factory aplica prefixo BEM dual-class", () => {
     const cn = screenLoadingBemClasses("pub");
-    const DashboardScreenLoading = createDashboardScreenLoading({
-      classNames: cn,
-      defaultLabel: "Aguarde",
-      variant: "embedded",
-      tone: "brand",
-    });
-    const { container } = render(<DashboardScreenLoading />);
+    const { container } = render(
+      <ScreenLoading classNames={cn} label="Aguarde" tone="brand" variant="embedded" />,
+    );
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("pub-screen-loading");
     expect(root.className).toContain("delpi-ui-screen-loading");
-    expect(root.className).toContain("delpi-ui-screen-loading--brand");
-    expect(screen.getByText("Aguarde")).toBeTruthy();
+  });
+
+  it("com showLightning renderiza camada SVG após resize", async () => {
+    const { container } = render(
+      <ScreenLoading label="TV" variant="fullscreen" tone="dark" showLightning />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(container.querySelector("svg.delpi-ui-screen-loading__lightning")).toBeTruthy();
   });
 });

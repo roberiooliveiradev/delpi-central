@@ -95,13 +95,13 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
     family: "feedback",
     exportName: "ScreenLoading",
     title: "ScreenLoading",
-    description: "Splash de carregamento de tela (orbit + barra indeterminada).",
+    description: "Splash de tela com marca Minha DELPI e raios brandados (kiosk).",
     docAnchor: "screenloading",
-    propsSummary: ["label", "variant", "tone", "classNames"],
+    propsSummary: ["label", "variant", "tone", "showLightning", "classNames"],
     demos: [
       {
         id: "dark-fullscreen",
-        label: "Kiosk escuro",
+        label: "Kiosk + raios",
         render: () => (
           <div style={{ position: "relative", height: 280, borderRadius: 12, overflow: "hidden" }}>
             <ScreenLoading
@@ -109,6 +109,7 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
               label="Carregando"
               variant="fullscreen"
               tone="dark"
+              showLightning
             />
           </div>
         ),

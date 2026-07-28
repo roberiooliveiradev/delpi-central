@@ -299,18 +299,19 @@ Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDash
 
 ### `ScreenLoading`
 
-Splash de carregamento de **tela** (orbit animado + label + barra indeterminada). Use em boot/kiosk/páginas; para painéis inline preferir `LoadingActivityCard` / `LoadingState`.
+Splash de carregamento de **tela**: marca Minha DELPI (swoosh + wordmark) + **raios elétricos** radiando do centro (linguagem do login energia) + label + barra indeterminada. Painéis inline: preferir `LoadingActivityCard` / `LoadingState`.
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
-| `label` | `string?` | Texto sob o orbit (default: «Carregando») |
+| `label` | `string?` | Texto sob a marca (default: «Carregando») |
 | `variant` | `"embedded" \| "fullscreen"` | Embutido vs. preencher ancestral posicionado |
 | `tone` | `"dark" \| "brand"` | Fundo kiosk vs. tokens `--delpi-ui-*` |
+| `showLightning` | `boolean?` | Default: ligado em `dark`/`fullscreen`; off em brand/embedded |
 | `classNames` | `ScreenLoadingClassNames?` | BEM dual-class |
 
-Helpers: `screenLoadingBemClasses(prefix)` e `createDashboardScreenLoading`.
+Helpers: `screenLoadingBemClasses(prefix)`, `createDashboardScreenLoading`, `generateBrandLightning`, `BrandLightningLayer`, `BrandMark`.
 
-CSS: `screen-loading.css` — `.delpi-ui-screen-loading*`. Consumidor piloto: `public-hub` (`PublicLoadingSplash`).
+CSS: `screen-loading.css` — `.delpi-ui-screen-loading*`. Consumidor piloto: `public-hub` (`PublicLoadingSplash`). Respeita `prefers-reduced-motion`.
 
 ### `StatusBadge`
 
