@@ -7,22 +7,37 @@ import {
 } from "./presentationFitPolicy";
 
 describe("resolvePresentationFitMode", () => {
-  it("preview e thumbnail sempre contain", () => {
+  it("auto → contain em preview, thumbnail e kiosk (Adeus Pendrive / multi-tamanho)", () => {
+    const sizes = [
+      { cw: 1280, ch: 720, dw: 1920, dh: 1080 },
+      { cw: 1920, ch: 1080, dw: 1920, dh: 1080 },
+      { cw: 3840, ch: 2160, dw: 1920, dh: 1080 },
+      { cw: 1920, ch: 1200, dw: 1920, dh: 1080 },
+      { cw: 2560, ch: 1080, dw: 1920, dh: 1080 },
+      { cw: 1080, ch: 1920, dw: 1080, dh: 1920 },
+      { cw: 1920, ch: 1080, dw: 1080, dh: 1920 }, // orientação cruzada
+    ];
+    for (const surface of ["preview", "thumbnail", "kiosk"] as const) {
+      for (const c of sizes) {
+        expect(
+          resolvePresentationFitMode({
+            surface,
+            designWidth: c.dw,
+            designHeight: c.dh,
+            containerWidth: c.cw,
+            containerHeight: c.ch,
+          }),
+        ).toBe("contain");
+      }
+    }
+  });
+
+  it("kiosk auto sem medida de container → contain (não cover)", () => {
     expect(
       resolvePresentationFitMode({
-        surface: "preview",
+        surface: "kiosk",
         designWidth: 1920,
         designHeight: 1080,
-        containerWidth: 800,
-        containerHeight: 600,
-      }),
-    ).toBe("contain");
-    expect(
-      resolvePresentationFitMode({
-        surface: "thumbnail",
-        designWidth: 1920,
-        designHeight: 1080,
-        fit: "auto",
       }),
     ).toBe("contain");
   });
@@ -46,58 +61,14 @@ describe("resolvePresentationFitMode", () => {
         fit: "cover",
       }),
     ).toBe("cover");
-  });
-
-  it("kiosk mesma orientação → cover (FitScreenAndZoom) em vários tamanhos", () => {
-    const cases = [
-      { cw: 1280, ch: 720, dw: 1920, dh: 1080 }, // 720p host, 1080p design
-      { cw: 1920, ch: 1080, dw: 1920, dh: 1080 },
-      { cw: 3840, ch: 2160, dw: 1920, dh: 1080 }, // 4k host
-      { cw: 1920, ch: 1200, dw: 1920, dh: 1080 }, // mais alto que 16:9
-      { cw: 2560, ch: 1080, dw: 1920, dh: 1080 }, // ultrawide
-      { cw: 1080, ch: 1920, dw: 1080, dh: 1920 }, // portrait→portrait
-    ];
-    for (const c of cases) {
-      expect(
-        resolvePresentationFitMode({
-          surface: "kiosk",
-          designWidth: c.dw,
-          designHeight: c.dh,
-          containerWidth: c.cw,
-          containerHeight: c.ch,
-        }),
-        `${c.cw}x${c.ch} vs ${c.dw}x${c.dh}`,
-      ).toBe("cover");
-    }
-  });
-
-  it("kiosk orientação divergente → contain (não destroi portrait na TV)", () => {
     expect(
       resolvePresentationFitMode({
         surface: "kiosk",
-        designWidth: 1080,
-        designHeight: 1920,
+        designWidth: 1920,
+        designHeight: 1080,
         containerWidth: 1920,
-        containerHeight: 1080,
-      }),
-    ).toBe("contain");
-    expect(
-      resolvePresentationFitMode({
-        surface: "kiosk",
-        designWidth: 1920,
-        designHeight: 1080,
-        containerWidth: 1080,
-        containerHeight: 1920,
-      }),
-    ).toBe("contain");
-  });
-
-  it("kiosk sem medida de container → cover (default wall)", () => {
-    expect(
-      resolvePresentationFitMode({
-        surface: "kiosk",
-        designWidth: 1920,
-        designHeight: 1080,
+        containerHeight: 1200,
+        fit: "cover",
       }),
     ).toBe("cover");
   });

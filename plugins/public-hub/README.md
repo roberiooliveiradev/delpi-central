@@ -205,7 +205,7 @@ Apresentação rotativa em modo **kiosk** (sem logo DELPI):
 |---|---|---|
 | Apresentação TV | `/p/tv-dashboard/present/{token}` | `GET /apps/tv-dashboard-api/public/present/{token}` |
 
-**Fit na TV:** política canônica `presentationFitPolicy` (`surface="kiosk"` + `fit="auto"` → cover na mesma orientação; contain se portrait×landscape). Prévia/admin: `surface="preview"`. Shell kiosk usa `usePresentationViewportPin` (reexport local `useKioskVisualViewportPin`).
+**Fit na TV:** política canônica `presentationFitPolicy` (`fit="auto"` → **contain** em kiosk/preview — slide inteiro). Compatível com Adeus Pendrive («ajustar à tela»); `cover` só sob override explícito. Shell kiosk usa `usePresentationViewportPin`.
 
 Ver `src/apps/tv-dashboard/` (`api.ts`, `PresentationView.tsx`, `pages.tsx`).  
 Motor compartilhado: `plugins/tv-dashboard-presentation/` (`DesignViewportStage`, `presentationFitPolicy`).  

@@ -14,7 +14,7 @@ alwaysApply: false
 |--------|----------------|
 | **Moldura 1080p** | Mesmo CSS (`.delpi-ui-comunicado`), `font-size: 16px`, font stack de design |
 | **Editor** | Dual-class no canvas + `__stage`; pasteboard (`overflow: visible`) no gutter |
-| **TV / prévia** | `DesignViewportStage` + `presentationFitPolicy` (`surface`: kiosk→cover / preview→contain; orientação cruzada→contain) e **clipa** na moldura |
+| **TV / prévia** | `DesignViewportStage` + `presentationFitPolicy` (`auto`→contain; `cover` só explícito) e **clipa** na moldura |
 | **Animações de entrada** | Off por padrão; só com `.tdp-stage--animate-entrances` |
 
 Itens com frame fora de 0–100%: mesmas coordenadas no editor e na TV. No editor aparecem no pasteboard; na apresentação/prévia são cortados na borda do slide (como PowerPoint no modo apresentação).

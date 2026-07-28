@@ -3,9 +3,10 @@
  *
  * Referência de mercado:
  * - Excalibur `FitScreen` / `FitContainer` → contain (slide inteiro, letterbox OK)
- * - Excalibur `FitScreenAndZoom` → cover (preenche, corta bordas; wall/signage)
+ * - Excalibur `FitScreenAndZoom` → cover (só sob pedido explícito — corta bordas)
  * - Xibo / BrightSign → canvas de design + `transform: scale` uniforme (nunca stretch)
- * - Android TV → margem ~5% overscan no conteúdo; fundo pode sangrar
+ * - Players com «ajustar à tela» (ex.: Adeus Pendrive) → o HTML deve usar **contain**;
+ *   cover + scale do host = zoom duplo e corte em baixo/lados
  *
  * Consumidores passam `surface`; o stage resolve contain|cover. Proibido
  * `if (mode === "public")` espalhado em views.
@@ -17,14 +18,14 @@ export type PresentationFitSurface = "kiosk" | "preview" | "thumbnail";
 export type PresentationFitResolved = "contain" | "cover";
 
 /**
- * Pedido explícito ou `auto` (resolve por surface + orientação do container).
- * Default do stage: `auto`.
+ * Pedido explícito ou `auto` (resolve por surface).
+ * Default do stage: `auto` → contain em todas as surfaces.
  */
 export type PresentationFitMode = PresentationFitResolved | "auto";
 
 /**
  * Quão perto os aspects precisam estar para tratar como «mesma família»
- * (só documentado; kiosk same-orientation já usa cover).
+ * (reservado; auto kiosk usa contain por causa de hosts com scale próprio).
  */
 export const PRESENTATION_FIT_ASPECT_NEAR_RATIO = 1.12;
 
@@ -32,10 +33,9 @@ export type ResolvePresentationFitModeInput = {
   surface: PresentationFitSurface;
   designWidth: number;
   designHeight: number;
-  /** Se omitido no kiosk, assume cover (wall). */
   containerWidth?: number;
   containerHeight?: number;
-  /** Força contain|cover; `auto` delega à regra de surface. */
+  /** Força contain|cover; `auto` → contain (seguro com Adeus Pendrive / WebView). */
   fit?: PresentationFitMode;
 };
 
@@ -46,46 +46,21 @@ export function presentationSurfaceFromViewMode(
   return mode === "public" ? "kiosk" : "preview";
 }
 
-function isLandscape(width: number, height: number): boolean {
-  return width >= height;
-}
-
 /**
  * Resolve contain vs cover para o par design × container × surface.
  *
- * - preview / thumbnail → sempre contain (ver slide inteiro).
- * - kiosk → cover se mesma orientação (FitScreenAndZoom); contain se
- *   orientação diverge (ex.: playlist portrait em TV landscape).
+ * - `auto` (todas as surfaces, inclusive kiosk) → **contain** — slide inteiro;
+ *   letterbox neutro se o host ≠ aspect do design. Evita corte com apps que
+ *   já fazem «ajustar à tela» (Adeus Pendrive).
+ * - `cover` só com `fit: "cover"` explícito (wall sem scale do host).
  */
 export function resolvePresentationFitMode(
   input: ResolvePresentationFitModeInput,
 ): PresentationFitResolved {
   const fit = input.fit ?? "auto";
   if (fit === "contain" || fit === "cover") return fit;
-
-  if (input.surface === "preview" || input.surface === "thumbnail") {
-    return "contain";
-  }
-
-  // kiosk
-  const { designWidth, designHeight, containerWidth, containerHeight } = input;
-  if (
-    !(designWidth > 0) ||
-    !(designHeight > 0) ||
-    containerWidth == null ||
-    containerHeight == null ||
-    !(containerWidth > 0) ||
-    !(containerHeight > 0)
-  ) {
-    return "cover";
-  }
-
-  const designLandscape = isLandscape(designWidth, designHeight);
-  const containerLandscape = isLandscape(containerWidth, containerHeight);
-  if (designLandscape !== containerLandscape) {
-    return "contain";
-  }
-  return "cover";
+  // auto: contain em todas as surfaces (kiosk incluído — Adeus Pendrive etc.)
+  return "contain";
 }
 
 /**

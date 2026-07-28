@@ -34,7 +34,7 @@ import {
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `DesignViewportStage` | Escala uniforme do canvas de design no container |
-| `resolvePresentationFitMode` | Política contain/cover por surface (kiosk/preview/thumbnail) + orientação |
+| `resolvePresentationFitMode` | Política contain/cover (`auto`→contain; seguro com Adeus Pendrive) |
 | `usePresentationViewportPin` | Fixa palco no `visualViewport` (WebView / apps de roteamento) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
 | `textViewProjection` | Resolver transversal para `textProjection` / `dataRef` em heading, text e shape (Onda 4P) |

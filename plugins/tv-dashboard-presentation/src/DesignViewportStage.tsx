@@ -98,7 +98,8 @@ export function computeDesignViewportLayoutBox(
  * - Posições/tamanhos: frames `%` intactos (sem reconstruir layout).
  * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
  * - Layout box = tamanho visual (scale via `transform-origin: top left`).
- * - Fit: `presentationFitPolicy` (kiosk≈cover / preview≈contain / orientação).
+ * - Fit: `presentationFitPolicy` — `auto` → contain (seguro com Adeus Pendrive);
+ *   `cover` só com override explícito.
  * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
