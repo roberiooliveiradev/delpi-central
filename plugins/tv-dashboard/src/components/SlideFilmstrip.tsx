@@ -13,6 +13,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
@@ -26,16 +27,21 @@ import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
 import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { groupSlidesBySection } from "../utils/groupSlidesBySection";
 import { shouldShowSectionChrome } from "../utils/sectionChromeVisibility";
+import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
 import { SlideFilmstripControls } from "./SlideFilmstripControls";
 import { mergeMasterConfigs } from "./slideCardPreview";
+
+const LONG_PRESS_MS = 450;
+const LONG_PRESS_MOVE_PX = 8;
 
 type Props = {
   slides: Slide[];
   sections?: PlaylistSection[];
   playlistId: string;
   selectedSlideId: string | null;
+  selectedSlideIds?: string[];
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
   dragIndex: number | null;
   inactiveLabel?: string;
@@ -43,7 +49,10 @@ type Props = {
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
   publicToken?: string | null;
-  onSelect: (slideId: string) => void;
+  multiMode?: boolean;
+  onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
+  onLongPressSelect?: (slideId: string) => void;
+  onClearMultiSelection?: () => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
   onDragEnd: () => void;
@@ -53,10 +62,10 @@ type Props = {
   onAddInSection?: (sectionId: string) => void;
   onCopy: (slide: Slide) => void;
   onPaste: () => void;
-  onDuplicate: (slide: Slide) => void;
+  onDuplicate: (slides: Slide[]) => void;
   onRename: (slide: Slide, title: string) => void;
-  onToggleActive: (slide: Slide) => void;
-  onRemove: (slide: Slide) => void;
+  onToggleActive: (slides: Slide[]) => void;
+  onRemove: (slides: Slide[]) => void;
   onSectionNameCommit?: (sectionId: string, name: string) => void;
   onSectionToggleCollapsed?: (sectionId: string, collapsed: boolean) => void;
   onSectionToggleActive?: (sectionId: string, active: boolean) => void;
@@ -66,11 +75,18 @@ type Props = {
   onDropOnUnsectioned?: () => void;
 };
 
+function modifiersFromMouseEvent(event: MouseEvent): FilmstripSelectionModifiers {
+  if (event.shiftKey) return { range: true };
+  if (event.ctrlKey || event.metaKey) return { toggle: true };
+  return {};
+}
+
 export function SlideFilmstrip({
   slides,
   sections = [],
   playlistId,
   selectedSlideId,
+  selectedSlideIds,
   previewBySlideId,
   dragIndex,
   inactiveLabel = "Pausada",
@@ -78,7 +94,10 @@ export function SlideFilmstrip({
   viewportProfile = "1080p",
   masterConfig,
   publicToken,
+  multiMode = false,
   onSelect,
+  onLongPressSelect,
+  onClearMultiSelection,
   onDragStart,
   onDrop,
   onDragEnd,
@@ -98,7 +117,6 @@ export function SlideFilmstrip({
   onSectionDelete,
   onSectionProperties,
   onDropOnSection,
-  onDropOnUnsectioned,
 }: Props) {
   const { collapsed, toggleCollapsed, setCollapsed, startResize, panelWidthPx, limits } =
     useDeckSidePanelLayout("filmstrip", { growDirection: "east" });
@@ -118,11 +136,47 @@ export function SlideFilmstrip({
   const renameInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const skipBlurCommitRef = useRef(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressOriginRef = useRef<{ x: number; y: number; slideId: string } | null>(null);
+  const longPressFiredRef = useRef(false);
+  const suppressClickRef = useRef(false);
+  const suppressDragRef = useRef(false);
 
   useDragEdgeAutoScroll(listRef, dragIndex != null);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
   const closeSectionMenu = useCallback(() => setSectionMenu(null), []);
+
+  const selectedIdSet = useMemo(() => {
+    const ids =
+      selectedSlideIds && selectedSlideIds.length > 0
+        ? selectedSlideIds
+        : selectedSlideId
+          ? [selectedSlideId]
+          : [];
+    return new Set(ids);
+  }, [selectedSlideId, selectedSlideIds]);
+
+  const clearLongPressTimer = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressOriginRef.current = null;
+  }, []);
+
+  useEffect(() => () => clearLongPressTimer(), [clearLongPressTimer]);
+
+  useEffect(() => {
+    if (!multiMode && selectedIdSet.size <= 1) return;
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      if (renamingSlideId) return;
+      onClearMultiSelection?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [multiMode, onClearMultiSelection, renamingSlideId, selectedIdSet.size]);
 
   const indexBySlideId = useMemo(() => {
     const map = new Map<string, number>();
@@ -174,10 +228,26 @@ export function SlideFilmstrip({
     el.select();
   }, [renamingSlideId]);
 
-  const handleContextMenu = useCallback((event: MouseEvent, slide: Slide) => {
-    event.preventDefault();
-    setContextMenu({ slide, x: event.clientX, y: event.clientY });
-  }, []);
+  const resolveMenuTargets = useCallback(
+    (slide: Slide): Slide[] => {
+      if (selectedIdSet.has(slide.id) && selectedIdSet.size > 1) {
+        return slides.filter((item) => selectedIdSet.has(item.id));
+      }
+      return [slide];
+    },
+    [selectedIdSet, slides],
+  );
+
+  const handleContextMenu = useCallback(
+    (event: MouseEvent, slide: Slide) => {
+      event.preventDefault();
+      if (!selectedIdSet.has(slide.id)) {
+        onSelect(slide.id);
+      }
+      setContextMenu({ slide, x: event.clientX, y: event.clientY });
+    },
+    [onSelect, selectedIdSet],
+  );
 
   const onRenameKeyDown = (event: KeyboardEvent<HTMLInputElement>, slide: Slide) => {
     if (event.key === "Enter") {
@@ -190,32 +260,111 @@ export function SlideFilmstrip({
     }
   };
 
+  const handleSelectClick = useCallback(
+    (event: MouseEvent, slideId: string) => {
+      if (suppressClickRef.current) {
+        suppressClickRef.current = false;
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      const modifiers = modifiersFromMouseEvent(event);
+      if (multiMode && !modifiers.range && !modifiers.toggle) {
+        onSelect(slideId, { toggle: true });
+        return;
+      }
+      onSelect(slideId, modifiers);
+    },
+    [multiMode, onSelect],
+  );
+
+  const handlePointerDown = useCallback(
+    (event: ReactPointerEvent, slideId: string) => {
+      if (event.button !== 0) return;
+      if (renamingSlideId) return;
+      clearLongPressTimer();
+      longPressFiredRef.current = false;
+      suppressDragRef.current = false;
+      longPressOriginRef.current = { x: event.clientX, y: event.clientY, slideId };
+      longPressTimerRef.current = setTimeout(() => {
+        longPressTimerRef.current = null;
+        longPressFiredRef.current = true;
+        suppressClickRef.current = true;
+        suppressDragRef.current = true;
+        onLongPressSelect?.(slideId);
+      }, LONG_PRESS_MS);
+    },
+    [clearLongPressTimer, onLongPressSelect, renamingSlideId],
+  );
+
+  const handlePointerMove = useCallback(
+    (event: ReactPointerEvent) => {
+      const origin = longPressOriginRef.current;
+      if (!origin || longPressTimerRef.current == null) return;
+      const dx = event.clientX - origin.x;
+      const dy = event.clientY - origin.y;
+      if (dx * dx + dy * dy > LONG_PRESS_MOVE_PX * LONG_PRESS_MOVE_PX) {
+        clearLongPressTimer();
+      }
+    },
+    [clearLongPressTimer],
+  );
+
+  const handlePointerUpOrCancel = useCallback(() => {
+    clearLongPressTimer();
+  }, [clearLongPressTimer]);
+
   const renderSlideItem = (slide: Slide): ReactNode => {
     const index = indexBySlideId.get(slide.id) ?? 0;
-    const selected = slide.id === selectedSlideId;
+    const isPrimary = slide.id === selectedSlideId;
+    const inMulti = selectedIdSet.has(slide.id);
     const renaming = renamingSlideId === slide.id;
     const sectionMaster = slide.sectionId
       ? sections.find((section) => section.id === slide.sectionId)?.masterConfig
       : undefined;
     const effectiveMaster = mergeMasterConfigs(masterConfig, sectionMaster);
+    const itemClass = [
+      "td-deck-filmstrip__item",
+      isPrimary ? "td-deck-filmstrip__item--selected" : "",
+      inMulti && !isPrimary ? "td-deck-filmstrip__item--multi-selected" : "",
+      !slide.isActive ? "td-deck-filmstrip__item--inactive" : "",
+      dragIndex === index ? "td-deck-filmstrip__item--dragging" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
       <div
         key={slide.id}
-        className={`td-deck-filmstrip__item${selected ? " td-deck-filmstrip__item--selected" : ""}${!slide.isActive ? " td-deck-filmstrip__item--inactive" : ""}${dragIndex === index ? " td-deck-filmstrip__item--dragging" : ""}`}
+        className={itemClass}
         draggable={!renaming}
-        onDragStart={() => {
+        onDragStart={(event) => {
           if (renaming) return;
+          if (suppressDragRef.current || longPressFiredRef.current) {
+            event.preventDefault();
+            suppressDragRef.current = false;
+            return;
+          }
+          clearLongPressTimer();
           onDragStart(index);
         }}
         onDragOver={(event) => event.preventDefault()}
         onDrop={() => onDrop(index)}
         onDragEnd={onDragEnd}
       >
-        <div className="td-deck-filmstrip__select" aria-current={selected ? "true" : undefined}>
+        <div
+          className="td-deck-filmstrip__select"
+          aria-current={isPrimary ? "true" : undefined}
+          aria-selected={inMulti || undefined}
+        >
           <button
             type="button"
             className="td-deck-filmstrip__thumb-btn"
-            onClick={() => onSelect(slide.id)}
+            onClick={(event) => handleSelectClick(event, slide.id)}
+            onPointerDown={(event) => handlePointerDown(event, slide.id)}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUpOrCancel}
+            onPointerCancel={handlePointerUpOrCancel}
             onDoubleClick={(event) => {
               event.preventDefault();
               beginRename(slide);
@@ -248,7 +397,11 @@ export function SlideFilmstrip({
               type="button"
               className="td-deck-filmstrip__title"
               title="Duplo clique para renomear"
-              onClick={() => onSelect(slide.id)}
+              onClick={(event) => handleSelectClick(event, slide.id)}
+              onPointerDown={(event) => handlePointerDown(event, slide.id)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUpOrCancel}
+              onPointerCancel={handlePointerUpOrCancel}
               onDoubleClick={(event) => {
                 event.preventDefault();
                 beginRename(slide);
@@ -371,10 +524,12 @@ export function SlideFilmstrip({
       </div>
     );
 
+  const menuTargets = contextMenu ? resolveMenuTargets(contextMenu.slide) : [];
+
   return (
     <>
       <div
-        className={`td-deck-filmstrip-shell${collapsed ? " td-deck-filmstrip-shell--collapsed" : ""}`}
+        className={`td-deck-filmstrip-shell${collapsed ? " td-deck-filmstrip-shell--collapsed" : ""}${multiMode ? " td-deck-filmstrip-shell--multi" : ""}`}
         style={shellStyle}
       >
         {collapsed ? (
@@ -431,20 +586,25 @@ export function SlideFilmstrip({
         <SlideFilmstripContextMenu
           open
           position={{ x: contextMenu.x, y: contextMenu.y }}
-          slideTitle={contextMenu.slide.title}
+          slideTitle={
+            menuTargets.length > 1
+              ? `${menuTargets.length} telas`
+              : contextMenu.slide.title
+          }
           slideActive={contextMenu.slide.isActive}
+          selectionCount={menuTargets.length}
           canPaste={canPasteSlide}
           onClose={closeContextMenu}
           onCopy={() => onCopy(contextMenu.slide)}
           onPaste={onPaste}
-          onDuplicate={() => onDuplicate(contextMenu.slide)}
+          onDuplicate={() => onDuplicate(menuTargets)}
           onAdd={onAdd}
           onCreateSection={
             onCreateSection ? () => onCreateSection(contextMenu.slide) : undefined
           }
           onRename={() => beginRename(contextMenu.slide)}
-          onToggleActive={() => onToggleActive(contextMenu.slide)}
-          onRemove={() => onRemove(contextMenu.slide)}
+          onToggleActive={() => onToggleActive(menuTargets)}
+          onRemove={() => onRemove(menuTargets)}
         />
       ) : null}
 

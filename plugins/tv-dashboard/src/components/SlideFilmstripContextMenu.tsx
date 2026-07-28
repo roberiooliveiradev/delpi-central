@@ -21,11 +21,16 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.filmstripContextMenu;
 
+function formatCount(template: string, count: number): string {
+  return template.replace("{count}", String(count));
+}
+
 export type SlideFilmstripContextMenuProps = {
   open: boolean;
   position: FixedPanelPoint | null;
   slideTitle: string;
   slideActive: boolean;
+  selectionCount?: number;
   canPaste: boolean;
   onClose: () => void;
   onCopy: () => void;
@@ -43,6 +48,7 @@ export function SlideFilmstripContextMenu({
   position,
   slideTitle,
   slideActive,
+  selectionCount = 1,
   canPaste,
   onClose,
   onCopy,
@@ -58,6 +64,17 @@ export function SlideFilmstripContextMenu({
     action();
     onClose();
   }
+
+  const many = selectionCount > 1;
+  const duplicateLabel = many ? formatCount(C.duplicateMany, selectionCount) : C.duplicate;
+  const toggleLabel = slideActive
+    ? many
+      ? formatCount(C.hideMany, selectionCount)
+      : C.hide
+    : many
+      ? formatCount(C.showMany, selectionCount)
+      : C.show;
+  const deleteLabel = many ? formatCount(C.deleteMany, selectionCount) : C.delete;
 
   return (
     <ContextMenu
@@ -89,17 +106,22 @@ export function SlideFilmstripContextMenu({
           onSelect={() => run(onCreateSection)}
         />
       ) : null}
-      <ContextMenuItem label={C.duplicate} icon={Copy} onSelect={() => run(onDuplicate)} />
-      <ContextMenuItem label={C.rename} icon={Pencil} onSelect={() => run(onRename)} />
+      <ContextMenuItem label={duplicateLabel} icon={Copy} onSelect={() => run(onDuplicate)} />
+      <ContextMenuItem
+        label={C.rename}
+        icon={Pencil}
+        disabled={many}
+        onSelect={() => run(onRename)}
+      />
       <ContextMenuDivider />
       <ContextMenuItem
-        label={slideActive ? C.hide : C.show}
+        label={toggleLabel}
         icon={slideActive ? EyeOff : Eye}
         onSelect={() => run(onToggleActive)}
       />
       <ContextMenuDivider />
       <ContextMenuItem
-        label={C.delete}
+        label={deleteLabel}
         icon={Trash2}
         shortcut="Del"
         destructive
