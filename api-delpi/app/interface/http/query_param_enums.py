@@ -378,6 +378,7 @@ def GRANULARITY_QUERY_DAY_MONTH_AUTO():
     enum=list(GRANULARITY_DAY_MONTH_AUTO_VALUES),
 )
 TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES = ("day", "month")
+TRANSFORMOMETRO_VIEW_VALUES = ("consolidated", "filial", "department")
 
 
 def TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY():
@@ -386,6 +387,18 @@ def TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY():
         description="Transformômetro evolution grain: day (vigência) or month.",
         pattern=_enum_pattern(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
         enum=list(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
+    )
+
+
+def TRANSFORMOMETRO_VIEW_QUERY():
+    return Query(
+        None,
+        description=(
+            "Transformômetro dashboard view: consolidated, filial or department. "
+            "Empty defaults to consolidated (or filial/department when filters are set)."
+        ),
+        pattern=_enum_pattern(TRANSFORMOMETRO_VIEW_VALUES),
+        enum=list(TRANSFORMOMETRO_VIEW_VALUES),
     )
 def INSPECTION_RESULT_QUERY():
     return Query(

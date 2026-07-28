@@ -97,6 +97,7 @@ from app.interface.http.query_param_enums import (
     LMP_LISTING_TYPE_QUERY,
     SORT_DIR_QUERY,
     TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY,
+    TRANSFORMOMETRO_VIEW_QUERY,
 )
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
@@ -622,8 +623,8 @@ def get_process_summary(
 )
 @require_any_permission(ENGINEERING_TRANSFORMOMETRO_ACCESS)
 def get_transformometro_savings_investment_series_route(
-    view: str | None = Query(default=None),
-    filial_id: str | None = Query(default=None),
+    view: str | None = TRANSFORMOMETRO_VIEW_QUERY(),
+    filial_id: str | None = BRANCH_QUERY_OPTIONAL(),
     setor_id: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),

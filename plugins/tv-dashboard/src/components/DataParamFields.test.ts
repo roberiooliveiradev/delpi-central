@@ -33,6 +33,18 @@ describe("resolveParamSelectOptions", () => {
     ]);
   });
 
+  it("rótulos PT para visão Transformômetro", () => {
+    expect(
+      resolveParamSelectOptions("view", {
+        enum: ["consolidated", "filial", "department"],
+      }),
+    ).toEqual([
+      { value: "consolidated", label: "Consolidado" },
+      { value: "filial", label: "Filial" },
+      { value: "department", label: "Departamento" },
+    ]);
+  });
+
   it("converte boolean em Sim/Não", () => {
     expect(resolveParamSelectOptions("legacy", { type: "boolean" })).toEqual([
       { value: "true", label: "Sim" },

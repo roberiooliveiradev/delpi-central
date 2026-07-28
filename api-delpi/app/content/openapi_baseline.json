@@ -13894,13 +13894,22 @@
         {
           "name": "view",
           "required": false,
-          "description": "View query parameter.",
+          "description": "Transformômetro dashboard view: consolidated, filial or department. Empty defaults to consolidated (or filial/department when filters are set).",
+          "enum": [
+            "consolidated",
+            "filial",
+            "department"
+          ],
           "type": "string"
         },
         {
           "name": "filial_id",
           "required": false,
-          "description": "Branch ID query parameter.",
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
           "type": "string"
         },
         {
@@ -13926,7 +13935,7 @@
         {
           "name": "granularity",
           "required": false,
-          "description": "Series bucket size: day, week, month or year.",
+          "description": "Transformômetro evolution grain: day (vigência) or month.",
           "type": "string",
           "default": "month",
           "enum": [
@@ -13970,11 +13979,11 @@
           "filial_id": {
             "locale": {
               "en": {
-                "description": "Branch ID query parameter.",
-                "label": "Branch ID"
+                "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
               },
               "pt-BR": {
-                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "description": "Código da filial (01 ou 02). Vazio = consolidado.",
                 "label": "Filial"
               }
             }
@@ -13982,11 +13991,11 @@
           "granularity": {
             "locale": {
               "en": {
-                "description": "Series bucket size: day, week, month or year.",
+                "description": "Transformômetro evolution grain: day or month.",
                 "label": "Granularity"
               },
               "pt-BR": {
-                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "description": "Como agrupar os pontos da série: day (dia) ou month (mês).",
                 "label": "Granularidade"
               }
             }
@@ -14006,11 +14015,11 @@
           "start_date": {
             "locale": {
               "en": {
-                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "description": "Optional start (YYYY-MM-DD). Empty with end empty = full history from first non-baseline revision.",
                 "label": "Start date"
               },
               "pt-BR": {
-                "description": "Início do período (AAAA-MM-DD).",
+                "description": "Início opcional (AAAA-MM-DD). Vazio com fim vazio = histórico desde a 1ª revisão não-baseline.",
                 "label": "Data início"
               }
             },
@@ -14019,11 +14028,11 @@
           "view": {
             "locale": {
               "en": {
-                "description": "View query parameter.",
+                "description": "Dashboard view: consolidated, filial or department.",
                 "label": "View"
               },
               "pt-BR": {
-                "description": "Modo de visualização dos dados retornados.",
+                "description": "Visão: consolidado, filial ou departamento.",
                 "label": "Visão"
               }
             }

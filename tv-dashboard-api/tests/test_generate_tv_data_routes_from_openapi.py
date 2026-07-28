@@ -322,6 +322,14 @@ def test_transformometro_savings_series_is_open_ended_without_period_days():
     assert sample.get("openEndedDateRange") is True
     assert "periodDays" not in (sample.get("defaultParams") or {})
     assert sample.get("paramStrategy") == "date_range"
+    schema = sample.get("paramSchema") or {}
+    assert schema.get("view", {}).get("enum") == [
+        "consolidated",
+        "filial",
+        "department",
+    ]
+    assert schema.get("filial_id", {}).get("enum") == ["01", "02"]
+    assert schema.get("granularity", {}).get("enum") == ["day", "month"]
 
 
 def test_list_lmp_nonconformities_is_open_ended_without_period_days():

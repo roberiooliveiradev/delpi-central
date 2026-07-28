@@ -2223,7 +2223,7 @@
         },
         "pt-BR": {
           "label": "Visão",
-          "description": "Modo de visualização dos dados retornados."
+          "description": "Modo de visualização (ex.: consolidado, filial, departamento; ou por material/produto conforme a rota)."
         }
       }
     },
