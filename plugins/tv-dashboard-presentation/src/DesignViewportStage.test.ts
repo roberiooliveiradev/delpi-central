@@ -54,6 +54,16 @@ describe("computeDesignViewportScale", () => {
     expect(1080 * cover).toBeGreaterThan(900);
   });
 
+  it("cover em viewport mais alta que 16:9 preenche altura (sem letterbox — TV kiosk)", () => {
+    // Ex.: WebView 1920×1200 (barras pretas com contain).
+    const cover = computeDesignViewportScale(1920, 1200, 1920, 1080, "cover");
+    expect(cover).toBeCloseTo(1200 / 1080);
+    expect(1080 * cover).toBeCloseTo(1200);
+    expect(1920 * cover).toBeGreaterThan(1920);
+    const contain = computeDesignViewportScale(1920, 1200, 1920, 1080, "contain");
+    expect(1080 * contain).toBeLessThan(1200);
+  });
+
   it("retorna 0 para dimensões inválidas", () => {
     expect(computeDesignViewportScale(0, 900, 1920, 1080)).toBe(0);
   });

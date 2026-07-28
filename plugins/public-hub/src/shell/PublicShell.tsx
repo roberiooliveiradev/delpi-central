@@ -1,9 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { PublicLoadingSplash } from "./PublicLoadingSplash";
 import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
 import { ThemeToggle } from "./ThemeToggle";
+import { useKioskVisualViewportPin } from "./useKioskVisualViewportPin";
 import type { PublicPageContext, PublicPageDefinition } from "./types";
 
 type State =
@@ -93,6 +94,10 @@ type StageProps = {
 };
 
 function Stage({ children, chrome = "default" }: StageProps) {
+  const isKiosk = chrome === "kiosk";
+  const kioskRootRef = useRef<HTMLDivElement>(null);
+  useKioskVisualViewportPin(isKiosk, kioskRootRef);
+
   useLayoutEffect(() => {
     if (chrome === "fullpage") {
       document.documentElement.classList.add("pub-fullpage");
@@ -102,17 +107,21 @@ function Stage({ children, chrome = "default" }: StageProps) {
         document.body.classList.remove("pub-fullpage");
       };
     }
-    if (chrome !== "kiosk") return;
+    if (!isKiosk) return;
     document.documentElement.classList.add("pub-kiosk");
     document.body.classList.add("pub-kiosk");
     return () => {
       document.documentElement.classList.remove("pub-kiosk");
       document.body.classList.remove("pub-kiosk");
     };
-  }, [chrome]);
+  }, [chrome, isKiosk]);
 
-  if (chrome === "kiosk") {
-    return <div className="pub-kiosk-root">{children}</div>;
+  if (isKiosk) {
+    return (
+      <div ref={kioskRootRef} className="pub-kiosk-root">
+        {children}
+      </div>
+    );
   }
 
   if (chrome === "fullpage") {

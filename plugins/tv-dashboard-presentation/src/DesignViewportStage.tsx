@@ -86,6 +86,8 @@ export function computeDesignViewportLayoutBox(
  * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
  * - Layout box = tamanho visual (scale via `transform-origin: top left` dentro
  *   de um frame já dimensionado) — evita deslocamento em webviews kiosk.
+ * - TV pública (`public-hub`): `fit="cover"` para preencher sem letterbox.
+ * - Prévia admin: `fit="contain"` para ver o slide inteiro.
  * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
@@ -106,13 +108,17 @@ export function DesignViewportStage({
     if (!node) return;
 
     const updateScale = () => {
-      const next = computeDesignViewportScale(
-        node.clientWidth,
-        node.clientHeight,
-        width,
-        height,
-        fit,
-      );
+      // Preferir retângulo visível: em WebViews/TV o client* às vezes inclui
+      // área fora do visualViewport (chrome / «ajustar à tela» do host).
+      const rect = node.getBoundingClientRect();
+      const vv = typeof window !== "undefined" ? window.visualViewport : null;
+      let cw = rect.width > 0 ? rect.width : node.clientWidth;
+      let ch = rect.height > 0 ? rect.height : node.clientHeight;
+      if (vv && vv.width > 0 && vv.height > 0) {
+        cw = Math.min(cw, vv.width);
+        ch = Math.min(ch, vv.height);
+      }
+      const next = computeDesignViewportScale(cw, ch, width, height, fit);
       if (next > 0) setScale(next);
     };
 

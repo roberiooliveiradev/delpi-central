@@ -205,11 +205,13 @@ Apresentação rotativa em modo **kiosk** (sem logo DELPI):
 |---|---|---|
 | Apresentação TV | `/p/tv-dashboard/present/{token}` | `GET /apps/tv-dashboard-api/public/present/{token}` |
 
-Ver `src/apps/tv-dashboard/` (`api.ts`, `PresentationView.tsx`, `pages.tsx`).  
-Motor compartilhado: `plugins/tv-dashboard-presentation/`.  
+**Fit na TV:** canvas 1920×1080 com escala `cover` (preenche a área útil, sem letterbox — padrão de signage). Prévia admin usa `contain`. O shell kiosk fixa o palco no `visualViewport` para apps que «ajustam à tela» (ex. roteador USB/TV) não deslocarem o slide.
+
+Ver `src/apps/tv-dashboard/` (`api.ts`, `PresentationView.tsx`, `pages.tsx`, `useKioskVisualViewportPin`).  
+Motor compartilhado: `plugins/tv-dashboard-presentation/` (`DesignViewportStage`).  
 Doc: `docs/12-roadmap-e-evolucao/tv-dashboard/README.md`.
 
-**Rebuild obrigatório** do `public-hub` após alterações na view ou no pacote de apresentação.
+**Rebuild obrigatório** do `public-hub` (e do remote se o pacote de apresentação mudou) após alterações na view.
 
 ---
 

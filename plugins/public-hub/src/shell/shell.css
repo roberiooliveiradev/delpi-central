@@ -208,7 +208,9 @@ html.pub-kiosk #root {
   overflow: hidden;
 }
 
-/* TV wall — preenche viewport; sem 100vw (overflow/assimetría em webviews kiosk). */
+/* TV wall — preenche viewport; sem 100vw (overflow/assimetria em webviews kiosk).
+   Em runtime, `useKioskVisualViewportPin` pode sobrescrever top/left/width/height
+   para alinhar ao visualViewport (apps de roteamento / chrome do browser). */
 .pub-kiosk-root {
   position: fixed;
   inset: 0;
@@ -216,6 +218,8 @@ html.pub-kiosk #root {
   height: auto;
   overflow: hidden;
   background: #05070a;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 /* Palco da apresentação: preenche o kiosk (DesignViewportStage mede inset:0). */
