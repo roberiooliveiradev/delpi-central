@@ -329,6 +329,7 @@ def open_purchase_orders_sql(
         RTRIM(SC7.C7_ITEM) AS order_item,
         RTRIM(SC7.C7_PRODUTO) AS product_code,
         RTRIM(COALESCE(SB1.B1_DESC, SC7.C7_DESCRI)) AS product_description,
+        RTRIM(ISNULL(SA5pn.supplier_part_number, '')) AS supplier_part_number,
         RTRIM(SC7.C7_LOCAL) AS warehouse,
         RTRIM(SC7.C7_UM) AS unit,
         CAST(ISNULL(SC7.C7_QUANT, 0) AS FLOAT) AS ordered_quantity,
@@ -383,6 +384,26 @@ def open_purchase_orders_sql(
         ON SA2.A2_COD = SC7.C7_FORNECE
        AND SA2.A2_LOJA = SC7.C7_LOJA
        AND SA2.D_E_L_E_T_ = ''
+    OUTER APPLY (
+        SELECT TOP 1
+            RTRIM(ISNULL(SA5.A5_CODPRF, '')) AS supplier_part_number
+        FROM SA5010 SA5 WITH (NOLOCK)
+        WHERE SA5.D_E_L_E_T_ = ''
+          AND RTRIM(SA5.A5_PRODUTO) = RTRIM(SC7.C7_PRODUTO)
+          AND RTRIM(SA5.A5_FORNECE) = RTRIM(SC7.C7_FORNECE)
+          AND RTRIM(SA5.A5_LOJA) = RTRIM(SC7.C7_LOJA)
+          AND (
+              RTRIM(ISNULL(SA5.A5_FILIAL, '')) = ''
+              OR RTRIM(SA5.A5_FILIAL) = RTRIM(SC7.C7_FILIAL)
+          )
+        ORDER BY
+            CASE
+                WHEN RTRIM(SA5.A5_FILIAL) = RTRIM(SC7.C7_FILIAL) THEN 0
+                WHEN RTRIM(ISNULL(SA5.A5_FILIAL, '')) = '' THEN 1
+                ELSE 2
+            END,
+            SA5.R_E_C_N_O_ DESC
+    ) SA5pn
     WHERE SC7.D_E_L_E_T_ = ''
       AND ISNULL(SC7.C7_RESIDUO, '') <> 'S'
       AND SC7.C7_QUANT > SC7.C7_QUJE

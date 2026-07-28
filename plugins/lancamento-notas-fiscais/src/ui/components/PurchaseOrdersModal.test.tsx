@@ -24,6 +24,7 @@ const sampleGroup = {
       order_item: "0001",
       product_code: "10080001",
       product_description: "Parafuso",
+      supplier_part_number: "FORN-P1",
       warehouse: "01",
       unit: "UN",
       ordered_quantity: 10,
@@ -56,6 +57,7 @@ const sampleGroupB = {
       order_number: "000456",
       product_code: "20080001",
       product_description: "Porca",
+      supplier_part_number: "FORN-B2",
       expected_delivery_date: "2026-07-25",
       open_merchandise_value: 30,
       open_ipi_value: 0,
@@ -97,6 +99,7 @@ describe("PurchaseOrdersModal", () => {
     expect(screen.getByText(/1 grupo/)).toBeTruthy();
     // Com canLink o primeiro grupo já vem expandido para seleção por linha
     expect(screen.getByText("10080001")).toBeTruthy();
+    expect(screen.getByText(/FORN-P1/)).toBeTruthy();
     expect(screen.getByText("Parafuso")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ocultar" }));
     expect(screen.queryByText("Parafuso")).toBeNull();
@@ -246,5 +249,56 @@ describe("PurchaseOrdersModal", () => {
 
     await waitFor(() => expect(screen.getByTestId("po-empty")).toBeTruthy());
     fireEvent.click(screen.getByTestId("po-close-btn"));
+  });
+
+  it("filtra por pedido e por código do fornecedor", async () => {
+    vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
+      request_id: "req-1",
+      branch_code: "01",
+      supplier_code: "000001",
+      supplier_store: "01",
+      supplier_name: "Alpha",
+      order_count: 2,
+      group_count: 2,
+      item_count: 2,
+      groups: [sampleGroup, sampleGroupB],
+      linked: [],
+      can_link: true,
+    });
+
+    render(
+      <PurchaseOrdersModal
+        open
+        requestId="req-1"
+        supplierName="Alpha"
+        branchCode="01"
+        canLink
+        onClose={() => undefined}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("po-table")).toBeTruthy());
+    expect(screen.getByTestId("po-group-000123")).toBeTruthy();
+    expect(screen.getByTestId("po-group-000456")).toBeTruthy();
+
+    fireEvent.change(screen.getByTestId("po-filter-input"), {
+      target: { value: "000456" },
+    });
+    expect(screen.queryByTestId("po-group-000123")).toBeNull();
+    expect(screen.getByTestId("po-group-000456")).toBeTruthy();
+    expect(screen.getByText(/1 no filtro/)).toBeTruthy();
+
+    fireEvent.change(screen.getByTestId("po-filter-input"), {
+      target: { value: "FORN-P1" },
+    });
+    expect(screen.getByTestId("po-group-000123")).toBeTruthy();
+    expect(screen.queryByTestId("po-group-000456")).toBeNull();
+    expect(screen.getByText(/FORN-P1/)).toBeTruthy();
+
+    fireEvent.change(screen.getByTestId("po-filter-input"), {
+      target: { value: "zzz-inexistente" },
+    });
+    expect(screen.getByTestId("po-filter-empty")).toBeTruthy();
+    expect(screen.queryByTestId("po-table")).toBeNull();
   });
 });

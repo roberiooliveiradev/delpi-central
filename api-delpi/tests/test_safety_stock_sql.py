@@ -144,6 +144,9 @@ def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
     assert "C7_RESIDUO" in sql
     assert "C7_QUANT > SC7.C7_QUJE" in sql
     assert "SA2010" in sql
+    assert "SA5010" in sql
+    assert "A5_CODPRF" in sql
+    assert "supplier_part_number" in sql
     assert "C7_QTDACLA" in sql
     assert "C7_PRODUTO) =" in sql
     assert "C7_TOTAL" in sql

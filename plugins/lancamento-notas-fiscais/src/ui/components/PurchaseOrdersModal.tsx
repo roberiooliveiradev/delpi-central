@@ -89,6 +89,44 @@ function setsEqual(a: Set<string>, b: Set<string>): boolean {
   return true;
 }
 
+function normalizeFilterQuery(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function textIncludes(haystack: unknown, query: string): boolean {
+  if (!query) return true;
+  return String(haystack ?? "")
+    .trim()
+    .toLowerCase()
+    .includes(query);
+}
+
+function itemMatchesFilter(item: OpenPurchaseOrderItem, query: string): boolean {
+  if (!query) return true;
+  return (
+    textIncludes(item.product_code, query) ||
+    textIncludes(item.supplier_part_number, query) ||
+    textIncludes(item.product_description, query) ||
+    textIncludes(item.order_item, query)
+  );
+}
+
+function groupMatchesFilter(group: OpenPurchaseOrderGroup, query: string): boolean {
+  if (!query) return true;
+  if (textIncludes(group.order_number, query)) return true;
+  return group.items.some((item) => itemMatchesFilter(item, query));
+}
+
+/** Itens visíveis no detalhe: se o PC bateu pelo número, mostra todos; senão só os itens que batem. */
+function visibleItemsForGroup(
+  group: OpenPurchaseOrderGroup,
+  query: string,
+): OpenPurchaseOrderItem[] {
+  if (!query) return group.items;
+  if (textIncludes(group.order_number, query)) return group.items;
+  return group.items.filter((item) => itemMatchesFilter(item, query));
+}
+
 export function PurchaseOrdersModal({
   open,
   requestId,
@@ -106,6 +144,7 @@ export function PurchaseOrdersModal({
   const [orderCount, setOrderCount] = useState(0);
   const [selectedLineKeys, setSelectedLineKeys] = useState<Set<string>>(new Set());
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [filterQuery, setFilterQuery] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -114,6 +153,7 @@ export function PurchaseOrdersModal({
     setError(null);
     setSelectedLineKeys(new Set());
     setExpandedKey(null);
+    setFilterQuery("");
     void api
       .listRequestPurchaseOrders(requestId, controller.signal)
       .then((data) => {
@@ -176,6 +216,26 @@ export function PurchaseOrdersModal({
     }
     return payload;
   }, [groups, selectedLineKeys]);
+
+  const normalizedFilter = useMemo(
+    () => normalizeFilterQuery(filterQuery),
+    [filterQuery],
+  );
+
+  const visibleGroups = useMemo(() => {
+    if (!normalizedFilter) return groups;
+    return groups.filter((group) => groupMatchesFilter(group, normalizedFilter));
+  }, [groups, normalizedFilter]);
+
+  useEffect(() => {
+    if (!normalizedFilter || visibleGroups.length === 0) return;
+    const currentVisible =
+      expandedKey &&
+      visibleGroups.some((group) => groupKey(group) === expandedKey);
+    if (!currentVisible) {
+      setExpandedKey(groupKey(visibleGroups[0]));
+    }
+  }, [normalizedFilter, visibleGroups, expandedKey]);
 
   function toggleLine(group: OpenPurchaseOrderGroup, item: OpenPurchaseOrderItem) {
     if (!item.order_item) return;
@@ -290,10 +350,25 @@ export function PurchaseOrdersModal({
             <>
               <p className="lnf-muted" data-testid="po-summary">
                 {orderCount} pedido(s) · {groups.length} grupo(s)
+                {normalizedFilter
+                  ? ` · ${visibleGroups.length} no filtro`
+                  : null}
                 {canLink
                   ? ` · ${selectedLineKeys.size} item(ns) · ${selectedGroupCount} grupo(s)`
                   : null}
               </p>
+              <div className="lnf-field lnf-po-filter">
+                <label htmlFor="lnf-po-filter-input">Filtrar</label>
+                <input
+                  id="lnf-po-filter-input"
+                  type="search"
+                  value={filterQuery}
+                  onChange={(event) => setFilterQuery(event.target.value)}
+                  placeholder="Pedido, código Delpi ou código do fornecedor…"
+                  data-testid="po-filter-input"
+                  autoComplete="off"
+                />
+              </div>
               {linked.length > 0 ? (
                 <p className="lnf-po-linked-banner" data-testid="po-linked-banner">
                   Amarrado atualmente:{" "}
@@ -309,6 +384,11 @@ export function PurchaseOrdersModal({
                   </strong>
                 </p>
               ) : null}
+              {visibleGroups.length === 0 ? (
+                <p className="lnf-muted" data-testid="po-filter-empty">
+                  Nenhum pedido ou item corresponde ao filtro.
+                </p>
+              ) : (
               <div className="lnf-table-wrap">
                 <table className="lnf-table" data-testid="po-table">
                   <thead>
@@ -323,11 +403,12 @@ export function PurchaseOrdersModal({
                     </tr>
                   </thead>
                   <tbody>
-                    {groups.map((group) => {
+                    {visibleGroups.map((group) => {
                       const key = groupKey(group);
                       const expanded = expandedKey === key;
                       const linkedNow = linked.some((item) => isSameGroup(group, item));
                       const { checked, indeterminate } = groupSelectionState(group);
+                      const detailItems = visibleItemsForGroup(group, normalizedFilter);
                       return (
                         <Fragment key={key}>
                           <tr
@@ -397,7 +478,7 @@ export function PurchaseOrdersModal({
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {group.items.map((row) => {
+                                    {detailItems.map((row) => {
                                       const itemChecked =
                                         !!row.order_item &&
                                         selectedLineKeys.has(
@@ -421,6 +502,15 @@ export function PurchaseOrdersModal({
                                           <td>{row.order_item || "—"}</td>
                                           <td>
                                             <strong>{row.product_code || "—"}</strong>
+                                            {row.supplier_part_number ? (
+                                              <span
+                                                className="lnf-po-supplier-pn"
+                                                title="Código do produto no fornecedor"
+                                              >
+                                                {" "}
+                                                · {row.supplier_part_number}
+                                              </span>
+                                            ) : null}
                                             {row.product_description ? (
                                               <div className="lnf-muted">
                                                 {row.product_description}
@@ -457,6 +547,7 @@ export function PurchaseOrdersModal({
                   </tbody>
                 </table>
               </div>
+              )}
             </>
           )
         ) : null}

@@ -270,6 +270,15 @@ export function LinkedPurchaseOrderReceipt({ requestId, request }: Props) {
                             <div className="lnf-po-receipt__item-main">
                               <span className="lnf-po-receipt__sku">
                                 {item.product_code}
+                                {item.supplier_part_number ? (
+                                  <span
+                                    className="lnf-po-receipt__supplier-pn"
+                                    title="Código do produto no fornecedor"
+                                  >
+                                    {" "}
+                                    · {item.supplier_part_number}
+                                  </span>
+                                ) : null}
                               </span>
                               <span className="lnf-po-receipt__desc">
                                 {item.product_description || "Produto sem descrição"}
