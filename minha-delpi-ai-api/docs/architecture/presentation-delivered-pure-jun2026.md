@@ -26,6 +26,34 @@ ExecuteExternalAction
 
 ---
 
+## Fluxo de decisão de vista (jul/2026 — padrão de mercado)
+
+```text
+resultado tipado (meta.shape + meta.fields + slots)
+  → dataShape / ViewIntent
+  → AutomaticScoreService (+ boost openapiShapeDefaults)
+  → selected / layoutMode
+       preferência toolbar  → PrimaryView (vence; se irrealizável → fallback)
+       Automático           → single = melhor score
+       composite / «visão integrada» → stack
+  → StructureDedup (projeções do mesmo fato: tree vs flat table)
+  → PayloadPruning (single: keep-bundle + suppressedKinds)
+  → RenderPlan (single: só selected; stack: narrativeOrder + tail)
+  → MFE render-only
+```
+
+### Invariantes
+
+| Situação | layoutMode | renderPlan |
+|----------|------------|------------|
+| Mesmo dataset / projeções (ex.: BOM tree↔table) | `single` | lead + **só** `selected` |
+| Vários papéis (`composite_analysis`, pedido integrado) | `stack` | vários segments com dedup Playbook 23 |
+| Formato pedido sem slot utilizável | `single` | `fallback` + `reason: formatUnavailableFallback` |
+
+`entityProfiles` é **override pontual**; o motor é shape OpenAPI + scores. Novas rotas: só `meta.shape` / `meta.fields` + checklist. Candidatas a poda: `scripts/audit_openapi_profile_pruning.py --check`.
+
+---
+
 ## O que foi removido (jun/2026)
 
 | Módulo removido | Substituto |
