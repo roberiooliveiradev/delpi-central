@@ -103,6 +103,15 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       sourceApps: ["lancamento-notas-fiscais"],
       pluginId: "lancamento-notas-fiscais",
     },
+    {
+      id: "tv_dashboard",
+      label: "Painéis TV",
+      icon: "tv",
+      mutable: true,
+      kind: "app",
+      sourceApps: ["tv-dashboard"],
+      pluginId: "tv-dashboard",
+    },
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",

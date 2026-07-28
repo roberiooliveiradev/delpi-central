@@ -112,6 +112,110 @@ def test_realtime_hub_relays_selection_with_server_identity():
     asyncio.run(_run())
 
 
+def test_realtime_hub_presence_leave_removes_peer():
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        alive = FakeWebSocket()
+        leaving = FakeWebSocket()
+        hub._rooms["playlist-1"] = {alive, leaving}  # noqa: SLF001
+        hub._sessions[leaving] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-2",
+            display_name="Michael Marotto",
+            role="editor",
+            can_edit=True,
+        )
+        hub._sessions[alive] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            alive,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-ana"}',
+        )
+        await hub._handle_message(  # noqa: SLF001
+            leaving,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-michael"}',
+        )
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            leaving,
+            playlist_id="playlist-1",
+            message='{"type":"presence_leave","clientId":"editor-michael"}',
+        )
+        assert sent[-1]["type"] == "presence_update"
+        peers = sent[-1]["peers"]
+        assert len(peers) == 1
+        assert peers[0]["clientId"] == "editor-ana"
+        assert peers[0]["displayName"] == "Ana"
+
+    asyncio.run(_run())
+
+
+def test_realtime_hub_purges_stale_presence_on_ping():
+    import asyncio
+    import time
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub(presence_stale_ttl_seconds=30)
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        alive = FakeWebSocket()
+        stale = FakeWebSocket()
+        hub._rooms["playlist-1"] = {alive, stale}  # noqa: SLF001
+        hub._sessions[alive] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-1",
+            display_name="Ana",
+            role="editor",
+            can_edit=True,
+        )
+        hub._sessions[stale] = PresentationRealtimeSession(  # noqa: SLF001
+            user_id="user-2",
+            display_name="Michael Marotto",
+            role="editor",
+            can_edit=True,
+        )
+        await hub._handle_message(  # noqa: SLF001
+            alive,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-ana"}',
+        )
+        await hub._handle_message(  # noqa: SLF001
+            stale,
+            playlist_id="playlist-1",
+            message='{"type":"presence_join","clientId":"editor-michael"}',
+        )
+        # Simula peer morto: lastSeen antigo sem leave/disconnect limpo.
+        hub._client_meta["playlist-1"][stale]["lastSeen"] = time.monotonic() - 120  # noqa: SLF001
+        sent.clear()
+        await hub._handle_message(  # noqa: SLF001
+            alive,
+            playlist_id="playlist-1",
+            message='{"type":"presence_ping","clientId":"editor-ana"}',
+        )
+        assert sent[-1]["type"] == "presence_update"
+        peers = sent[-1]["peers"]
+        assert len(peers) == 1
+        assert peers[0]["clientId"] == "editor-ana"
+
+    asyncio.run(_run())
+
+
 def test_public_presentation_ws_ping():
     client = TestClient(app)
     playlist = {

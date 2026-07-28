@@ -75,9 +75,10 @@ def _post_notification(payload: dict[str, Any]) -> bool:
         if response.status_code in (200, 201, 202):
             return True
         logger.warning(
-            "tv_dashboard_portal_notification_rejected status=%s event=%s",
+            "tv_dashboard_portal_notification_rejected status=%s event=%s body=%s",
             response.status_code,
             (payload.get("metadata") or {}).get("event"),
+            (response.text or "")[:500],
         )
     except Exception:
         logger.warning(

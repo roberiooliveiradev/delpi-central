@@ -81,6 +81,8 @@ def test_notify_playlist_share_granted_posts_to_core_api() -> None:
             assert "somente leitura" in payload["message"]
             assert payload["action"]["target"] == "/apps/tv-dashboard/playlists/pl-1"
             assert payload["metadata"]["event"] == "playlist_share_granted"
+            assert payload["category"] == "tv_dashboard"
+            assert payload["sourceApp"] == "tv-dashboard"
 
 
 def test_notify_skips_self_target() -> None:

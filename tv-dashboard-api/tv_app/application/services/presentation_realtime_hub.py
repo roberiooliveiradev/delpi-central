@@ -15,17 +15,26 @@ from tv_app.application.services.presentation_realtime_models import (
 
 logger = logging.getLogger(__name__)
 
+# Sem ping/leave por este intervalo → peer some de «Também editando».
+# Cliente envia presence_ping a cada ~30s; 3 misses cobrem aba morta / half-open.
+PRESENCE_STALE_TTL_SECONDS = 90.0
+
 
 class PresentationRealtimeHub:
     """Salas WebSocket por programação (playlist_id)."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        presence_stale_ttl_seconds: float = PRESENCE_STALE_TTL_SECONDS,
+    ) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
         self._client_meta: dict[str, dict[WebSocket, dict[str, Any]]] = {}
         self._sessions: dict[WebSocket, PresentationRealtimeSession] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
+        self._presence_stale_ttl_seconds = max(15.0, float(presence_stale_ttl_seconds))
 
     def bind_loop(self, loop: asyncio.AbstractEventLoop) -> None:
         self._loop = loop
@@ -119,10 +128,30 @@ class PresentationRealtimeHub:
             return
 
         if message_type == "presence_ping" and client_id:
+            session = self._sessions.get(websocket)
+            presence_changed = False
             async with self._lock:
-                current = self._client_meta.get(playlist_id, {}).get(websocket)
+                now = time.monotonic()
+                room_meta = self._client_meta.setdefault(playlist_id, {})
+                current = room_meta.get(websocket)
                 if current and current["clientId"] == client_id:
-                    current["lastSeen"] = time.monotonic()
+                    current["lastSeen"] = now
+                elif session and session.allow_presence:
+                    # Rehidrata presença se o TTL limpou o meta enquanto o socket segue vivo.
+                    room_meta[websocket] = {
+                        "clientId": client_id,
+                        "userId": session.user_id,
+                        "displayName": session.display_name,
+                        "role": session.role,
+                        "canEdit": session.can_edit,
+                        "lastSeen": now,
+                    }
+                    presence_changed = True
+                presence_changed = (
+                    self._purge_stale_presence_locked(playlist_id, now=now) or presence_changed
+                )
+            if presence_changed:
+                await self._broadcast_presence(playlist_id)
             return
 
         if message_type == "slide_draft":
@@ -186,8 +215,38 @@ class PresentationRealtimeHub:
         cleaned = value.strip()
         return cleaned or None
 
+    def _purge_stale_presence_locked(
+        self,
+        playlist_id: str,
+        *,
+        now: float | None = None,
+    ) -> bool:
+        """Remove metas sem ping recente. Caller deve segurar ``_lock``."""
+        room_meta = self._client_meta.get(playlist_id)
+        if not room_meta:
+            return False
+        cutoff = (now if now is not None else time.monotonic()) - self._presence_stale_ttl_seconds
+        stale = [
+            (websocket, meta)
+            for websocket, meta in list(room_meta.items())
+            if float(meta.get("lastSeen") or 0) < cutoff
+        ]
+        if not stale:
+            return False
+        for websocket, meta in stale:
+            room_meta.pop(websocket, None)
+            logger.info(
+                "presentation_presence_stale_purged playlist_id=%s client_id=%s",
+                playlist_id,
+                meta.get("clientId"),
+            )
+        if not room_meta:
+            del self._client_meta[playlist_id]
+        return True
+
     async def _presence_payload(self, playlist_id: str) -> dict[str, Any]:
         async with self._lock:
+            self._purge_stale_presence_locked(playlist_id)
             peers_by_id: dict[str, dict[str, str]] = {}
             for meta in self._client_meta.get(playlist_id, {}).values():
                 peers_by_id[meta["clientId"]] = {

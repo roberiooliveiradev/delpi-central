@@ -258,8 +258,24 @@ export function usePresentationRealtime({
 
     connect();
 
+    function sendPresenceLeave() {
+      if (!presence || ws?.readyState !== WebSocket.OPEN) return;
+      try {
+        ws.send(JSON.stringify({ type: "presence_leave", clientId: presence.clientId }));
+      } catch {
+        // o fechamento da conexão também remove a presença no servidor
+      }
+    }
+
+    function onPageHide() {
+      sendPresenceLeave();
+    }
+
+    window.addEventListener("pagehide", onPageHide);
+
     return () => {
       closedByUser = true;
+      window.removeEventListener("pagehide", onPageHide);
       if (sendRefStable) sendRefStable.current = null;
       connectionHandlerRef.current?.(false);
       if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
@@ -269,13 +285,7 @@ export function usePresentationRealtime({
         updateTimerRef.current = null;
       }
       pendingEventRef.current = null;
-      if (presence && ws?.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(JSON.stringify({ type: "presence_leave", clientId: presence.clientId }));
-        } catch {
-          // o fechamento da conexão também remove a presença no servidor
-        }
-      }
+      sendPresenceLeave();
       ws?.close();
     };
   }, [

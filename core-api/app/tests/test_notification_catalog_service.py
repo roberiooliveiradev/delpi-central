@@ -16,6 +16,8 @@ def test_catalog_contains_app_sources():
     assert catalog.categories["quality_action_plans"].plugin_id == "quality-action-plans"
     assert catalog.categories["auditoria_5s"].plugin_id == "auditoria-5s"
     assert catalog.categories["auditoria_5s"].source_apps == ("auditoria-5s",)
+    assert catalog.categories["tv_dashboard"].plugin_id == "tv-dashboard"
+    assert catalog.categories["tv_dashboard"].source_apps == ("tv-dashboard",)
 
 
 def test_resolve_legacy_category_alias():
@@ -30,6 +32,7 @@ def test_source_app_plugin_aliases_from_catalog():
     assert aliases["controle_mp"] == "controle-mp"
     assert aliases["api-delpi-console"] == "api-delpi-console"
     assert aliases["auditoria-5s"] == "auditoria-5s"
+    assert aliases["tv-dashboard"] == "tv-dashboard"
 
 
 def test_loader_rejects_app_category_without_source_apps(tmp_path: Path):

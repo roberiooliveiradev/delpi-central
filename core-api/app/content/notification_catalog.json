@@ -98,6 +98,14 @@
       "kind": "app",
       "sourceApps": ["lancamento-notas-fiscais"],
       "pluginId": "lancamento-notas-fiscais"
+    },
+    "tv_dashboard": {
+      "label": "Painéis TV",
+      "icon": "tv",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["tv-dashboard"],
+      "pluginId": "tv-dashboard"
     }
   },
   "legacyCategoryAliases": {
