@@ -108,9 +108,9 @@ class OperationalRouteRegistryService:
 
     @classmethod
     def vocabulary_routes(cls) -> list[dict[str, Any]]:
-        return [
+        filtered = [
             route
-            for route in cls.routes()
+            for route in cls.manual_routes()
             if isinstance(route, dict)
             and str(route.get("domain") or "").strip() != "productionOperational"
             and (
@@ -121,6 +121,26 @@ class OperationalRouteRegistryService:
                 )
             )
         ]
+
+        return sorted(filtered, key=cls._vocabulary_route_sort_key)
+
+    @staticmethod
+    def _vocabulary_route_sort_key(route: dict[str, Any]) -> tuple[int, int]:
+        """Facetas de produto (segmento/código) antes de catch-alls como productSearch."""
+        domain = str(route.get("domain") or "").strip()
+        match = route.get("match") if isinstance(route.get("match"), dict) else {}
+        has_segment = bool(str(route.get("routeSegment") or "").strip())
+        requires_product = bool(match.get("requiresProductIdentifier"))
+
+        if has_segment or requires_product or domain == "product":
+            class_rank = 0
+        elif domain == "domainProductSearch":
+            class_rank = 2
+        else:
+            class_rank = 1
+
+        # Dentro da classe: maior priority primeiro (mesmo critério de routes()).
+        return (class_rank, -int(route.get("priority") or 0))
 
     @classmethod
     def production_operational_routes(cls) -> list[dict[str, Any]]:

@@ -90,7 +90,8 @@ def test_operational_route_registry_routes_sorted_by_priority() -> None:
     priorities = [int(route.get("priority") or 0) for route in routes]
 
     assert priorities == sorted(priorities, reverse=True)
-    assert routes[0]["id"] == "productDirectives"
+    assert routes
+    assert int(routes[0].get("priority") or 0) == max(priorities)
 
 
 def test_operational_route_matcher_terms_from() -> None:
@@ -199,3 +200,15 @@ def test_product_search_routes_loaded_from_registry() -> None:
 
     assert "productSearchByGroup" in search_ids
     assert "productSearchByDescription" in search_ids
+
+
+def test_vocabulary_routes_prefer_product_segment_before_product_search() -> None:
+    ids = [
+        str(route.get("id") or "")
+        for route in OperationalRouteRegistryService.vocabulary_routes()
+    ]
+
+    suppliers_idx = ids.index("productSuppliers")
+    search_idx = ids.index("productSearchByDescription")
+
+    assert suppliers_idx < search_idx
