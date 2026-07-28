@@ -8,19 +8,31 @@ import {
 import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
 import {
   adminMediaUrl,
+  publicPresentMediaUrl,
   type PlaylistMasterConfig,
   type PresentationPayload,
   type Slide,
 } from "../api/tvDashboardApi";
+import { isPublicPresentMediaUrl } from "../utils/overlayLivePreviewPayload";
 
-/** URL de mídia para render nativo (miniatura / CSS / img) — Bearer via query. */
-function displayMediaUrl(playlistId: string, assetId: string): string {
+/** URL de mídia para render nativo (miniatura / CSS / img). */
+function displayMediaUrl(
+  playlistId: string,
+  assetId: string,
+  publicToken?: string | null,
+): string {
+  const token = typeof publicToken === "string" ? publicToken.trim() : "";
+  // Mesmo contrato da prévia admin /present — access_token em URL admin é frágil.
+  if (token) {
+    return publicPresentMediaUrl(token, assetId);
+  }
   return withBrowserMediaAccessToken(adminMediaUrl(playlistId, assetId));
 }
 
 /**
  * Resolve URL de exibição no editor a partir de `assetId` (preferencial) ou `url`.
  * Serialize omite `url` — sem isso o bloco fica no placeholder até re-enrich (troca de slide).
+ * Editor carrega via Bearer→blob; mantém URL admin (sem token na query).
  */
 export function resolveEditorMediaUrl(
   playlistId: string,
@@ -29,10 +41,10 @@ export function resolveEditorMediaUrl(
 ): string | undefined {
   const trimmedAsset = typeof assetId === "string" ? assetId.trim() : "";
   if (playlistId && trimmedAsset) {
-    return displayMediaUrl(playlistId, trimmedAsset);
+    return adminMediaUrl(playlistId, trimmedAsset);
   }
   const trimmedUrl = typeof url === "string" ? url.trim() : "";
-  return trimmedUrl ? withBrowserMediaAccessToken(trimmedUrl) : undefined;
+  return trimmedUrl || undefined;
 }
 
 /**
@@ -49,7 +61,7 @@ export function ensureComunicadoEditorMediaUrls(
 
   let background = config.background;
   if (background?.type === "image" && background.assetId) {
-    const url = displayMediaUrl(playlistId, background.assetId);
+    const url = adminMediaUrl(playlistId, background.assetId);
     if (background.url !== url) {
       background = { ...background, url };
       changed = true;
@@ -61,7 +73,7 @@ export function ensureComunicadoEditorMediaUrls(
     let blocksChanged = false;
     const nextBlocks = blocks.map((block) => {
       if ((block.type === "image" || block.type === "video") && block.assetId) {
-        const url = displayMediaUrl(playlistId, block.assetId);
+        const url = adminMediaUrl(playlistId, block.assetId);
         if (block.url !== url) {
           blocksChanged = true;
           return { ...block, url };
@@ -79,7 +91,7 @@ export function ensureComunicadoEditorMediaUrls(
   if (customFonts?.length) {
     let fontsChanged = false;
     const nextFonts = customFonts.map((font) => {
-      const url = displayMediaUrl(playlistId, font.assetId);
+      const url = adminMediaUrl(playlistId, font.assetId);
       if (font.url !== url) {
         fontsChanged = true;
         return { ...font, url };
@@ -265,6 +277,7 @@ export function buildFilmstripSlidesWithThumbnailCache(params: {
 export function resolveMasterForPreview(
   master: PlaylistMasterConfig | undefined,
   playlistId: string,
+  publicToken?: string | null,
 ): Record<string, unknown> | undefined {
   if (!master?.enabled) return undefined;
   const out: Record<string, unknown> = { enabled: true };
@@ -273,9 +286,13 @@ export function resolveMasterForPreview(
     if (background.type === "image" && background.assetId) {
       out.background = {
         ...background,
-        url: withBrowserMediaAccessToken(
-          background.url ?? adminMediaUrl(playlistId, background.assetId),
-        ),
+        url: displayMediaUrl(playlistId, background.assetId, publicToken),
+      };
+    } else if (background.type === "image" && background.url) {
+      const url = String(background.url);
+      out.background = {
+        ...background,
+        url: isPublicPresentMediaUrl(url) ? url : withBrowserMediaAccessToken(url),
       };
     } else {
       out.background = background;
@@ -284,10 +301,11 @@ export function resolveMasterForPreview(
   const logo = master.logo;
   if (logo) {
     const logoOut: Record<string, unknown> = { ...logo };
-    if (logo.assetId && !logo.url) {
-      logoOut.url = displayMediaUrl(playlistId, logo.assetId);
+    if (logo.assetId) {
+      logoOut.url = displayMediaUrl(playlistId, logo.assetId, publicToken);
     } else if (typeof logoOut.url === "string" && logoOut.url) {
-      logoOut.url = withBrowserMediaAccessToken(logoOut.url);
+      const url = String(logoOut.url);
+      logoOut.url = isPublicPresentMediaUrl(url) ? url : withBrowserMediaAccessToken(url);
     }
     out.logo = logoOut;
   }
@@ -299,6 +317,7 @@ export function buildSlideThumbnailNative(
   playlistId: string,
   previewSlide?: PresentationPayload["slides"][number],
   masterConfig?: PlaylistMasterConfig,
+  publicToken?: string | null,
 ): NativeSlidePayload | null {
   if (slide.slideType !== "native" || !slide.nativeScreenKey) return null;
 
@@ -308,7 +327,12 @@ export function buildSlideThumbnailNative(
     return {
       screenKey: "custom_message",
       config: slide.nativeConfig ?? {},
-      data: buildComunicadoPreviewData(slide.nativeConfig ?? {}, playlistId, masterConfig),
+      data: buildComunicadoPreviewData(
+        slide.nativeConfig ?? {},
+        playlistId,
+        masterConfig,
+        publicToken,
+      ),
     };
   }
 
@@ -335,6 +359,7 @@ function buildComunicadoPreviewData(
   raw: Record<string, unknown>,
   playlistId: string,
   masterConfig?: PlaylistMasterConfig,
+  publicToken?: string | null,
 ): Record<string, unknown> {
   const cfg = parseComunicadoConfig(raw);
   const background = cfg.background;
@@ -342,11 +367,11 @@ function buildComunicadoPreviewData(
   if (resolvedBackground.type === "image" && resolvedBackground.assetId) {
     resolvedBackground = {
       ...resolvedBackground,
-      url: displayMediaUrl(playlistId, resolvedBackground.assetId),
+      url: displayMediaUrl(playlistId, resolvedBackground.assetId, publicToken),
     };
   }
-  const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId);
-  const master = resolveMasterForPreview(masterConfig, playlistId);
+  const blocks = enrichBlocksForEditorThumbnail(cfg.blocks ?? [], playlistId, publicToken);
+  const master = resolveMasterForPreview(masterConfig, playlistId, publicToken);
   return {
     version: cfg.version ?? 2,
     headline: cfg.headline,
@@ -360,7 +385,7 @@ function buildComunicadoPreviewData(
       ? {
           customFonts: cfg.customFonts.map((font) => ({
             ...font,
-            url: displayMediaUrl(playlistId, font.assetId),
+            url: displayMediaUrl(playlistId, font.assetId, publicToken),
           })),
         }
       : {}),
@@ -386,12 +411,13 @@ const THUMBNAIL_TEXT_PLACEHOLDER: Record<"heading" | "text", string> = {
 function enrichBlocksForEditorThumbnail(
   blocks: ComunicadoBlock[],
   playlistId: string,
+  publicToken?: string | null,
 ): ComunicadoBlock[] {
   return blocks.map((block) => {
     if ((block.type === "image" || block.type === "video") && block.assetId) {
       return {
         ...block,
-        url: displayMediaUrl(playlistId, block.assetId),
+        url: displayMediaUrl(playlistId, block.assetId, publicToken),
       };
     }
     // chart_view / table_view / kpi_view / data_*: preservar `resolved` (print do palco).

@@ -26,6 +26,7 @@ type Props = {
   canPasteSlide: boolean;
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
+  publicToken?: string | null;
   onSelect: (slideId: string) => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
@@ -49,6 +50,7 @@ export function SlideFilmstrip({
   canPasteSlide,
   viewportProfile = "1080p",
   masterConfig,
+  publicToken,
   onSelect,
   onDragStart,
   onDrop,
@@ -226,6 +228,7 @@ export function SlideFilmstrip({
                             previewSlide={previewBySlideId[slide.id]}
                             viewportProfile={viewportProfile}
                             masterConfig={masterConfig}
+                            publicToken={publicToken}
                           />
                         </button>
                         {renaming ? (

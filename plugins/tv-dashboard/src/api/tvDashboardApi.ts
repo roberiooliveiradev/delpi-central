@@ -252,6 +252,11 @@ export function adminMediaUrl(playlistId: string, assetId: string) {
   return `${API_BASE}/playlists/${playlistId}/media/${assetId}`;
 }
 
+/** Mídia do link público — `<img>`/CSS no filmstrip e na prévia sem JWT. */
+export function publicPresentMediaUrl(publicToken: string, assetId: string) {
+  return `${API_BASE}/public/present/${encodeURIComponent(publicToken)}/media/${assetId}`;
+}
+
 export async function uploadPlaylistMedia(playlistId: string, file: File) {
   const form = new FormData();
   form.append("file", file);

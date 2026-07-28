@@ -11,6 +11,7 @@ type Props = {
   previewSlide?: PresentationPayload["slides"][number];
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
+  publicToken?: string | null;
 };
 
 export function SlideStagePreview({
@@ -19,6 +20,7 @@ export function SlideStagePreview({
   previewSlide,
   viewportProfile = "1080p",
   masterConfig,
+  publicToken,
 }: Props) {
   if (slide.slideType === "external") {
     return (
@@ -37,7 +39,13 @@ export function SlideStagePreview({
     );
   }
 
-  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide, masterConfig);
+  const native = buildSlideThumbnailNative(
+    slide,
+    playlistId,
+    previewSlide,
+    masterConfig,
+    publicToken,
+  );
   if (!native) {
     return <div className="td-deck-stage__preview td-deck-stage__preview--empty" />;
   }

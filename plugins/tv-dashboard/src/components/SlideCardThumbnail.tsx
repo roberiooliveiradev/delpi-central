@@ -14,6 +14,8 @@ type Props = {
   /** Viewport da playlist — miniaturiza o slide canônico (print exato). */
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
+  /** Token público — mídia do filmstrip via `/public/present/...` (sem JWT). */
+  publicToken?: string | null;
 };
 
 export function SlideCardThumbnail({
@@ -22,6 +24,7 @@ export function SlideCardThumbnail({
   previewSlide,
   viewportProfile = "1080p",
   masterConfig,
+  publicToken,
 }: Props) {
   if (slide.slideType === "external") {
     return (
@@ -32,7 +35,13 @@ export function SlideCardThumbnail({
     );
   }
 
-  const native = buildSlideThumbnailNative(slide, playlistId, previewSlide, masterConfig);
+  const native = buildSlideThumbnailNative(
+    slide,
+    playlistId,
+    previewSlide,
+    masterConfig,
+    publicToken,
+  );
   if (!native) {
     return <div className="td-slide-thumb td-slide-thumb--empty" aria-hidden="true" />;
   }

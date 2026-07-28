@@ -106,6 +106,50 @@ describe("slideCardPreview", () => {
     expect(data.blocks?.[0]?.url).toBe("/apps/tv-dashboard-api/playlists/playlist-1/media/asset-1");
   });
 
+  it("miniatura com publicToken usa URL /public/present (parity prévia/TV)", () => {
+    const slide: Slide = {
+      id: "s1",
+      playlistId: "p1",
+      sortOrder: 0,
+      slideType: "native",
+      title: "Comunicado",
+      nativeScreenKey: "custom_message",
+      nativeConfig: {
+        version: 2,
+        blocks: [
+          {
+            id: "img-1",
+            type: "image",
+            assetId: "asset-1",
+            frame: { x: 0, y: 0, w: 20, h: 20 },
+          },
+        ],
+        background: { type: "color", value: "#003366" },
+      },
+      isActive: true,
+    };
+    const native = buildSlideThumbnailNative(
+      slide,
+      "playlist-1",
+      undefined,
+      {
+        enabled: true,
+        logo: { assetId: "logo-1", frame: { x: 80, y: 2, w: 12, h: 10 } },
+      },
+      "tok-abc",
+    );
+    const data = native?.data as {
+      blocks?: Array<{ url?: string }>;
+      master?: { logo?: { url?: string } };
+    };
+    expect(data.blocks?.[0]?.url).toBe(
+      "/apps/tv-dashboard-api/public/present/tok-abc/media/asset-1",
+    );
+    expect(data.master?.logo?.url).toBe(
+      "/apps/tv-dashboard-api/public/present/tok-abc/media/logo-1",
+    );
+  });
+
   it("preenche placeholder de texto vazio na miniatura do editor", () => {
     const slide: Slide = {
       id: "s1",

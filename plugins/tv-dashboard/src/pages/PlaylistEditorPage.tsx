@@ -1199,6 +1199,7 @@ export function PlaylistEditorPage({
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
     masterConfig: playlist.masterConfig,
+    publicToken: playlist.publicToken,
     onSelect: selectSlide,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
@@ -1261,6 +1262,7 @@ export function PlaylistEditorPage({
                     previewSlide={previewBySlideId[selectedSlide.id]}
                     viewportProfile={playlist.viewportProfile}
                     masterConfig={playlist.masterConfig}
+                    publicToken={playlist.publicToken}
                   />
                 </div>
               )
