@@ -36,6 +36,7 @@ Metadados centralizados: `app/interface/http/openapi_agent_metadata.py`.
 | O usuário quer… | Rota preferida | `operationId` (ref.) |
 |---|---|---|
 | Busca sem código exato | `GET /products/search` | `search_products` |
+| Produto pelo **part number do fornecedor** | `GET /products/by-supplier-part-number` | `search_products_by_supplier_part_number` |
 | Dados cadastrais (leve) | `GET /products/{code}` | `get_product_detail` |
 | Resumo produto + estoque + preços | `GET /products/{code}/summary` | `get_product_summary` |
 | Ficha analítica (multi-dimensão) | `GET /products/{code}/analyser` | `get_product_analyser` |

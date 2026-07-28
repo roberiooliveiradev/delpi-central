@@ -30,6 +30,9 @@ from app.application.dto.product.list_product_structured_request import ListProd
 from app.application.dto.product.list_product_parents_request import ListProductParentsRequest
 from app.application.dto.product.export_structure_excel_request import ExportStructureExcelRequest
 from app.application.dto.product.list_product_suppliers_request import ListProductSuppliersRequest
+from app.application.dto.product.search_products_by_supplier_part_number_request import (
+    SearchProductsBySupplierPartNumberRequest,
+)
 from app.application.dto.product.list_product_customers_request import ListProductCustomersRequest
 from app.application.dto.product.list_product_inspection_request import ListProductInspectionRequest
 from app.application.dto.product.list_product_guide_request import ListProductGuideRequest
@@ -85,6 +88,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_DIRECTIVES,
     PRODUCT_SUMMARY,
     PRODUCT_SUPPLIERS,
+    PRODUCT_BY_SUPPLIER_PART_NUMBER,
 )
 from app.interface.http.routes.product_response_helpers import (
     STOCK_FIELD_LABELS,
@@ -121,6 +125,7 @@ from app.composition.product_composer import (
     build_export_structure_excel_use_case,
     build_list_parents_use_case,
     build_list_product_suppliers_use_case,
+    build_search_products_by_supplier_part_number_use_case,
     build_list_customers_use_case,
     build_list_product_inspection_use_case,
     build_list_product_guide_use_case,
@@ -194,6 +199,48 @@ def search_products_route(
 
     except Exception as e:
         log_error(f"Erro ao buscar produtos: {e}")
+        return error_response(str(e))
+
+
+@router.get(
+    "/by-supplier-part-number",
+    **PRODUCT_BY_SUPPLIER_PART_NUMBER,
+)
+@require_permission(API_DELPI_ACCESS)
+def search_products_by_supplier_part_number_route(
+    supplier_part_number: str = Query(
+        ...,
+        min_length=1,
+        description="Supplier part number (SA5010.A5_CODPRF).",
+    ),
+    supplier_code: Optional[str] = Query(
+        None,
+        description="Optional Protheus supplier code filter (SA5010.A5_FORNECE).",
+    ),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=500),
+):
+    try:
+        dto = SearchProductsBySupplierPartNumberRequest(
+            supplier_part_number=supplier_part_number,
+            supplier_code=supplier_code,
+            page=page,
+            page_size=page_size,
+        )
+        use_case = build_search_products_by_supplier_part_number_use_case()
+        result = use_case.execute(dto)
+
+        return product_success(
+            result.to_dict(),
+            operation_id=PRODUCT_BY_SUPPLIER_PART_NUMBER["operation_id"],
+            entity="product_by_supplier_part_number",
+            shape="paged_list",
+        )
+    except Exception as e:
+        log_error(
+            f"Erro ao buscar produtos pelo part number do fornecedor "
+            f"{supplier_part_number}: {e}"
+        )
         return error_response(str(e))
 
 

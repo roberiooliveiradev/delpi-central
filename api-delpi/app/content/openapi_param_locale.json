@@ -305,6 +305,18 @@
         }
       }
     },
+    "supplier_part_number": {
+      "locale": {
+        "en": {
+          "label": "Supplier part number",
+          "description": "Supplier/manufacturer part number (SA5010.A5_CODPRF)."
+        },
+        "pt-BR": {
+          "label": "Part number do fornecedor",
+          "description": "Código do produto no fornecedor (SA5010.A5_CODPRF)."
+        }
+      }
+    },
     "customer_segment": {
       "locale": {
         "en": {

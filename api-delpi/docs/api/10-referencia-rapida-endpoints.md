@@ -32,6 +32,7 @@ Legenda de permissões:
 | Método | Endpoint | Perm. |
 |---|---|---|
 | GET | `/products/search` | A |
+| GET | `/products/by-supplier-part-number` | A |
 | GET | `/products/{code}` | A |
 | GET | `/products/{code}/summary` | A |
 | GET | `/products/{code}/structure` | A |

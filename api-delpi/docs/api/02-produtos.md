@@ -34,6 +34,32 @@ GET /apps/api-delpi/products/search?description=parafuso&page=1&page_size=20
 
 ---
 
+## GET /products/by-supplier-part-number
+
+Busca inversa: localiza produtos DELPI a partir do **part number do fornecedor** (`SA5010.A5_CODPRF`).
+
+| Query | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `supplier_part_number` | string | **sim** | Part number no fornecedor (`A5_CODPRF`). |
+| `supplier_code` | string | não | Filtra pelo código do fornecedor (`A5_FORNECE`). |
+| `page` | int | não | Página (default `1`). |
+| `page_size` | int | não | Tamanho (default `50`, máx. `500`). |
+
+**`operationId`:** `search_products_by_supplier_part_number`  
+**Contrato:** `entity=product_by_supplier_part_number`, `shape=paged_list`
+
+Cada item inclui `product_code`, `product_description`, `supplier_code`, `supplier_name`, `supplier_part_number`, etc.
+
+**Exemplo:**
+
+```http
+GET /apps/api-delpi/products/by-supplier-part-number?supplier_part_number=008700056
+```
+
+Não confundir com `GET /products/{code}/suppliers` (produto → fornecedores).
+
+---
+
 ## GET /products/{code}
 
 Dados cadastrais do produto (leve, sem o payload completo do analyser).

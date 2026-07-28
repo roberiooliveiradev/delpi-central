@@ -18,3 +18,14 @@ class ProductSuppliersRepositoryPort(ABC):
     @abstractmethod
     def list_suppliers_for_codes(self, codes: list[str]) -> list[dict]:
         raise NotImplementedError
+
+    @abstractmethod
+    def search_by_supplier_part_number(
+        self,
+        supplier_part_number: str,
+        *,
+        supplier_code: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> Page[Supplier]:
+        raise NotImplementedError

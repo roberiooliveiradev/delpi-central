@@ -46,6 +46,9 @@ def presentation_strategy_for_entity(entity: str | None) -> str:
 ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Produtos
     "search_products": RouteContract("product_search", "paged_list"),
+    "search_products_by_supplier_part_number": RouteContract(
+        "product_by_supplier_part_number", "paged_list"
+    ),
     "get_product_detail": RouteContract("product", "product_snapshot"),
     "get_product_summary": RouteContract("product", "product_snapshot"),
     "get_product_structure": RouteContract("product_structure", "hierarchy"),

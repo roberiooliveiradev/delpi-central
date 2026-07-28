@@ -242,3 +242,109 @@ class ProductSuppliersRepository(BaseRepository, ProductSuppliersRepositoryPort)
 
         with self as repo:
             return repo.execute_batch_query(sql, params)
+
+    def search_by_supplier_part_number(
+        self,
+        supplier_part_number: str,
+        *,
+        supplier_code: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> Page[Supplier]:
+        part = str(supplier_part_number or "").strip()
+        supplier = str(supplier_code or "").strip() or None
+
+        if not part:
+            paging = paginate(page, page_size)
+            return Page(
+                items=[],
+                total=0,
+                page=paging["page"],
+                page_size=paging["page_size"],
+            )
+
+        paging = paginate(page, page_size)
+        where_clauses = [
+            "SA5.D_E_L_E_T_ = ''",
+            "SB1.D_E_L_E_T_ = ''",
+            "RTRIM(SA5.A5_CODPRF) <> ''",
+            "RTRIM(SA5.A5_CODPRF) COLLATE Latin1_General_CI_AI = ?",
+        ]
+        where_params: list = [part]
+
+        if supplier:
+            where_clauses.append("SA5.A5_FORNECE = ?")
+            where_params.append(supplier)
+
+        where_sql = " AND ".join(where_clauses)
+
+        count_sql = f"""
+        SELECT COUNT(*) AS total
+        FROM SA5010 SA5 WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SA5.A5_PRODUTO
+           AND SB1.D_E_L_E_T_ = ''
+        WHERE {where_sql}
+        """
+
+        sql = f"""
+        SELECT
+            SB1.B1_COD      AS product_code,
+            SB1.B1_DESC     AS product_description,
+            SB1.B1_UM       AS unit,
+            SA5.A5_FORNECE  AS supplier_code,
+            SA5.A5_LOJA     AS supplier_store,
+            SA2.A2_NOME     AS supplier_name,
+            RTRIM(SA5.A5_CODPRF) AS supplier_part_number,
+            SA5.A5_CODPRCA  AS catalog_code,
+            SA5.A5_CODBAR   AS barcode,
+            SA5.A5_LEAD_T   AS registered_lead_time_days
+        FROM SA5010 SA5 WITH (NOLOCK)
+        INNER JOIN SB1010 SB1 WITH (NOLOCK)
+            ON SB1.B1_COD = SA5.A5_PRODUTO
+           AND SB1.D_E_L_E_T_ = ''
+        LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+            ON SA2.A2_COD = SA5.A5_FORNECE
+           AND SA2.A2_LOJA = SA5.A5_LOJA
+           AND SA2.D_E_L_E_T_ = ''
+        WHERE {where_sql}
+        ORDER BY SB1.B1_COD, SA5.A5_FORNECE, SA5.A5_LOJA
+        OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+
+        with self as repo:
+            total_row = repo.execute_one(count_sql, tuple(where_params))
+            total = int(total_row["total"]) if total_row else 0
+            rows = repo.execute_query(
+                sql,
+                tuple(where_params + [paging["offset"], paging["page_size"]]),
+            )
+
+        suppliers = [
+            Supplier(
+                product_code=r["product_code"],
+                product_description=r["product_description"],
+                unit=r["unit"],
+                supplier_code=r["supplier_code"],
+                supplier_store=r["supplier_store"],
+                supplier_name=r["supplier_name"],
+                supplier_part_number=r["supplier_part_number"],
+                catalog_code=r["catalog_code"],
+                barcode=r["barcode"],
+                registered_lead_time_days=r["registered_lead_time_days"],
+                real_avg_lead_time_days=None,
+                real_min_lead_time_days=None,
+                real_max_lead_time_days=None,
+                real_lead_time_sample_size=None,
+                last_price=None,
+                last_price_date=None,
+            )
+            for r in rows
+        ]
+
+        return Page(
+            items=suppliers,
+            total=total,
+            page=paging["page"],
+            page_size=paging["page_size"],
+        )

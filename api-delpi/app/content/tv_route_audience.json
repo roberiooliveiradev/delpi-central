@@ -2810,14 +2810,31 @@
     "get_product_suppliers": {
       "locale": {
         "en": {
-          "summary": "suppliers do product",
-          "description": "Product suppliers.",
-          "label": "suppliers do product"
+          "summary": "Product suppliers",
+          "description": "List suppliers linked to a DELPI product code.",
+          "label": "Product suppliers"
         },
         "pt-BR": {
           "label": "Fornecedores do produto",
           "summary": "Fornecedores do produto",
-          "description": "Listagem paginada de «Fornecedores do produto» para uso em tabela ou gráfico no TV."
+          "description": "Listagem paginada de fornecedores vinculados a um código DELPI."
+        }
+      },
+      "category": "products"
+    },
+    "search_products_by_supplier_part_number": {
+      "locale": {
+        "en": {
+          "summary": "Products by supplier part number",
+          "description": "Find DELPI products linked to a supplier/manufacturer part number (A5_CODPRF).",
+          "label": "Products by supplier part number",
+          "whenToUse": "Use when the user has a vendor part number and needs the internal product code."
+        },
+        "pt-BR": {
+          "label": "Produtos por part number do fornecedor",
+          "summary": "Produtos por part number do fornecedor",
+          "description": "Localiza códigos DELPI a partir do part number do fornecedor (SA5010.A5_CODPRF).",
+          "whenToUse": "Use quando o usuário tem o part number do fornecedor e precisa do código interno do produto."
         }
       },
       "category": "products"

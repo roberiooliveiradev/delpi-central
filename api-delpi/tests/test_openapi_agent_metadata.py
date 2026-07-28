@@ -7,6 +7,7 @@ EXPECTED_CHAT_OPERATION_IDS = {
     "get_product_summary",
     "get_product_parents",
     "get_product_suppliers",
+    "search_products_by_supplier_part_number",
     "get_product_customers",
     "get_product_inspection",
     "get_product_guide",

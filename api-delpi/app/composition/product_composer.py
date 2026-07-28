@@ -8,6 +8,9 @@ from app.infrastructure.persistence.totvs.product_repositories.product_parents_r
 from app.application.use_cases.product.list_product_parents_use_case import ListProductParentsUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_suppliers_repository import ProductSuppliersRepository
 from app.application.use_cases.product.list_product_suppliers_use_case import ListProductSuppliersUseCase
+from app.application.use_cases.product.search_products_by_supplier_part_number_use_case import (
+    SearchProductsBySupplierPartNumberUseCase,
+)
 from app.infrastructure.persistence.totvs.product_repositories.product_customers_repository import ProductCustomersRepository
 from app.application.use_cases.product.list_product_customers_use_case import ListProductCustomersUseCase
 from app.infrastructure.persistence.totvs.product_repositories.product_inspection_repository import ProductInspectionRepository
@@ -93,6 +96,11 @@ def build_list_parents_use_case():
 def build_list_product_suppliers_use_case():
     repository = ProductSuppliersRepository()
     return ListProductSuppliersUseCase(repository)
+
+
+def build_search_products_by_supplier_part_number_use_case():
+    repository = ProductSuppliersRepository()
+    return SearchProductsBySupplierPartNumberUseCase(repository)
 
 def build_list_customers_use_case():
     repository = ProductCustomersRepository()

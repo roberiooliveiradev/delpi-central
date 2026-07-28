@@ -48,6 +48,16 @@ PRODUCT_SUPPLIERS = agent_route(
     operation_id="get_product_suppliers",
 )
 
+PRODUCT_BY_SUPPLIER_PART_NUMBER = agent_route(
+    summary="Find products by supplier part number",
+    description=(
+        "Reverse lookup: given a supplier part number (SA5010.A5_CODPRF), list matching DELPI products "
+        "with supplier code/name. Use when the user has a vendor/manufacturer part number and needs "
+        "the internal product code — not when they already have the DELPI code (use /products/{code}/suppliers)."
+    ),
+    operation_id="search_products_by_supplier_part_number",
+)
+
 PRODUCT_CUSTOMERS = agent_route(
     summary="Clientes do produto",
     description=(
