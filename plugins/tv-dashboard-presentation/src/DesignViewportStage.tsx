@@ -63,11 +63,29 @@ export function computeDesignViewportScale(
 }
 
 /**
+ * Caixa de layout pós-escala (o que webviews/kiosk medem em scrollWidth).
+ * Diferente do box pré-`transform: scale`, que permanece no tamanho de design
+ * e desloca o «ajustar à tela» de apps como Open Pen Drive.
+ */
+export function computeDesignViewportLayoutBox(
+  outerW: number,
+  outerH: number,
+  scale: number,
+): { width: number; height: number } {
+  if (!(scale > 0) || !(outerW > 0) || !(outerH > 0)) {
+    return { width: 0, height: 0 };
+  }
+  return { width: outerW * scale, height: outerH * scale };
+}
+
+/**
  * Renderiza o slide no tamanho de design do `viewportProfile` e aplica escala
  * uniforme para encaixar no container (prévia admin, TV pública, filmstrip).
  *
  * - Posições/tamanhos: frames `%` intactos (sem reconstruir layout).
  * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
+ * - Layout box = tamanho visual (scale via `transform-origin: top left` dentro
+ *   de um frame já dimensionado) — evita deslocamento em webviews kiosk.
  * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
@@ -101,10 +119,20 @@ export function DesignViewportStage({
     updateScale();
     const observer = new ResizeObserver(updateScale);
     observer.observe(node);
-    return () => observer.disconnect();
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    vv?.addEventListener("resize", updateScale);
+    vv?.addEventListener("scroll", updateScale);
+    window.addEventListener("orientationchange", updateScale);
+    return () => {
+      observer.disconnect();
+      vv?.removeEventListener("resize", updateScale);
+      vv?.removeEventListener("scroll", updateScale);
+      window.removeEventListener("orientationchange", updateScale);
+    };
   }, [fit, height, width]);
 
   const ready = scale != null && scale > 0;
+  const layout = computeDesignViewportLayoutBox(outerW, outerH, scale ?? 0);
 
   return (
     <div
@@ -120,34 +148,45 @@ export function DesignViewportStage({
       }}
     >
       <div
-        className={["tdp-design-viewport__stage", contentClassName].filter(Boolean).join(" ")}
+        className="tdp-design-viewport__frame"
+        data-layout-w={ready ? Math.round(layout.width) : undefined}
+        data-layout-h={ready ? Math.round(layout.height) : undefined}
         style={{
-          width: outerW,
-          height: outerH,
           position: "absolute",
           left: "50%",
           top: "50%",
-          marginLeft: -outerW / 2,
-          marginTop: -outerH / 2,
-          transform: ready ? `scale(${scale})` : "scale(0)",
-          transformOrigin: "center center",
-          visibility: ready ? "visible" : "hidden",
+          width: layout.width,
+          height: layout.height,
+          marginLeft: -layout.width / 2,
+          marginTop: -layout.height / 2,
           overflow: "hidden",
+          visibility: ready ? "visible" : "hidden",
         }}
       >
         <div
-          className="tdp-design-viewport__design"
-          data-viewport={viewportProfile || "1080p"}
+          className={["tdp-design-viewport__stage", contentClassName].filter(Boolean).join(" ")}
           style={{
-            position: "absolute",
-            left: bleedX,
-            top: bleedY,
-            width,
-            height,
+            width: outerW,
+            height: outerH,
+            transform: ready ? `scale(${scale})` : "scale(0)",
+            transformOrigin: "top left",
             overflow: "hidden",
           }}
         >
-          {children}
+          <div
+            className="tdp-design-viewport__design"
+            data-viewport={viewportProfile || "1080p"}
+            style={{
+              position: "absolute",
+              left: bleedX,
+              top: bleedY,
+              width,
+              height,
+              overflow: "hidden",
+            }}
+          >
+            {children}
+          </div>
         </div>
       </div>
     </div>

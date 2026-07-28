@@ -409,8 +409,13 @@
   height: auto;
 }
 
+.tdp-design-viewport__frame {
+  /* Caixa de layout = tamanho visual (já escalado). Evita scrollWidth 1920px em kiosk. */
+  overflow: hidden;
+}
+
 .tdp-design-viewport__stage {
-  /* Wrapper do transform; tamanho = moldura de design (sem bleed). */
+  /* Design em pixels nativos; scale com origin top-left dentro do __frame. */
   background: transparent;
 }
 

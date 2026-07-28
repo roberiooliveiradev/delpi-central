@@ -26,6 +26,7 @@ export {
   DesignViewportStage,
   computeDesignViewportScale,
   computeDesignViewportBleedSize,
+  computeDesignViewportLayoutBox,
   DESIGN_VIEWPORT_BLEED_RATIO,
 } from "./DesignViewportStage";
 export { RichComunicadoStage } from "./RichComunicadoStage";

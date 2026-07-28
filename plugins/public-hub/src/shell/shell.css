@@ -222,17 +222,17 @@ html.pub-kiosk,
 html.pub-kiosk body,
 html.pub-kiosk #root {
   height: 100%;
+  min-height: 100%;
   min-height: 100dvh;
   overflow: hidden;
 }
 
-/* TV wall — preenche viewport sem depender de cadeia height % */
+/* TV wall — preenche viewport; sem 100vw (overflow/assimetría em webviews kiosk). */
 .pub-kiosk-root {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  width: auto;
+  height: auto;
   overflow: hidden;
   background: #05070a;
 }
