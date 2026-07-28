@@ -11,7 +11,7 @@
     "dataIndicatorUnavailable": "Dados indisponíveis.",
     "dataSourceUnavailable": "Fonte de dados indisponível.",
     "dataTransformV2WriteDisabled": "A escrita de dataTransform v2 ainda não está habilitada.",
-    "dataParamRequired": "Parâmetro obrigatório.",
+    "dataParamRequired": "Parâmetro obrigatório: {param}.",
     "dataParamUnknown": "Parâmetro não permitido.",
     "dataRouteMethodNotAllowed": "Somente rotas GET são permitidas na TV.",
     "dataRowsLimitExceeded": "Limite de linhas excedido para esta rota.",

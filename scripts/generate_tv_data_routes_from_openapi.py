@@ -207,6 +207,7 @@ def enrich_param_schema_entry(
     if name == "periodDays":
         enriched.pop("enum", None)
         enriched.pop("default", None)
+        enriched["optional"] = True
     if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
         enriched["optional"] = True
@@ -220,6 +221,14 @@ def enrich_param_schema_entry(
         # Default só de UX TV — não inventa contrato HTTP.
         enriched["default"] = _TV_PARAM_UX_DEFAULTS[name]
         enriched["optional"] = True
+    # Overlay TV-only sem flag: alinhado ao MFE (ausente = opcional).
+    if "optional" not in enriched:
+        if isinstance(enriched.get("required"), bool):
+            enriched["optional"] = not bool(enriched.pop("required"))
+        else:
+            enriched["optional"] = True
+    else:
+        enriched.pop("required", None)
     return enriched
 
 

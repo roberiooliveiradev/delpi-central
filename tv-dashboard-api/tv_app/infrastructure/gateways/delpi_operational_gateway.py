@@ -9,6 +9,7 @@ from delpi_auth.service_token import internal_service_authorization
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
 )
+from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.series_points_extractor import (
     envelope_meta,

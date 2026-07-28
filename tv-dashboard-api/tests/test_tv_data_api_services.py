@@ -23,9 +23,25 @@ def test_suggested_display_modes_from_shape():
     assert block_type_for_display_mode("table") == "data_table"
 
 
-def test_validate_params_applies_default_when_empty():
-    schema = {"granularity": {"type": "string", "optional": False, "default": "day"}}
-    assert validate_params_against_schema({"granularity": ""}, schema) == {"granularity": "day"}
+def test_validate_params_missing_optional_flag_is_optional():
+    """Ausência de `optional` = opcional (mesmo contrato do MFE) — não exige periodDays."""
+    schema = {
+        "branch": {"type": "string", "optional": True, "default": "01"},
+        "periodDays": {"type": "integer", "label": "Período (dias)"},
+    }
+    assert validate_params_against_schema({"branch": "01"}, schema) == {"branch": "01"}
+
+
+def test_validate_params_required_error_names_the_param():
+    schema = {
+        "department_id": {
+            "type": "string",
+            "optional": False,
+            "label": "Departamento",
+        }
+    }
+    with pytest.raises(ValueError, match=r"Parâmetro obrigatório: Departamento"):
+        validate_params_against_schema({}, schema)
 
 
 def test_validate_params_allows_internal_date_range_preset():

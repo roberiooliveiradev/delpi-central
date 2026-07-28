@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
@@ -32,6 +32,27 @@ def _coerce_param_value(field_type: str, raw: Any) -> Any:
         token = str(raw).strip().lower()
         return token in {"1", "true", "yes", "on"}
     return str(raw).strip()
+
+
+def _is_param_optional(spec: Mapping[str, Any]) -> bool:
+    """Alinhado ao MFE (`isParamFieldOptional`): sem flag = opcional."""
+    if isinstance(spec.get("required"), bool):
+        return not bool(spec.get("required"))
+    if "optional" in spec:
+        return bool(spec.get("optional"))
+    return True
+
+
+def _param_display_name(key: str, spec: Mapping[str, Any]) -> str:
+    label = str(spec.get("label") or "").strip()
+    return label or key
+
+
+def _required_param_error(key: str, spec: Mapping[str, Any]) -> ValueError:
+    param = _param_display_name(key, spec)
+    return ValueError(
+        message("dataParamRequired", f"Parâmetro obrigatório: {param}.", param=param)
+    )
 
 
 def validate_params_against_schema(
@@ -77,23 +98,23 @@ def validate_params_against_schema(
         if empty:
             if spec.get("default") is not None:
                 normalized[key] = spec.get("default")
-            elif not spec.get("optional", False):
+            elif not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
                 if seeded_value not in (None, ""):
                     normalized[key] = _coerce_param_value(str(spec.get("type") or "string"), seeded_value)
                 else:
-                    raise ValueError(message("dataParamRequired", f"Parâmetro obrigatório: {key}"))
+                    raise _required_param_error(key, spec)
             continue
         value = _coerce_param_value(str(spec.get("type") or "string"), raw_value)
         if value is None or value == "":
             if spec.get("default") is not None:
                 normalized[key] = spec.get("default")
-            elif not spec.get("optional", False):
+            elif not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
                 if seeded_value not in (None, ""):
                     normalized[key] = _coerce_param_value(str(spec.get("type") or "string"), seeded_value)
                 else:
-                    raise ValueError(message("dataParamRequired", f"Parâmetro obrigatório: {key}"))
+                    raise _required_param_error(key, spec)
             continue
         normalized[key] = value
 

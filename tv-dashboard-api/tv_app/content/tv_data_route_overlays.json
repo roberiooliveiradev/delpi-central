@@ -40,7 +40,8 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "optional": true
         }
       }
     },
@@ -65,7 +66,8 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "optional": true
         }
       }
     },
@@ -150,7 +152,8 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "optional": true
         }
       },
       "suggestedTransformSteps": [
@@ -234,7 +237,8 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "optional": true
         }
       }
     },
@@ -253,7 +257,8 @@
       "paramSchema": {
         "periodDays": {
           "type": "integer",
-          "label": "Período (dias)"
+          "label": "Período (dias)",
+          "optional": true
         }
       }
     },

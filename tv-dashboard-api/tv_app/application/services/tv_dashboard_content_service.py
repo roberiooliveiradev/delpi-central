@@ -19,9 +19,15 @@ def _load_settings() -> dict[str, Any]:
     return json.loads(SETTINGS_PATH.read_text(encoding="utf-8"))
 
 
-def message(key: str, default: str = "") -> str:
+def message(key: str, default: str = "", **format_kwargs: Any) -> str:
     messages = _load_content().get("messages") or {}
-    return str(messages.get(key) or default or key)
+    text = str(messages.get(key) or default or key)
+    if format_kwargs:
+        try:
+            return text.format_map(format_kwargs)
+        except (KeyError, ValueError):
+            return text
+    return text
 
 
 def tv_dashboard_setting_int(key: str, default: int) -> int:
