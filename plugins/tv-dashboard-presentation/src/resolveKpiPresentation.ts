@@ -30,6 +30,7 @@ export type KpiViewPresentation = {
 export type KpiMetricPresentationOverrides = Pick<
   KpiMetricProjection,
   | "format"
+  | "decimalPlaces"
   | "colorRules"
   | "label"
   | "field"
@@ -119,6 +120,8 @@ export function resolveKpiViewPresentation(
   const colorRules = metricOverrides?.colorRules ?? options.colorRules;
   const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
   const valueFormat = metricOverrides?.format ?? options.valueFormat;
+  const decimalPlaces =
+    metricOverrides?.decimalPlaces ?? options.decimalPlaces;
 
   const fieldKey =
     metricOverrides?.field?.trim() ||
@@ -137,7 +140,7 @@ export function resolveKpiViewPresentation(
     resolved?.label ||
     "Indicador";
 
-  const valueText = formatKpiValue(rawValue, valueFormat, options.unit);
+  const valueText = formatKpiValue(rawValue, valueFormat, options.unit, decimalPlaces);
   const hint = options.subtitle?.trim() || undefined;
   const sparklinePoints = sparklinePointsFromResolved(resolved);
   const comparison = resolveComparisonPresentation({
@@ -169,6 +172,7 @@ function formatKpiValue(
   value: unknown,
   format: ComunicadoKpiOptions["valueFormat"],
   unit?: string,
+  decimalPlaces?: number | null,
 ): string {
   if (value == null || value === "") return "—";
 
@@ -181,7 +185,7 @@ function formatKpiValue(
   if (format === "raw") {
     const base = String(value);
     if (numeric != null && /^-?\d+\.\d{4,}$/.test(base.trim())) {
-      const text = formatNumber(numeric);
+      const text = formatNumber(numeric, decimalPlaces);
       return unit ? `${text} ${unit}` : text;
     }
     return unit && !base.includes(unit) ? `${base}${unit}` : base;
@@ -189,7 +193,7 @@ function formatKpiValue(
 
   if (format == null) {
     if (numeric != null) {
-      const text = formatNumber(numeric);
+      const text = formatNumber(numeric, decimalPlaces);
       return unit ? `${text} ${unit}` : text;
     }
     const base = String(value);
@@ -202,12 +206,12 @@ function formatKpiValue(
   }
 
   if (format === "percent") {
-    const text = formatPct(numeric);
+    const text = formatPct(numeric, decimalPlaces);
     return unit && unit !== "%" ? `${text} ${unit}` : text;
   }
 
   if (format === "currency") {
-    const text = formatCurrency(numeric);
+    const text = formatCurrency(numeric, decimalPlaces);
     return unit && !text.includes(unit) ? `${text} ${unit}` : text;
   }
 
@@ -219,6 +223,6 @@ function formatKpiValue(
     return unit ? `${text} ${unit}` : text;
   }
 
-  const text = formatNumber(numeric);
+  const text = formatNumber(numeric, decimalPlaces);
   return unit ? `${text} ${unit}` : text;
 }

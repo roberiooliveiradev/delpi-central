@@ -215,7 +215,9 @@ export function resolveCanvasTableCellDisplay(
     const anchor = series[series.length - 1] ?? null;
     const displayText =
       anchor != null
-        ? formatTextProjectionValue(anchor, ref.format ?? "number")
+        ? formatTextProjectionValue(anchor, ref.format ?? "number", {
+            decimalPlaces: ref.decimalPlaces,
+          })
         : normalized.text?.trim() || "—";
     const tone = resolveTextDataRefValue(
       resolved,

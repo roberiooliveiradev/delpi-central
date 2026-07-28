@@ -4,6 +4,7 @@ import {
   buildTextDataLinkPatch,
   catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
+  formatSupportsDecimalPlaces,
   isComunicadoVisualBoxBlock,
   staticLabelFromTextBoundBlock,
   suggestDefaultTextProjection,
@@ -16,6 +17,7 @@ import { useEffect, useMemo, useRef } from "react";
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
+import { DecimalPlacesField } from "./DecimalPlacesField";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
@@ -125,6 +127,9 @@ export function TextDataBindingInspector({
       ...projection,
       ...patch,
     };
+    if ("decimalPlaces" in patch && patch.decimalPlaces == null) {
+      delete next.decimalPlaces;
+    }
     updateSelected({ textProjection: next.field.trim() ? next : undefined } as Partial<typeof visualBox>);
   }
 
@@ -208,10 +213,23 @@ export function TextDataBindingInspector({
               <FormSelectControl
                 className={compactSelect}
                 value={projection.format ?? "number"}
-                onChange={(value) => patchProjection({ format: value as TextProjectionFormat })}
+                onChange={(value) => {
+                  const format = value as TextProjectionFormat;
+                  const patch: Partial<ComunicadoTextProjection> = { format };
+                  if (!formatSupportsDecimalPlaces(format)) {
+                    patch.decimalPlaces = undefined;
+                  }
+                  patchProjection(patch);
+                }}
                 options={FORMAT_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
               />
             </DeckField>
+            <DecimalPlacesField
+              format={projection.format ?? "number"}
+              value={projection.decimalPlaces}
+              compactClassName={compactSelect}
+              onChange={(decimalPlaces) => patchProjection({ decimalPlaces })}
+            />
             <DeckField label="Prefixo">
               <NativeTextControl
                 className={compactNative}

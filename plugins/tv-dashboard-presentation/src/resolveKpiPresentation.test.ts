@@ -50,4 +50,21 @@ describe("resolveKpiViewPresentation", () => {
     expect(presentation.comparisonText).toMatch(/vs período/);
     expect(presentation.comparisonTone).toBe("positive");
   });
+
+  it("aplica decimalPlaces do options no valor do KPI", () => {
+    const presentation = resolveKpiViewPresentation(
+      { kpi: { value: 12.567, label: "Taxa" } },
+      { valueFormat: "percent", decimalPlaces: 1 },
+    );
+    expect(presentation.valueText).toBe("12,6%");
+  });
+
+  it("métrica sobrescreve casas decimais do card", () => {
+    const presentation = resolveKpiViewPresentation(
+      { kpi: { value: 1.239, label: "Qtd" } },
+      { valueFormat: "number", decimalPlaces: 0 },
+      { format: "number", decimalPlaces: 2 },
+    );
+    expect(presentation.valueText).toBe("1,24");
+  });
 });

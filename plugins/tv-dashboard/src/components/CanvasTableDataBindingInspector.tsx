@@ -7,6 +7,7 @@ import {
   catalogFieldsFromRouteLabels,
   discoverResolvedFieldOptions,
   formatCanvasTableDataBindingLabel,
+  formatSupportsDecimalPlaces,
   listCanvasTableDataBindings,
   normalizeCanvasTableCell,
   resolveCanvasTableCellResolved,
@@ -22,6 +23,7 @@ import { useMemo } from "react";
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataSourceLinkSection } from "./DataSourceLinkSection";
+import { DecimalPlacesField } from "./DecimalPlacesField";
 import { DynamicContentInsertControl } from "./DynamicContentInsertControl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
@@ -361,18 +363,28 @@ export function CanvasTableDataBindingInspector({
                     <FormSelectControl
                       className={compactSelect}
                       value={dataRef.format ?? "number"}
-                      onChange={(value) =>
-                        patchCellDataRef({
-                          ...dataRef,
-                          format: value as TextProjectionFormat,
-                        })
-                      }
+                      onChange={(value) => {
+                        const format = value as TextProjectionFormat;
+                        const next: ComunicadoTextDataRef = { ...dataRef, format };
+                        if (!formatSupportsDecimalPlaces(format)) {
+                          delete next.decimalPlaces;
+                        }
+                        patchCellDataRef(next);
+                      }}
                       options={FORMAT_OPTIONS.map((item) => ({
                         value: item.value,
                         label: item.label,
                       }))}
                     />
                   </DeckField>
+                  <DecimalPlacesField
+                    format={dataRef.format ?? "number"}
+                    value={dataRef.decimalPlaces}
+                    compactClassName={compactSelect}
+                    onChange={(decimalPlaces) =>
+                      patchCellDataRef({ ...dataRef, decimalPlaces })
+                    }
+                  />
                   <div className="td-deck-ribbon__toolbar-row">
                     <button
                       type="button"

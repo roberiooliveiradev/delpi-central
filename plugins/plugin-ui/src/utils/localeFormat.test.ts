@@ -15,4 +15,10 @@ describe("localeFormat (pt-BR)", () => {
   it("formatNumber usa vírgula", () => {
     expect(formatNumber(5.43)).toBe("5,43");
   });
+
+  it("casas decimais explícitas arredondam", () => {
+    expect(formatNumber(1.235, 2)).toBe("1,24");
+    expect(formatPct(12.56, 0)).toBe("13%");
+    expect(formatCurrency(10.556, 2)).toMatch(/R\$\s*10,56/);
+  });
 });

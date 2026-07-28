@@ -16,6 +16,11 @@ export type ComunicadoKpiOptions = {
   valueColor?: string;
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
+  /**
+   * Casas decimais (0–6) para number / percent / currency.
+   * Arredonda na exibição (`Intl`).
+   */
+  decimalPlaces?: number;
   colorRules?: DelpiKpiColorRule[];
   /** Meta numérica para comparação / barra de progresso. */
   target?: number;

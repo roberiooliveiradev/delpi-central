@@ -144,6 +144,14 @@ describe("textViewProjection", () => {
     expect(formatTextProjectionValue(4005.33, "currency")).toMatch(/R\$\s*4\.005,33/);
   });
 
+  it("formatTextProjectionValue respeita decimalPlaces com arredondamento", () => {
+    expect(formatTextProjectionValue(1.235, "number", { decimalPlaces: 2 })).toBe("1,24");
+    expect(formatTextProjectionValue(12.56, "percent", { decimalPlaces: 0 })).toBe("13%");
+    expect(formatTextProjectionValue(10.556, "currency", { decimalPlaces: 2 })).toMatch(
+      /R\$\s*10,56/,
+    );
+  });
+
   it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {
     const siResolved: ComunicadoDataResolved = {
       kpi: { value: 1100, label: "value" },

@@ -32,6 +32,8 @@ export type KpiMetricProjection = {
   aggregation?: ViewAggregation;
   label?: string;
   format?: "number" | "percent" | "compact" | "raw" | "currency";
+  /** Casas decimais (0–6) para number / percent / currency. */
+  decimalPlaces?: number;
   colorRules?: DelpiKpiColorRule[];
   visible?: boolean;
   /** Meta por métrica (multi-KPI). */
@@ -149,6 +151,11 @@ export function normalizeKpiProjection(raw: unknown): KpiViewProjection | undefi
       }
       if ((item as KpiMetricProjection).format) {
         metric.format = (item as KpiMetricProjection).format;
+      }
+      const decimalPlaces = (item as KpiMetricProjection).decimalPlaces;
+      if (typeof decimalPlaces === "number" && Number.isFinite(decimalPlaces)) {
+        const n = Math.trunc(decimalPlaces);
+        if (n >= 0 && n <= 6) metric.decimalPlaces = n;
       }
       if (Array.isArray((item as KpiMetricProjection).colorRules)) {
         metric.colorRules = [...((item as KpiMetricProjection).colorRules ?? [])];

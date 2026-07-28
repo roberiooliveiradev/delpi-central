@@ -103,6 +103,14 @@ export {
   patchHostRelativeFramePageBottomLeftPx,
 } from "./framePageCoordinates";
 export { formatPct, formatNumber, formatCurrency } from "./nativeFormat";
+export {
+  DECIMAL_PLACES_MAX,
+  DECIMAL_PLACES_MIN,
+  defaultDecimalPlacesForFormat,
+  formatSupportsDecimalPlaces,
+  normalizeDecimalPlaces,
+  type DecimalPlacesFormat,
+} from "./nativeFormat";
 export type {
   PresentationMeta,
   PresentationPayloadLike,

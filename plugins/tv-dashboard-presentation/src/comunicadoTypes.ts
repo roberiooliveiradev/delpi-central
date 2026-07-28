@@ -148,6 +148,11 @@ export type ComunicadoTextDataRef = {
   field: string;
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
+  /**
+   * Casas decimais (0–6) para `number` / `percent` / `currency`.
+   * A exibição arredonda (half-up via `Intl`).
+   */
+  decimalPlaces?: number;
   label?: string;
   colorRules?: import("@delpi/plugin-ui/index").DelpiKpiColorRule[];
 };
@@ -158,6 +163,8 @@ export type ComunicadoTextProjection = {
   field: string;
   aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
+  /** Ver `ComunicadoTextDataRef.decimalPlaces`. */
+  decimalPlaces?: number;
   prefix?: string;
   suffix?: string;
   fallback?: string;

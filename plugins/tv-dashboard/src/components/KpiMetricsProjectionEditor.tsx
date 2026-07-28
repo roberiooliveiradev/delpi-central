@@ -1,12 +1,14 @@
 import { FormSelectControl, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   VIEW_AGGREGATION_OPTIONS,
+  formatSupportsDecimalPlaces,
   type KpiMetricProjection,
   type KpiViewProjection,
   type ViewAggregation,
 } from "@delpi/tv-dashboard-presentation";
 
 import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
+import { DecimalPlacesField } from "./DecimalPlacesField";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
@@ -76,6 +78,7 @@ export function KpiMetricsProjectionEditor({
         (metric) =>
           (metric.aggregation ?? "first") === "first" &&
           !metric.format &&
+          metric.decimalPlaces == null &&
           !metric.colorRules?.length &&
           !metric.label,
       );
@@ -87,7 +90,16 @@ export function KpiMetricsProjectionEditor({
   };
 
   const patchMetric = (field: string, patch: Partial<KpiMetricProjection>) => {
-    persist(metrics.map((metric) => (metric.field === field ? { ...metric, ...patch } : metric)));
+    persist(
+      metrics.map((metric) => {
+        if (metric.field !== field) return metric;
+        const next = { ...metric, ...patch };
+        if ("decimalPlaces" in patch && patch.decimalPlaces == null) {
+          delete next.decimalPlaces;
+        }
+        return next;
+      }),
+    );
   };
 
   const { canDrag, rowClassName, rowDropProps, handleDragProps } = useProjectionDragReorder(
@@ -170,11 +182,14 @@ export function KpiMetricsProjectionEditor({
                   className={compact ? "delpi-ui-select--compact" : undefined}
                   ariaLabel={`Formato de ${label}`}
                   value={metric.format ?? "raw"}
-                  onChange={(value) =>
-                    patchMetric(metric.field, {
-                      format: value as KpiMetricProjection["format"],
-                    })
-                  }
+                  onChange={(value) => {
+                    const format = value as KpiMetricProjection["format"];
+                    const patch: Partial<KpiMetricProjection> = { format };
+                    if (!formatSupportsDecimalPlaces(format)) {
+                      patch.decimalPlaces = undefined;
+                    }
+                    patchMetric(metric.field, patch);
+                  }}
                   options={[
                     { value: "raw", label: "Como veio" },
                     { value: "number", label: "Número" },
@@ -182,6 +197,12 @@ export function KpiMetricsProjectionEditor({
                     { value: "currency", label: "Moeda" },
                     { value: "compact", label: "Compacto" },
                   ]}
+                />
+                <DecimalPlacesField
+                  format={metric.format ?? "raw"}
+                  value={metric.decimalPlaces}
+                  compactClassName={compact ? "delpi-ui-select--compact" : undefined}
+                  onChange={(decimalPlaces) => patchMetric(metric.field, { decimalPlaces })}
                 />
                 <NativeTextControl
                   id={`${idPrefix}-${metric.field}-label`}

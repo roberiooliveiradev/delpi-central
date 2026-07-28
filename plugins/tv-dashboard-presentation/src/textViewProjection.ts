@@ -3,7 +3,7 @@ import {
   resolveDelpiKpiTone,
 } from "@delpi/plugin-ui/index";
 
-import { formatCurrency, formatNumber, formatPct } from "./nativeFormat";
+import { formatCurrency, formatNumber, formatPct, normalizeDecimalPlaces } from "./nativeFormat";
 import type {
   ComunicadoBlock,
   ComunicadoContentRun,
@@ -47,6 +47,8 @@ export function normalizeTextProjection(raw: unknown): ComunicadoTextProjection 
   const projection: ComunicadoTextProjection = { field };
   if (item.aggregation) projection.aggregation = item.aggregation;
   if (item.format) projection.format = item.format;
+  const decimalPlaces = normalizeDecimalPlaces(item.decimalPlaces);
+  if (decimalPlaces != null) projection.decimalPlaces = decimalPlaces;
   if (typeof item.prefix === "string" && item.prefix) projection.prefix = item.prefix;
   if (typeof item.suffix === "string" && item.suffix) projection.suffix = item.suffix;
   if (typeof item.fallback === "string" && item.fallback) projection.fallback = item.fallback;
@@ -64,6 +66,8 @@ export function normalizeTextDataRef(raw: unknown): ComunicadoTextDataRef | unde
   const ref: ComunicadoTextDataRef = { field };
   if (item.aggregation) ref.aggregation = item.aggregation;
   if (item.format) ref.format = item.format;
+  const decimalPlaces = normalizeDecimalPlaces(item.decimalPlaces);
+  if (decimalPlaces != null) ref.decimalPlaces = decimalPlaces;
   if (typeof item.label === "string" && item.label.trim()) ref.label = item.label.trim();
   if (Array.isArray(item.colorRules) && item.colorRules.length > 0) {
     ref.colorRules = [...item.colorRules];
@@ -71,9 +75,14 @@ export function normalizeTextDataRef(raw: unknown): ComunicadoTextDataRef | unde
   return ref;
 }
 
+export type FormatTextProjectionOptions = {
+  decimalPlaces?: number | null;
+};
+
 export function formatTextProjectionValue(
   value: unknown,
   format: TextProjectionFormat | undefined,
+  options?: FormatTextProjectionOptions,
 ): string {
   if (value == null || value === "") return "—";
   if (format === "raw" || format == null) return String(value);
@@ -88,12 +97,13 @@ export function formatTextProjectionValue(
   }
   const numeric = parseProjectionNumber(value);
   if (numeric == null) return String(value);
-  if (format === "percent") return formatPct(numeric);
-  if (format === "currency") return formatCurrency(numeric);
+  const places = options?.decimalPlaces;
+  if (format === "percent") return formatPct(numeric, places);
+  if (format === "currency") return formatCurrency(numeric, places);
   if (format === "compact") {
     return numeric.toLocaleString("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
   }
-  return formatNumber(numeric);
+  return formatNumber(numeric, places);
 }
 
 export function resolveTextDataRefValue(
@@ -106,7 +116,9 @@ export function resolveTextDataRefValue(
     return { text: fallback };
   }
   if (projected.kind === "list") {
-    const parts = projected.values.map((value) => formatTextProjectionValue(value, ref.format));
+    const parts = projected.values.map((value) =>
+      formatTextProjectionValue(value, ref.format, { decimalPlaces: ref.decimalPlaces }),
+    );
     const text = parts.join(FIELD_LIST_JOIN);
     const numeric = parseKpiNumericValue(projected.values[0]);
     const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
@@ -116,7 +128,9 @@ export function resolveTextDataRefValue(
   if (raw == null || raw === "") {
     return { text: fallback };
   }
-  const text = formatTextProjectionValue(raw, ref.format);
+  const text = formatTextProjectionValue(raw, ref.format, {
+    decimalPlaces: ref.decimalPlaces,
+  });
   const numeric = parseKpiNumericValue(raw);
   const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
   return { text, color: tone.valueColor };
@@ -134,6 +148,7 @@ export function resolveTextDisplayValue(
       field: projection.field,
       aggregation: projection.aggregation,
       format: projection.format,
+      decimalPlaces: projection.decimalPlaces,
       colorRules: projection.colorRules,
     },
     fallback,
@@ -184,6 +199,7 @@ export function patchTextProjectionFromEditedDisplay(
       field: projection.field,
       aggregation: projection.aggregation,
       format: projection.format,
+      decimalPlaces: projection.decimalPlaces,
       colorRules: projection.colorRules,
     },
     fallback,

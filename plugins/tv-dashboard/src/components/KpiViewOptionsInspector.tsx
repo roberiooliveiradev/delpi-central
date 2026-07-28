@@ -7,6 +7,7 @@ import {
 import {
   KPI_ELEMENT_CATALOG,
   applyKpiElementVisibility,
+  formatSupportsDecimalPlaces,
   isKpiElementEnabled,
   isKpiElementOpenForPart,
   kpiElementPrimaryPartRef,
@@ -21,6 +22,7 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DecimalPlacesField } from "./DecimalPlacesField";
 import { InspectorElementRow } from "./InspectorElementRow";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { KpiPartInspector } from "./KpiPartInspector";
@@ -57,7 +59,11 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
   };
 
   const patchOptions = (patch: Partial<ComunicadoKpiOptions>) => {
-    persistOptions(mergeComunicadoKpiOptions({ ...options, ...patch }));
+    const next = mergeComunicadoKpiOptions({ ...options, ...patch });
+    if ("decimalPlaces" in patch && patch.decimalPlaces == null) {
+      delete next.decimalPlaces;
+    }
+    persistOptions(next);
   };
 
   const focusElement = (elementId: KpiElementId) => {
@@ -137,11 +143,14 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
                 id="td-kpi-format"
                 ariaLabel="Formato do valor"
                 value={options.valueFormat ?? "number"}
-                onChange={(value) =>
-                  patchOptions({
-                    valueFormat: value as ComunicadoKpiOptions["valueFormat"],
-                  })
-                }
+                onChange={(value) => {
+                  const valueFormat = value as ComunicadoKpiOptions["valueFormat"];
+                  const patch: Partial<ComunicadoKpiOptions> = { valueFormat };
+                  if (!formatSupportsDecimalPlaces(valueFormat)) {
+                    patch.decimalPlaces = undefined;
+                  }
+                  patchOptions(patch);
+                }}
                 options={[
                   { value: "raw", label: "Como veio da fonte" },
                   { value: "number", label: "Número" },
@@ -151,6 +160,11 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
                 ]}
               />
             </DeckField>
+            <DecimalPlacesField
+              format={options.valueFormat ?? "number"}
+              value={options.decimalPlaces}
+              onChange={(decimalPlaces) => patchOptions({ decimalPlaces })}
+            />
             <DeckField id="td-kpi-tone" label="Cor base (tone)">
               <FormSelectControl
                 id="td-kpi-tone"
