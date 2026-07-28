@@ -135,3 +135,52 @@ def test_normalize_table_keeps_product_columns_for_entity() -> None:
     assert "product_description" in keys
     assert "supplier_name" in keys
     assert table["rows"][0].get("product_code") == "10080160"
+
+
+def test_suppliers_of_product_selection_unchanged() -> None:
+    from app.application.services.external_actions.external_action_selection_service import (
+        ExternalActionSelectionService,
+    )
+
+    class _FakeRepository:
+        def __init__(self, actions: list[dict]):
+            self.actions = actions
+
+        def find_candidate_actions(self, message, limit=80, allowed_action_ids=None):
+            allowed = {str(item) for item in (allowed_action_ids or [])}
+            return [
+                action
+                for action in self.actions
+                if not allowed or str(action.get("actionId")) in allowed
+            ][:limit]
+
+        def list_actions(self, provider_key=None):
+            return self.actions
+
+    actions = [
+        {
+            "actionId": "by-supplier-part-number-action",
+            "method": "GET",
+            "path": "/products/by-supplier-part-number",
+            "operationId": "search_products_by_supplier_part_number",
+            "parametersSchema": [
+                {"name": "supplier_part_number", "in": "query", "required": True},
+                {"name": "page", "in": "query"},
+                {"name": "page_size", "in": "query"},
+            ],
+        },
+        {
+            "actionId": "suppliers-action",
+            "method": "GET",
+            "path": "/products/{code}/suppliers",
+            "operationId": "get_product_suppliers",
+            "parametersSchema": [{"name": "code", "in": "path", "required": True}],
+        },
+    ]
+    selected = ExternalActionSelectionService(_FakeRepository(actions)).select_action(
+        "liste os fornecedores do produto 10080160",
+        allowed_action_ids=[action["actionId"] for action in actions],
+    )
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "suppliers-action"
+    assert selected["arguments"]["parameters"]["code"] == "10080160"

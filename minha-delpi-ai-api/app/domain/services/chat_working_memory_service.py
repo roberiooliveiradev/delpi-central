@@ -702,6 +702,7 @@ class ChatWorkingMemoryService:
             return None
 
         return distinct_codes[0]
+
     @classmethod
     def _extract_branches_from_tool_calls(cls, tool_calls: list | None) -> list[str]:
         branches: list[str] = []
