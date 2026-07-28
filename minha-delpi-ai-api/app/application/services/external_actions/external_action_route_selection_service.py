@@ -432,6 +432,8 @@ class ExternalActionRouteSelectionService:
         merge_date_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
         path_lookup_loader: Callable[..., list[dict]] | None = None,
+        product_code: str | None = None,
+        route_segment: str | None = None,
     ) -> dict | None:
         return self._operational_route.select(
             message,
@@ -442,6 +444,8 @@ class ExternalActionRouteSelectionService:
             merge_date_parameters=merge_date_parameters,
             previous_messages=previous_messages,
             path_lookup_loader=path_lookup_loader,
+            product_code=product_code,
+            route_segment=route_segment,
         )
 
     def select_intent_bound_route(

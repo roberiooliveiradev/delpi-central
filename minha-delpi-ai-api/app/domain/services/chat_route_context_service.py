@@ -73,6 +73,7 @@ class ChatRouteContextService:
     _MESSAGE_SEGMENT_HINTS: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("purchases", ("ultima compra", "últimas compras", "ultimas compras", "compra", "purchase")),
         ("suppliers", ("fornecedor", "fornecedore", "supplier")),
+        ("stock", ("estoque", "stock", "saldo em estoque", "saldo de estoque")),
         (
             "sales",
             (
@@ -108,7 +109,7 @@ class ChatRouteContextService:
                 "outbound",
             ),
         ),
-        ("customers", ("cliente do produto", "clientes do produto", "customer")),
+        ("customers", ("cliente do produto", "clientes do produto", "clientes do", "cliente", "customer")),
         (
             "open-orders",
             (

@@ -147,6 +147,9 @@ class OperationalRouteActionResolverService:
             if "search" in path and not path_markers and not path_exact_end and not path_suffix:
                 continue
 
+            if not self._action_fits_route_affinity(route, action, path=path):
+                continue
+
             parameters = self.build_parameters(
                 route,
                 action,
@@ -199,6 +202,32 @@ class OperationalRouteActionResolverService:
 
         return None
 
+    @staticmethod
+    def _action_fits_route_affinity(route: dict, action: dict, *, path: str) -> bool:
+        """Rejeita action cujo path não combina com a classe da rota do registry.
+
+        Evita shadowing clássico: marker ``/customers`` casando ``/customers/search``
+        quando a rota exige identificador de produto, ou ``product_search`` em
+        ``/customers/search``.
+        """
+        parameters_spec = route.get("parameters") or {}
+        strategy = str(parameters_spec.get("strategy") or "").strip().lower()
+        match_spec = route.get("match") if isinstance(route.get("match"), dict) else {}
+        requires_product = bool(match_spec.get("requiresProductIdentifier"))
+        route_segment = str(route.get("routeSegment") or "").strip()
+        domain = str(route.get("domain") or "").strip()
+
+        if strategy == "product_search" or domain == "domainProductSearch":
+            return "/products/" in path and "search" in path
+
+        if strategy == "product_code" or requires_product or route_segment:
+            if "{code}" in path or "{identifier}" in path:
+                return "/products/" in path
+
+            return "/products/" in path
+
+        return True
+
     def build_parameters(
         self,
         route: dict,
@@ -227,6 +256,9 @@ class OperationalRouteActionResolverService:
 
             path = str(action.get("path") or "").lower()
             operation_id = str(action.get("operationId") or "").lower()
+
+            if "/products/" not in path:
+                return None
 
             if "search" not in path and "search" not in operation_id:
                 return None

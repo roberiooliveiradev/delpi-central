@@ -49,6 +49,8 @@ class ExternalActionOperationalRouteSelectionService:
         merge_date_parameters: Callable[..., dict] | None = None,
         previous_messages: list | None = None,
         path_lookup_loader: Callable[..., list[dict]] | None = None,
+        product_code: str | None = None,
+        route_segment: str | None = None,
     ) -> dict | None:
         selected = self._domain.select_production_operational(
             message,
@@ -61,6 +63,27 @@ class ExternalActionOperationalRouteSelectionService:
 
         if selected:
             return selected
+
+        code = str(product_code or "").strip()
+        # Segment-first só com hint explícito na mensagem atual — não herdar
+        # segmento do histórico (ex.: follow-up «e os pais» após estrutura).
+        from app.domain.services.chat_route_context_service import ChatRouteContextService
+
+        explicit_segment = ChatRouteContextService.segment_from_message(message)
+        segment = str(explicit_segment or "").strip().lower()
+
+        if code and segment:
+            selected = self._domain.select_by_route_segment(
+                message,
+                code,
+                segment,
+                allowed_action_ids,
+                candidates_loader=candidates_loader,
+                previous_messages=previous_messages,
+            )
+
+            if selected:
+                return selected
 
         for route in OperationalRouteRegistryService.vocabulary_routes():
             selected = self._vocabulary.try_vocabulary_route(

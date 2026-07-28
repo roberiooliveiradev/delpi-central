@@ -265,6 +265,8 @@ class ExternalActionRegistryDispatchPhaseService:
             merge_date_parameters=callbacks.merge_date_parameters,
             previous_messages=ctx.previous_messages,
             path_lookup_loader=callbacks.path_lookup_loader,
+            product_code=ctx.product_code,
+            route_segment=ctx.product_route_segment,
         )
 
         if selected:
