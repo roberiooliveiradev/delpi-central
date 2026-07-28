@@ -32,5 +32,6 @@ Itens com frame fora de 0–100%: mesmas coordenadas no editor e na TV. No edito
 - Palco: `RichComunicadoStage` / `ComunicadoStageFrame`
 - Encaixe multi-tamanho: `presentationFitPolicy.ts` + `DesignViewportStage` (`fit="auto"`, `surface`) — **nunca** `if (mode === "public")` na view
 - Viewport pin (WebView/TV): `usePresentationViewportPin`
+- Regressão Adeus Pendrive (corte/deslocamento): `adeusPendriveFitContract.test.ts` + `isHostFitMeasurementSafe`
 - Tipografia KPI: `kpi-card.css` em **px**
 - Contrato: `comunicadoStageCssContract.test.ts`, `designStageClipContract.test.ts`, `presentationFitPolicy.test.ts`

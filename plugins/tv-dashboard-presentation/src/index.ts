@@ -37,6 +37,8 @@ export {
   measurePresentationViewportSize,
   presentationSurfaceFromViewMode,
   resolvePresentationScaleMethod,
+  isHostFitMeasurementSafe,
+  hostFitPaintedSize,
   PRESENTATION_FIT_ASPECT_NEAR_RATIO,
   type PresentationFitMode,
   type PresentationFitResolved,

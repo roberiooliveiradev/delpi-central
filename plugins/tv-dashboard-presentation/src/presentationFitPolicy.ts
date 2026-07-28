@@ -104,3 +104,58 @@ export function measurePresentationViewportSize(node: HTMLElement): {
     height: Math.max(0, height),
   };
 }
+
+/**
+ * Invariante Adeus Pendrive / «ajustar à tela»:
+ * o host escala o documento pelo tamanho **medido** (scrollWidth/Height).
+ * Se a medida for a caixa de design (1920×1080) e o visual for design×scale,
+ * o host reescala e desloca → espaço acima + corte abaixo.
+ *
+ * Seguro ⇔ medida ≈ caixa visual (o que `zoom` garante no kiosk).
+ */
+export function isHostFitMeasurementSafe(input: {
+  measuredWidth: number;
+  measuredHeight: number;
+  visualWidth: number;
+  visualHeight: number;
+  tolerancePx?: number;
+}): boolean {
+  const tol = input.tolerancePx ?? 1;
+  if (!(input.visualWidth > 0) || !(input.visualHeight > 0)) return false;
+  if (!(input.measuredWidth > 0) || !(input.measuredHeight > 0)) return false;
+  return (
+    Math.abs(input.measuredWidth - input.visualWidth) <= tol &&
+    Math.abs(input.measuredHeight - input.visualHeight) <= tol
+  );
+}
+
+/**
+ * Após o host aplicar scale = min(tv/measured) (contain do documento),
+ * a pintura do conteúdo visual cabe na TV sem corte?
+ * Usado para documentar o sintoma: medida errada (1920) → painted estoura ou desloca.
+ */
+export function hostFitPaintedSize(input: {
+  tvWidth: number;
+  tvHeight: number;
+  measuredWidth: number;
+  measuredHeight: number;
+  visualWidth: number;
+  visualHeight: number;
+}): { width: number; height: number; hostScale: number; fitsWithoutCrop: boolean } {
+  const { tvWidth, tvHeight, measuredWidth, measuredHeight, visualWidth, visualHeight } = input;
+  if (
+    !(tvWidth > 0) ||
+    !(tvHeight > 0) ||
+    !(measuredWidth > 0) ||
+    !(measuredHeight > 0) ||
+    !(visualWidth > 0) ||
+    !(visualHeight > 0)
+  ) {
+    return { width: 0, height: 0, hostScale: 0, fitsWithoutCrop: false };
+  }
+  const hostScale = Math.min(tvWidth / measuredWidth, tvHeight / measuredHeight);
+  const width = visualWidth * hostScale;
+  const height = visualHeight * hostScale;
+  const fitsWithoutCrop = width <= tvWidth + 0.5 && height <= tvHeight + 0.5;
+  return { width, height, hostScale, fitsWithoutCrop };
+}
