@@ -4,10 +4,10 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Seleção não deve reflowar o palco (piscar / deslocar o desenho):
+ * Seleção / inspetor lateral:
  * - ribbon Elemento em densidade `band` (altura fixa)
  * - inspetor sem auto-expand na seleção
- * - painel aberto em overlay com slot in-flow de 36px
+ * - painel aberto **empurra** o palco (in-flow), sem overlay absolute
  */
 describe("selection chrome viewport stability", () => {
   const base = dirname(fileURLToPath(import.meta.url));
@@ -41,11 +41,17 @@ describe("selection chrome viewport stability", () => {
     expect(embeddedChrome).toMatch(/function ribbonDensityFor[\s\S]*return "band"/);
   });
 
-  it("reserva slot de 36px e abre o inspetor em overlay", () => {
+  it("painel aberto empurra o palco (aside-slot cresce; sem overlay absolute)", () => {
     expect(workspace).toMatch(/td-deck-stage__aside-slot/);
     expect(css).toMatch(/\.td-deck-stage__aside-slot\s*\{[^}]*width:\s*36px/s);
     expect(css).toMatch(
-      /\.td-deck-right-stack:has\(\.td-deck-side-panel--open\)\s*\{[^}]*position:\s*absolute/s,
+      /\.td-deck-stage__aside-slot:has\(\.td-deck-side-panel--open\)\s*\{[^}]*--td-side-panel-width/s,
     );
+    // Anti-regressão: não voltar ao overlay que cobria o desenho.
+    const openStack = css.match(
+      /\.td-deck-right-stack:has\(\.td-deck-side-panel--open\)\s*\{([\s\S]*?)\}/,
+    );
+    expect(openStack?.[1] ?? "").not.toMatch(/position:\s*absolute/);
+    expect(openStack?.[1] ?? "").toMatch(/position:\s*relative/);
   });
 });

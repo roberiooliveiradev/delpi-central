@@ -81,22 +81,20 @@
   display: none;
 }
 /*
- * Inspetor aberto: coluna flutuante sobre o palco (slot in-flow fica em 36px).
- * Assim abrir/selecionar não encolhe o viewport do desenho.
+ * Inspetor aberto: coluna in-flow — empurra o palco (não sobrepõe).
+ * Largura animada no aside-slot; o main (flex:1) encolhe de forma suave.
  */
 .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: var(--td-side-panel-width, 320px);
-  min-width: 260px;
-  max-width: min(560px, 48vw);
-  z-index: 28;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  z-index: auto;
   background: var(--td-surface);
-  border-left: 1px solid var(--td-border);
-  box-shadow: -12px 0 28px color-mix(in srgb, #000 16%, transparent);
-  animation: td-deck-aside-reveal 0.18s ease;
+  border-left: none;
+  box-shadow: none;
+  animation: none;
 }
 @keyframes td-deck-aside-reveal{
   from{
@@ -109,8 +107,8 @@
   }
 }
 @media (prefers-reduced-motion: reduce){
-  .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
-    animation: none;
+  .dashboard-tv-dashboard .td-deck-stage__aside-slot{
+    transition: none;
   }
 }
 /* ── Atalhos: clusters locais + catálogo (balão visual = KeyTip em plugin-ui) ── */
@@ -6970,7 +6968,7 @@ body.td-composer--marqueeing *{
   /* Garante que o painel lateral herde a altura do palco, não a do conteúdo. */
   overflow: hidden;
 }
-/* Reserva fixa do trilho (36px) — inspetor aberto sobe em overlay sem reflow do palco. */
+/* Trilho 36px recolhido; aberto empurra o palco via flex (não overlay). */
 .dashboard-tv-dashboard .td-deck-stage__aside-slot{
   position: relative;
   flex-shrink: 0;
@@ -6978,7 +6976,17 @@ body.td-composer--marqueeing *{
   width: 36px;
   min-width: 36px;
   max-width: 36px;
-  z-index: 28;
+  z-index: 2;
+  transition:
+    width 0.22s ease,
+    min-width 0.22s ease,
+    max-width 0.22s ease;
+}
+.dashboard-tv-dashboard .td-deck-stage__aside-slot:has(.td-deck-side-panel--open){
+  width: var(--td-side-panel-width, 320px);
+  min-width: min(260px, 100%);
+  max-width: min(560px, 48vw);
+  border-left: 1px solid var(--td-border);
 }
 .dashboard-tv-dashboard .td-deck-stage__main{
   flex: 1;
@@ -6987,6 +6995,7 @@ body.td-composer--marqueeing *{
   display: flex;
   flex-direction: column;
   padding: 12px;
+  transition: flex-basis 0.22s ease;
 }
 .dashboard-tv-dashboard .td-deck-stage__empty{
   flex: 1;

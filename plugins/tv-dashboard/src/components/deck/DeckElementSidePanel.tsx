@@ -55,14 +55,19 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   const prevSelectionCount = useRef(selectedIds.length);
   const asideRef = useRef<HTMLElement>(null);
 
-  /** Expõe a largura no stack pai — overlay usa a mesma var sem reflow do palco. */
+  /** Expõe a largura no aside-slot (e no stack) para o palco encolher in-flow. */
   useLayoutEffect(() => {
     const stack = asideRef.current?.parentElement;
-    if (!(stack instanceof HTMLElement)) return;
-    if (open) {
-      stack.style.setProperty("--td-side-panel-width", `${width}px`);
-    } else {
-      stack.style.removeProperty("--td-side-panel-width");
+    const slot = asideRef.current?.closest(".td-deck-stage__aside-slot");
+    const targets = [stack, slot].filter(
+      (node): node is HTMLElement => node instanceof HTMLElement,
+    );
+    for (const node of targets) {
+      if (open) {
+        node.style.setProperty("--td-side-panel-width", `${width}px`);
+      } else {
+        node.style.removeProperty("--td-side-panel-width");
+      }
     }
   }, [open, width]);
 
