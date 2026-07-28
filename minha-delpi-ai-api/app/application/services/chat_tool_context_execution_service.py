@@ -361,6 +361,11 @@ class ChatToolContextExecutionService:
                 if executed_sql:
                     safe_metadata["executedSql"] = executed_sql
 
+                route_presentation = selected_tool.get("routePresentation")
+                if isinstance(route_presentation, dict):
+                    if route_presentation.get("promoteCanonicalProductFromResult"):
+                        safe_metadata["promoteCanonicalProductFromResult"] = True
+
             safe_tool_calls.append(
                 {
                     "name": result.name,

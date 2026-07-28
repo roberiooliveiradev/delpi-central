@@ -91,15 +91,55 @@ class ChatEntityTrackerService:
         if not normalized:
             return
 
-        code = ChatProductQueryIntentService.extract_product_code(normalized)
+        from app.domain.services.chat_operational_identifier_resolution_service import (
+            ChatOperationalIdentifierResolutionService,
+        )
 
-        if code:
+        identifier_set = ChatOperationalIdentifierResolutionService.resolve(normalized)
+        if (
+            identifier_set.primary
+            and identifier_set.primary.role == "supplier_part_number"
+        ):
+            # PN do fornecedor nunca alimenta productCode (slot tipado).
+            current = str(entities.get("productCode") or "").strip()
+            if current and current == identifier_set.primary.value:
+                entities.pop("productCode", None)
+                entities.pop("productCodeSource", None)
+        elif (
+            identifier_set.primary
+            and identifier_set.primary.role == "delpi_product_code"
+        ):
+            code = identifier_set.primary.value
             previous = str(entities.get("productCode") or "").strip()
 
             if previous and previous != code and previous not in previous_codes:
                 previous_codes.append(previous)
 
             entities["productCode"] = code
+        else:
+            from app.domain.services.operational_route_matcher_service import (
+                OperationalRouteMatcherService,
+            )
+            from app.domain.services.chat_message_normalization_service import (
+                ChatMessageNormalizationService,
+            )
+
+            matching = ChatMessageNormalizationService.normalize_for_matching(
+                normalized
+            ) or normalized.lower()
+            if not OperationalRouteMatcherService.matches_custom_predicate(
+                "supplierPartNumberLookup",
+                matching,
+            ):
+                code = ChatProductQueryIntentService.extract_product_code(normalized)
+
+                if code:
+                    previous = str(entities.get("productCode") or "").strip()
+
+                    if previous and previous != code and previous not in previous_codes:
+                        previous_codes.append(previous)
+
+                    entities["productCode"] = code
 
         branch_match = cls._BRANCH_IN_MSG_RE.search(normalized)
 

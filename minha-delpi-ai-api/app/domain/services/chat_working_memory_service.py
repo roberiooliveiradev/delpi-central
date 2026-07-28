@@ -178,7 +178,16 @@ class ChatWorkingMemoryService:
 
         identifier_set = ChatOperationalIdentifierResolutionService.resolve(message)
         explicit_code = None
-        if not (
+        if (
+            identifier_set.primary
+            and identifier_set.primary.role == "supplier_part_number"
+        ):
+            # Remove PN gravado indevidamente como productCode (tracker legado / pré-turno).
+            current = str(entities.get("productCode") or "").strip()
+            if current and current == identifier_set.primary.value:
+                entities.pop("productCode", None)
+                entities.pop("productCodeSource", None)
+        elif not (
             identifier_set.primary
             and identifier_set.primary.role == "supplier_part_number"
         ):
@@ -636,10 +645,11 @@ class ChatWorkingMemoryService:
         cls,
         tool_call: dict,
     ) -> str | None:
-        """Promove product_code do resultado quando a busca usou identificador não-canônico.
+        """Promove product_code canônico único quando a busca usou identificador não-canônico.
 
-        Critério genérico: parâmetro ``supplier_part_number`` + exatamente 1 item com
-        ``product_code`` (sem acoplar a operationId).
+        Critério genérico (sem operationId):
+        - parâmetro ``supplier_part_number`` ou flag ``promoteCanonicalProductFromResult``;
+        - exatamente **um** ``product_code`` distinto nos itens (N linhas do mesmo PA OK).
         """
         import json
 
@@ -649,11 +659,14 @@ class ChatWorkingMemoryService:
         parameters = args.get("parameters")
         if not isinstance(parameters, dict):
             return None
-        if not str(parameters.get("supplier_part_number") or "").strip():
-            return None
 
         metadata = tool_call.get("metadata")
         if not isinstance(metadata, dict):
+            return None
+
+        promote_flag = bool(metadata.get("promoteCanonicalProductFromResult"))
+        has_supplier_pn = bool(str(parameters.get("supplier_part_number") or "").strip())
+        if not promote_flag and not has_supplier_pn:
             return None
 
         payload: dict | None = None
@@ -671,17 +684,24 @@ class ChatWorkingMemoryService:
             return None
 
         items = data.get("items")
-        total = data.get("total")
         if not isinstance(items, list) or not items:
             return None
-        if total not in (None, 1) and int(total or 0) != 1:
-            return None
-        if len(items) != 1 or not isinstance(items[0], dict):
+
+        distinct_codes: list[str] = []
+        seen: set[str] = set()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            code = str(item.get("product_code") or "").strip()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            distinct_codes.append(code)
+
+        if len(distinct_codes) != 1:
             return None
 
-        product_code = str(items[0].get("product_code") or "").strip()
-        return product_code or None
-
+        return distinct_codes[0]
     @classmethod
     def _extract_branches_from_tool_calls(cls, tool_calls: list | None) -> list[str]:
         branches: list[str] = []

@@ -812,6 +812,7 @@
     "lmpList",
     "saleOrders",
     "productSearchBasic",
+    "productBySupplierPartNumber",
     "factoryMpStockSummary",
     "factoryRawMaterialStockDetail",
     "factoryProductionDetail",
@@ -1412,6 +1413,59 @@
         [
           "real_lead_time_sample_size",
           "Amostras"
+        ]
+      ]
+    },
+    "productBySupplierPartNumber": {
+      "detect": {
+        "allKeys": [
+          "product_code",
+          "supplier_part_number"
+        ],
+        "pathContains": [
+          "/by-supplier-part-number"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "product_code",
+          "Código DELPI"
+        ],
+        [
+          "product_description",
+          "Descrição"
+        ],
+        [
+          "unit",
+          "Unidade"
+        ],
+        [
+          "supplier_code",
+          "Cód. fornecedor"
+        ],
+        [
+          "supplier_name",
+          "Fornecedor"
+        ],
+        [
+          "supplier_part_number",
+          "Part number"
+        ],
+        [
+          "last_price",
+          "Últ. preço"
+        ],
+        [
+          "last_price_date",
+          "Data últ. preço"
+        ],
+        [
+          "registered_lead_time_days",
+          "Lead time cadastrado"
+        ],
+        [
+          "real_avg_lead_time_days",
+          "Lead time médio (dias)"
         ]
       ]
     },

@@ -134,7 +134,8 @@
     "product_cost_impact_simulation": "costImpactMaterials",
     "product_pricing": "salePricingDetail",
     "product_last_purchase": "lastPurchaseDetail",
-    "product_factory_status": "factoryProductionDetail"
+    "product_factory_status": "factoryProductionDetail",
+    "product_by_supplier_part_number": "productBySupplierPartNumber"
   },
   "entitySetProfileContracts": {
     "playbookOperational": {

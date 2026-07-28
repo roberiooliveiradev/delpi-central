@@ -26,6 +26,10 @@ class ChatPresentationFieldNormalizationService:
         if not isinstance(metadata, dict):
             return
 
+        entity = cls._resolve_entity_token(metadata)
+        if entity and not str(metadata.get("entity") or "").strip():
+            metadata["entity"] = entity
+
         for key in (
             "presentation",
             "tablePresentation",
@@ -44,6 +48,7 @@ class ChatPresentationFieldNormalizationService:
                     path=path,
                     schema_labels=schema_labels,
                     schema_formats=schema_formats,
+                    entity=entity,
                 )
 
         table_presentations = metadata.get("tablePresentations")
@@ -55,6 +60,7 @@ class ChatPresentationFieldNormalizationService:
                     path=path,
                     schema_labels=schema_labels,
                     schema_formats=schema_formats,
+                    entity=entity,
                 )
                 for presentation in table_presentations
                 if isinstance(presentation, dict)
@@ -77,6 +83,23 @@ class ChatPresentationFieldNormalizationService:
         )
 
     @classmethod
+    def _resolve_entity_token(cls, metadata: dict[str, Any]) -> str | None:
+        entity = str(metadata.get("entity") or "").strip()
+        if entity:
+            return entity
+        api_meta = metadata.get("apiDelpiResponseMeta")
+        if isinstance(api_meta, dict):
+            token = str(api_meta.get("entity") or "").strip()
+            if token:
+                return token
+        profile = metadata.get("presentationProfile")
+        if isinstance(profile, dict):
+            token = str(profile.get("openapiEntity") or "").strip()
+            if token:
+                return token
+        return None
+
+    @classmethod
     def normalize_presentation(
         cls,
         presentation: dict[str, Any],
@@ -84,6 +107,7 @@ class ChatPresentationFieldNormalizationService:
         path: str = "",
         schema_labels: dict[str, str] | None = None,
         schema_formats: dict[str, str] | None = None,
+        entity: str | None = None,
     ) -> dict[str, Any]:
         if not isinstance(presentation, dict):
             return presentation
@@ -96,6 +120,7 @@ class ChatPresentationFieldNormalizationService:
                 path=path,
                 schema_labels=schema_labels,
                 schema_formats=schema_formats,
+                entity=entity,
             )
 
         if presentation_type == "chart":
@@ -131,13 +156,23 @@ class ChatPresentationFieldNormalizationService:
         path: str,
         schema_labels: dict[str, str] | None,
         schema_formats: dict[str, str] | None,
+        entity: str | None = None,
     ) -> dict[str, Any]:
         rows = presentation.get("rows") or []
         first_row = next((row for row in rows if isinstance(row, dict)), None)
         columns = presentation.get("columns") or []
 
         if first_row:
-            profile_name = cls._column_labels.detect_table_profile(first_row, path=path)
+            from app.domain.services.chat_presentation_table_profile_inference_service import (
+                ChatPresentationTableProfileInferenceService,
+            )
+
+            profile_name = ChatPresentationTableProfileInferenceService.infer_profile_name(
+                path=path,
+                entity=entity,
+                sample_row=first_row,
+                column_labels=cls._column_labels,
+            )
             preferred = None
 
             if profile_name:

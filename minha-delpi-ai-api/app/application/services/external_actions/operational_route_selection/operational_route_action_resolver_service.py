@@ -198,6 +198,11 @@ class OperationalRouteActionResolverService:
                     "parameters": parameters,
                 },
                 "reason": reason,
+                "routePresentation": (
+                    dict(route.get("presentation"))
+                    if isinstance(route.get("presentation"), dict)
+                    else {}
+                ),
             }
 
         return None
