@@ -7,6 +7,15 @@ export function shouldShowSectionChrome(sections: PlaylistSection[]): boolean {
   return sections.length >= 2;
 }
 
+/** Principal vazia não aparece no filmstrip (ainda existe no backend). */
+export function shouldShowSectionInFilmstrip(
+  section: PlaylistSection,
+  slideCount: number,
+): boolean {
+  if (section.isMain && slideCount <= 0) return false;
+  return true;
+}
+
 /** Seções listáveis no jump «Ir para seção» (mesma regra do chrome). */
 export function sectionsVisibleInJump(sections: PlaylistSection[]): PlaylistSection[] {
   if (!shouldShowSectionChrome(sections)) return [];

@@ -26,7 +26,7 @@ import type {
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
 import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { groupSlidesBySection } from "../utils/groupSlidesBySection";
-import { shouldShowSectionChrome } from "../utils/sectionChromeVisibility";
+import { shouldShowSectionChrome, shouldShowSectionInFilmstrip } from "../utils/sectionChromeVisibility";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
@@ -44,6 +44,7 @@ type Props = {
   selectedSlideIds?: string[];
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
   dragIndex: number | null;
+  dragSlideIds?: string[];
   inactiveLabel?: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
@@ -89,6 +90,7 @@ export function SlideFilmstrip({
   selectedSlideIds,
   previewBySlideId,
   dragIndex,
+  dragSlideIds,
   inactiveLabel = "Pausada",
   canPasteSlide,
   viewportProfile = "1080p",
@@ -142,7 +144,7 @@ export function SlideFilmstrip({
   const suppressClickRef = useRef(false);
   const suppressDragRef = useRef(false);
 
-  useDragEdgeAutoScroll(listRef, dragIndex != null);
+  useDragEdgeAutoScroll(listRef, dragIndex != null || (dragSlideIds?.length ?? 0) > 0);
 
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
   const closeSectionMenu = useCallback(() => setSectionMenu(null), []);
@@ -156,6 +158,8 @@ export function SlideFilmstrip({
           : [];
     return new Set(ids);
   }, [selectedSlideId, selectedSlideIds]);
+
+  const draggingIdSet = useMemo(() => new Set(dragSlideIds ?? []), [dragSlideIds]);
 
   const clearLongPressTimer = useCallback(() => {
     if (longPressTimerRef.current != null) {
@@ -328,7 +332,9 @@ export function SlideFilmstrip({
       isPrimary ? "td-deck-filmstrip__item--selected" : "",
       inMulti && !isPrimary ? "td-deck-filmstrip__item--multi-selected" : "",
       !slide.isActive ? "td-deck-filmstrip__item--inactive" : "",
-      dragIndex === index ? "td-deck-filmstrip__item--dragging" : "",
+      draggingIdSet.has(slide.id) || dragIndex === index
+        ? "td-deck-filmstrip__item--dragging"
+        : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -486,14 +492,18 @@ export function SlideFilmstrip({
         <DeckSectionList
           prefix="td"
           emptyDropHint="Solte telas aqui"
-          sections={grouped.sections.map(({ section, slides: sectionSlides }) => ({
-            id: section.id,
-            name: sectionNameDrafts[section.id] ?? section.name,
-            collapsed: Boolean(section.isCollapsed),
-            inactive: section.isActive === false,
-            slideCount: sectionSlides.length,
-            children: sectionSlides.map((slide) => renderSlideItem(slide)),
-          }))}
+          sections={grouped.sections
+            .filter(({ section, slides: sectionSlides }) =>
+              shouldShowSectionInFilmstrip(section, sectionSlides.length),
+            )
+            .map(({ section, slides: sectionSlides }) => ({
+              id: section.id,
+              name: sectionNameDrafts[section.id] ?? section.name,
+              collapsed: Boolean(section.isCollapsed),
+              inactive: section.isActive === false,
+              slideCount: sectionSlides.length,
+              children: sectionSlides.map((slide) => renderSlideItem(slide)),
+            }))}
           onToggleCollapsed={(sectionId) => {
             const section = sections.find((item) => item.id === sectionId);
             if (!section) return;

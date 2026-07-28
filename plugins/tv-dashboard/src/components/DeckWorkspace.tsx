@@ -13,6 +13,7 @@ type Props = {
   multiMode?: boolean;
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
   dragIndex: number | null;
+  dragSlideIds?: string[];
   inactiveLabel: string;
   canPasteSlide: boolean;
   viewportProfile?: string;
@@ -54,6 +55,7 @@ export function DeckWorkspace({
   multiMode,
   previewBySlideId,
   dragIndex,
+  dragSlideIds,
   inactiveLabel,
   canPasteSlide,
   viewportProfile = "1080p",
@@ -96,6 +98,7 @@ export function DeckWorkspace({
         multiMode={multiMode}
         previewBySlideId={previewBySlideId}
         dragIndex={dragIndex}
+        dragSlideIds={dragSlideIds}
         inactiveLabel={inactiveLabel}
         canPasteSlide={canPasteSlide}
         viewportProfile={viewportProfile}

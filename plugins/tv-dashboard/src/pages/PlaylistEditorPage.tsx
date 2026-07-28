@@ -50,6 +50,7 @@ import { SlideStagePreview } from "../components/SlideStagePreview";
 import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
+import { relocateFilmstripSlides } from "../utils/relocateFilmstripSlides";
 import { claimSlidesForNewSection } from "../utils/claimSlidesForNewSection";
 import {
   DeckEditorHistoryProvider,
@@ -146,6 +147,7 @@ export function PlaylistEditorPage({
   const [filmstripMultiMode, setFilmstripMultiMode] = useState(false);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragSlideIds, setDragSlideIds] = useState<string[]>([]);
   const [sectionPropertiesId, setSectionPropertiesId] = useState<string | null>(null);
   const [previewBySlideId, setPreviewBySlideId] = useState<
     Record<string, PresentationPayload["slides"][number]>
@@ -975,10 +977,71 @@ export function PlaylistEditorPage({
     }
   }
 
+  function resolveFilmstripDragIds(index: number): string[] {
+    const slide = slides[index];
+    if (!slide) return [];
+    const multi =
+      selectedSlideIds.includes(slide.id) && selectedSlideIds.length > 1
+        ? slides.filter((item) => selectedSlideIds.includes(item.id)).map((item) => item.id)
+        : [slide.id];
+    return multi;
+  }
+
+  function beginFilmstripDrag(index: number) {
+    setDragIndex(index);
+    setDragSlideIds(resolveFilmstripDragIds(index));
+  }
+
+  function endFilmstripDrag() {
+    setDragIndex(null);
+    setDragSlideIds([]);
+  }
+
+  async function persistFilmstripRelocation(
+    nextSlides: Slide[],
+    options?: { expandSectionId?: string | null },
+  ) {
+    if (!playlist) return;
+    const byId = new Map(slides.map((slide) => [slide.id, slide]));
+    const sectionUpdates: Array<{ id: string; sectionId: string | null }> = [];
+    for (const slide of nextSlides) {
+      const prev = byId.get(slide.id);
+      if (!prev) continue;
+      if ((prev.sectionId ?? null) !== (slide.sectionId ?? null)) {
+        sectionUpdates.push({ id: slide.id, sectionId: slide.sectionId ?? null });
+      }
+    }
+    for (const update of sectionUpdates) {
+      await updateSlide(playlist.id, update.id, { sectionId: update.sectionId });
+    }
+    const items = nextSlides.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+    const result = await reorderSlides(playlist.id, items);
+    const sectionById = new Map(nextSlides.map((slide) => [slide.id, slide.sectionId ?? null]));
+    const expandId = options?.expandSectionId ?? null;
+    setPlaylist({
+      ...playlist,
+      sections: expandId
+        ? (playlist.sections ?? []).map((section) =>
+            section.id === expandId ? { ...section, isCollapsed: false } : section,
+          )
+        : playlist.sections,
+      slides: result.slides.map((item) =>
+        sectionById.has(item.id)
+          ? { ...item, sectionId: sectionById.get(item.id) ?? null }
+          : item,
+      ),
+    });
+  }
+
   async function moveSlideToSection(sectionId: string | null) {
-    if (!playlist || dragIndex === null) return;
-    const moved = slides[dragIndex];
-    if (!moved) return;
+    if (!playlist) return;
+    const movingIds =
+      dragSlideIds.length > 0
+        ? dragSlideIds
+        : dragIndex != null && slides[dragIndex]
+          ? [slides[dragIndex]!.id]
+          : [];
+    if (movingIds.length === 0) return;
     let targetSectionId = sectionId;
     if (targetSectionId == null) {
       const main =
@@ -996,8 +1059,22 @@ export function PlaylistEditorPage({
         );
       }
     }
-    if ((moved.sectionId ?? null) === targetSectionId) {
-      setDragIndex(null);
+    const ordered = relocateFilmstripSlides(slides, movingIds, {
+      kind: "section",
+      sectionId: targetSectionId,
+    });
+    const unchanged =
+      ordered.length === slides.length &&
+      ordered.every((slide, index) => {
+        const prev = slides[index];
+        return (
+          prev != null &&
+          prev.id === slide.id &&
+          (prev.sectionId ?? null) === (slide.sectionId ?? null)
+        );
+      });
+    if (unchanged) {
+      endFilmstripDrag();
       return;
     }
     deckHistory.recordBeforeChange();
@@ -1006,20 +1083,8 @@ export function PlaylistEditorPage({
       if (target?.isCollapsed) {
         await updatePlaylistSection(playlist.id, targetSectionId, { isCollapsed: false });
       }
-      await updateSlide(playlist.id, moved.id, { sectionId: targetSectionId });
-      const ordered = assignSlideToSectionOrder(slides, moved.id, targetSectionId);
-      const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-      const result = await reorderSlides(playlist.id, items);
-      setPlaylist({
-        ...playlist,
-        sections: (playlist.sections ?? []).map((section) =>
-          section.id === targetSectionId ? { ...section, isCollapsed: false } : section,
-        ),
-        slides: result.slides.map((item) =>
-          item.id === moved.id ? { ...item, sectionId: targetSectionId } : item,
-        ),
-      });
-      setDragIndex(null);
+      await persistFilmstripRelocation(ordered, { expandSectionId: targetSectionId });
+      endFilmstripDrag();
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1571,34 +1636,40 @@ export function PlaylistEditorPage({
   }
 
   async function handleDropSlide(targetIndex: number) {
-    if (!playlist || dragIndex === null || dragIndex === targetIndex) return;
-    deckHistory.recordBeforeChange();
-    const reordered = [...slides];
-    const [moved] = reordered.splice(dragIndex, 1);
-    if (!moved) {
-      deckHistory.cancelChange();
+    if (!playlist) return;
+    const movingIds =
+      dragSlideIds.length > 0
+        ? dragSlideIds
+        : dragIndex != null && slides[dragIndex]
+          ? [slides[dragIndex]!.id]
+          : [];
+    if (movingIds.length === 0) return;
+    if (movingIds.length === 1 && dragIndex === targetIndex) {
+      endFilmstripDrag();
       return;
     }
-    const targetSlide = slides[targetIndex];
-    const nextSectionId = targetSlide?.sectionId ?? null;
-    const sectionChanged = (moved.sectionId ?? null) !== nextSectionId;
-    reordered.splice(targetIndex, 0, {
-      ...moved,
-      sectionId: nextSectionId,
+    const ordered = relocateFilmstripSlides(slides, movingIds, {
+      kind: "index",
+      targetIndex,
     });
-    const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+    const unchanged =
+      ordered.length === slides.length &&
+      ordered.every((slide, index) => {
+        const prev = slides[index];
+        return (
+          prev != null &&
+          prev.id === slide.id &&
+          (prev.sectionId ?? null) === (slide.sectionId ?? null)
+        );
+      });
+    if (unchanged) {
+      endFilmstripDrag();
+      return;
+    }
+    deckHistory.recordBeforeChange();
     try {
-      if (sectionChanged) {
-        await updateSlide(playlist.id, moved.id, { sectionId: nextSectionId });
-      }
-      const result = await reorderSlides(playlist.id, items);
-      const slidesAfter = sectionChanged
-        ? result.slides.map((item) =>
-            item.id === moved.id ? { ...item, sectionId: nextSectionId } : item,
-          )
-        : result.slides;
-      setPlaylist({ ...playlist, slides: slidesAfter });
-      setDragIndex(null);
+      await persistFilmstripRelocation(ordered);
+      endFilmstripDrag();
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1693,6 +1764,7 @@ export function PlaylistEditorPage({
     multiMode: filmstripMultiMode,
     previewBySlideId,
     dragIndex,
+    dragSlideIds,
     inactiveLabel: admin.slideInactive ?? "Pausada",
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
@@ -1701,9 +1773,9 @@ export function PlaylistEditorPage({
     onSelect: handleFilmstripSelect,
     onLongPressSelect: handleFilmstripLongPress,
     onClearMultiSelection: clearFilmstripMultiSelection,
-    onDragStart: setDragIndex,
+    onDragStart: beginFilmstripDrag,
     onDrop: (index: number) => void handleDropSlide(index),
-    onDragEnd: () => setDragIndex(null),
+    onDragEnd: endFilmstripDrag,
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),
     onCreateSection: (slide: Slide) => void handleAddSection(slide.id),
