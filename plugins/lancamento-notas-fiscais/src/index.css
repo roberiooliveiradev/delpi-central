@@ -955,6 +955,14 @@
   width: min(920px, 100%);
 }
 
+.lnf-po-filter {
+  margin: 10px 0 12px;
+}
+
+.lnf-po-filter input[type="search"] {
+  width: 100%;
+}
+
 .lnf-btn--compact {
   padding: 4px 8px;
   font-size: 0.8rem;
@@ -1132,6 +1140,13 @@
   font-weight: 700;
   color: var(--lnf-title);
   letter-spacing: 0.02em;
+}
+
+.lnf-po-supplier-pn,
+.lnf-po-receipt__supplier-pn {
+  font-weight: 600;
+  color: var(--lnf-muted);
+  letter-spacing: 0.01em;
 }
 
 .lnf-po-receipt__desc {

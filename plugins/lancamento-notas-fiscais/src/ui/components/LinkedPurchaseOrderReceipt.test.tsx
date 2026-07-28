@@ -125,6 +125,7 @@ describe("LinkedPurchaseOrderReceipt", () => {
               order_item: "0001",
               product_code: "900100",
               product_description: "Parafuso M8",
+              supplier_part_number: "SUP-900100",
               warehouse: "01",
               unit: "UN",
               ordered_quantity: 10,
@@ -186,6 +187,7 @@ describe("LinkedPurchaseOrderReceipt", () => {
     expect(screen.getByText("Parafuso M8")).toBeTruthy();
     expect(screen.getByText("Porca M8")).toBeTruthy();
     expect(screen.getByText("900100")).toBeTruthy();
+    expect(screen.getByText(/SUP-900100/)).toBeTruthy();
     expect(screen.getByText("Mercadoria")).toBeTruthy();
     expect(screen.getByText("IPI")).toBeTruthy();
     expect(screen.getByText(/Mercadorias 000123/)).toBeTruthy();

@@ -465,6 +465,7 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           "order_item": str(row.get("order_item") or "").strip(),
           "product_code": str(row.get("product_code") or "").strip(),
           "product_description": str(row.get("product_description") or "").strip(),
+          "supplier_part_number": str(row.get("supplier_part_number") or "").strip(),
           "warehouse": str(row.get("warehouse") or "").strip(),
           "unit": str(row.get("unit") or "").strip(),
           "ordered_quantity": float(row.get("ordered_quantity") or 0),

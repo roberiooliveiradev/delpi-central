@@ -102,6 +102,8 @@ export type SafetyStockOpenPurchaseOrder = {
   order_item: string;
   product_code: string;
   product_description: string;
+  /** Código do produto no fornecedor (SA5.A5_CODPRF). */
+  supplier_part_number?: string;
   warehouse: string;
   unit: string;
   ordered_quantity: number;
