@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { PublicLoadingSplash } from "./PublicLoadingSplash";
 import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
 import { ThemeToggle } from "./ThemeToggle";
@@ -57,7 +58,7 @@ export function PublicShell() {
   if (state.status === "loading") {
     return (
       <Stage chrome={chrome}>
-        <div className="pub-loader" aria-label="Carregando" />
+        <PublicLoadingSplash chrome={chrome} />
       </Stage>
     );
   }

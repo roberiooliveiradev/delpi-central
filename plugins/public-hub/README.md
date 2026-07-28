@@ -31,7 +31,8 @@ O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /
   src/shell/registry.ts     publicRegistry[appId][pageId] → PublicPageDefinition
         │
         ▼
-  src/shell/PublicShell.tsx transversal: marca DELPI, loading, not-found, erro, título
+  src/shell/PublicShell.tsx transversal: marca DELPI, splash de loading, not-found, erro, título
+  src/shell/PublicLoadingSplash.tsx splash centralizado (boot HTML + React)
         │
         ▼
   page.load(ctx) → page.render(data, ctx)   (a view do app)
@@ -155,7 +156,7 @@ Pronto. **Não** é preciso: novo container, nova `location` no gateway, nem man
 
 | Responsabilidade | Onde |
 |---|---|
-| Fundo/branding, spinner, not-found, erro, título, `noindex` | **shell** (`src/shell/`, classes `pub-*`) |
+| Fundo/branding, splash de loading, not-found, erro, título, `noindex` | **shell** (`src/shell/`, classes `pub-*`) |
 | Carregar dados por token e renderizar a view | **app** (`src/apps/<app>/`) |
 | Endpoint público `/public/...` + token opaco | **API do app** |
 | Roteamento `/p/{app}/{page}/{token}` e alias | **shell** (`routing.ts`) + gateway (`^~ /p/`) |

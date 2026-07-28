@@ -7,6 +7,145 @@
     <meta name="theme-color" content="#003866" />
     <link rel="icon" type="image/svg+xml" href="/p/logoMinhaDelpi.svg" />
     <title>Minha DELPI</title>
+    <style>
+      /* Critical path: splash antes do bundle (mesmo visual do shell). */
+      html,
+      body,
+      #root {
+        margin: 0;
+        min-height: 100%;
+        min-height: 100dvh;
+        background: #05070a;
+      }
+      .pub-splash--boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #05070a;
+        isolation: isolate;
+      }
+      .pub-splash--boot .pub-splash__glow {
+        position: absolute;
+        inset: 18% 22%;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at 50% 45%, rgba(48, 184, 236, 0.22), transparent 62%),
+          radial-gradient(circle at 50% 70%, rgba(8, 155, 219, 0.12), transparent 55%);
+        filter: blur(28px);
+        animation: pub-splash-breathe 3.2s ease-in-out infinite;
+      }
+      .pub-splash--boot .pub-splash__stage {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        text-align: center;
+      }
+      .pub-splash--boot .pub-splash__orbit {
+        position: relative;
+        width: 64px;
+        height: 64px;
+      }
+      .pub-splash--boot .pub-splash__ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-top-color: #30b8ec;
+        border-right-color: rgba(48, 184, 236, 0.35);
+        animation: pub-splash-spin 1.05s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+      }
+      .pub-splash--boot .pub-splash__ring--delayed {
+        inset: 8px;
+        border-top-color: rgba(8, 155, 219, 0.85);
+        border-right-color: transparent;
+        border-bottom-color: rgba(8, 155, 219, 0.4);
+        animation-duration: 1.55s;
+        animation-direction: reverse;
+      }
+      .pub-splash--boot .pub-splash__core {
+        position: absolute;
+        inset: 22px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #7ad7f5, #089bdb 55%, #003866);
+        box-shadow: 0 0 18px rgba(48, 184, 236, 0.55);
+        animation: pub-splash-core 1.8s ease-in-out infinite;
+      }
+      .pub-splash--boot .pub-splash__label {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+        color: #9fb0c5;
+      }
+      .pub-splash--boot .pub-splash__bar {
+        width: min(180px, 56vw);
+        height: 3px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .pub-splash--boot .pub-splash__bar-fill {
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, transparent, #30b8ec, #089bdb, transparent);
+        animation: pub-splash-bar 1.35s ease-in-out infinite;
+      }
+      @keyframes pub-splash-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes pub-splash-breathe {
+        0%,
+        100% {
+          opacity: 0.55;
+          transform: scale(0.96);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.04);
+        }
+      }
+      @keyframes pub-splash-core {
+        0%,
+        100% {
+          transform: scale(0.92);
+          opacity: 0.85;
+        }
+        50% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @keyframes pub-splash-bar {
+        0% {
+          transform: translateX(-120%);
+        }
+        100% {
+          transform: translateX(280%);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .pub-splash--boot .pub-splash__glow,
+        .pub-splash--boot .pub-splash__ring,
+        .pub-splash--boot .pub-splash__core,
+        .pub-splash--boot .pub-splash__bar-fill {
+          animation: none;
+        }
+        .pub-splash--boot .pub-splash__bar-fill {
+          width: 70%;
+          transform: none;
+        }
+      }
+    </style>
     <script>
       // Aplica o tema salvo antes da renderização (evita flash). Sem escolha
       // fixada, o CSS segue a preferência do sistema operacional.
@@ -22,7 +161,26 @@
   </head>
   <body>
     <div id="root">
-      <p class="pub-boot" aria-live="polite">Carregando…</p>
+      <div
+        class="pub-splash pub-splash--boot"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        aria-label="Carregando"
+      >
+        <div class="pub-splash__glow" aria-hidden="true"></div>
+        <div class="pub-splash__stage">
+          <div class="pub-splash__orbit" aria-hidden="true">
+            <span class="pub-splash__ring"></span>
+            <span class="pub-splash__ring pub-splash__ring--delayed"></span>
+            <span class="pub-splash__core"></span>
+          </div>
+          <p class="pub-splash__label">Carregando</p>
+          <div class="pub-splash__bar" aria-hidden="true">
+            <span class="pub-splash__bar-fill"></span>
+          </div>
+        </div>
+      </div>
     </div>
     <script>
       window.addEventListener("error", function (event) {
