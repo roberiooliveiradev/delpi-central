@@ -58,7 +58,8 @@
 }
 
 .delpi-ui-series-chart__title {
-  flex: 0 1 auto;
+  /* Altura = conteúdo (fontSize/line-height); max-height só evita chrome engolir o plot. */
+  flex: 0 0 auto;
   max-height: 22%;
   overflow: hidden;
   text-align: center;
@@ -66,6 +67,7 @@
   font-size: var(--delpi-ui-series-chart-title-font-size, 22px);
   line-height: 1.2;
   color: var(--delpi-ui-series-chart-text-strong, #0f172a);
+  align-self: stretch;
 }
 
 .delpi-ui-series-chart__body {

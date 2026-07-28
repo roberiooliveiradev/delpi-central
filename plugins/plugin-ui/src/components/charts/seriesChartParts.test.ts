@@ -513,14 +513,26 @@ describe("seriesChartParts", () => {
     const parts = upsertChartPartState({}, { kind: "title" }, {
       style: { fontSize: 18, textAlign: "center", verticalAlign: "bottom" },
     });
-    expect(chartPartTypographyStyle(parts, { kind: "title" })).toMatchObject({
+    const css = chartPartTypographyStyle(parts, { kind: "title" });
+    expect(css).toMatchObject({
       fontSize: "18px",
       display: "flex",
       flexDirection: "column",
       justifyContent: "flex-end",
       alignItems: "center",
       textAlign: "center",
+      width: "100%",
     });
+    expect(css).not.toHaveProperty("height");
+  });
+
+  it("chartPartTypographyStyle fillHost só quando pedido (título com moldura)", () => {
+    const parts = upsertChartPartState({}, { kind: "title" }, {
+      style: { fontSize: 14, textAlign: "center" },
+    });
+    expect(
+      chartPartTypographyStyle(parts, { kind: "title" }, { boxLayout: true, fillHost: true }),
+    ).toMatchObject({ width: "100%", height: "100%" });
   });
 
   it("resolveChartPartFontSize e tipografia usam defaults canônicos (não 16 fantasma)", () => {

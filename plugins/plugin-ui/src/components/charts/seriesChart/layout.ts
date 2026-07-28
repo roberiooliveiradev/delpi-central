@@ -65,6 +65,8 @@ export type BuildSeriesChartLayoutInput = {
   secondaryAxisValues?: number[];
   showXAxisLabels: boolean;
   showXAxisTitle: boolean;
+  /** Reserva faixa esquerda para título Y rotacionado (evita clip no overflow do SVG). */
+  showYAxisTitle?: boolean;
   /** ViewBox dinâmico (ResizeObserver). Default: constantes SERIES_CHART_VIEW_*. */
   viewW?: number;
   viewH?: number;
@@ -318,6 +320,39 @@ function resolveBottomMargin(
   return bottom;
 }
 
+/** Faixa extra à esquerda para o título Y rotacionado (−90°). */
+export function yAxisTitleGutterPx(axisTitleFontSize: number): number {
+  const fs =
+    axisTitleFontSize > 0 ? axisTitleFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
+  return Math.round(fs * 1.15);
+}
+
+/**
+ * Âncora X do título Y: centro da faixa esquerda, com meia-caixa do glifo ≥ 2px
+ * dentro do viewBox (overflow:hidden no SVG).
+ */
+export function resolveYAxisTitleAnchorX(
+  marginLeft: number,
+  titleFontSize: number,
+): number {
+  const fs = titleFontSize > 0 ? titleFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
+  const halfEm = fs * 0.55;
+  const minX = halfEm + 2;
+  const strip = Math.max(yAxisTitleGutterPx(fs), minX * 2);
+  const centeredInStrip = strip / 2;
+  const cappedByMargin = Math.max(minX, Math.min(marginLeft * 0.38, centeredInStrip));
+  return Math.max(minX, cappedByMargin);
+}
+
+function resolveLeftMarginWithYTitle(
+  showYAxisTitle: boolean,
+  left: number,
+  axisTitleFontSize: number,
+): number {
+  if (!showYAxisTitle) return left;
+  return left + yAxisTitleGutterPx(axisTitleFontSize);
+}
+
 /** Margens laterais que cabem meia largura do 1º/último rótulo X + ticks Y. */
 function resolveSideMargins(
   showXAxisLabels: boolean,
@@ -407,9 +442,10 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     baseMargin,
     axisFontSize,
   );
+  const showYAxisTitle = Boolean(input.showYAxisTitle);
   const cartesianAutoMargin: SeriesChartMargin = {
     top: baseMargin.top,
-    left: sides.left,
+    left: resolveLeftMarginWithYTitle(showYAxisTitle, sides.left, axisTitleFontSize),
     right: Math.max(
       sides.right,
       hasSecondaryAxis ? Math.round(axisFontSize * 3.2) + 10 : sides.right,
@@ -423,6 +459,9 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       axisTitleFontSize,
     ),
   };
+  const minLeftForYTitle = showYAxisTitle
+    ? yAxisTitleGutterPx(axisTitleFontSize) + Math.round(axisFontSize * 2.6)
+    : 0;
   const centeredPad = Math.max(
     8,
     Math.round(Math.min(viewW, viewH) * 0.045) + Math.max(0, input.plotPadExtraPx ?? 0),
@@ -438,6 +477,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     framedEarly
       ? {
           ...framedEarly,
+          left: Math.max(framedEarly.left, minLeftForYTitle),
           right: Math.max(
             framedEarly.right,
             !input.centeredPlot && hasSecondaryAxis

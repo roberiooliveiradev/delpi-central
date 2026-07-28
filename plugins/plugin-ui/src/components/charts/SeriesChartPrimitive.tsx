@@ -233,6 +233,7 @@ export function SeriesChartPrimitive({
     showXAxisLabels:
       !centeredPlot && config.showAxes !== false && config.showXAxisLabels !== false,
     showXAxisTitle: !centeredPlot && config.showXAxisTitle !== false,
+    showYAxisTitle: !centeredPlot && config.showYAxisTitle !== false,
     viewW: viewSize.w,
     viewH: viewSize.h,
     categoryPaddingPercent: config.categoryPaddingPercent,

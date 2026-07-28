@@ -551,7 +551,7 @@ export function applyChartTextStyleToSiblingParts(
 export function chartPartTypographyStyle(
   parts: ChartPartsMap | null | undefined,
   ref: ChartPartRef,
-  options?: { boxLayout?: boolean },
+  options?: { boxLayout?: boolean; fillHost?: boolean },
 ): CSSProperties | undefined {
   const pointStyle = getChartPartState(parts, ref)?.style;
   const groupStyle =
@@ -589,10 +589,11 @@ export function chartPartTypographyStyle(
     Object.assign(
       css,
       resolveTextPartColumnBoxLayout({
-        textAlign: style.textAlign,
+        textAlign: style.textAlign ?? (ref.kind === "title" ? "center" : undefined),
         verticalAlign: style.verticalAlign,
         defaultVerticalAlign: "top",
-        fillHost: true,
+        /* Em fluxo (sem frame): altura acompanha fontSize — fillHost só com moldura. */
+        fillHost: options?.fillHost === true,
       }),
     );
   } else if (style.textAlign) {

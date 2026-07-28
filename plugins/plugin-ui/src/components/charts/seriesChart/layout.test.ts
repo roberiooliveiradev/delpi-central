@@ -6,8 +6,10 @@ import {
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
   resolveXLabelTextAnchor,
+  resolveYAxisTitleAnchorX,
   SERIES_CHART_MIN_PLOT_FRACTION,
   SERIES_CHART_MIN_PLOT_PX,
+  yAxisTitleGutterPx,
 } from "./layout";
 import { OTD_SERIES_LAYOUT_GOLDEN as otdGolden } from "./__fixtures__/otdSeriesLayout.golden";
 
@@ -210,6 +212,53 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(large.margin.left).toBeGreaterThan(small.margin.left);
     expect(large.margin.bottom).toBeGreaterThan(small.margin.bottom);
     expect(large.xLabelStep).toBeGreaterThanOrEqual(small.xLabelStep);
+  });
+
+  it("showYAxisTitle reserva margem esquerda e âncora cabe no viewBox", () => {
+    const points = [
+      { value: 70, label: "01/07/26" },
+      { value: 90, label: "15/07/26" },
+      { value: 110, label: "28/07/26" },
+    ];
+    const without = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      showYAxisTitle: false,
+      viewW: 400,
+      viewH: 220,
+      typography: { axisFontSize: 14, axisTitleFontSize: 22 },
+    });
+    const withTitle = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      showYAxisTitle: true,
+      viewW: 400,
+      viewH: 220,
+      typography: { axisFontSize: 14, axisTitleFontSize: 22 },
+    });
+    expect(withTitle.margin.left).toBeGreaterThan(without.margin.left);
+    const anchor = resolveYAxisTitleAnchorX(withTitle.margin.left, 22);
+    expect(anchor - 22 * 0.55).toBeGreaterThanOrEqual(2);
+    expect(anchor).toBeLessThan(withTitle.margin.left);
+  });
+
+  it("plotFrame apertado ainda respeita piso de gutter do título Y", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { value: 1, label: "a" },
+        { value: 2, label: "b" },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      showYAxisTitle: true,
+      viewW: 400,
+      viewH: 220,
+      plotFrame: { x: 2, y: 5, w: 90, h: 80 },
+      typography: { axisFontSize: 14, axisTitleFontSize: 20 },
+    });
+    expect(layout.margin.left).toBeGreaterThanOrEqual(yAxisTitleGutterPx(20) + Math.round(14 * 2.6));
   });
 
   it("tipografia extrema no resize mantém plot utilizável (não blank)", () => {

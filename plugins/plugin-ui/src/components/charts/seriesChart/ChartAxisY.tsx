@@ -9,7 +9,11 @@ import {
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import { ChartAxisTitle } from "./ChartAxisTitle";
-import { formatChartTick, type SeriesChartLayout } from "./layout";
+import {
+  formatChartTick,
+  resolveYAxisTitleAnchorX,
+  type SeriesChartLayout,
+} from "./layout";
 import type { SeriesChartValueFormat } from "../seriesChartOptions";
 
 export type ChartAxisYProps = {
@@ -42,6 +46,11 @@ export function ChartAxisY({
   const titleFontSize = resolveChartPartFontSize(
     "axisTitle",
     getChartPartState(chartParts, titleRef)?.style,
+  );
+  const titleX = resolveYAxisTitleAnchorX(margin.left, titleFontSize);
+  const titleEditWidth = Math.max(
+    titleFontSize + 8,
+    Math.min(Math.max(margin.left, 28), Math.round(titleFontSize * 1.35)),
   );
 
   return (
@@ -81,12 +90,12 @@ export function ChartAxisY({
           axis="y"
           title={title}
           visible={showTitle}
-          x={10}
+          x={titleX}
           y={axisCenterY}
-          editWidth={Math.max(margin.left, 28)}
+          editWidth={titleEditWidth}
           editHeight={Math.min(plotH, Math.max(120, (title?.length ?? 8) * titleFontSize * 0.7))}
           textAnchor="middle"
-          rotate={`rotate(-90 10 ${axisCenterY})`}
+          rotate={`rotate(-90 ${titleX} ${axisCenterY})`}
           interaction={interaction}
           chartParts={chartParts}
         />

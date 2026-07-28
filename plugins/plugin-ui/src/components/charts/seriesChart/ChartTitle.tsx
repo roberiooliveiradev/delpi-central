@@ -61,7 +61,10 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
   const showResize = selected && !editing && chartPartAllowsResize(ref);
   const chartAreaFill =
     getChartPartState(chartParts, { kind: "chartArea" })?.style?.fill ?? DECK_COLOR_SURFACE;
-  const typography = chartPartTypographyStyle(chartParts, ref, { boxLayout: true });
+  const typography = chartPartTypographyStyle(chartParts, ref, {
+    boxLayout: true,
+    fillHost: Boolean(frame),
+  });
   const textStyle: CSSProperties = {
     ...frameStyle,
     ...typography,
