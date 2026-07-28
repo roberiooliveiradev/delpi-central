@@ -27,6 +27,21 @@ Mover o arquivo inteiro para `message/` ou `presentation/` criaria dependência 
 | Copy / email | `buildAssistantCopyText`, `buildEmailCopyText` | ações do assistente |
 | Toggle rich UI | `resolveRichFormatToggles`, `shouldShowRichPresentation` | toolbar, modos |
 
+## Render-only (jul/2026)
+
+Com `renderPlan.version === 1`, o MFE **só executa** o plano — não redecide formato Automático.
+
+| Contrato | Papel no MFE |
+|----------|--------------|
+| `renderPlan` | Fonte primária dos segmentos (`buildSegmentsFromRenderPlan` / native single) |
+| `presentationDecision` / `availableViews` | Toolbar e próximo turno — não reordenar o frame atual |
+| `suppressedKinds` | Só na coleta **fora** do plan (keep-bundle) |
+| `structureDedupApplied` | Gate de dedup legado; com plan o filtro hierárquico é no-op |
+
+**Proibido com plan:** multi-rota por path antes do executor; filtrar tabela hierárquica no cliente; sintetizar «Pontos de atenção» ou chart a partir de tabela; esconder chart só porque há árvore.
+
+Sem `renderPlan` (mensagens antigas): fallback legado permanece.
+
 ## O que **não** colocar no hub (já extraído)
 
 | Módulo canônico | Pasta | PR |

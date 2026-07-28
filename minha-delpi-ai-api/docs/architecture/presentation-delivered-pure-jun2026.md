@@ -17,7 +17,7 @@ ExecuteExternalAction
        → ChatSchemaDrivenPresentationService               (tabela / KPI / chart / árvore / texto)
        → ChatDataInsightEnrichmentService                  (dataAnswer / dataCommentary)
        → ChatPresentationDecisionService                   (Automático)
-       → ChatPresentationRenderPipelineService.finalize    (renderPlan mínimo)
+       → ChatPresentationRenderPipelineService.finalize    (structure dedup + prune + renderPlan)
        → ChatPresentationDataOnlyProseService.apply_pipeline (quando LLM narrará)
   → MFE render-only (chatPresentation.ts)
 ```
@@ -174,8 +174,20 @@ resolve_effective_profile_key(path, entity, shape?)
 | `presentationDecision` | `ChatPresentationDecisionService` |
 | `renderPlan` | `ChatPresentationRenderPipelineService` |
 | `availableFormats` / `preferredFormat` | `ChatPresentationApiDeliveredMetadataService` |
+| `structureDedupApplied` | `ChatPresentationStructureDedupService` (sempre em `finalize`, antes do prune) |
 
 `stackPresentationPlan` rico **não** é mais populado pelo pipeline em `layoutMode: single`. Plano mínimo (`tailVisualPolicy: allowlist`) vem do pruning; stack completo só com `layoutMode: stack` (pedido «visão integrada»).
+
+### MFE render-only (dívida pós fases A–E)
+
+Com `renderPlan.version === 1`:
+
+1. Multi-rota por path **não** vence o plan.
+2. Dedup hierárquico local é no-op (`hasRenderPlanContract` ou `structureDedupApplied`).
+3. Ordem visual / layout / native single seguem o plan; markers e `selected` só no legado sem plan.
+4. Sem síntese de slots omitidos pelo plan (attention, chart←table).
+
+Doc MFE: `plugins/minha-delpi-chat/docs/chat-presentation-hub.md` § Render-only.
 
 ---
 
