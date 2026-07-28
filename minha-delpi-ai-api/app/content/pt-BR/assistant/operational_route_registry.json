@@ -415,8 +415,9 @@
       },
       "route": {
         "pathMarkers": [
-          "/suppliers"
+          "/products/"
         ],
+        "pathSuffix": "/suppliers",
         "operationIdMarkers": [
           "get_product_suppliers",
           "suppliers"
@@ -631,11 +632,15 @@
       },
       "route": {
         "pathMarkers": [
-          "/customers"
+          "/products/"
         ],
+        "pathSuffix": "/customers",
         "operationIdMarkers": [
           "get_product_customers",
           "customers"
+        ],
+        "excludePathMarkers": [
+          "/search"
         ],
         "method": "GET"
       },

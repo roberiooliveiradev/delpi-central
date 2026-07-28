@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -107,6 +108,7 @@ class OperationalRouteRegistryLintService:
         cls._lint_dispatch_order(report)
         cls._lint_fallback_policies(report)
         cls._lint_routes(report)
+        cls._lint_path_marker_shadow(report)
         cls._lint_parameter_strategies(report)
         cls._lint_intent_probes(report)
         cls._lint_sql_readiness(report)
@@ -200,6 +202,127 @@ class OperationalRouteRegistryLintService:
                     report.add_error(
                         f"routes.{route_id}.fallbackPolicy.resolver inválido: {resolver!r}"
                     )
+
+    @classmethod
+    def _lint_path_marker_shadow(cls, report: OperationalRouteRegistryLintReport) -> None:
+        """Falha se pathMarkers (pós exclude/suffix/exact) sombreiam ≥2 famílias de recurso."""
+        openapi_paths = cls._openapi_get_paths()
+
+        if not openapi_paths:
+            report.add_warning(
+                "pathMarkerShadow: openapi_baseline sem paths GET — lint de shadow ignorado"
+            )
+            return
+
+        for route in OperationalRouteRegistryService.manual_routes():
+            route_id = str(route.get("id") or "").strip() or "<sem-id>"
+            domain = str(route.get("domain") or "").strip()
+            parameters = route.get("parameters") if isinstance(route.get("parameters"), dict) else {}
+            strategy = str(parameters.get("strategy") or "").strip().lower()
+
+            # Gate focado em catch-alls (anti-FP em markers curtos de facetas product).
+            if domain != "domainProductSearch" and strategy != "product_search":
+                continue
+
+            route_spec = route.get("route")
+
+            if not isinstance(route_spec, dict):
+                continue
+
+            path_markers = [
+                str(marker).lower()
+                for marker in (route_spec.get("pathMarkers") or [])
+                if str(marker).strip()
+            ]
+
+            if not path_markers:
+                continue
+
+            exclude = [
+                str(marker).lower()
+                for marker in (route_spec.get("excludePathMarkers") or [])
+                if str(marker).strip()
+            ]
+            path_suffix = str(route_spec.get("pathSuffix") or "").strip().lower()
+            path_exact_end = str(route_spec.get("pathExactEnd") or "").strip().lower()
+
+            matched_families: set[str] = set()
+            matched_paths: list[str] = []
+
+            for path in openapi_paths:
+                lowered = path.lower()
+
+                if not any(marker in lowered for marker in path_markers):
+                    continue
+
+                if exclude and any(marker in lowered for marker in exclude):
+                    continue
+
+                if path_suffix and not lowered.rstrip("/").endswith(path_suffix.rstrip("/")):
+                    continue
+
+                if path_exact_end and not lowered.rstrip("/").endswith(
+                    path_exact_end.rstrip("/")
+                ):
+                    continue
+
+                family = cls._resource_family(lowered)
+
+                if not family:
+                    continue
+
+                matched_families.add(family)
+                matched_paths.append(lowered)
+
+            if len(matched_families) >= 2:
+                sample = ", ".join(sorted(matched_paths)[:4])
+                report.add_error(
+                    f"routes.{route_id}: pathMarkers sombreados em famílias "
+                    f"{sorted(matched_families)} (ex.: {sample}). "
+                    "Use pathSuffix/pathExactEnd/excludePathMarkers."
+                )
+
+    @staticmethod
+    def _resource_family(path: str) -> str:
+        parts = [part for part in str(path or "").strip("/").split("/") if part]
+        return parts[0].lower() if parts else ""
+
+    @classmethod
+    def _openapi_get_paths(cls) -> list[str]:
+        from app.domain.services.chat_presentation_coverage_service import (
+            ChatPresentationCoverageService,
+        )
+
+        baseline = ChatPresentationCoverageService.default_openapi_baseline_path()
+
+        if not baseline.is_file():
+            return []
+
+        try:
+            payload = json.loads(baseline.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+
+        operations = payload.get("operations") or payload.get("paths")
+
+        if not isinstance(operations, list):
+            return []
+
+        paths: list[str] = []
+
+        for item in operations:
+            if not isinstance(item, dict):
+                continue
+
+            if str(item.get("method") or "").upper() != "GET":
+                continue
+
+            path = str(item.get("path") or "").strip()
+
+            if path:
+                paths.append(path)
+
+        return paths
 
     @classmethod
     def _lint_match_spec(
