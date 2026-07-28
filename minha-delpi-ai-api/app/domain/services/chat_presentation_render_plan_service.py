@@ -52,6 +52,12 @@ class ChatPresentationRenderPlanService:
                 decision if isinstance(decision, dict) else None,
             )
 
+        if str(layout_mode).strip().lower() != "stack":
+            segments = cls._filter_single_layout_segments(
+                segments,
+                decision if isinstance(decision, dict) else None,
+            )
+
         artifacts = metadata.get("downloadArtifacts")
 
         if isinstance(artifacts, list) and artifacts:
@@ -354,6 +360,39 @@ class ChatPresentationRenderPlanService:
         return ChatPresentationStackOrderService._markdown_has_attention(metadata)
 
     @classmethod
+    def _layout_mode_from_decision(cls, decision: dict[str, Any] | None) -> str:
+        return str((decision or {}).get("layoutMode") or "single").strip().lower() or "single"
+
+    @classmethod
+    def _filter_single_layout_segments(
+        cls,
+        segments: list[dict[str, Any]],
+        decision: dict[str, Any] | None,
+    ) -> list[dict[str, Any]]:
+        """Invariante: single emite só lead + selected (nunca irmãos tree/table/chart/kpi)."""
+        selected = str((decision or {}).get("selected") or "").strip().lower()
+        allowed_visuals = {selected} if selected in _VISUAL_TOKEN_TO_KEY else set()
+        passthrough = {"markdown", "decision", "download"}
+
+        filtered: list[dict[str, Any]] = []
+
+        for segment in segments:
+            kind = str(segment.get("kind") or "").strip().lower()
+
+            if kind in passthrough:
+                filtered.append(segment)
+                continue
+
+            if kind in _VISUAL_TOKEN_TO_KEY:
+                if kind in allowed_visuals:
+                    filtered.append(segment)
+                continue
+
+            filtered.append(segment)
+
+        return filtered
+
+    @classmethod
     def _ensure_llm_decoupled_evidence_segments(
         cls,
         metadata: dict[str, Any],
@@ -361,11 +400,23 @@ class ChatPresentationRenderPlanService:
         plan: dict[str, Any] | None,
         decision: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
-        """Playbook 19 — prosa LLM no lead; tabelas/árvore/gráfico permanecem no renderPlan."""
+        """Playbook 19 — prosa LLM no lead; evidência conforme layoutMode."""
         result = list(segments)
         existing_kinds = {
             str(segment.get("kind") or "").strip().lower() for segment in result
         }
+        selected = str((decision or {}).get("selected") or "").strip().lower()
+        layout_mode = cls._layout_mode_from_decision(decision)
+
+        # Single: um visual por turno — só garante o selected (nunca injeta tabela/irmão).
+        if layout_mode != "stack":
+            if selected in _VISUAL_TOKEN_TO_KEY and selected not in existing_kinds:
+                source = cls._resolve_visual_source(metadata, selected)
+
+                if source:
+                    result.append({"kind": selected, "slot": "primary", "source": source})
+
+            return result
 
         if cls._has_table_bundle(metadata) and "table" not in existing_kinds:
             slot = (
@@ -390,8 +441,6 @@ class ChatPresentationRenderPlanService:
             existing_kinds.update(
                 str(segment.get("kind") or "").strip().lower() for segment in tail_segments
             )
-
-        selected = str((decision or {}).get("selected") or "").strip().lower()
 
         if selected in _VISUAL_TOKEN_TO_KEY and selected not in existing_kinds:
             source = cls._resolve_visual_source(metadata, selected)

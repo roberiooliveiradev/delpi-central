@@ -55,6 +55,7 @@ class ChatPresentationPayloadPruningService:
             cls._prune_allowlisted_visuals(metadata, plan)
         else:
             cls._trim_stack_plan_for_single_layout(plan)
+            cls._suppress_sibling_kinds_for_single(metadata, plan)
 
         cls._attach_render_hints(metadata, plan)
 
@@ -80,6 +81,58 @@ class ChatPresentationPayloadPruningService:
             plan.pop(key, None)
 
         plan["layoutMode"] = "single"
+
+    @classmethod
+    def _suppress_sibling_kinds_for_single(
+        cls,
+        metadata: dict[str, Any],
+        plan: dict[str, Any],
+    ) -> None:
+        """Keep-bundle: slots irmãos ficam no payload; só marca suppressedKinds (toolbar)."""
+        decision = metadata.get("presentationDecision")
+        selected = ""
+
+        if isinstance(decision, dict):
+            selected = str(decision.get("selected") or "").strip().lower()
+
+        if selected not in _VISUAL_TOKEN_TO_KEY and selected not in {"", "text", "canvas"}:
+            return
+
+        suppressed: list[str] = []
+
+        for token, key in _VISUAL_TOKEN_TO_KEY.items():
+            if token == selected:
+                continue
+
+            if isinstance(metadata.get(key), dict):
+                suppressed.append(token)
+
+        if selected != "table":
+            bundled = metadata.get("tablePresentations")
+
+            if isinstance(bundled, list) and any(
+                isinstance(item, dict) and item.get("type") == "table" for item in bundled
+            ):
+                if "table" not in suppressed:
+                    suppressed.append("table")
+
+        if not suppressed:
+            return
+
+        hints = plan.get("renderHints")
+
+        if not isinstance(hints, dict):
+            hints = {}
+            plan["renderHints"] = hints
+
+        existing = hints.get("suppressedKinds")
+
+        if isinstance(existing, list):
+            merged = list(dict.fromkeys([*existing, *suppressed]))
+        else:
+            merged = list(dict.fromkeys(suppressed))
+
+        hints["suppressedKinds"] = merged
 
     @classmethod
     def _ensure_stack_plan(cls, metadata: dict[str, Any]) -> dict[str, Any]:

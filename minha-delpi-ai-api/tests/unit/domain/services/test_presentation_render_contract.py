@@ -386,6 +386,118 @@ def test_render_plan_llm_decoupled_parents_keeps_tree_primary_segment():
     )
 
 
+def test_render_plan_single_llm_decoupled_emits_only_selected_kind():
+    """Automático single: árvore/tabela/chart irmãos no payload não entram no plano."""
+    cases = (
+        (
+            "tree",
+            {
+                "treePresentation": {
+                    "type": "tree",
+                    "title": "Estrutura",
+                    "root": {"id": "1", "label": "1"},
+                },
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Estrutura do produto",
+                    "columns": [{"key": "code", "label": "Código"}],
+                    "rows": [{"code": "50231850"}],
+                },
+                "chartPresentation": {"type": "chart", "title": "Mapa", "data": []},
+            },
+        ),
+        (
+            "table",
+            {
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Lista",
+                    "columns": [{"key": "code", "label": "Código"}],
+                    "rows": [{"code": "1"}],
+                },
+                "treePresentation": {
+                    "type": "tree",
+                    "title": "Árvore",
+                    "root": {"id": "1", "label": "1"},
+                },
+            },
+        ),
+        (
+            "chart",
+            {
+                "chartPresentation": {"type": "chart", "title": "Série", "data": [{"x": 1}]},
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Lista",
+                    "columns": [{"key": "x", "label": "X"}],
+                    "rows": [{"x": 1}],
+                },
+            },
+        ),
+        (
+            "kpi",
+            {
+                "kpiPresentation": {"type": "kpi", "title": "KPIs", "cards": [{"label": "A", "value": 1}]},
+                "tablePresentation": {
+                    "type": "table",
+                    "title": "Lista",
+                    "columns": [{"key": "a", "label": "A"}],
+                    "rows": [{"a": 1}],
+                },
+            },
+        ),
+    )
+
+    for selected, slots in cases:
+        metadata = {
+            "llmProseDecoupled": True,
+            "dataOnlyPresentation": True,
+            "presentationDecision": {
+                "layoutMode": "single",
+                "selected": selected,
+                "proseSource": "llm",
+            },
+            **slots,
+        }
+
+        ChatPresentationRenderPlanService.build(metadata)
+
+        visual_kinds = {
+            str(segment.get("kind") or "").strip().lower()
+            for segment in metadata["renderPlan"]["segments"]
+            if str(segment.get("kind") or "").strip().lower()
+            in {"tree", "table", "chart", "kpi", "dashboard"}
+        }
+
+        assert visual_kinds == {selected}, f"selected={selected} got {visual_kinds}"
+
+
+def test_prune_single_marks_sibling_kinds_suppressed_but_keeps_bundle():
+    metadata = {
+        "presentationDecision": {
+            "layoutMode": "single",
+            "selected": "tree",
+        },
+        "treePresentation": {"type": "tree", "title": "Estrutura", "root": {"id": "1"}},
+        "tablePresentation": {
+            "type": "table",
+            "title": "Estrutura do produto",
+            "columns": [{"key": "code", "label": "Código"}],
+            "rows": [{"code": "1"}],
+        },
+        "chartPresentation": {"type": "chart", "title": "Mapa", "data": []},
+    }
+
+    ChatPresentationPayloadPruningService.prune(metadata)
+
+    assert metadata.get("tablePresentation") is not None
+    assert metadata.get("chartPresentation") is not None
+    hints = metadata["stackPresentationPlan"]["renderHints"]
+    assert "table" in hints["suppressedKinds"]
+    assert "chart" in hints["suppressedKinds"]
+    assert "tree" not in hints["suppressedKinds"]
+
+
 def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
     metadata = {
         "presentationDecision": {"layoutMode": "stack", "selected": "text"},

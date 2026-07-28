@@ -70,6 +70,12 @@ def _validate_suppressed_presentations_removed(metadata: dict[str, Any]) -> list
     if ChatPresentationRichStackPolicyService._is_composite_metadata(metadata):
         return []
 
+    decision = metadata.get("presentationDecision")
+
+    # Single keep-bundle: slots irmãos ficam no payload para a toolbar; só o renderPlan omite.
+    if isinstance(decision, dict) and str(decision.get("layoutMode") or "").strip().lower() == "single":
+        return []
+
     issues: list[str] = []
     plan = metadata.get("stackPresentationPlan")
 
