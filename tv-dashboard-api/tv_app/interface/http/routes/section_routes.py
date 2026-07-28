@@ -81,7 +81,10 @@ def create_section(request: Request, playlist_id: UUID, body: CreateSectionBody)
         )
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
-    notify_presentation_changed(playlist_id, reason="section_created")
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="section_created",
+    )
     return ok(section, status_code=201)
 
 
@@ -108,7 +111,10 @@ def update_section(
         return fail("Programação não encontrada.", status_code=404)
     except SectionNotFoundError:
         return fail("Seção não encontrada.", status_code=404)
-    notify_presentation_changed(playlist_id, reason="section_updated")
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="section_updated",
+    )
     return ok(section)
 
 
@@ -134,7 +140,10 @@ def delete_section(
         return fail("Programação não encontrada.", status_code=404)
     except SectionNotFoundError:
         return fail("Seção não encontrada.", status_code=404)
-    notify_presentation_changed(playlist_id, reason="section_deleted")
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="section_deleted",
+    )
     return ok({"deleted": True})
 
 
@@ -153,5 +162,8 @@ def reorder_sections(request: Request, playlist_id: UUID, body: ReorderBody):
         )
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
-    notify_presentation_changed(playlist_id, reason="sections_reordered")
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="sections_reordered",
+    )
     return ok({"items": sections})
