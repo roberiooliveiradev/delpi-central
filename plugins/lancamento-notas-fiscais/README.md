@@ -70,7 +70,7 @@ Base HTTP: **`/apps/api-delpi/lancamento-notas-fiscais`**
 | GET | `/requests` | Fila paginada |
 | GET | `/requests/{id}` | Detalhe + timeline + `allowed_actions` |
 | GET | `/requests/{id}/purchase-orders` | Pedidos de compra abertos (grupos PC + entrega) |
-| POST | `/requests/{id}/purchase-orders/link` | Amarrar grupo à solicitação |
+| POST | `/requests/{id}/purchase-orders/link` | Amarrar um ou mais grupos (substitui o conjunto) |
 | PATCH | `/requests/{id}` | Corrigir dados |
 | POST | `/requests/{id}/start` | Iniciar atendimento |
 | POST | `/requests/{id}/block` | Bloquear |

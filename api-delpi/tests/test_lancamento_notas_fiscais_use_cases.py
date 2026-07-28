@@ -132,6 +132,7 @@ class FakeRequests:
         self.rows: dict[str, dict[str, Any]] = {}
         self.history: dict[str, list[dict[str, Any]]] = {}
         self.comments: dict[str, list[dict[str, Any]]] = {}
+        self.linked_pos: dict[str, list[dict[str, Any]]] = {}
         self.fail_history_once = fail_history_once
         self._history_failures = 0
 
@@ -194,6 +195,7 @@ class FakeRequests:
             "linked_po_linked_at": None,
             "linked_po_linked_by_user_id": None,
             "linked_po_linked_by_name": None,
+            "linked_purchase_orders": [],
             "created_at": datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -215,7 +217,67 @@ class FakeRequests:
 
     def get_request(self, request_id: str) -> dict[str, Any] | None:
         row = self.rows.get(request_id)
-        return deepcopy(row) if row else None
+        if not row:
+            return None
+        out = deepcopy(row)
+        out["linked_purchase_orders"] = deepcopy(
+            self.linked_pos.get(request_id, out.get("linked_purchase_orders") or [])
+        )
+        return out
+
+    def set_linked_purchase_orders(
+        self, request_id: str, rows: list[dict[str, Any]]
+    ) -> None:
+        self.linked_pos[request_id] = deepcopy(rows)
+        current = self.rows.get(request_id)
+        if current is not None:
+            current["linked_purchase_orders"] = deepcopy(rows)
+
+    def replace_linked_purchase_orders(
+        self,
+        *,
+        request_id: str,
+        rows: list[dict[str, Any]],
+        history_fields: dict[str, Any],
+        mirror_updates: dict[str, Any],
+    ) -> dict[str, Any]:
+        snapshots: list[dict[str, Any]] = []
+        for row in rows:
+            snap = {
+                "order_number": row["order_number"],
+                "delivery_date": (
+                    row["delivery_date"].isoformat()
+                    if isinstance(row.get("delivery_date"), date)
+                    else row.get("delivery_date")
+                ),
+                "issue_date": (
+                    row["issue_date"].isoformat()
+                    if isinstance(row.get("issue_date"), date)
+                    else row.get("issue_date")
+                ),
+                "open_value": (
+                    float(row["open_value"])
+                    if hasattr(row.get("open_value"), "quantize")
+                    else row.get("open_value")
+                ),
+                "product_count": row.get("product_count"),
+                "linked_at": (
+                    row["linked_at"].isoformat()
+                    if isinstance(row.get("linked_at"), datetime)
+                    else row.get("linked_at")
+                ),
+                "linked_by_user_id": row.get("linked_by_user_id"),
+                "linked_by_name": row.get("linked_by_name"),
+            }
+            snapshots.append(snap)
+        updated = self.update_request_with_history(
+            request_id=request_id,
+            updates=mirror_updates,
+            history_fields=history_fields,
+        )
+        self.set_linked_purchase_orders(request_id, snapshots)
+        refreshed = self.get_request(request_id)
+        return refreshed or updated
 
     def list_history(self, request_id: str) -> list[dict[str, Any]]:
         return deepcopy(self.history.get(request_id, []))
@@ -714,7 +776,7 @@ def test_list_open_purchase_orders_for_request() -> None:
     assert result["group_count"] == 2
     assert result["item_count"] == 3
     assert result["supplier_code"] == "000001"
-    assert result["linked"] is None
+    assert result["linked"] == []
     assert result["can_link"] is True
     assert len(result["groups"]) == 2
     first = next(g for g in result["groups"] if g["delivery_date"] == "2026-07-20")
@@ -763,11 +825,85 @@ def test_link_purchase_order_sets_fields_and_history() -> None:
     assert linked["linked_po_open_value"] == 150.5
     assert linked["linked_po_product_count"] == 2
     assert linked["linked_po_linked_by_user_id"] == "u-process"
+    assert len(linked["linked_purchase_orders"]) == 1
+    assert linked["linked_purchase_orders"][0]["order_number"] == "000123"
     history = repo.list_history(created["id"])
     event = next(h for h in history if h["event_type"] == "purchase_order_linked")
-    assert event["changes"]["linked_po"]["from"] is None
-    assert event["changes"]["linked_po"]["to"]["order_number"] == "000123"
+    assert event["changes"]["linked_po"]["from"] == []
+    assert event["changes"]["linked_po"]["to"][0]["order_number"] == "000123"
     assert "PC 000123" in (event.get("justification") or "")
+
+
+def test_link_purchase_order_multiple_groups() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000111",
+                    "product_code": "A",
+                    "open_value": 10.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-10",
+                },
+                {
+                    "order_number": "000222",
+                    "product_code": "B",
+                    "open_value": 20.0,
+                    "issue_date": "2026-07-02",
+                    "expected_delivery_date": None,
+                },
+            ]
+
+    linked = LinkRequestPurchaseOrderUseCase(repo, FakePurchaseOrders()).execute(
+        created["id"],
+        _processor(),
+        groups=[
+            {"order_number": "000111", "delivery_date": "2026-07-10"},
+            {"order_number": "000222", "delivery_date": None},
+        ],
+    )
+    assert len(linked["linked_purchase_orders"]) == 2
+    numbers = {g["order_number"] for g in linked["linked_purchase_orders"]}
+    assert numbers == {"000111", "000222"}
+    assert linked["linked_po_number"] == "000111"
+
+
+def test_link_purchase_order_clear_all() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000111",
+                    "product_code": "A",
+                    "open_value": 10.0,
+                    "expected_delivery_date": "2026-07-10",
+                }
+            ]
+
+    pos = FakePurchaseOrders()
+    LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(),
+        order_number="000111",
+        delivery_date="2026-07-10",
+    )
+    cleared = LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(),
+        groups=[],
+    )
+    assert cleared["linked_purchase_orders"] == []
+    assert cleared["linked_po_number"] is None
 
 
 def test_link_purchase_order_replaces_previous() -> None:
@@ -810,11 +946,12 @@ def test_link_purchase_order_replaces_previous() -> None:
     )
     assert replaced["linked_po_number"] == "000222"
     assert replaced["linked_po_delivery_date"] is None
+    assert len(replaced["linked_purchase_orders"]) == 1
     history = repo.list_history(created["id"])
     events = [h for h in history if h["event_type"] == "purchase_order_linked"]
     assert len(events) == 2
-    assert events[-1]["changes"]["linked_po"]["from"]["order_number"] == "000111"
-    assert events[-1]["changes"]["linked_po"]["to"]["order_number"] == "000222"
+    assert events[-1]["changes"]["linked_po"]["from"][0]["order_number"] == "000111"
+    assert events[-1]["changes"]["linked_po"]["to"][0]["order_number"] == "000222"
     assert "→" in (events[-1].get("justification") or "")
 
 

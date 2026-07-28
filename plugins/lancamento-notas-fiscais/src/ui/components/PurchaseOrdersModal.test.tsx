@@ -41,6 +41,23 @@ const sampleGroup = {
   ],
 };
 
+const sampleGroupB = {
+  ...sampleGroup,
+  order_number: "000456",
+  delivery_date: "2026-07-25",
+  open_value: 30,
+  items: [
+    {
+      ...sampleGroup.items[0],
+      order_number: "000456",
+      product_code: "20080001",
+      product_description: "Porca",
+      expected_delivery_date: "2026-07-25",
+      open_value: 30,
+    },
+  ],
+};
+
 describe("PurchaseOrdersModal", () => {
   it("lista grupos e permite ver detalhes", async () => {
     vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
@@ -53,7 +70,7 @@ describe("PurchaseOrdersModal", () => {
       group_count: 1,
       item_count: 1,
       groups: [sampleGroup],
-      linked: null,
+      linked: [],
       can_link: true,
     });
 
@@ -77,18 +94,18 @@ describe("PurchaseOrdersModal", () => {
     expect(screen.getByText("Parafuso")).toBeTruthy();
   });
 
-  it("amarra o grupo selecionado", async () => {
+  it("amarra vários grupos selecionados", async () => {
     vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
       request_id: "req-1",
       branch_code: "01",
       supplier_code: "000001",
       supplier_store: "01",
       supplier_name: "Alpha",
-      order_count: 1,
-      group_count: 1,
-      item_count: 1,
-      groups: [sampleGroup],
-      linked: null,
+      order_count: 2,
+      group_count: 2,
+      item_count: 2,
+      groups: [sampleGroup, sampleGroupB],
+      linked: [],
       can_link: true,
     });
     vi.mocked(api.linkRequestPurchaseOrder).mockResolvedValue({} as never);
@@ -109,11 +126,14 @@ describe("PurchaseOrdersModal", () => {
 
     await waitFor(() => expect(screen.getByTestId("po-table")).toBeTruthy());
     fireEvent.click(screen.getByLabelText("Selecionar PC 000123"));
+    fireEvent.click(screen.getByLabelText("Selecionar PC 000456"));
     fireEvent.click(screen.getByTestId("po-link-btn"));
     await waitFor(() => expect(api.linkRequestPurchaseOrder).toHaveBeenCalled());
     expect(api.linkRequestPurchaseOrder).toHaveBeenCalledWith("req-1", {
-      order_number: "000123",
-      delivery_date: "2026-07-20",
+      groups: [
+        { order_number: "000123", delivery_date: "2026-07-20" },
+        { order_number: "000456", delivery_date: "2026-07-25" },
+      ],
     });
     expect(onLinked).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
@@ -130,7 +150,7 @@ describe("PurchaseOrdersModal", () => {
       group_count: 0,
       item_count: 0,
       groups: [],
-      linked: null,
+      linked: [],
       can_link: false,
     });
 
@@ -146,6 +166,6 @@ describe("PurchaseOrdersModal", () => {
     );
 
     await waitFor(() => expect(screen.getByTestId("po-empty")).toBeTruthy());
-    fireEvent.click(screen.getByRole("button", { name: "Fechar" }));
+    fireEvent.click(screen.getByTestId("po-close-btn"));
   });
 });

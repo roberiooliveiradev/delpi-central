@@ -34,6 +34,17 @@ export type Supplier = {
   blocked: boolean;
 };
 
+export type LinkedPurchaseOrderSnapshot = {
+  order_number: string;
+  delivery_date: string | null;
+  issue_date: string | null;
+  open_value: number | null;
+  product_count: number | null;
+  linked_at: string | null;
+  linked_by_user_id: string | null;
+  linked_by_name: string | null;
+};
+
 export type InvoicePostingRequest = {
   id: string;
   branch_code: string;
@@ -74,6 +85,7 @@ export type InvoicePostingRequest = {
   linked_po_linked_at: string | null;
   linked_po_linked_by_user_id: string | null;
   linked_po_linked_by_name: string | null;
+  linked_purchase_orders: LinkedPurchaseOrderSnapshot[];
   created_at: string;
   updated_at: string;
 };
@@ -137,17 +149,6 @@ export type OpenPurchaseOrderItem = {
   open_value: number;
 };
 
-export type LinkedPurchaseOrderSnapshot = {
-  order_number: string;
-  delivery_date: string | null;
-  issue_date: string | null;
-  open_value: number | null;
-  product_count: number | null;
-  linked_at: string | null;
-  linked_by_user_id: string | null;
-  linked_by_name: string | null;
-};
-
 export type OpenPurchaseOrderGroup = {
   order_number: string;
   delivery_date: string | null;
@@ -168,7 +169,7 @@ export type OpenPurchaseOrdersResponse = {
   group_count: number;
   item_count: number;
   groups: OpenPurchaseOrderGroup[];
-  linked: LinkedPurchaseOrderSnapshot | null;
+  linked: LinkedPurchaseOrderSnapshot[];
   can_link: boolean;
 };
 

@@ -80,6 +80,7 @@ const detail = (actions: InvoicePostingDetail["allowed_actions"]): InvoicePostin
     linked_po_linked_at: null,
     linked_po_linked_by_user_id: null,
     linked_po_linked_by_name: null,
+    linked_purchase_orders: [],
     created_at: "2026-07-02T10:00:00+00:00",
     updated_at: "2026-07-02T10:00:00+00:00",
   },
@@ -209,6 +210,18 @@ describe("RequestDetailPage", () => {
     withPo.request.linked_po_delivery_date = "2026-07-20";
     withPo.request.linked_po_open_value = 150.5;
     withPo.request.linked_po_product_count = 2;
+    withPo.request.linked_purchase_orders = [
+      {
+        order_number: "000123",
+        delivery_date: "2026-07-20",
+        issue_date: null,
+        open_value: 150.5,
+        product_count: 2,
+        linked_at: null,
+        linked_by_user_id: null,
+        linked_by_name: null,
+      },
+    ];
     withPo.history = [
       ...withPo.history,
       {
@@ -231,6 +244,61 @@ describe("RequestDetailPage", () => {
       },
     ];
     vi.mocked(api.getRequest).mockResolvedValue(withPo);
+    vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
+      request_id: "req-1",
+      branch_code: "01",
+      supplier_code: "000001",
+      supplier_store: "01",
+      supplier_name: "Alpha",
+      order_count: 1,
+      group_count: 1,
+      item_count: 1,
+      linked: [
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          issue_date: null,
+          open_value: 150.5,
+          product_count: 2,
+          linked_at: null,
+          linked_by_user_id: null,
+          linked_by_name: null,
+        },
+      ],
+      can_link: true,
+      groups: [
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          issue_date: null,
+          product_count: 2,
+          open_value: 150.5,
+          item_count: 1,
+          items: [
+            {
+              branch: "01",
+              order_number: "000123",
+              order_item: "0001",
+              product_code: "ABC",
+              product_description: "Item cupom",
+              warehouse: "01",
+              unit: "UN",
+              ordered_quantity: 1,
+              delivered_quantity: 0,
+              open_quantity: 1,
+              pre_invoice_quantity: 0,
+              issue_date: null,
+              expected_delivery_date: "2026-07-20",
+              supplier_code: "000001",
+              supplier_store: "01",
+              supplier_name: "Alpha",
+              unit_price: 150.5,
+              open_value: 150.5,
+            },
+          ],
+        },
+      ],
+    });
 
     render(
       <RequestDetailPage
@@ -243,6 +311,9 @@ describe("RequestDetailPage", () => {
     expect(screen.getByTestId("linked-po-summary").textContent).toContain("PC 000123");
     expect(screen.getByText("Pedido de compra amarrado")).toBeTruthy();
     expect(screen.getByText(/Pedido amarrado: PC 000123/)).toBeTruthy();
+    await waitFor(() => expect(screen.getByTestId("linked-po-receipt")).toBeTruthy());
+    expect(screen.getByText("Item cupom")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Editar Pedido de Compras" })).toBeTruthy();
   });
 
   it("mostra botão de pedidos de compra", async () => {

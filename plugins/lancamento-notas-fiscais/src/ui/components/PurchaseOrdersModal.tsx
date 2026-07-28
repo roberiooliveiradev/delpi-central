@@ -28,15 +28,21 @@ function formatQty(value: number, unit: string): string {
   return um ? `${formatted} ${um}` : formatted;
 }
 
-function isSameLink(
+function isLinkedGroup(
   group: OpenPurchaseOrderGroup,
-  linked: LinkedPurchaseOrderSnapshot | null,
+  linked: LinkedPurchaseOrderSnapshot[],
 ): boolean {
-  if (!linked) return false;
-  return (
-    group.order_number === linked.order_number &&
-    (group.delivery_date ?? null) === (linked.delivery_date ?? null)
+  return linked.some(
+    (item) =>
+      group.order_number === item.order_number &&
+      (group.delivery_date ?? null) === (item.delivery_date ?? null),
   );
+}
+
+function normalizeLinked(raw: unknown): LinkedPurchaseOrderSnapshot[] {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object") return [raw as LinkedPurchaseOrderSnapshot];
+  return [];
 }
 
 export function PurchaseOrdersModal({
@@ -52,9 +58,9 @@ export function PurchaseOrdersModal({
   const [linking, setLinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<OpenPurchaseOrderGroup[]>([]);
-  const [linked, setLinked] = useState<LinkedPurchaseOrderSnapshot | null>(null);
+  const [linked, setLinked] = useState<LinkedPurchaseOrderSnapshot[]>([]);
   const [orderCount, setOrderCount] = useState(0);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,20 +68,24 @@ export function PurchaseOrdersModal({
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    setSelectedKey(null);
+    setSelectedKeys(new Set());
     setExpandedKey(null);
     void api
       .listRequestPurchaseOrders(requestId, controller.signal)
       .then((data) => {
         if (controller.signal.aborted) return;
         const nextGroups = data.groups ?? [];
+        const nextLinked = normalizeLinked(data.linked);
         setGroups(nextGroups);
-        setLinked(data.linked ?? null);
+        setLinked(nextLinked);
         setOrderCount(data.order_count ?? 0);
-        if (data.linked) {
-          const match = nextGroups.find((g) => isSameLink(g, data.linked));
-          if (match) setSelectedKey(groupKey(match));
+        const preselected = new Set<string>();
+        for (const group of nextGroups) {
+          if (isLinkedGroup(group, nextLinked)) {
+            preselected.add(groupKey(group));
+          }
         }
+        setSelectedKeys(preselected);
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
@@ -89,7 +99,7 @@ export function PurchaseOrdersModal({
           );
         }
         setGroups([]);
-        setLinked(null);
+        setLinked([]);
         setOrderCount(0);
       })
       .finally(() => {
@@ -98,19 +108,30 @@ export function PurchaseOrdersModal({
     return () => controller.abort();
   }, [open, requestId]);
 
-  const selectedGroup = useMemo(
-    () => groups.find((g) => groupKey(g) === selectedKey) ?? null,
-    [groups, selectedKey],
+  const selectedGroups = useMemo(
+    () => groups.filter((g) => selectedKeys.has(groupKey(g))),
+    [groups, selectedKeys],
   );
 
+  function toggleKey(key: string) {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
   async function handleLink() {
-    if (!selectedGroup || !canLink || linking) return;
+    if (!canLink || linking) return;
     setLinking(true);
     setError(null);
     try {
       await api.linkRequestPurchaseOrder(requestId, {
-        order_number: selectedGroup.order_number,
-        delivery_date: selectedGroup.delivery_date,
+        groups: selectedGroups.map((group) => ({
+          order_number: group.order_number,
+          delivery_date: group.delivery_date,
+        })),
       });
       onLinked?.();
       onClose();
@@ -129,6 +150,18 @@ export function PurchaseOrdersModal({
 
   if (!open) return null;
 
+  const selectionChanged =
+    selectedGroups.length !== linked.length ||
+    selectedGroups.some((g) => !isLinkedGroup(g, linked)) ||
+    linked.some(
+      (item) =>
+        !selectedGroups.some(
+          (g) =>
+            g.order_number === item.order_number &&
+            (g.delivery_date ?? null) === (item.delivery_date ?? null),
+        ),
+    );
+
   return (
     <div className="lnf-modal-backdrop" role="presentation">
       <div
@@ -137,7 +170,19 @@ export function PurchaseOrdersModal({
         aria-modal="true"
         aria-labelledby="lnf-po-title"
       >
-        <h2 id="lnf-po-title">Pedidos de compra</h2>
+        <div className="lnf-modal__header">
+          <h2 id="lnf-po-title">Pedidos de compra</h2>
+          <button
+            type="button"
+            className="lnf-modal__close"
+            onClick={onClose}
+            disabled={linking}
+            aria-label="Fechar"
+            data-testid="po-close-btn"
+          >
+            ×
+          </button>
+        </div>
         <p className="lnf-muted">
           Em aberto no Protheus · Filial {branchCode} · {supplierName}
         </p>
@@ -158,15 +203,22 @@ export function PurchaseOrdersModal({
             <>
               <p className="lnf-muted" data-testid="po-summary">
                 {orderCount} pedido(s) · {groups.length} grupo(s)
+                {canLink
+                  ? ` · ${selectedKeys.size} selecionado(s)`
+                  : null}
               </p>
-              {linked ? (
+              {linked.length > 0 ? (
                 <p className="lnf-po-linked-banner" data-testid="po-linked-banner">
                   Amarrado atualmente:{" "}
                   <strong>
-                    {linkedPurchaseOrderLabel(
-                      linked.order_number,
-                      linked.delivery_date,
-                    )}
+                    {linked
+                      .map((item) =>
+                        linkedPurchaseOrderLabel(
+                          item.order_number,
+                          item.delivery_date,
+                        ),
+                      )
+                      .join(" · ")}
                   </strong>
                 </p>
               ) : null}
@@ -187,23 +239,23 @@ export function PurchaseOrdersModal({
                     {groups.map((group) => {
                       const key = groupKey(group);
                       const expanded = expandedKey === key;
-                      const linkedNow = isSameLink(group, linked);
+                      const linkedNow = isLinkedGroup(group, linked);
+                      const checked = selectedKeys.has(key);
                       return (
                         <Fragment key={key}>
                           <tr
                             className={
-                              linkedNow ? "lnf-po-row--linked" : undefined
+                              linkedNow || checked ? "lnf-po-row--linked" : undefined
                             }
                             data-testid={`po-group-${group.order_number}`}
                           >
                             {canLink ? (
                               <td>
                                 <input
-                                  type="radio"
-                                  name="lnf-po-select"
+                                  type="checkbox"
                                   aria-label={`Selecionar PC ${group.order_number}`}
-                                  checked={selectedKey === key}
-                                  onChange={() => setSelectedKey(key)}
+                                  checked={checked}
+                                  onChange={() => toggleKey(key)}
                                   data-testid={`po-select-${key}`}
                                 />
                               </td>
@@ -297,11 +349,15 @@ export function PurchaseOrdersModal({
             <button
               type="button"
               className="lnf-btn lnf-btn--primary"
-              disabled={!selectedGroup || linking || loading}
+              disabled={linking || loading || !selectionChanged}
               onClick={() => void handleLink()}
               data-testid="po-link-btn"
             >
-              {linking ? "Amarrando…" : "Amarrar à solicitação"}
+              {linking
+                ? "Salvando…"
+                : selectedKeys.size === 0
+                  ? "Desamarrar todos"
+                  : `Salvar amarração (${selectedKeys.size})`}
             </button>
           ) : null}
         </div>

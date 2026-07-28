@@ -151,7 +151,9 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             }
             self._insert_history(history_fields, auto_commit=False)
             self.commit()
-            return _serialize_request(row)
+            out = _serialize_request(row)
+            out["linked_purchase_orders"] = []
+            return out
         except PluginsRepositoryError as exc:
             if _is_unique_violation(exc):
                 raise DuplicateFiscalKeyError() from exc
@@ -172,7 +174,146 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             """,
             (request_id,),
         )
-        return _serialize_request(row) if row else None
+        if not row:
+            return None
+        return self._serialize_request_with_links(row)
+
+    def list_linked_purchase_orders(self, request_id: str) -> list[dict[str, Any]]:
+        rows = self.fetch_all(
+            f"""
+            SELECT order_number, delivery_date, issue_date, open_value, product_count,
+                   linked_at, linked_by_user_id, linked_by_name
+              FROM {SCHEMA}.invoice_posting_request_linked_pos
+             WHERE request_id = %s::uuid
+             ORDER BY
+                CASE WHEN delivery_date IS NULL THEN 1 ELSE 0 END,
+                delivery_date ASC,
+                order_number ASC
+            """,
+            (request_id,),
+        )
+        return [_serialize_linked_po(r) for r in rows]
+
+    def list_linked_purchase_orders_for_requests(
+        self,
+        request_ids: Sequence[str],
+    ) -> dict[str, list[dict[str, Any]]]:
+        ids = [str(x) for x in request_ids if str(x).strip()]
+        if not ids:
+            return {}
+        rows = self.fetch_all(
+            f"""
+            SELECT request_id, order_number, delivery_date, issue_date, open_value,
+                   product_count, linked_at, linked_by_user_id, linked_by_name
+              FROM {SCHEMA}.invoice_posting_request_linked_pos
+             WHERE request_id = ANY(%s::uuid[])
+             ORDER BY
+                request_id,
+                CASE WHEN delivery_date IS NULL THEN 1 ELSE 0 END,
+                delivery_date ASC,
+                order_number ASC
+            """,
+            (ids,),
+        )
+        out: dict[str, list[dict[str, Any]]] = {rid: [] for rid in ids}
+        for row in rows:
+            rid = str(row["request_id"])
+            out.setdefault(rid, []).append(_serialize_linked_po(row))
+        return out
+
+    def replace_linked_purchase_orders(
+        self,
+        *,
+        request_id: str,
+        rows: Sequence[dict[str, Any]],
+        history_fields: dict[str, Any],
+        mirror_updates: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Substitui o conjunto de PCs amarrados (DELETE + INSERT) + histórico."""
+        try:
+            current = self.get_request(request_id)
+            if current is None:
+                raise LookupError(request_id)
+
+            self.execute(
+                f"""
+                DELETE FROM {SCHEMA}.invoice_posting_request_linked_pos
+                 WHERE request_id = %s::uuid
+                """,
+                (request_id,),
+                auto_commit=False,
+            )
+            for row in rows:
+                self.execute(
+                    f"""
+                    INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
+                        request_id, order_number, delivery_date, issue_date,
+                        open_value, product_count, linked_at,
+                        linked_by_user_id, linked_by_name
+                    ) VALUES (
+                        %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                    """,
+                    (
+                        request_id,
+                        row["order_number"],
+                        row.get("delivery_date"),
+                        row.get("issue_date"),
+                        row.get("open_value"),
+                        row.get("product_count"),
+                        row.get("linked_at"),
+                        row.get("linked_by_user_id"),
+                        row.get("linked_by_name"),
+                    ),
+                    auto_commit=False,
+                )
+
+            assignments = []
+            params: list[Any] = []
+            for key, value in mirror_updates.items():
+                assignments.append(f"{key} = %s")
+                params.append(value)
+            assignments.append("updated_at = NOW()")
+            params.append(request_id)
+            updated = self.execute_returning_one(
+                f"""
+                UPDATE {SCHEMA}.invoice_posting_requests
+                   SET {", ".join(assignments)}
+                 WHERE id = %s::uuid
+             RETURNING {_REQUEST_COLUMNS}
+                """,
+                tuple(params),
+                auto_commit=False,
+            )
+            if updated is None:
+                self.rollback()
+                raise LookupError(request_id)
+
+            history_fields = {**history_fields, "request_id": updated["id"]}
+            self._insert_history(history_fields, auto_commit=False)
+            self.commit()
+            return self._serialize_request_with_links(updated)
+        except Exception:
+            self.rollback()
+            raise
+
+    def _serialize_request_with_links(self, row: dict[str, Any]) -> dict[str, Any]:
+        out = _serialize_request(row)
+        rid = str(out.get("id") or "")
+        out["linked_purchase_orders"] = (
+            self.list_linked_purchase_orders(rid) if rid else []
+        )
+        return out
+
+    def _serialize_request_rows(self, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+        if not rows:
+            return []
+        serialized = [_serialize_request(r) for r in rows]
+        ids = [str(r["id"]) for r in serialized]
+        by_id = self.list_linked_purchase_orders_for_requests(ids)
+        for item in serialized:
+            item["linked_purchase_orders"] = by_id.get(str(item["id"]), [])
+        return serialized
 
     def list_history(self, request_id: str) -> list[dict[str, Any]]:
         rows = self.fetch_all(
@@ -274,7 +415,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             tuple(params + [page_size, offset]),
         )
         return {
-            "items": [_serialize_request(r) for r in rows],
+            "items": self._serialize_request_rows(rows),
             "page": page,
             "page_size": page_size,
             "total": total,
@@ -541,7 +682,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             history_fields = {**history_fields, "request_id": row["id"]}
             self._insert_history(history_fields, auto_commit=False)
             self.commit()
-            return _serialize_request(row)
+            return self._serialize_request_with_links(row)
         except PluginsRepositoryError as exc:
             if _is_unique_violation(exc):
                 raise DuplicateFiscalKeyError() from exc
@@ -627,6 +768,24 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
         )
 
 
+def _serialize_linked_po(row: dict[str, Any]) -> dict[str, Any]:
+    out = {
+        "order_number": str(row.get("order_number") or "").strip(),
+        "delivery_date": _iso(row.get("delivery_date")),
+        "issue_date": _iso(row.get("issue_date")),
+        "open_value": (
+            float(row["open_value"])
+            if isinstance(row.get("open_value"), Decimal)
+            else row.get("open_value")
+        ),
+        "product_count": row.get("product_count"),
+        "linked_at": _iso(row.get("linked_at")),
+        "linked_by_user_id": row.get("linked_by_user_id"),
+        "linked_by_name": row.get("linked_by_name"),
+    }
+    return out
+
+
 def _serialize_request(row: dict[str, Any]) -> dict[str, Any]:
     out = dict(row)
     for key in ("id",):
@@ -650,6 +809,8 @@ def _serialize_request(row: dict[str, Any]) -> dict[str, Any]:
         out["amount"] = float(out["amount"])
     if isinstance(out.get("linked_po_open_value"), Decimal):
         out["linked_po_open_value"] = float(out["linked_po_open_value"])
+    if "linked_purchase_orders" not in out:
+        out["linked_purchase_orders"] = []
     return out
 
 

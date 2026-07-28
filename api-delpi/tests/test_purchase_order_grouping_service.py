@@ -5,8 +5,10 @@ from __future__ import annotations
 from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
     find_purchase_order_group,
     format_linked_po_label,
+    format_linked_po_labels,
     group_open_purchase_order_lines,
     linked_po_snapshot_from_request,
+    linked_po_snapshots_from_request,
 )
 
 
@@ -81,3 +83,35 @@ def test_find_group_and_snapshot_helpers() -> None:
     assert "sem data" in format_linked_po_label(
         order_number="000123", delivery_date=None
     )
+    assert linked_po_snapshots_from_request(
+        {
+            "linked_purchase_orders": [
+                {"order_number": "A", "delivery_date": None},
+                {"order_number": "B", "delivery_date": "2026-07-01"},
+            ]
+        }
+    ) == [
+        {
+            "order_number": "A",
+            "delivery_date": None,
+            "issue_date": None,
+            "open_value": None,
+            "product_count": None,
+            "linked_at": None,
+            "linked_by_user_id": None,
+            "linked_by_name": None,
+        },
+        {
+            "order_number": "B",
+            "delivery_date": "2026-07-01",
+            "issue_date": None,
+            "open_value": None,
+            "product_count": None,
+            "linked_at": None,
+            "linked_by_user_id": None,
+            "linked_by_name": None,
+        },
+    ]
+    assert format_linked_po_labels(
+        [{"order_number": "A", "delivery_date": None}]
+    ).startswith("PC A")
