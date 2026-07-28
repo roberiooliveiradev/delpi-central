@@ -2941,19 +2941,20 @@ body.td-composer--marqueeing *{
   overflow: hidden;
 }
 .dashboard-tv-dashboard .td-editor-presence{
-  align-self: flex-end;
-  flex: 0 0 auto;
-  max-width: min(100%, 520px);
-  padding: 4px 10px;
+  flex: 0 1 auto;
+  max-width: min(42vw, 360px);
+  min-width: 0;
+  padding: 3px 10px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--td-accent) 28%, var(--td-border));
   border-radius: 999px;
-  background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
+  background: color-mix(in srgb, var(--td-accent) 10%, var(--td-surface));
   color: var(--td-muted);
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.3;
   text-overflow: ellipsis;
   white-space: nowrap;
+  align-self: center;
 }
 .dashboard-tv-dashboard .td-deck__compact-bar{
   display: flex;
@@ -6162,8 +6163,13 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-chrome__head-trail{
   display: inline-flex;
   align-items: stretch;
-  flex-shrink: 0;
+  gap: 8px;
+  flex-shrink: 1;
+  min-width: 0;
   margin-left: auto;
+}
+.dashboard-tv-dashboard .td-deck-chrome__head-trail .td-editor-presence{
+  align-self: center;
 }
 .dashboard-tv-dashboard .td-deck-chrome__collapse,
 .dashboard-tv-dashboard .td-deck-chrome__reopen{

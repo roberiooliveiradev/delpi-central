@@ -249,6 +249,16 @@ export function DeckEditorChrome({
         />
         {playlistChrome ? (
           <div className="td-deck-chrome__head-trail">
+            {playlistChrome.editingPresence?.trim() ? (
+              <span
+                className="td-editor-presence"
+                role="status"
+                aria-live="polite"
+                title={playlistChrome.editingPresence.trim()}
+              >
+                {playlistChrome.editingPresence.trim()}
+              </span>
+            ) : null}
             <DeckPlaylistIdentity
               playlistName={playlistChrome.playlistName}
               tvStatusLabel={playlistChrome.tvStatusLabel}

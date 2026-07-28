@@ -23,6 +23,8 @@ export type DeckPlaylistIdentityProps = {
   playlistName: string;
   tvStatusLabel?: string | null;
   tvStatusClass?: string;
+  /** Aviso de coedição ao vivo — fica na top bar, à esquerda do nome. */
+  editingPresence?: string | null;
 };
 
 export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {

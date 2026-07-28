@@ -1160,6 +1160,10 @@ export function PlaylistEditorPage({
       playlistName: playlist.name,
       tvStatusLabel: tvStatusLabel(),
       tvStatusClass: tvStatusClass(),
+      editingPresence:
+        otherEditors.length > 0
+          ? `Também editando: ${otherEditors.map((peer) => peer.displayName).join(", ")}`
+          : null,
       linkActive: playlist.isActive,
       onBack,
       onPreview,
@@ -1219,11 +1223,6 @@ export function PlaylistEditorPage({
       <KeyboardShortcutsTipsProvider>
       <DeckKeyTipsProvider>
       <div className="td-deck td-deck--editor">
-      {otherEditors.length > 0 ? (
-        <div className="td-editor-presence" role="status" aria-live="polite">
-          Também editando: {otherEditors.map((peer) => peer.displayName).join(", ")}
-        </div>
-      ) : null}
       {isCustomSlide && selectedSlide && editorComunicadoValue ? (
         <ComunicadoEditorProvider
           playlistId={playlistId}
