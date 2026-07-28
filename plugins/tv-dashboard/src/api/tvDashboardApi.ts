@@ -27,6 +27,20 @@ export type PlaylistMasterConfig = {
   };
 };
 
+export type PlaylistSection = {
+  id: string;
+  playlistId: string;
+  name: string;
+  sortOrder: number;
+  isCollapsed?: boolean;
+  isActive?: boolean;
+  defaultDurationSec?: number | null;
+  transitionStyle?: string | null;
+  masterConfig?: PlaylistMasterConfig;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
 export type Playlist = {
   id: string;
   /** Revisão otimista do agregado, quando entregue pelo backend. */
@@ -49,6 +63,7 @@ export type Playlist = {
   accessRole?: "owner" | "editor" | "viewer";
   dataDefaults?: Record<string, unknown>;
   masterConfig?: PlaylistMasterConfig;
+  sections?: PlaylistSection[];
   slides?: Slide[];
 };
 
@@ -88,6 +103,8 @@ export type Slide = {
   isActive: boolean;
   /** Override da transição da playlist; omitido = herdar. */
   transitionStyle?: string | null;
+  /** Seção da programação; null = sem seção. */
+  sectionId?: string | null;
 };
 
 export type NativeScreenCatalogItem = {
@@ -137,17 +154,28 @@ export type PresentationPayload = {
     globalRefreshSec: number;
     defaultDurationSec: number;
     publicUrl?: string;
+    masterConfig?: PlaylistMasterConfig;
   };
   presentationMeta?: {
     nativeErrorAdvanceSec: number;
     heartbeatIntervalSec: number;
   };
+  sections?: Array<{
+    id: string;
+    name: string;
+    sortOrder: number;
+    isActive?: boolean;
+    defaultDurationSec?: number | null;
+    transitionStyle?: string | null;
+    masterConfig?: PlaylistMasterConfig;
+  }>;
   slides: Array<{
     id: string;
     sortOrder: number;
     slideType: "native" | "external";
     durationSec: number;
     title: string;
+    sectionId?: string | null;
     transitionStyle?: string | null;
     native?: { screenKey: string; config: Record<string, unknown>; data: Record<string, unknown> };
     external?: { url: string; sandbox?: string | null };
@@ -616,6 +644,7 @@ export async function addSlide(
     nativeConfig?: Record<string, unknown>;
     externalUrl?: string;
     transitionStyle?: string | null;
+    sectionId?: string | null;
   },
 ) {
   return unwrap(
@@ -663,6 +692,7 @@ export async function updateSlide(
     externalUrl: string;
     isActive: boolean;
     transitionStyle: string | null;
+    sectionId: string | null;
   }>,
   options?: { keepalive?: boolean },
 ) {
@@ -671,6 +701,81 @@ export async function updateSlide(
       `${API_BASE}/playlists/${playlistId}/slides/${slideId}`,
       body,
       { keepalive: options?.keepalive },
+    ),
+  );
+}
+
+export async function listPlaylistSections(playlistId: string) {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: PlaylistSection[] }>>(
+      `${API_BASE}/playlists/${playlistId}/sections`,
+    ),
+  );
+  return data.items;
+}
+
+export async function createPlaylistSection(
+  playlistId: string,
+  body: {
+    name: string;
+    sortOrder?: number;
+    isCollapsed?: boolean;
+    isActive?: boolean;
+    defaultDurationSec?: number | null;
+    transitionStyle?: string | null;
+    masterConfig?: PlaylistMasterConfig;
+  },
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<PlaylistSection>>(
+      `${API_BASE}/playlists/${playlistId}/sections`,
+      body,
+    ),
+  );
+}
+
+export async function updatePlaylistSection(
+  playlistId: string,
+  sectionId: string,
+  body: Partial<{
+    name: string;
+    sortOrder: number;
+    isCollapsed: boolean;
+    isActive: boolean;
+    defaultDurationSec: number | null;
+    transitionStyle: string | null;
+    masterConfig: PlaylistMasterConfig;
+  }>,
+) {
+  return unwrap(
+    httpPatch<ApiEnvelope<PlaylistSection>>(
+      `${API_BASE}/playlists/${playlistId}/sections/${sectionId}`,
+      body,
+    ),
+  );
+}
+
+export async function deletePlaylistSection(
+  playlistId: string,
+  sectionId: string,
+  options?: { deleteSlides?: boolean },
+) {
+  const qs = options?.deleteSlides ? "?deleteSlides=true" : "";
+  return unwrap(
+    httpDelete<ApiEnvelope<{ deleted: boolean }>>(
+      `${API_BASE}/playlists/${playlistId}/sections/${sectionId}${qs}`,
+    ),
+  );
+}
+
+export async function reorderPlaylistSections(
+  playlistId: string,
+  items: Array<{ id: string; sortOrder: number }>,
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<{ items: PlaylistSection[] }>>(
+      `${API_BASE}/playlists/${playlistId}/sections/reorder`,
+      { items },
     ),
   );
 }

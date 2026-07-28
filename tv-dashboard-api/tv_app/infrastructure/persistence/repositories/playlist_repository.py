@@ -24,6 +24,10 @@ class SlideNotFoundError(LookupError):
     pass
 
 
+class SectionNotFoundError(LookupError):
+    pass
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -66,6 +70,23 @@ def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
         "externalSandbox": row["external_sandbox"],
         "isActive": row["is_active"],
         "transitionStyle": row.get("transition_style"),
+        "sectionId": str(row["section_id"]) if row.get("section_id") else None,
+    }
+
+
+def _row_to_section(row: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": str(row["id"]),
+        "playlistId": str(row["playlist_id"]),
+        "name": row["name"],
+        "sortOrder": row["sort_order"],
+        "isCollapsed": bool(row.get("is_collapsed")),
+        "isActive": bool(row.get("is_active", True)),
+        "defaultDurationSec": row.get("default_duration_sec"),
+        "transitionStyle": row.get("transition_style"),
+        "masterConfig": row.get("master_config") or {},
+        "createdAt": row["created_at"].isoformat() if row.get("created_at") else None,
+        "updatedAt": row["updated_at"].isoformat() if row.get("updated_at") else None,
     }
 
 
@@ -579,6 +600,7 @@ class PlaylistRepository:
         if not source:
             raise PlaylistNotFoundError
         slides = self.list_slides(playlist_id)
+        sections = self.list_sections(playlist_id)
         token = secrets.token_urlsafe(32)
         copy_name = f"{source['name']}{name_suffix}".strip()
         owner = (created_by or "").strip() or None
@@ -610,15 +632,43 @@ class PlaylistRepository:
                 )
                 new_row = cur.fetchone()
                 new_id = new_row["id"]
+                section_id_map: dict[str, str] = {}
+                for section in sections:
+                    cur.execute(
+                        """
+                        INSERT INTO tv_dashboard.playlist_sections (
+                          playlist_id, name, sort_order, is_collapsed, is_active,
+                          default_duration_sec, transition_style, master_config
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        RETURNING id
+                        """,
+                        (
+                            str(new_id),
+                            section["name"],
+                            section["sortOrder"],
+                            bool(section.get("isCollapsed", False)),
+                            bool(section.get("isActive", True)),
+                            section.get("defaultDurationSec"),
+                            section.get("transitionStyle"),
+                            json.dumps(section.get("masterConfig") or {}),
+                        ),
+                    )
+                    new_section = cur.fetchone()
+                    section_id_map[str(section["id"])] = str(new_section["id"])
                 for slide in slides:
+                    source_section = slide.get("sectionId")
+                    mapped_section = (
+                        section_id_map.get(str(source_section)) if source_section else None
+                    )
                     cur.execute(
                         """
                         INSERT INTO tv_dashboard.slides (
                           playlist_id, sort_order, slide_type, duration_sec, title,
                           native_screen_key, native_config, external_url, external_sandbox, is_active,
-                          transition_style
+                          transition_style, section_id
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s)
                         """,
                         (
                             str(new_id),
@@ -632,6 +682,7 @@ class PlaylistRepository:
                             slide.get("externalSandbox"),
                             slide.get("isActive", True),
                             slide.get("transitionStyle"),
+                            mapped_section,
                         ),
                     )
             conn.commit()
@@ -659,6 +710,7 @@ class PlaylistRepository:
                 "externalUrl": slide.get("externalUrl"),
                 "externalSandbox": slide.get("externalSandbox"),
                 "transitionStyle": slide.get("transitionStyle"),
+                "sectionId": slide.get("sectionId"),
             },
             actor_user_id=actor_user_id,
             reason=reason,
@@ -756,9 +808,10 @@ class PlaylistRepository:
                     """
                     INSERT INTO tv_dashboard.slides (
                       playlist_id, sort_order, slide_type, duration_sec, title,
-                      native_screen_key, native_config, external_url, external_sandbox, transition_style
+                      native_screen_key, native_config, external_url, external_sandbox,
+                      transition_style, section_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s)
                     RETURNING *
                     """,
                     (
@@ -772,6 +825,7 @@ class PlaylistRepository:
                         payload.get("externalUrl"),
                         payload.get("externalSandbox"),
                         payload.get("transitionStyle"),
+                        str(payload["sectionId"]) if payload.get("sectionId") else None,
                     ),
                 )
                 row = cur.fetchone()
@@ -796,6 +850,12 @@ class PlaylistRepository:
             else:
                 fields.append("transition_style = %s")
                 values.append(payload["transitionStyle"])
+        if "sectionId" in payload:
+            if payload["sectionId"] is None:
+                fields.append("section_id = NULL")
+            else:
+                fields.append("section_id = %s")
+                values.append(str(payload["sectionId"]))
         mapping = {
             "sort_order": payload.get("sortOrder"),
             "duration_sec": payload.get("durationSec"),
@@ -933,6 +993,231 @@ class PlaylistRepository:
                 self._touch_playlist_updated_at(cur, playlist_id)
             conn.commit()
         return self.list_slides(playlist_id)
+
+    def list_sections(self, playlist_id: UUID) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT * FROM tv_dashboard.playlist_sections
+                    WHERE playlist_id = %s
+                    ORDER BY sort_order ASC
+                    """,
+                    (str(playlist_id),),
+                )
+                rows = cur.fetchall()
+        return [_row_to_section(row) for row in rows]
+
+    def get_section(self, section_id: UUID, *, playlist_id: UUID) -> dict[str, Any]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT * FROM tv_dashboard.playlist_sections
+                    WHERE id = %s AND playlist_id = %s
+                    """,
+                    (str(section_id), str(playlist_id)),
+                )
+                row = cur.fetchone()
+        if not row:
+            raise SectionNotFoundError
+        return _row_to_section(row)
+
+    def add_section(
+        self,
+        playlist_id: UUID,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "section_created",
+    ) -> dict[str, Any]:
+        sort_order = payload.get("sortOrder")
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                if sort_order is None:
+                    cur.execute(
+                        """
+                        SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
+                        FROM tv_dashboard.playlist_sections
+                        WHERE playlist_id = %s
+                        """,
+                        (str(playlist_id),),
+                    )
+                    next_row = cur.fetchone()
+                    sort_order = int(next_row["next_order"]) if next_row else 0
+                cur.execute(
+                    """
+                    INSERT INTO tv_dashboard.playlist_sections (
+                      playlist_id, name, sort_order, is_collapsed, is_active,
+                      default_duration_sec, transition_style, master_config
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    RETURNING *
+                    """,
+                    (
+                        str(playlist_id),
+                        str(payload.get("name") or "Nova seção").strip(),
+                        sort_order,
+                        bool(payload.get("isCollapsed", False)),
+                        bool(payload.get("isActive", True)),
+                        payload.get("defaultDurationSec"),
+                        payload.get("transitionStyle"),
+                        json.dumps(payload.get("masterConfig") or {}),
+                    ),
+                )
+                row = cur.fetchone()
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return _row_to_section(row)
+
+    def update_section(
+        self,
+        playlist_id: UUID,
+        section_id: UUID,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "section_updated",
+    ) -> dict[str, Any]:
+        fields: list[str] = []
+        values: list[Any] = []
+        if "name" in payload and payload["name"] is not None:
+            fields.append("name = %s")
+            values.append(str(payload["name"]).strip())
+        if "sortOrder" in payload and payload["sortOrder"] is not None:
+            fields.append("sort_order = %s")
+            values.append(int(payload["sortOrder"]))
+        if "isCollapsed" in payload and payload["isCollapsed"] is not None:
+            fields.append("is_collapsed = %s")
+            values.append(bool(payload["isCollapsed"]))
+        if "isActive" in payload and payload["isActive"] is not None:
+            fields.append("is_active = %s")
+            values.append(bool(payload["isActive"]))
+        if "defaultDurationSec" in payload:
+            if payload["defaultDurationSec"] is None:
+                fields.append("default_duration_sec = NULL")
+            else:
+                fields.append("default_duration_sec = %s")
+                values.append(int(payload["defaultDurationSec"]))
+        if "transitionStyle" in payload:
+            if payload["transitionStyle"] is None:
+                fields.append("transition_style = NULL")
+            else:
+                fields.append("transition_style = %s")
+                values.append(payload["transitionStyle"])
+        if "masterConfig" in payload and payload["masterConfig"] is not None:
+            fields.append("master_config = %s::jsonb")
+            values.append(json.dumps(payload["masterConfig"]))
+        if not fields:
+            return self.get_section(section_id, playlist_id=playlist_id)
+        fields.append("updated_at = NOW()")
+        values.extend([str(section_id), str(playlist_id)])
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                cur.execute(
+                    f"""
+                    UPDATE tv_dashboard.playlist_sections
+                    SET {", ".join(fields)}
+                    WHERE id = %s AND playlist_id = %s
+                    RETURNING *
+                    """,
+                    tuple(values),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise SectionNotFoundError
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return _row_to_section(row)
+
+    def delete_section(
+        self,
+        playlist_id: UUID,
+        section_id: UUID,
+        *,
+        actor_user_id: str,
+        delete_slides: bool = False,
+        reason: str = "section_deleted",
+    ) -> None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                if delete_slides:
+                    cur.execute(
+                        """
+                        DELETE FROM tv_dashboard.slides
+                        WHERE playlist_id = %s AND section_id = %s
+                        """,
+                        (str(playlist_id), str(section_id)),
+                    )
+                cur.execute(
+                    """
+                    DELETE FROM tv_dashboard.playlist_sections
+                    WHERE id = %s AND playlist_id = %s
+                    RETURNING id
+                    """,
+                    (str(section_id), str(playlist_id)),
+                )
+                row = cur.fetchone()
+                if not row:
+                    raise SectionNotFoundError
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+
+    def reorder_sections(
+        self,
+        playlist_id: UUID,
+        items: list[dict[str, int | str]],
+        *,
+        actor_user_id: str,
+        reason: str = "sections_reordered",
+    ) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                for offset, item in enumerate(items):
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.playlist_sections
+                        SET sort_order = %s, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (-1000 - offset, str(item["id"]), str(playlist_id)),
+                    )
+                for item in items:
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.playlist_sections
+                        SET sort_order = %s, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (item["sortOrder"], str(item["id"]), str(playlist_id)),
+                    )
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return self.list_sections(playlist_id)
 
 
 def load_native_screens_catalog() -> list[dict[str, Any]]:

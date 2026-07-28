@@ -879,6 +879,14 @@ Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/r
 </CenteredScaledPreview>
 ```
 
+### `DeckSectionHeader` / `DeckSectionList` / `DeckSectionContextMenu`
+
+Kit de seções do filmstrip (TV Dashboard). Classes `.delpi-ui-deck-section*` em `styles/deck-section.css`; o MFE só compõe — sem CSS de componente local.
+
+```tsx
+import { DeckSectionList, DeckSectionContextMenu } from "@delpi/plugin-ui";
+```
+
 ### `ComunicadoStageFrame`
 
 Moldura presentacional do slide personalizado. Classes dual `tdp-comunicado*` + `delpi-ui-comunicado*`; CSS canônico em `styles/comunicado-stage.css`. O domínio dos blocos permanece em `tv-dashboard-presentation` (`RichComunicadoStage`).

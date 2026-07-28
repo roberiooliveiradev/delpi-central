@@ -359,6 +359,38 @@
   text-align: center;
 }
 
+.tdp-preview-controls__section-jump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+}
+
+.tdp-preview-controls__section-jump-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tdp-preview-controls__section-select {
+  appearance: none;
+  border: 1px solid color-mix(in srgb, #089bdb 40%, transparent);
+  background: color-mix(in srgb, #089bdb 18%, transparent);
+  color: #e2e8f0;
+  border-radius: 999px;
+  padding: 6px 28px 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 160px;
+}
+
 .tdp-stage--preview-shell,
 .tdp-stage--kiosk {
   position: relative;

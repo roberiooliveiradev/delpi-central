@@ -12,9 +12,17 @@ export type PublicSlide = {
   slideType: "native" | "external";
   durationSec: number;
   title: string;
+  sectionId?: string | null;
   transitionStyle?: string | null;
   native?: PublicSlideNative;
   external?: { url: string; sandbox?: string | null };
+};
+
+export type PublicPresentationSection = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive?: boolean;
 };
 
 export type PublicPresentationPayload = {
@@ -32,6 +40,7 @@ export type PublicPresentationPayload = {
     nativeErrorAdvanceSec: number;
     heartbeatIntervalSec: number;
   };
+  sections?: PublicPresentationSection[];
   slides: PublicSlide[];
 };
 

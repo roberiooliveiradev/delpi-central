@@ -71,6 +71,7 @@ export function PresentationView({
     setPaused,
     goPrevious,
     goNext,
+    goToSection,
   } = usePresentationEngine<PublicPresentationPayload>({
     initialPayload,
     onRefresh: onRefresh || token ? reloadPayload : undefined,
@@ -182,6 +183,8 @@ export function PresentationView({
         onPauseToggle={() => setPaused(!paused)}
         onPrevious={goPrevious}
         onNext={goNext}
+        sections={payload.sections}
+        onJumpToSection={goToSection}
       />
     </div>
   );

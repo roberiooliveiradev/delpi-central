@@ -1,10 +1,11 @@
 import { type ReactNode } from "react";
 
-import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tvDashboardApi";
+import type { PlaylistMasterConfig, PlaylistSection, PresentationPayload, Slide } from "../api/tvDashboardApi";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 
 type Props = {
   slides: Slide[];
+  sections?: PlaylistSection[];
   playlistId: string;
   selectedSlideId: string | null;
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
@@ -19,18 +20,25 @@ type Props = {
   onDrop: (index: number) => void;
   onDragEnd: () => void;
   onAdd: () => void;
+  onAddSection?: () => void;
   onCopySlide: (slide: Slide) => void;
   onPasteSlide: () => void;
   onDuplicateSlide: (slide: Slide) => void;
   onRenameSlide: (slide: Slide, title: string) => void;
   onToggleSlideActive: (slide: Slide) => void;
   onRemoveSlide: (slide: Slide) => void;
+  onSectionNameCommit?: (sectionId: string, name: string) => void;
+  onSectionToggleCollapsed?: (sectionId: string, collapsed: boolean) => void;
+  onSectionToggleActive?: (sectionId: string, active: boolean) => void;
+  onSectionDelete?: (sectionId: string, deleteSlides: boolean) => void;
+  onSectionProperties?: (sectionId: string) => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
 };
 
 export function DeckWorkspace({
   slides,
+  sections,
   playlistId,
   selectedSlideId,
   previewBySlideId,
@@ -45,12 +53,18 @@ export function DeckWorkspace({
   onDrop,
   onDragEnd,
   onAdd,
+  onAddSection,
   onCopySlide,
   onPasteSlide,
   onDuplicateSlide,
   onRenameSlide,
   onToggleSlideActive,
   onRemoveSlide,
+  onSectionNameCommit,
+  onSectionToggleCollapsed,
+  onSectionToggleActive,
+  onSectionDelete,
+  onSectionProperties,
   stage,
   rightPanel,
 }: Props) {
@@ -58,6 +72,7 @@ export function DeckWorkspace({
     <div className="td-deck__workspace">
       <SlideFilmstrip
         slides={slides}
+        sections={sections}
         playlistId={playlistId}
         selectedSlideId={selectedSlideId}
         previewBySlideId={previewBySlideId}
@@ -72,12 +87,18 @@ export function DeckWorkspace({
         onDrop={onDrop}
         onDragEnd={onDragEnd}
         onAdd={onAdd}
+        onAddSection={onAddSection}
         onCopy={onCopySlide}
         onPaste={onPasteSlide}
         onDuplicate={onDuplicateSlide}
         onRename={onRenameSlide}
         onToggleActive={onToggleSlideActive}
         onRemove={onRemoveSlide}
+        onSectionNameCommit={onSectionNameCommit}
+        onSectionToggleCollapsed={onSectionToggleCollapsed}
+        onSectionToggleActive={onSectionToggleActive}
+        onSectionDelete={onSectionDelete}
+        onSectionProperties={onSectionProperties}
       />
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         <div className="td-deck-stage__inner">

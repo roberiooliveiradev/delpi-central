@@ -5,6 +5,12 @@ from uuid import UUID
 
 from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
 from tv_app.application.services.native_screen_data_service import NativeScreenDataService
+from tv_app.application.services.playlist_section_inheritance_service import (
+    is_slide_visible_in_presentation,
+    merge_master_configs,
+    resolve_slide_duration_sec,
+    resolve_slide_transition_style,
+)
 from tv_app.application.services.public_filter_overrides_service import (
     allowlist_filter_overrides,
     collect_allowed_input_keys_from_playlist_slides,
@@ -96,24 +102,91 @@ class PresentationPayloadService:
         user: Any | None = None,
         filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
+        playlist_uuid = UUID(playlist["id"])
+        all_sections = self._repo.list_sections(playlist_uuid)
+        section_by_id = {s["id"]: s for s in all_sections}
+        active_sections = [s for s in all_sections if s.get("isActive", True)]
+
         slides = [
             slide
-            for slide in self._repo.list_slides(UUID(playlist["id"]))
-            if slide.get("isActive", True)
+            for slide in self._repo.list_slides(playlist_uuid)
+            if is_slide_visible_in_presentation(
+                slide_active=bool(slide.get("isActive", True)),
+                section=section_by_id.get(slide.get("sectionId") or ""),
+            )
         ]
         default_duration = playlist.get("defaultDurationSec") or 30
+        playlist_transition = playlist.get("transitionStyle") or "fade"
         playlist_id = str(playlist["id"])
         public_token = str(playlist["publicToken"]) if public_media_urls else None
-        playlist_defaults = playlist.get("dataDefaults") if isinstance(playlist.get("dataDefaults"), dict) else {}
-        allowed_slide_keys, allowed_by_source = collect_allowed_input_keys_from_playlist_slides(slides)
+        playlist_defaults = (
+            playlist.get("dataDefaults") if isinstance(playlist.get("dataDefaults"), dict) else {}
+        )
+        allowed_slide_keys, allowed_by_source = collect_allowed_input_keys_from_playlist_slides(
+            slides
+        )
         safe_overrides = allowlist_filter_overrides(
             filter_overrides,
             allowed_slide_keys=allowed_slide_keys,
             allowed_by_source=allowed_by_source,
         )
+
+        master_raw = (
+            playlist.get("masterConfig") if isinstance(playlist.get("masterConfig"), dict) else {}
+        )
+        playlist_master = self._comunicado.enrich_master_config(
+            master_raw,
+            api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
+            playlist_id=playlist_id,
+            public_token=public_token,
+        )
+
+        rendered_sections: list[dict[str, Any]] = []
+        section_master_by_id: dict[str, dict[str, Any] | None] = {}
+        for section in active_sections:
+            sec_raw = (
+                section.get("masterConfig")
+                if isinstance(section.get("masterConfig"), dict)
+                else {}
+            )
+            sec_master = self._comunicado.enrich_master_config(
+                sec_raw,
+                api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
+                playlist_id=playlist_id,
+                public_token=public_token,
+            )
+            section_master_by_id[section["id"]] = sec_master
+            item = {
+                "id": section["id"],
+                "name": section["name"],
+                "sortOrder": section["sortOrder"],
+                "isActive": section.get("isActive", True),
+            }
+            if section.get("defaultDurationSec") is not None:
+                item["defaultDurationSec"] = section["defaultDurationSec"]
+            if section.get("transitionStyle"):
+                item["transitionStyle"] = section["transitionStyle"]
+            if sec_master:
+                item["masterConfig"] = sec_master
+            rendered_sections.append(item)
+
         rendered_slides: list[dict[str, Any]] = []
         for slide in slides:
-            duration = slide.get("durationSec") or default_duration
+            section = section_by_id.get(slide.get("sectionId") or "")
+            duration = resolve_slide_duration_sec(
+                slide_duration=slide.get("durationSec"),
+                section_default=section.get("defaultDurationSec") if section else None,
+                playlist_default=default_duration,
+            )
+            transition = resolve_slide_transition_style(
+                slide_transition=slide.get("transitionStyle"),
+                section_transition=section.get("transitionStyle") if section else None,
+                playlist_transition=playlist_transition,
+            )
+            effective_master = merge_master_configs(
+                playlist_master,
+                section_master_by_id.get(slide.get("sectionId") or "") if section else None,
+            )
             item: dict[str, Any] = {
                 "id": slide["id"],
                 "sortOrder": slide["sortOrder"],
@@ -121,8 +194,10 @@ class PresentationPayloadService:
                 "durationSec": duration,
                 "title": slide["title"],
             }
-            if slide.get("transitionStyle"):
-                item["transitionStyle"] = slide["transitionStyle"]
+            if slide.get("sectionId"):
+                item["sectionId"] = slide["sectionId"]
+            if transition:
+                item["transitionStyle"] = transition
             if slide["slideType"] == "native":
                 item["native"] = {
                     "screenKey": slide["nativeScreenKey"],
@@ -143,26 +218,13 @@ class PresentationPayloadService:
                     "url": slide["externalUrl"],
                     "sandbox": slide.get("externalSandbox"),
                 }
-            rendered_slides.append(item)
-
-        master_raw = playlist.get("masterConfig") if isinstance(playlist.get("masterConfig"), dict) else {}
-        master = self._comunicado.enrich_master_config(
-            master_raw,
-            api_root_path=settings.TV_DASHBOARD_API_ROOT_PATH,
-            playlist_id=playlist_id,
-            public_token=public_token,
-        )
-
-        if master:
-            for item in rendered_slides:
+            if effective_master:
                 native = item.get("native")
-                if not isinstance(native, dict):
-                    continue
-                if native.get("screenKey") != "custom_message":
-                    continue
-                data = native.get("data")
-                if isinstance(data, dict):
-                    native["data"] = {**data, "master": master}
+                if isinstance(native, dict) and native.get("screenKey") == "custom_message":
+                    data = native.get("data")
+                    if isinstance(data, dict):
+                        native["data"] = {**data, "master": effective_master}
+            rendered_slides.append(item)
 
         return {
             "playlist": {
@@ -170,15 +232,16 @@ class PresentationPayloadService:
                 "name": playlist["name"],
                 "description": playlist.get("description"),
                 "viewportProfile": playlist.get("viewportProfile") or "1080p",
-                "transitionStyle": playlist.get("transitionStyle") or "fade",
+                "transitionStyle": playlist_transition,
                 "globalRefreshSec": playlist.get("globalRefreshSec") or 300,
                 "defaultDurationSec": default_duration,
                 "publicUrl": self.build_public_url(playlist["publicToken"]),
-                **({"masterConfig": master} if master else {}),
+                **({"masterConfig": playlist_master} if playlist_master else {}),
             },
             "presentationMeta": {
                 "nativeErrorAdvanceSec": presentation_setting_int("nativeErrorAdvanceSec", 10),
                 "heartbeatIntervalSec": heartbeat_interval_sec(),
             },
+            "sections": rendered_sections,
             "slides": rendered_slides,
         }

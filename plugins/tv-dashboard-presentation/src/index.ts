@@ -106,6 +106,7 @@ export type {
   PresentationMeta,
   PresentationPayloadLike,
   PresentationPlaylist,
+  PresentationSection,
   PresentationSlide,
 } from "./types";
 export type { UsePresentationEngineOptions } from "./usePresentationEngine";

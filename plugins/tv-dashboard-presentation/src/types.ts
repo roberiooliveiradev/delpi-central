@@ -4,9 +4,17 @@ export type PresentationSlide = {
   slideType: "native" | "external" | string;
   durationSec?: number | null;
   title?: string;
+  sectionId?: string | null;
   /** Override da transição da playlist (`fade` | `slide` | `none`). */
   transitionStyle?: string | null;
   native?: { config?: Record<string, unknown>; data?: Record<string, unknown> };
+};
+
+export type PresentationSection = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isActive?: boolean;
 };
 
 export type PresentationPlaylist = {
@@ -24,5 +32,6 @@ export type PresentationMeta = {
 export type PresentationPayloadLike = {
   playlist: PresentationPlaylist;
   presentationMeta?: PresentationMeta;
+  sections?: PresentationSection[];
   slides: PresentationSlide[];
 };

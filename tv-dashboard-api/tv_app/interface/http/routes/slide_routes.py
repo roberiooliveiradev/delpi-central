@@ -43,6 +43,7 @@ class CreateSlideBody(BaseModel):
     externalUrl: str | None = None
     externalSandbox: str | None = None
     transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    sectionId: UUID | None = None
 
     @field_validator("externalUrl")
     @classmethod
@@ -72,6 +73,7 @@ class UpdateSlideBody(BaseModel):
     externalSandbox: str | None = None
     isActive: bool | None = None
     transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
+    sectionId: UUID | None = None
 
     @field_validator("externalUrl")
     @classmethod

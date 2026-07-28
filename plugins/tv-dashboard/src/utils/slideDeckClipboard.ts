@@ -8,6 +8,7 @@ export type SlideClipboardPayload = {
   nativeConfig?: Record<string, unknown> | null;
   externalUrl?: string | null;
   transitionStyle?: string | null;
+  sectionId?: string | null;
 };
 
 export function slidePayloadForClipboard(slide: Slide): SlideClipboardPayload {
@@ -19,6 +20,7 @@ export function slidePayloadForClipboard(slide: Slide): SlideClipboardPayload {
     nativeConfig: slide.nativeConfig ? { ...slide.nativeConfig } : slide.nativeConfig,
     externalUrl: slide.externalUrl ?? undefined,
     transitionStyle: slide.transitionStyle ?? undefined,
+    sectionId: slide.sectionId ?? undefined,
   };
 }
 

@@ -272,6 +272,18 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Grupo expandido (controles + caption) ou colapsado (trigger + AnchoredPanelPortal).",
   }),
+  vc("layout", "DeckSectionHeader", {
+    addedAt: "2026-07-28",
+    description: "Cabeçalho colapsável de seção no filmstrip/deck (nome, contagem, menu).",
+  }),
+  vc("layout", "DeckSectionList", {
+    addedAt: "2026-07-28",
+    description: "Lista seção → filhos para filmstrip com seções nomeadas.",
+  }),
+  vc("layout", "DeckSectionContextMenu", {
+    addedAt: "2026-07-28",
+    description: "Menu de ações da seção (renomear, colapsar, excluir, propriedades).",
+  }),
   // menu
   vc("menu", "FixedPanelPortal", {
     addedAt: "2026-07-17",

@@ -86,6 +86,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     setPaused,
     goPrevious,
     goNext,
+    goToSection,
   } = usePresentationEngine({
     initialPayload: browserInitial,
     onRefresh: onRefresh ? reloadWithFilters : undefined,
@@ -216,6 +217,8 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         onPauseToggle={() => setPaused(!paused)}
         onPrevious={goPrevious}
         onNext={goNext}
+        sections={payload.sections}
+        onJumpToSection={goToSection}
       />
       {presenterMode ? (
         <aside className="tdp-presenter-panel" aria-label="Notas do apresentador">

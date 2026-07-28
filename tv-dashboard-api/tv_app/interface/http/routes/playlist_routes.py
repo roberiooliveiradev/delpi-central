@@ -152,6 +152,7 @@ def get_playlist(request: Request, playlist_id: UUID):
     playlist = dict(access.playlist or {})
     playlist["publicUrl"] = _present.build_public_url(playlist["publicToken"])
     playlist["slides"] = _repo.list_slides(playlist_id)
+    playlist["sections"] = _repo.list_sections(playlist_id)
     playlist["accessRole"] = access.level
     return ok(playlist)
 
@@ -352,6 +353,7 @@ def duplicate_playlist(request: Request, playlist_id: UUID):
         return fail(message("playlistNotFound"), 404)
     _with_public_url(playlist)
     playlist["slides"] = _repo.list_slides(UUID(playlist["id"]))
+    playlist["sections"] = _repo.list_sections(UUID(playlist["id"]))
     playlist["accessRole"] = "owner"
     return ok(playlist, message="Programação duplicada.", status_code=201)
 

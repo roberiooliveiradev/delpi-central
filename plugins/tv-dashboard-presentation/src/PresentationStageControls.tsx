@@ -1,3 +1,5 @@
+import type { PresentationSection } from "./types";
+
 type Props = {
   index: number;
   total: number;
@@ -5,6 +7,9 @@ type Props = {
   onPauseToggle: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  /** Seções nomeadas para salto rápido (Figma-like). */
+  sections?: PresentationSection[];
+  onJumpToSection?: (sectionId: string) => void;
   /** Quando false, oculta com transição (idle). */
   visible?: boolean;
   className?: string;
@@ -18,6 +23,8 @@ export function PresentationStageControls({
   onPauseToggle,
   onPrevious,
   onNext,
+  sections = [],
+  onJumpToSection,
   visible = true,
   className,
 }: Props) {
@@ -28,6 +35,9 @@ export function PresentationStageControls({
   ]
     .filter(Boolean)
     .join(" ");
+
+  const namedSections = sections.filter((section) => Boolean(section.name?.trim()));
+  const showSectionJump = namedSections.length >= 1 && typeof onJumpToSection === "function";
 
   return (
     <div className={rootClass} aria-hidden={!visible}>
@@ -61,6 +71,29 @@ export function PresentationStageControls({
       >
         Próxima
       </button>
+      {showSectionJump ? (
+        <label className="tdp-preview-controls__section-jump">
+          <span className="tdp-preview-controls__section-jump-label">Ir para seção</span>
+          <select
+            className="tdp-preview-controls__section-select"
+            aria-label="Ir para seção"
+            value=""
+            tabIndex={visible ? 0 : -1}
+            onChange={(event) => {
+              const sectionId = event.target.value;
+              if (sectionId) onJumpToSection?.(sectionId);
+              event.target.value = "";
+            }}
+          >
+            <option value="">Seção…</option>
+            {namedSections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {section.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
     </div>
   );
 }

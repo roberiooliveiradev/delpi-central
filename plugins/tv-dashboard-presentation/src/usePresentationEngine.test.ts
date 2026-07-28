@@ -127,4 +127,30 @@ describe("usePresentationEngine", () => {
     });
     expect(result.current.paused).toBe(true);
   });
+
+  it("salta para o primeiro slide da seção (goToSection)", () => {
+    const withSections: PresentationPayloadLike = {
+      ...payload,
+      sections: [
+        { id: "sec-a", name: "Abertura", sortOrder: 0 },
+        { id: "sec-b", name: "Indicadores", sortOrder: 1 },
+      ],
+      slides: [
+        { ...payload.slides[0]!, sectionId: "sec-a" },
+        { ...payload.slides[1]!, sectionId: "sec-b" },
+      ],
+    };
+    const { result } = renderHook(() =>
+      usePresentationEngine({ initialPayload: withSections, enableHiddenPause: false }),
+    );
+    expect(result.current.index).toBe(0);
+    act(() => {
+      result.current.goToSection("sec-b");
+    });
+    expect(result.current.index).toBe(1);
+    act(() => {
+      result.current.goToIndex(0);
+    });
+    expect(result.current.index).toBe(0);
+  });
 });

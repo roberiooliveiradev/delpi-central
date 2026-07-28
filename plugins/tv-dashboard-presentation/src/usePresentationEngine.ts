@@ -66,6 +66,23 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     });
   }, [slides.length]);
 
+  const goToIndex = useCallback(
+    (nextIndex: number) => {
+      if (!slides.length) return;
+      const clamped = Math.max(0, Math.min(slides.length - 1, Math.floor(nextIndex)));
+      setIndex(clamped);
+    },
+    [slides.length],
+  );
+
+  const goToSection = useCallback(
+    (sectionId: string) => {
+      const target = slides.findIndex((slide) => slide.sectionId === sectionId);
+      if (target >= 0) setIndex(target);
+    },
+    [slides],
+  );
+
   const reloadPayload = useCallback(async () => {
     if (!onRefresh) return;
     const next = await onRefresh();
@@ -173,5 +190,7 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     nativeError,
     goPrevious,
     goNext,
+    goToIndex,
+    goToSection,
   };
 }

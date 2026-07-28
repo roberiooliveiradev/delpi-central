@@ -20,6 +20,7 @@ export * from "./components/rich-text";
 export * from "./components/ribbon";
 export * from "./components/directory";
 export * from "./components/document";
+export * from "./components/deck";
 export * from "./brand";
 export * from "./theme";
 export * from "./utils";

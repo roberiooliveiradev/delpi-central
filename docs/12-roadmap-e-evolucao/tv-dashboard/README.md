@@ -14,7 +14,7 @@ Sistema de **programações rotativas** para TVs corporativas: gestão autentica
 | **Admin** | Gestor (produção, qualidade, etc.) | Portal → «Painéis TV» | Sim (Keycloak) |
 | **Apresentação na TV** | Navegador da TV / totem | `/p/tv-dashboard/present/{token}` | Não |
 
-O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OTD, comunicado…) e/ou URLs externas (Power BI, sites). Slides **Personalizado** (`custom_message`) usam um **editor visual estilo PowerPoint** (blocos, formas, mídia, ribbon de formatação). Gera um link ou QR; a TV abre o link e roda em autoplay com **atualização imediata via WebSocket** (fallback: polling `globalRefreshSec`).
+O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OTD, comunicado…) e/ou URLs externas (Power BI, sites). Slides podem ser agrupados em **seções** (organização no filmstrip, defaults de duração/transição/master por seção, ocultar na TV e salto «Ir para seção» na apresentação). Slides **Personalizado** (`custom_message`) usam um **editor visual estilo PowerPoint** (blocos, formas, mídia, ribbon de formatação). Gera um link ou QR; a TV abre o link e roda em autoplay com **atualização imediata via WebSocket** (fallback: polling `globalRefreshSec`).
 
 ---
 

@@ -312,6 +312,42 @@ export function resolveMasterForPreview(
   return out;
 }
 
+/** Empilha master da seção sob o da playlist (mesma ordem da TV / API). */
+export function mergeMasterConfigs(
+  playlistMaster: PlaylistMasterConfig | undefined,
+  sectionMaster: PlaylistMasterConfig | undefined,
+): PlaylistMasterConfig | undefined {
+  const pl = playlistMaster;
+  const sec = sectionMaster;
+  const plOn = Boolean(pl?.enabled);
+  const secOn = Boolean(sec?.enabled);
+  if (!plOn && !secOn) return undefined;
+
+  let base: PlaylistMasterConfig | undefined = plOn && pl ? { ...pl, enabled: true } : undefined;
+  if (!secOn || !sec) return base;
+
+  const merged: PlaylistMasterConfig = {
+    ...(base ?? {}),
+    ...Object.fromEntries(
+      Object.entries(sec).filter(([, value]) => value !== null && value !== undefined),
+    ),
+    enabled: true,
+  };
+  if (sec.background) {
+    merged.background = {
+      ...(base?.background ?? {}),
+      ...sec.background,
+    };
+  }
+  if (sec.logo) {
+    merged.logo = {
+      ...(base?.logo ?? {}),
+      ...sec.logo,
+    };
+  }
+  return merged;
+}
+
 export function buildSlideThumbnailNative(
   slide: Slide,
   playlistId: string,

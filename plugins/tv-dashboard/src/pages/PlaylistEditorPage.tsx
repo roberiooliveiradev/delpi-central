@@ -10,8 +10,10 @@ import { rewriteAdminMediaUrlsForBrowser } from "../api/browserSafeMediaUrl";
 import {
   activatePlaylist,
   addSlide,
+  createPlaylistSection,
   deactivatePlaylist,
   deletePlaylist,
+  deletePlaylistSection,
   deleteSlide,
   duplicateSlide,
   downloadQrPng,
@@ -24,10 +26,12 @@ import {
   regeneratePlaylistToken,
   reorderSlides,
   updatePlaylist,
+  updatePlaylistSection,
   updateSlide,
   type BranchScope,
   type NativeScreenCatalogItem,
   type Playlist,
+  type PlaylistSection,
   type PresentationPayload,
   type PresentationStatus,
   type Slide,
@@ -38,8 +42,9 @@ import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext"
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
 import { DeckEditorChrome } from "../components/DeckEditorChrome";
 import { DeckWorkspace } from "../components/DeckWorkspace";
+import { SectionPropertiesPanel } from "../components/SectionPropertiesPanel";
 import { SlideStagePreview } from "../components/SlideStagePreview";
-import { enrichComunicadoConfigForEditor } from "../components/slideCardPreview";
+import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import {
   DeckEditorHistoryProvider,
@@ -127,6 +132,7 @@ export function PlaylistEditorPage({
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [sectionPropertiesId, setSectionPropertiesId] = useState<string | null>(null);
   const [previewBySlideId, setPreviewBySlideId] = useState<
     Record<string, PresentationPayload["slides"][number]>
   >({});
@@ -262,10 +268,28 @@ export function PlaylistEditorPage({
     [playlist?.slides],
   );
 
+  const sections = useMemo(
+    () => [...(playlist?.sections ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [playlist?.sections],
+  );
+
   const selectedSlide = useMemo(
     () => slides.find((slide) => slide.id === selectedSlideId) ?? slides[0] ?? null,
     [slides, selectedSlideId],
   );
+
+  const sectionPropertiesTarget = useMemo(
+    () => sections.find((section) => section.id === sectionPropertiesId) ?? null,
+    [sections, sectionPropertiesId],
+  );
+
+  const selectedSlideMaster = useMemo(() => {
+    if (!selectedSlide) return playlist?.masterConfig;
+    const sectionMaster = selectedSlide.sectionId
+      ? sections.find((section) => section.id === selectedSlide.sectionId)?.masterConfig
+      : undefined;
+    return mergeMasterConfigs(playlist?.masterConfig, sectionMaster);
+  }, [playlist?.masterConfig, sections, selectedSlide]);
 
   const editorComunicadoValue = useMemo(() => {
     if (!selectedSlide || selectedSlide.nativeScreenKey !== "custom_message") {
@@ -280,7 +304,7 @@ export function PlaylistEditorPage({
       slides
         .map(
           (slide) =>
-            `${slide.id}:${slide.title}:${slide.slideType}:${slide.nativeScreenKey ?? ""}:${slide.externalUrl ?? ""}:${slide.isActive}`,
+            `${slide.id}:${slide.title}:${slide.slideType}:${slide.nativeScreenKey ?? ""}:${slide.externalUrl ?? ""}:${slide.isActive}:${slide.sectionId ?? ""}`,
         )
         .join("|"),
     [slides],
@@ -657,18 +681,106 @@ export function PlaylistEditorPage({
     const baseTitle = customCatalogItem?.label ?? "Personalizado";
     const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
     const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
+    const anchorSectionId =
+      slides.find((slide) => slide.id === anchorId)?.sectionId ?? selectedSlide?.sectionId ?? null;
     try {
       const slide = await addSlide(playlist.id, {
-      slideType: "native",
-      title,
-      nativeScreenKey: "custom_message",
-      nativeConfig: serializeComunicadoConfig(
-        parseComunicadoConfig({ headline: "", blocks: [] }),
-      ),
-      durationSec: customCatalogItem?.defaultDurationSec ?? 30,
+        slideType: "native",
+        title,
+        nativeScreenKey: "custom_message",
+        nativeConfig: serializeComunicadoConfig(
+          parseComunicadoConfig({ headline: "", blocks: [] }),
+        ),
+        durationSec: customCatalogItem?.defaultDurationSec ?? 30,
+        sectionId: anchorSectionId,
       });
       const placed = await placeSlideAfterActive(slide, anchorId);
       selectSlide(placed.id, placed);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
+  async function handleAddSection() {
+    if (!playlist) return;
+    deckHistory.recordBeforeChange();
+    try {
+      const nextOrder =
+        sections.reduce((max, section) => Math.max(max, section.sortOrder), -1) + 1;
+      const section = await createPlaylistSection(playlist.id, {
+        name: `Seção ${sections.length + 1}`,
+        sortOrder: nextOrder,
+      });
+      setPlaylist({
+        ...playlist,
+        sections: [...(playlist.sections ?? []), section],
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
+  async function patchSection(sectionId: string, patch: Partial<PlaylistSection>) {
+    if (!playlist) return;
+    deckHistory.recordBeforeChange();
+    try {
+      const updated = await updatePlaylistSection(playlist.id, sectionId, {
+        name: patch.name,
+        sortOrder: patch.sortOrder,
+        isCollapsed: patch.isCollapsed,
+        isActive: patch.isActive,
+        defaultDurationSec: patch.defaultDurationSec,
+        transitionStyle: patch.transitionStyle,
+        masterConfig: patch.masterConfig,
+      });
+      setPlaylist({
+        ...playlist,
+        sections: (playlist.sections ?? []).map((item) =>
+          item.id === sectionId ? updated : item,
+        ),
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
+  async function handleDeleteSection(sectionId: string, deleteSlides: boolean) {
+    if (!playlist) return;
+    const section = sections.find((item) => item.id === sectionId);
+    const confirmed = await confirm({
+      title: deleteSlides ? "Excluir seção e slides" : "Excluir seção",
+      message: deleteSlides
+        ? `Excluir a seção «${section?.name ?? ""}» e todos os slides nela?`
+        : `Excluir a seção «${section?.name ?? ""}»? Os slides permanecem sem seção.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+    deckHistory.recordBeforeChange();
+    try {
+      await deletePlaylistSection(playlist.id, sectionId, { deleteSlides });
+      const nextSections = (playlist.sections ?? []).filter((item) => item.id !== sectionId);
+      const nextSlides = deleteSlides
+        ? (playlist.slides ?? []).filter((slide) => slide.sectionId !== sectionId)
+        : (playlist.slides ?? []).map((slide) =>
+            slide.sectionId === sectionId ? { ...slide, sectionId: null } : slide,
+          );
+      setPlaylist({ ...playlist, sections: nextSections, slides: nextSlides });
+      if (sectionPropertiesId === sectionId) setSectionPropertiesId(null);
+      if (selectedSlideId && !nextSlides.some((slide) => slide.id === selectedSlideId)) {
+        const nextId = nextSlides[0]?.id ?? null;
+        if (nextId) selectSlide(nextId);
+        else {
+          setSelectedSlideId(null);
+          writeSelectedSlideId(playlistId, null);
+        }
+      }
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1052,12 +1164,18 @@ export function PlaylistEditorPage({
     const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
     deckHistory.recordBeforeChange();
     try {
+      const anchorSectionId =
+        slides.find((item) => item.id === anchorId)?.sectionId ??
+        selectedSlide?.sectionId ??
+        payload.sectionId ??
+        null;
       const slide = await addSlide(playlist.id, {
         ...payload,
         title: pasteTitleFromClipboard(payload),
         nativeScreenKey: payload.nativeScreenKey ?? undefined,
         nativeConfig: payload.nativeConfig ?? undefined,
         externalUrl: payload.externalUrl ?? undefined,
+        sectionId: anchorSectionId,
       });
       const placed = await placeSlideAfterActive(slide, anchorId);
       selectSlide(placed.id, placed);
@@ -1107,11 +1225,29 @@ export function PlaylistEditorPage({
     deckHistory.recordBeforeChange();
     const reordered = [...slides];
     const [moved] = reordered.splice(dragIndex, 1);
-    reordered.splice(targetIndex, 0, moved);
+    if (!moved) {
+      deckHistory.cancelChange();
+      return;
+    }
+    const targetSlide = slides[targetIndex];
+    const nextSectionId = targetSlide?.sectionId ?? null;
+    const sectionChanged = (moved.sectionId ?? null) !== nextSectionId;
+    reordered.splice(targetIndex, 0, {
+      ...moved,
+      sectionId: nextSectionId,
+    });
     const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
     try {
+      if (sectionChanged) {
+        await updateSlide(playlist.id, moved.id, { sectionId: nextSectionId });
+      }
       const result = await reorderSlides(playlist.id, items);
-      setPlaylist({ ...playlist, slides: result.slides });
+      const slidesAfter = sectionChanged
+        ? result.slides.map((item) =>
+            item.id === moved.id ? { ...item, sectionId: nextSectionId } : item,
+          )
+        : result.slides;
+      setPlaylist({ ...playlist, slides: slidesAfter });
       setDragIndex(null);
       await deckHistory.confirmChange();
     } catch (caught) {
@@ -1195,6 +1331,7 @@ export function PlaylistEditorPage({
 
   const workspaceProps = {
     slides,
+    sections,
     playlistId,
     selectedSlideId: selectedSlide?.id ?? null,
     previewBySlideId,
@@ -1209,12 +1346,22 @@ export function PlaylistEditorPage({
     onDrop: (index: number) => void handleDropSlide(index),
     onDragEnd: () => setDragIndex(null),
     onAdd: () => void handleAddCustomSlide(),
+    onAddSection: () => void handleAddSection(),
     onCopySlide: handleCopySlide,
     onPasteSlide: () => void handlePasteSlide(),
     onDuplicateSlide: (slide: Slide) => void handleDuplicateSlide(slide),
     onRenameSlide: (slide: Slide, title: string) => void handleRenameSlide(slide, title),
     onToggleSlideActive: (slide: Slide) => void handleToggleSlideActive(slide),
     onRemoveSlide: (slide: Slide) => void handleRemoveSlide(slide),
+    onSectionNameCommit: (sectionId: string, name: string) =>
+      void patchSection(sectionId, { name }),
+    onSectionToggleCollapsed: (sectionId: string, collapsed: boolean) =>
+      void patchSection(sectionId, { isCollapsed: collapsed }),
+    onSectionToggleActive: (sectionId: string, active: boolean) =>
+      void patchSection(sectionId, { isActive: active }),
+    onSectionDelete: (sectionId: string, deleteSlides: boolean) =>
+      void handleDeleteSection(sectionId, deleteSlides),
+    onSectionProperties: (sectionId: string) => setSectionPropertiesId(sectionId),
   };
 
   return (
@@ -1229,7 +1376,7 @@ export function PlaylistEditorPage({
           globalRefreshSec={playlist.globalRefreshSec}
           slideId={selectedSlide.id}
           viewportProfile={playlist.viewportProfile}
-          masterConfig={playlist.masterConfig}
+          masterConfig={selectedSlideMaster}
           value={editorComunicadoValue}
           remoteRevision={remoteConfigRevision}
           remoteSelections={currentRemoteSelections}
@@ -1260,7 +1407,7 @@ export function PlaylistEditorPage({
                     playlistId={playlistId}
                     previewSlide={previewBySlideId[selectedSlide.id]}
                     viewportProfile={playlist.viewportProfile}
-                    masterConfig={playlist.masterConfig}
+                    masterConfig={selectedSlideMaster}
                     publicToken={playlist.publicToken}
                   />
                 </div>
@@ -1271,7 +1418,16 @@ export function PlaylistEditorPage({
       )}
 
       </div>
-      <KeyboardShortcutsCatalogModal />
+      {sectionPropertiesTarget ? (
+        <SectionPropertiesPanel
+          open
+          section={sectionPropertiesTarget}
+          onClose={() => setSectionPropertiesId(null)}
+          onSave={(patch) => {
+            void patchSection(sectionPropertiesTarget.id, patch);
+          }}
+        />
+      ) : null}      <KeyboardShortcutsCatalogModal />
       </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>
