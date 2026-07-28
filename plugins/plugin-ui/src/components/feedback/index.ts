@@ -27,6 +27,15 @@ export {
   type InlineLoadingProgressProps,
 } from "./InlineLoadingProgress";
 export {
+  ScreenLoading,
+  createDashboardScreenLoading,
+  screenLoadingBemClasses,
+  type ScreenLoadingClassNames,
+  type ScreenLoadingProps,
+  type ScreenLoadingTone,
+  type ScreenLoadingVariant,
+} from "./ScreenLoading";
+export {
   EmptyState,
   LoadingState,
   createDashboardEmptyState,

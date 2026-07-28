@@ -123,6 +123,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   // feedback
   vc("feedback", "EmptyState"),
   vc("feedback", "LoadingState"),
+  vc("feedback", "ScreenLoading", {
+    addedAt: "2026-07-28",
+    changeNote: "Splash de carregamento de tela (orbit + barra) — fullscreen/embedded",
+  }),
   vc("feedback", "LoadingActivityCard"),
   vc("feedback", "StateBanner"),
   vc("feedback", "StateBox", {

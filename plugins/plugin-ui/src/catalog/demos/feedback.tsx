@@ -17,6 +17,8 @@ import {
   inlineLoadingProgressBemClasses,
   LoadingState,
   loadingStatePanelBemClasses,
+  ScreenLoading,
+  screenLoadingBemClasses,
   ModalShell,
   modalShellBemClasses,
   StateBanner,
@@ -38,6 +40,7 @@ const confirmCn = confirmModalBemClasses(PUC_PREFIX);
 const drawerCn = drawerShellBemClasses(PUC_PREFIX);
 const loadingActivityCn = loadingActivityBemClasses(PUC_PREFIX);
 const inlineLoadingProgressCn = inlineLoadingProgressBemClasses(PUC_PREFIX);
+const screenLoadingCn = screenLoadingBemClasses(PUC_PREFIX);
 const stateBoxCn = stateBoxBemClasses(PUC_PREFIX);
 const infoStateCn = infoStateBemClasses(PUC_PREFIX);
 
@@ -82,6 +85,43 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
             message="Carregando indicadores…"
             classNames={loadingCn}
             defaultMessage="Carregando…"
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback.ScreenLoading",
+    family: "feedback",
+    exportName: "ScreenLoading",
+    title: "ScreenLoading",
+    description: "Splash de carregamento de tela (orbit + barra indeterminada).",
+    docAnchor: "screenloading",
+    propsSummary: ["label", "variant", "tone", "classNames"],
+    demos: [
+      {
+        id: "dark-fullscreen",
+        label: "Kiosk escuro",
+        render: () => (
+          <div style={{ position: "relative", height: 280, borderRadius: 12, overflow: "hidden" }}>
+            <ScreenLoading
+              classNames={screenLoadingCn}
+              label="Carregando"
+              variant="fullscreen"
+              tone="dark"
+            />
+          </div>
+        ),
+      },
+      {
+        id: "brand-embedded",
+        label: "Embutido (marca)",
+        render: () => (
+          <ScreenLoading
+            classNames={screenLoadingCn}
+            label="Carregando página…"
+            variant="embedded"
+            tone="brand"
           />
         ),
       },

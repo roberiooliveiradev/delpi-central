@@ -13,7 +13,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, RibbonGroupsRow, RibbonGroup, ChartCard… |
-| feedback | EmptyState, ModalShell, DrawerShell, InlineLoadingProgress… |
+| feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress… |
 | forms | SelectField, DateField, MultiSelectField… |
 | **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
 | export | TabularExportButtons, DocumentExportActions… |
@@ -296,6 +296,21 @@ Feedback de carregamento com spinner, barra de progresso (determinada ou indeter
 | `labels` | `LoadingActivityCardLabels` | Textos PT (progresso restante, aria) |
 
 Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDashboardLoadingActivityCard`.
+
+### `ScreenLoading`
+
+Splash de carregamento de **tela** (orbit animado + label + barra indeterminada). Use em boot/kiosk/páginas; para painéis inline preferir `LoadingActivityCard` / `LoadingState`.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `label` | `string?` | Texto sob o orbit (default: «Carregando») |
+| `variant` | `"embedded" \| "fullscreen"` | Embutido vs. preencher ancestral posicionado |
+| `tone` | `"dark" \| "brand"` | Fundo kiosk vs. tokens `--delpi-ui-*` |
+| `classNames` | `ScreenLoadingClassNames?` | BEM dual-class |
+
+Helpers: `screenLoadingBemClasses(prefix)` e `createDashboardScreenLoading`.
+
+CSS: `screen-loading.css` — `.delpi-ui-screen-loading*`. Consumidor piloto: `public-hub` (`PublicLoadingSplash`).
 
 ### `StatusBadge`
 
@@ -677,6 +692,7 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `loading-activity.css` | `LoadingActivityCard` — `.delpi-ui-loading-activity*` |
 | `loading-activity-badge.css` | `LoadingActivityBadge` — `.delpi-ui-loading-activity-badge*` |
 | `inline-loading-progress.css` | `InlineLoadingProgress` — `.delpi-ui-inline-loading-progress*` |
+| `screen-loading.css` | `ScreenLoading` — `.delpi-ui-screen-loading*` |
 | `ribbon-overflow.css` | `RibbonGroupsRow` / `RibbonGroup` — `.delpi-ui-ribbon-groups*` / `.delpi-ui-ribbon-group*` |
 | `dashboard-filters.css` | `FiltersRow` / `filter-box` / `__spacer` / `FilterBarShell` |
 | `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` (+ `--trailing` / `__label`) |
