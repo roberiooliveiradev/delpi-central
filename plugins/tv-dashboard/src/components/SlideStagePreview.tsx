@@ -52,7 +52,11 @@ export function SlideStagePreview({
 
   return (
     <div className="td-deck-stage__preview">
-      <DesignViewportStage viewportProfile={viewportProfile}>
+      <DesignViewportStage
+        viewportProfile={viewportProfile}
+        surface="thumbnail"
+        fit="auto"
+      >
         <NativeSlideView native={native} comunicadoFontScale={1} />
       </DesignViewportStage>
     </div>

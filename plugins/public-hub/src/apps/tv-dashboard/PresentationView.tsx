@@ -12,6 +12,7 @@ import {
   usePresentationEngine,
   buildPublicPresentationWsUrl,
   resolveSlideTransitionStyle,
+  presentationSurfaceFromViewMode,
   type ComunicadoBlock,
   type InputFilterContributions,
 } from "@delpi/tv-dashboard-presentation";
@@ -150,15 +151,11 @@ export function PresentationView({
           Pré-visualização · ← → slides · Espaço pausa
         </div>
       ) : null}
-      {/*
-        TV pública (kiosk): `cover` — preenche a área útil sem letterbox (padrão
-        de signage / wall displays). Prévia admin permanece `contain` para ver
-        o slide inteiro. Clip nas bordas fica na moldura (`overflow: hidden`).
-      */}
       <DesignViewportStage
         viewportProfile={viewport}
         className="tdp-stage__design"
-        fit={mode === "public" ? "cover" : "contain"}
+        surface={presentationSurfaceFromViewMode(mode)}
+        fit="auto"
       >
         {(slides as PublicSlide[]).map((slide: PublicSlide, slideIndex: number) => {
           const active = slideIndex === index;

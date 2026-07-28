@@ -33,6 +33,16 @@ export { RichComunicadoStage } from "./RichComunicadoStage";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
+  resolvePresentationFitMode,
+  measurePresentationViewportSize,
+  presentationSurfaceFromViewMode,
+  PRESENTATION_FIT_ASPECT_NEAR_RATIO,
+  type PresentationFitMode,
+  type PresentationFitResolved,
+  type PresentationFitSurface,
+} from "./presentationFitPolicy";
+export { usePresentationViewportPin } from "./usePresentationViewportPin";
+export {
   resolveViewportPixelSize,
   type ViewportPixelSize,
 } from "./viewportPixelSize";

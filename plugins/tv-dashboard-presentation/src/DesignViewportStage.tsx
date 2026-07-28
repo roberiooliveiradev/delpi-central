@@ -1,8 +1,16 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
+import {
+  measurePresentationViewportSize,
+  resolvePresentationFitMode,
+  type PresentationFitMode,
+  type PresentationFitResolved,
+  type PresentationFitSurface,
+} from "./presentationFitPolicy";
 import { resolveViewportPixelSize } from "./viewportPixelSize";
 
-export type DesignViewportFitMode = "contain" | "cover";
+/** @deprecated Use `PresentationFitMode` — mantido para imports existentes. */
+export type DesignViewportFitMode = PresentationFitMode;
 
 type Props = {
   viewportProfile?: string | null;
@@ -11,10 +19,15 @@ type Props = {
   contentClassName?: string;
   style?: CSSProperties;
   /**
-   * `contain` (padrão) — letterbox/pillarbox sem cortar o slide.
-   * `cover` — preenche o container (pode cortar bordas do slide).
+   * Superfície de consumo — alimenta a política canônica (`presentationFitPolicy`).
+   * Default: `preview` (contain).
    */
-  fit?: DesignViewportFitMode;
+  surface?: PresentationFitSurface;
+  /**
+   * `auto` (padrão) resolve contain|cover pela surface + orientação.
+   * `contain` / `cover` forçam o modo (overrides).
+   */
+  fit?: PresentationFitMode;
 };
 
 /**
@@ -52,7 +65,7 @@ export function computeDesignViewportScale(
   containerHeight: number,
   designWidth: number,
   designHeight: number,
-  fit: DesignViewportFitMode = "contain",
+  fit: PresentationFitResolved = "contain",
 ): number {
   if (containerWidth <= 0 || containerHeight <= 0 || designWidth <= 0 || designHeight <= 0) {
     return 0;
@@ -84,10 +97,8 @@ export function computeDesignViewportLayoutBox(
  *
  * - Posições/tamanhos: frames `%` intactos (sem reconstruir layout).
  * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
- * - Layout box = tamanho visual (scale via `transform-origin: top left` dentro
- *   de um frame já dimensionado) — evita deslocamento em webviews kiosk.
- * - TV pública (`public-hub`): `fit="cover"` para preencher sem letterbox.
- * - Prévia admin: `fit="contain"` para ver o slide inteiro.
+ * - Layout box = tamanho visual (scale via `transform-origin: top left`).
+ * - Fit: `presentationFitPolicy` (kiosk≈cover / preview≈contain / orientação).
  * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
@@ -96,10 +107,12 @@ export function DesignViewportStage({
   className,
   contentClassName,
   style,
-  fit = "contain",
+  surface = "preview",
+  fit = "auto",
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number | null>(null);
+  const [resolvedFit, setResolvedFit] = useState<PresentationFitResolved>("contain");
   const { width, height } = resolveViewportPixelSize(viewportProfile);
   const { bleedX, bleedY, outerW, outerH } = computeDesignViewportBleedSize(width, height);
 
@@ -108,18 +121,20 @@ export function DesignViewportStage({
     if (!node) return;
 
     const updateScale = () => {
-      // Preferir retângulo visível: em WebViews/TV o client* às vezes inclui
-      // área fora do visualViewport (chrome / «ajustar à tela» do host).
-      const rect = node.getBoundingClientRect();
-      const vv = typeof window !== "undefined" ? window.visualViewport : null;
-      let cw = rect.width > 0 ? rect.width : node.clientWidth;
-      let ch = rect.height > 0 ? rect.height : node.clientHeight;
-      if (vv && vv.width > 0 && vv.height > 0) {
-        cw = Math.min(cw, vv.width);
-        ch = Math.min(ch, vv.height);
+      const { width: cw, height: ch } = measurePresentationViewportSize(node);
+      const nextFit = resolvePresentationFitMode({
+        surface,
+        fit,
+        designWidth: width,
+        designHeight: height,
+        containerWidth: cw,
+        containerHeight: ch,
+      });
+      const next = computeDesignViewportScale(cw, ch, width, height, nextFit);
+      if (next > 0) {
+        setResolvedFit(nextFit);
+        setScale(next);
       }
-      const next = computeDesignViewportScale(cw, ch, width, height, fit);
-      if (next > 0) setScale(next);
     };
 
     updateScale();
@@ -135,7 +150,7 @@ export function DesignViewportStage({
       vv?.removeEventListener("scroll", updateScale);
       window.removeEventListener("orientationchange", updateScale);
     };
-  }, [fit, height, width]);
+  }, [fit, height, surface, width]);
 
   const ready = scale != null && scale > 0;
   const layout = computeDesignViewportLayoutBox(outerW, outerH, scale ?? 0);
@@ -144,6 +159,8 @@ export function DesignViewportStage({
     <div
       ref={containerRef}
       className={["tdp-design-viewport", className].filter(Boolean).join(" ")}
+      data-fit={resolvedFit}
+      data-surface={surface}
       style={{
         position: "absolute",
         inset: 0,

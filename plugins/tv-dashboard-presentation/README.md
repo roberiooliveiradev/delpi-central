@@ -33,6 +33,9 @@ import {
 | `usePresentationEngine` | Autoplay, transições, refresh periódico, pausa por visibilidade |
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
+| `DesignViewportStage` | Escala uniforme do canvas de design no container |
+| `resolvePresentationFitMode` | Política contain/cover por surface (kiosk/preview/thumbnail) + orientação |
+| `usePresentationViewportPin` | Fixa palco no `visualViewport` (WebView / apps de roteamento) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
 | `textViewProjection` | Resolver transversal para `textProjection` / `dataRef` em heading, text e shape (Onda 4P) |
 | `ChartViewBlockView` / `TableViewBlockView` | Visuais conectados a `data_source` |

@@ -414,7 +414,10 @@ Implementação CSS:
 }
 ```
 
-Preview e apresentação aplicam `data-viewport` no container; opcionalmente **letterbox** se a janela do preview não for 16:9 (bordas neutras, conteúdo escala proporcionalmente).
+Preview e apresentação aplicam `data-viewport` no container via `DesignViewportStage`.
+Encaixe multi-tamanho (720p / 1080p / 4k / portrait × host arbitrário): **`presentationFitPolicy`**
+(`fit="auto"` + `surface`) — kiosk usa cover estilo FitScreenAndZoom; prévia/thumbnail usam contain;
+orientação cruzada (portrait na TV landscape) volta a contain. Nunca stretch.
 
 ### 6.4 Telas externas
 
