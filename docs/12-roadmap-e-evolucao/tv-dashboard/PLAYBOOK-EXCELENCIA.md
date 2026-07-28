@@ -415,10 +415,9 @@ Implementação CSS:
 ```
 
 Preview e apresentação aplicam `data-viewport` no container via `DesignViewportStage`.
-Encaixe multi-tamanho (720p / 1080p / 4k / portrait × host arbitrário): **`presentationFitPolicy`**
-(`fit="auto"` + `surface`) — **contain** por padrão (slide inteiro; letterbox neutro se o aspect
-do host divergir). `cover` só com override explícito. Apps com «ajustar à tela» (ex.: Adeus Pendrive)
-não devem receber cover — isso causa zoom duplo e corte em baixo/lados. Nunca stretch.
+Encaixe multi-tamanho: **`presentationFitPolicy`** — contain por padrão; kiosk aplica escala via
+**`zoom`** (layout = visual) para Adeus Pendrive / «ajustar à tela». `transform: scale` na prévia
+admin. Pin do documento sem `offsetTop` (evita espaço acima + corte abaixo). Nunca stretch.
 
 ### 6.4 Telas externas
 

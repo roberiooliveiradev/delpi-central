@@ -205,13 +205,12 @@ Apresentação rotativa em modo **kiosk** (sem logo DELPI):
 |---|---|---|
 | Apresentação TV | `/p/tv-dashboard/present/{token}` | `GET /apps/tv-dashboard-api/public/present/{token}` |
 
-**Fit na TV:** política canônica `presentationFitPolicy` (`fit="auto"` → **contain** em kiosk/preview — slide inteiro). Compatível com Adeus Pendrive («ajustar à tela»); `cover` só sob override explícito. Shell kiosk usa `usePresentationViewportPin`.
+**Fit na TV:** `presentationFitPolicy` — contain + **`zoom` no kiosk** (para Adeus Pendrive medir scrollWidth = tamanho visual; `transform: scale` deixava 1920px e deslocava o slide). Pin do viewport sem offset (documento = área útil).
 
 Ver `src/apps/tv-dashboard/` (`api.ts`, `PresentationView.tsx`, `pages.tsx`).  
-Motor compartilhado: `plugins/tv-dashboard-presentation/` (`DesignViewportStage`, `presentationFitPolicy`).  
-Doc: `docs/12-roadmap-e-evolucao/tv-dashboard/README.md`.
+Motor: `plugins/tv-dashboard-presentation/` (`DesignViewportStage`, `presentationFitPolicy`).  
 
-**Rebuild obrigatório** do `public-hub` (e do remote se o pacote de apresentação mudou) após alterações na view.
+**Rebuild obrigatório** do `public-hub` + pacote de apresentação após alterações.
 
 ---
 

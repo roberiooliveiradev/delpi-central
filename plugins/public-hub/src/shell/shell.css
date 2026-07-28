@@ -203,14 +203,13 @@ html.pub-kiosk,
 html.pub-kiosk body,
 html.pub-kiosk #root {
   height: 100%;
-  min-height: 100%;
-  min-height: 100dvh;
+  min-height: 0;
   overflow: hidden;
+  margin: 0;
 }
 
-/* TV wall — preenche viewport; sem 100vw (overflow/assimetria em webviews kiosk).
-   Em runtime, `useKioskVisualViewportPin` pode sobrescrever top/left/width/height
-   para alinhar ao visualViewport (apps de roteamento / chrome do browser). */
+/* TV wall — preenche viewport; sem 100vw.
+   `usePresentationViewportPin` fixa width/height em px (Adeus Pendrive). */
 .pub-kiosk-root {
   position: fixed;
   inset: 0;

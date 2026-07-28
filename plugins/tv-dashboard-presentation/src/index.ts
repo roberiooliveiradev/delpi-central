@@ -36,10 +36,12 @@ export {
   resolvePresentationFitMode,
   measurePresentationViewportSize,
   presentationSurfaceFromViewMode,
+  resolvePresentationScaleMethod,
   PRESENTATION_FIT_ASPECT_NEAR_RATIO,
   type PresentationFitMode,
   type PresentationFitResolved,
   type PresentationFitSurface,
+  type PresentationScaleMethod,
 } from "./presentationFitPolicy";
 export { usePresentationViewportPin } from "./usePresentationViewportPin";
 export {

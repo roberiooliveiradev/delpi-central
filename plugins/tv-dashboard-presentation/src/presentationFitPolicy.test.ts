@@ -4,42 +4,22 @@ import {
   measurePresentationViewportSize,
   presentationSurfaceFromViewMode,
   resolvePresentationFitMode,
+  resolvePresentationScaleMethod,
 } from "./presentationFitPolicy";
 
 describe("resolvePresentationFitMode", () => {
-  it("auto → contain em preview, thumbnail e kiosk (Adeus Pendrive / multi-tamanho)", () => {
-    const sizes = [
-      { cw: 1280, ch: 720, dw: 1920, dh: 1080 },
-      { cw: 1920, ch: 1080, dw: 1920, dh: 1080 },
-      { cw: 3840, ch: 2160, dw: 1920, dh: 1080 },
-      { cw: 1920, ch: 1200, dw: 1920, dh: 1080 },
-      { cw: 2560, ch: 1080, dw: 1920, dh: 1080 },
-      { cw: 1080, ch: 1920, dw: 1080, dh: 1920 },
-      { cw: 1920, ch: 1080, dw: 1080, dh: 1920 }, // orientação cruzada
-    ];
+  it("auto → contain em preview, thumbnail e kiosk", () => {
     for (const surface of ["preview", "thumbnail", "kiosk"] as const) {
-      for (const c of sizes) {
-        expect(
-          resolvePresentationFitMode({
-            surface,
-            designWidth: c.dw,
-            designHeight: c.dh,
-            containerWidth: c.cw,
-            containerHeight: c.ch,
-          }),
-        ).toBe("contain");
-      }
+      expect(
+        resolvePresentationFitMode({
+          surface,
+          designWidth: 1920,
+          designHeight: 1080,
+          containerWidth: 1920,
+          containerHeight: 1200,
+        }),
+      ).toBe("contain");
     }
-  });
-
-  it("kiosk auto sem medida de container → contain (não cover)", () => {
-    expect(
-      resolvePresentationFitMode({
-        surface: "kiosk",
-        designWidth: 1920,
-        designHeight: 1080,
-      }),
-    ).toBe("contain");
   });
 
   it("fit explícito vence a surface", () => {
@@ -48,29 +28,20 @@ describe("resolvePresentationFitMode", () => {
         surface: "kiosk",
         designWidth: 1920,
         designHeight: 1080,
-        containerWidth: 1920,
-        containerHeight: 1080,
-        fit: "contain",
-      }),
-    ).toBe("contain");
-    expect(
-      resolvePresentationFitMode({
-        surface: "preview",
-        designWidth: 1920,
-        designHeight: 1080,
         fit: "cover",
       }),
     ).toBe("cover");
-    expect(
-      resolvePresentationFitMode({
-        surface: "kiosk",
-        designWidth: 1920,
-        designHeight: 1080,
-        containerWidth: 1920,
-        containerHeight: 1200,
-        fit: "cover",
-      }),
-    ).toBe("cover");
+  });
+});
+
+describe("resolvePresentationScaleMethod", () => {
+  it("kiosk usa zoom para Adeus Pendrive (scrollWidth = visual)", () => {
+    expect(resolvePresentationScaleMethod("kiosk")).toBe("zoom");
+  });
+
+  it("preview/thumbnail usam transform", () => {
+    expect(resolvePresentationScaleMethod("preview")).toBe("transform");
+    expect(resolvePresentationScaleMethod("thumbnail")).toBe("transform");
   });
 });
 

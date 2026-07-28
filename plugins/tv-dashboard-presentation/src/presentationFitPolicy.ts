@@ -4,12 +4,14 @@
  * Referência de mercado:
  * - Excalibur `FitScreen` / `FitContainer` → contain (slide inteiro, letterbox OK)
  * - Excalibur `FitScreenAndZoom` → cover (só sob pedido explícito — corta bordas)
- * - Xibo / BrightSign → canvas de design + `transform: scale` uniforme (nunca stretch)
- * - Players com «ajustar à tela» (ex.: Adeus Pendrive) → o HTML deve usar **contain**;
- *   cover + scale do host = zoom duplo e corte em baixo/lados
+ * - Xibo / BrightSign → canvas de design + escala uniforme (nunca stretch)
+ * - Adeus Pendrive / WebViews com «ajustar à tela» medem **scrollWidth/Height**.
+ *   `transform: scale` NÃO reduz o layout (continua 1920×1080) → o host
+ *   reescala e desloca (espaço acima + corte abaixo). Por isso o kiosk usa
+ *   **`zoom`** (afeta layout) + documento com altura exata do viewport.
  *
- * Consumidores passam `surface`; o stage resolve contain|cover. Proibido
- * `if (mode === "public")` espalhado em views.
+ * Consumidores passam `surface`; o stage resolve contain|cover e o método
+ * de escala. Proibido `if (mode === "public")` espalhado em views.
  */
 
 export type PresentationFitSurface = "kiosk" | "preview" | "thumbnail";
@@ -22,6 +24,14 @@ export type PresentationFitResolved = "contain" | "cover";
  * Default do stage: `auto` → contain em todas as surfaces.
  */
 export type PresentationFitMode = PresentationFitResolved | "auto";
+
+/**
+ * Como aplicar a escala uniforme no DOM.
+ * - `zoom` — altera caixa de layout (scrollWidth = visual); obrigatório no kiosk
+ *   para Adeus Pendrive.
+ * - `transform` — só pinta; ok na prévia admin (sem host «ajustar à tela»).
+ */
+export type PresentationScaleMethod = "zoom" | "transform";
 
 /**
  * Quão perto os aspects precisam estar para tratar como «mesma família»
@@ -47,19 +57,27 @@ export function presentationSurfaceFromViewMode(
 }
 
 /**
+ * Kiosk → zoom (layout = visual para Adeus Pendrive).
+ * Preview/thumbnail → transform (sem afetar medição do host).
+ */
+export function resolvePresentationScaleMethod(
+  surface: PresentationFitSurface,
+): PresentationScaleMethod {
+  return surface === "kiosk" ? "zoom" : "transform";
+}
+
+/**
  * Resolve contain vs cover para o par design × container × surface.
  *
  * - `auto` (todas as surfaces, inclusive kiosk) → **contain** — slide inteiro;
- *   letterbox neutro se o host ≠ aspect do design. Evita corte com apps que
- *   já fazem «ajustar à tela» (Adeus Pendrive).
- * - `cover` só com `fit: "cover"` explícito (wall sem scale do host).
+ *   letterbox neutro se o host ≠ aspect do design.
+ * - `cover` só com `fit: "cover"` explícito.
  */
 export function resolvePresentationFitMode(
   input: ResolvePresentationFitModeInput,
 ): PresentationFitResolved {
   const fit = input.fit ?? "auto";
   if (fit === "contain" || fit === "cover") return fit;
-  // auto: contain em todas as surfaces (kiosk incluído — Adeus Pendrive etc.)
   return "contain";
 }
 

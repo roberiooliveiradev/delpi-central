@@ -1,11 +1,13 @@
 import { useLayoutEffect, type RefObject } from "react";
 
 /**
- * Fixa um elemento no visualViewport (padrão signage / WebView TV).
+ * Fixa o palco kiosk no tamanho exato do viewport (Adeus Pendrive / WebView TV).
  *
- * Apps que roteiam o link («ajustar à tela») e chrome do browser deslocam
- * layout viewport vs. área visível. Sem pin, o slide letterboxa de forma
- * assimétrica. Módulo canônico — usado pelo shell kiosk e pelo stage.
+ * Regras:
+ * - top/left sempre 0 — `visualViewport.offset*` inflava o documento
+ *   (`height + top`) e o host «ajustar à tela» deslocava o slide para baixo.
+ * - html/body/#root com width/height em px iguais à área útil — scrollHeight
+ *   não pode exceder a tela.
  */
 export function usePresentationViewportPin(
   enabled: boolean,
@@ -16,31 +18,40 @@ export function usePresentationViewportPin(
 
     const html = document.documentElement;
     const body = document.body;
+    const appRoot = document.getElementById("root");
     if (!rootRef.current) return;
 
     const vv = window.visualViewport;
     const apply = () => {
       const el = rootRef.current;
       if (!el) return;
-      const width = vv?.width ?? window.innerWidth;
-      const height = vv?.height ?? window.innerHeight;
-      const top = vv?.offsetTop ?? 0;
-      const left = vv?.offsetLeft ?? 0;
+      const width = Math.max(0, Math.round(vv?.width ?? window.innerWidth));
+      const height = Math.max(0, Math.round(vv?.height ?? window.innerHeight));
 
       el.style.position = "fixed";
       el.style.inset = "auto";
-      el.style.top = `${top}px`;
-      el.style.left = `${left}px`;
-      el.style.width = `${Math.max(0, width)}px`;
-      el.style.height = `${Math.max(0, height)}px`;
+      el.style.top = "0";
+      el.style.left = "0";
+      el.style.width = `${width}px`;
+      el.style.height = `${height}px`;
       el.style.right = "auto";
       el.style.bottom = "auto";
       el.style.overflow = "hidden";
+      el.style.margin = "0";
 
-      html.style.overflow = "hidden";
-      body.style.overflow = "hidden";
-      html.style.height = `${Math.max(0, height + top)}px`;
-      body.style.height = `${Math.max(0, height + top)}px`;
+      for (const node of [html, body, appRoot]) {
+        if (!node) continue;
+        node.style.overflow = "hidden";
+        node.style.width = `${width}px`;
+        node.style.height = `${height}px`;
+        node.style.minHeight = "0";
+        node.style.maxHeight = `${height}px`;
+        node.style.margin = "0";
+      }
+
+      window.scrollTo(0, 0);
+      html.scrollTop = 0;
+      body.scrollTop = 0;
     };
 
     apply();
@@ -65,11 +76,17 @@ export function usePresentationViewportPin(
         el.style.right = "";
         el.style.bottom = "";
         el.style.overflow = "";
+        el.style.margin = "";
       }
-      html.style.overflow = "";
-      body.style.overflow = "";
-      html.style.height = "";
-      body.style.height = "";
+      for (const node of [html, body, appRoot]) {
+        if (!node) continue;
+        node.style.overflow = "";
+        node.style.width = "";
+        node.style.height = "";
+        node.style.minHeight = "";
+        node.style.maxHeight = "";
+        node.style.margin = "";
+      }
     };
   }, [enabled, rootRef]);
 }

@@ -3,9 +3,11 @@ import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode }
 import {
   measurePresentationViewportSize,
   resolvePresentationFitMode,
+  resolvePresentationScaleMethod,
   type PresentationFitMode,
   type PresentationFitResolved,
   type PresentationFitSurface,
+  type PresentationScaleMethod,
 } from "./presentationFitPolicy";
 import { resolveViewportPixelSize } from "./viewportPixelSize";
 
@@ -20,11 +22,11 @@ type Props = {
   style?: CSSProperties;
   /**
    * Superfície de consumo — alimenta a política canônica (`presentationFitPolicy`).
-   * Default: `preview` (contain).
+   * Default: `preview`.
    */
   surface?: PresentationFitSurface;
   /**
-   * `auto` (padrão) resolve contain|cover pela surface + orientação.
+   * `auto` (padrão) resolve contain|cover pela política.
    * `contain` / `cover` forçam o modo (overrides).
    */
   fit?: PresentationFitMode;
@@ -77,8 +79,8 @@ export function computeDesignViewportScale(
 
 /**
  * Caixa de layout pós-escala (o que webviews/kiosk medem em scrollWidth).
- * Diferente do box pré-`transform: scale`, que permanece no tamanho de design
- * e desloca o «ajustar à tela» de apps como Open Pen Drive.
+ * Com método `zoom`, o DOM realmente ocupa este tamanho; com `transform`,
+ * só o `__frame` deve reportar este tamanho (filho 1920px não pode vazar).
  */
 export function computeDesignViewportLayoutBox(
   outerW: number,
@@ -88,18 +90,46 @@ export function computeDesignViewportLayoutBox(
   if (!(scale > 0) || !(outerW > 0) || !(outerH > 0)) {
     return { width: 0, height: 0 };
   }
-  return { width: outerW * scale, height: outerH * scale };
+  return {
+    width: Math.round(outerW * scale * 1000) / 1000,
+    height: Math.round(outerH * scale * 1000) / 1000,
+  };
+}
+
+function stageScaleStyle(
+  method: PresentationScaleMethod,
+  outerW: number,
+  outerH: number,
+  scale: number,
+  ready: boolean,
+): CSSProperties {
+  if (!ready || !(scale > 0)) {
+    return { width: outerW, height: outerH, overflow: "hidden", visibility: "hidden" };
+  }
+  if (method === "zoom") {
+    // Adeus Pendrive mede scrollWidth — zoom altera a caixa de layout.
+    return {
+      width: outerW,
+      height: outerH,
+      zoom: scale,
+      overflow: "hidden",
+    };
+  }
+  return {
+    width: outerW,
+    height: outerH,
+    transform: `scale(${scale})`,
+    transformOrigin: "top left",
+    overflow: "hidden",
+  };
 }
 
 /**
  * Renderiza o slide no tamanho de design do `viewportProfile` e aplica escala
  * uniforme para encaixar no container (prévia admin, TV pública, filmstrip).
  *
- * - Posições/tamanhos: frames `%` intactos (sem reconstruir layout).
- * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
- * - Layout box = tamanho visual (scale via `transform-origin: top left`).
- * - Fit: `presentationFitPolicy` — `auto` → contain (seguro com Adeus Pendrive);
- *   `cover` só com override explícito.
+ * - Kiosk: `zoom` + contain (Adeus Pendrive / «ajustar à tela»).
+ * - Preview: `transform` + contain.
  * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
@@ -114,6 +144,7 @@ export function DesignViewportStage({
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState<number | null>(null);
   const [resolvedFit, setResolvedFit] = useState<PresentationFitResolved>("contain");
+  const scaleMethod = resolvePresentationScaleMethod(surface);
   const { width, height } = resolveViewportPixelSize(viewportProfile);
   const { bleedX, bleedY, outerW, outerH } = computeDesignViewportBleedSize(width, height);
 
@@ -162,6 +193,7 @@ export function DesignViewportStage({
       className={["tdp-design-viewport", className].filter(Boolean).join(" ")}
       data-fit={resolvedFit}
       data-surface={surface}
+      data-scale-method={scaleMethod}
       style={{
         position: "absolute",
         inset: 0,
@@ -184,18 +216,14 @@ export function DesignViewportStage({
           marginLeft: -layout.width / 2,
           marginTop: -layout.height / 2,
           overflow: "hidden",
+          // Impede filho 1920px (pré-zoom/transform) de inflar scrollWidth do documento.
+          contain: "strict",
           visibility: ready ? "visible" : "hidden",
         }}
       >
         <div
           className={["tdp-design-viewport__stage", contentClassName].filter(Boolean).join(" ")}
-          style={{
-            width: outerW,
-            height: outerH,
-            transform: ready ? `scale(${scale})` : "scale(0)",
-            transformOrigin: "top left",
-            overflow: "hidden",
-          }}
+          style={stageScaleStyle(scaleMethod, outerW, outerH, scale ?? 0, ready)}
         >
           <div
             className="tdp-design-viewport__design"
