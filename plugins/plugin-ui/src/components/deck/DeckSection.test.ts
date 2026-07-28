@@ -23,6 +23,7 @@ describe("deck section kit", () => {
     const menu = readFileSync(join(__dirname, "./DeckSectionContextMenu.tsx"), "utf8");
     expect(menu).toContain('"add-slide"');
     expect(menu).toContain("Nova tela nesta seção");
+    expect(menu).toContain("allowDelete");
     const css = readFileSync(join(__dirname, "../../styles/deck-section.css"), "utf8");
     expect(css).toContain("drop-hint");
   });

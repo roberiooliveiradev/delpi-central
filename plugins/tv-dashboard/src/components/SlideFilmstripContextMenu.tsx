@@ -10,6 +10,7 @@ import {
   Copy,
   Eye,
   EyeOff,
+  FolderPlus,
   Pencil,
   Plus,
   Trash2,
@@ -31,6 +32,7 @@ export type SlideFilmstripContextMenuProps = {
   onPaste: () => void;
   onDuplicate: () => void;
   onAdd: () => void;
+  onCreateSection?: () => void;
   onRename: () => void;
   onToggleActive: () => void;
   onRemove: () => void;
@@ -47,6 +49,7 @@ export function SlideFilmstripContextMenu({
   onPaste,
   onDuplicate,
   onAdd,
+  onCreateSection,
   onRename,
   onToggleActive,
   onRemove,
@@ -79,6 +82,13 @@ export function SlideFilmstripContextMenu({
       />
       <ContextMenuDivider />
       <ContextMenuItem label={C.newSlide} icon={Plus} onSelect={() => run(onAdd)} />
+      {onCreateSection ? (
+        <ContextMenuItem
+          label={C.createSection}
+          icon={FolderPlus}
+          onSelect={() => run(onCreateSection)}
+        />
+      ) : null}
       <ContextMenuItem label={C.duplicate} icon={Copy} onSelect={() => run(onDuplicate)} />
       <ContextMenuItem label={C.rename} icon={Pencil} onSelect={() => run(onRename)} />
       <ContextMenuDivider />

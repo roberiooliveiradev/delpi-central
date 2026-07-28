@@ -21,6 +21,7 @@ type Props = {
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
+  onCreateSection?: (slide: Slide) => void;
   onAddInSection?: (sectionId: string) => void;
   onCopySlide: (slide: Slide) => void;
   onPasteSlide: () => void;
@@ -57,6 +58,7 @@ export function DeckWorkspace({
   onDragEnd,
   onAdd,
   onAddSection,
+  onCreateSection,
   onAddInSection,
   onCopySlide,
   onPasteSlide,
@@ -94,6 +96,7 @@ export function DeckWorkspace({
         onDragEnd={onDragEnd}
         onAdd={onAdd}
         onAddSection={onAddSection}
+        onCreateSection={onCreateSection}
         onAddInSection={onAddInSection}
         onCopy={onCopySlide}
         onPaste={onPasteSlide}

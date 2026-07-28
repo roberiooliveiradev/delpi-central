@@ -15,6 +15,7 @@ export type PresentationSection = {
   name: string;
   sortOrder: number;
   isActive?: boolean;
+  isMain?: boolean;
 };
 
 export type PresentationPlaylist = {

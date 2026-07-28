@@ -161,6 +161,7 @@ class PresentationPayloadService:
                 "name": section["name"],
                 "sortOrder": section["sortOrder"],
                 "isActive": section.get("isActive", True),
+                "isMain": bool(section.get("isMain")),
             }
             if section.get("defaultDurationSec") is not None:
                 item["defaultDurationSec"] = section["defaultDurationSec"]

@@ -37,7 +37,10 @@ export function PresentationStageControls({
     .join(" ");
 
   const namedSections = sections.filter((section) => Boolean(section.name?.trim()));
-  const showSectionJump = namedSections.length >= 1 && typeof onJumpToSection === "function";
+  const onlyMain =
+    namedSections.length === 1 && Boolean(namedSections[0]?.isMain);
+  const jumpSections = onlyMain ? [] : namedSections;
+  const showSectionJump = jumpSections.length >= 1 && typeof onJumpToSection === "function";
 
   return (
     <div className={rootClass} aria-hidden={!visible}>
@@ -86,7 +89,7 @@ export function PresentationStageControls({
             }}
           >
             <option value="">Seção…</option>
-            {namedSections.map((section) => (
+            {jumpSections.map((section) => (
               <option key={section.id} value={section.id}>
                 {section.name}
               </option>

@@ -519,6 +519,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     copy: "Copiar tela",
     paste: "Colar tela",
     newSlide: "Nova tela",
+    createSection: "Criar seção",
     duplicate: "Duplicar tela",
     rename: "Renomear tela",
     hide: "Ocultar tela",

@@ -17,13 +17,16 @@ import {
   deleteSlide,
   duplicateSlide,
   downloadQrPng,
+  ensurePlaylistMainSection,
   getBranchScope,
   getPlaylist,
   getPreviewPayload,
   getPresentationStatus,
   getUiContent,
   listNativeScreens,
+  listPlaylistSections,
   regeneratePlaylistToken,
+  reorderPlaylistSections,
   reorderSlides,
   updatePlaylist,
   updatePlaylistSection,
@@ -47,6 +50,7 @@ import { SlideStagePreview } from "../components/SlideStagePreview";
 import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
 import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
+import { claimSlidesForNewSection } from "../utils/claimSlidesForNewSection";
 import {
   DeckEditorHistoryProvider,
   type DeckEditorHistoryContextValue,
@@ -742,35 +746,112 @@ export function PlaylistEditorPage({
     }
   }
 
-  async function handleAddSection() {
+  async function handleAddSection(explicitAnchorId?: string | null) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
     try {
-      const nextOrder =
-        sections.reduce((max, section) => Math.max(max, section.sortOrder), -1) + 1;
+      const main = await ensurePlaylistMainSection(playlist.id);
+      let workingSections = await listPlaylistSections(playlist.id);
+      if (!workingSections.some((section) => section.id === main.id)) {
+        workingSections = [main, ...workingSections.filter((s) => !s.isMain)];
+      }
+      workingSections = [...workingSections].sort((a, b) => a.sortOrder - b.sortOrder);
+      let localSlides = (playlist.slides ?? []).map((slide) =>
+        slide.sectionId ? slide : { ...slide, sectionId: main.id },
+      );
+
+      const anchorId =
+        explicitAnchorId !== undefined && explicitAnchorId !== null
+          ? explicitAnchorId
+          : (selectedSlideId ?? selectedSlide?.id ?? null);
+      const anchor = anchorId
+        ? localSlides.find((slide) => slide.id === anchorId) ?? null
+        : null;
+
+      const userCount = workingSections.filter((section) => !section.isMain).length;
+      const maxOrder = workingSections.reduce(
+        (max, section) => Math.max(max, section.sortOrder),
+        -1,
+      );
+
+      if (!anchor) {
+        const section = await createPlaylistSection(playlist.id, {
+          name: `Seção ${userCount + 1}`,
+          sortOrder: maxOrder + 1,
+          isCollapsed: false,
+        });
+        setPlaylist({
+          ...playlist,
+          sections: [...workingSections.filter((s) => s.id !== section.id), section],
+          slides: localSlides,
+        });
+        await deckHistory.confirmChange();
+        return;
+      }
+
+      const claim = claimSlidesForNewSection(localSlides, workingSections, anchor.id);
+      const afterSectionId = claim.anchorSectionId ?? main.id;
       const section = await createPlaylistSection(playlist.id, {
-        name: `Seção ${sections.length + 1}`,
-        sortOrder: nextOrder,
+        name: `Seção ${userCount + 1}`,
+        sortOrder: maxOrder + 1,
         isCollapsed: false,
       });
-      let nextSlides = playlist.slides ?? [];
-      const anchor = selectedSlide ?? slides.find((slide) => slide.id === selectedSlideId) ?? null;
-      if (anchor) {
-        const updated = await updateSlide(playlist.id, anchor.id, { sectionId: section.id });
-        const ordered = assignSlideToSectionOrder(nextSlides, anchor.id, section.id);
-        const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-        const result = await reorderSlides(playlist.id, items);
-        nextSlides = result.slides.map((item) =>
-          item.id === anchor.id ? { ...item, sectionId: section.id } : item,
-        );
-        // Preferir o slide atualizado da API se reorder não trouxe sectionId.
-        if (!nextSlides.some((item) => item.id === updated.id && item.sectionId === section.id)) {
-          nextSlides = nextSlides.map((item) => (item.id === updated.id ? updated : item));
+
+      const baseOrder = workingSections.filter((s) => s.id !== section.id);
+      const afterIdx = baseOrder.findIndex((s) => s.id === afterSectionId);
+      const insertAt = afterIdx >= 0 ? afterIdx + 1 : 1;
+      const orderedSections = [...baseOrder];
+      orderedSections.splice(insertAt, 0, section);
+      const reorderItems = orderedSections.map((item, sortOrder) => ({
+        id: item.id,
+        sortOrder,
+      }));
+      workingSections = await reorderPlaylistSections(playlist.id, reorderItems);
+
+      const claimSet = new Set(claim.claimIds);
+      const beforeSet = new Set(claim.beforeIds);
+      const sectionUpdates: Array<{ id: string; sectionId: string }> = [];
+      localSlides = localSlides.map((slide) => {
+        let nextSectionId = slide.sectionId ?? main.id;
+        if (claimSet.has(slide.id)) nextSectionId = section.id;
+        else if (beforeSet.has(slide.id) && !slide.sectionId) nextSectionId = main.id;
+        else if (!slide.sectionId) nextSectionId = main.id;
+        if (nextSectionId !== (slide.sectionId ?? null)) {
+          sectionUpdates.push({ id: slide.id, sectionId: nextSectionId });
+        }
+        return { ...slide, sectionId: nextSectionId };
+      });
+
+      for (const update of sectionUpdates) {
+        await updateSlide(playlist.id, update.id, { sectionId: update.sectionId });
+      }
+
+      const items = localSlides
+        .slice()
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((item, sortOrder) => ({ id: item.id, sortOrder }));
+      const result = await reorderSlides(playlist.id, items);
+      const nextSlides = result.slides.map((item) => {
+        const local = localSlides.find((slide) => slide.id === item.id);
+        return local ? { ...item, sectionId: local.sectionId } : item;
+      });
+
+      const expandIds = new Set(
+        [section.id, afterSectionId].filter(Boolean) as string[],
+      );
+      for (const sectionId of expandIds) {
+        const target = workingSections.find((s) => s.id === sectionId);
+        if (target?.isCollapsed) {
+          await updatePlaylistSection(playlist.id, sectionId, { isCollapsed: false });
         }
       }
+      workingSections = workingSections.map((s) =>
+        expandIds.has(s.id) ? { ...s, isCollapsed: false } : s,
+      );
+
       setPlaylist({
         ...playlist,
-        sections: [...(playlist.sections ?? []), section],
+        sections: workingSections,
         slides: nextSlides,
       });
       await deckHistory.confirmChange();
@@ -784,32 +865,44 @@ export function PlaylistEditorPage({
     if (!playlist || dragIndex === null) return;
     const moved = slides[dragIndex];
     if (!moved) return;
-    if ((moved.sectionId ?? null) === sectionId) {
+    let targetSectionId = sectionId;
+    if (targetSectionId == null) {
+      const main =
+        sections.find((section) => section.isMain) ??
+        (await ensurePlaylistMainSection(playlist.id));
+      targetSectionId = main.id;
+      if (!sections.some((section) => section.id === main.id)) {
+        setPlaylist((prev) =>
+          prev
+            ? {
+                ...prev,
+                sections: [main, ...(prev.sections ?? []).filter((s) => s.id !== main.id)],
+              }
+            : prev,
+        );
+      }
+    }
+    if ((moved.sectionId ?? null) === targetSectionId) {
       setDragIndex(null);
       return;
     }
     deckHistory.recordBeforeChange();
     try {
-      if (sectionId) {
-        const target = sections.find((section) => section.id === sectionId);
-        if (target?.isCollapsed) {
-          await updatePlaylistSection(playlist.id, sectionId, { isCollapsed: false });
-        }
+      const target = sections.find((section) => section.id === targetSectionId);
+      if (target?.isCollapsed) {
+        await updatePlaylistSection(playlist.id, targetSectionId, { isCollapsed: false });
       }
-      await updateSlide(playlist.id, moved.id, { sectionId });
-      const ordered = assignSlideToSectionOrder(slides, moved.id, sectionId);
+      await updateSlide(playlist.id, moved.id, { sectionId: targetSectionId });
+      const ordered = assignSlideToSectionOrder(slides, moved.id, targetSectionId);
       const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
       const result = await reorderSlides(playlist.id, items);
-      const nextSections = sectionId
-        ? (playlist.sections ?? []).map((section) =>
-            section.id === sectionId ? { ...section, isCollapsed: false } : section,
-          )
-        : playlist.sections;
       setPlaylist({
         ...playlist,
-        sections: nextSections,
+        sections: (playlist.sections ?? []).map((section) =>
+          section.id === targetSectionId ? { ...section, isCollapsed: false } : section,
+        ),
         slides: result.slides.map((item) =>
-          item.id === moved.id ? { ...item, sectionId } : item,
+          item.id === moved.id ? { ...item, sectionId: targetSectionId } : item,
         ),
       });
       setDragIndex(null);
@@ -849,11 +942,16 @@ export function PlaylistEditorPage({
   async function handleDeleteSection(sectionId: string, deleteSlides: boolean) {
     if (!playlist) return;
     const section = sections.find((item) => item.id === sectionId);
+    if (section?.isMain) {
+      tvDashboardNotice("A seção principal não pode ser excluída.");
+      return;
+    }
+    const main = sections.find((item) => item.isMain);
     const confirmed = await confirm({
       title: deleteSlides ? "Excluir seção e slides" : "Excluir seção",
       message: deleteSlides
         ? `Excluir a seção «${section?.name ?? ""}» e todos os slides nela?`
-        : `Excluir a seção «${section?.name ?? ""}»? Os slides permanecem sem seção.`,
+        : `Excluir a seção «${section?.name ?? ""}»? Os slides voltam para a seção Principal.`,
       confirmLabel: "Excluir",
       variant: "danger",
     });
@@ -865,7 +963,9 @@ export function PlaylistEditorPage({
       const nextSlides = deleteSlides
         ? (playlist.slides ?? []).filter((slide) => slide.sectionId !== sectionId)
         : (playlist.slides ?? []).map((slide) =>
-            slide.sectionId === sectionId ? { ...slide, sectionId: null } : slide,
+            slide.sectionId === sectionId
+              ? { ...slide, sectionId: main?.id ?? null }
+              : slide,
           );
       setPlaylist({ ...playlist, sections: nextSections, slides: nextSlides });
       if (sectionPropertiesId === sectionId) setSectionPropertiesId(null);
@@ -1443,6 +1543,7 @@ export function PlaylistEditorPage({
     onDragEnd: () => setDragIndex(null),
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),
+    onCreateSection: (slide: Slide) => void handleAddSection(slide.id),
     onAddInSection: (sectionId: string) => void handleAddCustomSlide(sectionId),
     onCopySlide: handleCopySlide,
     onPasteSlide: () => void handlePasteSlide(),

@@ -30,4 +30,19 @@ describe("groupSlidesBySection", () => {
     expect(grouped.sections[0]!.slides.map((s) => s.id)).toEqual(["a"]);
     expect(grouped.sections[1]!.slides.map((s) => s.id)).toEqual(["c"]);
   });
+
+  it("órfãos vão para a Principal quando existe", () => {
+    const sections: PlaylistSection[] = [
+      { id: "m", playlistId: "p1", name: "Principal", sortOrder: 0, isMain: true },
+      { id: "u", playlistId: "p1", name: "User", sortOrder: 1 },
+    ];
+    const slides = [
+      slide({ id: "a", sortOrder: 0 }),
+      slide({ id: "b", sortOrder: 1, sectionId: "u" }),
+    ];
+    const grouped = groupSlidesBySection(slides, sections);
+    expect(grouped.unsectioned).toEqual([]);
+    expect(grouped.sections[0]!.slides.map((s) => s.id)).toEqual(["a"]);
+    expect(grouped.sections[1]!.slides.map((s) => s.id)).toEqual(["b"]);
+  });
 });

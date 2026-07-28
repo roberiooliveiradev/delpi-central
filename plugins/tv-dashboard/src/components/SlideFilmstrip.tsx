@@ -25,6 +25,7 @@ import type {
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
 import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { groupSlidesBySection } from "../utils/groupSlidesBySection";
+import { shouldShowSectionChrome } from "../utils/sectionChromeVisibility";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
 import { SlideFilmstripControls } from "./SlideFilmstripControls";
@@ -48,6 +49,7 @@ type Props = {
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
+  onCreateSection?: (slide: Slide) => void;
   onAddInSection?: (sectionId: string) => void;
   onCopy: (slide: Slide) => void;
   onPaste: () => void;
@@ -82,6 +84,7 @@ export function SlideFilmstrip({
   onDragEnd,
   onAdd,
   onAddSection,
+  onCreateSection,
   onAddInSection,
   onCopy,
   onPaste,
@@ -307,10 +310,12 @@ export function SlideFilmstrip({
     "--td-filmstrip-width": `${panelWidthPx}px`,
   } as CSSProperties;
 
+  const showSectionChrome = shouldShowSectionChrome(sections);
+
   const listBody =
     slides.length === 0 && sections.length === 0 ? (
       <p className="td-deck-filmstrip__empty">Nenhuma tela na programação.</p>
-    ) : sections.length === 0 ? (
+    ) : !showSectionChrome ? (
       <div
         ref={listRef}
         className="td-deck-filmstrip__list"
@@ -327,8 +332,6 @@ export function SlideFilmstrip({
       >
         <DeckSectionList
           prefix="td"
-          unsectioned={grouped.unsectioned.map((slide) => renderSlideItem(slide))}
-          unsectionedCount={grouped.unsectioned.length}
           emptyDropHint="Solte telas aqui"
           sections={grouped.sections.map(({ section, slides: sectionSlides }) => ({
             id: section.id,
@@ -364,7 +367,6 @@ export function SlideFilmstrip({
             });
           }}
           onDropOnSection={onDropOnSection}
-          onDropOnUnsectioned={onDropOnUnsectioned}
         />
       </div>
     );
@@ -437,6 +439,9 @@ export function SlideFilmstrip({
           onPaste={onPaste}
           onDuplicate={() => onDuplicate(contextMenu.slide)}
           onAdd={onAdd}
+          onCreateSection={
+            onCreateSection ? () => onCreateSection(contextMenu.slide) : undefined
+          }
           onRename={() => beginRename(contextMenu.slide)}
           onToggleActive={() => onToggleActive(contextMenu.slide)}
           onRemove={() => onRemove(contextMenu.slide)}
@@ -449,6 +454,7 @@ export function SlideFilmstrip({
           position={{ x: sectionMenu.x, y: sectionMenu.y }}
           collapsed={Boolean(sectionMenuTarget.isCollapsed)}
           active={sectionMenuTarget.isActive !== false}
+          allowDelete={!sectionMenuTarget.isMain}
           portalScopeClassName="dashboard-tv-dashboard"
           onClose={closeSectionMenu}
           onAction={handleSectionMenuAction}

@@ -882,7 +882,7 @@ Extensões previstas (compatíveis — campos opcionais):
 | `animations[]` por bloco | 4E | ✅ v1.3.8 | `{ phase, kind, delayMs, durationMs, easing, direction }` |
 | `slideTemplateKey` | 4B | ⚠ | Presets via painel templates (sem campo persistido) |
 | `masterConfig` (playlist-level) | 4E | ✅ | Logo/fundo compartilhado (`master_config` JSONB) |
-| **Seções de slides** (`playlist_sections`) | v1 | ✅ | Organização no filmstrip + herança duração/transição/master + ocultar seção + «Ir para seção» na TV (`V010`). Popular: menu «Nova tela nesta seção», soltar slide no cabeçalho/área vazia, «Nova seção» com slide selecionado |
+| **Seções de slides** (`playlist_sections`) | v1 | ✅ | Principal persistida (`is_main`, oculta se única); criar seção acima do slide engole até a próxima; menu do slide «Criar seção»; herança + «Ir para seção» (`V010`/`V011`) |
 | Blocos `data_*` (operationId + params) | 4F | ⚠ | Indicadores api-delpi — §18 |
 | `dataBinding.refreshSec` por bloco | 4F | ⚠ | Override do refresh global |
 | `dataBinding.displayMode` | 4F | ⚠ | `kpi` \| `chart` \| `table` \| `auto` |

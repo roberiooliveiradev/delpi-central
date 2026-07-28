@@ -10,6 +10,7 @@ from tv_app.application.services.playlist_access_service import PlaylistAccessSe
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
+    MainSectionProtectedError,
     PlaylistNotFoundError,
     PlaylistRepository,
     SectionNotFoundError,
@@ -26,6 +27,7 @@ class CreateSectionBody(BaseModel):
     sortOrder: int | None = None
     isCollapsed: bool | None = None
     isActive: bool | None = None
+    isMain: bool | None = None
     defaultDurationSec: int | None = Field(default=None, ge=5, le=600)
     transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
     masterConfig: dict[str, Any] | None = None
@@ -64,6 +66,26 @@ def list_sections(request: Request, playlist_id: UUID):
     except PlaylistNotFoundError:
         return fail("Programação não encontrada.", status_code=404)
     return ok({"items": items})
+
+
+@router.post("/ensure-main")
+def ensure_main_section(request: Request, playlist_id: UUID):
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
+    try:
+        section = _repo.ensure_main_section(
+            playlist_id,
+            actor_user_id=_actor_id(user) or "unknown",
+        )
+    except PlaylistNotFoundError:
+        return fail("Programação não encontrada.", status_code=404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="section_main_ensured",
+    )
+    return ok(section)
 
 
 @router.post("")
@@ -140,6 +162,8 @@ def delete_section(
         return fail("Programação não encontrada.", status_code=404)
     except SectionNotFoundError:
         return fail("Seção não encontrada.", status_code=404)
+    except MainSectionProtectedError:
+        return fail("A seção principal não pode ser excluída.", status_code=409)
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="section_deleted",

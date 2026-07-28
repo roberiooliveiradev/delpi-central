@@ -28,6 +28,12 @@ class SectionNotFoundError(LookupError):
     pass
 
 
+class MainSectionProtectedError(ValueError):
+    """Seção principal não pode ser excluída."""
+
+    pass
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -82,6 +88,7 @@ def _row_to_section(row: dict[str, Any]) -> dict[str, Any]:
         "sortOrder": row["sort_order"],
         "isCollapsed": bool(row.get("is_collapsed")),
         "isActive": bool(row.get("is_active", True)),
+        "isMain": bool(row.get("is_main")),
         "defaultDurationSec": row.get("default_duration_sec"),
         "transitionStyle": row.get("transition_style"),
         "masterConfig": row.get("master_config") or {},
@@ -638,9 +645,9 @@ class PlaylistRepository:
                         """
                         INSERT INTO tv_dashboard.playlist_sections (
                           playlist_id, name, sort_order, is_collapsed, is_active,
-                          default_duration_sec, transition_style, master_config
+                          is_main, default_duration_sec, transition_style, master_config
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
                         RETURNING id
                         """,
                         (
@@ -649,6 +656,7 @@ class PlaylistRepository:
                             section["sortOrder"],
                             bool(section.get("isCollapsed", False)),
                             bool(section.get("isActive", True)),
+                            bool(section.get("isMain", False)),
                             section.get("defaultDurationSec"),
                             section.get("transitionStyle"),
                             json.dumps(section.get("masterConfig") or {}),
@@ -1023,6 +1031,101 @@ class PlaylistRepository:
             raise SectionNotFoundError
         return _row_to_section(row)
 
+    def ensure_main_section(
+        self,
+        playlist_id: UUID,
+        *,
+        actor_user_id: str,
+        reason: str = "section_main_ensured",
+        assign_orphans: bool = True,
+    ) -> dict[str, Any]:
+        """Garante uma seção Principal (is_main) por playlist; idempotente."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT * FROM tv_dashboard.playlist_sections
+                    WHERE playlist_id = %s AND is_main = TRUE
+                    LIMIT 1
+                    """,
+                    (str(playlist_id),),
+                )
+                existing = cur.fetchone()
+                if existing:
+                    main = _row_to_section(existing)
+                    if assign_orphans:
+                        cur.execute(
+                            """
+                            UPDATE tv_dashboard.slides
+                            SET section_id = %s, updated_at = NOW()
+                            WHERE playlist_id = %s AND section_id IS NULL
+                            """,
+                            (main["id"], str(playlist_id)),
+                        )
+                        if cur.rowcount:
+                            self._touch_playlist_updated_at(cur, playlist_id)
+                    conn.commit()
+                    return main
+
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                cur.execute(
+                    """
+                    SELECT id FROM tv_dashboard.playlist_sections
+                    WHERE playlist_id = %s
+                    ORDER BY sort_order ASC
+                    """,
+                    (str(playlist_id),),
+                )
+                existing_ids = [str(row["id"]) for row in cur.fetchall()]
+                for offset, section_id in enumerate(existing_ids):
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.playlist_sections
+                        SET sort_order = %s, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (-1000 - offset, section_id, str(playlist_id)),
+                    )
+                cur.execute(
+                    """
+                    INSERT INTO tv_dashboard.playlist_sections (
+                      playlist_id, name, sort_order, is_collapsed, is_active,
+                      is_main, master_config
+                    )
+                    VALUES (%s, %s, 0, FALSE, TRUE, TRUE, '{}'::jsonb)
+                    RETURNING *
+                    """,
+                    (str(playlist_id), "Principal"),
+                )
+                row = cur.fetchone()
+                main = _row_to_section(row)
+                for index, section_id in enumerate(existing_ids):
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.playlist_sections
+                        SET sort_order = %s, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (index + 1, section_id, str(playlist_id)),
+                    )
+                if assign_orphans:
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.slides
+                        SET section_id = %s, updated_at = NOW()
+                        WHERE playlist_id = %s AND section_id IS NULL
+                        """,
+                        (main["id"], str(playlist_id)),
+                    )
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return main
+
     def add_section(
         self,
         playlist_id: UUID,
@@ -1031,6 +1134,23 @@ class PlaylistRepository:
         actor_user_id: str,
         reason: str = "section_created",
     ) -> dict[str, Any]:
+        is_main = bool(payload.get("isMain", False))
+        if is_main:
+            return self.ensure_main_section(
+                playlist_id,
+                actor_user_id=actor_user_id,
+                reason=reason,
+                assign_orphans=True,
+            )
+
+        # Seção de usuário: garante Principal antes.
+        self.ensure_main_section(
+            playlist_id,
+            actor_user_id=actor_user_id,
+            reason="section_main_ensured",
+            assign_orphans=True,
+        )
+
         sort_order = payload.get("sortOrder")
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -1055,9 +1175,9 @@ class PlaylistRepository:
                     """
                     INSERT INTO tv_dashboard.playlist_sections (
                       playlist_id, name, sort_order, is_collapsed, is_active,
-                      default_duration_sec, transition_style, master_config
+                      is_main, default_duration_sec, transition_style, master_config
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    VALUES (%s, %s, %s, %s, %s, FALSE, %s, %s, %s::jsonb)
                     RETURNING *
                     """,
                     (
@@ -1114,6 +1234,7 @@ class PlaylistRepository:
         if "masterConfig" in payload and payload["masterConfig"] is not None:
             fields.append("master_config = %s::jsonb")
             values.append(json.dumps(payload["masterConfig"]))
+        # is_main não é mutável via update (só ensure).
         if not fields:
             return self.get_section(section_id, playlist_id=playlist_id)
         fields.append("updated_at = NOW()")
@@ -1153,6 +1274,19 @@ class PlaylistRepository:
     ) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, is_main FROM tv_dashboard.playlist_sections
+                    WHERE id = %s AND playlist_id = %s
+                    """,
+                    (str(section_id), str(playlist_id)),
+                )
+                target = cur.fetchone()
+                if not target:
+                    raise SectionNotFoundError
+                if bool(target.get("is_main")):
+                    raise MainSectionProtectedError
+
                 self._capture_before_mutation(
                     cur,
                     playlist_id,
@@ -1167,6 +1301,34 @@ class PlaylistRepository:
                         """,
                         (str(playlist_id), str(section_id)),
                     )
+                else:
+                    cur.execute(
+                        """
+                        SELECT id FROM tv_dashboard.playlist_sections
+                        WHERE playlist_id = %s AND is_main = TRUE
+                        LIMIT 1
+                        """,
+                        (str(playlist_id),),
+                    )
+                    main_row = cur.fetchone()
+                    if main_row:
+                        cur.execute(
+                            """
+                            UPDATE tv_dashboard.slides
+                            SET section_id = %s, updated_at = NOW()
+                            WHERE playlist_id = %s AND section_id = %s
+                            """,
+                            (str(main_row["id"]), str(playlist_id), str(section_id)),
+                        )
+                    else:
+                        cur.execute(
+                            """
+                            UPDATE tv_dashboard.slides
+                            SET section_id = NULL, updated_at = NOW()
+                            WHERE playlist_id = %s AND section_id = %s
+                            """,
+                            (str(playlist_id), str(section_id)),
+                        )
                 cur.execute(
                     """
                     DELETE FROM tv_dashboard.playlist_sections

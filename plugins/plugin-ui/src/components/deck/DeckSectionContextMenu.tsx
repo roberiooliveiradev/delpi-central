@@ -29,6 +29,8 @@ export type DeckSectionContextMenuProps = {
   onClose: () => void;
   collapsed?: boolean;
   active?: boolean;
+  /** Se false, omite ações de exclusão (seção principal). */
+  allowDelete?: boolean;
   portalScopeClassName?: string;
   onAction: (action: DeckSectionContextMenuAction) => void;
 };
@@ -42,6 +44,7 @@ export function DeckSectionContextMenu({
   onClose,
   collapsed = false,
   active = true,
+  allowDelete = true,
   portalScopeClassName,
   onAction,
 }: DeckSectionContextMenuProps) {
@@ -84,18 +87,22 @@ export function DeckSectionContextMenu({
         icon={FolderInput}
         onSelect={() => run(collapsed ? "expand" : "collapse")}
       />
-      <ContextMenuDivider />
-      <ContextMenuItem
-        label="Excluir seção"
-        icon={Trash2}
-        onSelect={() => run("delete-section")}
-      />
-      <ContextMenuItem
-        label="Excluir seção e slides"
-        icon={Trash2}
-        destructive
-        onSelect={() => run("delete-section-and-slides")}
-      />
+      {allowDelete ? (
+        <>
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label="Excluir seção"
+            icon={Trash2}
+            onSelect={() => run("delete-section")}
+          />
+          <ContextMenuItem
+            label="Excluir seção e slides"
+            icon={Trash2}
+            destructive
+            onSelect={() => run("delete-section-and-slides")}
+          />
+        </>
+      ) : null}
     </ContextMenu>
   );
 }

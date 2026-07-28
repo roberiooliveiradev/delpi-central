@@ -34,6 +34,8 @@ export type PlaylistSection = {
   sortOrder: number;
   isCollapsed?: boolean;
   isActive?: boolean;
+  /** Seção principal do deck; única por playlist; chrome oculto quando é a única. */
+  isMain?: boolean;
   defaultDurationSec?: number | null;
   transitionStyle?: string | null;
   masterConfig?: PlaylistMasterConfig;
@@ -714,6 +716,16 @@ export async function listPlaylistSections(playlistId: string) {
   return data.items;
 }
 
+/** Garante a seção Principal (isMain); idempotente. */
+export async function ensurePlaylistMainSection(playlistId: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<PlaylistSection>>(
+      `${API_BASE}/playlists/${playlistId}/sections/ensure-main`,
+      {},
+    ),
+  );
+}
+
 export async function createPlaylistSection(
   playlistId: string,
   body: {
@@ -721,6 +733,7 @@ export async function createPlaylistSection(
     sortOrder?: number;
     isCollapsed?: boolean;
     isActive?: boolean;
+    isMain?: boolean;
     defaultDurationSec?: number | null;
     transitionStyle?: string | null;
     masterConfig?: PlaylistMasterConfig;
