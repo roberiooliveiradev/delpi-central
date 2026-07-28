@@ -1,4 +1,4 @@
-import { ComboboxNumberControl } from "@delpi/plugin-ui/index";
+import { NumberStepperControl } from "@delpi/plugin-ui/index";
 import {
   DECIMAL_PLACES_MAX,
   DECIMAL_PLACES_MIN,
@@ -10,6 +10,7 @@ import {
 import { DeckField } from "./deck/DeckField";
 
 const DECIMAL_PLACE_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
+const DECIMAL_PLACE_STEP = 1;
 
 type Props = {
   format: string | null | undefined;
@@ -20,9 +21,13 @@ type Props = {
   asField?: boolean;
 };
 
+function clampDecimalPlaces(n: number): number {
+  return Math.min(DECIMAL_PLACES_MAX, Math.max(DECIMAL_PLACES_MIN, Math.trunc(n)));
+}
+
 /**
- * Controle de casas decimais — visível só para Número / Percentual / Moeda.
- * Valor omitido usa o default do formato; ao alterar, grava e arredonda na exibição.
+ * Controle de casas decimais — mesmo padrão visual do tamanho de fonte (− / valor / +).
+ * Visível só para Número / Percentual / Moeda.
  */
 export function DecimalPlacesField({
   format,
@@ -39,24 +44,25 @@ export function DecimalPlacesField({
       : defaultDecimalPlacesForFormat(fmt);
 
   const control = (
-    <ComboboxNumberControl
+    <NumberStepperControl
       className={compactClassName}
-      compact={Boolean(compactClassName)}
+      compact
       square={false}
+      groupAriaLabel="Casas decimais"
+      aria-label="Casas decimais"
       min={DECIMAL_PLACES_MIN}
       max={DECIMAL_PLACES_MAX}
       value={effective}
       options={DECIMAL_PLACE_OPTIONS}
-      clamp={(n) =>
-        Math.min(DECIMAL_PLACES_MAX, Math.max(DECIMAL_PLACES_MIN, Math.trunc(n)))
-      }
+      clamp={clampDecimalPlaces}
       portalScopeClassName="dashboard-tv-dashboard"
-      aria-label="Casas decimais"
-      onChange={(n) =>
-        onChange(
-          Math.min(DECIMAL_PLACES_MAX, Math.max(DECIMAL_PLACES_MIN, Math.trunc(n))),
-        )
-      }
+      onChange={(n) => onChange(clampDecimalPlaces(n))}
+      onStepDown={() => onChange(clampDecimalPlaces(effective - DECIMAL_PLACE_STEP))}
+      onStepUp={() => onChange(clampDecimalPlaces(effective + DECIMAL_PLACE_STEP))}
+      stepDownDisabled={effective <= DECIMAL_PLACES_MIN}
+      stepUpDisabled={effective >= DECIMAL_PLACES_MAX}
+      stepDownAriaLabel="Diminuir casas decimais"
+      stepUpAriaLabel="Aumentar casas decimais"
     />
   );
 
