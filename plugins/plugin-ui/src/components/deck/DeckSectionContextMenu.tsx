@@ -2,6 +2,7 @@ import {
   Eye,
   EyeOff,
   FolderInput,
+  Plus,
   Pencil,
   Settings2,
   Trash2,
@@ -13,6 +14,7 @@ import { ContextMenuItem } from "../menu/ContextMenuItem";
 import type { FixedPanelPoint } from "../menu/useFixedPanelPosition";
 
 export type DeckSectionContextMenuAction =
+  | "add-slide"
   | "rename"
   | "properties"
   | "toggle-active"
@@ -32,7 +34,7 @@ export type DeckSectionContextMenuProps = {
 };
 
 /**
- * Menu de seção (PPT-like): renomear, propriedades, ocultar, colapsar, excluir.
+ * Menu de seção (PPT-like): nova tela, renomear, propriedades, ocultar, colapsar, excluir.
  */
 export function DeckSectionContextMenu({
   open,
@@ -56,6 +58,12 @@ export function DeckSectionContextMenu({
       aria-label="Menu da seção"
       portalScopeClassName={portalScopeClassName}
     >
+      <ContextMenuItem
+        label="Nova tela nesta seção"
+        icon={Plus}
+        onSelect={() => run("add-slide")}
+      />
+      <ContextMenuDivider />
       <ContextMenuItem
         label="Renomear"
         icon={Pencil}

@@ -1,4 +1,8 @@
-import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import type {
+  DragEvent as ReactDragEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { DeckSectionHeader } from "./DeckSectionHeader";
@@ -18,6 +22,7 @@ export type DeckSectionListProps = {
   unsectioned?: ReactNode;
   unsectionedLabel?: string;
   unsectionedCount?: number;
+  emptyDropHint?: string;
   prefix?: string;
   onToggleCollapsed?: (sectionId: string) => void;
   onNameChange?: (sectionId: string, name: string) => void;
@@ -26,6 +31,10 @@ export type DeckSectionListProps = {
     sectionId: string,
     event: ReactPointerEvent<HTMLButtonElement>,
   ) => void;
+  /** Soltar slide nesta seção (incluindo vazia). */
+  onDropOnSection?: (sectionId: string) => void;
+  /** Soltar slide no bucket «Sem seção». */
+  onDropOnUnsectioned?: () => void;
   /** Slot após o header (ex.: handles de DnD do MFE). */
   renderSectionChrome?: (section: DeckSectionListItem) => ReactNode;
 };
@@ -39,7 +48,13 @@ export function deckSectionListBemClasses(prefix = "delpi-ui") {
     section: pair(`${local}__section`, `${ui}__section`),
     body: pair(`${local}__body`, `${ui}__body`),
     unsectioned: pair(`${local}__unsectioned`, `${ui}__unsectioned`),
+    dropHint: pair(`${local}__drop-hint`, `${ui}__drop-hint`),
   };
+}
+
+function allowDrop(event: ReactDragEvent) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
 }
 
 /**
@@ -50,11 +65,14 @@ export function DeckSectionList({
   unsectioned,
   unsectionedLabel = "Sem seção",
   unsectionedCount = 0,
+  emptyDropHint = "Solte telas aqui",
   prefix = "td",
   onToggleCollapsed,
   onNameChange,
   onNameCommit,
   onSectionMenuPointerDown,
+  onDropOnSection,
+  onDropOnUnsectioned,
   renderSectionChrome,
 }: DeckSectionListProps) {
   const cn = deckSectionListBemClasses(prefix);
@@ -62,7 +80,20 @@ export function DeckSectionList({
   return (
     <div className={cn.root} data-deck-section-list="">
       {unsectioned != null ? (
-        <div className={cn.unsectioned} data-deck-unsectioned="">
+        <div
+          className={cn.unsectioned}
+          data-deck-unsectioned=""
+          onDragOver={onDropOnUnsectioned ? allowDrop : undefined}
+          onDrop={
+            onDropOnUnsectioned
+              ? (event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onDropOnUnsectioned();
+                }
+              : undefined
+          }
+        >
           <DeckSectionHeader
             prefix={prefix}
             name={unsectionedLabel}
@@ -70,17 +101,35 @@ export function DeckSectionList({
             nameEditable={false}
             collapsed={false}
           />
-          <div className={cn.body}>{unsectioned}</div>
+          <div className={cn.body}>
+            {unsectionedCount === 0 && onDropOnUnsectioned ? (
+              <div className={cn.dropHint} aria-hidden="true">
+                {emptyDropHint}
+              </div>
+            ) : null}
+            {unsectioned}
+          </div>
         </div>
       ) : null}
       {sections.map((section) => {
         const collapsed = Boolean(section.collapsed);
+        const empty = section.slideCount === 0;
         return (
           <div
             key={section.id}
             className={cn.section}
             data-section-id={section.id}
             data-collapsed={collapsed ? "true" : "false"}
+            onDragOver={onDropOnSection ? allowDrop : undefined}
+            onDrop={
+              onDropOnSection
+                ? (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onDropOnSection(section.id);
+                  }
+                : undefined
+            }
           >
             <DeckSectionHeader
               prefix={prefix}
@@ -98,7 +147,16 @@ export function DeckSectionList({
               }
             />
             {renderSectionChrome?.(section)}
-            {!collapsed ? <div className={cn.body}>{section.children}</div> : null}
+            {!collapsed ? (
+              <div className={cn.body}>
+                {empty && onDropOnSection ? (
+                  <div className={cn.dropHint} aria-hidden="true">
+                    {emptyDropHint}
+                  </div>
+                ) : null}
+                {section.children}
+              </div>
+            ) : null}
           </div>
         );
       })}

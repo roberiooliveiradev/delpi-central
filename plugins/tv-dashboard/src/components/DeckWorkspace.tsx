@@ -21,6 +21,7 @@ type Props = {
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
+  onAddInSection?: (sectionId: string) => void;
   onCopySlide: (slide: Slide) => void;
   onPasteSlide: () => void;
   onDuplicateSlide: (slide: Slide) => void;
@@ -32,6 +33,8 @@ type Props = {
   onSectionToggleActive?: (sectionId: string, active: boolean) => void;
   onSectionDelete?: (sectionId: string, deleteSlides: boolean) => void;
   onSectionProperties?: (sectionId: string) => void;
+  onDropOnSection?: (sectionId: string) => void;
+  onDropOnUnsectioned?: () => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
 };
@@ -54,6 +57,7 @@ export function DeckWorkspace({
   onDragEnd,
   onAdd,
   onAddSection,
+  onAddInSection,
   onCopySlide,
   onPasteSlide,
   onDuplicateSlide,
@@ -65,6 +69,8 @@ export function DeckWorkspace({
   onSectionToggleActive,
   onSectionDelete,
   onSectionProperties,
+  onDropOnSection,
+  onDropOnUnsectioned,
   stage,
   rightPanel,
 }: Props) {
@@ -88,6 +94,7 @@ export function DeckWorkspace({
         onDragEnd={onDragEnd}
         onAdd={onAdd}
         onAddSection={onAddSection}
+        onAddInSection={onAddInSection}
         onCopy={onCopySlide}
         onPaste={onPasteSlide}
         onDuplicate={onDuplicateSlide}
@@ -99,6 +106,8 @@ export function DeckWorkspace({
         onSectionToggleActive={onSectionToggleActive}
         onSectionDelete={onSectionDelete}
         onSectionProperties={onSectionProperties}
+        onDropOnSection={onDropOnSection}
+        onDropOnUnsectioned={onDropOnUnsectioned}
       />
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         <div className="td-deck-stage__inner">

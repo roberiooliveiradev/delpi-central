@@ -48,6 +48,7 @@ type Props = {
   onDragEnd: () => void;
   onAdd: () => void;
   onAddSection?: () => void;
+  onAddInSection?: (sectionId: string) => void;
   onCopy: (slide: Slide) => void;
   onPaste: () => void;
   onDuplicate: (slide: Slide) => void;
@@ -59,6 +60,8 @@ type Props = {
   onSectionToggleActive?: (sectionId: string, active: boolean) => void;
   onSectionDelete?: (sectionId: string, deleteSlides: boolean) => void;
   onSectionProperties?: (sectionId: string) => void;
+  onDropOnSection?: (sectionId: string) => void;
+  onDropOnUnsectioned?: () => void;
 };
 
 export function SlideFilmstrip({
@@ -79,6 +82,7 @@ export function SlideFilmstrip({
   onDragEnd,
   onAdd,
   onAddSection,
+  onAddInSection,
   onCopy,
   onPaste,
   onDuplicate,
@@ -90,6 +94,8 @@ export function SlideFilmstrip({
   onSectionToggleActive,
   onSectionDelete,
   onSectionProperties,
+  onDropOnSection,
+  onDropOnUnsectioned,
 }: Props) {
   const { collapsed, toggleCollapsed, setCollapsed, startResize, panelWidthPx, limits } =
     useDeckSidePanelLayout("filmstrip", { growDirection: "east" });
@@ -264,6 +270,10 @@ export function SlideFilmstrip({
   const handleSectionMenuAction = (action: DeckSectionContextMenuAction) => {
     if (!sectionMenuTarget) return;
     const id = sectionMenuTarget.id;
+    if (action === "add-slide") {
+      onAddInSection?.(id);
+      return;
+    }
     if (action === "rename") {
       /* foco no input do header — o usuário edita o nome inline */
       return;
@@ -317,12 +327,9 @@ export function SlideFilmstrip({
       >
         <DeckSectionList
           prefix="td"
-          unsectioned={
-            grouped.unsectioned.length > 0
-              ? grouped.unsectioned.map((slide) => renderSlideItem(slide))
-              : undefined
-          }
+          unsectioned={grouped.unsectioned.map((slide) => renderSlideItem(slide))}
           unsectionedCount={grouped.unsectioned.length}
+          emptyDropHint="Solte telas aqui"
           sections={grouped.sections.map(({ section, slides: sectionSlides }) => ({
             id: section.id,
             name: sectionNameDrafts[section.id] ?? section.name,
@@ -356,6 +363,8 @@ export function SlideFilmstrip({
               y: event.clientY,
             });
           }}
+          onDropOnSection={onDropOnSection}
+          onDropOnUnsectioned={onDropOnUnsectioned}
         />
       </div>
     );

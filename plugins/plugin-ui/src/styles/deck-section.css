@@ -19,6 +19,21 @@
   gap: 0.25rem;
   min-width: 0;
   padding-left: 0.15rem;
+  min-height: 0.5rem;
+}
+
+.delpi-ui-deck-section-list__drop-hint {
+  margin: 0.15rem 0.1rem 0.35rem;
+  padding: 0.55rem 0.5rem;
+  border-radius: 6px;
+  border: 1px dashed color-mix(in srgb, var(--delpi-ui-muted, #64748b) 55%, transparent);
+  color: var(--delpi-ui-muted, #64748b);
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.3;
+  pointer-events: none;
+  box-sizing: border-box;
 }
 
 .delpi-ui-deck-section-header {

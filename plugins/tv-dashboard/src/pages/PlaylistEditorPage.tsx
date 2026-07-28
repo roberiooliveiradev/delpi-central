@@ -46,6 +46,7 @@ import { SectionPropertiesPanel } from "../components/SectionPropertiesPanel";
 import { SlideStagePreview } from "../components/SlideStagePreview";
 import { enrichComunicadoConfigForEditor, mergeMasterConfigs } from "../components/slideCardPreview";
 import { insertSlideAfterAnchor } from "../utils/insertSlideAfterAnchor";
+import { assignSlideToSectionOrder } from "../utils/assignSlideToSectionOrder";
 import {
   DeckEditorHistoryProvider,
   type DeckEditorHistoryContextValue,
@@ -671,7 +672,7 @@ export function PlaylistEditorPage({
     return result.slides.find((item) => item.id === newSlide.id) ?? newSlide;
   }
 
-  async function handleAddCustomSlide() {
+  async function handleAddCustomSlide(explicitSectionId?: string | null) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
     const customCatalogItem = catalog.find((item) => item.key === "custom_message");
@@ -682,8 +683,18 @@ export function PlaylistEditorPage({
     const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
     const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
     const anchorSectionId =
-      slides.find((slide) => slide.id === anchorId)?.sectionId ?? selectedSlide?.sectionId ?? null;
+      explicitSectionId !== undefined
+        ? explicitSectionId
+        : (slides.find((slide) => slide.id === anchorId)?.sectionId ??
+          selectedSlide?.sectionId ??
+          null);
     try {
+      if (explicitSectionId) {
+        const target = sections.find((section) => section.id === explicitSectionId);
+        if (target?.isCollapsed) {
+          await updatePlaylistSection(playlist.id, explicitSectionId, { isCollapsed: false });
+        }
+      }
       const slide = await addSlide(playlist.id, {
         slideType: "native",
         title,
@@ -694,7 +705,35 @@ export function PlaylistEditorPage({
         durationSec: customCatalogItem?.defaultDurationSec ?? 30,
         sectionId: anchorSectionId,
       });
-      const placed = await placeSlideAfterActive(slide, anchorId);
+      let placed = slide;
+      if (explicitSectionId) {
+        const ordered = assignSlideToSectionOrder(
+          [...(playlist.slides ?? []), slide],
+          slide.id,
+          explicitSectionId,
+        );
+        const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+        const result = await reorderSlides(playlist.id, items);
+        const nextSections =
+          sections.find((section) => section.id === explicitSectionId)?.isCollapsed
+            ? (playlist.sections ?? []).map((section) =>
+                section.id === explicitSectionId ? { ...section, isCollapsed: false } : section,
+              )
+            : playlist.sections;
+        setPlaylist({
+          ...playlist,
+          sections: nextSections,
+          slides: result.slides.map((item) =>
+            item.id === slide.id ? { ...item, sectionId: explicitSectionId } : item,
+          ),
+        });
+        placed = result.slides.find((item) => item.id === slide.id) ?? {
+          ...slide,
+          sectionId: explicitSectionId,
+        };
+      } else {
+        placed = await placeSlideAfterActive(slide, anchorId);
+      }
       selectSlide(placed.id, placed);
       await deckHistory.confirmChange();
     } catch (caught) {
@@ -712,11 +751,68 @@ export function PlaylistEditorPage({
       const section = await createPlaylistSection(playlist.id, {
         name: `Seção ${sections.length + 1}`,
         sortOrder: nextOrder,
+        isCollapsed: false,
       });
+      let nextSlides = playlist.slides ?? [];
+      const anchor = selectedSlide ?? slides.find((slide) => slide.id === selectedSlideId) ?? null;
+      if (anchor) {
+        const updated = await updateSlide(playlist.id, anchor.id, { sectionId: section.id });
+        const ordered = assignSlideToSectionOrder(nextSlides, anchor.id, section.id);
+        const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+        const result = await reorderSlides(playlist.id, items);
+        nextSlides = result.slides.map((item) =>
+          item.id === anchor.id ? { ...item, sectionId: section.id } : item,
+        );
+        // Preferir o slide atualizado da API se reorder não trouxe sectionId.
+        if (!nextSlides.some((item) => item.id === updated.id && item.sectionId === section.id)) {
+          nextSlides = nextSlides.map((item) => (item.id === updated.id ? updated : item));
+        }
+      }
       setPlaylist({
         ...playlist,
         sections: [...(playlist.sections ?? []), section],
+        slides: nextSlides,
       });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
+  }
+
+  async function moveSlideToSection(sectionId: string | null) {
+    if (!playlist || dragIndex === null) return;
+    const moved = slides[dragIndex];
+    if (!moved) return;
+    if ((moved.sectionId ?? null) === sectionId) {
+      setDragIndex(null);
+      return;
+    }
+    deckHistory.recordBeforeChange();
+    try {
+      if (sectionId) {
+        const target = sections.find((section) => section.id === sectionId);
+        if (target?.isCollapsed) {
+          await updatePlaylistSection(playlist.id, sectionId, { isCollapsed: false });
+        }
+      }
+      await updateSlide(playlist.id, moved.id, { sectionId });
+      const ordered = assignSlideToSectionOrder(slides, moved.id, sectionId);
+      const items = ordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
+      const result = await reorderSlides(playlist.id, items);
+      const nextSections = sectionId
+        ? (playlist.sections ?? []).map((section) =>
+            section.id === sectionId ? { ...section, isCollapsed: false } : section,
+          )
+        : playlist.sections;
+      setPlaylist({
+        ...playlist,
+        sections: nextSections,
+        slides: result.slides.map((item) =>
+          item.id === moved.id ? { ...item, sectionId } : item,
+        ),
+      });
+      setDragIndex(null);
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1347,6 +1443,7 @@ export function PlaylistEditorPage({
     onDragEnd: () => setDragIndex(null),
     onAdd: () => void handleAddCustomSlide(),
     onAddSection: () => void handleAddSection(),
+    onAddInSection: (sectionId: string) => void handleAddCustomSlide(sectionId),
     onCopySlide: handleCopySlide,
     onPasteSlide: () => void handlePasteSlide(),
     onDuplicateSlide: (slide: Slide) => void handleDuplicateSlide(slide),
@@ -1362,6 +1459,8 @@ export function PlaylistEditorPage({
     onSectionDelete: (sectionId: string, deleteSlides: boolean) =>
       void handleDeleteSection(sectionId, deleteSlides),
     onSectionProperties: (sectionId: string) => setSectionPropertiesId(sectionId),
+    onDropOnSection: (sectionId: string) => void moveSlideToSection(sectionId),
+    onDropOnUnsectioned: () => void moveSlideToSection(null),
   };
 
   return (
