@@ -496,6 +496,14 @@ Depois de importar o OpenAPI e vincular actions ao agente, rotas de **produto**,
    - `parameters.strategy` (`product_code`, `date_branch`, `exclusive_catalog`, …)
    - `presentation.reasonKey` existente em `external_action_responses.json` → `selectionReasons`
 4. **Teste** — caso em `test_external_action_operational_route_selection_service.py` ou `chat_intelligence_regression_cases.py`.
+5. **Markers sem shadow** — evite `pathMarkers` curtos tipo `/search` sozinhos. Prefira `pathMarkers: ["/products/"]` + `pathSuffix: "/search"` (ou `pathExactEnd` / `excludePathMarkers`). O lint `_lint_path_marker_shadow` falha se catch-alls `domainProductSearch` sombrearem ≥2 famílias OpenAPI.
+
+### Hierarquia de seleção (jul/2026)
+
+1. Hint explícito de `routeSegment` na mensagem + código de produto → `select_by_route_segment` **antes** do loop vocabulary.
+2. Facetas `product` / `requiresProductIdentifier` no vocabulary **antes** de `domainProductSearch`.
+3. Resolver exige afinidade de path (`/products/…` para strategy `product_code` / search de produto).
+4. `productSearchQuestion` não casa quando há segmento operacional (`hasProductOperationalRouteSegment`).
 
 ### Multi-provider (mesmo path, actionIds diferentes)
 
