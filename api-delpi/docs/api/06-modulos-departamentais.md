@@ -286,6 +286,8 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 - Cache: `query_cache` (namespace `lmp-dashboard`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300s):
   - `|summary-rows|pi1` — linhas enriquecidas compartilhadas entre summary, charts e items (formato `{"rows": [...]}`).
   - `|summary-response` e `|charts-response` — respostas finais por filtro de status.
+  - **Singleflight** (`QueryCachePort.get_or_set`): miss concorrente (summary+charts+items no cold path) dispara **um** SQL; demais awaiters reutilizam o resultado.
+  - BOM/PI: vigência `G1_FIM` com parâmetro bind (sem `CONVERT(GETDATE())` na coluna).
 - Console: `operation_id=get_lmps_dashboard_charts` / `get_lmps_dashboard_summary`; alerta `slow_sql` acima de 2500 ms — após o primeiro carregamento do período, chamadas subsequentes devem ser cache hit (&lt; 500 ms).
 
 ### Transforma Mais

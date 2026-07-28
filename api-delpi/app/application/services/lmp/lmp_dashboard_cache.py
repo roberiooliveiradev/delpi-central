@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from app.application.dto.lmp.list_lmp_request import resolve_listing_type_filter
 from app.composition.query_cache_composer import build_query_cache
+
+T = TypeVar("T")
 
 
 def lmp_dashboard_cache_key(
@@ -32,6 +35,11 @@ def get_cached_lmp_dashboard(key: str) -> Any | None:
 
 def set_cached_lmp_dashboard(key: str, value: Any) -> None:
     build_query_cache().set(key, value)
+
+
+def get_or_set_cached_lmp_dashboard(key: str, factory: Callable[[], T]) -> T:
+    """Singleflight no namespace lmp-dashboard (anti-stampede no cold path)."""
+    return build_query_cache().get_or_set(key, factory)
 
 
 def invalidate_lmp_dashboard_cache() -> None:
@@ -71,3 +79,13 @@ def set_cached_lmp_dashboard_summary_rows(
     value: list[dict[str, Any]],
 ) -> None:
     build_query_cache().set(key, value)
+
+
+def get_or_set_cached_lmp_dashboard_summary_rows(
+    key: str,
+    factory: Callable[[], list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    value = build_query_cache().get_or_set(key, factory)
+    if isinstance(value, list):
+        return value
+    return []

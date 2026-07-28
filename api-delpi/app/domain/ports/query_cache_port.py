@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
+from collections.abc import Callable
+from typing import Any, Protocol, TypeVar
+
+T = TypeVar("T")
 
 
 class QueryCachePort(Protocol):
@@ -9,3 +12,7 @@ class QueryCachePort(Protocol):
     def set(self, key: str, value: Any) -> None: ...
 
     def invalidate_all(self) -> None: ...
+
+    def get_or_set(self, key: str, factory: Callable[[], T]) -> T:
+        """Retorna o valor em cache ou executa ``factory`` uma vez (singleflight)."""
+        ...

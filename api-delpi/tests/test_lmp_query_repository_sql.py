@@ -860,3 +860,74 @@ def test_get_lmp_dashboard_summary_reuses_repository_row_cache() -> None:
         include_qtd_pi=True,
     )
     assert build_query_cache().get(cache_key) is not None
+
+
+def test_pi_bom_uses_bound_today_instead_of_convert_getdate() -> None:
+    repo = LMPQueryRepository()
+    sql, params = repo._sql_pi_total_by_ov_ctes_from_produtos_lmp()
+
+    assert "CONVERT(CHAR(8), GETDATE()" not in sql
+    assert "G.G1_FIM > ?" in sql
+    # dois ramos do Recursive_BOM (âncora + recursivo)
+    assert sql.count("G.G1_FIM > ?") == 2
+    assert any(isinstance(p, str) and len(p) == 8 and p.isdigit() for p in params)
+
+
+def test_get_lmp_dashboard_summary_singleflight_under_concurrency() -> None:
+    import threading
+    from unittest.mock import patch
+
+    from app.application.dto.lmp.list_lmp_request import ListLMPRequest
+    from app.composition.query_cache_composer import reset_query_cache_for_tests
+
+    reset_query_cache_for_tests()
+    repo = LMPQueryRepository()
+    request = ListLMPRequest(
+        date_start="20260401",
+        date_end="20260501",
+        listing_type="lmp",
+        include_qtd_pi=False,
+    )
+    sample_rows = [
+        {
+            "branch": "01",
+            "sale_number": "OV002",
+            "sale_description": "X",
+            "listing_kind": "LMP",
+            "start_date": "20260410",
+            "end_date": None,
+            "homolog_revision": "00",
+            "measurement_revision": "00",
+            "homolog_date": "20260410",
+            "cycle_index": 1,
+            "engineering_status": "Andamento",
+            "engineering_total_minutes": 10,
+            "qtd_pi": 0,
+        }
+    ]
+    calls = {"n": 0}
+
+    def slow_batch(*_a, **_k):
+        calls["n"] += 1
+        import time
+
+        time.sleep(0.05)
+        return sample_rows
+
+    results: list[list] = []
+
+    with patch.object(LMPQueryRepository, "execute_batch_query", side_effect=slow_batch):
+        with patch.object(LMPQueryRepository, "__enter__", return_value=repo):
+            with patch.object(LMPQueryRepository, "__exit__", return_value=False):
+
+                def worker() -> None:
+                    results.append(repo.get_lmp_dashboard_summary(request))
+
+                threads = [threading.Thread(target=worker) for _ in range(6)]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+
+    assert calls["n"] == 1
+    assert all(row[0]["sale_number"] == "OV002" for row in results)

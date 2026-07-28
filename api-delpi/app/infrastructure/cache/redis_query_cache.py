@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
-from typing import Any
-
 from collections import defaultdict
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 from app.domain.ports.query_cache_port import QueryCachePort
 from app.domain.services.query_cache_stats_service import cache_namespace_from_key
+from app.infrastructure.cache.singleflight import Singleflight
+
+T = TypeVar("T")
 
 
 class RedisQueryCache(QueryCachePort):
@@ -22,6 +25,7 @@ class RedisQueryCache(QueryCachePort):
         self._client = redis.from_url(redis_url, decode_responses=True)
         self._ttl_seconds = max(1, int(ttl_seconds))
         self._key_prefix = key_prefix
+        self._singleflight: Singleflight[Any] = Singleflight()
         self._client.ping()
 
     def get(self, key: str) -> Any | None:
@@ -39,6 +43,21 @@ class RedisQueryCache(QueryCachePort):
             self._ttl_seconds,
             json.dumps(value, default=str),
         )
+
+    def get_or_set(self, key: str, factory: Callable[[], T]) -> T:
+        cached = self.get(key)
+        if cached is not None:
+            return cached
+
+        def compute() -> T:
+            again = self.get(key)
+            if again is not None:
+                return again  # type: ignore[return-value]
+            value = factory()
+            self.set(key, value)
+            return value
+
+        return self._singleflight.do(key, compute)
 
     def invalidate_all(self) -> None:
         pattern = f"{self._key_prefix}*"

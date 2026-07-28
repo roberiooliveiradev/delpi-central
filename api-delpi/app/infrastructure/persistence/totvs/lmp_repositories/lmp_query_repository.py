@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Tuple
 
 from app.application.dto.lmp.get_lmp_history_request import GetLmpHistoryRequest
@@ -11,9 +12,8 @@ from app.application.dto.lmp.list_lmp_request import (
 )
 from app.application.models.page import Page
 from app.application.services.lmp.lmp_dashboard_cache import (
-    get_cached_lmp_dashboard_summary_rows,
+    get_or_set_cached_lmp_dashboard_summary_rows,
     lmp_dashboard_summary_rows_cache_key,
-    set_cached_lmp_dashboard_summary_rows,
 )
 from app.domain.entities.lmp.lmp import LMP
 from app.domain.entities.lmp.lmp_history_event import LMPHistoryEvent
@@ -49,6 +49,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
     def _totvs_from(table: str, alias: str) -> str:
         """Leitura analítica — alias antes do hint (T-SQL: FROM Tbl X WITH (NOLOCK))."""
         return f"{table} {alias} WITH (NOLOCK)"
+
+    @staticmethod
+    def _sql_sg1_valid_through_today(alias: str = "G") -> Tuple[str, tuple]:
+        """Filtro de vigência SG1 com bind (evita CONVERT(GETDATE()) em coluna)."""
+        today = datetime.now().strftime("%Y%m%d")
+        return f"{alias}.G1_FIM > ?", (today,)
 
     def _active_filter(self, qb: QueryBuilder, field: str):
         qb.eq(field, self.settings.active_delete_flag)
@@ -2400,6 +2406,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         where_sb_root, params_sb_root = self._sql_filter_sb_root_types("SB")
         where_sg, params_sg = self._sql_filter_sg_active("G")
         where_sb_pi, params_sb_pi = self._sql_filter_sb_pi_types("SB")
+        g1_valid, params_g1_valid = self._sql_sg1_valid_through_today("G")
 
         sql = f"""
             ProdutosLMPRef AS (
@@ -2441,7 +2448,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN SG1010 G
                     ON G.G1_COD = B.ROOT_PRODUCT
                 WHERE {where_sg}
-                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+                  AND {g1_valid}
 
                 UNION ALL
 
@@ -2456,7 +2463,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN Recursive_BOM R
                     ON R.COMPONENT = G.G1_COD
                 WHERE {where_sg}
-                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+                  AND {g1_valid}
                   AND R.LEVEL < {int(self.settings.max_bom_level)}
             ),
 
@@ -2494,7 +2501,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_sb1,
             *params_sb_root,
             *params_sg,
+            *params_g1_valid,
             *params_sg,
+            *params_g1_valid,
             *params_sb_pi,
         )
         return sql, params
@@ -2504,6 +2513,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         where_sb_root, params_sb_root = self._sql_filter_sb_root_types("SB")
         where_sg, params_sg = self._sql_filter_sg_active("G")
         where_sb_pi, params_sb_pi = self._sql_filter_sb_pi_types("SB")
+        g1_valid, params_g1_valid = self._sql_sg1_valid_through_today("G")
 
         sql = f"""
             ProdutosLMPRef AS (
@@ -2547,7 +2557,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN SG1010 G
                     ON G.G1_COD = B.ROOT_PRODUCT
                 WHERE {where_sg}
-                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+                  AND {g1_valid}
 
                 UNION ALL
 
@@ -2563,7 +2573,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
                 INNER JOIN Recursive_BOM R
                     ON R.COMPONENT = G.G1_COD
                 WHERE {where_sg}
-                  AND G.G1_FIM > CONVERT(CHAR(8), GETDATE(), 112)
+                  AND {g1_valid}
                   AND R.LEVEL < {int(self.settings.max_bom_level)}
             ),
 
@@ -2603,7 +2613,9 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             *params_sb1,
             *params_sb_root,
             *params_sg,
+            *params_g1_valid,
             *params_sg,
+            *params_g1_valid,
             *params_sb_pi,
         )
         return sql, params
@@ -4031,52 +4043,50 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
             listing_type=request.listing_type,
             include_qtd_pi=include_qtd_pi,
         )
-        cached = get_cached_lmp_dashboard_summary_rows(cache_key)
-        if cached is not None:
-            return cached
 
-        final_select = self._staged_final_select(
-            include_qtd_pi=include_qtd_pi,
-            order_by=False,
-            summary_only=True,
-        )
-        residence_params = self._staged_residence_final_params(
-            residence_filter_count=1,
-            listing_kind_reclass_count=1,
-        )
-        final_select, final_params = self._apply_effective_listing_type_filter_to_select(
-            request,
-            final_select,
-            residence_params,
-        )
-        batch_sql, batch_params = self._build_staged_batch(
-            request,
-            include_qtd_pi=include_qtd_pi,
-            eng_resumo_lite=True,
-            final_select=final_select,
-            final_params=final_params,
-        )
+        def compute() -> list[dict]:
+            final_select = self._staged_final_select(
+                include_qtd_pi=include_qtd_pi,
+                order_by=False,
+                summary_only=True,
+            )
+            residence_params = self._staged_residence_final_params(
+                residence_filter_count=1,
+                listing_kind_reclass_count=1,
+            )
+            final_select, final_params = self._apply_effective_listing_type_filter_to_select(
+                request,
+                final_select,
+                residence_params,
+            )
+            batch_sql, batch_params = self._build_staged_batch(
+                request,
+                include_qtd_pi=include_qtd_pi,
+                eng_resumo_lite=True,
+                final_select=final_select,
+                final_params=final_params,
+            )
 
-        with self as repo:
-            rows = repo.execute_batch_query(batch_sql, batch_params)
+            with self as repo:
+                rows = repo.execute_batch_query(batch_sql, batch_params)
 
-        normalized = [
-            {
-                "branch": row.get("branch"),
-                "sale_number": row.get("sale_number"),
-                "sale_description": (row.get("sale_description") or "").strip(),
-                "listing_kind": row.get("listing_kind"),
-                "start_date": row.get("start_date"),
-                "end_date": row.get("end_date"),
-                "homolog_revision": row.get("homolog_revision"),
-                "measurement_revision": row.get("measurement_revision"),
-                "homolog_date": row.get("homolog_date"),
-                "cycle_index": int(row.get("cycle_index") or 1),
-                "engineering_status": row.get("engineering_status"),
-                "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
-                "qtd_pi": int(row.get("qtd_pi") or 0),
-            }
-            for row in rows
-        ]
-        set_cached_lmp_dashboard_summary_rows(cache_key, normalized)
-        return normalized
+            return [
+                {
+                    "branch": row.get("branch"),
+                    "sale_number": row.get("sale_number"),
+                    "sale_description": (row.get("sale_description") or "").strip(),
+                    "listing_kind": row.get("listing_kind"),
+                    "start_date": row.get("start_date"),
+                    "end_date": row.get("end_date"),
+                    "homolog_revision": row.get("homolog_revision"),
+                    "measurement_revision": row.get("measurement_revision"),
+                    "homolog_date": row.get("homolog_date"),
+                    "cycle_index": int(row.get("cycle_index") or 1),
+                    "engineering_status": row.get("engineering_status"),
+                    "engineering_total_minutes": int(row.get("engineering_total_minutes") or 0),
+                    "qtd_pi": int(row.get("qtd_pi") or 0),
+                }
+                for row in rows
+            ]
+
+        return get_or_set_cached_lmp_dashboard_summary_rows(cache_key, compute)
