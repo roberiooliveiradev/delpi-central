@@ -265,9 +265,18 @@ class DashboardCalculatorService:
         filtered_raw = self.filter_raw(raw=raw, filial_id=filial_id)
         context = self._build_context(filtered_raw)
 
-        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+        timeline_start = self._determine_timeline_start(
+            processos_by_id=context.processos_by_id,
+            revisoes_by_processo=context.revisoes_by_processo,
+        )
+        resolved_start, resolved_end = calc_rules.resolve_open_ended_dashboard_period(
             start_date,
             end_date,
+            default_start=timeline_start,
+        )
+        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+            resolved_start,
+            resolved_end,
         )
         if entirely_future:
             return self._empty_summary(
@@ -680,9 +689,15 @@ class DashboardCalculatorService:
         start_date = self._normalize_date_filter(start_date)
         end_date = self._normalize_date_filter(end_date)
 
-        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+        resolved_start, resolved_end = calc_rules.resolve_open_ended_dashboard_period(
             start_date,
             end_date,
+            default_start=timeline_start,
+        )
+
+        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+            resolved_start,
+            resolved_end,
         )
         if entirely_future:
             return [], []
@@ -1726,7 +1741,21 @@ class DashboardCalculatorService:
         processos_by_id: Dict[str, dict],
         revisoes_by_processo: Dict[str, List[dict]],
     ) -> Optional[date]:
+        """Início padrão da série: primeira revisão não-baseline (implantação/vigência).
+
+        Sem melhorias implantadas, faz fallback para created_at / datas de qualquer
+        revisão (comportamento legado).
+        """
         candidates: List[date] = []
+
+        for process_id, reviews in revisoes_by_processo.items():
+            first = self._pick_first_non_baseline_review(reviews)
+            impl = self._review_implementation_date(first)
+            if impl:
+                candidates.append(impl)
+
+        if candidates:
+            return min(candidates)
 
         for process_id, process_row in processos_by_id.items():
             created = self._parse_date(process_row.get("created_at"))

@@ -172,6 +172,18 @@ para cada linha (revisão × competência):
 
 Assim o gráfico reflete início de vigência/implantação (degraus e picos), em vez de uma média plana no mês.
 
+## Período aberto (TV / série Economia vs Investimento)
+
+Implementação: `calc_rules.resolve_open_ended_dashboard_period` + `clamp_period_to_elapsed_days`
+(sem colapsar ponta única) · `_determine_timeline_start` (primeira revisão **não-baseline**).
+
+| Entrada | Resolução |
+|---|---|
+| Sem datas | início = 1ª revisão não-baseline … fim = hoje |
+| Só início | início informado … fim = hoje |
+| Só fim | início = 1ª não-baseline … fim informado |
+| Ambas | período fixo (clamp ao dia corrente se o fim for futuro) |
+
 ## Economia diária (ranking “Top economia diária”)
 
 Implementação: `calc_rules.daily_averages_from_period_totals`.

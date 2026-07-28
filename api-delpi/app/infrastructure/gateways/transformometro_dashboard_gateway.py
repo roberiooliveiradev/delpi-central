@@ -35,6 +35,14 @@ class TransformometroDashboardGateway(TransformometroDashboardPort):
     def __init__(self, client: TransformometroApiClient | None = None) -> None:
         self._client = client or TransformometroApiClient()
 
+    @staticmethod
+    def _blank_to_none(value: Any) -> str | None:
+        """Datas vazias/whitespace → None (TM completa período open-ended)."""
+        if value is None:
+            return None
+        text = str(value).strip()
+        return text or None
+
     def get_evolucao(
         self,
         request: DashboardEvolucaoRequest,
@@ -45,15 +53,20 @@ class TransformometroDashboardGateway(TransformometroDashboardPort):
         if granularity not in {"day", "month"}:
             raise ValueError("granularity inválida. Valores aceitos: day, month.")
 
+        start_date = self._blank_to_none(request.start_date)
+        end_date = self._blank_to_none(request.end_date)
+
         # Fachada api-delpi: start_date/end_date (padrão TV/OpenAPI).
         # Upstream TM-API ainda espera competencia_inicio/competencia_fim.
+        # Período parcial/ausente é resolvido no Transformômetro
+        # (primeira revisão não-baseline … hoje).
         data = self._client.get_dashboard_evolucao(
             params={
                 "view": request.view,
                 "filial_id": request.filial_id,
                 "setor_id": request.setor_id,
-                "competencia_inicio": request.start_date,
-                "competencia_fim": request.end_date,
+                "competencia_inicio": start_date,
+                "competencia_fim": end_date,
                 "granularity": granularity,
             },
             authorization=authorization,

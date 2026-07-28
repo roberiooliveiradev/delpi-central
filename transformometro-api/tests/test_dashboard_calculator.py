@@ -151,6 +151,18 @@ def test_process_list_uses_first_non_baseline_implementation_date():
     assert items[0]["data_implantacao"] == "10/02/2025"
 
 
+def test_timeline_start_uses_first_non_baseline_not_baseline():
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    calc = DashboardCalculatorService()
+    context = calc._build_context(raw)
+    timeline = calc._determine_timeline_start(
+        processos_by_id=context.processos_by_id,
+        revisoes_by_processo=context.revisoes_by_processo,
+    )
+    # Baseline em 2025-01-01 não puxa o início; melhoria vigora em 2025-02-01.
+    assert timeline == date(2025, 2, 1)
+
+
 def test_max_zero_when_melhoria_piora_tempo():
     raw = _load_fixture("golden_baseline_melhoria.json")
     raw.revisoes[1] = {**raw.revisoes[1], "data_inicio_vigencia": "2025-03-01"}

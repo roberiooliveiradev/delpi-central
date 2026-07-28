@@ -97,6 +97,41 @@ def format_period_date(value: date) -> str:
     return value.strftime("%Y-%m-%d")
 
 
+def resolve_open_ended_dashboard_period(
+    start_date: Optional[str],
+    end_date: Optional[str],
+    *,
+    default_start: Optional[date] = None,
+    today: Optional[date] = None,
+) -> tuple[Optional[str], Optional[str]]:
+    """Completa período aberto do dashboard (TV / série Economia vs Investimento).
+
+    - Sem datas → ``default_start`` … ``today`` (primeira revisão não-baseline).
+    - Só início → início … ``today``.
+    - Só fim → ``default_start`` … fim.
+    - Ambas → inalteradas (normalizadas ISO).
+    """
+    ref = today or date.today()
+    start = parse_date(start_date)
+    end = parse_date(end_date)
+
+    if start is None and end is None:
+        if default_start is None:
+            return None, None
+        return format_period_date(default_start), format_period_date(ref)
+
+    if start is not None and end is None:
+        return format_period_date(start), format_period_date(ref)
+
+    if start is None and end is not None:
+        if default_start is None:
+            return None, format_period_date(end)
+        return format_period_date(default_start), format_period_date(end)
+
+    assert start is not None and end is not None
+    return format_period_date(start), format_period_date(end)
+
+
 def clamp_period_to_elapsed_days(
     start_date: Optional[str],
     end_date: Optional[str],
@@ -107,6 +142,10 @@ def clamp_period_to_elapsed_days(
 
     Retorna ``(start, end, is_entirely_future)``. Quando o período inteiro é
     futuro, o caller deve zerar economia/ganhos.
+
+    **Não** completa ponta ausente (não copia start↔end). Use
+    ``resolve_open_ended_dashboard_period`` antes quando o produto exige
+    intervalo aberto (só início / só fim / sem datas).
     """
     ref = today or date.today()
     start = parse_date(start_date)
@@ -115,24 +154,25 @@ def clamp_period_to_elapsed_days(
     if start is None and end is None:
         return start_date, end_date, False
 
-    if start is None:
-        start = end
-    if end is None:
-        end = start
-    if start is None or end is None:
-        return start_date, end_date, False
+    if start is not None and start > ref:
+        if end is None or end > ref:
+            return (
+                format_period_date(start),
+                format_period_date(end) if end is not None else None,
+                True,
+            )
 
-    if start > ref:
-        return start_date, end_date, True
-
-    if end > ref:
+    if end is not None and end > ref:
         end = ref
 
-    if end < start:
+    if start is not None and end is not None and end < start:
         end = start
 
-    return format_period_date(start), format_period_date(end), False
-
+    return (
+        format_period_date(start) if start is not None else None,
+        format_period_date(end) if end is not None else None,
+        False,
+    )
 
 def uses_day_level_date_filter(
     start_date: Optional[str],

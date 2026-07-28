@@ -227,6 +227,38 @@ def test_clamp_period_to_elapsed_days_marks_entirely_future():
     assert end == "2026-08-31"
 
 
+def test_clamp_period_does_not_collapse_open_ended_start_only():
+    start, end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+        "2025-07-01",
+        None,
+        today=date(2026, 7, 28),
+    )
+    assert entirely_future is False
+    assert start == "2025-07-01"
+    assert end is None
+
+
+def test_resolve_open_ended_dashboard_period_cases():
+    default = date(2025, 9, 1)
+    today = date(2026, 7, 28)
+
+    assert calc_rules.resolve_open_ended_dashboard_period(
+        None, None, default_start=default, today=today
+    ) == ("2025-09-01", "2026-07-28")
+
+    assert calc_rules.resolve_open_ended_dashboard_period(
+        "2025-07-01", None, default_start=default, today=today
+    ) == ("2025-07-01", "2026-07-28")
+
+    assert calc_rules.resolve_open_ended_dashboard_period(
+        None, "2026-03-31", default_start=default, today=today
+    ) == ("2025-09-01", "2026-03-31")
+
+    assert calc_rules.resolve_open_ended_dashboard_period(
+        "2025-07-01", "2026-01-31", default_start=default, today=today
+    ) == ("2025-07-01", "2026-01-31")
+
+
 def test_build_daily_evolucao_series_varies_by_vigencia_start():
     """Revisão que começa no meio do mês só contribui a partir desse dia."""
     reviews = {

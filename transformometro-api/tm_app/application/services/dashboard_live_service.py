@@ -192,20 +192,35 @@ class DashboardLiveService:
         competencia_fim: str | None = None,
     ) -> list[dict[str, Any]]:
         """Série diária (calc_rules) — front apenas renderiza."""
-        if not competencia_inicio or not competencia_fim:
+        raw = self.load_filtered_raw(
+            view=view, filial_id=filial_id, setor_id=setor_id
+        )
+        context = self._calculator._build_context(raw)
+        timeline_start = self._calculator._determine_timeline_start(
+            processos_by_id=context.processos_by_id,
+            revisoes_by_processo=context.revisoes_by_processo,
+        )
+        resolved_start, resolved_end = calc_rules.resolve_open_ended_dashboard_period(
+            competencia_inicio,
+            competencia_fim,
+            default_start=timeline_start,
+        )
+        clamped_start, clamped_end, entirely_future = calc_rules.clamp_period_to_elapsed_days(
+            resolved_start,
+            resolved_end,
+        )
+        if entirely_future or not clamped_start or not clamped_end:
             return []
+
         rows = self.calculation_rows(
             view=view,
             filial_id=filial_id,
             setor_id=setor_id,
-            competencia_inicio=competencia_inicio,
-            competencia_fim=competencia_fim,
+            competencia_inicio=clamped_start,
+            competencia_fim=clamped_end,
         )
         if not rows:
             return []
-        raw = self.load_filtered_raw(
-            view=view, filial_id=filial_id, setor_id=setor_id
-        )
         reviews_by_id = {
             str(review.get("revisao_id")): review
             for review in raw.revisoes
@@ -213,8 +228,8 @@ class DashboardLiveService:
         }
         return calc_rules.build_daily_evolucao_series(
             rows,
-            start_date=competencia_inicio,
-            end_date=competencia_fim,
+            start_date=clamped_start,
+            end_date=clamped_end,
             reviews_by_id=reviews_by_id,
         )
 
