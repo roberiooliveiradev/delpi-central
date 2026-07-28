@@ -37,11 +37,15 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_series,
 )
 from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
+    aggregate_purchase_order_items,
     find_purchase_order_group,
     format_linked_po_label,
     format_linked_po_labels,
     group_open_purchase_order_lines,
+    linked_lines_from_items,
     linked_po_snapshots_from_request,
+    normalize_order_item,
+    select_group_items_by_order_items,
 )
 from app.domain.services.lancamento_notas_fiscais.reconciliation_matching import (
     classify_candidates,
@@ -461,7 +465,47 @@ class LinkRequestPurchaseOrderUseCase:
                     raise InvoicePostingValidationError(
                         f"Pedido de compra informado não está aberto para este fornecedor: {label}."
                     )
-                issue_raw = group.get("issue_date")
+
+                wanted_order_items = item.get("order_items") or []
+                selected_items = select_group_items_by_order_items(
+                    group, wanted_order_items or None
+                )
+                if wanted_order_items:
+                    found = {
+                        normalize_order_item(line.get("order_item"))
+                        for line in selected_items
+                    }
+                    missing = [
+                        oi for oi in wanted_order_items if oi not in found
+                    ]
+                    if missing:
+                        label = format_linked_po_label(
+                            order_number=item["order_number"],
+                            delivery_date=item["delivery_date"],
+                        )
+                        raise InvoicePostingValidationError(
+                            "Itens do pedido não estão abertos para este fornecedor "
+                            f"({label}): {', '.join(missing)}."
+                        )
+                    if not selected_items:
+                        raise InvoicePostingValidationError(
+                            "Informe ao menos um item válido do pedido de compra."
+                        )
+
+                # Sem lines no body = grupo inteiro (não persiste filhas).
+                # Com lines = subset; persiste order_items e recalcula agregados.
+                if wanted_order_items:
+                    aggregates = aggregate_purchase_order_items(selected_items)
+                    lines_snapshot = linked_lines_from_items(selected_items)
+                else:
+                    aggregates = {
+                        "open_value": group.get("open_value"),
+                        "product_count": group.get("product_count"),
+                        "issue_date": group.get("issue_date"),
+                    }
+                    lines_snapshot = []
+
+                issue_raw = aggregates.get("issue_date") or group.get("issue_date")
                 issue_date = (
                     _parse_date(issue_raw, field="Data de emissão do pedido")
                     if issue_raw
@@ -478,11 +522,12 @@ class LinkRequestPurchaseOrderUseCase:
                         "order_number": group["order_number"],
                         "delivery_date": parsed_delivery,
                         "issue_date": issue_date,
-                        "open_value": group.get("open_value"),
-                        "product_count": group.get("product_count"),
+                        "open_value": aggregates.get("open_value"),
+                        "product_count": aggregates.get("product_count"),
                         "linked_at": linked_at,
                         "linked_by_user_id": actor.user_id,
                         "linked_by_name": actor.user_name,
+                        "lines": lines_snapshot,
                     }
                 )
 
@@ -508,6 +553,7 @@ class LinkRequestPurchaseOrderUseCase:
                 ),
                 "linked_by_user_id": row.get("linked_by_user_id"),
                 "linked_by_name": row.get("linked_by_name"),
+                "lines": list(row.get("lines") or []),
             }
             for row in resolved_rows
         ]
@@ -575,7 +621,7 @@ class LinkRequestPurchaseOrderUseCase:
         groups: list[dict[str, Any]] | None,
         order_number: str | None,
         delivery_date: str | None,
-    ) -> list[dict[str, str | None]]:
+    ) -> list[dict[str, Any]]:
         raw_groups: list[dict[str, Any]]
         if groups is not None:
             raw_groups = list(groups)
@@ -588,7 +634,7 @@ class LinkRequestPurchaseOrderUseCase:
                 "Informe os pedidos de compra a amarrar."
             )
 
-        wanted: list[dict[str, str | None]] = []
+        wanted: list[dict[str, Any]] = []
         for item in raw_groups:
             number = str(item.get("order_number") or "").strip()
             if not number:
@@ -604,8 +650,35 @@ class LinkRequestPurchaseOrderUseCase:
                     raw_delivery, field="Data de entrega do pedido"
                 )
                 delivery_key = parsed.isoformat()
+
+            order_items: list[str] = []
+            raw_lines = item.get("lines")
+            if raw_lines is not None:
+                if not isinstance(raw_lines, list):
+                    raise InvoicePostingValidationError(
+                        "Campo lines deve ser uma lista de itens do pedido."
+                    )
+                seen_items: set[str] = set()
+                for line in raw_lines:
+                    if isinstance(line, dict):
+                        order_item = normalize_order_item(line.get("order_item"))
+                    else:
+                        order_item = normalize_order_item(line)
+                    if not order_item:
+                        raise InvoicePostingValidationError(
+                            "Informe o item (order_item) do pedido de compra."
+                        )
+                    if order_item in seen_items:
+                        continue
+                    seen_items.add(order_item)
+                    order_items.append(order_item)
+
             wanted.append(
-                {"order_number": number, "delivery_date": delivery_key}
+                {
+                    "order_number": number,
+                    "delivery_date": delivery_key,
+                    "order_items": order_items,
+                }
             )
         return wanted
 

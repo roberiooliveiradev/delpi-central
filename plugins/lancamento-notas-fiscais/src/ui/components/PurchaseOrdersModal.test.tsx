@@ -36,6 +36,10 @@ const sampleGroup = {
       supplier_store: "01",
       supplier_name: "Alpha",
       unit_price: 1.5,
+      open_merchandise_value: 12,
+      open_ipi_value: 0,
+      open_freight_value: 0,
+      open_discount_value: 0,
       open_value: 12,
     },
   ],
@@ -53,6 +57,8 @@ const sampleGroupB = {
       product_code: "20080001",
       product_description: "Porca",
       expected_delivery_date: "2026-07-25",
+      open_merchandise_value: 30,
+      open_ipi_value: 0,
       open_value: 30,
     },
   ],
@@ -89,8 +95,12 @@ describe("PurchaseOrdersModal", () => {
     expect(screen.getByText("000123")).toBeTruthy();
     expect(screen.getByText(/1 pedido/)).toBeTruthy();
     expect(screen.getByText(/1 grupo/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Ver detalhes" }));
+    // Com canLink o primeiro grupo já vem expandido para seleção por linha
     expect(screen.getByText("10080001")).toBeTruthy();
+    expect(screen.getByText("Parafuso")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Ocultar" }));
+    expect(screen.queryByText("Parafuso")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ver detalhes" }));
     expect(screen.getByText("Parafuso")).toBeTruthy();
   });
 
@@ -131,12 +141,81 @@ describe("PurchaseOrdersModal", () => {
     await waitFor(() => expect(api.linkRequestPurchaseOrder).toHaveBeenCalled());
     expect(api.linkRequestPurchaseOrder).toHaveBeenCalledWith("req-1", {
       groups: [
-        { order_number: "000123", delivery_date: "2026-07-20" },
-        { order_number: "000456", delivery_date: "2026-07-25" },
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          lines: [{ order_item: "0001" }],
+        },
+        {
+          order_number: "000456",
+          delivery_date: "2026-07-25",
+          lines: [{ order_item: "0001" }],
+        },
       ],
     });
     expect(onLinked).toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it("amarra apenas linhas selecionadas do grupo", async () => {
+    const multiItemGroup = {
+      ...sampleGroup,
+      product_count: 2,
+      open_value: 42,
+      item_count: 2,
+      items: [
+        sampleGroup.items[0],
+        {
+          ...sampleGroup.items[0],
+          order_item: "0002",
+          product_code: "10080002",
+          product_description: "Porca",
+          open_merchandise_value: 30,
+          open_value: 30,
+        },
+      ],
+    };
+    vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
+      request_id: "req-1",
+      branch_code: "01",
+      supplier_code: "000001",
+      supplier_store: "01",
+      supplier_name: "Alpha",
+      order_count: 1,
+      group_count: 1,
+      item_count: 2,
+      groups: [multiItemGroup],
+      linked: [],
+      can_link: true,
+    });
+    vi.mocked(api.linkRequestPurchaseOrder).mockResolvedValue({} as never);
+
+    render(
+      <PurchaseOrdersModal
+        open
+        requestId="req-1"
+        supplierName="Alpha"
+        branchCode="01"
+        canLink
+        onClose={() => undefined}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId("po-table")).toBeTruthy());
+    fireEvent.click(
+      screen.getByLabelText("Selecionar item 0002 do PC 000123"),
+    );
+    fireEvent.click(screen.getByTestId("po-link-btn"));
+    await waitFor(() => expect(api.linkRequestPurchaseOrder).toHaveBeenCalled());
+    expect(api.linkRequestPurchaseOrder).toHaveBeenCalledWith("req-1", {
+      groups: [
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          lines: [{ order_item: "0002" }],
+        },
+      ],
+    });
   });
 
   it("mostra estado vazio", async () => {

@@ -138,15 +138,32 @@ Resposta: `{ request_id, branch_code, supplier_*, order_count, group_count, item
 
 Valor em aberto por item SC7 (proporcional ao saldo):  
 `fator = (C7_QUANT - C7_QUJE) / C7_QUANT`;  
-`open_value = ROUND(C7_TOTAL×f,2) + ROUND(C7_VALIPI×f,2) + ROUND(C7_VALFRE×f,2) - ROUND(C7_VLDESC×f,2)`  
+`open_merchandise_value = ROUND(C7_TOTAL×f,2)`;  
+`open_ipi_value = ROUND(C7_VALIPI×f,2)`;  
+`open_value = mercadoria + IPI + frete − desconto`  
 (não inclui `C7_VALICM` / `C7_ICMCOMP` / `C7_FRETE`).
 
 ### POST `.../purchase-orders/link`
 
-Body preferencial: `{ "groups": [{ "order_number": "...", "delivery_date": "YYYY-MM-DD" | null }, ...] }`  
-Compat: `{ "order_number": "...", "delivery_date": "..." }` (um grupo).
+Body preferencial:
 
-Substitui o **conjunto** amarrado (process/manage). `groups: []` desamarra todos. Persiste em `invoice_posting_request_linked_pos` (V005), espelha o primeiro em `linked_po_*` e grava histórico `purchase_order_linked` com `changes.linked_po.from/to` como **arrays**.
+```json
+{
+  "groups": [
+    {
+      "order_number": "...",
+      "delivery_date": "YYYY-MM-DD" | null,
+      "lines": [{ "order_item": "0001" }, { "order_item": "0002" }]
+    }
+  ]
+}
+```
+
+- `lines` omitido ou `[]` = amarra o **grupo inteiro** (compatível com vínculos V005).
+- `lines` preenchido = só os itens SC7 (`C7_ITEM`) informados; `open_value` / `product_count` são recalculados no domínio.
+- Compat legado: `{ "order_number": "...", "delivery_date": "..." }` (um grupo, sem lines).
+
+Substitui o **conjunto** amarrado (process/manage). `groups: []` desamarra todos. Persiste cabeçalhos em `invoice_posting_request_linked_pos` (V005) e itens em `invoice_posting_request_linked_po_lines` (V006), espelha o primeiro em `linked_po_*` e grava histórico `purchase_order_linked` com `changes.linked_po.from/to` como **arrays** (cada snapshot pode incluir `lines`).
 
 ---
 
@@ -228,6 +245,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | `V003__document_number_pad_9.sql` | Backfill de documento com 9 dígitos |
 | `V004__linked_purchase_order.sql` | Colunas `linked_po_*` (amarração PC + entrega) |
 | `V005__linked_purchase_orders_many.sql` | Tabela `invoice_posting_request_linked_pos` (N PCs por solicitação) |
+| `V006__linked_purchase_order_lines.sql` | Tabela `invoice_posting_request_linked_po_lines` (itens SC7 por PC) |
 
 ```bash
 # Produção / ambiente com dados: SOMENTE up (nunca reset)

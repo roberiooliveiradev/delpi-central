@@ -34,6 +34,11 @@ export type Supplier = {
   blocked: boolean;
 };
 
+export type LinkedPurchaseOrderLine = {
+  order_item: string;
+  product_code?: string | null;
+};
+
 export type LinkedPurchaseOrderSnapshot = {
   order_number: string;
   delivery_date: string | null;
@@ -43,6 +48,8 @@ export type LinkedPurchaseOrderSnapshot = {
   linked_at: string | null;
   linked_by_user_id: string | null;
   linked_by_name: string | null;
+  /** Vazio/ausente = grupo inteiro (legado V005). */
+  lines?: LinkedPurchaseOrderLine[];
 };
 
 export type InvoicePostingRequest = {
@@ -146,6 +153,10 @@ export type OpenPurchaseOrderItem = {
   supplier_store: string;
   supplier_name: string;
   unit_price: number;
+  open_merchandise_value: number;
+  open_ipi_value: number;
+  open_freight_value?: number;
+  open_discount_value?: number;
   open_value: number;
 };
 

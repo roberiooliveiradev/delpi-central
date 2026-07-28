@@ -1091,10 +1091,14 @@
 
 .lnf-po-receipt__item {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) 5.75rem 6.75rem;
   gap: 8px 10px;
   align-items: start;
   font-size: 0.78rem;
+}
+
+.lnf-po-receipt__item--split {
+  grid-template-columns: minmax(0, 1fr) 5.25rem 6.75rem 5.75rem;
 }
 
 .lnf-po-receipt__item--head {
@@ -1104,6 +1108,18 @@
   font-size: 0.66rem;
   padding-bottom: 2px;
   border-bottom: 1px dotted color-mix(in srgb, var(--lnf-border) 80%, transparent);
+  align-items: end;
+}
+
+.lnf-po-receipt__item--head .lnf-po-receipt__qty,
+.lnf-po-receipt__item--head .lnf-po-receipt__value {
+  font-weight: 600;
+  padding-top: 0;
+}
+
+.lnf-po-receipt__value--ipi {
+  font-weight: 600;
+  color: var(--lnf-muted);
 }
 
 .lnf-po-receipt__item-main {
@@ -1135,11 +1151,11 @@
   text-align: right;
   white-space: nowrap;
   padding-top: 1px;
+  justify-self: stretch;
 }
 
 .lnf-po-receipt__value {
   font-weight: 700;
-  min-width: 5.5rem;
 }
 
 .lnf-po-receipt__footer {

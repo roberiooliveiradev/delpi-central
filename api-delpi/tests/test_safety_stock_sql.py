@@ -6,6 +6,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     WORK_IN_PROCESS_WAREHOUSES,
     build_consumption_analysis_where_clauses,
     build_where_clauses,
+    compute_open_purchase_order_item_components,
     compute_open_purchase_order_item_value,
     consumption_agg_cte,
     consumption_analysis_rows_sql,
@@ -149,6 +150,9 @@ def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
     assert "C7_VALIPI" in sql
     assert "C7_VALFRE" in sql
     assert "C7_VLDESC" in sql
+    assert "open_merchandise_value" in sql
+    assert "open_ipi_value" in sql
+    assert "balance_factor" in sql
     assert "C7_VALICM" not in sql
     assert "C7_ICMCOMP" not in sql
     assert "ROUND(" in sql
@@ -157,6 +161,17 @@ def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
 
 def test_open_purchase_order_item_value_pc_061518_filial_01() -> None:
     """Pedido 061518 / filial 01: mercadoria 364 + IPI 11,83 = 375,83."""
+    parts = compute_open_purchase_order_item_components(
+        quantity=1,
+        delivered_quantity=0,
+        merchandise_total=364.0,
+        ipi_value=11.83,
+        freight_value=0.0,
+        discount_value=0.0,
+    )
+    assert parts["open_merchandise_value"] == 364.0
+    assert parts["open_ipi_value"] == 11.83
+    assert parts["open_value"] == 375.83
     assert (
         compute_open_purchase_order_item_value(
             quantity=1,
