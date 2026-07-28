@@ -170,6 +170,10 @@ class ChatPresentationPrimaryViewService:
 
     @classmethod
     def _sync_explicit_native_single_session(cls, metadata: dict[str, Any]) -> None:
+        from app.domain.services.chat_presentation_vocabulary_service import (
+            ChatPresentationVocabularyService,
+        )
+
         explicit = str(metadata.get("explicitSessionFormat") or "").strip().lower()
 
         decision = metadata.get("presentationDecision")
@@ -177,11 +181,110 @@ class ChatPresentationPrimaryViewService:
         if not isinstance(decision, dict):
             return
 
-        decision["selected"] = explicit
-        decision["layoutMode"] = "single"
-        decision["visualOrder"] = [explicit]
-
+        # Tenta montar/promover o slot pedido antes de decidir se é realizável.
         cls.finalize_explicit_native_single_view(metadata)
+
+        selected = explicit
+
+        if not cls.view_is_realizable(metadata, explicit):
+            selected = cls._resolve_realizable_fallback(metadata, decision, preferred=explicit)
+            decision["reason"] = ChatPresentationVocabularyService.decision_reason(
+                "formatUnavailableFallback",
+            )
+            # Preferência de sessão permanece em explicitSessionFormat para o próximo turno apto.
+
+        decision["selected"] = selected
+        decision["layoutMode"] = "single"
+        decision["visualOrder"] = [selected]
+
+        if selected in _EXPLICIT_NATIVE_SINGLE:
+            cls._align_primary_to_selected(metadata, selected)
+
+    @classmethod
+    def view_is_realizable(cls, metadata: dict[str, Any], view_type: str) -> bool:
+        token = str(view_type or "").strip().lower()
+
+        if token in {"text", "topics", "canvas"}:
+            return True
+
+        if token in _CHART_SELECTED_TYPES:
+            token = "chart"
+
+        view, _ = cls._find_view(metadata, token)
+
+        if not isinstance(view, dict):
+            # chart/table ainda podem estar só no slot auxiliar após promote parcial
+            if token == "chart":
+                view = metadata.get("chartPresentation")
+            elif token == "table":
+                view = metadata.get("tablePresentation")
+                if not isinstance(view, dict):
+                    view = cls._find_table_in_presentations(metadata)
+            elif token == "tree":
+                view = metadata.get("treePresentation")
+            elif token == "kpi":
+                view = metadata.get("kpiPresentation")
+            elif token == "dashboard":
+                view = metadata.get("dashboardPresentation")
+
+        if not isinstance(view, dict):
+            return False
+
+        if token == "tree":
+            return isinstance(view.get("root"), dict)
+
+        if token == "table":
+            return isinstance(view.get("rows"), list)
+
+        if token == "chart":
+            data = view.get("data")
+            return isinstance(data, list) and len(data) > 0
+
+        if token == "kpi":
+            cards = view.get("cards")
+            return isinstance(cards, list) and len(cards) > 0
+
+        if token == "dashboard":
+            panels = view.get("panels")
+            return isinstance(panels, list) and len(panels) > 0
+
+        return cls._presentation_type(view) == token
+
+    @classmethod
+    def _resolve_realizable_fallback(
+        cls,
+        metadata: dict[str, Any],
+        decision: dict[str, Any],
+        *,
+        preferred: str,
+    ) -> str:
+        fallback = str(decision.get("fallback") or "").strip().lower()
+        candidates: list[str] = []
+
+        if fallback and fallback != preferred:
+            candidates.append(fallback)
+
+        for view in decision.get("availableViews") or []:
+            token = str(view or "").strip().lower()
+
+            if token and token != preferred and token not in candidates:
+                candidates.append(token)
+
+        for token in ("table", "tree", "kpi", "chart", "text"):
+            if token != preferred and token not in candidates:
+                candidates.append(token)
+
+        for candidate in candidates:
+            if candidate in {"text", "topics"}:
+                return "text"
+
+            if candidate == "canvas":
+                continue
+
+            if cls.view_is_realizable(metadata, candidate):
+                return candidate
+
+        return "text"
 
     @classmethod
     def _sync_explicit_text_session(cls, metadata: dict[str, Any]) -> None:

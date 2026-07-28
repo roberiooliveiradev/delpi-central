@@ -151,11 +151,17 @@ class ChatPresentationUserFormatPreferenceService:
             primary_presentation=primary_presentation,
         )
 
-        if preferred in {"tree", "chart", "line_chart", "bar_chart", "donut"}:
+        if preferred in {"tree", "chart", "line_chart", "bar_chart", "donut", "kpi", "dashboard"}:
             if preferred == "tree" and not effective_tree:
+                resolved = "text" if "text" in normalized_views else "table"
+            elif preferred == "kpi" and preferred not in normalized_views:
+                resolved = "text" if "text" in normalized_views else "table"
+            elif preferred == "dashboard" and preferred not in normalized_views:
                 resolved = "text" if "text" in normalized_views else "table"
             elif preferred not in normalized_views and "text" in normalized_views:
                 resolved = "text"
+            elif preferred not in normalized_views and "table" in normalized_views:
+                resolved = "table"
 
         if (
             resolved == "table"
