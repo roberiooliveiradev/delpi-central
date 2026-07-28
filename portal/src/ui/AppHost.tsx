@@ -486,20 +486,23 @@ export const AppHost = () => {
     return () => {
       isActive = false;
 
-      if (mountedModuleRef.current?.unmount) {
+      // Captura o host antes de qualquer nullificação de ref — sem isso o remote
+      // pode não chamar root.unmount() e sockets (presença TV) ficam abertos.
+      const mountEl = federatedHostRef.current;
+      const mounted = mountedModuleRef.current;
+      mountedModuleRef.current = null;
+
+      if (mounted?.unmount) {
         try {
-          mountedModuleRef.current.unmount(federatedHostRef.current ?? undefined);
+          mounted.unmount(mountEl ?? undefined);
         } catch {
           // Evita quebrar o host por falha no cleanup do plugin.
         }
       }
 
-      mountedModuleRef.current = null;
-
       // Limpa sinais legados de layout imersivo (ex.: tv-dashboard-deck-active no html).
       document.documentElement.classList.remove("tv-dashboard-deck-active");
 
-      const mountEl = federatedHostRef.current;
       queueMicrotask(() => {
         if (mountEl) {
           mountEl.innerHTML = "";

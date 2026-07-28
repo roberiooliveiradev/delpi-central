@@ -136,6 +136,14 @@ export function buildAdminPresentationWsUrl(playlistId: string, accessToken: str
   return `${base}?access_token=${encodeURIComponent(accessToken)}`;
 }
 
+
+/** Rota do plugin Painéis TV no portal (presença só vale enquanto estiver aqui). */
+export function isTvDashboardPortalPath(pathname: string): boolean {
+  const path = (pathname || "").split("?")[0] || "";
+  return path === "/apps/tv-dashboard" || path.startsWith("/apps/tv-dashboard/");
+}
+
+
 export function usePresentationRealtime({
   enabled,
   wsUrl,
@@ -174,6 +182,7 @@ export function usePresentationRealtime({
     let ws: WebSocket | null = null;
     let reconnectTimer: number | null = null;
     let pingTimer: number | null = null;
+    let pathGuardTimer: number | null = null;
     let closedByUser = false;
 
     function flushPresentationUpdated() {
@@ -256,8 +265,6 @@ export function usePresentationRealtime({
       };
     }
 
-    connect();
-
     function sendPresenceLeave() {
       if (!presence || ws?.readyState !== WebSocket.OPEN) return;
       try {
@@ -267,26 +274,58 @@ export function usePresentationRealtime({
       }
     }
 
-    function onPageHide() {
-      sendPresenceLeave();
-    }
-
-    window.addEventListener("pagehide", onPageHide);
-
-    return () => {
+    function tearDownPresenceSocket() {
       closedByUser = true;
-      window.removeEventListener("pagehide", onPageHide);
+      if (reconnectTimer != null) {
+        window.clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+      }
+      if (pingTimer != null) {
+        window.clearInterval(pingTimer);
+        pingTimer = null;
+      }
+      if (pathGuardTimer != null) {
+        window.clearInterval(pathGuardTimer);
+        pathGuardTimer = null;
+      }
+      sendPresenceLeave();
+      try {
+        ws?.close();
+      } catch {
+        // ignore
+      }
+      ws = null;
       if (sendRefStable) sendRefStable.current = null;
       connectionHandlerRef.current?.(false);
-      if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
-      if (pingTimer != null) window.clearInterval(pingTimer);
+      presenceHandlerRef.current?.([]);
+    }
+
+    function onPageHide() {
+      tearDownPresenceSocket();
+    }
+
+    /** SPA: sair do plugin sem fechar a aba não dispara pagehide — o socket ficava vivo. */
+    function guardPortalPath() {
+      if (typeof window === "undefined") return;
+      if (isTvDashboardPortalPath(window.location.pathname)) return;
+      tearDownPresenceSocket();
+    }
+
+    connect();
+
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("popstate", guardPortalPath);
+    pathGuardTimer = window.setInterval(guardPortalPath, 1000);
+
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("popstate", guardPortalPath);
       if (updateTimerRef.current != null) {
         window.clearTimeout(updateTimerRef.current);
         updateTimerRef.current = null;
       }
       pendingEventRef.current = null;
-      sendPresenceLeave();
-      ws?.close();
+      tearDownPresenceSocket();
     };
   }, [
     enabled,

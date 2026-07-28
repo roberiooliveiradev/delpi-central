@@ -603,6 +603,7 @@ export function PlaylistEditorPage({
     playlistId,
     accessToken,
     presence: editorPresence,
+    enabled: editorActive,
     onPresenceUpdate: handlePresenceUpdate,
     onSync: () => {
       void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());

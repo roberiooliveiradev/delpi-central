@@ -8,6 +8,7 @@ export {
 export { PresentationStageControls } from "./PresentationStageControls";
 export {
   buildAdminPresentationWsUrl,
+  isTvDashboardPortalPath,
   buildPresentationWsUrl,
   buildPublicPresentationWsUrl,
   parsePresentationRealtimeEvent,

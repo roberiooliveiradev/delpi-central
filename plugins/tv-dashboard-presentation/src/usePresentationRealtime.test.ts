@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildPublicPresentationWsUrl,
+  isTvDashboardPortalPath,
   parsePresentationRealtimeEvent,
 } from "./usePresentationRealtime";
 
@@ -103,5 +104,14 @@ describe("parsePresentationRealtimeEvent", () => {
         selectedIds: ["block-1", 2],
       }),
     ).toBeNull();
+  });
+});
+
+describe("isTvDashboardPortalPath", () => {
+  it("reconhece só rotas do plugin TV no portal", () => {
+    expect(isTvDashboardPortalPath("/apps/tv-dashboard")).toBe(true);
+    expect(isTvDashboardPortalPath("/apps/tv-dashboard/playlists/x")).toBe(true);
+    expect(isTvDashboardPortalPath("/apps/controle-mp")).toBe(false);
+    expect(isTvDashboardPortalPath("/")).toBe(false);
   });
 });
