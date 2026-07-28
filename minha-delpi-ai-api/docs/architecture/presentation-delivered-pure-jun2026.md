@@ -82,7 +82,11 @@ O ramo legacy (~520 linhas) de `ChatPresentationMetadataPipelineService` foi **e
 | Tabela genérica | `presentation_table_host_service` + `ChatPresentationOperationalTableService` |
 | Comentário operacional | `ChatDataInsightService` → `ChatDataInsightEnrichmentService` |
 | Decisão Automático | `ChatPresentationDecisionService` (fachada ~85 linhas) → delegates |
-| Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` |
+| Ranker Automático | `ChatPresentationAutomaticScoreService` + `DataShapeAnalyzer` + `ViewIntentService` + `openapiShapeDefaults` |
+| Stack vs single | `ChatPresentationRichStackPolicyService` (composite / visão integrada; hierarchy sem auto-stack) |
+| Dedup hierarquia | `ChatPresentationStructureDedupService` (shape/entity + título schema-driven) |
+| renderPlan / prune | `ChatPresentationRenderPlanService` + `ChatPresentationPayloadPruningService` |
+| Formato explícito (toolbar) | `ChatToolContextFormatService` + `ChatPresentationPrimaryViewService` (fallback se irrealizável) |
 | Prosa template vs LLM | `ChatPresentationProseDeliveryService` (turn completion) + `ChatPresentationDataOnlyProseService` (pipeline) |
 | Perfis / pathRules | `ChatPresentationProfileService` + `presentation_profiles.json` + `OpenApiPresentationProfileDeriverService` |
 | Nova rota HTTP | OpenAPI import + checklist `new-api-route-checklist.md` |
