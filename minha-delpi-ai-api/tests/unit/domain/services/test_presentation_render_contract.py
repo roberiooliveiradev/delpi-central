@@ -498,6 +498,49 @@ def test_prune_single_marks_sibling_kinds_suppressed_but_keeps_bundle():
     assert "tree" not in hints["suppressedKinds"]
 
 
+def test_prune_single_table_selected_never_suppresses_table():
+    """Regressão: «em tabela» com selected=table não pode listar table em suppressedKinds."""
+    metadata = {
+        "explicitSessionFormat": "table",
+        "presentationDecision": {
+            "layoutMode": "single",
+            "selected": "table",
+        },
+        "presentation": {
+            "type": "table",
+            "title": "Estrutura do produto",
+            "columns": [{"key": "code", "label": "Código"}],
+            "rows": [{"code": "50231850"}],
+        },
+        "treePresentation": {
+            "type": "tree",
+            "title": "Estrutura",
+            "root": {"id": "90261565"},
+        },
+        "chartPresentation": {"type": "chart", "title": "Mapa", "data": [{"x": 1}]},
+        "stackPresentationPlan": {
+            "layoutMode": "single",
+            "renderHints": {
+                # Simula prune anterior com selected=tree (merge não pode manter table).
+                "suppressedKinds": ["table", "chart"],
+            },
+        },
+    }
+
+    ChatPresentationPayloadPruningService.prune(metadata)
+
+    hints = metadata["stackPresentationPlan"]["renderHints"]
+    assert "table" not in (hints.get("suppressedKinds") or [])
+    assert "tree" in hints["suppressedKinds"]
+    assert "chart" in hints["suppressedKinds"]
+
+    ChatPresentationRenderPlanService.build(metadata)
+
+    assert metadata["renderPlan"]["segments"] == [
+        {"kind": "table", "slot": "primary", "source": "presentation"},
+    ]
+
+
 def test_render_plan_falls_back_to_lead_markdown_when_stack_segments_empty():
     metadata = {
         "presentationDecision": {"layoutMode": "stack", "selected": "text"},

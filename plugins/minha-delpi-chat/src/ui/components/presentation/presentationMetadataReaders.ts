@@ -432,6 +432,13 @@ export function isRenderPlanVisualKindAllowed(
   toolCalls?: ChatToolCall[],
 ): boolean {
   const normalized = String(kind || "").trim().toLowerCase();
+  const allowed = getRenderPlanAllowedVisualKinds(toolCalls);
+
+  // renderPlan é a fonte de verdade do que monta na tela; suppressedKinds só omite irmãos.
+  if (allowed) {
+    return allowed.has(normalized);
+  }
+
   const suppressed = getPresentationRenderHintsFromToolCalls(toolCalls)?.suppressedKinds;
 
   if (Array.isArray(suppressed)) {
@@ -442,13 +449,7 @@ export function isRenderPlanVisualKindAllowed(
     }
   }
 
-  const allowed = getRenderPlanAllowedVisualKinds(toolCalls);
-
-  if (!allowed) {
-    return true;
-  }
-
-  return allowed.has(normalized);
+  return true;
 }
 
 /** Playbook 13 P6 — contrato mínimo para executor render-only (sem fallback blueprint). */

@@ -88,7 +88,11 @@ class ChatPresentationPayloadPruningService:
         metadata: dict[str, Any],
         plan: dict[str, Any],
     ) -> None:
-        """Keep-bundle: slots irmãos ficam no payload; só marca suppressedKinds (toolbar)."""
+        """Keep-bundle: slots irmãos ficam no payload; só marca suppressedKinds (toolbar).
+
+        Nunca inclui o ``selected`` — o MFE usa suppressedKinds para omitir coleta, e
+        incluir a vista ativa esvazia o painel (ex.: tabela pedida some da UI).
+        """
         decision = metadata.get("presentationDecision")
         selected = ""
 
@@ -116,8 +120,9 @@ class ChatPresentationPayloadPruningService:
                 if "table" not in suppressed:
                     suppressed.append("table")
 
-        if not suppressed:
-            return
+        # Preferência explícita / promote: tabela pode estar só em ``presentation``.
+        if selected == "table":
+            suppressed = [token for token in suppressed if token != "table"]
 
         hints = plan.get("renderHints")
 
@@ -132,7 +137,14 @@ class ChatPresentationPayloadPruningService:
         else:
             merged = list(dict.fromkeys(suppressed))
 
-        hints["suppressedKinds"] = merged
+        # Merge com prune anterior (ex.: selected era tree) não pode manter a vista atual.
+        if selected in _VISUAL_TOKEN_TO_KEY:
+            merged = [token for token in merged if token != selected]
+
+        if merged:
+            hints["suppressedKinds"] = merged
+        else:
+            hints.pop("suppressedKinds", None)
 
     @classmethod
     def _ensure_stack_plan(cls, metadata: dict[str, Any]) -> dict[str, Any]:

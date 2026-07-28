@@ -144,4 +144,46 @@ describe("collectVisualSegments", () => {
 
     expect(kinds).toEqual(["dashboard"]);
   });
+
+  it("coleta tabela do renderPlan mesmo se suppressedKinds listar table por engano", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          explicitSessionFormat: "table",
+          presentationDecision: {
+            layoutMode: "single",
+            selected: "table",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "table", slot: "primary", source: "presentation" }],
+          },
+          stackPresentationPlan: {
+            layoutMode: "single",
+            renderHints: {
+              suppressedKinds: ["chart", "table", "tree"],
+            },
+          },
+          presentation: {
+            type: "table",
+            title: "Estrutura do produto",
+            columns: [{ key: "code", label: "Código" }],
+            rows: [{ code: "50231850" }],
+          },
+          treePresentation: {
+            type: "tree",
+            title: "Estrutura",
+            root: { id: "90261565", label: "90261565", children: [] },
+          },
+        },
+      },
+    ]);
+
+    const kinds = collectVisualSegments(toolCalls).map((segment) => segment.kind);
+
+    expect(kinds).toEqual(["table"]);
+  });
 });
