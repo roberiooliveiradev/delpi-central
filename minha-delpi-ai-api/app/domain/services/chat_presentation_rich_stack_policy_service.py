@@ -56,7 +56,10 @@ class ChatPresentationRichStackPolicyService:
                         ChatPresentationStructureDedupService,
                     )
 
-                    if not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(primary):
+                    if not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                        primary,
+                        metadata,
+                    ):
                         count += 1
                 else:
                     count += 1
@@ -72,7 +75,7 @@ class ChatPresentationRichStackPolicyService:
                 if not isinstance(item, dict) or item.get("type") != "table":
                     continue
 
-                if ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(item):
+                if ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(item, metadata):
                     continue
 
                 count += 1
@@ -201,7 +204,10 @@ class ChatPresentationRichStackPolicyService:
                     ChatPresentationStructureDedupService,
                 )
 
-                if not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(primary):
+                if not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                    primary,
+                    metadata,
+                ):
                     present.append("table")
             elif primary_type in _VISUAL_SLOTS:
                 present.append(primary_type)
@@ -221,7 +227,10 @@ class ChatPresentationRichStackPolicyService:
             has_aux_table = any(
                 isinstance(item, dict)
                 and item.get("type") == "table"
-                and not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(item)
+                and not ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                    item,
+                    metadata,
+                )
                 for item in metadata["tablePresentations"]
             )
 

@@ -45,6 +45,46 @@ def test_dedupe_removes_structure_table_when_tree_present():
     assert metadata["structureDedupApplied"] is True
 
 
+def test_dedupe_removes_schema_driven_estrutura_do_produto_table():
+    schema_table = {
+        "type": "table",
+        "title": "Estrutura do produto",
+        "columns": [
+            {"key": "code", "label": "Código"},
+            {"key": "description", "label": "Descrição"},
+            {"key": "type", "label": "Tipo"},
+            {"key": "unit", "label": "Unidade"},
+            {"key": "quantity", "label": "Quantidade"},
+            {"key": "conversion_type", "label": "Tipo de conversão"},
+        ],
+        "rows": [{"code": "50231850", "description": "PI", "type": "PI", "unit": "MI", "quantity": 1}],
+    }
+    metadata = {
+        "path": "/products/90261565/structure",
+        "apiDelpiResponseMeta": {
+            "entity": "product_structure",
+            "shape": "hierarchy",
+        },
+        "presentationProfile": {"profileKey": "tree_hierarchy"},
+        "treePresentation": TREE,
+        "presentation": TREE,
+        "tablePresentation": schema_table,
+        "availableFormats": ["text", "table", "tree"],
+        "preferredFormat": "tree",
+    }
+
+    assert ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+        schema_table,
+        metadata,
+    )
+    ChatPresentationStructureDedupService.dedupe_metadata(metadata)
+
+    assert metadata["tablePresentation"] is None
+    assert metadata["structureDedupApplied"] is True
+    # Rota tree mantém table em availableFormats para fallback da toolbar.
+    assert "table" in metadata["availableFormats"]
+
+
 def test_dedupe_removes_tree_when_table_preferred_for_structure():
     metadata = {
         "presentation": TREE,

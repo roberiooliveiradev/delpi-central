@@ -21,6 +21,50 @@ class ChatPresentationVocabularyService(ChatAssistantVocabularyService):
         return cls.terms("structureDedup", "parentsTableTitleMarkers")
 
     @classmethod
+    def hierarchy_entities(cls) -> frozenset[str]:
+        return frozenset(
+            token.strip().lower()
+            for token in cls.terms("structureDedup", "hierarchyEntities")
+            if str(token).strip()
+        )
+
+    @classmethod
+    def hierarchy_shapes(cls) -> frozenset[str]:
+        return frozenset(
+            token.strip().lower()
+            for token in cls.terms("structureDedup", "hierarchyShapes")
+            if str(token).strip()
+        )
+
+    @classmethod
+    def hierarchy_profile_keys(cls) -> frozenset[str]:
+        return frozenset(
+            token.strip().lower()
+            for token in cls.terms("structureDedup", "hierarchyProfileKeys")
+            if str(token).strip()
+        )
+
+    @classmethod
+    def hierarchy_flat_projection_column_sets(cls) -> tuple[frozenset[str], ...]:
+        raw = cls.node("structureDedup", "hierarchyFlatProjectionColumnSets")
+
+        if not isinstance(raw, list):
+            return ()
+
+        sets: list[frozenset[str]] = []
+
+        for item in raw:
+            if not isinstance(item, list):
+                continue
+
+            keys = frozenset(str(token).strip().lower() for token in item if str(token).strip())
+
+            if keys:
+                sets.append(keys)
+
+        return tuple(sets)
+
+    @classmethod
     def table_title_tokens(cls, key: str) -> tuple[str, ...]:
         return cls.terms("sectionAvailability", "tableTitleTokens", key)
 

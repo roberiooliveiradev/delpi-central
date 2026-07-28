@@ -3,12 +3,27 @@
     "structureTableTitleMarkers": [
       "componentes da estrutura",
       "componentes com exclusividade",
+      "estrutura do produto",
       "estrutura (bom",
       "bom + exclusividade"
     ],
     "parentsTableTitleMarkers": [
       "produtos pai",
       "onde é usado"
+    ],
+    "hierarchyFlatProjectionColumnSets": [
+      ["code", "description", "type", "quantity"],
+      ["code", "description", "type", "unit", "quantity"]
+    ],
+    "hierarchyEntities": [
+      "product_structure",
+      "product_parents"
+    ],
+    "hierarchyShapes": [
+      "hierarchy"
+    ],
+    "hierarchyProfileKeys": [
+      "tree_hierarchy"
     ]
   },
   "sectionAvailability": {

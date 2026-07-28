@@ -60,10 +60,102 @@ class ChatPresentationStructureDedupService:
         return any(marker in title for marker in cls._parents_table_title_markers())
 
     @classmethod
-    def is_hierarchy_duplicate_table(cls, presentation: dict[str, Any] | None) -> bool:
-        return cls.is_structure_components_table(presentation) or cls.is_parents_usage_table(
+    def is_hierarchy_duplicate_table(
+        cls,
+        presentation: dict[str, Any] | None,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        if cls.is_structure_components_table(presentation) or cls.is_parents_usage_table(
             presentation
-        )
+        ):
+            return True
+
+        if metadata is not None and cls._is_hierarchy_flat_projection(metadata, presentation):
+            return True
+
+        return False
+
+    @classmethod
+    def _metadata_hierarchy_tokens(cls, metadata: dict[str, Any]) -> tuple[str, str, str]:
+        entity = ""
+        shape = ""
+        profile_key = ""
+
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            entity = str(api_meta.get("entity") or "").strip().lower()
+            shape = str(api_meta.get("shape") or "").strip().lower()
+
+        if not entity:
+            entity = str(metadata.get("entity") or "").strip().lower()
+
+        if not shape:
+            delpi = metadata.get("delpiMetadata")
+
+            if isinstance(delpi, dict):
+                shape = str(delpi.get("shape") or "").strip().lower()
+                if not entity:
+                    entity = str(delpi.get("entity") or "").strip().lower()
+
+        profile = metadata.get("presentationProfile")
+
+        if isinstance(profile, dict):
+            profile_key = str(profile.get("profileKey") or "").strip().lower()
+
+        if not profile_key:
+            decision = metadata.get("presentationDecision")
+
+            if isinstance(decision, dict):
+                profile_key = str(decision.get("presentationProfileKey") or "").strip().lower()
+
+        return entity, shape, profile_key
+
+    @classmethod
+    def _metadata_is_hierarchy_context(cls, metadata: dict[str, Any]) -> bool:
+        entity, shape, profile_key = cls._metadata_hierarchy_tokens(metadata)
+
+        if entity in ChatPresentationVocabularyService.hierarchy_entities():
+            return True
+
+        if shape in ChatPresentationVocabularyService.hierarchy_shapes():
+            return True
+
+        if profile_key in ChatPresentationVocabularyService.hierarchy_profile_keys():
+            return True
+
+        return False
+
+    @classmethod
+    def _is_hierarchy_flat_projection(
+        cls,
+        metadata: dict[str, Any],
+        presentation: dict[str, Any] | None,
+    ) -> bool:
+        if not isinstance(presentation, dict) or presentation.get("type") != "table":
+            return False
+
+        if not cls.metadata_has_tree(metadata):
+            return False
+
+        if not cls._metadata_is_hierarchy_context(metadata):
+            return False
+
+        columns = presentation.get("columns") or []
+        keys = {
+            str(column.get("key") or "").strip().lower()
+            for column in columns
+            if isinstance(column, dict)
+        }
+
+        if not keys:
+            return False
+
+        for required in ChatPresentationVocabularyService.hierarchy_flat_projection_column_sets():
+            if required.issubset(keys):
+                return True
+
+        return False
 
     @classmethod
     def metadata_has_tree(cls, metadata: dict[str, Any]) -> bool:
@@ -79,18 +171,22 @@ class ChatPresentationStructureDedupService:
     def _clear_table_slot(cls, metadata: dict[str, Any], key: str) -> None:
         presentation = metadata.get(key)
 
-        if cls.is_hierarchy_duplicate_table(presentation):
+        if cls.is_hierarchy_duplicate_table(presentation, metadata):
             metadata[key] = None
 
     @classmethod
-    def _filter_table_list(cls, tables: list[Any]) -> list[dict[str, Any]]:
+    def _filter_table_list(
+        cls,
+        tables: list[Any],
+        metadata: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         filtered: list[dict[str, Any]] = []
 
         for item in tables:
             if not isinstance(item, dict) or item.get("type") != "table":
                 continue
 
-            if cls.is_hierarchy_duplicate_table(item):
+            if cls.is_hierarchy_duplicate_table(item, metadata):
                 continue
 
             filtered.append(item)
@@ -103,7 +199,7 @@ class ChatPresentationStructureDedupService:
         bundled = metadata.get("tablePresentations")
 
         if isinstance(bundled, list):
-            count += len(cls._filter_table_list(bundled))
+            count += len(cls._filter_table_list(bundled, metadata))
 
         for key in (
             "tablePresentation",
@@ -113,13 +209,13 @@ class ChatPresentationStructureDedupService:
             presentation = metadata.get(key)
 
             if isinstance(presentation, dict) and presentation.get("type") == "table":
-                if not cls.is_hierarchy_duplicate_table(presentation):
+                if not cls.is_hierarchy_duplicate_table(presentation, metadata):
                     count += 1
 
         primary = metadata.get("presentation")
 
         if isinstance(primary, dict) and primary.get("type") == "table":
-            if not cls.is_hierarchy_duplicate_table(primary):
+            if not cls.is_hierarchy_duplicate_table(primary, metadata):
                 count += 1
 
         return count
@@ -132,13 +228,13 @@ class ChatPresentationStructureDedupService:
             "inspectionTablePresentation",
             "presentation",
         ):
-            if cls.is_hierarchy_duplicate_table(metadata.get(key)):
+            if cls.is_hierarchy_duplicate_table(metadata.get(key), metadata):
                 return True
 
         bundled = metadata.get("tablePresentations")
 
         if isinstance(bundled, list):
-            return any(cls.is_hierarchy_duplicate_table(item) for item in bundled)
+            return any(cls.is_hierarchy_duplicate_table(item, metadata) for item in bundled)
 
         return False
 
@@ -147,14 +243,14 @@ class ChatPresentationStructureDedupService:
         for key in ("tablePresentation", "presentation"):
             presentation = metadata.get(key)
 
-            if cls.is_hierarchy_duplicate_table(presentation):
+            if cls.is_hierarchy_duplicate_table(presentation, metadata):
                 return presentation
 
         bundled = metadata.get("tablePresentations")
 
         if isinstance(bundled, list):
             for item in bundled:
-                if cls.is_hierarchy_duplicate_table(item):
+                if cls.is_hierarchy_duplicate_table(item, metadata):
                     return item
 
         return None
@@ -461,7 +557,7 @@ class ChatPresentationStructureDedupService:
         ):
             primary = metadata.get("presentation")
 
-            if cls.is_hierarchy_duplicate_table(primary) and not cls._prefers_table_over_tree(
+            if cls.is_hierarchy_duplicate_table(primary, metadata) and not cls._prefers_table_over_tree(
                 metadata
             ):
                 metadata["presentation"] = metadata.get("treePresentation") or None
@@ -471,7 +567,7 @@ class ChatPresentationStructureDedupService:
             bundled = metadata.get("tablePresentations")
 
             if isinstance(bundled, list):
-                filtered = cls._filter_table_list(bundled)
+                filtered = cls._filter_table_list(bundled, metadata)
                 metadata["tablePresentations"] = filtered or None
 
             available = metadata.get("availableFormats")

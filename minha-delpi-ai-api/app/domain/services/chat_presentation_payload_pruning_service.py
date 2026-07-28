@@ -339,7 +339,7 @@ class ChatPresentationPayloadPruningService:
         bundled = metadata.get("tablePresentations")
 
         if isinstance(bundled, list):
-            filtered = ChatPresentationStructureDedupService._filter_table_list(bundled)
+            filtered = ChatPresentationStructureDedupService._filter_table_list(bundled, metadata)
 
             if filtered:
                 metadata["tablePresentations"] = filtered
@@ -357,7 +357,10 @@ class ChatPresentationPayloadPruningService:
 
             presentation = metadata.get(key)
 
-            if ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(presentation):
+            if ChatPresentationStructureDedupService.is_hierarchy_duplicate_table(
+                presentation,
+                metadata,
+            ):
                 metadata.pop(key, None)
 
     @classmethod
