@@ -6860,6 +6860,16 @@ body.td-composer--marqueeing *{
   border-color: color-mix(in srgb, var(--td-accent) 65%, var(--td-border));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--td-accent) 30%, transparent);
 }
+.dashboard-tv-dashboard .td-deck-filmstrip__item--multi-selected .td-deck-filmstrip__select{
+  border-color: color-mix(in srgb, var(--td-accent) 45%, var(--td-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--td-accent) 18%, transparent);
+  background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
+}
+.dashboard-tv-dashboard .td-deck-filmstrip-shell--multi .td-deck-filmstrip__toolbar-label::after{
+  content: " · multi";
+  font-weight: 500;
+  opacity: 0.65;
+}
 .dashboard-tv-dashboard .td-deck-filmstrip__item--inactive{
   opacity: 0.7;
 }

@@ -79,6 +79,12 @@ import {
   writeSelectedSlideId,
 } from "../utils/deckSelectedSlidePreferences";
 import {
+  ensureFilmstripSlideInSelection,
+  resolveFilmstripSlideSelection,
+  type FilmstripSelectionModifiers,
+  type FilmstripSlideSelection,
+} from "../utils/filmstripSlideSelection";
+import {
   applyServerPlaylistPreservingLocalEdits,
   clearComunicadoSlideDraftIfCoveredBySave,
   hasLocalComunicadoEdits,
@@ -135,6 +141,9 @@ export function PlaylistEditorPage({
   const [loading, setLoading] = useState(() => !readPlaylistShell(playlistId));
   const [error, setError] = useState<string | null>(null);
   const [selectedSlideId, setSelectedSlideId] = useState<string | null>(null);
+  const [selectedSlideIds, setSelectedSlideIds] = useState<string[]>([]);
+  const [filmstripRangeAnchorId, setFilmstripRangeAnchorId] = useState<string | null>(null);
+  const [filmstripMultiMode, setFilmstripMultiMode] = useState(false);
   const [tvStatus, setTvStatus] = useState<PresentationStatus | null>(null);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [sectionPropertiesId, setSectionPropertiesId] = useState<string | null>(null);
@@ -170,8 +179,8 @@ export function PlaylistEditorPage({
     if (playlist) writePlaylistShell(playlist);
   }, [playlist]);
 
-  /** Troca de slide: flush autosave do slide anterior e alinha ref live ao alvo. */
-  const selectSlide = useCallback(
+  /** Foco no slide primário (editor/autosave) sem limpar multi-seleção do filmstrip. */
+  const focusPrimarySlide = useCallback(
     (slideId: string, slideHint?: Slide | null) => {
       const pending = pendingComunicadoSaveRef.current;
       if (pending && pending.slide.id !== slideId) {
@@ -190,11 +199,101 @@ export function PlaylistEditorPage({
     [playlistId],
   );
 
+  /** Troca de slide com seleção única (histórico, atalhos, add/paste). */
+  const selectSlide = useCallback(
+    (slideId: string, slideHint?: Slide | null) => {
+      focusPrimarySlide(slideId, slideHint);
+      setSelectedSlideIds([slideId]);
+      setFilmstripRangeAnchorId(slideId);
+      setFilmstripMultiMode(false);
+    },
+    [focusPrimarySlide],
+  );
+
+  const applyFilmstripSelection = useCallback(
+    (next: FilmstripSlideSelection) => {
+      setSelectedSlideIds(next.selectedIds);
+      setFilmstripRangeAnchorId(next.rangeAnchorId);
+      if (next.selectedIds.length <= 1) {
+        setFilmstripMultiMode(false);
+      }
+      if (next.primaryId) {
+        focusPrimarySlide(next.primaryId);
+      }
+    },
+    [focusPrimarySlide],
+  );
+
+  const handleFilmstripSelect = useCallback(
+    (slideId: string, modifiers: FilmstripSelectionModifiers = {}) => {
+      const orderedIds = (playlistRef.current?.slides ?? []).map((slide) => slide.id);
+      const previous: FilmstripSlideSelection = {
+        selectedIds:
+          selectedSlideIds.length > 0
+            ? selectedSlideIds
+            : selectedSlideId
+              ? [selectedSlideId]
+              : [],
+        primaryId: selectedSlideId,
+        rangeAnchorId: filmstripRangeAnchorId,
+      };
+      applyFilmstripSelection(
+        resolveFilmstripSlideSelection({
+          orderedIds,
+          previous,
+          targetId: slideId,
+          modifiers,
+        }),
+      );
+    },
+    [applyFilmstripSelection, filmstripRangeAnchorId, selectedSlideId, selectedSlideIds],
+  );
+
+  const handleFilmstripLongPress = useCallback(
+    (slideId: string) => {
+      const orderedIds = (playlistRef.current?.slides ?? []).map((slide) => slide.id);
+      const previous: FilmstripSlideSelection = {
+        selectedIds:
+          selectedSlideIds.length > 0
+            ? selectedSlideIds
+            : selectedSlideId
+              ? [selectedSlideId]
+              : [],
+        primaryId: selectedSlideId,
+        rangeAnchorId: filmstripRangeAnchorId,
+      };
+      setFilmstripMultiMode(true);
+      applyFilmstripSelection(
+        ensureFilmstripSlideInSelection({ orderedIds, previous, targetId: slideId }),
+      );
+    },
+    [
+      applyFilmstripSelection,
+      filmstripRangeAnchorId,
+      selectedSlideId,
+      selectedSlideIds,
+    ],
+  );
+
+  const clearFilmstripMultiSelection = useCallback(() => {
+    if (selectedSlideId) {
+      setSelectedSlideIds([selectedSlideId]);
+      setFilmstripRangeAnchorId(selectedSlideId);
+    } else {
+      setSelectedSlideIds([]);
+      setFilmstripRangeAnchorId(null);
+    }
+    setFilmstripMultiMode(false);
+  }, [selectedSlideId]);
+
   const applyDeckSnapshot = useCallback(
     (snapshot: DeckEditorSnapshot) => {
       setPlaylist(snapshot.playlist);
       setSelectedSlideId(snapshot.selectedSlideId);
       writeSelectedSlideId(playlistId, snapshot.selectedSlideId);
+      setSelectedSlideIds(snapshot.selectedSlideId ? [snapshot.selectedSlideId] : []);
+      setFilmstripRangeAnchorId(snapshot.selectedSlideId);
+      setFilmstripMultiMode(false);
       const slide = snapshot.selectedSlideId
         ? snapshot.playlist.slides?.find((item) => item.id === snapshot.selectedSlideId)
         : null;
@@ -433,16 +532,28 @@ export function PlaylistEditorPage({
 
   useEffect(() => {
     setSelectedSlideId(null);
+    setSelectedSlideIds([]);
+    setFilmstripRangeAnchorId(null);
+    setFilmstripMultiMode(false);
     liveComunicadoConfigRef.current = null;
   }, [playlistId]);
 
   useEffect(() => {
     if (!slides.length) {
       setSelectedSlideId(null);
+      setSelectedSlideIds([]);
+      setFilmstripRangeAnchorId(null);
+      setFilmstripMultiMode(false);
       writeSelectedSlideId(playlistId, null);
       return;
     }
     if (selectedSlideId && slides.some((slide) => slide.id === selectedSlideId)) {
+      setSelectedSlideIds((prev) => {
+        const pruned = prev.filter((id) => slides.some((slide) => slide.id === id));
+        if (pruned.length === prev.length) return prev;
+        if (pruned.length === 0 && selectedSlideId) return [selectedSlideId];
+        return pruned;
+      });
       return;
     }
     const nextId = resolveSelectedSlideId(
@@ -455,6 +566,9 @@ export function PlaylistEditorPage({
       return;
     }
     setSelectedSlideId(null);
+    setSelectedSlideIds([]);
+    setFilmstripRangeAnchorId(null);
+    setFilmstripMultiMode(false);
     writeSelectedSlideId(playlistId, null);
   }, [slides, selectedSlideId, playlistId, selectSlide]);
 
@@ -1003,27 +1117,45 @@ export function PlaylistEditorPage({
   }
 
   async function handleRemoveSlide(slide: Slide) {
-    if (!playlist) return;
+    await handleRemoveSlides([slide]);
+  }
+
+  async function handleRemoveSlides(targets: Slide[]) {
+    if (!playlist || targets.length === 0) return;
+    const unique = targets.filter(
+      (slide, index, list) => list.findIndex((item) => item.id === slide.id) === index,
+    );
     const confirmed = await confirm({
-      title: "Remover tela",
-      message: `Remover a tela «${slide.title}»? Esta ação não pode ser desfeita.`,
+      title: unique.length > 1 ? "Remover telas" : "Remover tela",
+      message:
+        unique.length > 1
+          ? `Remover ${unique.length} telas? Esta ação não pode ser desfeita.`
+          : `Remover a tela «${unique[0]?.title ?? ""}»? Esta ação não pode ser desfeita.`,
       confirmLabel: "Remover",
       variant: "danger",
     });
     if (!confirmed) return;
     deckHistory.recordBeforeChange();
     try {
-      await deleteSlide(playlist.id, slide.id);
-      const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
+      const removeIds = new Set(unique.map((slide) => slide.id));
+      for (const slide of unique) {
+        await deleteSlide(playlist.id, slide.id);
+      }
+      const remaining = (playlist.slides ?? []).filter((item) => !removeIds.has(item.id));
       setPlaylist({ ...playlist, slides: remaining });
-      if (selectedSlideId === slide.id) {
+      if (selectedSlideId && removeIds.has(selectedSlideId)) {
         const nextId = remaining[0]?.id ?? null;
         if (nextId) selectSlide(nextId);
         else {
           setSelectedSlideId(null);
+          setSelectedSlideIds([]);
+          setFilmstripRangeAnchorId(null);
+          setFilmstripMultiMode(false);
           liveComunicadoConfigRef.current = null;
           writeSelectedSlideId(playlistId, null);
         }
+      } else {
+        setSelectedSlideIds((prev) => prev.filter((id) => !removeIds.has(id)));
       }
       await deckHistory.confirmChange();
     } catch (caught) {
@@ -1336,12 +1468,23 @@ export function PlaylistEditorPage({
   }, [flushPendingComunicadoSave]);
 
   async function handleDuplicateSlide(slide: Slide) {
-    if (!playlist) return;
+    await handleDuplicateSlides([slide]);
+  }
+
+  async function handleDuplicateSlides(targets: Slide[]) {
+    if (!playlist || targets.length === 0) return;
+    const unique = targets.filter(
+      (slide, index, list) => list.findIndex((item) => item.id === slide.id) === index,
+    );
     deckHistory.recordBeforeChange();
     try {
-      const copy = await duplicateSlide(playlist.id, slide.id);
-      const placed = await placeSlideAfterActive(copy, slide.id);
-      selectSlide(placed.id, placed);
+      let lastPlaced: Slide | null = null;
+      for (const slide of unique) {
+        const copy = await duplicateSlide(playlist.id, slide.id);
+        const placed = await placeSlideAfterActive(copy, lastPlaced?.id ?? slide.id);
+        lastPlaced = placed;
+      }
+      if (lastPlaced) selectSlide(lastPlaced.id, lastPlaced);
       await deckHistory.confirmChange();
     } catch (caught) {
       deckHistory.cancelChange();
@@ -1386,13 +1529,24 @@ export function PlaylistEditorPage({
   void slideClipboardRevision;
 
   async function handleToggleSlideActive(slide: Slide) {
-    if (!playlist) return;
+    await handleToggleSlidesActive([slide]);
+  }
+
+  async function handleToggleSlidesActive(targets: Slide[]) {
+    if (!playlist || targets.length === 0) return;
+    const unique = targets.filter(
+      (slide, index, list) => list.findIndex((item) => item.id === slide.id) === index,
+    );
     deckHistory.recordBeforeChange();
     try {
-      const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+      const updates = new Map<string, Slide>();
+      for (const slide of unique) {
+        const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+        updates.set(updated.id, updated);
+      }
       setPlaylist({
         ...playlist,
-        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+        slides: (playlist.slides ?? []).map((item) => updates.get(item.id) ?? item),
       });
       await deckHistory.confirmChange();
     } catch (caught) {
@@ -1530,6 +1684,13 @@ export function PlaylistEditorPage({
     sections,
     playlistId,
     selectedSlideId: selectedSlide?.id ?? null,
+    selectedSlideIds:
+      selectedSlideIds.length > 0
+        ? selectedSlideIds
+        : selectedSlide?.id
+          ? [selectedSlide.id]
+          : [],
+    multiMode: filmstripMultiMode,
     previewBySlideId,
     dragIndex,
     inactiveLabel: admin.slideInactive ?? "Pausada",
@@ -1537,7 +1698,9 @@ export function PlaylistEditorPage({
     viewportProfile: playlist.viewportProfile,
     masterConfig: playlist.masterConfig,
     publicToken: playlist.publicToken,
-    onSelect: selectSlide,
+    onSelect: handleFilmstripSelect,
+    onLongPressSelect: handleFilmstripLongPress,
+    onClearMultiSelection: clearFilmstripMultiSelection,
     onDragStart: setDragIndex,
     onDrop: (index: number) => void handleDropSlide(index),
     onDragEnd: () => setDragIndex(null),
@@ -1547,10 +1710,10 @@ export function PlaylistEditorPage({
     onAddInSection: (sectionId: string) => void handleAddCustomSlide(sectionId),
     onCopySlide: handleCopySlide,
     onPasteSlide: () => void handlePasteSlide(),
-    onDuplicateSlide: (slide: Slide) => void handleDuplicateSlide(slide),
+    onDuplicateSlide: (targets: Slide[]) => void handleDuplicateSlides(targets),
     onRenameSlide: (slide: Slide, title: string) => void handleRenameSlide(slide, title),
-    onToggleSlideActive: (slide: Slide) => void handleToggleSlideActive(slide),
-    onRemoveSlide: (slide: Slide) => void handleRemoveSlide(slide),
+    onToggleSlideActive: (targets: Slide[]) => void handleToggleSlidesActive(targets),
+    onRemoveSlide: (targets: Slide[]) => void handleRemoveSlides(targets),
     onSectionNameCommit: (sectionId: string, name: string) =>
       void patchSection(sectionId, { name }),
     onSectionToggleCollapsed: (sectionId: string, collapsed: boolean) =>

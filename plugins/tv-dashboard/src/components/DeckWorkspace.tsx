@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 
 import type { PlaylistMasterConfig, PlaylistSection, PresentationPayload, Slide } from "../api/tvDashboardApi";
+import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
 import { SlideFilmstrip } from "./SlideFilmstrip";
 
 type Props = {
@@ -8,6 +9,8 @@ type Props = {
   sections?: PlaylistSection[];
   playlistId: string;
   selectedSlideId: string | null;
+  selectedSlideIds?: string[];
+  multiMode?: boolean;
   previewBySlideId: Record<string, PresentationPayload["slides"][number]>;
   dragIndex: number | null;
   inactiveLabel: string;
@@ -15,7 +18,9 @@ type Props = {
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
   publicToken?: string | null;
-  onSelect: (slideId: string) => void;
+  onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
+  onLongPressSelect?: (slideId: string) => void;
+  onClearMultiSelection?: () => void;
   onDragStart: (index: number) => void;
   onDrop: (index: number) => void;
   onDragEnd: () => void;
@@ -25,10 +30,10 @@ type Props = {
   onAddInSection?: (sectionId: string) => void;
   onCopySlide: (slide: Slide) => void;
   onPasteSlide: () => void;
-  onDuplicateSlide: (slide: Slide) => void;
+  onDuplicateSlide: (slides: Slide[]) => void;
   onRenameSlide: (slide: Slide, title: string) => void;
-  onToggleSlideActive: (slide: Slide) => void;
-  onRemoveSlide: (slide: Slide) => void;
+  onToggleSlideActive: (slides: Slide[]) => void;
+  onRemoveSlide: (slides: Slide[]) => void;
   onSectionNameCommit?: (sectionId: string, name: string) => void;
   onSectionToggleCollapsed?: (sectionId: string, collapsed: boolean) => void;
   onSectionToggleActive?: (sectionId: string, active: boolean) => void;
@@ -45,6 +50,8 @@ export function DeckWorkspace({
   sections,
   playlistId,
   selectedSlideId,
+  selectedSlideIds,
+  multiMode,
   previewBySlideId,
   dragIndex,
   inactiveLabel,
@@ -53,6 +60,8 @@ export function DeckWorkspace({
   masterConfig,
   publicToken,
   onSelect,
+  onLongPressSelect,
+  onClearMultiSelection,
   onDragStart,
   onDrop,
   onDragEnd,
@@ -83,6 +92,8 @@ export function DeckWorkspace({
         sections={sections}
         playlistId={playlistId}
         selectedSlideId={selectedSlideId}
+        selectedSlideIds={selectedSlideIds}
+        multiMode={multiMode}
         previewBySlideId={previewBySlideId}
         dragIndex={dragIndex}
         inactiveLabel={inactiveLabel}
@@ -91,6 +102,8 @@ export function DeckWorkspace({
         masterConfig={masterConfig}
         publicToken={publicToken}
         onSelect={onSelect}
+        onLongPressSelect={onLongPressSelect}
+        onClearMultiSelection={onClearMultiSelection}
         onDragStart={onDragStart}
         onDrop={onDrop}
         onDragEnd={onDragEnd}
