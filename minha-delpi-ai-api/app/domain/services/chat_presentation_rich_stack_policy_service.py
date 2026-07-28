@@ -127,6 +127,9 @@ class ChatPresentationRichStackPolicyService:
         from app.domain.services.chat_presentation_text_first_policy_service import (
             ChatPresentationTextFirstPolicyService,
         )
+        from app.domain.services.chat_presentation_vocabulary_service import (
+            ChatPresentationVocabularyService,
+        )
 
         # Estoque: tabela nativa por defaultViewPolicy; stack narrativo só com mensagem do usuário.
         if ChatPresentationRoutePolicyService.is_stock_route(path):
@@ -134,12 +137,25 @@ class ChatPresentationRichStackPolicyService:
 
         entity_for_strategy = entity
         api_meta = metadata.get("apiDelpiResponseMeta")
+        openapi_shape = ""
 
-        if not entity_for_strategy and isinstance(api_meta, dict):
+        if isinstance(api_meta, dict):
             raw_entity = api_meta.get("entity")
+            openapi_shape = str(api_meta.get("shape") or "").strip().lower()
 
-            if isinstance(raw_entity, str) and raw_entity.strip():
+            if not entity_for_strategy and isinstance(raw_entity, str) and raw_entity.strip():
                 entity_for_strategy = raw_entity.strip()
+
+        # Hierarchy as-delivered: Automático = single (tree); stack só com pedido integrado.
+        hierarchy_entities = ChatPresentationVocabularyService.hierarchy_entities()
+        hierarchy_shapes = ChatPresentationVocabularyService.hierarchy_shapes()
+        entity_token = str(entity_for_strategy or "").strip().lower()
+
+        if openapi_shape in hierarchy_shapes or entity_token in hierarchy_entities:
+            if not ChatPresentationTextFirstPolicyService.looks_like_integrated_stack_request(
+                user_message,
+            ):
+                return False
 
         if ChatPresentationProfileService.uses_schema_first_presentation(path, entity_for_strategy):
             # Shape composite_analysis (factory-status, analyser, …) é intrinsecamente uma

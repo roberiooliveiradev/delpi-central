@@ -118,6 +118,34 @@ def test_stock_route_does_not_default_to_text_stack_without_user_preference():
     )
 
 
+def test_product_structure_does_not_auto_stack_without_integrated_request():
+    metadata = {
+        "path": "/products/90261565/structure",
+        "apiDelpiResponseMeta": {
+            "entity": "product_structure",
+            "shape": "hierarchy",
+        },
+        "textPresentation": {"type": "markdown", "markdown": "### Estrutura\n\nResumo."},
+        "treePresentation": {
+            "type": "tree",
+            "title": "BOM",
+            "root": {"id": "90261565", "children": []},
+        },
+        "tablePresentation": {
+            "type": "table",
+            "title": "Estrutura do produto",
+            "rows": [{"code": "1"}],
+        },
+    }
+
+    assert not ChatPresentationRichStackPolicyService.should_default_to_text_stack(
+        path=metadata["path"],
+        metadata=metadata,
+        entity="product_structure",
+        user_message="estrutura 90261565",
+    )
+
+
 def test_structure_exclusivity_tail_uses_dashboard_only_when_panel_present():
     metadata = {
         "path": "/products/90261805/structure/exclusivity",

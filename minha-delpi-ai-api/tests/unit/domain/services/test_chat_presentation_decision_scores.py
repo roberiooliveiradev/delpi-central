@@ -35,6 +35,17 @@ def test_compute_scores_prefers_tree_for_hierarchy():
     assert scores["tree"] >= 50
 
 
+def test_compute_scores_boosts_tree_from_openapi_shape_defaults():
+    scores = ChatPresentationAutomaticScoreService.compute_scores(
+        data_shape={"rows": 4, "hasCategory": True, "hasNumeric": True},
+        available_views=["text", "table", "tree", "chart"],
+        openapi_shape="hierarchy",
+    )
+
+    assert scores["tree"] >= scores["table"]
+    assert scores["tree"] >= 35
+
+
 def test_attach_scores_and_reading_layers_from_data_answer():
     decision = {
         "selected": "text",

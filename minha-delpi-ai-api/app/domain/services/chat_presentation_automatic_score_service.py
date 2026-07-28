@@ -54,6 +54,13 @@ _CHART_TYPE_TO_SELECTED = {
     "scatter": "scatter",
 }
 
+_OPENAPI_VIEW_POLICY_TO_SCORE_KEY = {
+    "tree_when_available": "tree",
+    "table_when_available": "table",
+    "kpi_when_available": "kpi",
+    "text_when_available": "text",
+}
+
 
 class ChatPresentationAutomaticScoreService:
     @classmethod
@@ -65,6 +72,7 @@ class ChatPresentationAutomaticScoreService:
         user_message: str | None = None,
         path: str | None = None,
         entity: str | None = None,
+        openapi_shape: str | None = None,
     ) -> dict[str, int]:
         shape = data_shape if isinstance(data_shape, dict) else {}
         message = re.sub(r"\s+", " ", str(user_message or "").strip().lower())
@@ -92,6 +100,12 @@ class ChatPresentationAutomaticScoreService:
         if shape.get("hasHierarchy") or recommended == "tree":
             scores["tree"] += 50
             scores["text"] += 10
+
+        cls._apply_openapi_shape_defaults_boost(
+            scores,
+            openapi_shape=openapi_shape,
+            available_views=available_views,
+        )
 
         lowered_path = str(path or "").strip().lower()
         resolved_entity = str(entity or "").strip().lower()
@@ -151,6 +165,50 @@ class ChatPresentationAutomaticScoreService:
         return {key: min(value, 100) for key, value in scores.items() if value > 0}
 
     @classmethod
+    def _apply_openapi_shape_defaults_boost(
+        cls,
+        scores: dict[str, int],
+        *,
+        openapi_shape: str | None,
+        available_views: list[str] | None,
+    ) -> None:
+        """Liga openapiShapeDefaults ao ranker — sem ficha por operationId."""
+        token = str(openapi_shape or "").strip().lower()
+
+        if not token:
+            return
+
+        from app.domain.services.chat_presentation_profile_service import (
+            ChatPresentationProfileService,
+        )
+
+        defaults = ChatPresentationProfileService.node("openapiShapeDefaults") or {}
+        entry = defaults.get(token) if isinstance(defaults, dict) else None
+
+        if not isinstance(entry, dict):
+            return
+
+        policy = str(entry.get("defaultViewPolicy") or "").strip().lower()
+        score_key = _OPENAPI_VIEW_POLICY_TO_SCORE_KEY.get(policy)
+
+        if not score_key:
+            return
+
+        views = {
+            str(view).strip().lower()
+            for view in (available_views or [])
+            if str(view or "").strip()
+        }
+
+        if views and score_key not in views and score_key != "text":
+            return
+
+        scores[score_key] = int(scores.get(score_key) or 0) + 35
+
+        if score_key == "tree":
+            scores["table"] = max(0, int(scores.get("table") or 0) - 10)
+
+    @classmethod
     def attach_scores_and_reading_layers(
         cls,
         decision: dict[str, Any],
@@ -171,6 +229,17 @@ class ChatPresentationAutomaticScoreService:
             metadata,
             path=path or None,
         )
+        openapi_shape = ""
+        api_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(api_meta, dict):
+            openapi_shape = str(api_meta.get("shape") or "").strip()
+
+        if not openapi_shape:
+            delpi = metadata.get("delpiMetadata")
+
+            if isinstance(delpi, dict):
+                openapi_shape = str(delpi.get("shape") or "").strip()
 
         decision["scores"] = cls.compute_scores(
             data_shape=merged_shape,
@@ -180,6 +249,7 @@ class ChatPresentationAutomaticScoreService:
             user_message=user_message,
             path=path or None,
             entity=entity,
+            openapi_shape=openapi_shape or None,
         )
 
         reading_layers = ChatHumanizedDataResponseContentService.get_node("readingLayers")
