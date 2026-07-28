@@ -232,3 +232,7 @@ def test_product_search_predicates_description_and_group():
         "productSearchWithGroupCode",
         by_description,
     )
+    suppliers = ChatMessageNormalizationService.normalize_for_matching(
+        "liste os fornecedores do produto 10080001"
+    )
+    assert not ChatProductRoutePredicateService.matches("productSearchQuestion", suppliers)

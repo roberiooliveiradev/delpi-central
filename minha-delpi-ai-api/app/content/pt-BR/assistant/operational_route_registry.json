@@ -1974,10 +1974,12 @@
       },
       "route": {
         "pathMarkers": [
-          "/search"
+          "/products/"
         ],
+        "pathSuffix": "/search",
         "excludePathMarkers": [
-          "/system/"
+          "/system/",
+          "/customers/"
         ],
         "method": "GET"
       },
@@ -2002,15 +2004,20 @@
         "noneOf": [
           {
             "customPredicate": "productSearchWithGroupCode"
+          },
+          {
+            "hasProductOperationalRouteSegment": true
           }
         ]
       },
       "route": {
         "pathMarkers": [
-          "/search"
+          "/products/"
         ],
+        "pathSuffix": "/search",
         "excludePathMarkers": [
-          "/system/"
+          "/system/",
+          "/customers/"
         ],
         "method": "GET"
       },

@@ -738,6 +738,7 @@
         { "technicalNormasDescriptionBlock": true },
         { "excludeIfSqlOperational": true },
         { "excludeIfProductionRestRoute": true },
+        { "hasProductOperationalRouteSegment": true },
         {
           "termsFrom": "external_action_responses.actionSelection.productSearch.audit5sExcludeTerms"
         }

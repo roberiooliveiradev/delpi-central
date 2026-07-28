@@ -228,6 +228,14 @@ class OperationalRouteMatcherService:
             if not _extract_product_search_group_code(message or normalized, normalized):
                 return False
 
+        if spec.get("hasProductOperationalRouteSegment"):
+            from app.domain.services.chat_route_context_service import (
+                ChatRouteContextService,
+            )
+
+            if not ChatRouteContextService.segment_from_message(message or normalized):
+                return False
+
         if spec.get("departmentKpiResolved"):
             if not _department_kpi_resolved(normalized):
                 return False
@@ -303,6 +311,7 @@ class OperationalRouteMatcherService:
             and not spec.get("lacksLmpSaleNumber")
             and not spec.get("hasSystemTableName")
             and not spec.get("hasProductSearchGroupCode")
+            and not spec.get("hasProductOperationalRouteSegment")
             and not spec.get("departmentKpiResolved")
             and not spec.get("technicalNormasDescriptionBlock")
             and not production_kind
