@@ -124,11 +124,25 @@ type Props = {
   /** ribbon = grade multi-coluna; pane = empilhado. */
   layout?: "ribbon" | "pane";
   /**
+   * Rota com intervalo aberto (ex.: série TRANSFORMA+): Personalizado sem datas =
+   * histórico completo. Não hidratar nem exibir «Este mês» como padrão.
+   */
+  openEndedDateRange?: boolean;
+  /**
+   * Quando false, não grava preset padrão no mount (filtros agregados do slide).
+   * Default true nas fontes individuais.
+   */
+  hydrateDefaultPreset?: boolean;
+  /**
    * Patch atômico de parâmetros. Sempre em lote — evita race quando Período +
    * competence / datas mudam juntos (binding stale sobrescrevia o preset).
    */
   onChange: (updates: Record<string, string>) => void;
 };
+
+function resolveFallbackPreset(openEndedDateRange: boolean): DateRangePresetId {
+  return openEndedDateRange ? "custom" : "this_month";
+}
 
 export function DataParamFields({
   schema,
@@ -137,6 +151,8 @@ export function DataParamFields({
   branchScope = null,
   idPrefix = "td-data-param",
   layout = "pane",
+  openEndedDateRange = false,
+  hydrateDefaultPreset = true,
   onChange,
 }: Props) {
   const entries = Object.entries(schema);
@@ -150,18 +166,27 @@ export function DataParamFields({
   // semana, ano…) é o mesmo das demais rotas. `competence` permanece opcional para mês fechado.
   const hasCompetence = "competence" in schema;
   const activeDatePair = datePair;
+  const fallbackPreset = resolveFallbackPreset(openEndedDateRange);
   const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
-  const preset = (presetRaw || (activeDatePair ? "this_month" : "")) as DateRangePresetId | "";
-  const isCustom = !activeDatePair || preset === "custom";
+  const preset = (
+    presetRaw || (activeDatePair && hydrateDefaultPreset ? fallbackPreset : "")
+  ) as DateRangePresetId | "";
+  const isCustom = !activeDatePair || !preset || preset === "custom";
   const showLastN = Boolean(activeDatePair) && preset === "last_n_days";
+  const periodSelectValue = presetRaw
+    ? presetRaw
+    : hydrateDefaultPreset
+      ? fallbackPreset
+      : "";
 
   useEffect(() => {
+    if (!hydrateDefaultPreset) return;
     if (!activeDatePair) return;
     if (String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim()) return;
-    onChange({ [DATE_RANGE_PRESET_PARAM]: "this_month" });
-    // Hidrata preset padrão quando a rota tem intervalo de datas.
+    onChange({ [DATE_RANGE_PRESET_PARAM]: fallbackPreset });
+    // Hidrata preset padrão alinhado à rota (custom em open-ended; this_month nas demais).
     // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
-  }, [activeDatePair?.startKey, activeDatePair?.endKey]);
+  }, [activeDatePair?.startKey, activeDatePair?.endKey, fallbackPreset, hydrateDefaultPreset]);
 
   function patchParam(key: string, value: string) {
     const updates: Record<string, string> = { [key]: value };
@@ -192,16 +217,27 @@ export function DataParamFields({
             key={DATE_RANGE_PRESET_PARAM}
             id={`${idPrefix}-date-range-preset`}
             label="Período"
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset}
+            hint={
+              openEndedDateRange
+                ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePresetOpenEnded
+                : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset
+            }
           >
             <FormSelectControl
               id={`${idPrefix}-date-range-preset`}
               className={selectClass}
               portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
               ariaLabel="Período relativo"
-              value={preset || "this_month"}
+              value={periodSelectValue}
               onChange={patchDateRangePreset}
-              options={DATE_RANGE_PRESET_OPTIONS}
+              options={
+                hydrateDefaultPreset
+                  ? DATE_RANGE_PRESET_OPTIONS
+                  : [
+                      { value: "", label: "Não definido (usa a fonte)" },
+                      ...DATE_RANGE_PRESET_OPTIONS,
+                    ]
+              }
             />
           </DeckField>,
           showLastN ? (
@@ -239,7 +275,9 @@ export function DataParamFields({
     const label = `${labelBase}${inherited ? " (herdado do slide)" : ""}`;
     const isRangeDate = isDateRangePairKey(key, activeDatePair);
     const hint = isRangeDate
-      ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixed
+      ? openEndedDateRange
+        ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixedOpenEnded
+        : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangeFixed
       : hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
@@ -298,6 +336,13 @@ export function DataParamFields({
         ? "number"
         : "text";
 
+    const openEndedDatePlaceholder =
+      openEndedDateRange && isRangeDate && isCustom
+        ? key === activeDatePair?.startKey
+          ? "Vazio = início do histórico"
+          : "Vazio = até hoje"
+        : null;
+
     return (
       <DeckField key={key} id={fieldId} label={label} hint={hint}>
         <NativeTextControl
@@ -310,11 +355,13 @@ export function DataParamFields({
               ? "Definido pelo período relativo"
               : inherited
                 ? "Herdado do slide"
-                : field.default !== undefined
-                  ? `Padrão: ${field.default}`
-                  : field.optional
-                    ? "Opcional"
-                    : ""
+                : openEndedDatePlaceholder
+                  ? openEndedDatePlaceholder
+                  : field.default !== undefined
+                    ? `Padrão: ${field.default}`
+                    : field.optional
+                      ? "Opcional"
+                      : ""
           }
           value={
             dateInputsLocked

@@ -363,6 +363,7 @@ export function DataRoutesSidePanel({
             branchScope={branchScope}
             idPrefix="td-data-source-param"
             layout={layout}
+            openEndedDateRange={Boolean(pickedRoute.openEndedDateRange)}
             onChange={(updates) => {
               setParams((previous) => applyDataParamRawUpdates(previous, updates, schema));
             }}

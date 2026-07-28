@@ -87,4 +87,13 @@ describe("DataParamFields date range UX contract", () => {
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
     expect(source).toMatch(/schemaEnum=\{field\.enum\}/);
   });
+
+  it("respeita openEndedDateRange (custom) e não força this_month no hydrate", () => {
+    const base = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/openEndedDateRange/);
+    expect(source).toMatch(/hydrateDefaultPreset/);
+    expect(source).toMatch(/resolveFallbackPreset/);
+    expect(source).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
+  });
 });

@@ -58,31 +58,41 @@ def _build_query_params(
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
         has_period_days = merged.get(PERIOD_DAYS_KEY) not in (None, "")
+        open_ended = bool(route.get("openEndedDateRange"))
         # Sem datas e sem periodDays → omite o par (histórico completo na API).
         # periodDays / datas parciais / preset resolvido ainda preenchem o intervalo.
         omit_date_range = not start and not end and not has_period_days
         if not omit_date_range and (not start or not end):
-            # Respeita data parcial do filtro/input (ex.: só end_date) em vez de
-            # forçar fim=hoje e apagar o valor do usuário.
-            period_days = int(
-                merged.get(PERIOD_DAYS_KEY)
-                or route.get("defaultParams", {}).get(PERIOD_DAYS_KEY)
-                or 7
-            )
-            try:
-                end_d = date.fromisoformat(str(end)[:10]) if end else date.today()
-            except ValueError:
-                end_d = date.today()
-            try:
-                start_d = (
-                    date.fromisoformat(str(start)[:10])
-                    if start
-                    else end_d - timedelta(days=max(period_days, 1) - 1)
+            if open_ended and not has_period_days:
+                # Rota aberta: envia só a ponta informada (não inventa janela de 7 dias).
+                if start:
+                    query[start_key] = str(start)
+                if end:
+                    query[end_key] = str(end)
+            else:
+                # Respeita data parcial do filtro/input (ex.: só end_date) em vez de
+                # forçar fim=hoje e apagar o valor do usuário.
+                period_days = int(
+                    merged.get(PERIOD_DAYS_KEY)
+                    or route.get("defaultParams", {}).get(PERIOD_DAYS_KEY)
+                    or 7
                 )
-            except ValueError:
-                start_d = end_d - timedelta(days=max(period_days, 1) - 1)
-            start, end = start_d.isoformat(), end_d.isoformat()
-        if not omit_date_range:
+                try:
+                    end_d = date.fromisoformat(str(end)[:10]) if end else date.today()
+                except ValueError:
+                    end_d = date.today()
+                try:
+                    start_d = (
+                        date.fromisoformat(str(start)[:10])
+                        if start
+                        else end_d - timedelta(days=max(period_days, 1) - 1)
+                    )
+                except ValueError:
+                    start_d = end_d - timedelta(days=max(period_days, 1) - 1)
+                start, end = start_d.isoformat(), end_d.isoformat()
+                query[start_key] = str(start)
+                query[end_key] = str(end)
+        elif not omit_date_range:
             query[start_key] = str(start)
             query[end_key] = str(end)
         branch = merged.get("branch")

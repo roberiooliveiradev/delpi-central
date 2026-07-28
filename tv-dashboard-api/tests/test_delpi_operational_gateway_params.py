@@ -274,6 +274,43 @@ def test_open_ended_date_range_omits_dates_when_custom_empty():
     assert query["filial_id"] == "01"
 
 
+def test_open_ended_partial_start_date_omits_invented_end():
+    """openEnded + só start_date → envia só início (sem janela de 7 dias)."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "granularity": {"type": "string"},
+            },
+        },
+        {"dateRangePreset": "custom", "start_date": "2025-06-01", "granularity": "month"},
+    )
+    assert query["start_date"] == "2025-06-01"
+    assert "end_date" not in query
+    assert query["granularity"] == "month"
+
+
+def test_open_ended_partial_end_date_omits_invented_start():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+            },
+        },
+        {"dateRangePreset": "custom", "end_date": "2025-12-31"},
+    )
+    assert query["end_date"] == "2025-12-31"
+    assert "start_date" not in query
+
+
 def test_open_ended_still_honors_explicit_period_days():
     today = date.today()
     query = _build_query_params(

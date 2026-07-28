@@ -318,6 +318,7 @@ export function DataBindingInspector({
       inheritedKeys={inheritedKeys}
       branchScope={branchScope}
       layout={layout}
+      openEndedDateRange={Boolean(route?.openEndedDateRange)}
       onChange={updateParams}
     />
   );
@@ -400,6 +401,7 @@ export function DataBindingInspector({
         branchScope={branchScope}
         layout="pane"
         idPrefix="td-data-param-modal"
+        openEndedDateRange={Boolean(route?.openEndedDateRange)}
         onChange={updateParams}
       />
     </HostContainedDialog>
