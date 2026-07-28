@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from unittest.mock import MagicMock, patch
 
 from app.infrastructure.persistence.totvs.product_repositories.product_suppliers_repository import (
@@ -15,6 +16,30 @@ from app.domain.entities.product.supplier import Supplier
 from app.application.models.page import Page
 from app.interface.http.route_contract_registry import ROUTE_CONTRACTS
 from app.interface.http.openapi_agent_metadata import PRODUCT_BY_SUPPLIER_PART_NUMBER
+from app.interface.http.routes.product_routes import (
+    search_products_by_supplier_part_number_route,
+)
+
+
+def _sample_supplier() -> Supplier:
+    return Supplier(
+        product_code="10080160",
+        product_description="ITEM TESTE",
+        unit="PC",
+        supplier_code="000192",
+        supplier_store="01",
+        supplier_name="MOLEX BRASIL LTDA.",
+        supplier_part_number="008700056",
+        catalog_code=None,
+        barcode=None,
+        registered_lead_time_days=None,
+        real_avg_lead_time_days=None,
+        real_min_lead_time_days=None,
+        real_max_lead_time_days=None,
+        real_lead_time_sample_size=None,
+        last_price=None,
+        last_price_date=None,
+    )
 
 
 def _repo_with_mocks() -> ProductSuppliersRepository:
@@ -75,26 +100,7 @@ def test_search_by_supplier_part_number_empty_returns_empty_page() -> None:
 def test_use_case_delegates_to_repository() -> None:
     repository = MagicMock()
     repository.search_by_supplier_part_number.return_value = Page(
-        items=[
-            Supplier(
-                product_code="10080160",
-                product_description="ITEM",
-                unit="PC",
-                supplier_code="000192",
-                supplier_store="01",
-                supplier_name="MOLEX",
-                supplier_part_number="008700056",
-                catalog_code=None,
-                barcode=None,
-                registered_lead_time_days=None,
-                real_avg_lead_time_days=None,
-                real_min_lead_time_days=None,
-                real_max_lead_time_days=None,
-                real_lead_time_sample_size=None,
-                last_price=None,
-                last_price_date=None,
-            )
-        ],
+        items=[_sample_supplier()],
         total=1,
         page=1,
         page_size=50,
@@ -131,3 +137,64 @@ def test_product_router_exposes_by_supplier_part_number_path() -> None:
 
     paths = {getattr(route, "path", "") for route in router.routes}
     assert "/by-supplier-part-number" in paths
+
+
+@patch(
+    "app.interface.http.routes.product_routes.build_search_products_by_supplier_part_number_use_case"
+)
+def test_route_returns_meta_operation_id_entity_shape(mock_build_use_case) -> None:
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = Page(
+        items=[_sample_supplier()],
+        total=1,
+        page=1,
+        page_size=50,
+    )
+    mock_build_use_case.return_value = mock_use_case
+
+    response = search_products_by_supplier_part_number_route(
+        supplier_part_number="008700056",
+        supplier_code=None,
+        page=1,
+        page_size=50,
+    )
+    body = json.loads(response.body.decode())
+
+    assert body["success"] is True
+    assert body["meta"]["operationId"] == "search_products_by_supplier_part_number"
+    assert body["meta"]["entity"] == "product_by_supplier_part_number"
+    assert body["meta"]["shape"] == "paged_list"
+    assert body["data"]["total"] == 1
+    assert body["data"]["items"][0]["product_code"] == "10080160"
+    assert body["data"]["items"][0]["supplier_part_number"] == "008700056"
+
+    request = mock_use_case.execute.call_args[0][0]
+    assert request.supplier_part_number == "008700056"
+    assert request.supplier_code is None
+
+
+@patch(
+    "app.interface.http.routes.product_routes.build_search_products_by_supplier_part_number_use_case"
+)
+def test_route_passes_optional_supplier_code(mock_build_use_case) -> None:
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = Page(
+        items=[],
+        total=0,
+        page=1,
+        page_size=50,
+    )
+    mock_build_use_case.return_value = mock_use_case
+
+    response = search_products_by_supplier_part_number_route(
+        supplier_part_number="008700056",
+        supplier_code="000192",
+        page=1,
+        page_size=50,
+    )
+    body = json.loads(response.body.decode())
+
+    assert body["meta"]["operationId"] == "search_products_by_supplier_part_number"
+    assert body["data"]["total"] == 0
+    request = mock_use_case.execute.call_args[0][0]
+    assert request.supplier_code == "000192"

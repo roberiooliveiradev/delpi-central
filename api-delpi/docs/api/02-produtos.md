@@ -40,23 +40,64 @@ Busca inversa: localiza produtos DELPI a partir do **part number do fornecedor**
 
 | Query | Tipo | Obrigatório | Descrição |
 |---|---|---|---|
-| `supplier_part_number` | string | **sim** | Part number no fornecedor (`A5_CODPRF`). |
+| `supplier_part_number` | string | **sim** | Part number no fornecedor (`A5_CODPRF`), match exato após trim. |
 | `supplier_code` | string | não | Filtra pelo código do fornecedor (`A5_FORNECE`). |
 | `page` | int | não | Página (default `1`). |
 | `page_size` | int | não | Tamanho (default `50`, máx. `500`). |
 
 **`operationId`:** `search_products_by_supplier_part_number`  
-**Contrato:** `entity=product_by_supplier_part_number`, `shape=paged_list`
+**Contrato:** `entity=product_by_supplier_part_number`, `shape=paged_list`  
+**Permissão:** `api-delpi.access`
 
-Cada item inclui `product_code`, `product_description`, `supplier_code`, `supplier_name`, `supplier_part_number`, etc.
+### Campos de cada item (`data.items[]`)
 
-**Exemplo:**
+| Campo API | Origem | Significado |
+|-----------|--------|-------------|
+| `product_code` | `SB1.B1_COD` | Código DELPI |
+| `product_description` | `SB1.B1_DESC` | Descrição do produto |
+| `unit` | `SB1.B1_UM` | Unidade de medida |
+| `supplier_code` | `SA5.A5_FORNECE` | Código do fornecedor |
+| `supplier_store` | `SA5.A5_LOJA` | Loja do fornecedor |
+| `supplier_name` | `SA2.A2_NOME` | Nome do fornecedor |
+| `supplier_part_number` | `SA5.A5_CODPRF` | Part number informado |
+| `catalog_code` | `SA5.A5_CODPRCA` | Código de catálogo (se houver) |
+| `barcode` | `SA5.A5_CODBAR` | Código de barras (se houver) |
+| `registered_lead_time_days` | `SA5.A5_LEAD_T` | Lead time cadastral |
+
+### Exemplo
 
 ```http
 GET /apps/api-delpi/products/by-supplier-part-number?supplier_part_number=008700056
 ```
 
-Não confundir com `GET /products/{code}/suppliers` (produto → fornecedores).
+```json
+{
+  "success": true,
+  "message": "Operação realizada com sucesso",
+  "data": {
+    "items": [
+      {
+        "product_code": "10080160",
+        "product_description": "…",
+        "supplier_code": "000192",
+        "supplier_name": "MOLEX BRASIL LTDA.",
+        "supplier_part_number": "008700056"
+      }
+    ],
+    "page": 1,
+    "page_size": 50,
+    "total": 1,
+    "total_pages": 1
+  },
+  "meta": {
+    "operationId": "search_products_by_supplier_part_number",
+    "entity": "product_by_supplier_part_number",
+    "shape": "paged_list"
+  }
+}
+```
+
+**Não confundir** com `GET /products/{code}/suppliers` (produto → fornecedores + part numbers). Esta rota é o sentido inverso (part number → produto).
 
 ---
 
