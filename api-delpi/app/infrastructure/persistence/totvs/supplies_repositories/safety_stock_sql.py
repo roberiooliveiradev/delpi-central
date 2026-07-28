@@ -36,6 +36,7 @@ __all__ = [
     "open_commitments_sql",
     "open_purchase_orders_sql",
     "compute_open_purchase_order_item_value",
+    "compute_open_purchase_order_item_components",
     "materials_for_projection_batch_sql",
     "last_inbound_party_names_sql",
     "product_detail_sql",
@@ -235,6 +236,49 @@ def resolve_order_by(sort_by: str, sort_direction: str) -> str:
     return f"{column} {direction}, product_code ASC"
 
 
+def compute_open_purchase_order_item_components(
+    *,
+    quantity: float,
+    delivered_quantity: float,
+    merchandise_total: float,
+    ipi_value: float,
+    freight_value: float,
+    discount_value: float,
+) -> dict[str, float]:
+    """Componentes proporcionais do open_value em open_purchase_orders_sql (SC7).
+
+    Fator = (C7_QUANT - C7_QUJE) / C7_QUANT
+    Cada componente arredondado em 2 casas antes da soma.
+    Não inclui C7_VALICM / C7_ICMCOMP / C7_FRETE.
+    """
+    qty = float(quantity or 0)
+    delivered = float(delivered_quantity or 0)
+    if qty <= 0 or qty <= delivered:
+        return {
+            "open_merchandise_value": 0.0,
+            "open_ipi_value": 0.0,
+            "open_freight_value": 0.0,
+            "open_discount_value": 0.0,
+            "open_value": 0.0,
+        }
+    factor = (qty - delivered) / qty
+
+    def _component(raw: float) -> float:
+        return round(float(raw or 0) * factor, 2)
+
+    merchandise = _component(merchandise_total)
+    ipi = _component(ipi_value)
+    freight = _component(freight_value)
+    discount = _component(discount_value)
+    return {
+        "open_merchandise_value": merchandise,
+        "open_ipi_value": ipi,
+        "open_freight_value": freight,
+        "open_discount_value": discount,
+        "open_value": round(merchandise + ipi + freight - discount, 2),
+    }
+
+
 def compute_open_purchase_order_item_value(
     *,
     quantity: float,
@@ -244,29 +288,15 @@ def compute_open_purchase_order_item_value(
     freight_value: float,
     discount_value: float,
 ) -> float:
-    """Espelho Python do open_value em open_purchase_orders_sql (SC7).
-
-    Fator = (C7_QUANT - C7_QUJE) / C7_QUANT
-    open_value = round(C7_TOTAL*f,2) + round(C7_VALIPI*f,2)
-                 + round(C7_VALFRE*f,2) - round(C7_VLDESC*f,2)
-    Não inclui C7_VALICM / C7_ICMCOMP / C7_FRETE.
-    """
-    qty = float(quantity or 0)
-    delivered = float(delivered_quantity or 0)
-    if qty <= 0 or qty <= delivered:
-        return 0.0
-    factor = (qty - delivered) / qty
-
-    def _component(raw: float) -> float:
-        return round(float(raw or 0) * factor, 2)
-
-    return round(
-        _component(merchandise_total)
-        + _component(ipi_value)
-        + _component(freight_value)
-        - _component(discount_value),
-        2,
-    )
+    """Espelho Python do open_value em open_purchase_orders_sql (SC7)."""
+    return compute_open_purchase_order_item_components(
+        quantity=quantity,
+        delivered_quantity=delivered_quantity,
+        merchandise_total=merchandise_total,
+        ipi_value=ipi_value,
+        freight_value=freight_value,
+        discount_value=discount_value,
+    )["open_value"]
 
 
 def open_purchase_orders_sql(
@@ -278,10 +308,11 @@ def open_purchase_orders_sql(
 ) -> str:
     """Pedidos de compra em aberto (SC7) por filial (+ produto e/ou fornecedor opcionais).
 
-    ``open_value`` é proporcional ao saldo do item:
+    Componentes proporcionais ao saldo:
     fator = (C7_QUANT - C7_QUJE) / C7_QUANT;
-    total = ROUND(C7_TOTAL*f,2) + ROUND(C7_VALIPI*f,2)
-            + ROUND(C7_VALFRE*f,2) - ROUND(C7_VLDESC*f,2).
+    open_merchandise_value = ROUND(C7_TOTAL*f,2);
+    open_ipi_value = ROUND(C7_VALIPI*f,2);
+    open_value = mercadoria + IPI + frete - desconto.
     """
     product_clause = ""
     if product_param is not None:
@@ -317,33 +348,34 @@ def open_purchase_orders_sql(
         RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, '')) AS supplier_name,
         CAST(ISNULL(SC7.C7_PRECO, 0) AS FLOAT) AS unit_price,
         CAST(
-            CASE
-                WHEN ISNULL(SC7.C7_QUANT, 0) <= 0 THEN 0
-                WHEN SC7.C7_QUANT > SC7.C7_QUJE THEN
-                    ROUND(
-                        ISNULL(SC7.C7_TOTAL, 0)
-                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
-                        2
-                    )
-                    + ROUND(
-                        ISNULL(SC7.C7_VALIPI, 0)
-                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
-                        2
-                    )
-                    + ROUND(
-                        ISNULL(SC7.C7_VALFRE, 0)
-                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
-                        2
-                    )
-                    - ROUND(
-                        ISNULL(SC7.C7_VLDESC, 0)
-                        * ((SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT),
-                        2
-                    )
-                ELSE 0
-            END AS FLOAT
+            ROUND(ISNULL(SC7.C7_TOTAL, 0) * bf.balance_factor, 2) AS FLOAT
+        ) AS open_merchandise_value,
+        CAST(
+            ROUND(ISNULL(SC7.C7_VALIPI, 0) * bf.balance_factor, 2) AS FLOAT
+        ) AS open_ipi_value,
+        CAST(
+            ROUND(ISNULL(SC7.C7_VALFRE, 0) * bf.balance_factor, 2) AS FLOAT
+        ) AS open_freight_value,
+        CAST(
+            ROUND(ISNULL(SC7.C7_VLDESC, 0) * bf.balance_factor, 2) AS FLOAT
+        ) AS open_discount_value,
+        CAST(
+            ROUND(ISNULL(SC7.C7_TOTAL, 0) * bf.balance_factor, 2)
+            + ROUND(ISNULL(SC7.C7_VALIPI, 0) * bf.balance_factor, 2)
+            + ROUND(ISNULL(SC7.C7_VALFRE, 0) * bf.balance_factor, 2)
+            - ROUND(ISNULL(SC7.C7_VLDESC, 0) * bf.balance_factor, 2)
+            AS FLOAT
         ) AS open_value
     FROM SC7010 SC7 WITH (NOLOCK)
+    CROSS APPLY (
+        SELECT
+            CASE
+                WHEN ISNULL(SC7.C7_QUANT, 0) <= 0 THEN CAST(0 AS FLOAT)
+                WHEN SC7.C7_QUANT > SC7.C7_QUJE
+                THEN (SC7.C7_QUANT - SC7.C7_QUJE) * 1.0 / SC7.C7_QUANT
+                ELSE CAST(0 AS FLOAT)
+            END AS balance_factor
+    ) bf
     LEFT JOIN SB1010 SB1 WITH (NOLOCK)
         ON SB1.B1_COD = SC7.C7_PRODUTO
        AND SB1.D_E_L_E_T_ = ''

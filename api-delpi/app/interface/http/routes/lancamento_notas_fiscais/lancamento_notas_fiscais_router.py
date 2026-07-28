@@ -95,9 +95,14 @@ class CommentBody(BaseModel):
     body: str
 
 
+class LinkPurchaseOrderLineBody(BaseModel):
+    order_item: str
+
+
 class LinkPurchaseOrderGroupBody(BaseModel):
     order_number: str
     delivery_date: str | None = None
+    lines: list[LinkPurchaseOrderLineBody] | None = None
 
 
 class LinkPurchaseOrderBody(BaseModel):

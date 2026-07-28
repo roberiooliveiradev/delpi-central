@@ -268,6 +268,16 @@ class FakeRequests:
                 ),
                 "linked_by_user_id": row.get("linked_by_user_id"),
                 "linked_by_name": row.get("linked_by_name"),
+                "lines": [
+                    {
+                        "order_item": str(line.get("order_item") or "").strip(),
+                        "product_code": (
+                            str(line.get("product_code") or "").strip() or None
+                        ),
+                    }
+                    for line in (row.get("lines") or [])
+                    if str(line.get("order_item") or "").strip()
+                ],
             }
             snapshots.append(snap)
         updated = self.update_request_with_history(
@@ -827,11 +837,90 @@ def test_link_purchase_order_sets_fields_and_history() -> None:
     assert linked["linked_po_linked_by_user_id"] == "u-process"
     assert len(linked["linked_purchase_orders"]) == 1
     assert linked["linked_purchase_orders"][0]["order_number"] == "000123"
+    assert linked["linked_purchase_orders"][0]["lines"] == []
     history = repo.list_history(created["id"])
     event = next(h for h in history if h["event_type"] == "purchase_order_linked")
     assert event["changes"]["linked_po"]["from"] == []
     assert event["changes"]["linked_po"]["to"][0]["order_number"] == "000123"
     assert "PC 000123" in (event.get("justification") or "")
+
+
+def test_link_purchase_order_partial_lines() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+                {
+                    "order_number": "000123",
+                    "order_item": "0002",
+                    "product_code": "10080002",
+                    "open_value": 50.5,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                },
+            ]
+
+    linked = LinkRequestPurchaseOrderUseCase(repo, FakePurchaseOrders()).execute(
+        created["id"],
+        _processor(),
+        groups=[
+            {
+                "order_number": "000123",
+                "delivery_date": "2026-07-20",
+                "lines": [{"order_item": "0002"}],
+            }
+        ],
+    )
+    snap = linked["linked_purchase_orders"][0]
+    assert snap["open_value"] == 50.5
+    assert snap["product_count"] == 1
+    assert snap["lines"] == [{"order_item": "0002", "product_code": "10080002"}]
+    assert linked["linked_po_open_value"] == 50.5
+    assert linked["linked_po_product_count"] == 1
+
+
+def test_link_purchase_order_rejects_invalid_line() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "A",
+                    "open_value": 10.0,
+                    "expected_delivery_date": "2026-07-20",
+                }
+            ]
+
+    with pytest.raises(InvoicePostingValidationError, match="Itens do pedido"):
+        LinkRequestPurchaseOrderUseCase(repo, FakePurchaseOrders()).execute(
+            created["id"],
+            _processor(),
+            groups=[
+                {
+                    "order_number": "000123",
+                    "delivery_date": "2026-07-20",
+                    "lines": [{"order_item": "0099"}],
+                }
+            ],
+        )
 
 
 def test_link_purchase_order_multiple_groups() -> None:

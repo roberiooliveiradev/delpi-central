@@ -57,6 +57,19 @@ function matchGroup(
   );
 }
 
+function filterLinkedItems(
+  items: OpenPurchaseOrderItem[],
+  linked: LinkedPurchaseOrderSnapshot,
+): OpenPurchaseOrderItem[] {
+  const lines = linked.lines ?? [];
+  if (lines.length === 0) return items;
+  const wanted = new Set(
+    lines.map((line) => String(line.order_item || "").trim()).filter(Boolean),
+  );
+  if (wanted.size === 0) return items;
+  return items.filter((item) => wanted.has(String(item.order_item || "").trim()));
+}
+
 type ReceiptBlock = {
   linked: LinkedPurchaseOrderSnapshot;
   group: OpenPurchaseOrderGroup | null;
@@ -89,10 +102,11 @@ export function LinkedPurchaseOrderReceipt({ requestId, request }: Props) {
         setBlocks(
           linkedSnapshots.map((linked) => {
             const group = groups.find((g) => matchGroup(g, linked)) ?? null;
+            const items = filterLinkedItems(group?.items ?? [], linked);
             return {
               linked,
               group,
-              items: group?.items ?? [],
+              items,
             };
           }),
         );
@@ -230,43 +244,93 @@ export function LinkedPurchaseOrderReceipt({ requestId, request }: Props) {
                     </div>
                   ) : (
                     <ul className="lnf-po-receipt__items">
-                      <li className="lnf-po-receipt__item lnf-po-receipt__item--head">
+                      <li className="lnf-po-receipt__item lnf-po-receipt__item--head lnf-po-receipt__item--split">
                         <span>Item</span>
-                        <span>Qtd</span>
-                        <span>Valor</span>
+                        <span className="lnf-po-receipt__qty">Qtd</span>
+                        <span className="lnf-po-receipt__value">Mercadoria</span>
+                        <span className="lnf-po-receipt__value lnf-po-receipt__value--ipi">
+                          IPI
+                        </span>
                       </li>
-                      {items.map((item) => (
-                        <li
-                          key={`${item.order_number}-${item.order_item}-${item.product_code}`}
-                          className="lnf-po-receipt__item"
-                        >
-                          <div className="lnf-po-receipt__item-main">
-                            <span className="lnf-po-receipt__sku">
-                              {item.product_code}
-                            </span>
-                            <span className="lnf-po-receipt__desc">
-                              {item.product_description || "Produto sem descrição"}
-                            </span>
-                            <span className="lnf-po-receipt__item-sub">
-                              Item {item.order_item}
-                              {item.warehouse ? ` · armazém ${item.warehouse}` : ""}
-                            </span>
-                          </div>
-                          <div className="lnf-po-receipt__qty">
-                            {formatQty(item.open_quantity, item.unit)}
-                          </div>
-                          <div className="lnf-po-receipt__value">
-                            {formatMoney(Number(item.open_value))}
-                          </div>
-                        </li>
-                      ))}
+                      {items.map((item) => {
+                        const merchandise = Number(
+                          item.open_merchandise_value ??
+                            Math.max(
+                              0,
+                              Number(item.open_value || 0) -
+                                Number(item.open_ipi_value || 0),
+                            ),
+                        );
+                        const ipi = Number(item.open_ipi_value || 0);
+                        return (
+                          <li
+                            key={`${item.order_number}-${item.order_item}-${item.product_code}`}
+                            className="lnf-po-receipt__item lnf-po-receipt__item--split"
+                          >
+                            <div className="lnf-po-receipt__item-main">
+                              <span className="lnf-po-receipt__sku">
+                                {item.product_code}
+                              </span>
+                              <span className="lnf-po-receipt__desc">
+                                {item.product_description || "Produto sem descrição"}
+                              </span>
+                              <span className="lnf-po-receipt__item-sub">
+                                Item {item.order_item}
+                                {item.warehouse ? ` · armazém ${item.warehouse}` : ""}
+                              </span>
+                            </div>
+                            <div className="lnf-po-receipt__qty">
+                              {formatQty(item.open_quantity, item.unit)}
+                            </div>
+                            <div className="lnf-po-receipt__value">
+                              {formatMoney(merchandise)}
+                            </div>
+                            <div className="lnf-po-receipt__value lnf-po-receipt__value--ipi">
+                              {ipi > 0 ? formatMoney(ipi) : "—"}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
 
-                  <div className="lnf-po-receipt__footer-row">
-                    <span>Subtotal {linked.order_number}</span>
-                    <strong>{total != null ? formatMoney(total) : "—"}</strong>
-                  </div>
+                  {(() => {
+                    const merchandiseTotal = items.reduce(
+                      (acc, item) =>
+                        acc +
+                        Number(
+                          item.open_merchandise_value ??
+                            Math.max(
+                              0,
+                              Number(item.open_value || 0) -
+                                Number(item.open_ipi_value || 0),
+                            ),
+                        ),
+                      0,
+                    );
+                    const ipiTotal = items.reduce(
+                      (acc, item) => acc + Number(item.open_ipi_value || 0),
+                      0,
+                    );
+                    return (
+                      <div className="lnf-po-receipt__footer">
+                        <div className="lnf-po-receipt__footer-row">
+                          <span>Mercadorias {linked.order_number}</span>
+                          <strong>{formatMoney(merchandiseTotal)}</strong>
+                        </div>
+                        <div className="lnf-po-receipt__footer-row">
+                          <span>IPI {linked.order_number}</span>
+                          <strong>{formatMoney(ipiTotal)}</strong>
+                        </div>
+                        <div className="lnf-po-receipt__footer-row">
+                          <span>Subtotal {linked.order_number}</span>
+                          <strong>
+                            {total != null ? formatMoney(total) : "—"}
+                          </strong>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })

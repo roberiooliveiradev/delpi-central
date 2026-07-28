@@ -51,6 +51,13 @@ MIGRATION_V005 = (
     / PLUGIN_SLUG
     / "V005__linked_purchase_orders_many.sql"
 )
+MIGRATION_V006 = (
+    Path(__file__).resolve().parents[1]
+    / "migrations"
+    / "plugins"
+    / PLUGIN_SLUG
+    / "V006__linked_purchase_order_lines.sql"
+)
 
 
 def _plugins_env_ready() -> bool:
@@ -119,6 +126,15 @@ def test_v005_migration_declares_linked_purchase_orders_many() -> None:
     assert "COALESCE(delivery_date" in sql
     assert "INSERT INTO lancamento_notas_fiscais.invoice_posting_request_linked_pos" in sql
     assert "linked_po_number" in sql
+
+
+def test_v006_migration_declares_linked_purchase_order_lines() -> None:
+    sql = MIGRATION_V006.read_text(encoding="utf-8")
+    assert "invoice_posting_request_linked_po_lines" in sql
+    assert "uq_lnf_linked_po_lines_po_item" in sql
+    assert "order_item" in sql
+    assert "ON DELETE CASCADE" in sql
+    assert "linked_po_id" in sql
 
 
 def _drop_plugin_schema_only(conn) -> None:

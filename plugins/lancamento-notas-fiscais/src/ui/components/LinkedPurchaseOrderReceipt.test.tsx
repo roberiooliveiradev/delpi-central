@@ -137,6 +137,10 @@ describe("LinkedPurchaseOrderReceipt", () => {
               supplier_store: "01",
               supplier_name: "Alpha",
               unit_price: 10,
+              open_merchandise_value: 100,
+              open_ipi_value: 0,
+              open_freight_value: 0,
+              open_discount_value: 0,
               open_value: 100,
             },
             {
@@ -157,6 +161,10 @@ describe("LinkedPurchaseOrderReceipt", () => {
               supplier_store: "01",
               supplier_name: "Alpha",
               unit_price: 10.1,
+              open_merchandise_value: 38.67,
+              open_ipi_value: 11.83,
+              open_freight_value: 0,
+              open_discount_value: 0,
               open_value: 50.5,
             },
           ],
@@ -178,8 +186,127 @@ describe("LinkedPurchaseOrderReceipt", () => {
     expect(screen.getByText("Parafuso M8")).toBeTruthy();
     expect(screen.getByText("Porca M8")).toBeTruthy();
     expect(screen.getByText("900100")).toBeTruthy();
+    expect(screen.getByText("Mercadoria")).toBeTruthy();
+    expect(screen.getByText("IPI")).toBeTruthy();
+    expect(screen.getByText(/Mercadorias 000123/)).toBeTruthy();
+    expect(screen.getByText(/IPI 000123/)).toBeTruthy();
     expect(screen.getByTestId("linked-po-receipt-total").textContent).toMatch(
       /150[,.]50/,
+    );
+  });
+
+  it("lista só as linhas amarradas quando há subset", async () => {
+    vi.mocked(api.listRequestPurchaseOrders).mockResolvedValue({
+      request_id: "req-1",
+      branch_code: "01",
+      supplier_code: "000001",
+      supplier_store: "01",
+      supplier_name: "Alpha Transportes",
+      order_count: 1,
+      group_count: 1,
+      item_count: 2,
+      linked: [
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          issue_date: "2026-07-10",
+          open_value: 50.5,
+          product_count: 1,
+          linked_at: "2026-07-12T11:00:00+00:00",
+          linked_by_user_id: "u2",
+          linked_by_name: "Processador",
+          lines: [{ order_item: "0002", product_code: "900200" }],
+        },
+      ],
+      can_link: true,
+      groups: [
+        {
+          order_number: "000123",
+          delivery_date: "2026-07-20",
+          issue_date: "2026-07-10",
+          product_count: 2,
+          open_value: 150.5,
+          item_count: 2,
+          items: [
+            {
+              branch: "01",
+              order_number: "000123",
+              order_item: "0001",
+              product_code: "900100",
+              product_description: "Parafuso M8",
+              warehouse: "01",
+              unit: "UN",
+              ordered_quantity: 10,
+              delivered_quantity: 0,
+              open_quantity: 10,
+              pre_invoice_quantity: 0,
+              issue_date: "2026-07-10",
+              expected_delivery_date: "2026-07-20",
+              supplier_code: "000001",
+              supplier_store: "01",
+              supplier_name: "Alpha",
+              unit_price: 10,
+              open_merchandise_value: 100,
+              open_ipi_value: 0,
+              open_value: 100,
+            },
+            {
+              branch: "01",
+              order_number: "000123",
+              order_item: "0002",
+              product_code: "900200",
+              product_description: "Porca M8",
+              warehouse: "01",
+              unit: "UN",
+              ordered_quantity: 5,
+              delivered_quantity: 0,
+              open_quantity: 5,
+              pre_invoice_quantity: 0,
+              issue_date: "2026-07-10",
+              expected_delivery_date: "2026-07-20",
+              supplier_code: "000001",
+              supplier_store: "01",
+              supplier_name: "Alpha",
+              unit_price: 10.1,
+              open_merchandise_value: 38.67,
+              open_ipi_value: 11.83,
+              open_value: 50.5,
+            },
+          ],
+        },
+      ],
+    });
+
+    render(
+      <LinkedPurchaseOrderReceipt
+        requestId="req-1"
+        request={baseRequest({
+          linked_po_open_value: 50.5,
+          linked_po_product_count: 1,
+          linked_purchase_orders: [
+            {
+              order_number: "000123",
+              delivery_date: "2026-07-20",
+              issue_date: "2026-07-10",
+              open_value: 50.5,
+              product_count: 1,
+              linked_at: "2026-07-12T11:00:00+00:00",
+              linked_by_user_id: "u2",
+              linked_by_name: "Processador",
+              lines: [{ order_item: "0002", product_code: "900200" }],
+            },
+          ],
+        })}
+      />,
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId("linked-po-receipt-total")).toBeTruthy(),
+    );
+    expect(screen.getByText("Porca M8")).toBeTruthy();
+    expect(screen.queryByText("Parafuso M8")).toBeNull();
+    expect(screen.getByTestId("linked-po-receipt-total").textContent).toMatch(
+      /50[,.]50/,
     );
   });
 

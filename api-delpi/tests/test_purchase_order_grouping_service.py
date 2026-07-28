@@ -100,6 +100,7 @@ def test_find_group_and_snapshot_helpers() -> None:
             "linked_at": None,
             "linked_by_user_id": None,
             "linked_by_name": None,
+            "lines": [],
         },
         {
             "order_number": "B",
@@ -110,8 +111,31 @@ def test_find_group_and_snapshot_helpers() -> None:
             "linked_at": None,
             "linked_by_user_id": None,
             "linked_by_name": None,
+            "lines": [],
         },
     ]
     assert format_linked_po_labels(
         [{"order_number": "A", "delivery_date": None}]
     ).startswith("PC A")
+
+
+def test_select_subset_and_aggregate() -> None:
+    from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
+        aggregate_purchase_order_items,
+        linked_lines_from_items,
+        select_group_items_by_order_items,
+    )
+
+    group = {
+        "items": [
+            {"order_item": "0001", "product_code": "A", "open_value": 10},
+            {"order_item": "0002", "product_code": "B", "open_value": 20},
+        ]
+    }
+    assert len(select_group_items_by_order_items(group, None)) == 2
+    subset = select_group_items_by_order_items(group, ["0002"])
+    assert len(subset) == 1
+    assert aggregate_purchase_order_items(subset)["open_value"] == 20.0
+    assert linked_lines_from_items(subset) == [
+        {"order_item": "0002", "product_code": "B"}
+    ]

@@ -64,5 +64,9 @@ class TotvsInvoicePostingSc7Repository(BaseRepository):
             "supplier_store": str(row.get("supplier_store") or "").strip(),
             "supplier_name": str(row.get("supplier_name") or "").strip(),
             "unit_price": float(row.get("unit_price") or 0),
+            "open_merchandise_value": float(row.get("open_merchandise_value") or 0),
+            "open_ipi_value": float(row.get("open_ipi_value") or 0),
+            "open_freight_value": float(row.get("open_freight_value") or 0),
+            "open_discount_value": float(row.get("open_discount_value") or 0),
             "open_value": float(row.get("open_value") or 0),
         }

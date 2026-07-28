@@ -32,7 +32,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 - Cadastro de solicitação após recebimento físico (filial, nota, série, fornecedor, valor, data/hora)
 - Fila FIFO por `received_at` (mais antigas primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
-- Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega)
+- Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega, com seleção por item/`C7_ITEM`)
 - Detalhe em layout denso (resumo + dados fiscais/situação + histórico sticky)
 - Documento com **9 dígitos** (zeros à esquerda); valor aceita **vírgula** (formato BR)
 
@@ -70,7 +70,7 @@ Base HTTP: **`/apps/api-delpi/lancamento-notas-fiscais`**
 | GET | `/requests` | Fila paginada |
 | GET | `/requests/{id}` | Detalhe + timeline + `allowed_actions` |
 | GET | `/requests/{id}/purchase-orders` | Pedidos de compra abertos (grupos PC + entrega) |
-| POST | `/requests/{id}/purchase-orders/link` | Amarrar um ou mais grupos (substitui o conjunto) |
+| POST | `/requests/{id}/purchase-orders/link` | Amarrar grupos/itens (substitui o conjunto; `lines` opcional) |
 | PATCH | `/requests/{id}` | Corrigir dados |
 | POST | `/requests/{id}/start` | Iniciar atendimento |
 | POST | `/requests/{id}/block` | Bloquear |

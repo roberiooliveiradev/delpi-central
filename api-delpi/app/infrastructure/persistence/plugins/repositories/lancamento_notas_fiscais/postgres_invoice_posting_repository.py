@@ -181,7 +181,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
     def list_linked_purchase_orders(self, request_id: str) -> list[dict[str, Any]]:
         rows = self.fetch_all(
             f"""
-            SELECT order_number, delivery_date, issue_date, open_value, product_count,
+            SELECT id, order_number, delivery_date, issue_date, open_value, product_count,
                    linked_at, linked_by_user_id, linked_by_name
               FROM {SCHEMA}.invoice_posting_request_linked_pos
              WHERE request_id = %s::uuid
@@ -192,7 +192,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             """,
             (request_id,),
         )
-        return [_serialize_linked_po(r) for r in rows]
+        return self._attach_linked_po_lines([_serialize_linked_po(r) for r in rows])
 
     def list_linked_purchase_orders_for_requests(
         self,
@@ -203,7 +203,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             return {}
         rows = self.fetch_all(
             f"""
-            SELECT request_id, order_number, delivery_date, issue_date, open_value,
+            SELECT id, request_id, order_number, delivery_date, issue_date, open_value,
                    product_count, linked_at, linked_by_user_id, linked_by_name
               FROM {SCHEMA}.invoice_posting_request_linked_pos
              WHERE request_id = ANY(%s::uuid[])
@@ -216,10 +216,55 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
             (ids,),
         )
         out: dict[str, list[dict[str, Any]]] = {rid: [] for rid in ids}
+        pending: list[dict[str, Any]] = []
         for row in rows:
             rid = str(row["request_id"])
-            out.setdefault(rid, []).append(_serialize_linked_po(row))
+            snap = _serialize_linked_po(row)
+            out.setdefault(rid, []).append(snap)
+            pending.append(snap)
+        self._attach_linked_po_lines(pending)
         return out
+
+    def _attach_linked_po_lines(
+        self, snapshots: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Anexa `lines` a cada snapshot (vazio = grupo inteiro)."""
+        for snap in snapshots:
+            snap.setdefault("lines", [])
+        linked_ids = [
+            str(snap["id"])
+            for snap in snapshots
+            if snap.get("id")
+        ]
+        if not linked_ids:
+            return snapshots
+        line_rows = self.fetch_all(
+            f"""
+            SELECT linked_po_id, order_item, product_code
+              FROM {SCHEMA}.invoice_posting_request_linked_po_lines
+             WHERE linked_po_id = ANY(%s::uuid[])
+             ORDER BY order_item ASC
+            """,
+            (linked_ids,),
+        )
+        by_id: dict[str, list[dict[str, Any]]] = {}
+        for row in line_rows:
+            lid = str(row["linked_po_id"])
+            by_id.setdefault(lid, []).append(
+                {
+                    "order_item": str(row.get("order_item") or "").strip(),
+                    "product_code": (
+                        str(row["product_code"]).strip()
+                        if row.get("product_code")
+                        else None
+                    ),
+                }
+            )
+        for snap in snapshots:
+            lid = str(snap.get("id") or "")
+            snap["lines"] = by_id.get(lid, [])
+            snap.pop("id", None)
+        return snapshots
 
     def replace_linked_purchase_orders(
         self,
@@ -244,7 +289,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                 auto_commit=False,
             )
             for row in rows:
-                self.execute(
+                inserted = self.execute_returning_one(
                     f"""
                     INSERT INTO {SCHEMA}.invoice_posting_request_linked_pos (
                         request_id, order_number, delivery_date, issue_date,
@@ -253,6 +298,7 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     ) VALUES (
                         %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s
                     )
+                    RETURNING id
                     """,
                     (
                         request_id,
@@ -267,6 +313,21 @@ class PostgresInvoicePostingRepository(PluginBaseRepository):
                     ),
                     auto_commit=False,
                 )
+                linked_po_id = inserted["id"] if inserted else None
+                for line in row.get("lines") or []:
+                    order_item = str(line.get("order_item") or "").strip()
+                    if not order_item or linked_po_id is None:
+                        continue
+                    product_code = str(line.get("product_code") or "").strip() or None
+                    self.execute(
+                        f"""
+                        INSERT INTO {SCHEMA}.invoice_posting_request_linked_po_lines (
+                            linked_po_id, order_item, product_code
+                        ) VALUES (%s::uuid, %s, %s)
+                        """,
+                        (linked_po_id, order_item, product_code),
+                        auto_commit=False,
+                    )
 
             assignments = []
             params: list[Any] = []
@@ -782,7 +843,10 @@ def _serialize_linked_po(row: dict[str, Any]) -> dict[str, Any]:
         "linked_at": _iso(row.get("linked_at")),
         "linked_by_user_id": row.get("linked_by_user_id"),
         "linked_by_name": row.get("linked_by_name"),
+        "lines": [],
     }
+    if row.get("id") is not None:
+        out["id"] = str(row["id"])
     return out
 
 

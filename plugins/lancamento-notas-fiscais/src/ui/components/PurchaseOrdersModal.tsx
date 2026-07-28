@@ -4,6 +4,7 @@ import * as api from "../../data/api/invoicePostingApi";
 import type {
   LinkedPurchaseOrderSnapshot,
   OpenPurchaseOrderGroup,
+  OpenPurchaseOrderItem,
 } from "../../domain/types";
 import { formatDate, formatMoney, linkedPurchaseOrderLabel } from "../format";
 
@@ -21,6 +22,13 @@ function groupKey(group: Pick<OpenPurchaseOrderGroup, "order_number" | "delivery
   return `${group.order_number}|${group.delivery_date ?? ""}`;
 }
 
+function lineKey(
+  group: Pick<OpenPurchaseOrderGroup, "order_number" | "delivery_date">,
+  orderItem: string,
+): string {
+  return `${groupKey(group)}|${orderItem}`;
+}
+
 function formatQty(value: number, unit: string): string {
   const qty = Number.isFinite(value) ? value : 0;
   const formatted = qty.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
@@ -28,14 +36,13 @@ function formatQty(value: number, unit: string): string {
   return um ? `${formatted} ${um}` : formatted;
 }
 
-function isLinkedGroup(
+function isSameGroup(
   group: OpenPurchaseOrderGroup,
-  linked: LinkedPurchaseOrderSnapshot[],
+  linked: LinkedPurchaseOrderSnapshot,
 ): boolean {
-  return linked.some(
-    (item) =>
-      group.order_number === item.order_number &&
-      (group.delivery_date ?? null) === (item.delivery_date ?? null),
+  return (
+    group.order_number === linked.order_number &&
+    (group.delivery_date ?? null) === (linked.delivery_date ?? null)
   );
 }
 
@@ -43,6 +50,43 @@ function normalizeLinked(raw: unknown): LinkedPurchaseOrderSnapshot[] {
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === "object") return [raw as LinkedPurchaseOrderSnapshot];
   return [];
+}
+
+function preselectLineKeys(
+  groups: OpenPurchaseOrderGroup[],
+  linked: LinkedPurchaseOrderSnapshot[],
+): Set<string> {
+  const next = new Set<string>();
+  for (const group of groups) {
+    const match = linked.find((item) => isSameGroup(group, item));
+    if (!match) continue;
+    const savedLines = match.lines ?? [];
+    if (savedLines.length === 0) {
+      for (const item of group.items) {
+        if (item.order_item) next.add(lineKey(group, item.order_item));
+      }
+    } else {
+      for (const line of savedLines) {
+        if (line.order_item) next.add(lineKey(group, line.order_item));
+      }
+    }
+  }
+  return next;
+}
+
+function linkedLineKeySet(
+  groups: OpenPurchaseOrderGroup[],
+  linked: LinkedPurchaseOrderSnapshot[],
+): Set<string> {
+  return preselectLineKeys(groups, linked);
+}
+
+function setsEqual(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const key of a) {
+    if (!b.has(key)) return false;
+  }
+  return true;
 }
 
 export function PurchaseOrdersModal({
@@ -60,7 +104,7 @@ export function PurchaseOrdersModal({
   const [groups, setGroups] = useState<OpenPurchaseOrderGroup[]>([]);
   const [linked, setLinked] = useState<LinkedPurchaseOrderSnapshot[]>([]);
   const [orderCount, setOrderCount] = useState(0);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [selectedLineKeys, setSelectedLineKeys] = useState<Set<string>>(new Set());
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -68,7 +112,7 @@ export function PurchaseOrdersModal({
     const controller = new AbortController();
     setLoading(true);
     setError(null);
-    setSelectedKeys(new Set());
+    setSelectedLineKeys(new Set());
     setExpandedKey(null);
     void api
       .listRequestPurchaseOrders(requestId, controller.signal)
@@ -79,13 +123,15 @@ export function PurchaseOrdersModal({
         setGroups(nextGroups);
         setLinked(nextLinked);
         setOrderCount(data.order_count ?? 0);
-        const preselected = new Set<string>();
-        for (const group of nextGroups) {
-          if (isLinkedGroup(group, nextLinked)) {
-            preselected.add(groupKey(group));
-          }
+        setSelectedLineKeys(preselectLineKeys(nextGroups, nextLinked));
+        const firstLinked = nextGroups.find((g) =>
+          nextLinked.some((item) => isSameGroup(g, item)),
+        );
+        if (firstLinked) {
+          setExpandedKey(groupKey(firstLinked));
+        } else if (canLink && nextGroups[0]) {
+          setExpandedKey(groupKey(nextGroups[0]));
         }
-        setSelectedKeys(preselected);
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
@@ -106,20 +152,72 @@ export function PurchaseOrdersModal({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [open, requestId]);
+  }, [open, requestId, canLink]);
 
-  const selectedGroups = useMemo(
-    () => groups.filter((g) => selectedKeys.has(groupKey(g))),
-    [groups, selectedKeys],
-  );
+  const selectedGroupsPayload = useMemo(() => {
+    const payload: Array<{
+      order_number: string;
+      delivery_date: string | null;
+      lines: Array<{ order_item: string }>;
+    }> = [];
+    for (const group of groups) {
+      const lines = group.items
+        .filter(
+          (item) =>
+            item.order_item && selectedLineKeys.has(lineKey(group, item.order_item)),
+        )
+        .map((item) => ({ order_item: item.order_item }));
+      if (lines.length === 0) continue;
+      payload.push({
+        order_number: group.order_number,
+        delivery_date: group.delivery_date,
+        lines,
+      });
+    }
+    return payload;
+  }, [groups, selectedLineKeys]);
 
-  function toggleKey(key: string) {
-    setSelectedKeys((prev) => {
+  function toggleLine(group: OpenPurchaseOrderGroup, item: OpenPurchaseOrderItem) {
+    if (!item.order_item) return;
+    const key = lineKey(group, item.order_item);
+    setSelectedLineKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
+  }
+
+  function toggleGroup(group: OpenPurchaseOrderGroup) {
+    const itemKeys = group.items
+      .filter((item) => item.order_item)
+      .map((item) => lineKey(group, item.order_item));
+    if (itemKeys.length === 0) return;
+    setSelectedLineKeys((prev) => {
+      const next = new Set(prev);
+      const allSelected = itemKeys.every((key) => next.has(key));
+      if (allSelected) {
+        for (const key of itemKeys) next.delete(key);
+      } else {
+        for (const key of itemKeys) next.add(key);
+      }
+      return next;
+    });
+  }
+
+  function groupSelectionState(group: OpenPurchaseOrderGroup): {
+    checked: boolean;
+    indeterminate: boolean;
+  } {
+    const itemKeys = group.items
+      .filter((item) => item.order_item)
+      .map((item) => lineKey(group, item.order_item));
+    if (itemKeys.length === 0) return { checked: false, indeterminate: false };
+    const selectedCount = itemKeys.filter((key) => selectedLineKeys.has(key)).length;
+    return {
+      checked: selectedCount === itemKeys.length,
+      indeterminate: selectedCount > 0 && selectedCount < itemKeys.length,
+    };
   }
 
   async function handleLink() {
@@ -128,10 +226,7 @@ export function PurchaseOrdersModal({
     setError(null);
     try {
       await api.linkRequestPurchaseOrder(requestId, {
-        groups: selectedGroups.map((group) => ({
-          order_number: group.order_number,
-          delivery_date: group.delivery_date,
-        })),
+        groups: selectedGroupsPayload,
       });
       onLinked?.();
       onClose();
@@ -150,17 +245,9 @@ export function PurchaseOrdersModal({
 
   if (!open) return null;
 
-  const selectionChanged =
-    selectedGroups.length !== linked.length ||
-    selectedGroups.some((g) => !isLinkedGroup(g, linked)) ||
-    linked.some(
-      (item) =>
-        !selectedGroups.some(
-          (g) =>
-            g.order_number === item.order_number &&
-            (g.delivery_date ?? null) === (item.delivery_date ?? null),
-        ),
-    );
+  const linkedKeys = linkedLineKeySet(groups, linked);
+  const selectionChanged = !setsEqual(selectedLineKeys, linkedKeys);
+  const selectedGroupCount = selectedGroupsPayload.length;
 
   return (
     <div className="lnf-modal-backdrop" role="presentation">
@@ -204,7 +291,7 @@ export function PurchaseOrdersModal({
               <p className="lnf-muted" data-testid="po-summary">
                 {orderCount} pedido(s) · {groups.length} grupo(s)
                 {canLink
-                  ? ` · ${selectedKeys.size} selecionado(s)`
+                  ? ` · ${selectedLineKeys.size} item(ns) · ${selectedGroupCount} grupo(s)`
                   : null}
               </p>
               {linked.length > 0 ? (
@@ -239,13 +326,15 @@ export function PurchaseOrdersModal({
                     {groups.map((group) => {
                       const key = groupKey(group);
                       const expanded = expandedKey === key;
-                      const linkedNow = isLinkedGroup(group, linked);
-                      const checked = selectedKeys.has(key);
+                      const linkedNow = linked.some((item) => isSameGroup(group, item));
+                      const { checked, indeterminate } = groupSelectionState(group);
                       return (
                         <Fragment key={key}>
                           <tr
                             className={
-                              linkedNow || checked ? "lnf-po-row--linked" : undefined
+                              linkedNow || checked || indeterminate
+                                ? "lnf-po-row--linked"
+                                : undefined
                             }
                             data-testid={`po-group-${group.order_number}`}
                           >
@@ -255,7 +344,10 @@ export function PurchaseOrdersModal({
                                   type="checkbox"
                                   aria-label={`Selecionar PC ${group.order_number}`}
                                   checked={checked}
-                                  onChange={() => toggleKey(key)}
+                                  ref={(el) => {
+                                    if (el) el.indeterminate = indeterminate;
+                                  }}
+                                  onChange={() => toggleGroup(group)}
                                   data-testid={`po-select-${key}`}
                                 />
                               </td>
@@ -293,34 +385,67 @@ export function PurchaseOrdersModal({
                                 <table className="lnf-table lnf-table--nested">
                                   <thead>
                                     <tr>
+                                      {canLink ? (
+                                        <th className="lnf-po-col-select">Sel.</th>
+                                      ) : null}
                                       <th>Item</th>
                                       <th>Produto</th>
                                       <th>Saldo</th>
-                                      <th>Valor aberto</th>
+                                      <th>Mercadoria</th>
+                                      <th>IPI</th>
+                                      <th>Total</th>
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {group.items.map((row) => (
-                                      <tr
-                                        key={`${row.order_number}-${row.order_item}-${row.product_code}`}
-                                      >
-                                        <td>{row.order_item || "—"}</td>
-                                        <td>
-                                          <strong>{row.product_code || "—"}</strong>
-                                          {row.product_description ? (
-                                            <div className="lnf-muted">
-                                              {row.product_description}
-                                            </div>
+                                    {group.items.map((row) => {
+                                      const itemChecked =
+                                        !!row.order_item &&
+                                        selectedLineKeys.has(
+                                          lineKey(group, row.order_item),
+                                        );
+                                      return (
+                                        <tr
+                                          key={`${row.order_number}-${row.order_item}-${row.product_code}`}
+                                        >
+                                          {canLink ? (
+                                            <td>
+                                              <input
+                                                type="checkbox"
+                                                aria-label={`Selecionar item ${row.order_item} do PC ${group.order_number}`}
+                                                checked={itemChecked}
+                                                onChange={() => toggleLine(group, row)}
+                                                data-testid={`po-line-${key}-${row.order_item}`}
+                                              />
+                                            </td>
                                           ) : null}
-                                        </td>
-                                        <td>
-                                          {formatQty(row.open_quantity, row.unit)}
-                                        </td>
-                                        <td>
-                                          {formatMoney(Number(row.open_value || 0))}
-                                        </td>
-                                      </tr>
-                                    ))}
+                                          <td>{row.order_item || "—"}</td>
+                                          <td>
+                                            <strong>{row.product_code || "—"}</strong>
+                                            {row.product_description ? (
+                                              <div className="lnf-muted">
+                                                {row.product_description}
+                                              </div>
+                                            ) : null}
+                                          </td>
+                                          <td>
+                                            {formatQty(row.open_quantity, row.unit)}
+                                          </td>
+                                          <td>
+                                            {formatMoney(
+                                              Number(row.open_merchandise_value || 0),
+                                            )}
+                                          </td>
+                                          <td>
+                                            {Number(row.open_ipi_value || 0) > 0
+                                              ? formatMoney(Number(row.open_ipi_value))
+                                              : "—"}
+                                          </td>
+                                          <td>
+                                            {formatMoney(Number(row.open_value || 0))}
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
                                   </tbody>
                                 </table>
                               </td>
@@ -355,9 +480,9 @@ export function PurchaseOrdersModal({
             >
               {linking
                 ? "Salvando…"
-                : selectedKeys.size === 0
+                : selectedLineKeys.size === 0
                   ? "Desamarrar todos"
-                  : `Salvar amarração (${selectedKeys.size})`}
+                  : `Salvar amarração (${selectedLineKeys.size} it.)`}
             </button>
           ) : null}
         </div>
