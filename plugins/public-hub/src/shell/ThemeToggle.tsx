@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-type Mode = "light" | "dark";
+export type PublicThemeMode = "light" | "dark";
 
 const STORAGE_KEY = "pub-theme";
 
-function systemMode(): Mode {
+function systemMode(): PublicThemeMode {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function storedMode(): Mode | null {
+function storedMode(): PublicThemeMode | null {
   try {
     const value = localStorage.getItem(STORAGE_KEY);
     return value === "light" || value === "dark" ? value : null;
@@ -17,10 +17,36 @@ function storedMode(): Mode | null {
   }
 }
 
-function currentMode(): Mode {
+/** Tema efetivo do hub (attr → storage → SO). */
+export function resolvePublicThemeMode(): PublicThemeMode {
   const attr = document.documentElement.getAttribute("data-theme");
   if (attr === "light" || attr === "dark") return attr;
   return storedMode() ?? systemMode();
+}
+
+/** Reage a toggle (`data-theme`) e a mudança do SO quando não há preferência fixada. */
+export function usePublicThemeMode(): PublicThemeMode {
+  const [mode, setMode] = useState<PublicThemeMode>(() => resolvePublicThemeMode());
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setMode(resolvePublicThemeMode());
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+
+    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
+    const onMq = () => {
+      if (!storedMode() && !root.getAttribute("data-theme")) sync();
+    };
+    mq?.addEventListener("change", onMq);
+
+    return () => {
+      observer.disconnect();
+      mq?.removeEventListener("change", onMq);
+    };
+  }, []);
+
+  return mode;
 }
 
 /**
@@ -29,27 +55,16 @@ function currentMode(): Mode {
  * em `data-theme` no <html> e persiste em localStorage.
  */
 export function ThemeToggle() {
-  const [mode, setMode] = useState<Mode>(() => currentMode());
-
-  useEffect(() => {
-    const mq = window.matchMedia?.("(prefers-color-scheme: dark)");
-    if (!mq) return;
-    const onChange = () => {
-      if (!storedMode()) setMode(systemMode());
-    };
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
+  const mode = usePublicThemeMode();
 
   const toggle = () => {
-    const next: Mode = mode === "dark" ? "light" : "dark";
+    const next: PublicThemeMode = mode === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
       /* modo privado / storage indisponível — só não persiste */
     }
-    setMode(next);
   };
 
   const isDark = mode === "dark";

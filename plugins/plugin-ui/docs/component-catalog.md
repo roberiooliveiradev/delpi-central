@@ -299,14 +299,16 @@ Helpers: `loadingActivityBemClasses(prefix, { withCopyWrapper? })` e `createDash
 
 ### `ScreenLoading`
 
-Splash de carregamento de **tela**: marca Minha DELPI (swoosh + wordmark) + **raios elétricos** radiando do centro (linguagem do login energia) + label + barra indeterminada. Painéis inline: preferir `LoadingActivityCard` / `LoadingState`.
+Splash de carregamento de **tela**: logo completa em **badge branco** (como o shell público) + respiração (scale/opacity) + anel fino opcional + label + barra indeterminada. Painéis inline: preferir `LoadingActivityCard` / `LoadingState`.
 
 | Prop | Tipo | Descrição |
 |------|------|-----------|
-| `label` | `string?` | Texto sob a marca (default: «Carregando») |
+| `label` | `string?` | Texto sob o badge (default: «Carregando») |
 | `variant` | `"embedded" \| "fullscreen"` | Embutido vs. preencher ancestral posicionado |
-| `tone` | `"dark" \| "brand"` | Fundo kiosk vs. tokens `--delpi-ui-*` |
-| `showLightning` | `boolean?` | Default: ligado em `dark`/`fullscreen`; off em brand/embedded |
+| `tone` | `"dark" \| "light" \| "brand"` | Kiosk escuro, institucional claro, ou tokens `--delpi-ui-*` |
+| `logoSrc` | `string?` | URL da logo (ex.: `/p/logoMinhaDelpi.svg`); sem prop, usa `BrandMark` no badge |
+| `showOrbitRing` | `boolean?` | Anel fino atrás do badge (default: true) |
+| `showLightning` | `boolean?` | Raios elétricos legado (default: false) |
 | `classNames` | `ScreenLoadingClassNames?` | BEM dual-class |
 
 Helpers: `screenLoadingBemClasses(prefix)`, `createDashboardScreenLoading`, `generateBrandLightning`, `BrandLightningLayer`, `BrandMark`.

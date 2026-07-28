@@ -68,27 +68,34 @@ describe("ScreenLoading", () => {
     vi.unstubAllGlobals();
   });
 
-  it("renderiza marca, label e classes fullscreen/dark", () => {
+  it("renderiza badge, label e classes fullscreen/dark sem lightning", () => {
     const { container } = render(
-      <ScreenLoading label="Carregando apresentação" variant="fullscreen" tone="dark" />,
+      <ScreenLoading
+        label="Carregando apresentação"
+        variant="fullscreen"
+        tone="dark"
+        logoSrc="/p/logoMinhaDelpi.svg"
+      />,
     );
     const root = container.firstElementChild as HTMLElement;
     expect(root.className).toContain("delpi-ui-screen-loading");
     expect(root.className).toContain("delpi-ui-screen-loading--fullscreen");
     expect(root.className).toContain("delpi-ui-screen-loading--dark");
-    expect(root.className).toContain("delpi-ui-screen-loading--lightning");
+    expect(root.className).not.toContain("delpi-ui-screen-loading--lightning");
     expect(root.getAttribute("role")).toBe("status");
     expect(screen.getByText("Carregando apresentação")).toBeTruthy();
-    expect(container.querySelector(".delpi-ui-screen-loading__mark")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-screen-loading__badge")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-screen-loading__orbit-ring")).toBeTruthy();
+    expect(container.querySelector('img[src="/p/logoMinhaDelpi.svg"]')).toBeTruthy();
   });
 
-  it("não liga lightning por default em brand embedded", () => {
+  it("renderiza tom light com classes corretas", () => {
     const { container } = render(
-      <ScreenLoading label="Aguarde" variant="embedded" tone="brand" />,
+      <ScreenLoading label="Carregando" tone="light" logoSrc="/p/logoMinhaDelpi.svg" />,
     );
     const root = container.firstElementChild as HTMLElement;
-    expect(root.className).not.toContain("delpi-ui-screen-loading--lightning");
-    expect(container.querySelector(".delpi-ui-screen-loading__lightning")).toBeNull();
+    expect(root.className).toContain("delpi-ui-screen-loading--light");
+    expect(root.className).not.toContain("delpi-ui-screen-loading--dark");
   });
 
   it("factory aplica prefixo BEM dual-class", () => {
@@ -101,7 +108,7 @@ describe("ScreenLoading", () => {
     expect(root.className).toContain("delpi-ui-screen-loading");
   });
 
-  it("com showLightning renderiza camada SVG após resize", async () => {
+  it("showLightning opcional renderiza camada SVG", async () => {
     const { container } = render(
       <ScreenLoading label="TV" variant="fullscreen" tone="dark" showLightning />,
     );

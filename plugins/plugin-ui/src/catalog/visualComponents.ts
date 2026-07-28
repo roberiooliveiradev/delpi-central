@@ -126,7 +126,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "ScreenLoading", {
     addedAt: "2026-07-28",
     updatedAt: "2026-07-28",
-    changeNote: "Marca Minha DELPI + raios brandados a partir do swoosh (login energia)",
+    changeNote: "Badge + pulse; tons dark/light/brand; raios opcionais",
   }),
   vc("feedback", "LoadingActivityCard"),
   vc("feedback", "StateBanner"),

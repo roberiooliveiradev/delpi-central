@@ -1,13 +1,12 @@
-import { useEffect, useId, useRef, useState } from "react";
-
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { BrandLightningLayer } from "./BrandLightningLayer";
 import { BrandMark } from "./BrandMark";
+import { useEffect, useRef, useState } from "react";
 
 export type ScreenLoadingVariant = "embedded" | "fullscreen";
 
-/** `dark` = kiosk / TV; `brand` = tokens `--delpi-ui-*` do host. */
-export type ScreenLoadingTone = "dark" | "brand";
+/** `dark` = kiosk / TV; `light` = institucional claro; `brand` = tokens `--delpi-ui-*`. */
+export type ScreenLoadingTone = "dark" | "light" | "brand";
 
 export type ScreenLoadingClassNames = {
   root: string;
@@ -16,21 +15,30 @@ export type ScreenLoadingClassNames = {
   lightningLine: string;
   lightningBranch: string;
   stage: string;
-  mark: string;
+  badgeWrap: string;
+  orbitRing: string;
+  badge: string;
   label: string;
   bar: string;
   barFill: string;
 };
 
 export type ScreenLoadingProps = {
-  /** Texto sob a marca (ex.: «Carregando»). */
+  /** Texto sob o badge (ex.: «Carregando»). */
   label?: string;
-  /** `fullscreen` preenche o ancestral posicionado (ou viewport fixa). */
+  /** `fullscreen` preenche o ancestral posicionado. */
   variant?: ScreenLoadingVariant;
   tone?: ScreenLoadingTone;
   /**
-   * Raios a partir do swoosh.
-   * Default: ligado em `tone=dark` ou `variant=fullscreen`; desligado em brand/embedded.
+   * URL da logo completa (ex.: `/p/logoMinhaDelpi.svg`).
+   * Sem `logoSrc`, usa marca tipográfica embutida dentro do badge.
+   */
+  logoSrc?: string;
+  /** Anel fino atrás do badge. Default: true. */
+  showOrbitRing?: boolean;
+  /**
+   * Raios elétricos (efeito legado). Default: false —
+   * visual canônico é badge + pulse.
    */
   showLightning?: boolean;
   className?: string;
@@ -49,7 +57,9 @@ export function screenLoadingBemClasses(prefix = "delpi-ui"): ScreenLoadingClass
     lightningLine: pair(`${base}__lightning-line`, `${ui}__lightning-line`),
     lightningBranch: pair(`${base}__lightning-branch`, `${ui}__lightning-branch`),
     stage: pair(`${base}__stage`, `${ui}__stage`),
-    mark: pair(`${base}__mark`, `${ui}__mark`),
+    badgeWrap: pair(`${base}__badge-wrap`, `${ui}__badge-wrap`),
+    orbitRing: pair(`${base}__orbit-ring`, `${ui}__orbit-ring`),
+    badge: pair(`${base}__badge`, `${ui}__badge`),
     label: pair(`${base}__label`, `${ui}__label`),
     bar: pair(`${base}__bar`, `${ui}__bar`),
     barFill: pair(`${base}__bar-fill`, `${ui}__bar-fill`),
@@ -72,34 +82,27 @@ function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * Splash de carregamento de tela (marca + raios brandados + label + barra).
+ * Splash de carregamento institucional: badge branco + logo + pulse.
  * CSS: `styles/screen-loading.css` (`.delpi-ui-screen-loading*`).
  */
 export function ScreenLoading({
   label = "Carregando",
   variant = "embedded",
   tone = "dark",
-  showLightning,
+  logoSrc,
+  showOrbitRing = true,
+  showLightning = false,
   className,
   classNames = DEFAULT_CN,
 }: ScreenLoadingProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const reducedMotion = usePrefersReducedMotion();
-  const gradientScopeId = useId();
-
-  const lightningEnabled =
-    showLightning ?? (tone === "dark" || variant === "fullscreen");
 
   useEffect(() => {
+    if (!showLightning) return;
     const el = rootRef.current;
-    if (!el || typeof ResizeObserver === "undefined") {
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        setSize({ width: Math.round(rect.width), height: Math.round(rect.height) });
-      }
-      return;
-    }
+    if (!el || typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
@@ -108,13 +111,13 @@ export function ScreenLoading({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [showLightning]);
 
   const rootClass = [
     classNames.root,
     `delpi-ui-screen-loading--${variant}`,
     `delpi-ui-screen-loading--${tone}`,
-    lightningEnabled ? "delpi-ui-screen-loading--lightning" : null,
+    showLightning ? "delpi-ui-screen-loading--lightning" : null,
     className,
   ]
     .filter(Boolean)
@@ -133,10 +136,9 @@ export function ScreenLoading({
       aria-live="polite"
       aria-busy="true"
       aria-label={label}
-      data-gradient-scope={gradientScopeId}
     >
       <div className={classNames.glow} aria-hidden="true" />
-      {lightningEnabled && size.width > 0 ? (
+      {showLightning && size.width > 0 ? (
         <BrandLightningLayer
           className={classNames.lightning}
           lineClassName={classNames.lightningLine}
@@ -144,13 +146,20 @@ export function ScreenLoading({
           width={size.width}
           height={size.height}
           origin={origin}
-          density={variant === "fullscreen" ? "medium" : "low"}
+          density="low"
           reducedMotion={reducedMotion}
         />
       ) : null}
       <div className={classNames.stage}>
-        <div className={classNames.mark} aria-hidden="true">
-          <BrandMark tone={tone === "brand" ? "brand" : "dark"} />
+        <div className={classNames.badgeWrap} aria-hidden="true">
+          {showOrbitRing ? <span className={classNames.orbitRing} /> : null}
+          <div className={classNames.badge}>
+            {logoSrc ? (
+              <img src={logoSrc} alt="" draggable={false} />
+            ) : (
+              <BrandMark tone="brand" />
+            )}
+          </div>
         </div>
         <p className={classNames.label}>{label}</p>
         <div className={classNames.bar} aria-hidden="true">
@@ -166,6 +175,8 @@ export function createDashboardScreenLoading(config: {
   defaultLabel?: string;
   variant?: ScreenLoadingVariant;
   tone?: ScreenLoadingTone;
+  logoSrc?: string;
+  showOrbitRing?: boolean;
   showLightning?: boolean;
 }) {
   const classNames = config.classNames ?? DEFAULT_CN;
@@ -177,6 +188,8 @@ export function createDashboardScreenLoading(config: {
     label?: string;
     variant?: ScreenLoadingVariant;
     tone?: ScreenLoadingTone;
+    logoSrc?: string;
+    showOrbitRing?: boolean;
     showLightning?: boolean;
     className?: string;
   }) {
@@ -186,6 +199,8 @@ export function createDashboardScreenLoading(config: {
         label={props.label ?? defaultLabel}
         variant={props.variant ?? defaultVariant}
         tone={props.tone ?? defaultTone}
+        logoSrc={props.logoSrc ?? config.logoSrc}
+        showOrbitRing={props.showOrbitRing ?? config.showOrbitRing}
         showLightning={props.showLightning ?? config.showLightning}
         className={props.className}
       />

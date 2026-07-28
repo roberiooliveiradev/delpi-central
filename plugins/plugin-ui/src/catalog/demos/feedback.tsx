@@ -95,13 +95,13 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
     family: "feedback",
     exportName: "ScreenLoading",
     title: "ScreenLoading",
-    description: "Splash de tela com marca Minha DELPI e raios brandados (kiosk).",
+    description: "Splash institucional: badge + logo + pulse (claro / escuro / brand).",
     docAnchor: "screenloading",
-    propsSummary: ["label", "variant", "tone", "showLightning", "classNames"],
+    propsSummary: ["label", "variant", "tone", "logoSrc", "showOrbitRing", "classNames"],
     demos: [
       {
         id: "dark-fullscreen",
-        label: "Kiosk + raios",
+        label: "Kiosk escuro",
         render: () => (
           <div style={{ position: "relative", height: 280, borderRadius: 12, overflow: "hidden" }}>
             <ScreenLoading
@@ -109,14 +109,27 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
               label="Carregando"
               variant="fullscreen"
               tone="dark"
-              showLightning
+              logoSrc="/p/logoMinhaDelpi.svg"
             />
           </div>
         ),
       },
       {
+        id: "light-embedded",
+        label: "Modo claro",
+        render: () => (
+          <ScreenLoading
+            classNames={screenLoadingCn}
+            label="Carregando"
+            variant="embedded"
+            tone="light"
+            logoSrc="/p/logoMinhaDelpi.svg"
+          />
+        ),
+      },
+      {
         id: "brand-embedded",
-        label: "Embutido (marca)",
+        label: "Embutido (tokens)",
         render: () => (
           <ScreenLoading
             classNames={screenLoadingCn}
