@@ -112,6 +112,27 @@ describe("assistantContentLayout", () => {
     expect(ordered.map((item) => item.kind)).toEqual(["table", "tree", "chart"]);
   });
 
+  it("com renderPlan, ordem visual segue segments do plan (não DEFAULT)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: { layoutMode: "stack", selected: "tree" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "tree", slot: "tailVisuals", source: "treePresentation" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentation" },
+            ],
+          },
+        },
+      },
+    ]);
+
+    expect(resolveStackLayoutOrderFromToolCalls(toolCalls)).toEqual(["text", "tree", "table"]);
+  });
+
   it("detecta visão nativa single quando selected=table", () => {
     const toolCalls = fixtureToolCalls([
       {
@@ -130,6 +151,48 @@ describe("assistantContentLayout", () => {
       active: true,
       kind: "table",
     });
+  });
+
+  it("com renderPlan single, não ativa native single via selected (executor do plan)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: {
+            selected: "table",
+            layoutMode: "single",
+          },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "table", source: "presentation" }],
+          },
+        },
+      },
+    ]);
+
+    expect(isNativeSingleViewSelection(toolCalls)).toEqual({
+      active: false,
+      kind: null,
+    });
+  });
+
+  it("com renderPlan, markers no content não mudam o layout", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          presentationDecision: { layoutMode: "single", selected: "table" },
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [{ kind: "table", source: "presentation" }],
+          },
+        },
+      },
+    ]);
+
+    expect(resolveAssistantContentLayout("Veja [[tabela]] abaixo", toolCalls)).toBe("text-only");
   });
 
   it("usa explicitSessionFormat=table quando selected=text (text-first stale)", () => {

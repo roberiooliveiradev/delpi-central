@@ -555,27 +555,6 @@ export function buildSegmentsFromRenderPlan(
     }
   }
 
-  if (
-    plan.attentionLast &&
-    sections.pontos?.trim() &&
-    !renderPlan.segments?.some(
-      (spec) => String(spec.slot || "").trim() === "attention",
-    ) &&
-    !segments.some(
-      (segment) =>
-        segment.kind === "markdown" && segment.markdown.includes("Pontos de atenção"),
-    )
-  ) {
-    maybePushStackSection(plan, segments, "attention", appendUnique, toolCalls);
-    pushSectionFraming(plan, segments, "attention", parseMarkdown, appendUnique);
-    pushMarkdownSegments(
-      segments,
-      stripRedundantSectionHeadings(sections.pontos, "pontos"),
-      parseMarkdown,
-      appendUnique,
-    );
-  }
-
   return dedupeTableSegments(segments);
 }
 

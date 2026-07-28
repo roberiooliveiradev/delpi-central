@@ -38,12 +38,15 @@ export function ChatDashboardDataPanel({
   title,
   table,
   chart,
+  allowChartSynthesis = true,
   onDrillDown,
   onOpenCanvas,
 }: {
   title?: string;
   table: TablePresentation;
   chart?: ChartPresentation | null;
+  /** Com renderPlan, não sintetizar chart a partir da tabela. */
+  allowChartSynthesis?: boolean;
   onDrillDown?: (query: string) => void;
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
 }) {
@@ -53,8 +56,8 @@ export function ChatDashboardDataPanel({
   );
 
   const resolvedChart = useMemo(
-    () => chart ?? buildChartPresentationFromTable(table),
-    [chart, table],
+    () => chart ?? (allowChartSynthesis ? buildChartPresentationFromTable(table) : null),
+    [chart, table, allowChartSynthesis],
   );
 
   const hasText = Boolean(textBody.trim());

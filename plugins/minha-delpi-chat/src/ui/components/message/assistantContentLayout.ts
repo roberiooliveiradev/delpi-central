@@ -2,6 +2,7 @@ import type { ChatToolCall } from "../../../data/api/chatTypes";
 
 import {
   getPresentationDecisionFromToolCalls,
+  getRenderPlanFromToolCalls,
   type PresentationPair,
 } from "../chatPresentation";
 import type { AssistantContentSegment } from "./assistantContentTypes";
@@ -190,6 +191,18 @@ export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
     return { active: true, kind: explicitKind };
   }
 
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+
+  // Com renderPlan v1 single, o executor do plan monta a vista — não reinterpretar selected.
+  if (
+    renderPlan?.version === 1 &&
+    Array.isArray(renderPlan.segments) &&
+    renderPlan.segments.length > 0 &&
+    String(renderPlan.layoutMode || "").trim() !== "stack"
+  ) {
+    return { active: false, kind: null };
+  }
+
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
 
   if (decision?.layoutMode === "stack") {
@@ -208,6 +221,41 @@ export function isNativeSingleViewSelection(toolCalls: ChatToolCall[] = []): {
 export function resolveStackLayoutOrderFromToolCalls(
   toolCalls?: ChatToolCall[],
 ): StackLayoutSlot[] {
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+
+  if (
+    renderPlan?.version === 1 &&
+    Array.isArray(renderPlan.segments) &&
+    renderPlan.segments.length
+  ) {
+    const fromPlan: StackLayoutSlot[] = [];
+
+    for (const spec of renderPlan.segments) {
+      const kind = String(spec.kind || "").trim().toLowerCase();
+
+      if (kind === "markdown" || kind === "decision" || kind === "download") {
+        if (kind === "markdown" && !fromPlan.includes("text")) {
+          fromPlan.push("text");
+        }
+        continue;
+      }
+
+      const slot = mapDecisionViewToStackSlot(kind);
+
+      if (slot && !fromPlan.includes(slot)) {
+        fromPlan.push(slot);
+      }
+    }
+
+    if (fromPlan.length) {
+      if (!fromPlan.includes("text")) {
+        fromPlan.unshift("text");
+      }
+
+      return fromPlan;
+    }
+  }
+
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
   const rawOrder = decision?.visualOrder;
 
@@ -287,14 +335,26 @@ export function resolveAssistantContentLayout(
   toolCalls: ChatToolCall[] = [],
   _pair?: PresentationPair,
 ): AssistantContentLayoutMode {
+  const renderPlan = getRenderPlanFromToolCalls(toolCalls);
+  const planLayout = String(renderPlan?.layoutMode || "").trim().toLowerCase();
+
+  if (planLayout === "stack") {
+    return "stack";
+  }
+
+  if (renderPlan?.version === 1 && Array.isArray(renderPlan.segments) && renderPlan.segments.length) {
+    return "text-only";
+  }
+
   const decision = getPresentationDecisionFromToolCalls(toolCalls);
-  const hasMarkers = /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(
-    content,
-  );
 
   if (decision?.layoutMode === "stack") {
     return "stack";
   }
+
+  const hasMarkers = /\[\[(?:tabela|table|grafico|chart|arvore|tree|kpi|dashboard)/i.test(
+    content,
+  );
 
   if (hasMarkers) {
     return "markers";

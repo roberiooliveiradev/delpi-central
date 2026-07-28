@@ -98,6 +98,18 @@ describe("presentationStackSections", () => {
             tableRoleOrder: ["profile", "guide", "inspection"],
             tailVisualOrder: ["tree"],
           },
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "table", slot: "profileTables", source: "tablePresentations" },
+              { kind: "markdown", slot: "highlights", source: "textPresentation" },
+              { kind: "table", slot: "operationalTables", source: "tablePresentations" },
+              { kind: "tree", slot: "tailVisuals", source: "treePresentation" },
+              { kind: "markdown", slot: "attention", source: "textPresentation" },
+            ],
+          },
         },
       },
     ] as never;
