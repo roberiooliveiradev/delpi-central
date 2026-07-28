@@ -172,7 +172,17 @@ class ChatWorkingMemoryService:
             )
             break
 
-        explicit_code = ChatProductQueryIntentService.extract_product_code(message)
+        from app.domain.services.chat_operational_identifier_resolution_service import (
+            ChatOperationalIdentifierResolutionService,
+        )
+
+        identifier_set = ChatOperationalIdentifierResolutionService.resolve(message)
+        explicit_code = None
+        if not (
+            identifier_set.primary
+            and identifier_set.primary.role == "supplier_part_number"
+        ):
+            explicit_code = ChatProductQueryIntentService.extract_product_code(message)
 
         if explicit_code:
             cls._record_product_switch(
@@ -607,6 +617,11 @@ class ChatWorkingMemoryService:
             if not isinstance(metadata, dict):
                 continue
 
+            promoted = cls._extract_canonical_product_from_noncanonical_lookup(tool_call)
+            if promoted:
+                codes.append(promoted)
+                continue
+
             code = ChatAnalysisIntentService.extract_product_code_from_tool_path(
                 str(metadata.get("path") or ""),
             )
@@ -615,6 +630,57 @@ class ChatWorkingMemoryService:
                 codes.append(code)
 
         return codes
+
+    @classmethod
+    def _extract_canonical_product_from_noncanonical_lookup(
+        cls,
+        tool_call: dict,
+    ) -> str | None:
+        """Promove product_code do resultado quando a busca usou identificador não-canônico.
+
+        Critério genérico: parâmetro ``supplier_part_number`` + exatamente 1 item com
+        ``product_code`` (sem acoplar a operationId).
+        """
+        import json
+
+        args = tool_call.get("arguments")
+        if not isinstance(args, dict):
+            return None
+        parameters = args.get("parameters")
+        if not isinstance(parameters, dict):
+            return None
+        if not str(parameters.get("supplier_part_number") or "").strip():
+            return None
+
+        metadata = tool_call.get("metadata")
+        if not isinstance(metadata, dict):
+            return None
+
+        payload: dict | None = None
+        preview = metadata.get("responsePreview")
+        if isinstance(preview, str) and preview.strip():
+            try:
+                parsed = json.loads(preview)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, dict):
+                payload = parsed
+
+        data = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(data, dict):
+            return None
+
+        items = data.get("items")
+        total = data.get("total")
+        if not isinstance(items, list) or not items:
+            return None
+        if total not in (None, 1) and int(total or 0) != 1:
+            return None
+        if len(items) != 1 or not isinstance(items[0], dict):
+            return None
+
+        product_code = str(items[0].get("product_code") or "").strip()
+        return product_code or None
 
     @classmethod
     def _extract_branches_from_tool_calls(cls, tool_calls: list | None) -> list[str]:

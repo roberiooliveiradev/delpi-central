@@ -208,6 +208,23 @@ class ChatOperationalIdentifierResolutionService:
         return found
 
     @classmethod
+    def resolve_clarification_answer(cls, message: str) -> str | None:
+        """Clarificação genérica quando o papel do identificador é ambíguo/ausente."""
+        raw = str(message or "")
+        normalized = ChatMessageNormalizationService.normalize_for_matching(raw) or raw.lower()
+        if not cls._matches_supplier_part_number_lookup(normalized):
+            return None
+
+        part_number = cls.primary_supplier_part_number(raw)
+        if part_number:
+            return None
+
+        resolved = cls.resolve(raw)
+        if resolved.ambiguity == "multiple_same_role":
+            return cls.clarification_text("multipleSameRole") or None
+        return cls.clarification_text("missingSupplierPartNumber") or None
+
+    @classmethod
     def primary_supplier_part_number(cls, message: str) -> str | None:
         resolved = cls.resolve(message, preferred_role="supplier_part_number")
         if resolved.primary and resolved.primary.role == "supplier_part_number":

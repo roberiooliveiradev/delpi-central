@@ -88,8 +88,15 @@ class ChatTurnPreparationToolRoutingService:
         if skip_missing_product_prompt:
             missing_product_code_answer = None
         else:
+            from app.domain.services.chat_operational_identifier_resolution_service import (
+                ChatOperationalIdentifierResolutionService,
+            )
+
             missing_product_code_answer = (
-                ChatOperationalParameterService.resolve_missing_product_code_answer(
+                ChatOperationalIdentifierResolutionService.resolve_clarification_answer(
+                    message
+                )
+                or ChatOperationalParameterService.resolve_missing_product_code_answer(
                     message,
                     conversation_context=conversation_context,
                     previous_messages=history_source,

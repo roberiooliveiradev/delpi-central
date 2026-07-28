@@ -91,6 +91,10 @@
     "entity": "product_suppliers",
     "shape": "paged_list"
   },
+  "search_products_by_supplier_part_number": {
+    "entity": "product_by_supplier_part_number",
+    "shape": "paged_list"
+  },
   "get_product_customers": {
     "entity": "product_customers",
     "shape": "paged_list"
