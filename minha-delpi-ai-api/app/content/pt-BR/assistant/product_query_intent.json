@@ -265,8 +265,14 @@
       "termsFrom": "product_query_intent.billing.terms",
       "hasProductScope": true
     },
+    "supplierPartNumberLookup": {
+      "termsFrom": "product_query_intent.identifierRoles.supplier_part_number.hintTerms"
+    },
     "suppliersRoute": {
-      "termsFrom": "product_query_intent.suppliers.terms"
+      "termsFrom": "product_query_intent.suppliers.terms",
+      "noneOf": [
+        { "customPredicate": "supplierPartNumberLookup" }
+      ]
     },
     "inspectionRoute": {
       "termsFrom": "product_query_intent.inspection.terms",
@@ -1260,6 +1266,42 @@
       "supplier"
     ]
   },
+  "identifierRoles": {
+    "supplier_part_number": {
+      "hintTerms": [
+        "part number do fornecedor",
+        "partnumber do fornecedor",
+        "part number fornecedor",
+        "partnumber fornecedor",
+        "part number",
+        "partnumber",
+        "codigo do fornecedor",
+        "código do fornecedor",
+        "codigo fornecedor",
+        "código fornecedor",
+        "referencia do fornecedor",
+        "referência do fornecedor",
+        "referencia fornecedor",
+        "referência fornecedor",
+        "codprf",
+        "a5_codprf"
+      ]
+    },
+    "delpi_product_code": {
+      "hintTerms": [
+        "codigo delpi",
+        "código delpi",
+        "codigo do produto",
+        "código do produto",
+        "produto "
+      ]
+    },
+    "clarifications": {
+      "unknownRole": "Não identifiquei se o código é DELPI ou part number do fornecedor. Pode esclarecer?",
+      "multipleSameRole": "Encontrei mais de um código na mensagem. Qual deles devo usar?",
+      "missingSupplierPartNumber": "Para buscar o produto pelo part number do fornecedor, informe o part number (ex.: 008700056)."
+    }
+  },
   "inspection": {
     "terms": [
       "inspeção",
@@ -1659,6 +1701,10 @@
       { "probe": "outboundInvoice", "subIntent": "sales_lookup" },
       { "predicate": "salesQuestion", "subIntent": "sales_lookup" },
       { "termsAny": "purchaseTerms", "subIntent": "purchase_lookup" },
+      {
+        "predicate": "supplierPartNumberLookup",
+        "subIntent": "product_by_supplier_part_number"
+      },
       { "probe": "supplierMention", "subIntent": "supplier_lookup" },
       { "termsAny": "priceTerms", "subIntent": "price_lookup" },
       { "probe": "fullAnalyserQuestion", "subIntent": "product_lookup" },

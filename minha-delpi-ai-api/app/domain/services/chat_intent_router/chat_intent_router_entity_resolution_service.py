@@ -130,6 +130,33 @@ class ChatIntentRouterEntityResolutionService:
         if memory_entities:
             params.update(memory_entities)
 
+        from app.domain.services.chat_operational_identifier_resolution_service import (
+            ChatOperationalIdentifierResolutionService,
+        )
+
+        identifier_set = ChatOperationalIdentifierResolutionService.resolve(
+            message,
+            previous_messages=previous_messages,
+            memory_snapshot=(
+                workspace_context.get("workingMemory")
+                if isinstance(workspace_context, dict)
+                else None
+            ),
+        )
+        if (
+            identifier_set.primary
+            and identifier_set.primary.role == "supplier_part_number"
+        ):
+            params.pop("productCode", None)
+            params["supplierPartNumber"] = identifier_set.primary.value
+            return params or None
+
+        if identifier_set.ambiguity == "multiple_same_role" and identifier_set.role_values(
+            "supplier_part_number"
+        ):
+            params.pop("productCode", None)
+            return params or None
+
         code_in_message = ChatProductQueryIntentService.extract_product_code(message)
         production_kind = ChatProductionOperationalIntentService.resolve(message)
 
