@@ -46,6 +46,20 @@ export { SeriesChartPrimitive, type SeriesChartPrimitiveProps, type SeriesPlotRe
 export { LineSeriesChart, type LineSeriesChartProps } from "./LineSeriesChart";
 export { BarSeriesChart, type BarSeriesChartProps } from "./BarSeriesChart";
 export {
+  ComparativeAreaChart,
+  comparativeAreaChartBemClasses,
+  type ComparativeAreaChartPoint,
+  type ComparativeAreaChartProps,
+  type ComparativeAreaChartSeries,
+} from "./ComparativeAreaChart";
+export {
+  ChartSeriesViewport,
+  chartSeriesViewportBemClasses,
+  type ChartSeriesViewportClassNames,
+  type ChartSeriesViewportLabels,
+  type ChartSeriesViewportProps,
+} from "./ChartSeriesViewport";
+export {
   seriesChartBemClasses,
   seriesChartTvClasses,
   SeriesChartClassesProvider,

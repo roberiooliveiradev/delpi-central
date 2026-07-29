@@ -1,9 +1,7 @@
 import { useMemo } from "react";
 import {
-  ConfigurableSeriesChart,
+  ComparativeAreaChart,
   segmentToggleBemClasses,
-  type SeriesChartPoint,
-  type SeriesChartSeriesSpec,
 } from "@delpi/plugin-ui/index";
 
 import type {
@@ -12,7 +10,7 @@ import type {
 } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 
-const SEGMENT = segmentToggleBemClasses("ds");
+const SEGMENT = segmentToggleBemClasses("kz");
 
 const SAVINGS_COLOR = "#22c55e";
 const INVESTMENT_COLOR = "#ef4444";
@@ -50,22 +48,15 @@ export function KaizenSavingsInvestmentChart({
     if (!series) return null;
     return `${formatDate(series.start_date)} — ${formatDate(series.end_date)}`;
   }, [series]);
-
-  const seriesList = useMemo<SeriesChartSeriesSpec[]>(() => {
-    if (!series?.points.length) return [];
-    const savingsPoints: SeriesChartPoint[] = series.points.map((point) => ({
-      label: periodLabel(point.periodo, series.granularity),
-      value: point.savings,
-    }));
-    const investmentPoints: SeriesChartPoint[] = series.points.map((point) => ({
-      label: periodLabel(point.periodo, series.granularity),
-      value: point.investment,
-    }));
-    return [
-      { name: "Ganhos financeiros", points: savingsPoints, color: SAVINGS_COLOR },
-      { name: "Investimento", points: investmentPoints, color: INVESTMENT_COLOR },
-    ];
-  }, [series]);
+  const chartData = useMemo(
+    () =>
+      (series?.points ?? []).map((point) => ({
+        name: periodLabel(point.periodo, series?.granularity ?? granularity),
+        savings: point.savings,
+        investment: point.investment,
+      })),
+    [series, granularity],
+  );
 
   const empty =
     !loading &&
@@ -108,25 +99,25 @@ export function KaizenSavingsInvestmentChart({
       ) : (
         <>
           <div className="kz-dash-chart__canvas">
-            <ConfigurableSeriesChart
-              chartType="area"
-              points={seriesList[0]?.points ?? []}
-              seriesList={seriesList}
-              options={{
-                showTitle: false,
-                showLegend: true,
-                legendPosition: "bottom",
-                showAxes: true,
-                showXAxisLabels: true,
-                showYAxisLabels: true,
-                showXAxisTitle: false,
-                showYAxisTitle: false,
-                showGrid: true,
-                showMarkers: false,
-                smoothLines: true,
-                valueFormat: "currency",
-                theme: "dark",
-              }}
+            <ComparativeAreaChart
+              prefix="kz"
+              data={chartData}
+              height={240}
+              valueFormatter={(value) => formatCurrency(Number(value))}
+              series={[
+                {
+                  dataKey: "savings",
+                  name: "Ganhos financeiros",
+                  color: SAVINGS_COLOR,
+                  fillOpacity: 0.5,
+                },
+                {
+                  dataKey: "investment",
+                  name: "Investimento",
+                  color: INVESTMENT_COLOR,
+                  fillOpacity: 0.45,
+                },
+              ]}
             />
           </div>
           {series ? (

@@ -7,3 +7,4 @@ export * from "./delpiUiClass";
 export * from "./ghostBtnBem";
 export * from "./comunicadoStageBem";
 export * from "./valuesEqual";
+export * from "./chartSeriesWindow";

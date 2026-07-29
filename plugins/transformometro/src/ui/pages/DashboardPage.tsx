@@ -7,13 +7,19 @@ import {
   Lightbulb,
   TrendingUp,
 } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { AppProps } from "../../App";
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
-import { FieldLabel, NativeTextControl, useChartGranularitySelection } from "@delpi/plugin-ui/index";
+import {
+  ComparativeAreaChart,
+  FieldLabel,
+  NativeTextControl,
+  SegmentToggle,
+  useChartGranularitySelection,
+  useChartSeriesWindow,
+} from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { ChartCard } from "../../components/ChartCard";
@@ -24,12 +30,11 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
-import { ChartSeriesViewport } from "../../components/ChartSeriesViewport";
+import { ChartSeriesViewport } from "@delpi/plugin-ui/index";
 import { RankingBarChart } from "../../components/RankingBarChart";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { DashboardToolbarMenu } from "../../components/DashboardToolbarMenu";
 import { PageHeader } from "../../components/PageHeader";
-import { SegmentToggle } from "../../components/SegmentToggle";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -61,7 +66,6 @@ import {
   formatRoiRatio,
 } from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
-import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
 import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { currentMonthFilterRange } from "../../utils/dashboardFilters";
 import { competenceToDateRange, dateRangeToCompetence } from "../../utils/competence";
@@ -181,10 +185,16 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       suggestGranularity(filters.dataInicial, filters.dataFinal),
     [filters.dataInicial, filters.dataFinal],
   );
-  const { granularity: savingsGranularity, setGranularity: setSavingsGranularity } =
+  const { granularity: autoSavingsGranularity, setGranularity: setAutoSavingsGranularity } =
     useChartGranularitySelection(filters.dataInicial, filters.dataFinal, {
       resolveAutoGranularity: resolveSavingsGranularity,
     });
+  const savingsGranularity: ChartGranularity =
+    autoSavingsGranularity === "week" ? "month" : autoSavingsGranularity;
+  const setSavingsGranularity = useCallback(
+    (value: ChartGranularity) => setAutoSavingsGranularity(value),
+    [setAutoSavingsGranularity],
+  );
 
   const params = useMemo(
     () =>
@@ -876,57 +886,41 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 onNextPage={savingsChartWindow.goNextPage}
                 onEnd={savingsChartWindow.goEnd}
                 onShift={savingsChartWindow.shiftBy}
+                prefix="ds"
               >
-                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                  <AreaChart data={savingsChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--ds-card-border)" />
-                    <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                    <YAxis
-                      tickFormatter={(v) =>
-                        savingsMeasure === "hours"
-                          ? formatHours(Number(v))
-                          : formatCurrency(Number(v))
-                      }
-                      width={72}
-                    />
-                    <Tooltip
-                      formatter={(v) =>
-                        savingsMeasure === "hours"
-                          ? formatHours(Number(v))
-                          : formatCurrency(Number(v))
-                      }
-                    />
-                    {savingsMeasure === "hours" ? (
-                      <Area
-                        type="monotone"
-                        dataKey="horas"
-                        name="Horas economizadas"
-                        stroke={HORAS_COLOR}
-                        fill={HORAS_COLOR}
-                        fillOpacity={0.5}
-                      />
-                    ) : (
-                      <>
-                        <Area
-                          type="monotone"
-                          dataKey="bruta"
-                          name="Economia bruta"
-                          stroke={ECONOMIA_COLOR}
-                          fill={ECONOMIA_COLOR}
-                          fillOpacity={0.5}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="investimento"
-                          name="Investimento"
-                          stroke={INVESTIMENTO_COLOR}
-                          fill={INVESTIMENTO_COLOR}
-                          fillOpacity={0.45}
-                        />
-                      </>
-                    )}
-                  </AreaChart>
-                </ResponsiveContainer>
+                <ComparativeAreaChart
+                  prefix="ds"
+                  data={savingsChartData}
+                  height={CHART_HEIGHT}
+                  valueFormatter={(value) =>
+                    savingsMeasure === "hours" ? formatHours(Number(value)) : formatCurrency(Number(value))
+                  }
+                  series={
+                    savingsMeasure === "hours"
+                      ? [
+                          {
+                            dataKey: "horas",
+                            name: "Horas economizadas",
+                            color: HORAS_COLOR,
+                            fillOpacity: 0.5,
+                          },
+                        ]
+                      : [
+                          {
+                            dataKey: "bruta",
+                            name: "Economia bruta",
+                            color: ECONOMIA_COLOR,
+                            fillOpacity: 0.5,
+                          },
+                          {
+                            dataKey: "investimento",
+                            name: "Investimento",
+                            color: INVESTIMENTO_COLOR,
+                            fillOpacity: 0.45,
+                          },
+                        ]
+                  }
+                />
               </ChartSeriesViewport>
             )}
           </ChartCard>
