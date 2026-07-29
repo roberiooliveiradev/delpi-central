@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -73,5 +76,19 @@ describe("NumberStepperControl", () => {
     ) as HTMLInputElement | null;
     expect(input?.placeholder).toBe("Misto");
     expect(input?.value).toBe("");
+  });
+
+  it("CSS do stepper não estica o combobox no host (.td-field)", () => {
+    const css = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../../styles/number-stepper.css"),
+      "utf8",
+    );
+    expect(css).toMatch(/width:\s*max-content/);
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper \.delpi-ui-combobox-number \{[\s\S]*?flex:\s*0 0 auto/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper \.delpi-ui-combobox-number__toggle \{[\s\S]*?width:\s*22px/,
+    );
   });
 });

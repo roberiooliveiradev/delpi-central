@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, ToolbarSelectField } from "@delpi/plugin-ui/index";
 import {
   ArrowLeftRight,
   Building2,
@@ -28,7 +28,8 @@ import { DeckIconField } from "./deck/DeckIconField";
 import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
-import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
+import { TdNativeTextField } from "./tdFormFields";
+import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
 type Props = {
@@ -239,9 +240,9 @@ export function DeckSettingsPanel({
               hint={F.slideTransition}
               className="td-deck-icon-field--medium"
             >
-              <TdNativeSelectField
+              <TdRibbonSelect
                 id="td-slide-transition"
-                label=""
+                aria-label="Transição do slide"
                 value={transitionStyle}
                 onChange={(value) => {
                   setTransitionStyle(value);
@@ -332,21 +333,23 @@ export function DeckSettingsPanel({
       <>
         <DeckRibbonGroup groupId="playlist-rotation" label="Rotação" hint={F.viewport}>
           <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
-            <TdNativeSelectField
-              id="td-viewport"
+            <ToolbarSelectField
               label="Resolução alvo"
-              hint={F.viewport}
+              title={F.viewport}
               value={playlist.viewportProfile}
-              onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+              allowEmptyOption={false}
+              searchable={false}
               options={VIEWPORT_OPTIONS}
+              onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
             />
-            <TdNativeSelectField
-              id="td-transition"
+            <ToolbarSelectField
               label="Transição"
-              hint={F.transition}
+              title={F.transition}
               value={playlist.transitionStyle}
-              onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
+              allowEmptyOption={false}
+              searchable={false}
               options={TRANSITION_OPTIONS}
+              onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
             />
             <DeckRangeField
               id="td-duration-default"

@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { FormSelectControl } from "@delpi/plugin-ui/index";
 import { Upload } from "lucide-react";
 
 import {
@@ -6,8 +7,15 @@ import {
   previewPlaylistDeckImport,
   type DeckImportPreview,
 } from "../api/tvDashboardApi";
+import { DeckField } from "./deck/DeckField";
+import { TdNativeTextField } from "./tdFormFields";
 import { HostContainedDialog } from "./ui/Modal";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
+
+const BINDING_POLICY_OPTIONS = [
+  { value: "lenient", label: "Permissiva (importa com avisos)" },
+  { value: "strict", label: "Rígida (bloqueia se houver avisos)" },
+] as const;
 
 type Props = {
   open: boolean;
@@ -172,29 +180,30 @@ export function DeckImportModal({ open, onClose, onImported }: Props) {
 
             {canApply ? (
               <>
-                <label className="td-deck-import__field">
-                  <span>Nome da programação</span>
-                  <input
-                    type="text"
-                    value={nameOverride}
-                    maxLength={200}
-                    disabled={busy}
-                    onChange={(event) => setNameOverride(event.target.value)}
-                  />
-                </label>
-                <label className="td-deck-import__field">
-                  <span>Política de bindings</span>
-                  <select
+                <TdNativeTextField
+                  id="td-deck-import-name"
+                  label="Nome da programação"
+                  value={nameOverride}
+                  maxLength={200}
+                  disabled={busy}
+                  onChange={setNameOverride}
+                />
+                <DeckField id="td-deck-import-binding" label="Política de bindings">
+                  <FormSelectControl
+                    id="td-deck-import-binding"
+                    ariaLabel="Política de bindings"
                     value={bindingPolicy}
                     disabled={busy}
-                    onChange={(event) =>
-                      setBindingPolicy(event.target.value as "lenient" | "strict")
-                    }
-                  >
-                    <option value="lenient">Permissiva (importa com avisos)</option>
-                    <option value="strict">Rígida (bloqueia se houver avisos)</option>
-                  </select>
-                </label>
+                    options={BINDING_POLICY_OPTIONS}
+                    allowEmpty={false}
+                    onChange={(value) => {
+                      if (value === "lenient" || value === "strict") {
+                        setBindingPolicy(value);
+                      }
+                    }}
+                    portalScopeClassName="dashboard-tv-dashboard"
+                  />
+                </DeckField>
               </>
             ) : null}
           </div>

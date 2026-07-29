@@ -576,10 +576,12 @@
   gap: 6px;
 }
 /* Layout do campo — visual do controle vem de `kit native control` (plugin-ui).
-   Checkbox/radio/file NÃO recebem width:100% (estica o input e corta o rótulo). */
-.dashboard-tv-dashboard .td-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
-.dashboard-tv-dashboard .td-field select,
-.dashboard-tv-dashboard .td-field textarea{
+   Checkbox/radio/file NÃO recebem width:100% (estica o input e corta o rótulo).
+   Controles `.delpi-ui-*` (stepper, combobox, select custom) também ficam de fora —
+   senão o input do NumberStepper estica e aperta chevron/+. */
+.dashboard-tv-dashboard .td-field input:not([class*="delpi-ui-"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.dashboard-tv-dashboard .td-field select:not([class*="delpi-ui-"]),
+.dashboard-tv-dashboard .td-field textarea:not([class*="delpi-ui-"]){
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -5922,12 +5924,16 @@ body.td-composer--marqueeing *{
   gap: 6px 10px;
   min-width: 0;
 }
-.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .td-field,
-.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .td-deck-ribbon__frame-field{
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation > *{
   min-width: 118px;
   max-width: 200px;
   width: auto;
   flex: 0 0 auto;
+}
+/* Range (duração/refresh) pode crescer um pouco mais que selects curtos. */
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation > *:nth-child(n + 3){
+  min-width: 140px;
+  max-width: 220px;
 }
 .dashboard-tv-dashboard .td-deck-playlist-link{
   display: flex;
@@ -6768,7 +6774,13 @@ body.td-composer--marqueeing *{
   height: 20px;
 }
 
-/* Propriedades da seção — chrome de domínio do editor (não espelha .delpi-ui-*) */
+/* Propriedades da seção — layout do formulário no HostContainedDialog (controles = kit). */
+.dashboard-tv-dashboard .td-deck-section-props-form{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* Legado: overlay próprio (substituído por HostContainedDialog; mantido se algum caller antigo). */
 .dashboard-tv-dashboard .td-deck-section-props{
   position: fixed;
   inset: 0;
@@ -7540,9 +7552,9 @@ body.td-composer--marqueeing *{
   margin-bottom: 0;
   min-width: 0;
 }
-.dashboard-tv-dashboard .td-deck-inspector--side .td-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
-.dashboard-tv-dashboard .td-deck-inspector--side .td-field textarea,
-.dashboard-tv-dashboard .td-deck-inspector--side .td-field select{
+.dashboard-tv-dashboard .td-deck-inspector--side .td-field input:not([class*="delpi-ui-"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.dashboard-tv-dashboard .td-deck-inspector--side .td-field textarea:not([class*="delpi-ui-"]),
+.dashboard-tv-dashboard .td-deck-inspector--side .td-field select:not([class*="delpi-ui-"]){
   width: 100%;
 }
 .dashboard-tv-dashboard .td-field--compact .td-field__label{

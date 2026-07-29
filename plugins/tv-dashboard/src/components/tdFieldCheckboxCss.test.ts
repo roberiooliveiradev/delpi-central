@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 /**
  * Regressão: `.td-field input { width: 100% }` esticava checkboxes e cortava rótulos
  * em «Campos de valor» (NativeCheckboxControl dentro de DeckField).
+ * Também não pode esticar `.delpi-ui-combobox-number__input` do NumberStepper
+ * (casas decimais / tamanho de fonte).
  */
 describe("td-field checkbox CSS contract", () => {
   const css = readFileSync(
@@ -13,9 +15,12 @@ describe("td-field checkbox CSS contract", () => {
     "utf8",
   );
 
-  it("exclui checkbox/radio das regras de width:100% em .td-field", () => {
-    expect(css).toMatch(
-      /\.td-field input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\)/,
+  it("exclui checkbox/radio e delpi-ui das regras de width:100% em .td-field", () => {
+    expect(css).toContain(
+      '.td-field input:not([class*="delpi-ui-"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])',
+    );
+    expect(css).toContain(
+      '.td-deck-inspector--side .td-field input:not([class*="delpi-ui-"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"])',
     );
     expect(css).not.toMatch(
       /\.dashboard-tv-dashboard \.td-field input,\s*\n\.dashboard-tv-dashboard \.td-field select/,
@@ -23,8 +28,7 @@ describe("td-field checkbox CSS contract", () => {
   });
 
   it("fixa tamanho do input do checkbox no inspector", () => {
-    expect(css).toMatch(
-      /\.td-field \.delpi-ui-native-checkbox input[\s\S]*?max-width:\s*1rem/,
-    );
+    expect(css).toMatch(/\.td-deck-inspector--side[\s\S]*?max-width:\s*1rem/);
+    expect(css).toContain("max-width: 1rem");
   });
 });

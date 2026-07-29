@@ -1,4 +1,12 @@
+import { useEffect, useState } from "react";
+import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+
 import type { PlaylistSection } from "../api/tvDashboardApi";
+import { DeckField } from "./deck/DeckField";
+import { TdNativeTextField } from "./tdFormFields";
+import { TdRibbonSelect } from "./tdRibbonUi";
+import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
+import { HostContainedDialog } from "./ui/Modal";
 
 type Props = {
   section: PlaylistSection;
@@ -7,111 +15,118 @@ type Props = {
   onSave: (patch: Partial<PlaylistSection>) => void;
 };
 
-/** Painel mínimo de propriedades da seção (duração, transição, ativo, master enabled). */
+const SECTION_TRANSITION_OPTIONS = [
+  { value: "", label: "Herdar playlist" },
+  { value: "fade", label: "Fade" },
+  { value: "slide", label: "Deslizar" },
+  { value: "none", label: "Sem transição" },
+] as const;
+
+/** Propriedades da seção — controles do plugin-ui (sem select/input crus). */
 export function SectionPropertiesPanel({ section, open, onClose, onSave }: Props) {
-  if (!open) return null;
+  const [name, setName] = useState(section.name);
+  const [durationDraft, setDurationDraft] = useState(
+    section.defaultDurationSec == null ? "" : String(section.defaultDurationSec),
+  );
+
+  useEffect(() => {
+    setName(section.name);
+    setDurationDraft(
+      section.defaultDurationSec == null ? "" : String(section.defaultDurationSec),
+    );
+  }, [section.id, section.name, section.defaultDurationSec]);
+
+  const masterEnabled = Boolean(section.masterConfig?.enabled);
+  const masterBg =
+    section.masterConfig?.background?.type === "color"
+      ? section.masterConfig.background.value || "#0f172a"
+      : "#0f172a";
 
   return (
-    <div className="td-deck-section-props" role="dialog" aria-label="Propriedades da seção">
-      <div className="td-deck-section-props__panel">
-        <header className="td-deck-section-props__head">
-          <h3>Propriedades da seção</h3>
-          <button type="button" onClick={onClose} aria-label="Fechar">
-            ×
+    <HostContainedDialog
+      open={open}
+      onClose={onClose}
+      title="Propriedades da seção"
+      className="td-modal--section-props"
+      footer={
+        <div className="td-modal-actions td-modal-actions--end">
+          <button type="button" className="td-btn td-btn--primary" onClick={onClose}>
+            Fechar
           </button>
-        </header>
-        <label className="td-deck-section-props__field">
-          <span>Nome</span>
-          <input
-            defaultValue={section.name}
-            onBlur={(event) => {
-              const name = event.target.value.trim();
-              if (name && name !== section.name) onSave({ name });
-            }}
-          />
-        </label>
-        <label className="td-deck-section-props__field">
-          <span>Duração padrão (s)</span>
-          <input
+        </div>
+      }
+    >
+      <div className="td-deck-section-props-form">
+        <TdNativeTextField
+          id="td-section-name"
+          label="Nome"
+          value={name}
+          onChange={setName}
+          onBlur={() => {
+            const trimmed = name.trim();
+            if (trimmed && trimmed !== section.name) onSave({ name: trimmed });
+          }}
+        />
+        <DeckField id="td-section-duration" label="Duração padrão (s)">
+          <NativeTextControl
+            id="td-section-duration"
             type="number"
             min={5}
             max={600}
-            defaultValue={section.defaultDurationSec ?? ""}
             placeholder="Herdar playlist"
-            onBlur={(event) => {
-              const raw = event.target.value.trim();
+            aria-label="Duração padrão da seção em segundos"
+            value={durationDraft}
+            onChange={setDurationDraft}
+            onBlur={() => {
+              const raw = durationDraft.trim();
               onSave({
                 defaultDurationSec: raw ? Number(raw) : null,
               });
             }}
           />
-        </label>
-        <label className="td-deck-section-props__field">
-          <span>Transição</span>
-          <select
-            defaultValue={section.transitionStyle ?? ""}
-            onChange={(event) => {
-              const value = event.target.value;
-              onSave({ transitionStyle: value ? value : null });
-            }}
-          >
-            <option value="">Herdar playlist</option>
-            <option value="fade">Fade</option>
-            <option value="slide">Slide</option>
-            <option value="none">Nenhuma</option>
-          </select>
-        </label>
-        <label className="td-deck-section-props__check">
-          <input
-            type="checkbox"
-            defaultChecked={section.isActive !== false}
-            onChange={(event) => onSave({ isActive: event.target.checked })}
+        </DeckField>
+        <DeckField id="td-section-transition" label="Transição">
+          <TdRibbonSelect
+            id="td-section-transition"
+            aria-label="Transição da seção"
+            value={section.transitionStyle ?? ""}
+            options={SECTION_TRANSITION_OPTIONS}
+            onChange={(value) => onSave({ transitionStyle: value ? value : null })}
           />
-          <span>Visível na TV</span>
-        </label>
-        <label className="td-deck-section-props__check">
-          <input
-            type="checkbox"
-            defaultChecked={Boolean(section.masterConfig?.enabled)}
-            onChange={(event) =>
+        </DeckField>
+        <NativeCheckboxControl
+          label="Visível na TV"
+          checked={section.isActive !== false}
+          onChange={(checked) => onSave({ isActive: checked })}
+        />
+        <NativeCheckboxControl
+          label="Master da seção ativo (fundo/logo)"
+          checked={masterEnabled}
+          onChange={(checked) =>
+            onSave({
+              masterConfig: {
+                ...(section.masterConfig ?? {}),
+                enabled: checked,
+              },
+            })
+          }
+        />
+        {masterEnabled ? (
+          <TvRibbonColorPicker
+            label="Cor de fundo da seção"
+            value={masterBg}
+            onChange={(color) =>
               onSave({
                 masterConfig: {
                   ...(section.masterConfig ?? {}),
-                  enabled: event.target.checked,
+                  enabled: true,
+                  background: { type: "color", value: color },
                 },
               })
             }
           />
-          <span>Master da seção ativo (fundo/logo)</span>
-        </label>
-        {section.masterConfig?.enabled ? (
-          <label className="td-deck-section-props__field">
-            <span>Cor de fundo da seção</span>
-            <input
-              type="color"
-              defaultValue={
-                section.masterConfig?.background?.type === "color"
-                  ? section.masterConfig.background.value || "#0f172a"
-                  : "#0f172a"
-              }
-              onChange={(event) =>
-                onSave({
-                  masterConfig: {
-                    ...(section.masterConfig ?? {}),
-                    enabled: true,
-                    background: { type: "color", value: event.target.value },
-                  },
-                })
-              }
-            />
-          </label>
         ) : null}
-        <footer className="td-deck-section-props__foot">
-          <button type="button" onClick={onClose}>
-            Fechar
-          </button>
-        </footer>
       </div>
-    </div>
+    </HostContainedDialog>
   );
 }
