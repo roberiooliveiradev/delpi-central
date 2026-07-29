@@ -190,7 +190,7 @@ function ScrapMonitoringContent({
       <div className="sm-app-shell">
         <PageHeader
           title={`Acompanhamento de Refugos — ${branchLabel}`}
-          subtitle={`Filial TOTVS ${totvsBranch} · ${periodoLabel} · sem produto de terceiro`}
+          subtitle={`Filial TOTVS ${totvsBranch} · ${periodoLabel}`}
           onRefresh={handleRefresh}
           refreshing={refreshing}
         />

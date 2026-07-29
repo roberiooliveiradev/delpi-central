@@ -175,7 +175,7 @@ export function PerdasPage({ pathname }: PerdasPageProps) {
           >
             <h3 className="dq-module-shortcut__title">Acompanhamento de Refugos</h3>
             <p className="dq-module-shortcut__description">
-              Rankings, séries e registros de refugo no TOTVS (sem produto de terceiro)
+              Rankings, séries e registros de refugo no TOTVS
               {scrap?.scrap_cost_pct != null
                 ? ` · KPI atual ${formatPctOrDash(scrap.scrap_cost_pct)}`
                 : ""}

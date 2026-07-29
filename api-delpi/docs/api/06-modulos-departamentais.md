@@ -436,8 +436,6 @@ Documentação completa: [production-appointments.md](./production-appointments.
 
 Painel de refugos em R$ (`SBC010` + custo SB2/SB1, motivos CYO, PA via SC2, operador SYS_USR). Plugin: `scrap-monitoring`. Filiais: SC=`01`, ES=`02`.
 
-**Escopo:** exclui produto de terceiro (`SB1.B1_TPMAT = 2`, SX3 «Produto de Terceiro») em resumo, rankings, série, registros e filtros.
-
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/refugos/health` | Health check da fonte SBC010. |

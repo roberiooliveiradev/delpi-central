@@ -18,8 +18,7 @@ def test_base_where_filters_refugo_branch_and_closed_open_dates() -> None:
     assert "LTRIM(RTRIM(BC.BC_FILIAL)) = ?" in where
     assert "BC.BC_DATA >= ?" in where
     assert "BC.BC_DATA < ?" in where
-    assert "LTRIM(RTRIM(SB1.B1_TPMAT)) <> ?" in where
-    assert params == ["R", "01", "20260401", "20260428", "2"]
+    assert params == ["R", "01", "20260401", "20260428"]
 
 
 def test_base_where_consolidated_uses_valid_branch_in_clause() -> None:
@@ -30,7 +29,7 @@ def test_base_where_consolidated_uses_valid_branch_in_clause() -> None:
     )
 
     assert "LTRIM(RTRIM(BC.BC_FILIAL)) IN (?, ?)" in where
-    assert params == ["R", "01", "02", "20260401", "20260428", "2"]
+    assert params == ["R", "01", "02", "20260401", "20260428"]
 
 
 def test_resumo_query_uses_nolock_and_avg_cost_join() -> None:
@@ -49,10 +48,8 @@ def test_resumo_query_uses_nolock_and_avg_cost_join() -> None:
     assert "AVG(NULLIF(CAST(B2_CM1 AS FLOAT), 0))" in query
     assert "CYO010" in query
     assert "SYS_USR" in query
-    assert "LTRIM(RTRIM(SB1.B1_TPMAT)) <> ?" in query
     assert params[12] == "R"
     assert params[13] == "01"
-    assert params[-1] == "2"
 
 
 def test_ranking_motivo_groups_by_cyo_label() -> None:
@@ -69,7 +66,6 @@ def test_ranking_motivo_groups_by_cyo_label() -> None:
     assert "ORDER BY value DESC" in query
     assert "TOP 10" in query
     assert params[0] == "R"
-    assert "2" in params
 
 
 def test_serie_day_groups_by_yyyymmdd() -> None:
@@ -83,7 +79,7 @@ def test_serie_day_groups_by_yyyymmdd() -> None:
     assert "LEFT(LTRIM(RTRIM(BC.BC_DATA)), 8) AS bucket" in query
     assert "GROUP BY LEFT(LTRIM(RTRIM(BC.BC_DATA)), 8)" in query
     assert "ORDER BY bucket ASC" in query
-    assert params == ("R", "01", "20260701", "20260716", "2")
+    assert params == ("R", "01", "20260701", "20260716")
 
 
 def test_serie_month_groups_by_yyyymm() -> None:

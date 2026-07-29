@@ -4,8 +4,6 @@ Plugin id: **`scrap-monitoring`**. Título exibido ao usuário: **Acompanhamento
 
 Painel multi-filial (SC/ES) de refugos em R$, consumindo a API **`/refugos`** da api-delpi.
 
-**Escopo:** a API exclui produto de terceiro (`SB1.B1_TPMAT = 2`, cadastro SB1 «Produto de Terceiro»). KPIs, rankings, série, filtros e registros já vêm sem esses itens — não há toggle no MFE.
-
 ## Rotas da UI
 
 | Path | Permissão | Filial TOTVS |
@@ -27,8 +25,6 @@ Base: `/apps/api-delpi` (gateway). Header: `X-Delpi-Caller-App: scrap-monitoring
 | `GET /refugos/rankings?dimension=…` | Top N (motivo, MP, PA, CT, colaborador) |
 | `GET /refugos/registros` | Tabela do acompanhamento |
 | `GET /refugos/filtros` | Opções MP/PA/OP/motivo |
-
-Todos os endpoints acima respeitam a exclusão de produto de terceiro na api-delpi.
 
 Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/scrap-monitoring.md).
 
