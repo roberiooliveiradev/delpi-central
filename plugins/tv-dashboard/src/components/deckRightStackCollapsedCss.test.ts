@@ -19,10 +19,18 @@ describe("deck right-stack collapsed CSS", () => {
     );
   });
 
-  it("esconde notas do apresentador com o painel recolhido", () => {
+  it("esconde notas do apresentador com o painel recolhido (legado CSS)", () => {
     expect(css).toMatch(
       /\.td-deck-right-stack:has\(\.td-deck-side-panel--collapsed\) \.td-deck-speaker-notes\s*\{[^}]*display:\s*none/s,
     );
+  });
+
+  it("layout do editor não monta o campo de notas do apresentador", () => {
+    const layout = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "./CustomSlideEditorLayout.tsx"),
+      "utf8",
+    );
+    expect(layout).not.toMatch(/td-speaker-notes|Notas do apresentador|td-deck-speaker-notes/);
   });
 
   it("fixa largura do painel stage recolhido em 36px (não herda width aberto)", () => {

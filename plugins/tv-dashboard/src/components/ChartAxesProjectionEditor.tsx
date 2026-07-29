@@ -44,6 +44,9 @@ function seriesByField(
 /**
  * Eixo X (categoria) + séries Y com propriedades individuais.
  * Ao mudar a categoria de referência, ela sai do eixo Y e o gráfico reprojeta os pontos.
+ *
+ * Rótulo da série = botão de seleção no palco (mesmo padrão das colunas de tabela).
+ * Checkbox só marca/desmarca a projeção — nunca concatena «Selecionar» ao nome do campo.
  */
 export function ChartAxesProjectionEditor({
   idPrefix,
@@ -62,14 +65,20 @@ export function ChartAxesProjectionEditor({
   const seriesList = chartProjection?.series ?? [];
   const seriesMap = seriesByField(chartProjection);
   const hasProjection = Boolean(categoryField || seriesList.length);
+  const seriesWell = chartSeriesWellLabel(policy);
+  const defaultSeriesAgg = policy.defaultAggregation;
+  const maxSeries = Math.max(1, policy.maxSeries);
+  const atSeriesLimit = seriesList.length >= maxSeries;
 
   const persist = (next: ChartViewProjection) => {
     const cleanedSeries = (next.series ?? []).filter(
       (item) => !next.categoryField || item.field !== next.categoryField,
     );
+    const cappedSeries =
+      cleanedSeries.length > maxSeries ? cleanedSeries.slice(0, maxSeries) : cleanedSeries;
     const payload: ChartViewProjection = {
       categoryField: next.categoryField || undefined,
-      series: cleanedSeries.length > 0 ? cleanedSeries : undefined,
+      series: cappedSeries.length > 0 ? cappedSeries : undefined,
     };
     if (!payload.categoryField && !payload.series?.length) {
       onChange(undefined);
@@ -92,8 +101,6 @@ export function ChartAxesProjectionEditor({
     persist({ categoryField: categoryField || undefined, series: current });
   };
 
-  const defaultSeriesAgg = policy.defaultAggregation;
-
   return (
     <div
       className={
@@ -106,6 +113,9 @@ export function ChartAxesProjectionEditor({
     >
       <p className="td-deck-inspector__hint">
         {chartAxesEditorHint(policy, hasProjection)}
+        {maxSeries === 1
+          ? " Este tipo de gráfico usa uma série de valor."
+          : ` Até ${maxSeries} séries.`}
       </p>
       <FormSelectControl
         id={`${idPrefix}-category`}
@@ -127,16 +137,19 @@ export function ChartAxesProjectionEditor({
         ]}
       />
 
-      <p className="td-deck-inspector__hint">{chartSeriesWellLabel(policy)}</p>
+      <p className="td-deck-inspector__hint">{seriesWell}</p>
       <div className="td-deck-inspector__projection-list" role="list" aria-label="Séries do gráfico">
       {yOptions.map((option) => {
         const checked = seriesMap.has(option.field);
         const series = seriesMap.get(option.field);
         const focused = focusedSeriesField === option.field;
         const orderIndex = seriesList.findIndex((item) => item.field === option.field);
+        const rowLabel = `${seriesWell} · ${option.label}`;
         const baseClass = focused
           ? "td-deck-inspector__chart-series td-deck-inspector__chart-series--focused"
           : "td-deck-inspector__chart-series";
+        const canActivate =
+          Boolean(checked && onSeriesActivate && orderIndex >= 0);
 
         return (
           <div
@@ -146,7 +159,6 @@ export function ChartAxesProjectionEditor({
               checked && orderIndex >= 0 ? rowClassName(baseClass, orderIndex) : baseClass
             }
             {...(checked && orderIndex >= 0 ? rowDropProps(orderIndex) : {})}
-            /* Só o rótulo/área ativa a parte — checkbox só muda projeção (não esvazia Design). */
           >
             <div
               className="td-deck-inspector__chart-series-head"
@@ -164,39 +176,56 @@ export function ChartAxesProjectionEditor({
                   ⋮⋮
                 </button>
               ) : null}
-              <NativeCheckboxControl
-                id={`${idPrefix}-series-${option.field}`}
-                className="td-deck-inspector__checkbox"
-                checked={checked}
-                label={`${chartSeriesWellLabel(policy)} · ${option.label}`}
-                onChange={(nextChecked) => {
-                  const current = seriesList.filter((item) => item.field !== option.field);
-                  const nextSeries = nextChecked
-                    ? [
-                        ...current,
-                        {
-                          field: option.field,
-                          label: option.label,
-                          aggregation: defaultSeriesAgg,
-                        },
-                      ]
-                    : current;
-                  persist({
-                    categoryField: categoryField || undefined,
-                    series: nextSeries,
-                  });
-                }}
-              />
-              {checked && onSeriesActivate && orderIndex >= 0 ? (
+              <span
+                className="td-deck-inspector__column-toggle"
+                onClick={(event) => event.stopPropagation()}
+                onPointerDown={(event) => event.stopPropagation()}
+              >
+                <NativeCheckboxControl
+                  id={`${idPrefix}-series-${option.field}`}
+                  className="td-deck-inspector__checkbox"
+                  checked={checked}
+                  disabled={!checked && atSeriesLimit && maxSeries > 1}
+                  aria-label={`Incluir ${rowLabel}`}
+                  onChange={(nextChecked) => {
+                    if (nextChecked) {
+                      const without = seriesList.filter((item) => item.field !== option.field);
+                      const entry = {
+                        field: option.field,
+                        label: option.label,
+                        aggregation: defaultSeriesAgg,
+                      };
+                      const nextSeries =
+                        maxSeries === 1
+                          ? [entry]
+                          : without.length >= maxSeries
+                            ? [...without.slice(0, maxSeries - 1), entry]
+                            : [...without, entry];
+                      persist({
+                        categoryField: categoryField || undefined,
+                        series: nextSeries,
+                      });
+                      return;
+                    }
+                    persist({
+                      categoryField: categoryField || undefined,
+                      series: seriesList.filter((item) => item.field !== option.field),
+                    });
+                  }}
+                />
+              </span>
+              {canActivate ? (
                 <button
                   type="button"
                   className="td-chart-element__label-btn"
                   title="Selecionar série no palco"
-                  onClick={() => onSeriesActivate(option.field, orderIndex)}
+                  onClick={() => onSeriesActivate?.(option.field, orderIndex)}
                 >
-                  Selecionar
+                  {rowLabel}
                 </button>
-              ) : null}
+              ) : (
+                <span className="td-chart-element__label">{rowLabel}</span>
+              )}
             </div>
             {checked && series ? (
               <div className="td-deck-inspector__chart-series-controls">

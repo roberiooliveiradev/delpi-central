@@ -14,8 +14,6 @@ import {
   buildFilmstripSlidesWithThumbnailCache,
   serializeComunicadoConfigForThumbnail,
 } from "./slideCardPreview";
-import { TdNativeTextAreaField } from "./tdFormFields";
-
 type WorkspaceProps = Omit<ComponentProps<typeof DeckWorkspace>, "stage">;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
 
@@ -40,7 +38,6 @@ export function CustomSlideEditorLayout({
     isDataPreviewStale,
     dataPreviewLoading,
     refreshDataPreview,
-    setSpeakerNotes,
   } = useComunicadoEditor();
   /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
@@ -100,15 +97,6 @@ export function CustomSlideEditorLayout({
         rightPanel={
           <div className="td-deck-right-stack">
             <DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />
-            <TdNativeTextAreaField
-              id="td-speaker-notes"
-              label="Notas do apresentador"
-              className="td-deck-speaker-notes"
-              rows={5}
-              value={config.speakerNotes ?? ""}
-              placeholder="Anotações visíveis apenas no modo apresentador."
-              onChange={setSpeakerNotes}
-            />
           </div>
         }
         stage={
