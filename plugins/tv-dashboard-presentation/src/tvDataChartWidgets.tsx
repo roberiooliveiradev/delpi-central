@@ -4,12 +4,11 @@ import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartInteraction, ComunicadoChartPartsMap } from "./comunicadoChartParts";
 import { pieInnerRadiusForChartType, toSeriesChartKind } from "./comunicadoChartView";
 import type { ComunicadoChartType, ComunicadoDataResolved } from "./comunicadoTypes";
-import { formatNumber, formatPct } from "./nativeFormat";
+import { formatNumber } from "./nativeFormat";
 
 export function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) return "—";
   if (typeof value === "number") {
-    if (Math.abs(value) <= 100 && !Number.isInteger(value)) return formatPct(value);
     return formatNumber(value);
   }
   return String(value);

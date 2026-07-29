@@ -420,6 +420,18 @@ describe("formatSeriesChartValue", () => {
     expect(formatted).toContain("R$");
     expect(formatted).toMatch(/0,0123/);
   });
+
+  it("automático não trata R$ pequeno como percentual", () => {
+    const formatted = formatSeriesChartValue(41.7, "auto");
+    expect(formatted).not.toContain("%");
+    expect(formatted).toMatch(/41/);
+  });
+
+  it("currency com centavos exibe 2 casas", () => {
+    const formatted = formatSeriesChartValue(41.7, "currency");
+    expect(formatted).toContain("R$");
+    expect(formatted).toMatch(/41,70/);
+  });
 });
 
 describe("mergeSeriesChartOptions", () => {

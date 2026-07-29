@@ -161,6 +161,9 @@ def test_rankings_returns_playbook_meta(
     assert body["meta"]["operationId"] == "get_refugos_rankings"
     assert body["meta"]["entity"] == "refugos_rankings"
     assert body["meta"]["shape"] == "playbook_report"
+    assert body["meta"]["fields"]["value"] == "Valor (R$)"
+    assert body["meta"]["fieldFormats"]["value"] == "currency"
+    assert body["meta"]["fieldFormats"]["sharePct"] == "percent"
 
 
 @patch(

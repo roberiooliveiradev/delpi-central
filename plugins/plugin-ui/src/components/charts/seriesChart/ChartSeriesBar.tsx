@@ -16,6 +16,9 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
 /**
  * Colunas cartesianas — topo via toY (domínio do eixo); base no fundo do plot.
  * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped bars).
+ *
+ * Seleção: hit-target no `<g>` (série inteira); outline em todas as barras.
+ * X alinha com rótulos via `sourceIndex` (mesmo slot da categoria).
  */
 export function ChartSeriesBar({
   layout,
@@ -33,15 +36,39 @@ export function ChartSeriesBar({
   const baseline = margin.top + plotH;
   const count = Math.max(1, seriesCount);
   const safeIndex = Math.min(Math.max(0, seriesIndex), count - 1);
+  const categoryCount = Math.max(points.length, 1);
 
   return (
-    <>
+    <g
+      {...chartPartDomProps(ref, interaction?.selectedPart)}
+      onPointerDown={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              interaction?.onPartPointerDown?.(ref, event);
+            }
+          : undefined
+      }
+      onDoubleClick={
+        interactive
+          ? (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+              interaction?.onPartDoubleClick?.(ref, event);
+            }
+          : undefined
+      }
+    >
       {points.map((point, index) => {
         const raw = Number(point.value);
         const value = Number.isFinite(raw)
           ? Math.min(axisMax, Math.max(axisMin, raw))
           : axisMin;
-        const slotW = plotW / Math.max(points.length, 1);
+        const slotIndex =
+          typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
+            ? point.sourceIndex
+            : index;
+        const slotW = plotW / categoryCount;
         const groupPad = Math.min(slotW * 0.12, 6);
         const usable = Math.max(slotW - groupPad * 2, 2);
         const innerGap = count > 1 ? Math.min(usable * 0.08, 3) : 0;
@@ -52,7 +79,7 @@ export function ChartSeriesBar({
         const clusterOffset = count > 1 ? 0 : (usable - barW) / 2;
         const x =
           margin.left +
-          index * slotW +
+          slotIndex * slotW +
           groupPad +
           clusterOffset +
           safeIndex * (barW + innerGap);
@@ -61,35 +88,19 @@ export function ChartSeriesBar({
 
         return (
           <rect
-            key={`bar-${seriesIndex}-${index}`}
+            key={`bar-${seriesIndex}-${slotIndex}`}
             x={x}
             y={y}
             width={barW}
             height={height}
             fill={seriesColor}
             rx={1}
-            className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
-            {...(index === 0 ? chartPartDomProps(ref, interaction?.selectedPart) : {})}
-            onPointerDown={
-              interactive
-                ? (event) => {
-                    event.stopPropagation();
-                    interaction?.onPartPointerDown?.(ref, event);
-                  }
-                : undefined
-            }
-            onDoubleClick={
-              interactive
-                ? (event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    interaction?.onPartDoubleClick?.(ref, event);
-                  }
-                : undefined
-            }
+            className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
+              .filter(Boolean)
+              .join(" ")}
           />
         );
       })}
-    </>
+    </g>
   );
 }

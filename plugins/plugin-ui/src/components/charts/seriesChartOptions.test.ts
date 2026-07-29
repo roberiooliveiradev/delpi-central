@@ -36,6 +36,23 @@ describe("seriesChartOptions — títulos de eixo", () => {
     expect(resolved.showYAxisTitle).toBe(true);
   });
 
+  it("resolveSeriesChartDisplayOptions infere moeda em ranking de valor (R$)", () => {
+    const resolved = resolveSeriesChartDisplayOptions(
+      { valueFormat: "auto" },
+      {
+        label: "Relatório operacional — Refugos rankings",
+        chart: { series: [{ field: "value", name: "Valor (R$)" }] },
+        table: {
+          columns: [
+            { key: "code", label: "Código" },
+            { key: "value", label: "Valor (R$)" },
+          ],
+        },
+      },
+    );
+    expect(resolved.valueFormat).toBe("currency");
+  });
+
   it("resolveSeriesChartDisplayOptions preserva override explícito dos eixos", () => {
     const resolved = resolveSeriesChartDisplayOptions(
       { xAxisTitle: "Mês", yAxisTitle: "Índice", showXAxisTitle: false },

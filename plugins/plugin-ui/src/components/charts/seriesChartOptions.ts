@@ -192,6 +192,9 @@ export type SeriesChartResolvedMeta = {
   table?: {
     columns?: Array<{ key?: string; label?: string } | null> | null;
   } | null;
+  chart?: {
+    series?: Array<{ field?: string | null; name?: string | null } | null> | null;
+  } | null;
 };
 
 function trimChartText(value: unknown): string {
@@ -221,6 +224,28 @@ function defaultYAxisTitleFromResolved(resolved?: SeriesChartResolvedMeta | null
   return trimChartText(resolved?.kpi?.label) || trimChartText(resolved?.label);
 }
 
+function primarySeriesFieldFromResolved(
+  resolved?: SeriesChartResolvedMeta | null,
+): { field?: string; label?: string } {
+  const series = resolved?.chart?.series;
+  if (Array.isArray(series)) {
+    for (const entry of series) {
+      const field = trimChartText(entry?.field);
+      if (field) {
+        return { field, label: trimChartText(entry?.name) || undefined };
+      }
+    }
+  }
+  const cols = resolved?.table?.columns;
+  if (Array.isArray(cols) && cols.length > 1) {
+    const key = trimChartText(cols[1]?.key);
+    if (key) {
+      return { field: key, label: trimChartText(cols[1]?.label) || undefined };
+    }
+  }
+  return {};
+}
+
 export function resolveSeriesChartDisplayOptions(
   blockOptions: SeriesChartOptions | undefined,
   resolved?: SeriesChartResolvedMeta | null,
@@ -230,6 +255,11 @@ export function resolveSeriesChartDisplayOptions(
   const xAxisTitle = trimChartText(merged.xAxisTitle) || defaultXAxisTitleFromResolved(resolved);
   const yAxisTitle =
     trimChartText(merged.yAxisTitle) || defaultYAxisTitleFromResolved(resolved) || fallbackTitle;
+  const explicitFormat = merged.valueFormat && merged.valueFormat !== "auto" ? merged.valueFormat : null;
+  const primary = primarySeriesFieldFromResolved(resolved);
+  const inferredFormat = explicitFormat
+    ? null
+    : inferSeriesChartValueFormatFromField(primary.field, primary.label || yAxisTitle);
   return {
     ...merged,
     title: trimChartText(merged.title) || fallbackTitle,
@@ -237,6 +267,7 @@ export function resolveSeriesChartDisplayOptions(
       trimChartText(merged.seriesName) || trimChartText(merged.title) || fallbackTitle || "Série",
     xAxisTitle: xAxisTitle || undefined,
     yAxisTitle: yAxisTitle || undefined,
+    valueFormat: explicitFormat ?? inferredFormat ?? merged.valueFormat ?? "auto",
   };
 }
 
@@ -265,7 +296,13 @@ export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChart
 
 export function formatSeriesChartValue(value: number, format: SeriesChartValueFormat): string {
   if (format === "currency") {
-    return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+    const hasCents = Math.abs(value % 1) > 1e-9;
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: hasCents ? 2 : 0,
+    });
   }
   if (format === "currency4") {
     return value.toLocaleString("pt-BR", {
@@ -281,13 +318,78 @@ export function formatSeriesChartValue(value: number, format: SeriesChartValueFo
   if (format === "number") {
     return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
   }
-  if (Math.abs(value) <= 100 && !Number.isInteger(value)) {
-    return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
-  }
+  /*
+   * Automático: número localizado. Não inferir % por magnitude (R$ 41,70 virava «41,7%»).
+   * Percentual/moeda só com valueFormat explícito ou inferência pelo nome do campo.
+   */
   if (Math.abs(value) >= 1000) {
-    return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+    const hasCents = Math.abs(value % 1) > 1e-9;
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: hasCents ? 2 : 0,
+    });
   }
   return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+/**
+ * Infere formato a partir do nome/rótulo do campo da série (meta/API), quando o bloco
+ * está em Automático. Evita R$ pequeno virar % e sharePct ficar sem sufixo.
+ */
+export function inferSeriesChartValueFormatFromField(
+  field?: string | null,
+  label?: string | null,
+): SeriesChartValueFormat | undefined {
+  const key = String(field ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+  const lab = String(label ?? "")
+    .trim()
+    .toLowerCase();
+  if (lab.includes("%") || lab.includes("percent") || lab.includes("participa")) {
+    return "percent";
+  }
+  if (lab.includes("r$") || lab.includes("moeda") || /\bvalor\b/.test(lab)) {
+    return "currency";
+  }
+  if (!key) return undefined;
+  if (
+    key.includes("pct") ||
+    key.includes("percent") ||
+    key.includes("share") ||
+    key.endsWith("_rate") ||
+    key.includes("margem") ||
+    key.includes("margin")
+  ) {
+    return "percent";
+  }
+  if (
+    key.includes("valor") ||
+    key.includes("cost") ||
+    key.includes("custo") ||
+    key.includes("revenue") ||
+    key.includes("receita") ||
+    key.includes("saving") ||
+    key.includes("economia") ||
+    /(^|_)rol($|_)/.test(key) ||
+    key.includes("amount") ||
+    key.includes("price") ||
+    key.includes("preco") ||
+    /* `value` sozinho é ambíguo (OEE vs R$); só com rótulo monetário acima. */
+    key === "total_valor" ||
+    (key.endsWith("_value") &&
+      (key.includes("cost") || key.includes("stock") || key.includes("saving")))
+  ) {
+    return "currency";
+  }
+  /* Rankings / KPIs monetários: campo canônico `value` + rótulo «Valor». */
+  if (key === "value" && (lab.includes("valor") || lab.includes("custo") || lab.includes("r$"))) {
+    return "currency";
+  }
+  return undefined;
 }
 
 const LIGHT_CHART_THEME = DECK_THEME_LIGHT;

@@ -114,6 +114,8 @@ def execute_refugos_route(
     operation_id: str,
     success_message: str,
     error_context: str,
+    fields: dict[str, str] | None = None,
+    field_formats: dict[str, str] | None = None,
 ):
     try:
         use_case = use_case_builder()
@@ -122,6 +124,8 @@ def execute_refugos_route(
             result,
             operation_id=operation_id,
             message=success_message,
+            fields=fields,
+            field_formats=field_formats,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao {error_context}: {exc}")

@@ -18,6 +18,8 @@ from app.composition.refugos_composer import (
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
+    REFUGOS_RANKINGS_FIELD_FORMATS,
+    REFUGOS_RANKINGS_FIELD_LABELS,
     REFUGOS_SCRAP_COST_PCT_FIELD_LABELS,
     kpi_fields,
 )
@@ -294,6 +296,8 @@ def get_refugos_rankings_route(
         operation_id="get_refugos_rankings",
         success_message="Ranking de refugos carregado com sucesso.",
         error_context="carregar ranking de refugos",
+        fields=kpi_fields(REFUGOS_RANKINGS_FIELD_LABELS),
+        field_formats=REFUGOS_RANKINGS_FIELD_FORMATS,
     )
 
 

@@ -237,6 +237,24 @@ REFUGOS_SCRAP_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "quantity": "Quantidade total",
 }
 
+REFUGOS_RANKINGS_FIELD_LABELS: dict[str, str] = {
+    "code": "Código",
+    "label": "Descrição",
+    "quantity": "Quantidade",
+    "value": "Valor (R$)",
+    "sharePct": "Participação (%)",
+    "occurrenceCount": "Ocorrências",
+    "total_valor": "Total valor (R$)",
+}
+
+REFUGOS_RANKINGS_FIELD_FORMATS: dict[str, str] = {
+    "value": "currency",
+    "sharePct": "percent",
+    "quantity": "quantity",
+    "occurrenceCount": "quantity",
+    "total_valor": "currency",
+}
+
 RETRABALHO_REWORK_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "rework_cost": "Custo de retrabalho (R$)",
     "rol_with_ipi": "ROL com IPI (R$)",
@@ -453,6 +471,8 @@ _FIELD_FORMAT_TOKENS: dict[str, tuple[str, ...]] = {
         "_pct",
         "_percent",
         "percentage",
+        "sharepct",
+        "share_pct",
         "taxa",
         "rate",
         "margem",

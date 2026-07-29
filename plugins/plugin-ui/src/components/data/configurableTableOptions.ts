@@ -1,4 +1,4 @@
-import { formatNumber, formatPct } from "../../utils/localeFormat";
+import { formatNumber } from "../../utils/localeFormat";
 import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableClassNames } from "./configurableTableClasses";
 
@@ -144,7 +144,13 @@ export function formatConfigurableTableCellValue(
   if (typeof value !== "number") return String(value);
 
   if (format === "currency") {
-    return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+    const hasCents = Math.abs(value % 1) > 1e-9;
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: hasCents ? 2 : 0,
+      maximumFractionDigits: hasCents ? 2 : 0,
+    });
   }
   if (format === "percent") {
     return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
@@ -152,7 +158,7 @@ export function formatConfigurableTableCellValue(
   if (format === "number") {
     return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
   }
-  if (Math.abs(value) <= 100 && !Number.isInteger(value)) return formatPct(value);
+  /* Automático: número — não inferir % por magnitude (R$ pequeno ≠ percentual). */
   return formatNumber(value);
 }
 
