@@ -1,4 +1,4 @@
-"""Exportação e importação do pacote portátil `.delpi-tv-deck`."""
+"""Exportação e importação do pacote portátil MDD (Minha Delpi Deck, `.mdd`)."""
 
 from __future__ import annotations
 
@@ -28,7 +28,9 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistRepository,
 )
 
-PACKAGE_FORMAT = "delpi_tv_deck"
+PACKAGE_FORMAT = "minha_delpi_deck"
+PACKAGE_FORMAT_ALIASES = frozenset({PACKAGE_FORMAT, "delpi_tv_deck", "mdd"})
+PACKAGE_EXTENSION = ".mdd"
 SCHEMA_VERSION = "1.0"
 MANIFEST_FILENAME = "manifest.json"
 PLAYLIST_PATH = "deck/playlist.json"
@@ -313,7 +315,7 @@ class TvDeckPackageService:
             ch if ch.isalnum() or ch in {"-", "_"} else "-"
             for ch in str(playlist["name"]).strip()
         ).strip("-") or "programacao"
-        filename = f"{safe_name}.delpi-tv-deck"
+        filename = f"{safe_name}{PACKAGE_EXTENSION}"
         return payload, filename
 
     def parse_package(self, raw: bytes) -> tuple[dict[str, Any], dict[str, bytes]]:
@@ -343,8 +345,8 @@ class TvDeckPackageService:
             raise TvDeckPackageError("manifest.json inválido.") from exc
         if not isinstance(manifest, dict):
             raise TvDeckPackageError("manifest.json inválido.")
-        if manifest.get("format") != PACKAGE_FORMAT:
-            raise TvDeckPackageError("Formato de pacote não reconhecido.")
+        if str(manifest.get("format") or "").strip() not in PACKAGE_FORMAT_ALIASES:
+            raise TvDeckPackageError("Formato de pacote não reconhecido (esperado MDD / minha_delpi_deck).")
         schema = str(manifest.get("schemaVersion") or "").strip()
         if schema.split(".")[0] != "1":
             raise TvDeckPackageError(f"schemaVersion não suportada: {schema or '?'}.")

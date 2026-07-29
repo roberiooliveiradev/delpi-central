@@ -1,4 +1,4 @@
-"""Testes do pacote portátil `.delpi-tv-deck`."""
+"""Testes do pacote portátil MDD (`.mdd` / Minha Delpi Deck)."""
 
 from __future__ import annotations
 
@@ -255,7 +255,7 @@ def test_export_preview_apply_roundtrip(tmp_path: Path):
 
     # Export
     payload, filename = service.export_package(uuid4(), exported_by="user-a")
-    assert filename.endswith(".delpi-tv-deck")
+    assert filename.endswith(".mdd")
     assert payload[:2] == b"PK"
 
     with zipfile.ZipFile(io.BytesIO(payload)) as zf:
@@ -301,6 +301,43 @@ def test_export_preview_apply_roundtrip(tmp_path: Path):
     # asset remap applied in update masterConfig
     update_kwargs = playlist_repo.update.call_args.kwargs
     assert update_kwargs["master_config"]["logo"]["assetId"] != asset_id
+
+
+def test_preview_accepts_legacy_format_alias():
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as zf:
+        playlist = json.dumps({"name": "Legado", "masterConfig": {}}).encode()
+        sections = b"[]"
+        slides = b"[]"
+        media = b"[]"
+        for path, content in (
+            (PLAYLIST_PATH, playlist),
+            (SECTIONS_PATH, sections),
+            (SLIDES_PATH, slides),
+            (MEDIA_INDEX_PATH, media),
+        ):
+            zf.writestr(path, content)
+        import hashlib
+
+        def entry(content: bytes) -> dict[str, Any]:
+            return {"sha256": hashlib.sha256(content).hexdigest(), "size_bytes": len(content)}
+
+        manifest = {
+            "format": "delpi_tv_deck",
+            "schemaVersion": "1.0",
+            "entries": {
+                PLAYLIST_PATH: entry(playlist),
+                SECTIONS_PATH: entry(sections),
+                SLIDES_PATH: entry(slides),
+                MEDIA_INDEX_PATH: entry(media),
+            },
+            "stats": {},
+        }
+        zf.writestr(MANIFEST_FILENAME, json.dumps(manifest).encode())
+    service = TvDeckPackageService(max_bytes=1024 * 1024, preview_store=_PreviewStore())
+    preview = service.preview_import(buffer.getvalue())
+    assert preview["valid"] is True
+    assert preview.get("importToken")
 
 
 def test_preview_rejects_bad_checksum():

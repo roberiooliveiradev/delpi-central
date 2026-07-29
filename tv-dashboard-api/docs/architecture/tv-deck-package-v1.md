@@ -1,8 +1,20 @@
-# Pacote portátil TV Deck — v1.0
+# Pacote portátil MDD (Minha Delpi Deck) — v1.0
+
+> **Padrão oficial** de exportação de programações e slides do Painéis TV.  
+> Guia de produto / uso: [`docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md`](../../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
 
 Formato canônico para exportar/importar uma **programação completa** (playlist + seções + slides + mídias + bindings) entre contas.
 
-Extensão sugerida: **`.delpi-tv-deck`** (conteúdo = ZIP).
+| | |
+|--|--|
+| **Sigla** | MDD |
+| **Nome** | Minha Delpi Deck |
+| **Extensão** | `.mdd` (conteúdo = ZIP) |
+| **`format` no manifest** | `minha_delpi_deck` |
+
+Importação ainda aceita o alias legado `delpi_tv_deck`.
+
+PNG, PDF e PPTX (MVP) no editor são **exportações de consumo** do slide atual; **não** substituem o MDD como formato de interchange.
 
 ## Estrutura
 
@@ -20,7 +32,7 @@ media/{sourceAssetId}{ext}
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| `format` | string | Sempre `delpi_tv_deck` |
+| `format` | string | `minha_delpi_deck` (MDD) |
 | `schemaVersion` | string | `1.0` |
 | `source` | object | `{ playlistId, playlistName, exportedBy, exportedAt }` (informativo) |
 | `entries` | object | `path → { sha256, size_bytes }` |
@@ -83,3 +95,7 @@ Política de binding:
 - Anti zip-slip: apenas paths relativos seguros sob `deck/` e `media/`.
 - Limite de tamanho: `TV_DECK_PACKAGE_MAX_BYTES` (default 500 MB).
 - Volume de mídia: `TV_DASHBOARD_MEDIA_UPLOAD_DIR` (persistente no Compose).
+
+## Uso por ferramentas de IA
+
+O miolo é JSON texto + pasta `media/`. Descompactar o `.mdd` (ZIP), editar os JSON e reempacotar permite round-trip com assistentes e scripts.

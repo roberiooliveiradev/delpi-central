@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** … **§19.21–§19.23** tipografia/PDF, conectores, e backlog PPT MVP (fonte, reflexo, grade canvas, notas/apresentador, PPTX, presença). **§19.25** linhas vertices-first + connection sites (parcial). **Backlog restante / longo prazo:** import PPTX completo, colaboração CRDT, reflexo cross-browser, elbow/curva de conectores.
+> **Status:** … **v1.5+ (jul/2026):** … **§19.21–§19.23** tipografia/PDF, conectores, e backlog PPT MVP (fonte, reflexo, grade canvas, notas/apresentador, PPTX, presença). **MDD** = padrão de exportação/importação de programações ([MDD-MINHA-DELPI-DECK](./MDD-MINHA-DELPI-DECK.md)). **§19.25** linhas vertices-first + connection sites (parcial). **Backlog restante / longo prazo:** import PPTX completo, colaboração CRDT, reflexo cross-browser, elbow/curva de conectores.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -812,14 +812,15 @@ Apresentação TV / preview
 | Master slide / layout mestre | ✓ | ✅ v1.5 (4E.3) | Logo/fundo fixos na playlist |
 | Modo apresentador / notas | ✓ | ⚠ | `speakerNotes` + preview `?presenter=1` ✅ (§19.23); notas no kiosk ❌ |
 
-#### Colaboração e export (prioridade baixa)
+#### Colaboração e export
 
 | Recurso | Canva/PPT | Status |
 |---|---|---|
-| Export PNG/PDF do slide | ✓ | ✅ | PNG 4E.5 + PDF §19.21 (`jspdf` + captura) |
-| Import/export PPTX | ✓ | ⚠ | **Export** MVP (`pptxgenjs`) ✅ (§19.23); import ❌ |
-| Colaboração tempo real | ✓ | ⚠ | **Presença** de editores via WS ✅ (§19.23); CRDT/OT ❌ |
-| Comentários / histórico de versões | ✓ | ❌ |
+| **MDD — Minha Delpi Deck** (export/import programação) | — | ✅ **Padrão** de interchange de slides/programação (`.mdd`); [doc](./MDD-MINHA-DELPI-DECK.md) |
+| Export PNG/PDF do slide | ✓ | ✅ PNG 4E.5 + PDF §19.21 (`jspdf` + captura) |
+| Import/export PPTX | ✓ | ⚠ **Export** MVP (`pptxgenjs`) ✅ (§19.23); import ❌ — PPTX **não** substitui MDD |
+| Colaboração tempo real | ✓ | ⚠ **Presença** de editores via WS ✅ (§19.23); CRDT/OT ❌ |
+| Comentários / histórico de versões | ✓ | ⚠ Histórico de revisões da playlist ✅; comentários ❌ |
 
 ### 17.4 Dívida técnica a resolver (pós v1.3)
 

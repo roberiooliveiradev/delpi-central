@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Políticas de dados por gráfico](./PLAYBOOK-CHART-DATA-POLICIES.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Políticas de dados por gráfico](./PLAYBOOK-CHART-DATA-POLICIES.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md) · [**MDD — exportação de slides**](./MDD-MINHA-DELPI-DECK.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -81,7 +81,7 @@ O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OT
 
 | Escopo | Prefixo | Exemplos |
 |---|---|---|
-| Admin (JWT) | `/apps/tv-dashboard-api/` | `GET /playlists`, `POST /playlists/{id}/slides`, `POST /playlists/{id}/media` |
+| Admin (JWT) | `/apps/tv-dashboard-api/` | `GET /playlists`, `POST /playlists/{id}/slides`, `POST /playlists/{id}/media`, **`GET /playlists/{id}/export` (MDD)**, **`POST /playlists/import/preview|apply`** |
 | Público | `/apps/tv-dashboard-api/public/` | `GET /present/{token}`, `WS /present/{token}/ws`, `POST /present/{token}/heartbeat` |
 | Tempo real (admin) | `/apps/tv-dashboard-api/` | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Conteúdo UI | `/apps/tv-dashboard-api/content/` | `GET /ui`, `GET /slide-presets` |
@@ -156,7 +156,20 @@ Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicado
   O browser contém apenas DTOs e estado de draft.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
-- **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração
+- **MDD (Minha Delpi Deck):** padrão oficial de **exportação/importação** de programações e slides (`.mdd`) — ver [MDD-MINHA-DELPI-DECK.md](./MDD-MINHA-DELPI-DECK.md)
+- **Backlog:** import PPTX completo; colaboração CRDT; elbow/curva de conectores
+
+---
+
+## Exportação de slides e programações
+
+| Formato | Papel |
+|--------|--------|
+| **MDD (`.mdd`)** | **Padrão** — pacote portátil da programação (slides, seções, mídias, bindings); importável por outras contas e editável por IA |
+| PNG / PDF | Captura visual do slide atual (consumo) |
+| PPTX (MVP) | Abrir no PowerPoint; fidelidade parcial — **não** substitui MDD |
+
+Detalhes, API e fluxo preview→apply: **[MDD — Minha Delpi Deck](./MDD-MINHA-DELPI-DECK.md)**.
 
 ---
 
@@ -222,9 +235,8 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 
 ### Editor / paridade PPT (restante)
 
-- Upload de fonte; reflexo tipográfico
-- Conectores entre formas; tabelas canvas simples
-- Import/export PPTX; modo apresentador; colaboração
+- Import PPTX completo; colaboração CRDT; elbow/curva de conectores
+- (Export PNG/PDF/PPTX MVP e **MDD** já entregues — ver [MDD](./MDD-MINHA-DELPI-DECK.md))
 
 ### Editor personalizado — Onda 4 (ver playbook §17)
 
@@ -246,10 +258,12 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 
 ## Referências
 
+- [MDD — Minha Delpi Deck (exportação de slides)](./MDD-MINHA-DELPI-DECK.md)
 - [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md)
 - [PLAYBOOK-POWER-QUERY-M.md](./PLAYBOOK-POWER-QUERY-M.md)
 - [ADR-M-DELPI-V1.md](./ADR-M-DELPI-V1.md)
 - [FASE-0-BASELINE-M-DELPI.md](./FASE-0-BASELINE-M-DELPI.md)
 - [tv-dashboard-api/README.md](../../../tv-dashboard-api/README.md)
+- [Especificação técnica do pacote MDD](../../../tv-dashboard-api/docs/architecture/tv-deck-package-v1.md)
 - [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md)
 - [plugins/tv-dashboard-presentation/README.md](../../../plugins/tv-dashboard-presentation/README.md)

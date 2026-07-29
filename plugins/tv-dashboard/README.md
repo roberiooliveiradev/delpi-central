@@ -8,6 +8,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Políticas de dados por tipo de gráfico (pizza, série, scatter…): [PLAYBOOK-CHART-DATA-POLICIES](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-CHART-DATA-POLICIES.md)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
+**Exportação MDD (padrão de slides/programação):** [MDD — Minha Delpi Deck](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
 
 Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. O piloto funcional está ativo com telemetria segura; profiling, explain e caches continuam desligados.
 
@@ -51,6 +52,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Efeitos tipográficos:** sombra, contorno e **reflexo** (aba Formatar → Efeitos; reflexo Chromium)
 - **Fontes personalizadas:** upload WOFF2/TTF/OTF na faixa Fonte, persistido como mídia da playlist e disponível no seletor tipográfico
 - **Cores recentes** no seletor de cor; **export PNG/PDF/PPTX (MVP)** na faixa Início
+- **MDD (Minha Delpi Deck):** padrão oficial de exportação/importação da **programação completa** (`.mdd`) — home «Exportar MDD» / «Importar MDD»; ver [MDD](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
 - **Tabela (canvas):** grade estática editável, separada de `table_view` (dados live)
 - **Notas do apresentador:** salvas por tela; preview admin com `?presenter=1` mostra notas e próxima tela sem afetar o kiosk
 - **Presença no editor:** chip «Também editando» via WebSocket (sem merge CRDT)
@@ -116,6 +118,9 @@ PATCH  /apps/tv-dashboard-api/playlists/{id}
 DELETE /apps/tv-dashboard-api/playlists/{id}
 GET    /apps/tv-dashboard-api/playlists/{id}/preview-payload
 WS     /apps/tv-dashboard-api/playlists/{id}/presentation-ws # refresh + presença no editor
+GET    /apps/tv-dashboard-api/playlists/{id}/export          # pacote MDD (.mdd)
+POST   /apps/tv-dashboard-api/playlists/import/preview       # multipart → relatório
+POST   /apps/tv-dashboard-api/playlists/import/apply         # cria programação a partir do token
 GET    /apps/tv-dashboard-api/playlists/{id}/slides
 POST   /apps/tv-dashboard-api/playlists/{id}/slides
 PATCH  /apps/tv-dashboard-api/playlists/{id}/slides/{slideId}
@@ -134,6 +139,15 @@ GET    /apps/tv-dashboard-api/data/m/functions
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```
+
+### Exportação de slides / programações
+
+| Formato | Onde | Papel |
+|--------|------|--------|
+| **MDD (`.mdd`)** | Home → Exportar / Importar MDD | **Padrão** portátil entre contas (slides + mídias + bindings) |
+| PNG / PDF / PPTX | Editor → faixa Início (slide atual) | Consumo visual / PowerPoint (MVP) |
+
+Doc: [MDD — Minha Delpi Deck](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md).
 
 O histórico consome `PlaylistHistoryEntry` com `authorName`, `authorEmail` e `change`
 (`available`, `comparedToRevision`, `playlistFields`, diferenças de slides e `totals`).

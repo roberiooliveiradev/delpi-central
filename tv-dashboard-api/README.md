@@ -4,6 +4,8 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
+**MDD (Minha Delpi Deck):** padrão de exportação/importação de programações e slides — [guia](../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md) · [schema v1](./docs/architecture/tv-deck-package-v1.md)
+
 Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md) adicionou profiling opt-in, explain, métricas por etapa, caches TTL/LRU particionados e telemetria segura sem mover semântica para o browser. O piloto funcional está ativo (`enabled`, `writeV2Enabled`, `advancedEditorEnabled` e telemetria); profiling, explain e caches permanecem desligados.
 
 ---
@@ -24,6 +26,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 | Grupo | Prefixo |
 |---|---|
 | Programações | `/playlists` |
+| **Pacote MDD** | `GET /playlists/{id}/export`, `POST /playlists/import/preview`, `POST /playlists/import/apply` — ver [MDD](../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md) |
 | Telas | `/playlists/{id}/slides` |
 | Histórico | `/playlists/{id}/history` — até 500 versões, detalhes e restauração atômica |
 | Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |

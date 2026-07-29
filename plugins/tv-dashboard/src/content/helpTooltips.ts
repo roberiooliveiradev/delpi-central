@@ -534,7 +534,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     menu: "Menu da programação",
     open: "Abrir",
     duplicate: "Duplicar",
-    export: "Exportar pacote",
+    export: "Exportar MDD",
     preview: "Prévia",
     share: "Editores",
     copyLink: "Link TV",

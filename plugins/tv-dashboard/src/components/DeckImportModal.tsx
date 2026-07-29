@@ -82,7 +82,7 @@ export function DeckImportModal({ open, onClose, onImported }: Props) {
     <HostContainedDialog
       open={open}
       onClose={handleClose}
-      title="Importar pacote"
+      title="Importar pacote MDD"
       className="td-modal--deck-import"
       footer={
         <div className="td-modal-actions td-modal-actions--end">
@@ -102,7 +102,7 @@ export function DeckImportModal({ open, onClose, onImported }: Props) {
     >
       <div className="td-deck-import">
         <p className="td-deck-import__hint">
-          Selecione um arquivo <code>.delpi-tv-deck</code> exportado de outra conta ou
+          Selecione um arquivo <code>.mdd</code> (Minha Delpi Deck) exportado de outra conta ou
           programação. O preview valida mídias, checksums e fontes de dados.
         </p>
 
@@ -110,7 +110,7 @@ export function DeckImportModal({ open, onClose, onImported }: Props) {
           <input
             ref={inputRef}
             type="file"
-            accept=".delpi-tv-deck,application/zip,.zip"
+            accept=".mdd,.delpi-tv-deck,application/zip,.zip"
             disabled={busy}
             className="td-sr-only"
             onChange={(event) => {

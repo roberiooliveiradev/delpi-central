@@ -157,7 +157,7 @@ def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
 
 @router.post("/import/preview")
 async def import_deck_preview(request: Request, file: UploadFile = File(...)):
-    """Valida pacote `.delpi-tv-deck` e devolve relatório + importToken."""
+    """Valida pacote MDD (`.mdd` / Minha Delpi Deck) e devolve relatório + importToken."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)
@@ -418,7 +418,7 @@ def duplicate_playlist(request: Request, playlist_id: UUID):
 
 @router.get("/{playlist_id}/export")
 def export_playlist_deck(request: Request, playlist_id: UUID):
-    """Exporta programação completa como pacote `.delpi-tv-deck` (ZIP)."""
+    """Exporta programação completa como pacote MDD (`.mdd`)."""
     guarded = require_playlist_access(request, playlist_id, need="read")
     if is_access_error(guarded):
         return guarded

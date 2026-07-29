@@ -123,7 +123,7 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
       const anchor = document.createElement("a");
       const safe = item.name.replace(/[^\w\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "programacao";
       anchor.href = url;
-      anchor.download = `${safe}.delpi-tv-deck`;
+      anchor.download = `${safe}.mdd`;
       anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       tvDashboardNotice("Pacote exportado.");
@@ -244,9 +244,9 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
             <span className="td-home__create-icon" aria-hidden="true">
               <Upload size={28} strokeWidth={2} />
             </span>
-            <span className="td-home__create-title">Importar pacote</span>
+            <span className="td-home__create-title">Importar MDD</span>
             <span className="td-home__create-hint">
-              Traga uma programação de outra conta via arquivo .delpi-tv-deck.
+              Traga uma programação de outra conta via arquivo .mdd (Minha Delpi Deck).
             </span>
           </button>
         </div>

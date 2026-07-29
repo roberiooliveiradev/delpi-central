@@ -1,4 +1,4 @@
-"""Validação de dataBinding do pacote TV Deck contra o catálogo local."""
+"""Validação de dataBinding do pacote MDD (Minha Delpi Deck) contra o catálogo local."""
 
 from __future__ import annotations
 
