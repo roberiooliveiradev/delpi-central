@@ -1,4 +1,10 @@
-"""Matching fiscal de conciliação — chave homologada SF1."""
+"""Matching fiscal de conciliação — chave homologada SF1.
+
+A chave lógica permanece filial + fornecedor SA2 + loja + documento + série.
+No ERP, ``F1_TIPO = 'B'`` (beneficiamento) grava o partido em SA1; o repositório
+SF1 resolve essa identidade via CNPJ e **projeta** os códigos SA2 da solicitação
+na linha retornada, para este matching continuar por ``FiscalMatchKey``.
+"""
 from __future__ import annotations
 
 from collections import defaultdict

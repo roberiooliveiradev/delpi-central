@@ -461,6 +461,70 @@ def test_idempotent_second_run() -> None:
     assert len(repo.list_history(pending["id"])) == 1
 
 
+def test_beneficiamento_tipo_b_reconciles_when_sf1_projects_request_supplier() -> None:
+    """NF tipo B no ERP usa SA1; o repositório SF1 projeta A2 da solicitação.
+
+    Regressão: 004041160 / série 1 / filial 01 — beneficiamento não conciliava
+    porque o match exigia F1_FORNECE = A2_COD (falso para tipo B).
+    """
+    pending = _seed_request(
+        branch_code="01",
+        document="4041160",
+        series="1",
+        supplier_code="000987",
+        supplier_store="01",
+    )
+    # Simula projeção do SQL: chave = SA2 da solicitação; erp_party = SA1 do tipo B
+    sf1_row = {
+        "branch_code": "01",
+        "supplier_code": "000987",
+        "supplier_store": "01",
+        "document_match_key": pending["document_match_key"],
+        "series": "1",
+        "sf1_recno": 88001,
+        "erp_entry_date_raw": "20260729",
+        "invoice_type": "B",
+        "erp_party_code": "001100",
+        "erp_party_store": "01",
+    }
+    repo = FakeRequests([pending])
+    summary = RunInvoicePostingReconciliationUseCase(repo, FakeSf1([sf1_row])).execute(
+        actor=_manager()
+    )
+    assert summary["posted"] == 1
+    assert repo.rows[pending["id"]]["status"] == "posted"
+    assert repo.rows[pending["id"]]["sf1_recno"] == 88001
+    assert repo.rows[pending["id"]]["completion_source"] == "auto"
+
+
+def test_beneficiamento_not_found_when_erp_party_codes_used_as_match_key() -> None:
+    """Sem projeção SA2, código SA1 do ERP não casa com a solicitação."""
+    pending = _seed_request(
+        branch_code="01",
+        document="4041160",
+        series="1",
+        supplier_code="000987",
+        supplier_store="01",
+    )
+    sf1_row = {
+        "branch_code": "01",
+        "supplier_code": "001100",  # SA1 do tipo B — sem bridge
+        "supplier_store": "01",
+        "document_match_key": pending["document_match_key"],
+        "series": "1",
+        "sf1_recno": 88001,
+        "erp_entry_date_raw": "20260729",
+        "invoice_type": "B",
+    }
+    repo = FakeRequests([pending])
+    summary = RunInvoicePostingReconciliationUseCase(repo, FakeSf1([sf1_row])).execute(
+        actor=_manager()
+    )
+    assert summary["not_found"] == 1
+    assert summary["posted"] == 0
+    assert repo.rows[pending["id"]]["status"] == "pending"
+
+
 def test_ambiguous_not_posted() -> None:
     pending = _seed_request()
     key = {

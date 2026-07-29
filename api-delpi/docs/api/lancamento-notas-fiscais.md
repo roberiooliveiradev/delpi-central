@@ -211,6 +211,8 @@ Usado ao abrir a fila no MFE. Se cooldown ativo (**45 s**), responde sem reexecu
 Lote administrativo (`manage`). Body opcional: `{ "limit": N }`.  
 Busy → erro de domínio recuperável (ex. 409). Match em `SF1` (`D_E_L_E_T_ = ''`); confirmação opcional `SD1`. Persistência: `sf1_recno`, `erp_entry_date`, `reconciled_at`, `completion_source = auto` quando aplicável.
 
+**Beneficiamento (`F1_TIPO = 'B'`):** no Protheus o partido fica em `SA1` (cliente), enquanto a solicitação LNF guarda `SA2`. O match aceita também CNPJ (dígitos) entre `SA1` do cabeçalho e `SA2` da solicitação; a linha retornada projeta os códigos SA2 da chave da solicitação.
+
 **Divergência pós-`posted`:** se o cabeçalho sumir do ERP, **não** reabre — seta alerta (`divergence_*`).
 
 ---
@@ -265,5 +267,6 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 | Use cases | `app/application/use_cases/lancamento_notas_fiscais/` |
 | Normalização / cooldown | `app/domain/services/lancamento_notas_fiscais/fiscal_normalization.py` |
 | Matching | `…/reconciliation_matching.py` |
+| SQL SF1 (tipo B / CNPJ) | `…/totvs_invoice_posting_sf1_sql.py` |
 | Repo Postgres | `app/infrastructure/persistence/plugins/repositories/lancamento_notas_fiscais/` |
 | Composer | `app/composition/lancamento_notas_fiscais_composer.py` |
