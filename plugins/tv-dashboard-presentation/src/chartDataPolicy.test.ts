@@ -3,13 +3,23 @@ import { describe, expect, it } from "vitest";
 import {
   chartAxesEditorHint,
   resolveChartDataPolicy,
+  resolveChartSeriesDefaultAggregation,
 } from "./chartDataPolicy";
 
 describe("chartDataPolicy", () => {
-  it("pizza/rosca usam groupByCategory com count", () => {
+  it("pizza/rosca usam groupByCategory com soma (medida); contagem só sem medida", () => {
     expect(resolveChartDataPolicy("pie").rowMode).toBe("groupByCategory");
-    expect(resolveChartDataPolicy("pie").defaultAggregation).toBe("count");
+    expect(resolveChartDataPolicy("pie").defaultAggregation).toBe("sum");
     expect(resolveChartDataPolicy("doughnut").rowMode).toBe("groupByCategory");
+    expect(resolveChartDataPolicy("doughnut").defaultAggregation).toBe("sum");
+  });
+
+  it("resolveChartSeriesDefaultAggregation: número→soma; texto→contagem", () => {
+    const pie = resolveChartDataPolicy("pie");
+    expect(resolveChartSeriesDefaultAggregation(pie, "number")).toBe("sum");
+    expect(resolveChartSeriesDefaultAggregation(pie, "string")).toBe("count");
+    expect(resolveChartSeriesDefaultAggregation(pie, "date")).toBe("count");
+    expect(resolveChartSeriesDefaultAggregation(pie, null)).toBe("sum");
   });
 
   it("linha/área permanecem rowwise", () => {

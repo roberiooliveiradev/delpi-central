@@ -71,4 +71,33 @@ describe("ChartAxesProjectionEditor", () => {
     expect(next.series).toHaveLength(1);
     expect(next.series[0].field).toBe("filial");
   });
+
+  it("rosca: ao trocar série numérica usa Soma (não Contagem de linhas)", () => {
+    const onChange = vi.fn();
+
+    render(
+      <ChartAxesProjectionEditor
+        idPrefix="donut"
+        chartType="doughnut"
+        options={[
+          { field: "codigo", label: "Código", fieldType: "string" },
+          { field: "value", label: "Valor", fieldType: "number" },
+          { field: "quantidade", label: "Quantidade", fieldType: "number" },
+        ]}
+        chartProjection={{
+          categoryField: "codigo",
+          series: [{ field: "value", label: "Valor", aggregation: "sum" }],
+        }}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Incluir Valor · Quantidade/i }));
+    const next = onChange.mock.calls.at(-1)?.[0];
+    expect(next.series).toHaveLength(1);
+    expect(next.series[0]).toMatchObject({
+      field: "quantidade",
+      aggregation: "sum",
+    });
+  });
 });

@@ -1009,6 +1009,7 @@ export {
   chartCategoryWellLabel,
   chartSeriesWellLabel,
   resolveChartDataPolicy,
+  resolveChartSeriesDefaultAggregation,
   type ChartDataPolicy,
   type ChartDataRowMode,
   type ChartDataWellSpec,

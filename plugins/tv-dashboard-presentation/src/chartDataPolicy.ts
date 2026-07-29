@@ -129,7 +129,8 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     chartType: "pie",
     family: "distribution",
     rowMode: "groupByCategory",
-    defaultAggregation: "count",
+    /** Medida numérica → soma por fatia (Excel/Power BI). Contagem só sem medida. */
+    defaultAggregation: "sum",
     maxSeries: 1,
     maxCategories: 8,
     wells: [WELL_CATEGORY, WELL_VALUE],
@@ -138,7 +139,7 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     chartType: "doughnut",
     family: "distribution",
     rowMode: "groupByCategory",
-    defaultAggregation: "count",
+    defaultAggregation: "sum",
     maxSeries: 1,
     maxCategories: 8,
     wells: [WELL_CATEGORY, WELL_VALUE],
@@ -248,4 +249,16 @@ export function chartSeriesWellLabel(policy: ChartDataPolicy): string {
       item.role === "yMeasure",
   );
   return well?.label ?? "Séries (Y)";
+}
+
+/**
+ * Agregação ao marcar uma série no painel Dados.
+ * Campo textual/data → contagem; medida → default da policy (soma em pizza/barra).
+ */
+export function resolveChartSeriesDefaultAggregation(
+  policy: ChartDataPolicy,
+  fieldType?: "number" | "string" | "date" | null,
+): ViewAggregation {
+  if (fieldType === "string" || fieldType === "date") return "count";
+  return policy.defaultAggregation;
 }

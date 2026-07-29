@@ -254,7 +254,8 @@ describe("applyViewProjection", () => {
       "pie",
     );
     expect(suggested.chartProjection?.categoryField).toBe("tipo");
-    expect(suggested.chartProjection?.series?.[0]?.aggregation).toBe("count");
+    expect(suggested.chartProjection?.series?.[0]?.aggregation).toBe("sum");
+    expect(suggested.chartProjection?.series?.[0]?.field).toBe("qtd");
   });
 
   it("migra selectedValueFields para kpiProjection helper", () => {

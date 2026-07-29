@@ -8,6 +8,7 @@ import {
   chartCategoryWellLabel,
   chartSeriesWellLabel,
   resolveChartDataPolicy,
+  resolveChartSeriesDefaultAggregation,
   VIEW_AGGREGATION_OPTIONS,
   type ChartSeriesProjection,
   type ChartViewProjection,
@@ -66,7 +67,6 @@ export function ChartAxesProjectionEditor({
   const seriesMap = seriesByField(chartProjection);
   const hasProjection = Boolean(categoryField || seriesList.length);
   const seriesWell = chartSeriesWellLabel(policy);
-  const defaultSeriesAgg = policy.defaultAggregation;
   const maxSeries = Math.max(1, policy.maxSeries);
   const atSeriesLimit = seriesList.length >= maxSeries;
 
@@ -193,7 +193,10 @@ export function ChartAxesProjectionEditor({
                       const entry = {
                         field: option.field,
                         label: option.label,
-                        aggregation: defaultSeriesAgg,
+                        aggregation: resolveChartSeriesDefaultAggregation(
+                          policy,
+                          option.fieldType,
+                        ),
                       };
                       const nextSeries =
                         maxSeries === 1
