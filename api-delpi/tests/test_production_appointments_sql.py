@@ -170,9 +170,33 @@ def test_series_day_work_center_groups_both() -> None:
         branch="02",
         group_by="day_work_center",
     )
-    assert "GROUP BY SH6.H6_DTAPONT, SH1.H1_CTRAB, HB.HB_NOME" in query
+    assert "GROUP BY LTRIM(RTRIM(SH6.H6_DTAPONT)), SH1.H1_CTRAB, HB.HB_NOME" in query
     assert "work_center" in query
     assert "THEN 1000" in query
+
+
+def test_series_month_granularity_buckets_by_yyyymm() -> None:
+    query, _params = build_series_query(
+        date_start="20260601",
+        date_end_exclusive="20260701",
+        branch="01",
+        group_by="day",
+        granularity="month",
+    )
+    assert "LEFT(LTRIM(RTRIM(SH6.H6_DTAPONT)), 6) AS appointment_date" in query
+    assert "GROUP BY LEFT(LTRIM(RTRIM(SH6.H6_DTAPONT)), 6)" in query
+
+
+def test_series_month_work_center_groups_month_and_ct() -> None:
+    query, _params = build_series_query(
+        date_start="20260601",
+        date_end_exclusive="20260701",
+        branch="01",
+        group_by="day_work_center",
+        granularity="month",
+    )
+    assert "LEFT(LTRIM(RTRIM(SH6.H6_DTAPONT)), 6)" in query
+    assert "GROUP BY LEFT(LTRIM(RTRIM(SH6.H6_DTAPONT)), 6), SH1.H1_CTRAB, HB.HB_NOME" in query
 
 
 def test_by_op_uses_offset_fetch() -> None:

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 
 import {
   fetchAllAppointments,
@@ -8,6 +9,8 @@ import {
   fetchAppointmentsSummary,
   fetchWorkCenters,
 } from "../api/appointmentsApi";
+import type { SeriesGranularity } from "../components/chartUi";
+import { resolveSeriesGranularity } from "../components/chartUi";
 import { replaceDetailPeriodInUrl, readDetailPeriodFromUrl } from "../constants/routes";
 import type {
   AppointmentRow,
@@ -64,6 +67,13 @@ export function useAppointmentsDetailQuery({
   const [seriesPoints, setSeriesPoints] = useState<SeriesPoint[]>([]);
   const [workCenters, setWorkCenters] = useState<WorkCenterItem[]>([]);
 
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    draftFilters.dateStart,
+    draftFilters.dateEnd,
+    { resolveAutoGranularity: resolveSeriesGranularity },
+  );
+  const seriesGranularity = resolveSeriesGranularity(granularity);
+
   const debouncedOp = useDebouncedValue(draftFilters.op, 350);
   const debouncedProduct = useDebouncedValue(draftFilters.product, 350);
 
@@ -108,7 +118,10 @@ export function useAppointmentsDetailQuery({
           fetchAllAppointments(filters, { signal: controller.signal }),
           fetchAppointmentsByOp(filters, 1, 200, { signal: controller.signal }),
           fetchAppointmentsSummary(filters, { signal: controller.signal }),
-          fetchAppointmentsSeries(filters, "day", { signal: controller.signal }),
+          fetchAppointmentsSeries(filters, "day", {
+            signal: controller.signal,
+            granularity: seriesGranularity,
+          }),
           fetchWorkCenters(filters.branch, { signal: controller.signal }),
           locked.op
             ? fetchAppointmentsChildOps(filters, locked.op, 1, 200, {
@@ -132,7 +145,7 @@ export function useAppointmentsDetailQuery({
     }
     void run();
     return () => controller.abort();
-  }, [appliedFilters, locked.op]);
+  }, [appliedFilters, locked.op, seriesGranularity]);
 
   const handleFiltersChange = (patch: Partial<FilterFormState>) => {
     setDraftFilters((current) => {
@@ -159,6 +172,8 @@ export function useAppointmentsDetailQuery({
     totals,
     summaryItems,
     seriesPoints,
+    seriesGranularity,
+    setSeriesGranularity: (value: SeriesGranularity) => setGranularity(value),
     workCenters,
     handleFiltersChange,
     handleQuickRange,

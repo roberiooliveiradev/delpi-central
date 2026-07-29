@@ -60,6 +60,7 @@ export type SeriesPoint = {
 
 export type AppointmentsSeriesData = {
   group_by: string;
+  granularity?: string;
   points: SeriesPoint[];
 };
 

@@ -66,7 +66,7 @@ Use case: `GetProducedQuantityUseCase` + `ProductionAppointmentsRepository` (ún
 | `mother_op` | não | `true` = só OP mãe (sufixo `001` em `H6_OP` / `C2_OP`) |
 | `search` | não | Texto livre nas listagens (`/appointments` e `/by-op`): operador, OP, produto, CT, recurso, etc. |
 | `group_by` | séries de apontamento | `day` (padrão) ou `day_work_center` |
-| `granularity` | série de OPs finalizadas | `day` (padrão) ou `month` |
+| `granularity` | séries (`/series`, `/finished-ops/series`) | `day` (padrão) ou `month` — bucket temporal |
 | `page`, `page_size` | listas | Paginação (`page_size` máx. 200) |
 
 ## Exemplo

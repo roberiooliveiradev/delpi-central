@@ -66,11 +66,16 @@ export async function fetchAppointmentsSummary(
 export async function fetchAppointmentsSeries(
   filters: AppointmentsQueryFilters,
   groupBy: "day" | "day_work_center" = "day",
-  options: RequestOptions = {},
+  options: RequestOptions & { granularity?: "day" | "month" } = {},
 ): Promise<AppointmentsSeriesData> {
+  const { granularity = "day", ...requestOptions } = options;
   return getEnvelope(
-    `/series${queryString({ ...baseQuery(filters), group_by: groupBy })}`,
-    options,
+    `/series${queryString({
+      ...baseQuery(filters),
+      group_by: groupBy,
+      granularity,
+    })}`,
+    requestOptions,
   );
 }
 

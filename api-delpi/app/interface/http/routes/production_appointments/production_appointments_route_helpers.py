@@ -33,6 +33,7 @@ def build_query_request(
     search: Optional[str] = None,
     mother_op: bool = False,
     group_by: Optional[str] = None,
+    granularity: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
 ) -> ProductionAppointmentsQueryRequest:
@@ -46,6 +47,7 @@ def build_query_request(
         search=search,
         mother_op=mother_op,
         group_by=group_by,
+        granularity=granularity,
         page=page,
         page_size=page_size,
     )
@@ -110,10 +112,14 @@ def GROUP_BY_QUERY():
 
 def FINISHED_OPS_GRANULARITY_QUERY():
     from app.interface.http.query_param_enums import (
-        PRODUCTION_APPOINTMENTS_FINISHED_OPS_GRANULARITY_QUERY,
+        PRODUCTION_APPOINTMENTS_TEMPORAL_GRANULARITY_QUERY,
     )
 
-    return PRODUCTION_APPOINTMENTS_FINISHED_OPS_GRANULARITY_QUERY()
+    return PRODUCTION_APPOINTMENTS_TEMPORAL_GRANULARITY_QUERY()
+
+
+def SERIES_GRANULARITY_QUERY():
+    return FINISHED_OPS_GRANULARITY_QUERY()
 
 
 def PAGE_QUERY():

@@ -6,6 +6,7 @@ from app.domain.production.production_appointments.production_appointments_scope
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
+    SERIES_GRANULARITY_OPTIONS,
     SERIES_GROUP_BY_OPTIONS,
     VALID_BRANCHES,
 )
@@ -28,6 +29,7 @@ class ProductionAppointmentsQueryRequest:
     search: str | None = None
     mother_op: bool = False
     group_by: str = "day"
+    granularity: str = "day"
     page: int = DEFAULT_PAGE
     page_size: int = DEFAULT_PAGE_SIZE
 
@@ -44,6 +46,7 @@ class ProductionAppointmentsQueryRequest:
         search: str | None = None,
         mother_op: bool = False,
         group_by: str | None = None,
+        granularity: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
     ) -> ProductionAppointmentsQueryRequest:
@@ -54,6 +57,10 @@ class ProductionAppointmentsQueryRequest:
         resolved_group = (group_by or "day").strip().lower()
         if resolved_group not in SERIES_GROUP_BY_OPTIONS:
             raise ValueError('group_by inválido. Use "day" ou "day_work_center".')
+
+        resolved_granularity = (granularity or "day").strip().lower()
+        if resolved_granularity not in SERIES_GRANULARITY_OPTIONS:
+            raise ValueError('granularity inválida. Use "day" ou "month".')
 
         resolved_page = page if page is not None else DEFAULT_PAGE
         resolved_size = page_size if page_size is not None else DEFAULT_PAGE_SIZE
@@ -72,6 +79,7 @@ class ProductionAppointmentsQueryRequest:
             search=ProductionAppointmentsListSearchService.normalize_term(search),
             mother_op=bool(mother_op),
             group_by=resolved_group,
+            granularity=resolved_granularity,
             page=resolved_page,
             page_size=resolved_size,
         )

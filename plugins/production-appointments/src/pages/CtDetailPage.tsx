@@ -140,7 +140,11 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
               {query.totals ? (
                 <SummaryCards totals={query.totals} omitKeys={["workCenterCount"]} />
               ) : null}
-              <SeriesChart points={query.seriesPoints} />
+              <SeriesChart
+                points={query.seriesPoints}
+                granularity={query.seriesGranularity}
+                onGranularityChange={query.setSeriesGranularity}
+              />
               <DataTableSection
                 columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v2"
                 title="Apontamentos do CT"

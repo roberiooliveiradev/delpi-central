@@ -12,24 +12,49 @@ import {
 import { CHART_AXIS_TICK, CHART_COLORS, CHART_GRID_STROKE } from "../constants/chartTheme";
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SeriesPoint } from "../types/appointments";
-import { formatProtheusDate, formatQuantity } from "../utils/formatters";
+import { formatSeriesBucket, formatQuantity } from "../utils/formatters";
 import { ChartCard } from "./ChartCard";
+import {
+  SeriesGranularityToggle,
+  type SeriesGranularity,
+} from "./chartUi";
 
 type SeriesChartProps = {
   points: SeriesPoint[];
+  granularity?: SeriesGranularity;
+  onGranularityChange?: (value: SeriesGranularity) => void;
 };
 
-export function SeriesChart({ points }: SeriesChartProps) {
+export function SeriesChart({
+  points,
+  granularity = "day",
+  onGranularityChange,
+}: SeriesChartProps) {
   const data = points.map((point) => ({
     ...point,
-    label: formatProtheusDate(point.appointment_date),
+    label: formatSeriesBucket(point.appointment_date, granularity),
   }));
+
+  const hint =
+    granularity === "month"
+      ? "Agregação mensal das quantidades produzida e perdida."
+      : undefined;
 
   return (
     <ChartCard
       title="Produção no tempo"
       titleHint={PA_HELP_TOOLTIPS.charts.series}
+      hint={hint}
       variant="featured"
+      actions={
+        onGranularityChange ? (
+          <SeriesGranularityToggle
+            value={granularity}
+            onChange={onGranularityChange}
+            idPrefix="pa-series-granularity"
+          />
+        ) : undefined
+      }
     >
       {data.length === 0 ? (
         <p className="pa-chart-card__empty">Sem pontos na série para o período.</p>

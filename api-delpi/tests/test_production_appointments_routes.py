@@ -140,7 +140,12 @@ def test_series_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) 
     )
     response = pa_client.get(
         "/production/appointments/series",
-        params={"branch": "01", "date_start": "2026-06-01", "date_end": "2026-06-30"},
+        params={
+            "branch": "01",
+            "date_start": "2026-06-01",
+            "date_end": "2026-06-30",
+            "granularity": "month",
+        },
     )
     body = _body(response)
     assert response.status_code == 200

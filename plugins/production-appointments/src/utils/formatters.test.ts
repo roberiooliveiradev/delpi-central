@@ -9,6 +9,7 @@ import {
   formatOperatorLabel,
   formatQuantity,
   formatResourceLabel,
+  formatSeriesBucket,
   appointmentDateTimeSortKey,
 } from "./formatters";
 import {
@@ -24,6 +25,9 @@ describe("formatters", () => {
     expect(formatCurrencyBrl(10.5)).toMatch(/R\$/);
     expect(formatDatePtBr("2026-04-27")).toBe("27/04/2026");
     expect(formatProtheusDate("20260715")).toBe("15/07/2026");
+    expect(formatProtheusDate("202607")).toBe("07/2026");
+    expect(formatSeriesBucket("20260715", "day")).toBe("15/07/2026");
+    expect(formatSeriesBucket("202607", "month")).toBe("07/2026");
     expect(formatQuantity(3836)).toBe("3.836,00");
   });
 

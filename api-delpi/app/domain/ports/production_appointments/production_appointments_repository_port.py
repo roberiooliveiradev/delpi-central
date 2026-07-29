@@ -65,6 +65,7 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         date_end_exclusive: str,
         branch: str,
         group_by: str = "day",
+        granularity: str = "day",
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,

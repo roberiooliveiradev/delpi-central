@@ -360,6 +360,7 @@ def build_series_query(
     date_end_exclusive: str,
     branch: str,
     group_by: str = "day",
+    granularity: str = "day",
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
@@ -376,10 +377,16 @@ def build_series_query(
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    date_col = "LTRIM(RTRIM(SH6.H6_DTAPONT))"
+    if granularity == "month":
+        bucket_expr = f"LEFT({date_col}, 6)"
+    else:
+        bucket_expr = date_col
+
     if group_by == "day_work_center":
         sql = f"""
         SELECT
-            LTRIM(RTRIM(SH6.H6_DTAPONT)) AS appointment_date,
+            {bucket_expr} AS appointment_date,
             LTRIM(RTRIM(SH1.H1_CTRAB)) AS work_center,
             LTRIM(RTRIM(HB.HB_NOME)) AS work_center_name,
             {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
@@ -388,20 +395,20 @@ def build_series_query(
             SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
         WHERE {where}
-        GROUP BY SH6.H6_DTAPONT, SH1.H1_CTRAB, HB.HB_NOME
-        ORDER BY SH6.H6_DTAPONT, SH1.H1_CTRAB
+        GROUP BY {bucket_expr}, SH1.H1_CTRAB, HB.HB_NOME
+        ORDER BY {bucket_expr}, SH1.H1_CTRAB
         """
     else:
         sql = f"""
         SELECT
-            LTRIM(RTRIM(SH6.H6_DTAPONT)) AS appointment_date,
+            {bucket_expr} AS appointment_date,
             COUNT(*) AS appointment_count,
             SUM({qty_prod}) AS qty_produced,
             SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
         WHERE {where}
-        GROUP BY SH6.H6_DTAPONT
-        ORDER BY SH6.H6_DTAPONT
+        GROUP BY {bucket_expr}
+        ORDER BY {bucket_expr}
         """
     return sql, tuple(params)
 

@@ -44,16 +44,34 @@ export function formatDatePtBr(value: string | null | undefined): string {
   return value;
 }
 
-/** Data Protheus AAAAMMDD → DD/MM/AAAA. */
+/** Data Protheus AAAAMMDD → DD/MM/AAAA. Também aceita AAAAMM (mês). */
 export function formatProtheusDate(value: string | null | undefined): string {
   if (!value) return "—";
   const raw = value.trim();
-  const match = /^(\d{4})(\d{2})(\d{2})$/.exec(raw);
-  if (match) {
-    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const dayMatch = /^(\d{4})(\d{2})(\d{2})$/.exec(raw);
+  if (dayMatch) {
+    const date = new Date(Number(dayMatch[1]), Number(dayMatch[2]) - 1, Number(dayMatch[3]));
     if (!Number.isNaN(date.getTime())) return dateFormatter.format(date);
   }
+  const monthMatch = /^(\d{4})(\d{2})$/.exec(raw);
+  if (monthMatch) {
+    return `${monthMatch[2]}/${monthMatch[1]}`;
+  }
   return formatDatePtBr(raw);
+}
+
+/** Rótulo do eixo X da série temporal (dia AAAAMMDD ou mês AAAAMM). */
+export function formatSeriesBucket(
+  value: string | null | undefined,
+  granularity: "day" | "month" = "day",
+): string {
+  if (!value) return "—";
+  const raw = value.trim();
+  if (granularity === "month") {
+    const month = /^(\d{4})(\d{2})/.exec(raw);
+    if (month) return `${month[2]}/${month[1]}`;
+  }
+  return formatProtheusDate(raw);
 }
 
 /** Hora Protheus (HHMM, HHMMSS ou HH:MM[:SS]) → HH:MM. */

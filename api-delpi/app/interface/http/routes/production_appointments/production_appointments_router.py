@@ -35,6 +35,7 @@ from app.interface.http.period_query_params import (
 from app.interface.http.routes.production_appointments.production_appointments_route_helpers import (
     BRANCH_QUERY,
     FINISHED_OPS_GRANULARITY_QUERY,
+    SERIES_GRANULARITY_QUERY,
     GROUP_BY_QUERY,
     MOTHER_OP_QUERY,
     OP_QUERY,
@@ -65,6 +66,7 @@ def _guard_and_build(
     search: Optional[str] = None,
     mother_op: bool = False,
     group_by: Optional[str] = None,
+    granularity: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
     error_context: str,
@@ -83,6 +85,7 @@ def _guard_and_build(
             search=search,
             mother_op=mother_op,
             group_by=group_by,
+            granularity=granularity,
             page=page,
             page_size=page_size,
         )
@@ -230,7 +233,9 @@ def series_route(
     product: Optional[str] = PRODUCT_QUERY(),
     mother_op: bool = MOTHER_OP_QUERY(),
     group_by: str = GROUP_BY_QUERY(),
+    granularity: str = SERIES_GRANULARITY_QUERY(),
 ):
+    """Time series of produced/lost quantities by day or month."""
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
         end_date=end_date,
@@ -246,6 +251,7 @@ def series_route(
         product=product,
         mother_op=mother_op,
         group_by=group_by,
+        granularity=granularity,
         error_context="carregar série de apontamentos",
     )
     if err:

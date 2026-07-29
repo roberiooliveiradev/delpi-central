@@ -22011,7 +22011,7 @@
           "name": "granularity",
           "in": "query",
           "required": false,
-          "description": "Finished OP series granularity: day or month.",
+          "description": "Temporal series granularity: day or month.",
           "type": "string",
           "default": "day",
           "enum": [
@@ -22419,6 +22419,18 @@
             "day",
             "day_work_center"
           ]
+        },
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Temporal series granularity: day or month.",
+          "type": "string",
+          "default": "day",
+          "enum": [
+            "day",
+            "month"
+          ]
         }
       ],
       "xDelpi": {
@@ -22428,14 +22440,14 @@
         "locale": {
           "en": {
             "summary": "Production appointments time series",
-            "description": "Daily (or day×work-center) series of produced and lost quantities from SH6 production appointments.",
-            "whenToUse": "Use for a line chart of produced vs lost quantity over the selected period.",
+            "description": "Produced and lost quantities from SH6 appointments, aggregated by day or month (optional day×work-center).",
+            "whenToUse": "Use for a line chart of produced vs lost quantity over the selected period with day or month granularity.",
             "label": "Production appointments — time series"
           },
           "pt-BR": {
             "summary": "Série temporal de apontamentos de produção",
-            "description": "Série diária (ou dia×CT) das quantidades produzida e perdida a partir dos apontamentos SH6.",
-            "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período.",
+            "description": "Quantidades produzida e perdida dos apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
+            "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período, com granularidade dia ou mês.",
             "label": "Apontamento de produção — série temporal"
           }
         },
@@ -22490,6 +22502,18 @@
               }
             },
             "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            }
           },
           "group_by": {
             "locale": {
@@ -22566,13 +22590,13 @@
           }
         },
         "tv": {
-          "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período.",
-          "description": "Série diária (ou dia×CT) das quantidades produzida e perdida a partir dos apontamentos SH6.",
+          "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período, com granularidade dia ou mês.",
+          "description": "Quantidades produzida e perdida dos apontamentos SH6, agregadas por dia ou mês (opcional dia×CT).",
           "label": "Apontamento de produção — série temporal"
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Daily (or day×work-center) series of produced and lost quantities from SH6 production appointments."
+      "description": "Produced and lost quantities from SH6 appointments, aggregated by day or month (optional day×work-center)."
     },
     {
       "method": "GET",

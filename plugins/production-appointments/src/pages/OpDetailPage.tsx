@@ -194,7 +194,11 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
                   {query.totals ? (
                     <SummaryCards totals={query.totals} omitKeys={["opCount"]} />
                   ) : null}
-                  <SeriesChart points={query.seriesPoints} />
+                  <SeriesChart
+                    points={query.seriesPoints}
+                    granularity={query.seriesGranularity}
+                    onGranularityChange={query.setSeriesGranularity}
+                  />
                   <DataTableSection
                     columnPreferencesKey="production-appointments:OpDetailPage:apontamentos-da-op:v2"
                     title="Apontamentos da OP"

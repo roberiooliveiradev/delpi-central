@@ -425,7 +425,7 @@ Apontamentos SH6010 por centro de trabalho (SH1→SHB). Inclui CT de inspeção 
 | GET | `/production/appointments/work-centers` | Catálogo de CTs (`is_final_inspection`). |
 | GET | `/production/appointments` | Lista paginada de apontamentos. |
 | GET | `/production/appointments/summary` | Totais + agregação por CT. |
-| GET | `/production/appointments/series` | Série temporal (`group_by=day\|day_work_center`). |
+| GET | `/production/appointments/series` | Série temporal (`group_by=day\|day_work_center`, `granularity=day\|month`). |
 | GET | `/production/appointments/finished-ops/series` | Quantidade de OPs finalizadas (`C2_DATRF`) por `granularity=day\|month`; `mother_op` opcional. |
 | GET | `/production/appointments/by-op` | Drill-down por OP. |
 | GET | `/production/appointments/child-ops` | OPs filhas da OP mãe. |

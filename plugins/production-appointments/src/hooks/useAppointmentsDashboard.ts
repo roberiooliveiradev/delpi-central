@@ -5,6 +5,7 @@ import {
   fetchAppointmentsSummary,
   fetchWorkCenters,
 } from "../api/appointmentsApi";
+import type { SeriesGranularity } from "../components/chartUi";
 import type {
   AppointmentsQueryFilters,
   AppointmentsSeriesData,
@@ -37,7 +38,10 @@ function hasRequiredFilters(
   return Boolean(filters?.branch && filters.dateStart && filters.dateEnd);
 }
 
-export function useAppointmentsDashboard(appliedFilters: AppointmentsQueryFilters | null) {
+export function useAppointmentsDashboard(
+  appliedFilters: AppointmentsQueryFilters | null,
+  seriesGranularity: SeriesGranularity = "day",
+) {
   const [state, setState] = useState<DashboardLoadState>("idle");
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<AppointmentsDashboardData>(emptyDashboard);
@@ -84,7 +88,11 @@ export function useAppointmentsDashboard(appliedFilters: AppointmentsQueryFilter
         const results = await runParallelWithProgress<unknown>(
           [
             (signal) => fetchAppointmentsSummary(filters, { signal }),
-            (signal) => fetchAppointmentsSeries(filters, "day", { signal }),
+            (signal) =>
+              fetchAppointmentsSeries(filters, "day", {
+                signal,
+                granularity: seriesGranularity,
+              }),
             (signal) => fetchWorkCenters(filters.branch, { signal }),
           ],
           controller.signal,
@@ -122,7 +130,7 @@ export function useAppointmentsDashboard(appliedFilters: AppointmentsQueryFilter
 
     void run();
     return () => controller.abort();
-  }, [appliedFilters, reloadKey]);
+  }, [appliedFilters, reloadKey, seriesGranularity]);
 
   return {
     state,

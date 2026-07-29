@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 
 import { AppointmentsTables } from "../components/AppointmentsTables";
+import type { SeriesGranularity } from "../components/chartUi";
+import { resolveSeriesGranularity } from "../components/chartUi";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { FiltersBar, type QuickRangePreset } from "../components/FiltersBar";
@@ -119,7 +122,17 @@ function ProductionAppointmentsContent({
     setByOpPage(1);
   }, [debouncedByOpSearch]);
 
-  const dashboard = useAppointmentsDashboard(isActive ? appliedFilters : null);
+  const { granularity, setGranularity } = useChartGranularitySelection(
+    draftFilters.dateStart,
+    draftFilters.dateEnd,
+    { resolveAutoGranularity: resolveSeriesGranularity },
+  );
+  const seriesGranularity = resolveSeriesGranularity(granularity);
+
+  const dashboard = useAppointmentsDashboard(
+    isActive ? appliedFilters : null,
+    seriesGranularity,
+  );
   const tables = useAppointmentsTables(
     isActive ? appliedFilters : null,
     listPage,
@@ -251,7 +264,11 @@ function ProductionAppointmentsContent({
       {!showInitialLoading && !dashboardError && !isEmpty && summary && appliedFilters ? (
         <>
           <SummaryCards totals={summary.totals} loading={dashboard.loading} />
-          <SeriesChart points={dashboard.data.series?.points ?? []} />
+          <SeriesChart
+            points={dashboard.data.series?.points ?? []}
+            granularity={seriesGranularity}
+            onGranularityChange={(value) => setGranularity(value)}
+          />
           <AppointmentsTables
             workCenters={summary.items}
             appointments={tables.list?.items ?? []}

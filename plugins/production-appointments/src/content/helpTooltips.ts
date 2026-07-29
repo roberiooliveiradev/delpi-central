@@ -26,7 +26,7 @@ export const PA_HELP_TOOLTIPS = {
   },
   charts: {
     series:
-      "Evolução diária das quantidades produzida e perdida (já convertidas para peças/UN pela API). Use o filtro de CT para restringir o traçado.",
+      "Evolução das quantidades produzida e perdida (já convertidas para peças/UN pela API). Alterne Dia/Mês no gráfico; use o filtro de CT para restringir o traçado.",
   },
   columns: {
     workCenter:

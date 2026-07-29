@@ -170,6 +170,7 @@ class GetProductionAppointmentsSeriesUseCase:
             date_end_exclusive=date_end_exclusive,
             branch=request.branch,
             group_by=request.group_by,
+            granularity=request.granularity,
             work_center=request.work_center,
             op=request.op,
             product=request.product,
@@ -179,6 +180,7 @@ class GetProductionAppointmentsSeriesUseCase:
             "period": {"start": date_start, "end_exclusive": date_end_exclusive},
             "branch": request.branch,
             "group_by": request.group_by,
+            "granularity": request.granularity,
             "filters": {
                 "work_center": request.work_center,
                 "op": request.op,
