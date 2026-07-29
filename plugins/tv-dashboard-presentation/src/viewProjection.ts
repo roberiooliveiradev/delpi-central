@@ -16,6 +16,10 @@ import {
   parseProjectionNumber,
   type ViewAggregation,
 } from "./fieldValueProjection";
+import {
+  pickPreferredCategoryField,
+  resolveCategoryDisplayLabel,
+} from "./categoryFieldPreference";
 import { humanizeFieldKey, isWeakFieldLabel } from "./fieldKeyHumanize";
 import { resolveFieldDisplayLabel } from "./fieldLabelRegistry";
 import {
@@ -330,7 +334,14 @@ function buildSeriesFromTable(
 
   // scatter/bubble: categoryField guarda a medida X (rótulo numérico).
   const categories = rows.map((row, index) => {
-    if (categoryField && row[categoryField] != null) return String(row[categoryField]);
+    if (categoryField && row[categoryField] != null) {
+      const key = String(row[categoryField]);
+      return resolveCategoryDisplayLabel({
+        categoryKey: key,
+        categoryField,
+        groupRows: [row],
+      });
+    }
     return String(index + 1);
   });
 
@@ -449,10 +460,17 @@ function buildGroupedSeriesFromTable(
       ? seriesDefs
       : [{ field: categoryField, aggregation: "count" as const, label: "Contagem" }];
 
+  const displayLabelFor = (key: string) =>
+    resolveCategoryDisplayLabel({
+      categoryKey: key,
+      categoryField,
+      groupRows: groups.get(key) ?? [],
+    });
+
   if (effectiveDefs.length <= 1) {
     const def = effectiveDefs[0]!;
     const points = categoryKeys.map((key) => ({
-      label: key,
+      label: displayLabelFor(key),
       value: aggregateGroupRows(groups.get(key) ?? [], def.field, def.aggregation, policy),
     }));
     return {
@@ -482,7 +500,7 @@ function buildGroupedSeriesFromTable(
     color: def.color,
     plotOn: def.plotOn,
     points: categoryKeys.map((key) => ({
-      label: key,
+      label: displayLabelFor(key),
       value: aggregateGroupRows(groups.get(key) ?? [], def.field, def.aggregation, policy),
     })),
   }));
@@ -782,14 +800,15 @@ export function suggestDefaultProjections(
     return hasFiniteSample();
   });
 
+  const stringCategoryFields = fields.filter((item) => {
+    const declared = typeOf(item.field);
+    if (declared === "date" || declared === "string") return true;
+    if (declared === "number") return false;
+    const sample = resolved.table?.rows?.[0]?.[item.field];
+    return typeof sample === "string" && asFiniteNumber(sample) == null;
+  });
   const categoryCandidate =
-    fields.find((item) => {
-      const declared = typeOf(item.field);
-      if (declared === "date" || declared === "string") return true;
-      if (declared === "number") return false;
-      const sample = resolved.table?.rows?.[0]?.[item.field];
-      return typeof sample === "string" && asFiniteNumber(sample) == null;
-    })?.field ?? fields[0]?.field;
+    pickPreferredCategoryField(stringCategoryFields) ?? fields[0]?.field;
 
   const kpiProjection: KpiViewProjection | undefined =
     numericFields.length > 0
