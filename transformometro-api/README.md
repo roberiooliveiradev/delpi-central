@@ -62,6 +62,7 @@ Playbook: [`docs/roadmaps/playbook-route-test-coverage-100.md`](docs/roadmaps/pl
 | Dashboard | `/dashboard/*` (`view`, `filial_id`, `setor_id`), `POST /recalcular`, snapshot |
 | Options | `GET /options` — catálogos + `access_scope` (RBAC filial) |
 | Integração | `/integrations/engineering/transforma-mais/*` (`id` = `instancia_id`) |
+| Atas Transforma+ | `/atas`, `/atas/{id}`, `…/send-for-signature`, `…/signatures`, `…/finalize`, `…/export.pdf`, `/atas/pending-signatures`, `/signatures/me` |
 
 ## Cadastro de dados
 

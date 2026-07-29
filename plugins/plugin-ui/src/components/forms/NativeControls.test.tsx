@@ -139,6 +139,19 @@ describe("NativeSelectControl", () => {
     expect(select.className).toContain(NATIVE_CONTROL_CLASS);
     expect(select.className).toContain(NATIVE_CONTROL_SELECT_CLASS);
   });
+
+  it("não quebra quando options está ausente", () => {
+    render(
+      <NativeSelectControl
+        value=""
+        aria-label="Unidade"
+        placeholderOption="Todas"
+        onChange={() => undefined}
+      />,
+    );
+    expect(screen.getByLabelText("Unidade")).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Todas" })).toBeTruthy();
+  });
 });
 
 describe("NativeTextAreaControl", () => {

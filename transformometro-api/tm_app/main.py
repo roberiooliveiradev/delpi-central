@@ -24,6 +24,8 @@ from tm_app.interface.http.routes.diagram_routes import router as diagram_router
 from tm_app.interface.http.routes.revisao_evidence_routes import router as revisao_evidence_router
 from tm_app.interface.http.routes.processo_arquivo_routes import router as processo_arquivo_router
 from tm_app.interface.http.routes.transformometro_routes import router as transformometro_router
+from tm_app.interface.http.routes.minutes_routes import router as minutes_router
+from tm_app.interface.http.routes.signature_profile_routes import router as signature_profile_router
 from tm_app.application.services.transformometro_realtime_hub import (
     transformometro_realtime_hub,
 )
@@ -115,6 +117,8 @@ def health():
 
 
 app.include_router(transformometro_router)
+app.include_router(minutes_router)
+app.include_router(signature_profile_router)
 app.include_router(crud_router)
 app.include_router(dashboard_router)
 app.include_router(integrations_router)

@@ -15,7 +15,8 @@ export type NativeSelectControlProps = {
   id?: string;
   value: string;
   onChange: (value: string) => void;
-  options: readonly NativeSelectOption[];
+  /** Lista de opções. Omitido ou `undefined` rende só o placeholder (se houver). */
+  options?: readonly NativeSelectOption[];
   placeholderOption?: string;
   disabled?: boolean;
   required?: boolean;
@@ -33,7 +34,7 @@ export function NativeSelectControl({
   id,
   value,
   onChange,
-  options,
+  options = [],
   placeholderOption,
   disabled,
   required,
@@ -43,6 +44,7 @@ export function NativeSelectControl({
   "aria-label": ariaLabel,
   onPointerDown,
 }: NativeSelectControlProps) {
+  const resolvedOptions = options ?? [];
   return (
     <select
       id={id}
@@ -57,7 +59,7 @@ export function NativeSelectControl({
       onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}
     >
       {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
-      {options.map((option) => (
+      {resolvedOptions.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>

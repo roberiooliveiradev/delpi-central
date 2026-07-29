@@ -86,6 +86,24 @@
       "name": "Exportar e importar JSON",
       "description": "Permite backup e restauração do cadastro via JSON.",
       "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.view",
+      "name": "Consultar atas Transforma+",
+      "description": "Permite listar e visualizar atas de reunião do Transforma+.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.manage",
+      "name": "Gerenciar atas Transforma+",
+      "description": "Permite criar, editar, enviar e finalizar atas de reunião.",
+      "module": "transformometro"
+    },
+    {
+      "code": "transformometro.atas.sign",
+      "name": "Assinar atas Transforma+",
+      "description": "Permite assinar ou recusar atas e gerenciar a assinatura pessoal.",
+      "module": "transformometro"
     }
   ],
   "routes": [
@@ -114,6 +132,15 @@
       "icon": "folder-tree",
       "entry": null,
       "order": 23,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/transformometro/atas",
+      "label": "Atas",
+      "permission": "transformometro.atas.view",
+      "icon": "file-text",
+      "entry": null,
+      "order": 24,
       "showInMenu": false
     },
     {

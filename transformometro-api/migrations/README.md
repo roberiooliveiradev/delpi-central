@@ -43,6 +43,7 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V039 | `V039__beneficio_calculo_categoria.sql` | `revisoes.beneficio_calculo_categoria` + colunas de capacidade em `dashboard_calculos` (Playbook 22; só DDL) |
 | V040 | `V040__ganho_capacidade_no_roi_comment.sql` | Comentário: `ganho_capacidade` entra no ROI via `economia_bruta` |
 | V041 | `V041__beneficio_categoria_default_automatico.sql` | Default + backfill `beneficio_calculo_categoria` → `automatico` (a partir de `economia_tempo`) |
+| V042 | `V042__meeting_minutes_transforma_mais.sql` | Atas Transforma+ (`tm_meeting_minutes*`, assinaturas, perfil de assinatura) |
 
 ## Notas V019–V020
 

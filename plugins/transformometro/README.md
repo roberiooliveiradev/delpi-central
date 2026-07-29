@@ -15,12 +15,32 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/configuracoes/departamentos` | Departamentos no workspace |
 | `/apps/transformometro/configuracoes/recursos` | Recursos compartilhados no workspace |
 | `/apps/transformometro/dados` | Export/import backup JSON |
+| `/apps/transformometro/atas` | Atas Transforma+ (lista por filial) |
+| `/apps/transformometro/atas/new` · `…/{id}/edit` | Editor: preencher ou importar DOCX + **Gerar ata com IA** (Kimi) + signatários |
+| `/apps/transformometro/atas/{id}` | Detalhe (`DocumentReader` + logo Transforma+ + faixa de marca) |
+| `/apps/transformometro/atas/{id}/sign` | Assinatura (perfil salvo ou pad) |
+| `/apps/transformometro/atas/pending` | Pendências de assinatura do usuário |
+| `/apps/transformometro/minha-assinatura` | Perfil de assinatura pessoal |
 
 **Legado (ainda parseado):** `/filiais`, `/setores`, `/recursos`, `/cadastros/*` — redirecionam para o mesmo conteúdo em `/configuracoes/*`.
 
 **Fonte de dados:** Postgres via `transformometro-api` (não planilha Google).
 
 Cadastro pelas telas do app. Backup/restauração via **Exportar / Importar JSON** (mesclar por ID ou substituir tudo) — inclui diagramas macro, escopos e overlays (Playbook 19).
+
+## Atas Transforma+
+
+Módulo de atas oficiais (CRUD, assinatura eletrônica manuscrita, PDF, geração assistida por Kimi).
+
+| Doc | Conteúdo |
+|-----|----------|
+| [docs/atas.md](./docs/atas.md) | Implementação MFE (rotas, port de IA, marca visual) |
+| [ATAS-TRANSFORMA-MAIS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md) | Visão de produto e fluxo |
+| [atas-kimi.md](../../transformometro-api/docs/atas-kimi.md) | API + configuração `KIMI_*` |
+
+**API base:** `/apps/transformometro-api/transformometro/atas` (JWT).  
+**Permissões:** `transformometro.atas.view` / `.manage` / `.sign`.  
+**Rebuild MFE:** `./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro`
 
 ## Workspaces (jul/2026)
 

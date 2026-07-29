@@ -421,8 +421,30 @@ Uploads gerais do processo (POP, instruções, planilhas) ficam em `/app/data/pr
 |----------|----------------------|---------------|
 | `TM_PROCESSO_ARQUIVO_UPLOAD_DIR` | `/app/data/processo-arquivos` | `${DELPI_DATA_HOST_DIR}/processo-arquivos` |
 
+## Atas Transforma+ (transformometro-api)
+
+Assinaturas PNG e PDF final das atas (metadado em `transformometro.tm_meeting_*`).
+
+| Variável | Default no container | Host (volume) |
+|----------|----------------------|---------------|
+| `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
+| `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
+
+### Kimi / OpenRouter (geração de ata)
+
+Opcional no boot; **obrigatório** para `POST /transformometro/atas/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
+
+| Variável | Default | Notas |
+|----------|---------|-------|
+| `KIMI_API_KEY` | vazio | Sem chave → 502 claro na geração |
+| `KIMI_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible |
+| `KIMI_MODEL` | `moonshotai/kimi-k3` | |
+
+Definir em `infra/.env`. Compose (dev e prod) repassa ao serviço `transformometro-api`. Detalhes, limites e smoke: [transformometro-api/docs/atas-kimi.md](../transformometro-api/docs/atas-kimi.md).
+
 ```bash
-sudo mkdir -p /var/lib/delpi/revisao-evidencias /var/lib/delpi/processo-arquivos
+sudo mkdir -p /var/lib/delpi/revisao-evidencias /var/lib/delpi/processo-arquivos \
+  /var/lib/delpi/transformometro/atas/signatures /var/lib/delpi/transformometro/atas/pdfs
 docker compose -f docker-compose.yml up -d --force-recreate transformometro-api
 ```
 

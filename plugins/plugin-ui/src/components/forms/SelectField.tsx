@@ -97,13 +97,15 @@ export function SelectControl({
   const fieldId = id ?? generatedId;
   const listId = `${fieldId}-list`;
 
+  const resolvedOptions = options ?? [];
+
   const filteredOptions = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
-    if (!normalizedQuery) return options;
-    return options.filter((option) =>
+    if (!normalizedQuery) return resolvedOptions;
+    return resolvedOptions.filter((option) =>
       option.label.toLocaleLowerCase("pt-BR").includes(normalizedQuery),
     );
-  }, [options, query]);
+  }, [resolvedOptions, query]);
 
   useEffect(() => {
     if (disabled) {
@@ -112,7 +114,7 @@ export function SelectControl({
     }
   }, [disabled]);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const selectedOption = resolvedOptions.find((option) => option.value === value);
   const selectedLabel =
     selectedOption?.label ?? (allowEmpty && !value ? emptyLabel : placeholder);
 
@@ -306,6 +308,7 @@ export function SelectField({
   const fieldId = id ?? generatedId;
   const resolvedPlaceholder = placeholder ?? labels.placeholder;
   const resolvedEmptyLabel = emptyLabel ?? labels.emptyLabel;
+  const resolvedOptions = options ?? [];
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
 
   return (
@@ -316,7 +319,7 @@ export function SelectField({
       </label>
       <SelectControl
         id={fieldId}
-        options={options}
+        options={resolvedOptions}
         value={value}
         onChange={onChange}
         placeholder={resolvedPlaceholder}

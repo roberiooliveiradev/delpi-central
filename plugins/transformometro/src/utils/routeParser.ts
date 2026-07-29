@@ -15,7 +15,14 @@ export type TransformometroView =
   | "processos"
   | "processo"
   | "instancia"
-  | "revisao";
+  | "revisao"
+  | "atas"
+  | "ata"
+  | "ataEdit"
+  | "ataNew"
+  | "ataSign"
+  | "atasPending"
+  | "minhaAssinatura";
 
 export type ParsedTransformometroRoute = {
   view: TransformometroView;
@@ -25,6 +32,7 @@ export type ParsedTransformometroRoute = {
   filialId?: string;
   setorId?: string;
   recursoId?: string;
+  ataId?: string;
   legacyRevisaoPath?: boolean;
 };
 
@@ -54,6 +62,19 @@ function matchConfiguracoesFilial(path: string) {
 
 export function parseTransformometroPath(pathname: string): ParsedTransformometroRoute {
   const path = normalizeTransformometroPath(pathname);
+
+  if (path === TRANSFORMOMETRO_ROUTES.atas) return { view: "atas" };
+  if (path === `${TRANSFORMOMETRO_ROUTES.atas}/new`) return { view: "ataNew" };
+  if (path === TRANSFORMOMETRO_ROUTES.atasPending) return { view: "atasPending" };
+  if (path === TRANSFORMOMETRO_ROUTES.minhaAssinatura) return { view: "minhaAssinatura" };
+
+  const ataMatch = path.match(/^\/apps\/transformometro\/atas\/([^/]+)(?:\/(edit|sign))?$/);
+  if (ataMatch) {
+    return {
+      view: ataMatch[2] === "edit" ? "ataEdit" : ataMatch[2] === "sign" ? "ataSign" : "ata",
+      ataId: ataMatch[1],
+    };
+  }
 
   const canonicalRevisaoMatch = path.match(
     /^\/apps\/transformometro\/processos\/([^/]+)\/instancias\/([^/]+)\/revisoes\/([^/]+)$/
