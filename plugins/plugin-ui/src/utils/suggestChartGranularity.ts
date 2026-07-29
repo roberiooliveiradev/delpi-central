@@ -20,6 +20,11 @@ function parseIsoDate(value: string): Date | null {
   return date;
 }
 
+/**
+ * Granularidade automática do gráfico por duração do período:
+ * - até ~1 mês (≤ 31 dias inclusive) → `day`
+ * - maior que 1 mês → `month`
+ */
 export function suggestChartGranularity(
   dateStart?: string,
   dateEnd?: string,
@@ -35,7 +40,5 @@ export function suggestChartGranularity(
     Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
 
   if (diffDays <= 31) return "day";
-  if (diffDays <= 120) return "week";
-  if (diffDays <= 730) return "month";
-  return "year";
+  return "month";
 }

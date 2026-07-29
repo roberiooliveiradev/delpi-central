@@ -100,9 +100,9 @@ export function suggestGranularity(
   const diffDays =
     Math.floor((end.getTime() - start.getTime()) / 86_400_000) + 1;
 
+  // Mesma regra do kit (`suggestChartGranularity`): ≤1 mês → dia; senão → mês.
   if (diffDays <= 31) return "day";
-  if (diffDays <= 730) return "month";
-  return "year";
+  return "month";
 }
 
 export function buildPeriodBuckets(

@@ -8,3 +8,4 @@ export * from "./ghostBtnBem";
 export * from "./comunicadoStageBem";
 export * from "./valuesEqual";
 export * from "./chartSeriesWindow";
+export * from "./suggestChartGranularity";

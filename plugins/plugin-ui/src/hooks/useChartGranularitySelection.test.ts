@@ -5,8 +5,14 @@ import { useChartGranularitySelection } from "./useChartGranularitySelection";
 import { suggestChartGranularity } from "../utils/suggestChartGranularity";
 
 describe("suggestChartGranularity", () => {
-  it("sugere day para intervalos curtos", () => {
+  it("sugere day para períodos de até 1 mês", () => {
     expect(suggestChartGranularity("2026-07-01", "2026-07-10")).toBe("day");
+    expect(suggestChartGranularity("2026-07-01", "2026-07-31")).toBe("day");
+  });
+
+  it("sugere month para períodos maiores que 1 mês", () => {
+    expect(suggestChartGranularity("2026-07-01", "2026-08-01")).toBe("month");
+    expect(suggestChartGranularity("2026-01-01", "2026-03-31")).toBe("month");
   });
 
   it("sugere month como padrão sem datas", () => {
@@ -40,7 +46,7 @@ describe("useChartGranularitySelection", () => {
     expect(result.current.granularity).toBe("month");
 
     rerender({ start: "2026-01-01", end: "2026-03-31" });
-    expect(result.current.granularity).toBe("week");
+    expect(result.current.granularity).toBe("month");
   });
 
   it("aplica resolveAutoGranularity na sugestão automática", () => {

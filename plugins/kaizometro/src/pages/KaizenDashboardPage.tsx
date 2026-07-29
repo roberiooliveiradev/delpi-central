@@ -9,6 +9,10 @@ import {
   TrendingUp,
   Wrench,
 } from "lucide-react";
+import {
+  useChartGranularitySelection,
+  type ChartGranularity,
+} from "@delpi/plugin-ui/index";
 
 import { fetchKaizenSavingsInvestmentSeries, fetchKaizenSummary } from "../api/kaizenApi";
 import { BarList, type BarListBucket, type BarListTone } from "../components/BarList";
@@ -47,6 +51,10 @@ type Props = {
   onNavigate: (path: string) => void;
   branchOptions: BranchOption[];
 };
+
+function toKaizenSeriesGranularity(suggested: ChartGranularity): KaizenSeriesGranularity {
+  return suggested === "day" ? "day" : "month";
+}
 
 type Tone = BarListTone;
 
@@ -89,7 +97,6 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
   );
   const [summary, setSummary] = useState<KaizenSummary | null>(null);
   const [series, setSeries] = useState<KaizenSavingsInvestmentSeries | null>(null);
-  const [seriesGranularity, setSeriesGranularity] = useState<KaizenSeriesGranularity>("month");
   const [loading, setLoading] = useState(true);
   const [seriesLoading, setSeriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +133,20 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
     dateEnd: initialFilters.dateEnd,
     competence: initialFilters.competence,
   });
+
+  const resolveSeriesGranularity = useCallback(
+    (suggested: ChartGranularity) => toKaizenSeriesGranularity(suggested),
+    [],
+  );
+  const { granularity: seriesGranularityRaw, setGranularity: setSeriesGranularityRaw } =
+    useChartGranularitySelection(dateStart || undefined, dateEnd || undefined, {
+      resolveAutoGranularity: resolveSeriesGranularity,
+    });
+  const seriesGranularity: KaizenSeriesGranularity = toKaizenSeriesGranularity(seriesGranularityRaw);
+  const setSeriesGranularity = useCallback(
+    (value: KaizenSeriesGranularity) => setSeriesGranularityRaw(value),
+    [setSeriesGranularityRaw],
+  );
 
   // O backend filtra por uma unidade (^(01|02)$). Com uma selecionada, filtra; com
   // nenhuma ou todas, consolida (sem branch).

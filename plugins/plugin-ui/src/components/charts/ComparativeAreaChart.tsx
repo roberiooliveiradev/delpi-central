@@ -167,7 +167,9 @@ export function ComparativeAreaChart({
             <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
             <XAxis
               dataKey="name"
-              tick={{ fontSize: 12, fill: tickFill }}
+              interval="preserveStartEnd"
+              minTickGap={12}
+              tick={{ fontSize: 11, fill: tickFill }}
               stroke={axisStroke}
               tickLine={false}
             />

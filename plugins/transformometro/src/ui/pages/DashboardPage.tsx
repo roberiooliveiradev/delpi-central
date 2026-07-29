@@ -13,13 +13,11 @@ import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
 import {
-  ChartSeriesViewport,
   ComparativeAreaChart,
   FieldLabel,
   NativeTextControl,
   SegmentToggle,
   useChartGranularitySelection,
-  useChartSeriesWindow,
 } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -70,7 +68,6 @@ import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCa
 import { currentMonthFilterRange } from "../../utils/dashboardFilters";
 import { competenceToDateRange, dateRangeToCompetence } from "../../utils/competence";
 import { horasEconomizadasDiaria } from "../../utils/calcRules";
-import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
 import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
@@ -141,7 +138,6 @@ function chartHint(
   measure: ChartMeasure,
   granularity: ChartGranularity,
   dayProrated: boolean,
-  needsNavigation: boolean
 ): string {
   const parts = [periodLabel];
   if (measure === "hours") {
@@ -154,9 +150,6 @@ function chartHint(
     parts.push("competências mensais incluídas no recorte");
   } else {
     parts.push("soma anual das competências no recorte");
-  }
-  if (needsNavigation) {
-    parts.push("navegue com os botões ou a rolagem do mouse no gráfico");
   }
   return parts.join(" · ");
 }
@@ -181,20 +174,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   const [viewMode, setViewMode] = useState<DashboardViewMode>("consolidated");
 
   const resolveSavingsGranularity = useCallback(
-    (_suggested: import("@delpi/plugin-ui").ChartGranularity): ChartGranularity =>
-      suggestGranularity(filters.dataInicial, filters.dataFinal),
-    [filters.dataInicial, filters.dataFinal],
+    (suggested: import("@delpi/plugin-ui").ChartGranularity): ChartGranularity =>
+      suggested === "day" ? "day" : "month",
+    [],
   );
-  const { granularity: autoSavingsGranularity, setGranularity: setAutoSavingsGranularity } =
+  const { granularity: savingsGranularity, setGranularity: setSavingsGranularity } =
     useChartGranularitySelection(filters.dataInicial, filters.dataFinal, {
       resolveAutoGranularity: resolveSavingsGranularity,
     });
-  const savingsGranularity: ChartGranularity =
-    autoSavingsGranularity === "week" ? "month" : autoSavingsGranularity;
-  const setSavingsGranularity = useCallback(
-    (value: ChartGranularity) => setAutoSavingsGranularity(value),
-    [setAutoSavingsGranularity],
-  );
 
   const params = useMemo(
     () =>
@@ -383,13 +370,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       ),
     [evolucao, filters.dataInicial, filters.dataFinal, savingsGranularity]
   );
-
-  const savingsChartWindowKey = `${filters.dataInicial}|${filters.dataFinal}|${savingsGranularity}|${savingsMeasure}`;
-  const savingsChartWindow = useChartSeriesWindow(
-    savingsChartSeries.points,
-    savingsChartWindowKey
-  );
-  const savingsChartData = savingsChartWindow.visible;
+  const savingsChartData = savingsChartSeries.points;
 
   const topDailyChart = useMemo<TopDailyPoint[]>(
     () =>
@@ -571,7 +552,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
     savingsMeasure,
     savingsGranularity,
     savingsChartSeries.dayProrated,
-    savingsChartWindow.navigable
   );
 
   const savingsChartTitle =
@@ -873,21 +853,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                 filtros de data.
               </p>
             ) : (
-              <ChartSeriesViewport
-                navigable={savingsChartWindow.navigable}
-                rangeLabel={savingsChartWindow.rangeLabel}
-                page={savingsChartWindow.page}
-                pageCount={savingsChartWindow.pageCount}
-                total={savingsChartWindow.total}
-                windowSize={savingsChartWindow.windowSize}
-                offset={savingsChartWindow.offset}
-                onStart={savingsChartWindow.goStart}
-                onPrevPage={savingsChartWindow.goPrevPage}
-                onNextPage={savingsChartWindow.goNextPage}
-                onEnd={savingsChartWindow.goEnd}
-                onShift={savingsChartWindow.shiftBy}
-                prefix="ds"
-              >
                 <ComparativeAreaChart
                   prefix="ds"
                   data={savingsChartData}
@@ -921,7 +886,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
                         ]
                   }
                 />
-              </ChartSeriesViewport>
             )}
           </ChartCard>
         </section>
