@@ -96,6 +96,13 @@ export function ComunicadoElementInspector({
 
   const pane = placement === "side";
   const typeLabel = comunicadoBlockTypeLabel(selected.type);
+  /** Abas Design/Layout da tabela devem permanecer mesmo com coluna/parte selecionada no palco. */
+  const keepTableBlockSections =
+    panelFocus === "tableDesign" || panelFocus === "tableLayout";
+  const showTableBlockSections =
+    !multiSelect &&
+    selected.type === "table_view" &&
+    (!selectedTablePart || keepTableBlockSections);
 
   return (
     <DeckInspectorLayout variant={placement}>
@@ -181,7 +188,7 @@ export function ComunicadoElementInspector({
         </>
       ) : null}
 
-      {!multiSelect && selected.type === "table_view" && !selectedTablePart ? (
+      {showTableBlockSections ? (
         <>
           <SelectionTypedWithTailHost
             layout="pane"
@@ -202,12 +209,14 @@ export function ComunicadoElementInspector({
                     ]
             }
           />
-          {panelFocus !== "tableDesign" ? (
+          {/* Células/formato: só sem parte (com parte o bloco abaixo cobre). */}
+          {panelFocus !== "tableDesign" && !selectedTablePart ? (
             <TableViewOptionsInspector pane={pane} omitDesignChrome omitCellAlign />
           ) : null}
         </>
       ) : null}
 
+      {/* Parte selecionada: inspetor da parte (Design/Layout já cobertos acima). */}
       {!multiSelect && selected.type === "table_view" && selectedTablePart ? (
         <TableViewOptionsInspector pane={pane} omitDesignChrome />
       ) : null}

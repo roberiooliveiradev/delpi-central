@@ -186,8 +186,6 @@ export function TableColumnsMultiSelect({
   focusedColumnKey = null,
   onSelectColumn,
 }: Props) {
-  if (options.length === 0) return null;
-
   const visible = resolveVisibleKeys(options, tableProjection);
   const isAutomatic = !tableProjection?.columns?.length;
   const hidden = options.filter((opt) => !visible.includes(opt.key));
@@ -197,6 +195,8 @@ export function TableColumnsMultiSelect({
     (nextVisible) =>
       onChange(reorderTableColumns(options, tableProjection ?? undefined, nextVisible)),
   );
+
+  if (options.length === 0) return null;
 
   function renameControl(key: string, defaultLabel: string) {
     const customFromSource = lookupFieldLabel(sourceFieldLabels, key) ?? "";
@@ -255,6 +255,7 @@ export function TableColumnsMultiSelect({
             <span
               className="td-deck-inspector__column-toggle"
               onClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
             >
               <NativeCheckboxControl
                 id={`${idPrefix}-${option.key}`}
@@ -300,8 +301,8 @@ export function TableColumnsMultiSelect({
     <div
       className={
         compact
-          ? "td-deck-inspector__value-fields td-deck-inspector__value-fields--compact"
-          : "td-deck-inspector__value-fields"
+          ? "td-deck-inspector__value-fields td-deck-inspector__value-fields--compact td-deck-inspector__value-fields--columns"
+          : "td-deck-inspector__value-fields td-deck-inspector__value-fields--columns"
       }
       role="group"
       aria-label="Colunas da tabela"
@@ -311,11 +312,13 @@ export function TableColumnsMultiSelect({
           ? "Todas as colunas — arraste para reordenar (ou desmarque para filtrar). Clique no nome para selecionar no palco."
           : `${visible.length} de ${options.length} colunas — arraste ⋮⋮ para reordenar. Clique no nome para selecionar.`}
       </p>
-      {visible.map((key, index) => {
-        const option = options.find((opt) => opt.key === key) ?? { key, label: key };
-        return columnVisibilityRow(option, true, index);
-      })}
-      {hidden.map((option) => columnVisibilityRow(option, false))}
+      <div className="td-deck-inspector__column-list">
+        {visible.map((key, index) => {
+          const option = options.find((opt) => opt.key === key) ?? { key, label: key };
+          return columnVisibilityRow(option, true, index);
+        })}
+        {hidden.map((option) => columnVisibilityRow(option, false))}
+      </div>
     </div>
   );
 }

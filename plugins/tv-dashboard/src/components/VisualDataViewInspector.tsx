@@ -104,14 +104,19 @@ export function VisualDataViewInspector({
   }));
 
   const applyTableProjection = (next: TableViewProjection | undefined) => {
-    let focusedKey: string | undefined;
+    /* Só limpa seleção se a coluna focada sumiu — nunca remapeia/seleciona no toggle
+     * (senão Design some por `selectedTablePart` e a sidebar parece vazia). */
     if (
       selected.type === "table_view" &&
       selectedTablePart?.kind === "headerCell" &&
       selectedTablePart.colIndex != null
     ) {
       const prevVisible = resolveVisibleKeys(tableColumnOptions, tableBlock?.tableProjection);
-      focusedKey = prevVisible[selectedTablePart.colIndex];
+      const focusedKey = prevVisible[selectedTablePart.colIndex];
+      const nextVisible = resolveVisibleKeys(tableColumnOptions, next);
+      if (focusedKey && !nextVisible.includes(focusedKey)) {
+        clearTablePartSelection();
+      }
     }
     const framePatch = buildViewFrameFitPatch({
       ...selected,
@@ -121,16 +126,6 @@ export function VisualDataViewInspector({
       tableProjection: next,
       ...(framePatch ?? {}),
     } as Partial<ComunicadoTableViewBlock>);
-    if (!focusedKey || selected.type !== "table_view") return;
-    const nextVisible = resolveVisibleKeys(tableColumnOptions, next);
-    const nextIndex = nextVisible.indexOf(focusedKey);
-    if (nextIndex < 0) {
-      clearTablePartSelection();
-      return;
-    }
-    if (nextIndex !== selectedTablePart?.colIndex) {
-      selectTablePart(selected.id, { kind: "headerCell", colIndex: nextIndex });
-    }
   };
 
   const applyKpiProjection = (next: KpiViewProjection | undefined) => {

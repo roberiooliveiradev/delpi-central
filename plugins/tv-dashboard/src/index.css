@@ -7263,6 +7263,8 @@ body.td-composer--marqueeing *{
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
 }
 .dashboard-tv-dashboard .td-deck-inspector__value-fields--compact{
   gap: 0.2rem;
@@ -7270,11 +7272,23 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
   margin: 0 0 0.15rem;
 }
+.dashboard-tv-dashboard .td-deck-inspector__column-list{
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  min-width: 0;
+  max-height: min(52vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 2px;
+}
 .dashboard-tv-dashboard .td-deck-inspector__column-row{
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.35rem;
   justify-content: flex-start;
+  min-width: 0;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-row-body{
   flex: 1 1 auto;
