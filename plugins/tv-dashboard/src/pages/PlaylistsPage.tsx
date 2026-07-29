@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
-import { MonitorPlay, Plus, Search } from "lucide-react";
+import { MonitorPlay, Plus, Search, Upload } from "lucide-react";
 
 import {
   activatePlaylist,
@@ -8,10 +8,12 @@ import {
   deletePlaylist,
   downloadQrPng,
   duplicatePlaylist,
+  exportPlaylistDeck,
   listPlaylists,
   regeneratePlaylistToken,
   type Playlist,
 } from "../api/tvDashboardApi";
+import { DeckImportModal } from "../components/DeckImportModal";
 import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
@@ -74,6 +76,7 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
     playlist: Playlist;
     position: FixedPanelPoint;
   } | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,6 +115,22 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
     },
     [confirm, onOpen],
   );
+
+  const handleExport = useCallback(async (item: Playlist) => {
+    try {
+      const blob = await exportPlaylistDeck(item.id);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      const safe = item.name.replace(/[^\w\-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "programacao";
+      anchor.href = url;
+      anchor.download = `${safe}.delpi-tv-deck`;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      tvDashboardNotice("Pacote exportado.");
+    } catch (err) {
+      tvDashboardNotice(err instanceof Error ? err.message : "Erro ao exportar pacote.");
+    }
+  }, []);
 
   const handleCopyLink = useCallback(async (item: Playlist) => {
     const url = item.publicUrl;
@@ -215,6 +234,19 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
             <span className="td-home__create-title">Nova programação</span>
             <span className="td-home__create-hint">
               Monte playlists de telas e gere um link público para TVs.
+            </span>
+          </button>
+          <button
+            type="button"
+            className="td-home__create-card"
+            onClick={() => setImportOpen(true)}
+          >
+            <span className="td-home__create-icon" aria-hidden="true">
+              <Upload size={28} strokeWidth={2} />
+            </span>
+            <span className="td-home__create-title">Importar pacote</span>
+            <span className="td-home__create-hint">
+              Traga uma programação de outra conta via arquivo .delpi-tv-deck.
             </span>
           </button>
         </div>
@@ -325,6 +357,7 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
           onClose={() => setContextMenu(null)}
           onOpen={() => onOpen(contextMenu.playlist.id)}
           onDuplicate={() => void handleDuplicate(contextMenu.playlist)}
+          onExport={() => void handleExport(contextMenu.playlist)}
           onPreview={() => onPreview(contextMenu.playlist.id)}
           onShare={() => onShare(contextMenu.playlist.id)}
           onCopyLink={() => void handleCopyLink(contextMenu.playlist)}
@@ -334,6 +367,12 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
           onDelete={() => void handleDelete(contextMenu.playlist)}
         />
       ) : null}
+
+      <DeckImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={(id) => onOpen(id)}
+      />
     </div>
   );
 }

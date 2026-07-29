@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, File, Query, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -18,6 +18,10 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_dashboard_portal_notification_service import (
     notify_playlist_share_granted,
 )
+from tv_app.application.services.tv_deck_package_service import (
+    TvDeckPackageError,
+    TvDeckPackageService,
+)
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_ADMIN, TV_READ, TV_WRITE, assert_permission, can
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -31,6 +35,7 @@ router = APIRouter(prefix="/playlists", tags=["Playlists"])
 _repo = PlaylistRepository()
 _present = PresentationPayloadService()
 _access = PlaylistAccessService()
+_deck_package = TvDeckPackageService()
 
 
 class CreatePlaylistBody(BaseModel):
@@ -60,6 +65,13 @@ class CreateEditInviteBody(BaseModel):
 
 class RedeemEditInviteBody(BaseModel):
     token: str = Field(min_length=8, max_length=200)
+
+
+class ApplyDeckImportBody(BaseModel):
+    importToken: str = Field(min_length=8, max_length=200)
+    nameOverride: str | None = Field(default=None, min_length=1, max_length=200)
+    activateAfterImport: bool = False
+    bindingPolicy: Literal["lenient", "strict"] = "lenient"
 
 
 def _actor_id(user: Any) -> str | None:
@@ -141,6 +153,52 @@ def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
         actor_user_id=None,
     )
     return ok(result, message="Acesso concedido.")
+
+
+@router.post("/import/preview")
+async def import_deck_preview(request: Request, file: UploadFile = File(...)):
+    """Valida pacote `.delpi-tv-deck` e devolve relatório + importToken."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not _actor_id(user):
+        return fail("Usuário não identificado.", 401)
+    raw = await file.read()
+    summary = _deck_package.preview_import(raw)
+    return ok(summary)
+
+
+@router.post("/import/apply")
+def import_deck_apply(request: Request, body: ApplyDeckImportBody):
+    """Aplica pacote pré-visualizado (cria programação inativa por padrão)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    created_by = _actor_id(user)
+    if not created_by:
+        return fail("Usuário não identificado.", 401)
+    try:
+        playlist = _deck_package.apply_import(
+            import_token=body.importToken,
+            created_by=created_by,
+            name_override=body.nameOverride,
+            activate_after_import=body.activateAfterImport,
+            binding_policy=body.bindingPolicy,
+        )
+    except TvDeckPackageError as exc:
+        return fail(str(exc), 422)
+    except PlaylistNotFoundError:
+        return fail(message("playlistNotFound"), 404)
+    _with_public_url(playlist)
+    return ok(
+        playlist,
+        message=message("deckPackageImported", "Programação importada."),
+        status_code=201,
+    )
 
 
 @router.get("/{playlist_id}")
@@ -356,6 +414,31 @@ def duplicate_playlist(request: Request, playlist_id: UUID):
     playlist["sections"] = _repo.list_sections(UUID(playlist["id"]))
     playlist["accessRole"] = "owner"
     return ok(playlist, message="Programação duplicada.", status_code=201)
+
+
+@router.get("/{playlist_id}/export")
+def export_playlist_deck(request: Request, playlist_id: UUID):
+    """Exporta programação completa como pacote `.delpi-tv-deck` (ZIP)."""
+    guarded = require_playlist_access(request, playlist_id, need="read")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
+    try:
+        payload, filename = _deck_package.export_package(
+            playlist_id,
+            exported_by=_actor_id(user),
+        )
+    except PlaylistNotFoundError:
+        return fail(message("playlistNotFound"), 404)
+    except TvDeckPackageError as exc:
+        return fail(str(exc), 422)
+    return Response(
+        content=payload,
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
 
 
 @router.post("/{playlist_id}/regenerate-token")

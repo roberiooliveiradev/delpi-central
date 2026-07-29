@@ -53,6 +53,10 @@ class Settings:
         "TV_DASHBOARD_MEDIA_UPLOAD_DIR",
         default="/app/data/tv-dashboard/media",
     )
+    TV_DECK_PACKAGE_MAX_BYTES: int = int(
+        _get_env("TV_DECK_PACKAGE_MAX_BYTES", default=str(500 * 1024 * 1024))
+        or str(500 * 1024 * 1024)
+    )
 
     CORE_API_BASE_URL: str = _get_env("CORE_API_BASE_URL", default="http://core-api:8000")
     CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(

@@ -1381,6 +1381,111 @@ class PlaylistRepository:
             conn.commit()
         return self.list_sections(playlist_id)
 
+    def import_sections_from_deck(
+        self,
+        playlist_id: UUID,
+        sections: list[dict[str, Any]],
+        *,
+        actor_user_id: str,
+    ) -> dict[str, str]:
+        """Insere seções de um pacote e retorna mapa sourceId → novo id."""
+        section_id_map: dict[str, str] = {}
+        ordered = sorted(
+            [s for s in sections if isinstance(s, dict)],
+            key=lambda s: int(s.get("sortOrder") or 0),
+        )
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason="playlist_imported_sections",
+                )
+                for section in ordered:
+                    cur.execute(
+                        """
+                        INSERT INTO tv_dashboard.playlist_sections (
+                          playlist_id, name, sort_order, is_collapsed, is_active,
+                          is_main, default_duration_sec, transition_style, master_config
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                        RETURNING id
+                        """,
+                        (
+                            str(playlist_id),
+                            str(section.get("name") or "Seção").strip(),
+                            int(section.get("sortOrder") or 0),
+                            bool(section.get("isCollapsed", False)),
+                            bool(section.get("isActive", True)),
+                            bool(section.get("isMain", False)),
+                            section.get("defaultDurationSec"),
+                            section.get("transitionStyle"),
+                            json.dumps(section.get("masterConfig") or {}),
+                        ),
+                    )
+                    new_section = cur.fetchone()
+                    source_id = str(section.get("sourceId") or "").strip()
+                    if source_id and new_section:
+                        section_id_map[source_id] = str(new_section["id"])
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return section_id_map
+
+    def import_slides_from_deck(
+        self,
+        playlist_id: UUID,
+        slides: list[dict[str, Any]],
+        *,
+        actor_user_id: str,
+    ) -> list[dict[str, Any]]:
+        """Insere slides de um pacote (já com sectionId/assetId remapeados)."""
+        ordered = sorted(
+            [s for s in slides if isinstance(s, dict)],
+            key=lambda s: int(s.get("sortOrder") or 0),
+        )
+        created: list[dict[str, Any]] = []
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason="playlist_imported_slides",
+                )
+                for index, slide in enumerate(ordered):
+                    cur.execute(
+                        """
+                        INSERT INTO tv_dashboard.slides (
+                          playlist_id, sort_order, slide_type, duration_sec, title,
+                          native_screen_key, native_config, external_url, external_sandbox,
+                          is_active, transition_style, section_id
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s, %s, %s)
+                        RETURNING *
+                        """,
+                        (
+                            str(playlist_id),
+                            int(slide.get("sortOrder") if slide.get("sortOrder") is not None else index),
+                            slide.get("slideType") or "native",
+                            slide.get("durationSec"),
+                            str(slide.get("title") or "Tela").strip(),
+                            slide.get("nativeScreenKey"),
+                            json.dumps(slide.get("nativeConfig") or {}),
+                            slide.get("externalUrl"),
+                            slide.get("externalSandbox"),
+                            bool(slide.get("isActive", True)),
+                            slide.get("transitionStyle"),
+                            str(slide["sectionId"]) if slide.get("sectionId") else None,
+                        ),
+                    )
+                    row = cur.fetchone()
+                    if row:
+                        created.append(_row_to_slide(row))
+                self._touch_playlist_updated_at(cur, playlist_id)
+            conn.commit()
+        return created
+
 
 def load_native_screens_catalog() -> list[dict[str, Any]]:
     data = json.loads(NATIVE_SCREENS_PATH.read_text(encoding="utf-8"))

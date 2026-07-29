@@ -439,6 +439,73 @@ export async function duplicatePlaylist(id: string) {
   );
 }
 
+export type DeckImportBindingReport = {
+  operationId: string;
+  slideSourceId?: string | null;
+  blockId?: string | null;
+  blockType?: string | null;
+  status: "ok" | "warning" | "error";
+  message: string;
+};
+
+export type DeckImportPreview = {
+  valid: boolean;
+  errors: string[];
+  warnings?: string[];
+  format?: string;
+  schemaVersion?: string;
+  importToken?: string;
+  playlistName?: string;
+  source?: {
+    playlistId?: string;
+    playlistName?: string;
+    exportedBy?: string | null;
+    exportedAt?: string;
+  };
+  stats?: {
+    slideCount?: number;
+    sectionCount?: number;
+    mediaCount?: number;
+    bindingCount?: number;
+  };
+  slides?: Array<{
+    sourceId?: string;
+    title?: string;
+    slideType?: string;
+    sortOrder?: number;
+  }>;
+  sections?: Array<{
+    sourceId?: string;
+    name?: string;
+    isMain?: boolean;
+    sortOrder?: number;
+  }>;
+  bindings?: DeckImportBindingReport[];
+};
+
+export async function exportPlaylistDeck(id: string): Promise<Blob> {
+  return httpGetBlob(`${API_BASE}/playlists/${id}/export`);
+}
+
+export async function previewPlaylistDeckImport(file: File): Promise<DeckImportPreview> {
+  const form = new FormData();
+  form.append("file", file);
+  return unwrap(
+    httpPostForm<ApiEnvelope<DeckImportPreview>>(`${API_BASE}/playlists/import/preview`, form),
+  );
+}
+
+export async function applyPlaylistDeckImport(body: {
+  importToken: string;
+  nameOverride?: string;
+  activateAfterImport?: boolean;
+  bindingPolicy?: "lenient" | "strict";
+}): Promise<Playlist> {
+  return unwrap(
+    httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/import/apply`, body),
+  );
+}
+
 export async function regeneratePlaylistToken(id: string) {
   return unwrap(
     httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/regenerate-token`, {}),

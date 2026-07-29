@@ -17,7 +17,11 @@
     "dataRowsLimitExceeded": "Limite de linhas excedido para esta rota.",
     "dataListCountLabel": "Quantidade",
     "mediaNotFound": "Mídia não encontrada.",
-    "mediaUploaded": "Mídia enviada."
+    "mediaUploaded": "Mídia enviada.",
+    "deckPackageExported": "Pacote da programação gerado.",
+    "deckPackageInvalid": "Pacote inválido ou corrompido.",
+    "deckPackageImported": "Programação importada.",
+    "deckPackageImportTokenExpired": "Token de importação inválido ou expirado. Gere um novo preview."
   },
   "presentation": {
     "nativeErrorAdvanceSec": 10,

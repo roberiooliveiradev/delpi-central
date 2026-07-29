@@ -6,6 +6,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   Copy,
+  Download,
   Eye,
   MonitorOff,
   MonitorPlay,
@@ -29,6 +30,7 @@ export type PlaylistHomeContextMenuProps = {
   onClose: () => void;
   onOpen: () => void;
   onDuplicate: () => void;
+  onExport: () => void;
   onPreview: () => void;
   onShare: () => void;
   onCopyLink: () => void;
@@ -47,6 +49,7 @@ export function PlaylistHomeContextMenu({
   onClose,
   onOpen,
   onDuplicate,
+  onExport,
   onPreview,
   onShare,
   onCopyLink,
@@ -70,6 +73,7 @@ export function PlaylistHomeContextMenu({
     >
       <ContextMenuItem label={C.open} icon={MonitorPlay} onSelect={() => run(onOpen)} />
       <ContextMenuItem label={C.duplicate} icon={Copy} onSelect={() => run(onDuplicate)} />
+      <ContextMenuItem label={C.export} icon={Download} onSelect={() => run(onExport)} />
       <ContextMenuItem label={C.preview} icon={Eye} onSelect={() => run(onPreview)} />
       <ContextMenuDivider />
       <ContextMenuItem label={C.share} icon={Users} onSelect={() => run(onShare)} />
