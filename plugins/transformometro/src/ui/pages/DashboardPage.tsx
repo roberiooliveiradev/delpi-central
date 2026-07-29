@@ -13,6 +13,7 @@ import type { DataTableColumn } from "../../components/DataTable";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DateField } from "../../components/DateField";
 import {
+  ChartSeriesViewport,
   ComparativeAreaChart,
   FieldLabel,
   NativeTextControl,
@@ -30,7 +31,6 @@ import {
   useTrackedSingleFetchProgress,
 } from "../../hooks/useSimulatedLoadingProgress";
 import { ChartGranularityToggle } from "../../components/ChartGranularityToggle";
-import { ChartSeriesViewport } from "@delpi/plugin-ui/index";
 import { RankingBarChart } from "../../components/RankingBarChart";
 import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { DashboardToolbarMenu } from "../../components/DashboardToolbarMenu";
