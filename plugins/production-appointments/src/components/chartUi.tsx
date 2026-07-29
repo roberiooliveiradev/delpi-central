@@ -22,13 +22,18 @@ const LABELS = {
 
 const kit = createDashboardChartToolbarKit({ prefix: "pa", labels: LABELS });
 
-type ChartGranularityToggleProps = Omit<
-  Parameters<typeof kit.ChartGranularityToggle<SeriesGranularity>>[0],
-  "options"
+type SeriesChartToolbarProps = Omit<
+  Parameters<typeof kit.ChartToolbar<SeriesGranularity>>[0],
+  "options" | "modes"
 >;
 
-export function SeriesGranularityToggle(props: ChartGranularityToggleProps) {
+/** Toolbar canônica do plugin-ui (Dia/Mês) — mesmo padrão OEE/OTD. */
+export function SeriesChartToolbar(props: SeriesChartToolbarProps) {
   return (
-    <kit.ChartGranularityToggle {...props} options={SERIES_GRANULARITY_OPTIONS} />
+    <kit.ChartToolbar
+      {...props}
+      options={SERIES_GRANULARITY_OPTIONS}
+      modes={["day", "month"]}
+    />
   );
 }

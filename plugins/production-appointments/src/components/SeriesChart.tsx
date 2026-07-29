@@ -15,7 +15,7 @@ import type { SeriesPoint } from "../types/appointments";
 import { formatSeriesBucket, formatQuantity } from "../utils/formatters";
 import { ChartCard } from "./ChartCard";
 import {
-  SeriesGranularityToggle,
+  SeriesChartToolbar,
   type SeriesGranularity,
 } from "./chartUi";
 
@@ -38,7 +38,7 @@ export function SeriesChart({
   const hint =
     granularity === "month"
       ? "Agregação mensal das quantidades produzida e perdida."
-      : undefined;
+      : "Agregação diária das quantidades produzida e perdida.";
 
   return (
     <ChartCard
@@ -46,16 +46,16 @@ export function SeriesChart({
       titleHint={PA_HELP_TOOLTIPS.charts.series}
       hint={hint}
       variant="featured"
-      actions={
-        onGranularityChange ? (
-          <SeriesGranularityToggle
-            value={granularity}
-            onChange={onGranularityChange}
-            idPrefix="pa-series-granularity"
-          />
-        ) : undefined
-      }
     >
+      {onGranularityChange ? (
+        <SeriesChartToolbar
+          idPrefix="pa-series"
+          granularity={granularity}
+          onGranularityChange={onGranularityChange}
+          granularityHelp={PA_HELP_TOOLTIPS.charts.seriesGranularity}
+        />
+      ) : null}
+
       {data.length === 0 ? (
         <p className="pa-chart-card__empty">Sem pontos na série para o período.</p>
       ) : (

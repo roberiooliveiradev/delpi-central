@@ -26,7 +26,9 @@ export const PA_HELP_TOOLTIPS = {
   },
   charts: {
     series:
-      "Evolução das quantidades produzida e perdida (já convertidas para peças/UN pela API). Alterne Dia/Mês no gráfico; use o filtro de CT para restringir o traçado.",
+      "Evolução das quantidades produzida e perdida (já convertidas para peças/UN pela API). Use o filtro de CT para restringir o traçado.",
+    seriesGranularity:
+      "Até cerca de 1 mês a série usa Dia; períodos maiores passam para Mês automaticamente. Você pode alternar Dia/Mês manualmente.",
   },
   columns: {
     workCenter:
