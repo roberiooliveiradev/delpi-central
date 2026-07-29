@@ -34,8 +34,10 @@ import {
   mergeTablePartsWithOptions,
   presetDefaultTableOptions,
   resolveTableFrameStyle,
+  resolveTableShapeChromePartRef,
   setTableElementEnabled,
   tableElementPrimaryPartRef,
+  upsertTablePartState,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -52,10 +54,11 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
+import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
-import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
@@ -137,6 +140,10 @@ function useTableDesignControls() {
   const block = selected as ComunicadoTableViewBlock;
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
   const frame = resolveTableFrameStyle(block.tableParts);
+  const chromePart = resolveTableShapeChromePartRef(selectedTablePart);
+  const isFrameChrome = chromePart.kind === "frame";
+  const cornerRadius =
+    (isFrameChrome ? frame.borderRadius : undefined) ?? block.style?.borderRadius ?? 0;
   const borderWidth = options.borderWidth ?? 1;
   const borderStyle = options.borderStyle ?? "solid";
   const activeStyleId = resolveActiveTableStyleRecipeId(options, block.tablePreset ?? "grid");
@@ -186,6 +193,16 @@ function useTableDesignControls() {
     updateSelectedStyle({ boxShadow });
   };
 
+  const patchCornerRadius = (radius: number) => {
+    const nextParts = upsertTablePartState(block.tableParts, chromePart, {
+      style: { borderRadius: radius } as never,
+    });
+    updateSelected({
+      tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
+      ...(isFrameChrome ? { style: { ...block.style, borderRadius: radius } } : {}),
+    } as Partial<ComunicadoBlock>);
+  };
+
   const borderWidthOptions = BORDER_WIDTH_OPTIONS.some(
     (entry) => entry.value === String(borderWidth),
   )
@@ -195,6 +212,7 @@ function useTableDesignControls() {
   return {
     options,
     frame,
+    cornerRadius,
     borderWidth,
     borderStyle,
     activeStyleId,
@@ -207,6 +225,7 @@ function useTableDesignControls() {
     toggleElement,
     focusElement,
     patchFrameShadow,
+    patchCornerRadius,
     openFrameShapeChrome: () => selectTablePart(block.id, { kind: "frame" }),
     openDataPanel,
   };
@@ -516,21 +535,26 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
     </div>
   );
 
-  const shortcuts = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-      <DeckRibbonTile
-        icon={Shapes}
-        label="Forma"
-        hint={H.tableOpenFrameShape}
-        onClick={ctrl.openFrameShapeChrome}
-      />
-      <DeckRibbonTile
-        icon={Database}
-        label="Selecionar dados"
-        hint={H.openDataPanel}
-        onClick={() => ctrl.openDataPanel()}
-      />
-    </div>
+  const formaChrome = (
+    <>
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <DeckRibbonTile
+          icon={Shapes}
+          label="Forma"
+          hint={H.tableOpenFrameShape}
+          onClick={ctrl.openFrameShapeChrome}
+        />
+      </div>
+      <div className="td-deck-ribbon__organize-props td-forma-opacity">
+        <ShapeCornerRadiusControl
+          id="td-table-design-corner-radius"
+          value={ctrl.cornerRadius}
+          onChange={ctrl.patchCornerRadius}
+          embedded
+        />
+        <FormatRibbonOpacityFields className="td-forma-opacity__slot" />
+      </div>
+    </>
   );
 
   if (layout === "pane") {
@@ -542,8 +566,18 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
         <SelectionPaneSection title="Efeitos" hint={H.tableFrameShadow} defaultOpen={false}>
           {effects}
         </SelectionPaneSection>
-        <SelectionPaneSection title="Forma e dados" hint={H.tableFormat} defaultOpen={false}>
-          {shortcuts}
+        <SelectionPaneSection title="Forma" hint={H.tableFrameChrome} defaultOpen={false}>
+          {formaChrome}
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Dados" hint={H.tableData ?? H.chartData} defaultOpen={false}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTile
+              icon={Database}
+              label="Selecionar dados"
+              hint={H.openDataPanel}
+              onClick={() => ctrl.openDataPanel()}
+            />
+          </div>
         </SelectionPaneSection>
       </>
     );
@@ -558,14 +592,7 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
         {effects}
       </DeckRibbonGroup>
       <DeckRibbonGroup groupId="table-forma" label="Forma" hint={H.tableFrameChrome}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={Shapes}
-            label="Forma"
-            hint={H.tableOpenFrameShape}
-            onClick={ctrl.openFrameShapeChrome}
-          />
-        </div>
+        {formaChrome}
       </DeckRibbonGroup>
       <DeckRibbonGroup groupId="table-data" label="Dados" hint={H.tableData ?? H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">

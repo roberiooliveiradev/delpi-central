@@ -332,8 +332,9 @@
 }
 
 .delpi-ui-table-style-gallery {
-  min-width: 280px;
-  max-width: min(420px, 90vw);
+  width: max-content;
+  max-width: min(320px, 90vw);
+  min-width: 0;
   max-height: 320px;
   overflow: auto;
   padding: 4px 2px;
@@ -341,6 +342,8 @@
 
 .delpi-ui-table-style-gallery__section {
   margin-bottom: 10px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .delpi-ui-table-style-gallery__heading {
@@ -351,9 +354,11 @@
 }
 
 .delpi-ui-table-style-gallery__grid {
-  display: grid;
-  grid-template-columns: repeat(7, 40px);
+  display: flex;
+  flex-wrap: wrap;
   gap: 4px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .delpi-ui-table-style-gallery__item {

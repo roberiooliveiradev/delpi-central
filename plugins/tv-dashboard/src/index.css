@@ -4824,16 +4824,18 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-table-style-options-popover,
 .dashboard-tv-dashboard .td-table-style-options-popover{
   position: fixed;
-  min-width: min(520px, calc(100vw - 24px));
-  max-width: min(640px, calc(100vw - 16px));
-  padding: 12px 14px;
+  width: max-content;
+  min-width: 0;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 8px 10px;
   margin: 0;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-table-style-options-popover .td-deck-ribbon__style-checks,
 .dashboard-tv-dashboard .td-table-style-options-popover .td-deck-ribbon__style-option-tiles{
   display: grid;
   grid-template-columns: repeat(4, max-content);
-  gap: 6px 16px;
+  gap: 6px 8px;
   width: max-content;
   max-width: 100%;
 }
@@ -7326,7 +7328,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-table-style-options-popover .td-deck-ribbon__style-option-tiles{
   display: grid;
   grid-template-columns: repeat(4, max-content);
-  gap: 6px 10px;
+  gap: 6px 8px;
   width: max-content;
   max-width: 100%;
 }
