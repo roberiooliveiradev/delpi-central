@@ -4,12 +4,14 @@ ValorPerda (Fase 0 validada):
   BC_QUANT * COALESCE(NULLIF(AVG(B2_CM1), 0), NULLIF(B1_CUSTD, 0), 0)
 
 Join SB2 agregado por filial+produto evita multiplicação por B2_LOCAL.
+Exclui produto de terceiro (SB1.B1_TPMAT = 2).
 """
 
 from __future__ import annotations
 
 from app.domain.quality.refugos.refugos_scope import (
     REFUGOS_LOSS_TYPE,
+    THIRD_PARTY_PRODUCT_TPMAT,
     VALID_REFUGOS_BRANCHES,
 )
 from app.infrastructure.persistence.totvs.refugos.refugos_query_settings import (
@@ -92,8 +94,16 @@ def build_base_where(
         branch_sql,
         "BC.BC_DATA >= ?",
         "BC.BC_DATA < ?",
+        # Exclui MP de terceiro (B1_TPMAT=2 — SX3 «Produto de Terceiro»).
+        "LTRIM(RTRIM(SB1.B1_TPMAT)) <> ?",
     ]
-    params: list = [REFUGOS_LOSS_TYPE, *branch_params, date_start, date_end_exclusive]
+    params: list = [
+        REFUGOS_LOSS_TYPE,
+        *branch_params,
+        date_start,
+        date_end_exclusive,
+        THIRD_PARTY_PRODUCT_TPMAT,
+    ]
 
     if mp:
         clauses.append("LTRIM(RTRIM(BC.BC_PRODUTO)) = ?")
@@ -269,6 +279,7 @@ def build_resumo_query(
       AND {branch_sql}
       AND BC.BC_DATA >= ?
       AND BC.BC_DATA < ?
+      AND LTRIM(RTRIM(SB1.B1_TPMAT)) <> ?
     """
     params: list = [
         date_start,
@@ -287,6 +298,7 @@ def build_resumo_query(
         *branch_params,
         min(date_start, day_start, month_start),
         max(date_end_exclusive, day_end_exclusive, month_end_exclusive),
+        THIRD_PARTY_PRODUCT_TPMAT,
     ]
 
     extras: list[str] = []

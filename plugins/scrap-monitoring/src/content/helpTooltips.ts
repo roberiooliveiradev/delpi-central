@@ -6,7 +6,7 @@ export const SCRAP_HELP_TOOLTIPS = {
       "Início do período filtrado. Afeta totais do período, rankings e a tabela de registros.",
     dateEnd:
       "Fim do período filtrado. Também define o dia do KPI «Refugo dia» e o mês calendário do KPI «Refugo no mês».",
-    mp: "Filtra por código de matéria-prima (produto apontado na perda SBC).",
+    mp: "Filtra por código de matéria-prima (produto apontado na perda SBC). Produtos de terceiro (B1_TPMAT = Sim) já são excluídos pela API.",
     pa: "Filtra pelo produto acabado da ordem de produção vinculada ao refugo.",
     op: "Filtra pela ordem de produção (OP) do apontamento de refugo.",
     motivo: "Filtra pelo motivo cadastrado em CYO (BC_MOTIVO).",
@@ -15,25 +15,25 @@ export const SCRAP_HELP_TOOLTIPS = {
   },
   kpis: {
     valorDia:
-      "Soma do valor de refugo (R$) apenas no dia de data final (dataFim), com os demais filtros aplicados.",
+      "Soma do valor de refugo (R$) apenas no dia de data final (dataFim), com os demais filtros aplicados. Não inclui produto de terceiro (B1_TPMAT = 2).",
     valorMes:
-      "Soma do valor de refugo (R$) no mês calendário completo de dataFim (do dia 1º ao último dia do mês). Não depende do intervalo dataInicio–dataFim dentro desse mês.",
+      "Soma do valor de refugo (R$) no mês calendário completo de dataFim (do dia 1º ao último dia do mês). Não depende do intervalo dataInicio–dataFim dentro desse mês. Exclui produto de terceiro.",
     totalPeriodo:
-      "Soma do valor de refugo (R$) entre data inicial e data final, com os filtros opcionais aplicados.",
+      "Soma do valor de refugo (R$) entre data inicial e data final, com os filtros opcionais aplicados. Exclui produto de terceiro (cadastro SB1).",
     ocorrencias:
-      "Quantidade de linhas de apontamento de refugo (BC_TIPO = R) no período filtrado.",
+      "Quantidade de linhas de apontamento de refugo (BC_TIPO = R) no período filtrado, sem produto de terceiro.",
     quantidade:
-      "Soma das quantidades apontadas (BC_QUANT) no período filtrado.",
+      "Soma das quantidades apontadas (BC_QUANT) no período filtrado, sem produto de terceiro.",
     semCusto:
       "Registros cujo custo unitário ficou zerado (sem B2_CM1 nem B1_CUSTD), impossibilitando o cálculo em R$.",
   },
   charts: {
     motivo:
-      "Distribuição do valor de refugo (R$) por motivo no período filtrado, com percentual sobre o total do ranking.",
+      "Distribuição do valor de refugo (R$) por motivo no período filtrado, com percentual sobre o total do ranking. Sem produto de terceiro.",
     serie:
-      "Evolução do valor de refugo (R$) ao longo do período. Até 62 dias agrega por dia; períodos maiores agregam por mês.",
+      "Evolução do valor de refugo (R$) ao longo do período. Até 62 dias agrega por dia; períodos maiores agregam por mês. Sem produto de terceiro.",
     materiaPrima:
-      "Top 10 matérias-primas por valor de refugo (R$) no período filtrado (código + descrição).",
+      "Top 10 matérias-primas por valor de refugo (R$) no período filtrado (código + descrição). Produtos de terceiro não entram.",
     produtoAcabado:
       "Top 10 produtos acabados (via OP) por valor de refugo (R$) no período filtrado (código + descrição).",
     centroTrabalho:
@@ -59,7 +59,7 @@ export const SCRAP_HELP_TOOLTIPS = {
   },
   table: {
     section:
-      "Listagem paginada dos apontamentos de refugo no período. Clique na linha para abrir o detalhe.",
+      "Listagem paginada dos apontamentos de refugo no período (sem produto de terceiro — B1_TPMAT = Sim). Clique na linha para abrir o detalhe.",
     data: "Data do apontamento de perda (BC_DATA).",
     op: "Ordem de produção vinculada ao apontamento.",
     pa: "Produto acabado da OP (via SC2).",
