@@ -159,7 +159,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartData: "Fonte e vínculo dos dados do gráfico.",
     chartType: "Abre o catálogo de tipos (mesmo de Inserir → Gráficos) para trocar o gráfico.",
     tableData: "Fonte e vínculo dos dados da tabela.",
-    tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
+    tableStyles:
+      "Galeria de estilos da tabela (claros/médios/escuros). Na faixa fica colapsada em «Estilos»; abra o menu para aplicar um preset.",
     tableStyleOptions:
       "Opções de estilo da tabela (ícones): cabeçalho, totais, listras, primeira/última coluna e bordas. Clique no texto do ícone para selecionar a parte no palco; o ícone só liga/desliga.",
     tableTypography:

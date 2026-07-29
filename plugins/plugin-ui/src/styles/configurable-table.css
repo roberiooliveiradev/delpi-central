@@ -316,6 +316,21 @@
   padding: 4px 6px;
 }
 
+.delpi-ui-table-style-menu__thumb {
+  display: block;
+  width: 22px;
+  height: 16px;
+  border-radius: 2px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #3a4558) 70%, transparent);
+}
+
+.delpi-ui-table-style-menu__thumb .delpi-ui-table-style-strip__preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .delpi-ui-table-style-gallery {
   min-width: 280px;
   max-width: min(420px, 90vw);

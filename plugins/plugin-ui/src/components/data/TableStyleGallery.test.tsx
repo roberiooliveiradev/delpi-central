@@ -1,7 +1,11 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { TableStyleRibbonStrip, type TableStylePreset } from "./TableStyleGallery";
+import {
+  TableStyleMenu,
+  TableStyleRibbonStrip,
+  type TableStylePreset,
+} from "./TableStyleGallery";
 
 afterEach(() => {
   cleanup();
@@ -33,6 +37,32 @@ const PRESETS: TableStylePreset[] = [
     borderColor: "#1e3a5f",
   },
 ];
+
+describe("TableStyleMenu", () => {
+  it("colapsa a galeria em um gatilho sem faixa de thumbs", () => {
+    const onSelect = vi.fn();
+    const { container } = render(
+      <TableStyleMenu
+        presets={PRESETS}
+        selectedId="medium-a"
+        onSelect={onSelect}
+        triggerLabel="Estilos"
+      />,
+    );
+    expect(screen.queryByRole("list", { name: "Estilos de tabela" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Galeria de estilos de tabela" })).toBeTruthy();
+    expect(screen.getByText("Estilos")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-table-style-menu__thumb")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Galeria de estilos de tabela" }));
+    fireEvent.click(
+      within(screen.getByRole("menu", { name: "Galeria de estilos de tabela" })).getByLabelText(
+        "Escura A",
+      ),
+    );
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "dark-a" }));
+  });
+});
 
 describe("TableStyleRibbonStrip", () => {
   it("mostra thumbs e aplica preset ao clicar", () => {

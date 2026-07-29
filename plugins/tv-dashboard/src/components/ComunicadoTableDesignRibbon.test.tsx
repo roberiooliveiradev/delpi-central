@@ -64,10 +64,11 @@ vi.mock("./comunicadoEditorContext", () => ({
 }));
 
 describe("ComunicadoTableDesignRibbon", () => {
-  it("oferece strip de estilos e seção Fonte global da tabela", () => {
+  it("oferece galeria de estilos colapsada e seção Fonte global da tabela", () => {
     render(<ComunicadoTableDesignRibbon />);
-    expect(screen.getByRole("list", { name: "Estilos de tabela" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Galeria de estilos de tabela" })).toBeTruthy();
+    expect(screen.getByText("Estilos")).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Estilos de tabela" })).toBeNull();
     expect(screen.getByLabelText("Família da fonte")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Negrito" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Itálico" })).toBeTruthy();

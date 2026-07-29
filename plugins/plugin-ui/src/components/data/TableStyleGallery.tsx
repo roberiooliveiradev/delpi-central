@@ -130,17 +130,20 @@ export type TableStyleMenuProps = TableStyleGalleryProps & {
   triggerLabel?: string;
 };
 
-/** Gatilho «Mais» com galeria completa em portal (evita clip por overflow da ribbon). */
+/** Gatilho colapsado com galeria completa em portal (evita clip por overflow da ribbon). */
 export function TableStyleMenu({
   triggerLabel,
   labels,
   onSelect,
+  presets,
+  selectedId,
   ...galleryProps
 }: TableStyleMenuProps) {
   const L = mergeLabels(labels);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const selected = selectedId ? presets.find((preset) => preset.id === selectedId) : undefined;
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
       <button
@@ -152,7 +155,16 @@ export function TableStyleMenu({
         onClick={() => setOpen((prev) => !prev)}
       >
         <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
-          <Table2 size={18} />
+          {selected ? (
+            <span
+              className="delpi-ui-table-style-menu__thumb"
+              style={thumbStyle(selected)}
+            >
+              <span className="delpi-ui-table-style-strip__preview" />
+            </span>
+          ) : (
+            <Table2 size={18} />
+          )}
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{triggerLabel ?? L.more}</span>
       </button>
@@ -165,6 +177,8 @@ export function TableStyleMenu({
           onDismiss={() => setOpen(false)}
         >
           <TableStyleGallery
+            presets={presets}
+            selectedId={selectedId}
             {...galleryProps}
             labels={labels}
             onSelect={(preset) => {

@@ -22,6 +22,7 @@ import {
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
   HintAction,
   ShapeShadowMenu,
+  TableStyleMenu,
   TableStyleRibbonStrip,
   ToolbarSelectField,
   useRibbonSectionPopoverSurface,
@@ -370,29 +371,34 @@ function TableStyleOptionsBandOrInline({ tiles }: { tiles: ReactNode }) {
   );
 }
 
-/** Galeria + sombreamento. */
+/** Galeria + sombreamento. Ribbon: estilos colapsados (só gatilho); painel: faixa de thumbs. */
 export function TableStylesSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
   if (!ctrl) return null;
 
-  const gallery = (
-    <div
-      className={
-        layout === "pane"
-          ? "td-table-style-gallery-pane"
-          : "td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
-      }
-    >
-      <TableStyleRibbonStrip
-        presets={STYLE_GALLERY_PRESETS}
-        selectedId={ctrl.activeStyleId}
-        onSelect={ctrl.applyGalleryPreset}
-        onClear={ctrl.clearTableStyle}
-        /* Sidebar: menos thumbs visíveis + wrap CSS; ribbon: faixa horizontal. */
-        maxVisible={layout === "pane" ? 6 : 7}
-      />
-    </div>
-  );
+  const gallery =
+    layout === "pane" ? (
+      <div className="td-table-style-gallery-pane">
+        <TableStyleRibbonStrip
+          presets={STYLE_GALLERY_PRESETS}
+          selectedId={ctrl.activeStyleId}
+          onSelect={ctrl.applyGalleryPreset}
+          onClear={ctrl.clearTableStyle}
+          maxVisible={6}
+        />
+      </div>
+    ) : (
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+        {/* Colapsado: evita faixa larga de thumbs cortando «Ação» / legendas. */}
+        <TableStyleMenu
+          presets={STYLE_GALLERY_PRESETS}
+          selectedId={ctrl.activeStyleId}
+          onSelect={ctrl.applyGalleryPreset}
+          onClear={ctrl.clearTableStyle}
+          triggerLabel="Estilos"
+        />
+      </div>
+    );
 
   const shade = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
@@ -427,7 +433,7 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
 
   return (
     <>
-      <DeckRibbonGroup groupId="table-styles" label="Estilos de tabela" hint={H.tableStyles} wide>
+      <DeckRibbonGroup groupId="table-styles" label="Estilos de tabela" hint={H.tableStyles}>
         {gallery}
       </DeckRibbonGroup>
       <DeckRibbonGroup
