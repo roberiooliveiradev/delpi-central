@@ -4,7 +4,7 @@
 > **Status:** Fases 0–3 concluídas em dev; Fases 4–10 planejadas  
 > **Produto:** Minha DELPI  
 > **Escopo:** plugin `kaizometro` + rotas `api-delpi/quality/kaizens/records` + schema `quality` (postgres-plugins)  
-> **Atualizado:** 2026-07-07
+> **Atualizado:** 2026-07-29
 
 ---
 
@@ -47,7 +47,7 @@ Documentação operacional: [plugins/kaizometro/README.md](../../../plugins/kaiz
 2. **Uma fonte por fluxo:** cadastro operacional = Postgres; leitura analítica legada = Sheets até cutover explícito.
 3. **API primeiro:** importação e migrações via HTTP (`import-from-sheet`), não scripts offline em produção.
 4. **Idempotência:** importação ignora duplicatas (filial + título + data de implantação).
-5. **Permissões no backend:** `kaizometro.view` / `kaizometro.manage` (+ aliases `api-delpi.quality.access`).
+5. **Permissões no backend:** `kaizometro.view` / `.manage` / `.notify-suggestions` (capacidades) + `kaizometro.branch-01` / `.branch-02` (escopo de unidade) (+ aliases `api-delpi.quality.access`).
 6. **Envelope canônico:** `meta.operationId` + `meta.shape` em todas as rotas de cadastro.
 
 ---
@@ -59,7 +59,8 @@ Fase 0  — Schema Postgres (quality)                    ✅
 Fase 1  — API CRUD + domínio (calculator, repository)  ✅
 Fase 2  — MFE kaizometro (UI + Docker)            ✅
 Fase 3  — Importação planilha via API + documentação   ✅
-Fase 4  — Produção: manifesto, RBAC, compose prod      ⏳ PRÓXIMA
+Fase 4  — Produção: manifesto, RBAC, compose prod      ⏳
+Fase 4b — RBAC por unidade + link público amarrado    ✅
 Fase 5  — Homologação CI/smoke + testes E2E           ⏳
 Fase 6  — Unificar leitura analítica (summary → PG)    📋
 Fase 7  — Integração dashboard-quality + SI            📋
@@ -136,7 +137,7 @@ Fase 10 — Evoluções UX e governança                    📋
 **Entregáveis**
 
 - [ ] Registrar manifesto na Core API (`plugins/kaizometro/scripts/register-manifest.sh`)
-- [ ] Atribuir `kaizometro.view` e `kaizometro.manage` aos perfis/grupos de qualidade (Keycloak / admin permissões)
+- [ ] Atribuir `kaizometro.view`, `kaizometro.manage` e `kaizometro.branch-01`/`branch-02` aos perfis (conforme unidades operadas)
 - [ ] Validar `gateway.depends_on` inclui `kaizometro` em `docker-compose.yml` (prod)
 - [ ] Confirmar migrations `quality` em postgres-plugins de **produção/staging**
 - [ ] Executar importação inicial via API em staging (`import-from-sheet`) com validação pela área de negócio
@@ -166,6 +167,30 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
 | Usuário edita no cadastro e não vê mudança no dashboard | Comunicação + Fase 6 |
 | Permissão ausente → 403 | Checklist RBAC antes do go-live |
 | Planilha e Postgres divergem | Importação idempotente + data de corte documentada |
+
+---
+
+## Fase 4b — RBAC por unidade + sugestão pública por filial ✅
+
+**Objetivo:** estratificar o Kaizômetro por unidade TOTVS e amarrar o QR/link público à filial.
+
+**Entregáveis**
+
+- [x] Constantes `KAIZOMETRO_BRANCH_01|02` + `KAIZOMETRO_BRANCH_VIEW_PERMS` em `api_delpi_permissions.py`
+- [x] Manifesto: `kaizometro.branch-01` / `kaizometro.branch-02`
+- [x] `kaizen_branch_access` + gate em `kaizen_records_router` (list/get/create/update/…)
+- [x] MFE: selects de unidade filtrados pelo JWT `branch-*`
+- [x] Modal «Compartilhar sugestão» exige unidade → `/p/kaizen/sugestao/aberto?unidade=01|02`
+- [x] public-hub: lê/trava unidade; `POST /public/kaizen/suggestions` com `branch_code` obrigatório
+- [x] Docs plugin + api-delpi; `register-manifest.sh`; atribuir `branch-*` nos perfis
+
+**Critério de pronto:** usuário só com `branch-01` não vê/edita dados da 02; link compartilhado grava sugestão na unidade correta.
+
+**Notas**
+
+- Capacidades (`view`/`manage`) **não** liberam unidades sozinhas — é preciso `branch-*`.
+- Superadmin opera ambas.
+- Link legado sem `?unidade=` → form público exige escolha de unidade.
 
 ---
 

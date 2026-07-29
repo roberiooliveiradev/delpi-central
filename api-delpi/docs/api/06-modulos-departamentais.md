@@ -539,8 +539,9 @@ Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração She
 
 | Operação | Permissões aceitas |
 |----------|-------------------|
-| Leitura (GET) | `kaizometro.view`, `kaizometro.manage` (+ legado `cadastro-kaizen.view`/`.manage`), `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
-| Escrita (POST/PUT/DELETE/import) | `kaizometro.manage` (+ legado `cadastro-kaizen.manage`), `api-delpi.quality.access`, `api-delpi.access` |
+| Leitura (GET) | `kaizometro.view`, `kaizometro.manage`, `kaizometro.branch-01`/`branch-02` (+ legado `cadastro-kaizen.view`/`.manage`), `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
+| Escrita (POST/PUT/DELETE/import) | `kaizometro.manage` (+ legado `cadastro-kaizen.manage`), `api-delpi.quality.access`, `api-delpi.access` — escopo ainda exige `branch-*` |
+| Escopo por unidade | `kaizometro.branch-01` / `kaizometro.branch-02` (gate `BRANCH_FORBIDDEN`; `.view` sozinho não libera filial) |
 | Alerta sugestão pública | `kaizometro.notify-suggestions` (+ legado `cadastro-kaizen.notify-suggestions` na janela de migração; sino Core) |
 
 #### GET /quality/kaizens/records

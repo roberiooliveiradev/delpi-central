@@ -13,8 +13,8 @@ Legenda de permissões:
 | **Q** | `api-delpi.quality.access` |
 | **L** | `dashboard-lmps.view` |
 | **PAC-R** | Leitura PAC: `quality-action-plans.read`, `.manage`, `api-delpi.quality.action-plans.read`, `dashboard-quality.view`, … |
-| **KZ-R** | Leitura Kaizômetro: `kaizometro.view`, `.manage` (+ legado `cadastro-kaizen.*`), `dashboard-quality.view`, `api-delpi.quality.access`, … |
-| **KZ-W** | Escrita Kaizômetro: `kaizometro.manage` (+ legado `cadastro-kaizen.manage`), `api-delpi.quality.access`, … |
+| **KZ-R** | Leitura Kaizômetro: `kaizometro.view`, `.manage`, `.branch-01`/`.branch-02` (+ legado `cadastro-kaizen.*`), `dashboard-quality.view`, `api-delpi.quality.access`, … |
+| **KZ-W** | Escrita Kaizômetro: `kaizometro.manage` (+ legado `cadastro-kaizen.manage`) + escopo `branch-*`, `api-delpi.quality.access`, … |
 | **público** | Sem JWT (prefixo `/public/...`) |
 | **PAC-W** | Escrita PAC: `quality-action-plans.write`, `.manage` |
 ---

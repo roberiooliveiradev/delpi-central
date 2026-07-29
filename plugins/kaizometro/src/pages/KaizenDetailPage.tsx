@@ -60,12 +60,14 @@ import type {
 import { formatCurrency, formatDate } from "../utils/format";
 import { categoriesFromRecord } from "../utils/kaizenCategories";
 import { savingsTypeLabel } from "../utils/labels";
+import type { BranchOption } from "../utils/kaizenBranchPermissions";
 import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
 type Props = {
   recordId: string;
   onNavigate: (path: string) => void;
+  branchOptions: BranchOption[];
 };
 
 function versionStatusOf(revision: KaizenRevision | null): KaizenVersionStatus {
@@ -75,8 +77,6 @@ function versionStatusOf(revision: KaizenRevision | null): KaizenVersionStatus {
 const BRANCH_LABEL: Record<string, string> = Object.fromEntries(
   BRANCHES.map((item) => [item.code, item.label]),
 );
-
-const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
 
 const ROLE_LABEL: Record<string, string> = {
   responsavel: "Responsável",
@@ -100,7 +100,7 @@ function savingsAccountingLabel(record: KaizenRecord): string {
   return `Não (validade encerrada em ${formatDate(record.savings_valid_until)})`;
 }
 
-export function KaizenDetailPage({ recordId, onNavigate }: Props) {
+export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props) {
   const [record, setRecord] = useState<KaizenRecord | null>(null);
   const [form, setForm] = useState<KaizenFormValues | null>(null);
   const [revisions, setRevisions] = useState<KaizenRevision[]>([]);
@@ -502,7 +502,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               required
               value={form.branch_code}
               onChange={(value) => updateField("branch_code", value)}
-              options={BRANCH_OPTIONS}
+              options={
+                branchOptions.length > 0
+                  ? branchOptions
+                  : BRANCHES.map((item) => ({ value: item.code, label: item.label }))
+              }
             />
             <TextField
               id="kz-d-sector"

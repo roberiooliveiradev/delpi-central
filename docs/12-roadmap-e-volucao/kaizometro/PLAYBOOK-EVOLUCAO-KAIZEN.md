@@ -38,6 +38,7 @@ O cadastro de kaizens hoje é um **CRUD plano**: uma tela de formulário (`Kaize
 4. **Storage persistente obrigatório.** Todo upload segue `persistent-upload-storage.mdc`: metadado no Postgres + binário em volume montado (**nunca** `/tmp` ou filesystem efêmero).
 5. **Envelope canônico.** Toda rota nova usa `api_delpi_success(..., operation_id=...)`, entra no `route_contract_registry` e segue `new-api-route-checklist.mdc`.
 6. **Textos/regex/limites em JSON** quando o consumidor for o chat/API de IA (`assistant-content-json.mdc`); no MFE, textos PT-BR ficam nos componentes/constantes do plugin.
+7. **Escopo multi-unidade.** Capacidades (`kaizometro.view` / `.manage`) separadas de escopo (`kaizometro.branch-01` / `.branch-02`). Ver Fase 4b do [ROADMAP.md](./ROADMAP.md).
 7. **Append-only para histórico.** Revisões e auditoria não são editadas nem apagadas; correção = nova revisão.
 8. **Concorrência otimista.** `PUT`/`PATCH` enviam `expected_revision_number`; API responde **409** em divergência (padrão PAC `withExpectedPlanRevision`).
 9. **Validade da economia = 1 ano.** Um kaizen contabiliza ganhos financeiros por **1 ano a partir da data de implantação**; a partir do aniversário deixa de somar no run-rate (permanece no histórico). Regra pura e única em `kaizen_savings_validity` (`savings_valid_until`, `is_savings_active`, `active_days_in_range`), consumida tanto pela consolidação de ganhos quanto pelo cadastro (expõe `savings_valid_until` / `savings_active`). **Nunca** duplicar a janela de 365 dias em `if` de consolidação, presenter ou MFE.

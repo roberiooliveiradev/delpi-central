@@ -9,7 +9,7 @@ Substituir o cadastro manual em planilha Google Sheets por um fluxo operacional 
 - Persistência em PostgreSQL (schema `quality`)
 - Formulário validado (filial, status, tipos de economia)
 - Importação controlada da planilha legada via API (sem scripts offline)
-- Permissões RBAC dedicadas (`kaizometro.view` / `kaizometro.manage` / `kaizometro.notify-suggestions`)
+- Permissões RBAC dedicadas (`kaizometro.view` / `kaizometro.manage` / `kaizometro.notify-suggestions` + escopo `kaizometro.branch-01` / `branch-02`)
 - Canal público de sugestão (public-hub + `POST /public/kaizen/suggestions`)
 
 A leitura para **indicadores estratégicos** e **dashboard-quality** permanece na planilha (`GET /quality/kaizens/summary`) até evolução planejada.

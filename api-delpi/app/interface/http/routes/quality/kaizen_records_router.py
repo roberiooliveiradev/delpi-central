@@ -11,6 +11,11 @@ from app.application.security.api_delpi_permissions import (
     KAIZEN_RECORDS_READ_PERMISSIONS,
     KAIZEN_RECORDS_WRITE_PERMISSIONS,
 )
+from app.interface.http.routes.quality.kaizen_branch_access import (
+    allowed_branch_codes,
+    branch_access_error,
+    resolve_query_branch,
+)
 from app.application.services.kaizen.kaizen_evidence_storage import KaizenEvidenceStorageError
 from app.composition.kaizen_composer import (
     build_import_kaizens_use_case,
@@ -176,6 +181,25 @@ def _body_to_fields(body: BaseModel) -> dict:
     return body.model_dump(exclude_unset=True)
 
 
+
+def _gate_loaded_branch(record: dict | None):
+    """None = not found already handled; returns error response or None."""
+    if record is None:
+        return None
+    return branch_access_error(str(record.get("branch_code") or ""))
+
+
+def _require_record_branch(repo, record_id: str, *, with_participants: bool = False):
+    """Retorna (record, error_response)."""
+    data = repo.get_record(record_id, with_participants=with_participants)
+    if data is None:
+        return None, not_found_response("Kaizen não encontrado.")
+    err = _gate_loaded_branch(data)
+    if err is not None:
+        return None, err
+    return data, None
+
+
 @router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
@@ -197,9 +221,12 @@ def list_kaizen_records(
             date_start=date_start,
             date_end=date_end,
         )
+        effective_branch, branch_err = resolve_query_branch(branch)
+        if branch_err is not None:
+            return branch_err
         repo = build_kaizen_repository()
         data = repo.list_records(
-            branch_code=branch,
+            branch_code=effective_branch,
             status=status,
             savings_type=savings_type,
             title=title,
@@ -225,6 +252,9 @@ def list_kaizen_records(
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def create_kaizen_record(body: KaizenRecordBody = Body(...)):
     try:
+        err = branch_access_error(body.branch_code)
+        if err is not None:
+            return err
         repo = build_kaizen_repository()
         data = repo.create_record(
             fields=_body_to_fields(body),
@@ -248,8 +278,15 @@ def export_kaizen_records():
     try:
         from datetime import datetime, timezone
 
+        allowed = allowed_branch_codes()
+        if not allowed:
+            return resolve_query_branch(None)[1]
         repo = build_kaizen_repository()
-        items = repo.export_records()
+        items = [
+            item
+            for item in repo.export_records()
+            if str(item.get("branch_code") or "") in allowed
+        ]
         return api_delpi_success(
             {
                 "version": KAIZEN_EXPORT_VERSION,
@@ -274,6 +311,13 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
     try:
         if not body.items:
             return error_response("Nenhum kaizen para importar (items vazio).", status_code=400)
+
+        for item in body.items:
+            code = str((item or {}).get("branch_code") or "").strip()
+            if code:
+                err = branch_access_error(code)
+                if err is not None:
+                    return err
 
         use_case = build_import_kaizens_use_case()
         result = use_case.execute(
@@ -309,8 +353,13 @@ def get_kaizen_records_summary(
             date_start=date_start,
             date_end=date_end,
         )
+        effective_branch, branch_err = resolve_query_branch(branch)
+        if branch_err is not None:
+            return branch_err
         repo = build_kaizen_repository()
-        data = repo.summary(branch_code=branch, date_start=start_date, date_end=end_date)
+        data = repo.summary(
+            branch_code=effective_branch, date_start=start_date, date_end=end_date
+        )
         return api_delpi_success(
             data,
             operation_id="get_kaizen_records_summary",
@@ -329,9 +378,9 @@ def get_kaizen_records_summary(
 def get_kaizen_record(record_id: str):
     try:
         repo = build_kaizen_repository()
-        data = repo.get_record(record_id)
-        if data is None:
-            return not_found_response("Kaizen não encontrado.")
+        data, err = _require_record_branch(repo, record_id, with_participants=True)
+        if err is not None:
+            return err
         return api_delpi_success(data, operation_id="get_kaizen_record")
     except Exception as exc:
         log_error(f"Erro ao buscar kaizen cadastrado: {exc}")
@@ -343,9 +392,16 @@ def get_kaizen_record(record_id: str):
 def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...)):
     try:
         repo = build_kaizen_repository()
+        existing, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         fields = _body_to_fields(body)
         if not fields:
             return error_response("Nenhum campo para atualizar.", status_code=400)
+        if "branch_code" in fields:
+            branch_err = branch_access_error(str(fields["branch_code"]))
+            if branch_err is not None:
+                return branch_err
 
         data = repo.update_record(
             record_id,
@@ -371,6 +427,9 @@ def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...
 def delete_kaizen_record(record_id: str):
     try:
         repo = build_kaizen_repository()
+        _existing, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         deleted = repo.delete_record(
             record_id,
             updated_by_user_id=_current_user_id(),
@@ -395,8 +454,9 @@ def delete_kaizen_record(record_id: str):
 def list_kaizen_revisions(record_id: str):
     try:
         repo = build_kaizen_repository()
-        if repo.get_record(record_id, with_participants=False) is None:
-            return not_found_response("Kaizen não encontrado.")
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         items = repo.list_revisions(record_id)
         return api_delpi_success(
             {"items": items},
@@ -413,6 +473,9 @@ def list_kaizen_revisions(record_id: str):
 def get_kaizen_revision(record_id: str, revision_number: int):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         revision = repo.get_revision(record_id, revision_number)
         if revision is None:
             return not_found_response("Revisão não encontrada.")
@@ -427,6 +490,9 @@ def get_kaizen_revision(record_id: str, revision_number: int):
 def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data YYYY-MM-DD")):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         revision = repo.get_revision_at(record_id, date)
         if revision is None:
             return not_found_response("Nenhuma revisão vigente na data informada.")
@@ -444,6 +510,12 @@ def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data 
 def create_kaizen_version(record_id: str, body: KaizenRecordBody = Body(...)):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
+        branch_err = branch_access_error(body.branch_code)
+        if branch_err is not None:
+            return branch_err
         data = repo.create_version(
             record_id,
             fields=_body_to_fields(body),
@@ -470,6 +542,9 @@ def update_kaizen_version(
 ):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         fields = _body_to_fields(body)
         if not fields:
             return error_response("Nenhum campo para atualizar.", status_code=400)
@@ -498,6 +573,9 @@ def update_kaizen_version(
 def delete_kaizen_version(record_id: str, revision_number: int):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         deleted = repo.delete_version(
             record_id,
             revision_number,
@@ -527,6 +605,9 @@ def implement_kaizen_version(
 ):
     try:
         repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         data = repo.implement_version(
             record_id,
             revision_number,
@@ -553,8 +634,9 @@ def implement_kaizen_version(
 def list_kaizen_history(record_id: str):
     try:
         repo = build_kaizen_repository()
-        if repo.get_record(record_id, with_participants=False) is None:
-            return not_found_response("Kaizen não encontrado.")
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         items = repo.list_history(record_id)
         return api_delpi_success(
             {"items": items},
@@ -571,8 +653,9 @@ def list_kaizen_history(record_id: str):
 def list_kaizen_audit_log(record_id: str):
     try:
         repo = build_kaizen_repository()
-        if repo.get_record(record_id, with_participants=False) is None:
-            return not_found_response("Kaizen não encontrado.")
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         items = repo.list_audit_log(record_id)
         return api_delpi_success(
             {"items": items},
@@ -601,8 +684,9 @@ def get_kaizen_savings_timeline(
             date_end=date_end,
         )
         repo = build_kaizen_repository()
-        if repo.get_record(record_id, with_participants=False) is None:
-            return not_found_response("Kaizen não encontrado.")
+        _rec, err = _require_record_branch(repo, record_id)
+        if err is not None:
+            return err
         data = repo.savings_timeline(record_id, date_start=start_date, date_end=end_date)
         return api_delpi_success(
             data,
@@ -621,6 +705,10 @@ def get_kaizen_savings_timeline(
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_evidences(record_id: str):
     try:
+        record_repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
         repo = build_kaizen_evidence_repository()
         items = repo.list_evidences(record_id)
         return api_delpi_success(
@@ -646,8 +734,9 @@ async def attach_kaizen_evidence(
 ):
     try:
         record_repo = build_kaizen_repository()
-        if record_repo.get_record(record_id, with_participants=False) is None:
-            return not_found_response("Kaizen não encontrado.")
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
 
         repo = build_kaizen_evidence_repository()
         fields: dict = {
@@ -700,6 +789,10 @@ async def attach_kaizen_evidence(
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def download_kaizen_evidence(record_id: str, evidence_id: str):
     try:
+        record_repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
         repo = build_kaizen_evidence_repository()
         evidence = repo.get_evidence(record_id, evidence_id)
         if not evidence or not evidence.get("stored_name"):
@@ -727,6 +820,10 @@ def update_kaizen_evidence(
     body: UpdateKaizenEvidenceBody = Body(...),
 ):
     try:
+        record_repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
         repo = build_kaizen_evidence_repository()
         data = repo.update_evidence(record_id, evidence_id, body.model_dump(exclude_unset=True))
         if data is None:
@@ -741,6 +838,10 @@ def update_kaizen_evidence(
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def delete_kaizen_evidence(record_id: str, evidence_id: str):
     try:
+        record_repo = build_kaizen_repository()
+        _rec, err = _require_record_branch(record_repo, record_id)
+        if err is not None:
+            return err
         repo = build_kaizen_evidence_repository()
         removed = repo.delete_evidence(record_id, evidence_id)
         if not removed:

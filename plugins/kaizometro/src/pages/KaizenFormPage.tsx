@@ -24,10 +24,25 @@ type Props = {
   recordId?: string;
   onNavigate: (path: string) => void;
   onCreated?: (id: string) => void;
+  branchOptions?: Array<{ value: string; label: string }>;
+  defaultBranchCode?: string;
 };
 
-export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props) {
-  const [values, setValues] = useState<KaizenFormValues>(emptyFormValues);
+export function KaizenFormPage({
+  mode,
+  recordId,
+  onNavigate,
+  onCreated,
+  branchOptions,
+  defaultBranchCode,
+}: Props) {
+  const [values, setValues] = useState<KaizenFormValues>(() => {
+    const base = emptyFormValues();
+    if (mode === "new" && defaultBranchCode) {
+      return { ...base, branch_code: defaultBranchCode };
+    }
+    return base;
+  });
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +137,11 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
 
         <KaizenFormProgress values={values} />
 
-        <KaizenFormFields values={values} onChange={updateField} />
+        <KaizenFormFields
+          values={values}
+          onChange={updateField}
+          branchOptions={branchOptions}
+        />
 
         <FormActions>
           <button type="submit" className="kz-primary-btn" disabled={saving}>

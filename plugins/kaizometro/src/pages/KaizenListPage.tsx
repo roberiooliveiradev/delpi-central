@@ -22,13 +22,16 @@ import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
+import type { BranchOption } from "../utils/kaizenBranchPermissions";
 import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
+  branchOptions: BranchOption[];
 };
 
-export function KaizenListPage({ onNavigate }: Props) {
+export function KaizenListPage({ onNavigate, branchOptions }: Props) {
+  const allowAllBranches = branchOptions.length > 1;
   const [items, setItems] = useState<KaizenRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -36,11 +39,19 @@ export function KaizenListPage({ onNavigate }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [branch, setBranch] = useState("");
+  const [branch, setBranch] = useState(() =>
+    allowAllBranches ? "" : branchOptions[0]?.value ?? "",
+  );
   const [status, setStatus] = useState("");
   const [savingsType, setSavingsType] = useState("");
   const [title, setTitle] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+
+  useEffect(() => {
+    if (!allowAllBranches && branchOptions[0] && branch !== branchOptions[0].value) {
+      setBranch(branchOptions[0].value);
+    }
+  }, [allowAllBranches, branchOptions, branch]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -263,7 +274,12 @@ export function KaizenListPage({ onNavigate }: Props) {
         }
       />
 
-      <KaizenShareSuggestionModal open={shareOpen} onClose={() => setShareOpen(false)} />
+      <KaizenShareSuggestionModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        branchOptions={branchOptions}
+        initialBranchCode={branch || undefined}
+      />
 
       <input
         ref={fileInputRef}
@@ -278,6 +294,8 @@ export function KaizenListPage({ onNavigate }: Props) {
         status={status}
         savingsType={savingsType}
         title={title}
+        branchOptions={branchOptions}
+        allowAllBranches={allowAllBranches}
         onBranchChange={setBranch}
         onStatusChange={setStatus}
         onSavingsTypeChange={setSavingsType}

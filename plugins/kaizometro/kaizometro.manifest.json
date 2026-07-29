@@ -26,6 +26,18 @@
       "name": "Receber notificações de sugestões Kaizen",
       "description": "Recebe alerta no portal quando uma sugestão pública é enviada",
       "module": "kaizometro"
+    },
+    {
+      "code": "kaizometro.branch-01",
+      "name": "Unidade Santa Catarina (01)",
+      "description": "Operar kaizens da unidade 01 (Santa Catarina)",
+      "module": "kaizometro"
+    },
+    {
+      "code": "kaizometro.branch-02",
+      "name": "Unidade Espírito Santo (02)",
+      "description": "Operar kaizens da unidade 02 (Espírito Santo)",
+      "module": "kaizometro"
     }
   ],
   "routes": [

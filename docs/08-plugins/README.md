@@ -203,7 +203,7 @@ Declaradas no manifesto e persistidas na Core API:
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
-| kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions` |
+| kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions`, `kaizometro.branch-01`, `kaizometro.branch-02` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 

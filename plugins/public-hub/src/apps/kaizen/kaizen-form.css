@@ -138,6 +138,15 @@
   font-size: 0.95rem;
 }
 
+.kz-pub-readonly {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--pub-surface, #1a1f2e) 80%, #fff 8%);
+  border: 1px solid color-mix(in srgb, var(--pub-text, #fff) 12%, transparent);
+  font-weight: 600;
+}
+
 .kz-pub-label {
   margin: 0;
   font-size: 0.95rem;

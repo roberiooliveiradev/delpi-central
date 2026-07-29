@@ -29,7 +29,7 @@ class PublicKaizenSuggestionBody(BaseModel):
     work_center_or_location: str = Field(..., min_length=1, max_length=200)
     problem_description: str = Field(..., min_length=5, max_length=4000)
     proposed_solution: str = Field(..., min_length=5, max_length=4000)
-    branch_code: str | None = Field(default="01", pattern="^(01|02)$")
+    branch_code: str = Field(..., pattern="^(01|02)$")
     # Honeypot — bots preenchem; humanos deixam vazio.
     website: str | None = Field(default=None, max_length=200)
 
@@ -49,7 +49,7 @@ def create_public_kaizen_suggestion(
             work_center_or_location=body.work_center_or_location,
             problem_description=body.problem_description,
             proposed_solution=body.proposed_solution,
-            branch_code=body.branch_code or "01",
+            branch_code=body.branch_code,
         )
         repo = build_kaizen_repository()
         created = repo.create_record(

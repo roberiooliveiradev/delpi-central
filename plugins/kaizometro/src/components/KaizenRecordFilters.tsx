@@ -1,4 +1,4 @@
-import { BRANCHES, KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
+import { KAIZEN_STATUSES, SAVINGS_TYPES } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { FilterInputField, FilterSelectField, FiltersRow } from "./ui";
 
@@ -7,19 +7,21 @@ type KaizenRecordFiltersProps = {
   status: string;
   savingsType: string;
   title: string;
+  branchOptions: Array<{ value: string; label: string }>;
+  allowAllBranches?: boolean;
   onBranchChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onSavingsTypeChange: (value: string) => void;
   onTitleChange: (value: string) => void;
 };
 
-const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
-
 export function KaizenRecordFilters({
   branch,
   status,
   savingsType,
   title,
+  branchOptions,
+  allowAllBranches = true,
   onBranchChange,
   onStatusChange,
   onSavingsTypeChange,
@@ -33,8 +35,8 @@ export function KaizenRecordFilters({
         hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
         value={branch}
         onChange={onBranchChange}
-        options={BRANCH_OPTIONS}
-        placeholderOption="Todas"
+        options={branchOptions}
+        placeholderOption={allowAllBranches ? "Todas" : undefined}
       />
       <FilterSelectField
         id="kz-filter-status"

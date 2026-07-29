@@ -146,11 +146,15 @@ A importação é **idempotente**: ignora duplicatas (mesma filial + título + d
 
 | Código | Uso |
 |--------|-----|
-| `kaizometro.view` | Listar e consultar registros |
+| `kaizometro.view` | Abrir o app / listar (capacidade) |
 | `kaizometro.manage` | Criar, editar, excluir e importar |
 | `kaizometro.notify-suggestions` | Alerta no portal ao receber sugestão pública |
+| `kaizometro.branch-01` | Escopo: unidade 01 (Santa Catarina) |
+| `kaizometro.branch-02` | Escopo: unidade 02 (Espírito Santo) |
 
-Na api-delpi, rotas de leitura aceitam também `api-delpi.quality.access` e `dashboard-quality.view`; escrita autenticada exige `kaizometro.manage` (ou `api-delpi.access` / `api-delpi.quality.access`). A rota pública de sugestão não exige JWT.
+`view`/`manage` **não** liberam unidades sozinhas — atribua também `branch-01` e/ou `branch-02`. Superadmin opera ambas.
+
+Na api-delpi, rotas de leitura aceitam também `api-delpi.quality.access` e `dashboard-quality.view`; escrita autenticada exige `kaizometro.manage` (ou `api-delpi.access` / `api-delpi.quality.access`). A rota pública de sugestão não exige JWT; o link deve levar `?unidade=01|02`.
 
 **Janela de migração (rename `cadastro-kaizen` → `kaizometro`):** a API ainda aceita as permissões legadas `cadastro-kaizen.view` / `.manage` / `.notify-suggestions` nas mesmas listas. Remova-as após remapear os perfis RBAC (ver runbook abaixo).
 
@@ -244,7 +248,7 @@ export TOKEN="$(bash infra/scripts/get-dev-token.sh)"
 
 Manifesto: `kaizometro.manifest.json` (`schemaVersion` 1.0.0, `renderMode: federated`).
 
-Após o registro, atribua `kaizometro.view` e `kaizometro.manage` aos perfis de qualidade; gestores que devem ver o **sino de nova sugestão** também precisam de `kaizometro.notify-suggestions`.
+Após o registro, atribua `kaizometro.view` e as unidades (`kaizometro.branch-01` / `branch-02`); quem edita precisa de `kaizometro.manage`; gestores do sino precisam de `kaizometro.notify-suggestions`.
 
 ## Deploy / rename (produção)
 

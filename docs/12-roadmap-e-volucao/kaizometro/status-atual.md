@@ -1,6 +1,6 @@
 # Status atual — Kaizômetro
 
-> Snapshot em **2026-07-15**. Roadmap completo: [ROADMAP.md](./ROADMAP.md)
+> Snapshot em **2026-07-29**. Roadmap completo: [ROADMAP.md](./ROADMAP.md)
 
 ## Resumo
 
@@ -11,6 +11,8 @@
 | MFE `kaizometro` | ✅ Build + Docker dev |
 | Dados piloto (dev) | ✅ 21+ registros via API |
 | Core API register + RBAC prod | ⏳ Pendente |
+| RBAC `kaizometro.branch-01\|02` | ✅ Gate API + manifesto |
+| Link/QR público por unidade (`?unidade=`) | ✅ Modal + public-hub |
 | Dashboard `summary` (Sheets) | ⚠️ Legado — não lê Postgres ainda |
 | Revisões versionadas | ✅ Migration V029 + serviço + rotas `/revisions` (dev) |
 | Evidências (Antes/Depois) | ✅ Migration V030 + volume + rotas `/evidences` (dev) |
@@ -29,7 +31,7 @@
 | Status `aprovado` + `date_committee_approved` | ✅ Migration V042 + regras de data/indicadores |
 | Status `recebido` (ex-`em_andamento`) | ✅ Migration V043 |
 | Formulário público + notificação | ✅ public-hub wizard + `POST /public/kaizen/suggestions` + sino Core |
-| Compartilhar sugestão (QR/PNG) | ✅ Modal na listagem |
+| Compartilhar sugestão (QR/PNG) | ✅ Modal com unidade → `?unidade=01\|02` |
 | Cálculo temporal do dashboard (revisões) | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) (Fase 6b/6c) |
 
 ## O que já funciona
@@ -57,6 +59,7 @@
 - **Múltiplos responsáveis/participantes** (accountable segue como principal)
 - Importar planilha (botão na UI ou `POST .../import-from-sheet`)
 - Permissões `kaizometro.view` / `kaizometro.manage` / `kaizometro.notify-suggestions`
+  (+ escopo `kaizometro.branch-01` / `branch-02` — Fase 4b)
 - **Formulário público de sugestão** (`/p/kaizen/sugestao/aberto`) com wizard 2 etapas,
   % de preenchimento e conclusão; botão **Compartilhar sugestão** (QR + link + PNG)
 - Status **Recebido** / **Aprovado** / **Implantado** com regras de datas e indicadores
@@ -71,7 +74,7 @@
 
 ## Próximo passo
 
-1. **Fase 4** do [ROADMAP.md](./ROADMAP.md): registro no portal, RBAC e importação validada em staging (inclui volume de evidências).
+1. **Fase 4** do [ROADMAP.md](./ROADMAP.md): registro no portal, RBAC (incl. `branch-*`) e importação validada em staging (inclui volume de evidências).
 2. **Fase 6b/6c**: cálculo temporal do dashboard lendo `kaizen_revisions` conforme [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md).
 
 > Evolução planejada (modo visual/edição, evidências do processo, revisões versionadas, descrição e múltiplos responsáveis): [PLAYBOOK-EVOLUCAO-KAIZEN.md](./PLAYBOOK-EVOLUCAO-KAIZEN.md).

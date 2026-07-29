@@ -4,17 +4,39 @@ import "./kaizen-form.css";
 
 const SECTOR_OPTIONS = ["Administrativo", "Produtivo", "Outra"] as const;
 
+const UNIT_OPTIONS = [
+  { code: "01" as const, label: "Santa Catarina" },
+  { code: "02" as const, label: "Espírito Santo" },
+];
+
+type BranchCode = "01" | "02";
 type Step = 1 | 2;
 type Phase = "form" | "submitting" | "done" | "error";
 
-const TOTAL_FIELDS = 6;
+function parseUnidadeFromSearch(): BranchCode | null {
+  if (typeof window === "undefined") return null;
+  const raw = new URLSearchParams(window.location.search).get("unidade")?.trim();
+  if (raw === "01" || raw === "02") return raw;
+  return null;
+}
+
+function unitLabel(code: BranchCode): string {
+  return UNIT_OPTIONS.find((u) => u.code === code)?.label ?? code;
+}
 
 function isFilled(value: string, min = 1): boolean {
   return value.trim().length >= min;
 }
 
 export function KaizenSuggestionForm() {
+  const lockedBranch = useMemo(() => parseUnidadeFromSearch(), []);
+  const invalidUnidade =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("unidade") &&
+    lockedBranch === null;
+
   const [step, setStep] = useState<Step>(1);
+  const [branchCode, setBranchCode] = useState<BranchCode | "">(lockedBranch ?? "");
   const [proposerName, setProposerName] = useState("");
   const [sector, setSector] = useState<(typeof SECTOR_OPTIONS)[number]>("Administrativo");
   const [sectorOther, setSectorOther] = useState("");
@@ -27,28 +49,38 @@ export function KaizenSuggestionForm() {
   const [error, setError] = useState<string | null>(null);
 
   const resolvedSector = sector === "Outra" ? sectorOther.trim() : sector;
+  const needsUnitChoice = !lockedBranch;
+  const totalFields = needsUnitChoice ? 7 : 6;
 
   const fillPercent = useMemo(() => {
     const filled =
+      Number(needsUnitChoice ? isFilled(branchCode) : true) +
       Number(isFilled(proposerName)) +
       Number(isFilled(resolvedSector)) +
       Number(isFilled(employeeRegistration)) +
       Number(isFilled(workCenter)) +
       Number(isFilled(problem, 5)) +
       Number(isFilled(solution, 5));
-    return Math.round((filled / TOTAL_FIELDS) * 100);
+    return Math.round((filled / totalFields) * 100);
   }, [
+    needsUnitChoice,
+    branchCode,
     proposerName,
     resolvedSector,
     employeeRegistration,
     workCenter,
     problem,
     solution,
+    totalFields,
   ]);
 
   const firstName = proposerName.trim().split(/\s+/)[0] || "";
 
   function validateStep1(): boolean {
+    if (needsUnitChoice && (branchCode !== "01" && branchCode !== "02")) {
+      setError("Selecione a unidade.");
+      return false;
+    }
     if (!isFilled(proposerName) || !isFilled(resolvedSector) || !isFilled(employeeRegistration)) {
       setError("Preencha os campos de identificação.");
       return false;
@@ -83,6 +115,11 @@ export function KaizenSuggestionForm() {
       return;
     }
     if (!validateStep1() || !validateStep2()) return;
+    const code = (lockedBranch ?? branchCode) as BranchCode;
+    if (code !== "01" && code !== "02") {
+      setError("Selecione a unidade.");
+      return;
+    }
 
     setPhase("submitting");
     try {
@@ -93,6 +130,7 @@ export function KaizenSuggestionForm() {
         work_center_or_location: workCenter.trim(),
         problem_description: problem.trim(),
         proposed_solution: solution.trim(),
+        branch_code: code,
         website: honeypot || undefined,
       });
       setPhase("done");
@@ -102,7 +140,21 @@ export function KaizenSuggestionForm() {
     }
   }
 
+  if (invalidUnidade) {
+    return (
+      <div className="kz-pub-done" role="alert">
+        <p className="kz-pub-form__eyebrow">TRANSFORMA+</p>
+        <h1>Link inválido</h1>
+        <p>
+          A unidade informada no link não é válida. Use um link com{" "}
+          <code>?unidade=01</code> (Santa Catarina) ou <code>?unidade=02</code> (Espírito Santo).
+        </p>
+      </div>
+    );
+  }
+
   if (phase === "done") {
+    const unit = (lockedBranch ?? branchCode) as BranchCode;
     return (
       <div className="kz-pub-done" role="status">
         <div className="kz-pub-done__check" aria-hidden="true">
@@ -111,8 +163,9 @@ export function KaizenSuggestionForm() {
         <p className="kz-pub-form__eyebrow">TRANSFORMA+</p>
         <h1>Sugestão enviada{firstName ? `, ${firstName}` : ""}!</h1>
         <p>
-          Obrigado por contribuir. Sua ideia foi registrada com status{" "}
-          <strong>Recebido</strong> e a equipe de qualidade já foi notificada para análise.
+          Obrigado por contribuir. Sua ideia foi registrada em{" "}
+          <strong>{unitLabel(unit)}</strong> com status <strong>Recebido</strong> e a equipe de
+          qualidade já foi notificada para análise.
         </p>
         <div className="kz-pub-done__progress" aria-hidden="true">
           <div className="kz-pub-progress__track">
@@ -135,6 +188,12 @@ export function KaizenSuggestionForm() {
         <h1>Sugestão de melhorias Kaizen</h1>
         <p className="kz-pub-form__lead">
           Etapa {step} de 2 · Campos com * são obrigatórios.
+          {lockedBranch ? (
+            <>
+              {" "}
+              Unidade: <strong>{unitLabel(lockedBranch)}</strong>.
+            </>
+          ) : null}
         </p>
         <div
           className="kz-pub-progress"
@@ -156,6 +215,33 @@ export function KaizenSuggestionForm() {
           <h2 id="kz-pub-id-title" className="kz-pub-card__title">
             1. Identificação
           </h2>
+
+          {lockedBranch ? (
+            <div className="kz-pub-field">
+              <span className="kz-pub-label">Unidade</span>
+              <p className="kz-pub-readonly">{unitLabel(lockedBranch)}</p>
+            </div>
+          ) : (
+            <div className="kz-pub-field" role="group" aria-labelledby="kz-pub-unit-label">
+              <p id="kz-pub-unit-label" className="kz-pub-label">
+                Unidade <span className="kz-pub-req" aria-hidden="true">*</span>
+              </p>
+              <div className="kz-pub-options">
+                {UNIT_OPTIONS.map((option) => (
+                  <label key={option.code} className="kz-pub-option">
+                    <input
+                      type="radio"
+                      name="unidade"
+                      checked={branchCode === option.code}
+                      onChange={() => setBranchCode(option.code)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <label className="kz-pub-field">
             <span className="kz-pub-label">
               Seu nome <span className="kz-pub-req" aria-hidden="true">*</span>

@@ -7,7 +7,7 @@ export type PublicKaizenSuggestionPayload = {
   work_center_or_location: string;
   problem_description: string;
   proposed_solution: string;
-  branch_code?: "01" | "02";
+  branch_code: "01" | "02";
   website?: string;
 };
 

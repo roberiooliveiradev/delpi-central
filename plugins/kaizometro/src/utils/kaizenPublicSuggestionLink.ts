@@ -5,12 +5,27 @@ export const KAIZEN_QR_DISPLAY_SIZE = 240;
 export const KAIZEN_QR_EXPORT_SIZE = 512;
 export const KAIZEN_QR_PNG_FILENAME = "kaizen-formulario-sugestao.png";
 
-export function resolveKaizenPublicSuggestionUrl(origin?: string): string {
-  const base = (origin ?? (typeof window !== "undefined" ? window.location.origin : "")).replace(
-    /\/+$/,
-    "",
-  );
-  return `${base}${KAIZEN_PUBLIC_SUGGESTION_PATH}`;
+export type PublicSuggestionLinkOptions = {
+  origin?: string;
+  /** Código TOTVS da unidade (`01` | `02`). Obrigatório para link amarrado. */
+  branchCode?: string;
+};
+
+export function resolveKaizenPublicSuggestionUrl(
+  options: PublicSuggestionLinkOptions | string = {},
+): string {
+  // Compat: chamada antiga com origin string
+  const opts: PublicSuggestionLinkOptions =
+    typeof options === "string" ? { origin: options } : options;
+  const base = (
+    opts.origin ?? (typeof window !== "undefined" ? window.location.origin : "")
+  ).replace(/\/+$/, "");
+  const url = `${base}${KAIZEN_PUBLIC_SUGGESTION_PATH}`;
+  const code = (opts.branchCode || "").trim();
+  if (code === "01" || code === "02") {
+    return `${url}?unidade=${encodeURIComponent(code)}`;
+  }
+  return url;
 }
 
 /** QR via serviço público (sem dependência npm extra no MFE). */

@@ -24,9 +24,16 @@ DASHBOARD_LMPS_NC_WRITE = "dashboard-lmps.nc.write"
 KAIZOMETRO_VIEW = "kaizometro.view"
 KAIZOMETRO_MANAGE = "kaizometro.manage"
 KAIZOMETRO_NOTIFY_SUGGESTIONS = "kaizometro.notify-suggestions"
+KAIZOMETRO_BRANCH_01 = "kaizometro.branch-01"
+KAIZOMETRO_BRANCH_02 = "kaizometro.branch-02"
 CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"  # legado
 CADASTRO_KAIZEN_MANAGE = "cadastro-kaizen.manage"  # legado
 CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS = "cadastro-kaizen.notify-suggestions"  # legado
+
+KAIZOMETRO_BRANCH_VIEW_PERMS = {
+    "01": KAIZOMETRO_BRANCH_01,
+    "02": KAIZOMETRO_BRANCH_02,
+}
 
 # --- planos de ação PAC qualidade ---
 QUALITY_ACTION_PLANS_ACCESS = "quality-action-plans.access"
@@ -199,6 +206,8 @@ KAIZEN_RECORDS_READ_PERMISSIONS = [
     DASHBOARD_QUALITY_VIEW,
     KAIZOMETRO_VIEW,
     KAIZOMETRO_MANAGE,
+    KAIZOMETRO_BRANCH_01,
+    KAIZOMETRO_BRANCH_02,
     CADASTRO_KAIZEN_VIEW,  # legado (janela de migração)
     CADASTRO_KAIZEN_MANAGE,  # legado
 ]

@@ -14,12 +14,19 @@ import type { KaizenFormValues } from "../../types/kaizen";
 type KaizenFormFieldsProps = {
   values: KaizenFormValues;
   onChange: <K extends keyof KaizenFormValues>(key: K, value: KaizenFormValues[K]) => void;
+  branchOptions?: Array<{ value: string; label: string }>;
 };
 
-const BRANCH_OPTIONS = BRANCHES.map((item) => ({ value: item.code, label: item.label }));
-
-export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
+export function KaizenFormFields({
+  values,
+  onChange,
+  branchOptions,
+}: KaizenFormFieldsProps) {
   const isQualitative = values.savings_type === "qualitativo";
+  const unitOptions =
+    branchOptions && branchOptions.length > 0
+      ? branchOptions
+      : BRANCHES.map((item) => ({ value: item.code, label: item.label }));
 
   return (
     <>
@@ -35,7 +42,7 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
           required
           value={values.branch_code}
           onChange={(value) => onChange("branch_code", value)}
-          options={BRANCH_OPTIONS}
+          options={unitOptions}
         />
 
         <SelectField
