@@ -46,6 +46,8 @@ filial
 ```
 
 Matching principal: **`SF1010`** com `D_E_L_E_T_ = ''`.  
+- Match **direto:** `F1_FORNECE`/`F1_LOJA` = `A2_COD`/`A2_LOJA` da solicitação (notas tipo `N` e demais com partido em SA2).  
+- Match **beneficiamento:** `F1_TIPO = 'B'` — no Protheus o partido é **SA1** (cliente); concilia quando o CNPJ (só dígitos) de `SA1` do cabeçalho = CNPJ de `SA2` da solicitação.  
 Confirmação opcional: existência de itens ativos em **`SD1010`** (`D_E_L_E_T_ = ''`) na mesma chave.  
 **Valor da nota não participa da chave.**
 

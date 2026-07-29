@@ -32,6 +32,7 @@ Gateway → /apps/api-delpi/lancamento-notas-fiscais/*
 - Cadastro de solicitação após recebimento físico (filial, nota, série, fornecedor, valor, data/hora)
 - Fila FIFO por `received_at` (mais antigas primeiro), filtros e cards no mobile
 - Refresh de conciliação ao abrir a fila (cooldown 45s) — não bloqueia a listagem
+- Conciliação automática SF1: match direto (SA2) e beneficiamento (`F1_TIPO=B` via CNPJ SA1↔SA2)
 - Atendimento: iniciar, bloquear (com responsável pela correção + notificação no sino), retomar, comentar, **Já lançada**, consultar e **amarrar Pedidos de compra** (grupos SC7 por PC + data de entrega, com seleção por item/`C7_ITEM`)
 - Detalhe em layout denso (resumo + dados fiscais/situação + histórico sticky)
 - Documento com **9 dígitos** (zeros à esquerda); valor aceita **vírgula** (formato BR)

@@ -21,7 +21,12 @@ class SupplierQueryPort(Protocol):
 
 
 class InvoicePostingSf1QueryPort(Protocol):
-    """Consulta somente leitura à SF1010 (cabeçalho NF entrada)."""
+    """Consulta somente leitura à SF1010 (cabeçalho NF entrada).
+
+    Match direto por ``F1_FORNECE``/``F1_LOJA`` (SA2) ou, quando ``F1_TIPO='B'``,
+    por CNPJ entre SA1 do ERP e SA2 da chave da solicitação. Linhas retornadas
+    projetam os códigos da solicitação (não o código SA1 do ERP).
+    """
 
     def find_active_by_fiscal_keys(
         self,
