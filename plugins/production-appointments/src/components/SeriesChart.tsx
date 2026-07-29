@@ -32,7 +32,10 @@ export function SeriesChart({
 }: SeriesChartProps) {
   const data = points.map((point) => ({
     ...point,
-    label: formatSeriesBucket(point.appointment_date, granularity),
+    label: formatSeriesBucket(
+      point.periodo ?? point.appointment_date,
+      granularity,
+    ),
   }));
 
   const hint =

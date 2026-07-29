@@ -205,6 +205,18 @@ PRODUCTION_APPOINTMENTS_FINISHED_OPS_FIELD_LABELS: dict[str, str] = {
     "granularity": "Granularidade",
 }
 
+PRODUCTION_APPOINTMENTS_SERIES_FIELD_LABELS: dict[str, str] = {
+    "periodo": "Período",
+    "bucket": "Bucket",
+    "appointment_date": "Data",
+    "appointment_count": "Apontamentos",
+    "qty_produced": "Qtd. produzida",
+    "qty_lost": "Qtd. perdida",
+    "work_center": "Centro de trabalho",
+    "work_center_name": "Nome do CT",
+    "granularity": "Granularidade",
+}
+
 QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
     "qty_returned_un": "Quantidade devolvida (un.)",
     "nc_count": "Quantidade de NCs",

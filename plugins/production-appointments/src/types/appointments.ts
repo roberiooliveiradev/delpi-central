@@ -50,7 +50,12 @@ export type AppointmentsSummaryData = {
 };
 
 export type SeriesPoint = {
+  /** ISO `YYYY-MM-DD` (dia) ou `YYYY-MM` (mês) — eixo temporal público. */
   appointment_date: string;
+  /** ISO espelhando `appointment_date` (padrão OEE/OTD / TV). */
+  periodo?: string;
+  /** Bucket Protheus `YYYYMMDD` / `YYYYMM` (quando a API enviar). */
+  bucket?: string;
   work_center?: string;
   work_center_name?: string;
   appointment_count: number;

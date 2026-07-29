@@ -60,13 +60,21 @@ export function formatProtheusDate(value: string | null | undefined): string {
   return formatDatePtBr(raw);
 }
 
-/** Rótulo do eixo X da série temporal (dia AAAAMMDD ou mês AAAAMM). */
+/** Rótulo do eixo X da série temporal (ISO ou Protheus; dia ou mês). */
 export function formatSeriesBucket(
   value: string | null | undefined,
   granularity: "day" | "month" = "day",
 ): string {
   if (!value) return "—";
   const raw = value.trim();
+  const isoMonth = /^(\d{4})-(\d{2})$/.exec(raw);
+  if (isoMonth) {
+    return `${isoMonth[2]}/${isoMonth[1]}`;
+  }
+  const isoDay = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  if (isoDay) {
+    return formatDatePtBr(raw);
+  }
   if (granularity === "month") {
     const month = /^(\d{4})(\d{2})/.exec(raw);
     if (month) return `${month[2]}/${month[1]}`;

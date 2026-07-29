@@ -176,6 +176,16 @@ class GetProductionAppointmentsSeriesUseCase:
             product=request.product,
             mother_op=request.mother_op,
         )
+        mapped_points = []
+        for row in points:
+            bucket = str(row.get("appointment_date") or "").strip()
+            periodo = _bucket_to_periodo(bucket, request.granularity)
+            mapped = dict(row)
+            mapped["bucket"] = bucket
+            mapped["periodo"] = periodo
+            # Eixo temporal público em ISO (TV / charts); bucket Protheus fica em `bucket`.
+            mapped["appointment_date"] = periodo
+            mapped_points.append(mapped)
         return {
             "period": {"start": date_start, "end_exclusive": date_end_exclusive},
             "branch": request.branch,
@@ -187,9 +197,9 @@ class GetProductionAppointmentsSeriesUseCase:
                 "product": request.product,
                 "mother_op": request.mother_op,
             },
-            "points": points,
+            "points": mapped_points,
             "summary": build_period_summary(
-                items=points,
+                items=mapped_points,
                 branch=request.branch,
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,

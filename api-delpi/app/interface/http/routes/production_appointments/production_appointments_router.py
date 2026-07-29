@@ -256,12 +256,18 @@ def series_route(
     )
     if err:
         return err
+    from app.interface.http.kpi_field_labels import (
+        PRODUCTION_APPOINTMENTS_SERIES_FIELD_LABELS,
+        kpi_fields,
+    )
+
     return execute_route(
         use_case_builder=build_get_production_appointments_series_use_case,
         request=request,
         operation_id="get_production_appointments_series",
         success_message="Série de apontamentos carregada com sucesso.",
         error_context="carregar série de apontamentos",
+        fields=kpi_fields(PRODUCTION_APPOINTMENTS_SERIES_FIELD_LABELS),
     )
 
 

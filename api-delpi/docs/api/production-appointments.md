@@ -32,6 +32,15 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 | GET | `/production/appointments/child-ops` | `list_production_appointments_child_ops` | `paged_list` |
 | GET | `/production/appointments/produced-totals` | `get_production_appointments_produced_totals` | `playbook_report` |
 
+## Série temporal (apontamentos)
+
+`GET /series` agrega produzida/perdida por `granularity` (`day`|`month`) e `group_by` (`day`|`day_work_center`):
+
+- `day` — `bucket` Protheus `YYYYMMDD` → `periodo` / `appointment_date` ISO `YYYY-MM-DD`
+- `month` — `bucket` Protheus `YYYYMM` → `periodo` / `appointment_date` ISO `YYYY-MM`
+
+Resposta: `points[]` com `bucket`, `periodo`, `appointment_date` (ISO), `qty_produced`, `qty_lost`, `appointment_count`.
+
 ## OPs finalizadas (série)
 
 `GET /finished-ops/series` conta OPs com **`SC2.C2_DATRF` preenchido** no período (closed-open), agregadas por `granularity`:
