@@ -53,6 +53,15 @@ def _stub_lnf_block_notification():
         yield mocked
 
 
+@pytest.fixture(autouse=True)
+def _stub_lnf_block_resolved_notification():
+    with patch(
+        "app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases.notify_block_resolved",
+        return_value=False,
+    ) as mocked:
+        yield mocked
+
+
 
 def _creator(**kwargs: Any) -> Actor:
     base = dict(
@@ -1134,6 +1143,191 @@ def test_block_notifies_assignee(_stub_lnf_block_notification) -> None:
     assert request_arg["assignee_user_id"] == "u-compras"
     assert request_arg["block_description"] == "Falta o PC"
     assert _stub_lnf_block_notification.call_args.kwargs["actor_user_id"] == "u-process"
+
+
+def test_resume_notifies_block_requester(
+    _stub_lnf_block_notification,
+    _stub_lnf_block_resolved_notification,
+) -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="purchase_order",
+        block_description="Falta pedido",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+    ResumeInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        _processor(user_id="u-compras", user_name="Compras Delpi"),
+    )
+    assert _stub_lnf_block_resolved_notification.called
+    kwargs = _stub_lnf_block_resolved_notification.call_args.kwargs
+    assert kwargs["recipient_user_id"] == "u-process"
+    assert kwargs["block_reason"] == "purchase_order"
+    assert kwargs["block_description"] == "Falta pedido"
+    assert kwargs["actor_user_id"] == "u-compras"
+
+
+def test_link_purchase_order_auto_resumes_purchase_order_block(
+    _stub_lnf_block_notification,
+    _stub_lnf_block_resolved_notification,
+) -> None:
+    """Amarração de PC com pendência purchase_order retoma e notifica quem bloqueou."""
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="purchase_order",
+        block_description="Falta pedido",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                }
+            ]
+
+    linked = LinkRequestPurchaseOrderUseCase(repo, FakePurchaseOrders()).execute(
+        created["id"],
+        _processor(user_id="u-compras", user_name="Compras Delpi"),
+        order_number="000123",
+        delivery_date="2026-07-20",
+    )
+    assert linked["status"] == "in_progress"
+    assert linked["block_reason"] is None
+    assert linked["linked_po_number"] == "000123"
+    assert linked["assignee_user_id"] == "u-compras"
+    assert _stub_lnf_block_resolved_notification.called
+    kwargs = _stub_lnf_block_resolved_notification.call_args.kwargs
+    assert kwargs["recipient_user_id"] == "u-process"
+    assert kwargs["block_reason"] == "purchase_order"
+    assert kwargs["actor_user_id"] == "u-compras"
+    history = repo.list_history(created["id"])
+    assert any(h["event_type"] == "purchase_order_linked" for h in history)
+    assert any(
+        h.get("from_status") == "blocked" and h.get("to_status") == "in_progress"
+        for h in history
+    )
+
+
+def test_link_purchase_order_does_not_auto_resume_other_block(
+    _stub_lnf_block_notification,
+    _stub_lnf_block_resolved_notification,
+) -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="other",
+        block_description="Outra pendência",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                }
+            ]
+
+    linked = LinkRequestPurchaseOrderUseCase(repo, FakePurchaseOrders()).execute(
+        created["id"],
+        _processor(user_id="u-compras", user_name="Compras Delpi"),
+        order_number="000123",
+        delivery_date="2026-07-20",
+    )
+    assert linked["status"] == "blocked"
+    assert linked["block_reason"] == "other"
+    assert not _stub_lnf_block_resolved_notification.called
+
+
+def test_link_purchase_order_clear_does_not_auto_resume(
+    _stub_lnf_block_notification,
+    _stub_lnf_block_resolved_notification,
+) -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    StartInvoicePostingRequestUseCase(repo).execute(created["id"], _processor())
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="purchase_order",
+        block_description="Falta pedido",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+
+    class FakePurchaseOrders:
+        def list_open_purchase_orders_by_supplier(self, **kwargs):
+            return [
+                {
+                    "order_number": "000123",
+                    "order_item": "0001",
+                    "product_code": "10080001",
+                    "open_value": 100.0,
+                    "issue_date": "2026-07-01",
+                    "expected_delivery_date": "2026-07-20",
+                }
+            ]
+
+    pos = FakePurchaseOrders()
+    LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(user_id="u-compras", user_name="Compras Delpi"),
+        order_number="000123",
+        delivery_date="2026-07-20",
+    )
+    _stub_lnf_block_resolved_notification.reset_mock()
+    # Após auto-resume a solicitação já está in_progress; rebloqueia para testar clear
+    BlockInvoicePostingRequestUseCase(repo).execute(
+        created["id"],
+        actor=_processor(),
+        block_reason="purchase_order",
+        block_description="Falta pedido de novo",
+        assignee_user_id="u-compras",
+        assignee_name="Compras Delpi",
+    )
+    _stub_lnf_block_resolved_notification.reset_mock()
+    cleared = LinkRequestPurchaseOrderUseCase(repo, pos).execute(
+        created["id"],
+        _processor(user_id="u-compras", user_name="Compras Delpi"),
+        groups=[],
+    )
+    assert cleared["status"] == "blocked"
+    assert cleared["block_reason"] == "purchase_order"
+    assert not _stub_lnf_block_resolved_notification.called
 
 
 def test_start_conflict_other_assignee() -> None:

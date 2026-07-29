@@ -181,6 +181,9 @@ Body: `{ "block_reason": "...", "block_description": "...", "assignee_user_id": 
 
 Após o bloqueio, a api-delpi envia notificação in-app (sino do portal) ao responsável — com motivo, descrição, nota, fornecedor, filial e link para `/apps/lancamento-notas-fiscais/filial-0x?requestId={id}`. Requer `CORE_API_BASE_URL` + `CORE_API_INTEGRATIONS_SERVICE_TOKEN` e `LNF_NOTIFICATIONS_ENABLED=true` (default). Não notifica se o responsável for o próprio ator.
 
+Ao **retomar** (`POST .../resume`), notifica quem registrou o bloqueio (tipo `success`).  
+Se a pendência for `purchase_order` e a amarração de PC incluir ao menos um pedido, a API **retoma automaticamente** (mesmo efeito do resume) e dispara a mesma notificação.
+
 ### POST `.../resume`
 
 `blocked` → `in_progress` (preserva assignee).

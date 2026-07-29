@@ -9,7 +9,11 @@ from typing import Any, Sequence
 from app.domain.services.lancamento_notas_fiscais.history_serialization import (
     history_changes_json_safe,
 )
-from app.application.services.lnf_portal_notification_service import notify_block_assignee
+from app.application.services.lnf_portal_notification_service import (
+    notify_block_assignee,
+    notify_block_resolved,
+    resolve_block_requester_user_id,
+)
 from app.shared.utils.person_name import format_person_name
 from app.domain.services.lancamento_notas_fiscais.exceptions import (
     DuplicateFiscalKeyError,
@@ -35,6 +39,7 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_branch,
     normalize_document,
     normalize_series,
+    should_auto_resume_after_purchase_order_link,
 )
 from app.domain.services.lancamento_notas_fiscais.purchase_order_grouping_service import (
     aggregate_purchase_order_items,
@@ -595,24 +600,34 @@ class LinkRequestPurchaseOrderUseCase:
         }
 
         if hasattr(self._requests, "replace_linked_purchase_orders"):
-            return self._requests.replace_linked_purchase_orders(
+            updated = self._requests.replace_linked_purchase_orders(
                 request_id=request_id,
                 rows=resolved_rows,
                 history_fields=history_fields,
                 mirror_updates=mirror_updates,
             )
+        else:
+            # Fallback (testes sem junction): espelha só o primeiro e lista em memória
+            updated = self._requests.update_request_with_history(
+                request_id=request_id,
+                updates=mirror_updates,
+                history_fields=history_fields,
+            )
+            if hasattr(self._requests, "set_linked_purchase_orders"):
+                self._requests.set_linked_purchase_orders(request_id, to_snapshots)
+                refreshed = self._requests.get_request(request_id)
+                updated = refreshed or updated
+            else:
+                updated["linked_purchase_orders"] = to_snapshots
 
-        # Fallback (testes sem junction): espelha só o primeiro e lista em memória
-        updated = self._requests.update_request_with_history(
-            request_id=request_id,
-            updates=mirror_updates,
-            history_fields=history_fields,
-        )
-        if hasattr(self._requests, "set_linked_purchase_orders"):
-            self._requests.set_linked_purchase_orders(request_id, to_snapshots)
-            refreshed = self._requests.get_request(request_id)
-            return refreshed or updated
-        updated["linked_purchase_orders"] = to_snapshots
+        if should_auto_resume_after_purchase_order_link(
+            status=current.get("status"),
+            block_reason=current.get("block_reason"),
+            has_linked_purchase_orders=bool(to_snapshots),
+        ):
+            updated = ResumeInvoicePostingRequestUseCase(self._requests).execute(
+                request_id, actor
+            )
         return updated
 
     @staticmethod
@@ -985,6 +1000,12 @@ class ResumeInvoicePostingRequestUseCase:
                 "Somente solicitações blocked podem ser retomadas."
             )
 
+        previous_block_reason = current.get("block_reason")
+        previous_block_description = current.get("block_description")
+        block_requester_user_id = resolve_block_requester_user_id(
+            self._requests.list_history(request_id)
+        )
+
         updates = {
             "status": "in_progress",
             "block_reason": None,
@@ -1001,9 +1022,26 @@ class ResumeInvoicePostingRequestUseCase:
             "changes": {"block_reason": None, "block_description": None},
             "justification": None,
         }
-        return self._requests.update_request_with_history(
+        updated = self._requests.update_request_with_history(
             request_id=request_id, updates=updates, history_fields=history
         )
+        notify_block_resolved(
+            request=updated,
+            recipient_user_id=block_requester_user_id,
+            block_reason=(
+                str(previous_block_reason)
+                if previous_block_reason is not None
+                else None
+            ),
+            block_description=(
+                str(previous_block_description)
+                if previous_block_description is not None
+                else None
+            ),
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+        )
+        return updated
 
 
 class CancelInvoicePostingRequestUseCase:

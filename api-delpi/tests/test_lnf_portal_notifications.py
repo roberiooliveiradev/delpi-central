@@ -5,11 +5,15 @@ from unittest.mock import patch
 from app.application.services.lnf_portal_notification_service import (
     block_reason_label,
     build_block_assigned_copy,
+    build_block_resolved_copy,
     lnf_portal_notifications_enabled,
     notify_block_assignee,
+    notify_block_resolved,
     request_portal_route,
+    resolve_block_requester_user_id,
     send_lnf_portal_notification,
     should_notify_block_assignee,
+    should_notify_block_requester,
 )
 
 
@@ -155,3 +159,91 @@ def test_notify_block_assignee_skips_self() -> None:
         )
         assert ok is False
         assert not send.called
+
+
+def test_resolve_block_requester_user_id_uses_last_block_actor() -> None:
+    history = [
+        {
+            "event_type": "status_changed",
+            "to_status": "in_progress",
+            "actor_user_id": "u-process",
+        },
+        {
+            "event_type": "status_changed",
+            "to_status": "blocked",
+            "actor_user_id": "u-fiscal",
+        },
+        {
+            "event_type": "comment_added",
+            "actor_user_id": "u-compras",
+        },
+    ]
+    assert resolve_block_requester_user_id(history) == "u-fiscal"
+    assert resolve_block_requester_user_id([]) is None
+
+
+def test_build_block_resolved_copy() -> None:
+    title, message, html_content = build_block_resolved_copy(
+        actor_name="Compras Delpi",
+        block_reason="purchase_order",
+        block_description="Falta o PC",
+        document_number="4041160",
+        series="1",
+        supplier_name="Alpha",
+        branch_code="01",
+    )
+    assert "Pendência de NF resolvida" in title
+    assert "Aguardando pedido de compra" in title
+    assert "marcou a pendência como resolvida" in message
+    assert "Falta o PC" in message
+    assert "004041160 / 1" in message
+    assert "notification-note-bubble" in html_content
+
+
+def test_notify_block_resolved_sends_to_requester() -> None:
+    with patch(
+        "app.application.services.lnf_portal_notification_service.send_lnf_portal_notification",
+        return_value=True,
+    ) as send:
+        ok = notify_block_resolved(
+            request={
+                "id": "req-1",
+                "branch_code": "01",
+                "document_number": "000012078",
+                "series": "",
+                "supplier_name": "Alpha",
+                "amount": 10,
+                "issue_date": "2026-07-01",
+            },
+            recipient_user_id="u-fiscal",
+            block_reason="other",
+            block_description="Pendência X",
+            actor_user_id="u-compras",
+            actor_name="Compras",
+        )
+        assert ok is True
+        kwargs = send.call_args.kwargs
+        assert kwargs["recipient_user_id"] == "u-fiscal"
+        assert kwargs["notification_type"] == "success"
+        assert kwargs["event_type"] == "lnf_request_block_resolved"
+        assert "Pendência X" in kwargs["message"]
+
+
+def test_notify_block_resolved_skips_self() -> None:
+    with patch(
+        "app.application.services.lnf_portal_notification_service.send_lnf_portal_notification"
+    ) as send:
+        ok = notify_block_resolved(
+            request={"id": "req-1"},
+            recipient_user_id="u-fiscal",
+            block_reason="other",
+            block_description="x",
+            actor_user_id="u-fiscal",
+            actor_name="Fiscal",
+        )
+        assert ok is False
+        assert not send.called
+    assert should_notify_block_requester(
+        requester_user_id="u-fiscal",
+        actor_user_id="u-compras",
+    )
