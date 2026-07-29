@@ -128,34 +128,98 @@ textarea.delpi-ui-native-control--compact {
   --delpi-ui-control-radius: 8px;
 }
 
-/* Checkbox — row explícito: portal Modal.css tem `label { flex-direction: column }` global. */
+/* Checkbox moderno — input a11y oculto + caixa com check (tokens do kit). */
 .delpi-ui-native-checkbox {
+  --delpi-ui-checkbox-size: 1.125rem;
+  --delpi-ui-checkbox-radius: 6px;
+  --delpi-ui-checkbox-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --delpi-ui-checkbox-border: var(--delpi-ui-border, var(--border, #d0d7de));
+  --delpi-ui-checkbox-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  --delpi-ui-checkbox-check: #ffffff;
+
   display: inline-flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   margin: 0;
   font-size: 13px;
   font-weight: 500;
   color: var(--delpi-ui-text, var(--text, #111));
   cursor: pointer;
+  user-select: none;
 }
 
-.delpi-ui-native-checkbox input {
-  width: 1rem;
-  height: 1rem;
-  max-width: 1rem;
+.delpi-ui-native-checkbox[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-native-checkbox__input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
   margin: 0;
   padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
+  pointer-events: none;
+}
+
+.delpi-ui-native-checkbox__box {
+  position: relative;
   box-sizing: border-box;
+  width: var(--delpi-ui-checkbox-size);
+  height: var(--delpi-ui-checkbox-size);
   flex: 0 0 auto;
-  flex-shrink: 0;
-  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  cursor: pointer;
+  margin-top: 0.1em;
+  border: 1.5px solid var(--delpi-ui-checkbox-border);
+  border-radius: var(--delpi-ui-checkbox-radius);
+  background: var(--delpi-ui-checkbox-bg);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+}
+
+.delpi-ui-native-checkbox__box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 72% 72%;
+  opacity: 0;
+  transform: scale(0.72);
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+}
+
+.delpi-ui-native-checkbox:hover:not([data-disabled="true"]) .delpi-ui-native-checkbox__box {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-checkbox-accent) 55%,
+    var(--delpi-ui-checkbox-border)
+  );
+}
+
+.delpi-ui-native-checkbox[data-checked="true"] .delpi-ui-native-checkbox__box {
+  border-color: var(--delpi-ui-checkbox-accent);
+  background: var(--delpi-ui-checkbox-accent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--delpi-ui-checkbox-accent) 35%, transparent);
+}
+
+.delpi-ui-native-checkbox[data-checked="true"] .delpi-ui-native-checkbox__box::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.delpi-ui-native-checkbox__input:focus-visible + .delpi-ui-native-checkbox__box {
+  outline: none;
+  border-color: var(--delpi-ui-checkbox-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--delpi-ui-checkbox-accent) 28%, transparent);
 }
 
 .delpi-ui-native-checkbox__copy {
@@ -164,6 +228,7 @@ textarea.delpi-ui-native-control--compact {
   gap: 2px;
   flex: 1 1 auto;
   min-width: 0;
+  padding-top: 0.05em;
 }
 
 .delpi-ui-native-checkbox__label {
@@ -174,6 +239,13 @@ textarea.delpi-ui-native-control--compact {
   font-size: 12px;
   font-weight: 400;
   color: var(--delpi-ui-text-muted, var(--td-text-muted, #64748b));
+}
+
+.delpi-ui-native-checkbox--compact {
+  --delpi-ui-checkbox-size: 1rem;
+  --delpi-ui-checkbox-radius: 5px;
+  gap: 8px;
+  font-size: 12px;
 }
 
 /* Switch — mesmo reforço de eixo horizontal (é <label>). */

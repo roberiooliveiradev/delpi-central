@@ -121,23 +121,18 @@
   cursor: pointer;
 }
 
-/* --- Checkbox nativo em formulários densos --- */
+/* --- Checkbox moderno em formulários densos --- */
 [data-delpi-ui-density="compact"] .delpi-ui-native-checkbox {
+  --delpi-ui-checkbox-size: 1rem;
+  --delpi-ui-checkbox-radius: 5px;
   width: auto;
   max-width: 100%;
+  gap: 8px;
+  font-size: 12px;
 }
 
-[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox input {
-  width: 1rem;
-  height: 1rem;
-  max-width: 1rem;
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  flex: 0 0 auto;
-  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox__box {
+  margin-top: 0.05em;
 }
 
 [data-delpi-ui-density="compact"] .delpi-ui-native-checkbox__copy,

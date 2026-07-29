@@ -16,11 +16,13 @@ export type NativeCheckboxControlProps = {
   disabled?: boolean;
   className?: string;
   inputClassName?: string;
+  boxClassName?: string;
   "aria-label"?: string;
 };
 
 /**
- * Checkbox nativo compacto (sem FormFieldShell) — toggles de FormatPane / filtros / admin.
+ * Checkbox moderno compacto (sem FormFieldShell) — toggles de FormatPane / filtros / admin.
+ * Visual canônico em `native-controls.css` (caixa + check); input nativo só para a11y.
  */
 export function NativeCheckboxControl({
   id,
@@ -32,6 +34,7 @@ export function NativeCheckboxControl({
   disabled,
   className,
   inputClassName,
+  boxClassName,
   "aria-label": ariaLabel,
 }: NativeCheckboxControlProps) {
   const resolvedLabel = label ?? children;
@@ -46,15 +49,25 @@ export function NativeCheckboxControl({
     ) : null;
 
   return (
-    <label className={["delpi-ui-native-checkbox", className].filter(Boolean).join(" ")}>
+    <label
+      className={["delpi-ui-native-checkbox", className].filter(Boolean).join(" ")}
+      data-checked={checked ? "true" : "false"}
+      data-disabled={disabled ? "true" : "false"}
+    >
       <input
         id={id}
         type="checkbox"
-        className={inputClassName}
+        className={["delpi-ui-native-checkbox__input", inputClassName]
+          .filter(Boolean)
+          .join(" ")}
         checked={checked}
         disabled={disabled}
         aria-label={ariaLabel}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.checked)}
+      />
+      <span
+        className={["delpi-ui-native-checkbox__box", boxClassName].filter(Boolean).join(" ")}
+        aria-hidden="true"
       />
       {copy}
     </label>

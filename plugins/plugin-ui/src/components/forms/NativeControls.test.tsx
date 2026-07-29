@@ -48,6 +48,21 @@ describe("NativeCheckboxControl", () => {
       <NativeCheckboxControl checked={false} label="X" onChange={() => undefined} />,
     );
     expect(container.querySelector(".delpi-ui-native-checkbox")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-native-checkbox__box")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-native-checkbox__input")).toBeTruthy();
+  });
+
+  it("marca data-checked quando selecionado", () => {
+    const { container, rerender } = render(
+      <NativeCheckboxControl checked={false} label="X" onChange={() => undefined} />,
+    );
+    expect(
+      container.querySelector(".delpi-ui-native-checkbox")?.getAttribute("data-checked"),
+    ).toBe("false");
+    rerender(<NativeCheckboxControl checked label="X" onChange={() => undefined} />);
+    expect(
+      container.querySelector(".delpi-ui-native-checkbox")?.getAttribute("data-checked"),
+    ).toBe("true");
   });
 
   it("aceita children como alias de label (compat plugins legados)", () => {
@@ -62,7 +77,7 @@ describe("NativeCheckboxControl", () => {
     );
   });
 
-  it("declara flex-direction row no CSS canônico (defesa contra label column do portal)", () => {
+  it("declara checkbox moderno no CSS canônico (box + input a11y)", () => {
     const cssPath = resolve(
       dirname(fileURLToPath(import.meta.url)),
       "../../styles/native-controls.css",
@@ -70,8 +85,12 @@ describe("NativeCheckboxControl", () => {
     const css = readFileSync(cssPath, "utf8");
     expect(css).toMatch(/\.delpi-ui-native-checkbox\s*\{[^}]*flex-direction:\s*row/s);
     expect(css).toMatch(/\.delpi-ui-native-switch\s*\{[^}]*flex-direction:\s*row/s);
+    expect(css).toMatch(/\.delpi-ui-native-checkbox__box\s*\{/s);
     expect(css).toMatch(
-      /\.delpi-ui-native-checkbox input\s*\{[^}]*max-width:\s*1rem/s,
+      /\.delpi-ui-native-checkbox__input\s*\{[^}]*opacity:\s*0/s,
+    );
+    expect(css).toMatch(
+      /\[data-checked="true"\]\s*\.delpi-ui-native-checkbox__box/s,
     );
   });
 });
