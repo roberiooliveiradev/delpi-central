@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 490,
+  "operation_count": 491,
   "operations": [
     {
       "method": "POST",
@@ -21669,6 +21669,270 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Paged list — Production appointments by op."
+    },
+    {
+      "method": "GET",
+      "path": "/production/appointments/child-ops",
+      "operationId": "list_production_appointments_child_ops",
+      "summary": "Paged list — Child production orders of the same family",
+      "tags": [
+        "Produção — Apontamento de Produção"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "op",
+          "in": "query",
+          "required": true,
+          "description": "Reference production order (mother or child).",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "work_center",
+          "in": "query",
+          "required": false,
+          "description": "Work center filter (e.g. CT-70).",
+          "type": "string"
+        },
+        {
+          "name": "product",
+          "in": "query",
+          "required": false,
+          "description": "Product code filter.",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Optional free-text search across visible table columns (operator, OP, product, work center, resource, etc.).",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Listing page number.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 50
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_appointments_child_ops",
+        "shape": "paged_list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Paged list — Child production orders of the same family",
+            "description": "Lists child OPs (sequence ≠ 001) that share the H6_OP family prefix with the reference OP.",
+            "whenToUse": "Use when drilling into a production order detail to list related child OPs."
+          },
+          "pt-BR": {
+            "summary": "Lista paginada — OPs filhas da mesma família",
+            "description": "Lista OPs filhas (sequência ≠ 001) que compartilham o prefixo de família de H6_OP com a OP de referência.",
+            "whenToUse": "Use no detalhe da OP para listar OPs filhas relacionadas.",
+            "label": "Lista paginada — OPs filhas"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "op": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Número da ordem de produção (OP).",
+                "label": "Ordem de produção"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "product": {
+            "locale": {
+              "en": {
+                "description": "Product query parameter.",
+                "label": "Product"
+              },
+              "pt-BR": {
+                "description": "Código ou identificador do produto.",
+                "label": "Produto"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "work_center": {
+            "locale": {
+              "en": {
+                "description": "Work center query parameter.",
+                "label": "Work center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
+                "label": "Centro de trabalho"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use no detalhe da OP para listar OPs filhas relacionadas.",
+          "description": "Lista OPs filhas (sequência ≠ 001) que compartilham o prefixo de família de H6_OP com a OP de referência.",
+          "label": "Lista paginada — OPs filhas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists child OPs (sequence ≠ 001) that share the H6_OP family prefix with the reference OP."
     },
     {
       "method": "GET",

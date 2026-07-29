@@ -68,5 +68,7 @@ export const PA_HELP_TOOLTIPS = {
       "Busca no servidor por OP ou código/descrição de produto. Reduz o total paginado da agregação.",
     ctDetailAppointments:
       "Apontamentos deste centro de trabalho no período. Clique na linha para abrir o detalhe da OP.",
+    childOps:
+      "OPs da mesma família (mesmo prefixo de H6_OP) com sequência diferente de 001. Clique na linha para abrir o detalhe da OP filha.",
   },
 } as const;

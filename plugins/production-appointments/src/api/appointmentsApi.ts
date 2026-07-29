@@ -98,6 +98,27 @@ export async function fetchAppointmentsByOp(
   );
 }
 
+export async function fetchAppointmentsChildOps(
+  filters: AppointmentsQueryFilters,
+  productionOrder: string,
+  page: number,
+  pageSize: number,
+  options: ListRequestOptions = {},
+): Promise<AppointmentsByOpData> {
+  return getEnvelope(
+    `/child-ops${queryString({
+      ...listQuery(
+        { ...filters, op: productionOrder, motherOp: undefined },
+        page,
+        pageSize,
+        options.search,
+      ),
+      op: productionOrder,
+    })}`,
+    options,
+  );
+}
+
 const EXPORT_PAGE_SIZE = 200;
 
 async function fetchAllPages<T>(

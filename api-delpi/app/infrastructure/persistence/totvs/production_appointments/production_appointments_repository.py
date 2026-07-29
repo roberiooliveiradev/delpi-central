@@ -175,6 +175,9 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         product: str | None = None,
         search: str | None = None,
         mother_op: bool = False,
+        op_family_prefix: str | None = None,
+        child_ops_only: bool = False,
+        exclude_op: str | None = None,
     ) -> list[dict]:
         query, params = build_by_op_query(
             date_start=date_start,
@@ -187,6 +190,9 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             product=product,
             search=search,
             mother_op=mother_op,
+            op_family_prefix=op_family_prefix,
+            child_ops_only=child_ops_only,
+            exclude_op=exclude_op,
         )
         with self:
             return self.execute_query(query, params)
@@ -202,6 +208,9 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         product: str | None = None,
         search: str | None = None,
         mother_op: bool = False,
+        op_family_prefix: str | None = None,
+        child_ops_only: bool = False,
+        exclude_op: str | None = None,
     ) -> int:
         query, params = build_by_op_count_query(
             date_start=date_start,
@@ -212,6 +221,9 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             product=product,
             search=search,
             mother_op=mother_op,
+            op_family_prefix=op_family_prefix,
+            child_ops_only=child_ops_only,
+            exclude_op=exclude_op,
         )
         with self:
             rows = self.execute_query(query, params)

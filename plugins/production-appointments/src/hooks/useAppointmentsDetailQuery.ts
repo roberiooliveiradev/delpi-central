@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   fetchAllAppointments,
   fetchAppointmentsByOp,
+  fetchAppointmentsChildOps,
   fetchAppointmentsSeries,
   fetchAppointmentsSummary,
   fetchWorkCenters,
@@ -57,6 +58,7 @@ export function useAppointmentsDetailQuery({
   const [error, setError] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [byOpRows, setByOpRows] = useState<ByOpRow[]>([]);
+  const [childOpRows, setChildOpRows] = useState<ByOpRow[]>([]);
   const [totals, setTotals] = useState<AppointmentTotals | null>(null);
   const [summaryItems, setSummaryItems] = useState<WorkCenterSummaryRow[]>([]);
   const [seriesPoints, setSeriesPoints] = useState<SeriesPoint[]>([]);
@@ -102,15 +104,21 @@ export function useAppointmentsDetailQuery({
       try {
         setLoading(true);
         setError(null);
-        const [items, byOp, summary, series, centers] = await Promise.all([
+        const [items, byOp, summary, series, centers, childOps] = await Promise.all([
           fetchAllAppointments(filters, { signal: controller.signal }),
           fetchAppointmentsByOp(filters, 1, 200, { signal: controller.signal }),
           fetchAppointmentsSummary(filters, { signal: controller.signal }),
           fetchAppointmentsSeries(filters, "day", { signal: controller.signal }),
           fetchWorkCenters(filters.branch, { signal: controller.signal }),
+          locked.op
+            ? fetchAppointmentsChildOps(filters, locked.op, 1, 200, {
+                signal: controller.signal,
+              })
+            : Promise.resolve({ items: [] as ByOpRow[] }),
         ]);
         setAppointments(items);
         setByOpRows(byOp.items);
+        setChildOpRows(childOps.items ?? []);
         setTotals(summary.totals);
         setSummaryItems(summary.items);
         setSeriesPoints(series.points ?? []);
@@ -124,7 +132,7 @@ export function useAppointmentsDetailQuery({
     }
     void run();
     return () => controller.abort();
-  }, [appliedFilters]);
+  }, [appliedFilters, locked.op]);
 
   const handleFiltersChange = (patch: Partial<FilterFormState>) => {
     setDraftFilters((current) => {
@@ -147,6 +155,7 @@ export function useAppointmentsDetailQuery({
     error,
     appointments,
     byOpRows,
+    childOpRows,
     totals,
     summaryItems,
     seriesPoints,

@@ -15,6 +15,7 @@ from app.composition.production_appointments_composer import (
     build_get_produced_quantity_use_case,
     build_list_production_appointment_work_centers_use_case,
     build_list_production_appointments_by_op_use_case,
+    build_list_production_appointments_child_ops_use_case,
     build_list_production_appointments_use_case,
 )
 from app.core.responses import error_response
@@ -305,6 +306,57 @@ def by_op_route(
         operation_id="list_production_appointments_by_op",
         success_message="Apontamentos por OP carregados com sucesso.",
         error_context="carregar drill-down por OP",
+    )
+
+
+@router.get(
+    "/child-ops",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "list_production_appointments_child_ops",
+        path="/production/appointments/child-ops",
+    ),
+)
+@require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
+def child_ops_route(
+    branch: str = BRANCH_QUERY(),
+    op: str = Query(..., description="Reference production order (mother or child)."),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    work_center: Optional[str] = WORK_CENTER_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    search: Optional[str] = SEARCH_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+):
+    """Child OPs of the same family (sequence ≠ 001) with appointments in the period."""
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    request, err = _guard_and_build(
+        branch=branch,
+        start_date=start_date,
+        end_date=end_date,
+        work_center=work_center,
+        op=op,
+        product=product,
+        search=search,
+        page=page,
+        page_size=page_size,
+        error_context="carregar OPs filhas",
+    )
+    if err:
+        return err
+    return execute_route(
+        use_case_builder=build_list_production_appointments_child_ops_use_case,
+        request=request,
+        operation_id="list_production_appointments_child_ops",
+        success_message="OPs filhas carregadas com sucesso.",
+        error_context="carregar OPs filhas",
     )
 
 

@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-29",
-  "baselineOperationCount": 490,
-  "operationCount": 490,
-  "coveredCount": 488,
+  "baselineOperationCount": 491,
+  "operationCount": 491,
+  "coveredCount": 489,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -104,8 +104,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 34,
-      "covered": 34,
+      "total": 35,
+      "covered": 35,
       "gap": 0,
       "exempt": 0
     },
@@ -2026,6 +2026,15 @@
       "path": "/production/appointments/by-op",
       "module": "production",
       "entity": "production_appointments_by_op",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_production_appointments_child_ops",
+      "method": "GET",
+      "path": "/production/appointments/child-ops",
+      "module": "production",
+      "entity": "production_appointments_child_ops",
       "shape": "paged_list",
       "status": "covered"
     },

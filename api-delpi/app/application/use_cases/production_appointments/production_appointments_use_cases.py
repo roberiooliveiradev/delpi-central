@@ -15,6 +15,9 @@ from app.domain.ports.production_appointments.production_appointments_repository
 from app.domain.services.production.production_operational_quantity_service import (
     ProductionOperationalQuantityService,
 )
+from app.domain.services.production.production_appointments_op_family_service import (
+    ProductionAppointmentsOpFamilyService,
+)
 
 
 def _calc_total_pages(total: int, page_size: int) -> int:
@@ -228,6 +231,69 @@ class ListProductionAppointmentsByOpUseCase:
                 "product": request.product,
                 "search": request.search,
                 "mother_op": request.mother_op,
+            },
+            "items": items,
+            "summary": build_period_summary(
+                items=items,
+                branch=request.branch,
+                period_start=date_start,
+                period_end_exclusive=date_end_exclusive,
+                is_complete=request.offset + len(items) >= total,
+                consolidated_across_branches=False,
+            ),
+            "pagination": {
+                "page": request.page,
+                "page_size": request.page_size,
+                "total": total,
+                "total_pages": _calc_total_pages(total, request.page_size),
+                "is_complete": request.offset + len(items) >= total,
+            },
+        }
+
+
+class ListProductionAppointmentsChildOpsUseCase:
+    """OPs filhas da mesma família (prefixo antes da sequência; sufixo ≠ 001)."""
+
+    def __init__(self, repository: ProductionAppointmentsRepositoryPort):
+        self._repository = repository
+
+    def execute(self, request: ProductionAppointmentsQueryRequest) -> dict:
+        reference_op = ProductionAppointmentsOpFamilyService.normalize_op(request.op)
+        if not reference_op:
+            raise ValueError("op é obrigatório para listar OPs filhas.")
+
+        family_prefix = ProductionAppointmentsOpFamilyService.family_prefix(reference_op)
+        date_start, date_end_exclusive = request.protheus_closed_open()
+        filters = {
+            "date_start": date_start,
+            "date_end_exclusive": date_end_exclusive,
+            "branch": request.branch,
+            "work_center": request.work_center,
+            "product": request.product,
+            "search": request.search,
+            "op_family_prefix": family_prefix,
+            "child_ops_only": True,
+            "exclude_op": reference_op,
+        }
+        items = _normalize_appointment_items(
+            self._repository.list_by_op(
+                offset=request.offset,
+                page_size=request.page_size,
+                **filters,
+            )
+        )
+        total = self._repository.count_by_op(**filters)
+
+        return {
+            "period": {"start": date_start, "end_exclusive": date_end_exclusive},
+            "branch": request.branch,
+            "reference_op": reference_op,
+            "family_prefix": family_prefix,
+            "filters": {
+                "work_center": request.work_center,
+                "op": reference_op,
+                "product": request.product,
+                "search": request.search,
             },
             "items": items,
             "summary": build_period_summary(

@@ -38,6 +38,7 @@ def test_router_exposes_all_endpoints(pa_client: TestClient) -> None:
     assert "/production/appointments/summary" in paths
     assert "/production/appointments/series" in paths
     assert "/production/appointments/by-op" in paths
+    assert "/production/appointments/child-ops" in paths
     assert "/production/appointments/produced-totals" in paths
 
 
@@ -166,6 +167,44 @@ def test_by_op_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) -
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "list_production_appointments_by_op"
     assert body["meta"]["shape"] == "paged_list"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_list_production_appointments_child_ops_use_case"
+)
+def test_child_ops_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "items": [],
+                "pagination": {"total": 0},
+                "reference_op": "24656601001",
+                "family_prefix": "24656601",
+            }
+        )
+    )
+    response = pa_client.get(
+        "/production/appointments/child-ops",
+        params={"branch": "01", "op": "24656601001"},
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "list_production_appointments_child_ops"
+    assert body["meta"]["entity"] == "production_appointments_child_ops"
+    assert body["meta"]["shape"] == "paged_list"
+    assert body["data"]["reference_op"] == "24656601001"
+
+
+def test_child_ops_requires_op(pa_client: TestClient) -> None:
+    response = pa_client.get(
+        "/production/appointments/child-ops",
+        params={"branch": "01"},
+    )
+    assert response.status_code == 422
 
 
 @patch(

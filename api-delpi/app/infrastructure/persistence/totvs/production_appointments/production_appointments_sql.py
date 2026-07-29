@@ -83,6 +83,9 @@ def build_appointments_where(
     search_scope: str = "appointment",
     mother_op: bool = False,
     inspection_final: bool = False,
+    op_family_prefix: str | None = None,
+    child_ops_only: bool = False,
+    exclude_op: str | None = None,
 ) -> tuple[str, list]:
     clauses = [
         "SH6.D_E_L_E_T_ = ' '",
@@ -131,10 +134,25 @@ def build_appointments_where(
         clauses.append(f"UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) IN ({placeholders})")
         params.extend(tipos)
 
+    family_prefix = str(op_family_prefix or "").strip()
+    if family_prefix:
+        prefix_len = len(family_prefix)
+        clauses.append(f"LEFT(LTRIM(RTRIM(SH6.H6_OP)), {prefix_len}) = ?")
+        params.append(family_prefix)
+
     if mother_op:
         suffix_len = len(MOTHER_OP_SUFFIX)
         clauses.append(f"RIGHT(LTRIM(RTRIM(SH6.H6_OP)), {suffix_len}) = ?")
         params.append(MOTHER_OP_SUFFIX)
+
+    if child_ops_only:
+        suffix_len = len(MOTHER_OP_SUFFIX)
+        clauses.append(f"RIGHT(LTRIM(RTRIM(SH6.H6_OP)), {suffix_len}) <> ?")
+        params.append(MOTHER_OP_SUFFIX)
+
+    if exclude_op:
+        clauses.append("LTRIM(RTRIM(SH6.H6_OP)) <> ?")
+        params.append(exclude_op.strip())
 
     if inspection_final:
         clauses.append(f"UPPER(HB.HB_NOME) LIKE '{CT_INSPECAO_NOME_SQL_LIKE}'")
@@ -400,6 +418,9 @@ def build_by_op_query(
     product: str | None = None,
     search: str | None = None,
     mother_op: bool = False,
+    op_family_prefix: str | None = None,
+    child_ops_only: bool = False,
+    exclude_op: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -411,6 +432,9 @@ def build_by_op_query(
         search=search,
         search_scope="by_op",
         mother_op=mother_op,
+        op_family_prefix=op_family_prefix,
+        child_ops_only=child_ops_only,
+        exclude_op=exclude_op,
     )
     sql = f"""
     SELECT
@@ -444,6 +468,9 @@ def build_by_op_count_query(
     product: str | None = None,
     search: str | None = None,
     mother_op: bool = False,
+    op_family_prefix: str | None = None,
+    child_ops_only: bool = False,
+    exclude_op: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -455,6 +482,9 @@ def build_by_op_count_query(
         search=search,
         search_scope="by_op",
         mother_op=mother_op,
+        op_family_prefix=op_family_prefix,
+        child_ops_only=child_ops_only,
+        exclude_op=exclude_op,
     )
     sql = f"""
     SELECT COUNT(*) AS total

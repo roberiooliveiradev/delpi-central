@@ -84,6 +84,9 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         product: str | None = None,
         search: str | None = None,
         mother_op: bool = False,
+        op_family_prefix: str | None = None,
+        child_ops_only: bool = False,
+        exclude_op: str | None = None,
     ) -> list[dict]: ...
 
     def count_by_op(
@@ -97,6 +100,9 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         product: str | None = None,
         search: str | None = None,
         mother_op: bool = False,
+        op_family_prefix: str | None = None,
+        child_ops_only: bool = False,
+        exclude_op: str | None = None,
     ) -> int: ...
 
     def get_produced_totals(

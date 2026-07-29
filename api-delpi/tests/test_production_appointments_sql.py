@@ -96,6 +96,24 @@ def test_appointments_where_mother_op_suffix_001() -> None:
     assert params[-1] == "001"
 
 
+def test_appointments_where_child_ops_family_prefix() -> None:
+    where, params = build_appointments_where(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        op_family_prefix="24656601",
+        child_ops_only=True,
+        exclude_op="24656601001",
+    )
+
+    assert "LEFT(LTRIM(RTRIM(SH6.H6_OP)), 8) = ?" in where
+    assert "RIGHT(LTRIM(RTRIM(SH6.H6_OP)), 3) <> ?" in where
+    assert "LTRIM(RTRIM(SH6.H6_OP)) <> ?" in where
+    assert "24656601" in params
+    assert params.count("001") == 1
+    assert "24656601001" in params
+
+
 def test_by_op_where_applies_free_text_search() -> None:
     where, params = build_appointments_where(
         date_start="20260615",

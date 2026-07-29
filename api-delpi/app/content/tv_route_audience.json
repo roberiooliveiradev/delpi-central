@@ -4835,6 +4835,22 @@
         }
       }
     },
+    "list_production_appointments_child_ops": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Paged list — Child production orders of the same family",
+          "description": "Lists child OPs (sequence ≠ 001) that share the H6_OP family prefix with the reference OP.",
+          "whenToUse": "Use when drilling into a production order detail to list related child OPs."
+        },
+        "pt-BR": {
+          "summary": "Lista paginada — OPs filhas da mesma família",
+          "description": "Lista OPs filhas (sequência ≠ 001) que compartilham o prefixo de família de H6_OP com a OP de referência.",
+          "whenToUse": "Use no detalhe da OP para listar OPs filhas relacionadas.",
+          "label": "Lista paginada — OPs filhas"
+        }
+      }
+    },
     "list_propostas_comerciais": {
       "locale": {
         "en": {
