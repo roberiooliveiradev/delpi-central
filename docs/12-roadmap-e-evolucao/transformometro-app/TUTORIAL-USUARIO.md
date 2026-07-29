@@ -6,7 +6,7 @@
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.
 
-Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [PLAYBOOK-23 — macro composto / vigência](./PLAYBOOK-23-decomposicao-composicao-macro-data.md)
+Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [PLAYBOOK-23 — macro composto / vigência](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) · [Atas Transforma+](./ATAS-TRANSFORMA-MAIS.md)
 
 ---
 
@@ -532,7 +532,29 @@ Use para **ambiente de homologação**, migração inicial ou cópia entre ambie
 
 ---
 
-## 12. Permissões (resumo)
+## 12. Atas Transforma+
+
+Menu **Atas** (`/apps/transformometro/atas`) — atas oficiais do programa, com assinatura eletrônica manuscrita e PDF.
+
+### Criar e editar
+
+1. **Nova ata** → informe unidade, título, data e tipo.
+2. Escolha **Preencher** (texto direto) ou **Importar transcrição** (`.docx`).
+3. No modo importação, use **Gerar ata com IA** para montar pauta, discussão, decisões, pendências e observações a partir da transcrição (revisar sempre antes de salvar). A IA **não grava sozinha** — é preciso salvar a ata.
+4. Em **Quem assina**, busque usuários do Minha Delpi e marque quem assina.
+5. Salve o rascunho.
+
+### Ciclo de assinatura
+
+1. **Enviar para assinatura** (na ata salva).
+2. Cada signatário abre a pendência em **Atas → Pendências** ou o link da notificação, lê o documento e **Assina** (assinatura cadastrada em **Minha assinatura** ou pad na tela) ou **Recusa**.
+3. Quando todos assinarem, **Finalizar** gera o PDF oficial (download disponível).
+
+Documentação técnica: [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas.md](../../../plugins/transformometro/docs/atas.md) · [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md).
+
+---
+
+## 13. Permissões (resumo)
 
 | Permissão | Permite |
 |-----------|---------|
@@ -544,13 +566,16 @@ Use para **ambiente de homologação**, migração inicial ou cópia entre ambie
 | `transformometro.shared-resources.manage` | Recursos e vínculos |
 | `transformometro.dashboard.recalculate` | Recalcular dashboard |
 | `transformometro.data.transfer` | Export/import JSON |
+| `transformometro.atas.view` | Listar e ler atas |
+| `transformometro.atas.manage` | Criar/editar atas, IA, enviar, finalizar |
+| `transformometro.atas.sign` | Assinar ou recusar (quando signatário) |
 | `transformometro.view.filial-XX` / `manage.filial-XX` | Leitura/escrita restrita à filial |
 
 Usuários sem escopo de filial enxergam todos os dados (comportamento legado global).
 
 ---
 
-## 13. Checklist — cadastro completo de uma melhoria
+## 14. Checklist — cadastro completo de uma melhoria
 
 Use como roteiro de conferência:
 
@@ -573,7 +598,7 @@ Use como roteiro de conferência:
 
 ---
 
-## 14. Perguntas frequentes
+## 15. Perguntas frequentes
 
 **Preciso duplicar o processo para cada filial?**  
 Não. Crie **melhorias** no mesmo processo-mestre — uma timeline por foco operacional. Para clonar tudo de uma vez, use **Duplicar** na lista de processos.
@@ -604,7 +629,7 @@ No detalhe do processo → **Linha do tempo** (audit log).
 
 ---
 
-## 15. Referências rápidas
+## 16. Referências rápidas
 
 | Tema | Documento |
 |------|-----------|
@@ -617,6 +642,9 @@ No detalhe do processo → **Linha do tempo** (audit log).
 | Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) |
 | Status técnico e deploy | [status-atual.md](./status-atual.md) |
 | Deploy e migrations | [OPERATIONS.md](./OPERATIONS.md) |
+| Atas Transforma+ (produto) | [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) |
+| Atas — UI | [plugins/transformometro/docs/atas.md](../../../plugins/transformometro/docs/atas.md) |
+| Atas — API e Kimi | [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
 
 ---
 

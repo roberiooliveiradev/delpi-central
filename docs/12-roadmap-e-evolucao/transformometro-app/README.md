@@ -22,6 +22,9 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [playbook-18-implementation-status.md](../../../transformometro-api/docs/playbook-18-implementation-status.md) | Status técnico S1–S12 + MFE §9 (API) |
 | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) | Fórmulas oficiais + escopo de recurso e visões |
 | [status-atual.md](./status-atual.md) | Snapshot do que está em produção / deploy |
+| [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) | Atas Transforma+ — fluxo, RBAC, status (incl. Kimi) |
+| [atas.md (MFE)](../../../plugins/transformometro/docs/atas.md) | UI das atas no plugin |
+| [atas-kimi.md (API)](../../../transformometro-api/docs/atas-kimi.md) | Endpoints + configuração OpenRouter/Kimi |
 | [ROADMAP.md](./ROADMAP.md) | Fases de entrega e Playbook 18 |
 | [ESPECIFICACAO.md](./ESPECIFICACAO.md) | Especificação funcional (planilha + Apps Script) |
 | [OPERATIONS.md](./OPERATIONS.md) | Runbook operacional e deploy Playbook 18 |

@@ -84,7 +84,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
-| `plugins/transformometro` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
+| `plugins/transformometro` | `transformometro` | microfrontend | plugin | `/apps/transformometro` | `delpi-transformometro` |
 | `plugins/helpdesk` | (ver manifesto) | — | — | — | Pode ser externo / legado |
 | `plugins/api-delpi-console` | `api-delpi-console` | microfrontend | plugin | `/apps/api-delpi-console` | `delpi-api-delpi-console` |
 | `plugins/idd_production` | (ver manifesto) | — | — | — | Avaliar registro na Core API |
@@ -126,6 +126,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Despesas por Centro de Custo | `/apps/api-delpi/financeiro/despesas-centro-custo/*` |
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
+| Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 
 ---
 

@@ -11,6 +11,12 @@ import {
 import { ProcessoWorkspacePage, isProcessoWorkspaceRoute } from "./ui/pages/ProcessoWorkspacePage";
 import { ProcessosPage } from "./ui/pages/ProcessosPage";
 import { DataTransferPage } from "./ui/pages/DataTransferPage";
+import { AtasPage } from "./ui/pages/AtasPage";
+import { AtaEditorPage } from "./ui/pages/AtaEditorPage";
+import { AtaDetailPage } from "./ui/pages/AtaDetailPage";
+import { AtaSignPage } from "./ui/pages/AtaSignPage";
+import { AtasPendingPage } from "./ui/pages/AtasPendingPage";
+import { MinhaAssinaturaPage } from "./ui/pages/MinhaAssinaturaPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
 import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
@@ -50,6 +56,18 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         onNavigate={onNavigate}
       />
     );
+  } else if (route.view === "atas") {
+    page = <AtasPage getAccessToken={getAccessToken} pathname={pathname} onNavigate={onNavigate} />;
+  } else if (route.view === "ataNew" || route.view === "ataEdit") {
+    page = <AtaEditorPage getAccessToken={getAccessToken} ataId={route.ataId} onNavigate={onNavigate} />;
+  } else if (route.view === "ata" && route.ataId) {
+    page = <AtaDetailPage getAccessToken={getAccessToken} ataId={route.ataId} pathname={pathname} onNavigate={onNavigate} />;
+  } else if (route.view === "ataSign" && route.ataId) {
+    page = <AtaSignPage getAccessToken={getAccessToken} ataId={route.ataId} onNavigate={onNavigate} />;
+  } else if (route.view === "atasPending") {
+    page = <AtasPendingPage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
+  } else if (route.view === "minhaAssinatura") {
+    page = <MinhaAssinaturaPage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
   } else if (isConfiguracoesWorkspaceRoute(route)) {
     page = (
       <ConfiguracoesWorkspacePage

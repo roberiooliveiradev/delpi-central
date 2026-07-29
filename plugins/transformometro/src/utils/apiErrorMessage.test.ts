@@ -19,6 +19,12 @@ describe("describeHttpError", () => {
   it("usa mensagem amigável para 5xx", () => {
     expect(describeHttpError(503)).toMatch(/indisponível/i);
   });
+
+  it("prioriza detalhe da API também em 502 (geração de ata)", () => {
+    expect(
+      describeHttpError(502, "Timeout ao chamar o provedor Kimi para gerar a ata."),
+    ).toBe("Timeout ao chamar o provedor Kimi para gerar a ata.");
+  });
 });
 
 describe("describeHttpErrorTitle", () => {

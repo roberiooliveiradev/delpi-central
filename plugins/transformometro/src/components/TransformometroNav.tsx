@@ -9,6 +9,7 @@ type TransformometroNavProps = {
 const LINKS = [
   { path: TRANSFORMOMETRO_ROUTES.dashboard, label: "Dashboard" },
   { path: TRANSFORMOMETRO_ROUTES.processos, label: "Processos" },
+  { path: TRANSFORMOMETRO_ROUTES.atas, label: "Atas" },
   { path: TRANSFORMOMETRO_ROUTES.configuracoesUnidades, label: "Configurações" },
   { path: TRANSFORMOMETRO_ROUTES.dados, label: "Exportar / Importar" },
 ] as const;

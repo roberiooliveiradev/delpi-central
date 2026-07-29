@@ -8,7 +8,8 @@ export function describeHttpError(
   detail?: string | null,
 ): string {
   const trimmed = typeof detail === "string" ? detail.trim() : "";
-  if (trimmed && status >= 400 && status < 500 && status !== 429) {
+  // Mensagem clara da API (ex.: AtaGenerationError em 502) tem prioridade.
+  if (trimmed && status >= 400 && status !== 429) {
     return trimmed;
   }
 

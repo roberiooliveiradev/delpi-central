@@ -65,9 +65,51 @@ class Settings:
         "TM_PROCESSO_ARQUIVO_UPLOAD_DIR",
         default="/app/data/processo-arquivos",
     )
+    TM_ATA_SIGNATURE_UPLOAD_DIR: str = _get_env(
+        "TM_ATA_SIGNATURE_UPLOAD_DIR",
+        default="/app/data/transformometro/atas/signatures",
+    )
+    TM_ATA_PDF_UPLOAD_DIR: str = _get_env(
+        "TM_ATA_PDF_UPLOAD_DIR",
+        default="/app/data/transformometro/atas/pdfs",
+    )
+    TM_ATA_SIGNATURE_MAX_BYTES: int = int(
+        _get_env("TM_ATA_SIGNATURE_MAX_BYTES", default=str(2 * 1024 * 1024))
+        or str(2 * 1024 * 1024)
+    )
+    TM_PORTAL_NOTIFICATIONS_ENABLED: bool = (
+        str(_get_env("TM_PORTAL_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    CORE_API_BASE_URL: str = _get_env(
+        "CORE_API_BASE_URL",
+        default="http://core-api:8000",
+    )
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN",
+        default="",
+    )
     TM_BACKUP_PACKAGE_MAX_BYTES: int = int(
         _get_env("TM_BACKUP_PACKAGE_MAX_BYTES", default=str(500 * 1024 * 1024))
         or str(500 * 1024 * 1024)
+    )
+
+    # Kimi / OpenAI-compatible — geração de atas a partir de transcrição.
+    # Sem default para a chave: falha clara na primeira chamada se não estiver setada.
+    KIMI_API_KEY: str | None = _get_env("KIMI_API_KEY")
+    KIMI_BASE_URL: str = _get_env(
+        "KIMI_BASE_URL",
+        default="https://openrouter.ai/api/v1",
+    )
+    KIMI_MODEL: str = _get_env("KIMI_MODEL", default="moonshotai/kimi-k3")
+    KIMI_TIMEOUT_SECONDS: int = int(
+        _get_env("KIMI_TIMEOUT_SECONDS", default="180") or "180"
+    )
+    KIMI_MAX_TRANSCRIPT_CHARS: int = int(
+        _get_env("KIMI_MAX_TRANSCRIPT_CHARS", default="20000") or "20000"
+    )
+    KIMI_MAX_OUTPUT_TOKENS: int = int(
+        _get_env("KIMI_MAX_OUTPUT_TOKENS", default="4096") or "4096"
     )
 
 

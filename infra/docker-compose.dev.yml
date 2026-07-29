@@ -1347,12 +1347,24 @@ services:
 
       TM_REVISION_EVIDENCE_UPLOAD_DIR: ${TM_REVISION_EVIDENCE_UPLOAD_DIR:-/app/data/revisao-evidencias}
       TM_PROCESSO_ARQUIVO_UPLOAD_DIR: ${TM_PROCESSO_ARQUIVO_UPLOAD_DIR:-/app/data/processo-arquivos}
+      TM_ATA_SIGNATURE_UPLOAD_DIR: ${TM_ATA_SIGNATURE_UPLOAD_DIR:-/app/data/transformometro/atas/signatures}
+      TM_ATA_PDF_UPLOAD_DIR: ${TM_ATA_PDF_UPLOAD_DIR:-/app/data/transformometro/atas/pdfs}
+      TM_PORTAL_NOTIFICATIONS_ENABLED: ${TM_PORTAL_NOTIFICATIONS_ENABLED:-true}
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
+
+      # Geração de atas via Kimi (OpenAI-compatible) — opcional; sem chave a rota retorna 502 claro
+      KIMI_API_KEY: ${KIMI_API_KEY:-}
+      KIMI_BASE_URL: ${KIMI_BASE_URL:-https://openrouter.ai/api/v1}
+      KIMI_MODEL: ${KIMI_MODEL:-moonshotai/kimi-k3}
 
     volumes:
       - ../transformometro-api:/app
       - ../shared:/shared
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/revisao-evidencias:/app/data/revisao-evidencias
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/processo-arquivos:/app/data/processo-arquivos
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/transformometro/atas/signatures:/app/data/transformometro/atas/signatures
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/transformometro/atas/pdfs:/app/data/transformometro/atas/pdfs
 
     depends_on:
       - keycloak

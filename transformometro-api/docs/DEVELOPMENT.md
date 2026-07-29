@@ -40,6 +40,19 @@ python scripts/import_cadastro_json.py export -o fixtures/cadastro/transformomet
 
 Detalhes: [fixtures/cadastro/README.md](../fixtures/cadastro/README.md) · [docs/json-backup.md](json-backup.md) · [docs/playbook-18-implementation-status.md](playbook-18-implementation-status.md).
 
+## Atas + Kimi
+
+- Doc API / env: [atas-kimi.md](./atas-kimi.md)
+- Smoke isolado: `python scripts/test_kimi_ata.py` (requer `KIMI_API_KEY` em `.env` — ver [`.env.example`](../.env.example))
+- Produto: [ATAS-TRANSFORMA-MAIS.md](../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md)
+
+Preferir scripts sequenciais da infra em vez de `docker compose up` em lote:
+
+```bash
+./infra/scripts/up-dev-sequential.sh --fase api --build transformometro-api
+./infra/scripts/up-dev-sequential.sh --fase mfe --build transformometro
+```
+
 ## MFE
 
 ```bash
@@ -47,4 +60,5 @@ cd plugins/transformometro
 npm run build
 ```
 
-Deep link / sincronização com o portal: `src/hooks/useDelpiPortalBridge.ts`.
+Deep link / sincronização com o portal: `src/hooks/useDelpiPortalBridge.ts`.  
+Doc UI das atas: [plugins/transformometro/docs/atas.md](../../plugins/transformometro/docs/atas.md).

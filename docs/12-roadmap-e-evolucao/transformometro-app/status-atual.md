@@ -65,6 +65,7 @@ Atualizado: **jul/2026** (workspace Processos + Configurações; subpastas de re
 | **Workspace Configurações** | ✅ Unidades + departamentos + recursos unificados em `/configuracoes/*`; rotas legadas compatíveis |
 | **Duplicar revisão** | ✅ `POST /revisoes/{id}/duplicar` + botão na listagem de revisões |
 | **MFE UX jul/2026** | ✅ SelectField (padrão PAC), modal de confirmação centralizado, transições suaves, linha do tempo |
+| **Atas Transforma+** | ✅ V042 + API + MFE Fluent; import DOCX; **Kimi real** (`POST …/generate-from-transcript`, `KIMI_*`); logo + faixa de marca; fora: anexos, vínculo a processo, ICP — [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md) · [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
 
 ## Migrations automáticas
 
@@ -172,5 +173,8 @@ export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
 - [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md)
 - [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md)
 - [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md)
+- [ATAS-TRANSFORMA-MAIS.md](./ATAS-TRANSFORMA-MAIS.md)
+- [atas.md (MFE)](../../../plugins/transformometro/docs/atas.md)
+- [atas-kimi.md (API)](../../../transformometro-api/docs/atas-kimi.md)
 - [TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)
 - [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)

@@ -12,6 +12,9 @@ Runbook para equipe após go-live (Postgres como fonte de verdade).
 | Processos (workspace) | `/apps/transformometro/processos` → árvore lateral + subpastas de revisão |
 | Configurações | `/apps/transformometro/configuracoes/unidades` (unidades, departamentos, recursos) |
 | Exportar / Importar JSON | `/apps/transformometro/dados` |
+| Atas Transforma+ | `/apps/transformometro/atas` |
+| Pendências de assinatura | `/apps/transformometro/atas/pending` |
+| Minha assinatura | `/apps/transformometro/minha-assinatura` |
 | API health | `/apps/transformometro-api/transformometro/health` |
 
 ## Rotina diária
@@ -78,7 +81,20 @@ Atribuir às roles/grupos de engenharia/gestão, no mínimo:
 - `transformometro.dashboard.recalculate`
 - `transformometro.shared-resources.manage` (catálogo Recursos)
 - `transformometro.data.transfer` (exportar / importar JSON em `/dados`)
+- Atas: `transformometro.atas.view`, `transformometro.atas.manage`, `transformometro.atas.sign`
 - Opcional RBAC filial: `transformometro.view.filial-01`, `transformometro.manage.filial-01`, `transformometro.view.consolidated`, …
+
+### Kimi (geração de atas)
+
+Em `infra/.env` (serviço `transformometro-api`):
+
+```env
+KIMI_API_KEY=…          # obrigatório para «Gerar ata com IA»
+KIMI_BASE_URL=https://openrouter.ai/api/v1
+KIMI_MODEL=moonshotai/kimi-k3
+```
+
+Doc completa: [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md). Sem chave, a rota retorna **502** com mensagem clara.
 
 ## Troubleshooting
 
@@ -95,6 +111,9 @@ Atribuir às roles/grupos de engenharia/gestão, no mínimo:
 | Números ≠ planilha antiga | Esperado: spec usa delta de recursos na bruta; ver [OVERVIEW.md](./OVERVIEW.md) |
 | SI 401 Transformômetro | `API_DELPI_INTERNAL_SERVICE_TOKEN` nos 3 serviços; rebuild SI |
 | SI 404 Transformômetro | `TRANSFORMOMETRO_API_BASE_URL=http://transformometro-api:8000` (sem `/apps/`) |
+| Ata IA 502 / «KIMI_API_KEY» | Definir `KIMI_*` em `infra/.env` e recreate `transformometro-api` |
+| Ata IA timeout | Transcrição muito longa; ver caps em [atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md) |
+| Assinatura/PDF sumiu após recreate | Conferir volumes `TM_ATA_*` em [README-ambiente](../../../infra/README-ambiente.md) |
 
 ## Auditoria
 
