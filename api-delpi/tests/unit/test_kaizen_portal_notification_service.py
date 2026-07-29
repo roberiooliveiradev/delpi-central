@@ -31,7 +31,12 @@ def test_notify_public_suggestion_posts_permission_code(monkeypatch) -> None:
 
     assert ok is True
     payload = mock_client.post.call_args.kwargs["json"]
-    assert payload["permissionCodes"] == ["cadastro-kaizen.notify-suggestions"]
-    assert payload["category"] == "cadastro_kaizen"
+    assert payload["permissionCodes"] == [
+        "kaizometro.notify-suggestions",
+        "cadastro-kaizen.notify-suggestions",
+    ]
+    assert payload["category"] == "kaizometro"
+    assert payload["sourceApp"] == "kaizometro"
     assert payload["metadata"]["event"] == "kaizen_suggestion_created"
+    assert payload["action"]["target"].startswith("/apps/kaizometro/detalhe/")
     assert "detalhe/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" in payload["action"]["target"]

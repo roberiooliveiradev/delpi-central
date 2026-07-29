@@ -17,7 +17,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | `dashboard-lmps` | — | ✅ Migrado | |
 | `dashboard-quality` | — | ✅ Migrado | |
 | `dashboard-supplies` | — | ✅ Migrado | |
-| `cadastro-kaizen` | — | ✅ Migrado | F2/F3 completo — ver [UI-PLUGIN-UI.md](../../cadastro-kaizen/docs/UI-PLUGIN-UI.md) |
+| `kaizometro` | — | ✅ Migrado | F2/F3 completo — ver [UI-PLUGIN-UI.md](../../kaizometro/docs/UI-PLUGIN-UI.md) |
 | `eficiencia-fabril` | — | ✅ Migrado | |
 | `transformometro` | — | ✅ Migrado | — |
 | `quality-action-plans` | — | ✅ Migrado | — |
@@ -38,7 +38,7 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 ## Ordem sugerida de migração (concluída Fase 1)
 
 1. Dashboards departamentais — ✅
-2. `cadastro-kaizen`, `transformometro`, `quality-action-plans`, `eficiencia-fabril`, `maintenance` — ✅
+2. `kaizometro`, `transformometro`, `quality-action-plans`, `eficiencia-fabril`, `maintenance` — ✅
 
 ## Após cada migração
 
@@ -117,7 +117,7 @@ Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/pl
 
 | Plugin | FileDropzone | Confirm | Notas |
 |--------|--------------|---------|-------|
-| `cadastro-kaizen` | ✅ | — | `fileDropzoneKaizenClasses` |
+| `kaizometro` | ✅ | — | `fileDropzoneKaizenClasses` |
 | `quality-action-plans` | ✅ | ✅ | `useConfirmDialogController` + `ConfirmModalPanel` |
 | `transformometro` | ✅ | ✅ | Provider + `ConfirmModalPanel` |
 | `strategic-indicators` | — | — | `operationalUnitLabels` reexport |
@@ -181,7 +181,7 @@ Após extração:
 | `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2 |
 | `inspecoes-entrada` | ✅ | — | ✅ | — | ✅ | — | PageHeader + Pagination + KpiCard + FilterBarShell F2/F3 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
-| `cadastro-kaizen` | — | ✅ | FiltersRow + FilterSelectField + createKaizenKpiCard + SectionCard + forms F2/F3 |
+| `kaizometro` | — | ✅ | FiltersRow + FilterSelectField + createKaizenKpiCard + SectionCard + forms F2/F3 |
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
@@ -255,7 +255,7 @@ Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGr
 
 | Plugin | EditableSectionCard | Notas |
 |--------|---------------------|-------|
-| `cadastro-kaizen` | ✅ | `editableSectionCardBemClasses("kz")` |
+| `kaizometro` | ✅ | `editableSectionCardBemClasses("kz")` |
 | `transformometro` | ✅ | `editableSectionCardTransformometroClasses("ds")` |
 | `quality-action-plans` | ✅ | `SectionCard` + `createDashboardEditableSectionCardPac` |
 
@@ -293,9 +293,9 @@ Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugi
 | `minha-delpi-chat` | — | ChatNative*, admin forms | ✅ |
 | `public-hub` | — | shell público | ✅ |
 
-## Referência — `cadastro-kaizen` (migração UI concluída)
+## Referência — `kaizometro` (migração UI concluída)
 
-Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cadastro-kaizen/docs/UI-PLUGIN-UI.md).
+Documento canônico do plugin: [kaizometro/docs/UI-PLUGIN-UI.md](../../kaizometro/docs/UI-PLUGIN-UI.md).
 
 | Camada | Exports plugin-ui | Wrapper local |
 |--------|-------------------|---------------|
@@ -332,7 +332,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — overrides `.delpi-ui-*` | ✅ |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ✅ |
 | **7.3** | `minha-delpi-chat` admin — **B** domínio isolado (`mdc-admin-*` / `mdc-audit-*`); overrides kit zerados | ✅ |
-| **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
+| **7.4** | `kaizometro`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ✅ |
 | **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
@@ -348,7 +348,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `quality-action-plans` | 7.2 | ✅ | headers dual `PAC_SECTION` | ✅ | ghost/state/section/table → kit; domain leftovers OK |
 | `controle-retrabalhos` | 7.2 | ✅ | — | ✅ | stack-safe margin no kit; sem `.cr-card:not` / state-box mirror |
 | `minha-delpi-chat` | 7.3 | ✅ | ✅ Admin* domínio (`mdc-admin-*` KPI/table; `mdc-audit-*` paginação) — **path B** (não kit shell) | ✅ checkboxes/switch/toolbar via kit + tokens; `delpi-ui-native-switch--compact` no kit |
-| `cadastro-kaizen` | 7.4 | ✅ | ghost dual `KZ_GHOST_BTN` | ✅ `dataTableBemClasses` | section-card só gap; chrome no kit |
+| `kaizometro` | 7.4 | ✅ | ghost dual `KZ_GHOST_BTN` | ✅ `dataTableBemClasses` | section-card só gap; chrome no kit |
 | `auditoria-5s` | 7.4 | ✅ | hero/list → `createAnalyticsKpiCard`; paginação domínio `a5s-list-pagination` | ✅ filtersUi dual filter-box | analytics-kpi CSS no kit; list table/filters-card domínio |
 | `maintenance` | 7.9 | ✅ | StateBox dual kit; KPI factory + atalhos via `NavigationCard` horizontal | ✅ | CSS `dm-shortcut-card*` removido; DataTable.css domínio; filter-kpi toggle dual |
 | `transformometro` | 7.4 | ✅ | ghost dual `DS_GHOST_BTN` | ✅ `dataTableBemClasses` | print help-tooltip + table ghost compact no kit; tree tokens no host |
@@ -404,4 +404,4 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 
 ---
 
-Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até barrels `ui`/`data`/`form`/`detail`/`evidence` e limpeza de shims; docs Fase 7 (`docs(plugin-ui): proíbe CSS…`).
+Commits de referência (jul/2026): série `refactor(kaizometro): … via plugin-ui` até barrels `ui`/`data`/`form`/`detail`/`evidence` e limpeza de shims; docs Fase 7 (`docs(plugin-ui): proíbe CSS…`).

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "kaizometro",
+  "name": "Kaizômetro",
+  "description": "Kaizômetro — cadastro e acompanhamento de melhorias contínuas (kaizen) no módulo qualidade",
+  "icon": "sparkles-icon",
+  "version": "0.2.0",
+  "type": "microfrontend",
+  "basePath": "/apps/kaizometro",
+  "entry": "/apps/kaizometro/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "kaizometro.view",
+      "name": "Visualizar Kaizômetro",
+      "description": "Consultar kaizens cadastrados no módulo qualidade",
+      "module": "kaizometro"
+    },
+    {
+      "code": "kaizometro.manage",
+      "name": "Gerenciar Kaizômetro",
+      "description": "Criar, editar e excluir kaizens",
+      "module": "kaizometro"
+    },
+    {
+      "code": "kaizometro.notify-suggestions",
+      "name": "Receber notificações de sugestões Kaizen",
+      "description": "Recebe alerta no portal quando uma sugestão pública é enviada",
+      "module": "kaizometro"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/kaizometro",
+      "label": "Kaizômetro",
+      "permission": "kaizometro.view",
+      "icon": "sparkles-icon",
+      "order": 17,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

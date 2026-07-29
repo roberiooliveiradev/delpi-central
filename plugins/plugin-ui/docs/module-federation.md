@@ -235,7 +235,7 @@ python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 
 **Dashboards (2a):** `dashboard-production`, `dashboard-commercial`, `dashboard-engineering`, `dashboard-financial`, `dashboard-hr`, `dashboard-lmps`, `dashboard-quality`, `dashboard-supplies`
 
-**Operacionais (2b):** `transformometro`, `quality-action-plans`, `cadastro-kaizen`, `maintenance`, `eficiencia-fabril`, `minha-delpi-chat`, `auditoria-5s`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `financeiro-centro-custo`, `strategic-indicators`, `customer-experience`, `cultura-delpi`, `central-agendamento`, `quality-labels`, `tv-dashboard` (também consome `@delpi/tv-dashboard-presentation` bundled)
+**Operacionais (2b):** `transformometro`, `quality-action-plans`, `kaizometro`, `maintenance`, `eficiencia-fabril`, `minha-delpi-chat`, `auditoria-5s`, `inspecoes-entrada`, `pedidos-venda-abertos`, `propostas-comerciais`, `financeiro-centro-custo`, `strategic-indicators`, `customer-experience`, `cultura-delpi`, `central-agendamento`, `quality-labels`, `tv-dashboard` (também consome `@delpi/tv-dashboard-presentation` bundled)
 
 **Shell público:** `public-hub` — consumidor MF (sem `exposes`); `tv-dashboard-presentation` permanece bundled.
 

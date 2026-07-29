@@ -25,7 +25,7 @@ Cálculo: mesmo das rotas `/refugos/scrap_cost_pct` e `/retrabalhos/rework_cost_
 
 **Ganhos financeiros (cálculo):** a `api-delpi` deriva `daily_savings` de cada kaizen a partir da planilha Google Sheets (`segundos_por_ocorrencia × ocorrencias_por_dia / 3600 × custo_hora`). Para cada kaizen com status *implantado*, o SI soma `daily_savings × dias ativos` no mês da competência. A data de implantação define o início da contagem; kaizens implantados em meses anteriores continuam gerando ganho nos dias do mês filtrado (não exige nova implantação no mês). O indicador *Ideias Kaizen* continua contando apenas implantações cuja data cai no período.
 
-> **Evolução (cadastro Postgres):** quando `GET /quality/kaizens/summary` migrar para PostgreSQL (Fase 6), o cálculo usará **revisões temporais** (`quality.kaizen_revisions`) para preservar status e economia vigentes em cada mês — ver [ESPECIFICACAO-REVISOES.md](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
+> **Evolução (cadastro Postgres):** quando `GET /quality/kaizens/summary` migrar para PostgreSQL (Fase 6), o cálculo usará **revisões temporais** (`quality.kaizen_revisions`) para preservar status e economia vigentes em cada mês — ver [ESPECIFICACAO-REVISOES.md](../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
 
 Detalhes da planilha e fórmulas: `api-delpi/docs/api/06-modulos-departamentais.md` (§ `GET /quality/kaizens/summary`).
 

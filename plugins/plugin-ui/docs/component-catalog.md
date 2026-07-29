@@ -936,7 +936,7 @@ import { FilePreviewModal } from "@delpi/plugin-ui";
 />
 ```
 
-Todos os MFEs com prévia de anexo usam **`FilePreviewModal`**: `quality-action-plans`, `minha-delpi-chat`, `transformometro`, `cadastro-kaizen`.
+Todos os MFEs com prévia de anexo usam **`FilePreviewModal`**: `quality-action-plans`, `minha-delpi-chat`, `transformometro`, `kaizometro`.
 
 ---
 
@@ -1008,7 +1008,7 @@ Consumidores: `ContextMenu` (kit) e `DataPrepareColumnMenu` do `tv-dashboard` (p
 | `transformometro` (S3+) | `ImpactEffortMatrix`, `ImpactEffortMatrixLegend`, `FilePreviewView`, **`FlowchartEditor`** (via wrapper) |
 | `quality-action-plans` | `FilePreviewModal`, `resolveFilePreviewKind` |
 | `minha-delpi-chat` | `FilePreviewModal`, `resolveFilePreviewKind` |
-| `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |
+| `kaizometro` | `FilePreviewModal`, `resolveFilePreviewKind` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 

@@ -31,7 +31,7 @@ Referência de integração: `plugins/controle-retrabalhos/` (MF + `preparePlugi
 | `dashboard-supplies` | idem | ~324 | idem |
 | `transformometro` | idem | ~332 | idem |
 | `quality-action-plans` | `src/components/ui/HelpTooltip.tsx` | ~363 | + `TitleWithHelp` |
-| `cadastro-kaizen` | `src/components/ui/HelpTooltip.tsx` | ~294 | `FieldLabel` com `htmlFor` |
+| `kaizometro` | `src/components/ui/HelpTooltip.tsx` | ~294 | `FieldLabel` com `htmlFor` |
 | `eficiencia-fabril` | `src/components/HelpTooltip.tsx` | ~59 | CSS hover simples (sem portal) |
 | `maintenance` | `src/components/data/HelpTooltip.tsx` | ~59 | CSS hover simples |
 | `portal` | `src/components/HelpTooltip.tsx` | — | ⚠️ API controlada (`open`) + `placement: right` |
@@ -62,7 +62,7 @@ Legenda: **A** = extrair para `plugin-ui` · **B** = pacote irmão futuro (`@del
 
 | Componente | Ocorrências | Ação sugerida |
 |------------|-------------|---------------|
-| `EditableSectionCard` | 3 (`cadastro-kaizen`, `transformometro`, `quality-action-plans`) | **A** após Fase 2 |
+| `EditableSectionCard` | 3 (`kaizometro`, `transformometro`, `quality-action-plans`) | **A** após Fase 2 |
 | `ReadOnlyField` | 2 | **A** |
 | `SelectField` | 2 (`quality-action-plans`, `transformometro`) | **A** |
 | `PageHeader` | 7 | Avaliar diff; provável **A** com slots |
@@ -179,7 +179,7 @@ Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugi
 |------|---------|-------|
 | 1a Piloto | `dashboard-production` | Referência departamental + mais maduro |
 | 1b Dashboards clone | `commercial`, `engineering`, `financial`, `hr`, `lmps`, `quality`, `supplies` | Copiar checklist do piloto; PRs em paralelo (1 plugin = 1 PR) |
-| 1c Domínio | `transformometro`, `cadastro-kaizen`, `quality-action-plans` | Atenção a `FieldLabel`/`TitleWithHelp` |
+| 1c Domínio | `transformometro`, `kaizometro`, `quality-action-plans` | Atenção a `FieldLabel`/`TitleWithHelp` |
 | 1d Simplificados | `eficiencia-fabril`, `maintenance` | Ganho a11y (portal/viewport vs CSS puro) |
 | 1e Portal | `portal` | Só após 0.3 — API controlada |
 
@@ -270,7 +270,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `dashboard-quality` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `dashboard-supplies` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ Pagination ✅ MultiSelect ✅ | — | sim |
 | `transformometro` | ✅ | ChartCard ✅ Pagination ✅ MultiSelect ✅ KpiCard ✅ DataTable ✅ | EditableSectionCard ✅ PageHeader ✅ ProcessoForm Native* ✅ | sim |
-| `cadastro-kaizen` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
+| `kaizometro` | ✅ | FiltersRow ✅ MultiSelect ✅ DataTable ✅ KpiCard ✅ | Forms ✅ SectionCard ✅ EditableSectionCard ✅ PageHeader ✅ StateBanner ✅ | sim |
 | `quality-action-plans` | ✅ | FiltersRow ✅ MultiSelect ✅ ChartCard ✅ KpiCard ✅ | PageHeader ✅ SectionCard ✅ | sim |
 | `eficiencia-fabril` | ✅ | ChartCard ✅ KpiCard ✅ LoadingActivity ✅ MultiSelect ✅ FilterBarShell ✅ | DetailFieldGrid ✅ | sim |
 | `maintenance` | ✅ | Pagination ✅ MultiSelect ✅ FilterBarShell ✅ DataTable ✅ | PageHeader ✅ · EditableCell ✅ · Native* forms ✅ | sim |
@@ -388,7 +388,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Plugin | Violações típicas | Onda sugerida |
 |--------|-------------------|---------------|
-| `cadastro-kaizen` | `.kz-section-card*` / dataTableUi → ✅ onda 7.4 (gap only + dual completo) | **7.4** ✅ |
+| `kaizometro` | `.kz-section-card*` / dataTableUi → ✅ onda 7.4 (gap only + dual completo) | **7.4** ✅ |
 | `auditoria-5s` | analytics KPI/filters → kit; paginação domínio `a5s-list-pagination` → ✅ **7.4** | **7.4** ✅ |
 | `maintenance` | StateBox dual kit; KPI factory; shortcuts domínio → ✅ **7.4** | **7.4** ✅ |
 | `transformometro` | ghost dual; print/tree no kit/tokens; dataTable dual → ✅ **7.4** | **7.4** ✅ |

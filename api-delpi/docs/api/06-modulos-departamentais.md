@@ -533,15 +533,15 @@ Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração She
 
 ### Cadastro operacional — `/quality/kaizens/records`
 
-**Fonte:** PostgreSQL (`quality.kaizens`, migrations `V026`–`V043`). Plugin MFE: `cadastro-kaizen`. Documentação: [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md).
+**Fonte:** PostgreSQL (`quality.kaizens`, migrations `V026`–`V043`). Plugin MFE: `kaizometro` (exibição **Kaizômetro**). Documentação: [plugins/kaizometro/README.md](../../../plugins/kaizometro/README.md).
 
 **Permissões:**
 
 | Operação | Permissões aceitas |
 |----------|-------------------|
-| Leitura (GET) | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
-| Escrita (POST/PUT/DELETE/import) | `cadastro-kaizen.manage`, `api-delpi.quality.access`, `api-delpi.access` |
-| Alerta sugestão pública | `cadastro-kaizen.notify-suggestions` (sino Core; não é RBAC da rota HTTP) |
+| Leitura (GET) | `kaizometro.view`, `kaizometro.manage` (+ legado `cadastro-kaizen.view`/`.manage`), `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
+| Escrita (POST/PUT/DELETE/import) | `kaizometro.manage` (+ legado `cadastro-kaizen.manage`), `api-delpi.quality.access`, `api-delpi.access` |
+| Alerta sugestão pública | `kaizometro.notify-suggestions` (+ legado `cadastro-kaizen.notify-suggestions` na janela de migração; sino Core) |
 
 #### GET /quality/kaizens/records
 
@@ -578,7 +578,7 @@ Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_qua
 
 #### POST /public/kaizen/suggestions
 
-Sugestão aberta (formulário public-hub `/p/kaizen/sugestao/aberto`). **Sem JWT.** Cria registro com `status=recebido` e notifica gestores com `cadastro-kaizen.notify-suggestions` (quando Core Integrations estiver configurado).
+Sugestão aberta (formulário public-hub `/p/kaizen/sugestao/aberto`). **Sem JWT.** Cria registro com `status=recebido` e notifica gestores com `kaizometro.notify-suggestions` (quando Core Integrations estiver configurado).
 
 Body: `proposer_name`, `sector`, `employee_registration`, `work_center_or_location`, `problem_description`, `proposed_solution`, `branch_code` opcional (`01`/`02`), honeypot `website`.
 
@@ -586,13 +586,13 @@ Body: `proposer_name`, `sector`, `employee_registration`, `work_center_or_locati
 
 #### Revisões, versões e evidências (implementado)
 
-Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo de vida de versões, evidências e trilhas de auditoria. Ver [plugins/cadastro-kaizen/docs/DOCUMENTACAO.md](../../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) § 9.
+Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo de vida de versões, evidências e trilhas de auditoria. Ver [plugins/kaizometro/docs/DOCUMENTACAO.md](../../../plugins/kaizometro/docs/DOCUMENTACAO.md) § 9.
 
 **Vigência:** `effective_from` da revisão espelha `date_implemented` informado no Estágio. O PUT não exige campo separado «Vigente a partir de» — body legado `effective_from` é ignorado.
 
 **Indicadores:** `recebido` fora de quantidade/ganhos; `aprovado` só quantidade; `implantado` quantidade + ganhos. Detalhe: README do plugin.
 
-**Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
+**Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
 
 ## Delpi Reports — `/reports`
 

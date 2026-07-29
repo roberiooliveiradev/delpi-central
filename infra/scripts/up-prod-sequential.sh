@@ -115,7 +115,7 @@ FASE_MFE=(
   estoque-seguranca
   transformometro
   quality-action-plans
-  cadastro-kaizen
+  kaizometro
   maintenance
   eficiencia-fabril
   minha-delpi-chat

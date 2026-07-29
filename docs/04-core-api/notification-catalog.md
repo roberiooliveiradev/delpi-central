@@ -54,7 +54,7 @@ Antes deste catálogo, categorias e rótulos ficavam espalhados em Python (`noti
 
 ### Aliases legados
 
-`legacyCategoryAliases` normaliza categorias antigas no dispatch (ex.: `quality` → `quality_action_plans`).
+`legacyCategoryAliases` normaliza categorias antigas no dispatch (ex.: `quality` → `quality_action_plans`, `cadastro_kaizen` → `kaizometro`).
 
 ---
 
@@ -114,7 +114,7 @@ Não é necessário editar `NotificationPreferencesPanel`, `NotificationCard` et
 | `quality_action_plans` | Planos de ação (PAC) | `quality-action-plans` | `quality-action-plans` |
 | `auditoria_5s` | Auditoria 5S | `auditoria-5s` | `auditoria-5s` |
 | `central_agendamento` | Central de Agendamento | `central-agendamento` | `central-agendamento` |
-| `cadastro_kaizen` | Cadastro de Kaizens | `cadastro-kaizen` | `cadastro-kaizen` |
+| `kaizometro` | Kaizômetro | `kaizometro` | `kaizometro` |
 | `lancamento_notas_fiscais` | Lançamento de Notas Fiscais | `lancamento-notas-fiscais` | `lancamento-notas-fiscais` |
 | `controle_mp` | Controle MP | `controle_mp` | `controle-mp` |
 | `tv_dashboard` | Painéis TV | `tv-dashboard` | `tv-dashboard` |

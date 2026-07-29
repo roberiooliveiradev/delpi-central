@@ -14,6 +14,6 @@
 | [migration-catalog.md](./migration-catalog.md) | Tracking por plugin + **Fase 7** (zero CSS kit no MFE) |
 | [refactoring-roadmap.md](./refactoring-roadmap.md) | Roadmap F1–F6 + **§ 8 Fase 7** (ondas 7.1–7.7) |
 | [export-catalog.md](./export-catalog.md) | Catálogo de exportação (CSV / Excel / PDF / PNG; E4 backlog) |
-| [../cadastro-kaizen/docs/UI-PLUGIN-UI.md](../cadastro-kaizen/docs/UI-PLUGIN-UI.md) | Migração UI concluída do cadastro-kaizen |
+| [../kaizometro/docs/UI-PLUGIN-UI.md](../kaizometro/docs/UI-PLUGIN-UI.md) | Migração UI concluída do kaizometro |
 
 **Início rápido:** [README.md](../README.md) na raiz do pacote.

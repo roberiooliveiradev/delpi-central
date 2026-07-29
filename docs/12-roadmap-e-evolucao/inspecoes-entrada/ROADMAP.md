@@ -31,7 +31,7 @@ Disponibilizar no Portal um **painel operacional por filial** para a equipe de q
 | Backend de dados | Rotas dedicadas `/inspecoes-entrada/*` | Módulo qualidade/recebimento isolado |
 | Persistência própria | **Não** (MVP) | Leitura direta das views |
 | Permissões | Por filial + view ampla | Mesmo padrão `auditoria-5s`, `central-agendamento` |
-| Referência de UI | `dashboard-production`, `cadastro-kaizen` | Tokens portal, KPI cards, tabelas |
+| Referência de UI | `dashboard-production`, `kaizometro` | Tokens portal, KPI cards, tabelas |
 | Referência de backend | `eficiencia_fabril`, `inspecoes_entrada_repository` | Repository TOTVS + use cases |
 
 Fluxo:

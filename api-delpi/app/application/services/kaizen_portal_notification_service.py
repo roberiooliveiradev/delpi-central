@@ -1,4 +1,4 @@
-"""Notificações in-app do Cadastro de Kaizen via Core API."""
+"""Notificações in-app do Kaizômetro via Core API."""
 
 from __future__ import annotations
 
@@ -7,14 +7,17 @@ from typing import Any
 
 import httpx
 
-from app.application.security.api_delpi_permissions import CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS
+from app.application.security.api_delpi_permissions import (
+    CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS,
+    KAIZOMETRO_NOTIFY_SUGGESTIONS,
+)
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
-_SOURCE_APP = "cadastro-kaizen"
-_CATEGORY = "cadastro_kaizen"
-_APP_BASE = "/apps/cadastro-kaizen"
+_SOURCE_APP = "kaizometro"
+_CATEGORY = "kaizometro"
+_APP_BASE = "/apps/kaizometro"
 
 
 def kaizen_portal_notifications_enabled() -> bool:
@@ -72,10 +75,14 @@ def notify_public_suggestion_created(*, record: dict[str, Any]) -> bool:
     message = f"{proposer} enviou uma sugestão «{title}»"
     if sector:
         message += f" ({sector})"
-    message += ". Abra o cadastro para analisar (status Recebido)."
+    message += ". Abra o Kaizômetro para analisar (status Recebido)."
 
     payload: dict[str, Any] = {
-        "permissionCodes": [CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS],
+        # Dual permission na janela de migração (perfis ainda com cadastro-kaizen.*).
+        "permissionCodes": [
+            KAIZOMETRO_NOTIFY_SUGGESTIONS,
+            CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS,
+        ],
         "title": "Nova sugestão Kaizen",
         "message": message,
         "type": "info",

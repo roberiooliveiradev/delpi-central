@@ -24,7 +24,7 @@ FEDERATED_PLUGINS = {
     "dashboard-supplies",
     "transformometro",
     "quality-action-plans",
-    "cadastro-kaizen",
+    "kaizometro",
     "maintenance",
     "eficiencia-fabril",
     "minha-delpi-chat",

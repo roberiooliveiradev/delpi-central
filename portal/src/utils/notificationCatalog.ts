@@ -86,13 +86,13 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
       pluginId: "central-agendamento",
     },
     {
-      id: "cadastro_kaizen",
-      label: "Cadastro de Kaizens",
+      id: "kaizometro",
+      label: "Kaizômetro",
       icon: "sparkles",
       mutable: true,
       kind: "app",
-      sourceApps: ["cadastro-kaizen"],
-      pluginId: "cadastro-kaizen",
+      sourceApps: ["kaizometro"],
+      pluginId: "kaizometro",
     },
     {
       id: "lancamento_notas_fiscais",
@@ -115,6 +115,7 @@ export const FALLBACK_NOTIFICATION_CATALOG: NotificationCatalogResponse = {
   ],
   legacyCategoryAliases: {
     quality: "quality_action_plans",
+    cadastro_kaizen: "kaizometro",
   },
 };
 

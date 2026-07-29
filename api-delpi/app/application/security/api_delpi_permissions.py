@@ -20,10 +20,13 @@ DASHBOARD_ENGINEERING_VIEW = "dashboard-engineering.view"
 DASHBOARD_LMPS_VIEW = "dashboard-lmps.view"
 DASHBOARD_LMPS_NC_WRITE = "dashboard-lmps.nc.write"
 
-# --- cadastro kaizen ---
-CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"
-CADASTRO_KAIZEN_MANAGE = "cadastro-kaizen.manage"
-CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS = "cadastro-kaizen.notify-suggestions"
+# --- kaizometro (legado: cadastro-kaizen.* mantido na janela de migração) ---
+KAIZOMETRO_VIEW = "kaizometro.view"
+KAIZOMETRO_MANAGE = "kaizometro.manage"
+KAIZOMETRO_NOTIFY_SUGGESTIONS = "kaizometro.notify-suggestions"
+CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"  # legado
+CADASTRO_KAIZEN_MANAGE = "cadastro-kaizen.manage"  # legado
+CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS = "cadastro-kaizen.notify-suggestions"  # legado
 
 # --- planos de ação PAC qualidade ---
 QUALITY_ACTION_PLANS_ACCESS = "quality-action-plans.access"
@@ -194,13 +197,16 @@ KAIZEN_RECORDS_READ_PERMISSIONS = [
     API_DELPI_ACCESS,
     API_DELPI_QUALITY_ACCESS,
     DASHBOARD_QUALITY_VIEW,
-    CADASTRO_KAIZEN_VIEW,
-    CADASTRO_KAIZEN_MANAGE,
+    KAIZOMETRO_VIEW,
+    KAIZOMETRO_MANAGE,
+    CADASTRO_KAIZEN_VIEW,  # legado (janela de migração)
+    CADASTRO_KAIZEN_MANAGE,  # legado
 ]
 KAIZEN_RECORDS_WRITE_PERMISSIONS = [
     API_DELPI_ACCESS,
     API_DELPI_QUALITY_ACCESS,
-    CADASTRO_KAIZEN_MANAGE,
+    KAIZOMETRO_MANAGE,
+    CADASTRO_KAIZEN_MANAGE,  # legado
 ]
 
 QUALITY_ACTION_PLANS_READ_PERMISSIONS = [

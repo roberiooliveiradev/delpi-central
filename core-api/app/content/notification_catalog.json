@@ -83,13 +83,13 @@
       "sourceApps": ["central-agendamento"],
       "pluginId": "central-agendamento"
     },
-    "cadastro_kaizen": {
-      "label": "Cadastro de Kaizens",
+    "kaizometro": {
+      "label": "Kaizômetro",
       "icon": "sparkles",
       "mutable": true,
       "kind": "app",
-      "sourceApps": ["cadastro-kaizen"],
-      "pluginId": "cadastro-kaizen"
+      "sourceApps": ["kaizometro"],
+      "pluginId": "kaizometro"
     },
     "lancamento_notas_fiscais": {
       "label": "Lançamento de Notas Fiscais",
@@ -109,6 +109,7 @@
     }
   },
   "legacyCategoryAliases": {
-    "quality": "quality_action_plans"
+    "quality": "quality_action_plans",
+    "cadastro_kaizen": "kaizometro"
   }
 }

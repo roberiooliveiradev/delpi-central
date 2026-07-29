@@ -732,15 +732,15 @@ services:
     networks:
       - delpi-network
 
-  cadastro-kaizen:
+  kaizometro:
     depends_on:
       - plugin-ui
     build:
       context: ../plugins
-      dockerfile: cadastro-kaizen/Dockerfile
+      dockerfile: kaizometro/Dockerfile
       target: production
 
-    container_name: delpi-cadastro-kaizen
+    container_name: delpi-kaizometro
     restart: unless-stopped
 
     environment:
@@ -1682,7 +1682,7 @@ services:
       - pedidos-venda-abertos
       - propostas-comerciais
       - auditoria-5s
-      - cadastro-kaizen
+      - kaizometro
       - quality-action-plans
       - inspecoes-entrada
       - inspecoes-processo

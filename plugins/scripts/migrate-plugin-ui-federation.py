@@ -127,7 +127,7 @@ COPY tv-dashboard-presentation ./tv-dashboard-presentation
 LOT_2B = [
     "transformometro",
     "quality-action-plans",
-    "cadastro-kaizen",
+    "kaizometro",
     "maintenance",
     "eficiencia-fabril",
     "minha-delpi-chat",

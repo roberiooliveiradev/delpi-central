@@ -69,7 +69,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/eficiencia-fabril` | `eficiencia-fabril` | microfrontend | plugin | `/apps/eficiencia-fabril` | `delpi-eficiencia-fabril` |
 | `plugins/pedidos-venda-abertos` | `pedidos-venda-abertos` | microfrontend | plugin | `/apps/pedidos-venda-abertos` | `delpi-pedidos-venda-abertos` |
 | `plugins/auditoria-5s` | `auditoria-5s` | microfrontend | plugin | `/apps/auditoria-5s` | `delpi-auditoria-5s` |
-| `plugins/cadastro-kaizen` | `cadastro-kaizen` | microfrontend | plugin | `/apps/cadastro-kaizen` | `delpi-cadastro-kaizen` |
+| `plugins/kaizometro` | `kaizometro` | microfrontend | plugin | `/apps/kaizometro` | `delpi-kaizometro` |
 | `plugins/customer-experience` | `customer-experience` | microfrontend | plugin | `/apps/customer-experience` | `delpi-customer-experience` |
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/lancamento-notas-fiscais` | `lancamento-notas-fiscais` | microfrontend | plugin | `/apps/lancamento-notas-fiscais` | `delpi-lancamento-notas-fiscais` |
@@ -114,7 +114,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
 | Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
-| Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação Sheets; sugestão pública `POST /public/kaizen/suggestions` + form `/p/kaizen/sugestao/aberto` |
+| Kaizômetro | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação Sheets; sugestão pública `POST /public/kaizen/suggestions` + form `/p/kaizen/sugestao/aberto` |
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
 | Lançamento de Notas Fiscais | `/apps/api-delpi/lancamento-notas-fiscais/*` (Postgres plugins + SF1/SA2) |
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
@@ -168,7 +168,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | api-delpi-console | `api-delpi-console` |
 | eficiencia-fabril | `eficiencia-fabril` |
 | central-agendamento | `central-agendamento` |
-| cadastro-kaizen | `cadastro-kaizen` |
+| kaizometro | `kaizometro` |
 | inspecoes-entrada | `inspecoes-entrada` |
 | lancamento-notas-fiscais | `lancamento-notas-fiscais` |
 | inspecoes-processo | `inspecoes-processo` |
@@ -203,7 +203,7 @@ Declaradas no manifesto e persistidas na Core API:
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
 | reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
-| cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `cadastro-kaizen.notify-suggestions` |
+| kaizometro | `kaizometro.view`, `kaizometro.manage`, `kaizometro.notify-suggestions` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 
@@ -219,7 +219,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Console API DELPI | [Plugin README](../../plugins/api-delpi-console/README.md) · [Playbook](../../api-delpi/docs/roadmaps/playbook-api-delpi-console.md) |
 | Dashboard Qualidade | [plugins/dashboard-quality/docs/ROADMAP.md](../../plugins/dashboard-quality/docs/ROADMAP.md) |
 | Central de Agendamento | [Plugin README](../../plugins/central-agendamento/README.md) |
-| Cadastro de Kaizens | [Plugin README](../../plugins/cadastro-kaizen/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) |
+| Kaizômetro | [Plugin README](../../plugins/kaizometro/README.md) · [Roadmap](../../docs/12-roadmap-e-volucao/kaizometro/ROADMAP.md) · [Revisões (spec)](../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md) · [Doc técnica](../../plugins/kaizometro/docs/DOCUMENTACAO.md) |
 | Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
 | Lançamento de Notas Fiscais | [Plugin README](../../plugins/lancamento-notas-fiscais/README.md) · [Playbook](../12-roadmap-e-evolucao/lancamento-notas-fiscais/PLAYBOOK.md) · [Roadmap](../12-roadmap-e-evolucao/lancamento-notas-fiscais/ROADMAP.md) · [API](../../api-delpi/docs/api/lancamento-notas-fiscais.md) |
 | Inspeções de Processo | [Plugin README](../../plugins/inspecoes-processo/README.md) · [Auditoria](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md) · [API](../../api-delpi/docs/api/inspecoes-processo.md) |

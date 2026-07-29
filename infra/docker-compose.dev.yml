@@ -761,14 +761,14 @@ services:
     networks:
       - delpi-network
 
-  cadastro-kaizen:
+  kaizometro:
     <<: *plugin-ui-federated
     build:
       context: ../plugins
-      dockerfile: cadastro-kaizen/Dockerfile
+      dockerfile: kaizometro/Dockerfile
       target: production
 
-    container_name: delpi-cadastro-kaizen
+    container_name: delpi-kaizometro
     restart: unless-stopped
 
     environment:

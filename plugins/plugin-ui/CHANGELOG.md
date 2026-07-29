@@ -17,7 +17,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 - `createKaizenKpiCard`, `simpleKpiKaizenBemClasses` e `simpleKpiKaizenToneClass` (`SimpleKpiCard` estilo kaizen).
 - `createAnalyticsKpiCard` / `simpleKpiAnalyticsBemClasses` (KPI `analytics-kpi` — consumidor `auditoria-5s`).
 - `createFilterBarShell`: opção `block` BEM + `embeddedByDefault` (ex.: `a5s-analytics-filters`).
-- Documentação da migração completa de `cadastro-kaizen`: [UI-PLUGIN-UI.md](../cadastro-kaizen/docs/UI-PLUGIN-UI.md).
+- Documentação da migração completa de `kaizometro`: [UI-PLUGIN-UI.md](../kaizometro/docs/UI-PLUGIN-UI.md).
 - Manifesto `plugins/shared-libraries.manifest.json` e gate CI `check_plugin_docker_shared_libraries.py`.
 - Documentação Docker em `plugins/docker/README.md` e fragmento de Dockerfile.
 - Script `scripts/ci/build-tv-dashboard.sh` (gate + build).
@@ -27,7 +27,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
-- `cadastro-kaizen`: páginas dashboard, detalhe, filtros e evidências passam a consumir wrappers `components/ui/` (F2/F3 concluído).
+- `kaizometro`: páginas dashboard, detalhe, filtros e evidências passam a consumir wrappers `components/ui/` (F2/F3 concluído).
 - [migration-catalog.md](./docs/migration-catalog.md), [component-catalog.md](./docs/component-catalog.md) e [refactoring-roadmap.md](./docs/refactoring-roadmap.md) atualizados.
 - Reorganização: componentes movidos de `src/*.tsx` para `src/components/help/`.
 - README expandido com quick start e links para documentação.

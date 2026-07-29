@@ -153,7 +153,7 @@ src/
 |-------|---------|
 | Referência | `controle-retrabalhos` |
 | Dashboards | `dashboard-*` (8) |
-| Operacionais | `quality-labels`, `quality-action-plans`, `minha-delpi-chat`, `cadastro-kaizen`, … |
+| Operacionais | `quality-labels`, `quality-action-plans`, `minha-delpi-chat`, `kaizometro`, … |
 | Shell | `public-hub` (MF plugin-ui; bundled só `tv-dashboard-presentation`) |
 | Fora de escopo | `portal` (shell host), `api-delpi-console` (não importa plugin-ui) |
 

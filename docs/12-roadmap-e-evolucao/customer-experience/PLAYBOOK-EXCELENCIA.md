@@ -56,7 +56,7 @@ A Delpi recebe **pessoas de empresas clientes** num programa de visitas/experiê
 
 | Componente | Identificador (inglês) | Rótulo/usuário (pt-BR) | Padrão de referência |
 |---|---|---|---|
-| Plugin admin (MFE) | `customer-experience` | «Experiência do Cliente» | `auditoria-5s`, `cadastro-kaizen` |
+| Plugin admin (MFE) | `customer-experience` | «Experiência do Cliente» | `auditoria-5s`, `kaizometro` |
 | Shell público (estático) | `public-hub` (view `customer-experience/thanks`) | — | novo padrão (ver §5) |
 | API dedicada | `customer-experience-api` | — | `maintenance-api`, `strategic-indicators-api` |
 | Rota gateway API | `/apps/customer-experience-api/` | — | `/apps/maintenance-api/` |

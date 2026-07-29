@@ -310,7 +310,7 @@ Ver wireframe dedicado. Resumo:
 
 Catálogo: [`plugins/plugin-ui/docs/component-catalog.md`](../../../plugins/plugin-ui/docs/component-catalog.md) § Matriz impacto×esforço.
 
-Reuso futuro: `cadastro-kaizen` (priorização de ideias), `quality-action-plans`.
+Reuso futuro: `kaizometro` (priorização de ideias), `quality-action-plans`.
 
 ---
 

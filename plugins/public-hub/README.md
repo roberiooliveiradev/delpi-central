@@ -193,9 +193,9 @@ Formulário aberto (token estático `aberto`) para colaboradores enviarem ideias
 
 Wizard **2 etapas** (Identificação → Melhoria), barra de **% preenchimento** e tela de conclusão. Tokens de marca `--pub-*` em `kaizen-form.css`.
 
-Compartilhamento (QR/link/PNG) fica no MFE autenticado `cadastro-kaizen` (botão **Compartilhar sugestão**).
+Compartilhamento (QR/link/PNG) fica no MFE autenticado `kaizometro` (botão **Compartilhar sugestão**).
 
-Ver `src/apps/kaizen/` · doc: [plugins/cadastro-kaizen/README.md](../cadastro-kaizen/README.md).
+Ver `src/apps/kaizen/` · doc: [plugins/kaizometro/README.md](../kaizometro/README.md).
 
 ### Painéis TV (`tv-dashboard`)
 
