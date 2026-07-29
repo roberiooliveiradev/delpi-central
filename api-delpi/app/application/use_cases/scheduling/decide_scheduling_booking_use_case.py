@@ -29,7 +29,6 @@ class DecideSchedulingBookingUseCase:
         actor_user_id: str,
         actor_name: str,
         reason: str | None = None,
-        is_superadmin: bool = False,
     ) -> dict[str, Any]:
         booking = self._repository.get_booking(booking_id)
         if not booking:
@@ -44,14 +43,6 @@ class DecideSchedulingBookingUseCase:
 
         if booking.get("status") != "pending":
             raise PluginsRepositoryError("Somente reservas pendentes podem ser decididas.")
-
-        if (
-            not is_superadmin
-            and str(booking.get("booked_by_user_id")) == actor_user_id
-        ):
-            raise PluginsRepositoryError(
-                "Você não pode aprovar ou rejeitar a própria solicitação."
-            )
 
         if action == "reject":
             clean_reason = (reason or "").strip()

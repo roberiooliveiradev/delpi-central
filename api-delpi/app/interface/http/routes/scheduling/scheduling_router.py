@@ -412,7 +412,6 @@ def approve_booking(booking_id: str):
             action="approve",
             actor_user_id=_current_user_id(),
             actor_name=_current_user_name(),
-            is_superadmin=_is_superadmin(),
         )
         return api_delpi_success(
             data,
@@ -420,8 +419,7 @@ def approve_booking(booking_id: str):
             message="Reserva confirmada com sucesso.",
         )
     except PluginsRepositoryError as exc:
-        status = 403 if "própria solicitação" in str(exc) else 400
-        return error_response(str(exc), status_code=status)
+        return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro ao aprovar reserva: {exc}")
         return error_response("Erro interno ao aprovar reserva.", status_code=500)
@@ -449,7 +447,6 @@ def reject_booking(booking_id: str, body: RejectBookingBody):
             actor_user_id=_current_user_id(),
             actor_name=_current_user_name(),
             reason=body.reason,
-            is_superadmin=_is_superadmin(),
         )
         return api_delpi_success(
             data,
@@ -457,8 +454,7 @@ def reject_booking(booking_id: str, body: RejectBookingBody):
             message="Reserva rejeitada.",
         )
     except PluginsRepositoryError as exc:
-        status = 403 if "própria solicitação" in str(exc) else 400
-        return error_response(str(exc), status_code=status)
+        return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro ao rejeitar reserva: {exc}")
         return error_response("Erro interno ao rejeitar reserva.", status_code=500)

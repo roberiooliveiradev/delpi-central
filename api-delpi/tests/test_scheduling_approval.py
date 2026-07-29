@@ -143,24 +143,39 @@ def test_create_booking_blocks_recurrence_when_requires_approval() -> None:
         )
 
 
-def test_decide_booking_rejects_self_approval() -> None:
+def test_decide_booking_allows_self_approval() -> None:
     repo = MagicMock()
     repo.expire_overdue_pending_bookings.return_value = []
-    repo.get_booking.return_value = {
+    pending = {
         "id": "book-1",
         "status": "pending",
         "branch_code": "ES",
         "booked_by_user_id": "user-1",
+        "title": "Detetização",
     }
+    confirmed = {
+        **pending,
+        "status": "confirmed",
+        "decided_by_user_id": "user-1",
+        "decided_by_name": "Ana",
+    }
+    repo.get_booking.return_value = pending
+    repo.decide_booking.return_value = confirmed
 
-    with pytest.raises(PluginsRepositoryError, match="própria solicitação"):
-        DecideSchedulingBookingUseCase(repo).execute(
+    with patch(
+        "app.application.use_cases.scheduling.decide_scheduling_booking_use_case.notify_booking_decision",
+        return_value=True,
+    ) as notify:
+        result = DecideSchedulingBookingUseCase(repo).execute(
             booking_id="book-1",
             action="approve",
             actor_user_id="user-1",
             actor_name="Ana",
-            is_superadmin=False,
         )
+
+    assert result["status"] == "confirmed"
+    assert result["decided_by_user_id"] == "user-1"
+    notify.assert_called_once_with(booking=confirmed, event_type="booking_approved")
 
 
 def test_decide_booking_approve_notifies_requester() -> None:
