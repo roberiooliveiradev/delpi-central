@@ -42,6 +42,7 @@ describe("deck chrome tab fallback contract", () => {
   it("Programação e Tela recebem chrome da antiga Página Inicial", () => {
     expect(chrome).toMatch(/DeckHomePlaylistChrome/);
     expect(chrome).toMatch(/SlideCurrentRibbon/);
+    expect(chrome).toMatch(/onRename=\{playlistChrome\.onRename\}/);
   });
 
   it("Camadas não força aba da top bar (não colapsa o ribbon)", () => {

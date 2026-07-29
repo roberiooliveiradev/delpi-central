@@ -253,6 +253,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     regenerateToken: "Gerar novo link da TV (invalida o anterior nas TVs).",
     toggleLink: "Ativar ou desativar o link da TV (apresentação pública).",
     delete: "Excluir esta programação permanentemente.",
+    rename: "Alterar o nome da programação.",
   },
   fields: {
     slideTitle: "Nome curto para identificar a tela no filmstrip e nos relatórios internos.",
@@ -534,6 +535,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     menu: "Menu da programação",
     open: "Abrir",
     duplicate: "Duplicar",
+    rename: "Renomear",
     export: "Exportar MDD",
     preview: "Prévia",
     share: "Editores",

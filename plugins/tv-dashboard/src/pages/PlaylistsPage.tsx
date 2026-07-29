@@ -11,10 +11,12 @@ import {
   exportPlaylistDeck,
   listPlaylists,
   regeneratePlaylistToken,
+  updatePlaylist,
   type Playlist,
 } from "../api/tvDashboardApi";
 import { DeckImportModal } from "../components/DeckImportModal";
 import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
+import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -77,6 +79,8 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
     position: FixedPanelPoint;
   } | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<Playlist | null>(null);
+  const [renameBusy, setRenameBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -131,6 +135,24 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
       tvDashboardNotice(err instanceof Error ? err.message : "Erro ao exportar pacote.");
     }
   }, []);
+
+  const handleRenameConfirm = useCallback(
+    async (name: string) => {
+      if (!renameTarget) return;
+      setRenameBusy(true);
+      try {
+        const updated = await updatePlaylist(renameTarget.id, { name });
+        patchItem(updated);
+        setRenameTarget(null);
+        tvDashboardNotice("Programação renomeada.");
+      } catch (err) {
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao renomear programação.");
+      } finally {
+        setRenameBusy(false);
+      }
+    },
+    [patchItem, renameTarget],
+  );
 
   const handleCopyLink = useCallback(async (item: Playlist) => {
     const url = item.publicUrl;
@@ -357,6 +379,7 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
           onClose={() => setContextMenu(null)}
           onOpen={() => onOpen(contextMenu.playlist.id)}
           onDuplicate={() => void handleDuplicate(contextMenu.playlist)}
+          onRename={() => setRenameTarget(contextMenu.playlist)}
           onExport={() => void handleExport(contextMenu.playlist)}
           onPreview={() => onPreview(contextMenu.playlist.id)}
           onShare={() => onShare(contextMenu.playlist.id)}
@@ -372,6 +395,16 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
         open={importOpen}
         onClose={() => setImportOpen(false)}
         onImported={(id) => onOpen(id)}
+      />
+
+      <PlaylistRenameDialog
+        open={renameTarget !== null}
+        initialName={renameTarget?.name ?? ""}
+        busy={renameBusy}
+        onClose={() => {
+          if (!renameBusy) setRenameTarget(null);
+        }}
+        onConfirm={handleRenameConfirm}
       />
     </div>
   );

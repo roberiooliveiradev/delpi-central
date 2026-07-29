@@ -60,6 +60,7 @@ import { KeyboardShortcutsTipsProvider } from "../context/KeyboardShortcutsTipsP
 import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
 import { EditorShortcutsProvider } from "../keyboard";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
+import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
@@ -163,6 +164,8 @@ export function PlaylistEditorPage({
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameBusy, setRenameBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
   const [remoteSelectionsByClientId, setRemoteSelectionsByClientId] = useState<
     Record<string, PresentationSelectionUpdateEvent>
@@ -1251,6 +1254,20 @@ export function PlaylistEditorPage({
     onBack();
   }
 
+  async function handleRenamePlaylist(name: string) {
+    if (!playlist) return;
+    setRenameBusy(true);
+    try {
+      await saveSettings("name", name);
+      setRenameOpen(false);
+      tvDashboardNotice("Programação renomeada.");
+    } catch (err) {
+      tvDashboardNotice(err instanceof Error ? err.message : "Erro ao renomear programação.");
+    } finally {
+      setRenameBusy(false);
+    }
+  }
+
   async function handleRegenerateToken() {
     if (!playlist) return;
     const confirmed = await confirm({
@@ -1734,6 +1751,7 @@ export function PlaylistEditorPage({
       onRegenerateToken: () => void handleRegenerateToken(),
       onToggleLink: () => void handleToggleActive(),
       onDelete: () => void handleDelete(),
+      onRename: () => setRenameOpen(true),
     },
   };
 
@@ -1863,7 +1881,17 @@ export function PlaylistEditorPage({
             void patchSection(sectionPropertiesTarget.id, patch);
           }}
         />
-      ) : null}      <KeyboardShortcutsCatalogModal />
+      ) : null}
+      <PlaylistRenameDialog
+        open={renameOpen}
+        initialName={playlist.name}
+        busy={renameBusy}
+        onClose={() => {
+          if (!renameBusy) setRenameOpen(false);
+        }}
+        onConfirm={(name) => void handleRenamePlaylist(name)}
+      />
+      <KeyboardShortcutsCatalogModal />
       </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>

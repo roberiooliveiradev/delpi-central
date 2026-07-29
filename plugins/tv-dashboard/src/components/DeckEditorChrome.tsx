@@ -263,6 +263,7 @@ export function DeckEditorChrome({
               playlistName={playlistChrome.playlistName}
               tvStatusLabel={playlistChrome.tvStatusLabel}
               tvStatusClass={playlistChrome.tvStatusClass}
+              onRename={playlistChrome.onRename}
             />
           </div>
         ) : null}

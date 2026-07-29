@@ -6232,12 +6232,42 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-chrome__playlist-name{
   min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--td-text);
+  text-align: left;
+  cursor: text;
+}
+.dashboard-tv-dashboard .td-deck-chrome__playlist-name:focus-visible{
+  outline: 2px solid color-mix(in srgb, var(--td-accent) 70%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.dashboard-tv-dashboard .td-playlist-rename{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.92rem;
+}
+.dashboard-tv-dashboard .td-playlist-rename__label{
+  color: var(--td-muted, #889);
+}
+.dashboard-tv-dashboard .td-playlist-rename input{
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--td-border, #ccc);
+  background: var(--td-surface, #fff);
+  color: var(--td-text, #111);
 }
 .dashboard-tv-dashboard .td-deck-chrome__identity .td-badge{
   flex-shrink: 0;

@@ -10,6 +10,7 @@ import {
   Eye,
   MonitorOff,
   MonitorPlay,
+  Pencil,
   QrCode,
   RefreshCw,
   Trash2,
@@ -30,6 +31,7 @@ export type PlaylistHomeContextMenuProps = {
   onClose: () => void;
   onOpen: () => void;
   onDuplicate: () => void;
+  onRename: () => void;
   onExport: () => void;
   onPreview: () => void;
   onShare: () => void;
@@ -49,6 +51,7 @@ export function PlaylistHomeContextMenu({
   onClose,
   onOpen,
   onDuplicate,
+  onRename,
   onExport,
   onPreview,
   onShare,
@@ -73,6 +76,7 @@ export function PlaylistHomeContextMenu({
     >
       <ContextMenuItem label={C.open} icon={MonitorPlay} onSelect={() => run(onOpen)} />
       <ContextMenuItem label={C.duplicate} icon={Copy} onSelect={() => run(onDuplicate)} />
+      <ContextMenuItem label={C.rename} icon={Pencil} onSelect={() => run(onRename)} />
       <ContextMenuItem label={C.export} icon={Download} onSelect={() => run(onExport)} />
       <ContextMenuItem label={C.preview} icon={Eye} onSelect={() => run(onPreview)} />
       <ContextMenuDivider />

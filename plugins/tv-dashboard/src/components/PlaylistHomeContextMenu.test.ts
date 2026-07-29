@@ -17,6 +17,7 @@ describe("playlist home context menu contract", () => {
     for (const label of [
       "C.open",
       "C.duplicate",
+      "C.rename",
       "C.preview",
       "C.share",
       "C.copyLink",
@@ -33,6 +34,7 @@ describe("playlist home context menu contract", () => {
   it("home abre o menu no botão direito do card (sem Abrir/Duplicar no rodapé)", () => {
     expect(page).toMatch(/onContextMenu/);
     expect(page).toContain("PlaylistHomeContextMenu");
+    expect(page).toContain("PlaylistRenameDialog");
     expect(page).not.toContain("td-home__card-actions");
   });
 
@@ -44,6 +46,7 @@ describe("playlist home context menu contract", () => {
   it("textos do menu estão no catálogo de tooltips", () => {
     expect(tips).toMatch(/homeContextMenu:\s*\{/);
     expect(tips).toMatch(/open:\s*"Abrir"/);
+    expect(tips).toMatch(/rename:\s*"Renomear"/);
     expect(tips).toMatch(/regenerateToken:\s*"Novo link"/);
   });
 });

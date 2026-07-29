@@ -4,6 +4,7 @@ import {
   Eye,
   Keyboard,
   MonitorOff,
+  Pencil,
   QrCode,
   RefreshCw,
   Trash2,
@@ -25,6 +26,8 @@ export type DeckPlaylistIdentityProps = {
   tvStatusClass?: string;
   /** Aviso de coedição ao vivo — fica na top bar, à esquerda do nome. */
   editingPresence?: string | null;
+  /** Duplo clique no nome abre renomear. */
+  onRename?: () => void;
 };
 
 export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
@@ -41,6 +44,7 @@ export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
   onRegenerateToken: () => void;
   onToggleLink: () => void;
   onDelete: () => void;
+  onRename?: () => void;
 };
 
 /** Título da programação + badge TV — barra superior (ao lado das abas). */
@@ -48,12 +52,23 @@ export function DeckPlaylistIdentity({
   playlistName,
   tvStatusLabel,
   tvStatusClass,
+  onRename,
 }: DeckPlaylistIdentityProps) {
   return (
     <div className="td-deck-chrome__identity" aria-label="Programação">
-      <span className="td-deck-chrome__playlist-name" title={playlistName}>
+      <button
+        type="button"
+        className="td-deck-chrome__playlist-name"
+        title={onRename ? `${playlistName} (duplo clique para renomear)` : playlistName}
+        onDoubleClick={(event) => {
+          if (!onRename) return;
+          event.preventDefault();
+          event.stopPropagation();
+          onRename();
+        }}
+      >
         {playlistName}
-      </span>
+      </button>
       {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
     </div>
   );
@@ -76,6 +91,7 @@ export function DeckHomePlaylistChrome({
   onRegenerateToken,
   onToggleLink,
   onDelete,
+  onRename,
 }: DeckHomePlaylistChromeProps) {
   const { openCatalog } = useKeyboardShortcutsTips();
 
@@ -100,6 +116,9 @@ export function DeckHomePlaylistChrome({
             hint="Catálogo de atalhos. Alt revela balões (Ctrl e F1–F8 nas abas)."
             onClick={openCatalog}
           />
+          {onRename ? (
+            <DeckRibbonTile icon={Pencil} label="Renomear" hint={H.rename} onClick={onRename} />
+          ) : null}
           <DeckRibbonTile icon={Users} label="Editores" hint={H.share} onClick={onShare} />
           <DeckRibbonTile icon={Copy} label="Link TV" hint={H.copyLink} onClick={onCopyLink} />
           <DeckRibbonTile icon={QrCode} label="QR" hint={H.qr} onClick={onQr} />
