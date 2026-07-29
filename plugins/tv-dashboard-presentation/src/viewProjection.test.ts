@@ -92,7 +92,7 @@ describe("applyViewProjection", () => {
     expect(next?.chart?.series?.[1]?.points?.[1]).toMatchObject({ label: "Fev", value: 95 });
   });
 
-  it("pizza com code+label exibe descrição completa na legenda (não só a sigla)", () => {
+  it("categoria/legenda usam o valor cru da coluna escolhida (como na API)", () => {
     const ranking: ComunicadoDataResolved = {
       table: {
         columns: [
@@ -103,84 +103,39 @@ describe("applyViewProjection", () => {
         rows: [
           { code: "FM", label: "FM - Falha de material", value: 102.04 },
           { code: "FH", label: "FH - Falha humana", value: 41.91 },
-          { code: "M3", label: "M3 - Setup", value: 8.49 },
+          {
+            code: "10070821",
+            label: "CABO PP CIRCULAR PVC/PVC 4X1.5MM2",
+            value: 41.65,
+          },
         ],
       },
     };
-    const next = applyViewProjection(ranking, {
+    const byCode = applyViewProjection(ranking, {
       chartType: "doughnut",
       chartProjection: {
         categoryField: "code",
         series: [{ field: "value", label: "Valor", aggregation: "sum" }],
       },
     });
-    const points = next?.chart?.points ?? [];
-    expect(points).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ label: "FM - Falha de material", value: 102.04 }),
-        expect.objectContaining({ label: "FH - Falha humana", value: 41.91 }),
-        expect.objectContaining({ label: "M3 - Setup", value: 8.49 }),
-      ]),
-    );
-  });
+    expect(byCode?.chart?.points?.map((p) => p.label)).toEqual([
+      "FM",
+      "FH",
+      "10070821",
+    ]);
 
-  it("sugestão de pizza prefere code a label como categoria", () => {
-    const ranking: ComunicadoDataResolved = {
-      table: {
-        columns: [
-          { key: "code", label: "Código" },
-          { key: "label", label: "Descrição" },
-          { key: "value", label: "Valor (R$)" },
-        ],
-        rows: [
-          { code: "FM", label: "FM - Falha de material", value: 10 },
-          { code: "FH", label: "FH - Falha humana", value: 5 },
-        ],
-      },
-      fieldTypes: {
-        code: "string",
-        label: "string",
-        value: "number",
-      },
-    };
-    const suggested = suggestDefaultProjections(
-      ranking,
-      {
-        code: "string",
-        label: "string",
-        value: "number",
-      },
-      "doughnut",
-    );
-    expect(suggested.chartProjection?.categoryField).toBe("code");
-  });
-
-  it("barra de matéria-prima mantém só o código no eixo (descrição no campo label)", () => {
-    const ranking: ComunicadoDataResolved = {
-      table: {
-        columns: [
-          { key: "code", label: "Código" },
-          { key: "label", label: "Descrição" },
-          { key: "value", label: "Valor" },
-        ],
-        rows: [
-          {
-            code: "10070821",
-            label:
-              "CABO PP CIRCULAR PVC/PVC 4X1.5MM2 CZ SPT/VDAR 90'C 600V DIAM EXT 8.20MM",
-            value: 41.65,
-          },
-        ],
-      },
-    };
-    const next = applyViewProjection(ranking, {
+    const byLabel = applyViewProjection(ranking, {
       chartType: "bar",
       chartProjection: {
-        categoryField: "code",
+        categoryField: "label",
         series: [{ field: "value", label: "Valor", aggregation: "sum" }],
       },
     });
-    expect(next?.chart?.points?.[0]?.label).toBe("10070821");
+    expect(byLabel?.chart?.points?.map((p) => p.label)).toEqual([
+      "FM - Falha de material",
+      "FH - Falha humana",
+      "CABO PP CIRCULAR PVC/PVC 4X1.5MM2",
+    ]);
   });
 
   it("pizza agrupa por categoria (TIPO) e conta linhas quando medida ausente", () => {

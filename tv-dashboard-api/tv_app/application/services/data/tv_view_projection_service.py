@@ -311,72 +311,6 @@ _GROUP_BY_CHART_TYPES = frozenset(
 _COUNT_DEFAULT_CHART_TYPES = frozenset({"pie", "doughnut"})
 
 
-def _is_code_like_category_field(field: str) -> bool:
-    key = str(field or "").strip().lower()
-    if not key:
-        return False
-    if key in {"code", "codigo", "código", "id", "key", "reason_code", "motivocodigo"}:
-        return True
-    return key.endswith("_code") or key.endswith("codigo") or key.endswith("_codigo")
-
-
-_LABEL_COMPANION_FIELDS = (
-    "label",
-    "description",
-    "descricao",
-    "descrição",
-    "name",
-    "nome",
-    "motivo",
-    "title",
-    "titulo",
-    "título",
-)
-
-# Paridade com categoryFieldPreference.ts — siglas curtas vs código de produto.
-_CATEGORY_CODE_ENRICH_MAX_LEN = 6
-_CATEGORY_ENRICHED_LABEL_MAX_LEN = 40
-
-
-def resolve_category_display_label(
-    category_key: str,
-    category_field: str,
-    group_rows: list[dict[str, Any]],
-) -> str:
-    """
-    Paridade com categoryFieldPreference.ts.
-
-    Motivo (sigla curta): pode enriquecer «FM - Falha…».
-    Matéria-prima / PA (código longo): mantém só o code; descrição fica em `label`.
-    """
-    if category_key in {"(vazio)", "Outros"}:
-        return category_key
-    if len(category_key) > _CATEGORY_CODE_ENRICH_MAX_LEN:
-        return category_key
-    if not _is_code_like_category_field(category_field):
-        return category_key
-    key_l = category_key.casefold()
-    for field in _LABEL_COMPANION_FIELDS:
-        for row in group_rows:
-            if field not in row:
-                continue
-            raw = row.get(field)
-            if raw is None:
-                continue
-            text = str(raw).strip()
-            if not text or text.casefold() == key_l:
-                continue
-            enriched = (
-                text
-                if category_key.lower() in text.lower()
-                else f"{category_key} - {text}"
-            )
-            if len(enriched) > _CATEGORY_ENRICHED_LABEL_MAX_LEN:
-                return category_key
-            return enriched
-    return category_key
-
-
 def _series_display_name(item: dict[str, Any], field: str) -> str:
     proj_label = str(item.get("label") or "")
     if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
@@ -438,7 +372,7 @@ def _build_chart_series(
             agg = str(item.get("aggregation") or default_agg)
             points = [
                 {
-                    "label": resolve_category_display_label(key, category, groups[key]),
+                    "label": key,
                     "value": _aggregate_group_rows(
                         groups[key],
                         field,
@@ -461,8 +395,7 @@ def _build_chart_series(
     categories: list[str] = []
     for idx, row in enumerate(rows):
         if category and row.get(category) is not None:
-            key = str(row.get(category))
-            categories.append(resolve_category_display_label(key, category, [row]))
+            categories.append(str(row.get(category)))
         else:
             categories.append(str(idx + 1))
     series_out = []

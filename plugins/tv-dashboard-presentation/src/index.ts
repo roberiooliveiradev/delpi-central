@@ -1050,11 +1050,6 @@ export {
   splitFieldKeyTokens,
 } from "./fieldKeyHumanize";
 export {
-  pickPreferredCategoryField,
-  resolveCategoryDisplayLabel,
-  scoreCategoryFieldPreference,
-} from "./categoryFieldPreference";
-export {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,

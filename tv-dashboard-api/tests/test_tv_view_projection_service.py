@@ -2,7 +2,6 @@ from tv_app.application.services.data.tv_view_projection_service import (
     aggregate_values,
     apply_field_labels_to_resolved,
     apply_view_projection_to_resolved,
-    resolve_category_display_label,
 )
 
 
@@ -144,41 +143,9 @@ def test_table_projection_keeps_field_labels_over_auto_baked():
     assert next_resolved["table"]["columns"][0]["label"] == "Código"
 
 
-def test_resolve_category_display_label_prefers_companion_description():
-    assert (
-        resolve_category_display_label(
-            "FM",
-            "code",
-            [{"code": "FM", "label": "FM - Falha de material"}],
-        )
-        == "FM - Falha de material"
-    )
-    assert (
-        resolve_category_display_label(
-            "FH",
-            "code",
-            [{"code": "FH", "label": "Falha humana"}],
-        )
-        == "FH - Falha humana"
-    )
 
 
-def test_resolve_category_display_label_keeps_product_code_only():
-    long_desc = (
-        "CABO PP CIRCULAR PVC/PVC 4X1.5MM2 CZ SPT/VDAR 90'C 600V "
-        "DIAM EXT 8.20MM VIAS NUMERADAS UL/CSA"
-    )
-    assert (
-        resolve_category_display_label(
-            "10070821",
-            "code",
-            [{"code": "10070821", "label": long_desc}],
-        )
-        == "10070821"
-    )
-
-
-def test_apply_chart_projection_pie_uses_full_motivo_label():
+def test_apply_chart_projection_pie_uses_category_column_as_is():
     resolved = {
         "table": {
             "columns": [
@@ -202,4 +169,4 @@ def test_apply_chart_projection_pie_uses_full_motivo_label():
     }
     next_resolved = apply_view_projection_to_resolved(resolved, block)
     labels = [p["label"] for p in next_resolved["chart"]["points"]]
-    assert labels == ["FM - FALHA MECANICA", "FH - FALHA HUMANA"]
+    assert labels == ["FM", "FH"]
