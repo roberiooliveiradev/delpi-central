@@ -2,6 +2,8 @@
 
 Consultas de **refugo em valor (R$)** a partir de **`SBC010`** (`BC_TIPO = 'R'`), com joins em `SB1010`, custo médio agregado de `SB2010`, motivos `CYO010`, OP/`SC2010` (PA), e operador `SYS_USR`.
 
+**Escopo de produto:** exclui produto de terceiro (`SB1.B1_TPMAT = 2`, dicionário SX3 «Produto de Terceiro»; `1=Não`, `2=Sim`) em resumo, rankings, série, registros, filtros e `%` scrap/ROL.
+
 **Não substitui** as rotas chat/operacionais `GET /production/losses/*` (quantidade). Este módulo alimenta o dashboard MFE **scrap-monitoring**.
 
 **Permissão:** `scrap-monitoring.access`, `scrap-monitoring.view`, `scrap-monitoring.view.filial-sc`, `scrap-monitoring.view.filial-es` ou `api-delpi.access`
