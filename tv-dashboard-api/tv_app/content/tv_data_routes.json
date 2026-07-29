@@ -1328,10 +1328,10 @@
         "idd",
         "score"
       ],
+      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
-      },
-      "tableFields": "indicators"
+      }
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1403,10 +1403,10 @@
         "idd",
         "score"
       ],
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -5889,18 +5889,18 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      }
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -6022,7 +6022,6 @@
         "end_date"
       ],
       "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
-      "openEndedDateRange": true,
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -6031,7 +6030,8 @@
         "customer_name": "Cliente",
         "product_code": "Código do produto",
         "status": "Status"
-      }
+      },
+      "openEndedDateRange": true
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -6699,24 +6699,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldLabels": {
-        "total_investment_in_period": "Investimento total",
-        "total_gross_costs_until_now": "Investimento total",
-        "total_gross_savings_in_period": "Economia bruta",
-        "total_hours_saved_until_now": "Horas economizadas",
-        "implemented_solutions_count": "Soluções ativas",
-        "solutions_started_in_period_count": "Soluções iniciadas no período",
-        "total_net_savings_until_now": "Economia líquida",
-        "average_roi": "ROI médio",
-        "month": "Mês",
-        "gross_savings_month": "Economia bruta (mês)",
-        "gross_costs_month": "Custos brutos (mês)",
-        "gross_investment_month": "Investimento bruto (mês)",
-        "gross_recurring_investment_month": "Invest. recorrente (mês)",
-        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
-        "investment_total_month": "Investimento total (mês)",
-        "net_savings_month": "Economia líquida (mês)"
-      },
       "valueFields": [
         "total_investment_in_period",
         "total_gross_savings_in_period",
@@ -6738,6 +6720,24 @@
         "shared_resource_cost_month": "number",
         "investment_total_month": "number",
         "net_savings_month": "number"
+      },
+      "valueFieldLabels": {
+        "total_investment_in_period": "Investimento total",
+        "total_gross_costs_until_now": "Investimento total",
+        "total_gross_savings_in_period": "Economia bruta",
+        "total_hours_saved_until_now": "Horas economizadas",
+        "implemented_solutions_count": "Soluções ativas",
+        "solutions_started_in_period_count": "Soluções iniciadas no período",
+        "total_net_savings_until_now": "Economia líquida",
+        "average_roi": "ROI médio",
+        "month": "Mês",
+        "gross_savings_month": "Economia bruta (mês)",
+        "gross_costs_month": "Custos brutos (mês)",
+        "gross_investment_month": "Investimento bruto (mês)",
+        "gross_recurring_investment_month": "Invest. recorrente (mês)",
+        "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
+        "investment_total_month": "Investimento total (mês)",
+        "net_savings_month": "Economia líquida (mês)"
       }
     },
     {
@@ -6813,6 +6813,24 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "tableFields": "points",
+      "openEndedDateRange": true,
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6827,25 +6845,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "openEndedDateRange": true,
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
-      "tableFields": "points"
+      ]
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -9618,6 +9618,76 @@
       ]
     },
     {
+      "operationId": "get_production_appointments_finished_ops_series",
+      "httpMethod": "GET",
+      "label": "Apontamento de produção — OPs finalizadas (série)",
+      "category": "production",
+      "path": "/production/appointments/finished-ops/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Contagem de OPs finalizadas (SC2.C2_DATRF preenchido) agregada por dia ou mês, com filtro opcional de OP mãe.",
+      "whenToUse": "Use no gráfico de quantas ordens de produção foram finalizadas em cada dia ou mês.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "mother_op": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente OP mãe",
+          "default": false,
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "day",
+          "enum": [
+            "day",
+            "month"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
       "operationId": "get_production_appointments_produced_totals",
       "httpMethod": "GET",
       "label": "Totais produzidos — inspeção final",
@@ -10791,21 +10861,6 @@
         "start_date",
         "end_date"
       ],
-      "suggestedTransformSteps": [
-        {
-          "op": "select",
-          "columns": [
-            "periodo",
-            "oee_filial_01",
-            "oee_filial_02"
-          ]
-        },
-        {
-          "op": "sort",
-          "column": "periodo",
-          "direction": "asc"
-        }
-      ],
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
@@ -10821,10 +10876,25 @@
       "fixedQueryParams": {
         "granularity": "day"
       },
+      "seriesField": "points",
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": [
+            "periodo",
+            "oee_filial_01",
+            "oee_filial_02"
+          ]
+        },
+        {
+          "op": "sort",
+          "column": "periodo",
+          "direction": "asc"
+        }
+      ],
       "tvConstraints": {
         "requiresBranchPermission": true
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -11245,10 +11315,10 @@
       "fixedQueryParams": {
         "granularity": "day"
       },
+      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -11891,11 +11961,11 @@
         "page": 1,
         "page_size": 5
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -15058,15 +15128,15 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "average_score"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "average_score"
-      ],
       "labelAliases": [
         "Auditoria 5S — resumo"
       ]
@@ -15610,6 +15680,11 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "total_savings",
+        "total_kaizens"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "total_savings": "Economia total",
@@ -15617,11 +15692,6 @@
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
       },
-      "valueFields": [
-        "value",
-        "total_savings",
-        "total_kaizens"
-      ],
       "labelAliases": [
         "Kaizens — resumo e listagem (Google Sheets)"
       ]
@@ -16305,6 +16375,11 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -16315,18 +16390,13 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
+      "labelAliases": [
+        "Qualidade — PPM externo"
       ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ]
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -16512,6 +16582,11 @@
         "start_date",
         "end_date"
       ],
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ],
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -16522,19 +16597,14 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
       ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      },
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ]
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -19072,11 +19142,11 @@
         "stockValue",
         "total"
       ],
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      },
-      "tableFields": "top_products"
+      }
     },
     {
       "operationId": "get_caller_stats",

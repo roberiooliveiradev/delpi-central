@@ -10,6 +10,7 @@ from app.application.security.api_delpi_permissions import (
     PRODUCTION_APPOINTMENTS_READ_PERMISSIONS,
 )
 from app.composition.production_appointments_composer import (
+    build_get_production_appointments_finished_ops_series_use_case,
     build_get_production_appointments_series_use_case,
     build_get_production_appointments_summary_use_case,
     build_get_produced_quantity_use_case,
@@ -33,6 +34,7 @@ from app.interface.http.period_query_params import (
 )
 from app.interface.http.routes.production_appointments.production_appointments_route_helpers import (
     BRANCH_QUERY,
+    FINISHED_OPS_GRANULARITY_QUERY,
     GROUP_BY_QUERY,
     MOTHER_OP_QUERY,
     OP_QUERY,
@@ -254,6 +256,65 @@ def series_route(
         operation_id="get_production_appointments_series",
         success_message="Série de apontamentos carregada com sucesso.",
         error_context="carregar série de apontamentos",
+    )
+
+
+@router.get(
+    "/finished-ops/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_appointments_finished_ops_series",
+        path="/production/appointments/finished-ops/series",
+    ),
+)
+@require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
+def finished_ops_series_route(
+    branch: str = BRANCH_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    mother_op: bool = MOTHER_OP_QUERY(),
+    granularity: str = FINISHED_OPS_GRANULARITY_QUERY(),
+):
+    """Count of finished production orders (SC2.C2_DATRF) by day or month."""
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+    try:
+        from app.application.dto.production_appointments.finished_ops_series_query_request import (
+            FinishedOpsSeriesQueryRequest,
+        )
+
+        request = FinishedOpsSeriesQueryRequest.from_query(
+            branch=branch,
+            date_start=start_date,
+            date_end=end_date,
+            product=product,
+            mother_op=mother_op,
+            granularity=granularity,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar série de OPs finalizadas: {exc}")
+        return error_response(str(exc), status_code=400)
+    from app.interface.http.kpi_field_labels import (
+        PRODUCTION_APPOINTMENTS_FINISHED_OPS_FIELD_LABELS,
+        kpi_fields,
+    )
+
+    return execute_route(
+        use_case_builder=build_get_production_appointments_finished_ops_series_use_case,
+        request=request,
+        operation_id="get_production_appointments_finished_ops_series",
+        success_message="Série de OPs finalizadas carregada com sucesso.",
+        error_context="carregar série de OPs finalizadas",
+        fields=kpi_fields(PRODUCTION_APPOINTMENTS_FINISHED_OPS_FIELD_LABELS),
     )
 
 

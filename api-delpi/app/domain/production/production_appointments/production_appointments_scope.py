@@ -23,5 +23,8 @@ DEFAULT_BY_OP_LIMIT = 50
 
 SERIES_GROUP_BY_OPTIONS: frozenset[str] = frozenset({"day", "day_work_center"})
 
+# Série de OPs finalizadas (SC2.C2_DATRF) — granularidade dia ou mês.
+FINISHED_OPS_GRANULARITY_OPTIONS: frozenset[str] = frozenset({"day", "month"})
+
 # OP mãe Protheus — sequência 001 (mesmo critério OTD / C2_SEQUEN).
 MOTHER_OP_SUFFIX = "001"

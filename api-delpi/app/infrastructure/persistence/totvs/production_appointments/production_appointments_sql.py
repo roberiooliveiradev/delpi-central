@@ -656,3 +656,55 @@ def build_produced_detail_query(
         SH6.H6_RECURSO
     """
     return sql, tuple(params)
+
+
+def build_finished_ops_series_query(
+    *,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str,
+    granularity: str = "day",
+    product: str | None = None,
+    mother_op: bool = False,
+) -> tuple[str, tuple]:
+    """Contagem de OPs finalizadas (SC2.C2_DATRF) por dia ou mês."""
+    from app.infrastructure.persistence.totvs.production_repositories.production_otd_sql_filters import (
+        sc2_finish_date_col,
+        sc2_finish_date_filled_sql,
+    )
+
+    finish_col = sc2_finish_date_col("OP")
+    if granularity == "month":
+        bucket_expr = f"LEFT(LTRIM(RTRIM({finish_col})), 6)"
+    else:
+        bucket_expr = f"LEFT(LTRIM(RTRIM({finish_col})), 8)"
+
+    clauses = [
+        "OP.D_E_L_E_T_ = ''",
+        "LTRIM(RTRIM(OP.C2_FILIAL)) = ?",
+        sc2_finish_date_filled_sql("OP"),
+        f"LTRIM(RTRIM({finish_col})) >= ?",
+        f"LTRIM(RTRIM({finish_col})) < ?",
+    ]
+    params: list = [branch, date_start, date_end_exclusive]
+
+    if mother_op:
+        suffix_len = len(MOTHER_OP_SUFFIX)
+        clauses.append(f"RIGHT(LTRIM(RTRIM(OP.C2_OP)), {suffix_len}) = ?")
+        params.append(MOTHER_OP_SUFFIX)
+
+    if product:
+        clauses.append("LTRIM(RTRIM(OP.C2_PRODUTO)) = ?")
+        params.append(product.strip())
+
+    where = " AND ".join(clauses)
+    sql = f"""
+    SELECT
+        {bucket_expr} AS bucket,
+        COUNT(*) AS ops_finished_count
+    FROM SC2010 OP WITH (NOLOCK)
+    WHERE {where}
+    GROUP BY {bucket_expr}
+    ORDER BY {bucket_expr}
+    """
+    return sql, tuple(params)

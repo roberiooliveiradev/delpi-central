@@ -137,3 +137,14 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         products: list[str] | None = None,
         product_types: list[str] | None = None,
     ) -> list[dict]: ...
+
+    def get_finished_ops_series(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str,
+        granularity: str = "day",
+        product: str | None = None,
+        mother_op: bool = False,
+    ) -> list[dict]: ...

@@ -37,6 +37,7 @@ def test_router_exposes_all_endpoints(pa_client: TestClient) -> None:
     assert "/production/appointments" in paths
     assert "/production/appointments/summary" in paths
     assert "/production/appointments/series" in paths
+    assert "/production/appointments/finished-ops/series" in paths
     assert "/production/appointments/by-op" in paths
     assert "/production/appointments/child-ops" in paths
     assert "/production/appointments/produced-totals" in paths
@@ -144,6 +145,43 @@ def test_series_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) 
     body = _body(response)
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_production_appointments_series"
+    assert body["meta"]["shape"] == "playbook_report"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_get_production_appointments_finished_ops_series_use_case"
+)
+def test_finished_ops_series_returns_meta(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(
+            return_value={
+                "points": [],
+                "granularity": "day",
+                "totals": {"ops_finished_count": 0},
+            }
+        )
+    )
+    response = pa_client.get(
+        "/production/appointments/finished-ops/series",
+        params={
+            "branch": "01",
+            "start_date": "2026-06-01",
+            "end_date": "2026-06-30",
+            "granularity": "day",
+            "mother_op": True,
+        },
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_production_appointments_finished_ops_series"
+    assert body["meta"]["entity"] == "production_appointments_finished_ops_series"
     assert body["meta"]["shape"] == "playbook_report"
     assert body["meta"]["dataVersion"] == DATA_VERSION
 

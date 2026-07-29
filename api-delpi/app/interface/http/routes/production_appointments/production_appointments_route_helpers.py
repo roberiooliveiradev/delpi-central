@@ -58,6 +58,7 @@ def execute_route(
     operation_id: str,
     success_message: str,
     error_context: str,
+    fields: dict[str, str] | None = None,
 ):
     try:
         use_case = use_case_builder()
@@ -66,6 +67,7 @@ def execute_route(
             result,
             operation_id=operation_id,
             message=success_message,
+            fields=fields,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao {error_context}: {exc}")
@@ -104,6 +106,16 @@ def MOTHER_OP_QUERY():
     )
 def GROUP_BY_QUERY():
     return PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY()
+
+
+def FINISHED_OPS_GRANULARITY_QUERY():
+    from app.interface.http.query_param_enums import (
+        PRODUCTION_APPOINTMENTS_FINISHED_OPS_GRANULARITY_QUERY,
+    )
+
+    return PRODUCTION_APPOINTMENTS_FINISHED_OPS_GRANULARITY_QUERY()
+
+
 def PAGE_QUERY():
     return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
 def PAGE_SIZE_QUERY():

@@ -312,3 +312,61 @@ class ListProductionAppointmentsChildOpsUseCase:
                 "is_complete": request.offset + len(items) >= total,
             },
         }
+
+
+class GetProductionAppointmentsFinishedOpsSeriesUseCase:
+    """Série de quantidade de OPs finalizadas (SC2.C2_DATRF) por dia ou mês."""
+
+    def __init__(self, repository: ProductionAppointmentsRepositoryPort):
+        self._repository = repository
+
+    def execute(self, request) -> dict:
+        date_start, date_end_exclusive = request.protheus_closed_open()
+        rows = self._repository.get_finished_ops_series(
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=request.branch,
+            granularity=request.granularity,
+            product=request.product,
+            mother_op=request.mother_op,
+        )
+        points = [
+            {
+                "bucket": str(row.get("bucket") or "").strip(),
+                "periodo": _bucket_to_periodo(
+                    str(row.get("bucket") or "").strip(),
+                    request.granularity,
+                ),
+                "ops_finished_count": int(row.get("ops_finished_count") or 0),
+            }
+            for row in rows
+        ]
+        total_ops = sum(point["ops_finished_count"] for point in points)
+        return {
+            "period": {"start": date_start, "end_exclusive": date_end_exclusive},
+            "branch": request.branch,
+            "granularity": request.granularity,
+            "filters": {
+                "product": request.product,
+                "mother_op": request.mother_op,
+            },
+            "totals": {"ops_finished_count": total_ops},
+            "points": points,
+            "summary": build_period_summary(
+                items=points,
+                branch=request.branch,
+                period_start=date_start,
+                period_end_exclusive=date_end_exclusive,
+                is_complete=True,
+                consolidated_across_branches=False,
+            ),
+        }
+
+
+def _bucket_to_periodo(bucket: str, granularity: str) -> str:
+    raw = str(bucket or "").strip()
+    if granularity == "month" and len(raw) >= 6:
+        return f"{raw[:4]}-{raw[4:6]}"
+    if len(raw) >= 8:
+        return f"{raw[:4]}-{raw[4:6]}-{raw[6:8]}"
+    return raw

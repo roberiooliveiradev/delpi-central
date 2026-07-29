@@ -27,8 +27,21 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 | GET | `/production/appointments` | `list_production_appointments` | `paged_list` |
 | GET | `/production/appointments/summary` | `get_production_appointments_summary` | `playbook_report` |
 | GET | `/production/appointments/series` | `get_production_appointments_series` | `playbook_report` |
+| GET | `/production/appointments/finished-ops/series` | `get_production_appointments_finished_ops_series` | `playbook_report` |
 | GET | `/production/appointments/by-op` | `list_production_appointments_by_op` | `paged_list` |
+| GET | `/production/appointments/child-ops` | `list_production_appointments_child_ops` | `paged_list` |
 | GET | `/production/appointments/produced-totals` | `get_production_appointments_produced_totals` | `playbook_report` |
+
+## OPs finalizadas (série)
+
+`GET /finished-ops/series` conta OPs com **`SC2.C2_DATRF` preenchido** no período (closed-open), agregadas por `granularity`:
+
+- `day` (padrão) — bucket `YYYYMMDD` → `periodo` ISO `YYYY-MM-DD`
+- `month` — bucket `YYYYMM` → `periodo` ISO `YYYY-MM`
+- `mother_op=true` — só OP mãe (`RIGHT(C2_OP, 3) = 001`)
+- `product` opcional — filtro exato em `C2_PRODUTO`
+
+Resposta: `points[]` com `bucket`, `periodo`, `ops_finished_count` + `totals.ops_finished_count`.
 
 ## Totais produzidos (canônico)
 
@@ -50,9 +63,10 @@ Use case: `GetProducedQuantityUseCase` + `ProductionAppointmentsRepository` (ún
 | `work_center` | não | Ex.: `CT-70` |
 | `op` | não | Ordem de produção (match exato) |
 | `product` | não | Código produto (match exato) |
-| `mother_op` | não | `true` = só OP mãe (sufixo `001` em `H6_OP`, sequência mãe Protheus) |
+| `mother_op` | não | `true` = só OP mãe (sufixo `001` em `H6_OP` / `C2_OP`) |
 | `search` | não | Texto livre nas listagens (`/appointments` e `/by-op`): operador, OP, produto, CT, recurso, etc. |
-| `group_by` | séries | `day` (padrão) ou `day_work_center` |
+| `group_by` | séries de apontamento | `day` (padrão) ou `day_work_center` |
+| `granularity` | série de OPs finalizadas | `day` (padrão) ou `month` |
 | `page`, `page_size` | listas | Paginação (`page_size` máx. 200) |
 
 ## Exemplo

@@ -1,4 +1,5 @@
 from app.application.use_cases.production_appointments.production_appointments_use_cases import (
+    GetProductionAppointmentsFinishedOpsSeriesUseCase,
     GetProductionAppointmentsSeriesUseCase,
     GetProductionAppointmentsSummaryUseCase,
     ListProductionAppointmentWorkCentersUseCase,
@@ -50,6 +51,12 @@ def build_list_production_appointments_child_ops_use_case() -> (
     ListProductionAppointmentsChildOpsUseCase
 ):
     return ListProductionAppointmentsChildOpsUseCase(repository=_repository())
+
+
+def build_get_production_appointments_finished_ops_series_use_case() -> (
+    GetProductionAppointmentsFinishedOpsSeriesUseCase
+):
+    return GetProductionAppointmentsFinishedOpsSeriesUseCase(repository=_repository())
 
 
 def build_get_produced_quantity_use_case() -> GetProducedQuantityUseCase:

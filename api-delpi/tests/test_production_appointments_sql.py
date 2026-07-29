@@ -230,3 +230,41 @@ def test_appointments_list_and_count_include_search_join() -> None:
     assert "SYS_USR" in count_query
     assert "%lind%" in list_params
     assert "%lind%" in count_params
+
+
+def test_finished_ops_series_day_bucket_and_datrf_filter() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_finished_ops_series_query,
+    )
+
+    query, params = build_finished_ops_series_query(
+        date_start="20260601",
+        date_end_exclusive="20260701",
+        branch="01",
+        granularity="day",
+    )
+    assert "SC2010" in query
+    assert "C2_DATRF" in query
+    assert "LEFT(LTRIM(RTRIM(OP.C2_DATRF)), 8)" in query
+    assert "ops_finished_count" in query
+    assert params == ("01", "20260601", "20260701")
+    assert "RIGHT(" not in query
+
+
+def test_finished_ops_series_month_bucket_mother_op_and_product() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_finished_ops_series_query,
+    )
+
+    query, params = build_finished_ops_series_query(
+        date_start="20260601",
+        date_end_exclusive="20260701",
+        branch="02",
+        granularity="month",
+        mother_op=True,
+        product="PROD1",
+    )
+    assert "LEFT(LTRIM(RTRIM(OP.C2_DATRF)), 6)" in query
+    assert "RIGHT(LTRIM(RTRIM(OP.C2_OP)), 3) = ?" in query
+    assert "C2_PRODUTO" in query
+    assert params == ("02", "20260601", "20260701", "001", "PROD1")

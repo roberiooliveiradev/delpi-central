@@ -198,6 +198,13 @@ QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
     "target": "Meta PPM",
 }
 
+PRODUCTION_APPOINTMENTS_FINISHED_OPS_FIELD_LABELS: dict[str, str] = {
+    "ops_finished_count": "OPs finalizadas",
+    "periodo": "Período",
+    "bucket": "Bucket",
+    "granularity": "Granularidade",
+}
+
 QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
     "qty_returned_un": "Quantidade devolvida (un.)",
     "nc_count": "Quantidade de NCs",

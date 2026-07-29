@@ -11,6 +11,7 @@ from app.infrastructure.persistence.totvs.production_appointments.production_app
     build_appointments_list_query,
     build_by_op_count_query,
     build_by_op_query,
+    build_finished_ops_series_query,
     build_produced_detail_query,
     build_produced_quantity_by_product_query,
     build_produced_totals_query,
@@ -291,6 +292,27 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             product=product,
             products=products,
             product_types=product_types,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def get_finished_ops_series(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str,
+        granularity: str = "day",
+        product: str | None = None,
+        mother_op: bool = False,
+    ) -> list[dict]:
+        query, params = build_finished_ops_series_query(
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=branch,
+            granularity=granularity,
+            product=product,
+            mother_op=mother_op,
         )
         with self:
             return self.execute_query(query, params)

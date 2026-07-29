@@ -2903,6 +2903,23 @@
         }
       }
     },
+    "get_production_appointments_finished_ops_series": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Finished production orders count by period",
+          "description": "Count of finished OPs (SC2.C2_DATRF filled) grouped by day or month, with optional mother-OP filter.",
+          "whenToUse": "Use for a chart of how many production orders were finished in each day or month.",
+          "label": "Production appointments — finished OPs series"
+        },
+        "pt-BR": {
+          "summary": "Quantidade de OPs finalizadas por período",
+          "description": "Contagem de OPs finalizadas (SC2.C2_DATRF preenchido) agregada por dia ou mês, com filtro opcional de OP mãe.",
+          "whenToUse": "Use no gráfico de quantas ordens de produção foram finalizadas em cada dia ou mês.",
+          "label": "Apontamento de produção — OPs finalizadas (série)"
+        }
+      }
+    },
     "get_production_appointments_summary": {
       "category": "production",
       "locale": {
