@@ -328,3 +328,43 @@ def test_open_ended_still_honors_explicit_period_days():
     assert query["end_date"] == today.isoformat()
     assert query["start_date"] == (today.fromordinal(today.toordinal() - 13)).isoformat()
 
+
+def test_resolve_route_path_substitutes_and_requires_path_params():
+    from tv_app.infrastructure.gateways.delpi_operational_gateway import (
+        path_param_names,
+        resolve_route_path,
+        _strip_path_params_from_query,
+    )
+
+    path = "/production/oee/appointments/{appointment_id}"
+    assert path_param_names(path) == ["appointment_id"]
+    assert (
+        resolve_route_path(path, {"appointment_id": 42, "branch": "01"})
+        == "/production/oee/appointments/42"
+    )
+    try:
+        resolve_route_path(path, {"branch": "01"})
+        raise AssertionError("expected missing path param")
+    except ValueError as exc:
+        assert "appointment_id" in str(exc)
+
+    query = _strip_path_params_from_query(
+        {"appointment_id": "42", "branch": "01"},
+        path=path,
+    )
+    assert query == {"branch": "01"}
+
+
+def test_filter_query_drops_path_params_marked_in_schema():
+    from tv_app.infrastructure.gateways.delpi_operational_gateway import _filter_query_to_route_schema
+
+    filtered = _filter_query_to_route_schema(
+        {"appointment_id": "9", "branch": "01"},
+        schema={
+            "appointment_id": {"type": "integer", "in": "path", "optional": False},
+            "branch": {"type": "string", "optional": True},
+        },
+        fixed=None,
+    )
+    assert filtered == {"branch": "01"}
+

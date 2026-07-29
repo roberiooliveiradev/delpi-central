@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date, timedelta
 from typing import Any, Mapping
 
@@ -23,6 +24,59 @@ from tv_app.application.services.tv_date_range_preset_service import (
     read_date_range_values,
     resolve_output_date_range_keys,
 )
+
+_PATH_PARAM_RE = re.compile(r"\{([^{}]+)\}")
+
+
+def path_param_names(path: str) -> list[str]:
+    """Nomes dos placeholders `{name}` no path OpenAPI/TV."""
+    return [match.group(1).strip() for match in _PATH_PARAM_RE.finditer(path) if match.group(1).strip()]
+
+
+def resolve_route_path(
+    path: str,
+    params: Mapping[str, Any],
+    *,
+    schema: Mapping[str, Any] | None = None,
+) -> str:
+    """Substitui `{name}` no path pelos valores de params (ou default do schema).
+
+    Levanta ValueError se faltar path param obrigatório — evita 422 opaco da api-delpi
+    com placeholder literal.
+    """
+    names = path_param_names(path)
+    if not names:
+        return path
+    resolved = path
+    schema_map = schema if isinstance(schema, Mapping) else {}
+    missing: list[str] = []
+    for name in names:
+        raw = params.get(name)
+        if raw is None or raw == "":
+            field = schema_map.get(name) if isinstance(schema_map.get(name), Mapping) else {}
+            raw = field.get("default") if isinstance(field, Mapping) else None
+        if raw is None or raw == "":
+            missing.append(name)
+            continue
+        resolved = resolved.replace("{" + name + "}", str(raw).strip())
+    if missing:
+        preview = ", ".join(missing[:6])
+        extra = f" (+{len(missing) - 6})" if len(missing) > 6 else ""
+        raise ValueError(
+            message(
+                "dataRouteMissingPathParams",
+                f"Parâmetros de path obrigatórios ausentes: {preview}{extra}.",
+                params=f"{preview}{extra}",
+            )
+        )
+    if "{" in resolved and "}" in resolved:
+        raise ValueError(
+            message(
+                "dataRouteUnresolvedPath",
+                "Path da rota ainda contém placeholders não resolvidos.",
+            )
+        )
+    return resolved
 
 
 def _build_query_params(
@@ -154,7 +208,22 @@ def _filter_query_to_route_schema(
         allowed |= {str(key) for key in fixed.keys()}
     if always_allow:
         allowed |= always_allow
+    # Path params vão no path — nunca na query.
+    for key, field in schema.items():
+        if isinstance(field, Mapping) and str(field.get("in") or "").lower() == "path":
+            allowed.discard(str(key))
     return {key: value for key, value in query.items() if key in allowed}
+
+
+def _strip_path_params_from_query(
+    query: dict[str, str],
+    *,
+    path: str,
+) -> dict[str, str]:
+    names = set(path_param_names(path))
+    if not names:
+        return query
+    return {key: value for key, value in query.items() if key not in names}
 
 
 class DelpiOperationalGateway:
@@ -191,9 +260,13 @@ class DelpiOperationalGateway:
         if not path.startswith("/"):
             raise ValueError(f"Path inválido para {canonical_operation_id}")
 
+        schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+        with_defaults = apply_catalog_param_defaults(params or {}, route)
+        resolved_path = resolve_route_path(path, with_defaults, schema=schema)
         query = _build_query_params(route, params or {})
+        query = _strip_path_params_from_query(query, path=path)
         envelope = self._client.get_path(
-            path,
+            resolved_path,
             params=query,
             authorization=self._auth(authorization),
         )

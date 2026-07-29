@@ -203,14 +203,14 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -646,6 +646,12 @@
       "metaShape": "product_snapshot",
       "description": "Consulta operacional: «Detalhe da proposta comercial (OV)».",
       "paramSchema": {
+        "proposal_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Proposal number",
+          "in": "path"
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -690,6 +696,12 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Histórico de estágios da proposta comercial» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "proposal_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Proposal number",
+          "in": "path"
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -876,6 +888,26 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Relatório operacional — Detalhe de linha otd de pedido de venda».",
       "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "in": "path",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "order_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Order number",
+          "in": "path"
+        },
+        "line_item": {
+          "type": "string",
+          "optional": false,
+          "label": "Line item",
+          "in": "path"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -1216,14 +1248,14 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "get_dashboard_department_indicators",
@@ -1292,13 +1324,13 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "tableFields": "indicators"
     },
     {
@@ -1367,13 +1399,13 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 20
+      },
       "valueFields": [
         "idd",
         "score"
       ],
-      "tvConstraints": {
-        "maxRows": 20
-      },
       "tableFields": "items"
     },
     {
@@ -1426,15 +1458,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -1486,15 +1518,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -1546,15 +1578,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -1606,15 +1638,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -1666,15 +1698,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -1726,15 +1758,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -1786,15 +1818,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -1846,15 +1878,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -1906,15 +1938,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -1966,15 +1998,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -2026,15 +2058,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -2086,15 +2118,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -2146,15 +2178,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -2206,15 +2238,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -2266,15 +2298,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -2326,15 +2358,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -2386,15 +2418,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -2446,15 +2478,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -2506,15 +2538,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -2566,15 +2598,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -2626,15 +2658,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -2686,15 +2718,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -2746,15 +2778,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -2806,15 +2838,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -2866,15 +2898,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -2926,15 +2958,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -2986,15 +3018,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -3046,15 +3078,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -3106,15 +3138,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -3166,15 +3198,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -3226,15 +3258,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -3286,15 +3318,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -3346,15 +3378,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -3406,15 +3438,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -3466,15 +3498,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -3526,15 +3558,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -3586,15 +3618,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -3646,15 +3678,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -3706,15 +3738,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -3766,15 +3798,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -3826,15 +3858,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -3886,15 +3918,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -3946,15 +3978,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -4006,15 +4038,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -4066,15 +4098,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -4126,15 +4158,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -4186,15 +4218,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -4246,15 +4278,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -4306,15 +4338,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -4366,15 +4398,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -4426,15 +4458,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -4486,15 +4518,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -4546,15 +4578,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -4606,15 +4638,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_rework_cost_pct_meta",
@@ -4669,11 +4701,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4729,11 +4761,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4789,11 +4821,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4849,11 +4881,11 @@
       "valueFields": [
         "value"
       ],
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFieldTypes": {
         "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -4906,15 +4938,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -4966,15 +4998,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -5026,15 +5058,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -5086,15 +5118,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -5146,15 +5178,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -5206,15 +5238,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -5266,15 +5298,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -5326,15 +5358,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -5386,15 +5418,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -5446,15 +5478,15 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "value"
-      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
       "tvConstraints": {
         "maxRows": 1
       },
-      "valueFieldTypes": {
-        "value": "number"
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "list_lmps",
@@ -5839,6 +5871,17 @@
             "Outro"
           ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
+        },
+        "summary_mode": {
+          "type": "string",
+          "optional": true,
+          "label": "Modo do summary",
+          "default": "kpi",
+          "enum": [
+            "kpi",
+            "full"
+          ],
+          "description": "kpi carrega PI só em OVs FINALIZADA; full carrega PI em todas as candidatas (gráficos/itens)."
         }
       },
       "paramStrategy": "date_range",
@@ -5846,18 +5889,18 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ]
     },
     {
       "operationId": "list_lmp_nonconformities",
@@ -5889,6 +5932,12 @@
           "label": "Filtro parcial pela OV (= LMP).",
           "description": "Filtro parcial pela OV (= LMP)."
         },
+        "lmp_number": {
+          "type": "string",
+          "optional": true,
+          "label": "Filtro parcial pelo número legado da LMP.",
+          "description": "Filtro parcial pelo número legado da LMP."
+        },
         "customer_name": {
           "type": "string",
           "optional": true,
@@ -5906,6 +5955,37 @@
           "optional": true,
           "label": "Filtro parcial por tag de problema identificado.",
           "description": "Filtro parcial por tag de problema identificado."
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "enum": [
+            "registered_at",
+            "occurrence_date",
+            "sale_number",
+            "lmp_number",
+            "customer_name",
+            "launch_date",
+            "last_revision_date",
+            "executed_by",
+            "released_by",
+            "status",
+            "defect_description",
+            "problem_tags",
+            "products"
+          ],
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
         },
         "start_date": {
           "type": "string",
@@ -5941,6 +6021,7 @@
         "start_date",
         "end_date"
       ],
+      "openEndedDateRange": true,
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -5950,8 +6031,20 @@
         "product_code": "Código do produto",
         "status": "Status"
       },
-      "openEndedDateRange": true,
       "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
+    },
+    {
+      "operationId": "export_lmp_nonconformities",
+      "httpMethod": "GET",
+      "label": "Exportar NCs LMP",
+      "category": "engineering",
+      "path": "/engineering/lmps/nonconformities/export",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Dump completo (sem paginação) das NCs LMP com produtos e tags."
     },
     {
       "operationId": "list_lmp_problem_tags",
@@ -5990,7 +6083,42 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Detalhe de uma não conformidade LMP por id."
+      "description": "Detalhe de uma não conformidade LMP por id.",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "ID da não conformidade",
+          "in": "path",
+          "format": "uuid",
+          "description": "ID da não conformidade"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_lmp_nonconformity_history",
+      "httpMethod": "GET",
+      "label": "Histórico da NC LMP",
+      "category": "engineering",
+      "path": "/engineering/lmps/nonconformities/{record_id}/history",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Histórico imutável de criação/alteração com id, e-mail e nome do usuário e diffs dos campos.",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "ID da não conformidade",
+          "in": "path",
+          "format": "uuid",
+          "description": "ID da não conformidade"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -6005,6 +6133,12 @@
       "metaShape": "product_snapshot",
       "description": "Consulta operacional: «Detalhe da LMP por ordem de venda».",
       "paramSchema": {
+        "sale_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Sale number",
+          "in": "path"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -6050,6 +6184,12 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Histórico de eventos da OV (AIJ010)» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "sale_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Sale number",
+          "in": "path"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -6101,6 +6241,12 @@
       "metaShape": "list",
       "description": "Consulta operacional: «Transições de fluxo da engenharia na OV».",
       "paramSchema": {
+        "sale_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Sale number",
+          "in": "path"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -6250,7 +6396,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe de ferramenta mini-aplicador»."
+      "description": "Indicador numérico para «Detalhe de ferramenta mini-aplicador».",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_componentes",
@@ -6265,6 +6421,13 @@
       "metaShape": "list",
       "description": "Consulta operacional: «Componentes do mini-aplicador».",
       "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "filial": {
           "type": "string",
           "optional": true,
@@ -6292,6 +6455,13 @@
       "metaShape": "scalar",
       "description": "Indicador numérico para «Golpes do mini-aplicador no período».",
       "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "filial": {
           "type": "string",
           "optional": true,
@@ -6335,7 +6505,17 @@
         "auto"
       ],
       "metaShape": "list",
-      "description": "Consulta operacional: «Listar peças do mini-aplicador»."
+      "description": "Consulta operacional: «Listar peças do mini-aplicador».",
+      "paramSchema": {
+        "codigo": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_mini_applicators_pecas_reposicao",
@@ -6519,13 +6699,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFields": [
-        "total_investment_in_period",
-        "total_gross_savings_in_period",
-        "total_hours_saved_until_now",
-        "implemented_solutions_count",
-        "solutions_started_in_period_count"
-      ],
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -6558,7 +6731,14 @@
         "shared_resource_cost_month": "number",
         "investment_total_month": "number",
         "net_savings_month": "number"
-      }
+      },
+      "valueFields": [
+        "total_investment_in_period",
+        "total_gross_savings_in_period",
+        "total_hours_saved_until_now",
+        "implemented_solutions_count",
+        "solutions_started_in_period_count"
+      ]
     },
     {
       "operationId": "get_transformometro_savings_investment_series",
@@ -6633,6 +6813,23 @@
         "start_date",
         "end_date"
       ],
+      "openEndedDateRange": true,
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6648,24 +6845,7 @@
           "direction": "asc"
         }
       ],
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
-      "openEndedDateRange": true,
-      "tableFields": "points",
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      }
+      "tableFields": "points"
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -7653,7 +7833,18 @@
       ],
       "metaShape": "scalar",
       "description": "Get Admin Department.",
-      "whenToUse": "Use quando precisar de: Get Admin Department."
+      "whenToUse": "Use quando precisar de: Get Admin Department.",
+      "paramSchema": {
+        "department_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Departamento",
+          "in": "path",
+          "format": "uuid",
+          "description": "Identificador do departamento no painel IDD."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedures",
@@ -7708,7 +7899,17 @@
       ],
       "metaShape": "scalar",
       "description": "Get Admin Procedure.",
-      "whenToUse": "Use quando precisar de: Get Admin Procedure."
+      "whenToUse": "Use quando precisar de: Get Admin Procedure.",
+      "paramSchema": {
+        "procedure_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Procedure id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedure_attachments",
@@ -7722,7 +7923,17 @@
       ],
       "metaShape": "paged_list",
       "description": "Listar anexos do procedimento (admin).",
-      "whenToUse": "Use quando precisar: Listar anexos do procedimento (admin)."
+      "whenToUse": "Use quando precisar: Listar anexos do procedimento (admin).",
+      "paramSchema": {
+        "procedure_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Procedure id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedure_media",
@@ -7736,7 +7947,17 @@
       ],
       "metaShape": "paged_list",
       "description": "Listar mídias do procedimento (admin).",
-      "whenToUse": "Use quando precisar: Listar mídias do procedimento (admin)."
+      "whenToUse": "Use quando precisar: Listar mídias do procedimento (admin).",
+      "paramSchema": {
+        "procedure_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Procedure id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_guias_procedimentos_attachment_file",
@@ -7750,7 +7971,17 @@
       ],
       "metaShape": "scalar",
       "description": "Baixar arquivo de anexo.",
-      "whenToUse": "Use quando precisar: Baixar arquivo de anexo."
+      "whenToUse": "Use quando precisar: Baixar arquivo de anexo.",
+      "paramSchema": {
+        "attachment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Attachment id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_departments",
@@ -7778,7 +8009,16 @@
       ],
       "metaShape": "scalar",
       "description": "Get Guias Department.",
-      "whenToUse": "Use quando precisar de: Get Guias Department."
+      "whenToUse": "Use quando precisar de: Get Guias Department.",
+      "paramSchema": {
+        "slug": {
+          "type": "string",
+          "optional": false,
+          "label": "Slug",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_guias_procedimentos_media_file",
@@ -7792,7 +8032,17 @@
       ],
       "metaShape": "scalar",
       "description": "Baixar arquivo de mídia.",
-      "whenToUse": "Use quando precisar: Baixar arquivo de mídia."
+      "whenToUse": "Use quando precisar: Baixar arquivo de mídia.",
+      "paramSchema": {
+        "media_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Media id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_procedure_attachments",
@@ -7806,7 +8056,17 @@
       ],
       "metaShape": "paged_list",
       "description": "Listar anexos do procedimento.",
-      "whenToUse": "Use quando precisar: Listar anexos do procedimento."
+      "whenToUse": "Use quando precisar: Listar anexos do procedimento.",
+      "paramSchema": {
+        "procedure_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Procedure id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_guias_procedimentos_procedure_media",
@@ -7820,7 +8080,17 @@
       ],
       "metaShape": "paged_list",
       "description": "Listar mídias do procedimento.",
-      "whenToUse": "Use quando precisar: Listar mídias do procedimento."
+      "whenToUse": "Use quando precisar: Listar mídias do procedimento.",
+      "paramSchema": {
+        "procedure_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Procedure id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_guias_procedimentos_procedure",
@@ -7834,7 +8104,16 @@
       ],
       "metaShape": "scalar",
       "description": "Get Guias Procedure.",
-      "whenToUse": "Use quando precisar de: Get Guias Procedure."
+      "whenToUse": "Use quando precisar de: Get Guias Procedure.",
+      "paramSchema": {
+        "slug": {
+          "type": "string",
+          "optional": false,
+          "label": "Slug",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_health",
@@ -8911,7 +9190,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "paramSchema": {
+        "request_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Request id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_lancamento_notas_fiscais_request_purchase_orders",
@@ -8923,7 +9212,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "request_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Request id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "search_lancamento_notas_fiscais_suppliers",
@@ -9093,6 +9392,13 @@
           "label": "Busca",
           "description": "Texto livre de busca."
         },
+        "mother_op": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente OP mãe",
+          "default": false,
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -9188,6 +9494,13 @@
           "label": "Busca",
           "description": "Texto livre de busca."
         },
+        "mother_op": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente OP mãe",
+          "default": false,
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -9277,6 +9590,13 @@
           "label": "Produto",
           "description": "Código ou identificador do produto."
         },
+        "mother_op": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente OP mãe",
+          "default": false,
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        },
         "group_by": {
           "type": "string",
           "optional": true,
@@ -9363,6 +9683,13 @@
           "label": "Produto",
           "description": "Código ou identificador do produto."
         },
+        "mother_op": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente OP mãe",
+          "default": false,
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        },
         "filial": {
           "type": "string",
           "optional": true,
@@ -9433,6 +9760,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Consumo real de item por produto».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -10244,6 +10578,12 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Detalhe do apontamento OEE (roteiro, estrutura e tempos)».",
       "paramSchema": {
+        "appointment_id": {
+          "type": "integer",
+          "optional": false,
+          "label": "Appointment id",
+          "in": "path"
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -10309,6 +10649,25 @@
         "start_date",
         "end_date"
       ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "seriesField": "points",
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10323,26 +10682,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points",
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      }
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -10400,14 +10740,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -10423,6 +10763,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Detalhe da OP por C2_OP».",
       "paramSchema": {
+        "production_order": {
+          "type": "string",
+          "optional": false,
+          "label": "Ordem de produção",
+          "in": "path",
+          "description": "Ordem(ns) de produção (CSV)."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -10748,9 +11095,6 @@
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
@@ -10759,6 +11103,9 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -10817,14 +11164,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -11049,6 +11396,49 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "search_products_by_supplier_part_number",
+      "httpMethod": "GET",
+      "label": "Produtos por part number do fornecedor",
+      "category": "products",
+      "path": "/products/by-supplier-part-number",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Localiza códigos DELPI a partir do part number do fornecedor (SA5010.A5_CODPRF).",
+      "whenToUse": "Use quando o usuário tem o part number do fornecedor e precisa do código interno do produto.",
+      "paramSchema": {
+        "supplier_part_number": {
+          "type": "string",
+          "optional": false,
+          "label": "Part number do fornecedor",
+          "description": "Código do produto no fornecedor (SA5010.A5_CODPRF)."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_product_directives",
       "httpMethod": "GET",
       "label": "Diretivas do produto (referência cliente ou código DELPI)",
@@ -11061,6 +11451,12 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Diretivas do produto (referência cliente ou código DELPI)».",
       "paramSchema": {
+        "identifier": {
+          "type": "string",
+          "optional": false,
+          "label": "Identifier",
+          "in": "path"
+        },
         "max_depth": {
           "type": "integer",
           "optional": true,
@@ -11372,6 +11768,13 @@
       "metaShape": "product_snapshot",
       "description": "Consulta operacional: «Dados cadastrais do produto».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "view": {
           "type": "string",
           "optional": true,
@@ -11406,6 +11809,13 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Analisador completo do produto».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "view": {
           "type": "string",
           "optional": true,
@@ -11433,6 +11843,13 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Simulador de impacto de custos do PA».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "max_depth": {
           "type": "integer",
           "optional": true,
@@ -11475,6 +11892,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Clientes do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -11503,7 +11927,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Metadados do desenho PDF do produto»."
+      "description": "Indicador numérico para «Metadados do desenho PDF do produto».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_drawing_pdf",
@@ -11516,7 +11950,17 @@
         "auto"
       ],
       "metaShape": "document_export",
-      "description": "Consulta operacional: «Do desenho PDF do produto»."
+      "description": "Consulta operacional: «Do desenho PDF do produto».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_factory_status",
@@ -11531,6 +11975,13 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Status fabril completo do produto».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "reference_date": {
           "type": "string",
           "optional": true,
@@ -11596,6 +12047,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Roteiro de produção do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -11641,6 +12099,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Itens de nota fiscal de entrada do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -11706,6 +12171,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Inspeção de qualidade do produto (QP6/QP7/QP8)» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -11740,6 +12212,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Movimentações internas do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -11817,6 +12296,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Última compra válida da matéria-prima».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -11844,6 +12330,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Itens de nota fiscal de saída do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -11909,6 +12402,13 @@
       "metaShape": "hierarchy",
       "description": "Visão hierárquica de «Onde o produto é usado (produtos pai / BOM reversa)».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "max_depth": {
           "type": "integer",
           "optional": true,
@@ -11941,7 +12441,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Preços e tabelas comerciais do produto»."
+      "description": "Indicador numérico para «Preços e tabelas comerciais do produto».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_production_status",
@@ -11956,6 +12466,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Situação produtiva do produto (PA, PI, OP e apontamentos)».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "reference_date": {
           "type": "string",
           "optional": true,
@@ -12003,6 +12520,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Histórico de orçamento de compra (SC + PC)».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -12048,6 +12572,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Histórico de preço de compra da matéria-prima».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -12099,6 +12630,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Histórico de compras do produto» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -12129,6 +12667,13 @@
       "metaShape": "composite_analysis",
       "description": "Análise composta: «Análise inteligente de preço de matéria-prima».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -12178,7 +12723,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Resumo de vendas do produto»."
+      "description": "Indicador numérico para «Resumo de vendas do produto».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_sales_billing",
@@ -12191,7 +12746,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Faturamento do produto»."
+      "description": "Indicador numérico para «Faturamento do produto».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_sales_open_orders",
@@ -12204,7 +12769,17 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Carteira de pedidos de venda em aberto do produto» para uso em tabela ou gráfico no TV."
+      "description": "Listagem paginada de «Carteira de pedidos de venda em aberto do produto» para uso em tabela ou gráfico no TV.",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_shipping_status",
@@ -12219,6 +12794,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Expedição do PA via inspeção final».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "reference_date": {
           "type": "string",
           "optional": true,
@@ -12278,6 +12860,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Estoque do produto por filial e local» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -12338,6 +12927,13 @@
       "metaShape": "hierarchy",
       "description": "Visão hierárquica de «Estrutura (BOM) do produto».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "max_depth": {
           "type": "integer",
           "optional": true,
@@ -12373,6 +12969,13 @@
       "description": "Exportar estrutura (BOM) em Excel.",
       "whenToUse": "Use quando precisar de: Exportar estrutura (BOM) em Excel.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "format": {
           "type": "string",
           "optional": true,
@@ -12396,6 +12999,13 @@
       "metaShape": "playbook_report",
       "description": "Relatório operacional: «Estrutura do produto com exclusividade de matérias-primas».",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "max_depth": {
           "type": "integer",
           "optional": true,
@@ -12423,7 +13033,17 @@
         "auto"
       ],
       "metaShape": "product_snapshot",
-      "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)»."
+      "description": "Consulta operacional: «Resumo do produto (cadastro + estoque + preços)».",
+      "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_product_suppliers",
@@ -12436,8 +13056,15 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Fornecedores do produto» para uso em tabela ou gráfico no TV.",
+      "description": "Listagem paginada de fornecedores vinculados a um código DELPI.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -12489,7 +13116,16 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
+      "description": "Análise composta: «Análise consolidada — Proposta comercial interna (pdf/totvs)».",
+      "paramSchema": {
+        "proposta_interna": {
+          "type": "string",
+          "optional": false,
+          "label": "Proposta interna",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_proposta_comercial_pdf",
@@ -12502,7 +13138,16 @@
         "auto"
       ],
       "metaShape": "document_export",
-      "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
+      "description": "Indicador numérico para «Proposta comercial — exportar PDF».",
+      "paramSchema": {
+        "proposta_interna": {
+          "type": "string",
+          "optional": false,
+          "label": "Proposta interna",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_public_quality_label_inspection",
@@ -12515,7 +13160,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
+      "description": "Indicador numérico para «Inspeção pública (etiqueta)».",
+      "paramSchema": {
+        "token": {
+          "type": "string",
+          "optional": false,
+          "label": "Token",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_purchases_top_products",
@@ -13208,7 +13862,17 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Quality action plan»."
+      "description": "Análise composta: «Análise consolidada — Quality action plan».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_audit_log",
@@ -13223,6 +13887,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Lista paginada — Quality action plan audit log» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -13253,6 +13924,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Lista paginada — Quality action plan evidence» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
         "q": {
           "type": "string",
           "optional": true,
@@ -13273,7 +13951,23 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Quality action plan evidence»."
+      "description": "Análise composta: «Análise consolidada — Quality action plan evidence».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
+        "evidence_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Evidence id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_quality_action_plan_evidence",
@@ -13286,7 +13980,23 @@
         "auto"
       ],
       "metaShape": "document_export",
-      "description": "Consulta operacional: «Consulta — Quality action plan evidence»."
+      "description": "Consulta operacional: «Consulta — Quality action plan evidence».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
+        "evidence_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Evidence id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_quality_action_plan_pdf",
@@ -13299,7 +14009,17 @@
         "auto"
       ],
       "metaShape": "document_export",
-      "description": "Consulta operacional: «Consulta — Quality action plan export»."
+      "description": "Consulta operacional: «Consulta — Quality action plan export».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d",
@@ -13314,6 +14034,13 @@
       "metaShape": "scalar",
       "description": "Indicador numérico para «Quality action plan export».",
       "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
         "template_key": {
           "type": "string",
           "optional": true,
@@ -13334,7 +14061,17 @@
         "auto"
       ],
       "metaShape": "document_export",
-      "description": "Consulta operacional: «Consulta — Quality action plan export»."
+      "description": "Consulta operacional: «Consulta — Quality action plan export».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_action_plan_revisions",
@@ -13349,6 +14086,13 @@
       "metaShape": "paged_list",
       "description": "Listagem paginada de «Lista paginada — Quality action plan revision» para uso em tabela ou gráfico no TV.",
       "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -13377,7 +14121,23 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Quality action plan revision»."
+      "description": "Análise composta: «Análise consolidada — Quality action plan revision».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        },
+        "revision_number": {
+          "type": "integer",
+          "optional": false,
+          "label": "Revision number",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_action_plan_similar_cases",
@@ -13390,7 +14150,17 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Análise consolidada — Quality action plan similar cases»."
+      "description": "Análise composta: «Análise consolidada — Quality action plan similar cases».",
+      "paramSchema": {
+        "plan_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Plano",
+          "in": "path",
+          "description": "Identificador do plano de ação."
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_audit_5s_analytics_dashboard",
@@ -13618,7 +14388,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Auditoria 5S — detalhe»."
+      "description": "Indicador numérico para «Auditoria 5S — detalhe».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_audit_5s_audit_nc_attachments",
@@ -13631,7 +14410,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
+      "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_audit_5s_nc_candidates",
@@ -13644,7 +14432,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
+      "description": "Indicador numérico para «Auditoria 5S — candidatos a NC».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_audit_5s_nonconformities",
@@ -13657,7 +14454,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
+      "description": "Indicador numérico para «Auditoria 5S — não conformidades».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_audit_5s_response_attachments",
@@ -13670,7 +14476,22 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Response anexos»."
+      "description": "Indicador numérico para «Response anexos».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        },
+        "criterion_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Criterion id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_audit_5s_response_attachment",
@@ -13683,7 +14504,28 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Response anexo»."
+      "description": "Indicador numérico para «Response anexo».",
+      "paramSchema": {
+        "audit_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Audit id",
+          "in": "path"
+        },
+        "criterion_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Criterion id",
+          "in": "path"
+        },
+        "attachment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Attachment id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_audit_5s_catalog",
@@ -13968,7 +14810,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
+      "description": "Indicador numérico para «Auditoria 5S — ações da NC».",
+      "paramSchema": {
+        "nc_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Nc id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_audit_5s_nc_attachments",
@@ -13981,7 +14832,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
+      "description": "Indicador numérico para «Auditoria 5S — anexos da NC».",
+      "paramSchema": {
+        "nc_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Nc id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_audit_5s_nc_attachment",
@@ -13994,7 +14854,22 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
+      "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC».",
+      "paramSchema": {
+        "nc_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Nc id",
+          "in": "path"
+        },
+        "attachment_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Attachment id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_audit_5s_summary",
@@ -14041,18 +14916,18 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "average_score": "Nota média 5S",
+        "comparable_goal": "Meta"
+      },
       "labelAliases": [
         "Auditoria 5S — resumo"
       ],
       "valueFields": [
         "value",
         "average_score"
-      ],
-      "valueFieldLabels": {
-        "value": "Valor",
-        "average_score": "Nota média 5S",
-        "comparable_goal": "Meta"
-      }
+      ]
     },
     {
       "operationId": "list_quality_branches",
@@ -14193,9 +15068,65 @@
       "description": "Indicador numérico para «Kaizen Records»."
     },
     {
+      "operationId": "get_kaizen_savings_investment_series",
+      "httpMethod": "GET",
+      "label": "Ganhos vs investimento (Kaizen)",
+      "category": "quality",
+      "path": "/quality/kaizens/records/savings-investment/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Série temporal de ganhos financeiros versus investimento (dia ou mês).",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "month",
+          "enum": [
+            "day",
+            "month"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
       "operationId": "get_kaizen_records_summary",
       "httpMethod": "GET",
-      "label": "Kaizen Records Summary",
+      "label": "Resumo de kaizens cadastrados",
       "category": "quality",
       "path": "/quality/kaizens/records/summary",
       "allowedDisplayModes": [
@@ -14203,7 +15134,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Kaizen Records Summary».",
+      "description": "Indicadores agregados do painel Kaizômetro.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -14248,7 +15179,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe do kaizen cadastrado (PostgreSQL)»."
+      "description": "Indicador numérico para «Detalhe do kaizen cadastrado (PostgreSQL)».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_kaizen_at_date",
@@ -14263,6 +15203,12 @@
       "metaShape": "scalar",
       "description": "Indicador numérico para «Kaizen At Date».",
       "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        },
         "date": {
           "type": "string",
           "optional": false,
@@ -14284,7 +15230,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Kaizen Audit Log»."
+      "description": "Indicador numérico para «Kaizen Audit Log».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_kaizen_evidences",
@@ -14297,7 +15252,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Kaizen evidências»."
+      "description": "Indicador numérico para «Kaizen evidências».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "download_kaizen_evidence",
@@ -14311,7 +15275,22 @@
       ],
       "metaShape": "scalar",
       "description": "Baixar evidência de kaizen.",
-      "whenToUse": "Use quando precisar: Baixar evidência de kaizen."
+      "whenToUse": "Use quando precisar: Baixar evidência de kaizen.",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        },
+        "evidence_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Evidence id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_kaizen_history",
@@ -14324,7 +15303,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Kaizen History»."
+      "description": "Indicador numérico para «Kaizen History».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_kaizen_revisions",
@@ -14337,7 +15325,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Kaizen Revisions»."
+      "description": "Indicador numérico para «Kaizen Revisions».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_kaizen_revision",
@@ -14350,7 +15347,22 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Kaizen Revision»."
+      "description": "Indicador numérico para «Kaizen Revision».",
+      "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        },
+        "revision_number": {
+          "type": "integer",
+          "optional": false,
+          "label": "Revision number",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_kaizen_savings_timeline",
@@ -14365,6 +15377,12 @@
       "metaShape": "scalar",
       "description": "Indicador numérico para «Kaizen Savings Timeline».",
       "paramSchema": {
+        "record_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Record id",
+          "in": "path"
+        },
         "start_date": {
           "type": "string",
           "optional": true,
@@ -14450,6 +15468,13 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldLabels": {
+        "value": "Valor",
+        "total_savings": "Economia total",
+        "total_kaizens": "Total kaizens",
+        "comparable_goal": "Meta financeira",
+        "ideas_goal": "Ideias / meta"
+      },
       "labelAliases": [
         "Kaizens — resumo e listagem (Google Sheets)"
       ],
@@ -14457,14 +15482,7 @@
         "value",
         "total_savings",
         "total_kaizens"
-      ],
-      "valueFieldLabels": {
-        "value": "Valor",
-        "total_savings": "Economia total",
-        "total_kaizens": "Total kaizens",
-        "comparable_goal": "Meta financeira",
-        "ideas_goal": "Ideias / meta"
-      }
+      ]
     },
     {
       "operationId": "get_kaizen_by_id",
@@ -14477,7 +15495,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)»."
+      "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)».",
+      "paramSchema": {
+        "kaizen_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Kaizen id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_quality_labels",
@@ -14617,6 +15644,13 @@
       "description": "Indicador numérico para «Lookup Op».",
       "whenToUse": "Use para consultar qualidade etiqueta op.",
       "paramSchema": {
+        "production_order": {
+          "type": "string",
+          "optional": false,
+          "label": "Ordem de produção",
+          "in": "path",
+          "description": "Ordem(ns) de produção (CSV)."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -14677,7 +15711,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
+      "description": "Indicador numérico para «Etiqueta de qualidade — detalhe».",
+      "paramSchema": {
+        "label_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Label id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_label_certificate",
@@ -14690,7 +15733,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Etiqueta — certificado»."
+      "description": "Indicador numérico para «Etiqueta — certificado».",
+      "paramSchema": {
+        "label_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Label id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_label_certificate_pdf",
@@ -14704,7 +15756,16 @@
       ],
       "metaShape": "scalar",
       "description": "Baixar PDF do certificado da etiqueta.",
-      "whenToUse": "Use quando precisar: Baixar PDF do certificado da etiqueta."
+      "whenToUse": "Use quando precisar: Baixar PDF do certificado da etiqueta.",
+      "paramSchema": {
+        "label_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Label id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_quality_label_qr",
@@ -14718,7 +15779,16 @@
       ],
       "metaShape": "scalar",
       "description": "Obter QR da etiqueta de qualidade.",
-      "whenToUse": "Use quando precisar: Obter QR da etiqueta de qualidade."
+      "whenToUse": "Use quando precisar: Obter QR da etiqueta de qualidade.",
+      "paramSchema": {
+        "label_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Label id",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_nonconformities",
@@ -15093,18 +16163,6 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15114,7 +16172,19 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      }
+      },
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -15300,19 +16370,6 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
-      "valueFields": [
-        "value",
-        "ppm",
-        "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -15322,7 +16379,20 @@
         "total_devolvido_un": "Total devolvido (un.)",
         "target": "Meta PPM",
         "comparable_goal": "Meta"
-      }
+      },
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "value",
+        "ppm",
+        "ppmValue"
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -16066,7 +17136,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "paramSchema": {
+        "definition_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Definition id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_report_recipients",
@@ -16078,7 +17158,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "paged_list"
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "definition_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Definition id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_report_schedule",
@@ -16090,7 +17180,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "paramSchema": {
+        "definition_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Definition id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_report_providers",
@@ -16206,7 +17306,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar"
+      "metaShape": "scalar",
+      "paramSchema": {
+        "run_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Run id",
+          "in": "path",
+          "format": "uuid"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_retrabalhos_colaboradores",
@@ -17260,6 +18370,13 @@
       "metaShape": "composite_analysis",
       "description": "Retorna detalhe da análise de consumo com série mensal e memória de cálculo via API DELPI. Visão consolidada com múltiplas seções. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -17485,6 +18602,13 @@
       "description": "Análise consolidada — Detalhe de estoque de segurança com cobertura de compras, empenhos e extrato projetado de saldo.",
       "whenToUse": "Use quando precisar de: Análise consolidada — Detalhe de estoque de segurança com cobertura de compras, empenhos e extrato projetado de saldo.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -17513,6 +18637,13 @@
       "description": "Lista — Fornecedores vinculados ao produto com última compra.",
       "whenToUse": "Use quando precisar de: Lista — Fornecedores vinculados ao produto com última compra.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -17541,6 +18672,20 @@
       "description": "Relatório operacional — Histórico de preço unitário do produto com um fornecedor.",
       "whenToUse": "Use quando precisar de: Relatório operacional — Histórico de preço unitário do produto com um fornecedor.",
       "paramSchema": {
+        "code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código",
+          "in": "path",
+          "description": "Código do registro a filtrar."
+        },
+        "supplier_code": {
+          "type": "string",
+          "optional": false,
+          "label": "Código do fornecedor",
+          "in": "path",
+          "description": "Código do fornecedor no Protheus."
+        },
         "branch": {
           "type": "string",
           "optional": true,
@@ -17718,15 +18863,15 @@
         "start_date",
         "end_date"
       ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
       ],
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "tableFields": "top_products"
     },
     {
@@ -17975,7 +19120,16 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Consulta informações de tabela»."
+      "description": "Indicador numérico para «Consulta informações de tabela».",
+      "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "list_protheus_table_columns",
@@ -17990,6 +19144,12 @@
       "metaShape": "paged_list",
       "description": "Indicador numérico para «Consulta colunas de tabela com paginação».",
       "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -18020,6 +19180,12 @@
       "metaShape": "paged_list",
       "description": "Indicador numérico para «Buscar colunas por texto».",
       "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        },
         "q": {
           "type": "string",
           "optional": false,
@@ -18040,7 +19206,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Consulta índices (SIX010)»."
+      "description": "Indicador numérico para «Consulta índices (SIX010)».",
+      "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_protheus_table_relations",
@@ -18053,7 +19228,16 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
+      "description": "Indicador numérico para «Consulta relacionamentos (SX9010)».",
+      "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_protheus_table_schema",
@@ -18066,7 +19250,16 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
+      "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)».",
+      "paramSchema": {
+        "tableName": {
+          "type": "string",
+          "optional": false,
+          "label": "Tablename",
+          "in": "path"
+        }
+      },
+      "paramStrategy": "direct"
     }
   ]
 }

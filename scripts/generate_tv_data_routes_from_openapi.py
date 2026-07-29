@@ -421,11 +421,16 @@ def build_param_schema_from_openapi(
             # Alias ativo ainda no baseline antigo: omitir se canônico já no schema.
             continue
         locale_label, locale_description = extract_param_locale_pt(op, name)
+        location = str(param.get("in") or "query").strip().lower() or "query"
+        # Path params são sempre obrigatórios (substituição de `{name}` no gateway).
+        optional = False if location == "path" else not bool(param.get("required"))
         entry: dict[str, Any] = {
             "type": map_openapi_type(param),
-            "optional": not bool(param.get("required")),
+            "optional": optional,
             "label": locale_label or humanize_param_label(name, param.get("description")),
         }
+        if location == "path":
+            entry["in"] = "path"
         if param.get("default") is not None:
             entry["default"] = param["default"]
         if isinstance(param.get("enum"), list) and param["enum"]:
@@ -705,17 +710,21 @@ def _schema_type_and_meta(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def _simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
+    """Espelho de openapi_baseline_service.simplify_openapi_parameter (query + path)."""
     if not isinstance(param, dict):
         return None
-    if str(param.get("in") or "").lower() != "query":
+    location = str(param.get("in") or "").lower()
+    if location not in {"query", "path"}:
         return None
     name = str(param.get("name") or "").strip()
     if not name:
         return None
     schema = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+    required = True if location == "path" else bool(param.get("required"))
     entry: dict[str, Any] = {
         "name": name,
-        "required": bool(param.get("required")),
+        "in": location,
+        "required": required,
     }
     description = str(param.get("description") or schema.get("description") or "").strip()
     if description:

@@ -14,6 +14,8 @@
     "dataParamRequired": "Parâmetro obrigatório: {param}.",
     "dataParamUnknown": "Parâmetro não permitido.",
     "dataRouteMethodNotAllowed": "Somente rotas GET são permitidas na TV.",
+    "dataRouteMissingPathParams": "Parâmetros de path obrigatórios ausentes: {params}.",
+    "dataRouteUnresolvedPath": "Path da rota ainda contém placeholders não resolvidos.",
     "dataRowsLimitExceeded": "Limite de linhas excedido para esta rota.",
     "dataListCountLabel": "Quantidade",
     "mediaNotFound": "Mídia não encontrada.",

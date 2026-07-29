@@ -47,18 +47,26 @@ def _schema_type_and_meta(schema: dict[str, Any]) -> dict[str, Any]:
 
 
 def simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
-    """Normaliza parameter OpenAPI → entrada enxuta do baseline (só query)."""
+    """Normaliza parameter OpenAPI → entrada enxuta do baseline (query + path).
+
+    Path params são obrigatórios na TV (substituição de `{name}` no path).
+    Header/cookie/cookie são ignorados.
+    """
     if not isinstance(param, dict):
         return None
-    if str(param.get("in") or "").lower() != "query":
+    location = str(param.get("in") or "").lower()
+    if location not in {"query", "path"}:
         return None
     name = str(param.get("name") or "").strip()
     if not name:
         return None
     schema = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+    # Path params OpenAPI são sempre required; força True para o catálogo TV.
+    required = True if location == "path" else bool(param.get("required"))
     entry: dict[str, Any] = {
         "name": name,
-        "required": bool(param.get("required")),
+        "in": location,
+        "required": required,
     }
     description = str(param.get("description") or schema.get("description") or "").strip()
     if description:

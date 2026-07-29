@@ -7,8 +7,22 @@ from app.domain.services.openapi_baseline_service import (
 )
 
 
-def test_simplify_openapi_parameter_query_only() -> None:
-    assert simplify_openapi_parameter({"in": "path", "name": "id"}) is None
+def test_simplify_openapi_parameter_query_and_path() -> None:
+    path_entry = simplify_openapi_parameter(
+        {
+            "in": "path",
+            "name": "appointment_id",
+            "required": True,
+            "schema": {"type": "integer"},
+        }
+    )
+    assert path_entry == {
+        "name": "appointment_id",
+        "in": "path",
+        "required": True,
+        "type": "integer",
+    }
+    assert simplify_openapi_parameter({"in": "header", "name": "X-Token"}) is None
     entry = simplify_openapi_parameter(
         {
             "in": "query",
@@ -20,6 +34,7 @@ def test_simplify_openapi_parameter_query_only() -> None:
     )
     assert entry == {
         "name": "branch",
+        "in": "query",
         "required": False,
         "description": "Filial",
         "type": "string",
@@ -45,6 +60,7 @@ def test_simplify_openapi_parameter_anyof_null() -> None:
     assert entry is not None
     assert entry["type"] == "string"
     assert entry["name"] == "branch"
+    assert entry["in"] == "query"
 
 
 def test_extract_operations_includes_parameters_and_x_delpi() -> None:
