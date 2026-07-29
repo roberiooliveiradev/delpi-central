@@ -1,32 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveTableSelectionPanelTab } from "./resolveTableSelectionPanelTab";
+import {
+  formatPanelTabForBlockType,
+  resolveFormatSelectionPanelTab,
+} from "./resolveTableSelectionPanelTab";
 
-describe("resolveTableSelectionPanelTab", () => {
-  it("mantém pedidos explícitos de Design/Layout/Dados", () => {
-    expect(
-      resolveTableSelectionPanelTab({
-        requested: "tableDesign",
-        selectedBlockType: "table_view",
-      }),
-    ).toBe("tableDesign");
-    expect(
-      resolveTableSelectionPanelTab({
-        requested: "tableLayout",
-        selectedBlockType: "table_view",
-      }),
-    ).toBe("tableLayout");
-    expect(
-      resolveTableSelectionPanelTab({
-        requested: "data",
-        selectedBlockType: "table_view",
-      }),
-    ).toBe("data");
+describe("formatPanelTabForBlockType", () => {
+  it("tabela → Design (ou Layout se já estava)", () => {
+    expect(formatPanelTabForBlockType("table_view")).toBe("tableDesign");
+    expect(formatPanelTabForBlockType("table_view", "tableLayout")).toBe("tableLayout");
   });
 
+  it("gráfico/KPI/forma → Elemento", () => {
+    expect(formatPanelTabForBlockType("chart_view")).toBe("element");
+    expect(formatPanelTabForBlockType("kpi_view")).toBe("element");
+    expect(formatPanelTabForBlockType("shape")).toBe("element");
+  });
+
+  it("fonte de dados → Dados", () => {
+    expect(formatPanelTabForBlockType("data_source")).toBe("data");
+  });
+});
+
+describe("resolveFormatSelectionPanelTab", () => {
   it("mapeia element→tableDesign quando a seleção é tabela", () => {
     expect(
-      resolveTableSelectionPanelTab({
+      resolveFormatSelectionPanelTab({
         requested: "element",
         selectedBlockType: "table_view",
         currentPanelTab: "layers",
@@ -36,7 +35,7 @@ describe("resolveTableSelectionPanelTab", () => {
 
   it("preserva tableLayout se já estava em Layout ao pedir element", () => {
     expect(
-      resolveTableSelectionPanelTab({
+      resolveFormatSelectionPanelTab({
         requested: "element",
         selectedBlockType: "table_view",
         currentPanelTab: "tableLayout",
@@ -44,33 +43,49 @@ describe("resolveTableSelectionPanelTab", () => {
     ).toBe("tableLayout");
   });
 
-  it("não altera element para blocos que não são tabela", () => {
+  it("element em gráfico/KPI permanece element (não tableDesign)", () => {
     expect(
-      resolveTableSelectionPanelTab({
+      resolveFormatSelectionPanelTab({
         requested: "element",
-        selectedBlockType: "shape",
+        selectedBlockType: "chart_view",
+        currentPanelTab: "tableDesign",
       }),
     ).toBe("element");
     expect(
-      resolveTableSelectionPanelTab({
-        requested: "element",
+      resolveFormatSelectionPanelTab({
+        requested: "shape",
+        selectedBlockType: "chart_view",
+      }),
+    ).toBe("element");
+    expect(
+      resolveFormatSelectionPanelTab({
+        requested: "chart",
+        selectedBlockType: "kpi_view",
+      }),
+    ).toBe("element");
+  });
+
+  it("pedido tableDesign com bloco não-tabela remapeia para a aba do bloco", () => {
+    expect(
+      resolveFormatSelectionPanelTab({
+        requested: "tableDesign",
         selectedBlockType: "chart_view",
       }),
     ).toBe("element");
   });
 
-  it("normaliza pedidos legados (table/format) para element e remapeia tabela", () => {
+  it("mantém data/layers", () => {
     expect(
-      resolveTableSelectionPanelTab({
-        requested: "table",
+      resolveFormatSelectionPanelTab({
+        requested: "data",
+        selectedBlockType: "chart_view",
+      }),
+    ).toBe("data");
+    expect(
+      resolveFormatSelectionPanelTab({
+        requested: "layers",
         selectedBlockType: "table_view",
       }),
-    ).toBe("tableDesign");
-    expect(
-      resolveTableSelectionPanelTab({
-        requested: "format",
-        selectedBlockType: "kpi_view",
-      }),
-    ).toBe("element");
+    ).toBe("layers");
   });
 });

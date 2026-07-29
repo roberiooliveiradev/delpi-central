@@ -301,6 +301,67 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectionPanelTab).toBe("tableLayout");
   });
 
+  it("após tabela, gráfico/KPI ficam em Elemento mesmo com requestRibbonTab legado no mesmo tick", () => {
+    const tableBlock: ComunicadoBlock = {
+      id: "tbl",
+      type: "table_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      tablePreset: "grid",
+    };
+    const chartBlock: ComunicadoBlock = {
+      id: "cht",
+      type: "chart_view",
+      frame: { x: 0, y: 40, w: 40, h: 30 },
+      chartType: "line",
+    };
+    const kpiBlock: ComunicadoBlock = {
+      id: "kpi",
+      type: "kpi_view",
+      frame: { x: 0, y: 80, w: 20, h: 20 },
+    };
+    const blocksLocal = [tableBlock, chartBlock, kpiBlock];
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks: blocksLocal });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: blocksLocal,
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("tbl");
+    });
+    expect(result.current.selectionPanelTab).toBe("tableDesign");
+
+    /* Simula BlockView: selectChartPart + requestRibbonTab("shape") sem blockId no mesmo tick. */
+    act(() => {
+      result.current.selectChartPart("cht", { kind: "plotArea" });
+      result.current.requestRibbonTab("shape");
+    });
+    expect(result.current.selectedIds).toEqual(["cht"]);
+    expect(result.current.selectionPanelTab).toBe("element");
+    expect(result.current.ribbonTabRequest).toBe("element");
+
+    act(() => {
+      result.current.selectBlock("tbl");
+    });
+    act(() => {
+      result.current.selectKpiPart("kpi", { kind: "title" });
+      result.current.requestRibbonTab("kpi");
+    });
+    expect(result.current.selectedIds).toEqual(["kpi"]);
+    expect(result.current.selectionPanelTab).toBe("element");
+
+    act(() => {
+      result.current.selectBlocksByIds(["cht"]);
+    });
+    expect(result.current.selectionPanelTab).toBe("element");
+  });
+
   it("multi-seleção de partes KPI (filhos do complexo)", () => {
     const { result } = renderSelectionHook();
 

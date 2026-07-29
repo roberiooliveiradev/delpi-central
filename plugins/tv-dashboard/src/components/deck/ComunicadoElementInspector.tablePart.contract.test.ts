@@ -25,4 +25,12 @@ describe("ComunicadoElementInspector table block sections", () => {
       /showTableBlockSections\s*=\s*[\s\S]*!selectedTablePart \|\| keepTableBlockSections/,
     );
   });
+
+  it("mantém seções de gráfico na aba Elemento com parte selecionada", () => {
+    const source = readFileSync(resolve(__dirname, "./ComunicadoElementInspector.tsx"), "utf8");
+    expect(source).toContain("showChartBlockSections");
+    expect(source).toMatch(
+      /showChartBlockSections\s*=\s*[\s\S]*panelFocus === "element" \|\| !selectedChartPart/,
+    );
+  });
 });

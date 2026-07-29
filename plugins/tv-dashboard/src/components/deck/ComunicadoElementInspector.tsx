@@ -108,6 +108,11 @@ export function ComunicadoElementInspector({
     !multiSelect &&
     selected.type === "table_view" &&
     (!selectedTablePart || keepTableBlockSections);
+  /** Gráfico: manter Design do bloco na aba Elemento mesmo com parte selecionada. */
+  const showChartBlockSections =
+    !multiSelect &&
+    selected.type === "chart_view" &&
+    (panelFocus === "element" || !selectedChartPart);
 
   return (
     <DeckInspectorLayout variant={placement}>
@@ -174,7 +179,7 @@ export function ComunicadoElementInspector({
         />
       ) : null}
 
-      {!multiSelect && selected.type === "chart_view" && !selectedChartPart ? (
+      {!multiSelect && showChartBlockSections ? (
         <>
           <SelectionTypedWithTailHost
             layout="pane"
@@ -189,7 +194,7 @@ export function ComunicadoElementInspector({
               "chartSeries",
             ]}
           />
-          <ChartViewOptionsInspector pane={pane} omitSeries />
+          {!selectedChartPart ? <ChartViewOptionsInspector pane={pane} omitSeries /> : null}
         </>
       ) : null}
 

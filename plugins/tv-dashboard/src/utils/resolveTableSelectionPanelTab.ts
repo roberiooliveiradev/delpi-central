@@ -5,18 +5,45 @@ import type {
 import { normalizeSelectionRibbonTab } from "./normalizeSelectionRibbonTab";
 
 /**
- * Tabela não tem aba «Elemento» no painel — só Design da Tabela / Layout.
- * Pedidos legados `element` (ex.: selectTablePart) devem mapear para Design/Layout,
- * senão `panelFocus=element` esconde as seções e a sidebar parece vazia.
+ * Aba de formatação canônica do painel lateral para o tipo de bloco.
+ * Tabela não tem «Elemento» — só Design / Layout.
  */
-export function resolveTableSelectionPanelTab(options: {
+export function formatPanelTabForBlockType(
+  blockType: string | null | undefined,
+  currentPanelTab?: SelectionPanelTab | null,
+): SelectionPanelTab {
+  if (blockType === "table_view") {
+    return currentPanelTab === "tableLayout" ? "tableLayout" : "tableDesign";
+  }
+  if (blockType === "data_source" || blockType?.startsWith("data_")) {
+    return "data";
+  }
+  return "element";
+}
+
+/**
+ * Normaliza pedidos de aba (legados `element`/`shape`/`chart`/…) para a aba
+ * real do painel, com base no **bloco-alvo** (não na seleção defasada do ref).
+ *
+ * Sem isso: selecionar gráfico após tabela grava `tableDesign` (inexistente para
+ * chart) e o inspetor parece vazio; insert via `selectBlocksByIds` não muda a aba.
+ */
+export function resolveFormatSelectionPanelTab(options: {
   requested: ComunicadoRibbonTabRequest;
   selectedBlockType: string | null | undefined;
-  /** Usado quando o pedido é `element` e já estamos em Layout. */
   currentPanelTab?: SelectionPanelTab | null;
 }): ComunicadoRibbonTabRequest {
   const normalized = normalizeSelectionRibbonTab(options.requested);
+  if (normalized === "data" || normalized === "layers" || normalized === "insert" || normalized === "view") {
+    return normalized;
+  }
+  if (normalized === "tableDesign" || normalized === "tableLayout") {
+    if (options.selectedBlockType === "table_view") return normalized;
+    return formatPanelTabForBlockType(options.selectedBlockType, options.currentPanelTab);
+  }
   if (normalized !== "element") return normalized;
-  if (options.selectedBlockType !== "table_view") return "element";
-  return options.currentPanelTab === "tableLayout" ? "tableLayout" : "tableDesign";
+  return formatPanelTabForBlockType(options.selectedBlockType, options.currentPanelTab);
 }
+
+/** @deprecated Preferir `resolveFormatSelectionPanelTab`. */
+export const resolveTableSelectionPanelTab = resolveFormatSelectionPanelTab;

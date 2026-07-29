@@ -51,7 +51,7 @@ import type {
 import {
   isSelectionPanelTab,
 } from "../../utils/normalizeSelectionRibbonTab";
-import { resolveTableSelectionPanelTab } from "../../utils/resolveTableSelectionPanelTab";
+import { resolveFormatSelectionPanelTab } from "../../utils/resolveTableSelectionPanelTab";
 import { toggleCompositePartSelection } from "../../utils/compositePartSelection";
 
 type Options = {
@@ -75,13 +75,25 @@ export function useComunicadoEditorSelection({
   updateBlocksRef,
 }: Options) {
   /** Sem auto-seleção: Gerenciar / F5 abrem no palco sem forçar Elemento. */
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIdsState] = useState<string[]>([]);
   /**
    * Override síncrono para ações do menu de contexto: aplica no snapshot da
    * sessão mesmo se `selectedIds` live foi limpa (tap-deselect / race).
    */
   const selectedIdsRef = useRef<string[]>([]);
-  selectedIdsRef.current = selectedIds;
+  /**
+   * Atualiza o ref **antes** do re-render. Sem isso, `requestRibbonTab` no mesmo
+   * tick (ex.: BlockView após `selectChartPart`) ainda via a seleção anterior
+   * e grava aba fantasma (`tableDesign` em gráfico) → sidebar vazia.
+   */
+  const setSelectedIds = useCallback((value: SetStateAction<string[]>) => {
+    const next =
+      typeof value === "function"
+        ? (value as (prev: string[]) => string[])(selectedIdsRef.current)
+        : value;
+    selectedIdsRef.current = next;
+    setSelectedIdsState(next);
+  }, []);
   const actionSelectedIdsOverrideRef = useRef<string[] | null>(null);
 
   const getActionSelectedIds = useCallback((): string[] => {
@@ -183,7 +195,7 @@ export function useComunicadoEditorSelection({
       const block = blockId
         ? configRef.current.blocks?.find((item) => item.id === blockId)
         : undefined;
-      const normalized = resolveTableSelectionPanelTab({
+      const normalized = resolveFormatSelectionPanelTab({
         requested: tab,
         selectedBlockType: block?.type,
         currentPanelTab: selectionPanelTabRef.current,
@@ -296,8 +308,13 @@ export function useComunicadoEditorSelection({
       setPreferGroupChildrenSelection(false);
       setEditingTextId(null);
       clearPartSelections();
+      /* Insert/marquee: sincronizar aba de formato com o bloco-alvo (não deixar layers/tableDesign fantasma). */
+      const primaryId = unique[unique.length - 1];
+      if (primaryId) {
+        requestRibbonTab("element", { blockId: primaryId });
+      }
     },
-    [clearPartSelections, configRef, flushActiveTextEdit],
+    [clearPartSelections, configRef, flushActiveTextEdit, requestRibbonTab],
   );
 
   const selectBlock = useCallback(
@@ -385,9 +402,9 @@ export function useComunicadoEditorSelection({
       setEditingTextId(null);
       clearPartSelections();
       if (selectedBlockType === "chart_view") {
-        requestRibbonTab("element");
+        requestRibbonTab("element", { blockId: targetId });
       } else if (selectedBlockType === "table_view") {
-        requestRibbonTab("element");
+        requestRibbonTab("element", { blockId: targetId });
       } else if (
         selectedBlockType === "shape" ||
         selectedBlockType === "heading" ||
@@ -396,14 +413,15 @@ export function useComunicadoEditorSelection({
         selectedBlockType === "video" ||
         selectedBlockType === "kpi_view" ||
         selectedBlockType === "canvas_table" ||
-        selectedBlockType === "input"
+        selectedBlockType === "input" ||
+        selectedBlockType === "icon"
       ) {
-        requestRibbonTab("element");
+        requestRibbonTab("element", { blockId: targetId });
       } else if (
         selectedBlockType === "data_source" ||
         selectedBlockType?.startsWith("data_")
       ) {
-        requestRibbonTab("data");
+        requestRibbonTab("data", { blockId: targetId });
       }
     },
     [clearPartSelections, configRef, flushActiveTextEdit, requestRibbonTab],
@@ -429,7 +447,7 @@ export function useComunicadoEditorSelection({
       setSelectedCanvasTableCell(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
-      requestRibbonTab("element");
+      requestRibbonTab("element", { blockId });
     },
     [flushActiveTextEdit, requestRibbonTab],
   );
@@ -515,7 +533,7 @@ export function useComunicadoEditorSelection({
           additive: options?.additive,
         }),
       );
-      requestRibbonTab("element");
+      requestRibbonTab("element", { blockId });
     },
     [flushActiveTextEdit, requestRibbonTab, setSelectedInputPart, setSelectedTablePart],
   );
@@ -545,7 +563,7 @@ export function useComunicadoEditorSelection({
           additive: options?.additive,
         }),
       );
-      requestRibbonTab("element");
+      requestRibbonTab("element", { blockId });
     },
     [flushActiveTextEdit, requestRibbonTab, setSelectedKpiPart, setSelectedTablePart],
   );
@@ -569,7 +587,7 @@ export function useComunicadoEditorSelection({
       setSelectedCanvasTableCell(
         cell ? { blockId, row: cell.row, col: cell.col } : null,
       );
-      requestRibbonTab("canvasTable");
+      requestRibbonTab("canvasTable", { blockId });
     },
     [flushActiveTextEdit, requestRibbonTab, setSelectedInputPart, setSelectedKpiPart, setSelectedTablePart],
   );
@@ -684,7 +702,7 @@ export function useComunicadoEditorSelection({
       clearPartSelections();
       setEditingTextId(targetId);
       clearTextEditUi();
-      requestRibbonTab(block.type === "shape" ? "shape" : "element");
+      requestRibbonTab(block.type === "shape" ? "shape" : "element", { blockId: targetId });
     },
     [clearPartSelections, clearTextEditUi, configRef, flushActiveTextEdit, requestRibbonTab],
   );

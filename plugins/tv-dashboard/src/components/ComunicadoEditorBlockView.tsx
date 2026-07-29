@@ -180,7 +180,6 @@ function EditorChartViewBlock({
     beginEditChartPart,
     commitChartPartContent,
     cancelEditChartPart,
-    requestRibbonTab,
     updateBlock,
     updateBlockLive,
     snapshotEditorConfig,
@@ -216,15 +215,6 @@ function EditorChartViewBlock({
       if (action === "part-move") return;
       if (action === "select-part") {
         selectChartPart(block.id, ref);
-        const primitiveKinds = new Set([
-          "marker",
-          "series",
-          "chartArea",
-          "plotArea",
-          "axis",
-          "grid",
-        ]);
-        requestRibbonTab(primitiveKinds.has(ref.kind) ? "shape" : "chart");
         return;
       }
       beginBlockStageMoveDrag({
@@ -244,7 +234,6 @@ function EditorChartViewBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
-      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
       selectChartPart,
@@ -263,19 +252,6 @@ function EditorChartViewBlock({
         selectedChartPart &&
         isChartPartRefEqual(selectedChartPart, ref);
       selectChartPart(block.id, ref);
-      const primitiveKinds = new Set([
-        "marker",
-        "series",
-        "chartArea",
-        "plotArea",
-        "axis",
-        "grid",
-      ]);
-      if (primitiveKinds.has(ref.kind)) {
-        requestRibbonTab("shape");
-      } else {
-        requestRibbonTab("chart");
-      }
       if (same && chartPartAllowsEdit(ref)) {
         beginEditChartPart(block.id, ref);
       }
@@ -283,7 +259,6 @@ function EditorChartViewBlock({
     [
       beginEditChartPart,
       block.id,
-      requestRibbonTab,
       selectChartPart,
       selectedChartPart,
       selectedId,
@@ -564,7 +539,6 @@ function EditorTableViewBlock({
     selectTablePart,
     beginEditTablePart,
     cancelEditTablePart,
-    requestRibbonTab,
     updateBlock,
     blocks,
     loadMoreDataPreview,
@@ -583,7 +557,6 @@ function EditorTableViewBlock({
         (event.ctrlKey || event.metaKey || event.shiftKey)
       ) {
         selectTablePart(block.id, ref, event.shiftKey ? { range: true } : { additive: true });
-        requestRibbonTab("table");
         return;
       }
       if (event.shiftKey) {
@@ -604,7 +577,6 @@ function EditorTableViewBlock({
       if (action === "part-move") return;
       if (action === "select-part") {
         selectTablePart(block.id, ref);
-        requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
         return;
       }
       beginBlockStageMoveDrag({
@@ -624,7 +596,6 @@ function EditorTableViewBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
-      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
       selectTablePart,
@@ -642,19 +613,11 @@ function EditorTableViewBlock({
         selectedTablePart &&
         isTablePartRefEqual(selectedTablePart, ref);
       selectTablePart(block.id, ref);
-      requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
       if (same && tablePartAllowsEdit(ref)) {
         beginEditTablePart(block.id, ref);
       }
     },
-    [
-      beginEditTablePart,
-      block.id,
-      requestRibbonTab,
-      selectTablePart,
-      selectedId,
-      selectedTablePart,
-    ],
+    [beginEditTablePart, block.id, selectTablePart, selectedId, selectedTablePart],
   );
 
   const onPartContentCommit = useCallback(
@@ -773,8 +736,9 @@ function EditorKpiViewBlock({
       if (!event) return;
       if (event.shiftKey) {
         selectKpiPart(block.id, part, { additive: true });
-        if (part.kind === "metricCard") requestRibbonTab("data");
-        else requestRibbonTab("kpi");
+        if (part.kind === "metricCard") {
+          requestRibbonTab("data", { blockId: block.id });
+        }
         return;
       }
       const samePartSelected =
@@ -790,8 +754,9 @@ function EditorKpiViewBlock({
       if (action === "part-move") return;
       if (action === "select-part") {
         selectKpiPart(block.id, part);
-        if (part.kind === "metricCard") requestRibbonTab("data");
-        else requestRibbonTab("kpi");
+        if (part.kind === "metricCard") {
+          requestRibbonTab("data", { blockId: block.id });
+        }
         return;
       }
       beginBlockStageMoveDrag({
@@ -830,10 +795,9 @@ function EditorKpiViewBlock({
         isKpiPartRefEqual(selectedKpiPart, part);
       selectKpiPart(block.id, part);
       if (part.kind === "metricCard") {
-        requestRibbonTab("data");
+        requestRibbonTab("data", { blockId: block.id });
         return;
       }
-      requestRibbonTab("kpi");
       if (same && kpiPartAllowsEdit(part)) {
         beginEditKpiPart(block.id, part);
       }
@@ -1173,7 +1137,6 @@ function EditorInputBlock({
     selectBlock,
     selectBlocksByIds,
     selectInputPart,
-    requestRibbonTab,
     updateBlock,
     updateBlockLive,
     snapshotEditorConfig,
@@ -1238,7 +1201,6 @@ function EditorInputBlock({
       if (!event) return;
       if (event.shiftKey) {
         selectInputPart(block.id, part, { additive: true });
-        requestRibbonTab("shape");
         return;
       }
       const blockSelected = selectedId === block.id;
@@ -1254,7 +1216,6 @@ function EditorInputBlock({
       if (action === "part-move") return;
       if (action === "select-part") {
         selectInputPart(block.id, part);
-        requestRibbonTab("shape");
         return;
       }
       beginBlockStageMoveDrag({
@@ -1274,7 +1235,6 @@ function EditorInputBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
-      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
       selectInputPart,
@@ -1288,9 +1248,8 @@ function EditorInputBlock({
   const onPartDoubleClick = useCallback(
     (part: ComunicadoInputPartRef) => {
       selectInputPart(block.id, part);
-      requestRibbonTab("shape");
     },
-    [block.id, requestRibbonTab, selectInputPart],
+    [block.id, selectInputPart],
   );
 
   const onPartMovePointerDown = useCallback(
