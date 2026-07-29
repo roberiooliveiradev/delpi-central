@@ -4,7 +4,6 @@ import {
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
   setTableElementEnabled,
-  tableElementPrimaryPartRef,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -28,8 +27,7 @@ type Props = {
  * Float da tabela — + elementos de estilo, pincel recipes, funil colunas/fonte.
  */
 export function TableSelectionFloatToolbar({ block }: Props) {
-  const { updateSelected, openDataPanel, selectTablePart, setSelectionPanelTab } =
-    useComunicadoEditor();
+  const { updateSelected, openDataPanel, setSelectionPanelTab } = useComunicadoEditor();
 
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
   const activeStyleId = resolveActiveTableStyleRecipeId(options, block.tablePreset ?? "grid");
@@ -46,8 +44,6 @@ export function TableSelectionFloatToolbar({ block }: Props) {
     const patch = setTableElementEnabled(elementId, enabled);
     const next = mergeComunicadoTableOptions({ ...options, ...patch }, block.tablePreset);
     persistOptions(next);
-    const part = tableElementPrimaryPartRef(elementId);
-    if (part && enabled) selectTablePart(block.id, part);
   };
 
   const applyRecipe = (recipeId: string) => {

@@ -1,11 +1,19 @@
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import {
+  Columns3,
   Database,
   Grid3x3,
+  Heading2,
   ListChecks,
+  PanelLeft,
+  PanelRight,
+  Rows3,
+  Sigma,
   Square,
   Shapes,
+  Type,
+  type LucideIcon,
 } from "lucide-react";
 import {
   AnchoredPanelPortal,
@@ -60,19 +68,45 @@ const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
 
 const STYLE_GALLERY_PRESETS = tableStyleRecipesAsPresets();
 
-const STYLE_OPTION_CHECKS: Array<{
+const STYLE_OPTION_TILES: Array<{
   id: TableElementId;
   label: string;
   hint: string;
+  icon: LucideIcon;
 }> = [
-  { id: "tableTitle", label: "Título", hint: "Exibir ou ocultar o título acima da tabela." },
-  { id: "header", label: "Linha de cabeçalho", hint: "Exibe a primeira linha como cabeçalho da tabela." },
-  { id: "totalRow", label: "Linha de totais", hint: "Exibe a última linha como linha de totais." },
-  { id: "firstColumn", label: "Primeira coluna", hint: "Destaca a primeira coluna da tabela." },
-  { id: "lastColumn", label: "Última coluna", hint: "Destaca a última coluna da tabela." },
-  { id: "zebraStripe", label: "Linhas em tiras", hint: "Alterna o fundo das linhas para facilitar a leitura." },
-  { id: "bandedColumns", label: "Colunas em tiras", hint: "Alterna o fundo das colunas para facilitar a leitura." },
-  { id: "borders", label: "Bordas", hint: "Linhas separadoras entre células." },
+  { id: "tableTitle", label: "Título", hint: "Exibir ou ocultar o título acima da tabela.", icon: Type },
+  {
+    id: "header",
+    label: "Cabeçalho",
+    hint: "Exibe a primeira linha como cabeçalho da tabela.",
+    icon: Heading2,
+  },
+  { id: "totalRow", label: "Totais", hint: "Exibe a última linha como linha de totais.", icon: Sigma },
+  {
+    id: "firstColumn",
+    label: "1ª coluna",
+    hint: "Destaca a primeira coluna da tabela.",
+    icon: PanelLeft,
+  },
+  {
+    id: "lastColumn",
+    label: "Última col.",
+    hint: "Destaca a última coluna da tabela.",
+    icon: PanelRight,
+  },
+  {
+    id: "zebraStripe",
+    label: "Linhas alt.",
+    hint: "Alterna o fundo das linhas para facilitar a leitura.",
+    icon: Rows3,
+  },
+  {
+    id: "bandedColumns",
+    label: "Colunas alt.",
+    hint: "Alterna o fundo das colunas para facilitar a leitura.",
+    icon: Columns3,
+  },
+  { id: "borders", label: "Bordas", hint: "Linhas separadoras entre células.", icon: Grid3x3 },
 ];
 
 const BORDER_WIDTH_OPTIONS = CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.map((width) => ({
@@ -131,12 +165,14 @@ function useTableDesignControls() {
     applyOptions(presetDefaultTableOptions("grid"), "grid");
   };
 
+  /** Só liga/desliga estilo — seleção de parte é pelo texto/palco, não pelo toggle. */
   const toggleElement = (id: TableElementId, enabled: boolean) => {
     applyOptions(setTableElementEnabled(id, enabled));
-    if (enabled) {
-      const part = tableElementPrimaryPartRef(id);
-      if (part) selectTablePart(block.id, part);
-    }
+  };
+
+  const focusElement = (id: TableElementId) => {
+    const part = tableElementPrimaryPartRef(id);
+    if (part) selectTablePart(block.id, part);
   };
 
   const shadeTarget =
@@ -168,6 +204,7 @@ function useTableDesignControls() {
     applyGalleryPreset,
     clearTableStyle,
     toggleElement,
+    focusElement,
     patchFrameShadow,
     openFrameShapeChrome: () => selectTablePart(block.id, { kind: "frame" }),
     openDataPanel,
@@ -196,38 +233,52 @@ function wrapPane(
   );
 }
 
-function TableStyleOptionsChecks({
+function TableStyleOptionTiles({
   options,
   onToggle,
+  onSelectLabel,
   density = "ribbon",
 }: {
   options: ComunicadoTableOptions;
   onToggle: (id: TableElementId, enabled: boolean) => void;
-  /** `pane`: grade estreita da sidebar (ribbon usa 4 colunas largas). */
+  /** Clique no rótulo do tile foca a parte no palco (não no ícone sozinho — o tile inteiro só alterna). */
+  onSelectLabel?: (id: TableElementId) => void;
+  /** `pane`: grade estreita da sidebar. */
   density?: "ribbon" | "pane";
 }) {
   return (
     <div
       className={[
-        "td-deck-ribbon__style-checks",
-        density === "pane" ? "td-deck-ribbon__style-checks--pane" : "",
+        "td-deck-ribbon__tiles",
+        "td-deck-ribbon__tiles--compact",
+        "td-deck-ribbon__style-option-tiles",
+        density === "pane" ? "td-deck-ribbon__style-option-tiles--pane" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       role="group"
       aria-label="Opções de estilo"
     >
-      {STYLE_OPTION_CHECKS.map((item) => {
+      {STYLE_OPTION_TILES.map((item) => {
         const checked = isTableElementEnabled(item.id, options);
         return (
-          <label key={item.id} className="td-deck-ribbon__style-check" title={item.hint}>
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={() => onToggle(item.id, !checked)}
-            />
-            <span>{item.label}</span>
-          </label>
+          <DeckRibbonTile
+            key={item.id}
+            icon={item.icon}
+            label={item.label}
+            hint={item.hint}
+            active={checked}
+            onClick={(event) => {
+              /* Clique no texto do rótulo → só foca a parte; ícone/área do botão → toggle. */
+              const target = event.target as HTMLElement | null;
+              if (onSelectLabel && target?.closest?.(".td-ribbon-tile__label")) {
+                event.preventDefault();
+                onSelectLabel(item.id);
+                return;
+              }
+              onToggle(item.id, !checked);
+            }}
+          />
         );
       })}
     </div>
@@ -235,41 +286,43 @@ function TableStyleOptionsChecks({
 }
 
 /**
- * Opções de estilo da tabela (checkboxes).
- * Ribbon: tile «Opções» + popover; painel: checkboxes embutidos.
+ * Opções de estilo da tabela (ícones).
+ * Ribbon: tile «Opções» + popover; painel: tiles embutidos.
+ * Toggle não seleciona parte no palco — só o clique no texto do rótulo.
  */
 export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
 
   if (!ctrl) return null;
 
-  const checks = (
-    <TableStyleOptionsChecks
+  const tiles = (
+    <TableStyleOptionTiles
       options={ctrl.options}
       onToggle={ctrl.toggleElement}
+      onSelectLabel={ctrl.focusElement}
       density={layout === "pane" ? "pane" : "ribbon"}
     />
   );
 
   if (layout === "pane") {
-    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, checks, false, "table-style-options");
+    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, tiles, false, "table-style-options");
   }
 
   return (
     <DeckRibbonGroup groupId="table-style-options" label="Opções de estilo" hint={H.tableStyleOptions}>
-      <TableStyleOptionsBandOrInline checks={checks} />
+      <TableStyleOptionsBandOrInline tiles={tiles} />
     </DeckRibbonGroup>
   );
 }
 
-function TableStyleOptionsBandOrInline({ checks }: { checks: ReactNode }) {
+function TableStyleOptionsBandOrInline({ tiles }: { tiles: ReactNode }) {
   const flattenNested = useRibbonSectionPopoverSurface();
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
   if (flattenNested) {
-    return <>{checks}</>;
+    return <>{tiles}</>;
   }
 
   return (
@@ -310,7 +363,7 @@ function TableStyleOptionsBandOrInline({ checks }: { checks: ReactNode }) {
             density="compact"
             onDismiss={() => setOpen(false)}
           >
-            {checks}
+            {tiles}
           </AnchoredPanelPortal>
         ) : null}
       </div>

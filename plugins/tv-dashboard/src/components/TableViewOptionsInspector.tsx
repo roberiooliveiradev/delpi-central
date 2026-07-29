@@ -71,7 +71,6 @@ export function TableViewOptionsInspector({
 
   const toggleElement = (elementId: TableElementId, enabled: boolean) => {
     setOptions(setTableElementEnabled(elementId, enabled));
-    if (enabled) focusElement(elementId);
   };
 
   const elementFocused = (elementId: TableElementId): boolean => {

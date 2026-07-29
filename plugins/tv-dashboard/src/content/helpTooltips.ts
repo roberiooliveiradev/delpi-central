@@ -161,7 +161,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableData: "Fonte e vínculo dos dados da tabela.",
     tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
     tableStyleOptions:
-      "Opções de estilo da tabela: cabeçalho, totais, listras, primeira/última coluna e bordas.",
+      "Opções de estilo da tabela (ícones): cabeçalho, totais, listras, primeira/última coluna e bordas. Clique no texto do ícone para selecionar a parte no palco; o ícone só liga/desliga.",
     tableTypography:
       "Tipografia global da tabela: família, tamanho, negrito/itálico, cor do texto e alinhamento.",
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
@@ -327,7 +327,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     viewValueFields:
       "Filtra métricas só neste visual, sem novo fetch. Use a fonte para limitar o conjunto disponível a todos os visuais.",
     tableColumns:
-      "Escolha quais colunas aparecem e a ordem (↑↓). Vazio = todas as colunas da fonte.",
+      "Escolha quais colunas aparecem e a ordem (arrastar). Checkbox só mostra/oculta; clique no nome da coluna para selecioná-la no palco. Vazio = todas as colunas da fonte.",
     tableWrapText:
       "Quebra o texto das células em várias linhas. Ao definir ou arrastar a largura de uma coluna, a quebra é ativada automaticamente.",
     tableColumnSize:

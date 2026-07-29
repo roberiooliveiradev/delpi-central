@@ -24,7 +24,7 @@ import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { ChartAxesProjectionEditor } from "./ChartAxesProjectionEditor";
 import { KpiMetricsProjectionEditor } from "./KpiMetricsProjectionEditor";
-import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
+import { TableColumnsMultiSelect, resolveVisibleKeys } from "./TableColumnsMultiSelect";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 import type { DataSourceLabelCatalog } from "@delpi/tv-dashboard-presentation";
 
@@ -67,7 +67,10 @@ export function VisualDataViewInspector({
     openDataCatalog,
     selectedKpiPart,
     selectedChartPart,
+    selectedTablePart,
     selectChartPart,
+    selectTablePart,
+    clearTablePartSelection,
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
@@ -101,6 +104,15 @@ export function VisualDataViewInspector({
   }));
 
   const applyTableProjection = (next: TableViewProjection | undefined) => {
+    let focusedKey: string | undefined;
+    if (
+      selected.type === "table_view" &&
+      selectedTablePart?.kind === "headerCell" &&
+      selectedTablePart.colIndex != null
+    ) {
+      const prevVisible = resolveVisibleKeys(tableColumnOptions, tableBlock?.tableProjection);
+      focusedKey = prevVisible[selectedTablePart.colIndex];
+    }
     const framePatch = buildViewFrameFitPatch({
       ...selected,
       tableProjection: next,
@@ -109,6 +121,16 @@ export function VisualDataViewInspector({
       tableProjection: next,
       ...(framePatch ?? {}),
     } as Partial<ComunicadoTableViewBlock>);
+    if (!focusedKey || selected.type !== "table_view") return;
+    const nextVisible = resolveVisibleKeys(tableColumnOptions, next);
+    const nextIndex = nextVisible.indexOf(focusedKey);
+    if (nextIndex < 0) {
+      clearTablePartSelection();
+      return;
+    }
+    if (nextIndex !== selectedTablePart?.colIndex) {
+      selectTablePart(selected.id, { kind: "headerCell", colIndex: nextIndex });
+    }
   };
 
   const applyKpiProjection = (next: KpiViewProjection | undefined) => {
@@ -249,6 +271,22 @@ export function VisualDataViewInspector({
             tableProjection={tableBlock?.tableProjection}
             compact={isRibbon}
             onChange={applyTableProjection}
+            focusedColumnKey={
+              selectedTablePart?.kind === "headerCell" && selectedTablePart.colIndex != null
+                ? resolveVisibleKeys(tableColumnOptions, tableBlock?.tableProjection)[
+                    selectedTablePart.colIndex
+                  ] ?? null
+                : null
+            }
+            onSelectColumn={(key) => {
+              const visibleKeys = resolveVisibleKeys(
+                tableColumnOptions,
+                tableBlock?.tableProjection,
+              );
+              const colIndex = visibleKeys.indexOf(key);
+              if (colIndex < 0) return;
+              selectTablePart(selected.id, { kind: "headerCell", colIndex });
+            }}
             sourceFieldLabels={
               linkedSource && isDataSourceBlockType(linkedSource.type)
                 ? (linkedSource as ComunicadoDataSourceBlock).fieldLabels

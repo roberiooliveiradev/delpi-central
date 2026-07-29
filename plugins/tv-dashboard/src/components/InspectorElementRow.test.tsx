@@ -52,4 +52,21 @@ describe("InspectorElementRow", () => {
       (screen.getByRole("checkbox", { name: /Exibir Controle/i }) as HTMLInputElement).disabled,
     ).toBe(true);
   });
+
+  it("checkbox não dispara onSelect; só o texto do rótulo", () => {
+    const onToggle = vi.fn();
+    const onSelect = vi.fn();
+    render(
+      <InspectorElementRow
+        id="td-test-el"
+        label="Linha de cabeçalho"
+        enabled
+        onToggle={onToggle}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(screen.getByRole("checkbox", { name: /Exibir Linha de cabeçalho/i }));
+    expect(onToggle).toHaveBeenCalledWith(false);
+    expect(onSelect).not.toHaveBeenCalled();
+  });
 });

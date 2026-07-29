@@ -27,6 +27,13 @@ type Props = {
   /** Rótulos atuais da fonte — valor do input quando onRenameField está definido. */
   sourceFieldLabels?: Record<string, string> | null;
   compact?: boolean;
+  /** Coluna focada no palco (`headerCell`) — destaque no rótulo. */
+  focusedColumnKey?: string | null;
+  /**
+   * Clique no texto do nome da coluna → seleciona no palco.
+   * Checkbox só altera visibilidade (não dispara seleção).
+   */
+  onSelectColumn?: (key: string) => void;
 };
 
 export function resolveVisibleKeys(
@@ -166,6 +173,7 @@ export function patchTableColumnLabel(
 
 /**
  * Seleção e ordem de colunas da table_view (arrastar para reordenar) + rótulo.
+ * Checkbox = visibilidade; texto do nome = seleção no palco.
  */
 export function TableColumnsMultiSelect({
   idPrefix,
@@ -175,6 +183,8 @@ export function TableColumnsMultiSelect({
   onRenameField,
   sourceFieldLabels,
   compact = false,
+  focusedColumnKey = null,
+  onSelectColumn,
 }: Props) {
   if (options.length === 0) return null;
 
@@ -214,46 +224,43 @@ export function TableColumnsMultiSelect({
     );
   }
 
-  return (
-    <div
-      className={
-        compact
-          ? "td-deck-inspector__value-fields td-deck-inspector__value-fields--compact"
-          : "td-deck-inspector__value-fields"
-      }
-      role="group"
-      aria-label="Colunas da tabela"
-    >
-      <p className="td-deck-inspector__hint">
-        {isAutomatic
-          ? "Todas as colunas — arraste para reordenar (ou desmarque para filtrar)"
-          : `${visible.length} de ${options.length} colunas — arraste ⋮⋮ para reordenar`}
-      </p>
-      {visible.map((key, index) => {
-        const option = options.find((opt) => opt.key === key) ?? { key, label: key };
-        return (
-          <div
-            key={option.key}
-            className={rowClassName("td-deck-inspector__column-row", index)}
-            {...rowDropProps(index)}
+  function columnVisibilityRow(option: TableColumnOption, checked: boolean, index?: number) {
+    const focused = focusedColumnKey === option.key;
+    return (
+      <div
+        key={option.key}
+        className={[
+          index != null
+            ? rowClassName("td-deck-inspector__column-row", index)
+            : "td-deck-inspector__column-row td-deck-inspector__column-row--hidden",
+          focused ? "td-deck-inspector__column-row--focused" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        {...(index != null ? rowDropProps(index) : {})}
+      >
+        {index != null && canDrag ? (
+          <button
+            type="button"
+            className="td-deck-inspector__drag-handle"
+            aria-label={`Arrastar coluna ${option.label}`}
+            title="Arrastar para reordenar"
+            {...handleDragProps(index)}
           >
-            {canDrag ? (
-              <button
-                type="button"
-                className="td-deck-inspector__drag-handle"
-                aria-label={`Arrastar coluna ${option.label}`}
-                title="Arrastar para reordenar"
-                {...handleDragProps(index)}
-              >
-                ⋮⋮
-              </button>
-            ) : null}
-            <div className="td-deck-inspector__column-row-body">
+            ⋮⋮
+          </button>
+        ) : null}
+        <div className="td-deck-inspector__column-row-body">
+          <div className="td-deck-inspector__column-row-summary">
+            <span
+              className="td-deck-inspector__column-toggle"
+              onClick={(event) => event.stopPropagation()}
+            >
               <NativeCheckboxControl
                 id={`${idPrefix}-${option.key}`}
                 className="td-deck-inspector__checkbox"
-                checked
-                label={option.label}
+                checked={checked}
+                aria-label={`Exibir coluna ${option.label}`}
                 onChange={(nextChecked) => {
                   onChange(
                     patchTableColumnVisibility(
@@ -266,38 +273,49 @@ export function TableColumnsMultiSelect({
                   );
                 }}
               />
-              {renameControl(option.key, option.label)}
-            </div>
+            </span>
+            {onSelectColumn ? (
+              <button
+                type="button"
+                className="td-chart-element__label-btn"
+                title="Selecionar coluna no palco"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onSelectColumn(option.key);
+                }}
+              >
+                {option.label}
+              </button>
+            ) : (
+              <span className="td-chart-element__label">{option.label}</span>
+            )}
           </div>
-        );
-      })}
-      {hidden.map((option) => (
-        <div
-          key={option.key}
-          className="td-deck-inspector__column-row td-deck-inspector__column-row--hidden"
-        >
-          <div className="td-deck-inspector__column-row-body">
-            <NativeCheckboxControl
-              id={`${idPrefix}-${option.key}`}
-              className="td-deck-inspector__checkbox"
-              checked={false}
-              label={option.label}
-              onChange={(nextChecked) => {
-                onChange(
-                  patchTableColumnVisibility(
-                    options,
-                    visible,
-                    option.key,
-                    nextChecked,
-                    tableProjection,
-                  ),
-                );
-              }}
-            />
-            {renameControl(option.key, option.label)}
-          </div>
+          {renameControl(option.key, option.label)}
         </div>
-      ))}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={
+        compact
+          ? "td-deck-inspector__value-fields td-deck-inspector__value-fields--compact"
+          : "td-deck-inspector__value-fields"
+      }
+      role="group"
+      aria-label="Colunas da tabela"
+    >
+      <p className="td-deck-inspector__hint">
+        {isAutomatic
+          ? "Todas as colunas — arraste para reordenar (ou desmarque para filtrar). Clique no nome para selecionar no palco."
+          : `${visible.length} de ${options.length} colunas — arraste ⋮⋮ para reordenar. Clique no nome para selecionar.`}
+      </p>
+      {visible.map((key, index) => {
+        const option = options.find((opt) => opt.key === key) ?? { key, label: key };
+        return columnVisibilityRow(option, true, index);
+      })}
+      {hidden.map((option) => columnVisibilityRow(option, false))}
     </div>
   );
 }
