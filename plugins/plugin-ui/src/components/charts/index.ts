@@ -80,7 +80,6 @@ export {
   SERIES_CHART_LEGEND_POSITION_OPTIONS,
   SERIES_CHART_VALUE_FORMAT_OPTIONS,
   formatSeriesChartValue,
-  inferSeriesChartValueFormatFromField,
   mergeSeriesChartOptions,
   migrateSeriesChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions,

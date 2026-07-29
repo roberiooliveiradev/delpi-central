@@ -36,16 +36,30 @@ describe("seriesChartOptions — títulos de eixo", () => {
     expect(resolved.showYAxisTitle).toBe(true);
   });
 
-  it("resolveSeriesChartDisplayOptions infere moeda em ranking de valor (R$)", () => {
+  it("resolveSeriesChartDisplayOptions não infere formato — escolha do usuário", () => {
     const resolved = resolveSeriesChartDisplayOptions(
       { valueFormat: "auto" },
       {
         label: "Relatório operacional — Refugos rankings",
-        chart: { series: [{ field: "value", name: "Valor (R$)" }] },
         table: {
           columns: [
             { key: "code", label: "Código" },
             { key: "value", label: "Valor (R$)" },
+          ],
+        },
+      },
+    );
+    expect(resolved.valueFormat).toBe("auto");
+  });
+
+  it("resolveSeriesChartDisplayOptions preserva formato explícito do usuário", () => {
+    const resolved = resolveSeriesChartDisplayOptions(
+      { valueFormat: "currency" },
+      {
+        table: {
+          columns: [
+            { key: "code", label: "Código" },
+            { key: "sharePct", label: "Participação (%)" },
           ],
         },
       },

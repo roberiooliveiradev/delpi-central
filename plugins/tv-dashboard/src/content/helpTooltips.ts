@@ -355,7 +355,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartOptions: "Título, legenda, eixos, rótulos de dados e formato dos valores exibidos no gráfico.",
     chartElements:
       "Ligue ou desligue partes. O detalhe (texto, eixos, grade) abre ao selecionar a parte no palco ou na faixa Gráfico.",
-    chartAppearance: "Formato numérico e cor da série.",
+    chartAppearance:
+      "Formato dos valores (Geral / Número / Moeda / %) — escolha explícita, como no Excel. Cor da série.",
+    chartValueFormat:
+      "Formato de exibição dos números do gráfico. Geral = número simples; use Moeda (R$) ou Percentual quando quiser.",
     chartTitle: "Título central acima do gráfico (ex.: ROL). Vazio usa o nome da fonte de dados.",
     chartAxisTitles:
       "Títulos dos eixos X/Y. Ligados por padrão; vazio usa os rótulos da rota (ex.: Período e a métrica).",

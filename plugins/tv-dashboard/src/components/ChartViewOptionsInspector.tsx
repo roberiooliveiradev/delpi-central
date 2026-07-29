@@ -135,7 +135,11 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
               defaultOpen={false}
             >
-              <DeckField id="td-chart-value-format" label="Formato dos valores">
+              <DeckField
+                id="td-chart-value-format"
+                label="Formato dos valores"
+                hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartValueFormat}
+              >
                 <FormSelectControl
                   id="td-chart-value-format"
                   ariaLabel="Formato dos valores"

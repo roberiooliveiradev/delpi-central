@@ -7,13 +7,17 @@ import {
   buildViewFrameFitPatch,
   patchFieldLabels,
   tablePresetLabel,
+  CHART_VALUE_FORMAT_OPTIONS,
+  mergeComunicadoChartOptions,
   type ComunicadoBlock,
+  type ComunicadoChartOptions,
   type ComunicadoDataSourceBlock,
   type ComunicadoTableViewBlock,
   type ChartViewProjection,
   type KpiViewProjection,
   type TableViewProjection,
 } from "@delpi/tv-dashboard-presentation";
+import { FormSelectControl } from "@delpi/plugin-ui/index";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -241,6 +245,38 @@ export function VisualDataViewInspector({
               if (seriesIndex < 0) return;
               selectChartPart(selected.id, { kind: "series", seriesIndex });
             }}
+          />
+        </DeckField>
+      ) : null}
+      {showProjectionEditors && hasSource && selected.type === "chart_view" ? (
+        <DeckField
+          id="td-view-chart-value-format"
+          label="Formato dos valores"
+          hint="Como Excel/Power BI: Geral, Número, Moeda (R$) ou Percentual — escolha explícita, sem inferência automática."
+        >
+          <FormSelectControl
+            id="td-view-chart-value-format"
+            className={compactSelect}
+            ariaLabel="Formato dos valores do gráfico"
+            value={
+              mergeComunicadoChartOptions(
+                "chartOptions" in selected ? selected.chartOptions : undefined,
+              ).valueFormat ?? "auto"
+            }
+            onChange={(value) => {
+              const current =
+                "chartOptions" in selected ? selected.chartOptions : undefined;
+              updateSelected({
+                chartOptions: {
+                  ...mergeComunicadoChartOptions(current),
+                  valueFormat: value as ComunicadoChartOptions["valueFormat"],
+                },
+              } as Partial<ComunicadoBlock>);
+            }}
+            options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
+              value: entry.value,
+              label: entry.label,
+            }))}
           />
         </DeckField>
       ) : null}
