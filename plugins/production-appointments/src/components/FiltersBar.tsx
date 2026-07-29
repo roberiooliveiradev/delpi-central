@@ -108,7 +108,7 @@ export function FiltersBar({
           hint={PA_HELP_TOOLTIPS.filters.motherOp}
           checked={filters.motherOp}
           onChange={(checked) => onChange({ motherOp: checked })}
-          checkboxLabel="Somente OPs com final 001"
+          checkboxLabel="Somente OP's mães"
           disabled={loading}
         />
       </div>

@@ -1,4 +1,5 @@
 import { FieldLabel } from "../help/FieldLabel";
+import { NativeCheckboxControl } from "./NativeCheckboxControl";
 
 export type FilterCheckboxFieldClassNames = {
   root: string;
@@ -52,16 +53,14 @@ export function FilterCheckboxField({
       <span className={classNames.labelRow}>
         <FieldLabel label={label} hint={hint} />
       </span>
-      <label className={classNames.checkboxControl} htmlFor={id}>
-        <input
-          id={id}
-          type="checkbox"
-          checked={checked}
-          disabled={disabled}
-          onChange={(event) => onChange(event.target.checked)}
-        />
-        <span>{resolvedCheckboxLabel}</span>
-      </label>
+      <NativeCheckboxControl
+        id={id}
+        className={classNames.checkboxControl}
+        checked={checked}
+        disabled={disabled}
+        label={resolvedCheckboxLabel}
+        onChange={onChange}
+      />
     </div>
   );
 }

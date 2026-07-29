@@ -31,21 +31,20 @@ describe("FilterCheckboxField", () => {
     expect(screen.getByLabelText("Ativar filtro")).toBeTruthy();
   });
 
-  it("usa checkboxLabel customizado e propaga onChange", () => {
-    const onChange = vi.fn();
-    render(
+  it("usa NativeCheckboxControl do kit (delpi-ui-native-checkbox)", () => {
+    const { container } = render(
       <FilterCheckboxField
-        id="filter-completed"
-        label="Mostrar concluídas"
-        checkboxLabel="Incluir concluídas"
+        id="filter-native"
+        label="OP mãe"
+        checkboxLabel="Somente OP's mães"
         checked={false}
-        onChange={onChange}
-        classNames={filterCheckboxFieldPacClasses("pac")}
+        onChange={() => undefined}
+        classNames={filterCheckboxFieldPacClasses("pa")}
         labels={LABELS}
       />,
     );
 
-    fireEvent.click(screen.getByLabelText("Incluir concluídas"));
-    expect(onChange).toHaveBeenCalledWith(true);
+    expect(container.querySelector(".delpi-ui-native-checkbox")).toBeTruthy();
+    expect(screen.getByLabelText("Somente OP's mães")).toBeTruthy();
   });
 });
