@@ -16,14 +16,15 @@ const { default: App } = await import("./App");
 const roots = new WeakMap<HTMLElement, Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {
-  let root = roots.get(el);
-
-  if (!root) {
-    root = ReactDOM.createRoot(el);
-    roots.set(el, root);
+  const existing = roots.get(el);
+  if (existing) {
+    existing.render(<App {...props} />);
+    return;
   }
 
-  root.render(<App {...props} />);
+  const created = ReactDOM.createRoot(el);
+  roots.set(el, created);
+  created.render(<App {...props} />);
 }
 
 export function mount(el: HTMLElement, props: AppProps = {}) {

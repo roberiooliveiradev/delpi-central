@@ -12,8 +12,6 @@ import type {
 import type { SeriesChartOptions } from "./seriesChartOptions";
 import {
   mergeSeriesChartOptions,
-  OFFICE_CHART_AREA_FILL,
-  OFFICE_CHART_AREA_STROKE,
   OFFICE_CHART_PLOT_FILL,
   OFFICE_CHART_PLOT_STROKE,
   OFFICE_CHART_SERIES_COLOR,

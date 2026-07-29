@@ -42,7 +42,7 @@ export function RecursoCatalogFormFields({
   return (
     <>
       <div className={DS_FILTERS_ROW}>
-        <TmNativeTextField label="Nome *" hint={R.nome} className={DS_FILTER_BOX_WIDE_MOD} required value={form.nome_recurso} onChange={(nome_recurso) => onChange({ ...form, nome_recurso })} />
+        <TmNativeTextField id="tm-recurso-nome" label="Nome *" hint={R.nome} className={DS_FILTER_BOX_WIDE_MOD} required value={form.nome_recurso} onChange={(nome_recurso) => onChange({ ...form, nome_recurso })} />
         <SelectField
           label="Categoria"
           hint={R.categoria}
@@ -55,7 +55,7 @@ export function RecursoCatalogFormFields({
             (c) => c
           )}
         />
-        <TmNativeTextField label="Fornecedor" hint={R.fornecedor} value={form.fornecedor} onChange={(fornecedor) => onChange({ ...form, fornecedor })} />
+        <TmNativeTextField id="tm-recurso-fornecedor" label="Fornecedor" hint={R.fornecedor} value={form.fornecedor} onChange={(fornecedor) => onChange({ ...form, fornecedor })} />
         <SelectField
           label="Tipo de custo *"
           hint={R.tipoCusto}
@@ -122,11 +122,11 @@ export function RecursoCatalogFormFields({
             (s) => s
           )}
         />
-        <TmNativeTextField label="Centro de custo" hint={R.centroCusto} value={form.centro_custo} onChange={(centro_custo) => onChange({ ...form, centro_custo })} />
-        <TmNativeTextField label="Início vigência do recurso" hint={R.inicioVigencia} type="date" value={form.data_inicio_vigencia} onChange={(data_inicio_vigencia) => onChange({ ...form, data_inicio_vigencia })} />
-        <TmNativeTextField label="Fim vigência do recurso" hint={R.fimVigencia} type="date" value={form.data_fim_vigencia} onChange={(data_fim_vigencia) => onChange({ ...form, data_fim_vigencia })} />
+        <TmNativeTextField id="tm-recurso-centro-custo" label="Centro de custo" hint={R.centroCusto} value={form.centro_custo} onChange={(centro_custo) => onChange({ ...form, centro_custo })} />
+        <TmNativeTextField id="tm-recurso-inicio-vigencia" label="Início vigência do recurso" hint={R.inicioVigencia} type="date" value={form.data_inicio_vigencia} onChange={(data_inicio_vigencia) => onChange({ ...form, data_inicio_vigencia })} />
+        <TmNativeTextField id="tm-recurso-fim-vigencia" label="Fim vigência do recurso" hint={R.fimVigencia} type="date" value={form.data_fim_vigencia} onChange={(data_fim_vigencia) => onChange({ ...form, data_fim_vigencia })} />
       </div>
-      <TmNativeTextField label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} className={DS_FILTER_BOX_WIDE_MOD} value={form.observacoes} onChange={(observacoes) => onChange({ ...form, observacoes })} />
+      <TmNativeTextField id="tm-recurso-observacoes" label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} className={DS_FILTER_BOX_WIDE_MOD} value={form.observacoes} onChange={(observacoes) => onChange({ ...form, observacoes })} />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">
           {submitLabel}

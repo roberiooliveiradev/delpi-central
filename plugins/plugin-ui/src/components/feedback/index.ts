@@ -82,6 +82,7 @@ export {
   ModalFrame,
   modalFrameClassName,
   type ModalFrameProps,
+  type ModalFrameRef,
 } from "./ModalFrame";
 export {
   StateBox,

@@ -1,12 +1,19 @@
-import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react";
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react";
+
+/** Ref estrutural — evita conflito entre `@types/react` do MFE e do kit. */
+export type ModalFrameRef =
+  | ((instance: HTMLDivElement | null) => void)
+  | { current: HTMLDivElement | null }
+  | null
+  | undefined;
 
 export type ModalFrameProps = {
   children: ReactNode;
   className?: string;
   style?: CSSProperties;
   /** Encaminha ref ao card (dialog). */
-  frameRef?: Ref<HTMLDivElement>;
-} & Omit<HTMLAttributes<HTMLDivElement>, "className" | "style" | "children">;
+  frameRef?: ModalFrameRef;
+} & Omit<HTMLAttributes<HTMLDivElement>, "className" | "style" | "children" | "ref">;
 
 /** Classe canônica do chrome de modal (raio/sombra/header do «Remover…»). */
 export function modalFrameClassName(...extra: Array<string | false | null | undefined>): string {
@@ -20,7 +27,12 @@ export function modalFrameClassName(...extra: Array<string | false | null | unde
  */
 export function ModalFrame({ children, className, style, frameRef, ...rest }: ModalFrameProps) {
   return (
-    <div ref={frameRef} className={modalFrameClassName(className)} style={style} {...rest}>
+    <div
+      ref={frameRef as never}
+      className={modalFrameClassName(className)}
+      style={style}
+      {...rest}
+    >
       {children}
     </div>
   );

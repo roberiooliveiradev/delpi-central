@@ -32,7 +32,7 @@ type BaseNativeFieldProps = {
 export type NativeTextFieldProps = BaseNativeFieldProps & {
   value: string;
   onChange: (value: string) => void;
-  type?: "text" | "date" | "datetime-local" | "number" | "url" | "search" | "password" | "month";
+  type?: "text" | "date" | "datetime-local" | "number" | "url" | "search" | "password" | "month" | "time";
   placeholder?: string;
   maxLength?: number;
   min?: number | string;

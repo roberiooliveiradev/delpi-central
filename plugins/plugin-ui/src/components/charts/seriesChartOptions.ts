@@ -84,6 +84,8 @@ export const SERIES_CHART_CHROME_VERSION = 2;
 export type SeriesChartPoint = {
   label?: string;
   value?: number | null;
+  /** Índice estável na série de origem (legenda/cores por categoria). */
+  sourceIndex?: number;
 };
 
 /** Série nomeada para gráficos multi-série (overlay). */

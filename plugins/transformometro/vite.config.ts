@@ -20,7 +20,7 @@ export default defineConfig({
       exposes: {
         "./App": "./src/bootstrap.tsx",
       },
-      shared: { ...FEDERATION_SHARED_WITH_DIAGRAM },
+      shared: { ...FEDERATION_SHARED_WITH_DIAGRAM } as never,
     }),
     federationReactProxyFixPlugin(),
     react(),

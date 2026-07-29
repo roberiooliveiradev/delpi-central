@@ -88,7 +88,7 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    setAtaGenerationPort(createHttpAtaGenerationPort(getAccessToken));
+    setAtaGenerationPort(createHttpAtaGenerationPort(() => getAccessToken?.()));
     return () => resetAtaGenerationPort();
   }, [getAccessToken]);
 

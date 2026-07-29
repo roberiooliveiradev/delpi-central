@@ -8,8 +8,24 @@
  * Chunks App-*.js ainda importam React bundled (index-*.js) fora do importShared;
  * o shim CJS é redirecionado para globalThis.__DELPI_MF_REACT__ quando disponível.
  */
-import type { Plugin } from "vite";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
+
+/** Tipagem mínima do plugin Vite — evita depender de `vite` no typecheck dos MFEs. */
+type VitePlugin = {
+  name: string;
+  apply?: "build" | "serve" | ((this: unknown, config: unknown, env: { command: string }) => boolean);
+  enforce?: "pre" | "post";
+  renderChunk?: (
+    this: unknown,
+    code: string,
+    chunk: { fileName: string },
+  ) => string | null | undefined | { code: string; map?: unknown };
+  generateBundle?: (
+    this: unknown,
+    outputOptions: unknown,
+    bundle: Record<string, { type: string; code?: string; fileName?: string }>,
+  ) => void;
+};
 
 /** Instância canônica de React — portal/MFE semeiam antes do mount; importShared atualiza. */
 export const DELPI_MF_REACT_GLOBAL = "__DELPI_MF_REACT__";
@@ -293,18 +309,23 @@ function isAppOrExposeChunk(fileName: string): boolean {
   return /(?:^|\/)App-/.test(fileName) || fileName.includes("__federation_expose_");
 }
 
-export function federationReactProxyFixPlugin(): Plugin {
+export function federationReactProxyFixPlugin(): VitePlugin {
   return {
     name: "federation-react-proxy-fix",
     apply: "build",
     enforce: "post",
-    renderChunk(code, chunk) {
+    renderChunk(code: string, chunk: { fileName: string }) {
       const patched = applyMfChunkPatches(code, chunk.fileName);
       return patched === code ? null : patched;
     },
-    generateBundle(_outputOptions, bundle) {
+    generateBundle(
+      _outputOptions: unknown,
+      bundle: Record<string, { type: string; code?: string; fileName?: string }>,
+    ) {
       for (const item of Object.values(bundle)) {
-        if (item.type !== "chunk") continue;
+        if (item.type !== "chunk" || typeof item.code !== "string" || typeof item.fileName !== "string") {
+          continue;
+        }
         item.code = applyMfChunkPatches(item.code, item.fileName);
       }
     },

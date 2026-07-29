@@ -13,7 +13,7 @@ export type NativeTextControlProps = {
   id?: string;
   value: string | number;
   onChange: (value: string) => void;
-  type?: "text" | "number" | "url" | "date" | "datetime-local" | "search" | "password" | "month";
+  type?: "text" | "number" | "url" | "date" | "datetime-local" | "search" | "password" | "month" | "time";
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;

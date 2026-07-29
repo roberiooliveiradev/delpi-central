@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Share scope MF — registra React do MFE pai antes do remote plugin-ui.
  *

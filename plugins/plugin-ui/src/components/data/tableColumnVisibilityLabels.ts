@@ -1,4 +1,4 @@
-import type { TableColumnVisibilityMenuLabels } from "../components/data/TableColumnVisibilityMenu";
+import type { TableColumnVisibilityMenuLabels } from "./TableColumnVisibilityMenu";
 
 /** Textos PT-BR padrão do menu “Colunas” (Pedidos de Vendas / DataTableSection). */
 export const DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS: TableColumnVisibilityMenuLabels = {

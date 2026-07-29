@@ -64,8 +64,8 @@ export function FixedPanelPortal({
   });
 
   useEffect(() => {
-    const dismiss = onDismiss;
-    if (!open || !dismiss) return;
+    if (!open || !onDismiss) return;
+    const dismiss: () => void = onDismiss;
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         event.preventDefault();

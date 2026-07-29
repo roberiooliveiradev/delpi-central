@@ -118,7 +118,7 @@ export function ChartAxisTitle({
         <div
           ref={editRef}
           // xmlns necessário em alguns browsers para foreignObject HTML
-          xmlns="http://www.w3.org/1999/xhtml"
+          {...({ xmlns: "http://www.w3.org/1999/xhtml" } as Record<string, string>)}
           contentEditable
           suppressContentEditableWarning
           role="textbox"

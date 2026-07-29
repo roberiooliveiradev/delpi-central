@@ -35,7 +35,8 @@ export function printScopedWindow(options: ScopedWindowPrintOptions = {}): boole
     window.dispatchEvent(new Event("resize"));
   }
 
-  let fallbackTimer: ReturnType<typeof window.setTimeout> | undefined;
+  // `number` evita choque DOM vs `@types/node` (NodeJS.Timeout).
+  let fallbackTimer: number | undefined;
 
   const cleanup = () => {
     if (rootClass) root.classList.remove(rootClass);
@@ -48,7 +49,7 @@ export function printScopedWindow(options: ScopedWindowPrintOptions = {}): boole
 
   window.addEventListener("afterprint", cleanup);
   // Liberação de emergência se o navegador não emitir afterprint.
-  fallbackTimer = window.setTimeout(cleanup, 60_000);
+  fallbackTimer = window.setTimeout(cleanup, 60_000) as unknown as number;
 
   const run = () => {
     try {
@@ -76,7 +77,7 @@ export function scheduleTargetWindowPrint(
   onPrinted?: () => void,
 ): void {
   let started = false;
-  let scheduleTimer: ReturnType<typeof window.setTimeout> | undefined;
+  let scheduleTimer: number | undefined;
 
   const clearSchedule = () => {
     if (scheduleTimer !== undefined) window.clearTimeout(scheduleTimer);
@@ -91,7 +92,7 @@ export function scheduleTargetWindowPrint(
   };
 
   targetWindow.addEventListener("load", trigger, { once: true });
-  scheduleTimer = window.setTimeout(trigger, 1_000);
+  scheduleTimer = window.setTimeout(trigger, 1_000) as unknown as number;
 }
 
 function waitForImagesThenPrintOnce(
@@ -100,8 +101,8 @@ function waitForImagesThenPrintOnce(
 ): void {
   const images = Array.from(targetWindow.document.images);
   let printed = false;
-  let readyTimer: ReturnType<typeof window.setTimeout> | undefined;
-  let fallbackTimer: ReturnType<typeof window.setTimeout> | undefined;
+  let readyTimer: number | undefined;
+  let fallbackTimer: number | undefined;
 
   const clearTimers = () => {
     if (readyTimer !== undefined) window.clearTimeout(readyTimer);
@@ -121,7 +122,7 @@ function waitForImagesThenPrintOnce(
   };
 
   if (images.length === 0) {
-    readyTimer = window.setTimeout(runPrint, 100);
+    readyTimer = window.setTimeout(runPrint, 100) as unknown as number;
     return;
   }
 
@@ -129,7 +130,7 @@ function waitForImagesThenPrintOnce(
   const tryPrint = () => {
     ready += 1;
     if (ready >= images.length) {
-      readyTimer = window.setTimeout(runPrint, 150);
+      readyTimer = window.setTimeout(runPrint, 150) as unknown as number;
     }
   };
 
@@ -141,7 +142,7 @@ function waitForImagesThenPrintOnce(
     }
   }
 
-  fallbackTimer = window.setTimeout(runPrint, 1_500);
+  fallbackTimer = window.setTimeout(runPrint, 1_500) as unknown as number;
 }
 
 /** Exposto só para testes — reseta o mutex de impressão da janela atual. */

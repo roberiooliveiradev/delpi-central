@@ -244,13 +244,14 @@ export function ProcessoFolderBrowser({
   const fieldVisibility = fieldVisibilityForProcessoListView(viewMode);
   const pageSize = pageSizeForProcessoListView(viewMode);
 
-  const listForPagination = showingDepartamentoRoot ? departamentoFolders : sortedProcessos;
-  const { page, setPage, slice, total } = useClientPagination(listForPagination, pageSize);
+  const departamentoPagination = useClientPagination(departamentoFolders, pageSize);
+  const processoPagination = useClientPagination(sortedProcessos, pageSize);
+  const { page, setPage, total } = showingDepartamentoRoot
+    ? departamentoPagination
+    : processoPagination;
 
-  const departamentoSlice = showingDepartamentoRoot
-    ? (slice as DepartamentoFolder[])
-    : [];
-  const processoSlice = showingDepartamentoRoot ? [] : (slice as Processo[]);
+  const departamentoSlice = showingDepartamentoRoot ? departamentoPagination.slice : [];
+  const processoSlice = showingDepartamentoRoot ? [] : processoPagination.slice;
 
   const departamentoDetailColumns = useMemo<DataTableColumn<DepartamentoFolder>[]>(
     () => [
