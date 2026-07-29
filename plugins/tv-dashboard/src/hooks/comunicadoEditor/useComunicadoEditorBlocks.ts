@@ -225,6 +225,23 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef],
   );
 
+  /**
+   * Inserção: commit antes da seleção.
+   * `selectBlocksByIds` / `setSelectedId` resolvem contra `configRef` —
+   * selecionar antes do commit deixa o id fora do ref e a seleção vazia.
+   */
+  const commitAndSelectInserted = useCallback(
+    (
+      nextBlocks: ComunicadoBlock[],
+      selectIds: string[],
+      configPatch?: Pick<ComunicadoConfig, "groupTransforms">,
+    ) => {
+      updateBlocks(nextBlocks, configPatch);
+      selectBlocksByIds(selectIds);
+    },
+    [selectBlocksByIds, updateBlocks],
+  );
+
   const connectSelected = useCallback(() => {
     if (selectedIds.length !== 2) return;
     const blocks = configRef.current.blocks ?? [];
@@ -233,9 +250,8 @@ export function useComunicadoEditorBlocks({
     const b = blocks.find((block) => block.id === idB);
     if (!a || !b || !canConnectBlocks(a, b)) return;
     const connector = createConnectorBlock(a, b, { zIndex: nextZIndex(blocks) });
-    updateBlocks([...blocks, connector]);
-    selectBlocksByIds([connector.id]);
-  }, [configRef, selectBlocksByIds, selectedIds, updateBlocks]);
+    commitAndSelectInserted([...blocks, connector], [connector.id]);
+  }, [commitAndSelectInserted, configRef, selectedIds]);
 
   const addBlock = useCallback(
     (type: ComunicadoBlock["type"]) => {
@@ -245,10 +261,9 @@ export function useComunicadoEditorBlocks({
       );
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, placeInserted, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, placeInserted],
   );
 
   const addDataBlock = useCallback(
@@ -264,10 +279,9 @@ export function useComunicadoEditorBlocks({
         }
       }
       withZ = placeInserted(withZ);
-      setSelectedId(withZ.id);
-      updateBlocks([...(configRef.current.blocks ?? []), withZ]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), withZ], [withZ.id]);
     },
-    [configRef, placeInserted, setLastDataDisplayMode, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, placeInserted, setLastDataDisplayMode],
   );
 
   const linkViewToSource = useCallback(
@@ -324,10 +338,9 @@ export function useComunicadoEditorBlocks({
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, linkViewToSource, placeInserted, selectedId],
   );
 
   const addTableViewBlock = useCallback(
@@ -339,10 +352,9 @@ export function useComunicadoEditorBlocks({
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, linkViewToSource, placeInserted, selectedId],
   );
 
   const addCanvasTableBlock = useCallback(
@@ -350,19 +362,17 @@ export function useComunicadoEditorBlocks({
       let block = createCanvasTableBlock(rows, cols);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, placeInserted, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, placeInserted],
   );
 
   const addInputBlock = useCallback(() => {
     let block = createInputBlock({ targetScope: "slide", paramKey: "" });
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     block = placeInserted(block);
-    setSelectedId(block.id);
-    updateBlocks([...(configRef.current.blocks ?? []), block]);
-  }, [configRef, placeInserted, setSelectedId, updateBlocks]);
+    commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
+  }, [commitAndSelectInserted, configRef, placeInserted]);
 
   const addKpiViewBlock = useCallback(() => {
     let block = createKpiViewBlock();
@@ -372,9 +382,8 @@ export function useComunicadoEditorBlocks({
     }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     block = placeInserted(block);
-    setSelectedId(block.id);
-    updateBlocks([...(configRef.current.blocks ?? []), block]);
-  }, [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks]);
+    commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
+  }, [commitAndSelectInserted, configRef, linkViewToSource, placeInserted, selectedId]);
 
   const addDataSourceBlock = useCallback(
     (block: ComunicadoBlock, options?: { preferredView?: DataInsertPreferredView }) => {
@@ -435,8 +444,7 @@ export function useComunicadoEditorBlocks({
           }
         }
         setDataPanelOpen(false);
-        setSelectedId(viewBlock.id);
-        updateBlocks(nextBlocks);
+        commitAndSelectInserted(nextBlocks, [viewBlock.id]);
         return;
       }
 
@@ -454,18 +462,16 @@ export function useComunicadoEditorBlocks({
         }
       }
       setDataPanelOpen(false);
-      setSelectedId(withZ.id);
-      updateBlocks(nextBlocks);
+      commitAndSelectInserted(nextBlocks, [withZ.id]);
     },
     [
+      commitAndSelectInserted,
       configRef,
       linkViewToSource,
       placeInserted,
       selectedId,
       setDataPanelOpen,
       setLastDataDisplayMode,
-      setSelectedId,
-      updateBlocks,
     ],
   );
 
@@ -555,12 +561,17 @@ export function useComunicadoEditorBlocks({
       let block = createShapeBlock(shape);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
       setShapeMenuOpen(false);
       setRibbonTabRequest("element");
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, placeInserted, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],
+    [
+      commitAndSelectInserted,
+      configRef,
+      placeInserted,
+      setRibbonTabRequest,
+      setShapeMenuOpen,
+    ],
   );
 
   /** Insere bloco shape já posicionado (desenho no palco — linhas/conectores). */
@@ -573,11 +584,10 @@ export function useComunicadoEditorBlocks({
           zIndex: block.style?.zIndex ?? nextZIndex(configRef.current.blocks ?? []),
         },
       };
-      setSelectedId(next.id);
       setRibbonTabRequest("element");
-      updateBlocks([...(configRef.current.blocks ?? []), next]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), next], [next.id]);
     },
-    [configRef, setRibbonTabRequest, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, setRibbonTabRequest],
   );
 
   const addIconBlock = useCallback(
@@ -585,10 +595,9 @@ export function useComunicadoEditorBlocks({
       let block = createIconBlock(iconName);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       block = placeInserted(block);
-      setSelectedId(block.id);
-      updateBlocks([...(configRef.current.blocks ?? []), block]);
+      commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
     },
-    [configRef, placeInserted, setSelectedId, updateBlocks],
+    [commitAndSelectInserted, configRef, placeInserted],
   );
 
   const groupSelected = useCallback(() => {
@@ -1423,10 +1432,10 @@ export function useComunicadoEditorBlocks({
       setDataCatalogModalOpen(true);
     }
     block = placeInserted(block);
-    setSelectedId(block.id);
-    updateBlocks([...(configRef.current.blocks ?? []), block]);
+    commitAndSelectInserted([...(configRef.current.blocks ?? []), block], [block.id]);
   }, [
     bindSelectedVisualBoxToData,
+    commitAndSelectInserted,
     configRef,
     linkViewToSource,
     placeInserted,
@@ -1436,8 +1445,6 @@ export function useComunicadoEditorBlocks({
     setDataCatalogMode,
     setDataPanelIntent,
     setDataPanelOpen,
-    setSelectedId,
-    updateBlocks,
   ]);
 
   return {
