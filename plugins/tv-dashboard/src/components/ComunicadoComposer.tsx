@@ -95,10 +95,8 @@ import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { GroupTransformLayer } from "./GroupTransformLayer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
-import {
-  ComplexViewFloatToolbar,
-  shouldShowComplexViewFloatToolbar,
-} from "./ComplexViewFloatToolbar";
+import { ComplexViewFloatToolbarOverlay } from "./ComplexViewFloatToolbarOverlay";
+import { shouldShowComplexViewFloatToolbar } from "./ComplexViewFloatToolbar";
 import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
@@ -1033,17 +1031,6 @@ export function ComunicadoComposerCanvas() {
             displayNames={remoteEditors.map((selection) => selection.displayName)}
           />
         ) : null}
-        {shouldShowComplexViewFloatToolbar({
-          block,
-          isPrimary,
-          selectedIdsLength: selectedIds.length,
-          selectedChartPart,
-          selectedKpiPart,
-          selectedTablePart,
-          selectedInputPart,
-        }) ? (
-          <ComplexViewFloatToolbar block={block} />
-        ) : null}
       </div>
     );
   };
@@ -1351,17 +1338,6 @@ export function ComunicadoComposerCanvas() {
                     displayNames={remoteEditors.map((selection) => selection.displayName)}
                   />
                 ) : null}
-                {shouldShowComplexViewFloatToolbar({
-                  block,
-                  isPrimary,
-                  selectedIdsLength: selectedIds.length,
-                  selectedChartPart,
-                  selectedKpiPart,
-                  selectedTablePart,
-                  selectedInputPart,
-                }) ? (
-                  <ComplexViewFloatToolbar block={block} />
-                ) : null}
               </div>
             );
           })}
@@ -1384,6 +1360,30 @@ export function ComunicadoComposerCanvas() {
               />
             );
           })}
+          {/* Float (+/pincel/funil) irmão do chrome — z centralizado acima dos handles. */}
+          {blocks.map((block) => {
+            if (layeredMemberIds.has(block.id)) return null;
+            const isPrimary = block.id === primarySelected;
+            if (
+              !shouldShowComplexViewFloatToolbar({
+                block,
+                isPrimary,
+                selectedIdsLength: selectedIds.length,
+                selectedChartPart,
+                selectedKpiPart,
+                selectedTablePart,
+                selectedInputPart,
+              })
+            ) {
+              return null;
+            }
+            return (
+              <ComplexViewFloatToolbarOverlay
+                key={`block-float-${block.id}`}
+                block={block}
+              />
+            );
+          })}
           {idleGroupLayerList.map((group) => {
             const slideAspect = designSize.width / Math.max(designSize.height, 1);
             const gesture = beginGroupGesture({
@@ -1399,6 +1399,22 @@ export function ComunicadoComposerCanvas() {
               group.members.find((member) => member.id === primarySelected) ??
               group.members[group.members.length - 1];
             if (!gesture || !anchor) return null;
+            const extentW = gesture.childExtent.w > 0 ? gesture.childExtent.w : 1;
+            const extentH = gesture.childExtent.h > 0 ? gesture.childExtent.h : 1;
+            const floatBlock = group.members.find((member) =>
+              shouldShowComplexViewFloatToolbar({
+                block: member,
+                isPrimary: member.id === primarySelected,
+                selectedIdsLength: selectedIds.length,
+                selectedChartPart,
+                selectedKpiPart,
+                selectedTablePart,
+                selectedInputPart,
+              }),
+            );
+            const floatLocal = floatBlock
+              ? gesture.localFrames.get(floatBlock.id)
+              : undefined;
             return (
               <GroupTransformLayer
                 key={group.groupId}
@@ -1406,13 +1422,31 @@ export function ComunicadoComposerCanvas() {
                 members={group.members}
                 renderMember={({ block, wrapStyle }) => renderBlock(block, wrapStyle)}
                 chrome={
-                  <GroupSelectionChrome
-                    frame={gesture.group.frame}
-                    rotation={gesture.group.rotation}
-                    fillParent
-                    anchorBlock={anchor}
-                    onPointerDown={startDragRespectingPan}
-                  />
+                  <>
+                    <GroupSelectionChrome
+                      frame={gesture.group.frame}
+                      rotation={gesture.group.rotation}
+                      fillParent
+                      anchorBlock={anchor}
+                      onPointerDown={startDragRespectingPan}
+                    />
+                    {floatBlock && floatLocal ? (
+                      <ComplexViewFloatToolbarOverlay
+                        block={floatBlock}
+                        framePercent={{
+                          x: (floatLocal.frame.x / extentW) * 100,
+                          y: (floatLocal.frame.y / extentH) * 100,
+                          w: (floatLocal.frame.w / extentW) * 100,
+                          h: (floatLocal.frame.h / extentH) * 100,
+                        }}
+                        transform={
+                          floatLocal.rotation
+                            ? `rotate(${floatLocal.rotation}deg)`
+                            : undefined
+                        }
+                      />
+                    ) : null}
+                  </>
                 }
               />
             );
@@ -1432,15 +1466,57 @@ export function ComunicadoComposerCanvas() {
                 const anchor =
                   members.find((member) => member.id === primarySelected) ??
                   members[members.length - 1];
-                return anchor ? (
-                  <GroupSelectionChrome
-                    frame={activeGroupGesture.group.frame}
-                    rotation={activeGroupGesture.group.rotation}
-                    fillParent
-                    anchorBlock={anchor}
-                    onPointerDown={startDragRespectingPan}
-                  />
-                ) : null;
+                const extentW =
+                  activeGroupGesture.childExtent.w > 0
+                    ? activeGroupGesture.childExtent.w
+                    : 1;
+                const extentH =
+                  activeGroupGesture.childExtent.h > 0
+                    ? activeGroupGesture.childExtent.h
+                    : 1;
+                const floatBlock = members.find((member) =>
+                  shouldShowComplexViewFloatToolbar({
+                    block: member,
+                    isPrimary: member.id === primarySelected,
+                    selectedIdsLength: selectedIds.length,
+                    selectedChartPart,
+                    selectedKpiPart,
+                    selectedTablePart,
+                    selectedInputPart,
+                  }),
+                );
+                const floatLocal = floatBlock
+                  ? activeGroupGesture.localFrames.get(floatBlock.id)
+                  : undefined;
+                return (
+                  <>
+                    {anchor ? (
+                      <GroupSelectionChrome
+                        frame={activeGroupGesture.group.frame}
+                        rotation={activeGroupGesture.group.rotation}
+                        fillParent
+                        anchorBlock={anchor}
+                        onPointerDown={startDragRespectingPan}
+                      />
+                    ) : null}
+                    {floatBlock && floatLocal ? (
+                      <ComplexViewFloatToolbarOverlay
+                        block={floatBlock}
+                        framePercent={{
+                          x: (floatLocal.frame.x / extentW) * 100,
+                          y: (floatLocal.frame.y / extentH) * 100,
+                          w: (floatLocal.frame.w / extentW) * 100,
+                          h: (floatLocal.frame.h / extentH) * 100,
+                        }}
+                        transform={
+                          floatLocal.rotation
+                            ? `rotate(${floatLocal.rotation}deg)`
+                            : undefined
+                        }
+                      />
+                    ) : null}
+                  </>
+                );
               })()}
             />
           ) : null}

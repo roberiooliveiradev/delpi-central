@@ -4,10 +4,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Chrome de seleção (handles) não pode ficar sob blocos vizinhos —
- * e o conteúdo do selecionado não pode subir acima do z do modelo.
+ * Chrome de seleção (handles) e float (+/pincel/funil) não podem ficar sob
+ * blocos vizinhos — e o conteúdo do selecionado não pode subir acima do z do modelo.
  *
  * Overlay `.td-composer__block-chrome` + resolveSelectionChromeOverlayZIndex;
+ * Overlay `.td-composer__block-float` + resolveSelectionFloatToolbarOverlayZIndex;
  * wrap usa só resolveBlockWrapStackZIndex (modelo).
  */
 describe("selection chrome stacking contract", () => {
@@ -19,12 +20,28 @@ describe("selection chrome stacking contract", () => {
     join(base, "../components/BlockSelectionChromeOverlay.tsx"),
     "utf8",
   );
+  const floatOverlay = readFileSync(
+    join(base, "../components/ComplexViewFloatToolbarOverlay.tsx"),
+    "utf8",
+  );
 
   it("composer usa overlay de chrome e wrap só com z do modelo", () => {
     expect(composer).toMatch(/BlockSelectionChromeOverlay/);
     expect(composer).toMatch(/resolveBlockWrapStackZIndex\(\{\s*modelZIndex:/);
     expect(composer).not.toMatch(/selectionChromeVisible:/);
     expect(overlay).toMatch(/resolveSelectionChromeOverlayZIndex/);
+  });
+
+  it("composer usa overlay de float (não float dentro do wrap)", () => {
+    expect(composer).toMatch(/ComplexViewFloatToolbarOverlay/);
+    expect(floatOverlay).toMatch(/resolveSelectionFloatToolbarOverlayZIndex/);
+    expect(util).toMatch(/SELECTION_FLOAT_TOOLBAR_STACK_FLOOR\s*=\s*14_000/);
+    expect(css).toMatch(/\.td-composer__block-float\s*\{/);
+    // Float não pode competir com z-index baixo dentro do wrap.
+    const chartFloat = css.match(
+      /\.dashboard-tv-dashboard\s+\.td-chart-float\s*\{([^}]*)\}/,
+    )?.[1];
+    expect(chartFloat ?? "").not.toMatch(/z-index:\s*6/);
   });
 
   it("floor de overlay documentado; group-chrome acima; wrap sem outline de seleção", () => {

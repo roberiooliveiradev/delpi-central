@@ -2079,6 +2079,20 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block-chrome .td-composer__block-handles{
   pointer-events: none;
 }
+/*
+ * Shell do float (+ / pincel / funil) — irmão do chrome no palco.
+ * z-index vem de resolveSelectionFloatToolbarOverlayZIndex (inline).
+ */
+.dashboard-tv-dashboard .td-composer__block-float{
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-composer__block-float .td-chart-float{
+  pointer-events: auto;
+  z-index: auto;
+}
 .dashboard-tv-dashboard .td-composer__group-chrome{
   position: absolute;
   /* Acima do floor de seleção de blocos (handles do grupo clicáveis). */
@@ -3234,7 +3248,8 @@ body.td-composer--marqueeing *{
   display: flex;
   flex-direction: column;
   gap: var(--td-float-gap);
-  z-index: 6;
+  /* Stacking do shell `.td-composer__block-float` (overlay); não competir no wrap. */
+  z-index: auto;
 }
 .dashboard-tv-dashboard .td-chart-float__btn{
   display: inline-flex;
