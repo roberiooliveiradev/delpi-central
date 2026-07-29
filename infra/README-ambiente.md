@@ -128,8 +128,45 @@ Cada serviço sobe com `up -d --no-deps` (a ordem vem do script, não do `depend
 | MFEs antes de `plugin-ui` | Remote MF indisponível; MFE quebra em runtime |
 | `docker compose up --build gateway` (sem `--no-deps`) | Rebuild em cascata — gateway `depends_on` lista todos os MFEs |
 | `--env-file infra/.env` com cwd já em `infra/` | Path duplicado `infra/infra/.env` |
+| `docker volume prune` ou `docker system prune --volumes` | Apaga volumes Postgres/Ollama ou dados de upload órfãos |
 
 Detalhes de RAM, recuperação e compose manual: § [Memória RAM](#memória-ram--diagnóstico-e-mitigação) e § [Checklist deploy produção](#checklist-deploy-produção).
+
+---
+
+## Manutenção de cache (sem apagar dados sensíveis)
+
+Script canônico para liberar disco e caches regeneráveis **sem** tocar em Postgres, Keycloak, modelos Ollama nem uploads/evidências em `DELPI_DATA_HOST_DIR`.
+
+```bash
+# Ver proteções, tiers e uso atual de disco
+./infra/scripts/maintenance-clean-cache.sh --list
+
+# Simular (nenhuma alteração)
+./infra/scripts/maintenance-clean-cache.sh --dry-run --tier standard
+
+# Dev/prod — tier recomendado (build cache + caches de app)
+./infra/scripts/maintenance-clean-cache.sh --tier standard --yes
+
+# Só Docker leve (WSL com pouco disco)
+./infra/scripts/maintenance-clean-cache.sh --tier light --yes
+
+# Limpeza profunda de imagens Docker não usadas (rebuild demorado depois)
+./infra/scripts/maintenance-clean-cache.sh --tier docker-deep --yes
+
+# Alvos isolados
+./infra/scripts/maintenance-clean-cache.sh --only drawing-library,query-cache --yes
+```
+
+| Tier | O que limpa |
+|------|-------------|
+| `light` | Build cache Docker (7 dias), imagens dangling, containers parados **fora** de `delpi-*` |
+| `standard` | `light` + `drawing-library-cache`, restart `api-delpi` (query-cache memória), logs `api-delpi-logs` > 30 dias |
+| `docker-deep` | `standard` + imagens não usadas + build cache completo |
+
+**Nunca executado pelo script:** `docker volume prune`, `docker system prune --volumes`, `rm` em pastas de upload (PAC, chat, CIPA, etc.).
+
+Catálogo de proteção: [`scripts/maintenance-cache-manifest.sh`](scripts/maintenance-cache-manifest.sh).
 
 ---
 
