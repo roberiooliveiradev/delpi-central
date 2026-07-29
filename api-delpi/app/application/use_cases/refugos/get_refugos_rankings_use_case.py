@@ -64,6 +64,7 @@ class GetRefugosRankingsUseCase:
                     "quantity": round_qty(row.get("quantity")),
                     "value": value,
                     "sharePct": share,
+                    "percentual": share,
                     "occurrenceCount": as_int(row.get("occurrence_count")),
                 }
             )

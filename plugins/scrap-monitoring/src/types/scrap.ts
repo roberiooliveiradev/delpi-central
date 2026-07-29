@@ -53,6 +53,8 @@ export type ScrapRankingItem = {
   quantity: number;
   value: number;
   sharePct: number;
+  /** Alias de sharePct (participação % sobre o total do ranking). */
+  percentual?: number;
   occurrenceCount: number;
 };
 

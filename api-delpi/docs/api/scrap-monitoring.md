@@ -92,7 +92,10 @@ Parâmetros: período e filtros opcionais iguais a `/refugos/resumo`. `filial` �
 
 Query obrigatória: `dimension` ∈ `motivo` \| `materia_prima` \| `produto_acabado` \| `centro_trabalho` \| `colaborador`.
 
-Cada item: `{ code, label, quantity, value, sharePct, occurrenceCount }`.
+Cada item: `{ code, label, quantity, value, sharePct, percentual, occurrenceCount }`.
+
+- `value` — valor em R$
+- `sharePct` / `percentual` — participação % sobre o total do ranking retornado (mesmos valores)
 
 Para `dimension=motivo`, `label` vem como **`SIGLA - significado`** (código `BC_MOTIVO` + descrição `CYO_DSRF`).
 

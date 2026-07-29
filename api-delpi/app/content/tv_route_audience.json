@@ -3610,15 +3610,15 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Refugos rankings",
-          "description": "Refugos rankings.",
-          "whenToUse": "Use when you need refugos rankings."
+          "summary": "Scrap rankings",
+          "description": "Top scrap rankings by dimension with value (BRL) and share percent.",
+          "whenToUse": "Use for scrap ranking by reason, material, finished product, work center, or operator."
         },
         "pt-BR": {
-          "summary": "Relatório operacional — Refugos rankings",
-          "description": "Relatório operacional — Refugos rankings.",
-          "whenToUse": "Use quando precisar de: Relatório operacional — Refugos rankings.",
-          "label": "Relatório operacional — Refugos rankings"
+          "summary": "Ranking de refugos",
+          "description": "Ranking de refugos por dimensão com valor (R$) e participação percentual (sharePct/percentual).",
+          "whenToUse": "Use para ranking de refugo por motivo, matéria-prima, produto acabado, centro de trabalho ou colaborador.",
+          "label": "Ranking de refugos"
         }
       }
     },

@@ -164,6 +164,8 @@ def test_rankings_returns_playbook_meta(
     assert body["meta"]["fields"]["value"] == "Valor (R$)"
     assert body["meta"]["fieldFormats"]["value"] == "currency"
     assert body["meta"]["fieldFormats"]["sharePct"] == "percent"
+    assert body["meta"]["fieldFormats"]["percentual"] == "percent"
+    assert body["meta"]["fields"]["percentual"] == "Participação (%)"
 
 
 @patch(

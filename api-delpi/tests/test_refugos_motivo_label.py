@@ -64,7 +64,12 @@ def test_rankings_motivo_label_is_code_dash_description() -> None:
 
     assert result["items"][0]["code"] == "FM"
     assert result["items"][0]["label"] == "FM - Falha de material"
+    assert result["items"][0]["value"] == 100.0
+    assert result["items"][0]["sharePct"] == 66.67
+    assert result["items"][0]["percentual"] == 66.67
     assert result["items"][1]["label"] == "XX"
+    assert result["items"][1]["sharePct"] == 33.33
+    assert result["items"][1]["percentual"] == 33.33
 
 
 def test_registros_motivo_is_code_dash_description() -> None:

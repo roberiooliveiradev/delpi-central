@@ -120,6 +120,7 @@ function HorizontalValueBars({
         fullName: `${item.code}${item.label ? ` — ${item.label}` : ""}`,
         value: item.value,
         sharePct: item.sharePct,
+        barLabel: `${formatCurrencyBrl(item.value)} (${formatSharePercent(item.sharePct)})`,
       };
     }
 
@@ -128,6 +129,7 @@ function HorizontalValueBars({
       fullName: item.label || item.code,
       value: item.value,
       sharePct: item.sharePct,
+      barLabel: `${formatCurrencyBrl(item.value)} (${formatSharePercent(item.sharePct)})`,
     };
   });
 
@@ -140,7 +142,7 @@ function HorizontalValueBars({
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ left: 8, right: isProduct ? 72 : 16, top: 8, bottom: 8 }}
+          margin={{ left: 8, right: isProduct ? 88 : 72, top: 8, bottom: 8 }}
           barCategoryGap={isProduct ? "18%" : "22%"}
         >
           <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" horizontal={false} />
@@ -162,14 +164,7 @@ function HorizontalValueBars({
           />
           <Tooltip content={<CurrencyTooltip />} />
           <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} maxBarSize={28}>
-            {isProduct ? (
-              <LabelList
-                dataKey="value"
-                position="right"
-                formatter={(v: number) => formatCurrencyBrl(v)}
-                className="sm-chart-bar-label"
-              />
-            ) : null}
+            <LabelList dataKey="barLabel" position="right" className="sm-chart-bar-label" />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

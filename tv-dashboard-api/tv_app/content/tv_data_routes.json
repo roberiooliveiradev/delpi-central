@@ -1324,14 +1324,14 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ],
-      "tableFields": "indicators"
+      ]
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1399,14 +1399,14 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
       "valueFields": [
         "idd",
         "score"
-      ],
-      "tableFields": "items"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -6021,7 +6021,6 @@
         "start_date",
         "end_date"
       ],
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
       "valueFieldLabels": {
         "occurrence_date": "Data da ocorrência",
         "sale_number": "Número da OV",
@@ -6031,7 +6030,8 @@
         "product_code": "Código do produto",
         "status": "Status"
       },
-      "openEndedDateRange": true
+      "openEndedDateRange": true,
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -6699,21 +6699,6 @@
         "start_date",
         "end_date"
       ],
-      "valueFieldTypes": {
-        "total_investment_in_period": "number",
-        "total_gross_savings_in_period": "number",
-        "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number",
-        "solutions_started_in_period_count": "number",
-        "month": "string",
-        "gross_savings_month": "number",
-        "gross_costs_month": "number",
-        "gross_investment_month": "number",
-        "gross_recurring_investment_month": "number",
-        "shared_resource_cost_month": "number",
-        "investment_total_month": "number",
-        "net_savings_month": "number"
-      },
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -6731,6 +6716,21 @@
         "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
         "investment_total_month": "Investimento total (mês)",
         "net_savings_month": "Economia líquida (mês)"
+      },
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
       },
       "valueFields": [
         "total_investment_in_period",
@@ -6828,6 +6828,13 @@
           "direction": "asc"
         }
       ],
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      },
+      "openEndedDateRange": true,
+      "tableFields": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "economia_bruta": "number",
@@ -6835,17 +6842,10 @@
         "economia_liquida": "number",
         "horas_economizadas": "number"
       },
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
-      "openEndedDateRange": true,
       "valueFields": [
         "economia_bruta",
         "investimento"
-      ],
-      "tableFields": "points"
+      ]
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -10887,6 +10887,7 @@
           "direction": "asc"
         }
       ],
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10895,17 +10896,16 @@
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
       },
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
-      ],
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -11315,6 +11315,7 @@
         "start_date",
         "end_date"
       ],
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -11323,13 +11324,12 @@
         "otd_filial_01": "number",
         "otd_filial_02": "number"
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points"
+      "fixedQueryParams": {
+        "granularity": "day"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -11968,6 +11968,7 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -11975,8 +11976,7 @@
       "defaultParams": {
         "page": 1,
         "page_size": 5
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -15144,12 +15144,12 @@
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta"
       },
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
       "valueFields": [
         "value",
         "average_score"
-      ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
       ]
     },
     {
@@ -15698,13 +15698,13 @@
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
       },
+      "labelAliases": [
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ],
       "valueFields": [
         "value",
         "total_savings",
         "total_kaizens"
-      ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (Google Sheets)"
       ]
     },
     {
@@ -16386,10 +16386,6 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -16400,13 +16396,17 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM externo"
       ]
     },
     {
@@ -16593,10 +16593,6 @@
         "start_date",
         "end_date"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldLabels": {
         "value": "Valor",
         "ppm": "PPM",
@@ -16607,14 +16603,18 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ],
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
       ]
     },
     {
@@ -16966,6 +16966,8 @@
       "category": "quality",
       "path": "/refugos/rankings",
       "allowedDisplayModes": [
+        "table",
+        "bar_chart",
         "kpi",
         "auto"
       ],
@@ -17053,7 +17055,24 @@
       "dateRangeKeys": [
         "start_date",
         "end_date"
-      ]
+      ],
+      "tableFields": "items",
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
+      "valueFieldLabels": {
+        "value": "Valor (R$)",
+        "sharePct": "Participação (%)",
+        "percentual": "Participação (%)",
+        "quantity": "Quantidade",
+        "occurrenceCount": "Ocorrências",
+        "code": "Código",
+        "label": "Descrição"
+      }
     },
     {
       "operationId": "get_refugos_registros",
@@ -19148,6 +19167,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
@@ -19156,8 +19176,7 @@
         "value",
         "stockValue",
         "total"
-      ],
-      "tableFields": "top_products"
+      ]
     },
     {
       "operationId": "get_caller_stats",

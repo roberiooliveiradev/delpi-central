@@ -549,6 +549,31 @@
         "quantity": "Quantidade total"
       }
     },
+    "get_refugos_rankings": {
+      "tableFields": "items",
+      "valueFields": [
+        "value",
+        "sharePct",
+        "percentual",
+        "quantity",
+        "occurrenceCount"
+      ],
+      "valueFieldLabels": {
+        "value": "Valor (R$)",
+        "sharePct": "Participação (%)",
+        "percentual": "Participação (%)",
+        "quantity": "Quantidade",
+        "occurrenceCount": "Ocorrências",
+        "code": "Código",
+        "label": "Descrição"
+      },
+      "allowedDisplayModes": [
+        "table",
+        "bar_chart",
+        "kpi",
+        "auto"
+      ]
+    },
     "get_transforma_mais_summary": {
       "valueFields": [
         "total_investment_in_period",

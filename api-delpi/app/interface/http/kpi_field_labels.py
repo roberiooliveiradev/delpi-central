@@ -243,6 +243,7 @@ REFUGOS_RANKINGS_FIELD_LABELS: dict[str, str] = {
     "quantity": "Quantidade",
     "value": "Valor (R$)",
     "sharePct": "Participação (%)",
+    "percentual": "Participação (%)",
     "occurrenceCount": "Ocorrências",
     "total_valor": "Total valor (R$)",
 }
@@ -250,6 +251,7 @@ REFUGOS_RANKINGS_FIELD_LABELS: dict[str, str] = {
 REFUGOS_RANKINGS_FIELD_FORMATS: dict[str, str] = {
     "value": "currency",
     "sharePct": "percent",
+    "percentual": "percent",
     "quantity": "quantity",
     "occurrenceCount": "quantity",
     "total_valor": "currency",
