@@ -3,6 +3,7 @@ from __future__ import annotations
 from app.application.dto.refugos.refugos_formatters import (
     clean_text,
     display_label,
+    format_code_dash_label,
     format_protheus_date,
     round_cost,
     round_qty,
@@ -53,10 +54,11 @@ class GetRefugosRegistrosUseCase:
                 "descricao": clean_text(row.get("description")),
                 "um": clean_text(row.get("unit")),
                 "motivoCodigo": clean_text(row.get("reason_code")),
-                "motivo": display_label(
-                    row.get("reason_label"), fallback=MOTIVO_SEM_LABEL
-                )
-                or clean_text(row.get("reason_code")),
+                "motivo": format_code_dash_label(
+                    row.get("reason_code"),
+                    row.get("reason_label"),
+                    empty_fallback=MOTIVO_SEM_LABEL,
+                ),
                 "quantidade": round_qty(row.get("quantity")),
                 "valor": round_cost(row.get("value")),
                 "custoUnitario": round_cost(row.get("unit_cost")),

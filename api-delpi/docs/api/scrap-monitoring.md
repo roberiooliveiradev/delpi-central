@@ -94,6 +94,8 @@ Query obrigatória: `dimension` ∈ `motivo` \| `materia_prima` \| `produto_acab
 
 Cada item: `{ code, label, quantity, value, sharePct, occurrenceCount }`.
 
+Para `dimension=motivo`, `label` vem como **`SIGLA - significado`** (código `BC_MOTIVO` + descrição `CYO_DSRF`).
+
 ---
 
 ## `/refugos/serie`

@@ -32,6 +32,24 @@ def display_label(value: Any, *, fallback: str) -> str:
     return normalized or fallback
 
 
+def format_code_dash_label(
+    code: Any,
+    description: Any,
+    *,
+    empty_fallback: str = "",
+) -> str:
+    """Monta ``SIGLA - significado``; evita duplicar quando descrição = código."""
+    code_s = clean_text(code)
+    desc_s = clean_text(description)
+    if code_s and desc_s and desc_s.casefold() != code_s.casefold():
+        return f"{code_s} - {desc_s}"
+    if code_s:
+        return code_s
+    if desc_s:
+        return desc_s
+    return empty_fallback
+
+
 def format_protheus_date(value: Any) -> str:
     """Converte YYYYMMDD → YYYY-MM-DD quando possível."""
     raw = clean_text(value)

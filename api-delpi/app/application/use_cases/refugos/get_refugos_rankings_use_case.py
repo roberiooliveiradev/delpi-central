@@ -4,6 +4,7 @@ from app.application.dto.refugos.refugos_formatters import (
     as_int,
     clean_text,
     display_label,
+    format_code_dash_label,
     round_cost,
     round_qty,
 )
@@ -47,11 +48,19 @@ class GetRefugosRankingsUseCase:
         for row in rows:
             value = round_cost(row.get("value"))
             share = round((value / total_valor) * 100, 2) if total_valor > 0 else 0.0
+            code = clean_text(row.get("code"))
+            if request.dimension == "motivo":
+                label = format_code_dash_label(
+                    code,
+                    row.get("label"),
+                    empty_fallback=MOTIVO_SEM_LABEL,
+                )
+            else:
+                label = display_label(row.get("label"), fallback=fallback) or code
             items.append(
                 {
-                    "code": clean_text(row.get("code")),
-                    "label": display_label(row.get("label"), fallback=fallback)
-                    or clean_text(row.get("code")),
+                    "code": code,
+                    "label": label,
                     "quantity": round_qty(row.get("quantity")),
                     "value": value,
                     "sharePct": share,

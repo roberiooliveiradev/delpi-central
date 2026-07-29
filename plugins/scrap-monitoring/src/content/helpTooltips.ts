@@ -65,7 +65,7 @@ export const SCRAP_HELP_TOOLTIPS = {
     pa: "Produto acabado da OP (via SC2).",
     mp: "Código da matéria-prima / produto da perda (BC_PRODUTO).",
     descricao: "Descrição do produto no cadastro SB1.",
-    motivo: "Motivo do refugo (descrição CYO ou código BC_MOTIVO).",
+    motivo: "Motivo do refugo no formato SIGLA - significado (código BC_MOTIVO + descrição CYO).",
     ct: "Centro de trabalho / recurso (BC_RECURSO).",
     colaborador: "Operador associado ao apontamento (SYS_USR).",
     qtd: "Quantidade apontada (BC_QUANT) e unidade de medida.",

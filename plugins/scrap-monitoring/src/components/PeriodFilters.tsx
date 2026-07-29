@@ -20,7 +20,7 @@ type PeriodFiltersProps = {
 
 function optionLabel(codigo: string, descricao?: string): string {
   const desc = descricao?.trim();
-  return desc ? `${codigo} — ${desc}` : codigo;
+  return desc ? `${codigo} - ${desc}` : codigo;
 }
 
 export function PeriodFilters({
