@@ -59,6 +59,22 @@ BLOCK_REASONS = frozenset(
     }
 )
 
+PURCHASE_ORDER_BLOCK_REASON = "purchase_order"
+
+
+def should_auto_resume_after_purchase_order_link(
+    *,
+    status: str | None,
+    block_reason: str | None,
+    has_linked_purchase_orders: bool,
+) -> bool:
+    """Pendência «falta de PC» + amarração com ao menos 1 pedido → retoma automática."""
+    return (
+        str(status or "").strip() == "blocked"
+        and str(block_reason or "").strip() == PURCHASE_ORDER_BLOCK_REASON
+        and bool(has_linked_purchase_orders)
+    )
+
 TERMINAL_STATUSES = frozenset({"posted", "cancelled"})
 NON_TERMINAL_STATUSES = frozenset({"pending", "in_progress", "blocked"})
 RECONCILIATION_ELIGIBLE_STATUSES = NON_TERMINAL_STATUSES

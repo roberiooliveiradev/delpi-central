@@ -5,7 +5,7 @@ from __future__ import annotations
 import html
 import logging
 from decimal import Decimal
-from typing import Any
+from typing import Any, Sequence
 
 import httpx
 
@@ -17,6 +17,7 @@ _SOURCE_APP = "lancamento-notas-fiscais"
 _CATEGORY = "lancamento_notas_fiscais"
 _APP_BASE = "/apps/lancamento-notas-fiscais"
 _EVENT_BLOCK_ASSIGNED = "lnf_request_blocked_assigned"
+_EVENT_BLOCK_RESOLVED = "lnf_request_block_resolved"
 
 BLOCK_REASON_LABELS: dict[str, str] = {
     "purchase_order": "Aguardando pedido de compra",
@@ -61,6 +62,10 @@ def block_assigned_dedupe_key(*, request_id: str, user_id: str) -> str:
     return f"lnf:block_assigned:{request_id}:{user_id}"
 
 
+def block_resolved_dedupe_key(*, request_id: str, user_id: str) -> str:
+    return f"lnf:block_resolved:{request_id}:{user_id}"
+
+
 def should_notify_block_assignee(
     *,
     assignee_user_id: str | None,
@@ -73,6 +78,35 @@ def should_notify_block_assignee(
     if actor and actor == normalized:
         return False
     return True
+
+
+def should_notify_block_requester(
+    *,
+    requester_user_id: str | None,
+    actor_user_id: str | None = None,
+) -> bool:
+    """Quem registrou o bloqueio recebe aviso quando a pendência é retomada."""
+    return should_notify_block_assignee(
+        assignee_user_id=requester_user_id,
+        actor_user_id=actor_user_id,
+    )
+
+
+def resolve_block_requester_user_id(
+    history: Sequence[dict[str, Any]] | None,
+) -> str | None:
+    """Último ator que levou a solicitação a ``blocked`` (ordem cronológica)."""
+    if not history:
+        return None
+    for event in reversed(list(history)):
+        if str(event.get("event_type") or "").strip() != "status_changed":
+            continue
+        if str(event.get("to_status") or "").strip() != "blocked":
+            continue
+        uid = str(event.get("actor_user_id") or "").strip()
+        if uid and uid != "unknown":
+            return uid
+    return None
 
 
 def _format_document(document_number: str | None, series: str | None) -> str:
@@ -145,6 +179,63 @@ def build_block_assigned_copy(
     html_content = (
         f"<p><strong>{html.escape(actor)}</strong> registrou uma pendência "
         f"e atribuiu a você a correção:</p>"
+        f'<span class="notification-note-bubble"><ul>{list_items}</ul></span>'
+    )
+    return title, message, html_content
+
+
+def build_block_resolved_copy(
+    *,
+    actor_name: str | None,
+    block_reason: str | None,
+    block_description: str | None,
+    document_number: str | None,
+    series: str | None,
+    supplier_name: str | None,
+    branch_code: str | None,
+    amount: Any = None,
+    issue_date: str | None = None,
+) -> tuple[str, str, str]:
+    reason = block_reason_label(block_reason)
+    description = (block_description or "").strip() or "Sem descrição"
+    actor = (actor_name or "").strip() or "alguém"
+    document = _format_document(document_number, series)
+    supplier = (supplier_name or "").strip() or "—"
+    branch = branch_label(branch_code)
+
+    title = f"Pendência de NF resolvida — {reason}"
+
+    detail_lines: list[tuple[str, str]] = [
+        ("Pendência", reason),
+        ("O que foi resolvido", description),
+        ("Nota", document),
+        ("Fornecedor", supplier),
+        ("Filial", branch),
+    ]
+    if amount is not None and str(amount).strip() != "":
+        detail_lines.append(("Valor", _format_amount(amount)))
+    issue = str(issue_date or "").strip()
+    if issue:
+        date_part = issue[:10]
+        if len(date_part) == 10 and date_part[4] == "-" and date_part[7] == "-":
+            year, month, day = date_part.split("-")
+            detail_lines.append(("Emissão", f"{day}/{month}/{year}"))
+        else:
+            detail_lines.append(("Emissão", issue))
+
+    plain_details = "\n".join(f"{label}: {value}" for label, value in detail_lines)
+    message = (
+        f"{actor} marcou a pendência como resolvida e retomou a solicitação.\n\n"
+        f"{plain_details}"
+    )
+
+    list_items = "".join(
+        f"<li><strong>{html.escape(label)}:</strong> {html.escape(value)}</li>"
+        for label, value in detail_lines
+    )
+    html_content = (
+        f"<p><strong>{html.escape(actor)}</strong> marcou a pendência como "
+        f"resolvida e retomou a solicitação:</p>"
         f'<span class="notification-note-bubble"><ul>{list_items}</ul></span>'
     )
     return title, message, html_content
@@ -272,6 +363,63 @@ def notify_block_assignee(
             "requestId": request_id,
             "branchCode": str(request.get("branch_code") or ""),
             "blockReason": str(request.get("block_reason") or ""),
+        },
+        html_content=html_content,
+    )
+
+
+def notify_block_resolved(
+    *,
+    request: dict[str, Any],
+    recipient_user_id: str | None,
+    block_reason: str | None,
+    block_description: str | None,
+    actor_user_id: str | None,
+    actor_name: str | None,
+) -> bool:
+    """Avisa quem registrou o bloqueio quando a pendência é retomada (resolvida)."""
+    recipient = str(recipient_user_id or "").strip()
+    if not should_notify_block_requester(
+        requester_user_id=recipient,
+        actor_user_id=actor_user_id,
+    ):
+        return False
+
+    request_id = str(request.get("id") or "").strip()
+    if not request_id:
+        return False
+
+    title, message, html_content = build_block_resolved_copy(
+        actor_name=actor_name,
+        block_reason=block_reason,
+        block_description=block_description,
+        document_number=str(request.get("document_number") or ""),
+        series=str(request.get("series") or ""),
+        supplier_name=str(request.get("supplier_name") or ""),
+        branch_code=str(request.get("branch_code") or ""),
+        amount=request.get("amount"),
+        issue_date=str(request.get("issue_date") or ""),
+    )
+
+    return send_lnf_portal_notification(
+        recipient_user_id=recipient,
+        title=title,
+        message=message,
+        notification_type="success",
+        action_label="Abrir solicitação",
+        action_target=request_portal_route(
+            branch_code=str(request.get("branch_code") or ""),
+            request_id=request_id,
+        ),
+        dedupe_key=block_resolved_dedupe_key(
+            request_id=request_id,
+            user_id=recipient,
+        ),
+        event_type=_EVENT_BLOCK_RESOLVED,
+        metadata={
+            "requestId": request_id,
+            "branchCode": str(request.get("branch_code") or ""),
+            "blockReason": str(block_reason or ""),
         },
         html_content=html_content,
     )

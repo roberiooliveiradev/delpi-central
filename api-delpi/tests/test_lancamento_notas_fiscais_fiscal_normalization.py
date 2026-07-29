@@ -9,6 +9,7 @@ from app.domain.services.lancamento_notas_fiscais.fiscal_normalization import (
     normalize_branch,
     normalize_document,
     normalize_series,
+    should_auto_resume_after_purchase_order_link,
 )
 
 
@@ -48,3 +49,38 @@ def test_normalize_branch() -> None:
     assert normalize_branch("02") == "02"
     with pytest.raises(FiscalNormalizationError):
         normalize_branch("03")
+
+
+def test_should_auto_resume_only_for_purchase_order_block_with_linked_po() -> None:
+    assert (
+        should_auto_resume_after_purchase_order_link(
+            status="blocked",
+            block_reason="purchase_order",
+            has_linked_purchase_orders=True,
+        )
+        is True
+    )
+    assert (
+        should_auto_resume_after_purchase_order_link(
+            status="blocked",
+            block_reason="purchase_order",
+            has_linked_purchase_orders=False,
+        )
+        is False
+    )
+    assert (
+        should_auto_resume_after_purchase_order_link(
+            status="blocked",
+            block_reason="other",
+            has_linked_purchase_orders=True,
+        )
+        is False
+    )
+    assert (
+        should_auto_resume_after_purchase_order_link(
+            status="in_progress",
+            block_reason="purchase_order",
+            has_linked_purchase_orders=True,
+        )
+        is False
+    )
