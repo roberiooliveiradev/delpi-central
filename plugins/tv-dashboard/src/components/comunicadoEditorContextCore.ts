@@ -352,7 +352,10 @@ export type ComunicadoEditorContextValue = {
   sendToBack: () => void;
   bringForward: () => void;
   sendBackward: () => void;
-  requestRibbonTab: (tab: ComunicadoRibbonTabRequest) => void;
+  requestRibbonTab: (
+    tab: ComunicadoRibbonTabRequest,
+    options?: { blockId?: string },
+  ) => void;
   ribbonTabRequest: ComunicadoRibbonTabRequest | null;
   clearRibbonTabRequest: () => void;
   replaceSelectedDataRoute: (block: ComunicadoBlock) => void;

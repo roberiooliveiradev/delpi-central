@@ -262,6 +262,45 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedTablePart).toBeNull();
   });
 
+  it("selectTablePart em table_view pede Design da Tabela (não aba Elemento fantasma)", () => {
+    const tableBlock: ComunicadoBlock = {
+      id: "tbl",
+      type: "table_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      tablePreset: "grid",
+    };
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks: [tableBlock] });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: [tableBlock],
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    act(() => {
+      result.current.setSelectionPanelTab("tableDesign");
+    });
+    act(() => {
+      result.current.selectTablePart("tbl", { kind: "headerCell", colIndex: 1 });
+    });
+    expect(result.current.selectedTablePart).toEqual({ kind: "headerCell", colIndex: 1 });
+    expect(result.current.selectionPanelTab).toBe("tableDesign");
+    expect(result.current.ribbonTabRequest).toBe("tableDesign");
+
+    act(() => {
+      result.current.setSelectionPanelTab("tableLayout");
+    });
+    act(() => {
+      result.current.selectTablePart("tbl", { kind: "frame" });
+    });
+    expect(result.current.selectedTablePart).toEqual({ kind: "frame" });
+    expect(result.current.selectionPanelTab).toBe("tableLayout");
+  });
+
   it("multi-seleção de partes KPI (filhos do complexo)", () => {
     const { result } = renderSelectionHook();
 

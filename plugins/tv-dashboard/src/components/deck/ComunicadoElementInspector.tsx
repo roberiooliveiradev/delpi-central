@@ -96,9 +96,14 @@ export function ComunicadoElementInspector({
 
   const pane = placement === "side";
   const typeLabel = comunicadoBlockTypeLabel(selected.type);
-  /** Abas Design/Layout da tabela devem permanecer mesmo com coluna/parte selecionada no palco. */
+  /**
+   * Tabela não tem aba «Elemento»: se o foco vier como `element` (pedido legado),
+   * tratar como Design da Tabela — senão Design some com parte/coluna selecionada.
+   */
+  const tablePanelFocus =
+    selected.type === "table_view" && panelFocus === "element" ? "tableDesign" : panelFocus;
   const keepTableBlockSections =
-    panelFocus === "tableDesign" || panelFocus === "tableLayout";
+    tablePanelFocus === "tableDesign" || tablePanelFocus === "tableLayout";
   const showTableBlockSections =
     !multiSelect &&
     selected.type === "table_view" &&
@@ -194,9 +199,9 @@ export function ComunicadoElementInspector({
             layout="pane"
             labels={labels}
             typed={
-              panelFocus === "tableLayout"
+              tablePanelFocus === "tableLayout"
                 ? ["tableLayoutData", "tableLayoutSize", "tableLayoutAlign"]
-                : panelFocus === "tableDesign"
+                : tablePanelFocus === "tableDesign"
                   ? ["tableStyleOptions", "tableStyles", "tableTypography", "tableBorders"]
                   : [
                       "tableStyleOptions",
@@ -210,7 +215,7 @@ export function ComunicadoElementInspector({
             }
           />
           {/* Células/formato: só sem parte (com parte o bloco abaixo cobre). */}
-          {panelFocus !== "tableDesign" && !selectedTablePart ? (
+          {tablePanelFocus !== "tableDesign" && !selectedTablePart ? (
             <TableViewOptionsInspector pane={pane} omitDesignChrome omitCellAlign />
           ) : null}
         </>

@@ -50,8 +50,8 @@ import type {
 } from "../../components/comunicadoEditorContextCore";
 import {
   isSelectionPanelTab,
-  normalizeSelectionRibbonTab,
 } from "../../utils/normalizeSelectionRibbonTab";
+import { resolveTableSelectionPanelTab } from "../../utils/resolveTableSelectionPanelTab";
 import { toggleCompositePartSelection } from "../../utils/compositePartSelection";
 
 type Options = {
@@ -170,18 +170,31 @@ export function useComunicadoEditorSelection({
   >(null);
   const [ribbonTabRequest, setRibbonTabRequest] = useState<ComunicadoRibbonTabRequest | null>(null);
   const [selectionPanelTab, setSelectionPanelTabState] = useState<SelectionPanelTab>("layers");
+  const selectionPanelTabRef = useRef(selectionPanelTab);
+  selectionPanelTabRef.current = selectionPanelTab;
 
   const setSelectionPanelTab = useCallback((tab: SelectionPanelTab) => {
     setSelectionPanelTabState(tab);
   }, []);
 
-  const requestRibbonTab = useCallback((tab: ComunicadoRibbonTabRequest) => {
-    const normalized = normalizeSelectionRibbonTab(tab);
-    setRibbonTabRequest(normalized);
-    if (isSelectionPanelTab(normalized)) {
-      setSelectionPanelTabState(normalized);
-    }
-  }, []);
+  const requestRibbonTab = useCallback(
+    (tab: ComunicadoRibbonTabRequest, options?: { blockId?: string }) => {
+      const blockId = options?.blockId ?? selectedIdsRef.current[0];
+      const block = blockId
+        ? configRef.current.blocks?.find((item) => item.id === blockId)
+        : undefined;
+      const normalized = resolveTableSelectionPanelTab({
+        requested: tab,
+        selectedBlockType: block?.type,
+        currentPanelTab: selectionPanelTabRef.current,
+      });
+      setRibbonTabRequest(normalized);
+      if (isSelectionPanelTab(normalized)) {
+        setSelectionPanelTabState(normalized);
+      }
+    },
+    [configRef],
+  );
 
   const openLayersPanel = useCallback(() => {
     setSelectionPanelTabState("layers");
@@ -471,7 +484,8 @@ export function useComunicadoEditorSelection({
         }
         return [part];
       });
-      requestRibbonTab("element");
+      /* Tabela não tem aba Elemento — pedir Design/Layout (blockId explícito: setState ainda não atualizou o ref). */
+      requestRibbonTab("element", { blockId });
     },
     [flushActiveTextEdit, requestRibbonTab],
   );

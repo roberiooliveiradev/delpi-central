@@ -1,0 +1,38 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ComunicadoTableViewBlock } from "@delpi/tv-dashboard-presentation";
+
+import { TableBordersSection } from "./selectionSections/TableDesignSections";
+
+const tableBlock: ComunicadoTableViewBlock = {
+  id: "t1",
+  type: "table_view",
+  frame: { x: 0, y: 0, w: 40, h: 30 },
+  tablePreset: "grid",
+  tableOptions: { showHeader: true, showBorders: true },
+  style: { borderRadius: 8, opacity: 1 },
+};
+
+vi.mock("./comunicadoEditorContext", () => ({
+  useComunicadoEditor: () => ({
+    selected: tableBlock,
+    selectedTablePart: null,
+    selectedKpiPart: null,
+    selectedChartPart: null,
+    updateSelected: vi.fn(),
+    updateSelectedStyle: vi.fn(),
+    selectTablePart: vi.fn(),
+    openDataPanel: vi.fn(),
+  }),
+}));
+
+afterEach(() => cleanup());
+
+describe("TableBordersSection Forma", () => {
+  it("expõe Raio e Opacidade como na forma", () => {
+    render(<TableBordersSection layout="ribbon" />);
+    expect(screen.getByLabelText("Cantos arredondados em pixels")).toBeTruthy();
+    expect(screen.getByLabelText("Opacidade")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Forma" })).toBeTruthy();
+  });
+});
