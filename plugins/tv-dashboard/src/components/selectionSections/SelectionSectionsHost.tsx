@@ -52,6 +52,13 @@ type Props = {
   labels?: Labels;
   only?: SelectionSectionId[];
   full?: boolean;
+  /**
+   * `resolved` (padrão): intersecta `only` com `resolveSelectionSections`
+   * (rabo comum / tipografia — respeita modo parte e multi-seleção).
+   * `declared`: `only` é a lista final — Design/Layout tipado do inspetor
+   * permanece mesmo com coluna/parte selecionada (senão a sidebar esvazia).
+   */
+  sectionSource?: "resolved" | "declared";
 };
 
 function renderSection(
@@ -139,6 +146,7 @@ export function SelectionSectionsHost({
   labels = {},
   only,
   full = false,
+  sectionSource = "resolved",
 }: Props) {
   const {
     selected,
@@ -151,6 +159,9 @@ export function SelectionSectionsHost({
   } = useComunicadoEditor();
 
   const sections = useMemo(() => {
+    if (only && sectionSource === "declared") {
+      return only.filter((id) => SHARED_HOST_SECTIONS.has(id));
+    }
     const resolved = resolveSelectionSections({
       selected,
       selectedIds,
@@ -176,6 +187,7 @@ export function SelectionSectionsHost({
     selectedInputPart,
     only,
     full,
+    sectionSource,
   ]);
 
   if (sections.length === 0) return null;

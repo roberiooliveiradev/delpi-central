@@ -149,6 +149,19 @@ export type ComunicadoEditorContextValue = {
     options?: { additive?: boolean; range?: boolean },
   ) => void;
   clearTablePartSelection: () => void;
+  /**
+   * Remapeia `headerCell` após mudar colunas visíveis (toggle/reordenar).
+   * Chave estável — não deixar colIndex fantasma nem limpar Design pontualmente.
+   */
+  reconcileTablePartsForVisibleKeys: (
+    prevVisibleKeys: string[],
+    nextVisibleKeys: string[],
+  ) => void;
+  /** Remapeia série/marcador do gráfico após mudar séries da projeção. */
+  reconcileChartPartForSeriesFields: (
+    prevSeriesFields: string[],
+    nextSeriesFields: string[],
+  ) => void;
   /** Edição inline do rótulo do cabeçalho (headerCell) → fieldLabels da fonte. */
   editingTablePart: ComunicadoTablePartRef | null;
   beginEditTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;

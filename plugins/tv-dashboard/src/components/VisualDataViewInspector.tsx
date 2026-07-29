@@ -70,7 +70,8 @@ export function VisualDataViewInspector({
     selectedTablePart,
     selectChartPart,
     selectTablePart,
-    clearTablePartSelection,
+    reconcileTablePartsForVisibleKeys,
+    reconcileChartPartForSeriesFields,
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
@@ -104,20 +105,9 @@ export function VisualDataViewInspector({
   }));
 
   const applyTableProjection = (next: TableViewProjection | undefined) => {
-    /* Só limpa seleção se a coluna focada sumiu — nunca remapeia/seleciona no toggle
-     * (senão Design some por `selectedTablePart` e a sidebar parece vazia). */
-    if (
-      selected.type === "table_view" &&
-      selectedTablePart?.kind === "headerCell" &&
-      selectedTablePart.colIndex != null
-    ) {
-      const prevVisible = resolveVisibleKeys(tableColumnOptions, tableBlock?.tableProjection);
-      const focusedKey = prevVisible[selectedTablePart.colIndex];
-      const nextVisible = resolveVisibleKeys(tableColumnOptions, next);
-      if (focusedKey && !nextVisible.includes(focusedKey)) {
-        clearTablePartSelection();
-      }
-    }
+    const prevVisible = resolveVisibleKeys(tableColumnOptions, tableBlock?.tableProjection);
+    const nextVisible = resolveVisibleKeys(tableColumnOptions, next);
+    reconcileTablePartsForVisibleKeys(prevVisible, nextVisible);
     const framePatch = buildViewFrameFitPatch({
       ...selected,
       tableProjection: next,
@@ -140,6 +130,11 @@ export function VisualDataViewInspector({
   };
 
   const applyChartProjection = (next: ChartViewProjection | undefined) => {
+    const prevFields = (selected.type === "chart_view" ? selected.chartProjection?.series : null)?.map(
+      (item) => item.field,
+    ) ?? [];
+    const nextFields = (next?.series ?? []).map((item) => item.field);
+    reconcileChartPartForSeriesFields(prevFields, nextFields);
     const framePatch = buildViewFrameFitPatch({
       ...selected,
       chartProjection: next,

@@ -663,6 +663,8 @@ export function ComunicadoEditorProvider({
     selectedTableParts: selection.selectedTableParts,
     selectTablePart: selection.selectTablePart,
     clearTablePartSelection: selection.clearTablePartSelection,
+    reconcileTablePartsForVisibleKeys: selection.reconcileTablePartsForVisibleKeys,
+    reconcileChartPartForSeriesFields: selection.reconcileChartPartForSeriesFields,
     editingTablePart: selection.editingTablePart,
     beginEditTablePart: selection.beginEditTablePart,
     cancelEditTablePart: selection.cancelEditTablePart,

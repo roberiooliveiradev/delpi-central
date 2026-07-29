@@ -50,6 +50,7 @@ export function SelectionTypographyHost({ layout, labels }: CommonHostProps) {
 /**
  * Design tipado (sem rabo) + rabo comum no mesmo host.
  * Ex.: chart Design, table Design no painel/ribbon.
+ * `sectionSource=declared`: lista tipada não some no modo parte (coluna/série).
  */
 export function SelectionTypedWithTailHost({
   layout,
@@ -69,6 +70,7 @@ export function SelectionTypedWithTailHost({
       layout={layout}
       labels={labels}
       only={[...typed, ...tail]}
+      sectionSource="declared"
     />
   );
 }

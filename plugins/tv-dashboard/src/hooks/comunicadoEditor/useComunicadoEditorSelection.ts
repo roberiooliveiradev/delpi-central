@@ -53,6 +53,10 @@ import {
 } from "../../utils/normalizeSelectionRibbonTab";
 import { resolveFormatSelectionPanelTab } from "../../utils/resolveTableSelectionPanelTab";
 import { toggleCompositePartSelection } from "../../utils/compositePartSelection";
+import {
+  reconcileChartSeriesPartAfterSeriesFieldsChange,
+  reconcileTableHeaderPartsAfterVisibleKeysChange,
+} from "../../utils/reconcileProjectionPartSelection";
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
@@ -513,6 +517,50 @@ export function useComunicadoEditorSelection({
     setEditingTablePart(null);
   }, []);
 
+  /** Após toggle/reordenar colunas — remapeia headerCell por chave (não por índice). */
+  const reconcileTablePartsForVisibleKeys = useCallback(
+    (prevVisibleKeys: string[], nextVisibleKeys: string[]) => {
+      setSelectedTableParts((current) =>
+        reconcileTableHeaderPartsAfterVisibleKeysChange({
+          prevVisibleKeys,
+          nextVisibleKeys,
+          selectedParts: current,
+        }),
+      );
+      setEditingTablePart((current) => {
+        if (!current || current.kind !== "headerCell" || current.colIndex == null) return current;
+        const remapped = reconcileTableHeaderPartsAfterVisibleKeysChange({
+          prevVisibleKeys,
+          nextVisibleKeys,
+          selectedParts: [current],
+        });
+        return remapped[0] ?? null;
+      });
+    },
+    [],
+  );
+
+  /** Após toggle de séries do gráfico — remapeia series/marker por campo. */
+  const reconcileChartPartForSeriesFields = useCallback(
+    (prevSeriesFields: string[], nextSeriesFields: string[]) => {
+      setSelectedChartPart((current) =>
+        reconcileChartSeriesPartAfterSeriesFieldsChange({
+          prevSeriesFields,
+          nextSeriesFields,
+          selectedPart: current,
+        }),
+      );
+      setEditingChartPart((current) =>
+        reconcileChartSeriesPartAfterSeriesFieldsChange({
+          prevSeriesFields,
+          nextSeriesFields,
+          selectedPart: current,
+        }),
+      );
+    },
+    [],
+  );
+
   const selectKpiPart = useCallback(
     (blockId: string, part: ComunicadoKpiPartRef, options?: { additive?: boolean }) => {
       flushActiveTextEdit();
@@ -938,6 +986,8 @@ export function useComunicadoEditorSelection({
     setSelectedTablePart,
     selectTablePart,
     clearTablePartSelection,
+    reconcileTablePartsForVisibleKeys,
+    reconcileChartPartForSeriesFields,
     editingTablePart,
     beginEditTablePart,
     cancelEditTablePart,
