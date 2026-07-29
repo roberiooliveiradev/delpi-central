@@ -168,6 +168,7 @@ export function ComunicadoElementInspector({
           route={selectedRoute}
           labelCatalog={labelCatalog}
           onOpenDataSources={onOpenDataSources}
+          mode="connection"
         />
       ) : null}
       {!multiSelect && isVisualBoxData ? (

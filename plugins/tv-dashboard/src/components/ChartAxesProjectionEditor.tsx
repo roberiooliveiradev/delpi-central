@@ -128,6 +128,7 @@ export function ChartAxesProjectionEditor({
       />
 
       <p className="td-deck-inspector__hint">{chartSeriesWellLabel(policy)}</p>
+      <div className="td-deck-inspector__projection-list" role="list" aria-label="Séries do gráfico">
       {yOptions.map((option) => {
         const checked = seriesMap.has(option.field);
         const series = seriesMap.get(option.field);
@@ -140,27 +141,12 @@ export function ChartAxesProjectionEditor({
         return (
           <div
             key={option.field}
+            role="listitem"
             className={
               checked && orderIndex >= 0 ? rowClassName(baseClass, orderIndex) : baseClass
             }
             {...(checked && orderIndex >= 0 ? rowDropProps(orderIndex) : {})}
-            role={checked ? "button" : undefined}
-            tabIndex={checked ? 0 : undefined}
-            onClick={
-              checked && onSeriesActivate
-                ? () => onSeriesActivate(option.field, orderIndex)
-                : undefined
-            }
-            onKeyDown={
-              checked && onSeriesActivate
-                ? (event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSeriesActivate(option.field, orderIndex);
-                    }
-                  }
-                : undefined
-            }
+            /* Só o rótulo/área ativa a parte — checkbox só muda projeção (não esvazia Design). */
           >
             <div
               className="td-deck-inspector__chart-series-head"
@@ -201,6 +187,16 @@ export function ChartAxesProjectionEditor({
                   });
                 }}
               />
+              {checked && onSeriesActivate && orderIndex >= 0 ? (
+                <button
+                  type="button"
+                  className="td-chart-element__label-btn"
+                  title="Selecionar série no palco"
+                  onClick={() => onSeriesActivate(option.field, orderIndex)}
+                >
+                  Selecionar
+                </button>
+              ) : null}
             </div>
             {checked && series ? (
               <div className="td-deck-inspector__chart-series-controls">
@@ -256,6 +252,7 @@ export function ChartAxesProjectionEditor({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

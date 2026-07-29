@@ -309,6 +309,7 @@ export function SelectedDataSidePanel({
           route={selectedRoute}
           labelCatalog={labelCatalog}
           onOpenDataSources={() => openCatalog("insert")}
+          mode="full"
         />
       ) : null}
 

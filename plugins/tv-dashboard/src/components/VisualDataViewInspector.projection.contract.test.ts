@@ -19,4 +19,9 @@ describe("VisualDataViewInspector column toggle", () => {
     );
     expect(chartApply).toContain("reconcileChartPartForSeriesFields");
   });
+
+  it("expõe mode connection|full para separar Elemento de Dados", () => {
+    const source = readFileSync(resolve(__dirname, "./VisualDataViewInspector.tsx"), "utf8");
+    expect(source).toContain('mode?: "connection" | "full"');
+  });
 });

@@ -36,6 +36,12 @@ type Props = {
   /** Rota da fonte ligada (labels de valueFields). */
   route?: TvDataRouteCatalogItem | null;
   labelCatalog?: DataSourceLabelCatalog | null;
+  /**
+   * `connection` — só vínculo com a fonte (aba Elemento / Design).
+   * `full` — eixos, séries, colunas, métricas (aba Dados).
+   * Misturar full na aba Elemento enche o painel e “esvazia” o Design.
+   */
+  mode?: "connection" | "full";
 };
 
 function viewValueFieldOptions(
@@ -58,6 +64,7 @@ export function VisualDataViewInspector({
   onOpenDataSources,
   route = null,
   labelCatalog = null,
+  mode = "full",
 }: Props) {
   const {
     selected,
@@ -65,6 +72,7 @@ export function VisualDataViewInspector({
     updateSelected,
     updateBlock,
     openDataCatalog,
+    openDataPanel,
     selectedKpiPart,
     selectedChartPart,
     selectedTablePart,
@@ -75,6 +83,7 @@ export function VisualDataViewInspector({
   } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
+  const showProjectionEditors = mode === "full";
 
   if (
     !selected ||
@@ -206,7 +215,10 @@ export function VisualDataViewInspector({
             : "Escolha uma fonte deste slide ou insira uma nova no catálogo."
         }
       />
-      {hasSource && selected.type === "chart_view" && valueFieldOptions.length > 0 ? (
+      {showProjectionEditors &&
+      hasSource &&
+      selected.type === "chart_view" &&
+      valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-chart-axes"
           label="Eixos e séries"
@@ -226,12 +238,16 @@ export function VisualDataViewInspector({
                 : null
             }
             onSeriesActivate={(_field, seriesIndex) => {
+              if (seriesIndex < 0) return;
               selectChartPart(selected.id, { kind: "series", seriesIndex });
             }}
           />
         </DeckField>
       ) : null}
-      {hasSource && selected.type === "kpi_view" && valueFieldOptions.length > 0 ? (
+      {showProjectionEditors &&
+      hasSource &&
+      selected.type === "kpi_view" &&
+      valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-kpi-metrics"
           label="Métricas neste KPI"
@@ -249,7 +265,10 @@ export function VisualDataViewInspector({
           />
         </DeckField>
       ) : null}
-      {hasSource && selected.type === "table_view" && tableColumnOptions.length > 0 ? (
+      {showProjectionEditors &&
+      hasSource &&
+      selected.type === "table_view" &&
+      tableColumnOptions.length > 0 ? (
         <DeckField
           id="td-view-table-columns"
           label="Colunas neste visual"
@@ -295,6 +314,21 @@ export function VisualDataViewInspector({
           />
         </DeckField>
       ) : null}
+      {!showProjectionEditors && hasSource && !isRibbon ? (
+        <div className="td-deck-inspector__actions" style={{ paddingTop: 8 }}>
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={() => openDataPanel()}
+          >
+            {selected.type === "chart_view"
+              ? "Eixos e séries na aba Dados"
+              : selected.type === "table_view"
+                ? "Colunas na aba Dados"
+                : "Métricas na aba Dados"}
+          </button>
+        </div>
+      ) : null}
     </>
   );
 
@@ -315,7 +349,7 @@ export function VisualDataViewInspector({
         pane={pane}
         title="Conexão de dados"
         hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewBinding}
-        defaultOpen={!hasSource}
+        defaultOpen={showProjectionEditors || !hasSource}
       >
         {connectionBody}
       </DeckPropertySection>
