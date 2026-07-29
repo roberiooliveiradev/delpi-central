@@ -7,16 +7,16 @@ import {
 } from "./categoryFieldPreference";
 
 describe("categoryFieldPreference", () => {
-  it("prefere label a code", () => {
-    expect(scoreCategoryFieldPreference("label")).toBeGreaterThan(
-      scoreCategoryFieldPreference("code"),
+  it("prefere code a label (eixo curto; descrição fica no campo label)", () => {
+    expect(scoreCategoryFieldPreference("code")).toBeGreaterThan(
+      scoreCategoryFieldPreference("label"),
     );
     expect(
-      pickPreferredCategoryField([{ field: "code" }, { field: "label" }, { field: "value" }]),
-    ).toBe("label");
+      pickPreferredCategoryField([{ field: "label" }, { field: "code" }, { field: "value" }]),
+    ).toBe("code");
   });
 
-  it("resolveCategoryDisplayLabel usa descrição quando categoria é código", () => {
+  it("resolveCategoryDisplayLabel usa descrição curta quando categoria é sigla", () => {
     expect(
       resolveCategoryDisplayLabel({
         categoryKey: "FM",
@@ -26,7 +26,7 @@ describe("categoryFieldPreference", () => {
     ).toBe("FM - Falha de material");
   });
 
-  it("resolveCategoryDisplayLabel monta SIGLA - desc quando label não inclui código", () => {
+  it("resolveCategoryDisplayLabel monta SIGLA - desc curta", () => {
     expect(
       resolveCategoryDisplayLabel({
         categoryKey: "FH",
@@ -34,6 +34,22 @@ describe("categoryFieldPreference", () => {
         groupRows: [{ code: "FH", label: "Falha humana" }],
       }),
     ).toBe("FH - Falha humana");
+  });
+
+  it("não cola descrição longa de matéria-prima no eixo (só o código)", () => {
+    expect(
+      resolveCategoryDisplayLabel({
+        categoryKey: "10070821",
+        categoryField: "code",
+        groupRows: [
+          {
+            code: "10070821",
+            label:
+              "CABO PP CIRCULAR PVC/PVC 4X1.5MM2 CZ SPT/VDAR 90'C 600V DIAM EXT 8.20MM VIAS NUMERADAS UL/CSA",
+          },
+        ],
+      }),
+    ).toBe("10070821");
   });
 
   it("não altera quando já usa o campo label", () => {

@@ -163,6 +163,21 @@ def test_resolve_category_display_label_prefers_companion_description():
     )
 
 
+def test_resolve_category_display_label_keeps_product_code_only():
+    long_desc = (
+        "CABO PP CIRCULAR PVC/PVC 4X1.5MM2 CZ SPT/VDAR 90'C 600V "
+        "DIAM EXT 8.20MM VIAS NUMERADAS UL/CSA"
+    )
+    assert (
+        resolve_category_display_label(
+            "10070821",
+            "code",
+            [{"code": "10070821", "label": long_desc}],
+        )
+        == "10070821"
+    )
+
+
 def test_apply_chart_projection_pie_uses_full_motivo_label():
     resolved = {
         "table": {

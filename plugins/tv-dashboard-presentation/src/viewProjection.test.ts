@@ -124,7 +124,7 @@ describe("applyViewProjection", () => {
     );
   });
 
-  it("sugestão de pizza prefere label a code como categoria", () => {
+  it("sugestão de pizza prefere code a label como categoria", () => {
     const ranking: ComunicadoDataResolved = {
       table: {
         columns: [
@@ -152,7 +152,35 @@ describe("applyViewProjection", () => {
       },
       "doughnut",
     );
-    expect(suggested.chartProjection?.categoryField).toBe("label");
+    expect(suggested.chartProjection?.categoryField).toBe("code");
+  });
+
+  it("barra de matéria-prima mantém só o código no eixo (descrição no campo label)", () => {
+    const ranking: ComunicadoDataResolved = {
+      table: {
+        columns: [
+          { key: "code", label: "Código" },
+          { key: "label", label: "Descrição" },
+          { key: "value", label: "Valor" },
+        ],
+        rows: [
+          {
+            code: "10070821",
+            label:
+              "CABO PP CIRCULAR PVC/PVC 4X1.5MM2 CZ SPT/VDAR 90'C 600V DIAM EXT 8.20MM",
+            value: 41.65,
+          },
+        ],
+      },
+    };
+    const next = applyViewProjection(ranking, {
+      chartType: "bar",
+      chartProjection: {
+        categoryField: "code",
+        series: [{ field: "value", label: "Valor", aggregation: "sum" }],
+      },
+    });
+    expect(next?.chart?.points?.[0]?.label).toBe("10070821");
   });
 
   it("pizza agrupa por categoria (TIPO) e conta linhas quando medida ausente", () => {

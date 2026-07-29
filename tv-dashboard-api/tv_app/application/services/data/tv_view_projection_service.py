@@ -333,6 +333,10 @@ _LABEL_COMPANION_FIELDS = (
     "título",
 )
 
+# Paridade com categoryFieldPreference.ts — siglas curtas vs código de produto.
+_CATEGORY_CODE_ENRICH_MAX_LEN = 6
+_CATEGORY_ENRICHED_LABEL_MAX_LEN = 40
+
 
 def resolve_category_display_label(
     category_key: str,
@@ -340,10 +344,14 @@ def resolve_category_display_label(
     group_rows: list[dict[str, Any]],
 ) -> str:
     """
-    Paridade com categoryFieldPreference.ts — legenda completa quando a
-    categoria é código e a linha tem descrição («FM - Falha de material»).
+    Paridade com categoryFieldPreference.ts.
+
+    Motivo (sigla curta): pode enriquecer «FM - Falha…».
+    Matéria-prima / PA (código longo): mantém só o code; descrição fica em `label`.
     """
     if category_key in {"(vazio)", "Outros"}:
+        return category_key
+    if len(category_key) > _CATEGORY_CODE_ENRICH_MAX_LEN:
         return category_key
     if not _is_code_like_category_field(category_field):
         return category_key
@@ -358,9 +366,14 @@ def resolve_category_display_label(
             text = str(raw).strip()
             if not text or text.casefold() == key_l:
                 continue
-            if category_key.lower() in text.lower():
-                return text
-            return f"{category_key} - {text}"
+            enriched = (
+                text
+                if category_key.lower() in text.lower()
+                else f"{category_key} - {text}"
+            )
+            if len(enriched) > _CATEGORY_ENRICHED_LABEL_MAX_LEN:
+                return category_key
+            return enriched
     return category_key
 
 

@@ -1,8 +1,10 @@
 /**
  * Preferência de campo de categoria e rótulo de exibição no gráfico.
  *
- * Rankings (ex.: refugos) expõem `code` + `label` («FM» / «FM - Falha de material»).
- * Sem esta regra, o default pegava o 1º string (`code`) e a legenda ficava só na sigla.
+ * Rankings (ex.: refugos) expõem `code` + `label` separados.
+ * - Motivo (sigla curta FM/FH): legenda pode mostrar «FM - Falha…».
+ * - Matéria-prima / PA (código longo): eixo/legenda ficam **só no code**;
+ *   a descrição permanece no campo `label` da linha (tooltip / tabela).
  */
 
 const CODE_LIKE = new Set([
@@ -28,6 +30,12 @@ const LABEL_LIKE_ORDER = [
   "título",
 ] as const;
 
+/** Códigos acima disso (ex.: 10070821) não recebem descrição no eixo. */
+export const CATEGORY_CODE_ENRICH_MAX_LEN = 6;
+
+/** Descrição longa demais (produto) não entra no rótulo do gráfico. */
+export const CATEGORY_ENRICHED_LABEL_MAX_LEN = 40;
+
 function normalizeFieldKey(field: string): string {
   return field.trim().toLowerCase();
 }
@@ -43,17 +51,20 @@ function isCodeLikeField(field: string): boolean {
   );
 }
 
-/** Score alto = melhor candidato a eixo/categoria (legenda legível). */
+/**
+ * Score alto = melhor candidato a eixo/categoria.
+ * Prefere `code` a `label` — descrição longa de MP/PA não vira categoria default.
+ */
 export function scoreCategoryFieldPreference(field: string): number {
   const key = normalizeFieldKey(field);
+  if (isCodeLikeField(field)) return 150;
   const labelIdx = LABEL_LIKE_ORDER.indexOf(key as (typeof LABEL_LIKE_ORDER)[number]);
-  if (labelIdx >= 0) return 200 - labelIdx;
-  if (isCodeLikeField(field)) return 10;
+  if (labelIdx >= 0) return 100 - labelIdx;
   return 50;
 }
 
 /**
- * Entre campos string-like, prefere `label`/`name`/… a `code`/`codigo`.
+ * Entre campos string-like, prefere `code`/`codigo` a `label`/`name`.
  * Empate: mantém ordem de entrada.
  */
 export function pickPreferredCategoryField(
@@ -79,8 +90,8 @@ function companionLabelFields(categoryField: string): string[] {
 }
 
 /**
- * Rótulo da fatia/barra na legenda: se a categoria é código e a linha tem
- * descrição mais rica, usa a descrição (já «SIGLA - significado» quando a API manda).
+ * Rótulo da fatia/barra: enriquece só siglas curtas (motivo).
+ * Códigos de produto / descrições longas → mantém o `code` puro.
  */
 export function resolveCategoryDisplayLabel(params: {
   categoryKey: string;
@@ -89,6 +100,7 @@ export function resolveCategoryDisplayLabel(params: {
 }): string {
   const { categoryKey, categoryField, groupRows } = params;
   if (categoryKey === "(vazio)" || categoryKey === "Outros") return categoryKey;
+  if (categoryKey.length > CATEGORY_CODE_ENRICH_MAX_LEN) return categoryKey;
 
   for (const field of companionLabelFields(categoryField)) {
     for (const row of groupRows) {
@@ -98,9 +110,12 @@ export function resolveCategoryDisplayLabel(params: {
       const text = String(raw).trim();
       if (!text) continue;
       if (text.toLowerCase() === categoryKey.toLowerCase()) continue;
-      // API já montou «FM - Falha…» ou só a descrição.
-      if (text.toLowerCase().includes(categoryKey.toLowerCase())) return text;
-      return `${categoryKey} - ${text}`;
+
+      const enriched = text.toLowerCase().includes(categoryKey.toLowerCase())
+        ? text
+        : `${categoryKey} - ${text}`;
+      if (enriched.length > CATEGORY_ENRICHED_LABEL_MAX_LEN) return categoryKey;
+      return enriched;
     }
   }
   return categoryKey;
