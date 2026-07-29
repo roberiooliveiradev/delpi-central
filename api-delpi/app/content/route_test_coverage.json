@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-29",
-  "baselineOperationCount": 491,
-  "operationCount": 491,
-  "coveredCount": 489,
+  "baselineOperationCount": 492,
+  "operationCount": 492,
+  "coveredCount": 490,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -134,8 +134,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 138,
-      "covered": 138,
+      "total": 139,
+      "covered": 139,
       "gap": 0,
       "exempt": 0
     },
@@ -3907,6 +3907,15 @@
       "path": "/quality/produced-quantity",
       "module": "quality",
       "entity": "produced_quantity",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_quality_returned_totals",
+      "method": "GET",
+      "path": "/quality/returned-totals",
+      "module": "quality",
+      "entity": "quality_returned_totals",
       "shape": "playbook_report",
       "status": "covered"
     },

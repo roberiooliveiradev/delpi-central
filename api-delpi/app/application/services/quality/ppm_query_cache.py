@@ -21,7 +21,21 @@ def ppm_summary_cache_key(request: PpmSummaryRequest) -> str:
 def get_cached_ppm_summary(key: str) -> PpmSummary | None:
     cached = build_query_cache().get(key)
     if isinstance(cached, dict):
-        return PpmSummary(**cached)
+        payload = {
+            k: cached[k]
+            for k in (
+                "type",
+                "branch",
+                "start_date",
+                "end_date",
+                "total_devolvido_un",
+                "total_produzido_milheiro",
+                "total_produzido_un",
+                "ppm",
+            )
+            if k in cached
+        }
+        return PpmSummary(**payload)
     return None
 
 

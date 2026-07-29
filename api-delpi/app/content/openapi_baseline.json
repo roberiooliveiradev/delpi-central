@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 491,
+  "operation_count": 492,
   "operations": [
     {
       "method": "POST",
@@ -42460,6 +42460,198 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Produced quantity."
+    },
+    {
+      "method": "GET",
+      "path": "/quality/returned-totals",
+      "operationId": "get_quality_returned_totals",
+      "summary": "Returned quantity totals (NC QI2_QTDDEV)",
+      "tags": [
+        "Qualidade",
+        "Qualidade — PPM"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "type",
+          "in": "query",
+          "required": true,
+          "description": "PPM type: internal or external.",
+          "type": "string",
+          "enum": [
+            "internal",
+            "external"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "product_prefix",
+          "in": "query",
+          "required": false,
+          "description": "Optional finished-product family prefix (e.g. 9026).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "quality_returned_totals",
+        "shape": "playbook_report",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Returned quantity totals (NC QI2_QTDDEV)",
+            "description": "Canonical SUM(QI2_QTDDEV) used as the PPM numerator for internal or external nonconformities.",
+            "whenToUse": "Use when you need the returned quantity total alone (PPM numerator), without computing PPM.",
+            "label": "Returned quantity totals"
+          },
+          "pt-BR": {
+            "summary": "Totais de quantidade devolvida (NC QI2_QTDDEV)",
+            "description": "Soma canônica de QI2_QTDDEV usada como numerador do PPM (NC interna ou externa).",
+            "whenToUse": "Use quando precisar só do total devolvido (numerador PPM), sem calcular o PPM.",
+            "label": "Totais de quantidade devolvida"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "product_prefix": {
+            "locale": {
+              "en": {
+                "description": "Product prefix query parameter.",
+                "label": "Product prefix"
+              },
+              "pt-BR": {
+                "description": "Prefixo do código de produto para filtrar famílias.",
+                "label": "Prefixo do produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "type": {
+            "locale": {
+              "en": {
+                "description": "Type query parameter.",
+                "label": "Type"
+              },
+              "pt-BR": {
+                "description": "Tipo do registro a filtrar.",
+                "label": "Tipo"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use quando precisar só do total devolvido (numerador PPM), sem calcular o PPM.",
+          "description": "Soma canônica de QI2_QTDDEV usada como numerador do PPM (NC interna ou externa).",
+          "label": "Totais de quantidade devolvida"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Canonical SUM(QI2_QTDDEV) used as the PPM numerator for internal or external nonconformities."
     },
     {
       "method": "GET",

@@ -335,6 +335,8 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/ppm/external/series` | Série PPM externo. |
 | GET | `/quality/ppm/internal` | PPM interno (detalhado). |
 | GET | `/quality/ppm/external` | PPM externo (detalhado). |
+| GET | `/quality/returned-totals` | Totais de quantidade devolvida (numerador PPM — `QI2_QTDDEV`). |
+| GET | `/quality/produced-quantity` | Quantidade produzida por produto (detalhe). |
 | GET | `/quality/scrap-cost-pct` | Custo de refugo / ROL (%) — aba Perdas + SI `quality_scrap_cost_pct` (mesmo cálculo de `/refugos/scrap_cost_pct`; params `branch`/`date_start`/`date_end`). |
 | GET | `/quality/rework-cost-pct` | Custo de retrabalho / ROL (%) — aba Perdas + SI `quality_rework_cost_pct` (mesmo cálculo de `/retrabalhos/rework_cost_pct`). |
 

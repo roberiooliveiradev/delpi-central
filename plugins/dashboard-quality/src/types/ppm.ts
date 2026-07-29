@@ -10,6 +10,15 @@ export type DateRangeParams = {
   product_prefix?: string;
 };
 
+export type PpmNumerator = {
+  qty_returned_un: number;
+};
+
+export type PpmDenominator = {
+  qty_produced_un: number;
+  qty_produced_milheiro: number;
+};
+
 export type PpmSummary = DashboardGoalFields & {
   type: PpmType;
   branch: string | null;
@@ -19,6 +28,8 @@ export type PpmSummary = DashboardGoalFields & {
   total_produzido_milheiro: number;
   total_produzido_un: number;
   ppm: number;
+  numerator: PpmNumerator;
+  denominator: PpmDenominator;
 };
 
 export type PpmItem = {
@@ -47,6 +58,9 @@ export type PpmSeriesPoint = {
   ppm: number;
   total_devolvido_un: number;
   total_produzido_un: number;
+  total_produzido_milheiro: number;
+  numerator: PpmNumerator;
+  denominator: PpmDenominator;
 };
 
 export type PpmSeriesResponse = {

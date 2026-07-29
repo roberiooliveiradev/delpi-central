@@ -198,6 +198,16 @@ QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
     "target": "Meta PPM",
 }
 
+QUALITY_RETURNED_QUANTITY_FIELD_LABELS: dict[str, str] = {
+    "qty_returned_un": "Quantidade devolvida (un.)",
+    "nc_count": "Quantidade de NCs",
+    "type": "Tipo PPM",
+    "branch": "Filial",
+    "start_date": "Data início",
+    "end_date": "Data fim",
+    "product_prefix": "Prefixo de produto",
+}
+
 REFUGOS_SCRAP_COST_PCT_FIELD_LABELS: dict[str, str] = {
     "scrap_cost": "Custo de refugo (R$)",
     "rol_with_ipi": "ROL com IPI (R$)",

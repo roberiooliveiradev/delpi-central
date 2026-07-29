@@ -8,6 +8,9 @@ from app.application.services.quality.ppm_query_cache import (
     ppm_summary_cache_key,
     set_cached_ppm_summary,
 )
+from app.application.use_cases.ppm.get_returned_quantity_use_case import (
+    GetReturnedQuantityUseCase,
+)
 from app.application.use_cases.production_appointments.get_produced_quantity_use_case import (
     GetProducedQuantityUseCase,
 )
@@ -24,9 +27,13 @@ class GetPpmSummaryUseCase:
         self,
         repository: PpmQueryRepositoryPort,
         produced_quantity_use_case: GetProducedQuantityUseCase,
+        returned_quantity_use_case: GetReturnedQuantityUseCase | None = None,
     ):
         self._repository = repository
         self._produced_quantity = produced_quantity_use_case
+        self._returned_quantity = returned_quantity_use_case or GetReturnedQuantityUseCase(
+            repository
+        )
 
     def execute(self, request):
         if request.type not in {"internal", "external"}:
@@ -40,7 +47,7 @@ class GetPpmSummaryUseCase:
         if cached is not None:
             return cached
 
-        nc_total = self._repository.get_nc_returned_total(request)
+        returned = self._returned_quantity.get_totals(request)
         produced = self._produced_quantity.get_totals(
             ProducedQuantityQueryRequest.create(
                 date_start=request.date_start,
@@ -51,7 +58,7 @@ class GetPpmSummaryUseCase:
         )
         milheiro = float(produced.get("qty_produced_milheiro") or 0)
         un = float(produced.get("qty_produced_un") or 0)
-        devolvido = float(nc_total or 0)
+        devolvido = float(returned.get("qty_returned_un") or 0)
         ppm = 0.0 if un == 0 else (devolvido / un) * 1_000_000.0
 
         summary = PpmSummary(

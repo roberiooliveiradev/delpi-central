@@ -1,23 +1,15 @@
 """PPM por família: numerador filtrado, denominador geral (apontamentos)."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
 from app.application.use_cases.ppm.get_ppm_summary_use_case import GetPpmSummaryUseCase
-from app.infrastructure.persistence.totvs.ppm_repositories.ppm_query_repository import (
-    PpmQueryRepository,
-)
 
 
 def test_scoped_summary_filters_numerator_only() -> None:
-    captured: dict[str, object] = {}
-
-    def fake_execute_one(sql: str, params: tuple) -> dict:
-        captured["sql"] = sql
-        captured["params"] = params
-        return {"total_devolvido_un": 10}
-
-    repository = PpmQueryRepository()
+    repository = MagicMock()
+    returned = MagicMock()
+    returned.get_totals.return_value = {"qty_returned_un": 10.0, "nc_count": 2}
     produced = MagicMock()
     produced.get_totals.return_value = {
         "qty_produced_milheiro": 20,
@@ -31,17 +23,13 @@ def test_scoped_summary_filters_numerator_only() -> None:
         product_prefix="9026",
     )
 
-    with patch.object(PpmQueryRepository, "_connect"), patch.object(
-        repository, "execute_one", side_effect=fake_execute_one
-    ):
-        summary = GetPpmSummaryUseCase(repository, produced).execute(request)
+    summary = GetPpmSummaryUseCase(repository, produced, returned).execute(request)
 
-    sql = str(captured["sql"])
-    params = tuple(captured["params"])
-
-    assert "QI2_ITEM LIKE ?" in sql
-    assert "9026%" in params
-    assert "SH6.H6_PRODUTO LIKE" not in sql
-    assert "apont_inspecao" not in sql
+    returned.get_totals.assert_called_once_with(request)
     assert summary.total_produzido_un == 20000
+    assert summary.total_devolvido_un == 10.0
     produced.get_totals.assert_called_once()
+    payload = summary.to_dict()
+    assert payload["numerator"] == {"qty_returned_un": 10.0}
+    assert payload["denominator"]["qty_produced_un"] == 20000
+    assert payload["denominator"]["qty_produced_milheiro"] == 20

@@ -70,6 +70,39 @@ def test_list_ppm_external_returns_meta(mock_build) -> None:
     assert_envelope_meta(body_json(response), operation_id="list_ppm_external")
 
 
+@patch(f"{_PPM}.build_get_returned_quantity_use_case")
+def test_get_quality_returned_totals_returns_meta(mock_build) -> None:
+    from app.interface.http.routes.quality.ppm_routes import get_returned_totals
+
+    mock_build.return_value = MagicMock(
+        get_totals=MagicMock(
+            return_value={
+                "qty_returned_un": 10.0,
+                "nc_count": 2,
+                "type": "internal",
+                "branch": "01",
+                "start_date": "2026-01-01",
+                "end_date": "2026-01-31",
+                "product_prefix": None,
+            }
+        )
+    )
+    response = get_returned_totals(
+        type="internal",
+        branch="01",
+        start_date="2026-01-01",
+        end_date="2026-01-31",
+        date_start=None,
+        date_end=None,
+        product_prefix=None,
+    )
+    body = body_json(response)
+    assert_envelope_meta(body, operation_id="get_quality_returned_totals")
+    assert body["meta"]["entity"] == "quality_returned_totals"
+    assert body["meta"]["shape"] == "playbook_report"
+    assert body["data"]["qty_returned_un"] == 10.0
+
+
 def test_suggest_evidence_tags_returns_meta() -> None:
     from app.interface.http.routes.quality.action_plans_intelligence_router import (
         SuggestEvidenceTagsBody,

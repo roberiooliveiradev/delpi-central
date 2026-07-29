@@ -276,6 +276,8 @@ Legenda de permissões:
 | GET | `/quality/ppm/external/series` | Q |
 | GET | `/quality/ppm/internal` | Q |
 | GET | `/quality/ppm/external` | Q |
+| GET | `/quality/returned-totals` | Q |
+| GET | `/quality/produced-quantity` | Q |
 
 ---
 

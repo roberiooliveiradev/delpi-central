@@ -185,8 +185,9 @@ Métricas TOTVS e Google Sheets (PPM, NC Protheus, kaizen, 5S resumo).
 |---|---|
 | `/quality/branches` | Filiais |
 | `/quality/nonconformities` (+ `/series`) | NC Protheus |
-| `/quality/ppm/internal|external/summary` | PPM resumo |
+| `/quality/ppm/internal|external/summary` | PPM resumo (inclui `numerator` / `denominator`) |
 | `/quality/ppm/internal|external` | PPM detalhado (+ `/series`) |
+| `/quality/returned-totals` | Totais devolvidos (numerador PPM) |
 | `/quality/audit-5s/summary`, `/quality/kaizens/summary` | 5S e kaizens (resumo) |
 | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen (ficha + cálculo da economia) |
 

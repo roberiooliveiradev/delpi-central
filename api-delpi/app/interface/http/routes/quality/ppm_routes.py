@@ -30,6 +30,7 @@ from app.composition.quality_composer import (
     build_get_ppm_series_use_case,
     build_get_ppm_summary_use_case,
     build_get_produced_quantity_use_case,
+    build_get_returned_quantity_use_case,
     build_list_ppm_use_case,
 )
 from app.core.responses import error_response
@@ -41,6 +42,7 @@ from app.domain.services.quality.ppm_product_scope import (
 from app.interface.http.kpi_field_labels import (
     QUALITY_PPM_FIELD_LABELS,
     QUALITY_PRODUCED_QUANTITY_FIELD_LABELS,
+    QUALITY_RETURNED_QUANTITY_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
@@ -395,6 +397,60 @@ def list_external_ppm(
         page_size=page_size,
         product_prefix=product_prefix,
     )
+
+
+@router.get("/returned-totals", operation_id="get_quality_returned_totals")
+@require_any_permission(KPI_QUALITY_ACCESS)
+def get_returned_totals(
+    type: PpmType = Query(..., description="PPM type: internal or external."),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    product_prefix: Optional[str] = Query(
+        None,
+        description="Optional finished-product family prefix (e.g. 9026).",
+    ),
+):
+    """Canonical returned quantity total (SUM QI2_QTDDEV) — PPM numerator."""
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    normalized_prefix, prefix_error = _parse_product_prefix(product_prefix)
+    if prefix_error:
+        return error_response(prefix_error, status_code=400)
+    try:
+        from app.application.dto.ppm.returned_quantity_query_request import (
+            ReturnedQuantityQueryRequest,
+        )
+
+        query = ReturnedQuantityQueryRequest.create(
+            ppm_type=type,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+            product_prefix=normalized_prefix,
+        )
+        use_case = build_get_returned_quantity_use_case()
+        result = use_case.get_totals(query)
+        return api_delpi_success(
+            result,
+            operation_id="get_quality_returned_totals",
+            fields=kpi_fields(QUALITY_RETURNED_QUANTITY_FIELD_LABELS),
+            message="Totais de quantidade devolvida carregados com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao buscar quantidade devolvida: {exc}")
+        return error_response(
+            "Erro interno ao buscar quantidade devolvida.",
+            status_code=500,
+        )
 
 
 @router.get("/produced-quantity", operation_id="get_produced_quantity")

@@ -45,6 +45,9 @@ class GetPpmSeriesUseCase:
                 )
             )
 
+            devolvido = round(float(summary.total_devolvido_un or 0), 2)
+            produzido_un = round(float(summary.total_produzido_un or 0), 2)
+            produzido_milheiro = round(float(summary.total_produzido_milheiro or 0), 4)
             points.append(
                 PpmSeriesPointDto(
                     periodo=bucket.label,
@@ -52,8 +55,14 @@ class GetPpmSeriesUseCase:
                     start_date=bucket.start_date,
                     end_date=bucket.end_date,
                     ppm=round(float(summary.ppm or 0), 2),
-                    total_devolvido_un=round(float(summary.total_devolvido_un or 0), 2),
-                    total_produzido_un=round(float(summary.total_produzido_un or 0), 2),
+                    total_devolvido_un=devolvido,
+                    total_produzido_un=produzido_un,
+                    total_produzido_milheiro=produzido_milheiro,
+                    numerator={"qty_returned_un": devolvido},
+                    denominator={
+                        "qty_produced_un": produzido_un,
+                        "qty_produced_milheiro": produzido_milheiro,
+                    },
                 )
             )
 
@@ -68,12 +77,33 @@ class GetPpmSeriesUseCase:
 
     @staticmethod
     def _from_cached_dict(cached: dict) -> PpmSeriesResponse:
+        points: list[PpmSeriesPointDto] = []
+        for point in cached.get("points") or []:
+            devolvido = float(point.get("total_devolvido_un") or 0)
+            produzido_un = float(point.get("total_produzido_un") or 0)
+            produzido_milheiro = float(point.get("total_produzido_milheiro") or 0)
+            points.append(
+                PpmSeriesPointDto(
+                    periodo=point["periodo"],
+                    sort_key=point["sort_key"],
+                    start_date=point["start_date"],
+                    end_date=point["end_date"],
+                    ppm=float(point.get("ppm") or 0),
+                    total_devolvido_un=devolvido,
+                    total_produzido_un=produzido_un,
+                    total_produzido_milheiro=produzido_milheiro,
+                    numerator=point.get("numerator")
+                    or {"qty_returned_un": devolvido},
+                    denominator=point.get("denominator")
+                    or {
+                        "qty_produced_un": produzido_un,
+                        "qty_produced_milheiro": produzido_milheiro,
+                    },
+                )
+            )
         return PpmSeriesResponse(
             type=cached["type"],
             granularity=cached["granularity"],
             truncated=bool(cached["truncated"]),
-            points=[
-                PpmSeriesPointDto(**point)
-                for point in cached.get("points") or []
-            ],
+            points=points,
         )

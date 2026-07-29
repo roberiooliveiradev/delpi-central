@@ -49,19 +49,27 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
     ) -> tuple[str | None, str | None]:
         return to_protheus_date(date_start), exclusive_end_date(date_end)
 
-    def get_nc_returned_total(self, request) -> float:
-        """Numerador PPM — só NC (QI2). Denominador vem do módulo de apontamentos."""
-        date_start, date_end_exclusive = self._resolve_date_range(
-            request.date_start,
-            request.date_end,
+    def get_returned_totals(
+        self,
+        *,
+        ppm_type: str,
+        branch: str | None,
+        date_start: str | None,
+        date_end: str | None,
+        product_prefix: str | None = None,
+    ) -> dict:
+        """Numerador PPM — só NC (QI2_QTDDEV). Denominador vem do módulo de apontamentos."""
+        date_start_p, date_end_exclusive = self._resolve_date_range(
+            date_start,
+            date_end,
         )
 
         where_nc, params_nc = build_nc_where_clause(
-            ppm_type=request.type,
-            branch=request.branch,
-            date_start=date_start,
+            ppm_type=ppm_type,
+            branch=branch,
+            date_start=date_start_p,
             date_end_exclusive=date_end_exclusive,
-            product_prefix=getattr(request, "product_prefix", None),
+            product_prefix=product_prefix,
         )
 
         sql = f"""
@@ -72,7 +80,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
                         TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
                         0
                     )
-                ) AS total_devolvido_un
+                ) AS qty_returned_un,
+                COUNT(*) AS nc_count
             FROM QI2010 WITH (NOLOCK)
             WHERE {where_nc}
         """
@@ -80,7 +89,10 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
         with self as repo:
             row = repo.execute_one(sql, tuple(params_nc)) or {}
 
-        return float(row.get("total_devolvido_un") or 0)
+        return {
+            "qty_returned_un": float(row.get("qty_returned_un") or 0),
+            "nc_count": int(row.get("nc_count") or 0),
+        }
 
     def list_branches(
         self,

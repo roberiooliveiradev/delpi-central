@@ -32,13 +32,14 @@ def test_ppm_summary_cache_key_varies_by_type() -> None:
 
 def test_ppm_summary_use_case_reuses_cached_summary() -> None:
     repository = MagicMock()
-    repository.get_nc_returned_total.return_value = 1.0
+    returned = MagicMock()
+    returned.get_totals.return_value = {"qty_returned_un": 1.0, "nc_count": 1}
     produced = MagicMock()
     produced.get_totals.return_value = {
         "qty_produced_milheiro": 2.0,
         "qty_produced_un": 2000.0,
     }
-    use_case = GetPpmSummaryUseCase(repository, produced)
+    use_case = GetPpmSummaryUseCase(repository, produced, returned)
     request = PpmSummaryRequest(
         type="external",
         branch="01",
@@ -51,7 +52,9 @@ def test_ppm_summary_use_case_reuses_cached_summary() -> None:
 
     assert first.ppm == 500.0
     assert second.ppm == 500.0
-    repository.get_nc_returned_total.assert_called_once()
+    assert first.to_dict()["numerator"]["qty_returned_un"] == 1.0
+    assert first.to_dict()["denominator"]["qty_produced_un"] == 2000.0
+    returned.get_totals.assert_called_once()
     produced.get_totals.assert_called_once()
 
 

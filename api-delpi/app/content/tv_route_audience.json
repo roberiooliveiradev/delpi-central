@@ -2354,6 +2354,23 @@
       },
       "category": "quality"
     },
+    "get_quality_returned_totals": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Returned quantity totals (NC QI2_QTDDEV)",
+          "description": "Canonical SUM(QI2_QTDDEV) used as the PPM numerator for internal or external nonconformities.",
+          "whenToUse": "Use when you need the returned quantity total alone (PPM numerator), without computing PPM.",
+          "label": "Returned quantity totals"
+        },
+        "pt-BR": {
+          "summary": "Totais de quantidade devolvida (NC QI2_QTDDEV)",
+          "description": "Soma canônica de QI2_QTDDEV usada como numerador do PPM (NC interna ou externa).",
+          "whenToUse": "Use quando precisar só do total devolvido (numerador PPM), sem calcular o PPM.",
+          "label": "Totais de quantidade devolvida"
+        }
+      }
+    },
     "get_product_analyser": {
       "locale": {
         "en": {

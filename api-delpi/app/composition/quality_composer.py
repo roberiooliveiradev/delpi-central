@@ -24,6 +24,9 @@ from app.application.use_cases.ppm.get_ppm_series_use_case import (
 from app.application.use_cases.ppm.get_ppm_summary_use_case import (
     GetPpmSummaryUseCase,
 )
+from app.application.use_cases.ppm.get_returned_quantity_use_case import (
+    GetReturnedQuantityUseCase,
+)
 from app.application.use_cases.ppm.list_ppm_use_case import (
     ListPpmUseCase,
 )
@@ -109,10 +112,15 @@ def build_get_kaizen_by_id_use_case() -> GetKaizenByIdUseCase:
 def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
     return GetAudit5SSummaryUseCase(repository=_build_audit_5s_query_repository())
 
+def build_get_returned_quantity_use_case() -> GetReturnedQuantityUseCase:
+    return GetReturnedQuantityUseCase(_build_ppm_repository())
+
+
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
     return GetPpmSummaryUseCase(
         _build_ppm_repository(),
         build_get_produced_quantity_use_case(),
+        build_get_returned_quantity_use_case(),
     )
 
 
@@ -122,7 +130,6 @@ def build_get_produced_quantity_use_case() -> GetProducedQuantityUseCase:
     )
 
     return build_appointments_produced()
-
 
 def build_list_ppm_use_case() -> ListPpmUseCase:
     return ListPpmUseCase(_build_ppm_repository())
