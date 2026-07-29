@@ -10,10 +10,11 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { fetchKaizenSummary } from "../api/kaizenApi";
+import { fetchKaizenSavingsInvestmentSeries, fetchKaizenSummary } from "../api/kaizenApi";
 import { BarList, type BarListBucket, type BarListTone } from "../components/BarList";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
+import { KaizenSavingsInvestmentChart } from "../components/KaizenSavingsInvestmentChart";
 import {
   EmptyHint,
   FilterInputField,
@@ -25,7 +26,12 @@ import {
 import { detailPath, newPath } from "../constants/kaizen";
 import { KAIZEN_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useCompetenceLinkedDates } from "../hooks/useCompetenceLinkedDates";
-import type { KaizenSummary, KaizenSummaryBucket } from "../types/kaizen";
+import type {
+  KaizenSavingsInvestmentSeries,
+  KaizenSeriesGranularity,
+  KaizenSummary,
+  KaizenSummaryBucket,
+} from "../types/kaizen";
 import {
   readDashboardFilters,
   subscribeDashboardFilterSync,
@@ -82,7 +88,10 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
     [branchOptions],
   );
   const [summary, setSummary] = useState<KaizenSummary | null>(null);
+  const [series, setSeries] = useState<KaizenSavingsInvestmentSeries | null>(null);
+  const [seriesGranularity, setSeriesGranularity] = useState<KaizenSeriesGranularity>("month");
   const [loading, setLoading] = useState(true);
+  const [seriesLoading, setSeriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [units, setUnits] = useState<string[]>(() => {
     const fromUrl = unitsFromString(initialFilters.unit).filter((code) =>
@@ -139,9 +148,30 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
     }
   }, [branchParam, dateStart, dateEnd]);
 
+  const loadSeries = useCallback(async () => {
+    setSeriesLoading(true);
+    try {
+      const data = await fetchKaizenSavingsInvestmentSeries({
+        branch: branchParam,
+        dateStart: dateStart || undefined,
+        dateEnd: dateEnd || undefined,
+        granularity: seriesGranularity,
+      });
+      setSeries(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao carregar série do gráfico.");
+    } finally {
+      setSeriesLoading(false);
+    }
+  }, [branchParam, dateStart, dateEnd, seriesGranularity]);
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void loadSeries();
+  }, [loadSeries]);
 
   // Reflete os filtros na URL (compartilhável) e no sessionStorage (troca de aba no portal).
   useEffect(() => {
@@ -213,10 +243,13 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
             <button
               type="button"
               className={KZ_GHOST_BTN}
-              onClick={() => void load()}
-              disabled={loading}
+              onClick={() => {
+                void load();
+                void loadSeries();
+              }}
+              disabled={loading || seriesLoading}
             >
-              {loading ? "Atualizando…" : "Atualizar"}
+              {loading || seriesLoading ? "Atualizando…" : "Atualizar"}
             </button>
             <button type="button" className="kz-primary-btn" onClick={() => onNavigate(newPath())}>
               Novo kaizen
@@ -333,6 +366,13 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
           </section>
 
           <div className="kz-dash-grid">
+            <KaizenSavingsInvestmentChart
+              series={series}
+              granularity={seriesGranularity}
+              onGranularityChange={setSeriesGranularity}
+              loading={seriesLoading}
+            />
+
             <section className="kz-card kz-dash-panel kz-dash-panel--wide">
               <h2 className="kz-dash-panel__title">Kaizens aprovados/implantados por mês</h2>
               <BarList buckets={buckets.implantedByMonth} toneOf={() => "success"} />

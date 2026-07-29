@@ -6,6 +6,7 @@ from decimal import Decimal
 from typing import Any
 
 from app.domain.services.kaizen import kaizen_revision_service as revision_service
+from app.domain.services.kaizen import kaizen_savings_investment_series as savings_investment_series
 from app.domain.services.kaizen import kaizen_savings_timeline as savings_timeline_service
 from app.domain.services.kaizen import kaizen_savings_validity
 from app.domain.services.kaizen.kaizen_categories import (
@@ -416,6 +417,34 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "expiring_soon": expiring_soon,
             "recent": recent,
         }
+
+    def savings_investment_series(
+        self,
+        *,
+        branch_code: str | None = None,
+        date_start: str | None = None,
+        date_end: str | None = None,
+        granularity: str = "month",
+    ) -> dict[str, Any]:
+        """Série dia/mês de ganhos financeiros vs investimento (painel)."""
+        filters = ["k.deleted_at IS NULL"]
+        params: list[Any] = []
+        if branch_code:
+            filters.append("k.branch_code = %s")
+            params.append(branch_code)
+        where_clause = " AND ".join(filters)
+        rows = self.fetch_all(
+            f"{_KAIZEN_SELECT} WHERE {where_clause} ORDER BY k.created_at DESC",
+            tuple(params),
+        )
+        grain = "day" if granularity == "day" else "month"
+        return savings_investment_series.build_savings_investment_series(
+            rows,
+            granularity=grain,
+            date_start=date_start,
+            date_end=date_end,
+            branch_code=branch_code,
+        )
 
     @staticmethod
     def _tally_categories(items: list[dict[str, Any]]) -> list[dict[str, Any]]:

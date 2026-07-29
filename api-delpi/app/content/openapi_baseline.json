@@ -34300,6 +34300,87 @@
       "description": "Kaizen records summary."
     },
     {
+      "method": "GET",
+      "path": "/quality/kaizens/records/savings-investment/series",
+      "operationId": "get_kaizen_savings_investment_series",
+      "summary": "Get Kaizen savings vs investment series",
+      "tags": [
+        "Qualidade",
+        "Kaizen — cadastro"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "granularity",
+          "required": false,
+          "description": "Kaizen savings vs investment series grain: day or month.",
+          "enum": [
+            "day",
+            "month"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "kaizen_savings_investment_series",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Get Kaizen savings vs investment series",
+            "description": "Time series of financial gains versus investment (day or month).",
+            "label": "Kaizen savings vs investment"
+          },
+          "pt-BR": {
+            "summary": "Série ganhos financeiros vs investimento",
+            "description": "Série temporal de ganhos financeiros versus investimento (dia ou mês).",
+            "label": "Ganhos vs investimento (Kaizen)"
+          }
+        }
+      },
+      "description": "Kaizen records summary."
+    },
+    {
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}",
       "operationId": "delete_kaizen_record",

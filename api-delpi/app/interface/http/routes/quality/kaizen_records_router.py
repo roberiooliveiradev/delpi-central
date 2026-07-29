@@ -48,6 +48,7 @@ from app.interface.http.query_param_enums import (
     KAIZEN_SAVINGS_TYPE_VALUES,
     KAIZEN_STATUS_QUERY,
     KAIZEN_STATUS_VALUES,
+    KAIZEN_SERIES_GRANULARITY_QUERY,
 )
 
 router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
@@ -371,6 +372,53 @@ def get_kaizen_records_summary(
     except Exception as exc:
         log_error(f"Erro ao calcular indicadores de kaizen: {exc}")
         return error_response("Erro interno ao calcular indicadores de kaizen.", status_code=500)
+
+
+@router.get(
+    "/savings-investment/series",
+    operation_id="get_kaizen_savings_investment_series",
+)
+@require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
+def get_kaizen_savings_investment_series(
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    start_date: str | None = START_DATE_QUERY(),
+    end_date: str | None = END_DATE_QUERY(),
+    date_start: str | None = LEGACY_DATE_START_QUERY(),
+    date_end: str | None = LEGACY_DATE_END_QUERY(),
+    granularity: str = KAIZEN_SERIES_GRANULARITY_QUERY(),
+):
+    """Série temporal de ganhos financeiros vs investimento (granularidade dia ou mês)."""
+    try:
+        start_date, end_date = resolve_period_dates(
+            start_date=start_date,
+            end_date=end_date,
+            date_start=date_start,
+            date_end=date_end,
+        )
+        effective_branch, branch_err = resolve_query_branch(branch)
+        if branch_err is not None:
+            return branch_err
+        repo = build_kaizen_repository()
+        data = repo.savings_investment_series(
+            branch_code=effective_branch,
+            date_start=start_date,
+            date_end=end_date,
+            granularity=granularity,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="get_kaizen_savings_investment_series",
+            shape="scalar",
+        )
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao calcular série ganhos vs investimento: {exc}")
+        return error_response(str(exc), status_code=500)
+    except Exception as exc:
+        log_error(f"Erro ao calcular série ganhos vs investimento: {exc}")
+        return error_response(
+            "Erro interno ao calcular série ganhos vs investimento.",
+            status_code=500,
+        )
 
 
 @router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID)

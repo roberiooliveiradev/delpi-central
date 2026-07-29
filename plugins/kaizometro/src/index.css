@@ -1229,6 +1229,31 @@
   .dashboard-kaizometro .kz-dash-panel--recent{
     grid-column: span 1;
   }
+}.dashboard-kaizometro .kz-dash-chart__header{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}.dashboard-kaizometro .kz-dash-chart__titles{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}.dashboard-kaizometro .kz-dash-chart__subtitle{
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
+}.dashboard-kaizometro .kz-dash-chart__canvas{
+  min-height: 280px;
+  width: 100%;
+}.dashboard-kaizometro .kz-dash-chart__canvas .delpi-ui-series-chart{
+  min-height: 280px;
+}.dashboard-kaizometro .kz-dash-chart__empty,
+.dashboard-kaizometro .kz-dash-chart__totals{
+  margin: 0;
+  font-size: var(--kz-font-sm);
+  color: var(--kz-text-muted);
 }/* --- Bar list --- */.dashboard-kaizometro .kz-barlist{
   list-style: none;
   margin: 0;

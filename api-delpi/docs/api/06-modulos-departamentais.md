@@ -321,6 +321,8 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen na planilha (`{kaizen_id:path}`). |
 | GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |
 | POST | `/quality/kaizens/records` | Cria kaizen no PostgreSQL. |
+| GET | `/quality/kaizens/records/summary` | Indicadores do painel Kaizômetro (Postgres). |
+| GET | `/quality/kaizens/records/savings-investment/series` | Série ganhos financeiros vs investimento (`granularity=day\|month`). |
 | GET | `/quality/kaizens/records/{id}` | Detalhe cadastro (UUID). |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza cadastro. |
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |

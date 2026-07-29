@@ -182,6 +182,25 @@ export type KaizenSummary = {
   recent: KaizenSummaryRecent[];
 };
 
+export type KaizenSeriesGranularity = "day" | "month";
+
+export type KaizenSavingsInvestmentPoint = {
+  periodo: string;
+  savings: number;
+  investment: number;
+};
+
+export type KaizenSavingsInvestmentSeries = {
+  granularity: KaizenSeriesGranularity;
+  start_date: string;
+  end_date: string;
+  branch_code: string | null;
+  total_savings: number;
+  total_investment: number;
+  total: number;
+  points: KaizenSavingsInvestmentPoint[];
+};
+
 export type KaizenEvidenceStage = "antes" | "depois" | "geral";
 export type KaizenEvidenceType = "attachment" | "photo" | "document" | "link";
 

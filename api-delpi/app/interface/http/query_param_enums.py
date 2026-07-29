@@ -391,6 +391,15 @@ def TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_QUERY():
     )
 
 
+def KAIZEN_SERIES_GRANULARITY_QUERY():
+    return Query(
+        "month",
+        description="Kaizen savings vs investment series grain: day or month.",
+        pattern=_enum_pattern(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
+        enum=list(TRANSFORMOMETRO_EVOLUCAO_GRANULARITY_VALUES),
+    )
+
+
 def TRANSFORMOMETRO_VIEW_QUERY():
     return Query(
         None,

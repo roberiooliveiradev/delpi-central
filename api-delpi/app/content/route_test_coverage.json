@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-28",
+  "generatedAt": "2026-07-29",
   "baselineOperationCount": 484,
-  "operationCount": 484,
-  "coveredCount": 482,
+  "operationCount": 485,
+  "coveredCount": 483,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -134,8 +134,8 @@
       "exempt": 0
     },
     "quality": {
-      "total": 137,
-      "covered": 137,
+      "total": 138,
+      "covered": 138,
       "gap": 0,
       "exempt": 0
     },
@@ -3430,6 +3430,15 @@
       "path": "/quality/kaizens/records/summary",
       "module": "quality",
       "entity": "kaizen_records_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_kaizen_savings_investment_series",
+      "method": "GET",
+      "path": "/quality/kaizens/records/savings-investment/series",
+      "module": "quality",
+      "entity": "kaizen_savings_investment_series",
       "shape": "scalar",
       "status": "covered"
     },

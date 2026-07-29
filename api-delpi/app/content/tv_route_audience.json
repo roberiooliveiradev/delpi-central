@@ -1951,9 +1951,24 @@
           "label": "Kaizen Records Summary"
         },
         "pt-BR": {
-          "label": "Kaizen Records Summary",
-          "summary": "Kaizen Records Summary",
-          "description": "Indicador numérico para «Kaizen Records Summary»."
+          "label": "Resumo de kaizens cadastrados",
+          "summary": "Resumo de kaizens cadastrados",
+          "description": "Indicadores agregados do painel Kaizômetro."
+        }
+      },
+      "category": "quality"
+    },
+    "get_kaizen_savings_investment_series": {
+      "locale": {
+        "en": {
+          "summary": "Get Kaizen savings vs investment series",
+          "description": "Time series of financial gains versus investment (day or month).",
+          "label": "Kaizen savings vs investment"
+        },
+        "pt-BR": {
+          "label": "Ganhos vs investimento (Kaizen)",
+          "summary": "Série ganhos financeiros vs investimento",
+          "description": "Série temporal de ganhos financeiros versus investimento (dia ou mês)."
         }
       },
       "category": "quality"

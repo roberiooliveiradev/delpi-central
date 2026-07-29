@@ -232,6 +232,34 @@ def test_quality_kaizen_records_summary_returns_meta(mock_build) -> None:
     )
 
 
+@patch("app.interface.http.routes.quality.kaizen_records_router.resolve_query_branch", return_value=(None, None))
+@patch("app.interface.http.routes.quality.kaizen_records_router.build_kaizen_repository")
+def test_quality_kaizen_savings_investment_series_returns_meta(mock_build, _branch) -> None:
+    from app.interface.http.routes.quality.kaizen_records_router import (
+        get_kaizen_savings_investment_series,
+    )
+
+    mock_repo = MagicMock()
+    mock_repo.savings_investment_series.return_value = {
+        "granularity": "month",
+        "start_date": "2026-07-01",
+        "end_date": "2026-07-31",
+        "branch_code": None,
+        "total_savings": 0.0,
+        "total_investment": 0.0,
+        "total": 1,
+        "points": [{"periodo": "2026-07", "savings": 0.0, "investment": 0.0}],
+    }
+    mock_build.return_value = mock_repo
+
+    response = get_kaizen_savings_investment_series()
+    _assert_meta(
+        _body(response),
+        operation_id="get_kaizen_savings_investment_series",
+        shape="scalar",
+    )
+
+
 @patch("app.interface.http.routes.quality.kaizen_records_router.build_import_kaizens_use_case")
 def test_quality_kaizen_import_returns_meta(mock_build) -> None:
     from app.application.use_cases.kaizen.import_kaizens_use_case import ImportKaizensResult

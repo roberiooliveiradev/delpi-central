@@ -18,7 +18,9 @@ import type {
   KaizenListResponse,
   KaizenRecord,
   KaizenRevision,
+  KaizenSavingsInvestmentSeries,
   KaizenSavingsTimeline,
+  KaizenSeriesGranularity,
   KaizenSummary,
 } from "../types/kaizen";
 
@@ -69,6 +71,26 @@ export async function fetchKaizenSummary(params: SummaryParams = {}): Promise<Ka
     `${API_BASE}/summary${query ? `?${query}` : ""}`,
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar indicadores de kaizen.");
+}
+
+export type SavingsInvestmentSeriesParams = SummaryParams & {
+  granularity?: KaizenSeriesGranularity;
+};
+
+/** Série temporal ganhos financeiros vs investimento (dia ou mês). */
+export async function fetchKaizenSavingsInvestmentSeries(
+  params: SavingsInvestmentSeriesParams = {},
+): Promise<KaizenSavingsInvestmentSeries> {
+  const search = new URLSearchParams();
+  if (params.branch) search.set("branch", params.branch);
+  if (params.dateStart) search.set("start_date", params.dateStart);
+  if (params.dateEnd) search.set("end_date", params.dateEnd);
+  if (params.granularity) search.set("granularity", params.granularity);
+  const query = search.toString();
+  const envelope = await httpGet<ApiEnvelope<KaizenSavingsInvestmentSeries>>(
+    `${API_BASE}/savings-investment/series${query ? `?${query}` : ""}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro ao carregar série ganhos vs investimento.");
 }
 
 export async function fetchKaizenRecord(id: string): Promise<KaizenRecord> {
