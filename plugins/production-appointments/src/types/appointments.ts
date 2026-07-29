@@ -5,6 +5,7 @@ export type AppointmentsQueryFilters = {
   workCenter?: string;
   op?: string;
   product?: string;
+  motherOp?: boolean;
 };
 
 export type FilterFormState = {
@@ -13,6 +14,7 @@ export type FilterFormState = {
   workCenter: string;
   op: string;
   product: string;
+  motherOp: boolean;
 };
 
 export type WorkCenterItem = {

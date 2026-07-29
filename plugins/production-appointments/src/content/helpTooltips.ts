@@ -9,6 +9,8 @@ export const PA_HELP_TOOLTIPS = {
       "Restringe o painel a um centro de trabalho (CT). CTs de inspeção final aparecem identificados na lista.",
     op: "Filtra pela ordem de produção (OP). Deixe vazio para todas as OPs do período.",
     product: "Filtra pelo código do produto. Deixe vazio para todos os produtos.",
+    motherOp:
+      "Restringe a OPs mãe (sequência Protheus 001 — número da OP terminando em 001). Exclui OPs vinculadas (002+).",
   },
   kpis: {
     appointments:

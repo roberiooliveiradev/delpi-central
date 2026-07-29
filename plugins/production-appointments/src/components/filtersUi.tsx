@@ -1,7 +1,9 @@
 import {
   FilterInputField as PluginFilterInputField,
   FilterSelectField as PluginFilterSelectField,
+  createDashboardFilterCheckboxField,
   createFilterBarShell,
+  filterCheckboxFieldBemClasses,
   filtersRowBemClasses,
   selectControlBemClasses,
   type FilterInputFieldProps,
@@ -10,6 +12,7 @@ import {
 
 const FIELD_CLASS_NAMES = filtersRowBemClasses("pa");
 const SELECT_CLASS_NAMES = selectControlBemClasses("pa");
+const CHECKBOX_CLASS_NAMES = filterCheckboxFieldBemClasses("pa");
 
 export const FilterBarShell = createFilterBarShell({
   prefix: "pa",
@@ -32,3 +35,8 @@ export function FilterSelectField(
     />
   );
 }
+
+export const FilterCheckboxField = createDashboardFilterCheckboxField({
+  classNames: CHECKBOX_CLASS_NAMES,
+  labels: { defaultCheckboxLabel: "Ativar" },
+});

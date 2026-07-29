@@ -213,3 +213,27 @@ def test_by_op_forwards_optional_search(
     assert response.status_code == 200
     request = use_case.execute.call_args.args[0]
     assert request.search == "2465"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_get_production_appointments_summary_use_case"
+)
+def test_summary_forwards_mother_op(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {"totals": {}, "items": []}
+    mock_builder.return_value = use_case
+
+    response = pa_client.get(
+        "/production/appointments/summary",
+        params={"branch": "01", "mother_op": "true"},
+    )
+
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.mother_op is True

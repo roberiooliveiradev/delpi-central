@@ -107,6 +107,7 @@ function ProductionAppointmentsContent({
     appliedFilters?.workCenter,
     appliedFilters?.op,
     appliedFilters?.product,
+    appliedFilters?.motherOp,
     totvsBranch,
   ]);
 

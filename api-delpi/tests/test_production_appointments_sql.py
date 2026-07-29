@@ -48,6 +48,18 @@ def test_appointments_where_applies_free_text_search() -> None:
     assert params.count("%lind%") == 12
 
 
+def test_appointments_where_mother_op_suffix_001() -> None:
+    where, params = build_appointments_where(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        mother_op=True,
+    )
+
+    assert "RIGHT(LTRIM(RTRIM(SH6.H6_OP)), 3) = ?" in where
+    assert params[-1] == "001"
+
+
 def test_by_op_where_applies_free_text_search() -> None:
     where, params = build_appointments_where(
         date_start="20260615",

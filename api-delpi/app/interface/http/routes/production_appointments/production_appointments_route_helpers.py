@@ -31,6 +31,7 @@ def build_query_request(
     op: Optional[str] = None,
     product: Optional[str] = None,
     search: Optional[str] = None,
+    mother_op: bool = False,
     group_by: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
@@ -43,6 +44,7 @@ def build_query_request(
         op=op,
         product=product,
         search=search,
+        mother_op=mother_op,
         group_by=group_by,
         page=page,
         page_size=page_size,
@@ -90,6 +92,14 @@ def SEARCH_QUERY():
         description=(
             "Optional free-text search across visible table columns "
             "(operator, OP, product, work center, resource, etc.)."
+        ),
+    )
+def MOTHER_OP_QUERY():
+    return Query(
+        False,
+        description=(
+            "When true, restrict to mother production orders "
+            "(H6_OP ending with sequence 001)."
         ),
     )
 def GROUP_BY_QUERY():

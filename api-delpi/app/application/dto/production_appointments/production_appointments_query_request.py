@@ -26,6 +26,7 @@ class ProductionAppointmentsQueryRequest:
     op: str | None = None
     product: str | None = None
     search: str | None = None
+    mother_op: bool = False
     group_by: str = "day"
     page: int = DEFAULT_PAGE
     page_size: int = DEFAULT_PAGE_SIZE
@@ -41,6 +42,7 @@ class ProductionAppointmentsQueryRequest:
         op: str | None = None,
         product: str | None = None,
         search: str | None = None,
+        mother_op: bool = False,
         group_by: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
@@ -68,6 +70,7 @@ class ProductionAppointmentsQueryRequest:
             op=op.strip() if op else None,
             product=product.strip() if product else None,
             search=ProductionAppointmentsListSearchService.normalize_term(search),
+            mother_op=bool(mother_op),
             group_by=resolved_group,
             page=resolved_page,
             page_size=resolved_size,

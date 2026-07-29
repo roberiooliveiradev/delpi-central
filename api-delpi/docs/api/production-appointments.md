@@ -38,6 +38,7 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 | `work_center` | não | Ex.: `CT-70` |
 | `op` | não | Ordem de produção (match exato) |
 | `product` | não | Código produto (match exato) |
+| `mother_op` | não | `true` = só OP mãe (sufixo `001` em `H6_OP`, sequência mãe Protheus) |
 | `search` | não | Texto livre nas listagens (`/appointments` e `/by-op`): operador, OP, produto, CT, recurso, etc. |
 | `group_by` | séries | `day` (padrão) ou `day_work_center` |
 | `page`, `page_size` | listas | Paginação (`page_size` máx. 200) |

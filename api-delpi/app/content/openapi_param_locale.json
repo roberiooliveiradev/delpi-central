@@ -1308,6 +1308,18 @@
         }
       }
     },
+    "mother_op": {
+      "locale": {
+        "en": {
+          "label": "Mother OP only",
+          "description": "When true, restrict to mother production orders (OP ending with sequence 001)."
+        },
+        "pt-BR": {
+          "label": "Somente OP mãe",
+          "description": "Quando verdadeiro, restringe às OPs mãe (sufixo 001 em H6_OP)."
+        }
+      }
+    },
     "novos_negocios": {
       "locale": {
         "en": {

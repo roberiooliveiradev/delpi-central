@@ -148,6 +148,7 @@ export function createDefaultFilterFormState(referenceDate = new Date()) {
     workCenter: "",
     op: "",
     product: "",
+    motherOp: false,
   };
 }
 
@@ -159,6 +160,7 @@ export function filtersFromFormState(
     workCenter?: string;
     op?: string;
     product?: string;
+    motherOp?: boolean;
   },
 ) {
   return {
@@ -168,5 +170,6 @@ export function filtersFromFormState(
     workCenter: state.workCenter?.trim() || undefined,
     op: state.op?.trim() || undefined,
     product: state.product?.trim() || undefined,
+    motherOp: state.motherOp || undefined,
   };
 }

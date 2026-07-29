@@ -31,6 +31,7 @@ from app.interface.http.period_query_params import (
 from app.interface.http.routes.production_appointments.production_appointments_route_helpers import (
     BRANCH_QUERY,
     GROUP_BY_QUERY,
+    MOTHER_OP_QUERY,
     OP_QUERY,
     PAGE_QUERY,
     PAGE_SIZE_QUERY,
@@ -57,6 +58,7 @@ def _guard_and_build(
     op: Optional[str] = None,
     product: Optional[str] = None,
     search: Optional[str] = None,
+    mother_op: bool = False,
     group_by: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
@@ -74,6 +76,7 @@ def _guard_and_build(
             op=op,
             product=product,
             search=search,
+            mother_op=mother_op,
             group_by=group_by,
             page=page,
             page_size=page_size,
@@ -123,6 +126,7 @@ def list_appointments_route(
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
+    mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
 ):
@@ -140,6 +144,7 @@ def list_appointments_route(
         op=op,
         product=product,
         search=search,
+        mother_op=mother_op,
         page=page,
         page_size=page_size,
         error_context="listar apontamentos",
@@ -172,6 +177,7 @@ def summary_route(
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
+    mother_op: bool = MOTHER_OP_QUERY(),
 ):
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
@@ -186,6 +192,7 @@ def summary_route(
         work_center=work_center,
         op=op,
         product=product,
+        mother_op=mother_op,
         error_context="carregar resumo de apontamentos",
     )
     if err:
@@ -216,6 +223,7 @@ def series_route(
     work_center: Optional[str] = WORK_CENTER_QUERY(),
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
+    mother_op: bool = MOTHER_OP_QUERY(),
     group_by: str = GROUP_BY_QUERY(),
 ):
     start_date, end_date = resolve_period_dates(
@@ -231,6 +239,7 @@ def series_route(
         work_center=work_center,
         op=op,
         product=product,
+        mother_op=mother_op,
         group_by=group_by,
         error_context="carregar série de apontamentos",
     )
@@ -263,6 +272,7 @@ def by_op_route(
     op: Optional[str] = OP_QUERY(),
     product: Optional[str] = PRODUCT_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
+    mother_op: bool = MOTHER_OP_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
 ):
@@ -280,6 +290,7 @@ def by_op_route(
         op=op,
         product=product,
         search=search,
+        mother_op=mother_op,
         page=page,
         page_size=page_size,
         error_context="carregar drill-down por OP",

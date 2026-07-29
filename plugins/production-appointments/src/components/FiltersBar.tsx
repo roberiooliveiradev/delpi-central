@@ -4,7 +4,12 @@ import {
   type QuickRangePreset,
   validatePeriodRange,
 } from "../utils/dateRange";
-import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
+import {
+  FilterBarShell,
+  FilterCheckboxField,
+  FilterInputField,
+  FilterSelectField,
+} from "./filtersUi";
 
 export type { QuickRangePreset };
 
@@ -97,6 +102,15 @@ export function FiltersBar({
             placeholder="Opcional"
           />
         ) : null}
+        <FilterCheckboxField
+          id="pa-filter-mother-op"
+          label="OP mãe"
+          hint={PA_HELP_TOOLTIPS.filters.motherOp}
+          checked={filters.motherOp}
+          onChange={(checked) => onChange({ motherOp: checked })}
+          checkboxLabel="Somente OPs com final 001"
+          disabled={loading}
+        />
       </div>
       {validationError || localError ? (
         <p className="pa-filters__error" role="alert">

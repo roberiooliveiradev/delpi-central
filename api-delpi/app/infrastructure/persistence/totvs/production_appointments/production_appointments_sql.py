@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from app.domain.production.production_appointments.production_appointments_scope import (
     CT_INSPECAO_NOME_SQL_LIKE,
+    MOTHER_OP_SUFFIX,
 )
 from app.domain.services.production.production_appointments_list_search_service import (
     ProductionAppointmentsListSearchService,
@@ -78,6 +79,7 @@ def build_appointments_where(
     product: str | None = None,
     search: str | None = None,
     search_scope: str = "appointment",
+    mother_op: bool = False,
 ) -> tuple[str, list]:
     clauses = [
         "SH6.D_E_L_E_T_ = ' '",
@@ -99,6 +101,10 @@ def build_appointments_where(
     if product:
         clauses.append("LTRIM(RTRIM(SH6.H6_PRODUTO)) = ?")
         params.append(product.strip())
+    if mother_op:
+        suffix_len = len(MOTHER_OP_SUFFIX)
+        clauses.append(f"RIGHT(LTRIM(RTRIM(SH6.H6_OP)), {suffix_len}) = ?")
+        params.append(MOTHER_OP_SUFFIX)
 
     if search_scope == "by_op":
         search_clause, search_params = (
@@ -147,6 +153,7 @@ def build_appointments_list_query(
     op: str | None = None,
     product: str | None = None,
     search: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -157,6 +164,7 @@ def build_appointments_list_query(
         product=product,
         search=search,
         search_scope="appointment",
+        mother_op=mother_op,
     )
     sql = f"""
     SELECT
@@ -200,6 +208,7 @@ def build_appointments_count_query(
     op: str | None = None,
     product: str | None = None,
     search: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -210,6 +219,7 @@ def build_appointments_count_query(
         product=product,
         search=search,
         search_scope="appointment",
+        mother_op=mother_op,
     )
     operator_join = _operator_join_for_search(search)
     sql = f"""
@@ -229,6 +239,7 @@ def build_summary_by_ct_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -237,6 +248,7 @@ def build_summary_by_ct_query(
         work_center=work_center,
         op=op,
         product=product,
+        mother_op=mother_op,
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
@@ -265,6 +277,7 @@ def build_summary_totals_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -273,6 +286,7 @@ def build_summary_totals_query(
         work_center=work_center,
         op=op,
         product=product,
+        mother_op=mother_op,
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
@@ -298,6 +312,7 @@ def build_series_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -306,6 +321,7 @@ def build_series_query(
         work_center=work_center,
         op=op,
         product=product,
+        mother_op=mother_op,
     )
     qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
     qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
@@ -350,6 +366,7 @@ def build_by_op_query(
     op: str | None = None,
     product: str | None = None,
     search: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -360,6 +377,7 @@ def build_by_op_query(
         product=product,
         search=search,
         search_scope="by_op",
+        mother_op=mother_op,
     )
     sql = f"""
     SELECT
@@ -392,6 +410,7 @@ def build_by_op_count_query(
     op: str | None = None,
     product: str | None = None,
     search: str | None = None,
+    mother_op: bool = False,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -402,6 +421,7 @@ def build_by_op_count_query(
         product=product,
         search=search,
         search_scope="by_op",
+        mother_op=mother_op,
     )
     sql = f"""
     SELECT COUNT(*) AS total

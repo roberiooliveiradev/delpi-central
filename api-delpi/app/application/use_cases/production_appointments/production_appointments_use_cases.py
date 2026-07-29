@@ -68,6 +68,7 @@ class ListProductionAppointmentsUseCase:
             "op": request.op,
             "product": request.product,
             "search": request.search,
+            "mother_op": request.mother_op,
         }
         items = _normalize_appointment_items(
             self._repository.list_appointments(
@@ -86,6 +87,7 @@ class ListProductionAppointmentsUseCase:
                 "op": request.op,
                 "product": request.product,
                 "search": request.search,
+                "mother_op": request.mother_op,
             },
             "items": items,
             "summary": build_period_summary(
@@ -119,6 +121,7 @@ class GetProductionAppointmentsSummaryUseCase:
             "work_center": request.work_center,
             "op": request.op,
             "product": request.product,
+            "mother_op": request.mother_op,
         }
         # Agregações já convertem MI→UN no SQL (fator de production_operational_units).
         by_ct = self._repository.get_summary_by_ct(**filters)
@@ -131,6 +134,7 @@ class GetProductionAppointmentsSummaryUseCase:
                 "work_center": request.work_center,
                 "op": request.op,
                 "product": request.product,
+                "mother_op": request.mother_op,
             },
             "totals": {
                 "appointment_count": int(totals.get("appointment_count") or 0),
@@ -166,6 +170,7 @@ class GetProductionAppointmentsSeriesUseCase:
             work_center=request.work_center,
             op=request.op,
             product=request.product,
+            mother_op=request.mother_op,
         )
         return {
             "period": {"start": date_start, "end_exclusive": date_end_exclusive},
@@ -175,6 +180,7 @@ class GetProductionAppointmentsSeriesUseCase:
                 "work_center": request.work_center,
                 "op": request.op,
                 "product": request.product,
+                "mother_op": request.mother_op,
             },
             "points": points,
             "summary": build_period_summary(
@@ -202,6 +208,7 @@ class ListProductionAppointmentsByOpUseCase:
             "op": request.op,
             "product": request.product,
             "search": request.search,
+            "mother_op": request.mother_op,
         }
         items = _normalize_appointment_items(
             self._repository.list_by_op(
@@ -220,6 +227,7 @@ class ListProductionAppointmentsByOpUseCase:
                 "op": request.op,
                 "product": request.product,
                 "search": request.search,
+                "mother_op": request.mother_op,
             },
             "items": items,
             "summary": build_period_summary(

@@ -29,6 +29,7 @@ function baseQuery(filters: AppointmentsQueryFilters) {
     work_center: filters.workCenter || undefined,
     op: filters.op || undefined,
     product: filters.product || undefined,
+    mother_op: filters.motherOp || undefined,
   };
 }
 

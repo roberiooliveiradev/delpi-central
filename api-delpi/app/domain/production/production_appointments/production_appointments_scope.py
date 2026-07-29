@@ -14,3 +14,6 @@ MAX_BY_OP_LIMIT = 200
 DEFAULT_BY_OP_LIMIT = 50
 
 SERIES_GROUP_BY_OPTIONS: frozenset[str] = frozenset({"day", "day_work_center"})
+
+# OP mãe Protheus — sequência 001 (mesmo critério OTD / C2_SEQUEN).
+MOTHER_OP_SUFFIX = "001"

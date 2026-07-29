@@ -50,6 +50,7 @@ export function useAppointmentsDetailQuery({
     workCenter: locked.workCenter ?? "",
     op: locked.op ?? "",
     product: "",
+    motherOp: false,
   }));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
