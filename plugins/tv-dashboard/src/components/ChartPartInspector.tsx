@@ -7,6 +7,8 @@ import {
   chartPrimitiveSupportsFill,
   chartPrimitiveSupportsStroke,
   CHART_LEGEND_POSITION_OPTIONS,
+  CHART_LEGEND_LAYOUT_OPTIONS,
+  CHART_LEGEND_SORT_OPTIONS,
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
@@ -392,6 +394,42 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               options={CHART_LEGEND_POSITION_OPTIONS.filter((entry) => entry.value !== "hidden").map(
                 (entry) => ({ value: entry.value, label: entry.label }),
               )}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-legend-layout" label="Disposição">
+            <FormSelectControl
+              id="td-chart-part-legend-layout"
+              ariaLabel="Disposição da legenda"
+              value={options.legendLayout ?? "auto"}
+              onChange={(value) =>
+                persistOptions({
+                  ...options,
+                  legendLayout: value as ComunicadoChartOptions["legendLayout"],
+                  showLegend: true,
+                })
+              }
+              options={CHART_LEGEND_LAYOUT_OPTIONS.map((entry) => ({
+                value: entry.value,
+                label: entry.label,
+              }))}
+            />
+          </DeckField>
+          <DeckField id="td-chart-part-legend-sort" label="Ordenação">
+            <FormSelectControl
+              id="td-chart-part-legend-sort"
+              ariaLabel="Ordenação da legenda"
+              value={options.legendSort ?? "auto"}
+              onChange={(value) =>
+                persistOptions({
+                  ...options,
+                  legendSort: value as ComunicadoChartOptions["legendSort"],
+                  showLegend: true,
+                })
+              }
+              options={CHART_LEGEND_SORT_OPTIONS.map((entry) => ({
+                value: entry.value,
+                label: entry.label,
+              }))}
             />
           </DeckField>
           <DeckField id="td-chart-part-legend-color" label="Cor da série">

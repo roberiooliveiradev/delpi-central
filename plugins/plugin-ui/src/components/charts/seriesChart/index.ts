@@ -29,6 +29,8 @@ export {
   buildSeriesChartLayout,
   chartPartFrameFromPlotLayout,
   marginsFromPlotFrame,
+  resolveSeriesChartCategoryBarSlot,
+  resolveSeriesChartCategoryScale,
   resolveSeriesName,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
@@ -39,5 +41,6 @@ export {
   SERIES_CHART_PLOT_INSET,
   SERIES_CHART_VIEW_H,
   SERIES_CHART_VIEW_W,
+  type SeriesChartCategoryScale,
   type SeriesChartLayout,
 } from "./layout";

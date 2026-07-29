@@ -19,6 +19,8 @@ export type ChartQuickLayout = {
   hint: string;
   elements: Partial<Record<ChartElementId, boolean>>;
   legendPosition?: NonNullable<ComunicadoChartOptions["legendPosition"]>;
+  legendLayout?: NonNullable<ComunicadoChartOptions["legendLayout"]>;
+  legendSort?: NonNullable<ComunicadoChartOptions["legendSort"]>;
 };
 
 /** Presets declarativos de layout rápido do gráfico. */
@@ -41,7 +43,7 @@ export const CHART_QUICK_LAYOUTS: ChartQuickLayout[] = [
   {
     id: "title_legend_right",
     label: "Título + legenda à direita",
-    hint: "Título e legenda à direita do gráfico.",
+    hint: "Título e legenda em coluna à direita (ajuste típico de pizza).",
     elements: {
       chartTitle: true,
       legend: true,
@@ -52,6 +54,8 @@ export const CHART_QUICK_LAYOUTS: ChartQuickLayout[] = [
       dataTable: false,
     },
     legendPosition: "right",
+    legendLayout: "column",
+    legendSort: "auto",
   },
   {
     id: "title_axes",
@@ -120,6 +124,8 @@ export function applyChartQuickLayout(
       ...nextOptions,
       showLegend: true,
       legendPosition: layout.legendPosition,
+      ...(layout.legendLayout ? { legendLayout: layout.legendLayout } : {}),
+      ...(layout.legendSort ? { legendSort: layout.legendSort } : {}),
     };
   }
 

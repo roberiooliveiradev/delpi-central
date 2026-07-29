@@ -26,7 +26,7 @@ export function ChartSeriesHistogram({
   chartParts,
 }: ChartSeriesHistogramProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH } = layout;
+  const { margin, plotH } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -49,7 +49,8 @@ export function ChartSeriesHistogram({
   }
   const maxCount = Math.max(...counts, 1);
   const innerH = Math.max(1, plotH);
-  const slotW = plotW / binCount;
+  const { categoryBandStart, categoryBandWidth } = layout;
+  const slotW = categoryBandWidth(binCount);
   const gap = Math.min(slotW * 0.15, 6);
 
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(seriesRef, interaction, {
@@ -68,7 +69,7 @@ export function ChartSeriesHistogram({
       {counts.map((count, index) => {
         const height = (count / maxCount) * innerH;
         const width = Math.max(slotW - gap, 2);
-        const x = margin.left + index * slotW + gap / 2;
+        const x = categoryBandStart(index, binCount) + gap / 2;
         const y = margin.top + plotH - height;
         return (
           <rect

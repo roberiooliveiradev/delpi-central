@@ -1,7 +1,10 @@
 import { type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
-import type { SeriesChartLegendPosition } from "../seriesChartOptions";
+import type {
+  SeriesChartLegendLayoutResolved,
+  SeriesChartLegendPosition,
+} from "../seriesChartOptions";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
@@ -19,6 +22,8 @@ export type ChartLegendProps = {
   /** Quando informado, renderiza uma entrada por série. */
   items?: Array<{ name: string; color: string }>;
   position: SeriesChartLegendPosition;
+  /** Layout resolvido (`row` | `column`) — nunca `auto`. */
+  layout?: SeriesChartLegendLayoutResolved;
   visible?: boolean;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
@@ -48,6 +53,7 @@ export function ChartLegend({
   seriesColor,
   items,
   position,
+  layout = "row",
   visible = true,
   interaction,
   chartParts,
@@ -63,6 +69,7 @@ export function ChartLegend({
         : position === "left"
           ? cn.legendLeft
           : cn.legendBottom;
+  const layoutClass = layout === "column" ? cn.legendLayoutColumn : cn.legendLayoutRow;
 
   const ref = { kind: "legend" as const };
   const rawFrame = getChartPartState(chartParts, ref)?.frame;
@@ -99,6 +106,7 @@ export function ChartLegend({
       className={[
         cn.legend,
         frameStyle?.position === "absolute" ? "" : positionClass,
+        layoutClass,
         frameStyle?.position === "absolute" ? `${cn.root}__part--framed` : "",
         selected ? `${cn.root}__part--selected` : "",
         showResize ? `${cn.root}__part--resizable` : "",

@@ -18,6 +18,7 @@ describe("ChartSeriesBar overflow", () => {
       showXAxisTitle: false,
       viewW: 400,
       viewH: 240,
+      categoryScale: "band",
     });
 
     const { container } = render(
@@ -66,5 +67,36 @@ describe("ChartSeriesBar overflow", () => {
     expect(clipped).toBeTruthy();
     const svg = container.querySelector("svg");
     expect(svg?.getAttribute("overflow")).toBe("hidden");
+  });
+
+  it("centros das barras alinham com toX do layout band (rótulos do eixo)", () => {
+    const points = Array.from({ length: 10 }, (_, i) => ({
+      label: String(10020134 + i),
+      value: 41 - i * 4,
+      sourceIndex: i,
+    }));
+    const layout = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 640,
+      viewH: 280,
+      categoryScale: "band",
+    });
+
+    const { container } = render(
+      <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel="alinhamento">
+        <ChartSeriesBar layout={layout} points={points} seriesColor="#089bdb" />
+      </ChartFrame>,
+    );
+
+    const bars = Array.from(container.querySelectorAll("rect"));
+    expect(bars).toHaveLength(10);
+    bars.forEach((bar, index) => {
+      const x = Number(bar.getAttribute("x"));
+      const width = Number(bar.getAttribute("width"));
+      const center = x + width / 2;
+      expect(center).toBeCloseTo(layout.toX(index, points.length), 5);
+    });
   });
 });

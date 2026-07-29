@@ -40,6 +40,8 @@ export type SeriesChartClassNames = {
   legendBottom: string;
   legendLeft: string;
   legendRight: string;
+  legendLayoutRow: string;
+  legendLayoutColumn: string;
   legendItem: string;
   legendSwatch: string;
   dataTable: string;
@@ -86,6 +88,8 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     legendBottom: `${prefix}__legend--bottom`,
     legendLeft: `${prefix}__legend--left`,
     legendRight: `${prefix}__legend--right`,
+    legendLayoutRow: `${prefix}__legend--layout-row`,
+    legendLayoutColumn: `${prefix}__legend--layout-column`,
     legendItem: `${prefix}__legend-item`,
     legendSwatch: `${prefix}__legend-swatch`,
     dataTable: `${prefix}__data-table`,

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildSeriesChartLayout,
   chartPartFrameFromPlotLayout,
+  resolveSeriesChartCategoryBarSlot,
+  resolveSeriesChartCategoryScale,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
   resolveXLabelTextAnchor,
@@ -330,8 +332,61 @@ describe("golden layout fixture OTD", () => {
       viewH: 240,
       categoryPaddingPercent: 0,
     });
+    expect(layout.categoryScale).toBe("point");
     expect(layout.toX(0, 3)).toBeCloseTo(layout.margin.left, 5);
     expect(layout.toX(2, 3)).toBeCloseTo(layout.margin.left + layout.plotW, 5);
+  });
+
+  it("band: toX no centro da categoria (padrão Excel/ECharts/d3.scaleBand)", () => {
+    const layout = buildSeriesChartLayout({
+      points: Array.from({ length: 10 }, (_, i) => ({
+        label: String(10020000 + i),
+        value: 40 - i,
+        sourceIndex: i,
+      })),
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+      categoryPaddingPercent: 0,
+      categoryScale: "band",
+    });
+    expect(layout.categoryScale).toBe("band");
+    const n = 10;
+    for (let i = 0; i < n; i += 1) {
+      const bandStart = layout.categoryBandStart(i, n);
+      const bandW = layout.categoryBandWidth(n);
+      expect(layout.toX(i, n)).toBeCloseTo(bandStart + bandW / 2, 5);
+    }
+    expect(resolveXLabelTextAnchor(0, n, false, "band")).toBe("middle");
+    expect(resolveXLabelTextAnchor(n - 1, n, false, "band")).toBe("middle");
+    expect(resolveSeriesChartCategoryScale("bar")).toBe("band");
+    expect(resolveSeriesChartCategoryScale("line")).toBe("point");
+  });
+
+  it("band: centro da barra coincide com toX (rótulo do eixo)", () => {
+    const points = Array.from({ length: 10 }, (_, i) => ({
+      label: String(10020134 + i),
+      value: 40 - i * 3,
+      sourceIndex: i,
+    }));
+    const layout = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 640,
+      viewH: 280,
+      categoryPaddingPercent: 0,
+      categoryScale: "band",
+    });
+    for (let i = 0; i < points.length; i += 1) {
+      const slot = resolveSeriesChartCategoryBarSlot({
+        layout,
+        categoryIndex: i,
+        categoryCount: points.length,
+      });
+      expect(slot.centerX).toBeCloseTo(layout.toX(i, points.length), 5);
+    }
   });
 
   it("toY(axisMin) alinha ao eixo X (sem gap do plotInset vertical)", () => {

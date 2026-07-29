@@ -38,4 +38,16 @@ describe("chartQuickLayouts", () => {
     expect(next.options.showDataTable).toBe(true);
     expect(next.options.legendPosition).toBe("bottom");
   });
+
+  it("applyChartQuickLayout — legenda à direita aplica coluna (preset de ajuste)", () => {
+    const layout = CHART_QUICK_LAYOUTS.find((item) => item.id === "title_legend_right");
+    expect(layout).toBeTruthy();
+    const base = mergeComunicadoChartOptions({
+      legendPosition: "bottom",
+      legendLayout: "row",
+    });
+    const next = applyChartQuickLayout(layout!, base, null);
+    expect(next.options.legendPosition).toBe("right");
+    expect(next.options.legendLayout).toBe("column");
+  });
 });

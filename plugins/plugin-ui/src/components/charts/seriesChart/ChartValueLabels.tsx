@@ -19,6 +19,7 @@ import {
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
+import { resolveSeriesChartCategoryBarSlot } from "./layout";
 
 export type ChartValueLabelsProps = Pick<
   SeriesChartKindProps,
@@ -380,8 +381,8 @@ export function ChartValueLabels({
 
   if (chartType === "bar" || chartType === "histogram" || chartType === "waterfall") {
     const count = Math.max(1, seriesCount);
-    const safeIndex = Math.min(Math.max(0, seriesIndex), count - 1);
     const baseline = margin.top + plotH;
+    const categoryCount = Math.max(points.length, 1);
 
     return (
       <>
@@ -394,22 +395,13 @@ export function ChartValueLabels({
           const clamped = Number.isFinite(raw)
             ? Math.min(axisMax, Math.max(axisMin, raw))
             : axisMin;
-          const slotW = plotW / Math.max(points.length, 1);
-          const groupPad = Math.min(slotW * 0.12, 6);
-          const usable = Math.max(slotW - groupPad * 2, 2);
-          const innerGap = count > 1 ? Math.min(usable * 0.08, 3) : 0;
-          const barW =
-            count > 1
-              ? Math.max((usable - innerGap * (count - 1)) / count, 2)
-              : Math.max(usable * 0.8, 2);
-          const clusterOffset = count > 1 ? 0 : (usable - barW) / 2;
-          const x =
-            margin.left +
-            point.sourceIndex * slotW +
-            groupPad +
-            clusterOffset +
-            safeIndex * (barW + innerGap) +
-            barW / 2;
+          const { centerX: x } = resolveSeriesChartCategoryBarSlot({
+            layout,
+            categoryIndex: point.sourceIndex,
+            categoryCount,
+            seriesIndex,
+            seriesCount: count,
+          });
           const yTop = toY(clamped);
           let y = yTop - 6;
           if (position === "center") y = (yTop + baseline) / 2;

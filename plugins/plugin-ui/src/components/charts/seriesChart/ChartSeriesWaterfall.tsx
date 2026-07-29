@@ -30,7 +30,7 @@ export function ChartSeriesWaterfall({
   chartParts,
 }: ChartSeriesWaterfallProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, plotH } = layout;
+  const { margin, plotH, categoryBandStart, categoryBandWidth } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -58,7 +58,7 @@ export function ChartSeriesWaterfall({
   const innerH = Math.max(1, plotH);
   const toLocalY = (v: number) => margin.top + (1 - (v - yMin) / yRange) * innerH;
 
-  const slotW = plotW / steps.length;
+  const slotW = categoryBandWidth(steps.length);
   const gap = Math.min(slotW * 0.2, 8);
 
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(seriesRef, interaction, {
@@ -80,7 +80,7 @@ export function ChartSeriesWaterfall({
         const top = Math.min(y1, y2);
         const height = Math.max(Math.abs(y2 - y1), 1);
         const width = Math.max(slotW - gap, 2);
-        const x = margin.left + index * slotW + gap / 2;
+        const x = categoryBandStart(index, steps.length) + gap / 2;
         const fill = step.isTotal
           ? seriesColor || TOTAL_FILL
           : step.delta >= 0

@@ -8,6 +8,7 @@ import {
 } from "react";
 
 import {
+  resolveSeriesChartLegendLayout,
   seriesChartThemeStyle,
   usableSeriesChartPoints,
   type SeriesChartKind,
@@ -16,7 +17,10 @@ import {
   type SeriesChartSeriesSpec,
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
-import { buildSeriesChartLegendItems } from "./seriesChartLegendItems";
+import {
+  applySeriesChartLegendSort,
+  buildSeriesChartLegendItems,
+} from "./seriesChartLegendItems";
 import {
   dataLabelOutsideGutterPx,
   resolveSeriesChartDataLabels,
@@ -41,6 +45,7 @@ import {
 } from "./seriesChartParts";
 import {
   buildSeriesChartLayout,
+  resolveSeriesChartCategoryScale,
   ChartContainer,
   ChartDataTable,
   ChartFrame,
@@ -109,11 +114,22 @@ export function SeriesChartPrimitive({
         }))
       : undefined;
   // Multi-série: série vazia (ex.: campo fantasma «quantidade») não pode zerar o gráfico.
-  const seriesWithData = normalizedSeries?.filter((series) => series.points.length > 0);
-  const usable =
-    seriesWithData && seriesWithData.length > 0
-      ? seriesWithData[0]!.points
+  const seriesWithDataRaw = normalizedSeries?.filter((series) => series.points.length > 0);
+  const usableRaw =
+    seriesWithDataRaw && seriesWithDataRaw.length > 0
+      ? seriesWithDataRaw[0]!.points
       : usableSeriesChartPoints(points);
+  const legendSorted = applySeriesChartLegendSort({
+    chartType,
+    points: usableRaw,
+    seriesList: seriesWithDataRaw,
+    sort: config.legendSort,
+  });
+  const seriesWithData =
+    legendSorted.seriesList && legendSorted.seriesList.length > 0
+      ? legendSorted.seriesList.filter((series) => series.points.length > 0)
+      : seriesWithDataRaw;
+  const usable = legendSorted.points;
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
   const primarySeriesForAxis =
     seriesWithData?.filter((series) => series.plotOn !== "secondary") ?? [];
@@ -243,6 +259,7 @@ export function SeriesChartPrimitive({
       axisTitleFontSize: Math.max(axisTitleXFont, axisTitleYFont),
     },
     centeredPlot,
+    categoryScale: resolveSeriesChartCategoryScale(chartType),
     plotPadExtraPx: centeredPlot
       ? dataLabelOutsideGutterPx(resolvedDataLabels, chartType)
       : dataLabelOutsideGutterPx(resolvedDataLabels, chartType) > 0
@@ -265,6 +282,14 @@ export function SeriesChartPrimitive({
     seriesList: seriesWithData,
     categoryColors: config.categoryColors,
     chartParts,
+    sort: config.legendSort,
+  });
+  const legendPosition = config.legendPosition ?? "bottom";
+  const legendLayout = resolveSeriesChartLegendLayout({
+    position: legendPosition,
+    layout: config.legendLayout,
+    itemCount: legendItems?.length ?? 1,
+    usesCategoryLegend: legendSorted.usesCategoryLegend,
   });
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
@@ -328,7 +353,8 @@ export function SeriesChartPrimitive({
       seriesName={seriesName}
       seriesColor={seriesColor}
       items={legendItems}
-      position={config.legendPosition ?? "bottom"}
+      position={legendPosition}
+      layout={legendLayout}
       visible={showLegend}
       interaction={interaction}
       chartParts={chartParts}
@@ -386,20 +412,20 @@ export function SeriesChartPrimitive({
           interaction={interaction}
           chartParts={chartParts}
         />
-        {config.legendPosition === "top" ? legend : null}
+        {legendPosition === "top" ? legend : null}
 
         <div className={cn.body}>
-          {config.legendPosition === "left" ? legend : null}
+          {legendPosition === "left" ? legend : null}
           <div className={cn.plotHost} ref={plotHostRef}>
             <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
               {renderPlotArea(plotProps)}
             </ChartFrame>
             <ChartPlotAreaChrome layout={layout} interaction={interaction} chartParts={chartParts} />
           </div>
-          {config.legendPosition === "right" ? legend : null}
+          {legendPosition === "right" ? legend : null}
         </div>
 
-        {config.legendPosition === "bottom" ? legend : null}
+        {legendPosition === "bottom" ? legend : null}
         <ChartDataTable
           points={usable}
           seriesName={seriesName}

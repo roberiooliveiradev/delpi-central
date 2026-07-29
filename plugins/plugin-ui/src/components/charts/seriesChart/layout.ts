@@ -1,6 +1,7 @@
 import {
   formatSeriesChartValue,
   resolveSeriesChartTicks,
+  type SeriesChartKind,
   type SeriesChartOptions,
   type SeriesChartValueFormat,
   type SeriesChartPoint,
@@ -12,6 +13,13 @@ export const SERIES_CHART_VIEW_H = 220;
 
 /** Inset interno do plot — folga para stroke/marcadores não colarem nem furarem o clip. */
 export const SERIES_CHART_PLOT_INSET = 14;
+
+/**
+ * Escala de categoria no eixo X (padrão de mercado):
+ * - `point` — linha/área/scatter: extremos nas bordas (d3.scalePoint / ECharts boundaryGap:false)
+ * - `band` — coluna/barra: centro da banda (d3.scaleBand / ECharts boundaryGap:true / Excel)
+ */
+export type SeriesChartCategoryScale = "point" | "band";
 
 export type SeriesChartMargin = {
   top: number;
@@ -28,6 +36,8 @@ export type SeriesChartLayout = {
   plotH: number;
   /** Inset usado em toX/toY (marcadores dentro do plot). */
   plotInset: number;
+  /** Escala X ativa — barras e rótulos devem concordar. */
+  categoryScale: SeriesChartCategoryScale;
   ticks: number[];
   axisMin: number;
   axisMax: number;
@@ -36,7 +46,12 @@ export type SeriesChartLayout = {
   xLabelsRotated: boolean;
   /** Índices de rótulos X sem colisão (inclui último só se couber). */
   visibleXLabelIndices: number[];
+  /** Âncora X da categoria: centro da banda (`band`) ou ponto (`point`). */
   toX: (index: number, count: number) => number;
+  /** Início (esquerda) da banda de categoria — alinhado a `toX` em modo band. */
+  categoryBandStart: (index: number, count: number) => number;
+  /** Largura da banda de categoria. */
+  categoryBandWidth: (count: number) => number;
   toY: (value: number) => number;
   /** Escala Y direita (séries com plotOn=secondary). */
   toYSecondary?: (value: number) => number;
@@ -89,7 +104,67 @@ export type BuildSeriesChartLayoutInput = {
   centeredPlot?: boolean;
   /** Folga extra (px) quando rótulos ficam fora do anel/área (evita clip). */
   plotPadExtraPx?: number;
+  /**
+   * Escala de categoria X. Default `point`.
+   * Tipos coluna/barra devem passar `band` (via `resolveSeriesChartCategoryScale`).
+   */
+  categoryScale?: SeriesChartCategoryScale;
 };
+
+/** Tipos que usam band scale no eixo X (barras centradas na categoria). */
+export function resolveSeriesChartCategoryScale(
+  chartType: SeriesChartKind | null | undefined,
+): SeriesChartCategoryScale {
+  switch (chartType) {
+    case "bar":
+    case "stacked_bar":
+    case "histogram":
+    case "waterfall":
+    case "combo":
+      return "band";
+    default:
+      return "point";
+  }
+}
+
+/**
+ * Geometria de coluna dentro da banda — mesma conta para paint e data labels.
+ * Alinha ao centro retornado por `layout.toX` em modo `band`.
+ */
+export function resolveSeriesChartCategoryBarSlot(args: {
+  layout: Pick<SeriesChartLayout, "categoryBandStart" | "categoryBandWidth">;
+  categoryIndex: number;
+  categoryCount: number;
+  seriesIndex?: number;
+  seriesCount?: number;
+  padRatio?: number;
+  fillRatio?: number;
+}): { x: number; width: number; centerX: number } {
+  const {
+    layout,
+    categoryIndex,
+    categoryCount,
+    seriesIndex = 0,
+    seriesCount = 1,
+    padRatio = 0.12,
+    fillRatio = 0.8,
+  } = args;
+  const count = Math.max(1, categoryCount);
+  const slotW = layout.categoryBandWidth(count);
+  const bandStart = layout.categoryBandStart(categoryIndex, count);
+  const groupPad = Math.min(slotW * padRatio, padRatio >= 0.15 ? 8 : 6);
+  const usable = Math.max(slotW - groupPad * 2, 2);
+  const seriesN = Math.max(1, seriesCount);
+  const safeIndex = Math.min(Math.max(0, seriesIndex), seriesN - 1);
+  const innerGap = seriesN > 1 ? Math.min(usable * 0.08, 3) : 0;
+  const barW =
+    seriesN > 1
+      ? Math.max((usable - innerGap * (seriesN - 1)) / seriesN, 2)
+      : Math.max(usable * fillRatio, 2);
+  const clusterOffset = seriesN > 1 ? 0 : (usable - barW) / 2;
+  const x = bandStart + groupPad + clusterOffset + safeIndex * (barW + innerGap);
+  return { x, width: barW, centerX: x + barW / 2 };
+}
 
 /** Converte margens atuais do layout em frame % (materializar ao selecionar). */
 export function chartPartFrameFromPlotLayout(layout: {
@@ -289,14 +364,16 @@ export function resolveVisibleXLabelIndices(count: number, step: number): number
   return indices;
 }
 
-/** Âncora de texto X nas bordas — evita cortar o primeiro/último rótulo. */
+/** Âncora de texto X — point nas bordas evita clip; band sempre no centro da categoria. */
 export function resolveXLabelTextAnchor(
   index: number,
   count: number,
   rotated: boolean,
+  categoryScale: SeriesChartCategoryScale = "point",
 ): "start" | "middle" | "end" {
   if (rotated) return "end";
   if (count <= 1) return "middle";
+  if (categoryScale === "band") return "middle";
   if (index === 0) return "start";
   if (index === count - 1) return "end";
   return "middle";
@@ -506,11 +583,29 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       ? Math.min(Math.floor(Math.min(plotW, plotH) / 6), Math.max(4, insetFromPercent))
       : 0;
   const innerW = Math.max(1, plotW - 2 * plotInset);
+  const categoryScale: SeriesChartCategoryScale = input.categoryScale ?? "point";
 
-  const toX = (index: number, count: number) =>
-    count > 1
+  const categoryBandWidth = (count: number) => {
+    const n = Math.max(1, count);
+    return innerW / n;
+  };
+  const categoryBandStart = (index: number, count: number) => {
+    const n = Math.max(1, count);
+    const i = Math.min(Math.max(0, index), n - 1);
+    return margin.left + plotInset + (i / n) * innerW;
+  };
+
+  // point: extremos nas bordas (linha). band: centro de cada categoria (coluna).
+  const toX = (index: number, count: number) => {
+    if (categoryScale === "band") {
+      const n = Math.max(1, count);
+      const i = Math.min(Math.max(0, index), n - 1);
+      return margin.left + plotInset + ((i + 0.5) / n) * innerW;
+    }
+    return count > 1
       ? margin.left + plotInset + (index / (count - 1)) * innerW
       : margin.left + plotW / 2;
+  };
   const toY = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
     return margin.top + (1 - t) * plotH;
@@ -529,6 +624,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     plotW,
     plotH,
     plotInset,
+    categoryScale,
     ticks,
     axisMin,
     axisMax,
@@ -537,6 +633,8 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     xLabelsRotated,
     visibleXLabelIndices,
     toX,
+    categoryBandStart,
+    categoryBandWidth,
     toY,
     ...(hasSecondaryAxis
       ? { toYSecondary, secondaryTicks, hasSecondaryAxis: true }

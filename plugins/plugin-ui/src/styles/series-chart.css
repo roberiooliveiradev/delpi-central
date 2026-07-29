@@ -160,7 +160,6 @@
   max-height: 18%;
   overflow: hidden;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.35rem 0.75rem;
@@ -171,12 +170,35 @@
   padding: 0;
 }
 
+.delpi-ui-series-chart__legend--layout-row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-series-chart__legend--layout-column {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: center;
+  max-height: 42%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .delpi-ui-series-chart__legend--right,
 .delpi-ui-series-chart__legend--left {
-  flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   min-width: 4.5rem;
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.delpi-ui-series-chart__legend--right.delpi-ui-series-chart__legend--layout-column,
+.delpi-ui-series-chart__legend--left.delpi-ui-series-chart__legend--layout-column {
+  max-height: 100%;
 }
 
 .delpi-ui-series-chart__legend-item {

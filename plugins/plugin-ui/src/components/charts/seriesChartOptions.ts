@@ -16,6 +16,25 @@ export type SeriesChartValueFormat =
 
 export type SeriesChartLegendPosition = "top" | "bottom" | "left" | "right" | "hidden";
 
+/**
+ * Orientação dos itens da legenda.
+ * - `auto`: coluna em left/right; em top/bottom, coluna se ≥4 categorias (pizza/funil), senão linha.
+ * - `row` / `column`: força o layout.
+ */
+export type SeriesChartLegendLayout = "auto" | "row" | "column";
+
+/**
+ * Ordenação das entradas (e das fatias/categorias alinhadas).
+ * - `auto`: valor ↓ em pizza/funil (categoria); ordem dos dados nos demais.
+ */
+export type SeriesChartLegendSort =
+  | "auto"
+  | "data"
+  | "valueDesc"
+  | "valueAsc"
+  | "nameAsc"
+  | "nameDesc";
+
 export type SeriesChartTheme = "light" | "dark";
 
 /** @deprecated Preferir import de `@delpi/plugin-ui` theme / DECK_COLOR_*. */
@@ -33,6 +52,10 @@ export type SeriesChartOptions = {
   seriesName?: string;
   showLegend?: boolean;
   legendPosition?: SeriesChartLegendPosition;
+  /** Linha, coluna ou ajuste automático (padrão). */
+  legendLayout?: SeriesChartLegendLayout;
+  /** Ordenação das entradas da legenda (e categorias alinhadas no plot). */
+  legendSort?: SeriesChartLegendSort;
   showAxes?: boolean;
   showXAxisLabels?: boolean;
   showYAxisLabels?: boolean;
@@ -122,6 +145,8 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showTitle: true,
   showLegend: true,
   legendPosition: "bottom",
+  legendLayout: "auto",
+  legendSort: "auto",
   showAxes: true,
   showXAxisLabels: true,
   showYAxisLabels: true,
@@ -256,6 +281,62 @@ export const SERIES_CHART_LEGEND_POSITION_OPTIONS = [
   { value: "right", label: "À direita" },
   { value: "hidden", label: "Oculta" },
 ] as const;
+
+export const SERIES_CHART_LEGEND_LAYOUT_OPTIONS = [
+  { value: "auto", label: "Automático" },
+  { value: "row", label: "Linha" },
+  { value: "column", label: "Coluna" },
+] as const;
+
+export const SERIES_CHART_LEGEND_SORT_OPTIONS = [
+  { value: "auto", label: "Automático" },
+  { value: "data", label: "Ordem dos dados" },
+  { value: "valueDesc", label: "Valor (maior → menor)" },
+  { value: "valueAsc", label: "Valor (menor → maior)" },
+  { value: "nameAsc", label: "Nome (A → Z)" },
+  { value: "nameDesc", label: "Nome (Z → A)" },
+] as const;
+
+/** Limiar do padrão automático: legenda em coluna em top/bottom com muitas categorias. */
+export const SERIES_CHART_LEGEND_AUTO_COLUMN_MIN_ITEMS = 4;
+
+export type SeriesChartLegendLayoutResolved = "row" | "column";
+export type SeriesChartLegendSortResolved = Exclude<SeriesChartLegendSort, "auto">;
+
+/**
+ * Resolve layout da legenda. `auto` = coluna nas laterais; em cima/baixo,
+ * coluna quando há várias categorias (evita fila horizontal apinhada).
+ */
+export function resolveSeriesChartLegendLayout(args: {
+  position: SeriesChartLegendPosition;
+  layout?: SeriesChartLegendLayout | null;
+  itemCount?: number;
+  usesCategoryLegend?: boolean;
+}): SeriesChartLegendLayoutResolved {
+  const { position, layout, itemCount = 0, usesCategoryLegend = false } = args;
+  if (layout === "row" || layout === "column") return layout;
+  if (position === "left" || position === "right") return "column";
+  if (usesCategoryLegend && itemCount >= SERIES_CHART_LEGEND_AUTO_COLUMN_MIN_ITEMS) {
+    return "column";
+  }
+  return "row";
+}
+
+/**
+ * Resolve ordenação. `auto` = valor ↓ em pizza/funil por categoria; senão ordem dos dados.
+ */
+export function resolveSeriesChartLegendSort(args: {
+  chartType: SeriesChartKind;
+  sort?: SeriesChartLegendSort | null;
+  usesCategoryLegend?: boolean;
+}): SeriesChartLegendSortResolved {
+  const { chartType, sort, usesCategoryLegend = false } = args;
+  if (sort && sort !== "auto") return sort;
+  if (usesCategoryLegend && (chartType === "pie" || chartType === "funnel")) {
+    return "valueDesc";
+  }
+  return "data";
+}
 
 export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChartPoint[] {
   return points.filter((point) => {

@@ -5,6 +5,8 @@ import {
   SERIES_CHART_CHROME_VERSION,
   migrateSeriesChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions,
+  resolveSeriesChartLegendLayout,
+  resolveSeriesChartLegendSort,
   resolveSeriesChartTicks,
 } from "./seriesChartOptions";
 
@@ -12,6 +14,8 @@ describe("seriesChartOptions — títulos de eixo", () => {
   it("liga títulos de eixo por padrão", () => {
     expect(DEFAULT_SERIES_CHART_OPTIONS.showXAxisTitle).toBe(true);
     expect(DEFAULT_SERIES_CHART_OPTIONS.showYAxisTitle).toBe(true);
+    expect(DEFAULT_SERIES_CHART_OPTIONS.legendLayout).toBe("auto");
+    expect(DEFAULT_SERIES_CHART_OPTIONS.legendSort).toBe("auto");
     expect(DEFAULT_SERIES_CHART_OPTIONS.chromeVersion).toBe(SERIES_CHART_CHROME_VERSION);
   });
 
@@ -126,5 +130,65 @@ describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
     const ticks = resolveSeriesChartTicks(0, 800);
     expect(ticks[0]).toBe(0);
     expect(ticks[ticks.length - 1]).toBe(800);
+  });
+});
+
+describe("legenda — layout e ordenação automáticos", () => {
+  it("auto: laterais em coluna; top/bottom em linha com poucas categorias", () => {
+    expect(
+      resolveSeriesChartLegendLayout({
+        position: "right",
+        layout: "auto",
+        itemCount: 5,
+        usesCategoryLegend: true,
+      }),
+    ).toBe("column");
+    expect(
+      resolveSeriesChartLegendLayout({
+        position: "bottom",
+        layout: "auto",
+        itemCount: 2,
+        usesCategoryLegend: true,
+      }),
+    ).toBe("row");
+  });
+
+  it("auto: top/bottom em coluna com ≥4 categorias (padrão de ajuste)", () => {
+    expect(
+      resolveSeriesChartLegendLayout({
+        position: "bottom",
+        layout: "auto",
+        itemCount: 5,
+        usesCategoryLegend: true,
+      }),
+    ).toBe("column");
+  });
+
+  it("força linha mesmo à direita", () => {
+    expect(
+      resolveSeriesChartLegendLayout({
+        position: "right",
+        layout: "row",
+        itemCount: 5,
+        usesCategoryLegend: true,
+      }),
+    ).toBe("row");
+  });
+
+  it("auto: pizza/funil ordenam por valor ↓", () => {
+    expect(
+      resolveSeriesChartLegendSort({
+        chartType: "pie",
+        sort: "auto",
+        usesCategoryLegend: true,
+      }),
+    ).toBe("valueDesc");
+    expect(
+      resolveSeriesChartLegendSort({
+        chartType: "line",
+        sort: "auto",
+        usesCategoryLegend: false,
+      }),
+    ).toBe("data");
   });
 });

@@ -863,6 +863,8 @@ export {
 } from "./comunicadoChartView";
 export {
   CHART_LEGEND_POSITION_OPTIONS,
+  CHART_LEGEND_LAYOUT_OPTIONS,
+  CHART_LEGEND_SORT_OPTIONS,
   CHART_VALUE_FORMAT_OPTIONS,
   DEFAULT_COMUNICADO_CHART_OPTIONS,
   OFFICE_CHART_AREA_FILL,
@@ -873,7 +875,11 @@ export {
   formatSeriesChartValue,
   mergeComunicadoChartOptions,
   resolveChartDisplayOptions,
+  resolveChartLegendLayout,
+  resolveChartLegendSort,
+  type ComunicadoChartLegendLayout,
   type ComunicadoChartLegendPosition,
+  type ComunicadoChartLegendSort,
   type ComunicadoChartOptions,
   type ComunicadoChartValueFormat,
 } from "./comunicadoChartOptions";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applySeriesChartLegendSort,
   buildSeriesChartLegendItems,
   seriesChartUsesCategoryLegend,
 } from "./seriesChartLegendItems";
@@ -25,11 +26,36 @@ describe("seriesChartLegendItems", () => {
         { label: "AMOSTRA", value: 2, sourceIndex: 1 },
       ],
       categoryColors: ["#089bdb", "#22c55e"],
+      sort: "data",
     });
     expect(items).toEqual([
       { name: "LMP", color: "#089bdb" },
       { name: "AMOSTRA", color: "#22c55e" },
     ]);
+  });
+
+  it("applySeriesChartLegendSort — pizza auto ordena valor ↓ e preserva cores via sourceIndex", () => {
+    const sorted = applySeriesChartLegendSort({
+      chartType: "pie",
+      sort: "auto",
+      points: [
+        { label: "M3", value: 8.45, sourceIndex: 2 },
+        { label: "FM", value: 102.04, sourceIndex: 0 },
+        { label: "FH", value: 41.91, sourceIndex: 1 },
+      ],
+    });
+    expect(sorted.resolvedSort).toBe("valueDesc");
+    expect(sorted.points.map((p) => p.label)).toEqual(["FM", "FH", "M3"]);
+    const items = buildSeriesChartLegendItems({
+      chartType: "pie",
+      seriesColor: "#089bdb",
+      points: sorted.points,
+      categoryColors: ["#089bdb", "#14b8a6", "#f97316"],
+      sort: "data",
+    });
+    expect(items?.map((item) => item.name)).toEqual(["FM", "FH", "M3"]);
+    expect(items?.[0]?.color).toBe("#089bdb");
+    expect(items?.[2]?.color).toBe("#f97316");
   });
 
   it("linha single-series retorna undefined (fallback seriesName)", () => {
@@ -55,11 +81,12 @@ describe("seriesChartLegendItems", () => {
       chartParts: {
         "marker:0:1": { style: { fill: "#ff00aa" } },
       },
+      sort: "data",
     });
     expect(items?.[1]?.color).toBe("#ff00aa");
   });
 
-  it("multi-série prioriza nomes das séries", () => {
+  it("multi-série prioriza nomes das séries e pode ordenar só a legenda", () => {
     const items = buildSeriesChartLegendItems({
       chartType: "pie",
       seriesColor: "#089bdb",
@@ -81,10 +108,11 @@ describe("seriesChartLegendItems", () => {
           ],
         },
       ],
+      sort: "nameDesc",
     });
     expect(items).toEqual([
-      { name: "OEE", color: expect.any(String) },
       { name: "OTD", color: "#14b8a6" },
+      { name: "OEE", color: expect.any(String) },
     ]);
   });
 });

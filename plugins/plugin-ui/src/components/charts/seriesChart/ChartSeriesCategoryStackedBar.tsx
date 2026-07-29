@@ -5,7 +5,7 @@ import {
   isChartPartRefEqual,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
-import type { SeriesChartLayout } from "./layout";
+import { resolveSeriesChartCategoryBarSlot, type SeriesChartLayout } from "./layout";
 
 export type ChartSeriesCategoryStackedBarProps = {
   layout: SeriesChartLayout;
@@ -25,19 +25,21 @@ export function ChartSeriesCategoryStackedBar({
   interaction,
 }: ChartSeriesCategoryStackedBarProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotW, toY, axisMin } = layout;
+  const { toY, axisMin } = layout;
   const categoryCount = Math.max(...seriesList.map((series) => series.points.length), 0);
   if (categoryCount === 0 || seriesList.length === 0) return null;
-
-  const slotW = plotW / categoryCount;
-  const groupPad = Math.min(slotW * 0.18, 8);
-  const barW = Math.max(slotW - groupPad * 2, 2);
 
   return (
     <>
       {Array.from({ length: categoryCount }, (_, catIndex) => {
         let cumulative = 0;
-        const x = margin.left + catIndex * slotW + groupPad;
+        const { x, width: barW } = resolveSeriesChartCategoryBarSlot({
+          layout,
+          categoryIndex: catIndex,
+          categoryCount,
+          padRatio: 0.18,
+          fillRatio: 1,
+        });
         return (
           <g key={`stack-col-${catIndex}`}>
             {seriesList.map((series, seriesIndex) => {

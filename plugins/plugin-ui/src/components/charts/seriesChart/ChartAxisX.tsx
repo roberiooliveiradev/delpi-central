@@ -100,7 +100,12 @@ export function ChartAxisX({
                 x={x}
                 y={labelY}
                 className={className}
-                textAnchor={resolveXLabelTextAnchor(index, points.length, xLabelsRotated)}
+                textAnchor={resolveXLabelTextAnchor(
+                  index,
+                  points.length,
+                  xLabelsRotated,
+                  layout.categoryScale,
+                )}
                 transform={xLabelsRotated ? `rotate(-38 ${x} ${labelY})` : undefined}
                 style={axisTypography}
               >

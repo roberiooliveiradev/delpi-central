@@ -1,6 +1,8 @@
 export type {
   SeriesChartValueFormat as ComunicadoChartValueFormat,
   SeriesChartLegendPosition as ComunicadoChartLegendPosition,
+  SeriesChartLegendLayout as ComunicadoChartLegendLayout,
+  SeriesChartLegendSort as ComunicadoChartLegendSort,
   SeriesChartOptions as ComunicadoChartOptions,
   SeriesChartPoint,
   SeriesChartKind,
@@ -15,10 +17,14 @@ export {
   OFFICE_CHART_SERIES_COLOR,
   SERIES_CHART_VALUE_FORMAT_OPTIONS as CHART_VALUE_FORMAT_OPTIONS,
   SERIES_CHART_LEGEND_POSITION_OPTIONS as CHART_LEGEND_POSITION_OPTIONS,
+  SERIES_CHART_LEGEND_LAYOUT_OPTIONS as CHART_LEGEND_LAYOUT_OPTIONS,
+  SERIES_CHART_LEGEND_SORT_OPTIONS as CHART_LEGEND_SORT_OPTIONS,
   formatSeriesChartValue,
   mergeSeriesChartOptions as mergeComunicadoChartOptions,
   migrateSeriesChartOptionsOnLoad as migrateComunicadoChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions as resolveChartDisplayOptions,
+  resolveSeriesChartLegendLayout as resolveChartLegendLayout,
+  resolveSeriesChartLegendSort as resolveChartLegendSort,
   resolveSeriesChartTicks,
   usableSeriesChartPoints,
 } from "@delpi/plugin-ui/index";
