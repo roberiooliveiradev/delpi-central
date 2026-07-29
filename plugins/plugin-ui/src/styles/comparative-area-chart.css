@@ -14,6 +14,14 @@
 .delpi-ui-comparative-area-chart__canvas {
   width: 100%;
   min-width: 0;
+  position: relative;
+}
+
+.delpi-ui-comparative-area-chart__svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .delpi-ui-comparative-area-chart__empty {
