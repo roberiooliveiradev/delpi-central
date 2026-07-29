@@ -1,4 +1,8 @@
 import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoTypes";
+import {
+  SHAPE_CORNER_ADJUST_HANDLE,
+  separateAdjustmentHandleFromChromeControls,
+} from "@delpi/plugin-ui/index";
 
 /**
  * Ajustes de geometria no modelo PowerPoint (Adjustments 0..1 tipicamente).
@@ -34,12 +38,13 @@ function linearFromY(localY: number, min: number, max: number): number {
 
 /** Cantos arredondados (retângulo / processo) — equivalente ao adj do Rounded Rectangle.
  * handleAt e valueFromPointer são inversos.
- * Início em ~12% no topo (não no canto NW) para não cobrir o handle azul de resize.
+ * Faixa 18–36% / y=10%: longe do NW e do pill N + giro (centro do topo).
  */
 function cornerSpec(index = 0, defaultValue = 0.16): ShapeAdjustmentSpec {
-  const trackStart = 12;
-  const trackEnd = 50;
+  const trackStart = SHAPE_CORNER_ADJUST_HANDLE.trackStartPct;
+  const trackEnd = SHAPE_CORNER_ADJUST_HANDLE.trackEndPct;
   const track = trackEnd - trackStart;
+  const handleY = SHAPE_CORNER_ADJUST_HANDLE.yPct;
   return {
     index,
     id: "corner",
@@ -50,7 +55,7 @@ function cornerSpec(index = 0, defaultValue = 0.16): ShapeAdjustmentSpec {
     axis: "x",
     handleAt: (values) => ({
       x: clamp(trackStart + ((values[index] ?? defaultValue) / 0.5) * track, trackStart, trackEnd),
-      y: 0,
+      y: handleY,
     }),
     valueFromPointer: (localX) =>
       clamp(((localX - trackStart) / track) * 0.5, 0, 0.5),
@@ -663,11 +668,38 @@ export function patchShapeAdjustment(
   return patch;
 }
 
-export function adjustmentHandleCssPosition(spec: ShapeAdjustmentSpec, values: number[]): {
+export function adjustmentHandleCssPosition(
+  spec: ShapeAdjustmentSpec,
+  values: number[],
+  options?: {
+    boxWidthPx?: number;
+    boxHeightPx?: number;
+    minSeparationPx?: number;
+    rotateOffsetYPct?: number;
+  },
+): {
   left: string;
   top: string;
 } {
-  const pos = spec.handleAt(values);
+  const raw = spec.handleAt(values);
+  const boxW = options?.boxWidthPx;
+  const boxH = options?.boxHeightPx;
+  const pos =
+    boxW != null &&
+    boxH != null &&
+    Number.isFinite(boxW) &&
+    Number.isFinite(boxH) &&
+    boxW > 0 &&
+    boxH > 0
+      ? separateAdjustmentHandleFromChromeControls({
+          xPct: raw.x,
+          yPct: raw.y,
+          boxWidthPx: boxW,
+          boxHeightPx: boxH,
+          minSeparationPx: options?.minSeparationPx,
+          rotateOffsetYPct: options?.rotateOffsetYPct,
+        })
+      : { x: clamp(raw.x, 0, 100), y: clamp(raw.y, 0, 100) };
   return {
     left: `${clamp(pos.x, 0, 100)}%`,
     top: `${clamp(pos.y, 0, 100)}%`,

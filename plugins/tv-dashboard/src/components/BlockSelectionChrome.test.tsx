@@ -13,13 +13,19 @@ afterEach(() => {
 });
 
 describe("BlockSelectionChrome", () => {
+  const chromeProps = {
+    designShortSidePx: 64,
+    designWidthPx: 240,
+    designHeightPx: 160,
+    allowResize: true as const,
+  };
+
   it("expõe os mesmos controles de seleção para ícone e forma com ajuste", () => {
     const onPointerDown = vi.fn();
     const { rerender } = render(
       <BlockSelectionChrome
         block={createIconBlock("Factory")}
-        designShortSidePx={64}
-        allowResize
+        {...chromeProps}
         onPointerDown={onPointerDown}
       />,
     );
@@ -30,8 +36,7 @@ describe("BlockSelectionChrome", () => {
     rerender(
       <BlockSelectionChrome
         block={createShapeBlock("rounded-rect")}
-        designShortSidePx={64}
-        allowResize
+        {...chromeProps}
         onPointerDown={onPointerDown}
       />,
     );
@@ -54,6 +59,8 @@ describe("BlockSelectionChrome", () => {
       <BlockSelectionChrome
         block={line}
         designShortSidePx={20}
+        designWidthPx={200}
+        designHeightPx={20}
         allowResize={false}
         onPointerDown={onPointerDown}
       />,
@@ -70,8 +77,7 @@ describe("BlockSelectionChrome", () => {
     render(
       <BlockSelectionChrome
         block={createShapeBlock("rectangle")}
-        designShortSidePx={64}
-        allowResize
+        {...chromeProps}
         onPointerDown={onPointerDown}
       />,
     );
@@ -84,8 +90,7 @@ describe("BlockSelectionChrome", () => {
     render(
       <BlockSelectionChrome
         block={createKpiViewBlock()}
-        designShortSidePx={64}
-        allowResize
+        {...chromeProps}
         onPointerDown={onPointerDown}
       />,
     );
@@ -95,6 +100,23 @@ describe("BlockSelectionChrome", () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
+  it("losango de cantos não fica no NW nem no centro do topo", () => {
+    const onPointerDown = vi.fn();
+    render(
+      <BlockSelectionChrome
+        block={createShapeBlock("rounded-rect")}
+        {...chromeProps}
+        onPointerDown={onPointerDown}
+      />,
+    );
+    const adjust = screen.getByLabelText(/Ajustar/i);
+    const left = Number.parseFloat(String(adjust.style.left));
+    const top = Number.parseFloat(String(adjust.style.top));
+    expect(left).toBeGreaterThan(8);
+    expect(left).toBeLessThan(45);
+    expect(top).toBeGreaterThan(0);
+  });
+
   it("duplo clique no handle dispara hug (não inicia resize no 2º clique)", () => {
     const onPointerDown = vi.fn();
     const onResizeHandleDoubleClick = vi.fn();
@@ -102,8 +124,7 @@ describe("BlockSelectionChrome", () => {
     render(
       <BlockSelectionChrome
         block={block}
-        designShortSidePx={64}
-        allowResize
+        {...chromeProps}
         onPointerDown={onPointerDown}
         onResizeHandleDoubleClick={onResizeHandleDoubleClick}
       />,

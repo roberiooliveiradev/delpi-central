@@ -10,6 +10,7 @@ import {
   resolveShapeGeometry,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
+import { resolveAdjustmentChromeMinSeparationPx } from "@delpi/plugin-ui/index";
 
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
@@ -35,6 +36,14 @@ type Props = {
   block: ComunicadoBlock;
   /** Lado curto do frame em px de design (handles de ajuste). */
   designShortSidePx: number;
+  /** Largura do frame em px de design — separação losango × resize. */
+  designWidthPx: number;
+  /** Altura do frame em px de design. */
+  designHeightPx: number;
+  /** Métricas de chrome @ zoom atual (separação mínima). */
+  handleSizePx?: number;
+  adjustSizePx?: number;
+  rotateStemPx?: number;
   allowResize: boolean;
   onPointerDown: (
     event: ReactPointerEvent<HTMLElement>,
@@ -68,6 +77,11 @@ function lineEndpointLocalPercent(
 export function BlockSelectionChrome({
   block,
   designShortSidePx,
+  designWidthPx,
+  designHeightPx,
+  handleSizePx = 10,
+  adjustSizePx = 10,
+  rotateStemPx = 30,
   allowResize,
   onPointerDown,
   onResizeHandleDoubleClick,
@@ -75,6 +89,10 @@ export function BlockSelectionChrome({
   /* KPI incluso — `comunicadoBlockShapeChrome` já resolve cantos da parte `card`. */
   const showAdjust = blockSupportsShapeChromeHandles(block);
   const isLine = block.type === "shape" && isLineShapeKind(block.shape);
+  const boxW = Math.max(1, designWidthPx);
+  const boxH = Math.max(1, designHeightPx);
+  const minSeparationPx = resolveAdjustmentChromeMinSeparationPx(handleSizePx, adjustSizePx);
+  const rotateOffsetYPct = boxH > 0 ? (rotateStemPx / boxH) * 100 : 0;
 
   return (
     <div className="td-composer__block-handles">
@@ -137,7 +155,12 @@ export function BlockSelectionChrome({
       {showAdjust
         ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
             const values = resolveBlockShapeChromeAdjustmentValues(block, designShortSidePx);
-            const pos = adjustmentHandleCssPosition(spec, values);
+            const pos = adjustmentHandleCssPosition(spec, values, {
+              boxWidthPx: boxW,
+              boxHeightPx: boxH,
+              minSeparationPx,
+              rotateOffsetYPct,
+            });
             return (
               <button
                 key={`adj-${spec.index}`}

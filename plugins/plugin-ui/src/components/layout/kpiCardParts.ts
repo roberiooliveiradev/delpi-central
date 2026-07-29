@@ -226,13 +226,14 @@ export const KPI_ICON_DEFAULT_SIZE_PX = 36;
 export const KPI_ICON_DEFAULT_RADIUS_PX = 12;
 
 /**
- * Track do handle amarelo de cantos — mesmo padrão do `cornerSpec` (bloco/forma).
- * Move ao longo do topo (12%→50%); valor 0–0.5 = fração do lado curto.
+ * Track do handle amarelo de cantos — mesmo padrão do `cornerSpec` / SHAPE_CORNER_ADJUST_HANDLE.
+ * Longe do NW e do pill N + giro (centro do topo).
  */
-const KPI_CORNER_TRACK_START = 12;
-const KPI_CORNER_TRACK_END = 50;
-const KPI_CORNER_TRACK = KPI_CORNER_TRACK_END - KPI_CORNER_TRACK_START;
 const KPI_CORNER_ADJ_MAX = 0.5;
+const KPI_CORNER_TRACK_START = 18;
+const KPI_CORNER_TRACK_END = 36;
+const KPI_CORNER_TRACK = KPI_CORNER_TRACK_END - KPI_CORNER_TRACK_START;
+const KPI_CORNER_HANDLE_Y_PCT = 10;
 
 function clampKpiCorner(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -260,7 +261,7 @@ export function kpiPartCornerAdjustCssPosition(
     KPI_CORNER_TRACK_START,
     KPI_CORNER_TRACK_END,
   );
-  return { left: `${x}%`, top: "0%" };
+  return { left: `${x}%`, top: `${KPI_CORNER_HANDLE_Y_PCT}%` };
 }
 
 /** Converte ponteiro local X (0–100 % no bbox) → ajuste 0–0.5. */

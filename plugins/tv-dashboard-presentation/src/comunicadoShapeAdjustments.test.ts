@@ -68,12 +68,15 @@ describe("comunicadoShapeAdjustments", () => {
     const spec = shapeAdjustmentSpecs("rounded-rect")[0]!;
     for (const adj of [0, 0.1, 0.16, 0.25, 0.5]) {
       const pos = spec.handleAt([adj]);
-      expect(pos.x).toBeGreaterThanOrEqual(12);
-      expect(pos.x).toBeLessThanOrEqual(50);
+      expect(pos.x).toBeGreaterThanOrEqual(18);
+      expect(pos.x).toBeLessThanOrEqual(36);
+      expect(pos.y).toBe(10);
       expect(spec.valueFromPointer(pos.x, pos.y, [adj])).toBeCloseTo(adj, 5);
     }
     // Raio 0 não cobre o handle NW (0%,0%).
     expect(spec.handleAt([0]).x).toBeGreaterThan(8);
+    // Raio máximo não vai ao centro (pill N / giro).
+    expect(spec.handleAt([0.5]).x).toBeLessThan(45);
   });
 
   it("paths parametrizados respondem ao ajuste", () => {

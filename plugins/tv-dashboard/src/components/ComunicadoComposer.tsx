@@ -1375,6 +1375,7 @@ export function ComunicadoComposerCanvas() {
                 block={block}
                 designWidth={designSize.width}
                 designHeight={designSize.height}
+                stageZoom={stageZoom}
                 isPrimarySelection={block.id === primarySelected}
                 onPointerDown={startDragRespectingPan}
                 onResizeHandleDoubleClick={

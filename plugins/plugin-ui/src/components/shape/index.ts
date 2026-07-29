@@ -87,3 +87,10 @@ export type {
   ShapeStylePreset,
   ThemePalette,
 } from "./types";
+export {
+  SHAPE_CHROME_RESIZE_CONTROL_POINTS_PCT,
+  SHAPE_CORNER_ADJUST_HANDLE,
+  resolveAdjustmentChromeMinSeparationPx,
+  separateAdjustmentHandleFromChromeControls,
+  type ChromeControlPointPct,
+} from "./selectionChromeAdjustSeparation";
