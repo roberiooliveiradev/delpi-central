@@ -34,6 +34,7 @@ import {
 import { formatCurrency, formatDate, formatInteger } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
+import { isMultiUnitAccount } from "../utils/kaizenBranchPermissions";
 import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
@@ -75,6 +76,7 @@ function withLabels(buckets: KaizenSummaryBucket[], labelOf: (key: string) => st
 
 export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
   const initialFilters = useMemo(() => readDashboardFilters(), []);
+  const multiUnit = isMultiUnitAccount(branchOptions);
   const allowedCodes = useMemo(
     () => new Set(branchOptions.map((o) => o.value)),
     [branchOptions],
@@ -159,7 +161,9 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
     });
   }, [replaceAll]);
 
-  const hasFilters = Boolean(units.length || dateStart || dateEnd || competence);
+  const hasFilters = Boolean(
+    (multiUnit && units.length) || dateStart || dateEnd || competence,
+  );
 
   const clearFilters = useCallback(() => {
     setUnits([]);
@@ -231,14 +235,16 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
           ) : undefined
         }
       >
-        <MultiSelectField
-          label="Unidade"
-          labelHint={KAIZEN_HELP_TOOLTIPS.fields.branch}
-          options={branchOptions}
-          selectedValues={units}
-          onChange={setUnits}
-          emptyLabel={branchOptions.length > 1 ? "Todas" : "Unidade"}
-        />
+        {multiUnit ? (
+          <MultiSelectField
+            label="Unidade"
+            labelHint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+            options={branchOptions}
+            selectedValues={units}
+            onChange={setUnits}
+            emptyLabel="Todas"
+          />
+        ) : null}
         <FilterInputField
           id="kz-dash-competence"
           label="Competência"

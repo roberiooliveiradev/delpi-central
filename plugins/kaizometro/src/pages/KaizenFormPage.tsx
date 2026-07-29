@@ -135,7 +135,10 @@ export function KaizenFormPage({
         {error ? <StateAlert variant="error">{error}</StateAlert> : null}
         {success ? <StateAlert variant="success">{success}</StateAlert> : null}
 
-        <KaizenFormProgress values={values} />
+        <KaizenFormProgress
+          values={values}
+          includeBranch={(branchOptions?.length ?? 0) > 1}
+        />
 
         <KaizenFormFields
           values={values}

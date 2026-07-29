@@ -38,6 +38,11 @@ export function branchOptionsForPermissions(
   }));
 }
 
+/** Conta multi-unidade: mais de uma `branch-*` (ou superadmin com ambas). */
+export function isMultiUnitAccount(branchOptions: readonly BranchOption[]): boolean {
+  return branchOptions.length > 1;
+}
+
 export function defaultBranchCode(
   permissions: string[] | undefined,
   isSuperadmin?: boolean,

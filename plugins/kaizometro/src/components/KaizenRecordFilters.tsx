@@ -27,17 +27,21 @@ export function KaizenRecordFilters({
   onSavingsTypeChange,
   onTitleChange,
 }: KaizenRecordFiltersProps) {
+  const showUnitFilter = allowAllBranches && branchOptions.length > 1;
+
   return (
     <FiltersRow ariaLabel="Filtros de kaizen">
-      <FilterSelectField
-        id="kz-filter-branch"
-        label="Unidade"
-        hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
-        value={branch}
-        onChange={onBranchChange}
-        options={branchOptions}
-        placeholderOption={allowAllBranches ? "Todas" : undefined}
-      />
+      {showUnitFilter ? (
+        <FilterSelectField
+          id="kz-filter-branch"
+          label="Unidade"
+          hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+          value={branch}
+          onChange={onBranchChange}
+          options={branchOptions}
+          placeholderOption="Todas"
+        />
+      ) : null}
       <FilterSelectField
         id="kz-filter-status"
         label="Status"

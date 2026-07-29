@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { valuesEqual } from "@delpi/plugin-ui/index";
 
 import {
   createKaizenVersion,
+  deleteKaizenRecord,
   deleteKaizenVersion,
   fetchKaizenRecord,
   fetchKaizenRevisions,
@@ -61,6 +63,7 @@ import { formatCurrency, formatDate } from "../utils/format";
 import { categoriesFromRecord } from "../utils/kaizenCategories";
 import { savingsTypeLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
+import { isMultiUnitAccount } from "../utils/kaizenBranchPermissions";
 import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
@@ -101,6 +104,11 @@ function savingsAccountingLabel(record: KaizenRecord): string {
 }
 
 export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props) {
+  const multiUnit = isMultiUnitAccount(branchOptions);
+  const unitEditOptions =
+    branchOptions.length > 0
+      ? branchOptions
+      : BRANCHES.map((item) => ({ value: item.code, label: item.label }));
   const [record, setRecord] = useState<KaizenRecord | null>(null);
   const [form, setForm] = useState<KaizenFormValues | null>(null);
   const [revisions, setRevisions] = useState<KaizenRevision[]>([]);
@@ -111,6 +119,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
   const [creating, setCreating] = useState(false);
   const [implementing, setImplementing] = useState(false);
   const [deletingVersion, setDeletingVersion] = useState(false);
+  const [deletingRecord, setDeletingRecord] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [changeReason, setChangeReason] = useState("");
@@ -318,6 +327,23 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
     }
   }, [record, selectedRevision, mode, load]);
 
+  const handleDeleteRecord = useCallback(async () => {
+    if (!record) return;
+    const confirmed = window.confirm(
+      `Excluir o kaizen "${record.title}"? Esta ação não pode ser desfeita.`,
+    );
+    if (!confirmed) return;
+    setDeletingRecord(true);
+    setError(null);
+    try {
+      await deleteKaizenRecord(record.id);
+      onNavigate(listPath());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir kaizen.");
+      setDeletingRecord(false);
+    }
+  }, [record, onNavigate]);
+
   const handleImplement = useCallback(async () => {
       if (!record || selectedRevision == null || !form) return;
       setImplementing(true);
@@ -383,6 +409,17 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
           stopAll();
           onNavigate(listPath());
         }}
+        actions={
+          <button
+            type="button"
+            className="kz-danger-btn"
+            onClick={() => void handleDeleteRecord()}
+            disabled={deletingRecord}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            {deletingRecord ? "Excluindo…" : "Excluir"}
+          </button>
+        }
       />
 
       {error ? <StateAlert variant="error">{error}</StateAlert> : null}
@@ -407,6 +444,7 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
       <KaizenFormProgress
         values={recordToFormValues(view)}
         title={`Preenchimento ${selectedLabel !== "versão única" ? `da ${selectedLabel}` : "do processo"}`}
+        includeBranch={multiUnit}
       />
 
       {/* Identificação */}
@@ -495,19 +533,17 @@ export function KaizenDetailPage({ recordId, onNavigate, branchOptions }: Props)
         }
         editContent={
           <FormGrid>
-            <SelectField
-              id="kz-d-branch"
-              label="Unidade *"
-              hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
-              required
-              value={form.branch_code}
-              onChange={(value) => updateField("branch_code", value)}
-              options={
-                branchOptions.length > 0
-                  ? branchOptions
-                  : BRANCHES.map((item) => ({ value: item.code, label: item.label }))
-              }
-            />
+            {multiUnit ? (
+              <SelectField
+                id="kz-d-branch"
+                label="Unidade *"
+                hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+                required
+                value={form.branch_code}
+                onChange={(value) => updateField("branch_code", value)}
+                options={unitEditOptions}
+              />
+            ) : null}
             <TextField
               id="kz-d-sector"
               label="Setor"

@@ -8,7 +8,7 @@ import {
   resolveKaizenPublicSuggestionUrl,
 } from "../utils/kaizenPublicSuggestionLink";
 import { unitLabel } from "../utils/labels";
-import type { BranchOption } from "../utils/kaizenBranchPermissions";
+import { isMultiUnitAccount, type BranchOption } from "../utils/kaizenBranchPermissions";
 
 type Props = {
   open: boolean;
@@ -52,6 +52,7 @@ export function KaizenShareSuggestionModal({
     [url],
   );
   const canShare = Boolean(branchCode && url);
+  const multiUnit = isMultiUnitAccount(branchOptions);
 
   async function copyLink() {
     if (!url) return;
@@ -85,21 +86,29 @@ export function KaizenShareSuggestionModal({
     <Modal open={open} title="Compartilhar formulário de sugestão" onClose={onClose}>
       <div className="kz-share-modal">
         <p className="kz-share-modal__hint">
-          Qualquer pessoa com o link pode enviar uma sugestão. O registro entra na unidade
-          escolhida com status <strong>Recebido</strong> e notifica quem tiver a permissão de
-          alertas.
+          Qualquer pessoa com o link pode enviar uma sugestão. O registro entra
+          {branchCode ? (
+            <>
+              {" "}
+              em <strong>{unitLabel(branchCode)}</strong>
+            </>
+          ) : (
+            " na unidade escolhida"
+          )}{" "}
+          com status <strong>Recebido</strong> e notifica quem tiver a permissão de alertas.
         </p>
 
-        <SelectField
-          id="kz-share-branch"
-          label="Unidade *"
-          required
-          value={branchCode}
-          onChange={setBranchCode}
-          options={branchOptions}
-          allowEmpty={branchOptions.length > 1}
-          emptyLabel="Selecione a unidade"
-        />
+        {multiUnit ? (
+          <SelectField
+            id="kz-share-branch"
+            label="Unidade *"
+            required
+            value={branchCode}
+            onChange={setBranchCode}
+            options={branchOptions}
+            placeholderOption="Selecione a unidade"
+          />
+        ) : null}
 
         {!branchOptions.length ? (
           <p className="kz-share-modal__error" role="alert">
@@ -107,7 +116,7 @@ export function KaizenShareSuggestionModal({
           </p>
         ) : null}
 
-        {branchCode ? (
+        {multiUnit && branchCode ? (
           <p className="kz-share-modal__hint">
             Sugestões deste link entram em <strong>{unitLabel(branchCode)}</strong>.
           </p>

@@ -10,6 +10,7 @@ import {
   SAVINGS_TYPES,
 } from "../../constants/kaizen";
 import type { KaizenFormValues } from "../../types/kaizen";
+import { isMultiUnitAccount } from "../../utils/kaizenBranchPermissions";
 
 type KaizenFormFieldsProps = {
   values: KaizenFormValues;
@@ -27,23 +28,30 @@ export function KaizenFormFields({
     branchOptions && branchOptions.length > 0
       ? branchOptions
       : BRANCHES.map((item) => ({ value: item.code, label: item.label }));
+  const showUnitField = isMultiUnitAccount(unitOptions);
 
   return (
     <>
       <FormSection
         title="Identificação"
         hint={KAIZEN_HELP_TOOLTIPS.sections.identification}
-        description="Unidade, título, equipe e descrição do processo"
+        description={
+          showUnitField
+            ? "Unidade, título, equipe e descrição do processo"
+            : "Título, equipe e descrição do processo"
+        }
       >
-        <SelectField
-          id="kz-branch"
-          label="Unidade *"
-          hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
-          required
-          value={values.branch_code}
-          onChange={(value) => onChange("branch_code", value)}
-          options={unitOptions}
-        />
+        {showUnitField ? (
+          <SelectField
+            id="kz-branch"
+            label="Unidade *"
+            hint={KAIZEN_HELP_TOOLTIPS.fields.branch}
+            required
+            value={values.branch_code}
+            onChange={(value) => onChange("branch_code", value)}
+            options={unitOptions}
+          />
+        ) : null}
 
         <SelectField
           id="kz-status"

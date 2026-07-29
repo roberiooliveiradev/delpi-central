@@ -23,10 +23,16 @@ function isSavingsFilled(values: KaizenFormValues): boolean {
 }
 
 /** Percentual de preenchimento dos campos relevantes do cadastro (padrão quality-action-plans). */
-export function computeKaizenFormCompletion(values: KaizenFormValues): FormCompletion {
+export function computeKaizenFormCompletion(
+  values: KaizenFormValues,
+  options?: { includeBranch?: boolean },
+): FormCompletion {
+  const includeBranch = options?.includeBranch !== false;
   const items: CompletionItem[] = [
     { id: "title", label: "Título", done: filled(values.title) },
-    { id: "branch", label: "Unidade", done: filled(values.branch_code) },
+    ...(includeBranch
+      ? [{ id: "branch", label: "Unidade", done: filled(values.branch_code) }]
+      : []),
     { id: "sector", label: "Setor", done: filled(values.sector) },
     { id: "category", label: "Categoria", done: values.categories.length > 0 },
     {

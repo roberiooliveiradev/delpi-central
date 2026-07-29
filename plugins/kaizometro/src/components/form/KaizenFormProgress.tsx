@@ -6,10 +6,18 @@ import type { KaizenFormValues } from "../../types/kaizen";
 type Props = {
   values: KaizenFormValues;
   title?: string;
+  /** Conta multi-unidade: inclui passo «Unidade» no progresso. Default true. */
+  includeBranch?: boolean;
 };
 
-export function KaizenFormProgress({ values, title = "Preenchimento do cadastro" }: Props) {
-  const { percent, done, total, items } = computeKaizenFormCompletion(values);
+export function KaizenFormProgress({
+  values,
+  title = "Preenchimento do cadastro",
+  includeBranch = true,
+}: Props) {
+  const { percent, done, total, items } = computeKaizenFormCompletion(values, {
+    includeBranch,
+  });
 
   return (
     <div className="kz-form-progress" aria-label={title}>

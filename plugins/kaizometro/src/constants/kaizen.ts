@@ -210,21 +210,22 @@ export type View = "dashboard" | "list" | "new" | "edit" | "detail";
 
 export function parseRoute(pathname?: string): { view: View; id?: string } {
   const path = (pathname ?? APP_BASE).replace(/\/+$/, "");
-  if (path.endsWith("/dashboard")) return { view: "dashboard" };
+  if (path === APP_BASE || path.endsWith("/dashboard")) return { view: "dashboard" };
+  if (path.endsWith("/cadastros")) return { view: "list" };
   if (path.endsWith("/novo")) return { view: "new" };
   const detailMatch = path.match(/\/detalhe\/([^/]+)$/);
   if (detailMatch) return { view: "detail", id: detailMatch[1] };
   const editMatch = path.match(/\/editar\/([^/]+)$/);
   if (editMatch) return { view: "detail", id: editMatch[1] };
-  return { view: "list" };
+  return { view: "dashboard" };
 }
 
 export function listPath(): string {
-  return APP_BASE;
+  return `${APP_BASE}/cadastros`;
 }
 
 export function dashboardPath(): string {
-  return `${APP_BASE}/dashboard`;
+  return APP_BASE;
 }
 
 export function newPath(): string {

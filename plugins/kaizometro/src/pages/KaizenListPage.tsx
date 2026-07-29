@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FolderOpen, Trash2 } from "lucide-react";
 
 import {
-  deleteKaizenRecord,
   exportKaizenRecords,
   fetchKaizenRecords,
   importKaizenRecords,
@@ -23,7 +21,6 @@ import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
-import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -138,21 +135,6 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
     [handleImportFile],
   );
 
-  const handleDelete = useCallback(
-    async (record: KaizenRecord) => {
-      const confirmed = window.confirm(`Excluir o kaizen "${record.title}"?`);
-      if (!confirmed) return;
-
-      try {
-        await deleteKaizenRecord(record.id);
-        await load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Erro ao excluir kaizen.");
-      }
-    },
-    [load],
-  );
-
   const columns = useMemo<DataTableColumn<KaizenRecord>[]>(
     () => [
       {
@@ -227,31 +209,8 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
         sortable: true,
         sortValue: (row) => row.updated_at,
       },
-      {
-        key: "actions",
-        header: "Ações",
-        render: (row) => (
-          <div className="kz-row-actions">
-            <button
-              type="button"
-              className={KZ_GHOST_BTN}
-              onClick={() => onNavigate(detailPath(row.id))}
-            >
-              <FolderOpen size={14} aria-hidden="true" />
-              Abrir
-            </button>
-            <button
-              type="button"
-              className="kz-danger-btn"
-              onClick={() => void handleDelete(row)}
-            >
-              <Trash2 size={14} aria-hidden="true" />
-            </button>
-          </div>
-        ),
-      },
     ],
-    [handleDelete, onNavigate],
+    [],
   );
 
   return (
@@ -306,7 +265,7 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
       {success ? <StateAlert variant="success">{success}</StateAlert> : null}
 
       <DataTableSection
-        columnPreferencesKey="kaizometro:KaizenListPage:kaizens-cadastrados:v1"
+        columnPreferencesKey="kaizometro:KaizenListPage:kaizens-cadastrados:v2"
         title="Kaizens cadastrados"
         hint="Dados persistidos no PostgreSQL"
         columns={columns}
@@ -316,6 +275,7 @@ export function KaizenListPage({ onNavigate, branchOptions }: Props) {
         emptyMessage="Nenhum kaizen cadastrado."
         initialSort={{ key: "date", dir: "desc" }}
         searchPlaceholder="Buscar na listagem…"
+        onRowClick={(row) => onNavigate(detailPath(row.id))}
         getSearchText={(row) =>
           [
             row.branch_code,
