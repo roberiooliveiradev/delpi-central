@@ -1039,6 +1039,8 @@ export {
   catalogFieldsFromRouteLabels,
   humanizeFieldKey,
   isWeakFieldLabel,
+  normalizeFieldKeySnake,
+  splitFieldKeyTokens,
 } from "./fieldKeyHumanize";
 export {
   distributeTableProjectionColumnWidths,

@@ -1,11 +1,12 @@
 /**
- * Humanização centralizada de chaves snake_case → rótulo PT.
+ * Humanização centralizada de chaves snake_case / camelCase → rótulo PT.
  *
  * Cascata:
  *   1. mapa de chave completa (rótulo curado)
- *   2. tokens (`_` = espaço) traduzidos + primeira letra maiúscula
+ *   2. tokens (`_` / camelCase = espaço) traduzidos + primeira letra maiúscula
  *
- * Usado quando catálogo/meta não trazem label — evita `gross_savings_month` no picker.
+ * Usado quando catálogo/meta não trazem label — evita `gross_savings_month` /
+ * `valorDia` grudado (`Valordia`) no picker.
  */
 
 /** Rótulos canônicos por chave completa (preferir sempre que existir). */
@@ -43,10 +44,15 @@ export const FIELD_KEY_LABELS: Record<string, string> = {
   goal_scope_label: "Escopo da meta",
   goal_scope_hint: "Observação da meta",
   comparable_goal: "Meta comparável",
+  valor_dia: "Valor dia",
+  total_quantidade: "Total quantidade",
+  total_valor: "Total valor",
+  registros_sem_custo: "Registros sem custo",
+  ocorrencias: "Ocorrências",
 };
 
 /**
- * Tradução de tokens individuais (snake_case).
+ * Tradução de tokens individuais (snake_case / camelCase).
  * Ordem do inglês é preservada; chave completa no mapa acima cobre frases naturais.
  */
 export const FIELD_TOKEN_LABELS: Record<string, string> = {
@@ -56,6 +62,7 @@ export const FIELD_TOKEN_LABELS: Record<string, string> = {
   years: "anos",
   day: "dia",
   days: "dias",
+  dia: "dia",
   week: "semana",
   period: "período",
   periodo: "período",
@@ -70,6 +77,7 @@ export const FIELD_TOKEN_LABELS: Record<string, string> = {
   saving: "economia",
   costs: "custos",
   cost: "custo",
+  custo: "custo",
   investment: "investimento",
   investments: "investimentos",
   recurring: "recorrente",
@@ -85,10 +93,12 @@ export const FIELD_TOKEN_LABELS: Record<string, string> = {
   mean: "média",
   count: "quantidade",
   quantity: "quantidade",
+  quantidade: "quantidade",
   qty: "qtd.",
   amount: "valor",
   value: "valor",
   values: "valores",
+  valor: "valor",
   rate: "taxa",
   pct: "%",
   percent: "%",
@@ -116,19 +126,58 @@ export const FIELD_TOKEN_LABELS: Record<string, string> = {
   now: "agora",
   accumulated: "acumulada",
   shared_resource: "recurso compartilhado",
+  registros: "registros",
+  registro: "registro",
+  sem: "sem",
+  ocorrencias: "ocorrências",
+  ocorrencia: "ocorrência",
 };
 
-/** Label fraco: igual à chave, ou só `_` → espaço (sem tradução). */
+/**
+ * Quebra `valor_dia` / `valorDia` / `ValorDia` em tokens minúsculos.
+ * Sem isso, camelCase vira um único token e o rótulo fica grudado (`Valordia`).
+ */
+export function splitFieldKeyTokens(field: string): string[] {
+  const raw = String(field ?? "").trim();
+  if (!raw) return [];
+  const withBreaks = raw
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+    .replace(/([a-zA-Z])([0-9])/g, "$1_$2")
+    .replace(/([0-9])([a-zA-Z])/g, "$1_$2");
+  return withBreaks
+    .toLowerCase()
+    .split(/[_-\s]+/)
+    .filter(Boolean);
+}
+
+/** Forma canônica snake_case para lookup no mapa de chave completa. */
+export function normalizeFieldKeySnake(field: string): string {
+  return splitFieldKeyTokens(field).join("_");
+}
+
+/** Label fraco: igual à chave, só `_`→espaço, ou chave colapsada sem espaços (grudado). */
 export function isWeakFieldLabel(field: string, label: string | null | undefined): boolean {
   const key = String(field ?? "").trim();
   const text = String(label ?? "").trim();
   if (!key) return !text;
   if (!text) return true;
   if (text === key) return true;
-  const spaced = key.replace(/_/g, " ");
+  const spaced = splitFieldKeyTokens(key).join(" ");
   if (text === spaced) return true;
   if (text.toLowerCase() === spaced.toLowerCase()) return true;
   if (text.toLowerCase() === key.toLowerCase()) return true;
+  const collapsedKey = splitFieldKeyTokens(key).join("");
+  const collapsedLabel = text.replace(/\s+/g, "").toLowerCase();
+  /* Rótulo grudado: mesma letras da chave, mas sem espaços entre tokens. */
+  if (
+    collapsedKey &&
+    collapsedLabel === collapsedKey &&
+    splitFieldKeyTokens(key).length > 1 &&
+    !/\s/.test(text)
+  ) {
+    return true;
+  }
   return false;
 }
 
@@ -138,17 +187,17 @@ function capitalizeFirst(text: string): string {
 }
 
 /**
- * Converte `gross_savings_month` → rótulo PT.
+ * Converte `gross_savings_month` / `valorDia` → rótulo PT com espaços.
  * Preferência: chave completa; senão tokens traduzidos unidos por espaço.
  */
 export function humanizeFieldKey(field: string): string {
   const key = String(field ?? "").trim();
   if (!key) return "";
-  const lower = key.toLowerCase();
-  const curated = FIELD_KEY_LABELS[lower];
+  const snake = normalizeFieldKeySnake(key);
+  const curated = FIELD_KEY_LABELS[snake] ?? FIELD_KEY_LABELS[key.toLowerCase()];
   if (curated) return curated;
 
-  const tokens = lower.split(/_+/).filter(Boolean);
+  const tokens = splitFieldKeyTokens(key);
   if (tokens.length === 0) return key;
   if (tokens.length === 1) {
     const single = FIELD_TOKEN_LABELS[tokens[0]!] ?? tokens[0]!;
@@ -181,7 +230,8 @@ export function catalogFieldsFromRouteLabels(
     const curated = labels[field]?.trim();
     return {
       field,
-      label: curated || humanizeFieldKey(field),
+      label:
+        curated && !isWeakFieldLabel(field, curated) ? curated : humanizeFieldKey(field),
     };
   });
 }

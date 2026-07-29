@@ -3,6 +3,7 @@
 from tv_app.domain.services.field_key_humanize import (
     humanize_field_key,
     is_weak_field_label,
+    split_field_key_tokens,
 )
 
 
@@ -17,6 +18,18 @@ def test_humanize_field_key_translates_tokens():
     assert humanize_field_key("goal_amount") == "Meta valor"
 
 
+def test_humanize_field_key_splits_camel_case_with_spaces():
+    assert split_field_key_tokens("valorDia") == ["valor", "dia"]
+    assert humanize_field_key("valorDia") == "Valor dia"
+    assert humanize_field_key("valor_dia") == "Valor dia"
+    assert humanize_field_key("totalQuantidade") == "Total quantidade"
+    assert humanize_field_key("registrosSemCusto") == "Registros sem custo"
+    assert humanize_field_key("totalValor") == "Total valor"
+
+
 def test_is_weak_field_label():
     assert is_weak_field_label("month", "month") is True
     assert is_weak_field_label("month", "Mês") is False
+    assert is_weak_field_label("valorDia", "Valordia") is True
+    assert is_weak_field_label("valor_dia", "Valordia") is True
+    assert is_weak_field_label("valorDia", "Valor do dia") is False

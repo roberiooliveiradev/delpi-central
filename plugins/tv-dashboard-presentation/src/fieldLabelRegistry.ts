@@ -12,7 +12,7 @@ import type {
   ComunicadoDataResolved,
   ComunicadoDataTableColumn,
 } from "./comunicadoTypes";
-import { humanizeFieldKey } from "./fieldKeyHumanize";
+import { humanizeFieldKey, isWeakFieldLabel } from "./fieldKeyHumanize";
 
 export type FieldLabelsMap = Record<string, string>;
 
@@ -87,17 +87,19 @@ export function resolveFieldDisplayLabel(input: ResolveFieldDisplayLabelInput): 
   if (
     typeof projection === "string" &&
     projection.trim() &&
-    !isAutoBakedFieldLabel(projection, field)
+    !isAutoBakedFieldLabel(projection, field) &&
+    !isWeakFieldLabel(field, projection)
   ) {
     return projection;
   }
   const fromSource = lookupFieldLabel(input.sourceFieldLabels, field);
-  if (fromSource?.trim()) return fromSource;
+  if (fromSource?.trim() && !isWeakFieldLabel(field, fromSource)) return fromSource;
   const catalog = input.catalogLabel;
   if (
     typeof catalog === "string" &&
     catalog.trim() &&
-    !isAutoBakedFieldLabel(catalog, field)
+    !isAutoBakedFieldLabel(catalog, field) &&
+    !isWeakFieldLabel(field, catalog)
   ) {
     return catalog;
   }
@@ -105,7 +107,8 @@ export function resolveFieldDisplayLabel(input: ResolveFieldDisplayLabelInput): 
   if (
     typeof resolved === "string" &&
     resolved.trim() &&
-    !isAutoBakedFieldLabel(resolved, field)
+    !isAutoBakedFieldLabel(resolved, field) &&
+    !isWeakFieldLabel(field, resolved)
   ) {
     return resolved;
   }

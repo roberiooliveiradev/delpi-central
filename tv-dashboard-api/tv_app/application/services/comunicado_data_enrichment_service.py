@@ -38,7 +38,7 @@ from tv_app.application.services.tv_dashboard_content_service import (
     message,
     tv_dashboard_setting_int,
 )
-from tv_app.domain.services.field_key_humanize import humanize_field_key
+from tv_app.domain.services.field_key_humanize import humanize_field_key, is_weak_field_label
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     DATA_VIEW_BLOCK_TYPES,
@@ -223,11 +223,13 @@ def _merged_value_field_labels(
 
 def _humanize_value_field(field: str, labels: dict[str, str]) -> str:
     if field in labels:
-        return labels[field]
+        curated = labels[field]
+        if not is_weak_field_label(field, curated):
+            return curated
     # Match case-insensitive no mapa (meta às vezes usa casing diferente).
     lowered = field.lower()
     for key, label in labels.items():
-        if key.lower() == lowered:
+        if key.lower() == lowered and not is_weak_field_label(field, label):
             return label
     return humanize_field_key(field)
 

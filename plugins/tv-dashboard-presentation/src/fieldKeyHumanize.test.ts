@@ -4,6 +4,7 @@ import {
   catalogFieldsFromRouteLabels,
   humanizeFieldKey,
   isWeakFieldLabel,
+  splitFieldKeyTokens,
 } from "./fieldKeyHumanize";
 
 describe("fieldKeyHumanize", () => {
@@ -22,10 +23,32 @@ describe("fieldKeyHumanize", () => {
     expect(humanizeFieldKey("unknown_field_xyz")).toBe("Unknown field xyz");
   });
 
-  it("detecta label fraco (chave ou só underscore→espaço)", () => {
+  it("quebra camelCase com espaços (não gruda Valordia)", () => {
+    expect(splitFieldKeyTokens("valorDia")).toEqual(["valor", "dia"]);
+    expect(humanizeFieldKey("valorDia")).toBe("Valor dia");
+    expect(humanizeFieldKey("valor_dia")).toBe("Valor dia");
+    expect(humanizeFieldKey("totalQuantidade")).toBe("Total quantidade");
+    expect(humanizeFieldKey("total_quantidade")).toBe("Total quantidade");
+    expect(humanizeFieldKey("registrosSemCusto")).toBe("Registros sem custo");
+    expect(humanizeFieldKey("registros_sem_custo")).toBe("Registros sem custo");
+    expect(humanizeFieldKey("totalValor")).toBe("Total valor");
+  });
+
+  it("detecta label fraco (chave, underscore→espaço ou grudado)", () => {
     expect(isWeakFieldLabel("gross_savings_month", "gross_savings_month")).toBe(true);
     expect(isWeakFieldLabel("gross_savings_month", "gross savings month")).toBe(true);
     expect(isWeakFieldLabel("gross_savings_month", "Economia bruta (mês)")).toBe(false);
+    expect(isWeakFieldLabel("valorDia", "Valordia")).toBe(true);
+    expect(isWeakFieldLabel("valor_dia", "Valordia")).toBe(true);
+    /* "Valor dia" = tokens espaçados (fallback); curated real permanece forte. */
+    expect(isWeakFieldLabel("valorDia", "Valor do dia")).toBe(false);
+  });
+
+  it("catálogo ignora rótulo grudado do meta e humaniza", () => {
+    const fields = catalogFieldsFromRouteLabels(["valorDia"], {
+      valorDia: "Valordia",
+    });
+    expect(fields[0]?.label).toBe("Valor dia");
   });
 
   it("catálogo inclui chaves só em valueFieldLabels", () => {

@@ -1,10 +1,12 @@
-"""Humanização centralizada de chaves snake_case → rótulo PT (TV / enrichment).
+"""Humanização centralizada de chaves snake_case / camelCase → rótulo PT (TV / enrichment).
 
 Espelho de ``plugins/tv-dashboard-presentation/src/fieldKeyHumanize.ts``.
-Preferir mapa de chave completa; senão traduz tokens (`_` = espaço).
+Preferir mapa de chave completa; senão traduz tokens (`_` / camelCase = espaço).
 """
 
 from __future__ import annotations
+
+import re
 
 FIELD_KEY_LABELS: dict[str, str] = {
     "month": "Mês",
@@ -40,6 +42,11 @@ FIELD_KEY_LABELS: dict[str, str] = {
     "goal_scope_label": "Escopo da meta",
     "goal_scope_hint": "Observação da meta",
     "comparable_goal": "Meta comparável",
+    "valor_dia": "Valor dia",
+    "total_quantidade": "Total quantidade",
+    "total_valor": "Total valor",
+    "registros_sem_custo": "Registros sem custo",
+    "ocorrencias": "Ocorrências",
 }
 
 FIELD_TOKEN_LABELS: dict[str, str] = {
@@ -49,6 +56,7 @@ FIELD_TOKEN_LABELS: dict[str, str] = {
     "years": "anos",
     "day": "dia",
     "days": "dias",
+    "dia": "dia",
     "week": "semana",
     "period": "período",
     "periodo": "período",
@@ -63,6 +71,7 @@ FIELD_TOKEN_LABELS: dict[str, str] = {
     "saving": "economia",
     "costs": "custos",
     "cost": "custo",
+    "custo": "custo",
     "investment": "investimento",
     "investments": "investimentos",
     "recurring": "recorrente",
@@ -78,10 +87,12 @@ FIELD_TOKEN_LABELS: dict[str, str] = {
     "mean": "média",
     "count": "quantidade",
     "quantity": "quantidade",
+    "quantidade": "quantidade",
     "qty": "qtd.",
     "amount": "valor",
     "value": "valor",
     "values": "valores",
+    "valor": "valor",
     "rate": "taxa",
     "pct": "%",
     "percent": "%",
@@ -108,7 +119,27 @@ FIELD_TOKEN_LABELS: dict[str, str] = {
     "until": "até",
     "now": "agora",
     "accumulated": "acumulada",
+    "registros": "registros",
+    "registro": "registro",
+    "sem": "sem",
+    "ocorrencias": "ocorrências",
+    "ocorrencia": "ocorrência",
 }
+
+
+def split_field_key_tokens(field: str) -> list[str]:
+    raw = str(field or "").strip()
+    if not raw:
+        return []
+    with_breaks = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", raw)
+    with_breaks = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", with_breaks)
+    with_breaks = re.sub(r"([a-zA-Z])([0-9])", r"\1_\2", with_breaks)
+    with_breaks = re.sub(r"([0-9])([a-zA-Z])", r"\1_\2", with_breaks)
+    return [part for part in re.split(r"[_\-\s]+", with_breaks.lower()) if part]
+
+
+def normalize_field_key_snake(field: str) -> str:
+    return "_".join(split_field_key_tokens(field))
 
 
 def is_weak_field_label(field: str, label: str | None) -> bool:
@@ -120,12 +151,22 @@ def is_weak_field_label(field: str, label: str | None) -> bool:
         return True
     if text == key:
         return True
-    spaced = key.replace("_", " ")
+    spaced = " ".join(split_field_key_tokens(key))
     if text == spaced:
         return True
     if text.lower() == spaced.lower():
         return True
     if text.lower() == key.lower():
+        return True
+    collapsed_key = "".join(split_field_key_tokens(key))
+    collapsed_label = re.sub(r"\s+", "", text).lower()
+    # Rótulo grudado: mesmas letras da chave, sem espaços entre tokens.
+    if (
+        collapsed_key
+        and collapsed_label == collapsed_key
+        and len(split_field_key_tokens(key)) > 1
+        and not re.search(r"\s", text)
+    ):
         return True
     return False
 
@@ -134,11 +175,11 @@ def humanize_field_key(field: str) -> str:
     key = str(field or "").strip()
     if not key:
         return ""
-    lower = key.lower()
-    curated = FIELD_KEY_LABELS.get(lower)
+    snake = normalize_field_key_snake(key)
+    curated = FIELD_KEY_LABELS.get(snake) or FIELD_KEY_LABELS.get(key.lower())
     if curated:
         return curated
-    tokens = [part for part in lower.split("_") if part]
+    tokens = split_field_key_tokens(key)
     if not tokens:
         return key
     if len(tokens) == 1:
