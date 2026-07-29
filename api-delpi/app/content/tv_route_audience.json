@@ -2890,15 +2890,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "Production appointments series",
-          "description": "Production appointments series.",
-          "whenToUse": "Use when you need production appointments series."
+          "summary": "Production appointments time series",
+          "description": "Daily (or day×work-center) series of produced and lost quantities from SH6 production appointments.",
+          "whenToUse": "Use for a line chart of produced vs lost quantity over the selected period.",
+          "label": "Production appointments — time series"
         },
         "pt-BR": {
-          "summary": "Relatório operacional — Production appointments series",
-          "description": "Relatório operacional — Production appointments series.",
-          "whenToUse": "Use quando precisar de: Relatório operacional — Production appointments series.",
-          "label": "Relatório operacional — Production appointments series"
+          "summary": "Série temporal de apontamentos de produção",
+          "description": "Série diária (ou dia×CT) das quantidades produzida e perdida a partir dos apontamentos SH6.",
+          "whenToUse": "Use no gráfico de linha de quantidade produzida vs perdida no período.",
+          "label": "Apontamento de produção — série temporal"
         }
       }
     },
@@ -2907,14 +2908,15 @@
       "locale": {
         "en": {
           "summary": "Production appointments summary",
-          "description": "Production appointments summary.",
-          "whenToUse": "Use when you need production appointments summary."
+          "description": "KPI totals (appointments, produced/lost qty, OP and work-center counts) plus breakdown by work center.",
+          "whenToUse": "Use for KPI cards and work-center summary of production appointments in the period.",
+          "label": "Production appointments — summary"
         },
         "pt-BR": {
-          "summary": "Relatório operacional — Production appointments summary",
-          "description": "Relatório operacional — Production appointments summary.",
-          "whenToUse": "Use quando precisar de: Relatório operacional — Production appointments summary.",
-          "label": "Relatório operacional — Production appointments summary"
+          "summary": "Resumo de apontamentos de produção",
+          "description": "Totais de KPI (apontamentos, qtd. produzida/perdida, OPs e CTs) e detalhe por centro de trabalho.",
+          "whenToUse": "Use nos cards de KPI e no resumo por CT dos apontamentos no período.",
+          "label": "Apontamento de produção — resumo"
         }
       }
     },
@@ -2924,7 +2926,8 @@
         "en": {
           "summary": "Produced quantity totals (final inspection + mother OP)",
           "description": "Canonical SUM(H6_QTDPROD) at final inspection work center for mother production orders.",
-          "whenToUse": "Use when you need the canonical produced quantity denominator (PPM / shipping)."
+          "whenToUse": "Use when you need the canonical produced quantity denominator (PPM / shipping).",
+          "label": "Produced totals — final inspection"
         },
         "pt-BR": {
           "summary": "Totais de quantidade produzida (inspeção final + OP mãe)",
@@ -4808,15 +4811,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "Paged list — Production appointment work center",
-          "description": "Paged list — Production appointment work center.",
-          "whenToUse": "Use when you need paged list — Production appointment work center."
+          "summary": "Work centers catalog for production appointments",
+          "description": "Lists work centers (SHB) available for the branch, including final-inspection flag.",
+          "whenToUse": "Use to populate work-center filters for production appointments.",
+          "label": "Production appointments — work centers"
         },
         "pt-BR": {
-          "summary": "Lista paginada — Production appointment work center",
-          "description": "Lista paginada — Production appointment work center.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Production appointment work center.",
-          "label": "Lista paginada — Production appointment work center"
+          "summary": "Catálogo de centros de trabalho (apontamento)",
+          "description": "Lista os CTs (SHB) da filial, com marcação de inspeção final.",
+          "whenToUse": "Use para popular o filtro de centro de trabalho no apontamento de produção.",
+          "label": "Apontamento de produção — centros de trabalho"
         }
       }
     },
@@ -4824,15 +4828,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "Paged list — Production appointment",
-          "description": "Paged list — Production appointment.",
-          "whenToUse": "Use when you need paged list — Production appointment."
+          "summary": "Paged list of production appointments",
+          "description": "Paged rows of individual SH6 production appointments (operator, OP, product, CT, produced/lost qty).",
+          "whenToUse": "Use for a detailed table of production appointment records in the period.",
+          "label": "Production appointments — list"
         },
         "pt-BR": {
-          "summary": "Lista paginada — Production appointment",
-          "description": "Lista paginada — Production appointment.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Production appointment.",
-          "label": "Lista paginada — Production appointment"
+          "summary": "Lista paginada de apontamentos de produção",
+          "description": "Linhas paginadas dos apontamentos individuais SH6 (operador, OP, produto, CT, qtd. produzida/perdida).",
+          "whenToUse": "Use na tabela detalhada dos apontamentos do período.",
+          "label": "Apontamento de produção — lista"
         }
       }
     },
@@ -4840,15 +4845,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "Paged list — Production appointments by op",
-          "description": "Paged list — Production appointments by op.",
-          "whenToUse": "Use when you need paged list — Production appointments by op."
+          "summary": "Production appointments aggregated by OP",
+          "description": "Paged aggregation of appointments by production order (counts, CTs, produced qty, period).",
+          "whenToUse": "Use for a table of OPs with appointment totals in the period.",
+          "label": "Production appointments — by OP"
         },
         "pt-BR": {
-          "summary": "Lista paginada — Production appointments by op",
-          "description": "Lista paginada — Production appointments by op.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Production appointments by op.",
-          "label": "Lista paginada — Production appointments by op"
+          "summary": "Apontamentos agregados por OP",
+          "description": "Agregação paginada por ordem de produção (contagens, CTs, qtd. produzida, período).",
+          "whenToUse": "Use na tabela de OPs com totais de apontamento no período.",
+          "label": "Apontamento de produção — por OP"
         }
       }
     },
@@ -4856,15 +4862,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "Paged list — Child production orders of the same family",
+          "summary": "Child production orders of the same family",
           "description": "Lists child OPs (sequence ≠ 001) that share the H6_OP family prefix with the reference OP.",
-          "whenToUse": "Use when drilling into a production order detail to list related child OPs."
+          "whenToUse": "Use when drilling into a production order detail to list related child OPs.",
+          "label": "Production appointments — child OPs"
         },
         "pt-BR": {
-          "summary": "Lista paginada — OPs filhas da mesma família",
+          "summary": "OPs filhas da mesma família",
           "description": "Lista OPs filhas (sequência ≠ 001) que compartilham o prefixo de família de H6_OP com a OP de referência.",
           "whenToUse": "Use no detalhe da OP para listar OPs filhas relacionadas.",
-          "label": "Lista paginada — OPs filhas"
+          "label": "Apontamento de produção — OPs filhas"
         }
       }
     },
