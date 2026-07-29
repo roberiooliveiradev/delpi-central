@@ -113,5 +113,7 @@ describe("isTvDashboardPortalPath", () => {
     expect(isTvDashboardPortalPath("/apps/tv-dashboard/playlists/x")).toBe(true);
     expect(isTvDashboardPortalPath("/apps/controle-mp")).toBe(false);
     expect(isTvDashboardPortalPath("/")).toBe(false);
+    // Link público da TV — fora do plugin; guarda de path não deve valer sem presence.
+    expect(isTvDashboardPortalPath("/p/tv-dashboard/present/tok")).toBe(false);
   });
 });

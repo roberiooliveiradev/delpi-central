@@ -11,7 +11,7 @@ describe("editor presence disconnect criteria", () => {
     expect(page).toMatch(/usePlaylistEditorSync\(\{[\s\S]*enabled:\s*editorActive/);
   });
 
-  it("realtime tem guarda de path SPA além de pagehide", () => {
+  it("realtime tem guarda de path SPA só com presença de editor", () => {
     const realtime = readFileSync(
       join(here, "../../../tv-dashboard-presentation/src/usePresentationRealtime.ts"),
       "utf8",
@@ -19,6 +19,8 @@ describe("editor presence disconnect criteria", () => {
     expect(realtime).toContain("guardPortalPath");
     expect(realtime).toContain("isTvDashboardPortalPath");
     expect(realtime).toContain("tearDownPresenceSocket");
+    // Kiosk /p/... não tem presence — não pode derrubar o WS de presentation_updated.
+    expect(realtime).toMatch(/function guardPortalPath\(\) \{\s*if \(!presence\) return;/);
   });
 
   it("bootstrap unmount funciona sem el (fallback lastMounted)", () => {

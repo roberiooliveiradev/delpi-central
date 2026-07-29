@@ -304,8 +304,13 @@ export function usePresentationRealtime({
       tearDownPresenceSocket();
     }
 
-    /** SPA: sair do plugin sem fechar a aba não dispara pagehide — o socket ficava vivo. */
+    /**
+     * SPA: sair do plugin sem fechar a aba não dispara pagehide — o socket de
+     * presença do editor ficava vivo. Só aplica com `presence` (editor);
+     * kiosk/prévia em `/p/...` devem manter o WS de `presentation_updated`.
+     */
     function guardPortalPath() {
+      if (!presence) return;
       if (typeof window === "undefined") return;
       if (isTvDashboardPortalPath(window.location.pathname)) return;
       tearDownPresenceSocket();
@@ -314,8 +319,10 @@ export function usePresentationRealtime({
     connect();
 
     window.addEventListener("pagehide", onPageHide);
-    window.addEventListener("popstate", guardPortalPath);
-    pathGuardTimer = window.setInterval(guardPortalPath, 1000);
+    if (presence) {
+      window.addEventListener("popstate", guardPortalPath);
+      pathGuardTimer = window.setInterval(guardPortalPath, 1000);
+    }
 
     return () => {
       window.removeEventListener("pagehide", onPageHide);
