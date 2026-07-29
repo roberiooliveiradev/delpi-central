@@ -2,6 +2,10 @@ import "./native-screens.css";
 
 export { usePresentationEngine } from "./usePresentationEngine";
 export {
+  applySlideDraftToPayload,
+  mergeSlideDraftOntoNative,
+} from "./applySlideDraftToPayload";
+export {
   PRESENTATION_CHROME_HIDE_MS,
   usePresentationChromeVisibility,
 } from "./usePresentationChromeVisibility";

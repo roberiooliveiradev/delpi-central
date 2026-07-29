@@ -15,6 +15,7 @@ import {
   presentationSurfaceFromViewMode,
   type ComunicadoBlock,
   type InputFilterContributions,
+  type PresentationRealtimeEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PublicPresentationPayload, PublicSlide } from "./api";
@@ -51,14 +52,17 @@ export function PresentationView({
   overridesRef.current = runtimeOverrides;
   const debounceRef = useRef<number | null>(null);
 
-  const reloadPayload = useCallback(async () => {
-    const filters = hasInputFilterContributions(overridesRef.current)
-      ? overridesRef.current
-      : null;
-    if (onRefresh) return onRefresh(filters);
-    if (!token) return null;
-    return refreshPublicPresentation(token, filters);
-  }, [onRefresh, token]);
+  const reloadPayload = useCallback(
+    async (event?: PresentationRealtimeEvent) => {
+      const filters = hasInputFilterContributions(overridesRef.current)
+        ? overridesRef.current
+        : null;
+      if (onRefresh) return onRefresh(filters);
+      if (!token) return null;
+      return refreshPublicPresentation(token, filters, event?.revision ?? null);
+    },
+    [onRefresh, token],
+  );
 
   const { visible: chromeVisible } = usePresentationChromeVisibility();
 

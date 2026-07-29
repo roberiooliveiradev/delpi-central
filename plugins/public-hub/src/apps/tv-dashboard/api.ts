@@ -51,7 +51,11 @@ export type PublicFilterOverrides = {
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
-function presentUrl(token: string, filters?: PublicFilterOverrides | null): string {
+function presentUrl(
+  token: string,
+  filters?: PublicFilterOverrides | null,
+  cacheBust?: string | null,
+): string {
   const url = new URL(
     `${API_BASE}/public/present/${encodeURIComponent(token)}`,
     typeof window !== "undefined" ? window.location.origin : "http://localhost",
@@ -65,15 +69,20 @@ function presentUrl(token: string, filters?: PublicFilterOverrides | null): stri
       url.searchParams.set("filters", JSON.stringify({ slide, bySourceId }));
     }
   }
+  if (cacheBust) {
+    url.searchParams.set("_rev", cacheBust);
+  }
   return `${url.pathname}${url.search}`;
 }
 
 export async function fetchPublicPresentation(
   token: string,
   filters?: PublicFilterOverrides | null,
+  options?: { cacheBust?: string | null; cache?: RequestCache },
 ): Promise<PublicPresentationPayload | null> {
-  const res = await fetch(presentUrl(token, filters), {
+  const res = await fetch(presentUrl(token, filters, options?.cacheBust), {
     headers: { Accept: "application/json" },
+    cache: options?.cache ?? "default",
   });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error("Não foi possível carregar a apresentação.");
@@ -85,8 +94,12 @@ export async function fetchPublicPresentation(
 export async function refreshPublicPresentation(
   token: string,
   filters?: PublicFilterOverrides | null,
+  revision?: string | null,
 ): Promise<PublicPresentationPayload | null> {
-  return fetchPublicPresentation(token, filters);
+  return fetchPublicPresentation(token, filters, {
+    cacheBust: revision ?? String(Date.now()),
+    cache: "no-store",
+  });
 }
 
 export async function sendPresentationHeartbeat(token: string): Promise<void> {

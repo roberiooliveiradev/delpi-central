@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { applySlideDraftToPayload } from "./applySlideDraftToPayload";
 import type { PresentationPayloadLike, PresentationSlide } from "./types";
-import { usePresentationRealtime } from "./usePresentationRealtime";
+import {
+  usePresentationRealtime,
+  type PresentationRealtimeEvent,
+} from "./usePresentationRealtime";
 import { resolveSlideTransitionStyle } from "./presentationTransition";
 
 export type UsePresentationEngineOptions<T extends PresentationPayloadLike> = {
   initialPayload: T;
-  onRefresh?: () => Promise<T | null>;
+  /** Refresh completo (HTTP). Recebe o evento WS quando a origem for `presentation_updated`. */
+  onRefresh?: (event?: PresentationRealtimeEvent) => Promise<T | null>;
   /** @deprecated Use `enableKeyboardControls` (Space + setas). */
   enableKeyboardPause?: boolean;
   /** Space = pausa; ←/→ = slide anterior/próximo. */
@@ -83,11 +88,14 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
     [slides],
   );
 
-  const reloadPayload = useCallback(async () => {
-    if (!onRefresh) return;
-    const next = await onRefresh();
-    if (next) setPayload(next);
-  }, [onRefresh]);
+  const reloadPayload = useCallback(
+    async (event?: PresentationRealtimeEvent) => {
+      if (!onRefresh) return;
+      const next = await onRefresh(event);
+      if (next) setPayload(next);
+    },
+    [onRefresh],
+  );
 
   /*
    * Re-seed quando o pai troca o payload (ex.: fetch da prévia).
@@ -143,8 +151,12 @@ export function usePresentationEngine<T extends PresentationPayloadLike>({
   usePresentationRealtime({
     enabled: Boolean(realtimeWsUrl && onRefresh),
     wsUrl: realtimeWsUrl,
-    onPresentationUpdated: () => {
-      void reloadPayload();
+    onPresentationUpdated: (event) => {
+      void reloadPayload(event);
+    },
+    onSlideDraft: (event) => {
+      // Tempo real enquanto o editor digita — sem esperar autosave + HTTP.
+      setPayload((prev) => applySlideDraftToPayload(prev, event.slideId, event.nativeConfig));
     },
   });
 

@@ -14,6 +14,7 @@ import {
   isComunicadoInputBlock,
   type ComunicadoBlock,
   type InputFilterContributions,
+  type PresentationRealtimeEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -26,7 +27,10 @@ type Props = {
   payload: PresentationPayload;
   playlistId?: string;
   onClose?: () => void;
-  onRefresh?: (filters?: InputFilterContributions | null) => Promise<PresentationPayload>;
+  onRefresh?: (
+    filters?: InputFilterContributions | null,
+    event?: PresentationRealtimeEvent,
+  ) => Promise<PresentationPayload>;
 };
 
 function blocksFromNativeData(data: Record<string, unknown> | undefined): ComunicadoBlock[] {
@@ -67,14 +71,17 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
     return buildAdminPresentationWsUrl(playlistId, token);
   }, [playlistId]);
 
-  const reloadWithFilters = useCallback(async () => {
-    if (!onRefresh) return null;
-    const filters = hasInputFilterContributions(overridesRef.current)
-      ? overridesRef.current
-      : null;
-    const next = await onRefresh(filters);
-    return next ? forBrowserDisplay(next) : null;
-  }, [onRefresh]);
+  const reloadWithFilters = useCallback(
+    async (event?: PresentationRealtimeEvent) => {
+      if (!onRefresh) return null;
+      const filters = hasInputFilterContributions(overridesRef.current)
+        ? overridesRef.current
+        : null;
+      const next = await onRefresh(filters, event);
+      return next ? forBrowserDisplay(next) : null;
+    },
+    [onRefresh],
+  );
 
   const {
     index,
