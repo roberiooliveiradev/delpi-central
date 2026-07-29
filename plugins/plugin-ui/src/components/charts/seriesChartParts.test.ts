@@ -438,6 +438,15 @@ describe("seriesChartParts", () => {
     expect(normalized.legend?.frame).toBeUndefined();
   });
 
+  it("normalizeChartPartsForLoad remove legenda lateral estreita (paridade TV)", () => {
+    const narrow = {
+      ...chartOptionsToParts(mergeSeriesChartOptions({})),
+      legend: { visible: true, frame: { x: 82, y: 20, w: 16, h: 55 } },
+    };
+    const normalized = normalizeChartPartsForLoad(narrow, mergeSeriesChartOptions({}));
+    expect(normalized.legend?.frame).toBeUndefined();
+  });
+
   it("normalizeChartPartsForLoad preserva frame livre fora da faixa auto", () => {
     const free = {
       ...chartOptionsToParts(mergeSeriesChartOptions({})),

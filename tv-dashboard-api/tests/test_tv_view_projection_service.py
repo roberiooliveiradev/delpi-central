@@ -2,6 +2,7 @@ from tv_app.application.services.data.tv_view_projection_service import (
     aggregate_values,
     apply_field_labels_to_resolved,
     apply_view_projection_to_resolved,
+    resolve_category_display_label,
 )
 
 
@@ -141,3 +142,49 @@ def test_table_projection_keeps_field_labels_over_auto_baked():
     }
     next_resolved = apply_view_projection_to_resolved(resolved, block)
     assert next_resolved["table"]["columns"][0]["label"] == "Código"
+
+
+def test_resolve_category_display_label_prefers_companion_description():
+    assert (
+        resolve_category_display_label(
+            "FM",
+            "code",
+            [{"code": "FM", "label": "FM - Falha de material"}],
+        )
+        == "FM - Falha de material"
+    )
+    assert (
+        resolve_category_display_label(
+            "FH",
+            "code",
+            [{"code": "FH", "label": "Falha humana"}],
+        )
+        == "FH - Falha humana"
+    )
+
+
+def test_apply_chart_projection_pie_uses_full_motivo_label():
+    resolved = {
+        "table": {
+            "columns": [
+                {"key": "code", "label": "Código"},
+                {"key": "label", "label": "Descrição"},
+                {"key": "value", "label": "Valor"},
+            ],
+            "rows": [
+                {"code": "FM", "label": "FM - FALHA MECANICA", "value": 102.04},
+                {"code": "FH", "label": "FH - FALHA HUMANA", "value": 41.91},
+            ],
+        }
+    }
+    block = {
+        "type": "chart_view",
+        "chartType": "doughnut",
+        "chartProjection": {
+            "categoryField": "code",
+            "series": [{"field": "value", "aggregation": "sum", "label": "Valor"}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    labels = [p["label"] for p in next_resolved["chart"]["points"]]
+    assert labels == ["FM - FALHA MECANICA", "FH - FALHA HUMANA"]

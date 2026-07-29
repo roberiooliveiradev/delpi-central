@@ -322,8 +322,8 @@ export function SeriesChartPrimitive({
     borderRadius: chartArea.borderRadius,
     boxShadow: "none",
     boxSizing: "border-box",
-    // Clip ao radius; com seleção do fundo libera overflow p/ handles.
-    overflow: chartAreaSelected ? "visible" : "hidden",
+    // Sempre visible: legenda/título iguais na TV e no editor (não depender de seleção).
+    overflow: "visible",
     backgroundClip: "padding-box",
     ...(chartArea.opacity != null ? { opacity: chartArea.opacity } : {}),
     ...chartAreaFrameCss,

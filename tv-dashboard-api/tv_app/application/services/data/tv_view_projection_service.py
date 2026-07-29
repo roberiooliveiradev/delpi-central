@@ -311,6 +311,59 @@ _GROUP_BY_CHART_TYPES = frozenset(
 _COUNT_DEFAULT_CHART_TYPES = frozenset({"pie", "doughnut"})
 
 
+def _is_code_like_category_field(field: str) -> bool:
+    key = str(field or "").strip().lower()
+    if not key:
+        return False
+    if key in {"code", "codigo", "código", "id", "key", "reason_code", "motivocodigo"}:
+        return True
+    return key.endswith("_code") or key.endswith("codigo") or key.endswith("_codigo")
+
+
+_LABEL_COMPANION_FIELDS = (
+    "label",
+    "description",
+    "descricao",
+    "descrição",
+    "name",
+    "nome",
+    "motivo",
+    "title",
+    "titulo",
+    "título",
+)
+
+
+def resolve_category_display_label(
+    category_key: str,
+    category_field: str,
+    group_rows: list[dict[str, Any]],
+) -> str:
+    """
+    Paridade com categoryFieldPreference.ts — legenda completa quando a
+    categoria é código e a linha tem descrição («FM - Falha de material»).
+    """
+    if category_key in {"(vazio)", "Outros"}:
+        return category_key
+    if not _is_code_like_category_field(category_field):
+        return category_key
+    key_l = category_key.casefold()
+    for field in _LABEL_COMPANION_FIELDS:
+        for row in group_rows:
+            if field not in row:
+                continue
+            raw = row.get(field)
+            if raw is None:
+                continue
+            text = str(raw).strip()
+            if not text or text.casefold() == key_l:
+                continue
+            if category_key.lower() in text.lower():
+                return text
+            return f"{category_key} - {text}"
+    return category_key
+
+
 def _series_display_name(item: dict[str, Any], field: str) -> str:
     proj_label = str(item.get("label") or "")
     if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
@@ -372,7 +425,7 @@ def _build_chart_series(
             agg = str(item.get("aggregation") or default_agg)
             points = [
                 {
-                    "label": key,
+                    "label": resolve_category_display_label(key, category, groups[key]),
                     "value": _aggregate_group_rows(
                         groups[key],
                         field,
@@ -392,10 +445,13 @@ def _build_chart_series(
             )
         return series_out
 
-    categories = [
-        str(row.get(category)) if category and row.get(category) is not None else str(idx + 1)
-        for idx, row in enumerate(rows)
-    ]
+    categories: list[str] = []
+    for idx, row in enumerate(rows):
+        if category and row.get(category) is not None:
+            key = str(row.get(category))
+            categories.append(resolve_category_display_label(key, category, [row]))
+        else:
+            categories.append(str(idx + 1))
     series_out = []
     for item in series_cfg:
         if not isinstance(item, dict):

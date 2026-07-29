@@ -411,6 +411,7 @@ export function bindChartPartPointer(
 /**
  * Frames auto-gravados ao selecionar (legenda/título no fluxo) — removem o item
  * do flex e sobrepõem o plot. Descarta faixa típica de materialização no select.
+ * Também descarta legenda lateral estreita (clipava «FM - …» na TV).
  */
 export function looksLikeAutoMaterializedFlowFrame(
   kind: "title" | "legend",
@@ -418,9 +419,17 @@ export function looksLikeAutoMaterializedFlowFrame(
 ): boolean {
   const w = frame.w ?? 0;
   const h = frame.h ?? 0;
-  if (w < 40 || h <= 0 || h > 22) return false;
-  if (kind === "title") return frame.y <= 22;
-  return frame.y >= 70;
+  if (h <= 0) return false;
+  if (kind === "title") {
+    if (w < 40 || h > 22) return false;
+    return frame.y <= 22;
+  }
+  // Legenda inferior materializada no select.
+  if (w >= 40 && h <= 22 && frame.y >= 70) return true;
+  // Coluna lateral estreita — texto completo não cabe na bbox absoluta.
+  const onRight = frame.x >= 55;
+  const onLeft = frame.x + w <= 45;
+  return (onRight || onLeft) && w > 0 && w < 28 && h <= 80;
 }
 
 /**
