@@ -2901,6 +2901,22 @@
         }
       }
     },
+    "get_production_appointments_produced_totals": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Produced quantity totals (final inspection + mother OP)",
+          "description": "Canonical SUM(H6_QTDPROD) at final inspection work center for mother production orders.",
+          "whenToUse": "Use when you need the canonical produced quantity denominator (PPM / shipping)."
+        },
+        "pt-BR": {
+          "summary": "Totais de quantidade produzida (inspeção final + OP mãe)",
+          "description": "Soma canônica de H6_QTDPROD no CT de inspeção final para ordens mãe.",
+          "whenToUse": "Use quando precisar do denominador canônico de quantidade produzida (PPM / shipping).",
+          "label": "Totais produzidos — inspeção final"
+        }
+      }
+    },
     "get_production_consumption_by_item": {
       "locale": {
         "en": {

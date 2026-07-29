@@ -1,9 +1,21 @@
-"""Regras de negócio do denominador PPM — produção apontada no CT de inspeção final."""
+"""Regras de negócio do denominador PPM — produção apontada no CT de inspeção final.
 
-PPM_PRODUCED_B1_TIPOS: frozenset[str] = frozenset({"PA", "PI"})
+Constantes de CT / tipos vivem no módulo de apontamentos (fonte única).
+"""
 
-# SHB010.HB_NOME — localização dinâmica por filial (ex.: CT-70, CT-99).
-CT_INSPECAO_NOME_SQL_LIKE = "%INSPE%FINAL%"
+from app.domain.production.production_appointments.production_appointments_scope import (
+    CT_INSPECAO_NOME_SQL_LIKE,
+    DEFAULT_PRODUCED_PRODUCT_TYPES,
+)
+
+PPM_PRODUCED_B1_TIPOS: frozenset[str] = DEFAULT_PRODUCED_PRODUCT_TYPES
+
+__all__ = [
+    "CT_INSPECAO_NOME_SQL_LIKE",
+    "PPM_PRODUCED_B1_TIPOS",
+    "is_eligible_product_type",
+    "sql_b1_tipo_in_clause",
+]
 
 
 def is_eligible_product_type(tipo: str | None) -> bool:

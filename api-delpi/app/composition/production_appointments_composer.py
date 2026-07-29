@@ -5,6 +5,9 @@ from app.application.use_cases.production_appointments.production_appointments_u
     ListProductionAppointmentsByOpUseCase,
     ListProductionAppointmentsUseCase,
 )
+from app.application.use_cases.production_appointments.get_produced_quantity_use_case import (
+    GetProducedQuantityUseCase,
+)
 from app.infrastructure.persistence.totvs.production_appointments.production_appointments_repository import (
     ProductionAppointmentsRepository,
 )
@@ -40,3 +43,7 @@ def build_list_production_appointments_by_op_use_case() -> (
     ListProductionAppointmentsByOpUseCase
 ):
     return ListProductionAppointmentsByOpUseCase(repository=_repository())
+
+
+def build_get_produced_quantity_use_case() -> GetProducedQuantityUseCase:
+    return GetProducedQuantityUseCase(repository=_repository())

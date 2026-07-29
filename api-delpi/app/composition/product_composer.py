@@ -169,11 +169,25 @@ def build_get_product_production_status_use_case() -> GetProductProductionStatus
 
 
 def build_get_product_shipping_status_use_case() -> GetProductShippingStatusUseCase:
-    return GetProductShippingStatusUseCase(ProductPlaybookRepository())
+    from app.composition.production_appointments_composer import (
+        build_get_produced_quantity_use_case,
+    )
+
+    return GetProductShippingStatusUseCase(
+        ProductPlaybookRepository(),
+        build_get_produced_quantity_use_case(),
+    )
 
 
 def build_get_product_factory_status_use_case() -> GetProductFactoryStatusUseCase:
-    return GetProductFactoryStatusUseCase(ProductPlaybookRepository())
+    from app.composition.production_appointments_composer import (
+        build_get_produced_quantity_use_case,
+    )
+
+    return GetProductFactoryStatusUseCase(
+        ProductPlaybookRepository(),
+        build_get_produced_quantity_use_case(),
+    )
 
 
 def build_get_product_cost_impact_simulation_use_case() -> GetProductCostImpactSimulationUseCase:

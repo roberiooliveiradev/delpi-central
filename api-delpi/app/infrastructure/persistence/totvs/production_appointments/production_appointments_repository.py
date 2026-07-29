@@ -11,6 +11,9 @@ from app.infrastructure.persistence.totvs.production_appointments.production_app
     build_appointments_list_query,
     build_by_op_count_query,
     build_by_op_query,
+    build_produced_detail_query,
+    build_produced_quantity_by_product_query,
+    build_produced_totals_query,
     build_series_query,
     build_summary_by_ct_query,
     build_summary_totals_query,
@@ -215,3 +218,67 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         if not rows:
             return 0
         return int(rows[0].get("total") or 0)
+
+    def get_produced_totals(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> dict:
+        query, params = build_produced_totals_query(
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=branch,
+            product=product,
+            products=products,
+            product_types=product_types,
+        )
+        with self:
+            rows = self.execute_query(query, params)
+        return rows[0] if rows else {}
+
+    def list_produced_quantity(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> list[dict]:
+        query, params = build_produced_quantity_by_product_query(
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=branch,
+            product=product,
+            products=products,
+            product_types=product_types,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def list_produced_detail(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> list[dict]:
+        query, params = build_produced_detail_query(
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=branch,
+            product=product,
+            products=products,
+            product_types=product_types,
+        )
+        with self:
+            return self.execute_query(query, params)

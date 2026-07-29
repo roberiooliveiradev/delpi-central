@@ -98,3 +98,36 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         search: str | None = None,
         mother_op: bool = False,
     ) -> int: ...
+
+    def get_produced_totals(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> dict: ...
+
+    def list_produced_quantity(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> list[dict]: ...
+
+    def list_produced_detail(
+        self,
+        *,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str | None = None,
+        product: str | None = None,
+        products: list[str] | None = None,
+        product_types: list[str] | None = None,
+    ) -> list[dict]: ...

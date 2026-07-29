@@ -38,6 +38,7 @@ def test_router_exposes_all_endpoints(pa_client: TestClient) -> None:
     assert "/production/appointments/summary" in paths
     assert "/production/appointments/series" in paths
     assert "/production/appointments/by-op" in paths
+    assert "/production/appointments/produced-totals" in paths
 
 
 def test_summary_requires_branch(pa_client: TestClient) -> None:
@@ -237,3 +238,35 @@ def test_summary_forwards_mother_op(
     assert response.status_code == 200
     request = use_case.execute.call_args.args[0]
     assert request.mother_op is True
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_get_produced_quantity_use_case"
+)
+def test_produced_totals_meta(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.get_totals.return_value = {
+        "qty_produced_milheiro": 1.5,
+        "qty_produced_un": 1500.0,
+        "inspection_final": True,
+        "mother_op": True,
+    }
+    mock_builder.return_value = use_case
+
+    response = pa_client.get(
+        "/production/appointments/produced-totals",
+        params={"branch": "01", "date_start": "2026-06-01", "date_end": "2026-06-30"},
+    )
+
+    assert response.status_code == 200
+    body = _body(response)
+    assert body["meta"]["operationId"] == "get_production_appointments_produced_totals"
+    assert body["meta"]["entity"] == "production_appointments_produced_totals"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+    use_case.get_totals.assert_called_once()

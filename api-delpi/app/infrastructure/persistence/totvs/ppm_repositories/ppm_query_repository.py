@@ -1,25 +1,7 @@
-from datetime import datetime, timedelta
-
 from app.application.models.page import Page
 from app.domain.entities.ppm.ppm_item import PpmItem
-from app.application.dto.ppm.ppm_summary_request import PpmSummaryRequest
-from app.application.services.quality.ppm_query_cache import (
-    get_cached_ppm_summary,
-    ppm_summary_cache_key,
-    set_cached_ppm_summary,
-)
-from app.domain.entities.ppm.ppm_summary import PpmSummary
-from app.domain.entities.ppm.produced_quantity import (
-    ProducedQuantityByProduct,
-    ProducedQuantityItem,
-    ProducedQuantityReport,
-)
 from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
-from app.infrastructure.persistence.totvs.ppm_repositories.ppm_inspection_sql_builder import (
-    append_apont_date_params,
-    build_inspection_apont_ctes,
-)
 from app.infrastructure.persistence.totvs.ppm_repositories.ppm_nc_query import (
     build_nc_where_clause,
 )
@@ -37,7 +19,6 @@ from app.infrastructure.persistence.totvs.ppm_repositories.ppm_protheus_dates im
     exclusive_end_date,
     to_protheus_date,
 )
-from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 
 
 class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
@@ -68,17 +49,8 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
     ) -> tuple[str | None, str | None]:
         return to_protheus_date(date_start), exclusive_end_date(date_end)
 
-    def get_summary(self, request) -> PpmSummary:
-        cache_key = ppm_summary_cache_key(request)
-        cached = get_cached_ppm_summary(cache_key)
-        if cached is not None:
-            return cached
-
-        summary = self._load_summary(request)
-        set_cached_ppm_summary(cache_key, summary)
-        return summary
-
-    def _load_summary(self, request) -> PpmSummary:
+    def get_nc_returned_total(self, request) -> float:
+        """Numerador PPM — só NC (QI2). Denominador vem do módulo de apontamentos."""
         date_start, date_end_exclusive = self._resolve_date_range(
             request.date_start,
             request.date_end,
@@ -92,168 +64,23 @@ class PpmQueryRepository(BaseRepository, PpmQueryRepositoryPort):
             product_prefix=getattr(request, "product_prefix", None),
         )
 
-        ctes = build_inspection_apont_ctes(
-            branch=request.branch,
-        )
-        prod_params = append_apont_date_params(
-            ctes.params,
-            date_start=date_start,
-            date_end_exclusive=date_end_exclusive,
-        )
-
         sql = f"""
-            WITH nc AS (
-                SELECT
-                    SUM(
-                        COALESCE(
-                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
-                            TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
-                            0
-                        )
-                    ) AS total_devolvido_un
-                FROM QI2010 WITH (NOLOCK)
-                WHERE {where_nc}
-            ),
-            {ctes.ct_inspecao_cte.strip()},
-            {ctes.apont_inspecao_cte.strip()},
-            prod AS (
-                SELECT
-                    SUM(qtd_produzida_op) AS total_produzido_milheiro
-                FROM apont_inspecao
-            )
             SELECT
-                ISNULL(nc.total_devolvido_un, 0) AS total_devolvido_un,
-                ISNULL(prod.total_produzido_milheiro, 0) AS total_produzido_milheiro,
-                ISNULL(prod.total_produzido_milheiro, 0) * 1000 AS total_produzido_un,
-                CASE
-                    WHEN ISNULL(prod.total_produzido_milheiro, 0) = 0 THEN 0
-                    ELSE (ISNULL(nc.total_devolvido_un, 0) / (prod.total_produzido_milheiro * 1000.0)) * 1000000.0
-                END AS ppm
-            FROM nc
-            CROSS JOIN prod
-        """
-
-        final_params = tuple(list(params_nc) + prod_params)
-
-        with self as repo:
-            row = repo.execute_one(sql, final_params) or {}
-
-        return PpmSummary(
-            type=request.type,
-            branch=request.branch,
-            start_date=request.date_start,
-            end_date=request.date_end,
-            total_devolvido_un=float(row.get("total_devolvido_un") or 0),
-            total_produzido_milheiro=float(row.get("total_produzido_milheiro") or 0),
-            total_produzido_un=float(row.get("total_produzido_un") or 0),
-            ppm=float(row.get("ppm") or 0),
-        )
-
-    def list_produced_quantity(self, request) -> ProducedQuantityReport:
-        date_start, date_end_exclusive = self._resolve_date_range(
-            request.date_start,
-            request.date_end,
-        )
-
-        if not date_start or not date_end_exclusive:
-            raise ValueError("date_start e date_end são obrigatórios.")
-
-        ctes = build_inspection_apont_ctes(
-            branch=request.branch,
-            product_codes=request.products,
-        )
-        params = tuple(
-            append_apont_date_params(
-                ctes.params,
-                date_start=date_start,
-                date_end_exclusive=date_end_exclusive,
-            )
-        )
-
-        sql = f"""
-            WITH
-            {ctes.ct_inspecao_cte.strip()},
-            {ctes.apont_inspecao_cte.strip()}
-            SELECT
-                LTRIM(RTRIM(ai.H6_FILIAL)) AS branch,
-                LTRIM(RTRIM(ai.H6_PRODUTO)) AS product_code,
-                LTRIM(RTRIM(ai.B1_TIPO)) AS product_type,
-                MAX(LTRIM(RTRIM(SB1.B1_DESC))) AS description,
-                MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit,
-                SUM(ai.qtd_produzida_op) AS produced_milheiro,
-                SUM(ai.qtd_produzida_op) * 1000 AS produced_un,
-                COUNT(DISTINCT ai.H6_OP) AS orders_count
-            FROM apont_inspecao ai
-            INNER JOIN SB1010 SB1
-                ON SB1.B1_COD = ai.H6_PRODUTO
-               AND SB1.D_E_L_E_T_ = ' '
-            GROUP BY
-                ai.H6_FILIAL,
-                ai.H6_PRODUTO,
-                ai.B1_TIPO
-            ORDER BY
-                ai.H6_FILIAL,
-                ai.H6_PRODUTO
+                SUM(
+                    COALESCE(
+                        TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'pt-BR'),
+                        TRY_PARSE(NULLIF(LTRIM(RTRIM(QI2_QTDDEV)), '') AS DECIMAL(18,3) USING 'en-US'),
+                        0
+                    )
+                ) AS total_devolvido_un
+            FROM QI2010 WITH (NOLOCK)
+            WHERE {where_nc}
         """
 
         with self as repo:
-            rows = repo.execute_query(sql, params) or []
+            row = repo.execute_one(sql, tuple(params_nc)) or {}
 
-        items = [
-            ProducedQuantityItem(
-                branch=str(row.get("branch") or "").strip(),
-                product_code=str(row.get("product_code") or "").strip(),
-                product_type=str(row.get("product_type") or "").strip(),
-                description=str(row.get("description") or "").strip(),
-                unit=str(row.get("unit") or "").strip(),
-                produced_milheiro=float(row.get("produced_milheiro") or 0),
-                produced_un=float(row.get("produced_un") or 0),
-                orders_count=int(row.get("orders_count") or 0),
-            )
-            for row in rows
-        ]
-
-        by_product = self._aggregate_produced_by_product(items)
-        total_milheiro = sum(item.produced_milheiro for item in items)
-
-        return ProducedQuantityReport(
-            branch=request.branch,
-            start_date=request.date_start,
-            end_date=request.date_end,
-            products=request.products,
-            items=items,
-            total_produced_milheiro=total_milheiro,
-            total_produced_un=total_milheiro * 1000,
-            by_product=by_product,
-        )
-
-    @staticmethod
-    def _aggregate_produced_by_product(
-        items: list[ProducedQuantityItem],
-    ) -> list[ProducedQuantityByProduct]:
-        by_product_map: dict[str, ProducedQuantityByProduct] = {}
-        for item in items:
-            existing = by_product_map.get(item.product_code)
-            if existing is None:
-                by_product_map[item.product_code] = ProducedQuantityByProduct(
-                    product_code=item.product_code,
-                    product_type=item.product_type,
-                    description=item.description,
-                    unit=item.unit,
-                    produced_milheiro=item.produced_milheiro,
-                    produced_un=item.produced_un,
-                    orders_count=item.orders_count,
-                    branches=[item.branch] if item.branch else [],
-                )
-                continue
-
-            existing.produced_milheiro += item.produced_milheiro
-            existing.produced_un += item.produced_un
-            existing.orders_count += item.orders_count
-            if item.branch and item.branch not in existing.branches:
-                existing.branches.append(item.branch)
-
-        return sorted(by_product_map.values(), key=lambda row: row.product_code)
+        return float(row.get("total_devolvido_un") or 0)
 
     def list_branches(
         self,

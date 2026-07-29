@@ -33,6 +33,42 @@ def test_appointments_where_closed_open_and_filters() -> None:
     ]
 
 
+def test_appointments_where_inspection_final_and_product_types() -> None:
+    where, params = build_appointments_where(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        mother_op=True,
+        inspection_final=True,
+        product_types=["PA", "PI"],
+    )
+    assert "UPPER(HB.HB_NOME) LIKE '%INSPE%FINAL%'" in where
+    assert "RIGHT(LTRIM(RTRIM(SH6.H6_OP)), 3) = ?" in where
+    assert "UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) IN (?, ?)" in where
+    assert params[-3:] == ["PA", "PI", "001"] or (
+        "PA" in params and "PI" in params and params[-1] == "001"
+    )
+
+
+def test_produced_totals_uses_h6_qtdprod_and_display_factor() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_produced_totals_query,
+    )
+
+    query, params = build_produced_totals_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        product_types=["PA", "PI"],
+    )
+    assert "SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced_milheiro" in query
+    assert "THEN 1000" in query
+    assert "%INSPE%FINAL%" in query
+    assert "RIGHT(LTRIM(RTRIM(SH6.H6_OP)), 3) = ?" in query
+    assert params[0] == "01"
+    assert params[-1] == "001"
+
+
 def test_appointments_where_applies_free_text_search() -> None:
     where, params = build_appointments_where(
         date_start="20260615",

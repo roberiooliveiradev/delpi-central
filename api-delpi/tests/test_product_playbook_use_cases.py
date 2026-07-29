@@ -137,9 +137,10 @@ def test_factory_status_use_case_aggregates_sections() -> None:
             "production_order": "001",
         }
     ]
-    repository.fetch_shipping_status.return_value = []
+    produced = MagicMock()
+    produced.list_detail.return_value = []
 
-    use_case = GetProductFactoryStatusUseCase(repository)
+    use_case = GetProductFactoryStatusUseCase(repository, produced)
     result = use_case.execute(ProductPlaybookRequest(code="90261255"))
 
     assert result["factory_status"] == "OP ABERTA / NÃO INICIADO"
@@ -149,6 +150,7 @@ def test_factory_status_use_case_aggregates_sections() -> None:
     assert "shipping" in result
     assert result["indicators"]["total_raw_materials_without_stock_for_one_pa"] == 1
     repository.fetch_product_header.assert_called_once()
+    produced.list_detail.assert_called_once()
     repository.fetch_product_header.reset_mock()
     cached = use_case.execute(ProductPlaybookRequest(code="90261255"))
     assert cached["factory_status"] == result["factory_status"]

@@ -1,16 +1,10 @@
-# app/domain/ports/ppm/ppm_query_repository_port.py
-
 from abc import ABC, abstractmethod
 
 
 class PpmQueryRepositoryPort(ABC):
 
     @abstractmethod
-    def get_summary(self, request):
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_produced_quantity(self, request):
+    def get_nc_returned_total(self, request) -> float:
         raise NotImplementedError
 
     @abstractmethod

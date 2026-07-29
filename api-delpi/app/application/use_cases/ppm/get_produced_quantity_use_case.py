@@ -1,11 +1,6 @@
-from app.application.dto.ppm.produced_quantity_request import ProducedQuantityRequest
-from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
+from app.application.use_cases.production_appointments.get_produced_quantity_use_case import (
+    GetProducedQuantityUseCase,
+)
 
-
-class GetProducedQuantityUseCase:
-
-    def __init__(self, repository: PpmQueryRepositoryPort):
-        self._repository = repository
-
-    def execute(self, request: ProducedQuantityRequest):
-        return self._repository.list_produced_quantity(request)
+# Reexport — rota PPM e composers históricos importam deste path.
+__all__ = ["GetProducedQuantityUseCase"]

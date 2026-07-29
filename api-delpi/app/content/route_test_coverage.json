@@ -1,9 +1,9 @@
 {
   "version": 1,
   "generatedAt": "2026-07-29",
-  "baselineOperationCount": 484,
-  "operationCount": 485,
-  "coveredCount": 483,
+  "baselineOperationCount": 490,
+  "operationCount": 490,
+  "coveredCount": 488,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -44,8 +44,8 @@
       "exempt": 0
     },
     "engineering": {
-      "total": 24,
-      "covered": 24,
+      "total": 27,
+      "covered": 27,
       "gap": 0,
       "exempt": 0
     },
@@ -104,14 +104,14 @@
       "exempt": 0
     },
     "production": {
-      "total": 33,
-      "covered": 33,
+      "total": 34,
+      "covered": 34,
       "gap": 0,
       "exempt": 0
     },
     "products": {
-      "total": 34,
-      "covered": 34,
+      "total": 35,
+      "covered": 35,
       "gap": 0,
       "exempt": 0
     },
@@ -1093,6 +1093,24 @@
       "status": "covered"
     },
     {
+      "operationId": "export_lmp_nonconformities",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/export",
+      "module": "engineering",
+      "entity": "lmp_nonconformity_export",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "import_lmp_nonconformities",
+      "method": "POST",
+      "path": "/engineering/lmps/nonconformities/import",
+      "module": "engineering",
+      "entity": "lmp_nonconformity_import",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_lmp_problem_tags",
       "method": "GET",
       "path": "/engineering/lmps/nonconformities/problem-tags",
@@ -1135,6 +1153,15 @@
       "module": "engineering",
       "entity": "lmp_nonconformity",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_lmp_nonconformity_history",
+      "method": "GET",
+      "path": "/engineering/lmps/nonconformities/{record_id}/history",
+      "module": "engineering",
+      "entity": "lmp_nonconformity_history",
+      "shape": "list",
       "status": "covered"
     },
     {
@@ -2003,6 +2030,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_production_appointments_produced_totals",
+      "method": "GET",
+      "path": "/production/appointments/produced-totals",
+      "module": "production",
+      "entity": "production_appointments_produced_totals",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_appointments_series",
       "method": "GET",
       "path": "/production/appointments/series",
@@ -2270,6 +2306,15 @@
       "module": "production",
       "entity": "production_work_center_order_summary",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_products_by_supplier_part_number",
+      "method": "GET",
+      "path": "/products/by-supplier-part-number",
+      "module": "products",
+      "entity": "product_by_supplier_part_number",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -3425,20 +3470,20 @@
       "status": "covered"
     },
     {
-      "operationId": "get_kaizen_records_summary",
-      "method": "GET",
-      "path": "/quality/kaizens/records/summary",
-      "module": "quality",
-      "entity": "kaizen_records_summary",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_kaizen_savings_investment_series",
       "method": "GET",
       "path": "/quality/kaizens/records/savings-investment/series",
       "module": "quality",
       "entity": "kaizen_savings_investment_series",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_kaizen_records_summary",
+      "method": "GET",
+      "path": "/quality/kaizens/records/summary",
+      "module": "quality",
+      "entity": "kaizen_records_summary",
       "shape": "scalar",
       "status": "covered"
     },

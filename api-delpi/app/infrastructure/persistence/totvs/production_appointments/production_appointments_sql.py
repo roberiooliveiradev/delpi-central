@@ -73,24 +73,37 @@ def build_appointments_where(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None = None,
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    products: list[str] | None = None,
+    product_types: list[str] | None = None,
     search: str | None = None,
     search_scope: str = "appointment",
     mother_op: bool = False,
+    inspection_final: bool = False,
 ) -> tuple[str, list]:
     clauses = [
         "SH6.D_E_L_E_T_ = ' '",
         "SH6.H6_TIPO = 'P'",
         "SH6.H6_OP <> ''",
         "SH6.H6_RECURSO <> ''",
-        "LTRIM(RTRIM(SH6.H6_FILIAL)) = ?",
-        "SH6.H6_DTAPONT >= ?",
-        "SH6.H6_DTAPONT < ?",
+        "SH6.H6_PRODUTO <> ''",
     ]
-    params: list = [branch, date_start, date_end_exclusive]
+    params: list = []
+
+    if branch:
+        clauses.append("LTRIM(RTRIM(SH6.H6_FILIAL)) = ?")
+        params.append(branch.strip())
+
+    clauses.extend(
+        [
+            "SH6.H6_DTAPONT >= ?",
+            "SH6.H6_DTAPONT < ?",
+        ]
+    )
+    params.extend([date_start, date_end_exclusive])
 
     if work_center:
         clauses.append("LTRIM(RTRIM(SH1.H1_CTRAB)) = ?")
@@ -98,13 +111,33 @@ def build_appointments_where(
     if op:
         clauses.append("LTRIM(RTRIM(SH6.H6_OP)) = ?")
         params.append(op.strip())
-    if product:
+
+    product_codes = [str(code).strip() for code in (products or []) if str(code).strip()]
+    if product_codes:
+        placeholders = ", ".join("?" for _ in product_codes)
+        clauses.append(f"LTRIM(RTRIM(SH6.H6_PRODUTO)) IN ({placeholders})")
+        params.extend(product_codes)
+    elif product:
         clauses.append("LTRIM(RTRIM(SH6.H6_PRODUTO)) = ?")
         params.append(product.strip())
+
+    tipos = [
+        str(tipo).strip().upper()
+        for tipo in (product_types or [])
+        if str(tipo).strip()
+    ]
+    if tipos:
+        placeholders = ", ".join("?" for _ in tipos)
+        clauses.append(f"UPPER(LTRIM(RTRIM(SB1.B1_TIPO))) IN ({placeholders})")
+        params.extend(tipos)
+
     if mother_op:
         suffix_len = len(MOTHER_OP_SUFFIX)
         clauses.append(f"RIGHT(LTRIM(RTRIM(SH6.H6_OP)), {suffix_len}) = ?")
         params.append(MOTHER_OP_SUFFIX)
+
+    if inspection_final:
+        clauses.append(f"UPPER(HB.HB_NOME) LIKE '{CT_INSPECAO_NOME_SQL_LIKE}'")
 
     if search_scope == "by_op":
         search_clause, search_params = (
@@ -431,5 +464,165 @@ def build_by_op_count_query(
         WHERE {where}
         GROUP BY SH6.H6_OP, SH6.H6_PRODUTO
     ) G
+    """
+    return sql, tuple(params)
+
+
+def _produced_scope_where(
+    *,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str | None = None,
+    product: str | None = None,
+    products: list[str] | None = None,
+    product_types: list[str] | None = None,
+) -> tuple[str, list]:
+    """Where canônico: inspeção final + OP mãe + SUM(H6_QTDPROD)."""
+    return build_appointments_where(
+        date_start=date_start,
+        date_end_exclusive=date_end_exclusive,
+        branch=branch,
+        product=product,
+        products=products,
+        product_types=product_types,
+        mother_op=True,
+        inspection_final=True,
+    )
+
+
+def build_produced_totals_query(
+    *,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str | None = None,
+    product: str | None = None,
+    products: list[str] | None = None,
+    product_types: list[str] | None = None,
+) -> tuple[str, tuple]:
+    where, params = _produced_scope_where(
+        date_start=date_start,
+        date_end_exclusive=date_end_exclusive,
+        branch=branch,
+        product=product,
+        products=products,
+        product_types=product_types,
+    )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    sql = f"""
+    SELECT
+        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced_milheiro,
+        SUM({qty_prod}) AS qty_produced_un,
+        SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost_milheiro,
+        SUM({qty_lost}) AS qty_lost_un,
+        COUNT(*) AS appointment_count,
+        COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS orders_count
+    {_BASE_FROM}
+    WHERE {where}
+    """
+    return sql, tuple(params)
+
+
+def build_produced_quantity_by_product_query(
+    *,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str | None = None,
+    product: str | None = None,
+    products: list[str] | None = None,
+    product_types: list[str] | None = None,
+) -> tuple[str, tuple]:
+    where, params = _produced_scope_where(
+        date_start=date_start,
+        date_end_exclusive=date_end_exclusive,
+        branch=branch,
+        product=product,
+        products=products,
+        product_types=product_types,
+    )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    sql = f"""
+    SELECT
+        LTRIM(RTRIM(SH6.H6_FILIAL)) AS branch,
+        LTRIM(RTRIM(SH6.H6_PRODUTO)) AS product_code,
+        LTRIM(RTRIM(SB1.B1_TIPO)) AS product_type,
+        MAX(LTRIM(RTRIM(SB1.B1_DESC))) AS description,
+        MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit,
+        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS produced_milheiro,
+        SUM({qty_prod}) AS produced_un,
+        COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS orders_count
+    {_BASE_FROM}
+    WHERE {where}
+    GROUP BY
+        SH6.H6_FILIAL,
+        SH6.H6_PRODUTO,
+        SB1.B1_TIPO
+    ORDER BY
+        SH6.H6_FILIAL,
+        SH6.H6_PRODUTO
+    """
+    return sql, tuple(params)
+
+
+def build_produced_detail_query(
+    *,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str | None = None,
+    product: str | None = None,
+    products: list[str] | None = None,
+    product_types: list[str] | None = None,
+) -> tuple[str, tuple]:
+    """Detalhe por OP/operação/recurso — shape de shipping-status."""
+    where, params = _produced_scope_where(
+        date_start=date_start,
+        date_end_exclusive=date_end_exclusive,
+        branch=branch,
+        product=product,
+        products=products,
+        product_types=product_types,
+    )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
+    sql = f"""
+    SELECT
+        LTRIM(RTRIM(SH6.H6_FILIAL)) AS branch,
+        LTRIM(RTRIM(SH6.H6_PRODUTO)) AS product_code,
+        LTRIM(RTRIM(SB1.B1_DESC)) AS description,
+        LTRIM(RTRIM(SB1.B1_TIPO)) AS product_type,
+        LTRIM(RTRIM(SB1.B1_UM)) AS unit,
+        LTRIM(RTRIM(SH6.H6_OP)) AS production_order,
+        LTRIM(RTRIM(SH6.H6_OPERAC)) AS operation,
+        LTRIM(RTRIM(SH6.H6_RECURSO)) AS resource_code,
+        LTRIM(RTRIM(SH1.H1_DESCRI)) AS resource_name,
+        LTRIM(RTRIM(SH1.H1_CTRAB)) AS work_center,
+        LTRIM(RTRIM(HB.HB_NOME)) AS inspection_work_center_name,
+        SUM({qty_prod}) AS shipped_quantity,
+        SUM({qty_lost}) AS inspection_loss_quantity,
+        COUNT(*) AS total_reports,
+        MIN(LTRIM(RTRIM(SH6.H6_DATAINI))) AS first_start_date,
+        MIN(LTRIM(RTRIM(SH6.H6_HORAINI))) AS first_start_time,
+        MAX(LTRIM(RTRIM(SH6.H6_DATAFIN))) AS last_end_date,
+        MAX(LTRIM(RTRIM(SH6.H6_HORAFIN))) AS last_end_time,
+        MAX(LTRIM(RTRIM(SH6.H6_DTAPONT))) AS last_report_date
+    {_BASE_FROM}
+    WHERE {where}
+    GROUP BY
+        SH6.H6_FILIAL,
+        SH6.H6_PRODUTO,
+        SB1.B1_DESC,
+        SB1.B1_TIPO,
+        SB1.B1_UM,
+        SH6.H6_OP,
+        SH6.H6_OPERAC,
+        SH6.H6_RECURSO,
+        SH1.H1_DESCRI,
+        SH1.H1_CTRAB,
+        HB.HB_NOME
+    ORDER BY
+        SH6.H6_FILIAL,
+        SH6.H6_OP,
+        SH6.H6_OPERAC,
+        SH6.H6_RECURSO
     """
     return sql, tuple(params)

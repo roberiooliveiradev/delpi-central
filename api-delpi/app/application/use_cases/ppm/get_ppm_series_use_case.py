@@ -10,12 +10,12 @@ from app.application.services.production.production_kpi_cache import (
     set_cached_chart_series,
 )
 from app.application.shared.chart_period_buckets import build_period_buckets
-from app.domain.ports.ppm.ppm_query_repository_port import PpmQueryRepositoryPort
+from app.application.use_cases.ppm.get_ppm_summary_use_case import GetPpmSummaryUseCase
 
 
 class GetPpmSeriesUseCase:
-    def __init__(self, repository: PpmQueryRepositoryPort):
-        self._repository = repository
+    def __init__(self, summary_use_case: GetPpmSummaryUseCase):
+        self._summary_use_case = summary_use_case
 
     def execute(self, request: PpmSeriesRequest) -> PpmSeriesResponse:
         if request.type not in {"internal", "external"}:
@@ -35,7 +35,7 @@ class GetPpmSeriesUseCase:
         points: list[PpmSeriesPointDto] = []
 
         for bucket in buckets_result.buckets:
-            summary = self._repository.get_summary(
+            summary = self._summary_use_case.execute(
                 PpmSummaryRequest(
                     type=request.type,
                     branch=request.branch,

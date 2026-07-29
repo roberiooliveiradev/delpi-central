@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 489,
+  "operation_count": 490,
   "operations": [
     {
       "method": "POST",
@@ -21669,6 +21669,180 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Paged list — Production appointments by op."
+    },
+    {
+      "method": "GET",
+      "path": "/production/appointments/produced-totals",
+      "operationId": "get_production_appointments_produced_totals",
+      "summary": "Produced quantity totals (final inspection + mother OP)",
+      "tags": [
+        "Produção — Apontamento de Produção"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "product",
+          "in": "query",
+          "required": false,
+          "description": "Product code filter.",
+          "type": "string"
+        },
+        {
+          "name": "product_types",
+          "in": "query",
+          "required": false,
+          "description": "Comma-separated SB1 types (default PA,PI).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_appointments_produced_totals",
+        "shape": "playbook_report",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Produced quantity totals (final inspection + mother OP)",
+            "description": "Canonical SUM(H6_QTDPROD) at final inspection work center for mother production orders.",
+            "whenToUse": "Use when you need the canonical produced quantity denominator (PPM / shipping)."
+          },
+          "pt-BR": {
+            "summary": "Totais de quantidade produzida (inspeção final + OP mãe)",
+            "description": "Soma canônica de H6_QTDPROD no CT de inspeção final para ordens mãe.",
+            "whenToUse": "Use quando precisar do denominador canônico de quantidade produzida (PPM / shipping).",
+            "label": "Totais produzidos — inspeção final"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "product": {
+            "locale": {
+              "en": {
+                "description": "Product query parameter.",
+                "label": "Product"
+              },
+              "pt-BR": {
+                "description": "Código ou identificador do produto.",
+                "label": "Produto"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use quando precisar do denominador canônico de quantidade produzida (PPM / shipping).",
+          "description": "Soma canônica de H6_QTDPROD no CT de inspeção final para ordens mãe.",
+          "label": "Totais produzidos — inspeção final"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Canonical SUM(H6_QTDPROD) at final inspection work center for mother production orders."
     },
     {
       "method": "GET",

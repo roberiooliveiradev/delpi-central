@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from delpi_auth.authorization import require_any_permission
 
@@ -12,12 +12,14 @@ from app.application.security.api_delpi_permissions import (
 from app.composition.production_appointments_composer import (
     build_get_production_appointments_series_use_case,
     build_get_production_appointments_summary_use_case,
+    build_get_produced_quantity_use_case,
     build_list_production_appointment_work_centers_use_case,
     build_list_production_appointments_by_op_use_case,
     build_list_production_appointments_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.production_appointments.production_appointments_branch_access import (
     branch_access_error,
 )
@@ -304,3 +306,67 @@ def by_op_route(
         success_message="Apontamentos por OP carregados com sucesso.",
         error_context="carregar drill-down por OP",
     )
+
+
+@router.get(
+    "/produced-totals",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_production_appointments_produced_totals",
+        path="/production/appointments/produced-totals",
+    ),
+)
+@require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
+def produced_totals_route(
+    branch: str = BRANCH_QUERY(),
+    start_date: Optional[str] = START_DATE_QUERY(),
+    end_date: Optional[str] = END_DATE_QUERY(),
+    date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
+    date_end: Optional[str] = LEGACY_DATE_END_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    product_types: Optional[str] = Query(
+        None,
+        description="Comma-separated SB1 types (default PA,PI).",
+    ),
+):
+    """Total produzido canônico: SUM(H6_QTDPROD) na inspeção final + OP mãe."""
+    start_date, end_date = resolve_period_dates(
+        start_date=start_date,
+        end_date=end_date,
+        date_start=date_start,
+        date_end=date_end,
+    )
+    branch_error = branch_access_error(branch)
+    if branch_error:
+        return branch_error
+    try:
+        from app.application.dto.production_appointments.produced_quantity_query_request import (
+            ProducedQuantityQueryRequest,
+        )
+
+        tipos = None
+        if product_types:
+            tipos = [part.strip() for part in product_types.split(",") if part.strip()]
+        query = ProducedQuantityQueryRequest.create(
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+            products=[product] if product else None,
+            product_types=tipos,
+            require_branch=True,
+        )
+        use_case = build_get_produced_quantity_use_case()
+        result = use_case.get_totals(query)
+        return api_delpi_success(
+            result,
+            operation_id="get_production_appointments_produced_totals",
+            message="Totais de quantidade produzida carregados com sucesso.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar totais produzidos: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar totais produzidos: {exc}")
+        return error_response(
+            "Erro interno ao carregar totais produzidos.",
+            status_code=500,
+        )

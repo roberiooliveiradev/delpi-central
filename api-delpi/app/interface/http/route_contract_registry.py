@@ -461,6 +461,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_production_appointments_by_op": RouteContract(
         "production_appointments_by_op", "paged_list"
     ),
+    "get_production_appointments_produced_totals": RouteContract(
+        "production_appointments_produced_totals", "playbook_report"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),

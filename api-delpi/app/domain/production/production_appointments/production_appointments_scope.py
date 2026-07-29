@@ -1,9 +1,17 @@
-"""Escopo e constantes — Apontamento de Produção (SH6 por CT)."""
+"""Escopo e constantes — Apontamento de Produção (SH6 por CT).
+
+Quantidade real produzida: ``SH6010.H6_QTDPROD``.
+Denominador canônico (PPM / shipping / produced-totals): inspeção final + OP mãe.
+"""
 
 from __future__ import annotations
 
 # Mesma convenção de nome SHB do domínio qualidade; sem acoplar rotas PPM.
 CT_INSPECAO_NOME_SQL_LIKE = "%INSPE%FINAL%"
+
+# Tipos SB1 no total produzido do PPM (PA + PI). Shipping usa só PA.
+DEFAULT_PRODUCED_PRODUCT_TYPES: frozenset[str] = frozenset({"PA", "PI"})
+SHIPPING_PRODUCED_PRODUCT_TYPES: frozenset[str] = frozenset({"PA"})
 
 VALID_BRANCHES: frozenset[str] = frozenset({"01", "02"})
 

@@ -5,7 +5,7 @@
 **Spec / Fase 0:** [`docs/12-roadmap-e-evolucao/production-appointments/`](../../../../docs/12-roadmap-e-evolucao/production-appointments/)
 
 Acompanha apontamentos de produção (`SH6010`, tipo `P`) por centro de trabalho via `SH1010` → `SHB010`.  
-**Fora de escopo:** PPM, eficiência %, MOD. CT de inspeção final entra nos totais.
+CT de inspeção final + OP mãe alimentam o total produzido canônico (`/produced-totals`), consumido também por PPM e shipping-status.
 
 ## Permissões
 
@@ -28,6 +28,18 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 | GET | `/production/appointments/summary` | `get_production_appointments_summary` | `playbook_report` |
 | GET | `/production/appointments/series` | `get_production_appointments_series` | `playbook_report` |
 | GET | `/production/appointments/by-op` | `list_production_appointments_by_op` | `paged_list` |
+| GET | `/production/appointments/produced-totals` | `get_production_appointments_produced_totals` | `playbook_report` |
+
+## Totais produzidos (canônico)
+
+`GET /produced-totals` expõe o denominador compartilhado com PPM e shipping:
+
+- Fonte: **`SH6010.H6_QTDPROD`**
+- CT de inspeção final (`HB_NOME LIKE '%INSPE%FINAL%'`)
+- OP mãe (`H6_OP` sufixo `001`)
+- Tipos SB1: default `PA,PI` (`product_types` opcional); shipping usa `PA`
+
+Use case: `GetProducedQuantityUseCase` + `ProductionAppointmentsRepository` (único SQL).
 
 ## Parâmetros
 

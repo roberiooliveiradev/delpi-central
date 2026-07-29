@@ -110,11 +110,18 @@ def build_get_audit_5s_summary_use_case() -> GetAudit5SSummaryUseCase:
     return GetAudit5SSummaryUseCase(repository=_build_audit_5s_query_repository())
 
 def build_get_ppm_summary_use_case() -> GetPpmSummaryUseCase:
-    return GetPpmSummaryUseCase(_build_ppm_repository())
+    return GetPpmSummaryUseCase(
+        _build_ppm_repository(),
+        build_get_produced_quantity_use_case(),
+    )
 
 
 def build_get_produced_quantity_use_case() -> GetProducedQuantityUseCase:
-    return GetProducedQuantityUseCase(_build_ppm_repository())
+    from app.composition.production_appointments_composer import (
+        build_get_produced_quantity_use_case as build_appointments_produced,
+    )
+
+    return build_appointments_produced()
 
 
 def build_list_ppm_use_case() -> ListPpmUseCase:
@@ -122,7 +129,7 @@ def build_list_ppm_use_case() -> ListPpmUseCase:
 
 
 def build_get_ppm_series_use_case() -> GetPpmSeriesUseCase:
-    return GetPpmSeriesUseCase(_build_ppm_repository())
+    return GetPpmSeriesUseCase(build_get_ppm_summary_use_case())
 
 
 def build_list_quality_branches_use_case() -> ListQualityBranchesUseCase:
