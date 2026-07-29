@@ -9,6 +9,7 @@ import {
   firstDataTransferImageFile,
   hasExternalClipboardPayload,
   looksLikeInternalBlocksPayload,
+  parseInternalBlocksClipboard,
   parseInternalBlocksPayload,
   planExternalClipboardPaste,
   serializeInternalBlocksPayload,
@@ -41,6 +42,29 @@ describe("externalClipboardPaste", () => {
     const blocks = parseInternalBlocksPayload(payload);
     expect(blocks).toHaveLength(1);
     expect(blocks?.[0].type).toBe("text");
+  });
+
+  it("preserva sourceSlideId no envelope e aceita array legado", () => {
+    const envelope = serializeInternalBlocksPayload(
+      [{ id: "a", type: "text", content: "Olá", frame: { x: 1, y: 2, w: 3, h: 4 } } as never],
+      "slide-xyz",
+    );
+    const parsed = parseInternalBlocksClipboard(envelope);
+    expect(parsed?.sourceSlideId).toBe("slide-xyz");
+    expect(parsed?.blocks).toHaveLength(1);
+
+    const legacy = `${DELPI_TV_BLOCKS_CLIPBOARD_PREFIX}${JSON.stringify([
+      { id: "b", type: "text", content: "Legado", frame: { x: 0, y: 0, w: 1, h: 1 } },
+    ])}`;
+    const legacyParsed = parseInternalBlocksClipboard(legacy);
+    expect(legacyParsed?.sourceSlideId).toBeUndefined();
+    expect(legacyParsed?.blocks[0]?.id).toBe("b");
+
+    const plan = planExternalClipboardPaste(mockDataTransfer({ plain: envelope }));
+    expect(plan.kind).toBe("internal-blocks");
+    if (plan.kind === "internal-blocks") {
+      expect(plan.sourceSlideId).toBe("slide-xyz");
+    }
   });
 
   it("reconhece payload interno com CRLF do clipboard Windows", () => {

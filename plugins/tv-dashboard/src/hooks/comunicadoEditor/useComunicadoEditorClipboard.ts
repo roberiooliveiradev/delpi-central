@@ -10,7 +10,11 @@ import {
 import { uploadPlaylistMedia } from "../../api/tvDashboardApi";
 import { resolveEditorMediaUrl } from "../../components/slideCardPreview";
 import { isEditableKeyboardTarget } from "../../keyboard";
-import { cloneBlocksForClipboard, pasteClipboardBlocks } from "../../utils/comunicadoEditorClipboard";
+import {
+  cloneBlocksForClipboard,
+  pasteClipboardBlocks,
+  resolvePasteFrameOffset,
+} from "../../utils/comunicadoEditorClipboard";
 import {
   assignPasteStack,
   hasExternalClipboardPayload,
@@ -27,6 +31,8 @@ import { readSystemClipboardDataTransfer } from "../../utils/readSystemClipboard
 
 type Options = {
   playlistId: string;
+  /** Slide atual — usado para deslocar só no mesmo slide ao colar. */
+  getSlideId?: () => string | null | undefined;
   getSources: () => ComunicadoBlock[];
   getExistingBlocks: () => ComunicadoBlock[];
   selectBlocksByIds: (ids: string[]) => void;
@@ -47,10 +53,13 @@ type PasteOptions = {
   allowInternalFallback?: boolean;
 };
 
-async function writeBlocksToSystemClipboard(blocks: ComunicadoBlock[]): Promise<void> {
+async function writeBlocksToSystemClipboard(
+  blocks: ComunicadoBlock[],
+  sourceSlideId?: string | null,
+): Promise<void> {
   if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return;
   try {
-    await navigator.clipboard.writeText(serializeInternalBlocksPayload(blocks));
+    await navigator.clipboard.writeText(serializeInternalBlocksPayload(blocks, sourceSlideId));
   } catch {
     // Sem permissão / contexto inseguro — clipboard interno em memória permanece.
   }
@@ -58,6 +67,7 @@ async function writeBlocksToSystemClipboard(blocks: ComunicadoBlock[]): Promise<
 
 export function useComunicadoEditorClipboard({
   playlistId,
+  getSlideId,
   getSources,
   getExistingBlocks,
   selectBlocksByIds,
@@ -71,10 +81,11 @@ export function useComunicadoEditorClipboard({
   const [clipboardRevision, setClipboardRevision] = useState(0);
   const [pastingExternal, setPastingExternal] = useState(false);
   const clipboardRef = useRef<ComunicadoBlock[]>([]);
+  const clipboardSourceSlideIdRef = useRef<string | null>(null);
   const pastingRef = useRef(false);
 
   const insertBlocks = useCallback(
-    async (incoming: ComunicadoBlock[]) => {
+    async (incoming: ComunicadoBlock[], sourceSlideId?: string | null) => {
       if (incoming.length === 0) return;
 
       const existing = getExistingBlocks();
@@ -97,10 +108,14 @@ export function useComunicadoEditorClipboard({
       }
 
       const stacked = assignPasteStack(incoming, existing);
+      const offset = resolvePasteFrameOffset({
+        sourceSlideId,
+        targetSlideId: getSlideId?.() ?? null,
+      });
       const { blocks: nextBlocks, pastedIds } = pasteClipboardBlocks(
         existing,
         stacked,
-        { x: 2, y: 2 },
+        offset,
         plan.policy,
       );
       // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
@@ -110,6 +125,7 @@ export function useComunicadoEditorClipboard({
     [
       chooseDataSourceDuplicatePolicy,
       getExistingBlocks,
+      getSlideId,
       selectBlocksByIds,
       updateBlocks,
     ],
@@ -184,7 +200,11 @@ export function useComunicadoEditorClipboard({
         return true;
       }
       if (plan.kind === "internal-blocks" || plan.kind === "blocks") {
-        await insertBlocks(plan.blocks);
+        const sourceSlideId =
+          plan.kind === "internal-blocks"
+            ? (plan.sourceSlideId ?? clipboardSourceSlideIdRef.current)
+            : clipboardSourceSlideIdRef.current;
+        await insertBlocks(plan.blocks, sourceSlideId);
         return true;
       }
       return false;
@@ -196,14 +216,19 @@ export function useComunicadoEditorClipboard({
     const sources = getSources();
     if (sources.length === 0) return;
     const cloned = cloneBlocksForClipboard(sources, getExistingBlocks());
+    const sourceSlideId = getSlideId?.() ?? null;
     clipboardRef.current = cloned;
+    clipboardSourceSlideIdRef.current =
+      typeof sourceSlideId === "string" && sourceSlideId.trim()
+        ? sourceSlideId.trim()
+        : null;
     setClipboardRevision((tick) => tick + 1);
-    void writeBlocksToSystemClipboard(cloned);
-  }, [getExistingBlocks, getSources]);
+    void writeBlocksToSystemClipboard(cloned, clipboardSourceSlideIdRef.current);
+  }, [getExistingBlocks, getSlideId, getSources]);
 
   const pasteSelected = useCallback(async () => {
     if (clipboardRef.current.length === 0) return;
-    await insertBlocks(clipboardRef.current);
+    await insertBlocks(clipboardRef.current, clipboardSourceSlideIdRef.current);
   }, [insertBlocks]);
 
   /**

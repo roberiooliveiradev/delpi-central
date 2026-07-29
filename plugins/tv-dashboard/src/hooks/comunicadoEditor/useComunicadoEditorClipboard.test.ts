@@ -36,6 +36,7 @@ describe("useComunicadoEditorClipboard", () => {
     const { result } = renderHook(() =>
       useComunicadoEditorClipboard({
         playlistId: "pl-1",
+        getSlideId: () => "slide-a",
         getSources: () => [existing[0]],
         getExistingBlocks: () => committed,
         selectBlocksByIds: (ids) => {
@@ -62,6 +63,46 @@ describe("useComunicadoEditorClipboard", () => {
 
     expect(order).toEqual(["update", "select"]);
     expect(committed.length).toBe(2);
+  });
+
+  it("ao colar no mesmo slide, desloca o frame; em outro slide, mantém posição", async () => {
+    const source = fakeBlock("src");
+    source.frame = { x: 20, y: 30, w: 20, h: 10 };
+    let committed: ComunicadoBlock[] = [source];
+    let currentSlide = "slide-a";
+
+    const { result } = renderHook(() =>
+      useComunicadoEditorClipboard({
+        playlistId: "pl-1",
+        getSlideId: () => currentSlide,
+        getSources: () => [committed.find((block) => block.id === "src") ?? source],
+        getExistingBlocks: () => committed,
+        selectBlocksByIds: () => undefined,
+        updateBlocks: (blocks) => {
+          committed = blocks;
+        },
+        removeSelected: () => undefined,
+      }),
+    );
+
+    act(() => {
+      result.current.copySelected();
+    });
+
+    await act(async () => {
+      await result.current.pasteSelected();
+    });
+    const sameSlidePaste = committed.find((block) => block.id !== "src");
+    expect(sameSlidePaste?.frame.x).toBe(22);
+    expect(sameSlidePaste?.frame.y).toBe(32);
+
+    currentSlide = "slide-b";
+    committed = [];
+    await act(async () => {
+      await result.current.pasteSelected();
+    });
+    expect(committed[0]?.frame.x).toBe(20);
+    expect(committed[0]?.frame.y).toBe(30);
   });
 
   it("não cola a última forma do plugin quando o SO trouxe HTML externo (Google)", async () => {

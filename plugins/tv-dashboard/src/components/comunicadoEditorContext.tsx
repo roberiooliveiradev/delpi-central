@@ -194,6 +194,8 @@ export function ComunicadoEditorProvider({
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const editingTextIdRef = useRef<string | null>(null);
+  const slideIdRef = useRef(slideId);
+  slideIdRef.current = slideId;
   const updateBlockTextFieldsRef = useRef<
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >(() => {});
@@ -586,9 +588,12 @@ export function ComunicadoEditorProvider({
 
   editingTextIdRef.current = selection.editingTextId;
 
+  const getClipboardSlideId = useCallback(() => slideIdRef.current ?? null, []);
+
   const { copySelected, cutSelected, pasteSelected, pasteFromSystemClipboard, canPaste } =
     useComunicadoEditorClipboard({
       playlistId,
+      getSlideId: getClipboardSlideId,
       getSources: getClipboardSources,
       getExistingBlocks: getExistingBlocksForClipboard,
       selectBlocksByIds: selection.selectBlocksByIds,

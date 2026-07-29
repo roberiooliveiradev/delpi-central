@@ -10,7 +10,7 @@ import {
 } from "./comunicadoStageContextMenuActions";
 
 describe("comunicadoEditorClipboard", () => {
-  it("cola blocos com novos ids e deslocamento", () => {
+  it("cola blocos com novos ids e deslocamento no mesmo slide", () => {
     const source = createBlock("text", "Olá");
     source.frame = { x: 10, y: 20, w: 30, h: 10 };
     const { blocks, pastedIds } = pasteClipboardBlocks([], [source]);
@@ -20,6 +20,14 @@ describe("comunicadoEditorClipboard", () => {
     expect(blocks[0].id).not.toBe(source.id);
     expect(blocks[0].frame.x).toBe(12);
     expect(blocks[0].frame.y).toBe(22);
+  });
+
+  it("cola em outro slide sem deslocar (offset zero)", () => {
+    const source = createBlock("text", "Olá");
+    source.frame = { x: 10, y: 20, w: 30, h: 10 };
+    const { blocks } = pasteClipboardBlocks([], [source], { x: 0, y: 0 });
+    expect(blocks[0].frame.x).toBe(10);
+    expect(blocks[0].frame.y).toBe(20);
   });
 
   it("clona blocos sem metadados de preview", () => {

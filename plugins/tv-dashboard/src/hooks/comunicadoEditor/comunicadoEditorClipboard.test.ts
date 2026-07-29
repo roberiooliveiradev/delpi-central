@@ -4,6 +4,7 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import {
   cloneBlocksForClipboard,
   pasteClipboardBlocks,
+  resolvePasteFrameOffset,
 } from "../../utils/comunicadoEditorClipboard";
 
 function fakeBlock(id: string, groupId?: string): ComunicadoBlock {
@@ -24,12 +25,41 @@ describe("comunicadoEditorClipboard", () => {
     expect(cloned[1].content).toBe("block-b");
   });
 
-  it("cola com novos ids e offset de frame", () => {
+  it("cola com novos ids e offset de frame no mesmo slide", () => {
     const payload = cloneBlocksForClipboard([fakeBlock("a")]);
     const result = pasteClipboardBlocks([fakeBlock("existing")], payload, { x: 2, y: 2 });
     expect(result.blocks.length).toBe(2);
     expect(result.pastedIds).toHaveLength(1);
     expect(result.pastedIds[0]).not.toBe("a");
+    const pasted = result.blocks.find((block) => block.id === result.pastedIds[0]);
+    expect(pasted?.frame.x).toBe(12);
+    expect(pasted?.frame.y).toBe(12);
+  });
+
+  it("resolvePasteFrameOffset desloca só no mesmo slide", () => {
+    expect(resolvePasteFrameOffset({ sourceSlideId: "s1", targetSlideId: "s1" })).toEqual({
+      x: 2,
+      y: 2,
+    });
+    expect(resolvePasteFrameOffset({ sourceSlideId: "s1", targetSlideId: "s2" })).toEqual({
+      x: 0,
+      y: 0,
+    });
+    expect(resolvePasteFrameOffset({ sourceSlideId: null, targetSlideId: "s2" })).toEqual({
+      x: 0,
+      y: 0,
+    });
+  });
+
+  it("cola em outro slide preserva posição (offset zero)", () => {
+    const source = fakeBlock("a");
+    source.frame = { x: 40, y: 15, w: 20, h: 10 };
+    const result = pasteClipboardBlocks([], [source], resolvePasteFrameOffset({
+      sourceSlideId: "slide-a",
+      targetSlideId: "slide-b",
+    }));
+    expect(result.blocks[0]?.frame.x).toBe(40);
+    expect(result.blocks[0]?.frame.y).toBe(15);
   });
 
   it("cola grupo com novo groupId (cópia agrupada, fora do grupo da origem)", () => {
