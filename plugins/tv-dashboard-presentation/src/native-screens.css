@@ -1086,26 +1086,32 @@
   font-size: 0.85em;
 }
 
+/* Igual texto do compositor: edição transparente — herda fundo/cor do th. */
 .tdp-configurable-table__header-edit {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   margin: 0;
   padding: 0.1em 0.25em;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 2px;
-  background: #fff;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: normal;
+  font-weight: inherit;
+  font-style: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
   outline: none;
+  caret-color: currentColor;
+  box-shadow: none;
 }
 
 .tdp-configurable-table__header-edit:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px #2563eb;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .tdp-configurable-table--header-normal-case .tdp-table-header-cell,
@@ -1319,15 +1325,14 @@
   transform: translateY(-50%);
 }
 
+/*
+ * Seleção de coluna: só chrome lateral (sem tint de fundo/texto) —
+ * mesmo fluxo dos blocos de texto.
+ */
 .tdp-table-column--selected {
-  background: color-mix(
-    in srgb,
-    var(--tdp-data-accent, #089bdb) 10%,
-    var(--tdp-table-cell-bg, #fff)
-  ) !important;
   box-shadow:
-    inset 1px 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 48%, transparent),
-    inset -1px 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 48%, transparent);
+    inset 2px 0 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 72%, transparent),
+    inset -2px 0 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 72%, transparent);
 }
 
 .tdp-data-source {

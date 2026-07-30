@@ -127,25 +127,32 @@
   font-size: 0.85em;
 }
 
+/* Igual texto do compositor: edição transparente — herda fundo/cor do th. */
 .delpi-ui-config-table__header-edit {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
   margin: 0;
   padding: 0.1em 0.25em;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: 2px;
-  background: #fff;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 600;
-  text-transform: none;
+  font-weight: inherit;
+  font-style: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
   outline: none;
+  caret-color: currentColor;
+  box-shadow: none;
 }
 
 .delpi-ui-config-table__header-edit:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 1px #2563eb;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 .delpi-ui-config-table--header-normal-case .delpi-ui-config-table__header-cell {
@@ -354,27 +361,22 @@
   transform: translateY(-50%);
 }
 
+/*
+ * Seleção de coluna: só chrome lateral (sem tint de fundo/texto) —
+ * mesmo fluxo dos blocos de texto (outline no wrap, conteúdo intacto).
+ */
 .delpi-ui-config-table__column--selected {
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, #089bdb) 10%,
-    var(--delpi-ui-config-table-cell-bg, #fff)
-  ) !important;
   box-shadow:
-    inset 1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent),
-    inset -1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
+    inset 2px 0 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 72%, transparent),
+    inset -2px 0 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 72%, transparent);
 }
 
+/* Seleção de linha: chrome superior/inferior sem alterar fundo das células. */
 .delpi-ui-config-table__row--selected > td,
 .delpi-ui-config-table tr.delpi-ui-config-table__row--selected > td {
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-accent, #089bdb) 10%,
-    var(--delpi-ui-config-table-cell-bg, #fff)
-  );
   box-shadow:
-    inset 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent),
-    inset 0 -1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
+    inset 0 2px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 72%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 72%, transparent);
 }
 
 .delpi-ui-config-table--interactive [data-table-part^="headerCell"],
