@@ -1,0 +1,42 @@
+---
+description: Armazéns Protheus e custo B2_CM1 — padrões Delpi para rotas novas
+globs:
+  - api-delpi/**/*.py
+  - api-delpi/docs/**/*.md
+alwaysApply: false
+---
+
+# Padrões Delpi — armazém e custo unitário (TOTVS)
+
+Doc canônica: **`api-delpi/docs/api/padroes-totvs/armazem-custo.md`**.  
+Hub da biblioteca: **`api-delpi/docs/api/padroes-totvs/README.md`**.  
+Constantes: **`api-delpi/app/domain/totvs/protheus_warehouses.py`**.
+
+## Locais (`SB2.B2_LOCAL`)
+
+| Código | Significado |
+|--------|-------------|
+| **`01`** | **Almoxarifado** — custo canônico (`B2_CM1`) |
+| **`99`** | **Fábrica** — não usar como CM1 de ValorPerda |
+| `98`, `50` | Saldo/WIP — ver doc (não são custo canônico) |
+
+## Valoração em R$ (rota nova)
+
+```text
+qtd × COALESCE(B2_CM1 do local 01, B1_CUSTD, 0)
+```
+
+- Join `SB2010` **filtrado** por `COST_UNIT_WAREHOUSE` (`01`).
+- **Proibido** `AVG(B2_CM1)` entre todos os locais para KPI/perda valorizada.
+- **Proibido** join SB2 sem filtrar/agregar local (multiplica linhas).
+
+## Saldo ≠ custo
+
+- Saldo disponível ESTSEG: tipicamente `01+98+99`.
+- Custo unitário: **só `01`**.
+
+## Checklist
+
+1. Constante de `protheus_warehouses` (não literal solto sem doc).
+2. Doc da rota linka `padroes-totvs/armazem-custo.md`.
+3. Teste SQL asserta `B2_LOCAL = '01'` quando houver valoração.

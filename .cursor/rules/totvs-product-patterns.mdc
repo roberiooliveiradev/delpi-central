@@ -1,0 +1,27 @@
+---
+description: Biblioteca de padrões TOTVS Delpi — hub para rotas e SQL novos
+globs:
+  - api-delpi/**/*.py
+  - api-delpi/docs/**/*.md
+alwaysApply: false
+---
+
+# Padrões TOTVS — produto Delpi (hub)
+
+**Biblioteca canônica:** `api-delpi/docs/api/padroes-totvs/README.md`
+
+Antes de criar ou alterar rota/SQL Protheus, consultar o índice. Seções:
+
+| Tema | Arquivo |
+|------|---------|
+| Armazém + `B2_CM1` | `padroes-totvs/armazem-custo.md` |
+| Filiais SC/ES | `padroes-totvs/filiais.md` |
+| SQL base | `padroes-totvs/principios-sql.md` |
+| Unidades (MI) | `padroes-totvs/unidades-medida.md` |
+| Cadastro SB1 / terceiro | `padroes-totvs/cadastro-produto.md` |
+
+Código transversal: `api-delpi/app/domain/totvs/`.
+
+**Padrão novo:** seção na pasta + constante em `domain/totvs/` se couber + link na doc da rota (não copiar tabelas).
+
+Valoração R$ → também `totvs-warehouse-cost-standards.mdc`.

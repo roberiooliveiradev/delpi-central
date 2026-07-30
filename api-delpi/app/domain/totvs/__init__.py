@@ -1,0 +1,19 @@
+"""Domínio transversal — convenções TOTVS/Protheus da Delpi."""
+
+from app.domain.totvs.protheus_warehouses import (
+    AVAILABLE_BALANCE_WAREHOUSES,
+    COST_UNIT_WAREHOUSE,
+    WAREHOUSE_ALMOXARIFADO,
+    WAREHOUSE_FABRICA,
+    WAREHOUSE_LABELS_PT,
+    WORK_IN_PROCESS_WAREHOUSES,
+)
+
+__all__ = [
+    "AVAILABLE_BALANCE_WAREHOUSES",
+    "COST_UNIT_WAREHOUSE",
+    "WAREHOUSE_ALMOXARIFADO",
+    "WAREHOUSE_FABRICA",
+    "WAREHOUSE_LABELS_PT",
+    "WORK_IN_PROCESS_WAREHOUSES",
+]

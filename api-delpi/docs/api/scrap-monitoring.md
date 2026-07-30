@@ -49,21 +49,18 @@ Janela máxima: **24 meses**. Ranking default: top **10** (`limit` até 50). Reg
 
 ## Valor (R$)
 
+Segue o padrão Delpi — ver **[padroes-totvs/armazem-custo.md](./padroes-totvs/armazem-custo.md)** ([biblioteca](./padroes-totvs/README.md)).
+
 ```text
 ValorPerda = BC_QUANT * COALESCE(NULLIF(B2_CM1 do B2_LOCAL=01, 0), NULLIF(B1_CUSTD, 0), 0)
 ```
 
-### Armazéns (`SB2.B2_LOCAL`) — conhecimento operacional
+| Local | Papel |
+|---|---|
+| **`01`** | **Almoxarifado** — custo canônico |
+| **`99`** | **Fábrica** — não entra no ValorPerda |
 
-| Local | Uso na Delpi | Papel no ValorPerda |
-|---|---|---|
-| **`01`** | **Almoxarifado** | **Custo canônico** — `B2_CM1` deste local (igual ao Power BI / `RELATED` típico) |
-| **`99`** | **Fábrica** | Não entra no cálculo de refugo |
-| `50`, `98`, … | Outros locais | Não entram no cálculo de refugo |
-
-O join em `SB2010` filtra `B2_LOCAL = '01'` (constante `REFUGOS_COST_WAREHOUSE`) para **não** multiplicar linhas por vários locais e **não** misturar CM1 de fábrica (`99`) com almoxarifado. Se o CM1 do `01` for zero/ausente, cai no `B1_CUSTD`.
-
-Constante de domínio: `app/domain/quality/refugos/refugos_scope.py`.
+Constante: `REFUGOS_COST_WAREHOUSE` → `COST_UNIT_WAREHOUSE` em `protheus_warehouses.py`.
 
 ---
 

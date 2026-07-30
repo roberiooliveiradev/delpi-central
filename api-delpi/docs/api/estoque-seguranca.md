@@ -4,6 +4,8 @@ Rotas de análise de matérias-primas (MP) versus estoque de segurança cadastra
 
 Plugin MFE: [plugins/estoque-seguranca/README.md](../../../plugins/estoque-seguranca/README.md).
 
+Armazéns (`01` almoxarifado, `98`/`99` saldo/fábrica): padrão Delpi em [padroes-totvs/armazem-custo.md](./padroes-totvs/armazem-custo.md) ([biblioteca](./padroes-totvs/README.md)) — saldo disponível ≠ custo unitário.
+
 ---
 
 ## Base

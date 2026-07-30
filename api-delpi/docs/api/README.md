@@ -63,6 +63,8 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |
 | [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md) | Reimport OpenAPI no chat após mudanças de contrato. |
 | [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md) | **Padrão de rotas futuras** — OpenAPI bilíngue, operationId, enums, labels, sync TV/chat. |
+| [padroes-totvs/README.md](./padroes-totvs/README.md) | **Biblioteca de padrões TOTVS** (produto Delpi) — armazém, filiais, SQL, UM, cadastro. |
+| [padroes-totvs-armazem-custo.md](./padroes-totvs-armazem-custo.md) | Redirect → [padroes-totvs/armazem-custo.md](./padroes-totvs/armazem-custo.md). |
 | [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
 | [../roadmaps/playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md) | **Cobertura 100% das rotas** (concluído) — inventário, smoke Nível A, gate `--check-complete`. |
 

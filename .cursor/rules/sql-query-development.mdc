@@ -57,4 +57,14 @@ Namespaces de cache existentes: `stock-value`, `financial-rol`, `production-oee`
 
 - `api-delpi/docs/api/06-modulos-departamentais.md` (§ Performance por módulo)
 - `api-delpi/docs/api/supplies-estoque-historico.md`
+- `api-delpi/docs/api/padroes-totvs/README.md` — **biblioteca de padrões TOTVS** (produto)
+- `api-delpi/docs/api/padroes-totvs/armazem-custo.md` — **armazéns Delpi + custo `B2_CM1` (local 01)**
 - `api-delpi/docs/roadmaps/playbook-api-delpi-console.md` (Saúde SQL, Cache)
+
+## Valoração / armazém (obrigatório se a query usa `B2_CM1`)
+
+Ver **`totvs-warehouse-cost-standards.mdc`**, hub **`totvs-product-patterns.mdc`** e `padroes-totvs/armazem-custo.md`:
+
+- Custo unitário canônico = `B2_LOCAL = 01` (almoxarifado), nunca média de todos os locais.
+- `99` = fábrica — não misturar no `ValorPerda`.
+- Constantes: `app/domain/totvs/protheus_warehouses.py`.

@@ -13,6 +13,8 @@ Este documento descreve como a **API DELPI** se relaciona com o TOTVS dentro da 
 
 A `api-delpi` é o backend operacional da plataforma. Ela concentra integrações e consultas de negócio, incluindo acesso ao datasource TOTVS, e também pode hospedar módulos de domínio que não pertencem à Core API.
 
+**Padrões de negócio Protheus (armazém, filial, custo, SQL, UM):** biblioteca em [`api-delpi/docs/api/padroes-totvs/README.md`](../../api-delpi/docs/api/padroes-totvs/README.md). Este documento cobre **infra e papel da API**; a biblioteca cobre **convenções do produto**.
+
 ---
 
 ## 2. Papel da API DELPI na integração TOTVS
