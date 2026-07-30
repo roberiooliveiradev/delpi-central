@@ -319,4 +319,5 @@ def test_ambiguous_when_multiple_adjustable_items():
     )
 
     assert result is not None
-    assert "Qual item devo marcar" in str(result.get("directAnswer") or "")
+    assert "confirmação" in str(result.get("directAnswer") or "").lower()
+    assert "qual item" in str(result.get("directAnswer") or "").lower()

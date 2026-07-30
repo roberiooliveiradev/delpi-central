@@ -30,8 +30,8 @@
     "illegiblePdf": "O PDF está ilegível ou sem texto extraível suficiente. Informe o código na mensagem ou regenere o PDF.",
     "noPdf": "Anexe o PDF para validar carimho, BOM e cotas. A API já foi consultada para cadastro, roteiro e inspeção.",
     "pendingWithPdf": "Revise os itens pendentes ou com erro antes da liberação.",
-    "pendingWithPdfIntro": "A validação automática terminou com ressalvas. Conferir manualmente:",
-    "pendingWithPdfAction": "Revise os pontos acima no PDF e no cadastro antes de liberar o desenho.",
+    "pendingWithPdfIntro": "A validação automática terminou com ressalvas e pediu a sua confirmação nos pontos abaixo:",
+    "pendingWithPdfAction": "Confirme no PDF/cadastro ou use «tudo certo» / o chip «Confirmar revisão manual» para registrar a revisão.",
     "approved": "Nenhuma divergência crítica detectada na validação automática da API."
   },
   "criticalReport": {
@@ -88,7 +88,7 @@
     "checkIntermediate50xx": "Conferir intermediário 50xx",
     "missingDash": "—",
     "pdfScopePrefix": " [{scope}]",
-    "dimensionNoteAmbiguous": "Notas conflitantes no PDF ({excerpt}) — {explanation}"
+    "dimensionNoteAmbiguous": "Sinais conflitantes no PDF ({excerpt}) — {explanation}"
   },
   "regionalScopeSources": {
     "bom_region": "BOM — região superior",
@@ -403,9 +403,9 @@
     },
     "dimension_note_ambiguous": {
       "section": "Cotas",
-      "item": "Nota dimensional ambígua",
-      "rule": "Medidas de termoretração/ensaio não devem ser tratadas como decape de cabo",
-      "recommendation": "Conferir manualmente cotas de decape versus notas de termoencolhível"
+      "item": "Preciso da sua confirmação — nota dimensional",
+      "rule": "Quando há sinais conflitantes (decape × termo/pré-decape/ensaio), o sistema não afirma o decape sozinho",
+      "recommendation": "Confira no desenho se a cota à esquerda é decape de cabo e se bate com a descrição 50xx; confirme a revisão se estiver correto"
     },
     "bom_quantity_mismatch": {
       "section": "BOM",
@@ -565,6 +565,78 @@
         "HEAT SHRINK",
         "ENCOLHIVEL"
       ]
+    }
+  },
+  "ambiguityIntelligence": {
+    "askUserEnvelope": "{title}{whyEscalated} {systemDidNot} {askUser} {resolveHint}",
+    "askUserEnvelopeParts": {
+      "title": "**Preciso da sua confirmação** — {title}.",
+      "whyEscalated": "{whyEscalated}",
+      "systemDidNot": "**Não afirmei:** {systemDidNot}.",
+      "askUser": "**O que fazer:** {askUser}",
+      "resolveHint": "{resolveHint}"
+    },
+    "defaultResolveHint": "Responda «tudo certo» / «revisado» ou use o chip «Confirmar revisão manual».",
+    "suppressedOkRecommendation": "Não aplicável — asserção suspensa por ambiguidade no mesmo escopo. Confirme o pending relacionado.",
+    "kinds": {
+      "conflicting_notes": {
+        "title": "sinais conflitantes no PDF",
+        "defaultAskUser": "Confira no desenho o que cada cota/nota realmente representa e confirme se o cadastro está coerente."
+      },
+      "low_confidence": {
+        "title": "confiança da leitura abaixo do limiar",
+        "defaultAskUser": "Confera BOM e cotas no PDF antes de tratar divergências OCR como definitivas."
+      },
+      "self_contradiction": {
+        "title": "asserção automática sob ambiguidade no mesmo escopo",
+        "defaultAskUser": "Ignore o OK automático neste escopo até confirmar o ponto pendente."
+      }
+    },
+    "policies": {
+      "conflicting_notes": {
+        "createPending": true,
+        "withholdAssertions": ["per_intermediate_decape", "global_decape_ok"],
+        "suppressTemplateKeysWhenOk": ["decapes_ed"],
+        "suppressStatus": "not_applicable"
+      },
+      "low_confidence": {
+        "createPending": false,
+        "enrichTemplateKeys": ["extraction_confidence"],
+        "withholdAssertions": [],
+        "suppressTemplateKeysWhenOk": []
+      },
+      "self_contradiction": {
+        "createPending": false,
+        "withholdAssertions": [],
+        "suppressTemplateKeysWhenOk": ["decapes_ed"],
+        "suppressStatus": "not_applicable"
+      }
+    },
+    "detectors": {
+      "conflicting_dimension_notes": {
+        "kind": "conflicting_notes",
+        "scope": "dimensions",
+        "templateKey": "dimension_note_ambiguous",
+        "whyEscalated": "No PDF há sinais de decape de cabo misturados com termoencolhível, pré-decape ou ensaio.",
+        "systemDidNot": "decape esquerdo (E) automático e confronto E/D por intermediário",
+        "askUser": "Confira no desenho se a cota à esquerda é decape de cabo e se bate com a descrição 50xx (/E/D). Se estiver correto, confirme a revisão."
+      },
+      "extraction_below_threshold": {
+        "kind": "low_confidence",
+        "scope": "extraction",
+        "templateKey": "extraction_confidence",
+        "whyEscalated": "A confiança da leitura do PDF ficou abaixo do limiar para cruzamento automático seguro.",
+        "systemDidNot": "reprovação automática por divergências PDF × SG1010 nestes itens",
+        "askUser": "Confera BOM e cotas no PDF; se a leitura estiver correta, confirme a revisão ou peça reanálise."
+      },
+      "asserted_ok_under_ambiguity": {
+        "kind": "self_contradiction",
+        "scope": "dimensions",
+        "parentDetectorIds": ["conflicting_dimension_notes"],
+        "whyEscalated": "Havia um OK automático no mesmo escopo em que a leitura dimensional está ambígua.",
+        "systemDidNot": "validação automática de Decapes E/D a partir do OCR global",
+        "askUser": "Use o pending de nota dimensional; não confie no OK de Decapes E/D até confirmar."
+      }
     }
   },
   "validationLayers": {
@@ -761,10 +833,11 @@
     "codeListDelimiter": ", ",
     "maxGuideRows": 80,
     "evidenceJoiner": "; ",
-    "ambiguousNoteExplanation": "há notas de termoencolhível ou ensaio junto com decape de cabo; o decape esquerdo (E) não foi inferido automaticamente para evitar falso positivo",
+    "ambiguousNoteExplanation": "o sistema detectou ambiguidade (decape × termo/pré-decape) e não fechou o E sozinho — confirme no desenho",
     "ambiguousNoteExcerptFallback": "trecho dimensional ambíguo",
     "executiveSummaryWithPending": "**Resumo:** produto `{code}` — **{overall}**. {pendingSummary}",
     "executiveSummaryPendingLine": "• **{section}** — {item}: {detail}",
-    "nonconformityDetailFallback": "conferir manualmente no PDF"
+    "nonconformityDetailFallback": "conferir manualmente no PDF",
+    "omitStatusesFromDimensionsTable": ["not_applicable"]
   }
 }

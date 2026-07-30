@@ -92,7 +92,7 @@ class ChatDrawingValidationOrchestrationService:
                     api_evidence=cls._evidence("notFound"),
                 )
             )
-            items, extraction_confidence = cls._apply_validation_layers(
+            items, extraction_confidence, ambiguity_signals = cls._apply_validation_layers(
                 items,
                 pdf_extract=pdf_extract,
             )
@@ -104,6 +104,7 @@ class ChatDrawingValidationOrchestrationService:
                 pdf_extract=pdf_extract,
                 analyser_root=root,
                 extraction_confidence=extraction_confidence,
+                ambiguity_signals=ambiguity_signals,
             )
 
         items.append(
@@ -291,7 +292,7 @@ class ChatDrawingValidationOrchestrationService:
             group_code=group_code,
         )
 
-        items, extraction_confidence = cls._apply_validation_layers(
+        items, extraction_confidence, ambiguity_signals = cls._apply_validation_layers(
             items,
             pdf_extract=pdf_extract,
         )
@@ -303,6 +304,7 @@ class ChatDrawingValidationOrchestrationService:
             pdf_extract=pdf_extract,
             analyser_root=root,
             extraction_confidence=extraction_confidence,
+            ambiguity_signals=ambiguity_signals,
         )
 
     @classmethod
@@ -340,7 +342,14 @@ class ChatDrawingValidationOrchestrationService:
         items: list[dict[str, Any]],
         *,
         pdf_extract: dict[str, Any] | None,
-    ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
+    ) -> tuple[
+        list[dict[str, Any]],
+        dict[str, Any] | None,
+        list[dict[str, Any]],
+    ]:
+        from app.domain.services.chat_drawing_ambiguity_intelligence_service import (
+            ChatDrawingAmbiguityIntelligenceService,
+        )
         from app.domain.services.chat_drawing_validation_assertion_service import (
             ChatDrawingValidationAssertionService,
         )
@@ -349,8 +358,19 @@ class ChatDrawingValidationOrchestrationService:
             items=items,
             pdf_extract=pdf_extract,
         )
+        confidence_meta = confidence.to_metadata() if confidence else None
+        signals = ChatDrawingAmbiguityIntelligenceService.collect_signals(
+            pdf_extract=pdf_extract,
+            items=adjusted,
+            extraction_confidence=confidence_meta,
+        )
+        adjusted, signals = ChatDrawingAmbiguityIntelligenceService.apply(
+            adjusted,
+            signals,
+            pdf_extract=pdf_extract,
+        )
 
-        return adjusted, confidence.to_metadata() if confidence else None
+        return adjusted, confidence_meta, signals
 
     @classmethod
     def format_report_markdown(cls, package: dict[str, Any]) -> str:
@@ -810,6 +830,7 @@ class ChatDrawingValidationOrchestrationService:
         pdf_extract: dict[str, Any] | None = None,
         analyser_root: dict | None = None,
         extraction_confidence: dict[str, Any] | None = None,
+        ambiguity_signals: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         critical = sum(1 for i in items if i.get("status") == cls._STATUS_CRITICAL)
         errors = sum(1 for i in items if i.get("status") == cls._STATUS_ERROR)
@@ -903,6 +924,11 @@ class ChatDrawingValidationOrchestrationService:
                 **(
                     {"validationLayers": {"extractionConfidence": extraction_confidence}}
                     if extraction_confidence
+                    else {}
+                ),
+                **(
+                    {"ambiguitySignals": ambiguity_signals}
+                    if ambiguity_signals
                     else {}
                 ),
                 **(

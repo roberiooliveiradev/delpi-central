@@ -95,6 +95,15 @@ class ChatDrawingValidationPresentationService:
 
     @classmethod
     def describe_nonconformity(cls, item: dict[str, Any]) -> str:
+        from app.domain.services.chat_drawing_ambiguity_intelligence_service import (
+            ChatDrawingAmbiguityIntelligenceService,
+        )
+
+        ask_user = ChatDrawingAmbiguityIntelligenceService.format_ask_user(item)
+
+        if ask_user:
+            return ask_user
+
         recommendation = str(item.get("recommendation") or "").strip()
         dash = ChatDrawingValidationContentService.evidence("dash")
 
@@ -535,6 +544,14 @@ class ChatDrawingValidationPresentationService:
             item
             for item in cls.prepare_display_items(raw_items)
             if str(item.get("section") or "").strip() == "Cotas"
+            and str(item.get("status") or "")
+            not in {
+                str(value)
+                for value in ChatDrawingValidationContentService.list_values(
+                    "presentation",
+                    "omitStatusesFromDimensionsTable",
+                )
+            }
         ]
         intermediate_rows = (
             ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)

@@ -104,6 +104,13 @@ Changelog: [`../changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](../chan
 - **Cotas × estrutura** no relatório markdown + referência de comprimento em mm (jun/2026 — `90260027`)
 - PI aninhado sob PA na coleta de intermediários; gate `total_length` com confiança OCR
 - **PI × MP** (jul/2026): classificação via vocabulário técnico; anti-fantasma 50xx; OCR 10↔50; MP fora do `guide_structure_extra`; consumível sem falso length/qtd
+- **Auto-ambiguidade** (jul/2026): `ChatDrawingAmbiguityIntelligenceService` — detectores plugáveis + policies (withhold / ask-user / suppress OK contraditório); textos em `drawing_validation.json` → `ambiguityIntelligence`
+
+---
+
+## Auto-ambiguidade (HITL)
+
+O pipeline **detecta a própria incerteza** (sinais conflitantes, confiança OCR baixa, OK sob ambiguidade no mesmo escopo), **suspende asserções arriscadas** e escala ao usuário com envelope único («Preciso da sua confirmação… Não afirmei…»). Resolução: chip / «tudo certo» via `ChatDrawingReportAdjustment*`. Novo tipo de ambiguidade = detector + entrada JSON, sem ramo na presentation.
 
 ---
 

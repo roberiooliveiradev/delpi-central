@@ -553,10 +553,13 @@ class ChatDrawingStructureValidationService:
             ChatDrawingDimensionsExtractionService,
         )
 
-        haystack = cls._dimension_note_haystack(pdf_extract)
+        from app.domain.services.chat_drawing_ambiguity_intelligence_service import (
+            ChatDrawingAmbiguityIntelligenceService,
+        )
 
-        if ChatDrawingDimensionsExtractionService.detect_ambiguous_dimension_notes(
-            haystack
+        if ChatDrawingAmbiguityIntelligenceService.should_withhold(
+            "per_intermediate_decape",
+            pdf_extract=pdf_extract,
         ):
             return True
 

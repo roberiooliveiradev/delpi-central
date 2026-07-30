@@ -189,10 +189,16 @@ def test_format_report_executive_summary_lists_pending_dimension_note():
 
     assert analysis["status"] == "approved_with_notes"
     assert "**Resumo:**" in report
-    assert "Nota dimensional ambígua" in report
-    assert "termoencolhível" in report.lower() or "TERMO ENCOL" in report.upper()
+    assert "confirmação" in report.lower()
+    assert "nota dimensional" in report.lower()
+    assert "Não afirmei" in report or "não afirmei" in report.lower()
+    assert analysis.get("ambiguitySignals")
+    assert any(
+        signal.get("detectorId") == "conflicting_dimension_notes"
+        for signal in analysis["ambiguitySignals"]
+    )
     assert "Pendente leitura do PDF" not in report
-    assert "Revise os pontos acima" in report
+    assert "Confirmar revisão manual" in report or "tudo certo" in report.lower()
 
 
 def test_extract_dimensions_ignores_process_sample_30mm():

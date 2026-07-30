@@ -13,6 +13,7 @@
 | Follow-up existente | `ChatDrawingFollowUpTurnService` · `ChatDrawingFollowUpService` |
 | Policy LLM (limite) | `drawing-analysis-render-only.md` — narrativa SIM, reclassificar checklist NÃO |
 | Vocabulário | `drawing_validation.json` · `drawing_query_intent.json` · `personality_playbook.json` |
+| Auto-ambiguidade | `ChatDrawingAmbiguityIntelligenceService` + `ambiguityIntelligence` (envelope ask-user nos pendings) |
 | Playbooks relacionados | [Validação normativa](./playbook_validacao_desenhos_delpi_roadmap.md) · [Desacoplamento skill](./playbook_skill_desenho_desacoplamento.md) · [Interatividade chips](./playbook_interatividade_botoes_minha_delpi_chat.md) · [Memória de sessão](./playbook_memoria_sessao_preferencias_minha_delpi_chat.md) |
 
 **Caso de referência:** produto **90261877** — relatório «Aprovado com ressalvas» com item pendente `dimension_note_ambiguous`; usuário informa revisão manual («foi revisado, o problema não é verdadeiro, gere um novo relatório») e espera relatório atualizado sem a ressalva.
