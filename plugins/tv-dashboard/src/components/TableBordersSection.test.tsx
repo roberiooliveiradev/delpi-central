@@ -18,6 +18,7 @@ vi.mock("./comunicadoEditorContext", () => ({
     selectedIds: [tableBlock.id],
     selectedBlocks: [tableBlock],
     selectedTablePart: null,
+    selectedTableParts: [],
     selectedKpiPart: null,
     selectedChartPart: null,
     selectedInputPart: null,

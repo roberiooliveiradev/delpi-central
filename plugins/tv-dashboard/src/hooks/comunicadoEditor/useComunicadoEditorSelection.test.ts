@@ -262,6 +262,30 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedTablePart).toBeNull();
   });
 
+  it("multi-seleção de linhas: additive e range", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectTablePart("a", { kind: "row", rowIndex: 0 });
+    });
+    act(() => {
+      result.current.selectTablePart("a", { kind: "row", rowIndex: 2 }, { additive: true });
+    });
+    expect(result.current.selectedTableParts).toEqual([
+      { kind: "row", rowIndex: 0 },
+      { kind: "row", rowIndex: 2 },
+    ]);
+
+    act(() => {
+      result.current.selectTablePart("a", { kind: "row", rowIndex: 0 }, { range: true });
+    });
+    expect(result.current.selectedTableParts).toEqual([
+      { kind: "row", rowIndex: 1 },
+      { kind: "row", rowIndex: 2 },
+      { kind: "row", rowIndex: 0 },
+    ]);
+  });
+
   it("selectTablePart em table_view pede Design da Tabela (não aba Elemento fantasma)", () => {
     const tableBlock: ComunicadoBlock = {
       id: "tbl",

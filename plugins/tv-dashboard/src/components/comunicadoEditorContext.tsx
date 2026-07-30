@@ -476,6 +476,7 @@ export function ComunicadoEditorProvider({
     selectedBlocks: selection.selectedBlocks,
     selectedChartPart: selection.selectedChartPart,
     selectedTablePart: selection.selectedTablePart,
+    selectedTableParts: selection.selectedTableParts,
     selectedKpiPart: selection.selectedKpiPart,
     selectedInputPart: selection.selectedInputPart,
     editingChartPart: selection.editingChartPart,

@@ -10,6 +10,7 @@ import {
   bindTablePartPointer,
   getTablePartState,
   resolveTableHeaderCellPaintStyle,
+  tablePartPaintToCss,
   type TableInteraction,
   type TablePartsMap,
 } from "../configurableTableParts";
@@ -36,14 +37,8 @@ export function TableHeaderCell({
     interaction,
   );
   const paint = resolveTableHeaderCellPaintStyle(tableParts, colIndex);
-  const style: CSSProperties | undefined =
-    paint.backgroundColor || paint.color || paint.fontWeight != null
-      ? {
-          ...(paint.backgroundColor ? { backgroundColor: paint.backgroundColor } : {}),
-          ...(paint.color ? { color: paint.color } : {}),
-          ...(paint.fontWeight != null ? { fontWeight: paint.fontWeight } : {}),
-        }
-      : undefined;
+  const css = tablePartPaintToCss(paint);
+  const style: CSSProperties | undefined = Object.keys(css).length > 0 ? css : undefined;
   const resizable = selected && Boolean(interaction?.onColumnResize);
   const displayLabel = typeof children === "string" ? children : String(children ?? "");
 

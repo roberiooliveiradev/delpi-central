@@ -24,6 +24,7 @@ vi.mock("./comunicadoEditorContext", () => ({
   useComunicadoEditor: () => ({
     selected: tableBlock,
     selectedTablePart: null,
+    selectedTableParts: [],
     updateSelected,
     updateSelectedStyle: vi.fn(),
     selectTablePart,

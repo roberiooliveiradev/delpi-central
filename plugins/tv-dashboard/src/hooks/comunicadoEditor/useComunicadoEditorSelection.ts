@@ -482,8 +482,10 @@ export function useComunicadoEditorSelection({
       setSelectedInputPart(null);
       setSelectedCanvasTableCell(null);
       setSelectedTableParts((current) => {
-        /* Multi-seleção só entre colunas (headerCell) — Excel-like. */
-        if (part.kind === "headerCell" && (options?.additive || options?.range)) {
+        /* Multi-seleção homogênea (colunas, linhas ou células) — Excel-like. */
+        if (!(options?.additive || options?.range)) return [part];
+
+        if (part.kind === "headerCell") {
           const headerCells = current.filter(
             (item): item is Extract<ComunicadoTablePartRef, { kind: "headerCell" }> =>
               item.kind === "headerCell",
@@ -504,6 +506,40 @@ export function useComunicadoEditorSelection({
             return [...headerCells, part];
           }
         }
+
+        if (part.kind === "row") {
+          const rows = current.filter(
+            (item): item is Extract<ComunicadoTablePartRef, { kind: "row" }> => item.kind === "row",
+          );
+          if (options.range && rows.length > 0) {
+            const anchor = rows[rows.length - 1];
+            const start = Math.min(anchor.rowIndex, part.rowIndex);
+            const end = Math.max(anchor.rowIndex, part.rowIndex);
+            const range: ComunicadoTablePartRef[] = [];
+            for (let rowIndex = start; rowIndex <= end; rowIndex += 1) {
+              if (rowIndex !== part.rowIndex) range.push({ kind: "row", rowIndex });
+            }
+            return [...range, part];
+          }
+          if (options.additive && rows.length > 0) {
+            const already = rows.some((item) => isTablePartRefEqual(item, part));
+            if (already) return rows.filter((item) => !isTablePartRefEqual(item, part));
+            return [...rows, part];
+          }
+        }
+
+        if (part.kind === "cell") {
+          const cells = current.filter(
+            (item): item is Extract<ComunicadoTablePartRef, { kind: "cell" }> =>
+              item.kind === "cell",
+          );
+          if (options.additive && cells.length > 0) {
+            const already = cells.some((item) => isTablePartRefEqual(item, part));
+            if (already) return cells.filter((item) => !isTablePartRefEqual(item, part));
+            return [...cells, part];
+          }
+        }
+
         return [part];
       });
       /* Tabela não tem aba Elemento — pedir Design/Layout (blockId explícito: setState ainda não atualizou o ref). */

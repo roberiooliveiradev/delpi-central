@@ -259,6 +259,24 @@
     inset -1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
 }
 
+.delpi-ui-config-table__row--selected > td,
+.delpi-ui-config-table tr.delpi-ui-config-table__row--selected > td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 10%,
+    var(--delpi-ui-config-table-cell-bg, #fff)
+  );
+  box-shadow:
+    inset 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent),
+    inset 0 -1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
+}
+
+.delpi-ui-config-table--interactive [data-table-part^="headerCell"],
+.delpi-ui-config-table--interactive [data-table-part^="cell"],
+.delpi-ui-config-table--interactive [data-table-part^="row"] {
+  cursor: cell;
+}
+
 /* Galeria Estilos de tabela (ribbon strip + Mais) */
 .delpi-ui-table-style-strip {
   display: inline-flex;

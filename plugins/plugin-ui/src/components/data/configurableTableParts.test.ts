@@ -18,6 +18,8 @@ import {
   tablePartAllowsStroke,
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
+  applyTablePartStyleToParts,
+  resolveTableBodyCellPaintStyle,
 } from "./configurableTableParts";
 
 describe("configurableTableParts", () => {
@@ -89,12 +91,13 @@ describe("configurableTableParts", () => {
     });
   });
 
-  it("resolveTableFrameStyle migra seed legado radius 0 sem sombra", () => {
+  it("resolveTableFrameStyle honra borderRadius 0 explícito e migra sombra legada", () => {
     const legacy = upsertTablePartState({}, { kind: "frame" }, {
       style: { fill: "#ffffff", stroke: "#b4b4b4", strokeWidth: 1, borderRadius: 0 },
     });
     const resolved = resolveTableFrameStyle(legacy);
-    expect(resolved.borderRadius).toBe(DECK_TABLE_DEFAULTS.borderRadius);
+    /* `borderRadius: 0` é cantos retos válidos — não reaplica default. */
+    expect(resolved.borderRadius).toBe(0);
     expect(resolved.boxShadow).toBe(DECK_TABLE_DEFAULTS.boxShadow);
   });
 
@@ -162,5 +165,43 @@ describe("configurableTableParts", () => {
       backgroundColor: "#222222",
       color: "#eeeeee",
     });
+  });
+
+  it("serializa e parseia parte row", () => {
+    expect(serializeTablePartRef({ kind: "row", rowIndex: 2 })).toBe("row:2");
+    expect(parseTablePartRef("row:2")).toEqual({ kind: "row", rowIndex: 2 });
+  });
+
+  it("resolveTableBodyCellPaintStyle herda coluna → linha → célula", () => {
+    let parts = upsertTablePartState({}, { kind: "headerCell", colIndex: 0 }, {
+      style: { fill: "#aaa", fontFamily: "Inter", fontSize: 18 },
+    });
+    parts = upsertTablePartState(parts, { kind: "row", rowIndex: 1 }, {
+      style: { color: "#111", fontWeight: "bold" },
+    });
+    parts = upsertTablePartState(parts, { kind: "cell", rowIndex: 1, colIndex: 0 }, {
+      style: { fill: "#fff" },
+    });
+    expect(resolveTableBodyCellPaintStyle(parts, 1, 0)).toEqual({
+      backgroundColor: "#fff",
+      color: "#111",
+      fontWeight: "bold",
+      fontFamily: "Inter",
+      fontSize: 18,
+    });
+  });
+
+  it("applyTablePartStyleToParts aplica a várias colunas", () => {
+    const next = applyTablePartStyleToParts(
+      {},
+      [
+        { kind: "headerCell", colIndex: 0 },
+        { kind: "headerCell", colIndex: 2 },
+      ],
+      { color: "#f00", fontSize: 22 },
+    );
+    expect(next["headerCell:0"]?.style).toMatchObject({ color: "#f00", fontSize: 22 });
+    expect(next["headerCell:2"]?.style).toMatchObject({ color: "#f00", fontSize: 22 });
+    expect(next["headerCell:1"]).toBeUndefined();
   });
 });

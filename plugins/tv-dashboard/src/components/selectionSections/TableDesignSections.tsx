@@ -27,8 +27,11 @@ import {
   resolveTableShapeChromePartRef,
   tableElementPrimaryPartRef,
   upsertTablePartState,
+  applyTablePartStyleToParts,
+  getTablePartState,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
+  type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
   type TableElementId,
 } from "@delpi/tv-dashboard-presentation";
@@ -82,6 +85,7 @@ function useTableDesignControls() {
   const {
     selected,
     selectedTablePart,
+    selectedTableParts,
     updateSelected,
     updateSelectedStyle,
     selectTablePart,
@@ -149,11 +153,64 @@ function useTableDesignControls() {
     });
   };
 
+  const shadeableParts = (selectedTableParts.length > 0 ? selectedTableParts : []).filter(
+    (part): part is ComunicadoTablePartRef =>
+      part.kind === "header" ||
+      part.kind === "headerCell" ||
+      part.kind === "cell" ||
+      part.kind === "row" ||
+      part.kind === "title",
+  );
+  const shadePart = shadeableParts[shadeableParts.length - 1] ?? null;
+  const shadeIsPartLocal = shadeableParts.length > 0;
   const shadeTarget =
-    selectedTablePart?.kind === "header" || selectedTablePart?.kind === "headerCell"
+    shadePart?.kind === "header" || shadePart?.kind === "headerCell"
       ? "header"
-      : "cell";
-  const shadeValue = shadeTarget === "header" ? options.headerBg : options.cellBg;
+      : shadePart?.kind === "row"
+        ? "row"
+        : shadePart?.kind === "cell"
+          ? "cell"
+          : shadePart?.kind === "title"
+            ? "title"
+            : selectedTablePart?.kind === "header" || selectedTablePart?.kind === "headerCell"
+              ? "header"
+              : "cell";
+  const shadeValue = shadeIsPartLocal
+    ? getTablePartState(block.tableParts, shadePart!)?.style?.fill ??
+      (shadeTarget === "header"
+        ? options.headerBg
+        : shadeTarget === "title"
+          ? "transparent"
+          : options.cellBg)
+    : shadeTarget === "header"
+      ? options.headerBg
+      : options.cellBg;
+
+  const applyShade = (color: string) => {
+    if (shadeableParts.length > 0) {
+      updateSelected({
+        tableParts: applyTablePartStyleToParts(block.tableParts, shadeableParts, { fill: color }),
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    applyOptions(
+      shadeTarget === "header" ? { headerBg: color } : { cellBg: color },
+    );
+  };
+
+  const shadeTriggerLabel = shadeIsPartLocal
+    ? shadeableParts.length > 1
+      ? `${shadeableParts.length} partes`
+      : shadeTarget === "header"
+        ? "Coluna"
+        : shadeTarget === "row"
+          ? "Linha"
+          : shadeTarget === "title"
+            ? "Título"
+            : "Célula"
+    : shadeTarget === "header"
+      ? "Cabeçalho"
+      : "Célula";
 
   const patchFrameShadow = (boxShadow: string | undefined) => {
     updateSelectedStyle({ boxShadow });
@@ -185,6 +242,8 @@ function useTableDesignControls() {
     activeStyleId,
     shadeTarget,
     shadeValue,
+    shadeTriggerLabel,
+    applyShade,
     borderWidthOptions,
     applyOptions,
     applyRecipe,
@@ -286,12 +345,8 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
       <ColorPickerPopoverTrigger
         value={ctrl.shadeValue ?? "#ffffff"}
-        triggerLabel={ctrl.shadeTarget === "header" ? "Cabeçalho" : "Célula"}
-        onChange={(color) =>
-          ctrl.applyOptions(
-            ctrl.shadeTarget === "header" ? { headerBg: color } : { cellBg: color },
-          )
-        }
+        triggerLabel={ctrl.shadeTriggerLabel}
+        onChange={(color) => ctrl.applyShade(color)}
       />
     </div>
   );
@@ -310,7 +365,7 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
         </SelectionPaneSection>
         <SelectionPaneSection
           title="Sombreamento"
-          hint="Cor de fundo do cabeçalho ou das células."
+          hint="Cor de fundo da parte selecionada (coluna, linha ou célula) ou do tema global."
           defaultOpen={false}
         >
           {shade}
@@ -327,7 +382,7 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
       <DeckRibbonGroup
         groupId="table-shading"
         label="Sombreamento"
-        hint="Cor de fundo do cabeçalho ou das células."
+        hint="Cor de fundo da parte selecionada (coluna, linha ou célula) ou do tema global."
       >
         {shade}
       </DeckRibbonGroup>

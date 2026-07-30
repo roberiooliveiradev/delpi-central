@@ -550,25 +550,56 @@ function EditorTableViewBlock({
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
       if (!event) return;
-      /* Ctrl/Cmd alterna a coluna; Shift estende o intervalo desde a coluna âncora. */
-      if (
-        ref.kind === "headerCell" &&
-        selectedId === block.id &&
-        (event.ctrlKey || event.metaKey || event.shiftKey)
-      ) {
-        selectTablePart(block.id, ref, event.shiftKey ? { range: true } : { additive: true });
+      const blockSelected = selectedId === block.id;
+
+      /* Alt+célula → seleciona a linha (Excel-like). */
+      if (ref.kind === "cell" && event.altKey && blockSelected) {
+        selectTablePart(
+          block.id,
+          { kind: "row", rowIndex: ref.rowIndex },
+          event.shiftKey
+            ? { range: true }
+            : event.ctrlKey || event.metaKey
+              ? { additive: true }
+              : undefined,
+        );
         return;
       }
+
+      /* Ctrl/Cmd alterna; Shift estende intervalo (colunas/linhas). */
+      if (
+        blockSelected &&
+        (ref.kind === "headerCell" || ref.kind === "row" || ref.kind === "cell") &&
+        (event.ctrlKey || event.metaKey || event.shiftKey)
+      ) {
+        selectTablePart(
+          block.id,
+          ref,
+          event.shiftKey && ref.kind !== "cell" ? { range: true } : { additive: true },
+        );
+        return;
+      }
+
       if (event.shiftKey) {
         selectBlock(block.id, { additive: true });
         return;
       }
+
+      /*
+       * Tabela já selecionada: clique em coluna/célula/linha/cabeçalho seleciona a parte
+       * (modificação individual). Primeiro clique no bloco ainda arrasta/seleciona o pai.
+       */
+      if (blockSelected && isCompositeContentPart("table_view", ref)) {
+        selectTablePart(block.id, ref);
+        return;
+      }
+
       const samePartSelected =
-        selectedId === block.id &&
+        blockSelected &&
         Boolean(selectedTablePart && isTablePartRefEqual(selectedTablePart, ref));
       const contentPart = isCompositeContentPart("table_view", ref);
       const action = resolveCompositePartPointerAction({
-        blockSelected: selectedId === block.id,
+        blockSelected,
         samePartSelected,
         /* Tabela ainda não move frame no palco. */
         partAllowsMove: false,

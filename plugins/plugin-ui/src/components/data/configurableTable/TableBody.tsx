@@ -3,7 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { useConfigurableTableClasses } from "../configurableTableClasses";
 import {
   bindTablePartPointer,
-  resolveTablePartPaintStyle,
+  resolveTableBodyCellPaintStyle,
+  tablePartPaintToCss,
   type TableInteraction,
   type TablePartsMap,
 } from "../configurableTableParts";
@@ -13,6 +14,7 @@ export type TableCellProps = {
   rowIndex?: number;
   colIndex?: number;
   columnSelected?: boolean;
+  rowSelected?: boolean;
   interaction?: TableInteraction | null;
   tableParts?: TablePartsMap | null;
 };
@@ -22,6 +24,7 @@ export function TableCell({
   rowIndex = 0,
   colIndex = 0,
   columnSelected = false,
+  rowSelected = false,
   interaction,
   tableParts,
 }: TableCellProps) {
@@ -31,15 +34,9 @@ export function TableCell({
     ref,
     interaction,
   );
-  const paint = resolveTablePartPaintStyle(tableParts, ref);
-  const style: CSSProperties | undefined =
-    paint.backgroundColor || paint.color || paint.fontWeight != null
-      ? {
-          ...(paint.backgroundColor ? { backgroundColor: paint.backgroundColor } : {}),
-          ...(paint.color ? { color: paint.color } : {}),
-          ...(paint.fontWeight != null ? { fontWeight: paint.fontWeight } : {}),
-        }
-      : undefined;
+  const paint = resolveTableBodyCellPaintStyle(tableParts, rowIndex, colIndex);
+  const css = tablePartPaintToCss(paint);
+  const style: CSSProperties | undefined = Object.keys(css).length > 0 ? css : undefined;
 
   return (
     <td
@@ -47,7 +44,10 @@ export function TableCell({
         cn.cell,
         selected ? `${cn.root}__part--selected` : "",
         columnSelected ? cn.columnSelected : "",
-      ].filter(Boolean).join(" ")}
+        rowSelected ? `${cn.root}__row--selected` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={style}
       {...dom}
       onPointerDown={onPointerDown}
@@ -63,15 +63,39 @@ export type TableRowProps = {
   children: ReactNode;
   /** Linha de totais (Excel Total Row). */
   total?: boolean;
+  selected?: boolean;
+  interaction?: TableInteraction | null;
 };
 
-export function TableRow({ rowIndex, children, total = false }: TableRowProps) {
+export function TableRow({
+  rowIndex,
+  children,
+  total = false,
+  selected = false,
+  interaction,
+}: TableRowProps) {
   const cn = useConfigurableTableClasses();
+  const ref = { kind: "row" as const, rowIndex };
+  const bind = interaction
+    ? bindTablePartPointer(ref, interaction)
+    : { selected: false, onPointerDown: undefined, onDoubleClick: undefined };
+  const rowSelected = selected || bind.selected;
+
   return (
     <tr
-      className={[cn.row, total ? cn.rowTotal : ""].filter(Boolean).join(" ")}
+      className={[
+        cn.row,
+        total ? cn.rowTotal : "",
+        rowSelected ? `${cn.root}__row--selected` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       data-row-index={rowIndex}
       data-table-total={total ? "true" : undefined}
+      data-table-part={`row:${rowIndex}`}
+      aria-selected={rowSelected ? true : undefined}
+      onPointerDown={bind.onPointerDown}
+      onDoubleClick={bind.onDoubleClick}
     >
       {children}
     </tr>

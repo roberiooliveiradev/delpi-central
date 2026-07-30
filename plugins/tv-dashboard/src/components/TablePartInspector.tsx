@@ -91,7 +91,8 @@ export function TablePartInspector({ pane = false, block }: Props) {
     selectedTablePart.kind === "title" ||
     selectedTablePart.kind === "header" ||
     selectedTablePart.kind === "headerCell" ||
-    selectedTablePart.kind === "cell";
+    selectedTablePart.kind === "cell" ||
+    selectedTablePart.kind === "row";
 
   const defaultFill =
     selectedTablePart.kind === "header" || selectedTablePart.kind === "headerCell"

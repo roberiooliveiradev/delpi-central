@@ -101,7 +101,7 @@ const CHART_TEXT_FORMAT_KINDS = new Set([
   "axis",
   "axes",
 ]);
-const TABLE_TEXT_FORMAT_KINDS = new Set(["title", "header", "headerCell", "cell"]);
+const TABLE_TEXT_FORMAT_KINDS = new Set(["title", "header", "headerCell", "cell", "row"]);
 
 export function isKpiTextFormatPart(part: ComunicadoKpiPartRef | null | undefined): boolean {
   return Boolean(part && KPI_TEXT_FORMAT_KINDS.has(part.kind));

@@ -94,6 +94,8 @@ export function tablePartSelectionLabel(part: ComunicadoTablePartRef): string {
       return "Cabeçalho";
     case "headerCell":
       return `Coluna ${(part.colIndex ?? 0) + 1}`;
+    case "row":
+      return `Linha ${(part.rowIndex ?? 0) + 1}`;
     case "cell":
       return `Célula ${(part.rowIndex ?? 0) + 1}:${(part.colIndex ?? 0) + 1}`;
     default:

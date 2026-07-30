@@ -8,6 +8,7 @@ import {
 } from "./configurableTableOptions";
 import {
   selectedTableColumnIndexes,
+  selectedTableRowIndexes,
   type TableInteraction,
   type TablePartsMap,
 } from "./configurableTableParts";
@@ -55,6 +56,7 @@ export function ConfigurablePresentationTable({
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
   const selectedColumns = selectedTableColumnIndexes(interaction);
+  const selectedRows = selectedTableRowIndexes(interaction);
   const hasColumnWidths = columns.some((column) => column.widthPct != null && column.widthPct > 0);
   const layoutClassName = [
     className,
@@ -111,13 +113,19 @@ export function ConfigurablePresentationTable({
         </TableHeader>
         <TableBody>
           {rows.map((row, rowIndex) => (
-            <TableRow key={`row-${rowIndex}`} rowIndex={rowIndex}>
+            <TableRow
+              key={`row-${rowIndex}`}
+              rowIndex={rowIndex}
+              selected={selectedRows.has(rowIndex)}
+              interaction={interaction}
+            >
               {columns.map((column, colIndex) => (
                 <TableCell
                   key={`${column.key}-${rowIndex}`}
                   rowIndex={rowIndex}
                   colIndex={colIndex}
                   columnSelected={selectedColumns.has(colIndex)}
+                  rowSelected={selectedRows.has(rowIndex)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >
@@ -127,13 +135,20 @@ export function ConfigurablePresentationTable({
             </TableRow>
           ))}
           {totalRow ? (
-            <TableRow key="row-total" rowIndex={rows.length} total>
+            <TableRow
+              key="row-total"
+              rowIndex={rows.length}
+              total
+              selected={selectedRows.has(rows.length)}
+              interaction={interaction}
+            >
               {columns.map((column, colIndex) => (
                 <TableCell
                   key={`${column.key}-total`}
                   rowIndex={rows.length}
                   colIndex={colIndex}
                   columnSelected={selectedColumns.has(colIndex)}
+                  rowSelected={selectedRows.has(rows.length)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >

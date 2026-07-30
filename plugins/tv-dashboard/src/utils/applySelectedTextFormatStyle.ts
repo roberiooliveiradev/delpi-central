@@ -117,6 +117,8 @@ export function buildSelectedTextFormatBlockPatch(params: {
   selectedKpiPart?: ComunicadoKpiPartRef | null;
   selectedChartPart?: ComunicadoChartPartRef | null;
   selectedTablePart?: ComunicadoTablePartRef | null;
+  /** Multi-seleção de colunas/células/linhas — tipografia aplica a todas. */
+  selectedTableParts?: ComunicadoTablePartRef[] | null;
   selectedInputPart?: ComunicadoInputPartRef | null;
 }): Partial<ComunicadoBlock> | null {
   const {
@@ -125,6 +127,7 @@ export function buildSelectedTextFormatBlockPatch(params: {
     selectedKpiPart = null,
     selectedChartPart = null,
     selectedTablePart = null,
+    selectedTableParts = null,
     selectedInputPart = null,
   } = params;
 
@@ -213,10 +216,17 @@ export function buildSelectedTextFormatBlockPatch(params: {
 
   if (target.mode === "part" && target.source === "table" && selected.type === "table_view") {
     if (!isTableTextFormatPart(selectedTablePart) || !selectedTablePart) return null;
-    const prev = getTablePartState(selected.tableParts, selectedTablePart)?.style;
-    const nextParts = upsertTablePartState(selected.tableParts, selectedTablePart, {
-      style: mergeTypographyStyle(prev, patch) as AnyPartStyle,
-    });
+    const targets = (selectedTableParts?.length ? selectedTableParts : [selectedTablePart]).filter(
+      (part) => isTableTextFormatPart(part),
+    );
+    const applyTo = targets.length > 0 ? targets : [selectedTablePart];
+    let nextParts = selected.tableParts;
+    for (const part of applyTo) {
+      const prev = getTablePartState(nextParts, part)?.style;
+      nextParts = upsertTablePartState(nextParts, part, {
+        style: mergeTypographyStyle(prev, patch) as AnyPartStyle,
+      });
+    }
     return { tableParts: nextParts } as Partial<ComunicadoBlock>;
   }
 

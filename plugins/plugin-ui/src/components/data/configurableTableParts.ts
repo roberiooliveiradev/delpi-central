@@ -16,12 +16,19 @@ export type TablePartRef =
   | { kind: "title" }
   | { kind: "header" }
   | { kind: "headerCell"; colIndex: number }
+  | { kind: "row"; rowIndex: number }
   | { kind: "cell"; rowIndex: number; colIndex: number };
 
 export type TablePartStyle = {
   fill?: string;
   color?: string;
   fontWeight?: string | number;
+  fontFamily?: string;
+  fontSize?: number;
+  fontStyle?: string;
+  textDecoration?: string;
+  textAlign?: "left" | "center" | "right" | "justify";
+  verticalAlign?: "top" | "middle" | "bottom";
   /** Contorno da moldura (parte `frame`). */
   stroke?: string;
   strokeWidth?: number;
@@ -66,6 +73,7 @@ const TABLE_PART_KIND_CAPABILITIES: Record<TablePartRef["kind"], TablePartCapabi
   title: { movable: false, editable: true, deletable: true, resizable: false },
   header: { movable: false, editable: false, deletable: true, resizable: false },
   headerCell: { movable: false, editable: true, deletable: false, resizable: true },
+  row: { movable: false, editable: false, deletable: false, resizable: false },
   cell: { movable: false, editable: false, deletable: false, resizable: false },
 };
 
@@ -79,6 +87,8 @@ export function serializeTablePartRef(ref: TablePartRef): string {
       return "header";
     case "headerCell":
       return `headerCell:${ref.colIndex}`;
+    case "row":
+      return `row:${ref.rowIndex}`;
     case "cell":
       return `cell:${ref.rowIndex}:${ref.colIndex}`;
     default: {
@@ -96,6 +106,8 @@ export function parseTablePartRef(raw: string | null | undefined): TablePartRef 
   if (value === "header") return { kind: "header" };
   const headerCell = /^headerCell:(\d+)$/.exec(value);
   if (headerCell) return { kind: "headerCell", colIndex: Number(headerCell[1]) };
+  const row = /^row:(\d+)$/.exec(value);
+  if (row) return { kind: "row", rowIndex: Number(row[1]) };
   const cell = /^cell:(\d+):(\d+)$/.exec(value);
   if (cell) return { kind: "cell", rowIndex: Number(cell[1]), colIndex: Number(cell[2]) };
   return null;
@@ -123,6 +135,18 @@ export function selectedTableColumnIndexes(
   const parts = [interaction?.selectedPart, ...(interaction?.selectedParts ?? [])];
   for (const part of parts) {
     if (part?.kind === "headerCell") indexes.add(part.colIndex);
+  }
+  return indexes;
+}
+
+/** Índices das linhas selecionadas (partes `row`, primária + multi). */
+export function selectedTableRowIndexes(
+  interaction?: Pick<TableInteraction, "selectedPart" | "selectedParts"> | null,
+): Set<number> {
+  const indexes = new Set<number>();
+  const parts = [interaction?.selectedPart, ...(interaction?.selectedParts ?? [])];
+  for (const part of parts) {
+    if (part?.kind === "row") indexes.add(part.rowIndex);
   }
   return indexes;
 }
@@ -185,7 +209,8 @@ export type TableGridDimensions = {
 
 /**
  * Replica estilo em células irmãs (Excel: Apply to All).
- * `cell` → todas as células; `headerCell` → todos os cabeçalhos de coluna.
+ * `cell` → todas as células; `headerCell` → todos os cabeçalhos de coluna;
+ * `row` → todas as linhas (partes `row`).
  * Demais kinds: sem irmãos de grade — retorna o mapa inalterado.
  */
 export function applyTablePartStyleToSiblingParts(
@@ -212,7 +237,34 @@ export function applyTablePartStyleToSiblingParts(
     }
     return next;
   }
+  if (from.kind === "row") {
+    let next = parts ?? {};
+    for (let rowIndex = 0; rowIndex < rows; rowIndex += 1) {
+      next = upsertTablePartState(next, { kind: "row", rowIndex }, { style });
+    }
+    return next;
+  }
   return parts ?? {};
+}
+
+/**
+ * Aplica estilo a várias partes (multi-seleção de colunas/células/linhas).
+ * Para `headerCell`, o estilo fica na coluna e herda nas células do corpo via paint.
+ */
+export function applyTablePartStyleToParts(
+  parts: TablePartsMap | null | undefined,
+  targets: TablePartRef[],
+  style: TablePartStyle,
+): TablePartsMap {
+  let next = parts ?? {};
+  const seen = new Set<string>();
+  for (const target of targets) {
+    const key = serializeTablePartRef(target);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next = upsertTablePartState(next, target, { style });
+  }
+  return next;
 }
 
 export function tablePartDomProps(ref: TablePartRef, selectedPart?: TablePartRef | null) {
@@ -421,18 +473,74 @@ export function tableElementPrimaryPartRef(
   return null;
 }
 
-/** Estilo de pintura (fundo/texto) de uma parte — usado no render. */
-export function resolveTablePartPaintStyle(
-  parts: TablePartsMap | null | undefined,
-  ref: TablePartRef,
-): { backgroundColor?: string; color?: string; fontWeight?: string | number } {
-  const style = getTablePartState(parts, ref)?.style;
+/** Estilo de pintura CSS derivado de uma parte — tipografia + fundo. */
+export type TablePartPaintStyle = {
+  backgroundColor?: string;
+  color?: string;
+  fontWeight?: string | number;
+  fontFamily?: string;
+  fontSize?: number | string;
+  fontStyle?: string;
+  textDecoration?: string;
+  textAlign?: TablePartStyle["textAlign"];
+  verticalAlign?: TablePartStyle["verticalAlign"];
+};
+
+function tablePartStyleToPaint(style: TablePartStyle | undefined): TablePartPaintStyle {
   if (!style) return {};
   return {
     ...(style.fill != null ? { backgroundColor: style.fill } : {}),
     ...(style.color != null ? { color: style.color } : {}),
     ...(style.fontWeight != null ? { fontWeight: style.fontWeight } : {}),
+    ...(style.fontFamily != null ? { fontFamily: style.fontFamily } : {}),
+    ...(style.fontSize != null ? { fontSize: style.fontSize } : {}),
+    ...(style.fontStyle != null ? { fontStyle: style.fontStyle } : {}),
+    ...(style.textDecoration != null ? { textDecoration: style.textDecoration } : {}),
+    ...(style.textAlign != null ? { textAlign: style.textAlign } : {}),
+    ...(style.verticalAlign != null ? { verticalAlign: style.verticalAlign } : {}),
   };
+}
+
+function mergeTablePartPaint(
+  base: TablePartPaintStyle,
+  overlay: TablePartPaintStyle,
+): TablePartPaintStyle {
+  return {
+    backgroundColor: overlay.backgroundColor ?? base.backgroundColor,
+    color: overlay.color ?? base.color,
+    fontWeight: overlay.fontWeight ?? base.fontWeight,
+    fontFamily: overlay.fontFamily ?? base.fontFamily,
+    fontSize: overlay.fontSize ?? base.fontSize,
+    fontStyle: overlay.fontStyle ?? base.fontStyle,
+    textDecoration: overlay.textDecoration ?? base.textDecoration,
+    textAlign: overlay.textAlign ?? base.textAlign,
+    verticalAlign: overlay.verticalAlign ?? base.verticalAlign,
+  };
+}
+
+/** Converte paint resolvido em `CSSProperties` (só chaves definidas). */
+export function tablePartPaintToCss(paint: TablePartPaintStyle): Record<string, string | number> {
+  const css: Record<string, string | number> = {};
+  if (paint.backgroundColor != null) css.backgroundColor = paint.backgroundColor;
+  if (paint.color != null) css.color = paint.color;
+  if (paint.fontWeight != null) css.fontWeight = paint.fontWeight;
+  if (paint.fontFamily != null) css.fontFamily = paint.fontFamily;
+  if (paint.fontSize != null) {
+    css.fontSize = typeof paint.fontSize === "number" ? `${paint.fontSize}px` : paint.fontSize;
+  }
+  if (paint.fontStyle != null) css.fontStyle = paint.fontStyle;
+  if (paint.textDecoration != null) css.textDecoration = paint.textDecoration;
+  if (paint.textAlign != null) css.textAlign = paint.textAlign;
+  if (paint.verticalAlign != null) css.verticalAlign = paint.verticalAlign;
+  return css;
+}
+
+/** Estilo de pintura (fundo/texto/tipografia) de uma parte — usado no render. */
+export function resolveTablePartPaintStyle(
+  parts: TablePartsMap | null | undefined,
+  ref: TablePartRef,
+): TablePartPaintStyle {
+  return tablePartStyleToPaint(getTablePartState(parts, ref)?.style);
 }
 
 /**
@@ -441,12 +549,23 @@ export function resolveTablePartPaintStyle(
 export function resolveTableHeaderCellPaintStyle(
   parts: TablePartsMap | null | undefined,
   colIndex: number,
-): { backgroundColor?: string; color?: string; fontWeight?: string | number } {
+): TablePartPaintStyle {
   const header = resolveTablePartPaintStyle(parts, { kind: "header" });
   const cell = resolveTablePartPaintStyle(parts, { kind: "headerCell", colIndex });
-  return {
-    backgroundColor: cell.backgroundColor ?? header.backgroundColor,
-    color: cell.color ?? header.color,
-    fontWeight: cell.fontWeight ?? header.fontWeight,
-  };
+  return mergeTablePartPaint(header, cell);
+}
+
+/**
+ * Pintura de célula do corpo: herda coluna (`headerCell`) e linha (`row`);
+ * estilo explícito da célula vence (Excel-like).
+ */
+export function resolveTableBodyCellPaintStyle(
+  parts: TablePartsMap | null | undefined,
+  rowIndex: number,
+  colIndex: number,
+): TablePartPaintStyle {
+  const column = resolveTablePartPaintStyle(parts, { kind: "headerCell", colIndex });
+  const row = resolveTablePartPaintStyle(parts, { kind: "row", rowIndex });
+  const cell = resolveTablePartPaintStyle(parts, { kind: "cell", rowIndex, colIndex });
+  return mergeTablePartPaint(mergeTablePartPaint(column, row), cell);
 }

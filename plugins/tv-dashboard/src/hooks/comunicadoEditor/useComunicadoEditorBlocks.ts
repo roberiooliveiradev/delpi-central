@@ -127,6 +127,7 @@ type Options = {
   selectedBlocks: ComunicadoBlock[];
   selectedChartPart: ComunicadoChartPartRef | null;
   selectedTablePart: ComunicadoTablePartRef | null;
+  selectedTableParts?: ComunicadoTablePartRef[];
   selectedKpiPart: ComunicadoKpiPartRef | null;
   selectedInputPart: ComunicadoInputPartRef | null;
   editingChartPart: ComunicadoChartPartRef | null;
@@ -175,6 +176,7 @@ export function useComunicadoEditorBlocks({
   selectedBlocks,
   selectedChartPart,
   selectedTablePart,
+  selectedTableParts = [],
   selectedKpiPart,
   selectedInputPart,
   editingChartPart,
@@ -885,6 +887,7 @@ export function useComunicadoEditorBlocks({
         selectedKpiPart,
         selectedChartPart,
         selectedTablePart,
+        selectedTableParts,
         selectedInputPart,
       });
       if (complexPatch) {
@@ -900,6 +903,7 @@ export function useComunicadoEditorBlocks({
       selectedInputPart,
       selectedKpiPart,
       selectedTablePart,
+      selectedTableParts,
       updateSelected,
       updateSelectedStyle,
     ],

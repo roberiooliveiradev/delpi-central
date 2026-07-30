@@ -80,4 +80,45 @@ describe("buildSelectedTextFormatBlockPatch", () => {
     expect(patch?.kpiParts?.title?.style?.fontFamily).toBe("Inter");
     expect(patch?.kpiParts?.value?.style?.color).toBe("#334155");
   });
+
+  it("tipografia em coluna grava tableParts da headerCell", () => {
+    const selected = {
+      id: "tb1",
+      type: "table_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      tableParts: {},
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedTablePart: { kind: "headerCell", colIndex: 1 },
+      patch: { fontFamily: "Georgia", fontSize: 26, color: "#0a0", fontWeight: "bold" },
+    });
+    expect(patch?.tableParts?.["headerCell:1"]?.style).toMatchObject({
+      fontFamily: "Georgia",
+      fontSize: 26,
+      color: "#0a0",
+      fontWeight: "bold",
+    });
+    expect(patch?.tableOptions).toBeUndefined();
+  });
+
+  it("tipografia multi-coluna aplica a todas as partes", () => {
+    const selected = {
+      id: "tb1",
+      type: "table_view",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      tableParts: {},
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedTablePart: { kind: "headerCell", colIndex: 2 },
+      selectedTableParts: [
+        { kind: "headerCell", colIndex: 0 },
+        { kind: "headerCell", colIndex: 2 },
+      ],
+      patch: { color: "#123456" },
+    });
+    expect(patch?.tableParts?.["headerCell:0"]?.style?.color).toBe("#123456");
+    expect(patch?.tableParts?.["headerCell:2"]?.style?.color).toBe("#123456");
+  });
 });
