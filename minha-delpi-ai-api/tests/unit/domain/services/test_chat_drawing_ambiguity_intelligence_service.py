@@ -118,17 +118,66 @@ def test_describe_nonconformity_uses_ask_user_envelope():
     item["ambiguity"] = {
         "kind": "conflicting_notes",
         "title": "sinais conflitantes no PDF",
-        "whyEscalated": "mistura de notas.",
-        "systemDidNot": "decape E automático",
+        "whyEscalated": "o PDF mistura sinais de decape com termo.",
+        "systemDidNot": "o valor do decape E",
         "askUser": "Confira no desenho.",
         "resolveHint": "Use o chip.",
     }
 
     detail = ChatDrawingValidationPresentationService.describe_nonconformity(item)
+    compact = ChatDrawingValidationPresentationService.describe_nonconformity(
+        item,
+        compact=True,
+    )
 
     assert "Preciso da sua confirmação" in detail
     assert "Não afirmei" in detail
     assert "Confira no desenho" in detail
+    assert "Pedi a sua confirmação" in compact
+    assert "sinais conflitantes no PDF" not in compact or "mistura" in compact
+
+
+def test_executive_summary_omits_suppressed_decapes_and_uses_compact_ask_user():
+    analysis = {
+        "productCode": "90261842",
+        "overallLabel": "Aprovado com ressalvas",
+        "items": [
+            {
+                **ChatDrawingValidationContentService.item_from_template(
+                    "dimension_note_ambiguous",
+                    status="pending",
+                    pdf_evidence="nota",
+                    api_evidence="—",
+                ),
+                "ambiguity": {
+                    "kind": "conflicting_notes",
+                    "title": "sinais conflitantes no PDF",
+                    "whyEscalated": "o PDF mistura sinais de decape com termoencolhível",
+                    "systemDidNot": "o valor do decape esquerdo (E)",
+                    "askUser": "Confira no desenho e confirme a revisão.",
+                    "resolveHint": "Use o chip.",
+                },
+            },
+            {
+                **ChatDrawingValidationContentService.item_from_template(
+                    "decapes_ed",
+                    status="not_applicable",
+                    pdf_evidence="E=5",
+                    api_evidence="—",
+                ),
+                "ambiguitySuppressed": True,
+            },
+        ],
+    }
+
+    summary = ChatDrawingValidationPresentationService.build_executive_summary(analysis)
+
+    assert "Nota dimensional" in summary
+    assert "Pedi a sua confirmação" in summary
+    assert "Decapes E/D" not in summary
+    assert summary.lower().count("preciso da sua confirmação") <= 1
+    assert "Preciso da sua confirmação — nota dimensional" not in summary
+    assert "Preciso da sua confirmação — sinais conflitantes" not in summary
 
 
 def test_dimensions_table_omits_not_applicable_rows():

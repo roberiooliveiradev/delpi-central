@@ -403,9 +403,9 @@
     },
     "dimension_note_ambiguous": {
       "section": "Cotas",
-      "item": "Preciso da sua confirmação — nota dimensional",
+      "item": "Nota dimensional",
       "rule": "Quando há sinais conflitantes (decape × termo/pré-decape/ensaio), o sistema não afirma o decape sozinho",
-      "recommendation": "Confira no desenho se a cota à esquerda é decape de cabo e se bate com a descrição 50xx; confirme a revisão se estiver correto"
+      "recommendation": "Confira no desenho se a cota à esquerda é decape de cabo e se bate com a descrição do intermediário; confirme a revisão se estiver correto"
     },
     "bom_quantity_mismatch": {
       "section": "BOM",
@@ -568,14 +568,15 @@
     }
   },
   "ambiguityIntelligence": {
-    "askUserEnvelope": "{title}{whyEscalated} {systemDidNot} {askUser} {resolveHint}",
+    "askUserEnvelope": "{title} {whyEscalated} {systemDidNot} {askUser} {resolveHint}",
     "askUserEnvelopeParts": {
-      "title": "**Preciso da sua confirmação** — {title}.",
+      "title": "**Preciso da sua confirmação.**",
       "whyEscalated": "{whyEscalated}",
       "systemDidNot": "**Não afirmei:** {systemDidNot}.",
       "askUser": "**O que fazer:** {askUser}",
       "resolveHint": "{resolveHint}"
     },
+    "askUserCompact": "Pedi a sua confirmação: {whyEscalated} Não afirmei: {systemDidNot}. {askUser}",
     "defaultResolveHint": "Responda «tudo certo» / «revisado» ou use o chip «Confirmar revisão manual».",
     "suppressedOkRecommendation": "Não aplicável — asserção suspensa por ambiguidade no mesmo escopo. Confirme o pending relacionado.",
     "kinds": {
@@ -617,25 +618,25 @@
         "kind": "conflicting_notes",
         "scope": "dimensions",
         "templateKey": "dimension_note_ambiguous",
-        "whyEscalated": "No PDF há sinais de decape de cabo misturados com termoencolhível, pré-decape ou ensaio.",
-        "systemDidNot": "decape esquerdo (E) automático e confronto E/D por intermediário",
-        "askUser": "Confira no desenho se a cota à esquerda é decape de cabo e se bate com a descrição 50xx (/E/D). Se estiver correto, confirme a revisão."
+        "whyEscalated": "o PDF mistura sinais de decape de cabo com termoencolhível, pré-decape ou ensaio",
+        "systemDidNot": "o valor do decape esquerdo (E) e o confronto E/D por intermediário",
+        "askUser": "Confira no desenho se a cota da esquerda é decape de cabo e se bate com a descrição do intermediário. Se estiver correto, confirme a revisão."
       },
       "extraction_below_threshold": {
         "kind": "low_confidence",
         "scope": "extraction",
         "templateKey": "extraction_confidence",
-        "whyEscalated": "A confiança da leitura do PDF ficou abaixo do limiar para cruzamento automático seguro.",
-        "systemDidNot": "reprovação automática por divergências PDF × SG1010 nestes itens",
+        "whyEscalated": "a confiança da leitura do PDF ficou abaixo do limiar para cruzamento automático seguro",
+        "systemDidNot": "reprovação automática por divergências PDF × cadastro nestes itens",
         "askUser": "Confera BOM e cotas no PDF; se a leitura estiver correta, confirme a revisão ou peça reanálise."
       },
       "asserted_ok_under_ambiguity": {
         "kind": "self_contradiction",
         "scope": "dimensions",
         "parentDetectorIds": ["conflicting_dimension_notes"],
-        "whyEscalated": "Havia um OK automático no mesmo escopo em que a leitura dimensional está ambígua.",
+        "whyEscalated": "havia um OK automático no mesmo escopo em que a leitura dimensional está ambígua",
         "systemDidNot": "validação automática de Decapes E/D a partir do OCR global",
-        "askUser": "Use o pending de nota dimensional; não confie no OK de Decapes E/D até confirmar."
+        "askUser": "Confirme o pending de nota dimensional; não confie no OK de Decapes E/D até revisar."
       }
     }
   },
@@ -838,6 +839,7 @@
     "executiveSummaryWithPending": "**Resumo:** produto `{code}` — **{overall}**. {pendingSummary}",
     "executiveSummaryPendingLine": "• **{section}** — {item}: {detail}",
     "nonconformityDetailFallback": "conferir manualmente no PDF",
-    "omitStatusesFromDimensionsTable": ["not_applicable"]
+    "omitStatusesFromDimensionsTable": ["not_applicable"],
+    "omitStatusesFromExecutiveSummary": ["not_applicable", "ok"]
   }
 }

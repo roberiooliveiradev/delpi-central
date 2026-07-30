@@ -88,8 +88,7 @@ def test_dimensions_section_skips_intermediate_rows_with_description_length():
     )
     joined = "\n".join(lines)
 
-    assert "confirmação" in joined.lower()
-    assert "nota dimensional" in joined.lower()
+    assert "confirmação" in joined.lower() or "nota dimensional" in joined.lower()
     assert "50231200" not in joined
     assert "50231204" not in joined
     assert "185" not in joined

@@ -189,9 +189,11 @@ def test_format_report_executive_summary_lists_pending_dimension_note():
 
     assert analysis["status"] == "approved_with_notes"
     assert "**Resumo:**" in report
-    assert "confirmação" in report.lower()
-    assert "nota dimensional" in report.lower()
+    assert "Nota dimensional" in report
+    assert "Pedi a sua confirmação" in report or "confirmação" in report.lower()
     assert "Não afirmei" in report or "não afirmei" in report.lower()
+    assert "Decapes E/D" not in report.split("## 2.")[0]
+    assert report.lower().count("preciso da sua confirmação —") == 0
     assert analysis.get("ambiguitySignals")
     assert any(
         signal.get("detectorId") == "conflicting_dimension_notes"

@@ -110,11 +110,29 @@ class ChatDrawingAmbiguityIntelligenceService:
         return adjusted, signals
 
     @classmethod
-    def format_ask_user(cls, item: dict[str, Any]) -> str | None:
+    def format_ask_user(
+        cls,
+        item: dict[str, Any],
+        *,
+        compact: bool = False,
+    ) -> str | None:
+        if item.get("ambiguitySuppressed"):
+            return None
+
         ambiguity = item.get("ambiguity")
 
         if not isinstance(ambiguity, dict):
             return None
+
+        if compact:
+            text = ChatDrawingValidationContentService.format(
+                "ambiguityIntelligence",
+                "askUserCompact",
+                whyEscalated=str(ambiguity.get("whyEscalated") or "").strip(),
+                systemDidNot=str(ambiguity.get("systemDidNot") or "").strip(),
+                askUser=str(ambiguity.get("askUser") or "").strip(),
+            ).strip()
+            return text or None
 
         return cls._format_envelope_from_parts(ambiguity) or None
 
@@ -470,6 +488,6 @@ class ChatDrawingAmbiguityIntelligenceService:
             item["status"] = status
             item["recommendation"] = recommendation or item.get("recommendation")
             item["ambiguitySuppressed"] = True
-            item["ambiguity"] = dict(signal.get("ambiguity") or {})
+            item.pop("ambiguity", None)
 
         return items

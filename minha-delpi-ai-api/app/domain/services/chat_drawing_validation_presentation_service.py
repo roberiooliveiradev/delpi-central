@@ -94,12 +94,39 @@ class ChatDrawingValidationPresentationService:
         ]
 
     @classmethod
-    def describe_nonconformity(cls, item: dict[str, Any]) -> str:
+    def executive_summary_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        omit = {
+            str(value)
+            for value in ChatDrawingValidationContentService.list_values(
+                "presentation",
+                "omitStatusesFromExecutiveSummary",
+            )
+            if str(value).strip()
+        } or {"not_applicable", "ok"}
+
+        return [
+            item
+            for item in items
+            if isinstance(item, dict)
+            and str(item.get("status") or "") not in omit
+            and not item.get("ambiguitySuppressed")
+        ]
+
+    @classmethod
+    def describe_nonconformity(
+        cls,
+        item: dict[str, Any],
+        *,
+        compact: bool = False,
+    ) -> str:
         from app.domain.services.chat_drawing_ambiguity_intelligence_service import (
             ChatDrawingAmbiguityIntelligenceService,
         )
 
-        ask_user = ChatDrawingAmbiguityIntelligenceService.format_ask_user(item)
+        ask_user = ChatDrawingAmbiguityIntelligenceService.format_ask_user(
+            item,
+            compact=compact,
+        )
 
         if ask_user:
             return ask_user
@@ -137,10 +164,18 @@ class ChatDrawingValidationPresentationService:
 
     @classmethod
     def build_analysis_conclusion(cls, items: list[dict[str, Any]], *, has_pdf: bool) -> str:
-        non_ok = cls.nonconformity_items(items)
+        non_ok = cls.executive_summary_items(items)
 
         if not non_ok:
-            return ChatDrawingValidationContentService.get("conclusions", "approved")
+            if not cls.nonconformity_items(items):
+                return ChatDrawingValidationContentService.get("conclusions", "approved")
+            # Só itens omitidos do resumo (ex.: not_applicable) — manter conclusão genérica
+            if not has_pdf:
+                return ChatDrawingValidationContentService.get("conclusions", "noPdf")
+            return ChatDrawingValidationContentService.get(
+                "conclusions",
+                "pendingWithPdf",
+            )
 
         if not has_pdf:
             return ChatDrawingValidationContentService.get("conclusions", "noPdf")
@@ -156,7 +191,7 @@ class ChatDrawingValidationPresentationService:
                     "executiveSummaryPendingLine",
                     section=str(item.get("section") or ChatDrawingValidationContentService.evidence("dash")),
                     item=str(item.get("item") or ChatDrawingValidationContentService.evidence("dash")),
-                    detail=cls.describe_nonconformity(item),
+                    detail=cls.describe_nonconformity(item, compact=True),
                 )
             )
 
@@ -173,7 +208,7 @@ class ChatDrawingValidationPresentationService:
         product: dict[str, Any] | None = None,
     ) -> str:
         raw_items = analysis.get("items") if isinstance(analysis.get("items"), list) else []
-        non_ok = cls.nonconformity_items(
+        non_ok = cls.executive_summary_items(
             cls.prepare_display_items(raw_items if isinstance(raw_items, list) else [])
         )
 
@@ -186,7 +221,7 @@ class ChatDrawingValidationPresentationService:
                 "executiveSummaryPendingLine",
                 section=str(item.get("section") or ChatDrawingValidationContentService.evidence("dash")),
                 item=str(item.get("item") or ChatDrawingValidationContentService.evidence("dash")),
-                detail=cls.describe_nonconformity(item),
+                detail=cls.describe_nonconformity(item, compact=True),
             )
             for item in non_ok
         ]
