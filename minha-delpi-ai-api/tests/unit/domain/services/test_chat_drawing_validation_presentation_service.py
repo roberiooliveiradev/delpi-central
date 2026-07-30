@@ -46,6 +46,83 @@ def test_status_display_from_json():
     assert ChatDrawingValidationPresentationService.status_label("error") == "Erro"
 
 
+def test_dimensions_section_skips_intermediate_rows_with_description_length():
+    """Âncora 90261842 — não listar Intermediário 50xx quando o comprimento já está na descrição."""
+    package = {
+        "analyserRoot": {
+            "structure": {
+                "items": [
+                    {
+                        "code": "50231200",
+                        "description": "CA0,75AZUL-00185/14/06-0000-1145",
+                        "type": "PI",
+                        "components": [
+                            {"code": "10020042", "quantity": 185.0, "unit": "MT"},
+                        ],
+                    },
+                    {
+                        "code": "50231204",
+                        "description": "CA0,75MARR-00285/14/06-0000-1145",
+                        "type": "PI",
+                        "components": [
+                            {"code": "10020048", "quantity": 285.0, "unit": "MT"},
+                        ],
+                    },
+                ]
+            }
+        },
+        "drawingAnalysis": {
+            "items": [
+                ChatDrawingValidationContentService.item_from_template(
+                    "dimension_note_ambiguous",
+                    status="pending",
+                    pdf_evidence="nota termo",
+                    api_evidence="—",
+                ),
+            ]
+        },
+    }
+
+    lines = ChatDrawingValidationPresentationService.format_dimensions_comparison_section(
+        package
+    )
+    joined = "\n".join(lines)
+
+    assert "Nota dimensional ambígua" in joined
+    assert "50231200" not in joined
+    assert "50231204" not in joined
+    assert "185" not in joined
+    assert "285" not in joined
+
+
+def test_dimensions_section_keeps_intermediate_row_without_description_length():
+    package = {
+        "analyserRoot": {
+            "structure": {
+                "items": [
+                    {
+                        "code": "50231200",
+                        "description": "INTERMEDIARIO SEM ASSINATURA DE COMPRIMENTO",
+                        "type": "PI",
+                        "components": [
+                            {"code": "10020042", "quantity": 185.0, "unit": "MT"},
+                        ],
+                    },
+                ]
+            }
+        },
+        "drawingAnalysis": {"items": []},
+    }
+
+    lines = ChatDrawingValidationPresentationService.format_dimensions_comparison_section(
+        package
+    )
+    joined = "\n".join(lines)
+
+    assert "50231200" in joined
+    assert "185" in joined
+
+
 def test_consolidate_segment_length_items():
     items = [
         ChatDrawingValidationContentService.item_from_template(

@@ -541,8 +541,15 @@ class ChatDrawingValidationPresentationService:
             if isinstance(root, dict) and root
             else []
         )
+        # Comprimento só da descrição 50xx: não entra na tabela (cota no PDF não obrigatória).
+        visible_intermediate_rows = [
+            row
+            for row in intermediate_rows
+            if row.get("lengthMm") is not None
+            and row.get("lengthFromDescription") is not True
+        ]
 
-        if not cota_items and not intermediate_rows:
+        if not cota_items and not visible_intermediate_rows:
             return []
 
         lines = [
@@ -569,16 +576,11 @@ class ChatDrawingValidationPresentationService:
             "dimensionsIntermediateRow",
         )
 
-        for row in intermediate_rows:
-            length_mm = row.get("lengthMm")
-
-            if length_mm is None:
-                continue
-
+        for row in visible_intermediate_rows:
             lines.append(
                 intermediate_tpl.format(
                     code=cls.format_code(row.get("code") or dash),
-                    length=str(length_mm),
+                    length=str(row.get("lengthMm")),
                 )
             )
 

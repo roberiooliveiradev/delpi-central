@@ -55,7 +55,7 @@
 | V7 | `total_length` crítico com OCR de cotas ruim | Reprovação indevida | **Implementado** — `total_length` em `pdfDependentTemplateKeys` (gate ≥ 95%) |
 | V8 | Falso **50xx** (termoencolhível) / OCR **10↔50** / MP no SG2010 | `intermediate_*`, `bom_extra`, `guide_structure_extra`, length/qtd | **Implementado** (jul/2026) — `ChatDrawingProductFamilyClassificationService` + vocabulário técnico; ver § PI × MP abaixo |
 | V9 | REF. do cliente (`REF:` / COD. CLIENTE) × `B1_REFEREN` | Cabeçalho crítico se divergir | **Implementado** — `customer_reference_cross_check` + extração `REF:` |
-| V10 | Cota de trecho no PDF × 50xx com OCR ruidoso | Falso pendente «Comprimento de trecho» | **Decisão (jul/2026):** se **todos** os intermediários estruturais declaram comprimento na descrição, a cota no desenho **não** é obrigatória — `descriptions_declare_segment_lengths` (âncora `90261842`) |
+| V10 | Cota de trecho no PDF × 50xx com OCR ruidoso | Falso pendente «Comprimento de trecho» + linhas informativas no relatório | **Decisão (jul/2026):** se intermediário declara comprimento na descrição, cota no desenho **não** é obrigatória — skip de `segment_length_pending` + omitir linhas `Intermediário {code}` em `format_dimensions_comparison_section` (âncora `90261842`) |
 
 ---
 
