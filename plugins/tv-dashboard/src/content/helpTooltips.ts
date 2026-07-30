@@ -162,7 +162,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableStyles:
       "Galeria de estilos da tabela (claros/médios/escuros). Na faixa fica colapsada em «Estilos»; abra o menu para aplicar um preset.",
     tableStyleOptions:
-      "Opções de estilo da tabela (ícones): cabeçalho, totais, listras, primeira/última coluna e bordas. Clique no texto do ícone para selecionar a parte no palco; o ícone só liga/desliga.",
+      "Inclui ou remove elementos da tabela (título, cabeçalho, totais, listras, primeira/última coluna e bordas). Cada item abre Mostrar/Ocultar — igual ao «Adicionar elemento» do gráfico.",
     tableTypography:
       "Tipografia global da tabela: família, tamanho, negrito/itálico, cor do texto e alinhamento.",
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",

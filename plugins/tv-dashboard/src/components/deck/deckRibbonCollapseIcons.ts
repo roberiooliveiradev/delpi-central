@@ -14,7 +14,6 @@ import {
   LayoutTemplate,
   LineChart,
   Link,
-  ListChecks,
   Maximize2,
   Monitor,
   MoreHorizontal,
@@ -86,7 +85,7 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "canvas-table-cell": Type,
   "part-nav": ArrowLeft,
   /* Design tabela */
-  "table-style-options": ListChecks,
+  "table-style-options": LayoutTemplate,
   "table-styles": Table,
   "table-shading": PaintBucket,
   "table-typography": Type,

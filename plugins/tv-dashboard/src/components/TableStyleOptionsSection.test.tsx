@@ -18,6 +18,7 @@ const tableBlock: ComunicadoTableViewBlock = {
 
 const selectTablePart = vi.fn();
 const updateSelected = vi.fn();
+const setSelectionPanelTab = vi.fn();
 
 vi.mock("./comunicadoEditorContext", () => ({
   useComunicadoEditor: () => ({
@@ -27,6 +28,7 @@ vi.mock("./comunicadoEditorContext", () => ({
     updateSelectedStyle: vi.fn(),
     selectTablePart,
     openDataPanel: vi.fn(),
+    setSelectionPanelTab,
   }),
 }));
 
@@ -34,28 +36,31 @@ afterEach(() => {
   cleanup();
   selectTablePart.mockClear();
   updateSelected.mockClear();
+  setSelectionPanelTab.mockClear();
 });
 
 describe("TableStyleOptionsSection", () => {
-  it("usa tiles com ícones (sem checkbox) e toggle não seleciona parte", () => {
-    render(<TableStyleOptionsSection layout="pane" />);
-    expect(screen.queryByRole("checkbox")).toBeNull();
-    expect(screen.getByRole("group", { name: "Opções de estilo" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Cabeçalho" })).toBeTruthy();
+  it("ribbon oferece Adicionar elemento com menu cascata (ícone + subopções)", () => {
+    render(<TableStyleOptionsSection layout="ribbon" />);
+    fireEvent.click(screen.getByRole("button", { name: /Adicionar\s*elemento/i }));
+    expect(document.querySelector(".td-chart-add-element")).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /Título da tabela/i })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /Linha de cabeçalho/i })).toBeTruthy();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: "Cabeçalho" }).querySelector(".td-ribbon-tile__icon")!);
+  it("flyout Mostrar/Ocultar aplica opções sem selecionar parte", () => {
+    render(<TableStyleOptionsSection layout="ribbon" />);
+    fireEvent.click(screen.getByRole("button", { name: /Adicionar\s*elemento/i }));
+    fireEvent.mouseEnter(screen.getByRole("menuitem", { name: /Linha de cabeçalho/i }).closest("li")!);
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: /Ocultar/i }));
     expect(updateSelected).toHaveBeenCalled();
     expect(selectTablePart).not.toHaveBeenCalled();
   });
 
-  it("clique no texto do rótulo seleciona a parte no palco", () => {
+  it("painel oferece o mesmo botão Adicionar elemento", () => {
     render(<TableStyleOptionsSection layout="pane" />);
-    const label = screen
-      .getByRole("button", { name: "Cabeçalho" })
-      .querySelector(".td-ribbon-tile__label");
-    expect(label).toBeTruthy();
-    fireEvent.click(label!);
-    expect(selectTablePart).toHaveBeenCalledWith("t1", { kind: "header" });
-    expect(updateSelected).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Adicionar\s*elemento/i }));
+    expect(document.querySelector(".td-chart-add-element")).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /Bordas/i })).toBeTruthy();
   });
 });

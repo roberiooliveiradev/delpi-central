@@ -1,27 +1,17 @@
 import type { ReactNode } from "react";
 import { useRef, useState } from "react";
 import {
-  Columns3,
   Database,
   Grid3x3,
-  Heading2,
-  ListChecks,
-  PanelLeft,
-  PanelRight,
-  Rows3,
-  Sigma,
+  LayoutTemplate,
   Square,
   Shapes,
-  Type,
-  type LucideIcon,
 } from "lucide-react";
 import {
   AnchoredPanelPortal,
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
-  ElementTogglePopover,
-  HintAction,
   ShapeShadowMenu,
   TableStyleMenu,
   TableStyleRibbonStrip,
@@ -30,13 +20,11 @@ import {
   type TableStylePreset,
 } from "@delpi/plugin-ui/index";
 import {
-  isTableElementEnabled,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
   presetDefaultTableOptions,
   resolveTableFrameStyle,
   resolveTableShapeChromePartRef,
-  setTableElementEnabled,
   tableElementPrimaryPartRef,
   upsertTablePartState,
   type ComunicadoBlock,
@@ -47,6 +35,10 @@ import {
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 
 import {
+  applyTableAddElementChoice,
+  type TableAddElementChoiceId,
+} from "../../content/tableAddElementMenuCatalog";
+import {
   findTableStyleRecipe,
   resolveActiveTableStyleRecipeId,
   tableStyleRecipesAsPresets,
@@ -55,10 +47,12 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { TableAddElementMenu } from "../TableAddElementMenu";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
+import { DeckRibbonLargeButton } from "../deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
@@ -72,47 +66,6 @@ const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
 }));
 
 const STYLE_GALLERY_PRESETS = tableStyleRecipesAsPresets();
-
-const STYLE_OPTION_TILES: Array<{
-  id: TableElementId;
-  label: string;
-  hint: string;
-  icon: LucideIcon;
-}> = [
-  { id: "tableTitle", label: "Título", hint: "Exibir ou ocultar o título acima da tabela.", icon: Type },
-  {
-    id: "header",
-    label: "Cabeçalho",
-    hint: "Exibe a primeira linha como cabeçalho da tabela.",
-    icon: Heading2,
-  },
-  { id: "totalRow", label: "Totais", hint: "Exibe a última linha como linha de totais.", icon: Sigma },
-  {
-    id: "firstColumn",
-    label: "1ª coluna",
-    hint: "Destaca a primeira coluna da tabela.",
-    icon: PanelLeft,
-  },
-  {
-    id: "lastColumn",
-    label: "Última col.",
-    hint: "Destaca a última coluna da tabela.",
-    icon: PanelRight,
-  },
-  {
-    id: "zebraStripe",
-    label: "Linhas alt.",
-    hint: "Alterna o fundo das linhas para facilitar a leitura.",
-    icon: Rows3,
-  },
-  {
-    id: "bandedColumns",
-    label: "Colunas alt.",
-    hint: "Alterna o fundo das colunas para facilitar a leitura.",
-    icon: Columns3,
-  },
-  { id: "borders", label: "Bordas", hint: "Linhas separadoras entre células.", icon: Grid3x3 },
-];
 
 const BORDER_WIDTH_OPTIONS = CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS.map((width) => ({
   value: String(width),
@@ -132,7 +85,12 @@ function useTableDesignControls() {
     updateSelectedStyle,
     selectTablePart,
     openDataPanel,
+    setSelectionPanelTab,
   } = useComunicadoEditor();
+
+  const addElementAnchorRef = useRef<HTMLDivElement>(null);
+  const addElementPanelRef = useRef<HTMLDivElement>(null);
+  const [addElementOpen, setAddElementOpen] = useState(false);
 
   if (!selected || selected.type !== "table_view") {
     return null;
@@ -174,14 +132,15 @@ function useTableDesignControls() {
     applyOptions(presetDefaultTableOptions("grid"), "grid");
   };
 
-  /** Só liga/desliga estilo — seleção de parte é pelo texto/palco, não pelo toggle. */
-  const toggleElement = (id: TableElementId, enabled: boolean) => {
-    applyOptions(setTableElementEnabled(id, enabled));
+  const applyAddElementChoice = (choiceId: TableAddElementChoiceId) => {
+    applyOptions(applyTableAddElementChoice(choiceId, options));
   };
 
-  const focusElement = (id: TableElementId) => {
+  const openAddElementMoreOptions = (id: TableElementId) => {
     const part = tableElementPrimaryPartRef(id);
     if (part) selectTablePart(block.id, part);
+    setSelectionPanelTab("element");
+    setAddElementOpen(false);
   };
 
   const shadeTarget =
@@ -220,11 +179,15 @@ function useTableDesignControls() {
     shadeTarget,
     shadeValue,
     borderWidthOptions,
+    addElementAnchorRef,
+    addElementPanelRef,
+    addElementOpen,
+    setAddElementOpen,
     applyOptions,
     applyGalleryPreset,
     clearTableStyle,
-    toggleElement,
-    focusElement,
+    applyAddElementChoice,
+    openAddElementMoreOptions,
     patchFrameShadow,
     patchCornerRadius,
     openFrameShapeChrome: () => selectTablePart(block.id, { kind: "frame" }),
@@ -254,134 +217,70 @@ function wrapPane(
   );
 }
 
-function TableStyleOptionTiles({
-  options,
-  onToggle,
-  onSelectLabel,
-  density = "ribbon",
-}: {
-  options: ComunicadoTableOptions;
-  onToggle: (id: TableElementId, enabled: boolean) => void;
-  onSelectLabel?: (id: TableElementId) => void;
-  density?: "ribbon" | "pane";
-}) {
-  return (
-    <div
-      className={[
-        "td-deck-ribbon__tiles",
-        "td-deck-ribbon__tiles--compact",
-        "td-deck-ribbon__style-option-tiles",
-        density === "pane" ? "td-deck-ribbon__style-option-tiles--pane" : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      role="group"
-      aria-label="Opções de estilo"
-    >
-      {STYLE_OPTION_TILES.map((item) => {
-        const checked = isTableElementEnabled(item.id, options);
-        return (
-          <ElementTogglePopover
-            key={item.id}
-            icon={item.icon}
-            label={item.label}
-            hint={item.hint}
-            active={checked}
-            presence={{
-              enabled: checked,
-              onAdd: () => onToggle(item.id, true),
-              onRemove: () => onToggle(item.id, false),
-              onOpenOptions: () => onSelectLabel?.(item.id),
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 /**
- * Opções de estilo da tabela (ícones).
- * Ribbon: tile «Opções» + popover; painel: tiles embutidos.
- * Toggle não seleciona parte no palco — só o clique no texto do rótulo.
+ * Layout / elementos da tabela — paridade com ChartLayoutSection («Adicionar elemento»).
+ * Ribbon: botão grande + menu cascata; painel: menu embutido.
  */
 export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
-
   if (!ctrl) return null;
 
-  const tiles = (
-    <TableStyleOptionTiles
-      options={ctrl.options}
-      onToggle={ctrl.toggleElement}
-      onSelectLabel={ctrl.focusElement}
-      density={layout === "pane" ? "pane" : "ribbon"}
-    />
-  );
-
-  if (layout === "pane") {
-    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, tiles, false, "table-style-options");
-  }
-
-  return (
-    <DeckRibbonGroup groupId="table-style-options" label="Opções de estilo" hint={H.tableStyleOptions}>
-      <TableStyleOptionsBandOrInline tiles={tiles} />
-    </DeckRibbonGroup>
+  return wrapPane(
+    "Layout da tabela",
+    H.tableStyleOptions,
+    layout,
+    <TableStyleOptionsBandOrInline ctrl={ctrl} />,
+    true,
+    "table-style-options",
   );
 }
 
-function TableStyleOptionsBandOrInline({ tiles }: { tiles: ReactNode }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
+function TableStyleOptionsBandOrInline({
+  ctrl,
+}: {
+  ctrl: NonNullable<ReturnType<typeof useTableDesignControls>>;
+}) {
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  if (flattenNested) {
-    return <>{tiles}</>;
+  const addElementMenu = (
+    <TableAddElementMenu
+      options={ctrl.options}
+      onApplyChoice={ctrl.applyAddElementChoice}
+      onMoreOptions={ctrl.openAddElementMoreOptions}
+    />
+  );
+
+  if (inSectionPopover) {
+    return addElementMenu;
   }
 
   return (
-      <div className="td-table-style-options-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-        <HintAction hint={H.tableStyleOptions} ariaLabel="Ajuda: Opções de estilo">
-          <button
-            ref={triggerRef}
-            type="button"
-            className={[
-              "delpi-ui-shape-menu__trigger",
-              open ? "td-table-style-options-entry__trigger--active" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-label="Opções de estilo"
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            onClick={() => setOpen((prev) => !prev)}
-          >
-            <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
-              <ListChecks size={18} />
-            </span>
-            <span className="delpi-ui-shape-menu__trigger-label">Opções</span>
-          </button>
-        </HintAction>
-        {open ? (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <div ref={ctrl.addElementAnchorRef} className="td-composer__dropdown">
+        <DeckRibbonLargeButton
+          icon={LayoutTemplate}
+          label={"Adicionar\nelemento"}
+          hint={H.tableStyleOptions}
+          onClick={() => ctrl.setAddElementOpen((open) => !open)}
+        />
+        {ctrl.addElementOpen ? (
           <AnchoredPanelPortal
-            open={open}
-            anchorRef={triggerRef}
-            panelRef={panelRef}
+            open={ctrl.addElementOpen}
+            anchorRef={ctrl.addElementAnchorRef}
+            panelRef={ctrl.addElementPanelRef}
+            variant="bare"
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-            className="td-table-style-options-popover"
-            role="dialog"
-            aria-label="Opções de estilo"
-            preferredPlacement="bottom"
-            allowFlip={false}
-            gap={10}
-            density="compact"
-            onDismiss={() => setOpen(false)}
+            className="td-chart-add-element-portal"
+            role="menu"
+            aria-label="Adicionar elemento de tabela"
+            exclusive={!inSectionPopover}
+            onDismiss={() => ctrl.setAddElementOpen(false)}
           >
-            {tiles}
+            <div>{addElementMenu}</div>
           </AnchoredPanelPortal>
         ) : null}
       </div>
+    </div>
   );
 }
 

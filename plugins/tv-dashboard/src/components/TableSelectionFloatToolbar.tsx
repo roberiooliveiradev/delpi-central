@@ -1,9 +1,7 @@
 import {
-  TABLE_ELEMENT_CATALOG,
-  isTableElementEnabled,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
-  setTableElementEnabled,
+  tableElementPrimaryPartRef,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -11,12 +9,17 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import {
+  applyTableAddElementChoice,
+  type TableAddElementChoiceId,
+} from "../content/tableAddElementMenuCatalog";
+import {
   findTableStyleRecipe,
   resolveActiveTableStyleRecipeId,
   TABLE_STYLE_RECIPES,
 } from "../content/tableStyleRecipes";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
 import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
+import { TableAddElementMenu } from "./TableAddElementMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -24,10 +27,11 @@ type Props = {
 };
 
 /**
- * Float da tabela — + elementos de estilo, pincel recipes, funil colunas/fonte.
+ * Float da tabela — + elementos (flyouts), pincel recipes, funil colunas/fonte.
  */
 export function TableSelectionFloatToolbar({ block }: Props) {
-  const { updateSelected, openDataPanel, setSelectionPanelTab } = useComunicadoEditor();
+  const { updateSelected, openDataPanel, selectTablePart, setSelectionPanelTab } =
+    useComunicadoEditor();
 
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
   const activeStyleId = resolveActiveTableStyleRecipeId(options, block.tablePreset ?? "grid");
@@ -40,10 +44,16 @@ export function TableSelectionFloatToolbar({ block }: Props) {
     } as Partial<ComunicadoBlock>);
   };
 
-  const toggleElement = (elementId: TableElementId, enabled: boolean) => {
-    const patch = setTableElementEnabled(elementId, enabled);
+  const applyAddElementChoice = (choiceId: TableAddElementChoiceId) => {
+    const patch = applyTableAddElementChoice(choiceId, options);
     const next = mergeComunicadoTableOptions({ ...options, ...patch }, block.tablePreset);
     persistOptions(next);
+  };
+
+  const openAddElementMoreOptions = (elementId: TableElementId) => {
+    const part = tableElementPrimaryPartRef(elementId);
+    if (part) selectTablePart(block.id, part);
+    setSelectionPanelTab("element");
   };
 
   const applyRecipe = (recipeId: string) => {
@@ -75,21 +85,15 @@ export function TableSelectionFloatToolbar({ block }: Props) {
         style: "Estilos da tabela",
         data: "Dados da tabela",
       }}
-      renderElements={() => (
-        <FloatChecklist aria-label="Elementos da tabela">
-          {TABLE_ELEMENT_CATALOG.map((element) => {
-            const enabled = isTableElementEnabled(element.id, options);
-            return (
-              <FloatChecklistItem
-                key={element.id}
-                label={element.label}
-                title={element.hint}
-                active={enabled}
-                onClick={() => toggleElement(element.id, !enabled)}
-              />
-            );
-          })}
-        </FloatChecklist>
+      renderElements={(close) => (
+        <TableAddElementMenu
+          options={options}
+          onApplyChoice={applyAddElementChoice}
+          onMoreOptions={(elementId) => {
+            openAddElementMoreOptions(elementId);
+            close();
+          }}
+        />
       )}
       renderStyle={(close) => (
         <FloatChecklist aria-label="Estilos da tabela">
