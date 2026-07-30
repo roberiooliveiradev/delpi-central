@@ -16,6 +16,8 @@ export interface PublicPageDefinition {
   documentTitle?: string;
   /** `kiosk` oculta logo e preenche viewport (TV wall). `fullpage` estica o conteúdo na viewport. */
   chrome?: "default" | "kiosk" | "fullpage";
+  /** Título quando `load` retorna null/undefined (default: «Página não encontrada»). */
+  notFoundTitle?: string;
   /** Mensagem exibida quando `load` retorna null/undefined. */
   notFoundMessage?: string;
   /** Carrega os dados da página. Retorne null/undefined para "não encontrado". */

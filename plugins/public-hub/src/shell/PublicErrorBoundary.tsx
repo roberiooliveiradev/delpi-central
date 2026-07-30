@@ -1,5 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
+import { PublicFallback } from "./PublicFallback";
+
 type Props = {
   children: ReactNode;
 };
@@ -22,10 +24,12 @@ export class PublicErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.message) {
       return (
-        <div className="pub-fallback pub-fallback--fatal">
-          <h1>Não foi possível exibir esta página</h1>
-          <p>{this.state.message}</p>
-        </div>
+        <PublicFallback
+          kind="error"
+          title="Não foi possível exibir esta página"
+          message={this.state.message}
+          chrome="kiosk"
+        />
       );
     }
     return this.props.children;

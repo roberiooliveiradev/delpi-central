@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { PublicFallback } from "./PublicFallback";
 import { PublicLoadingSplash } from "./PublicLoadingSplash";
 import { resolveRoute } from "./routing";
 import { publicRegistry } from "./registry";
@@ -9,7 +10,7 @@ import type { PublicPageContext, PublicPageDefinition } from "./types";
 
 type State =
   | { status: "loading" }
-  | { status: "not-found"; message?: string }
+  | { status: "not-found"; message?: string; title?: string }
   | { status: "error"; message: string }
   | { status: "ready"; data: unknown };
 
@@ -38,7 +39,11 @@ export function PublicShell() {
       .then((data) => {
         if (!active) return;
         if (data === null || data === undefined) {
-          setState({ status: "not-found", message: page.notFoundMessage });
+          setState({
+            status: "not-found",
+            message: page.notFoundMessage,
+            title: page.notFoundTitle,
+          });
           return;
         }
         setState({ status: "ready", data });
@@ -65,18 +70,14 @@ export function PublicShell() {
   }
 
   if (state.status === "not-found" || state.status === "error") {
-    const fallbackClass =
-      chrome === "kiosk" ? "pub-fallback pub-fallback--fatal" : "pub-fallback";
     return (
       <Stage chrome={chrome}>
-        <div className={fallbackClass}>
-          <h1>{state.status === "not-found" ? "Página não encontrada" : "Ops!"}</h1>
-          <p>
-            {state.status === "not-found"
-              ? state.message ?? "Este link não está mais disponível."
-              : state.message}
-          </p>
-        </div>
+        <PublicFallback
+          kind={state.status === "not-found" ? "not-found" : "error"}
+          title={state.status === "not-found" ? state.title : undefined}
+          message={state.message}
+          chrome={chrome}
+        />
       </Stage>
     );
   }

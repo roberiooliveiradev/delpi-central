@@ -6,6 +6,7 @@ export const tvDashboardPages: AppPublicPages = {
   present: {
     documentTitle: "Painéis TV — DELPI",
     chrome: "kiosk",
+    notFoundTitle: "Programação indisponível",
     notFoundMessage: "Esta programação não está disponível ou foi desativada.",
     load: ({ token }) => fetchPublicPresentation(token),
     render: (data, ctx) => (

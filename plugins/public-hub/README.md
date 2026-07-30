@@ -31,8 +31,9 @@ O gateway (`gateway/nginx.conf` e `nginx.dev.conf`) já encaminha **todo** `^~ /
   src/shell/registry.ts     publicRegistry[appId][pageId] → PublicPageDefinition
         │
         ▼
-  src/shell/PublicShell.tsx transversal: marca DELPI, splash via ScreenLoading (kit), not-found, erro, título
-  src/shell/PublicLoadingSplash.tsx wrapper fino de `@delpi/plugin-ui` `ScreenLoading`
+  src/shell/PublicShell.tsx           transversal: marca, splash, fallback not-found/erro, título
+  src/shell/PublicLoadingSplash.tsx   wrapper fino de `@delpi/plugin-ui` `ScreenLoading`
+  src/shell/PublicFallback.tsx        not-found / erro (marca em destaque no chrome kiosk)
         │
         ▼
   page.load(ctx) → page.render(data, ctx)   (a view do app)
@@ -48,6 +49,8 @@ interface PublicPageContext { appId: string; pageId: string; token: string; }
 
 interface PublicPageDefinition {
   documentTitle?: string;          // título do documento
+  chrome?: "default" | "kiosk" | "fullpage";
+  notFoundTitle?: string;          // título quando load() retorna null (TV: «Programação indisponível»)
   notFoundMessage?: string;        // texto quando load() retorna null/undefined
   load: (ctx: PublicPageContext) => Promise<unknown>;   // null/undefined => "não encontrado"
   render: (data: unknown, ctx: PublicPageContext) => ReactNode;
