@@ -35,7 +35,7 @@ import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { parseApiEnvelope } from "../../data/api/transformometroHttp";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
-import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
+import { RevisaoDiagramSection } from "../../components/diagram/sections/RevisaoDiagramSection";
 import { RevisaoDecompositionSection } from "../../components/decomposition/RevisaoDecompositionSection";
 import { RevisaoInvestimentosSection } from "../revisao/cadastro/RevisaoInvestimentosSection";
 import { RevisaoAtivarToolbar } from "../revisao/cadastro/RevisaoAtivarToolbar";

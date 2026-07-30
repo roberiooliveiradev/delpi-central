@@ -1,0 +1,25 @@
+/* BPMN editor tokens */
+/* BPMN editor — @delpi/plugin-ui */
+
+.dashboard-transformometro,
+.delpi-ui-flowchart-shell {
+  --delpi-ui-bpmn-canvas-bg: var(--ds-surface-inset);
+  --delpi-ui-bpmn-dot-color: color-mix(in srgb, var(--ds-text) 22%, transparent);
+  --delpi-ui-bpmn-edge-color: color-mix(in srgb, var(--ds-text) 38%, transparent);
+  --delpi-ui-bpmn-minimap-bg: var(--ds-card-bg);
+  --delpi-ui-bpmn-minimap-node: color-mix(in srgb, var(--ds-accent) 28%, var(--ds-card-bg));
+  --delpi-ui-bpmn-controls-bg: var(--ds-card-bg);
+  --delpi-ui-bpmn-controls-border: var(--ds-card-border);
+}
+
+:root[data-theme="dark"] .dashboard-transformometro,
+:root[data-theme="dark"] .delpi-ui-flowchart-shell {
+  --delpi-ui-bpmn-canvas-bg: color-mix(in srgb, var(--ds-card-bg) 82%, black 18%);
+  --delpi-ui-bpmn-dot-color: rgba(255, 255, 255, 0.16);
+  --delpi-ui-bpmn-edge-color: rgba(255, 255, 255, 0.42);
+  --delpi-ui-bpmn-minimap-bg: color-mix(in srgb, var(--ds-card-bg) 90%, black);
+  --delpi-ui-bpmn-minimap-node: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-bg));
+  --delpi-ui-bpmn-controls-bg: color-mix(in srgb, var(--ds-card-bg) 92%, black);
+  --delpi-ui-bpmn-controls-border: rgba(255, 255, 255, 0.12);
+}
+

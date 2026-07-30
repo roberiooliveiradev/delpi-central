@@ -8,6 +8,7 @@
 | [architecture.md](./architecture.md) | Princípios, escopo, tokens CSS, **CSS canônico vs MFE**, Vite bundled vs MF |
 | [module-federation.md](./module-federation.md) | Remote runtime, Docker, consumidor federado, rollout |
 | [component-catalog.md](./component-catalog.md) | Inventário de exports, props e exemplos + mapa do app catálogo |
+| [bpmn-editor.md](./bpmn-editor.md) | Editor BPMN (`FlowchartEditor`) — checklist MF, wrapper, pastas |
 | [contributing.md](./contributing.md) | Como adicionar componente, testes, checklist (+ cobertura visual) |
 | [../plugin-ui.manifest.json](../plugin-ui.manifest.json) | App portal «Catálogo UI» (`./App`, permissão `plugin-ui.view`) |
 | [`src/catalog/visualComponents.ts`](../src/catalog/visualComponents.ts) | Lista canônica + metadados `addedAt`/`updatedAt` (gate de cobertura) |

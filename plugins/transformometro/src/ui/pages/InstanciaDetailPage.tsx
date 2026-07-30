@@ -74,7 +74,7 @@ import {
   type InstanciaWorkspaceSectionId,
 } from "../processos/processoWorkspaceNav";
 import { useProcessoWorkspacePanelActions } from "../processos/processoWorkspacePanelActions";
-import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
+import { InstanciaDiagramEscopoSection } from "../../components/diagram/sections/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
 import { InstanciaMatrizRevisoesSection } from "../instancia/InstanciaMatrizRevisoesSection";

@@ -18,7 +18,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 | **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
 | export | TabularExportButtons, DocumentExportActions… |
 | charts | ConfigurableSeriesChart, ImpactEffortMatrix, ChartTypeCatalogPanel… |
-| preview / diagram / shape / menu | prévias + stubs onde falta fixture |
+| preview / bpmn / shape / menu | prévias + stubs onde falta fixture |
 
 Tabela estilo **dashboard LMPS**: use a entrada `DataTable` / `DataTableSection` (não a ConfigurablePresentationTable do TV/deck).
 
@@ -325,13 +325,16 @@ Consumidor piloto: `strategic-indicators` (`StatusBadge.tsx`).
 
 ---
 
-## Família `diagram` — editor de fluxograma BPMN / swimlanes
+## Família `bpmn` — editor de fluxograma BPMN / swimlanes
 
 Editor React Flow headless com faixas, paleta BPMN, import/export Mermaid e exportação PNG. **Textos PT-BR** vêm do plugin via `FlowchartEditorLabels` — o pacote não hardcodeia rótulos.
 
+Código: `src/components/bpmn/` (subpastas `model` | `editor` | `nodes` | `mermaid` | `layout` | `export` | `hooks` | `shell`).  
+Guia de consumo (MF + wrapper): [bpmn-editor.md](./bpmn-editor.md).
+
 Peer opcionais: `@xyflow/react`, `mermaid`, `html-to-image`.
 
-Importar estilos: `import "@delpi/plugin-ui/styles.css"` (inclui `diagram.css`).
+Importar estilos: `import "@delpi/plugin-ui/styles.css"` (inclui `styles/bpmn/`).
 
 ### `FlowchartEditor`
 
@@ -358,17 +361,17 @@ Ref: `FlowchartEditorHandle` (`fitView`, `exportPng`, etc.).
 | `flowchartToMermaid` / `mermaidToFlowchart` | Conversão bidirecional |
 | `exportReactFlowDiagramPng` | Export PNG com faixas |
 | `getDiagramFitNodes` / `getDiagramExportNodes` | Fit view e bounds de export |
-| `emptyFlowchart`, templates, catálogo BPMN | Tipos e helpers em `./types/diagram` |
+| `emptyFlowchart`, templates, catálogo BPMN | Tipos e helpers em `components/bpmn/model/` |
 
-Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` (`tm-diagram-editor`). Alias de escopo: `.delpi-ui-flowchart-shell, .dashboard-transformometro`.
+Classes shell: `flowchartEditorShellClassName()`, `FLOWCHART_EDITOR_ROOT_CLASS` (`delpi-ui-bpmn-editor`). Escopo: `.delpi-ui-flowchart-shell` + `shellClassName` do host. Tokens: `--delpi-ui-bpmn-*` (aliases `--tm-diagram-*` temporários).
 
 ### Padrão de integração no plugin
 
 Wrapper fino injeta labels, confirm e tema:
 
 ```tsx
-// transformometro/src/components/diagram/TransformometroFlowchartEditor.tsx
-import { FlowchartEditor as BaseFlowchartEditor } from "@delpi/plugin-ui";
+// transformometro/.../editor/TransformometroFlowchartEditor.tsx
+import { FlowchartEditor as BaseFlowchartEditor } from "@delpi/plugin-ui/index";
 import { TRANSFORMOMETRO_FLOWCHART_EDITOR_LABELS } from "../../content/flowchartEditorLabels";
 
 <BaseFlowchartEditor

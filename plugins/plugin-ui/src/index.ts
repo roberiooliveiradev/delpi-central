@@ -12,7 +12,8 @@ export * from "./components/data";
 export * from "./components/forms";
 export * from "./components/preview";
 export * from "./components/charts";
-export * from "./components/diagram";
+export * from "./components/bpmn";
+
 export * from "./components/shape";
 export * from "./components/menu";
 export * from "./components/signature";

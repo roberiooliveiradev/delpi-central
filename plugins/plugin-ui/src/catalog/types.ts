@@ -9,7 +9,7 @@ export type CatalogFamily =
   | "export"
   | "charts"
   | "preview"
-  | "diagram"
+  | "bpmn"
   | "shape"
   | "menu";
 
@@ -59,7 +59,7 @@ export const CATALOG_FAMILY_LABELS: Record<CatalogFamily, string> = {
   export: "Export",
   charts: "Charts",
   preview: "Preview",
-  diagram: "Diagram",
+  bpmn: "BPMN",
   shape: "Shape",
   menu: "Menu",
 };

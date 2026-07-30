@@ -247,11 +247,14 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("preview", "CenteredScaledPreview"),
   vc("preview", "SpreadsheetPreview"),
   vc("preview", "DocxPreview"),
-  // diagram
-  vc("diagram", "FlowchartEditor"),
-  vc("diagram", "DiagramMermaidPreview"),
-  vc("diagram", "DiagramFullscreenFrame"),
-  vc("diagram", "TabPanelTransition"),
+  // bpmn (ex-diagram)
+  vc("bpmn", "FlowchartEditor", {
+    updatedAt: "2026-07-30",
+    changeNote: "Família reorganizada em components/bpmn/* + CSS delpi-ui-bpmn-*",
+  }),
+  vc("bpmn", "DiagramMermaidPreview", { updatedAt: "2026-07-30" }),
+  vc("bpmn", "DiagramFullscreenFrame", { updatedAt: "2026-07-30" }),
+  vc("bpmn", "TabPanelTransition", { updatedAt: "2026-07-30" }),
   // shape
   vc("shape", "ShapeFillMenu"),
   vc("shape", "ShapeOutlineMenu"),

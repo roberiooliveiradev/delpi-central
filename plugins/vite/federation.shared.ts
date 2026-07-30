@@ -41,11 +41,14 @@ export const FEDERATION_SHARED_XYFLOW = {
   "@xyflow/react": { singleton: true },
 } as const;
 
-/** Remote plugin-ui e MFEs com editor de diagrama (ex.: transformometro). */
+/** Remote plugin-ui e MFEs com editor BPMN/diagrama (ex.: transformometro). */
 export const FEDERATION_SHARED_WITH_DIAGRAM = {
   ...FEDERATION_SHARED_REACT,
   ...FEDERATION_SHARED_XYFLOW,
 } as const;
+
+/** Alias semântico — mesmo share scope que `FEDERATION_SHARED_WITH_DIAGRAM`. */
+export const FEDERATION_SHARED_WITH_BPMN = FEDERATION_SHARED_WITH_DIAGRAM;
 
 /**
  * Resolve a URL do remote `@delpi/plugin-ui`.

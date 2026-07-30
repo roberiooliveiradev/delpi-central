@@ -1,0 +1,8 @@
+/* Família BPMN — @delpi/plugin-ui */
+@import "./tokens.css";
+@import "./shell.css";
+@import "./fullscreen.css";
+@import "./editor.css";
+@import "./nodes.css";
+@import "./mermaid.css";
+@import "./aliases.css";

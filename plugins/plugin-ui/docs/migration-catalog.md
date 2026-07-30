@@ -129,19 +129,21 @@ Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/pl
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
-## Status — Fase 6 (diagrama / flowchart)
+## Status — Fase 6 (BPMN / flowchart)
 
 | Plugin | Arquivos locais removidos | Status | Notas |
 |--------|---------------------------|--------|-------|
 | `transformometro` | `components/diagram/FlowchartEditor*`, utils `diagram*`, `flowchartMermaid`, `exportFlowchartImage`, `types/bpmnNodeCatalog` | ✅ Migrado | Wrapper `TransformometroFlowchartEditor` + `content/flowchartEditorLabels.ts` |
 
-Pacote: `plugin-ui/src/components/diagram/` + `styles/diagram.css`.
+Pacote: `plugin-ui/src/components/bpmn/` (subpastas por responsabilidade) + `styles/bpmn/`.  
+Guia: [bpmn-editor.md](./bpmn-editor.md). Shim legado: `components/diagram` → `bpmn`.
 
 Após migração:
 - [x] Wrapper fino com `labels`, `confirm`, `colorMode`, `shellClassName`
 - [x] Reexport de tipos de API em `transformometro/src/types/diagram.ts`
-- [x] `npm run build` transformometro + testes plugin-ui diagram
-- [ ] Remover bloco CSS duplicado `tm-diagram-*` de `transformometro/src/index.css` (opcional — alias mantém compatibilidade)
+- [x] `npm run build` transformometro + testes plugin-ui bpmn
+- [x] Família reorganizada `bpmn/` + CSS `delpi-ui-bpmn-*` (aliases `tm-diagram-*`)
+- [x] CSS duplicado `tm-diagram-*` no `index.css` do TM — ausente (grep zero)
 
 ## Infraestrutura de popover (`menu`) — `FixedPanelPortal` (jul/2026)
 

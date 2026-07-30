@@ -1,0 +1,220 @@
+/* BPMN — shell.css */
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section,
+.dashboard-transformometro .delpi-ui-bpmn-section,
+.delpi-ui-flowchart-shell .tm-diagram-section,
+.dashboard-transformometro .tm-diagram-section{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section__checkbox,
+.dashboard-transformometro .delpi-ui-bpmn-section__checkbox,
+.delpi-ui-flowchart-shell .tm-diagram-section__checkbox,
+.dashboard-transformometro .tm-diagram-section__checkbox{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section__actions,
+.dashboard-transformometro .delpi-ui-bpmn-section__actions,
+.delpi-ui-flowchart-shell .tm-diagram-section__actions,
+.dashboard-transformometro .tm-diagram-section__actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section__actions .ds-primary-btn,
+.dashboard-transformometro .delpi-ui-bpmn-section__actions .ds-primary-btn,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section__actions .delpi-ui-ghost-btn,
+.dashboard-transformometro .delpi-ui-bpmn-section__actions .delpi-ui-ghost-btn,
+.delpi-ui-flowchart-shell .tm-diagram-section__actions .ds-primary-btn,
+.dashboard-transformometro .tm-diagram-section__actions .ds-primary-btn,
+.delpi-ui-flowchart-shell .tm-diagram-section__actions .delpi-ui-ghost-btn,
+.dashboard-transformometro .tm-diagram-section__actions .delpi-ui-ghost-btn{
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-section__preview,
+.dashboard-transformometro .delpi-ui-bpmn-section__preview,
+.delpi-ui-flowchart-shell .tm-diagram-section__preview,
+.dashboard-transformometro .tm-diagram-section__preview{
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  padding: 8px 12px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace,
+.dashboard-transformometro .delpi-ui-bpmn-workspace,
+.delpi-ui-flowchart-shell .tm-diagram-workspace,
+.dashboard-transformometro .tm-diagram-workspace{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--embedded,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--embedded,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--embedded,
+.dashboard-transformometro .tm-diagram-workspace--embedded{
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--embedded .delpi-ui-bpmn-workspace__body,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--embedded .delpi-ui-bpmn-workspace__body,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--embedded .tm-diagram-workspace__body,
+.dashboard-transformometro .tm-diagram-workspace--embedded .tm-diagram-workspace__body{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .sr-only, .dashboard-transformometro .sr-only{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 12px 12px;
+  gap: 8px;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-section__actions,
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-section__actions{
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border, #e5e7eb));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__body,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__body,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__body,
+.dashboard-transformometro .tm-diagram-workspace__body{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-export-swimlane-backdrop,
+.dashboard-transformometro .delpi-ui-bpmn-export-swimlane-backdrop,
+.delpi-ui-flowchart-shell .tm-diagram-export-swimlane-backdrop,
+.dashboard-transformometro .tm-diagram-export-swimlane-backdrop{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-diff,
+.dashboard-transformometro .delpi-ui-bpmn-diff,
+.delpi-ui-flowchart-shell .tm-diagram-diff,
+.dashboard-transformometro .tm-diagram-diff{
+  padding: 8px 12px;
+  border-radius: var(--ds-radius-sm);
+  background: var(--ds-surface-muted);
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner, .dashboard-transformometro .tm-collab-banner{
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__alert, .dashboard-transformometro .tm-collab-banner__alert{
+  margin: 0 0 6px;
+  color: var(--ds-danger, #b42318);
+  font-weight: 600;
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__line, .dashboard-transformometro .tm-collab-banner__line{
+  margin: 0;
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__line + .tm-collab-banner__line, .dashboard-transformometro .tm-collab-banner__line + .tm-collab-banner__line{
+  margin-top: 4px;
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__line--muted, .dashboard-transformometro .tm-collab-banner__line--muted{
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__line--info, .dashboard-transformometro .tm-collab-banner__line--info{
+  color: var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell .tm-collab-banner__dismiss, .dashboard-transformometro .tm-collab-banner__dismiss{
+  margin-left: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation,
+.dashboard-transformometro .delpi-ui-bpmn-validation,
+.delpi-ui-flowchart-shell .tm-diagram-validation,
+.dashboard-transformometro .tm-diagram-validation{
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-surface-muted);
+  font-size: var(--ds-font-sm);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issues,
+.dashboard-transformometro .delpi-ui-bpmn-validation__issues,
+.delpi-ui-flowchart-shell .tm-diagram-validation__issues,
+.dashboard-transformometro .tm-diagram-validation__issues{
+  margin: 8px 0 0;
+  padding-left: 1.2rem;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issue--error,
+.dashboard-transformometro .delpi-ui-bpmn-validation__issue--error,
+.delpi-ui-flowchart-shell .tm-diagram-validation__issue--error,
+.dashboard-transformometro .tm-diagram-validation__issue--error{
+  color: var(--ds-danger, #b42318);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issue--warning,
+.dashboard-transformometro .delpi-ui-bpmn-validation__issue--warning,
+.delpi-ui-flowchart-shell .tm-diagram-validation__issue--warning,
+.dashboard-transformometro .tm-diagram-validation__issue--warning{
+  color: var(--ds-warning, #b54708);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__simulation,
+.dashboard-transformometro .delpi-ui-bpmn-validation__simulation,
+.delpi-ui-flowchart-shell .tm-diagram-validation__simulation,
+.dashboard-transformometro .tm-diagram-validation__simulation{
+  margin-top: 10px;
+}

@@ -1,0 +1,211 @@
+/* BPMN — mermaid.css */
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-code,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-code,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-code,
+.dashboard-transformometro .tm-diagram-editor__mermaid-code{
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  font-size: var(--ds-font-xs);
+  white-space: pre-wrap;
+  color: var(--ds-text);
+  background: var(--ds-surface-inset);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-panel,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-panel,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-panel,
+.dashboard-transformometro .tm-diagram-editor__mermaid-panel{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__mermaid-panel--fill,
+.dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-panel--fill{
+  flex: 1;
+  min-height: 280px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-toolbar,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-toolbar,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-toolbar,
+.dashboard-transformometro .tm-diagram-editor__mermaid-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-input,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-input,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-input,
+.dashboard-transformometro .tm-diagram-editor__mermaid-input{
+  width: 100%;
+  min-height: 140px;
+  max-height: min(32vh, 280px);
+  resize: vertical;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: var(--ds-font-xs);
+  line-height: 1.45;
+  color: var(--ds-text);
+  background: var(--ds-surface-inset);
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-preview,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-preview,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-preview,
+.dashboard-transformometro .tm-diagram-editor__mermaid-preview{
+  flex: 1;
+  min-height: 220px;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-preview,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-preview,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview,
+.dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview{
+  min-height: min(40vh, 480px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid,
+.dashboard-transformometro .tm-diagram-mermaid{
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  background: var(--delpi-ui-bpmn-canvas-bg);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark,
+.dashboard-transformometro .tm-diagram-mermaid--dark{
+  color-scheme: dark;
+  background: var(--delpi-ui-bpmn-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-preview.delpi-ui-bpmn-mermaid--dark,
+.dashboard-transformometro .delpi-ui-bpmn-editor__mermaid-preview.delpi-ui-bpmn-mermaid--dark,
+.delpi-ui-flowchart-shell .tm-diagram-editor__mermaid-preview.tm-diagram-mermaid--dark,
+.dashboard-transformometro .tm-diagram-editor__mermaid-preview.tm-diagram-mermaid--dark{
+  background: var(--delpi-ui-bpmn-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg,
+.dashboard-transformometro .tm-diagram-mermaid svg{
+  display: block;
+  flex: 0 0 auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg .tm-mermaid-canvas-bg,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg .tm-mermaid-canvas-bg,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg .tm-mermaid-canvas-bg,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .tm-mermaid-canvas-bg{
+  background-color: var(--delpi-ui-bpmn-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg rect.background,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg rect.background,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg .background,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg .background,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg rect.background,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg rect.background,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg .background,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .background{
+  fill: var(--delpi-ui-bpmn-canvas-bg) !important;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg .node foreignObject,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg .node foreignObject,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--dark svg .node foreignObject div,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--dark svg .node foreignObject div,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg .node foreignObject,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--dark svg .node foreignObject div,
+.dashboard-transformometro .tm-diagram-mermaid--dark svg .node foreignObject div{
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg .cluster-label foreignObject,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg .cluster-label foreignObject,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg .cluster-label foreignObject div,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg .cluster-label foreignObject div,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg .cluster-label foreignObject,
+.dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg .cluster-label foreignObject div,
+.dashboard-transformometro .tm-diagram-mermaid svg .cluster-label foreignObject div{
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  max-width: 280px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg foreignObject,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg foreignObject,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg foreignObject,
+.dashboard-transformometro .tm-diagram-mermaid svg foreignObject{
+  overflow: visible;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg foreignObject div,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg foreignObject div,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg .nodeLabel,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg .nodeLabel,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg .nodeLabel p,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg .nodeLabel p,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid svg .nodeLabel span,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid svg .nodeLabel span,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg foreignObject div,
+.dashboard-transformometro .tm-diagram-mermaid svg foreignObject div,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg .nodeLabel,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg .nodeLabel p,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel p,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid svg .nodeLabel span,
+.dashboard-transformometro .tm-diagram-mermaid svg .nodeLabel span{
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--loading,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--loading,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid--error,
+.dashboard-transformometro .delpi-ui-bpmn-mermaid--error,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--loading,
+.dashboard-transformometro .tm-diagram-mermaid--loading,
+.delpi-ui-flowchart-shell .tm-diagram-mermaid--error,
+.dashboard-transformometro .tm-diagram-mermaid--error{
+  font-size: var(--ds-font-sm);
+  color: var(--ds-text-muted);
+}

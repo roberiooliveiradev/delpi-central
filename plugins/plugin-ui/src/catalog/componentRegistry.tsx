@@ -6,7 +6,7 @@ import { helpCatalogEntries } from "./demos/help";
 import { layoutCatalogEntries } from "./demos/layout";
 import { chartsCatalogEntries } from "./demos/charts";
 import { previewCatalogEntries } from "./demos/preview";
-import { diagramCatalogEntries } from "./demos/diagram";
+import { bpmnCatalogEntries } from "./demos/bpmn";
 import { shapeCatalogEntries } from "./demos/shape";
 import { menuCatalogEntries } from "./demos/menu";
 import { CatalogStub } from "./CatalogStub";
@@ -71,7 +71,7 @@ const EXPLICIT_ENTRIES_RAW = [
   ...exportCatalogEntries,
   ...chartsCatalogEntries,
   ...previewCatalogEntries,
-  ...diagramCatalogEntries,
+  ...bpmnCatalogEntries,
   ...shapeCatalogEntries,
   ...menuCatalogEntries,
 ];

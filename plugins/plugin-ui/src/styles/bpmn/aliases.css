@@ -1,0 +1,11 @@
+/* Compat — tokens legados tm-diagram-* */
+.dashboard-transformometro,
+.delpi-ui-flowchart-shell {
+  --tm-diagram-canvas-bg: var(--delpi-ui-bpmn-canvas-bg);
+  --tm-diagram-dot-color: var(--delpi-ui-bpmn-dot-color);
+  --tm-diagram-edge-color: var(--delpi-ui-bpmn-edge-color);
+  --tm-diagram-minimap-bg: var(--delpi-ui-bpmn-minimap-bg);
+  --tm-diagram-minimap-node: var(--delpi-ui-bpmn-minimap-node);
+  --tm-diagram-controls-bg: var(--delpi-ui-bpmn-controls-bg);
+  --tm-diagram-controls-border: var(--delpi-ui-bpmn-controls-border);
+}

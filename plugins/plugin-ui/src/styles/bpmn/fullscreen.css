@@ -1,0 +1,388 @@
+/* BPMN — fullscreen.css */
+
+/* Modal de confirmação — padrão action plans (PAC) */.dashboard-transformometro.ds-modal-overlay,
+.delpi-ui-flowchart-shell .ds-modal-overlay, .dashboard-transformometro .ds-modal-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 10100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--ds-text) 52%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.delpi-ui-flowchart-shell .ds-modal, .dashboard-transformometro .ds-modal{
+  width: min(480px, 100%);
+  max-height: min(88vh, 640px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--ds-card-radius);
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-card-bg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--ds-text) 28%, transparent);
+  color: var(--ds-text);
+  animation: delpi-ui-bpmn-modal-in 0.18s ease-out;
+}
+
+.delpi-ui-flowchart-shell .ds-modal__header, .dashboard-transformometro .ds-modal__header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .ds-modal__title, .dashboard-transformometro .ds-modal__title{
+  margin: 0;
+  font-size: var(--ds-font-md, 16px);
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell .ds-modal__body, .dashboard-transformometro .ds-modal__body{
+  padding: 16px 18px 18px;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .ds-modal__close, .dashboard-transformometro .ds-modal__close{
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+.delpi-ui-flowchart-shell .ds-confirm-modal__message, .dashboard-transformometro .ds-confirm-modal__message{
+  margin: 0 0 1.25rem;
+  font-size: var(--ds-font-sm, 14px);
+  line-height: 1.55;
+  color: var(--ds-text);
+  white-space: pre-line;
+}
+
+.delpi-ui-flowchart-shell .ds-form-actions--end, .dashboard-transformometro .ds-form-actions--end{
+  justify-content: flex-end;
+}
+
+.delpi-ui-flowchart-shell .ds-danger-btn, .dashboard-transformometro .ds-danger-btn{
+  min-height: var(--ds-control-height);
+  border-radius: var(--ds-control-radius);
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--ds-danger-fg) 55%, transparent);
+  background: color-mix(in srgb, var(--ds-danger-fg) 88%, #000 12%);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .ds-danger-btn:disabled, .dashboard-transformometro .ds-danger-btn:disabled{
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Modal tela cheia — diagrama */.dashboard-transformometro.delpi-ui-bpmn-modal,
+/* Modal tela cheia — diagrama */
+.dashboard-transformometro.tm-diagram-modal{
+  position: fixed;
+  inset: 0;
+  z-index: 10090;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__backdrop,
+.dashboard-transformometro .delpi-ui-bpmn-modal__backdrop,
+.delpi-ui-flowchart-shell .tm-diagram-modal__backdrop,
+.dashboard-transformometro .tm-diagram-modal__backdrop{
+  position: absolute;
+  inset: 0;
+  border: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--ds-text) 52%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__panel,
+.dashboard-transformometro .delpi-ui-bpmn-modal__panel,
+.delpi-ui-flowchart-shell .tm-diagram-modal__panel,
+.dashboard-transformometro .tm-diagram-modal__panel{
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(1440px, 100%);
+  max-width: 100%;
+  height: min(920px, calc(100vh - 32px));
+  max-height: calc(100vh - 32px);
+  background: var(--ds-page-bg);
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-card-radius);
+  box-shadow:
+    0 24px 64px color-mix(in srgb, var(--ds-text) 28%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--ds-card-border) 80%, transparent);
+  overflow: hidden;
+  animation: delpi-ui-bpmn-modal-in 0.18s ease-out;
+}
+
+@keyframes delpi-ui-bpmn-modal-in,
+@keyframes tm-diagram-modal-in{
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__header,
+.dashboard-transformometro .delpi-ui-bpmn-modal__header,
+.delpi-ui-flowchart-shell .tm-diagram-modal__header,
+.dashboard-transformometro .tm-diagram-modal__header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__title,
+.dashboard-transformometro .delpi-ui-bpmn-modal__title,
+.delpi-ui-flowchart-shell .tm-diagram-modal__title,
+.dashboard-transformometro .tm-diagram-modal__title{
+  margin: 0;
+  font-size: var(--ds-font-lg, 18px);
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__subtitle,
+.dashboard-transformometro .delpi-ui-bpmn-modal__subtitle,
+.delpi-ui-flowchart-shell .tm-diagram-modal__subtitle,
+.dashboard-transformometro .tm-diagram-modal__subtitle{
+  margin: 4px 0 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__close,
+.dashboard-transformometro .delpi-ui-bpmn-modal__close,
+.delpi-ui-flowchart-shell .tm-diagram-modal__close,
+.dashboard-transformometro .tm-diagram-modal__close{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__close-icon,
+.dashboard-transformometro .delpi-ui-bpmn-modal__close-icon,
+.delpi-ui-flowchart-shell .tm-diagram-modal__close-icon,
+.dashboard-transformometro .tm-diagram-modal__close-icon{
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body,
+.dashboard-transformometro .tm-diagram-modal__body{
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 16px 16px;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-editor--fill,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-editor--fill,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body .tm-diagram-editor--fill,
+.dashboard-transformometro .tm-diagram-modal__body .tm-diagram-editor--fill{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas{
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-validation,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-validation,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-section__preview,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-section__preview,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body .tm-diagram-validation,
+.dashboard-transformometro .tm-diagram-modal__body .tm-diagram-validation,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body .tm-diagram-section__preview,
+.dashboard-transformometro .tm-diagram-modal__body .tm-diagram-section__preview{
+  flex-shrink: 0;
+  max-height: min(28vh, 240px);
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-section__actions,
+.dashboard-transformometro .delpi-ui-bpmn-modal__body .delpi-ui-bpmn-section__actions,
+.delpi-ui-flowchart-shell .tm-diagram-modal__body .tm-diagram-section__actions,
+.dashboard-transformometro .tm-diagram-modal__body .tm-diagram-section__actions{
+  position: static;
+  flex-shrink: 0;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: var(--ds-page-bg);
+}
+
+@media (max-width: 720px) {
+  .dashboard-transformometro.delpi-ui-bpmn-modal {
+    padding: 0;
+  }
+
+  .delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__panel, .dashboard-transformometro .delpi-ui-bpmn-modal__panel{
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__close, .dashboard-transformometro .delpi-ui-bpmn-modal__close{
+    display: none;
+  }
+
+  .delpi-ui-flowchart-shell .delpi-ui-bpmn-modal__close-icon, .dashboard-transformometro .delpi-ui-bpmn-modal__close-icon{
+    display: inline-flex;
+  }
+}
+
+/* Legado — mantido para referência interna */.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--fullscreen,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--fullscreen,
+/* Legado — mantido para referência interna */
+.delpi-ui-flowchart-shell .tm-diagram-workspace--fullscreen,
+.dashboard-transformometro .tm-diagram-workspace--fullscreen{
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: var(--ds-page-bg);
+  padding: 12px 16px 16px;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__header,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__header,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__header,
+.dashboard-transformometro .tm-diagram-workspace__header{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ds-border-subtle);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__title,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__title,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__title,
+.dashboard-transformometro .tm-diagram-workspace__title{
+  margin: 0;
+  font-size: var(--ds-font-lg);
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__subtitle,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__subtitle,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__subtitle,
+.dashboard-transformometro .tm-diagram-workspace__subtitle{
+  margin: 4px 0 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__expand-row,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__expand-row,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__expand-row,
+.dashboard-transformometro .tm-diagram-workspace__expand-row{
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__expand-btn,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__expand-btn,
+.delpi-ui-flowchart-shell .tm-diagram-workspace__expand-btn,
+.dashboard-transformometro .tm-diagram-workspace__expand-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--modal-body,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--modal-body,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--modal-body,
+.dashboard-transformometro .tm-diagram-workspace--modal-body{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  gap: 8px;
+}
+
+/* ModalShell — tela cheia do diagrama (host-fill / page) */.delpi-ui-diagram-modal.delpi-ui-modal--host-fill,
+.delpi-ui-diagram-modal.delpi-ui-modal--page {
+  overflow: hidden;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-workspace__body,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-workspace__body,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--fullscreen .tm-diagram-workspace__body,
+.dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-workspace__body{
+  flex: 1;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-section__actions,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-section__actions,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--fullscreen .tm-diagram-section__actions,
+.dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-section__actions{
+  position: static;
+  flex-shrink: 0;
+  z-index: 1;
+  padding-top: 12px;
+  border-top: 1px solid var(--ds-border-subtle);
+  background: var(--ds-page-bg);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--fullscreen .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--fullscreen .tm-diagram-editor--fill .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-workspace--fullscreen .tm-diagram-editor--fill .tm-diagram-editor__canvas{
+  min-height: min(72vh, 900px);
+}

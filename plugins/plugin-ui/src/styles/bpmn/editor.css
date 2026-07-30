@@ -1,0 +1,886 @@
+/* BPMN — editor.css */
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-editor--fill,
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-editor--fill{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas{
+  flex: 1 1 auto;
+  min-height: 280px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--overlay-tools,
+.dashboard-transformometro .delpi-ui-bpmn-editor--overlay-tools,
+.delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools,
+.dashboard-transformometro .tm-diagram-editor--overlay-tools{
+  gap: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__stage,
+.dashboard-transformometro .delpi-ui-bpmn-editor__stage,
+.delpi-ui-flowchart-shell .tm-diagram-editor__stage,
+.dashboard-transformometro .tm-diagram-editor__stage{
+  position: relative;
+  min-height: 680px;
+  border-radius: var(--ds-radius-md);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-overlay,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-overlay,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-overlay,
+.dashboard-transformometro .tm-diagram-editor__toolbar-overlay{
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 56px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: calc(100% - 72px);
+  pointer-events: none;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-overlay > *,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-overlay > *,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-overlay > *,
+.dashboard-transformometro .tm-diagram-editor__toolbar-overlay > *{
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-head,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-head,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-head,
+.dashboard-transformometro .tm-diagram-editor__toolbar-head{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-tabs,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-tabs,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tabs,
+.dashboard-transformometro .tm-diagram-editor__toolbar-tabs{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-tab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-tab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab,
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab{
+  border: none;
+  background: transparent;
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-tab.is-active,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-tab.is-active,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab.is-active,
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab.is-active{
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-tab-cell,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-tab-cell,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtab-cell,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtab-cell,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab-cell,
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab-cell,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab-cell,
+.dashboard-transformometro .tm-diagram-editor__palette-subtab-cell{
+  display: inline-flex;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-tab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-tab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab,
+.dashboard-transformometro .tm-diagram-editor__toolbar-tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab,
+.dashboard-transformometro .tm-diagram-editor__palette-subtab{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history,
+.dashboard-transformometro .delpi-ui-bpmn-editor__history,
+.delpi-ui-flowchart-shell .tm-diagram-editor__history,
+.dashboard-transformometro .tm-diagram-editor__history{
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn,
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn,
+.dashboard-transformometro .tm-diagram-editor__history-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn:hover:not(:disabled),
+.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn:hover:not(:disabled),
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:hover:not(:disabled),
+.dashboard-transformometro .tm-diagram-editor__history-btn:hover:not(:disabled){
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn:disabled,
+.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn:disabled,
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:disabled,
+.dashboard-transformometro .tm-diagram-editor__history-btn:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar,
+.dashboard-transformometro .tm-diagram-editor__statusbar{
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-toggles,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-toggles,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-zoom,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-zoom,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-toggles,
+.dashboard-transformometro .tm-diagram-editor__statusbar-toggles,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-zoom,
+.dashboard-transformometro .tm-diagram-editor__statusbar-zoom{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-btn,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn,
+.dashboard-transformometro .tm-diagram-editor__statusbar-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text-muted);
+  padding: 4px 8px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-btn:hover,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-btn:hover,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn:hover,
+.dashboard-transformometro .tm-diagram-editor__statusbar-btn:hover{
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-btn--active,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-btn--active,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn--active,
+.dashboard-transformometro .tm-diagram-editor__statusbar-btn--active{
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-slider,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-slider,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-slider,
+.dashboard-transformometro .tm-diagram-editor__statusbar-slider{
+  width: 120px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__statusbar-percent,
+.dashboard-transformometro .delpi-ui-bpmn-editor__statusbar-percent,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-percent,
+.dashboard-transformometro .tm-diagram-editor__statusbar-percent{
+  min-width: 3.2rem;
+  text-align: right;
+  font-size: var(--ds-font-xs);
+  font-weight: 700;
+  color: var(--ds-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tool-btn--active:not(:disabled),
+.dashboard-transformometro .delpi-ui-bpmn-editor__tool-btn--active:not(:disabled),
+.delpi-ui-flowchart-shell .tm-diagram-editor__tool-btn--active:not(:disabled),
+.dashboard-transformometro .tm-diagram-editor__tool-btn--active:not(:disabled){
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-help,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-help,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-help,
+.dashboard-transformometro .tm-diagram-editor__toolbar-help{
+  border: none;
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-panel,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-panel,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-panel,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel{
+  padding: 6px 8px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 90%, transparent);
+  backdrop-filter: blur(10px);
+  max-height: min(168px, 24vh);
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtabs,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtabs,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtabs,
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtabs--compact,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtabs--compact,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtabs--compact,
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact{
+  padding-left: 2px;
+  margin-bottom: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab,
+.dashboard-transformometro .tm-diagram-editor__palette-subtab{
+  border: 1px solid transparent;
+  background: color-mix(in srgb, var(--ds-surface-muted) 70%, transparent);
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtab.is-active,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtab.is-active,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab.is-active,
+.dashboard-transformometro .tm-diagram-editor__palette-subtab.is-active{
+  color: var(--ds-text);
+  border-color: var(--ds-accent);
+  background: var(--ds-accent-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ds-accent) 35%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-subtabs--compact .delpi-ui-bpmn-editor__palette-subtab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtabs--compact .delpi-ui-bpmn-editor__palette-subtab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab,
+.dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab{
+  font-size: 9px;
+  padding: 2px 7px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-groups,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-groups,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-groups,
+.dashboard-transformometro .tm-diagram-editor__palette-groups{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(340px, 48vh);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-group-title,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette-group-title,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-group-title,
+.dashboard-transformometro .tm-diagram-editor__palette-group-title{
+  margin: 0 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__palette,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__palette,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__templates,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__templates,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__actions,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__actions,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-panel .tm-diagram-editor__templates,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__templates,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-panel .tm-diagram-editor__actions,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__actions{
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__view-tabs--overlay,
+.dashboard-transformometro .delpi-ui-bpmn-editor__view-tabs--overlay,
+.delpi-ui-flowchart-shell .tm-diagram-editor__view-tabs--overlay,
+.dashboard-transformometro .tm-diagram-editor__view-tabs--overlay{
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock,
+.dashboard-transformometro .tm-diagram-editor__action-dock{
+  position: absolute;
+  bottom: 56px;
+  right: 12px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-item,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-item,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-item,
+.dashboard-transformometro .tm-diagram-editor__action-dock-item{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-label,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-label,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-label,
+.dashboard-transformometro .tm-diagram-editor__action-dock-label{
+  position: absolute;
+  right: calc(100% + 8px);
+  padding: 5px 10px;
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent));
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 18%, transparent);
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  color: var(--ds-text);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(6px);
+  transition:
+    opacity 0.18s ease,
+    transform 0.18s ease,
+    visibility 0.18s ease;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-item:hover .delpi-ui-bpmn-editor__action-dock-label,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-item:hover .delpi-ui-bpmn-editor__action-dock-label,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-item:focus-within .delpi-ui-bpmn-editor__action-dock-label,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-item:focus-within .delpi-ui-bpmn-editor__action-dock-label,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-item:hover .tm-diagram-editor__action-dock-label,
+.dashboard-transformometro .tm-diagram-editor__action-dock-item:hover .tm-diagram-editor__action-dock-label,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-item:focus-within .tm-diagram-editor__action-dock-label,
+.dashboard-transformometro .tm-diagram-editor__action-dock-item:focus-within .tm-diagram-editor__action-dock-label{
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-btn,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-btn,
+.dashboard-transformometro .tm-diagram-editor__action-dock-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--ds-text);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    color 0.15s ease;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-btn:hover:not(:disabled),
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-btn:hover:not(:disabled),
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-btn:hover:not(:disabled),
+.dashboard-transformometro .tm-diagram-editor__action-dock-btn:hover:not(:disabled){
+  background: var(--ds-surface-muted);
+  border-color: var(--ds-card-border);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-btn:focus-visible,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-btn:focus-visible,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-btn:focus-visible,
+.dashboard-transformometro .tm-diagram-editor__action-dock-btn:focus-visible{
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-btn:disabled,
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-btn:disabled,
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-btn:disabled,
+.dashboard-transformometro .tm-diagram-editor__action-dock-btn:disabled{
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__action-dock-btn--active:not(:disabled),
+.dashboard-transformometro .delpi-ui-bpmn-editor__action-dock-btn--active:not(:disabled),
+.delpi-ui-flowchart-shell .tm-diagram-editor__action-dock-btn--active:not(:disabled),
+.dashboard-transformometro .tm-diagram-editor__action-dock-btn--active:not(:disabled){
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--overlay-tools .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-editor--overlay-tools .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas{
+  height: 100%;
+  min-height: 680px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor,
+.dashboard-transformometro .delpi-ui-bpmn-editor,
+.delpi-ui-flowchart-shell .tm-diagram-editor,
+.dashboard-transformometro .tm-diagram-editor{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill,
+.dashboard-transformometro .tm-diagram-editor--fill{
+  flex: 1;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .tm-tab-panel-transition,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-tab-panel-transition,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .tm-tab-panel-transition,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-tab-panel-transition,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-tab-panel-transition,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill .delpi-ui-tab-panel-transition,
+.dashboard-transformometro .tm-diagram-editor--fill .tm-tab-panel-transition,
+.dashboard-transformometro .tm-diagram-editor--fill .delpi-ui-tab-panel-transition{
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__canvas{
+  flex: 1 1 auto;
+  min-height: min(620px, 58vh);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace--embedded .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-workspace--embedded .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-workspace--embedded .tm-diagram-editor--fill .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-workspace--embedded .tm-diagram-editor--fill .tm-diagram-editor__canvas{
+  min-height: min(620px, 58vh);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar--compact,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar--compact,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar--compact,
+.dashboard-transformometro .tm-diagram-editor__toolbar--compact{
+  gap: 4px 6px;
+  padding: 6px 8px;
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  border-radius: var(--ds-radius-md);
+  background: color-mix(in srgb, var(--ds-card-bg) 94%, var(--ds-accent) 6%);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar--compact .delpi-ui-bpmn-editor__actions-row,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar--compact .delpi-ui-bpmn-editor__actions-row,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar--compact .tm-diagram-editor__actions-row,
+.dashboard-transformometro .tm-diagram-editor__toolbar--compact .tm-diagram-editor__actions-row{
+  flex-basis: auto;
+  padding-top: 0;
+  border-top: none;
+  margin-left: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar--compact .delpi-ui-bpmn-editor__hint,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar--compact .delpi-ui-bpmn-editor__hint,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar--compact .tm-diagram-editor__hint,
+.dashboard-transformometro .tm-diagram-editor__toolbar--compact .tm-diagram-editor__hint{
+  margin-left: auto;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar,
+.dashboard-transformometro .tm-diagram-editor__toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette,
+.dashboard-transformometro .delpi-ui-bpmn-editor__palette,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__templates,
+.dashboard-transformometro .delpi-ui-bpmn-editor__templates,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__actions,
+.dashboard-transformometro .delpi-ui-bpmn-editor__actions,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette,
+.dashboard-transformometro .tm-diagram-editor__palette,
+.delpi-ui-flowchart-shell .tm-diagram-editor__templates,
+.dashboard-transformometro .tm-diagram-editor__templates,
+.delpi-ui-flowchart-shell .tm-diagram-editor__actions,
+.dashboard-transformometro .tm-diagram-editor__actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__section-label,
+.dashboard-transformometro .delpi-ui-bpmn-editor__section-label,
+.delpi-ui-flowchart-shell .tm-diagram-editor__section-label,
+.dashboard-transformometro .tm-diagram-editor__section-label{
+  font-size: var(--ds-font-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ds-text-muted);
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__actions-row,
+.dashboard-transformometro .delpi-ui-bpmn-editor__actions-row,
+.delpi-ui-flowchart-shell .tm-diagram-editor__actions-row,
+.dashboard-transformometro .tm-diagram-editor__actions-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex-basis: 100%;
+  padding-top: 4px;
+  border-top: 1px solid var(--ds-border-subtle);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tool-wrap,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tool-wrap,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tool-wrap,
+.dashboard-transformometro .tm-diagram-editor__tool-wrap{
+  border-bottom: none;
+  cursor: default;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tool-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tool-btn,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tool-btn,
+.dashboard-transformometro .tm-diagram-editor__tool-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tool-btn:disabled,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tool-btn:disabled,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tool-btn:disabled,
+.dashboard-transformometro .tm-diagram-editor__tool-btn:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__hint-link,
+.dashboard-transformometro .delpi-ui-bpmn-editor__hint-link,
+.delpi-ui-flowchart-shell .tm-diagram-editor__hint-link,
+.dashboard-transformometro .tm-diagram-editor__hint-link{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ds-accent);
+  font-weight: 600;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__hint-wrap,
+.dashboard-transformometro .delpi-ui-bpmn-editor__hint-wrap,
+.delpi-ui-flowchart-shell .tm-diagram-editor__hint-wrap,
+.dashboard-transformometro .tm-diagram-editor__hint-wrap{
+  border-bottom: none;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tab-wrap,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tab-wrap,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tab-wrap,
+.dashboard-transformometro .tm-diagram-editor__tab-wrap{
+  border-bottom: none;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__hint,
+.dashboard-transformometro .delpi-ui-bpmn-editor__hint,
+.delpi-ui-flowchart-shell .tm-diagram-editor__hint,
+.dashboard-transformometro .tm-diagram-editor__hint{
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tabs,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tabs,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tabs,
+.dashboard-transformometro .tm-diagram-editor__tabs{
+  display: flex;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tab,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tab,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tab,
+.dashboard-transformometro .tm-diagram-editor__tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--ds-card-border);
+  background: var(--ds-surface-muted);
+  border-radius: var(--ds-radius-sm);
+  padding: 4px 10px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text);
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__tab.is-active,
+.dashboard-transformometro .delpi-ui-bpmn-editor__tab.is-active,
+.delpi-ui-flowchart-shell .tm-diagram-editor__tab.is-active,
+.dashboard-transformometro .tm-diagram-editor__tab.is-active{
+  background: var(--ds-accent-soft);
+  border-color: var(--ds-accent);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__canvas,
+.dashboard-transformometro .delpi-ui-bpmn-editor__canvas,
+.delpi-ui-flowchart-shell .tm-diagram-editor__canvas,
+.dashboard-transformometro .tm-diagram-editor__canvas{
+  height: 680px;
+  min-height: 680px;
+  border: 1px solid var(--ds-card-border);
+  border-radius: var(--ds-radius-md);
+  overflow: hidden;
+  background: var(--delpi-ui-bpmn-canvas-bg);
+  position: relative;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__canvas .react-flow,
+.dashboard-transformometro .delpi-ui-bpmn-editor__canvas .react-flow,
+.delpi-ui-flowchart-shell .tm-diagram-editor__canvas .react-flow,
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow{
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  background-color: var(--delpi-ui-bpmn-canvas-bg);
+  --xy-background-color: var(--delpi-ui-bpmn-canvas-bg);
+  --xy-background-pattern-dots-color: var(--delpi-ui-bpmn-dot-color);
+  --xy-background-pattern-lines-color: var(--delpi-ui-bpmn-dot-color);
+  --xy-edge-stroke-default: var(--delpi-ui-bpmn-edge-color);
+  --xy-edge-stroke-selected-default: var(--ds-accent);
+  --xy-connectionline-stroke-default: var(--delpi-ui-bpmn-edge-color);
+  --xy-minimap-background-color: var(--delpi-ui-bpmn-minimap-bg);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--delpi-ui-bpmn-canvas-bg) 55%, transparent);
+  --xy-minimap-node-background-color: var(--delpi-ui-bpmn-minimap-node);
+  --xy-minimap-node-stroke-color: var(--ds-card-border);
+  --xy-controls-button-background-color: var(--delpi-ui-bpmn-controls-bg);
+  --xy-controls-button-background-color-hover-default: var(--ds-surface-muted);
+  --xy-controls-button-border-color-default: var(--delpi-ui-bpmn-controls-border);
+  --xy-controls-button-color-default: var(--ds-text);
+  --xy-controls-button-color-hover-default: var(--ds-text);
+  --xy-controls-box-shadow-default: 0 0 0 1px var(--delpi-ui-bpmn-controls-border);
+  --xy-edge-label-background-color: var(--ds-card-bg);
+  --xy-edge-label-color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__canvas--swimlanes,
+.dashboard-transformometro .delpi-ui-bpmn-editor__canvas--swimlanes,
+.delpi-ui-flowchart-shell .tm-diagram-editor__canvas--swimlanes,
+.dashboard-transformometro .tm-diagram-editor__canvas--swimlanes{
+  min-height: 360px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__lane-select,
+.dashboard-transformometro .delpi-ui-bpmn-editor__lane-select,
+.delpi-ui-flowchart-shell .tm-diagram-editor__lane-select,
+.dashboard-transformometro .tm-diagram-editor__lane-select{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--ds-font-xs);
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__lane-select .ds-select__trigger,
+.dashboard-transformometro .delpi-ui-bpmn-editor__lane-select .ds-select__trigger,
+.delpi-ui-flowchart-shell .tm-diagram-editor__lane-select .ds-select__trigger,
+.dashboard-transformometro .tm-diagram-editor__lane-select .ds-select__trigger{
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: var(--ds-radius-sm);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__elements,
+.dashboard-transformometro .delpi-ui-bpmn-editor__elements,
+.delpi-ui-flowchart-shell .tm-diagram-editor__elements,
+.dashboard-transformometro .tm-diagram-editor__elements{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__elements-lanes--panel,
+.dashboard-transformometro .delpi-ui-bpmn-editor__elements-lanes--panel,
+.delpi-ui-flowchart-shell .tm-diagram-editor__elements-lanes--panel,
+.dashboard-transformometro .tm-diagram-editor__elements-lanes--panel{
+  border-top: none;
+  padding-top: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__palette,
+.dashboard-transformometro .delpi-ui-bpmn-editor__toolbar-panel .delpi-ui-bpmn-editor__palette,
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette,
+.dashboard-transformometro .tm-diagram-editor__toolbar-panel .tm-diagram-editor__palette{
+  max-height: min(96px, 14vh);
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__elements-lanes,
+.dashboard-transformometro .delpi-ui-bpmn-editor__elements-lanes,
+.delpi-ui-flowchart-shell .tm-diagram-editor__elements-lanes,
+.dashboard-transformometro .tm-diagram-editor__elements-lanes{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+}
+
+/* Root do editor — garante visibilidade mesmo se regras filhas vazarem para o shell */.delpi-ui-flowchart-shell.delpi-ui-bpmn-editor,
+.dashboard-transformometro .delpi-ui-flowchart-shell.delpi-ui-bpmn-editor,
+/* Root do editor — garante visibilidade mesmo se regras filhas vazarem para o shell */
+.delpi-ui-flowchart-shell.tm-diagram-editor,
+.dashboard-transformometro .delpi-ui-flowchart-shell.tm-diagram-editor{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  pointer-events: auto;
+  clip: auto;
+  transform: none;
+  background: transparent;
+}

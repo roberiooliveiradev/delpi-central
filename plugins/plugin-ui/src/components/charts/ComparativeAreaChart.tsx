@@ -10,7 +10,7 @@ import {
 } from "recharts";
 
 import { delpiUiClass } from "../../utils/delpiUiClass";
-import { useDelpiDarkMode } from "../diagram/hooks/useDelpiDarkMode";
+import { useDelpiDarkMode } from "../bpmn/hooks/useDelpiDarkMode";
 
 export type ComparativeAreaChartSeries = {
   dataKey: string;

@@ -55,8 +55,8 @@ import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { ProcessoMatrizImpactoSection } from "../processos/ProcessoMatrizImpactoSection";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
-import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
-import { ProcessoDiagramComposedSection } from "../../components/diagram/ProcessoDiagramComposedSection";
+import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
+import { ProcessoDiagramComposedSection } from "../../components/diagram/sections/ProcessoDiagramComposedSection";
 import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
 import {
   masterPayloadFromProcessoForm,
