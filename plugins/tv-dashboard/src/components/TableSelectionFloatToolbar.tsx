@@ -1,6 +1,7 @@
 import {
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
+  presetDefaultTableOptions,
   tableElementPrimaryPartRef,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
@@ -12,14 +13,11 @@ import {
   applyTableAddElementChoice,
   type TableAddElementChoiceId,
 } from "../content/tableAddElementMenuCatalog";
-import {
-  findTableStyleRecipe,
-  resolveActiveTableStyleRecipeId,
-  TABLE_STYLE_RECIPES,
-} from "../content/tableStyleRecipes";
+import { type TableStyleRecipe } from "../content/tableStyleRecipes";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
-import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
 import { TableAddElementMenu } from "./TableAddElementMenu";
+import { TableDataMenu, type TableDataMenuActionId } from "./TableDataMenu";
+import { TableStylesMenu } from "./TableStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -27,14 +25,13 @@ type Props = {
 };
 
 /**
- * Float da tabela — + elementos (flyouts), pincel recipes, funil colunas/fonte.
+ * Float da tabela — + elementos, pincel estilos, funil dados (mesmos menus da ribbon).
  */
 export function TableSelectionFloatToolbar({ block }: Props) {
   const { updateSelected, openDataPanel, selectTablePart, setSelectionPanelTab } =
     useComunicadoEditor();
 
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
-  const activeStyleId = resolveActiveTableStyleRecipeId(options, block.tablePreset ?? "grid");
 
   const persistOptions = (nextOptions: ComunicadoTableOptions, preset = block.tablePreset) => {
     updateSelected({
@@ -56,9 +53,7 @@ export function TableSelectionFloatToolbar({ block }: Props) {
     setSelectionPanelTab("element");
   };
 
-  const applyRecipe = (recipeId: string) => {
-    const recipe = findTableStyleRecipe(recipeId);
-    if (!recipe) return;
+  const applyRecipe = (recipe: TableStyleRecipe) => {
     const next = mergeComunicadoTableOptions(
       { ...options, ...recipe.options },
       recipe.preset,
@@ -66,14 +61,18 @@ export function TableSelectionFloatToolbar({ block }: Props) {
     persistOptions(next, recipe.preset);
   };
 
-  const openDataFocus = (anchorId?: string) => {
+  const clearTableStyle = () => {
+    persistOptions(presetDefaultTableOptions("grid"), "grid");
+  };
+
+  const openDataFocus = (actionId: TableDataMenuActionId) => {
     openDataPanel();
     setSelectionPanelTab("data");
-    if (anchorId) {
-      requestAnimationFrame(() => {
-        document.getElementById(anchorId)?.scrollIntoView({ block: "nearest" });
-      });
-    }
+    const anchorId =
+      actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
+    requestAnimationFrame(() => {
+      document.getElementById(anchorId)?.scrollIntoView({ block: "nearest" });
+    });
   };
 
   return (
@@ -96,43 +95,28 @@ export function TableSelectionFloatToolbar({ block }: Props) {
         />
       )}
       renderStyle={(close) => (
-        <FloatChecklist aria-label="Estilos da tabela">
-          {TABLE_STYLE_RECIPES.slice(0, 8).map((recipe) => (
-            <FloatChecklistItem
-              key={recipe.id}
-              label={recipe.label}
-              active={activeStyleId === recipe.id}
-              onClick={() => {
-                applyRecipe(recipe.id);
-                close();
-              }}
-            />
-          ))}
-        </FloatChecklist>
+        <div className="td-chart-float__popover td-chart-float__popover--style">
+          <TableStylesMenu
+            options={options}
+            preset={block.tablePreset}
+            onApplyRecipe={(recipe) => {
+              applyRecipe(recipe);
+              close();
+            }}
+            onClear={() => {
+              clearTableStyle();
+              close();
+            }}
+          />
+        </div>
       )}
       renderData={(close) => (
-        <>
-          <button
-            type="button"
-            className="td-deck-ribbon__cascade-item"
-            onClick={() => {
-              openDataFocus("td-view-data-source");
-              close();
-            }}
-          >
-            Selecionar fonte…
-          </button>
-          <button
-            type="button"
-            className="td-deck-ribbon__cascade-item"
-            onClick={() => {
-              openDataFocus("td-view-table-columns");
-              close();
-            }}
-          >
-            Colunas do visual…
-          </button>
-        </>
+        <TableDataMenu
+          onSelect={(actionId) => {
+            openDataFocus(actionId);
+            close();
+          }}
+        />
       )}
     />
   );

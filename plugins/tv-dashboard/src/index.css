@@ -3916,6 +3916,10 @@ body.td-composer--marqueeing *{
     linear-gradient(#089bdb, #089bdb) 8px 8px / 28px 10px no-repeat,
     #fff;
 }
+.dashboard-tv-dashboard .td-table-style-menu__thumb{
+  /* Thumb da receita: cores via style inline (header/célula). */
+  background: #f8fafc;
+}
 .dashboard-tv-dashboard .td-chart-style-menu__style-thumb--markers-on{
   background:
     radial-gradient(circle at 10px 13px, #089bdb 2px, transparent 3px),

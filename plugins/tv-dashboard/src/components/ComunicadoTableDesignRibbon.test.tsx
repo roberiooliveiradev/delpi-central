@@ -39,6 +39,7 @@ vi.mock("./comunicadoEditorContext", () => ({
     updateSelectedTextFormatStyle: vi.fn(),
     selectTablePart,
     openDataPanel,
+    setSelectionPanelTab: vi.fn(),
     requestRibbonTab: vi.fn(),
     groupSelected: vi.fn(),
     ungroupSelected: vi.fn(),
@@ -68,11 +69,11 @@ vi.mock("./comunicadoEditorContext", () => ({
 }));
 
 describe("ComunicadoTableDesignRibbon", () => {
-  it("oferece galeria de estilos colapsada e seção Fonte global da tabela", () => {
+  it("oferece Alterar estilos e tipografia global da tabela", () => {
     render(<ComunicadoTableDesignRibbon />);
-    expect(screen.getByRole("button", { name: "Galeria de estilos de tabela" })).toBeTruthy();
-    expect(screen.getByText("Estilos")).toBeTruthy();
-    expect(screen.queryByRole("list", { name: "Estilos de tabela" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Alterar\s*estilos/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Adicionar\s*elemento/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Selecionar\s*dados/i })).toBeTruthy();
     expect(screen.getByLabelText("Família da fonte")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Negrito" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Itálico" })).toBeTruthy();

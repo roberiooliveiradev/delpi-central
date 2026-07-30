@@ -158,9 +158,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Formas geométricas com preenchimento e contorno. Em Linha, use as alças das pontas; aproxime de outro bloco para conectar.",
     chartData: "Fonte e vínculo dos dados do gráfico.",
     chartType: "Abre o catálogo de tipos (mesmo de Inserir → Gráficos) para trocar o gráfico.",
-    tableData: "Fonte e vínculo dos dados da tabela.",
+    tableData: "Fonte e colunas do visual da tabela (menu com ícones, como no gráfico).",
     tableStyles:
-      "Galeria de estilos da tabela (claros/médios/escuros). Na faixa fica colapsada em «Estilos»; abra o menu para aplicar um preset.",
+      "Presets Claros/Médios/Escuros da tabela. Na faixa: «Alterar estilos» (mesmo painel do pincel flutuante).",
     tableStyleOptions:
       "Inclui ou remove elementos da tabela (título, cabeçalho, totais, listras, primeira/última coluna e bordas). Cada item abre Mostrar/Ocultar — igual ao «Adicionar elemento» do gráfico.",
     tableTypography:
