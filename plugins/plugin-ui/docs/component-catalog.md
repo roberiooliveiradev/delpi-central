@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | PageHeader, KpiCard, RibbonGroupsRow, RibbonGroup, ChartCard… |
+| layout | PageHeader, EditorChrome, KpiCard, RibbonGroupsRow, RibbonGroup, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress… |
 | forms | SelectField, DateField, MultiSelectField… |
 | **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
@@ -700,6 +700,8 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `inline-loading-progress.css` | `InlineLoadingProgress` — `.delpi-ui-inline-loading-progress*` |
 | `screen-loading.css` | `ScreenLoading` — `.delpi-ui-screen-loading*` |
 | `ribbon-overflow.css` | `RibbonGroupsRow` / `RibbonGroup` — `.delpi-ui-ribbon-groups*` / `.delpi-ui-ribbon-group*` |
+| `ribbon-tile.css` | `RibbonTile` / `RibbonTiles` — `.delpi-ui-ribbon-tile*` |
+| `editor-chrome.css` | `EditorChrome` — `.delpi-ui-editor-chrome*` |
 | `dashboard-filters.css` | `FiltersRow` / `filter-box` / `__spacer` / `FilterBarShell` |
 | `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` (+ `--trailing` / `__label`) |
 

@@ -19,6 +19,69 @@
   gap: 0;
 }
 
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--chrome,
+.dashboard-transformometro .delpi-ui-bpmn-editor--chrome,
+.delpi-ui-flowchart-shell .tm-diagram-editor--chrome,
+.dashboard-transformometro .tm-diagram-editor--chrome{
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--chrome .delpi-ui-bpmn-editor__stage,
+.dashboard-transformometro .delpi-ui-bpmn-editor--chrome .delpi-ui-bpmn-editor__stage,
+.delpi-ui-flowchart-shell .tm-diagram-editor--chrome .tm-diagram-editor__stage,
+.dashboard-transformometro .tm-diagram-editor--chrome .tm-diagram-editor__stage{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--chrome .delpi-ui-editor-chrome,
+.dashboard-transformometro .delpi-ui-bpmn-editor--chrome .delpi-ui-editor-chrome{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--chrome .delpi-ui-editor-chrome__body,
+.dashboard-transformometro .delpi-ui-bpmn-editor--chrome .delpi-ui-editor-chrome__body{
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-back,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-back{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-back:hover,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-back:hover{
+  background: color-mix(in srgb, var(--primary, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__view-tabs--chrome,
+.dashboard-transformometro .delpi-ui-bpmn-editor__view-tabs--chrome{
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+}
+
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__stage,
 .dashboard-transformometro .delpi-ui-bpmn-editor__stage,
 .delpi-ui-flowchart-shell .tm-diagram-editor__stage,

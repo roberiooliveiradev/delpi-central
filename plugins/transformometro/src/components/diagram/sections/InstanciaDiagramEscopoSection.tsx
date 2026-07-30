@@ -28,6 +28,11 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
   variant?: "embedded" | "page";
+  chromeLeading?: {
+    onBack?: () => void;
+    backLabel?: string;
+    title?: string;
+  };
   resyncVersion?: number;
   onError: (message: string | null) => void;
   /** Após salvar — invalida diagrama composto do processo (keep-alive). */
@@ -41,6 +46,7 @@ export function InstanciaDiagramEscopoSection({
   readOnly = false,
   embeddedInCard = false,
   variant = "embedded",
+  chromeLeading,
   resyncVersion = 0,
   onError,
   onSaved,
@@ -142,6 +148,7 @@ export function InstanciaDiagramEscopoSection({
         onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
         showTemplates={false}
         showPreviewTab={false}
+        chromeLeading={variant === "page" ? chromeLeading : undefined}
       />
 
       {!readOnly ? (

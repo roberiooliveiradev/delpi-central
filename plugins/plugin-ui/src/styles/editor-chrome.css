@@ -1,0 +1,93 @@
+/**
+ * Editor chrome — head + ribbon + body (padrão TV Dashboard).
+ * Classes: .delpi-ui-editor-chrome*
+ */
+
+.delpi-ui-editor-chrome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  box-sizing: border-box;
+  --delpi-ui-editor-chrome-head-height: 40px;
+  --delpi-ui-editor-chrome-radius: 8px;
+  --delpi-ui-editor-chrome-border: color-mix(
+    in srgb,
+    var(--border, rgba(127, 127, 127, 0.35)) 85%,
+    transparent
+  );
+  --delpi-ui-editor-chrome-surface: color-mix(
+    in srgb,
+    var(--text, currentColor) 3%,
+    var(--surface, transparent)
+  );
+}
+
+.delpi-ui-editor-chrome__head {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  min-height: var(--delpi-ui-editor-chrome-head-height);
+  border-bottom: 1px solid var(--delpi-ui-editor-chrome-border);
+  background: var(--delpi-ui-editor-chrome-surface);
+  border-radius: var(--delpi-ui-editor-chrome-radius) var(--delpi-ui-editor-chrome-radius) 0 0;
+  overflow-x: clip;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+.delpi-ui-editor-chrome__head-leading,
+.delpi-ui-editor-chrome__head-tabs,
+.delpi-ui-editor-chrome__head-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0 4px;
+}
+
+.delpi-ui-editor-chrome__head-tabs {
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.delpi-ui-editor-chrome__head-trail {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 1;
+  min-width: 0;
+  margin-left: auto;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, var(--muted, inherit));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delpi-ui-editor-chrome__ribbon {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 6px 6px;
+  border-bottom: 1px solid var(--delpi-ui-editor-chrome-border);
+  background: var(--delpi-ui-editor-chrome-surface);
+  overflow-x: hidden;
+  overflow-y: hidden;
+  box-sizing: border-box;
+}
+
+.delpi-ui-editor-chrome__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}

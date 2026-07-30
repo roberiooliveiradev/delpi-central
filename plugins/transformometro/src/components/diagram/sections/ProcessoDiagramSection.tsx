@@ -31,6 +31,11 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
   variant?: "embedded" | "page";
+  chromeLeading?: {
+    onBack?: () => void;
+    backLabel?: string;
+    title?: string;
+  };
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onEntityChanged?: () => void;
@@ -42,6 +47,7 @@ export function ProcessoDiagramSection({
   readOnly = false,
   embeddedInCard = false,
   variant = "embedded",
+  chromeLeading,
   resyncVersion = 0,
   onError,
   onEntityChanged,
@@ -165,6 +171,7 @@ export function ProcessoDiagramSection({
         value={flowchart}
         onChange={readOnly ? undefined : setFlowchart}
         readOnly={readOnly}
+        chromeLeading={variant === "page" ? chromeLeading : undefined}
       />
 
       <DiagramValidationPanel report={validation} loading={validating} />

@@ -39,3 +39,17 @@ export {
   type ElementTogglePopoverProps,
   type ElementTogglePresence,
 } from "./ElementTogglePopover";
+export {
+  RibbonTile,
+  RibbonTiles,
+  ribbonTileBemClasses,
+  ribbonTilesBemClasses,
+  type RibbonTileProps,
+  type RibbonTilesProps,
+} from "./RibbonTile";
+export {
+  EditorRibbonSection,
+  EditorRibbonSections,
+  type EditorRibbonSectionProps,
+  type EditorRibbonSectionsProps,
+} from "./EditorRibbonSection";

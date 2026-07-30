@@ -374,3 +374,10 @@ export {
   type InputElementDefinition,
   type InputElementId,
 } from "./inputFilterElementCatalog";
+export {
+  EditorChrome,
+  editorChromeBemClasses,
+  type EditorChromeClassNames,
+  type EditorChromeDensity,
+  type EditorChromeProps,
+} from "./EditorChrome";

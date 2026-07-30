@@ -40,6 +40,11 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
   variant?: "embedded" | "page";
+  chromeLeading?: {
+    onBack?: () => void;
+    backLabel?: string;
+    title?: string;
+  };
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onReload?: () => void;
@@ -52,6 +57,7 @@ export function RevisaoDiagramSection({
   readOnly = false,
   embeddedInCard = false,
   variant = "embedded",
+  chromeLeading,
   resyncVersion = 0,
   onError,
   onReload,
@@ -192,6 +198,7 @@ export function RevisaoDiagramSection({
         }
         readOnly={readOnly}
         diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
+        chromeLeading={variant === "page" ? chromeLeading : undefined}
       />
 
       <details

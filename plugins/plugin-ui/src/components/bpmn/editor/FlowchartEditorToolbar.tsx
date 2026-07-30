@@ -1,12 +1,25 @@
-import { Boxes, CircleHelp, LayoutTemplate, type LucideIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Boxes,
+  CircleHelp,
+  Code2,
+  LayoutTemplate,
+  Pencil,
+  type LucideIcon,
+} from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { HelpTooltip } from "../../help/HelpTooltip";
 import { TabHintCell } from "../../help/TabHintCell";
+import { EditorChrome } from "../../layout/EditorChrome";
+import {
+  EditorRibbonSection,
+  EditorRibbonSections,
+} from "../../ribbon/EditorRibbonSection";
+import { RibbonTile, RibbonTiles } from "../../ribbon/RibbonTile";
 import type { FlowchartEditorLabels } from "../model/flowchartEditorLabels";
 import type { BpmnPaletteCategoryId } from "../model/bpmnNodeCatalog";
 import type { FlowchartLane, FlowchartNodeType } from "../model/diagram";
-import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
 import { FlowchartEditorHistoryActions } from "./FlowchartEditorHistoryActions";
 import { FlowchartLaneToolbar } from "../nodes/FlowchartLaneToolbar";
 import {
@@ -24,6 +37,12 @@ import {
 
 export type FlowchartEditorToolbarTab = "elements" | "models";
 
+export type FlowchartEditorChromeLeading = {
+  onBack?: () => void;
+  backLabel?: string;
+  title?: string;
+};
+
 type Props = {
   labels: FlowchartEditorLabels;
   toolbarTab: FlowchartEditorToolbarTab;
@@ -37,6 +56,12 @@ type Props = {
   canRedo?: boolean;
   onUndo?: () => void;
   onRedo?: () => void;
+  chromeLeading?: FlowchartEditorChromeLeading;
+  portalScopeClassName?: string;
+  showPreviewTab?: boolean;
+  activeViewTab?: "canvas" | "mermaid";
+  onViewTabChange?: (tab: "canvas" | "mermaid") => void;
+  children: ReactNode;
 };
 
 function PaletteSubTabs<T extends string>({
@@ -88,6 +113,9 @@ function PaletteSubTabs<T extends string>({
   );
 }
 
+/**
+ * Chrome 2-tier do editor BPMN (head + ribbon com seções colapsáveis) + corpo.
+ */
 export function FlowchartEditorToolbar({
   labels,
   toolbarTab,
@@ -101,6 +129,12 @@ export function FlowchartEditorToolbar({
   canRedo = false,
   onUndo,
   onRedo,
+  chromeLeading,
+  portalScopeClassName,
+  showPreviewTab = false,
+  activeViewTab = "canvas",
+  onViewTabChange,
+  children,
 }: Props) {
   const addLaneAction = diagramEditorAddLaneAction(labels);
   const layoutActions = useMemo(() => diagramEditorLayoutActions(labels), [labels]);
@@ -124,82 +158,117 @@ export function FlowchartEditorToolbar({
     [labels],
   );
 
-  const [elementGroup, setElementGroup] = useState<FlowchartElementGroupTab>("events");
   const [eventSubTab, setEventSubTab] = useState<BpmnPaletteCategoryId>("events_start");
 
-  const activeCategory = resolvePaletteCategory(elementGroup, eventSubTab);
-  const paletteItems = activeCategory ? paletteByCategory(activeCategory) : [];
+  const backLabel = chromeLeading?.backLabel ?? "Voltar";
 
-  return (
-    <div className="delpi-ui-bpmn-editor__toolbar-overlay" role="toolbar" aria-label={labels.toolbarAriaLabel}>
-      <div className="delpi-ui-bpmn-editor__toolbar-head">
-        {onUndo && onRedo ? (
-          <FlowchartEditorHistoryActions
-            labels={labels}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onUndo={onUndo}
-            onRedo={onRedo}
-          />
-        ) : null}
-        <div className="delpi-ui-bpmn-editor__toolbar-tabs" role="tablist" aria-label={labels.toolbarGroupsAriaLabel}>
-          {toolbarTabs.map((tab) => (
-            <TabHintCell
-              key={tab.id}
-              label={tab.label}
-              hint={tab.hint}
-              icon={tab.icon}
-              active={toolbarTab === tab.id}
-              onSelect={() => onToolbarTabChange(tab.id)}
-              cellClassName="delpi-ui-bpmn-editor__toolbar-tab-cell"
-              tabClassName="delpi-ui-bpmn-editor__toolbar-tab"
-              tabActiveClassName="is-active"
-              hintPlacement="bottom"
-            />
-          ))}
-        </div>
-        <HelpTooltip
-          content={labels.usoGeral}
-          ariaLabel={labels.toolbarHowToUseAriaLabel}
-          wrap
-          placement="bottom"
-          className="delpi-ui-bpmn-editor__hint-wrap"
+  const leading = (
+    <>
+      {chromeLeading?.onBack ? (
+        <button
+          type="button"
+          className="delpi-ui-bpmn-editor__chrome-back"
+          onClick={chromeLeading.onBack}
         >
-          <button type="button" className="delpi-ui-bpmn-editor__hint-link delpi-ui-bpmn-editor__toolbar-help">
-            <CircleHelp size={14} aria-hidden="true" />
-            <span>{labels.toolbarHowToUse}</span>
-          </button>
-        </HelpTooltip>
-      </div>
+          <ArrowLeft size={16} aria-hidden />
+          {backLabel}
+        </button>
+      ) : null}
+      {onUndo && onRedo ? (
+        <FlowchartEditorHistoryActions
+          labels={labels}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={onUndo}
+          onRedo={onRedo}
+        />
+      ) : null}
+    </>
+  );
 
-      <div className="delpi-ui-bpmn-editor__toolbar-panel" role="tabpanel">
-        {toolbarTab === "elements" ? (
-          <div className="delpi-ui-bpmn-editor__elements">
-            <PaletteSubTabs<FlowchartElementGroupTab>
-              tabs={elementGroupTabs}
-              activeId={elementGroup}
-              onChange={setElementGroup}
-              ariaLabel={labels.paletteCategoriesAriaLabel}
-            />
+  const tabs = (
+    <div className="delpi-ui-bpmn-editor__toolbar-tabs" role="tablist" aria-label={labels.toolbarGroupsAriaLabel}>
+      {toolbarTabs.map((tab) => (
+        <TabHintCell
+          key={tab.id}
+          label={tab.label}
+          hint={tab.hint}
+          icon={tab.icon}
+          active={toolbarTab === tab.id}
+          onSelect={() => onToolbarTabChange(tab.id)}
+          cellClassName="delpi-ui-bpmn-editor__toolbar-tab-cell"
+          tabClassName="delpi-ui-bpmn-editor__toolbar-tab"
+          tabActiveClassName="is-active"
+          hintPlacement="bottom"
+        />
+      ))}
+    </div>
+  );
 
-            {elementGroup === "events" ? (
-              <PaletteSubTabs<BpmnPaletteCategoryId>
-                tabs={eventSubTabs}
-                activeId={eventSubTab}
-                onChange={setEventSubTab}
-                ariaLabel={labels.paletteEventsAriaLabel}
-                compact
-              />
-            ) : null}
+  const trailing = (
+    <>
+      <HelpTooltip
+        content={labels.usoGeral}
+        ariaLabel={labels.toolbarHowToUseAriaLabel}
+        wrap
+        placement="bottom"
+        className="delpi-ui-bpmn-editor__hint-wrap"
+      >
+        <button type="button" className="delpi-ui-bpmn-editor__hint-link delpi-ui-bpmn-editor__toolbar-help">
+          <CircleHelp size={14} aria-hidden="true" />
+          <span>{labels.toolbarHowToUse}</span>
+        </button>
+      </HelpTooltip>
+      {showPreviewTab && onViewTabChange ? (
+        <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--chrome" role="tablist">
+          <TabHintCell
+            label={labels.canvasTabLabel}
+            hint={labels.canvasTab}
+            icon={Pencil}
+            active={activeViewTab === "canvas"}
+            onSelect={() => onViewTabChange("canvas")}
+            cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+            tabClassName="delpi-ui-bpmn-editor__tab"
+            tabActiveClassName="is-active"
+          />
+          <TabHintCell
+            label={labels.mermaidTabLabel}
+            hint={labels.mermaidTab}
+            icon={Code2}
+            active={activeViewTab === "mermaid"}
+            onSelect={() => onViewTabChange("mermaid")}
+            cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+            tabClassName="delpi-ui-bpmn-editor__tab"
+            tabActiveClassName="is-active"
+          />
+        </div>
+      ) : null}
+    </>
+  );
 
-            {elementGroup === "lanes" ? (
-              <div className="delpi-ui-bpmn-editor__elements-lanes delpi-ui-bpmn-editor__elements-lanes--panel">
-                <DiagramEditorToolbarButton
-                  label={addLaneAction.label}
-                  hint={addLaneAction.hint}
-                  icon={addLaneAction.icon}
-                  onClick={() => onEditorAction("addLane")}
-                />
+  const ribbon =
+    toolbarTab === "elements" ? (
+      <EditorRibbonSections portalScopeClassName={portalScopeClassName}>
+        {elementGroupTabs.map((group, index) => {
+          const Icon = group.icon;
+          if (group.id === "lanes") {
+            return (
+              <EditorRibbonSection
+                key={group.id}
+                groupId={`bpmn-${group.id}`}
+                label={group.label}
+                hint={group.hint}
+                collapseIcon={Icon}
+                order={(index + 1) * 10}
+              >
+                <RibbonTiles compact aria-label={group.label}>
+                  <RibbonTile
+                    icon={addLaneAction.icon}
+                    label={addLaneAction.label}
+                    hint={addLaneAction.hint}
+                    onClick={() => onEditorAction("addLane")}
+                  />
+                </RibbonTiles>
                 {lanes.length ? (
                   <FlowchartLaneToolbar
                     labels={labels}
@@ -208,40 +277,85 @@ export function FlowchartEditorToolbar({
                     onActiveLaneChange={onActiveLaneChange}
                   />
                 ) : null}
-              </div>
-            ) : (
-              <div className="delpi-ui-bpmn-editor__palette">
+              </EditorRibbonSection>
+            );
+          }
+
+          const category = resolvePaletteCategory(group.id as FlowchartElementGroupTab, eventSubTab);
+          const paletteItems = category ? paletteByCategory(category) : [];
+
+          return (
+            <EditorRibbonSection
+              key={group.id}
+              groupId={`bpmn-${group.id}`}
+              label={group.label}
+              hint={group.hint}
+              collapseIcon={Icon}
+              order={(index + 1) * 10}
+            >
+              {group.id === "events" ? (
+                <PaletteSubTabs<BpmnPaletteCategoryId>
+                  tabs={eventSubTabs}
+                  activeId={eventSubTab}
+                  onChange={setEventSubTab}
+                  ariaLabel={labels.paletteEventsAriaLabel}
+                  compact
+                />
+              ) : null}
+              <RibbonTiles compact aria-label={group.label}>
                 {paletteItems.map((item) => {
-                  const Icon = FLOWCHART_NODE_ICONS[item.type];
+                  const NodeIcon = FLOWCHART_NODE_ICONS[item.type];
                   return (
-                    <DiagramEditorToolbarButton
+                    <RibbonTile
                       key={item.type}
+                      icon={NodeIcon}
                       label={item.label}
                       hint={flowchartNodeHint(item.type, labels)}
-                      icon={Icon}
                       onClick={() => onAddNode(item.type)}
                     />
                   );
                 })}
-              </div>
-            )}
-          </div>
-        ) : null}
-
-        {toolbarTab === "models" ? (
-          <div className="delpi-ui-bpmn-editor__templates">
+              </RibbonTiles>
+            </EditorRibbonSection>
+          );
+        })}
+      </EditorRibbonSections>
+    ) : (
+      <EditorRibbonSections portalScopeClassName={portalScopeClassName}>
+        <EditorRibbonSection
+          groupId="bpmn-templates"
+          label={labels.toolbarModelsTab}
+          hint={labels.toolbarModelsTabHint}
+          collapseIcon={LayoutTemplate}
+          order={10}
+        >
+          <RibbonTiles compact aria-label={labels.toolbarModelsTab}>
             {layoutActions.map((action) => (
-              <DiagramEditorToolbarButton
+              <RibbonTile
                 key={action.id}
+                icon={action.icon}
                 label={action.label}
                 hint={action.hint}
-                icon={action.icon}
                 onClick={() => onEditorAction(action.id)}
               />
             ))}
-          </div>
-        ) : null}
-      </div>
-    </div>
+          </RibbonTiles>
+        </EditorRibbonSection>
+      </EditorRibbonSections>
+    );
+
+  return (
+    <EditorChrome
+      density="compact"
+      aria-label={labels.toolbarAriaLabel}
+      leading={leading}
+      tabs={tabs}
+      trailing={trailing}
+      trail={chromeLeading?.title ? <span title={chromeLeading.title}>{chromeLeading.title}</span> : null}
+      ribbon={ribbon}
+      className="delpi-ui-bpmn-editor__chrome"
+    >
+      {children}
+    </EditorChrome>
   );
 }

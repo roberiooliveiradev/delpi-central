@@ -27,10 +27,11 @@ import {
 } from "react";
 
 import { useDelpiDarkMode } from "../hooks/useDelpiDarkMode";
-import { Pencil, Code2 } from "lucide-react";
+import { Pencil, Code2, ArrowLeft } from "lucide-react";
 import { TabHintCell } from "../../help/TabHintCell";
 import type { ConfirmDialogOptions } from "../../feedback/useConfirmDialog";
 import { TabPanelTransition } from "../shell/TabPanelTransition";
+import { EditorChrome } from "../../layout/EditorChrome";
 import {
   createDiagramEditorSelectionActions,
   type DiagramEditorAction,
@@ -117,6 +118,12 @@ type FlowchartEditorProps = {
   diffNodeIds?: { changed?: string[]; added?: string[]; removed?: string[] };
   showTemplates?: boolean;
   showPreviewTab?: boolean;
+  /** Voltar + título no head do EditorChrome (página dedicada). */
+  chromeLeading?: {
+    onBack?: () => void;
+    backLabel?: string;
+    title?: string;
+  };
 };
 
 type ActivityNode = Node<BpmnNodeData>;
@@ -362,6 +369,7 @@ function FlowchartEditorInner({
   diffNodeIds,
   showTemplates = true,
   showPreviewTab = true,
+  chromeLeading,
   editorRef,
 }: FlowchartEditorProps & {
   editorRef?: Ref<FlowchartEditorHandle>;
@@ -1323,7 +1331,11 @@ function FlowchartEditorInner({
         bpmnEditorBem(
           "",
           ...(layout === "fill" ? ["--fill"] : []),
-          "--overlay-tools"
+          ...(!readOnly && showTemplates
+            ? ["--chrome"]
+            : chromeLeading
+              ? ["--chrome"]
+              : ["--overlay-tools"]),
         ),
       ]
         .filter(Boolean)
@@ -1331,127 +1343,178 @@ function FlowchartEditorInner({
     >
       <TabPanelTransition tabKey={activeTab}>
         {activeTab === "canvas" ? (
-          <div
-            className={bpmnEditorBem("__stage")}
-            style={{ minHeight: canvasHeight }}
-          >
-            {!readOnly && showTemplates ? (
-              <FlowchartEditorToolbar
-                labels={labels}
-                toolbarTab={toolbarTab}
-                onToolbarTabChange={setToolbarTab}
-                lanes={lanes}
-                activeLaneId={activeLaneId}
-                onActiveLaneChange={handleSelectLane}
-                onAddNode={addNode}
-                onEditorAction={runEditorAction}
-                canUndo={canUndo}
-                canRedo={canRedo}
-                onUndo={handleUndo}
-                onRedo={handleRedo}
-              />
-            ) : null}
+          (() => {
+            const stageBody = (
+              <>
+                {!readOnly ? (
+                  <FlowchartEditorActionDock
+                    labels={labels}
+                    selectionActions={selectionActions}
+                    clipboardReady={clipboardReady}
+                    onSelectionAction={runSelectionAction}
+                    isSelectionActionDisabled={isSelectionActionDisabled}
+                    onPointerDownCapture={(event) => {
+                      event.preventDefault();
+                    }}
+                  />
+                ) : null}
 
-            {!readOnly ? (
-              <FlowchartEditorActionDock
-                labels={labels}
-                selectionActions={selectionActions}
-                clipboardReady={clipboardReady}
-                onSelectionAction={runSelectionAction}
-                isSelectionActionDisabled={isSelectionActionDisabled}
-                onPointerDownCapture={(event) => {
-                  event.preventDefault();
-                }}
-              />
-            ) : null}
+                <div
+                  ref={canvasWrapperRef}
+                  tabIndex={readOnly ? -1 : 0}
+                  className={bpmnEditorBem(
+                    "__canvas",
+                    ...(lanes.length ? ["__canvas--swimlanes"] : []),
+                    ...(readOnly ? ["__canvas--readonly"] : [])
+                  )}
+                  style={{ height: canvasHeight }}
+                >
+                  <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
+                    colorMode={reactFlowColorMode}
+                    defaultEdgeOptions={{
+                      type: "flowchart",
+                      labelStyle: { fontSize: 11, fontWeight: 600 },
+                      labelBgStyle: { fillOpacity: 0.92 },
+                    }}
+                    onInit={(instance) => {
+                      window.requestAnimationFrame(() => {
+                        const fitNodes = getDiagramFitNodes(instance.getNodes());
+                        if (!fitNodes.length) return;
+                        void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
+                      });
+                    }}
+                    onNodesChange={readOnly ? undefined : onNodesChange}
+                    onEdgesChange={readOnly ? undefined : onEdgesChange}
+                    onConnect={onConnect}
+                    onNodeDrag={onNodeDrag}
+                    onNodeDragStop={onNodeDragStop}
+                    onNodesDelete={onNodesDelete}
+                    onEdgesDelete={onEdgesDelete}
+                    deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
+                    selectionOnDrag={!readOnly}
+                    selectionMode={SelectionMode.Partial}
+                    selectionKeyCode={null}
+                    multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
+                    panOnDrag={readOnly ? true : [1, 2]}
+                    minZoom={0.08}
+                    maxZoom={3}
+                    connectionRadius={36}
+                    nodesDraggable={!readOnly}
+                    nodesConnectable={!readOnly}
+                    nodesFocusable={!readOnly}
+                    elementsSelectable={!readOnly}
+                    proOptions={{ hideAttribution: true }}
+                  >
+                    <FlowchartSwimlaneBackdrop />
+                    {showGrid ? <Background gap={20} size={1} /> : null}
+                    <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
+                    <Controls showInteractive={!readOnly} position="bottom-left" />
+                  </ReactFlow>
+                  <FlowchartEditorStatusBar
+                    labels={labels}
+                    showGrid={showGrid}
+                    onShowGridChange={setShowGrid}
+                  />
+                </div>
+              </>
+            );
 
-            {showPreviewTab ? (
-              <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--overlay" role="tablist">
-                <TabHintCell
-                  label={labels.canvasTabLabel}
-                  hint={labels.canvasTab}
-                  icon={Pencil}
-                  active={activeTab === "canvas"}
-                  onSelect={() => setActiveTab("canvas")}
-                  cellClassName="delpi-ui-bpmn-editor__tab-wrap"
-                  tabClassName="delpi-ui-bpmn-editor__tab"
-                  tabActiveClassName="is-active"
-                />
-                <TabHintCell
-                  label={labels.mermaidTabLabel}
-                  hint={labels.mermaidTab}
-                  icon={Code2}
-                  active={false}
-                  onSelect={() => switchToMermaidTab()}
-                  cellClassName="delpi-ui-bpmn-editor__tab-wrap"
-                  tabClassName="delpi-ui-bpmn-editor__tab"
-                  tabActiveClassName="is-active"
-                />
+            if (!readOnly && showTemplates) {
+              return (
+                <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+                  <FlowchartEditorToolbar
+                    labels={labels}
+                    toolbarTab={toolbarTab}
+                    onToolbarTabChange={setToolbarTab}
+                    lanes={lanes}
+                    activeLaneId={activeLaneId}
+                    onActiveLaneChange={handleSelectLane}
+                    onAddNode={addNode}
+                    onEditorAction={runEditorAction}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    onUndo={handleUndo}
+                    onRedo={handleRedo}
+                    chromeLeading={chromeLeading}
+                    portalScopeClassName={shellClassName}
+                    showPreviewTab={showPreviewTab}
+                    activeViewTab="canvas"
+                    onViewTabChange={(tab) => {
+                      if (tab === "mermaid") switchToMermaidTab();
+                      else setActiveTab("canvas");
+                    }}
+                  >
+                    {stageBody}
+                  </FlowchartEditorToolbar>
+                </div>
+              );
+            }
+
+            if (chromeLeading) {
+              return (
+                <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+                  <EditorChrome
+                    density="compact"
+                    aria-label={labels.toolbarAriaLabel}
+                    leading={
+                      chromeLeading.onBack ? (
+                        <button
+                          type="button"
+                          className="delpi-ui-bpmn-editor__chrome-back"
+                          onClick={chromeLeading.onBack}
+                        >
+                          <ArrowLeft size={16} aria-hidden />
+                          {chromeLeading.backLabel ?? "Voltar"}
+                        </button>
+                      ) : null
+                    }
+                    trail={
+                      chromeLeading.title ? (
+                        <span title={chromeLeading.title}>{chromeLeading.title}</span>
+                      ) : null
+                    }
+                    className="delpi-ui-bpmn-editor__chrome"
+                  >
+                    {stageBody}
+                  </EditorChrome>
+                </div>
+              );
+            }
+
+            return (
+              <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+                {showPreviewTab ? (
+                  <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--overlay" role="tablist">
+                    <TabHintCell
+                      label={labels.canvasTabLabel}
+                      hint={labels.canvasTab}
+                      icon={Pencil}
+                      active={activeTab === "canvas"}
+                      onSelect={() => setActiveTab("canvas")}
+                      cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+                      tabClassName="delpi-ui-bpmn-editor__tab"
+                      tabActiveClassName="is-active"
+                    />
+                    <TabHintCell
+                      label={labels.mermaidTabLabel}
+                      hint={labels.mermaidTab}
+                      icon={Code2}
+                      active={false}
+                      onSelect={() => switchToMermaidTab()}
+                      cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+                      tabClassName="delpi-ui-bpmn-editor__tab"
+                      tabActiveClassName="is-active"
+                    />
+                  </div>
+                ) : null}
+                {stageBody}
               </div>
-            ) : null}
-
-            <div
-              ref={canvasWrapperRef}
-              tabIndex={readOnly ? -1 : 0}
-              className={bpmnEditorBem(
-                "__canvas",
-                ...(lanes.length ? ["__canvas--swimlanes"] : []),
-                ...(readOnly ? ["__canvas--readonly"] : [])
-              )}
-              style={{ height: canvasHeight }}
-            >
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                colorMode={reactFlowColorMode}
-                defaultEdgeOptions={{
-                  type: "flowchart",
-                  labelStyle: { fontSize: 11, fontWeight: 600 },
-                  labelBgStyle: { fillOpacity: 0.92 },
-                }}
-                onInit={(instance) => {
-                  window.requestAnimationFrame(() => {
-                    const fitNodes = getDiagramFitNodes(instance.getNodes());
-                    if (!fitNodes.length) return;
-                    void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
-                  });
-                }}
-                onNodesChange={readOnly ? undefined : onNodesChange}
-                onEdgesChange={readOnly ? undefined : onEdgesChange}
-                onConnect={onConnect}
-                onNodeDrag={onNodeDrag}
-                onNodeDragStop={onNodeDragStop}
-                onNodesDelete={onNodesDelete}
-                onEdgesDelete={onEdgesDelete}
-                deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-                selectionOnDrag={!readOnly}
-                selectionMode={SelectionMode.Partial}
-                selectionKeyCode={null}
-                multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
-                panOnDrag={readOnly ? true : [1, 2]}
-                minZoom={0.08}
-                maxZoom={3}
-                connectionRadius={36}
-                nodesDraggable={!readOnly}
-                nodesConnectable={!readOnly}
-                nodesFocusable={!readOnly}
-                elementsSelectable={!readOnly}
-                proOptions={{ hideAttribution: true }}
-              >
-                <FlowchartSwimlaneBackdrop />
-                {showGrid ? <Background gap={20} size={1} /> : null}
-                <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
-                <Controls showInteractive={!readOnly} position="bottom-left" />
-              </ReactFlow>
-              <FlowchartEditorStatusBar
-                labels={labels}
-                showGrid={showGrid}
-                onShowGridChange={setShowGrid}
-              />
-            </div>
-          </div>
+            );
+          })()
         ) : (
           <>
             {showPreviewTab ? (

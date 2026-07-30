@@ -1,0 +1,96 @@
+/**
+ * Tile de ribbon — ícone + rótulo (paridade visual com TV insert ribbon).
+ * Classes: .delpi-ui-ribbon-tile* · .delpi-ui-ribbon-tiles*
+ */
+
+.delpi-ui-ribbon-tiles {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto;
+  grid-auto-columns: max-content;
+  align-items: start;
+  gap: 1px 2px;
+}
+
+.delpi-ui-ribbon-tiles--compact {
+  gap: 0 1px;
+}
+
+.delpi-ui-ribbon-tiles--rows-2 {
+  grid-template-rows: repeat(2, auto);
+}
+
+.delpi-ui-ribbon-tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--delpi-ui-text, var(--text, inherit));
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.delpi-ui-ribbon-tile:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, transparent);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 18%, var(--border, rgba(127, 127, 127, 0.35)));
+}
+
+.delpi-ui-ribbon-tile--active {
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, var(--surface, transparent));
+  border-color: var(--primary, #089bdb);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+}
+
+.delpi-ui-ribbon-tile:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.delpi-ui-ribbon-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-ribbon-tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.delpi-ui-ribbon-tile__label {
+  max-width: 64px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-ribbon-tile {
+  min-width: 48px;
+  min-height: 48px;
+  padding: 3px 4px;
+  font-size: 9px;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-ribbon-tile__icon {
+  width: 24px;
+  height: 24px;
+}

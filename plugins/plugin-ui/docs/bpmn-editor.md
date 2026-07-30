@@ -54,6 +54,16 @@ export const FlowchartEditor = forwardRef<FlowchartEditorHandle, Props>(
 
 Referência de labels: `plugins/transformometro/src/content/flowchartEditorLabels.ts` (tipo `FlowchartEditorLabels`).
 
+## Chrome 2-tier (página dedicada)
+
+Em modo editável (`!readOnly` + `showTemplates`), o editor monta [`EditorChrome`](../src/components/layout/EditorChrome.tsx) + ribbon com [`EditorRibbonSection`](../src/components/ribbon/EditorRibbonSection.tsx) / [`RibbonTile`](../src/components/ribbon/RibbonTile.tsx):
+
+- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo · Elementos/Modelos · Como usar · Desenho/Mermaid · título
+- **Ribbon:** seções por categoria BPMN; colapso responsivo (direita→esquerda) abre popover via `RibbonGroup`
+- **Props:** `chromeLeading?: { onBack?; backLabel?; title? }` — o Transformômetro passa isso em `/diagrama/edit`
+
+CSS: `styles/editor-chrome.css`, `styles/ribbon-tile.css`, `styles/ribbon-overflow.css`.
+
 ## Estado e persistência
 
 - Modelo canônico: `FlowchartV1` (`emptyFlowchart()`, templates `applyLinearTemplate` / `applyDecisionTemplate` / `applySwimlaneBpmnTemplate`).

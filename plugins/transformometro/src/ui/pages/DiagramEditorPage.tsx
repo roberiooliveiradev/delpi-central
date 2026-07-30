@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActionButton } from "@delpi/plugin-ui/index";
-import { ArrowLeft } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
@@ -132,6 +130,12 @@ export function DiagramEditorPage({
     onNavigate(detailHref);
   }
 
+  const chromeLeading = {
+    onBack: goBack,
+    backLabel: "Voltar",
+    title: config.title,
+  };
+
   const readOnly = lockFailed || !lockReady;
   const missingIds =
     (kind === "instancia" && !instanciaId) || (kind === "revisao" && !revisaoId);
@@ -139,14 +143,6 @@ export function DiagramEditorPage({
   return (
     <TransformometroShell>
       <div className="tm-diagram-editor-page">
-        <header className="tm-diagram-editor-page__toolbar">
-          <ActionButton variant="link" onClick={goBack}>
-            <ArrowLeft size={16} aria-hidden />
-            Voltar
-          </ActionButton>
-          <h1 className="tm-diagram-editor-page__title">{config.title}</h1>
-        </header>
-
         <StatusAlerts
           error={error}
           loading={false}
@@ -177,6 +173,7 @@ export function DiagramEditorPage({
             {kind === "processo" ? (
               <ProcessoDiagramSection
                 variant="page"
+                chromeLeading={chromeLeading}
                 readOnly={readOnly}
                 processoId={processoId}
                 getAccessToken={getAccessToken}
@@ -187,6 +184,7 @@ export function DiagramEditorPage({
             {kind === "instancia" && instanciaId ? (
               <InstanciaDiagramEscopoSection
                 variant="page"
+                chromeLeading={chromeLeading}
                 readOnly={readOnly}
                 processoId={processoId}
                 instanciaId={instanciaId}
@@ -198,6 +196,7 @@ export function DiagramEditorPage({
             {kind === "revisao" && revisaoId ? (
               <RevisaoDiagramSection
                 variant="page"
+                chromeLeading={chromeLeading}
                 readOnly={readOnly}
                 revisaoId={revisaoId}
                 getAccessToken={getAccessToken}
