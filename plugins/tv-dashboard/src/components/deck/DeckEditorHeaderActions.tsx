@@ -104,7 +104,7 @@ export function DeckHomePlaylistChrome({
           {onRefreshVisual ? (
             <DeckRibbonTile
               icon={RefreshCw}
-              label="Atualizar visual"
+              label="Atualizar"
               hint={H.refreshVisual}
               active={dataPreviewStale || dataPreviewLoading}
               onClick={onRefreshVisual}

@@ -6,7 +6,11 @@ import {
   Clock,
   Copy,
   Globe,
+  Layers,
   LayoutTemplate,
+  Link2,
+  Monitor,
+  RefreshCw,
   Trash2,
   Type,
   Upload,
@@ -440,58 +444,100 @@ export function DeckSettingsPanel({
     return (
       <>
         <DeckRibbonGroup groupId="playlist-rotation" label="Rotação" hint={F.viewport}>
-          <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
-            <ToolbarSelectField
-              label="Resolução alvo"
-              title={F.viewport}
-              value={playlist.viewportProfile}
-              allowEmptyOption={false}
-              searchable={false}
-              options={VIEWPORT_OPTIONS}
-              onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
-            />
-            <ToolbarSelectField
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTilePopover
+              icon={Monitor}
+              label="Resolução"
+              hint={F.viewport}
+              panelLabel="Resolução alvo"
+              panelClassName="td-deck-ribbon-tile-popover--narrow"
+            >
+              <ToolbarSelectField
+                label="Resolução alvo"
+                title={F.viewport}
+                value={playlist.viewportProfile}
+                allowEmptyOption={false}
+                searchable={false}
+                options={VIEWPORT_OPTIONS}
+                onChange={(value) => onSavePlaylistSettings("viewportProfile", value)}
+              />
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
+              icon={ArrowLeftRight}
               label="Transição"
-              title={F.transition}
-              value={playlist.transitionStyle}
-              allowEmptyOption={false}
-              searchable={false}
-              options={TRANSITION_OPTIONS}
-              onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
-            />
-            <DeckRangeField
-              id="td-duration-default"
-              label="Duração padrão (s)"
+              hint={F.transition}
+              panelLabel="Transição da programação"
+              panelClassName="td-deck-ribbon-tile-popover--narrow"
+            >
+              <ToolbarSelectField
+                label="Transição"
+                title={F.transition}
+                value={playlist.transitionStyle}
+                allowEmptyOption={false}
+                searchable={false}
+                options={TRANSITION_OPTIONS}
+                onChange={(value) => onSavePlaylistSettings("transitionStyle", value)}
+              />
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
+              icon={Clock}
+              label="Duração"
               hint={F.defaultDuration}
-              min={5}
-              max={600}
-              value={playlist.defaultDurationSec}
-              onChange={(value) => onSavePlaylistSettings("defaultDurationSec", value)}
-            />
-            <DeckRangeField
-              id="td-refresh"
-              label="Atualizar dados na TV (s)"
+              panelLabel="Duração padrão"
+              panelClassName="td-deck-ribbon-tile-popover--timing"
+            >
+              <DeckRangeField
+                id="td-duration-default"
+                label="Duração padrão (s)"
+                hint={F.defaultDuration}
+                min={5}
+                max={600}
+                value={playlist.defaultDurationSec}
+                onChange={(value) => onSavePlaylistSettings("defaultDurationSec", value)}
+              />
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
+              icon={RefreshCw}
+              label="Atualizar"
               hint={F.refreshInterval}
-              min={30}
-              max={3600}
-              step={10}
-              value={playlist.globalRefreshSec}
-              onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
-            />
+              panelLabel="Atualizar dados na TV"
+              panelClassName="td-deck-ribbon-tile-popover--timing"
+            >
+              <DeckRangeField
+                id="td-refresh"
+                label="Atualizar dados na TV (s)"
+                hint={F.refreshInterval}
+                min={30}
+                max={3600}
+                step={10}
+                value={playlist.globalRefreshSec}
+                onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
+              />
+            </DeckRibbonTilePopover>
           </div>
         </DeckRibbonGroup>
 
-        <DeckRibbonGroup groupId="playlist-link" label="Link público" hint={F.publicUrl} wide>
-          <div className="td-deck-playlist-link">
-            <TdNativeTextField
-              id="td-public-url"
+        <DeckRibbonGroup groupId="playlist-link" label="Link público" hint={F.publicUrl}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTilePopover
+              icon={Link2}
               label="URL"
               hint={F.publicUrl}
-              className="td-deck-playlist-link__field"
-              value={playlist.publicUrl ?? ""}
-              onChange={() => undefined}
-              readOnly
-            />
+              panelLabel="Link público da TV"
+              panelClassName="td-deck-ribbon-tile-popover--wide"
+            >
+              <TdNativeTextField
+                id="td-public-url"
+                label="URL"
+                hint={F.publicUrl}
+                value={playlist.publicUrl ?? ""}
+                onChange={() => undefined}
+                readOnly
+              />
+            </DeckRibbonTilePopover>
             <DeckRibbonTile
               icon={Copy}
               label={linkCopied ? "Copiado" : "Copiar"}
@@ -511,83 +557,92 @@ export function DeckSettingsPanel({
 
         <DeckRibbonGroup
           groupId="playlist-master"
-          label="Master slide"
+          label="Master"
           hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
-          wide
         >
-          <div className="td-deck-master td-deck-master--compact">
-            <div className="td-deck-master__row td-deck-master__row--dense">
-              <NativeCheckboxControl
-                className="td-deck-master__toggle"
-                label="Ativo em telas livres"
-                checked={masterEnabled}
-                onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
-              />
-              <TvRibbonColorPicker
-                label="Fundo sólido"
-                value={masterBgColor}
-                onChange={(color) =>
-                  saveMaster(
-                    patchMaster(master, {
-                      enabled: true,
-                      background: { type: "color", value: color },
-                    }),
-                  )
-                }
-              />
-              <DeckRibbonTile
-                icon={Upload}
-                label="Fundo imagem"
-                disabled={masterUploading}
-                onClick={() => bgInputRef.current?.click()}
-              />
-              <DeckRibbonTile
-                icon={Upload}
-                label="Logo"
-                disabled={masterUploading}
-                onClick={() => logoInputRef.current?.click()}
-              />
-              {logoUrl ? (
-                <DeckRibbonTile
-                  icon={Trash2}
-                  label="Remover logo"
-                  onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTilePopover
+              icon={Layers}
+              label="Master"
+              hint="Fundo e logo compartilhados nas telas livres."
+              panelLabel="Master slide"
+              panelClassName="td-deck-ribbon-tile-popover--master"
+            >
+              <div className="td-deck-master td-deck-master--popover">
+                <NativeCheckboxControl
+                  className="td-deck-master__toggle"
+                  label="Ativo em telas livres"
+                  checked={masterEnabled}
+                  onChange={(enabled) => saveMaster(patchMaster(master, { enabled }))}
                 />
-              ) : null}
-              {logoUrl ? (
-                <div
-                  className="td-deck-master__logo-preview"
-                  style={
-                    logoPreviewSrc
-                      ? { backgroundImage: `url(${logoPreviewSrc})` }
-                      : undefined
-                  }
-                  title="Logo do master"
+                <div className="td-deck-master__row td-deck-master__row--dense">
+                  <TvRibbonColorPicker
+                    label="Fundo"
+                    value={masterBgColor}
+                    onChange={(color) =>
+                      saveMaster(
+                        patchMaster(master, {
+                          enabled: true,
+                          background: { type: "color", value: color },
+                        }),
+                      )
+                    }
+                  />
+                  <DeckRibbonTile
+                    icon={Upload}
+                    label="Imagem"
+                    disabled={masterUploading}
+                    onClick={() => bgInputRef.current?.click()}
+                  />
+                  <DeckRibbonTile
+                    icon={Upload}
+                    label="Logo"
+                    disabled={masterUploading}
+                    onClick={() => logoInputRef.current?.click()}
+                  />
+                  {logoUrl ? (
+                    <DeckRibbonTile
+                      icon={Trash2}
+                      label="Remover"
+                      onClick={() => saveMaster(patchMaster(master, { logo: undefined }))}
+                    />
+                  ) : null}
+                </div>
+                {logoUrl ? (
+                  <div
+                    className="td-deck-master__logo-preview"
+                    style={
+                      logoPreviewSrc
+                        ? { backgroundImage: `url(${logoPreviewSrc})` }
+                        : undefined
+                    }
+                    title="Logo do master"
+                  />
+                ) : null}
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (file) void uploadMasterAsset("logo", file);
+                  }}
                 />
-              ) : null}
-            </div>
-            <input
-              ref={logoInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void uploadMasterAsset("logo", file);
-              }}
-            />
-            <input
-              ref={bgInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void uploadMasterAsset("background", file);
-              }}
-            />
+                <input
+                  ref={bgInputRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = "";
+                    if (file) void uploadMasterAsset("background", file);
+                  }}
+                />
+              </div>
+            </DeckRibbonTilePopover>
           </div>
         </DeckRibbonGroup>
       </>
