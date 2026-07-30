@@ -393,7 +393,7 @@ GET /products/{code}/last-purchase
 GET /products/{code}/purchase-price-history
 GET /products/{code}/purchase-budget-history
 
-Documentação: api-delpi/docs/roadmaps/playbook-analise-preco-materia-prima.md
+Documentação: api-delpi/docs/api/padroes-totvs/playbooks/playbook-analise-preco-materia-prima.md
 
 ======================================================================
 12. VALIDAÇÃO SQL

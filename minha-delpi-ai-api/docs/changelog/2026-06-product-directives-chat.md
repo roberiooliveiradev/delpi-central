@@ -6,7 +6,7 @@ Integração ponta a ponta de `GET /products/directives/{identifier}` (api-delpi
 
 Perguntas como «diretivas 90260882» ou «diretivas 10018137» devem retornar **estrutura (BOM)**, **fornecedores por MP** e **última NF de compra**, não o cadastro genérico (`GET /products/{code}`).
 
-Playbook api-delpi: `api-delpi/docs/roadmaps/playbook-diretivas-produto.md`.
+Playbook api-delpi: `api-delpi/docs/api/padroes-totvs/playbooks/playbook-diretivas-produto.md`.
 
 ---
 
@@ -200,7 +200,7 @@ Documentação: `api-delpi/docs/api/compras-validas-frete-mp-changelog-jun2026.m
 ```
 api-delpi/
   app/.../get_product_directives (rota, serviço, repositórios)
-  docs/roadmaps/playbook-diretivas-produto.md
+  docs/api/padroes-totvs/playbooks/playbook-diretivas-produto.md
 
 minha-delpi-ai-api/
   app/application/services/external_actions/

@@ -126,4 +126,4 @@ Produto teste: 90261255
 - Não ignorar filtro de vigência G1_FIM
 - Não usar SD1010 neste simulador base (opcional extensão futura: preço NF)
 
-Documentação: api-delpi/docs/roadmaps/playbook-simulador-impacto-custos-pa.md
+Documentação: api-delpi/docs/api/padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md

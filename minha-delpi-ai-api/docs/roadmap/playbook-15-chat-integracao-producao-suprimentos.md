@@ -178,5 +178,5 @@ Detalhes, import async e checklist: [`playbook-16-openapi-import-async-e-readine
 
 - Master: [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)
 - Import / readiness: [`playbook-16-openapi-import-async-e-readiness-operacional.md`](./playbook-16-openapi-import-async-e-readiness-operacional.md)
-- api-delpi: [`playbook-producao-consumo-compras-perdas-op.md`](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md)
+- api-delpi: [`playbook-producao-consumo-compras-perdas-op.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md)
 - Arquitetura: [`../architecture/chat-intelligence-base.md`](../architecture/chat-intelligence-base.md)

@@ -81,7 +81,7 @@ Fases **A–G** concluídas (PR-1–42). Hub `chatPresentation.ts` fatiado (PR-3
 |---------|--------|
 | Módulo `src/export/` (`runChatExport`, primitivos compartilhados) | ✅ |
 | PDF unificado — layout certificado DELPI (logo; tabela = desenho) | ✅ `src/export/pdf/` |
-| Quantidades operacionais MI→UN (cronograma, OPs, OEE) | ✅ api-delpi — [playbook § 3.4](../../../api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md) |
+| Quantidades operacionais MI→UN (cronograma, OPs, OEE) | ✅ api-delpi — [playbook § 3.4](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md) |
 
 **Próximo (opcional):** reduzir arquivos na raiz `components/` (~55 → ≤25) — modais e orquestração ainda na raiz; fora do escopo estrutural PR-1–42.
 

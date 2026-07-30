@@ -3,7 +3,7 @@ Versão: jun/2026
 Escopo RAG: agente minha-delpi-chat · api-delpi · SQL operacional · BOM · PA em MI
 
 Documentação técnica api-delpi (Markdown):
-api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md
+api-delpi/docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md
 
 ======================================================================
 0. QUANDO USAR ESTE DOCUMENTO

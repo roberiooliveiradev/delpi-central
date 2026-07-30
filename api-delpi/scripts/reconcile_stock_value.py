@@ -14,7 +14,7 @@ Saída:
   docs/roadmaps/evidencias/estoque-reconciliacao-<end_date>.json
   docs/roadmaps/evidencias/estoque-reconciliacao-<end_date>.md
 
-Ver playbook: docs/roadmaps/playbook-correcao-estoque-supplies-inventario.md §7
+Ver playbook: docs/api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md §7
 """
 from __future__ import annotations
 

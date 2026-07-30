@@ -120,4 +120,4 @@ npm test -- src/export src/ui/utils/drawingAnalysisExport.test.ts \
 - Estrutura MFE: [`component-structure.md`](./component-structure.md)
 - Hub apresentação: [`chat-presentation-hub.md`](./chat-presentation-hub.md)
 - Desenho (API): [`chat-intelligence-base.md`](../../../minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md) § validação desenho
-- Conversão MI→UN (api-delpi): [`playbook-conversao-unidades-protheus.md`](../../../api-delpi/docs/roadmaps/playbook-conversao-unidades-protheus.md) § 3.4
+- Conversão MI→UN (api-delpi): [`playbook-conversao-unidades-protheus.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md) § 3.4

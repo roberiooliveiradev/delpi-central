@@ -75,9 +75,8 @@ README hub → seção curta (armazem-custo, filiais, …)
 ### B) Playbook (`padroes-totvs/playbooks/playbook-<tema>.md`)
 
 1. Detalhe de implementação, SQL de referência, homologação.
-2. Stub em `docs/roadmaps/playbook-<tema>.md` se o path legado existir ou for citado fora.
-3. Links relativos corretos a partir de `playbooks/` (`../../` para docs api, `../../../../app/`, etc.).
-4. Linha no índice de playbooks do README hub + `playbooks/README.md`.
+2. Links relativos corretos a partir de `playbooks/` (`../../` para docs api, `../../../../app/`, etc.).
+3. Linha no índice de playbooks do README hub + `playbooks/README.md`.
 
 ### C) Código
 

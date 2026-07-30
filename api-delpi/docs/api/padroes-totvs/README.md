@@ -29,7 +29,7 @@ Regras Cursor: **`totvs-product-patterns.mdc`** (quando **usar** e como **enriqu
 
 ## Playbooks (detalhe)
 
-Pasta: [`playbooks/`](./playbooks/) — paths antigos em `docs/roadmaps/playbook-*.md` redirecionam para cá.
+Pasta: [`playbooks/`](./playbooks/).
 
 | Playbook | Tema |
 |----------|------|
@@ -68,7 +68,7 @@ Diretriz completa para agentes/PRs: **`.cursor/rules/totvs-product-patterns.mdc`
 Resumo:
 
 1. Seção curta: `padroes-totvs/<tema>.md` com tabela + **o que fazer** / **não fazer**.
-2. Detalhe longo: `padroes-totvs/playbooks/playbook-<tema>.md` (+ stub em `docs/roadmaps/` se houver path legado).
+2. Detalhe longo: `padroes-totvs/playbooks/playbook-<tema>.md`.
 3. Constante estável → `app/domain/totvs/` + teste mínimo.
 4. Incluir no índice deste `README.md`.
 5. Doc da rota nova **só referencia** a seção/playbook — não reescreve o padrão.

@@ -33,8 +33,8 @@ Hoje o agente técnico DELPI resolve perguntas operacionais montando T-SQL e cha
 
 Playbooks api-delpi já entregues (referência de padrão):
 
-- [`api-delpi/docs/roadmaps/playbook-analise-preco-materia-prima.md`](../../../api-delpi/docs/roadmaps/playbook-analise-preco-materia-prima.md)
-- [`api-delpi/docs/roadmaps/playbook-simulador-impacto-custos-pa.md`](../../../api-delpi/docs/roadmaps/playbook-simulador-impacto-custos-pa.md)
+- [`api-delpi/docs/api/padroes-totvs/playbooks/playbook-analise-preco-materia-prima.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-analise-preco-materia-prima.md)
+- [`api-delpi/docs/api/padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md)
 - [`playbook-chat-preco-mp-simulador-custos-pa.md`](./playbook-chat-preco-mp-simulador-custos-pa.md) — integração chat (Fase 0)
 
 ---
@@ -79,7 +79,7 @@ Mapeamento **SQL validado → rota proposta**:
 | **R17** | Catálogo MPs exclusivas (global) | playbook estrutura §8 | `GET /products/exclusive-raw-materials/catalog` | ✅ |
 | **R18** | Estrutura PA + flags exclusividade | playbook estrutura §10 | `GET /products/{code}/structure/exclusivity` | ✅ |
 
-Detalhe exclusividade: [`api-delpi/docs/roadmaps/playbook-catalogo-exclusividade-mp.md`](../../../api-delpi/docs/roadmaps/playbook-catalogo-exclusividade-mp.md).
+Detalhe exclusividade: [`api-delpi/docs/api/padroes-totvs/playbooks/playbook-catalogo-exclusividade-mp.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-catalogo-exclusividade-mp.md).
 
 ---
 
@@ -238,7 +238,7 @@ Manter `POST /data/sql` apenas para **exploração ad hoc** (agente SQL avançad
 
 ## 6. Implementação api-delpi (instruções)
 
-Guia detalhado por camada: [`api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md`](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md).
+Guia detalhado por camada: [`api-delpi/docs/api/padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md).
 
 ### 6.1 Checklist por rota
 
@@ -400,7 +400,7 @@ Doc manual: [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacio
 
 | Doc | Conteúdo |
 |-----|----------|
-| [playbook-producao-consumo-compras-perdas-op.md](../../../api-delpi/docs/roadmaps/playbook-producao-consumo-compras-perdas-op.md) | Implementação api-delpi (SQL, camadas, exemplos) |
+| [playbook-producao-consumo-compras-perdas-op.md](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-producao-consumo-compras-perdas-op.md) | Implementação api-delpi (SQL, camadas, exemplos) |
 | [13-producao-operacional.md](../../../api-delpi/docs/api/13-producao-operacional.md) | Referência API — rotas, parâmetros, integração chat |
 | [playbook-15-chat-integracao-producao-suprimentos.md](./playbook-15-chat-integracao-producao-suprimentos.md) | Integração chat base |
 | [playbook-16-openapi-import-async-e-readiness-operacional.md](./playbook-16-openapi-import-async-e-readiness-operacional.md) | Import async, progresso UI, readiness pós-deploy |

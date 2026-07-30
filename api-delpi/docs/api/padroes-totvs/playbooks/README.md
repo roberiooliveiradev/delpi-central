@@ -2,8 +2,6 @@
 
 Playbooks de **domínio Protheus** da biblioteca. Índice completo: [../README.md](../README.md).
 
-Paths legados `api-delpi/docs/roadmaps/playbook-*.md` (domínio produto) redirecionam para os arquivos desta pasta.
-
 | Arquivo | Tema |
 |---------|------|
 | [playbook-conversao-unidades-protheus.md](./playbook-conversao-unidades-protheus.md) | Unidades / MI |

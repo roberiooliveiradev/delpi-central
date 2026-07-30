@@ -6,8 +6,8 @@
 
 Documentação de referência cruzada:
 
-- Playbook API preço MP: `api-delpi/docs/roadmaps/playbook-analise-preco-materia-prima.md`
-- Playbook API simulador PA: `api-delpi/docs/roadmaps/playbook-simulador-impacto-custos-pa.md`
+- Playbook API preço MP: `api-delpi/docs/api/padroes-totvs/playbooks/playbook-analise-preco-materia-prima.md`
+- Playbook API simulador PA: `api-delpi/docs/api/padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md`
 - Modelo fabril (jun/2026): `docs/changelog/2026-06-playbook-rotas-sessao-ativa-parametros.md`
 - Arquitetura chat base: `docs/architecture/chat-intelligence-base.md`
 - Vocabulário centralizado: `docs/architecture/vocabulary-centralization-jun2026.md`

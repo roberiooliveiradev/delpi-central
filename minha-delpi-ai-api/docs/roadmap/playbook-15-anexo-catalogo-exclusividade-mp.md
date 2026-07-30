@@ -1,6 +1,6 @@
 # Playbook 15 — Anexo: catálogo de exclusividade MP (chat)
 
-**Parent api-delpi:** [`api-delpi/docs/roadmaps/playbook-catalogo-exclusividade-mp.md`](../../../api-delpi/docs/roadmaps/playbook-catalogo-exclusividade-mp.md)  
+**Parent api-delpi:** [`api-delpi/docs/api/padroes-totvs/playbooks/playbook-catalogo-exclusividade-mp.md`](../../../api-delpi/docs/api/padroes-totvs/playbooks/playbook-catalogo-exclusividade-mp.md)  
 **Parent playbook 15:** [`playbook-15-rotas-operacionais-sem-sql.md`](./playbook-15-rotas-operacionais-sem-sql.md)
 
 ---
