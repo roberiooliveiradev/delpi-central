@@ -87,6 +87,7 @@ def get_supplies_stock_balances_summary(
         description="Legacy alias of warehouse — prefer warehouse.",
         pattern=_WAREHOUSE_PATTERN,
         deprecated=True,
+        include_in_schema=False,
     ),
     only_positive: bool = Query(
         default=True,
@@ -144,13 +145,19 @@ def get_supplies_stock_balances_items(
         description="Legacy alias of warehouse — prefer warehouse.",
         pattern=_WAREHOUSE_PATTERN,
         deprecated=True,
+        include_in_schema=False,
     ),
     only_positive: bool = Query(
         default=True,
         description="When true, only rows with B2_QATU > 0.",
     ),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(
+        default=50,
+        ge=1,
+        le=500,
+        description="Rows per page (max 500).",
+    ),
     sort: str = Query(
         default="stock_value_desc",
         description="Sort key for stock balance items.",

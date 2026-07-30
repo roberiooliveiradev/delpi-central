@@ -44,9 +44,9 @@ Opcional na resposta (conferência): `total_stock_value_vatu1 = SUM(B2_VATU1)`.
 | Param | Default | Comportamento |
 |-------|---------|----------------|
 | `branch` | vazio | Consolidado (todas as filiais) |
-| `warehouse` | vazio | Todos os armazéns; alias `location` |
+| `warehouse` | vazio | Todos os armazéns; alias `location` (aceito, fora do OpenAPI/TV) |
 | `only_positive` | `true` | `B2_QATU > 0` |
-| `page` / `page_size` | items | Paginação |
+| `page` / `page_size` | `1` / `50` | Paginação; `page_size` máx. **500** |
 | `sort` | `stock_value_desc` | Ordenação da listagem |
 
 ## Respostas

@@ -624,7 +624,13 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
         patched_existing: dict[str, Any] = {}
         for key, value in existing_schema.items():
             if not isinstance(value, dict):
+                if openapi_schema and key not in openapi_schema:
+                    continue
                 patched_existing[key] = value
+                continue
+            # Params removidos do OpenAPI não devem ressuscitar pelo catálogo antigo
+            # (ex.: alias `location` deprecated fora do schema). Extras TV-only vêm do overlay.
+            if openapi_schema and key not in openapi_schema:
                 continue
             entry = dict(value)
             openapi_entry = openapi_schema.get(key) if isinstance(openapi_schema.get(key), dict) else {}

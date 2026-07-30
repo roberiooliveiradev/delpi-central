@@ -49506,14 +49506,6 @@
           "type": "string"
         },
         {
-          "name": "location",
-          "in": "query",
-          "required": false,
-          "description": "Legacy alias of warehouse — prefer warehouse.",
-          "type": "string",
-          "deprecated": true
-        },
-        {
           "name": "only_positive",
           "in": "query",
           "required": false,
@@ -49533,7 +49525,7 @@
           "name": "page_size",
           "in": "query",
           "required": false,
-          "description": "Rows per page.",
+          "description": "Rows per page (max 500).",
           "type": "integer",
           "default": 50
         },
@@ -49582,18 +49574,6 @@
               "pt-BR": {
                 "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
                 "label": "Filial"
-              }
-            }
-          },
-          "location": {
-            "locale": {
-              "en": {
-                "description": "Location query parameter.",
-                "label": "Location"
-              },
-              "pt-BR": {
-                "description": "Localização / endereço de estoque no Protheus.",
-                "label": "Localização"
               }
             }
           },
@@ -49696,14 +49676,6 @@
           "type": "string"
         },
         {
-          "name": "location",
-          "in": "query",
-          "required": false,
-          "description": "Legacy alias of warehouse — prefer warehouse.",
-          "type": "string",
-          "deprecated": true
-        },
-        {
           "name": "only_positive",
           "in": "query",
           "required": false,
@@ -49740,18 +49712,6 @@
               "pt-BR": {
                 "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
                 "label": "Filial"
-              }
-            }
-          },
-          "location": {
-            "locale": {
-              "en": {
-                "description": "Location query parameter.",
-                "label": "Location"
-              },
-              "pt-BR": {
-                "description": "Localização / endereço de estoque no Protheus.",
-                "label": "Localização"
               }
             }
           },

@@ -27,7 +27,7 @@ class StockBalancesItemsRequest(StockBalancesQueryRequest):
     def __post_init__(self) -> None:
         super().__post_init__()
         self.page = max(1, int(self.page or 1))
-        self.page_size = min(200, max(1, int(self.page_size or 50)))
+        self.page_size = min(500, max(1, int(self.page_size or 50)))
         self.sort = (self.sort or "stock_value_desc").strip().lower()
 
     @property

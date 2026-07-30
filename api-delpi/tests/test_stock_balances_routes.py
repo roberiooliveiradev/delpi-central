@@ -219,3 +219,55 @@ def test_location_alias_maps_to_warehouse(
     assert response.status_code == 200
     req = use_case.execute.call_args.args[0]
     assert req.warehouse == "25"
+
+
+@patch(
+    "app.interface.http.routes.supplies.stock_balances_router"
+    ".build_get_supplies_stock_balances_items_use_case"
+)
+def test_items_accepts_page_size_500(
+    mock_builder, stock_balances_client: TestClient
+) -> None:
+    """TV pode pedir até 500 linhas; limite anterior (200) gerava 422."""
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [],
+        "page": 1,
+        "page_size": 500,
+        "total": 0,
+        "total_pages": 0,
+        "sort": "stock_value_desc",
+        "pagination": {
+            "page": 1,
+            "page_size": 500,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
+    }
+    mock_builder.return_value = use_case
+
+    response = stock_balances_client.get(
+        "/supplies/stock-balances/items",
+        params={
+            "branch": "01",
+            "warehouse": "25",
+            "page": 1,
+            "page_size": 500,
+            "only_positive": True,
+            "sort": "stock_value_desc",
+        },
+    )
+    assert response.status_code == 200
+    body = _body(response)
+    assert body["meta"]["operationId"] == "get_supplies_stock_balances_items"
+    req = use_case.execute.call_args.args[0]
+    assert req.page_size == 500
+
+
+def test_items_rejects_page_size_over_500(stock_balances_client: TestClient) -> None:
+    response = stock_balances_client.get(
+        "/supplies/stock-balances/items",
+        params={"page_size": 501},
+    )
+    assert response.status_code == 422

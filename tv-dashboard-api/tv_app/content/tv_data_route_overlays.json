@@ -325,7 +325,7 @@
       ],
       "paramStrategy": "direct",
       "tvConstraints": {
-        "maxRows": 15,
+        "maxRows": 50,
         "requiresBranchPermission": true
       },
       "valueFields": [
@@ -338,7 +338,62 @@
       },
       "label": "Suprimentos — itens de saldo por armazém",
       "description": "Lista de produtos com quantidade, custo unitário e valor por armazém.",
-      "whenToUse": "Tabela ou barras de produtos dentro de um armazém (ex.: 25, 50) ou consolidado."
+      "whenToUse": "Tabela ou barras de produtos dentro de um armazém (ex.: 25, 50) ou consolidado.",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 50,
+        "only_positive": true,
+        "sort": "stock_value_desc"
+      },
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": ["01", "02"],
+          "default": "01"
+        },
+        "warehouse": {
+          "type": "string",
+          "optional": true,
+          "label": "Armazém",
+          "description": "Código do armazém (B2_LOCAL). Vazio = todos."
+        },
+        "only_positive": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente saldo positivo",
+          "default": true
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "maximum": 500,
+          "description": "Máximo 500 linhas por página."
+        },
+        "sort": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação",
+          "default": "stock_value_desc",
+          "enum": [
+            "stock_value_desc",
+            "stock_value_asc",
+            "quantity_desc",
+            "quantity_asc",
+            "product_code_asc",
+            "product_code_desc"
+          ]
+        }
+      }
     },
     "get_lmps_dashboard_summary": {
       "valueFields": [
