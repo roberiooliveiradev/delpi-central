@@ -56,31 +56,36 @@
   white-space: nowrap;
 }
 
+/* Uma superfície só (portal bare) — sem borda dupla do shape-menu. */
 .delpi-ui-element-toggle__menu {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  min-width: 11rem;
-  padding: 0.35rem;
-  border-radius: 0.4rem;
-  background: var(--delpi-ui-surface, #fff);
+  gap: 0.1rem;
+  min-width: 12rem;
+  padding: 0.3rem;
   color: var(--delpi-ui-text, #0f172a);
-  border: 1px solid var(--delpi-ui-border, #e2e8f0);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
 }
 
 .delpi-ui-element-toggle__action {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   text-align: left;
-  padding: 0.45rem 0.55rem;
+  padding: 0.4rem 0.5rem;
   border: none;
-  border-radius: 0.3rem;
+  border-radius: 0.35rem;
   background: transparent;
   color: inherit;
   font: inherit;
   font-size: 0.8125rem;
+  line-height: 1.25;
   cursor: pointer;
+}
+
+.delpi-ui-element-toggle__action-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .delpi-ui-element-toggle__action:hover:not(:disabled) {
@@ -98,9 +103,9 @@
 }
 
 .delpi-ui-element-toggle__extra {
-  margin-top: 0.25rem;
-  padding-top: 0.35rem;
-  border-top: 1px solid var(--delpi-ui-border, #e2e8f0);
+  margin-top: 0.2rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--delpi-ui-popover-border-color, var(--delpi-ui-border, #e2e8f0));
 }
 
 .delpi-ui-element-toggle__inline {

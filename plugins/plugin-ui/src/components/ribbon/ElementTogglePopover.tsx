@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { Plus, Settings2, Trash2 } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -30,6 +31,7 @@ export type ElementTogglePopoverProps = {
   labels?: {
     add?: string;
     remove?: string;
+    /** Sobrescreve «Opções {label}». */
     options?: string;
     menuAria?: string;
   };
@@ -41,7 +43,6 @@ export type ElementTogglePopoverProps = {
 const DEFAULT_LABELS = {
   add: "Adicionar",
   remove: "Remover",
-  options: "Opções do item…",
   menuAria: "Ações do elemento",
 } as const;
 
@@ -62,7 +63,13 @@ export function ElementTogglePopover({
   portalScopeClassName,
   className,
 }: ElementTogglePopoverProps) {
-  const L = { ...DEFAULT_LABELS, ...labelsProp };
+  const optionsLabel =
+    labelsProp?.options?.trim() || `Opções ${label}`;
+  const L = {
+    ...DEFAULT_LABELS,
+    ...labelsProp,
+    options: optionsLabel,
+  };
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -107,7 +114,8 @@ export function ElementTogglePopover({
   const menu = (
     <div
       id={menuId}
-      className="delpi-ui-element-toggle__menu"
+      ref={inSectionPopover ? panelRef : undefined}
+      className="delpi-ui-element-toggle__menu delpi-ui-popover-surface"
       role="menu"
       aria-label={L.menuAria}
     >
@@ -118,7 +126,8 @@ export function ElementTogglePopover({
           className="delpi-ui-element-toggle__action delpi-ui-element-toggle__action--danger"
           onClick={runRemove}
         >
-          {L.remove}
+          <Trash2 size={15} aria-hidden="true" className="delpi-ui-element-toggle__action-icon" />
+          <span>{L.remove}</span>
         </button>
       ) : (
         <button
@@ -127,7 +136,8 @@ export function ElementTogglePopover({
           className="delpi-ui-element-toggle__action"
           onClick={runAdd}
         >
-          {L.add}
+          <Plus size={15} aria-hidden="true" className="delpi-ui-element-toggle__action-icon" />
+          <span>{L.add}</span>
         </button>
       )}
       <button
@@ -137,7 +147,8 @@ export function ElementTogglePopover({
         disabled={!presence.enabled}
         onClick={runOptions}
       >
-        {L.options}
+        <Settings2 size={15} aria-hidden="true" className="delpi-ui-element-toggle__action-icon" />
+        <span>{L.options}</span>
       </button>
       {children ? <div className="delpi-ui-element-toggle__extra">{children}</div> : null}
     </div>
@@ -172,6 +183,7 @@ export function ElementTogglePopover({
             onDismiss={close}
             anchorRef={rootRef}
             panelRef={panelRef}
+            variant="bare"
             exclusive={!inSectionPopover}
             density="compact"
             className={["delpi-ui-element-toggle__portal", portalScopeClassName]
