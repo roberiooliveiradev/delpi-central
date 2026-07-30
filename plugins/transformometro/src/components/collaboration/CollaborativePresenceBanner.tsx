@@ -1,3 +1,8 @@
+import {
+  EditorChromeNotice,
+  EditorChromeNotices,
+} from "@delpi/plugin-ui/index";
+
 import type { CollaborationPresencePayload } from "../../data/api/transformometroCollaborationApi";
 import { COLLABORATION_SECTION_LABELS } from "../../constants/collaborationSections";
 
@@ -8,6 +13,11 @@ type Props = {
   onDismissRealtimeNotice?: () => void;
   /** Em páginas imersivas (ex.: editor BPMN), omitir «Visualizando» libera altura. */
   showViewers?: boolean;
+  /**
+   * `stack` — wrapper próprio (páginas de detalhe).
+   * `items` — só os avisos, para encaixar em `EditorChrome.notices`.
+   */
+  layout?: "stack" | "items";
 };
 
 export function CollaborativePresenceBanner({
@@ -16,55 +26,57 @@ export function CollaborativePresenceBanner({
   realtimeNotice,
   onDismissRealtimeNotice,
   showViewers = true,
+  layout = "stack",
 }: Props) {
-  if (!lockError && !realtimeNotice) {
-    const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
-    const viewers = showViewers ? presence?.viewers ?? [] : [];
-    if (!editors.length && !viewers.length) {
-      return null;
-    }
-  }
-
   const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
   const viewers = showViewers ? presence?.viewers ?? [] : [];
 
-  return (
-    <div className="tm-collab-banner" role="status">
-      {lockError ? <p className="tm-collab-banner__alert">{lockError}</p> : null}
+  if (!lockError && !realtimeNotice && !editors.length && !viewers.length) {
+    return null;
+  }
+
+  const items = (
+    <>
+      {lockError ? (
+        <EditorChromeNotice tone="danger">{lockError}</EditorChromeNotice>
+      ) : null}
       {realtimeNotice ? (
-        <p className="tm-collab-banner__line tm-collab-banner__line--info">
+        <EditorChromeNotice
+          tone="info"
+          actionLabel={onDismissRealtimeNotice ? "Ok" : undefined}
+          onAction={onDismissRealtimeNotice}
+        >
           {realtimeNotice}
-          {onDismissRealtimeNotice ? (
-            <button
-              type="button"
-              className="tm-collab-banner__dismiss"
-              onClick={onDismissRealtimeNotice}
-            >
-              Ok
-            </button>
-          ) : null}
-        </p>
+        </EditorChromeNotice>
       ) : null}
       {editors.length ? (
-        <p className="tm-collab-banner__line">
+        <EditorChromeNotice tone="info">
           Editando:{" "}
           {editors
             .map(
               (item) =>
-                `${item.user_name || "Usuário"} (${COLLABORATION_SECTION_LABELS[item.section_key] || item.section_key})`
+                `${item.user_name || "Usuário"} (${COLLABORATION_SECTION_LABELS[item.section_key] || item.section_key})`,
             )
             .join(" · ")}
-        </p>
+        </EditorChromeNotice>
       ) : null}
       {viewers.length ? (
-        <p className="tm-collab-banner__line tm-collab-banner__line--muted">
+        <EditorChromeNotice tone="neutral">
           Visualizando:{" "}
           {viewers
             .map((item) => item.user_name || item.user_email || "Usuário")
             .filter((value, index, list) => list.indexOf(value) === index)
             .join(", ")}
-        </p>
+        </EditorChromeNotice>
       ) : null}
-    </div>
+    </>
+  );
+
+  if (layout === "items") {
+    return items;
+  }
+
+  return (
+    <EditorChromeNotices aria-label="Presença colaborativa">{items}</EditorChromeNotices>
   );
 }

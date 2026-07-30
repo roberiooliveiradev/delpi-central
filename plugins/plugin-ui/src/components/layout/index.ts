@@ -381,3 +381,12 @@ export {
   type EditorChromeDensity,
   type EditorChromeProps,
 } from "./EditorChrome";
+export {
+  EditorChromeNotice,
+  EditorChromeNotices,
+  editorChromeNoticeBemClasses,
+  type EditorChromeNoticeClassNames,
+  type EditorChromeNoticeProps,
+  type EditorChromeNoticeTone,
+  type EditorChromeNoticesProps,
+} from "./EditorChromeNotice";

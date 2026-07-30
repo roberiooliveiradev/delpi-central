@@ -45,6 +45,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
     backLabel?: string;
     title?: string;
   };
+  chromeNotices?: import("react").ReactNode;
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onReload?: () => void;
@@ -58,6 +59,7 @@ export function RevisaoDiagramSection({
   embeddedInCard = false,
   variant = "embedded",
   chromeLeading,
+  chromeNotices,
   resyncVersion = 0,
   onError,
   onReload,
@@ -199,6 +201,7 @@ export function RevisaoDiagramSection({
         readOnly={readOnly}
         diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         chromeLeading={variant === "page" ? chromeLeading : undefined}
+        chromeNotices={variant === "page" ? chromeNotices : undefined}
       />
 
       <details

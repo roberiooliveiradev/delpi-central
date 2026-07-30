@@ -701,7 +701,7 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `screen-loading.css` | `ScreenLoading` — `.delpi-ui-screen-loading*` |
 | `ribbon-overflow.css` | `RibbonGroupsRow` / `RibbonGroup` — `.delpi-ui-ribbon-groups*` / `.delpi-ui-ribbon-group*` |
 | `ribbon-tile.css` | `RibbonTile` / `RibbonTiles` — `.delpi-ui-ribbon-tile*` |
-| `editor-chrome.css` | `EditorChrome` — `.delpi-ui-editor-chrome*` |
+| `editor-chrome.css` | `EditorChrome` + `EditorChromeNotice(s)` — `.delpi-ui-editor-chrome*` / `-notice*` |
 | `dashboard-filters.css` | `FiltersRow` / `filter-box` / `__spacer` / `FilterBarShell` |
 | `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` (+ `--trailing` / `__label`) |
 

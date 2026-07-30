@@ -58,6 +58,8 @@ type Props = {
   onUndo?: () => void;
   onRedo?: () => void;
   chromeLeading?: FlowchartEditorChromeLeading;
+  /** Avisos na faixa do chrome (entre head e ribbon). */
+  chromeNotices?: ReactNode;
   portalScopeClassName?: string;
   showPreviewTab?: boolean;
   activeViewTab?: "canvas" | "mermaid";
@@ -131,6 +133,7 @@ export function FlowchartEditorToolbar({
   onUndo,
   onRedo,
   chromeLeading,
+  chromeNotices,
   portalScopeClassName,
   showPreviewTab = false,
   activeViewTab = "canvas",
@@ -211,6 +214,7 @@ export function FlowchartEditorToolbar({
       <FlowchartComponentSearch
         labels={labels}
         onAddNode={onAddNode}
+        onEditorAction={onEditorAction}
         portalScopeClassName={portalScopeClassName}
       />
       <HelpTooltip
@@ -358,6 +362,7 @@ export function FlowchartEditorToolbar({
       tabs={tabs}
       trailing={trailing}
       trail={chromeLeading?.title ? <span title={chromeLeading.title}>{chromeLeading.title}</span> : null}
+      notices={chromeNotices}
       ribbon={ribbon}
       className="delpi-ui-bpmn-editor__chrome"
     >

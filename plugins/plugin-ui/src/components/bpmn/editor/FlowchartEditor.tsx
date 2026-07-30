@@ -23,6 +23,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
   type Ref,
 } from "react";
 
@@ -124,6 +125,8 @@ type FlowchartEditorProps = {
     backLabel?: string;
     title?: string;
   };
+  /** Avisos padronizados na faixa do chrome (entre head e ribbon). */
+  chromeNotices?: ReactNode;
 };
 
 type ActivityNode = Node<BpmnNodeData>;
@@ -370,6 +373,7 @@ function FlowchartEditorInner({
   showTemplates = true,
   showPreviewTab = true,
   chromeLeading,
+  chromeNotices,
   editorRef,
 }: FlowchartEditorProps & {
   editorRef?: Ref<FlowchartEditorHandle>;
@@ -1440,6 +1444,7 @@ function FlowchartEditorInner({
                     onUndo={handleUndo}
                     onRedo={handleRedo}
                     chromeLeading={chromeLeading}
+                    chromeNotices={chromeNotices}
                     portalScopeClassName={shellClassName}
                     showPreviewTab={showPreviewTab}
                     activeViewTab="canvas"
@@ -1477,6 +1482,7 @@ function FlowchartEditorInner({
                         <span title={chromeLeading.title}>{chromeLeading.title}</span>
                       ) : null
                     }
+                    notices={chromeNotices}
                     className="delpi-ui-bpmn-editor__chrome"
                   >
                     {stageBody}

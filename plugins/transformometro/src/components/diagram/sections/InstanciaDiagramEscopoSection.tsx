@@ -33,6 +33,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
     backLabel?: string;
     title?: string;
   };
+  chromeNotices?: import("react").ReactNode;
   resyncVersion?: number;
   onError: (message: string | null) => void;
   /** Após salvar — invalida diagrama composto do processo (keep-alive). */
@@ -47,6 +48,7 @@ export function InstanciaDiagramEscopoSection({
   embeddedInCard = false,
   variant = "embedded",
   chromeLeading,
+  chromeNotices,
   resyncVersion = 0,
   onError,
   onSaved,
@@ -149,6 +151,7 @@ export function InstanciaDiagramEscopoSection({
         showTemplates={false}
         showPreviewTab={false}
         chromeLeading={variant === "page" ? chromeLeading : undefined}
+        chromeNotices={variant === "page" ? chromeNotices : undefined}
       />
 
       {!readOnly ? (

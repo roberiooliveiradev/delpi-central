@@ -96,3 +96,88 @@
   min-height: 0;
   position: relative;
 }
+
+/* --- Avisos padronizados (top bar / chrome) --- */
+
+.delpi-ui-editor-chrome__notices,
+.delpi-ui-editor-chrome-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 4px 8px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-editor-chrome__notices {
+  border-bottom: 1px solid var(--delpi-ui-editor-chrome-border);
+  background: var(--delpi-ui-editor-chrome-surface);
+}
+
+.delpi-ui-editor-chrome__notices:not(:has(.delpi-ui-editor-chrome-notice)),
+.delpi-ui-editor-chrome-notices:not(:has(.delpi-ui-editor-chrome-notice)),
+.delpi-ui-editor-chrome-notices:empty {
+  display: none;
+  padding: 0;
+  border: none;
+}
+
+.delpi-ui-editor-chrome-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, var(--border, rgba(127, 127, 127, 0.45))) 70%, transparent);
+  background: color-mix(in srgb, var(--text, currentColor) 4%, var(--surface, transparent));
+  color: var(--delpi-ui-text, var(--text, inherit));
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+.delpi-ui-editor-chrome-notice__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.delpi-ui-editor-chrome-notice--neutral {
+  color: var(--delpi-ui-muted, var(--text-muted, inherit));
+  font-weight: 500;
+}
+
+.delpi-ui-editor-chrome-notice--info {
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 35%, transparent);
+  background: color-mix(in srgb, var(--primary, #089bdb) 10%, var(--surface, transparent));
+}
+
+.delpi-ui-editor-chrome-notice--warning {
+  border-color: color-mix(in srgb, var(--warning, #f79009) 40%, transparent);
+  background: color-mix(in srgb, var(--warning, #f79009) 12%, var(--surface, transparent));
+}
+
+.delpi-ui-editor-chrome-notice--danger {
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #b42318) 40%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-danger, #b42318) 12%, var(--surface, transparent));
+}
+
+.delpi-ui-editor-chrome-notice__action {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--primary, #089bdb) 40%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--primary, #089bdb);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.delpi-ui-editor-chrome-notice__action:hover {
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+}

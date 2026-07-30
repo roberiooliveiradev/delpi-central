@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { Search, X, type LucideIcon } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -11,24 +11,37 @@ import {
 import { AnchoredPanelPortal } from "../../shape/AnchoredPanelPortal";
 import {
   BPMN_NODE_DEFINITIONS,
-  searchBpmnPalette,
   type FlowchartNodeType,
 } from "../model/bpmnNodeCatalog";
 import type { FlowchartEditorLabels } from "../model/flowchartEditorLabels";
-import { FLOWCHART_NODE_ICONS } from "./flowchartEditorToolbar";
+import {
+  FLOWCHART_NODE_ICONS,
+  type DiagramEditorAction,
+} from "./flowchartEditorToolbar";
+import {
+  searchFlowchartComponents,
+  type FlowchartComponentSearchHit,
+} from "./searchFlowchartComponents";
 
 type Props = {
   labels: FlowchartEditorLabels;
   onAddNode: (type: FlowchartNodeType) => void;
+  onEditorAction: (actionId: DiagramEditorAction["id"]) => void;
   portalScopeClassName?: string;
 };
 
+function hitIcon(hit: FlowchartComponentSearchHit): LucideIcon {
+  if (hit.kind === "action") return hit.icon;
+  return FLOWCHART_NODE_ICONS[hit.type];
+}
+
 /**
- * Busca de componentes BPMN na top bar — filtra o catálogo e adiciona o nó selecionado.
+ * Busca de componentes BPMN na top bar — paleta + ações (Faixa, modelos).
  */
 export function FlowchartComponentSearch({
   labels,
   onAddNode,
+  onEditorAction,
   portalScopeClassName,
 }: Props) {
   const listId = useId();
@@ -39,15 +52,19 @@ export function FlowchartComponentSearch({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const hits = useMemo(() => searchBpmnPalette(query), [query]);
+  const hits = useMemo(
+    () => searchFlowchartComponents(query, labels),
+    [labels, query],
+  );
   const showPanel = open && query.trim().length > 0;
 
   useEffect(() => {
     setActiveIndex(0);
   }, [query]);
 
-  const pick = (type: FlowchartNodeType) => {
-    onAddNode(type);
+  const pick = (hit: FlowchartComponentSearchHit) => {
+    if (hit.kind === "node") onAddNode(hit.type);
+    else onEditorAction(hit.actionId);
     setQuery("");
     setOpen(false);
     inputRef.current?.blur();
@@ -74,7 +91,7 @@ export function FlowchartComponentSearch({
     if (event.key === "Enter") {
       event.preventDefault();
       const hit = hits[activeIndex];
-      if (hit) pick(hit.type);
+      if (hit) pick(hit);
       return;
     }
     if (event.key === "Escape") {
@@ -104,7 +121,7 @@ export function FlowchartComponentSearch({
           aria-expanded={showPanel}
           aria-activedescendant={
             showPanel && hits[activeIndex]
-              ? `${listId}-option-${hits[activeIndex].type}`
+              ? `${listId}-option-${hits[activeIndex].id}`
               : undefined
           }
           onChange={(event) => {
@@ -155,16 +172,20 @@ export function FlowchartComponentSearch({
           ) : (
             <ul id={listId} className="delpi-ui-bpmn-editor__component-search-list" role="listbox">
               {hits.map((hit, index) => {
-                const Icon = FLOWCHART_NODE_ICONS[hit.type];
+                const Icon = hitIcon(hit);
                 const active = index === activeIndex;
+                const title =
+                  hit.kind === "node"
+                    ? hit.hint || BPMN_NODE_DEFINITIONS[hit.type].hint
+                    : hit.hint;
                 return (
-                  <li key={hit.type} role="presentation">
+                  <li key={hit.id} role="presentation">
                     <button
                       type="button"
-                      id={`${listId}-option-${hit.type}`}
+                      id={`${listId}-option-${hit.id}`}
                       role="option"
                       aria-selected={active}
-                      title={hit.hint || BPMN_NODE_DEFINITIONS[hit.type].hint}
+                      title={title}
                       className={[
                         "delpi-ui-bpmn-editor__component-search-option",
                         active
@@ -174,7 +195,7 @@ export function FlowchartComponentSearch({
                         .filter(Boolean)
                         .join(" ")}
                       onMouseEnter={() => setActiveIndex(index)}
-                      onClick={() => pick(hit.type)}
+                      onClick={() => pick(hit)}
                     >
                       <span
                         className="delpi-ui-bpmn-editor__component-search-option-icon"

@@ -36,6 +36,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
     backLabel?: string;
     title?: string;
   };
+  chromeNotices?: import("react").ReactNode;
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onEntityChanged?: () => void;
@@ -48,6 +49,7 @@ export function ProcessoDiagramSection({
   embeddedInCard = false,
   variant = "embedded",
   chromeLeading,
+  chromeNotices,
   resyncVersion = 0,
   onError,
   onEntityChanged,
@@ -172,6 +174,7 @@ export function ProcessoDiagramSection({
         onChange={readOnly ? undefined : setFlowchart}
         readOnly={readOnly}
         chromeLeading={variant === "page" ? chromeLeading : undefined}
+        chromeNotices={variant === "page" ? chromeNotices : undefined}
       />
 
       <DiagramValidationPanel report={validation} loading={validating} />

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import { EditorChromeNotice } from "@delpi/plugin-ui/index";
+
 import type { AppProps } from "../../App";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
 import { TransformometroShell } from "../../components/TransformometroShell";
@@ -136,6 +138,25 @@ export function DiagramEditorPage({
     title: config.title,
   };
 
+  const chromeNotices = (
+    <>
+      <CollaborativePresenceBanner
+        presence={sectionEdit.presence}
+        lockError={sectionEdit.lockError}
+        realtimeNotice={sectionEdit.realtimeNotice}
+        onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+        showViewers={false}
+        layout="items"
+      />
+      {lockFailed ? (
+        <EditorChromeNotice tone="warning">
+          Outro usuário está editando este diagrama. Você pode visualizar em somente leitura ou
+          voltar ao detalhe.
+        </EditorChromeNotice>
+      ) : null}
+    </>
+  );
+
   const readOnly = lockFailed || !lockReady;
   const missingIds =
     (kind === "instancia" && !instanciaId) || (kind === "revisao" && !revisaoId);
@@ -151,21 +172,6 @@ export function DiagramEditorPage({
           onDismissError={() => setError(null)}
         />
 
-        <CollaborativePresenceBanner
-          presence={sectionEdit.presence}
-          lockError={sectionEdit.lockError}
-          realtimeNotice={sectionEdit.realtimeNotice}
-          onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
-          showViewers={false}
-        />
-
-        {lockFailed ? (
-          <p className="ds-hint tm-diagram-editor-page__lock-hint" role="status">
-            Outro usuário está editando este diagrama. Você pode visualizar em somente leitura ou
-            voltar ao detalhe.
-          </p>
-        ) : null}
-
         {missingIds ? (
           <p className="ds-hint">Identificadores incompletos para abrir o editor.</p>
         ) : (
@@ -174,6 +180,7 @@ export function DiagramEditorPage({
               <ProcessoDiagramSection
                 variant="page"
                 chromeLeading={chromeLeading}
+                chromeNotices={chromeNotices}
                 readOnly={readOnly}
                 processoId={processoId}
                 getAccessToken={getAccessToken}
@@ -185,6 +192,7 @@ export function DiagramEditorPage({
               <InstanciaDiagramEscopoSection
                 variant="page"
                 chromeLeading={chromeLeading}
+                chromeNotices={chromeNotices}
                 readOnly={readOnly}
                 processoId={processoId}
                 instanciaId={instanciaId}
@@ -197,6 +205,7 @@ export function DiagramEditorPage({
               <RevisaoDiagramSection
                 variant="page"
                 chromeLeading={chromeLeading}
+                chromeNotices={chromeNotices}
                 readOnly={readOnly}
                 revisaoId={revisaoId}
                 getAccessToken={getAccessToken}
