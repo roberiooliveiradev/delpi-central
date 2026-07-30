@@ -24,6 +24,12 @@ describe("deck history back button contract", () => {
     expect(chrome).toMatch(/DeckHistoryTabActions onBack=\{playlistChrome\?\.onBack\}/);
   });
 
+  it("ribbon Programação não duplica Voltar (já existe Lista de Painéis na top bar)", () => {
+    const headerActions = readFileSync(join(base, "DeckEditorHeaderActions.tsx"), "utf8");
+    expect(headerActions).not.toMatch(/label=\"Voltar\"/);
+    expect(headerActions).toMatch(/Lista de Painéis/);
+  });
+
   it("substitui histórico de revisões por Atualizar dados quando há blocos de dados", () => {
     expect(history).not.toContain("DeckRevisionHistoryPanel");
     expect(history).not.toContain("Abrir histórico de revisões");

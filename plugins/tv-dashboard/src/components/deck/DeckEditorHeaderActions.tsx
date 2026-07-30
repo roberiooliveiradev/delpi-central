@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   Copy,
   Eye,
   Keyboard,
@@ -32,6 +31,7 @@ export type DeckPlaylistIdentityProps = {
 
 export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
   linkActive: boolean;
+  /** Usado pela top bar («Lista de Painéis») — não duplicar tile na ribbon. */
   onBack: () => void;
   onPreview: () => void;
   /** Refresh dos dados no editor (não o link público). */
@@ -77,10 +77,11 @@ export function DeckPlaylistIdentity({
 /**
  * Controles da programação/TV na aba Programação (tiles na ribbon).
  * Identidade (nome/status) fica em `DeckPlaylistIdentity` na barra superior.
+ * Voltar à lista: só na top bar («Lista de Painéis»).
  */
 export function DeckHomePlaylistChrome({
   linkActive,
-  onBack,
+  onBack: _onBack,
   onPreview,
   onRefreshVisual,
   dataPreviewStale = false,
@@ -99,7 +100,6 @@ export function DeckHomePlaylistChrome({
     <DeckRibbonGroup groupId="playlist-chrome" label="Programação" hint={R.playlistChrome}>
       <div className="td-deck-ribbon__playlist-chrome">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--playlist">
-          <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />
           <DeckRibbonTile icon={Eye} label="Prévia" hint={H.preview} onClick={onPreview} />
           {onRefreshVisual ? (
             <DeckRibbonTile

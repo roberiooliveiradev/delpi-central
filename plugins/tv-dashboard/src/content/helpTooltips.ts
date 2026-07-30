@@ -8,7 +8,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     nextSlide: "Avança para a próxima tela na ordem de exibição.",
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
     playlistChrome:
-      "Controles da programação: voltar, pré-visualizar, atalhos, colaboradores e link da TV.",
+      "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
     pause: "Desativa a tela na exibição da TV sem removê-la da playlist.",
     activate: "Reativa uma tela pausada para voltar a aparecer na rotação.",
     duplicate: "Cria uma cópia idêntica da tela atual, logo após ela na lista.",
