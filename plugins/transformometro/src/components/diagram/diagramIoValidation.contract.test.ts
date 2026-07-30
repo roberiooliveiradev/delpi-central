@@ -14,8 +14,10 @@ describe("diagram validation + IO chrome", () => {
     expect(section).toMatch(/DiagramIoMenu/);
     expect(section).toMatch(/delpi-ui-bpmn-workspace__split--with-panel/);
     expect(section).toMatch(/layout=\{validationLayout\}/);
-    expect(panel).toMatch(/delpi-ui-bpmn-validation__path/);
-    expect(panel).toMatch(/Simulação por token/);
-    expect(ioMenu).toMatch(/AnchoredPanelPortal/);
+    expect(panel).toMatch(/onCollapse/);
+    expect(panel).toMatch(/onClose/);
+    expect(panel).toMatch(/delpi-ui-bpmn-validation--rail/);
+    expect(section).toMatch(/validationPanelCollapsed/);
+    expect(section).toMatch(/setValidationPanelOpen/);
   });
 });

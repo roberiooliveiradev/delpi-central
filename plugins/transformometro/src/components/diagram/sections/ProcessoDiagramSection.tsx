@@ -58,6 +58,8 @@ export function ProcessoDiagramSection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [validating, setValidating] = useState(false);
+  const [validationPanelOpen, setValidationPanelOpen] = useState(false);
+  const [validationPanelCollapsed, setValidationPanelCollapsed] = useState(false);
   const [flowchart, setFlowchart] = useState<FlowchartV1>(emptyFlowchart());
   const liveMermaid = useMemo(() => flowchartToMermaid(flowchart), [flowchart]);
   const [validation, setValidation] = useState<DiagramValidationReport | null>(null);
@@ -93,6 +95,8 @@ export function ProcessoDiagramSection({
 
   async function runValidation(nextChart: FlowchartV1 = flowchart) {
     setValidating(true);
+    setValidationPanelOpen(true);
+    setValidationPanelCollapsed(false);
     onError(null);
     try {
       const report = await validateProcessoDiagrama(processoId, nextChart, getAccessToken);
@@ -210,9 +214,22 @@ export function ProcessoDiagramSection({
           </button>
           <button
             type="button"
-            className={actionBtnClass}
+            className={[
+              actionBtnClass,
+              validationPanelOpen ? "delpi-ui-bpmn-editor__chrome-action-btn--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             disabled={validating}
-            onClick={() => void runValidation()}
+            aria-pressed={validationPanelOpen}
+            onClick={() => {
+              if (validationPanelOpen && validation && !validating) {
+                setValidationPanelOpen(false);
+                setValidationPanelCollapsed(false);
+                return;
+              }
+              void runValidation();
+            }}
           >
             <ShieldCheck size={14} />
             Validar / simular
@@ -240,7 +257,8 @@ export function ProcessoDiagramSection({
     return <p className="ds-hint">Carregando diagrama macro…</p>;
   }
 
-  const showValidationPanel = validating || validation != null;
+  const showValidationPanel =
+    validationPanelOpen && (validating || validation != null);
   const validationLayout = isPage ? "aside" : "stack";
 
   const editorCore = (
@@ -255,11 +273,20 @@ export function ProcessoDiagramSection({
     />
   );
 
+  const closeValidationPanel = () => {
+    setValidationPanelOpen(false);
+    setValidationPanelCollapsed(false);
+  };
+
   const validationPanel = showValidationPanel ? (
     <DiagramValidationPanel
       report={validation}
       loading={validating}
       layout={validationLayout}
+      collapsed={isPage ? validationPanelCollapsed : false}
+      onCollapse={isPage ? () => setValidationPanelCollapsed(true) : undefined}
+      onExpand={isPage ? () => setValidationPanelCollapsed(false) : undefined}
+      onClose={closeValidationPanel}
     />
   ) : null;
 
@@ -270,13 +297,25 @@ export function ProcessoDiagramSection({
           className={[
             "delpi-ui-bpmn-workspace__split",
             showValidationPanel ? "delpi-ui-bpmn-workspace__split--with-panel" : "",
+            showValidationPanel && validationPanelCollapsed
+              ? "delpi-ui-bpmn-workspace__split--rail"
+              : "",
           ]
             .filter(Boolean)
             .join(" ")}
         >
           <div className="delpi-ui-bpmn-workspace__main">{editorCore}</div>
           {showValidationPanel ? (
-            <div className="delpi-ui-bpmn-workspace__aside">{validationPanel}</div>
+            <div
+              className={[
+                "delpi-ui-bpmn-workspace__aside",
+                validationPanelCollapsed ? "delpi-ui-bpmn-workspace__aside--rail" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {validationPanel}
+            </div>
           ) : null}
         </div>
       ) : (

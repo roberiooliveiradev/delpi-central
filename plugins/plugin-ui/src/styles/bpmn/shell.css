@@ -165,6 +165,15 @@
     max-width: 400px;
     min-width: 280px;
   }
+
+  .delpi-ui-bpmn-workspace__split--with-panel.delpi-ui-bpmn-workspace__split--rail .delpi-ui-bpmn-workspace__aside,
+  .dashboard-transformometro .delpi-ui-bpmn-workspace__split--with-panel.delpi-ui-bpmn-workspace__split--rail .delpi-ui-bpmn-workspace__aside,
+  .delpi-ui-bpmn-workspace__aside--rail,
+  .dashboard-transformometro .delpi-ui-bpmn-workspace__aside--rail{
+    flex: 0 0 44px;
+    max-width: 44px;
+    min-width: 44px;
+  }
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-export-swimlane-backdrop,
@@ -264,19 +273,127 @@
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--loading,
 .dashboard-transformometro .delpi-ui-bpmn-validation--loading{
-  flex-direction: row;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__loading-row,
+.dashboard-transformometro .delpi-ui-bpmn-validation__loading-row{
+  display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__header-row,
+.dashboard-transformometro .delpi-ui-bpmn-validation__header-row{
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__header-row .delpi-ui-bpmn-validation__status,
+.dashboard-transformometro .delpi-ui-bpmn-validation__header-row .delpi-ui-bpmn-validation__status{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__toolbar,
+.dashboard-transformometro .delpi-ui-bpmn-validation__toolbar{
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__toolbar-spacer,
+.dashboard-transformometro .delpi-ui-bpmn-validation__toolbar-spacer{
+  flex: 1 1 auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__icon-btn,
+.dashboard-transformometro .delpi-ui-bpmn-validation__icon-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ds-text-muted, inherit);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__icon-btn:hover,
+.dashboard-transformometro .delpi-ui-bpmn-validation__icon-btn:hover{
+  background: color-mix(in srgb, var(--text, currentColor) 8%, transparent);
+  color: var(--ds-text, inherit);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--rail,
+.dashboard-transformometro .delpi-ui-bpmn-validation--rail{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  min-height: 120px;
+  padding: 8px 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__rail-btn,
+.dashboard-transformometro .delpi-ui-bpmn-validation__rail-btn{
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  padding: 6px 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ds-text-muted, inherit);
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__rail-btn:hover,
+.dashboard-transformometro .delpi-ui-bpmn-validation__rail-btn:hover{
+  background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
+  color: var(--primary, #089bdb);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__rail-label,
+.dashboard-transformometro .delpi-ui-bpmn-validation__rail-label{
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-action-btn--active,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-action-btn--active{
+  background: color-mix(in srgb, var(--primary, #089bdb) 14%, transparent);
+  color: var(--primary, #089bdb);
+  border-color: color-mix(in srgb, var(--primary, #089bdb) 30%, transparent);
+}
+
+
+@keyframes delpi-ui-bpmn-spin {
+  to { transform: rotate(360deg); }
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__spinner,
 .dashboard-transformometro .delpi-ui-bpmn-validation__spinner{
   animation: delpi-ui-bpmn-spin 0.9s linear infinite;
   color: var(--ds-accent, #089bdb);
-}
-
-@keyframes delpi-ui-bpmn-spin {
-  to { transform: rotate(360deg); }
+  flex-shrink: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__loading-text,

@@ -1,4 +1,13 @@
-import { AlertTriangle, CheckCircle2, Loader2, Route, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronRight,
+  Loader2,
+  PanelRightOpen,
+  Route,
+  X,
+  XCircle,
+} from "lucide-react";
 
 import type { DiagramValidationReport } from "../../../data/api/transformometroDiagramApi";
 
@@ -7,6 +16,11 @@ type Props = {
   loading?: boolean;
   /** `aside` = painel lateral compacto; `stack` = bloco abaixo do editor. */
   layout?: "aside" | "stack";
+  /** Recolhe o painel a um trilho estreito (só layout aside). */
+  collapsed?: boolean;
+  onCollapse?: () => void;
+  onExpand?: () => void;
+  onClose?: () => void;
 };
 
 /**
@@ -16,21 +30,89 @@ export function DiagramValidationPanel({
   report,
   loading = false,
   layout = "stack",
+  collapsed = false,
+  onCollapse,
+  onExpand,
+  onClose,
 }: Props) {
+  const isAside = layout === "aside";
+  const showChrome = Boolean(onClose || (isAside && (onCollapse || onExpand)));
+
+  if (isAside && collapsed) {
+    return (
+      <div
+        className="delpi-ui-bpmn-validation delpi-ui-bpmn-validation--rail"
+        role="complementary"
+        aria-label="Validação recolhida"
+      >
+        <button
+          type="button"
+          className="delpi-ui-bpmn-validation__rail-btn"
+          onClick={onExpand}
+          aria-label="Expandir painel de validação"
+          title="Expandir validação"
+        >
+          <PanelRightOpen size={16} aria-hidden="true" />
+          <span className="delpi-ui-bpmn-validation__rail-label">Validação</span>
+        </button>
+        {onClose ? (
+          <button
+            type="button"
+            className="delpi-ui-bpmn-validation__icon-btn"
+            onClick={onClose}
+            aria-label="Fechar painel de validação"
+            title="Fechar"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div
         className={[
           "delpi-ui-bpmn-validation",
           "delpi-ui-bpmn-validation--loading",
-          layout === "aside" ? "delpi-ui-bpmn-validation--aside" : "",
+          isAside ? "delpi-ui-bpmn-validation--aside" : "",
         ]
           .filter(Boolean)
           .join(" ")}
         role="status"
       >
-        <Loader2 size={16} className="delpi-ui-bpmn-validation__spinner" aria-hidden="true" />
-        <p className="delpi-ui-bpmn-validation__loading-text">Validando diagrama…</p>
+        {showChrome ? (
+          <div className="delpi-ui-bpmn-validation__toolbar">
+            <span className="delpi-ui-bpmn-validation__toolbar-spacer" />
+            {isAside && onCollapse ? (
+              <button
+                type="button"
+                className="delpi-ui-bpmn-validation__icon-btn"
+                onClick={onCollapse}
+                aria-label="Recolher painel de validação"
+                title="Recolher"
+              >
+                <ChevronRight size={14} aria-hidden="true" />
+              </button>
+            ) : null}
+            {onClose ? (
+              <button
+                type="button"
+                className="delpi-ui-bpmn-validation__icon-btn"
+                onClick={onClose}
+                aria-label="Fechar painel de validação"
+                title="Fechar"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="delpi-ui-bpmn-validation__loading-row">
+          <Loader2 size={16} className="delpi-ui-bpmn-validation__spinner" aria-hidden="true" />
+          <p className="delpi-ui-bpmn-validation__loading-text">Validando diagrama…</p>
+        </div>
       </div>
     );
   }
@@ -49,29 +131,57 @@ export function DiagramValidationPanel({
       className={[
         "delpi-ui-bpmn-validation",
         report.valid ? "delpi-ui-bpmn-validation--ok" : "delpi-ui-bpmn-validation--invalid",
-        layout === "aside" ? "delpi-ui-bpmn-validation--aside" : "",
+        isAside ? "delpi-ui-bpmn-validation--aside" : "",
       ]
         .filter(Boolean)
         .join(" ")}
       aria-label="Validação e simulação do diagrama"
     >
       <header className="delpi-ui-bpmn-validation__header">
-        <div className="delpi-ui-bpmn-validation__status">
-          {report.valid ? (
-            <CheckCircle2 size={18} aria-hidden="true" className="delpi-ui-bpmn-validation__status-icon" />
-          ) : (
-            <XCircle size={18} aria-hidden="true" className="delpi-ui-bpmn-validation__status-icon" />
-          )}
-          <div className="delpi-ui-bpmn-validation__status-copy">
-            <p className="delpi-ui-bpmn-validation__title">
-              {report.valid ? "Validação estrutural OK" : "Validação com problemas"}
-            </p>
-            <p className="delpi-ui-bpmn-validation__subtitle">
-              {report.valid
-                ? "O diagrama passou nas regras estruturais."
-                : "Revise os erros antes de salvar ou publicar."}
-            </p>
+        <div className="delpi-ui-bpmn-validation__header-row">
+          <div className="delpi-ui-bpmn-validation__status">
+            {report.valid ? (
+              <CheckCircle2 size={18} aria-hidden="true" className="delpi-ui-bpmn-validation__status-icon" />
+            ) : (
+              <XCircle size={18} aria-hidden="true" className="delpi-ui-bpmn-validation__status-icon" />
+            )}
+            <div className="delpi-ui-bpmn-validation__status-copy">
+              <p className="delpi-ui-bpmn-validation__title">
+                {report.valid ? "Validação estrutural OK" : "Validação com problemas"}
+              </p>
+              <p className="delpi-ui-bpmn-validation__subtitle">
+                {report.valid
+                  ? "O diagrama passou nas regras estruturais."
+                  : "Revise os erros antes de salvar ou publicar."}
+              </p>
+            </div>
           </div>
+          {showChrome ? (
+            <div className="delpi-ui-bpmn-validation__toolbar">
+              {isAside && onCollapse ? (
+                <button
+                  type="button"
+                  className="delpi-ui-bpmn-validation__icon-btn"
+                  onClick={onCollapse}
+                  aria-label="Recolher painel de validação"
+                  title="Recolher"
+                >
+                  <ChevronRight size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+              {onClose ? (
+                <button
+                  type="button"
+                  className="delpi-ui-bpmn-validation__icon-btn"
+                  onClick={onClose}
+                  aria-label="Fechar painel de validação"
+                  title="Fechar"
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {hasSimulation ? (
           <div className="delpi-ui-bpmn-validation__stats" role="group" aria-label="Resumo da simulação">
