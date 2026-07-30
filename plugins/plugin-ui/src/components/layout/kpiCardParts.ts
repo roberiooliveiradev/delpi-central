@@ -10,6 +10,7 @@ import type {
 
 import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
 import { AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, resolvePaintTextColor } from "../shape/colorUtils";
+import { SHAPE_CORNER_ADJUST_HANDLE } from "../shape/selectionChromeAdjustSeparation";
 import { applyTextEffectStyleToCss } from "../shape/textEffectStyle";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { resolveTextPartColumnBoxLayout } from "../../utils/textPartBoxLayout";
@@ -227,13 +228,13 @@ export const KPI_ICON_DEFAULT_RADIUS_PX = 12;
 
 /**
  * Track do handle amarelo de cantos — mesmo padrão do `cornerSpec` / SHAPE_CORNER_ADJUST_HANDLE.
- * Longe do NW e do pill N + giro (centro do topo).
+ * Borda superior (y=0), longe do NW e do pill N + giro.
  */
 const KPI_CORNER_ADJ_MAX = 0.5;
-const KPI_CORNER_TRACK_START = 18;
-const KPI_CORNER_TRACK_END = 36;
+const KPI_CORNER_TRACK_START = SHAPE_CORNER_ADJUST_HANDLE.trackStartPct;
+const KPI_CORNER_TRACK_END = SHAPE_CORNER_ADJUST_HANDLE.trackEndPct;
 const KPI_CORNER_TRACK = KPI_CORNER_TRACK_END - KPI_CORNER_TRACK_START;
-const KPI_CORNER_HANDLE_Y_PCT = 10;
+const KPI_CORNER_HANDLE_Y_PCT = SHAPE_CORNER_ADJUST_HANDLE.yPct;
 
 function clampKpiCorner(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));

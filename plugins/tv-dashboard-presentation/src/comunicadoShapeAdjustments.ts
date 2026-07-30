@@ -38,7 +38,7 @@ function linearFromY(localY: number, min: number, max: number): number {
 
 /** Cantos arredondados (retângulo / processo) — equivalente ao adj do Rounded Rectangle.
  * handleAt e valueFromPointer são inversos.
- * Faixa 18–36% / y=10%: longe do NW e do pill N + giro (centro do topo).
+ * Faixa na borda superior (y=0): longe do NW e do pill N + giro.
  */
 function cornerSpec(index = 0, defaultValue = 0.16): ShapeAdjustmentSpec {
   const trackStart = SHAPE_CORNER_ADJUST_HANDLE.trackStartPct;

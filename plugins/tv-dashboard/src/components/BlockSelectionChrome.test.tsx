@@ -100,7 +100,7 @@ describe("BlockSelectionChrome", () => {
     ).toBeGreaterThanOrEqual(1);
   });
 
-  it("losango de cantos não fica no NW nem no centro do topo", () => {
+  it("losango de cantos fica na borda superior, fora do NW e do centro", () => {
     const onPointerDown = vi.fn();
     render(
       <BlockSelectionChrome
@@ -113,8 +113,8 @@ describe("BlockSelectionChrome", () => {
     const left = Number.parseFloat(String(adjust.style.left));
     const top = Number.parseFloat(String(adjust.style.top));
     expect(left).toBeGreaterThan(8);
-    expect(left).toBeLessThan(45);
-    expect(top).toBeGreaterThan(0);
+    expect(left).toBeLessThan(50);
+    expect(top).toBe(0);
   });
 
   it("duplo clique no handle dispara hug (não inicia resize no 2º clique)", () => {
