@@ -35,11 +35,11 @@
 
 /* Separador suave entre seções da ribbon (exceto a primeira). */
 .delpi-ui-ribbon-group + .delpi-ui-ribbon-group {
-  margin-left: 2px;
-  padding-left: 10px;
+  margin-left: 4px;
+  padding-left: 12px;
   border-left: 1px solid color-mix(
     in srgb,
-    var(--delpi-ui-border, var(--border, rgba(127, 127, 127, 0.4))) 55%,
+    var(--delpi-ui-border, var(--border, rgba(160, 160, 160, 0.55))) 70%,
     transparent
   );
 }

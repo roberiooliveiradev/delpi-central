@@ -113,7 +113,8 @@ export const FLOWCHART_NODE_ICONS: Record<FlowchartNodeType, LucideIcon> = Objec
 ) as Record<FlowchartNodeType, LucideIcon>;
 
 export function flowchartNodeHint(type: FlowchartNodeType, labels: FlowchartEditorLabels): string {
-  return labels.nodeHints[type] ?? BPMN_NODE_DEFINITIONS[type]?.label ?? "";
+  const def = BPMN_NODE_DEFINITIONS[type];
+  return labels.nodeHints[type] ?? def?.hint ?? def?.label ?? "";
 }
 
 export type FlowchartElementGroupTab =

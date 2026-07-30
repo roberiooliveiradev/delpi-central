@@ -85,7 +85,7 @@ export const BPMN_PALETTE_CATEGORIES: Array<{ id: BpmnPaletteCategoryId; label: 
 
 export const BPMN_NODE_DEFINITIONS = {
   start: {
-    label: "Início",
+    label: "Genérico",
     category: "events_start",
     shape: "event_start",
     marker: "none",
@@ -94,7 +94,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Evento de início genérico (nenhum gatilho específico).",
   },
   start_message: {
-    label: "Início — mensagem",
+    label: "Mensagem",
     category: "events_start",
     shape: "event_start",
     marker: "message",
@@ -104,7 +104,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Processo inicia ao receber uma mensagem.",
   },
   start_timer: {
-    label: "Início — temporizador",
+    label: "Temporizador",
     category: "events_start",
     shape: "event_start",
     marker: "timer",
@@ -114,7 +114,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Processo inicia em data/horário ou intervalo programado.",
   },
   start_signal: {
-    label: "Início — sinal",
+    label: "Sinal",
     category: "events_start",
     shape: "event_start",
     marker: "signal",
@@ -124,7 +124,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Processo inicia ao receber um sinal em difusão.",
   },
   start_conditional: {
-    label: "Início — condicional",
+    label: "Condicional",
     category: "events_start",
     shape: "event_start",
     marker: "conditional",
@@ -134,7 +134,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Processo inicia quando uma condição de negócio é satisfeita.",
   },
   start_multiple: {
-    label: "Início — múltiplo",
+    label: "Múltiplo",
     category: "events_start",
     shape: "event_start",
     marker: "multiple",
@@ -144,7 +144,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Início disparado por um entre vários eventos possíveis.",
   },
   start_parallel: {
-    label: "Início — paralelo",
+    label: "Paralelo",
     category: "events_start",
     shape: "event_start",
     marker: "parallel",
@@ -155,7 +155,7 @@ export const BPMN_NODE_DEFINITIONS = {
   },
 
   intermediate: {
-    label: "Intermediário",
+    label: "Genérico",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "none",
@@ -164,7 +164,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Evento intermediário genérico (captura).",
   },
   intermediate_message_catch: {
-    label: "Intermediário — mensagem (recepção)",
+    label: "Mensagem (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "message",
@@ -174,7 +174,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda recebimento de mensagem durante o fluxo.",
   },
   intermediate_timer: {
-    label: "Intermediário — temporizador",
+    label: "Temporizador",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "timer",
@@ -184,7 +184,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda tempo decorrer (delay, prazo, ciclo).",
   },
   intermediate_signal_catch: {
-    label: "Intermediário — sinal (recepção)",
+    label: "Sinal (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "signal",
@@ -194,7 +194,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda um sinal em difusão durante o fluxo.",
   },
   intermediate_conditional: {
-    label: "Intermediário — condicional",
+    label: "Condicional",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "conditional",
@@ -204,7 +204,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Aguarda condição de negócio ser satisfeita.",
   },
   intermediate_link_catch: {
-    label: "Intermediário — vínculo (recepção)",
+    label: "Vínculo (recepção)",
     category: "events_intermediate",
     shape: "event_intermediate_catch",
     marker: "link",
@@ -214,7 +214,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Ponto de chegada de um vínculo dentro do mesmo processo.",
   },
   intermediate_message_throw: {
-    label: "Intermediário — mensagem (envio)",
+    label: "Mensagem (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "message",
@@ -224,7 +224,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Envia mensagem para outro participante ou processo.",
   },
   intermediate_signal_throw: {
-    label: "Intermediário — sinal (envio)",
+    label: "Sinal (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "signal",
@@ -234,7 +234,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Emite sinal em difusão durante o fluxo.",
   },
   intermediate_link_throw: {
-    label: "Intermediário — vínculo (envio)",
+    label: "Vínculo (envio)",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "link",
@@ -244,7 +244,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Salta para o ponto de vínculo correspondente no diagrama.",
   },
   intermediate_escalation_throw: {
-    label: "Intermediário — escalação",
+    label: "Escalação",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "escalation",
@@ -254,7 +254,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Dispara escalação para nível superior ou subprocesso.",
   },
   intermediate_compensation_throw: {
-    label: "Intermediário — compensação",
+    label: "Compensação",
     category: "events_intermediate",
     shape: "event_intermediate_throw",
     marker: "compensation",
@@ -265,7 +265,7 @@ export const BPMN_NODE_DEFINITIONS = {
   },
 
   end: {
-    label: "Fim",
+    label: "Genérico",
     category: "events_end",
     shape: "event_end",
     marker: "none",
@@ -274,7 +274,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Evento de fim genérico — término normal do fluxo.",
   },
   end_message: {
-    label: "Fim — mensagem",
+    label: "Mensagem",
     category: "events_end",
     shape: "event_end",
     marker: "message",
@@ -284,7 +284,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Fim ao enviar mensagem para outro participante.",
   },
   end_error: {
-    label: "Fim — erro",
+    label: "Erro",
     category: "events_end",
     shape: "event_end",
     marker: "error",
@@ -294,7 +294,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Fim por erro de negócio ou técnico.",
   },
   end_terminate: {
-    label: "Fim — terminate",
+    label: "Terminate",
     category: "events_end",
     shape: "event_end",
     marker: "terminate",
@@ -304,7 +304,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Encerra imediatamente todo o processo (inclui tokens paralelos).",
   },
   end_signal: {
-    label: "Fim — sinal",
+    label: "Sinal",
     category: "events_end",
     shape: "event_end",
     marker: "signal",
@@ -314,7 +314,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Fim ao emitir sinal em difusão.",
   },
   end_escalation: {
-    label: "Fim — escalação",
+    label: "Escalação",
     category: "events_end",
     shape: "event_end",
     marker: "escalation",
@@ -324,7 +324,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Fim por escalação para responsável externo.",
   },
   end_cancel: {
-    label: "Fim — cancelamento",
+    label: "Cancelamento",
     category: "events_end",
     shape: "event_end",
     marker: "cancel",
@@ -334,7 +334,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Fim por cancelamento de transação.",
   },
   end_compensation: {
-    label: "Fim — compensação",
+    label: "Compensação",
     category: "events_end",
     shape: "event_end",
     marker: "compensation",
@@ -559,7 +559,7 @@ export const BPMN_NODE_DEFINITIONS = {
   },
 
   boundary_timer: {
-    label: "Borda — temporizador",
+    label: "Temporizador",
     category: "boundary",
     shape: "boundary",
     marker: "timer",
@@ -569,7 +569,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Interrompe ou desvia atividade após prazo.",
   },
   boundary_message: {
-    label: "Borda — mensagem",
+    label: "Mensagem",
     category: "boundary",
     shape: "boundary",
     marker: "message",
@@ -579,7 +579,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Desvia fluxo ao receber mensagem durante atividade.",
   },
   boundary_error: {
-    label: "Borda — erro",
+    label: "Erro",
     category: "boundary",
     shape: "boundary",
     marker: "error",
@@ -589,7 +589,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Captura erro da atividade anexada (interrompente).",
   },
   boundary_signal: {
-    label: "Borda — sinal",
+    label: "Sinal",
     category: "boundary",
     shape: "boundary",
     marker: "signal",
@@ -599,7 +599,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Desvia fluxo ao receber sinal durante atividade.",
   },
   boundary_escalation: {
-    label: "Borda — escalação",
+    label: "Escalação",
     category: "boundary",
     shape: "boundary",
     marker: "escalation",
@@ -609,7 +609,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Escala atividade para responsável externo.",
   },
   boundary_compensation: {
-    label: "Borda — compensação",
+    label: "Compensação",
     category: "boundary",
     shape: "boundary",
     marker: "compensation",
@@ -619,7 +619,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Gatilho de compensação na atividade anexada.",
   },
   boundary_cancel: {
-    label: "Borda — cancelamento",
+    label: "Cancelamento",
     category: "boundary",
     shape: "boundary",
     marker: "cancel",
@@ -629,7 +629,7 @@ export const BPMN_NODE_DEFINITIONS = {
     hint: "Cancela transação da atividade anexada.",
   },
   boundary_conditional: {
-    label: "Borda — condicional",
+    label: "Condicional",
     category: "boundary",
     shape: "boundary",
     marker: "conditional",
