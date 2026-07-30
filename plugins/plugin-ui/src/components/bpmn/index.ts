@@ -7,7 +7,7 @@ export type {
 } from "./shell/DiagramFullscreenFrame";
 export { DiagramLayoutProvider, useDiagramEditorLayout } from "./shell/DiagramLayoutContext";
 export { TabPanelTransition } from "./shell/TabPanelTransition";
-export { flowchartEditorShellClassName, FLOWCHART_EDITOR_ROOT_CLASS } from "./shell/diagramShellClasses";
+export { flowchartEditorShellClassName, FLOWCHART_EDITOR_ROOT_CLASS, bpmnEditorBem } from "./shell/diagramShellClasses";
 export type { FlowchartEditorLabels } from "./model/flowchartEditorLabels";
 export type {
   FlowchartV1,

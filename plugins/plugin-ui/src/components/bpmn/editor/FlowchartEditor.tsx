@@ -35,7 +35,7 @@ import {
   createDiagramEditorSelectionActions,
   type DiagramEditorAction,
 } from "./flowchartEditorToolbar";
-import { flowchartEditorShellClassName } from "../shell/diagramShellClasses";
+import { bpmnEditorBem, flowchartEditorShellClassName } from "../shell/diagramShellClasses";
 import type { FlowchartEditorLabels } from "../model/flowchartEditorLabels";
 import {
   autoLayoutFlowchart,
@@ -1320,9 +1320,11 @@ function FlowchartEditorInner({
     <div
       className={[
         flowchartEditorShellClassName(shellClassName),
-        "delpi-ui-bpmn-editor",
-        layout === "fill" ? "delpi-ui-bpmn-editor--fill" : "",
-        "delpi-ui-bpmn-editor--overlay-tools",
+        bpmnEditorBem(
+          "",
+          ...(layout === "fill" ? ["--fill"] : []),
+          "--overlay-tools"
+        ),
       ]
         .filter(Boolean)
         .join(" ")}
@@ -1330,7 +1332,7 @@ function FlowchartEditorInner({
       <TabPanelTransition tabKey={activeTab}>
         {activeTab === "canvas" ? (
           <div
-            className="delpi-ui-bpmn-editor__stage"
+            className={bpmnEditorBem("__stage")}
             style={{ minHeight: canvasHeight }}
           >
             {!readOnly && showTemplates ? (
@@ -1391,13 +1393,11 @@ function FlowchartEditorInner({
             <div
               ref={canvasWrapperRef}
               tabIndex={readOnly ? -1 : 0}
-              className={[
-                "delpi-ui-bpmn-editor__canvas",
-                lanes.length ? "delpi-ui-bpmn-editor__canvas--swimlanes" : "",
-                readOnly ? "delpi-ui-bpmn-editor__canvas--readonly" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className={bpmnEditorBem(
+                "__canvas",
+                ...(lanes.length ? ["__canvas--swimlanes"] : []),
+                ...(readOnly ? ["__canvas--readonly"] : [])
+              )}
               style={{ height: canvasHeight }}
             >
               <ReactFlow

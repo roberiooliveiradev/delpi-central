@@ -29,18 +29,18 @@
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--overlay-tools .react-flow__controls,
 .dashboard-transformometro .delpi-ui-bpmn-editor--overlay-tools .react-flow__controls,
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .react-flow__controls,
-.dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls{
-  bottom: 56px;
-  /* Cabeçalho das swimlanes (~132px) — zoom não cobre os rótulos verticais */
-  left: 148px;
-}
-
+.dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls,
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__canvas .react-flow__controls,
 .dashboard-transformometro .delpi-ui-bpmn-editor__canvas .react-flow__controls,
 .delpi-ui-flowchart-shell .tm-diagram-editor__canvas .react-flow__controls,
-.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__controls{
-  bottom: 56px;
-  left: 148px;
+.dashboard-transformometro .tm-diagram-editor__canvas .react-flow__controls,
+/* Painel XYFlow — não depender só do BEM do editor (evita desalinhamento pós-renomeação) */
+.delpi-ui-flowchart-shell .react-flow__panel.react-flow__controls.bottom.left,
+.dashboard-transformometro .react-flow__panel.react-flow__controls.bottom.left{
+  bottom: 56px !important;
+  /* Cabeçalho das swimlanes (LANE_HEADER_WIDTH 132px) + folga — zoom não cobre os rótulos */
+  left: 148px !important;
+  margin-left: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__canvas--readonly .react-flow__handle,
