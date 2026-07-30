@@ -239,6 +239,41 @@
   margin-left: 4px;
 }
 
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-actions,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-actions{
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid
+    color-mix(in srgb, var(--border, rgba(127, 127, 127, 0.45)) 85%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-actions--mermaid,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-actions--mermaid{
+  margin-left: 4px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-action-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-action-btn,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-actions .ds-primary-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-actions .ds-primary-btn,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-actions .delpi-ui-ghost-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-actions .delpi-ui-ghost-btn,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__chrome-actions .ds-ghost-btn,
+.dashboard-transformometro .delpi-ui-bpmn-editor__chrome-actions .ds-ghost-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__stage,
 .dashboard-transformometro .delpi-ui-bpmn-editor__stage,
 .delpi-ui-flowchart-shell .tm-diagram-editor__stage,

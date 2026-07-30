@@ -30,7 +30,47 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__mermaid-panel--fill,
 .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-panel--fill{
   flex: 1;
-  min-height: 280px;
+  min-height: 0;
+  height: 100%;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill.delpi-ui-bpmn-editor__mermaid-panel--chrome,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill.delpi-ui-bpmn-editor__mermaid-panel--chrome{
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(280px, 1.25fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-alert,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-alert{
+  grid-column: 1 / -1;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-input,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-input,
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-code,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-code{
+  min-height: 0;
+  max-height: none;
+  height: 100%;
+  resize: none;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-preview,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-preview{
+  min-height: 0;
+  height: 100%;
+}
+
+@media (max-width: 960px) {
+  .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill.delpi-ui-bpmn-editor__mermaid-panel--chrome,
+  .dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--fill.delpi-ui-bpmn-editor__mermaid-panel--chrome{
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(180px, 36vh) minmax(220px, 1fr);
+  }
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__mermaid-toolbar,
@@ -76,6 +116,11 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview,
 .dashboard-transformometro .tm-diagram-editor--fill .tm-diagram-editor__mermaid-preview{
   min-height: min(40vh, 480px);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-preview,
+.dashboard-transformometro .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__mermaid-panel--chrome .delpi-ui-bpmn-editor__mermaid-preview{
+  min-height: 0;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-mermaid,

@@ -5,6 +5,8 @@ import {
   Code2,
   LayoutTemplate,
   Pencil,
+  RefreshCw,
+  Wand2,
   type LucideIcon,
 } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
@@ -60,10 +62,23 @@ type Props = {
   chromeLeading?: FlowchartEditorChromeLeading;
   /** Avisos na faixa do chrome (entre head e ribbon). */
   chromeNotices?: ReactNode;
+  /** Ações persistentes (salvar/exportar…) à direita do head. */
+  chromeActions?: ReactNode;
+  /** Controles da aba Mermaid (Atualizar / Aplicar) no head. */
+  mermaidControls?: {
+    onRefreshFromCanvas: () => void;
+    onApply: () => void;
+    onUseTemplate: () => void;
+    applying: boolean;
+    hasDraft: boolean;
+    showTemplate: boolean;
+  } | null;
   portalScopeClassName?: string;
   showPreviewTab?: boolean;
   activeViewTab?: "canvas" | "mermaid";
   onViewTabChange?: (tab: "canvas" | "mermaid") => void;
+  /** Esconde a ribbon (paleta) — típico na aba Mermaid. */
+  hideRibbon?: boolean;
   children: ReactNode;
 };
 
@@ -134,10 +149,13 @@ export function FlowchartEditorToolbar({
   onRedo,
   chromeLeading,
   chromeNotices,
+  chromeActions,
+  mermaidControls = null,
   portalScopeClassName,
   showPreviewTab = false,
   activeViewTab = "canvas",
   onViewTabChange,
+  hideRibbon = false,
   children,
 }: Props) {
   const addLaneAction = diagramEditorAddLaneAction(labels);
@@ -209,26 +227,33 @@ export function FlowchartEditorToolbar({
     </div>
   );
 
+  const showMermaidChrome =
+    activeViewTab === "mermaid" && mermaidControls != null;
+
   const trailing = (
     <>
-      <FlowchartComponentSearch
-        labels={labels}
-        onAddNode={onAddNode}
-        onEditorAction={onEditorAction}
-        portalScopeClassName={portalScopeClassName}
-      />
-      <HelpTooltip
-        content={labels.usoGeral}
-        ariaLabel={labels.toolbarHowToUseAriaLabel}
-        wrap
-        placement="bottom"
-        className="delpi-ui-bpmn-editor__hint-wrap"
-      >
-        <button type="button" className="delpi-ui-bpmn-editor__hint-link delpi-ui-bpmn-editor__toolbar-help">
-          <CircleHelp size={14} aria-hidden="true" />
-          <span>{labels.toolbarHowToUse}</span>
-        </button>
-      </HelpTooltip>
+      {!hideRibbon ? (
+        <FlowchartComponentSearch
+          labels={labels}
+          onAddNode={onAddNode}
+          onEditorAction={onEditorAction}
+          portalScopeClassName={portalScopeClassName}
+        />
+      ) : null}
+      {!hideRibbon ? (
+        <HelpTooltip
+          content={labels.usoGeral}
+          ariaLabel={labels.toolbarHowToUseAriaLabel}
+          wrap
+          placement="bottom"
+          className="delpi-ui-bpmn-editor__hint-wrap"
+        >
+          <button type="button" className="delpi-ui-bpmn-editor__hint-link delpi-ui-bpmn-editor__toolbar-help">
+            <CircleHelp size={14} aria-hidden="true" />
+            <span>{labels.toolbarHowToUse}</span>
+          </button>
+        </HelpTooltip>
+      ) : null}
       {showPreviewTab && onViewTabChange ? (
         <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--chrome" role="tablist">
           <TabHintCell
@@ -253,11 +278,52 @@ export function FlowchartEditorToolbar({
           />
         </div>
       ) : null}
+      {showMermaidChrome ? (
+        <div
+          className="delpi-ui-bpmn-editor__chrome-actions delpi-ui-bpmn-editor__chrome-actions--mermaid"
+          role="group"
+          aria-label={labels.mermaidTabLabel}
+        >
+          <button
+            type="button"
+            className="ds-ghost-btn delpi-ui-bpmn-editor__chrome-action-btn"
+            onClick={mermaidControls.onRefreshFromCanvas}
+          >
+            <RefreshCw size={14} aria-hidden />
+            {labels.mermaidRefreshFromDrawing}
+          </button>
+          {mermaidControls.showTemplate ? (
+            <button
+              type="button"
+              className="ds-ghost-btn delpi-ui-bpmn-editor__chrome-action-btn"
+              onClick={mermaidControls.onUseTemplate}
+            >
+              <Wand2 size={14} aria-hidden />
+              {labels.mermaidStarterTemplate}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className="ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
+            disabled={mermaidControls.applying || !mermaidControls.hasDraft}
+            onClick={mermaidControls.onApply}
+          >
+            {mermaidControls.applying ? labels.mermaidApplying : labels.mermaidApplyToDrawing}
+          </button>
+        </div>
+      ) : null}
+      {chromeActions ? (
+        <div className="delpi-ui-bpmn-editor__chrome-actions" role="group">
+          {chromeActions}
+        </div>
+      ) : null}
     </>
   );
 
   const ribbon =
-    toolbarTab === "elements" ? (
+    hideRibbon || activeViewTab === "mermaid"
+      ? null
+      : toolbarTab === "elements" ? (
       <EditorRibbonSections portalScopeClassName={portalScopeClassName}>
         {elementGroupTabs.map((group, index) => {
           const Icon = group.icon;
@@ -359,7 +425,7 @@ export function FlowchartEditorToolbar({
       density="compact"
       aria-label={labels.toolbarAriaLabel}
       leading={leading}
-      tabs={tabs}
+      tabs={hideRibbon || activeViewTab === "mermaid" ? null : tabs}
       trailing={trailing}
       trail={chromeLeading?.title ? <span title={chromeLeading.title}>{chromeLeading.title}</span> : null}
       notices={chromeNotices}

@@ -18,6 +18,8 @@ type Props = {
   applying: boolean;
   isEmpty: boolean;
   isDark?: boolean;
+  /** Quando false, ações ficam no chrome (topbar). */
+  showToolbar?: boolean;
 };
 
 export function FlowchartMermaidPanel({
@@ -33,17 +35,19 @@ export function FlowchartMermaidPanel({
   applying,
   isEmpty,
   isDark,
+  showToolbar = true,
 }: Props) {
   return (
     <div
       className={[
         "delpi-ui-bpmn-editor__mermaid-panel",
         layout === "fill" ? "delpi-ui-bpmn-editor__mermaid-panel--fill" : "",
+        !showToolbar || readOnly ? "delpi-ui-bpmn-editor__mermaid-panel--chrome" : "",
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      {!readOnly ? (
+      {!readOnly && showToolbar ? (
         <div className="delpi-ui-bpmn-editor__mermaid-toolbar">
           <button type="button" className="ds-ghost-btn" onClick={onRefreshFromCanvas}>
             <RefreshCw size={16} aria-hidden />
@@ -67,7 +71,7 @@ export function FlowchartMermaidPanel({
       ) : null}
 
       {applyError ? (
-        <div className="ds-state ds-state--warn" role="alert">
+        <div className="ds-state ds-state--warn delpi-ui-bpmn-editor__mermaid-alert" role="alert">
           {applyError}
         </div>
       ) : null}

@@ -58,11 +58,12 @@ Referência de labels: `plugins/transformometro/src/content/flowchartEditorLabel
 
 Em modo editável (`!readOnly` + `showTemplates`), o editor monta [`EditorChrome`](../src/components/layout/EditorChrome.tsx) + ribbon com [`EditorRibbonSection`](../src/components/ribbon/EditorRibbonSection.tsx) / [`RibbonTile`](../src/components/ribbon/RibbonTile.tsx):
 
-- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo (`EditorHistoryActions`, Ctrl/⌘+Z · Ctrl/⌘+Y) · Elementos/Modelos · **Buscar componente** · Como usar · Desenho/Mermaid · título
+- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo (`EditorHistoryActions`, Ctrl/⌘+Z · Ctrl/⌘+Y) · Elementos/Modelos · **Buscar componente** · Como usar · Desenho/Mermaid · `chromeActions` (salvar/exportar) · ações Mermaid na aba
 - **Avisos:** `chromeNotices` → faixa `EditorChrome.notices` com [`EditorChromeNotice`](../src/components/layout/EditorChromeNotice.tsx) (info/warning/danger)
 - **Barra inferior:** grade · bloquear arraste · ações de seleção · zoom/ajuste — estilo `td-stage-statusbar` (sem Controls flutuantes do React Flow)
-- **Ribbon:** seções por categoria BPMN; colapso responsivo (direita→esquerda) abre popover via `RibbonGroup`
-- **Props:** `chromeLeading?: { onBack?; backLabel?; title? }` · `chromeNotices?: ReactNode` — o Transformômetro passa presença colaborativa em `/diagrama/edit`
+- **Ribbon:** seções por categoria BPMN; colapso responsivo (direita→esquerda) abre popover via `RibbonGroup` — oculta na aba Mermaid
+- **Props:** `chromeLeading?: { onBack?; backLabel?; title? }` · `chromeNotices?: ReactNode` · `chromeActions?: ReactNode` — o Transformômetro passa presença colaborativa e ações de IO em `/diagrama/edit`
+- **Mermaid:** painel fill em duas colunas (código | preview); sync no head (Atualizar / Aplicar)
 - **Busca:** `FlowchartComponentSearch` filtra `searchBpmnPalette` (rótulo/hint/categoria) e chama `onAddNode`
 
 CSS: `styles/editor-chrome.css`, `styles/ribbon-tile.css`, `styles/ribbon-overflow.css`.

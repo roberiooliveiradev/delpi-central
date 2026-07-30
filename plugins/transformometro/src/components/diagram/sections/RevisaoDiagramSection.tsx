@@ -173,6 +173,38 @@ export function RevisaoDiagramSection({
   const hasDiff =
     Boolean(diff) &&
     (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
+  const isPage = variant === "page";
+  const actionBtnClass = isPage
+    ? `${DS_GHOST_BTN} delpi-ui-bpmn-editor__chrome-action-btn`
+    : DS_GHOST_BTN;
+  const primaryBtnClass = isPage
+    ? "ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
+    : "ds-primary-btn";
+
+  const diagramActions = (
+    <>
+      {!readOnly ? (
+        <button
+          type="button"
+          className={primaryBtnClass}
+          disabled={saving}
+          onClick={() => void handleSave()}
+        >
+          {saving ? "Salvando…" : "Salvar diagrama da revisão"}
+        </button>
+      ) : null}
+      <button type="button" className={actionBtnClass} onClick={() => void exportPng(false)}>
+        <Download size={14} />
+        Exportar PNG
+      </button>
+      {!readOnly ? (
+        <button type="button" className={actionBtnClass} onClick={() => void exportPng(true)}>
+          <ImagePlus size={14} />
+          PNG como evidência
+        </button>
+      ) : null}
+    </>
+  );
 
   const editorBody = (
     <>
@@ -200,39 +232,26 @@ export function RevisaoDiagramSection({
         }
         readOnly={readOnly}
         diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
-        chromeLeading={variant === "page" ? chromeLeading : undefined}
-        chromeNotices={variant === "page" ? chromeNotices : undefined}
+        chromeLeading={isPage ? chromeLeading : undefined}
+        chromeNotices={isPage ? chromeNotices : undefined}
+        chromeActions={isPage ? diagramActions : undefined}
       />
 
-      <details
-        className="delpi-ui-bpmn-section__preview"
-        open={false}
-        onToggle={(event) => {
-          const el = event.currentTarget;
-          if (el.open) setMermaidPreviewOpen(true);
-        }}
-      >
-        <summary>Preview Mermaid (mesclado)</summary>
-        {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
-      </details>
+      {!isPage ? (
+        <details
+          className="delpi-ui-bpmn-section__preview"
+          open={false}
+          onToggle={(event) => {
+            const el = event.currentTarget;
+            if (el.open) setMermaidPreviewOpen(true);
+          }}
+        >
+          <summary>Preview Mermaid (mesclado)</summary>
+          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
+        </details>
+      ) : null}
 
-      <div className="delpi-ui-bpmn-section__actions">
-        {!readOnly ? (
-          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : "Salvar diagrama da revisão"}
-          </button>
-        ) : null}
-        <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(false)}>
-          <Download size={16} />
-          Exportar PNG
-        </button>
-        {!readOnly ? (
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(true)}>
-            <ImagePlus size={16} />
-            PNG como evidência
-          </button>
-        ) : null}
-      </div>
+      {!isPage ? <div className="delpi-ui-bpmn-section__actions">{diagramActions}</div> : null}
     </>
   );
 

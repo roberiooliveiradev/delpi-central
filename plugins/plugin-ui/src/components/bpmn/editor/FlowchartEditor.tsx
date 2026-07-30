@@ -125,6 +125,8 @@ type FlowchartEditorProps = {
   };
   /** Avisos padronizados na faixa do chrome (entre head e ribbon). */
   chromeNotices?: ReactNode;
+  /** Ações de persistência/IO no head (salvar, exportar…). */
+  chromeActions?: ReactNode;
 };
 
 type ActivityNode = Node<BpmnNodeData>;
@@ -372,6 +374,7 @@ function FlowchartEditorInner({
   showPreviewTab = true,
   chromeLeading,
   chromeNotices,
+  chromeActions,
   editorRef,
 }: FlowchartEditorProps & {
   editorRef?: Ref<FlowchartEditorHandle>;
@@ -1331,6 +1334,125 @@ function FlowchartEditorInner({
     else if (actionId === "templateSwimlanes") applyTemplate("swimlanes");
   };
 
+  const useFullChrome = !readOnly && showTemplates;
+  const useLiteChrome = Boolean(chromeLeading) && !useFullChrome;
+
+  const stageBody = (
+    <>
+      <div
+        ref={canvasWrapperRef}
+        tabIndex={readOnly ? -1 : 0}
+        className={bpmnEditorBem(
+          "__canvas",
+          ...(lanes.length ? ["__canvas--swimlanes"] : []),
+          ...(readOnly ? ["__canvas--readonly"] : []),
+        )}
+        style={{ height: canvasHeight }}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          colorMode={reactFlowColorMode}
+          defaultEdgeOptions={{
+            type: "flowchart",
+            labelStyle: { fontSize: 11, fontWeight: 600 },
+            labelBgStyle: { fillOpacity: 0.92 },
+          }}
+          onInit={(instance) => {
+            window.requestAnimationFrame(() => {
+              const fitNodes = getDiagramFitNodes(instance.getNodes());
+              if (!fitNodes.length) return;
+              void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
+            });
+          }}
+          onNodesChange={readOnly ? undefined : onNodesChange}
+          onEdgesChange={readOnly ? undefined : onEdgesChange}
+          onConnect={onConnect}
+          onNodeDrag={onNodeDrag}
+          onNodeDragStop={onNodeDragStop}
+          onNodesDelete={onNodesDelete}
+          onEdgesDelete={onEdgesDelete}
+          deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
+          selectionOnDrag={!readOnly && nodesInteractive}
+          selectionMode={SelectionMode.Partial}
+          selectionKeyCode={null}
+          multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
+          panOnDrag={readOnly || !nodesInteractive ? true : [1, 2]}
+          minZoom={0.08}
+          maxZoom={3}
+          connectionRadius={36}
+          nodesDraggable={!readOnly && nodesInteractive}
+          nodesConnectable={!readOnly && nodesInteractive}
+          nodesFocusable={!readOnly}
+          elementsSelectable={!readOnly}
+          proOptions={{ hideAttribution: true }}
+        >
+          <FlowchartSwimlaneBackdrop />
+          {showGrid ? <Background gap={20} size={1} /> : null}
+          <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
+        </ReactFlow>
+        <FlowchartEditorStatusBar
+          labels={labels}
+          showGrid={showGrid}
+          onShowGridChange={setShowGrid}
+          readOnly={readOnly}
+          nodesInteractive={nodesInteractive}
+          onNodesInteractiveChange={setNodesInteractive}
+          selectionActions={selectionActions}
+          clipboardReady={clipboardReady}
+          onSelectionAction={runSelectionAction}
+          isSelectionActionDisabled={isSelectionActionDisabled}
+          onSelectionPointerDownCapture={(event) => {
+            event.preventDefault();
+          }}
+        />
+      </div>
+    </>
+  );
+
+  const mermaidPanel = (
+    <FlowchartMermaidPanel
+      labels={labels}
+      draft={mermaidDraft}
+      onDraftChange={setMermaidDraft}
+      onApply={applyMermaidDraft}
+      onRefreshFromCanvas={refreshMermaidFromCanvas}
+      onUseTemplate={useMermaidTemplate}
+      readOnly={readOnly}
+      layout={layout}
+      applyError={mermaidApplyError}
+      applying={mermaidApplying}
+      isEmpty={!value.nodes.length}
+      isDark={isDark}
+      showToolbar={!useFullChrome && !useLiteChrome}
+    />
+  );
+
+  const panelBody = (
+    <TabPanelTransition tabKey={activeTab}>
+      {activeTab === "canvas" ? stageBody : mermaidPanel}
+    </TabPanelTransition>
+  );
+
+  const onViewTabChange = (tab: "canvas" | "mermaid") => {
+    if (tab === "mermaid") switchToMermaidTab();
+    else setActiveTab("canvas");
+  };
+
+  const mermaidControls =
+    !readOnly && (useFullChrome || useLiteChrome)
+      ? {
+          onRefreshFromCanvas: refreshMermaidFromCanvas,
+          onApply: applyMermaidDraft,
+          onUseTemplate: useMermaidTemplate,
+          applying: mermaidApplying,
+          hasDraft: Boolean(mermaidDraft.trim()),
+          showTemplate: !value.nodes.length,
+        }
+      : null;
+
   return (
     <div
       className={[
@@ -1338,162 +1460,63 @@ function FlowchartEditorInner({
         bpmnEditorBem(
           "",
           ...(layout === "fill" ? ["--fill"] : []),
-          ...(!readOnly && showTemplates
-            ? ["--chrome"]
-            : chromeLeading
-              ? ["--chrome"]
-              : ["--overlay-tools"]),
+          ...(useFullChrome || useLiteChrome ? ["--chrome"] : ["--overlay-tools"]),
         ),
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <TabPanelTransition tabKey={activeTab}>
-        {activeTab === "canvas" ? (
-          (() => {
-            const stageBody = (
-              <>
-                <div
-                  ref={canvasWrapperRef}
-                  tabIndex={readOnly ? -1 : 0}
-                  className={bpmnEditorBem(
-                    "__canvas",
-                    ...(lanes.length ? ["__canvas--swimlanes"] : []),
-                    ...(readOnly ? ["__canvas--readonly"] : [])
-                  )}
-                  style={{ height: canvasHeight }}
+      {useFullChrome ? (
+        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+          <FlowchartEditorToolbar
+            labels={labels}
+            toolbarTab={toolbarTab}
+            onToolbarTabChange={setToolbarTab}
+            lanes={lanes}
+            activeLaneId={activeLaneId}
+            onActiveLaneChange={handleSelectLane}
+            onAddNode={addNode}
+            onEditorAction={runEditorAction}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            chromeLeading={chromeLeading}
+            chromeNotices={chromeNotices}
+            chromeActions={chromeActions}
+            mermaidControls={mermaidControls}
+            portalScopeClassName={shellClassName}
+            showPreviewTab={showPreviewTab}
+            activeViewTab={activeTab}
+            onViewTabChange={onViewTabChange}
+          >
+            {panelBody}
+          </FlowchartEditorToolbar>
+        </div>
+      ) : useLiteChrome ? (
+        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+          <EditorChrome
+            density="compact"
+            aria-label={labels.toolbarAriaLabel}
+            leading={
+              chromeLeading?.onBack ? (
+                <button
+                  type="button"
+                  className="delpi-ui-bpmn-editor__chrome-back"
+                  onClick={chromeLeading.onBack}
                 >
-                  <ReactFlow
-                    nodes={nodes}
-                    edges={edges}
-                    nodeTypes={nodeTypes}
-                    edgeTypes={edgeTypes}
-                    colorMode={reactFlowColorMode}
-                    defaultEdgeOptions={{
-                      type: "flowchart",
-                      labelStyle: { fontSize: 11, fontWeight: 600 },
-                      labelBgStyle: { fillOpacity: 0.92 },
-                    }}
-                    onInit={(instance) => {
-                      window.requestAnimationFrame(() => {
-                        const fitNodes = getDiagramFitNodes(instance.getNodes());
-                        if (!fitNodes.length) return;
-                        void instance.fitView({ ...DIAGRAM_FIT_VIEW_OPTIONS, nodes: fitNodes });
-                      });
-                    }}
-                    onNodesChange={readOnly ? undefined : onNodesChange}
-                    onEdgesChange={readOnly ? undefined : onEdgesChange}
-                    onConnect={onConnect}
-                    onNodeDrag={onNodeDrag}
-                    onNodeDragStop={onNodeDragStop}
-                    onNodesDelete={onNodesDelete}
-                    onEdgesDelete={onEdgesDelete}
-                    deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-                    selectionOnDrag={!readOnly && nodesInteractive}
-                    selectionMode={SelectionMode.Partial}
-                    selectionKeyCode={null}
-                    multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
-                    panOnDrag={readOnly || !nodesInteractive ? true : [1, 2]}
-                    minZoom={0.08}
-                    maxZoom={3}
-                    connectionRadius={36}
-                    nodesDraggable={!readOnly && nodesInteractive}
-                    nodesConnectable={!readOnly && nodesInteractive}
-                    nodesFocusable={!readOnly}
-                    elementsSelectable={!readOnly}
-                    proOptions={{ hideAttribution: true }}
-                  >
-                    <FlowchartSwimlaneBackdrop />
-                    {showGrid ? <Background gap={20} size={1} /> : null}
-                    <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
-                  </ReactFlow>
-                  <FlowchartEditorStatusBar
-                    labels={labels}
-                    showGrid={showGrid}
-                    onShowGridChange={setShowGrid}
-                    readOnly={readOnly}
-                    nodesInteractive={nodesInteractive}
-                    onNodesInteractiveChange={setNodesInteractive}
-                    selectionActions={selectionActions}
-                    clipboardReady={clipboardReady}
-                    onSelectionAction={runSelectionAction}
-                    isSelectionActionDisabled={isSelectionActionDisabled}
-                    onSelectionPointerDownCapture={(event) => {
-                      event.preventDefault();
-                    }}
-                  />
-                </div>
-              </>
-            );
-
-            if (!readOnly && showTemplates) {
-              return (
-                <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
-                  <FlowchartEditorToolbar
-                    labels={labels}
-                    toolbarTab={toolbarTab}
-                    onToolbarTabChange={setToolbarTab}
-                    lanes={lanes}
-                    activeLaneId={activeLaneId}
-                    onActiveLaneChange={handleSelectLane}
-                    onAddNode={addNode}
-                    onEditorAction={runEditorAction}
-                    canUndo={canUndo}
-                    canRedo={canRedo}
-                    onUndo={handleUndo}
-                    onRedo={handleRedo}
-                    chromeLeading={chromeLeading}
-                    chromeNotices={chromeNotices}
-                    portalScopeClassName={shellClassName}
-                    showPreviewTab={showPreviewTab}
-                    activeViewTab="canvas"
-                    onViewTabChange={(tab) => {
-                      if (tab === "mermaid") switchToMermaidTab();
-                      else setActiveTab("canvas");
-                    }}
-                  >
-                    {stageBody}
-                  </FlowchartEditorToolbar>
-                </div>
-              );
+                  <ArrowLeft size={16} aria-hidden />
+                  {chromeLeading.backLabel ?? "Voltar"}
+                </button>
+              ) : null
             }
-
-            if (chromeLeading) {
-              return (
-                <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
-                  <EditorChrome
-                    density="compact"
-                    aria-label={labels.toolbarAriaLabel}
-                    leading={
-                      chromeLeading.onBack ? (
-                        <button
-                          type="button"
-                          className="delpi-ui-bpmn-editor__chrome-back"
-                          onClick={chromeLeading.onBack}
-                        >
-                          <ArrowLeft size={16} aria-hidden />
-                          {chromeLeading.backLabel ?? "Voltar"}
-                        </button>
-                      ) : null
-                    }
-                    trail={
-                      chromeLeading.title ? (
-                        <span title={chromeLeading.title}>{chromeLeading.title}</span>
-                      ) : null
-                    }
-                    notices={chromeNotices}
-                    className="delpi-ui-bpmn-editor__chrome"
-                  >
-                    {stageBody}
-                  </EditorChrome>
-                </div>
-              );
-            }
-
-            return (
-              <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+            trailing={
+              <>
                 {showPreviewTab ? (
-                  <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--overlay" role="tablist">
+                  <div
+                    className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--chrome"
+                    role="tablist"
+                  >
                     <TabHintCell
                       label={labels.canvasTabLabel}
                       hint={labels.canvasTab}
@@ -1508,7 +1531,7 @@ function FlowchartEditorInner({
                       label={labels.mermaidTabLabel}
                       hint={labels.mermaidTab}
                       icon={Code2}
-                      active={false}
+                      active={activeTab === "mermaid"}
                       onSelect={() => switchToMermaidTab()}
                       cellClassName="delpi-ui-bpmn-editor__tab-wrap"
                       tabClassName="delpi-ui-bpmn-editor__tab"
@@ -1516,53 +1539,78 @@ function FlowchartEditorInner({
                     />
                   </div>
                 ) : null}
-                {stageBody}
-              </div>
-            );
-          })()
-        ) : (
-          <>
-            {showPreviewTab ? (
-              <div className="delpi-ui-bpmn-editor__view-tabs" role="tablist">
-                <TabHintCell
-                  label={labels.canvasTabLabel}
-                  hint={labels.canvasTab}
-                  icon={Pencil}
-                  active={false}
-                  onSelect={() => setActiveTab("canvas")}
-                  cellClassName="delpi-ui-bpmn-editor__tab-wrap"
-                  tabClassName="delpi-ui-bpmn-editor__tab"
-                  tabActiveClassName="is-active"
-                />
-                <TabHintCell
-                  label={labels.mermaidTabLabel}
-                  hint={labels.mermaidTab}
-                  icon={Code2}
-                  active={activeTab === "mermaid"}
-                  onSelect={() => switchToMermaidTab()}
-                  cellClassName="delpi-ui-bpmn-editor__tab-wrap"
-                  tabClassName="delpi-ui-bpmn-editor__tab"
-                  tabActiveClassName="is-active"
-                />
-              </div>
-            ) : null}
-            <FlowchartMermaidPanel
-              labels={labels}
-              draft={mermaidDraft}
-              onDraftChange={setMermaidDraft}
-              onApply={applyMermaidDraft}
-              onRefreshFromCanvas={refreshMermaidFromCanvas}
-              onUseTemplate={useMermaidTemplate}
-              readOnly={readOnly}
-              layout={layout}
-              applyError={mermaidApplyError}
-              applying={mermaidApplying}
-              isEmpty={!value.nodes.length}
-              isDark={isDark}
-            />
-          </>
-        )}
-      </TabPanelTransition>
+                {activeTab === "mermaid" && mermaidControls ? (
+                  <div
+                    className="delpi-ui-bpmn-editor__chrome-actions delpi-ui-bpmn-editor__chrome-actions--mermaid"
+                    role="group"
+                    aria-label={labels.mermaidTabLabel}
+                  >
+                    <button
+                      type="button"
+                      className="ds-ghost-btn delpi-ui-bpmn-editor__chrome-action-btn"
+                      onClick={mermaidControls.onRefreshFromCanvas}
+                    >
+                      {labels.mermaidRefreshFromDrawing}
+                    </button>
+                    <button
+                      type="button"
+                      className="ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
+                      disabled={mermaidControls.applying || !mermaidControls.hasDraft}
+                      onClick={mermaidControls.onApply}
+                    >
+                      {mermaidControls.applying
+                        ? labels.mermaidApplying
+                        : labels.mermaidApplyToDrawing}
+                    </button>
+                  </div>
+                ) : null}
+                {chromeActions ? (
+                  <div className="delpi-ui-bpmn-editor__chrome-actions" role="group">
+                    {chromeActions}
+                  </div>
+                ) : null}
+              </>
+            }
+            trail={
+              chromeLeading?.title ? (
+                <span title={chromeLeading.title}>{chromeLeading.title}</span>
+              ) : null
+            }
+            notices={chromeNotices}
+            className="delpi-ui-bpmn-editor__chrome"
+          >
+            {panelBody}
+          </EditorChrome>
+        </div>
+      ) : (
+        <div className={bpmnEditorBem("__stage")} style={{ minHeight: canvasHeight }}>
+          {showPreviewTab ? (
+            <div className="delpi-ui-bpmn-editor__view-tabs delpi-ui-bpmn-editor__view-tabs--overlay" role="tablist">
+              <TabHintCell
+                label={labels.canvasTabLabel}
+                hint={labels.canvasTab}
+                icon={Pencil}
+                active={activeTab === "canvas"}
+                onSelect={() => setActiveTab("canvas")}
+                cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+                tabClassName="delpi-ui-bpmn-editor__tab"
+                tabActiveClassName="is-active"
+              />
+              <TabHintCell
+                label={labels.mermaidTabLabel}
+                hint={labels.mermaidTab}
+                icon={Code2}
+                active={activeTab === "mermaid"}
+                onSelect={() => switchToMermaidTab()}
+                cellClassName="delpi-ui-bpmn-editor__tab-wrap"
+                tabClassName="delpi-ui-bpmn-editor__tab"
+                tabActiveClassName="is-active"
+              />
+            </div>
+          ) : null}
+          {panelBody}
+        </div>
+      )}
     </div>
   );
 }
