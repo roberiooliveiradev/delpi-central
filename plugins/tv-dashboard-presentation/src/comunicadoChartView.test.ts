@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ComunicadoChartType } from "./comunicadoTypes";
-import { chartTypeHasBasicRender, toSeriesChartKind } from "./comunicadoChartView";
+import { chartTypeHasBasicRender, chartTypeLabel, toSeriesChartKind } from "./comunicadoChartView";
 
 const ALL_CHART_TYPES: ComunicadoChartType[] = [
   "line",
@@ -37,5 +37,7 @@ describe("toSeriesChartKind", () => {
     expect(toSeriesChartKind("radar")).toBe("radar");
     expect(toSeriesChartKind("waterfall")).toBe("waterfall");
     expect(toSeriesChartKind("funnel")).toBe("funnel");
+    expect(toSeriesChartKind("horizontal_bar")).toBe("horizontal_bar");
+    expect(chartTypeLabel("horizontal_bar")).toBe("Barras");
   });
 });

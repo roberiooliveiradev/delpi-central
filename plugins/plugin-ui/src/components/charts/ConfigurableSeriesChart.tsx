@@ -1,4 +1,3 @@
-import { BarSeriesChart } from "./BarSeriesChart";
 import { LineSeriesChart } from "./LineSeriesChart";
 import { ChartPlotAreaGroup } from "./seriesChart";
 import { SeriesChartPrimitive } from "./SeriesChartPrimitive";
@@ -32,8 +31,14 @@ export function ConfigurableSeriesChart({
 }: ConfigurableSeriesChartProps) {
   const shared = { points, seriesList, options, chartParts, interaction, emptyMessage, className };
 
-  if (chartType === "bar") {
-    return <BarSeriesChart {...shared} />;
+  if (chartType === "bar" || chartType === "horizontal_bar") {
+    return (
+      <SeriesChartPrimitive
+        {...shared}
+        chartType={chartType}
+        renderPlotArea={(plotProps) => <ChartPlotAreaGroup {...plotProps} />}
+      />
+    );
   }
   if (chartType === "line") {
     return <LineSeriesChart {...shared} />;
