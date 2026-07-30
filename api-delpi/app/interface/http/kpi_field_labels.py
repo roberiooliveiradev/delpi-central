@@ -290,6 +290,7 @@ QUALITY_PRODUCED_QUANTITY_FIELD_LABELS: dict[str, str] = {
 QUALITY_KAIZEN_FIELD_LABELS: dict[str, str] = {
     "total_kaizens": "Total kaizens",
     "total_savings": "Economia total",
+    "total_hours_saved": "Horas poupadas",
     "annual_savings": "Economia projetada por ano",
     "ideas_goal": "Meta de ideias Kaizen",
     "target": "Meta Kaizen",

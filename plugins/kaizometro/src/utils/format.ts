@@ -10,6 +10,11 @@ export function formatCurrency(value: number | null | undefined): string {
   return currencyFormatter.format(value);
 }
 
+export function formatHours(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "—";
+  return `${numberFormatter.format(Math.round(value * 10) / 10)} h`;
+}
+
 export function formatInteger(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return numberFormatter.format(value);

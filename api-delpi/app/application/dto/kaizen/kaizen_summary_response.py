@@ -10,6 +10,7 @@ class KaizenSummaryResponse:
     end_date: Optional[str]
     total_kaizens: int
     total_savings: float
+    total_hours_saved: float = 0.0
     list_kaizen: List[Kaizen] = field(default_factory=list)
     # Implantados que contribuem para total_savings (pode diferir de list_kaizen).
     list_savings_kaizen: List[Kaizen] = field(default_factory=list)
@@ -20,6 +21,7 @@ class KaizenSummaryResponse:
             "end_date": self.end_date,
             "total_kaizens": self.total_kaizens,
             "total_savings": self.total_savings,
+            "total_hours_saved": self.total_hours_saved,
             "list_kaizen": [item.to_dict() for item in self.list_kaizen],
             "list_savings_kaizen": [item.to_dict() for item in self.list_savings_kaizen],
         }

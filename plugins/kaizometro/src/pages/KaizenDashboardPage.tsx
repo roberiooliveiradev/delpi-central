@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CalendarCheck,
   CheckCircle2,
+  Clock,
   PiggyBank,
   Sparkles,
   TrendingUp,
@@ -41,7 +42,7 @@ import {
   subscribeDashboardFilterSync,
   writeDashboardFilters,
 } from "../utils/dashboardFilterUrl";
-import { formatCurrency, formatDate, formatInteger } from "../utils/format";
+import { formatCurrency, formatDate, formatHours, formatInteger } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
 import type { BranchOption } from "../utils/kaizenBranchPermissions";
 import { isMultiUnitAccount } from "../utils/kaizenBranchPermissions";
@@ -348,6 +349,13 @@ export function KaizenDashboardPage({ onNavigate, branchOptions }: Props) {
               label="Ganhos financeiros"
               value={formatCurrency(summary.period_savings)}
               sub={savingsHint}
+            />
+            <KpiCard
+              icon={<Clock size={22} />}
+              tone="accent"
+              label="Horas poupadas"
+              value={formatHours(summary.period_hours_saved)}
+              sub={`${formatHours(summary.active_hours_saved_per_day)} / dia vigentes`}
             />
             <KpiCard
               icon={<CalendarCheck size={22} />}

@@ -21,6 +21,7 @@ from app.domain.services.kaizen.kaizen_query_mapper import (
     row_to_kaizen,
     row_to_kaizen_detail,
 )
+from app.domain.services.kaizen.kaizen_savings_calculator import hours_saved_per_day
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginBaseRepository
 
@@ -117,6 +118,26 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
         )
         return round(daily * active_days, 2)
 
+    @staticmethod
+    def _calculate_row_total_hours(
+        row: dict[str, Any],
+        range_start: date | None,
+        range_end: date | None,
+    ) -> float:
+        hours_day = hours_saved_per_day(
+            _as_float(row.get("seconds_per_occurrence")),
+            _as_float(row.get("occurrences_per_day")),
+        )
+        if not hours_day:
+            return 0.0
+        implemented = _as_date(row.get("date_implemented"))
+        active_days = kaizen_savings_validity.active_days_in_range(
+            implemented,
+            range_start,
+            range_end,
+        )
+        return round(hours_day * active_days, 2)
+
     def get_kaizen_summary(self, request: KaizenSummaryRequest) -> KaizenSummaryResponse:
         range_start, range_end = self._parse_request_dates(request)
         rows = self._load_rows()
@@ -145,13 +166,19 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
         kaizens: list[Kaizen] = [row_to_kaizen(row) for row in count_rows]
         savings_kaizens: list[Kaizen] = []
         total_savings = 0.0
+        total_hours_saved = 0.0
         for row in savings_rows:
             period_savings = self._calculate_row_total_savings(
                 row, range_start, range_end
             )
+            period_hours = self._calculate_row_total_hours(
+                row, range_start, range_end
+            )
             total_savings += period_savings
+            total_hours_saved += period_hours
             item = row_to_kaizen(row)
             item.period_savings = period_savings
+            item.period_hours_saved = period_hours
             savings_kaizens.append(item)
 
         return KaizenSummaryResponse(
@@ -159,6 +186,7 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
             end_date=request.date_end,
             total_kaizens=len(kaizens),
             total_savings=round(total_savings, 2),
+            total_hours_saved=round(total_hours_saved, 2),
             list_kaizen=kaizens,
             list_savings_kaizen=savings_kaizens,
         )

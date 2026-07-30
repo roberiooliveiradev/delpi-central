@@ -51,8 +51,13 @@ def test_postgres_kaizen_summary_counts_implanted_in_range() -> None:
     assert summary.total_kaizens == 1
     assert summary.list_kaizen[0].daily_savings == 7.54
     assert summary.total_savings == round(7.54 * 3, 2)
+    # 1015.96s × 0.21 ocorr./dia ≈ 0,0593 h/dia × 3 dias
+    assert summary.total_hours_saved == pytest.approx(0.18, rel=1e-2)
     assert len(summary.list_savings_kaizen) == 1
     assert summary.list_savings_kaizen[0].period_savings == round(7.54 * 3, 2)
+    assert summary.list_savings_kaizen[0].period_hours_saved == pytest.approx(
+        summary.total_hours_saved
+    )
 
 
 def test_postgres_kaizen_summary_savings_list_includes_prior_implants() -> None:

@@ -74,6 +74,7 @@ def test_summary_counts_aprovado_in_quantity_not_savings() -> None:
     assert result["aprovados"] == 1
     assert result["implantados"] == 0
     assert result["period_savings"] == 0.0
+    assert result["period_hours_saved"] == 0.0
     assert result["active_count"] == 0
     assert result["implanted_by_month"] == [{"key": "2026-07", "value": 1}]
 
@@ -91,6 +92,9 @@ def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period(
     assert result["total"] == 0
     assert result["period_implanted_count"] == 0
     assert result["period_savings"] > 0
+    # 60s × 10 ocorr./dia = 0,1667 h/dia × 3 dias no intervalo
+    assert result["period_hours_saved"] == pytest.approx(0.5, rel=1e-2)
+    assert result["active_hours_saved_per_day"] == pytest.approx(0.1667, rel=1e-2)
     assert result["active_count"] == 1
     assert result["active_annual_savings"] > 0
     assert result["realized_annual_savings"] == pytest.approx(3040.45, rel=1e-2)
@@ -127,6 +131,7 @@ def test_summary_period_savings_zero_for_future_competence(
 
     assert result["period_implanted_count"] == 0
     assert result["period_savings"] == 0.0
+    assert result["period_hours_saved"] == 0.0
     # Run-rate vigente continua refletindo kaizens ativos hoje.
     assert result["active_count"] == 1
-
+    assert result["active_hours_saved_per_day"] == pytest.approx(0.1667, rel=1e-2)

@@ -19,6 +19,7 @@ from app.domain.services.kaizen.kaizen_indicator_eligibility import (
 )
 from app.domain.services.kaizen.kaizen_savings_calculator import (
     enrich_savings_fields,
+    hours_saved_per_day,
     resolve_realized_annual_savings,
     resolve_realized_daily_savings,
 )
@@ -275,18 +276,26 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         period_rows = [row for row in rows if in_period(row)]
 
-        # Indicador 1 — ganhos financeiros no período (sobre TODOS os registros).
+        # Indicador 1 — ganhos financeiros e horas no período (sobre TODOS os registros).
         period_savings = 0.0
+        period_hours_saved = 0.0
         for row in rows:
             if not is_implanted(row):
-                continue
-            daily = self._as_float(row.get("daily_savings"))
-            if not daily:
                 continue
             days = kaizen_savings_validity.active_days_in_range(
                 implemented_date(row), start, end
             )
-            period_savings += daily * days
+            if days <= 0:
+                continue
+            daily = self._as_float(row.get("daily_savings"))
+            if daily:
+                period_savings += daily * days
+            hours_day = hours_saved_per_day(
+                self._as_float(row.get("seconds_per_occurrence")),
+                self._as_float(row.get("occurrences_per_day")),
+            )
+            if hours_day:
+                period_hours_saved += hours_day * days
 
         # Indicador 2 — quantidade no período (aprovado + implantado, âncora coalesce).
         implanted_period = [
@@ -389,9 +398,21 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "descontinuados": status_count("descontinuado"),
             "cancelados": status_count("cancelado"),
             "period_savings": round(period_savings, 2),
+            "period_hours_saved": round(period_hours_saved, 2),
             "period_implanted_count": len(implanted_period),
             "active_annual_savings": round(
                 sum(self._as_float(row.get("annual_savings")) for row in active_rows), 2
+            ),
+            "active_hours_saved_per_day": round(
+                sum(
+                    hours_saved_per_day(
+                        self._as_float(row.get("seconds_per_occurrence")),
+                        self._as_float(row.get("occurrences_per_day")),
+                    )
+                    or 0.0
+                    for row in active_rows
+                ),
+                4,
             ),
             "realized_annual_savings": round(
                 sum(

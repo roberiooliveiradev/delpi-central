@@ -18,6 +18,8 @@ class Kaizen:
     quantity_date: Optional[str] = None
     # Ganho no período (daily_savings × dias ativos) — preenchido em list_savings_kaizen.
     period_savings: Optional[float] = None
+    # Horas poupadas no período (hours_saved_per_day × dias ativos).
+    period_hours_saved: Optional[float] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -217,6 +217,7 @@ def test_quality_kaizen_records_summary_returns_meta(mock_build) -> None:
     mock_repo.summary.return_value = {
         "total": 0,
         "period_savings": 0.0,
+        "period_hours_saved": 0.0,
         "period_implanted_count": 0,
         "implanted_by_month": [],
         "by_status": [],

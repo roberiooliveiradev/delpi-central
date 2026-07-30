@@ -317,11 +317,11 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/branches` | Filiais disponíveis para filtros. |
 | GET | `/quality/nonconformities` | Lista NC do Protheus. |
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
-| GET | `/quality/kaizens/summary` | Resumo de kaizens (PostgreSQL / Minha Delpi). |
+| GET | `/quality/kaizens/summary` | Resumo analítico: `total_savings`, `total_hours_saved`. |
 | GET | `/quality/kaizens/{kaizen_id}` | Detalhe analítico de um kaizen (PostgreSQL; `{kaizen_id:path}`). |
 | GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |
 | POST | `/quality/kaizens/records` | Cria kaizen no PostgreSQL. |
-| GET | `/quality/kaizens/records/summary` | Indicadores do painel Kaizômetro (Postgres). |
+| GET | `/quality/kaizens/records/summary` | Indicadores Kaizômetro: `period_savings`, `period_hours_saved`, `active_hours_saved_per_day`. |
 | GET | `/quality/kaizens/records/savings-investment/series` | Série ganhos financeiros vs investimento (`granularity=day\|month`). |
 | GET | `/quality/kaizens/records/{id}` | Detalhe cadastro (UUID). |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza cadastro. |

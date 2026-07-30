@@ -166,8 +166,10 @@ export type KaizenSummary = {
   descontinuados: number;
   cancelados: number;
   period_savings: number;
+  period_hours_saved: number;
   period_implanted_count: number;
   active_annual_savings: number;
+  active_hours_saved_per_day: number;
   realized_annual_savings: number;
   active_count: number;
   total_investment: number;

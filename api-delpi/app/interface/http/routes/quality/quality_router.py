@@ -289,7 +289,7 @@ def get_kaizen_summary(
             branch=branch,
             start_date=start_date,
             end_date=end_date,
-            summary_extra_fields=("total_kaizens", "total_savings"),
+            summary_extra_fields=("total_kaizens", "total_savings", "total_hours_saved"),
             nested_blocks={"ideas_goal": "total_kaizens"},
         )
 
