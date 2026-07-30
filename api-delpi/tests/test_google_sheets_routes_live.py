@@ -37,7 +37,6 @@ def api_client() -> TestClient:
 @pytest.mark.parametrize(
     ("name", "sheet_id_attr", "gid_attr"),
     [
-        ("kaizen", "QUALITY_SHEET_ID", "QUALITY_KAIZEN_SHEET_GID"),
         ("audit-5s", "QUALITY_SHEET_ID", "QUALITY_AUDIT_5S_SHEET_GID"),
         ("ebitda", "FINANCIAL_EBITDA_SHEET_ID", "FINANCIAL_EBITDA_SHEET_GID"),
         ("direct_labor", "DIRECT_LABOR_SHEET_ID", "DIRECT_LABOR_SHEET_GID"),

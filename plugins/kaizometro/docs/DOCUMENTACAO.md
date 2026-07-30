@@ -104,37 +104,11 @@ Body JSON (campos principais):
 
 Se `savings_type` for omitido, a API infere (`tempo`, `material`, `financeiro`, `qualitativo` ou `misto`) e recalcula `daily_savings` / `annual_savings`.
 
-### POST — import-from-sheet
+### POST — import (JSON)
 
-Body opcional:
+Importa kaizens a partir do JSON exportado (`GET .../export`). **Não há** mais `import-from-sheet` — o Kaizômetro usa somente PostgreSQL.
 
-```json
-{ "dry_run": false }
-```
-
-Resposta `data`:
-
-```json
-{
-  "created": 19,
-  "skipped": 2,
-  "errors": 0,
-  "items": [
-    {
-      "sheet_id": "01-16/01/2026-App resina CT-16",
-      "title": "App resina CT-16",
-      "result": "skipped",
-      "reason": "already_exists"
-    }
-  ]
-}
-```
-
-`meta.operationId`: `import_kaizens_from_sheet`
-
-Regras de deduplicação na importação: `branch_code` + `title` + `date_implemented`.
-
-Mapeamento planilha → Postgres: `KaizenSheetImportMapper` (status normalizado, data `DD/MM/YYYY` → ISO).
+`meta.operationId`: `import_kaizen_records`
 
 ## 4. Tipos de economia
 
@@ -198,13 +172,12 @@ Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./
 
 | Variável | Uso |
 |----------|-----|
-| `QUALITY_SHEET_ID` | ID da planilha Google (import / summary Sheets) |
-| `QUALITY_KAIZEN_SHEET_GID` | Aba kaizen |
-| `GOOGLE_SHEETS_TIMEOUT` | Timeout do client HTTP |
 | `KAIZEN_NOTIFICATIONS_ENABLED` | Liga/desliga notificações de sugestão pública (default `true`) |
 | `CORE_API_BASE_URL` | Base do Core para Integrations |
 | `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Bearer do serviço de notificações |
 | `RUN_PLUGINS_MIGRATIONS_ON_STARTUP` | Aplica V0xx do schema `quality` no boot |
+
+Kaizen **não** usa mais `QUALITY_KAIZEN_SHEET_GID` / Google Sheets em runtime.
 
 Definidas em `infra/.env` e repassadas ao container `delpi-api-delpi`.
 
@@ -286,7 +259,6 @@ PYTHONPATH="../shared:.:." pytest \
   tests/unit/test_kaizen_status_and_indicators.py \
   tests/unit/test_kaizen_public_suggestion_mapper.py \
   tests/unit/test_kaizen_portal_notification_service.py \
-  tests/unit/test_import_kaizens_from_sheet_use_case.py \
   tests/test_route_meta_smoke.py -k "kaizen" -q
 
 cd plugins/kaizometro

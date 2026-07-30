@@ -179,7 +179,7 @@ Detalhes histórico: [supplies-estoque-historico.md](./supplies-estoque-historic
 
 ## Qualidade (`/quality`)
 
-Métricas TOTVS e Google Sheets (PPM, NC Protheus, kaizen, 5S resumo).
+Métricas TOTVS e PostgreSQL (PPM, NC Protheus, kaizen, 5S resumo).
 
 | Rota | Uso |
 |---|---|

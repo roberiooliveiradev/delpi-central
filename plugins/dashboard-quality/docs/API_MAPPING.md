@@ -84,7 +84,7 @@ Ao tipar o frontend, inspecionar DTOs em:
 
 ## Kaizen — planilha e cálculo
 
-Fonte: Google Sheets via `GET /quality/kaizens/summary` (sem TOTVS).
+Fonte: PostgreSQL via `GET /quality/kaizens/summary` (Kaizômetro / Minha Delpi).
 
 **Colunas usadas na planilha:** `filial`, `descricao`, `responsavel`, `area_setor`, `custo_investimento`, `segudos_por_ocorrecia` (ou `segundos_por_ocorrencia`), `ocorrecias_por_dia` (ou `ocorrencias_por_dia`), `custo_hora`, `status`, `data`, `deleted`.
 

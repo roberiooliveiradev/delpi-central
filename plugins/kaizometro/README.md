@@ -1,6 +1,6 @@
 # Kaizômetro — plugin Minha DELPI
 
-Microfrontend federado para **cadastro operacional** de melhorias contínuas (kaizen) no módulo qualidade. Os dados ficam em **PostgreSQL** (`quality.kaizens`); o **dashboard de qualidade** continua lendo KPIs da **planilha Google Sheets** até migração futura da leitura analítica.
+Microfrontend federado para **cadastro operacional** de melhorias contínuas (kaizen) no módulo qualidade. Os dados ficam em **PostgreSQL** (`quality.kaizens`); o dashboard de qualidade e a TV leem a mesma fonte (sem Google Sheets).
 
 ## Visão geral
 
@@ -8,10 +8,10 @@ Microfrontend federado para **cadastro operacional** de melhorias contínuas (ka
 |--------|------------------|
 | **MFE** `kaizometro` | Listagem, ficha, dashboard, compartilhar sugestão (QR/PNG) |
 | **public-hub** `/p/kaizen/sugestao/aberto` | Formulário público (wizard 2 etapas, sem login) |
-| **api-delpi** `/quality/kaizens/records` | CRUD autenticado + importação Sheets → Postgres |
+| **api-delpi** `/quality/kaizens/records` | CRUD autenticado + import/export JSON |
 | **api-delpi** `POST /public/kaizen/suggestions` | Cria sugestão pública (`status=recebido`) + notifica Core |
-| **api-delpi** `/quality/kaizens/summary` | Leitura analítica (Sheets) — dashboard-quality |
-| **PostgreSQL** `quality.kaizens` | Fonte de verdade do cadastro operacional |
+| **api-delpi** `/quality/kaizens/summary` | Leitura analítica (PostgreSQL) — dashboard-quality / TV |
+| **PostgreSQL** `quality.kaizens` | Fonte de verdade do cadastro e da leitura analítica |
 
 ```text
 Portal → /apps/kaizometro  (JWT)
@@ -24,7 +24,7 @@ Compartilhar sugestão → QR/link → public-hub /p/kaizen/sugestao/aberto
            ↓
          Postgres (status recebido) + sino Core (permission notify-suggestions)
 
-Dashboard qualidade → /quality/kaizens/summary (Google Sheets — legado)
+Dashboard qualidade → /quality/kaizens/summary (PostgreSQL)
 ```
 
 ## Rotas da UI
@@ -94,14 +94,14 @@ Base HTTP: **`/apps/api-delpi/quality/kaizens/records`**
 | GET | `/quality/kaizens/records/{id}` | Detalhe (UUID Postgres) |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza |
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica (`deleted_at`) |
-| POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha |
+| POST | `/quality/kaizens/records/import` | Importa JSON exportado (backup entre ambientes) |
 
-**Leitura analítica (Sheets, dashboard):**
+**Leitura analítica (PostgreSQL — mesma fonte do cadastro):**
 
 | Método | Rota | Fonte |
 |--------|------|-------|
-| GET | `/quality/kaizens/summary` | Google Sheets |
-| GET | `/quality/kaizens/{kaizen_id}` | Google Sheets (`{kaizen_id:path}` — aceita `/` no ID) |
+| GET | `/quality/kaizens/summary` | PostgreSQL |
+| GET | `/quality/kaizens/{kaizen_id}` | PostgreSQL (`{kaizen_id:path}` — aceita `/` no ID legado) |
 
 | GET | `/quality/kaizens/records/{id}/revisions` | Revisões / snapshots |
 | POST | `/quality/kaizens/records/{id}/versions` | Nova versão (rascunho) |
@@ -128,19 +128,19 @@ curl -s -H "Authorization: Bearer $TOKEN" \
   | jq '.success, .data.pagination'
 ```
 
-### Exemplo — importar da planilha
+### Exemplo — importar JSON (backup)
 
 ```bash
 curl -s -X POST \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Delpi-Caller-App: kaizometro" \
   -H "Content-Type: application/json" \
-  -d '{"dry_run": false}' \
-  "http://localhost/apps/api-delpi/quality/kaizens/records/import-from-sheet" \
+  -d @kaizens-export.json \
+  "http://localhost/apps/api-delpi/quality/kaizens/records/import" \
   | jq '.data | {created, skipped, errors}'
 ```
 
-A importação é **idempotente**: ignora duplicatas (mesma filial + título + data de implantação). Use `dry_run: true` para simular.
+A importação JSON é **idempotente** no que couber ao use case de import — use o export da própria API como fonte.
 
 ## Permissões
 
@@ -308,18 +308,16 @@ Com `RUN_PLUGINS_MIGRATIONS_ON_STARTUP=true` (default no compose), migrations ro
 | Notificação Core | `app/application/services/kaizen_portal_notification_service.py` |
 | Mapper sugestão pública | `app/domain/services/kaizen/kaizen_public_suggestion_mapper.py` |
 | Repositório Postgres | `app/infrastructure/persistence/plugins/repositories/kaizen/postgres_kaizen_repository.py` |
-| Importação Sheets | `app/application/use_cases/kaizen/import_kaizens_from_sheet_use_case.py` |
-| Mapper planilha → POST | `app/domain/services/kaizen/kaizen_sheet_import_mapper.py` |
 | Composer | `app/composition/kaizen_composer.py` |
 
 Testes: `tests/unit/test_kaizen_*.py`, `test_kaizen_public_suggestion_mapper.py`, `test_kaizen_portal_notification_service.py`, smoke `test_route_meta_smoke.py` (filtro `kaizen`).
 
 ## Relação com o dashboard de qualidade
 
-- **Cadastro** (`kaizometro`): Postgres, CRUD completo, importação one-shot da planilha.
-- **Dashboard** (`dashboard-quality`): KPIs e tabela via `/quality/kaizens/summary` (Sheets).
+- **Cadastro** (`kaizometro`): Postgres, CRUD completo, import/export JSON.
+- **Dashboard** (`dashboard-quality`): KPIs e tabela via `/quality/kaizens/summary` (também PostgreSQL).
 
-Até unificar a leitura analítica no Postgres, alterações no cadastro **não** refletem automaticamente no dashboard — planeje sincronização ou migração da rota `summary`.
+Cadastro e leitura analítica compartilham a mesma base — alterações no Kaizômetro refletem no dashboard.
 
 ## Homologação rápida
 

@@ -22,23 +22,21 @@ Rotas que dependem **só** de **Google Sheets** continuam funcionando. Rotas que
 
 | Método | Path | Fonte de dados | Permissão |
 |--------|------|----------------|-----------|
-| GET | `/quality/kaizens/summary` | Google Sheets (`QUALITY_*`) | `dashboard-quality.view` ou `api-delpi.quality.access` |
-| GET | `/quality/kaizens/{kaizen_id}` | Google Sheets (`QUALITY_*`) | idem |
-| GET | `/quality/audit-5s/summary` | Google Sheets | idem |
-| GET | `/quality/kaizens/summary?date_start=01-01-2026&date_end=31-12-2026` | Sheets + filtro | idem |
+| GET | `/quality/kaizens/summary` | PostgreSQL (Kaizômetro) | `dashboard-quality.view` ou `api-delpi.quality.access` |
+| GET | `/quality/kaizens/{kaizen_id}` | PostgreSQL (Kaizômetro) | idem |
+| GET | `/quality/audit-5s/summary` | PostgreSQL (ou Sheets legado, se ainda configurado) | idem |
 
-**Cadastro operacional (PostgreSQL + importação da planilha):** requer `postgres-plugins` em execução e migrations `quality` aplicadas. Ver [plugins/kaizometro/README.md](../../../plugins/kaizometro/README.md).
+**Cadastro operacional (PostgreSQL):** requer `postgres-plugins` em execução e migrations `quality` aplicadas. Ver [plugins/kaizometro/README.md](../../../plugins/kaizometro/README.md).
 
 | Método | Path | Fonte | Permissão |
 |--------|------|-------|-----------|
 | GET | `/quality/kaizens/records` | PostgreSQL | `kaizometro.view` ou equivalentes |
-| POST | `/quality/kaizens/records/import-from-sheet` | Sheets → Postgres | `kaizometro.manage` |
+| POST | `/quality/kaizens/records/import` | JSON → Postgres | `kaizometro.manage` |
 
-**Leitura direta das planilhas** (sem passar pelos use cases HTTP):
+**Leitura direta das planilhas** (sem passar pelos use cases HTTP) — **Kaizen não usa mais planilha**:
 
 | Planilha | Env |
 |----------|-----|
-| Kaizen | `QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID` | Colunas de entrada: `segudos_por_ocorrecia`, `ocorrecias_por_dia`, `custo_hora`. `daily_savings` é **calculado na API** (não usar `ganho_diario` / `horas_poupadas_dia` na planilha). Ver [06-modulos-departamentais.md](./06-modulos-departamentais.md) § Kaizen. |
 | Audit 5S | `QUALITY_SHEET_ID` + `QUALITY_AUDIT_5S_SHEET_GID` |
 | EBITDA | `FINANCIAL_EBITDA_SHEET_ID` + `FINANCIAL_EBITDA_SHEET_GID` |
 | Mão de obra direta | `DIRECT_LABOR_SHEET_ID` + `DIRECT_LABOR_SHEET_GID` |

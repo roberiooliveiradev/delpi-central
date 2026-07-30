@@ -462,6 +462,7 @@
       },
       "label": "Kaizen — resumo",
       "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
         "Kaizens — resumo e listagem (Google Sheets)"
       ],
       "description": "Hub Kaizen com ideias, ganhos financeiros, listagem e metas SI.",

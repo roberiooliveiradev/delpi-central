@@ -39924,19 +39924,19 @@
         "category": "quality",
         "locale": {
           "en": {
-            "summary": "Kaizen by id",
-            "description": "Kaizen by id.",
-            "label": "Kaizen by id"
+            "summary": "Kaizen detail (PostgreSQL)",
+            "description": "Full kaizen record by UUID or legacy migrated id (PostgreSQL).",
+            "label": "Kaizen detail (PostgreSQL)"
           },
           "pt-BR": {
-            "summary": "Detalhe do kaizen (Google Sheets)",
-            "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)».",
-            "label": "Detalhe do kaizen (Google Sheets)"
+            "summary": "Detalhe do kaizen (PostgreSQL)",
+            "description": "Ficha completa do kaizen por UUID do cadastro ou id legado migrado (PostgreSQL).",
+            "label": "Detalhe do kaizen (PostgreSQL)"
           }
         },
         "tv": {
-          "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)».",
-          "label": "Detalhe do kaizen (Google Sheets)"
+          "description": "Ficha completa do kaizen por UUID do cadastro ou id legado migrado (PostgreSQL).",
+          "label": "Detalhe do kaizen (PostgreSQL)"
         },
         "presentationStrategy": "as_delivered"
       },
@@ -43631,15 +43631,15 @@
         "category": "quality",
         "locale": {
           "en": {
-            "summary": "Refugos rankings",
-            "description": "Refugos rankings.",
-            "whenToUse": "Use when you need refugos rankings."
+            "summary": "Scrap rankings",
+            "description": "Top scrap rankings by dimension with value (BRL) and share percent.",
+            "whenToUse": "Use for scrap ranking by reason, material, finished product, work center, or operator."
           },
           "pt-BR": {
-            "summary": "Relatório operacional — Refugos rankings",
-            "description": "Relatório operacional — Refugos rankings.",
-            "whenToUse": "Use quando precisar de: Relatório operacional — Refugos rankings.",
-            "label": "Relatório operacional — Refugos rankings"
+            "summary": "Ranking de refugos",
+            "description": "Ranking de refugos por dimensão com valor (R$) e participação percentual (sharePct/percentual).",
+            "whenToUse": "Use para ranking de refugo por motivo, matéria-prima, produto acabado, centro de trabalho ou colaborador.",
+            "label": "Ranking de refugos"
           }
         },
         "params": {
@@ -43793,9 +43793,9 @@
           }
         },
         "tv": {
-          "whenToUse": "Use quando precisar de: Relatório operacional — Refugos rankings.",
-          "description": "Relatório operacional — Refugos rankings.",
-          "label": "Relatório operacional — Refugos rankings"
+          "whenToUse": "Use para ranking de refugo por motivo, matéria-prima, produto acabado, centro de trabalho ou colaborador.",
+          "description": "Ranking de refugos por dimensão com valor (R$) e participação percentual (sharePct/percentual).",
+          "label": "Ranking de refugos"
         },
         "presentationStrategy": "as_delivered"
       },

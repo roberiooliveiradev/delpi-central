@@ -317,8 +317,8 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/branches` | Filiais disponíveis para filtros. |
 | GET | `/quality/nonconformities` | Lista NC do Protheus. |
 | GET | `/quality/nonconformities/series` | Série temporal de NC. |
-| GET | `/quality/kaizens/summary` | Resumo de kaizens (Google Sheets). |
-| GET | `/quality/kaizens/{kaizen_id}` | Detalhe de um kaizen na planilha (`{kaizen_id:path}`). |
+| GET | `/quality/kaizens/summary` | Resumo de kaizens (PostgreSQL / Minha Delpi). |
+| GET | `/quality/kaizens/{kaizen_id}` | Detalhe analítico de um kaizen (PostgreSQL; `{kaizen_id:path}`). |
 | GET | `/quality/kaizens/records` | Lista cadastro operacional (PostgreSQL). |
 | POST | `/quality/kaizens/records` | Cria kaizen no PostgreSQL. |
 | GET | `/quality/kaizens/records/summary` | Indicadores do painel Kaizômetro (Postgres). |
@@ -326,7 +326,6 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | GET | `/quality/kaizens/records/{id}` | Detalhe cadastro (UUID). |
 | PUT | `/quality/kaizens/records/{id}` | Atualiza cadastro. |
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |
-| POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha para PostgreSQL. |
 | POST | `/public/kaizen/suggestions` | Sugestão pública (**sem JWT**); status inicial `recebido`. |
 | GET | `/quality/audit-5s/summary` | Resumo auditorias 5S (Postgres `quality.audit_5s_*`; média `%` das avaliações não-rascunho com nota). |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
@@ -462,7 +461,7 @@ Documentação completa: [scrap-monitoring.md](./scrap-monitoring.md).
 
 ### GET /quality/kaizens/summary
 
-**Fonte:** Google Sheets (`QUALITY_SHEET_ID` + `QUALITY_KAIZEN_SHEET_GID`). Não usa TOTVS.
+**Fonte:** PostgreSQL (`quality.kaizens` — Minha Delpi / Kaizômetro). Não usa Google Sheets nem TOTVS.
 
 | Query | Descrição |
 |---|---|
@@ -476,24 +475,6 @@ Documentação completa: [scrap-monitoring.md](./scrap-monitoring.md).
 **Ganhos (`total_savings`):** para cada kaizen *implantado* com dias ativos no período, soma `daily_savings × dias ativos`. Kaizens implantados antes do `date_start` continuam gerando ganho nos dias do intervalo (desde a data de implantação até `date_end`).
 
 **Listagem (`list_kaizen`):** itens com `id`, `annual_savings` (`daily_savings × 365`) e demais campos cadastrais. O dashboard de qualidade usa chamada sem datas para catálogo completo na tabela.
-
-#### Planilha — colunas lidas
-
-| Coluna (header) | Campo API | Observação |
-|---|---|---|
-| `filial` | `branch` | |
-| `descricao` | `title` | |
-| `responsavel` | `accountable` | |
-| `area_setor` | `sector` | |
-| `custo_investimento` | `investment` | |
-| `segudos_por_ocorrecia` / `segundos_por_ocorrencia` | — | Entrada do cálculo (aliases aceitos). |
-| `ocorrecias_por_dia` / `ocorrencias_por_dia` | — | Entrada do cálculo (aliases aceitos). |
-| `custo_hora` | — | Entrada do cálculo. |
-| `status` | `status` | |
-| `data` | `date_implemented` | Data de implantação. |
-| `deleted` | — | Linhas marcadas são ignoradas. |
-
-**Não ler da planilha:** `horas_poupadas_dia` e `ganho_diario` — removidas da planilha; a API calcula o ganho diário.
 
 #### Cálculo
 
@@ -532,13 +513,13 @@ Se alguma das três entradas estiver ausente, `daily_savings` e `annual_savings`
 
 ### GET /quality/kaizens/{kaizen_id}
 
-**Fonte:** mesma planilha. Path: `kaizen_id` = `list_kaizen[].id` (ex.: `01-16/01/2026-App resina CT-16`). O segmento usa `{kaizen_id:path}` no FastAPI para aceitar barras no identificador.
+**Fonte:** PostgreSQL. Path: `kaizen_id` = UUID do cadastro ou id legado migrado (ex.: `01-16/01/2026-App resina CT-16`). O segmento usa `{kaizen_id:path}` no FastAPI para aceitar barras no identificador.
 
 Retorna ficha completa com entradas do cálculo: `seconds_per_occurrence`, `occurrences_per_day`, `hourly_cost`, `hours_saved_per_day`, além dos campos do resumo.
 
 **operationId:** `get_kaizen_by_id` · **meta.entity:** `kaizen` · **meta.shape:** `scalar`
 
-Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração Sheets: [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md).
+Testes: `tests/unit/test_postgres_kaizen_query_repository.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.
 
 ### Cadastro operacional — `/quality/kaizens/records`
 
@@ -572,19 +553,11 @@ Body JSON com `branch_code`, `title` (obrigatórios), campos cadastrais e entrad
 
 **operationId:** `create_kaizen_record` · **meta.shape:** `scalar`
 
-#### POST /quality/kaizens/records/import-from-sheet
+#### POST /quality/kaizens/records/import
 
-Importa todas as linhas **ativas** da planilha kaizen (`deleted` ignorado) para o PostgreSQL. Ignora duplicatas (filial + título + data de implantação). Alias legado de status `em_andamento` → `recebido`.
+Importa kaizens a partir de JSON exportado (`GET .../export` / backup entre ambientes). Não há mais importação a partir do Google Sheets — o Kaizômetro usa apenas PostgreSQL.
 
-Body opcional: `{ "dry_run": true }` — simula sem gravar.
-
-**operationId:** `import_kaizens_from_sheet` · **meta.shape:** `scalar`
-
-Resposta `data`: `{ "created", "skipped", "errors", "items": [...] }`.
-
-Código: `ImportKaizensFromSheetUseCase`, `kaizen_sheet_import_mapper.py`, `kaizen_records_router.py`.
-
-Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.
+**operationId:** `import_kaizen_records` (quando exposto) · ver router `kaizen_records_router.py`.
 
 #### POST /public/kaizen/suggestions
 
@@ -602,7 +575,7 @@ Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo 
 
 **Indicadores:** `recebido` fora de quantidade/ganhos; `aprovado` só quantidade; `implantado` quantidade + ganhos. Detalhe: README do plugin.
 
-**Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
+**Fonte analítica:** `GET /quality/kaizens/summary` e `GET /quality/kaizens/{kaizen_id}` leem PostgreSQL (`PostgresKaizenQueryRepository`). Cálculo temporal por revisão: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/kaizometro/ESPECIFICACAO-REVISOES.md).
 
 ## Delpi Reports — `/reports`
 

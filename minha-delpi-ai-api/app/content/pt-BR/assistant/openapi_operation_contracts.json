@@ -511,10 +511,6 @@
     "entity": "kaizen_record",
     "shape": "scalar"
   },
-  "import_kaizens_from_sheet": {
-    "entity": "kaizen_record_import",
-    "shape": "scalar"
-  },
   "get_quality_action_plans_dashboard": {
     "entity": "quality_action_plan_dashboard",
     "shape": "scalar"

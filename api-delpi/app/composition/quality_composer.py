@@ -36,9 +36,6 @@ from app.application.use_cases.quality.list_quality_branches_use_case import (
 from app.infrastructure.persistence.google_sheets.audit_5s.audit_5s_repository import (
     Audit5SRepository,
 )
-from app.infrastructure.persistence.google_sheets.kaizen.kaizen_repository import (
-    KaizenRepository,
-)
 from app.infrastructure.persistence.plugins.repositories.audit_5s.postgres_audit_5s_query_repository import (
     PostgresAudit5SQueryRepository,
 )
@@ -63,16 +60,6 @@ def _build_google_sheets_client() -> GoogleSheetsClient:
 
 def _build_utils() -> Utils:
     return Utils()
-
-
-def _build_kaizen_sheets_repository() -> KaizenRepository:
-    """Fonte legada da planilha — mantida só para importação pontual (import-from-sheet)."""
-    return KaizenRepository(
-        client=_build_google_sheets_client(),
-        sheet_id=settings.QUALITY_SHEET_ID,
-        gid=settings.QUALITY_KAIZEN_SHEET_GID,
-        utils=_build_utils(),
-    )
 
 
 def _build_kaizen_query_repository() -> PostgresKaizenQueryRepository:
