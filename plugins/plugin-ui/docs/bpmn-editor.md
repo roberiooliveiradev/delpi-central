@@ -58,7 +58,7 @@ Referência de labels: `plugins/transformometro/src/content/flowchartEditorLabel
 
 Em modo editável (`!readOnly` + `showTemplates`), o editor monta [`EditorChrome`](../src/components/layout/EditorChrome.tsx) + ribbon com [`EditorRibbonSection`](../src/components/ribbon/EditorRibbonSection.tsx) / [`RibbonTile`](../src/components/ribbon/RibbonTile.tsx):
 
-- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo · Elementos/Modelos · **Buscar componente** · Como usar · Desenho/Mermaid · título
+- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo (`EditorHistoryActions`, Ctrl/⌘+Z · Ctrl/⌘+Y) · Elementos/Modelos · **Buscar componente** · Como usar · Desenho/Mermaid · título
 - **Avisos:** `chromeNotices` → faixa `EditorChrome.notices` com [`EditorChromeNotice`](../src/components/layout/EditorChromeNotice.tsx) (info/warning/danger)
 - **Ribbon:** seções por categoria BPMN; colapso responsivo (direita→esquerda) abre popover via `RibbonGroup`
 - **Props:** `chromeLeading?: { onBack?; backLabel?; title? }` · `chromeNotices?: ReactNode` — o Transformômetro passa presença colaborativa em `/diagrama/edit`

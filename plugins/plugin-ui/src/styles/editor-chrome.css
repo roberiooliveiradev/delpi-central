@@ -181,3 +181,66 @@
 .delpi-ui-editor-chrome-notice__action:hover {
   background: color-mix(in srgb, var(--primary, #089bdb) 12%, transparent);
 }
+
+/* --- Histórico undo/redo (paridade visual TV Dashboard) --- */
+
+.delpi-ui-editor-history {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 0;
+  padding: 0 8px 0 4px;
+  margin: 0;
+  border: none;
+  border-right: 1px solid
+    color-mix(in srgb, var(--delpi-ui-border, var(--border, rgba(127, 127, 127, 0.45))) 85%, transparent);
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.delpi-ui-editor-history__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin: auto 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delpi-ui-muted, var(--text-muted, inherit));
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.12s ease;
+}
+
+.delpi-ui-editor-history__btn:hover:not(:disabled) {
+  color: var(--delpi-ui-text, var(--text, inherit));
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, rgba(127, 127, 127, 0.45))) 70%,
+    transparent
+  );
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, transparent);
+}
+
+.delpi-ui-editor-history__btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.delpi-ui-editor-history__btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.delpi-ui-editor-history__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary, #089bdb) 55%, transparent);
+  outline-offset: 1px;
+}

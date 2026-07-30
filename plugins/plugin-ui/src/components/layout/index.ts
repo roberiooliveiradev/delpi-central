@@ -390,3 +390,11 @@ export {
   type EditorChromeNoticeTone,
   type EditorChromeNoticesProps,
 } from "./EditorChromeNotice";
+export {
+  EditorHistoryActions,
+  appendShortcutHint,
+  editorHistoryActionsBemClasses,
+  editorModKeyLabel,
+  type EditorHistoryActionsClassNames,
+  type EditorHistoryActionsProps,
+} from "./EditorHistoryActions";

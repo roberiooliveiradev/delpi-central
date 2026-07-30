@@ -347,49 +347,51 @@
   gap: 4px;
 }
 
-.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history,
-.dashboard-transformometro .delpi-ui-bpmn-editor__history,
+/* Histórico: estilos canônicos em editor-chrome.css (.delpi-ui-editor-history*). */
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history.delpi-ui-editor-history,
+.dashboard-transformometro .delpi-ui-bpmn-editor__history.delpi-ui-editor-history,
 .delpi-ui-flowchart-shell .tm-diagram-editor__history,
 .dashboard-transformometro .tm-diagram-editor__history{
+  /* Alias legado: mesmo visual do kit. */
   display: inline-flex;
   align-items: center;
+  align-self: stretch;
   gap: 2px;
-  padding: 3px;
-  border-radius: var(--ds-radius-md);
-  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
-  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
-  backdrop-filter: blur(8px);
+  padding: 0 8px 0 4px;
+  border: none;
+  border-right: 1px solid
+    color-mix(in srgb, var(--border, rgba(127, 127, 127, 0.45)) 85%, transparent);
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
 }
 
-.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn,
-.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn,
 .delpi-ui-flowchart-shell .tm-diagram-editor__history-btn,
 .dashboard-transformometro .tm-diagram-editor__history-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: var(--ds-radius-sm);
+  width: 30px;
+  height: 30px;
+  margin: auto 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
   background: transparent;
-  color: var(--ds-text-muted);
+  color: var(--text-muted, inherit);
   cursor: pointer;
 }
 
-.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn:hover:not(:disabled),
-.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn:hover:not(:disabled),
 .delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:hover:not(:disabled),
 .dashboard-transformometro .tm-diagram-editor__history-btn:hover:not(:disabled){
-  background: var(--ds-accent-soft);
-  color: var(--ds-text);
+  color: var(--text, inherit);
+  border-color: color-mix(in srgb, var(--border, rgba(127, 127, 127, 0.45)) 70%, transparent);
+  background: color-mix(in srgb, var(--primary, #089bdb) 8%, transparent);
 }
 
-.delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__history-btn:disabled,
-.dashboard-transformometro .delpi-ui-bpmn-editor__history-btn:disabled,
 .delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:disabled,
 .dashboard-transformometro .tm-diagram-editor__history-btn:disabled{
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
 }
 

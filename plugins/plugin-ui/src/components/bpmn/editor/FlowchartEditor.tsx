@@ -1223,11 +1223,13 @@ function FlowchartEditorInner({
       const mod = event.ctrlKey || event.metaKey;
       const selectedCount = getSelectionSnapshot().nodes.length;
       if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        if (!canUndo) return;
         event.preventDefault();
         handleUndo();
         return;
       }
       if ((mod && event.key.toLowerCase() === "y") || (mod && event.shiftKey && event.key.toLowerCase() === "z")) {
+        if (!canRedo) return;
         event.preventDefault();
         handleRedo();
         return;
@@ -1269,6 +1271,8 @@ function FlowchartEditorInner({
     getSelectionSnapshot,
     handleRedo,
     handleUndo,
+    canRedo,
+    canUndo,
     nudgeSelection,
     pasteSelection,
     readOnly,
