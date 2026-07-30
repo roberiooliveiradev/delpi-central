@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSeriesChartLayout,
   chartPartFrameFromPlotLayout,
+  resolveHorizontalCategoryLabelLeftPad,
   resolveSeriesChartCategoryBarSlot,
   resolveSeriesChartCategoryScale,
   resolveVisibleXLabelIndices,
@@ -514,18 +515,53 @@ describe("category label rotation + horizontal_bar", () => {
     expect(onlyX.visibleXLabelIndices).toEqual([]);
   });
 
-  it("orientation vertical: desligar showX zera categorias; showY sozinho não as restaura", () => {
-    const points = [
-      { label: "A", value: 10 },
-      { label: "B", value: 20 },
-    ];
-    const offX = buildSeriesChartLayout({
+  it("horizontal_bar: fonte do eixo Y amplia margem esquerda sem sobrepor o plot", () => {
+    const labels = ["10080059", "10500316", "10090045", "10200018", "10300112"];
+    const points = labels.map((label, index) => ({ label, value: 40 - index }));
+    const small = buildSeriesChartLayout({
       points,
-      showXAxisLabels: false,
+      showXAxisLabels: true,
       showYAxisLabels: true,
       showXAxisTitle: false,
-      orientation: "vertical",
+      orientation: "horizontal",
+      categoryScale: "band",
+      viewW: 420,
+      viewH: 280,
+      typography: { axisFontSize: 14 },
     });
-    expect(offX.visibleXLabelIndices).toEqual([]);
+    const large = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+      viewW: 420,
+      viewH: 280,
+      typography: { axisFontSize: 32 },
+    });
+    const needLarge = resolveHorizontalCategoryLabelLeftPad(labels, 32);
+    expect(large.margin.left).toBeGreaterThan(small.margin.left);
+    expect(large.margin.left).toBeGreaterThanOrEqual(needLarge);
+    expect(large.plotW).toBeGreaterThanOrEqual(Math.round(420 * SERIES_CHART_MIN_PLOT_FRACTION));
+  });
+
+  it("horizontal_bar: plotFrame apertado ainda respeita gutter das categorias", () => {
+    const labels = ["10080059", "10500316"];
+    const layout = buildSeriesChartLayout({
+      points: labels.map((label, index) => ({ label, value: 10 + index })),
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+      viewW: 420,
+      viewH: 280,
+      plotFrame: { x: 4, y: 8, w: 90, h: 80 },
+      typography: { axisFontSize: 28 },
+    });
+    expect(layout.margin.left).toBeGreaterThanOrEqual(
+      resolveHorizontalCategoryLabelLeftPad(labels, 28),
+    );
   });
 });

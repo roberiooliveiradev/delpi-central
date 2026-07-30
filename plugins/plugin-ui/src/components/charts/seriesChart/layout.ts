@@ -322,9 +322,9 @@ function resolveAxisTitleFontSize(typography?: SeriesChartLayoutTypography | nul
 }
 
 function marginScaleForAxisFont(axisFontSize: number): number {
-  // Cap moderado: tipografia live no resize do bloco pode subir muito;
-  // o piso do plot (`clampMarginsForUsablePlot`) é a defesa final.
-  return Math.max(0.85, Math.min(2.75, axisFontSize / SERIES_CHART_LAYOUT_REF_AXIS_FONT));
+  // Cap alto o bastante para eixos ~40–48px (TV/editor); o piso do plot
+  // (`clampMarginsForUsablePlot`) continua sendo a defesa final.
+  return Math.max(0.85, Math.min(5.5, axisFontSize / SERIES_CHART_LAYOUT_REF_AXIS_FONT));
 }
 
 /** Fração mínima do viewBox reservada ao plot (evita série clipada a ~1px). */
@@ -334,14 +334,22 @@ export const SERIES_CHART_MIN_PLOT_FRACTION = 0.38;
 export const SERIES_CHART_MIN_PLOT_PX = 48;
 
 /**
- * Comprime margens proporcionalmente quando o plot colapsaria.
+ * Comprime margens quando o plot colapsaria.
  * Canônico para qualquer consumidor de `buildSeriesChartLayout` (TV / editor).
+ *
+ * `preferShrinkRight` / `preferShrinkTop`: encolhe primeiro a margem oposta aos
+ * rótulos (direita / topo) para não “comer” o gutter de categoria / eixo X.
  */
 export function clampMarginsForUsablePlot(
   margin: SeriesChartMargin,
   viewW: number,
   viewH: number,
-  options?: { minPlotFraction?: number; minPlotPx?: number },
+  options?: {
+    minPlotFraction?: number;
+    minPlotPx?: number;
+    preferShrinkRight?: boolean;
+    preferShrinkTop?: boolean;
+  },
 ): SeriesChartMargin {
   const minFrac = options?.minPlotFraction ?? SERIES_CHART_MIN_PLOT_FRACTION;
   const minPx = options?.minPlotPx ?? SERIES_CHART_MIN_PLOT_PX;
@@ -350,7 +358,7 @@ export function clampMarginsForUsablePlot(
 
   let { top, right, bottom, left } = margin;
 
-  const shrinkAxis = (
+  const shrinkProportional = (
     a: number,
     b: number,
     maxSum: number,
@@ -372,11 +380,36 @@ export function clampMarginsForUsablePlot(
     return [nextA, nextB];
   };
 
+  /** Encolhe `flexible` primeiro; só então `protectedSide`. */
+  const shrinkPreferFlexible = (
+    protectedSide: number,
+    flexible: number,
+    maxSum: number,
+  ): [number, number] => {
+    const sum = protectedSide + flexible;
+    if (sum <= maxSum || sum <= 0) {
+      return [Math.max(0, protectedSide), Math.max(0, flexible)];
+    }
+    const excess = sum - maxSum;
+    if (flexible >= excess) {
+      return [Math.max(0, protectedSide), Math.max(0, flexible - excess)];
+    }
+    return [Math.max(0, protectedSide - (excess - flexible)), 0];
+  };
+
   if (viewW - left - right < minPlotW) {
-    [left, right] = shrinkAxis(left, right, Math.max(0, viewW - minPlotW));
+    const maxSum = Math.max(0, viewW - minPlotW);
+    [left, right] = options?.preferShrinkRight
+      ? shrinkPreferFlexible(left, right, maxSum)
+      : shrinkProportional(left, right, maxSum);
   }
   if (viewH - top - bottom < minPlotH) {
-    [top, bottom] = shrinkAxis(top, bottom, Math.max(0, viewH - minPlotH));
+    const maxSum = Math.max(0, viewH - minPlotH);
+    if (options?.preferShrinkTop) {
+      [bottom, top] = shrinkPreferFlexible(bottom, top, maxSum);
+    } else {
+      [top, bottom] = shrinkProportional(top, bottom, maxSum);
+    }
   }
 
   return { top, right, bottom, left };
@@ -396,6 +429,48 @@ function scaledBaseMargin(axisFontSize: number): SeriesChartMargin {
 export function estimateLabelWidth(label: string, axisFontSize = SERIES_CHART_LAYOUT_REF_AXIS_FONT): number {
   const fs = axisFontSize > 0 ? axisFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
   return Math.max(label.length, 1) * fs * 0.55;
+}
+
+/**
+ * Margem esquerda mínima para categorias no `horizontal_bar`
+ * (`textAnchor="end"` em `margin.left - 6`).
+ * Usa a largura estimada completa — sem reaplicar o fator 0.55.
+ */
+export function resolveHorizontalCategoryLabelLeftPad(
+  labels: string[],
+  axisFontSize: number,
+  options?: { paintGapPx?: number },
+): number {
+  const fs = axisFontSize > 0 ? axisFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
+  const gap = options?.paintGapPx ?? 8;
+  if (labels.length === 0) {
+    return Math.round(fs * 3.5) + gap;
+  }
+  const maxLabel = Math.max(
+    ...labels.map((label) => estimateLabelWidth(label, fs)),
+    fs,
+  );
+  return Math.ceil(maxLabel + gap);
+}
+
+/**
+ * Margem esquerda mínima para ticks de valor no eixo Y (orientação vertical).
+ */
+export function resolveValueAxisLabelLeftPad(
+  tickLabels: string[],
+  axisFontSize: number,
+  options?: { paintGapPx?: number },
+): number {
+  const fs = axisFontSize > 0 ? axisFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
+  const gap = options?.paintGapPx ?? 8;
+  if (tickLabels.length === 0) {
+    return Math.round(fs * 2.6) + gap;
+  }
+  const maxLabel = Math.max(
+    ...tickLabels.map((label) => estimateLabelWidth(label, fs)),
+    fs,
+  );
+  return Math.ceil(maxLabel + gap);
 }
 
 export function resolveXLabelStep(
@@ -643,21 +718,33 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     axisFontSize,
   );
   const showYAxisTitle = Boolean(input.showYAxisTitle);
+  const displayCategoryLabels = showCategoryLabels
+    ? labels.map((label) =>
+        resolveCategoryAxisLabelText(
+          label,
+          input.categoryLabelFormat,
+          input.categoryLabelOverflow,
+        ),
+      )
+    : labels;
   const categoryLabelLeftPad =
     orientation === "horizontal" && showCategoryLabels
-      ? Math.max(
-          Math.round(axisFontSize * 3.5),
-          Math.ceil(
-            Math.max(...labels.map((label) => estimateLabelWidth(label, axisFontSize)), axisFontSize) *
-              0.55,
-          ),
-        )
+      ? resolveHorizontalCategoryLabelLeftPad(displayCategoryLabels, axisFontSize)
       : 0;
+  const valueTickLabels =
+    orientation === "vertical" && showYAxisLabels
+      ? ticks.map((tick) => formatChartTick(tick, "auto"))
+      : [];
+  const valueAxisLeftPad =
+    orientation === "vertical" && showYAxisLabels
+      ? resolveValueAxisLabelLeftPad(valueTickLabels, axisFontSize)
+      : 0;
+  const leftLabelFloor = Math.max(categoryLabelLeftPad, valueAxisLeftPad);
   const cartesianAutoMargin: SeriesChartMargin = {
     top: baseMargin.top,
     left: Math.max(
       resolveLeftMarginWithYTitle(showYAxisTitle, sides.left, axisTitleFontSize),
-      categoryLabelLeftPad,
+      leftLabelFloor,
     ),
     right: Math.max(
       sides.right,
@@ -677,6 +764,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const minLeftForYTitle = showYAxisTitle
     ? yAxisTitleGutterPx(axisTitleFontSize) + Math.round(axisFontSize * 2.6)
     : 0;
+  const minLeftFloor = Math.max(minLeftForYTitle, leftLabelFloor);
   const centeredPad = Math.max(
     8,
     Math.round(Math.min(viewW, viewH) * 0.045) + Math.max(0, input.plotPadExtraPx ?? 0),
@@ -692,7 +780,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     framedEarly
       ? {
           ...framedEarly,
-          left: Math.max(framedEarly.left, minLeftForYTitle),
+          left: Math.max(framedEarly.left, minLeftFloor),
           right: Math.max(
             framedEarly.right,
             !input.centeredPlot && hasSecondaryAxis
@@ -703,6 +791,10 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       : autoMargin,
     viewW,
     viewH,
+    {
+      preferShrinkRight: orientation === "horizontal" && showCategoryLabels,
+      preferShrinkTop: orientation === "vertical" && showCategoryLabels,
+    },
   );
 
   const plotW = Math.max(1, viewW - margin.left - margin.right);

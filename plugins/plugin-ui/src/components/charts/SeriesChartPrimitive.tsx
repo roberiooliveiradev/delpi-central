@@ -259,6 +259,7 @@ export function SeriesChartPrimitive({
     categoryPaddingPercent: config.categoryPaddingPercent,
     plotFrame,
     typography: {
+      /* Categoria no Y (horizontal_bar) ou valor no Y — usar o maior dos eixos. */
       axisFontSize: Math.max(axisXFont, axisYFont),
       axisTitleFontSize: Math.max(axisTitleXFont, axisTitleYFont),
     },
