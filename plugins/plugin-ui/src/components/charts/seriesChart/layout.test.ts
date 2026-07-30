@@ -12,6 +12,7 @@ import {
   resolveYAxisTitleAnchorX,
   SERIES_CHART_MIN_PLOT_FRACTION,
   SERIES_CHART_MIN_PLOT_PX,
+  SERIES_CHART_VALUE_AXIS_GUTTER_PX,
   yAxisTitleGutterPx,
 } from "./layout";
 import { OTD_SERIES_LAYOUT_GOLDEN as otdGolden } from "./__fixtures__/otdSeriesLayout.golden";
@@ -390,7 +391,7 @@ describe("golden layout fixture OTD", () => {
     }
   });
 
-  it("toY(axisMin) alinha ao eixo X (sem gap do plotInset vertical)", () => {
+  it("toY(axisMin) alinha ao eixo X; axisMax tem folga no teto (não cola no clip)", () => {
     const layout = buildSeriesChartLayout({
       points: [
         { label: "a", value: 0 },
@@ -402,7 +403,11 @@ describe("golden layout fixture OTD", () => {
       viewH: 240,
     });
     expect(layout.toY(layout.axisMin)).toBeCloseTo(layout.margin.top + layout.plotH, 5);
-    expect(layout.toY(layout.axisMax)).toBeCloseTo(layout.margin.top, 5);
+    expect(layout.toY(layout.axisMax)).toBeCloseTo(
+      layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX,
+      5,
+    );
+    expect(layout.toY(layout.axisMax)).toBeGreaterThan(layout.margin.top);
   });
 
   it("axisMax cobre dataMax para não clipar série no teto (economia vs investimento)", () => {
@@ -422,6 +427,10 @@ describe("golden layout fixture OTD", () => {
     // Variação acima de 800 (antigo teto clipado) continua distinguível no plot
     expect(layout.toY(800)).toBeGreaterThan(layout.toY(875));
     expect(layout.toY(875)).toBeGreaterThan(layout.toY(890));
+    // Pico no teto não cola na borda do clipPath (stroke/área visíveis)
+    expect(layout.toY(890)).toBeGreaterThanOrEqual(
+      layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX - 0.01,
+    );
   });
 });
 

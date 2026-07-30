@@ -20,6 +20,13 @@ export const SERIES_CHART_VIEW_H = 220;
 export const SERIES_CHART_PLOT_INSET = 14;
 
 /**
+ * Folga no extremo alto do eixo de valor (px).
+ * Com inset 0 (linha/área nas bordas da categoria), sem isso a série no teto
+ * cola no clipPath e o stroke/preenchimento parece «cortado».
+ */
+export const SERIES_CHART_VALUE_AXIS_GUTTER_PX = 5;
+
+/**
  * Escala de categoria no eixo X (padrão de mercado):
  * - `point` — linha/área/scatter: extremos nas bordas (d3.scalePoint / ECharts boundaryGap:false)
  * - `band` — coluna/barra: centro da banda (d3.scaleBand / ECharts boundaryGap:true / Excel)
@@ -817,7 +824,15 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
         )
       : 0;
   const innerW = Math.max(1, plotW - 2 * plotInset);
-  const yGutter = Math.min(plotInset, Math.floor(plotH / 4));
+  const insetGutter = Math.min(plotInset, Math.floor(plotH / 4));
+  /**
+   * Eixo de valor: folga no extremo alto (topo no vertical / direita no horizontal).
+   * Base do eixo (min) permanece na borda do plot para área/barra alinharem ao eixo.
+   */
+  const valueHighGutter = input.centeredPlot
+    ? insetGutter
+    : Math.max(SERIES_CHART_VALUE_AXIS_GUTTER_PX, insetGutter);
+  const valueLowGutter = insetGutter;
   const categoryScale: SeriesChartCategoryScale = input.categoryScale ?? "point";
 
   const categoryBandWidth = (count: number) => {
@@ -829,16 +844,19 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     const i = Math.min(Math.max(0, index), n - 1);
     return margin.left + plotInset + (i / n) * innerW;
   };
-  const innerH = Math.max(1, plotH - 2 * yGutter);
+  const categoryInnerH = Math.max(1, plotH - 2 * insetGutter);
   const categoryBandHeight = (count: number) => {
     const n = Math.max(1, count);
-    return innerH / n;
+    return categoryInnerH / n;
   };
   const categoryBandStartY = (index: number, count: number) => {
     const n = Math.max(1, count);
     const i = Math.min(Math.max(0, index), n - 1);
-    return margin.top + yGutter + (i / n) * innerH;
+    return margin.top + insetGutter + (i / n) * categoryInnerH;
   };
+
+  const valueInnerH = Math.max(1, plotH - valueHighGutter - valueLowGutter);
+  const valueInnerW = Math.max(1, plotW - plotInset - Math.max(plotInset, valueHighGutter));
 
   // point: extremos nas bordas (linha). band: centro de cada categoria (coluna).
   const toX = (index: number, count: number) => {
@@ -853,16 +871,16 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   };
   const toY = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
-    return margin.top + yGutter + (1 - t) * innerH;
+    return margin.top + valueHighGutter + (1 - t) * valueInnerH;
   };
   const toValueX = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
-    return margin.left + plotInset + t * innerW;
+    return margin.left + plotInset + t * valueInnerW;
   };
   const toYSecondary = hasSecondaryAxis
     ? (value: number) => {
         const t = Math.min(1, Math.max(0, (value - secondaryMin) / secondaryRange));
-        return margin.top + yGutter + (1 - t) * innerH;
+        return margin.top + valueHighGutter + (1 - t) * valueInnerH;
       }
     : undefined;
 

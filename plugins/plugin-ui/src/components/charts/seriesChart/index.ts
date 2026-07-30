@@ -44,6 +44,7 @@ export {
   shouldRotateXLabels,
   yAxisTitleGutterPx,
   SERIES_CHART_PLOT_INSET,
+  SERIES_CHART_VALUE_AXIS_GUTTER_PX,
   SERIES_CHART_VIEW_H,
   SERIES_CHART_VIEW_W,
   type SeriesChartCategoryScale,
