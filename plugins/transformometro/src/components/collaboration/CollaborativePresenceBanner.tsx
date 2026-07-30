@@ -6,6 +6,8 @@ type Props = {
   lockError?: string | null;
   realtimeNotice?: string | null;
   onDismissRealtimeNotice?: () => void;
+  /** Em páginas imersivas (ex.: editor BPMN), omitir «Visualizando» libera altura. */
+  showViewers?: boolean;
 };
 
 export function CollaborativePresenceBanner({
@@ -13,17 +15,18 @@ export function CollaborativePresenceBanner({
   lockError,
   realtimeNotice,
   onDismissRealtimeNotice,
+  showViewers = true,
 }: Props) {
   if (!lockError && !realtimeNotice) {
     const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
-    const viewers = presence?.viewers ?? [];
+    const viewers = showViewers ? presence?.viewers ?? [] : [];
     if (!editors.length && !viewers.length) {
       return null;
     }
   }
 
   const editors = presence?.editors.filter((item) => item.lock_active) ?? [];
-  const viewers = presence?.viewers ?? [];
+  const viewers = showViewers ? presence?.viewers ?? [] : [];
 
   return (
     <div className="tm-collab-banner" role="status">

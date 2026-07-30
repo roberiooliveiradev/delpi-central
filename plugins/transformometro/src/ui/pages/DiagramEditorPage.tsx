@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 
 import type { AppProps } from "../../App";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
-import { PageHeader } from "../../components/PageHeader";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { ProcessoDiagramSection } from "../../components/diagram/sections/ProcessoDiagramSection";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/sections/InstanciaDiagramEscopoSection";
@@ -32,26 +31,22 @@ const KIND_CONFIG: Record<
   DiagramEditorKind,
   {
     title: string;
-    subtitle: string;
     sectionKey: string;
     entityType: CollaborationEntityType;
   }
 > = {
   processo: {
     title: "Editar diagrama macro",
-    subtitle: "Mapa canônico do fluxo end-to-end deste processo-mestre.",
     sectionKey: "diagrama_macro",
     entityType: "processo",
   },
   instancia: {
     title: "Editar escopo no diagrama",
-    subtitle: "Quais etapas do diagrama-macro esta melhoria cobre.",
     sectionKey: "diagrama_escopo",
     entityType: "processo_instancia",
   },
   revisao: {
     title: "Editar diagrama da revisão",
-    subtitle: "Overlay as-is / to-be no escopo desta melhoria.",
     sectionKey: "diagrama_revisao",
     entityType: "revisao",
   },
@@ -144,18 +139,13 @@ export function DiagramEditorPage({
   return (
     <TransformometroShell>
       <div className="tm-diagram-editor-page">
-        <PageHeader
-          title={config.title}
-          subtitle={config.subtitle}
-          currentPath={detailHref}
-          onNavigate={onNavigate}
-          actions={
-            <ActionButton variant="link" onClick={goBack}>
-              <ArrowLeft size={16} aria-hidden />
-              Voltar
-            </ActionButton>
-          }
-        />
+        <header className="tm-diagram-editor-page__toolbar">
+          <ActionButton variant="link" onClick={goBack}>
+            <ArrowLeft size={16} aria-hidden />
+            Voltar
+          </ActionButton>
+          <h1 className="tm-diagram-editor-page__title">{config.title}</h1>
+        </header>
 
         <StatusAlerts
           error={error}
@@ -170,6 +160,7 @@ export function DiagramEditorPage({
           lockError={sectionEdit.lockError}
           realtimeNotice={sectionEdit.realtimeNotice}
           onDismissRealtimeNotice={sectionEdit.clearRealtimeNotice}
+          showViewers={false}
         />
 
         {lockFailed ? (

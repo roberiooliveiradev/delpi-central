@@ -3371,11 +3371,35 @@
 }
 
 /* —— Editor de diagrama BPMN (página dedicada) —— */
+.dashboard-transformometro:has(.tm-diagram-editor-page){
+  padding: 8px 12px 12px;
+  background-image: none;
+}
+.dashboard-transformometro:has(.tm-diagram-editor-page) .tm-page-sections{
+  gap: 0;
+  min-height: calc(100vh - 20px);
+}
 .dashboard-transformometro .tm-diagram-editor-page{
   display: flex;
   flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+.dashboard-transformometro .tm-diagram-editor-page__toolbar{
+  display: flex;
+  align-items: center;
   gap: 12px;
-  min-height: calc(100vh - 2 * var(--ds-page-padding, 16px));
+  min-height: 32px;
+  flex: 0 0 auto;
+}
+.dashboard-transformometro .tm-diagram-editor-page__title{
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--ds-title);
+  line-height: 1.2;
 }
 .dashboard-transformometro .tm-diagram-editor-page__lock-hint{
   margin: 0;
