@@ -840,6 +840,118 @@
   gap: 8px;
 }
 
+.lnf-comment-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lnf-comment-composer__hint {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--lnf-muted, var(--lnf-text-muted, #64748b));
+}
+
+.lnf-comment-composer__field {
+  position: relative;
+}
+
+.lnf-comment-composer__field textarea {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+}
+
+.lnf-comment-mention {
+  font-weight: 700;
+  color: var(--lnf-title);
+}
+
+.lnf-comment-mention-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 12px;
+  border: 1px solid var(--lnf-border);
+  background: var(--lnf-surface);
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.lnf-comment-mention-empty {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  color: var(--lnf-text);
+  opacity: 0.75;
+}
+
+.lnf-comment-mention-option {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lnf-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.lnf-comment-mention-option strong {
+  font-size: 0.88rem;
+  color: var(--lnf-title);
+}
+
+.lnf-comment-mention-option span {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+
+.lnf-comment-mention-option:hover,
+.lnf-comment-mention-option.is-active {
+  background: color-mix(in srgb, var(--lnf-accent) 14%, transparent);
+}
+
+.lnf-comment-mention-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lnf-comment-mention-chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--lnf-accent) 16%, transparent);
+  color: var(--lnf-title);
+  font-size: 0.78rem;
+}
+
+.lnf-comment-mention-chip-remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  padding: 0 2px;
+}
+
 .lnf-supplier-list {
   list-style: none;
   margin: 0;

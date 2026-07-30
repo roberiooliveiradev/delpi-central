@@ -5,7 +5,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from delpi_auth.authz_core import has_permission
 from delpi_auth.authorization import require_any_permission, require_permission
@@ -93,6 +93,20 @@ class PostManualBody(BaseModel):
 
 class CommentBody(BaseModel):
     body: str
+    mentioned_user_ids: list[str] = Field(default_factory=list, max_length=20)
+
+    @field_validator("mentioned_user_ids")
+    @classmethod
+    def _normalize_mentioned_user_ids(cls, value: list[str]) -> list[str]:
+        unique: list[str] = []
+        seen: set[str] = set()
+        for raw in value or []:
+            uid = str(raw or "").strip()
+            if not uid or uid in seen:
+                continue
+            seen.add(uid)
+            unique.append(uid)
+        return unique
 
 
 class LinkPurchaseOrderLineBody(BaseModel):
@@ -551,7 +565,10 @@ def add_comment(request_id: UUID, body: CommentBody):
         if branch_error is not None:
             return branch_error
         data = build_add_invoice_posting_comment_use_case().execute(
-            str(request_id), actor=_actor(), body=body.body
+            str(request_id),
+            actor=_actor(),
+            body=body.body,
+            mentioned_user_ids=body.mentioned_user_ids,
         )
         return api_delpi_success(
             data,

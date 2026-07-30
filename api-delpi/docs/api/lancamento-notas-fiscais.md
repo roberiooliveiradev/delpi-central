@@ -190,7 +190,8 @@ Se a pendência for `purchase_order` e a amarração de PC incluir ao menos um p
 
 ### POST `.../comments`
 
-Body: `{ "body": "..." }`
+Body: `{ "body": "...", "mentioned_user_ids": ["uuid-opcional", ...] }` (máx. 20 IDs únicos).  
+Os IDs **não** são persistidos no banco — só disparam notificação in-app (`lnf_comment_mention`) para cada usuário marcado (exceto o próprio autor). Deep link: `/apps/lancamento-notas-fiscais/filial-0x?requestId={id}`.
 
 ### POST `.../cancel`
 

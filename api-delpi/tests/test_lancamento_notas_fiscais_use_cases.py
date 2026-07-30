@@ -1478,6 +1478,29 @@ def test_comments_auth() -> None:
         )
 
 
+def test_comment_notifies_mentions() -> None:
+    repo = FakeRequests()
+    created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(
+        _payload(), _creator()
+    )
+    with patch(
+        "app.application.use_cases.lancamento_notas_fiscais.invoice_posting_use_cases.notify_comment_mentions",
+        return_value=1,
+    ) as notify:
+        AddInvoicePostingCommentUseCase(repo).execute(
+            created["id"],
+            actor=_creator(),
+            body="Oi @Maria",
+            mentioned_user_ids=["u-maria", "u-maria", _creator().user_id],
+        )
+    assert notify.called
+    kwargs = notify.call_args.kwargs
+    assert kwargs["mentioned_user_ids"] == ["u-maria", "u-maria", _creator().user_id]
+    assert kwargs["comment_text"] == "Oi @Maria"
+    assert kwargs["request"]["id"] == created["id"]
+    assert kwargs["comment_id"]
+
+
 def test_get_includes_history_comments_actions() -> None:
     repo = FakeRequests()
     created = CreateInvoicePostingRequestUseCase(repo, FakeSuppliers()).execute(

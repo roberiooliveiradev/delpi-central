@@ -12,6 +12,7 @@ from app.domain.services.lancamento_notas_fiscais.history_serialization import (
 from app.application.services.lnf_portal_notification_service import (
     notify_block_assignee,
     notify_block_resolved,
+    notify_comment_mentions,
     resolve_block_requester_user_id,
 )
 from app.shared.utils.person_name import format_person_name
@@ -1168,7 +1169,14 @@ class AddInvoicePostingCommentUseCase:
     def __init__(self, requests: Any) -> None:
         self._requests = requests
 
-    def execute(self, request_id: str, *, actor: Actor, body: str) -> dict[str, Any]:
+    def execute(
+        self,
+        request_id: str,
+        *,
+        actor: Actor,
+        body: str,
+        mentioned_user_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
         text = str(body or "").strip()
         if not text:
             raise InvoicePostingValidationError("Comentário não pode ser vazio.")
@@ -1186,12 +1194,21 @@ class AddInvoicePostingCommentUseCase:
         ):
             raise InvoicePostingForbiddenError("Sem permissão para comentar.")
 
-        return self._requests.add_comment(
+        comment = self._requests.add_comment(
             request_id=request_id,
             author_user_id=actor.user_id,
             author_name=actor.user_name,
             body=text,
         )
+        notify_comment_mentions(
+            request=current,
+            comment_id=str(comment.get("id") or ""),
+            mentioned_user_ids=mentioned_user_ids,
+            comment_text=text,
+            actor_user_id=actor.user_id,
+            actor_name=actor.user_name,
+        )
+        return comment
 
 
 def resolve_reconciliation_limit(limit: int | None) -> int:

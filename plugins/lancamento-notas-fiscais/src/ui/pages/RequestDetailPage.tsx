@@ -5,6 +5,11 @@ import type { InvoicePostingDetail } from "../../domain/types";
 import { blockReasonLabel, hasAction, statusLabel } from "../../domain/status";
 import { BlockModal } from "../components/BlockModal";
 import { CancelModal } from "../components/CancelModal";
+import {
+  CommentComposer,
+  type MentionSelection,
+} from "../components/CommentComposer";
+import { CommentMentionText } from "../components/CommentMentionText";
 import { LnfPageHeader } from "../components/LnfPageHeader";
 import { ManualPostModal } from "../components/ManualPostModal";
 import { LinkedPurchaseOrderReceipt } from "../components/LinkedPurchaseOrderReceipt";
@@ -39,6 +44,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
   const [manualPostOpen, setManualPostOpen] = useState(false);
   const [purchaseOrdersOpen, setPurchaseOrdersOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const [commentMentions, setCommentMentions] = useState<MentionSelection[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -464,7 +470,7 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                     <span className="lnf-muted">{formatDateTime(c.created_at)}</span>
                   </div>
                   <div className="lnf-muted">{c.author_name}</div>
-                  <p>{c.body}</p>
+                  <CommentMentionText text={c.body} />
                 </li>
               ))}
             </ol>
@@ -478,18 +484,24 @@ export function RequestDetailPage({ requestId, onBack, onEdit }: Props) {
                 const text = comment.trim();
                 if (!text || busy) return;
                 void runAction(async () => {
-                  await api.addComment(requestId, text);
+                  await api.addComment(
+                    requestId,
+                    text,
+                    commentMentions.map((m) => m.id),
+                  );
                   setComment("");
+                  setCommentMentions([]);
                 });
               }}
             >
               <label className="lnf-field">
                 Novo comentário
-                <textarea
-                  aria-label="Novo comentário"
-                  rows={2}
+                <CommentComposer
                   value={comment}
-                  onChange={(e) => setComment(e.target.value)}
+                  onChange={setComment}
+                  mentions={commentMentions}
+                  onMentionsChange={setCommentMentions}
+                  disabled={busy}
                   data-testid="comment-input"
                 />
               </label>

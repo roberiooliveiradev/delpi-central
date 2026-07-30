@@ -157,10 +157,14 @@ export async function postManualRequest(
 export async function addComment(
   requestId: string,
   body: string,
+  mentionedUserIds: string[] = [],
 ): Promise<InvoicePostingComment> {
   return httpPost<InvoicePostingComment>(
     `${API_BASE}/requests/${requestId}/comments`,
-    { body },
+    {
+      body,
+      mentioned_user_ids: mentionedUserIds,
+    },
   );
 }
 
