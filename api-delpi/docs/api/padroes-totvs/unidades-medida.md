@@ -2,7 +2,7 @@
 
 Parte da [biblioteca de padrões TOTVS](./README.md).
 
-**Detalhe canônico (playbook completo):** [playbook-conversao-unidades-protheus.md](../../roadmaps/playbook-conversao-unidades-protheus.md)  
+**Detalhe canônico (playbook completo):** [playbooks/playbook-conversao-unidades-protheus.md](./playbooks/playbook-conversao-unidades-protheus.md)  
 Resumo operacional abaixo — **não** duplicar o playbook nesta seção.
 
 ---
@@ -35,4 +35,4 @@ Resumo operacional abaixo — **não** duplicar o playbook nesta seção.
 ## Referências
 
 - [02-produtos.md](../02-produtos.md) (ponte ao playbook)
-- Playbook: [playbook-conversao-unidades-protheus.md](../../roadmaps/playbook-conversao-unidades-protheus.md)
+- Playbook: [playbooks/playbook-conversao-unidades-protheus.md](./playbooks/playbook-conversao-unidades-protheus.md)

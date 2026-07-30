@@ -4,9 +4,9 @@ Registro da unificação do filtro de **vigência da BOM** (`G1_INI` / `G1_FIM`)
 
 Playbooks relacionados:
 
-- [playbook-estrutura-produto-exclusividade-mp.md](../roadmaps/playbook-estrutura-produto-exclusividade-mp.md)
-- [playbook-situacao-de-producao-pa.md](../roadmaps/playbook-situacao-de-producao-pa.md)
-- [playbook-visaostatus-produto.md](../roadmaps/playbook-visaostatus-produto.md)
+- [playbook-estrutura-produto-exclusividade-mp.md](./padroes-totvs/playbooks/playbook-estrutura-produto-exclusividade-mp.md)
+- [playbook-situacao-de-producao-pa.md](./padroes-totvs/playbooks/playbook-situacao-de-producao-pa.md)
+- [playbook-visaostatus-produto.md](./padroes-totvs/playbooks/playbook-visaostatus-produto.md)
 
 ---
 

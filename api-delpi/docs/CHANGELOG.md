@@ -96,7 +96,7 @@ Detalhes: [bom-validity-filter-changelog-jun2026.md](./api/bom-validity-filter-c
 
 Playbook transversal para interpretação de `B1_UM`, BOM (`SG1010`), fiscal (`SB5010`) e convenção **1 MI = 1000 peças** nas rotas de produto.
 
-Documentação: [playbook-conversao-unidades-protheus.md](./roadmaps/playbook-conversao-unidades-protheus.md).
+Documentação: [playbook-conversao-unidades-protheus.md](./api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md).
 
 **Módulo canônico:** `ProductPaBomReferenceService` + `app/content/product_pa_bom_reference.json`.
 

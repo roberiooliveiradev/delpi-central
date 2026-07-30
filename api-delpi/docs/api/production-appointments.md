@@ -107,7 +107,7 @@ Na **lista** (`GET /production/appointments`), cada item traz também:
 | Lista / by-op | `ProductionOperationalQuantityService.normalize_items` (`qty_produced`, `qty_lost`; `unit` → `UN`) |
 | Summary / series | Fator no SQL (`CASE` × `displayUnitFactor` de `production_operational_units.json`) |
 
-Playbook: [`docs/roadmaps/playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md). O MFE **não** multiplica nem rotula “milheiro”.
+Playbook: [`docs/api/padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md`](./padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md). O MFE **não** multiplica nem rotula “milheiro”.
 
 ## SQL
 

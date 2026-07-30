@@ -8,7 +8,7 @@ Formato de resposta: envelope `{ success, message, data }`.
 
 > **Agentes (chat):** mapa de qual rota usar por intenção — [11-guia-agente-chat.md](./11-guia-agente-chat.md). Metadados OpenAPI (`summary`, `description`, `operationId`) em `app/interface/http/openapi_agent_metadata.py`.
 
-> **Unidades de medida (MI, BOM, fiscal):** convenção produtiva e impacto nas rotas de estrutura, estoque e simulador — [playbook-conversao-unidades-protheus.md](../roadmaps/playbook-conversao-unidades-protheus.md).
+> **Unidades de medida (MI, BOM, fiscal):** convenção produtiva e impacto nas rotas de estrutura, estoque e simulador — [playbook-conversao-unidades-protheus.md](./padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md) ([biblioteca](./padroes-totvs/README.md)).
 
 > **Vigência da BOM (`SG1010`):** rotas que explodem estrutura consideram apenas linhas vigentes em `G1_INI` / `G1_FIM`. Default: **hoje**; rotas fabris com `reference_date` usam essa data. Módulo: `ProductBomValidityFilterService` — [bom-validity-filter-changelog-jun2026.md](./bom-validity-filter-changelog-jun2026.md).
 
@@ -151,7 +151,7 @@ Estrutura (BOM) do produto — somente componentes **vigentes na data de hoje** 
 | `max_depth` | Profundidade máxima da árvore. |
 | `page`, `page_size` | Paginação de itens da estrutura. |
 
-Quantidades retornadas (`accumulated_quantity`, `G1_QUANT`) estão na base **por 1 PA**. Para PA com `B1_UM = MI` (milheiro), isso equivale a **1 MI = 1000 peças** — a API não divide por 1000; ver [`playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md).
+Quantidades retornadas (`accumulated_quantity`, `G1_QUANT`) estão na base **por 1 PA**. Para PA com `B1_UM = MI` (milheiro), isso equivale a **1 MI = 1000 peças** — a API não divide por 1000; ver [`playbook-conversao-unidades-protheus.md`](./padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md).
 
 ---
 
@@ -413,7 +413,7 @@ Download inline do PDF (`application/pdf`). Resposta **binária** — fora do en
 
 ## GET /products/{code}/cost-impact-simulation
 
-Simulador de impacto de custos do **PA** — ranking Pareto das MPs na BOM vigente e simulação percentual de reajuste (playbook [`playbook-simulador-impacto-custos-pa.md`](../roadmaps/playbook-simulador-impacto-custos-pa.md)).
+Simulador de impacto de custos do **PA** — ranking Pareto das MPs na BOM vigente e simulação percentual de reajuste (playbook [`playbook-simulador-impacto-custos-pa.md`](./padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md)).
 
 | Query | Default | Descrição |
 |---|---|---|
@@ -424,7 +424,7 @@ Simulador de impacto de custos do **PA** — ranking Pareto das MPs na BOM vigen
 
 **Restrição:** disponível apenas para produto tipo **PA** (MP retorna erro).
 
-**Unidade:** `quantity_per_pa` e custos de materiais referem-se a **1 PA**; para PA em **MI**, 1 PA = 1 milheiro. Campo `pa_reference` documenta a base. Ver [`playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md).
+**Unidade:** `quantity_per_pa` e custos de materiais referem-se a **1 PA**; para PA em **MI**, 1 PA = 1 milheiro. Campo `pa_reference` documenta a base. Ver [`playbook-conversao-unidades-protheus.md`](./padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md).
 
 **operationId:** `get_product_cost_impact_simulation` · **shape:** `composite_analysis`
 

@@ -68,3 +68,7 @@ Ver **`totvs-warehouse-cost-standards.mdc`**, hub **`totvs-product-patterns.mdc`
 - Custo unitário canônico = `B2_LOCAL = 01` (almoxarifado), nunca média de todos os locais.
 - `99` = fábrica — não misturar no `ValorPerda`.
 - Constantes: `app/domain/totvs/protheus_warehouses.py`.
+
+## Convenção TOTVS nova descoberta no PR
+
+Se o fix/revela regra de negócio reutilizável (filial, armazém, UM, exclusão de produto, anti-padrão SQL): seguir **`totvs-product-patterns.mdc`** § **Quando ENRIQUECER** — atualizar `padroes-totvs/` (+ constante se couber), não deixar só no changelog da rota.

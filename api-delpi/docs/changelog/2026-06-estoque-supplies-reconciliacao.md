@@ -3,7 +3,7 @@
 Gap entre dashboard `GET /supplies/stock-value` e Registro de Inventário TOTVS (filiais 01/02, maio/2026).
 
 **Resumo executivo:** [estoque-supplies-matr460-resumo-jun2026.md](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md)  
-**Playbook:** [playbook-correcao-estoque-supplies-inventario.md](../roadmaps/playbook-correcao-estoque-supplies-inventario.md)
+**Playbook:** [playbook-correcao-estoque-supplies-inventario.md](../api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md)
 
 ## W0 — Reconciliação
 

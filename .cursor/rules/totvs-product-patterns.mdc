@@ -1,27 +1,113 @@
 ---
-description: Biblioteca de padrões TOTVS Delpi — hub para rotas e SQL novos
+description: Quando usar e como enriquecer a biblioteca padroes-totvs (TOTVS/Protheus Delpi)
 globs:
-  - api-delpi/**/*.py
-  - api-delpi/docs/**/*.md
+  - api-delpi/**/*
+  - plugins/scrap-monitoring/**/*
+  - plugins/estoque-seguranca/**/*
+  - plugins/dashboard-supplies/**/*
+  - plugins/dashboard-quality/**/*
+  - .cursor/rules/sql-query-development.mdc
+  - .cursor/rules/new-api-route-checklist.mdc
 alwaysApply: false
 ---
 
-# Padrões TOTVS — produto Delpi (hub)
+# Biblioteca `padroes-totvs` — quando usar e como enriquecer
 
-**Biblioteca canônica:** `api-delpi/docs/api/padroes-totvs/README.md`
+**Hub:** `api-delpi/docs/api/padroes-totvs/README.md`  
+**Playbooks:** `api-delpi/docs/api/padroes-totvs/playbooks/`  
+**Código:** `api-delpi/app/domain/totvs/`  
+**Custo/armazém (detalhe):** `totvs-warehouse-cost-standards.mdc`
 
-Antes de criar ou alterar rota/SQL Protheus, consultar o índice. Seções:
+Esta biblioteca é a **fonte de verdade de negócio** Protheus na Delpi. Infra/Docker fica em `docs/07-api-delpi/integracao-totvs.md`. Ops/CI (coverage, console, PAC) permanece em `api-delpi/docs/roadmaps/`.
+
+---
+
+## Quando USAR (consultar antes de codar)
+
+**Obrigatório** abrir o hub (e a seção/playbook relevante) quando a tarefa:
+
+1. Cria ou altera **rota/SQL** que lê tabelas Protheus (`SB*`, `SC*`, `SD*`, `SBC*`, etc.).
+2. Calcula **valor em R$** (qtd × custo), ranking financeiro, refugo, perda valorizada.
+3. Filtra por **filial** (`01`/`02`) ou **armazém** (`B2_LOCAL`).
+4. Trata **unidade de medida** (`B1_UM`, MI/milheiro, BOM por PA).
+5. Exclui ou classifica produto (`B1_TPMAT`, tipo MP/PA, diretivas).
+6. Diagnostica **divergência vs Power BI / TOTVS / inventário**.
+7. Escreve doc de rota nova que menciona convenção de negócio.
+
+**Fluxo mínimo:**
+
+```text
+README hub → seção curta (armazem-custo, filiais, …)
+         → playbook longo se a seção apontar
+         → constante em app/domain/totvs/ se existir
+         → implementar SQL/rota alinhado
+```
+
+**Não usar esta lib para:** RBAC genérico, envelope OpenAPI, apresentação chat, Compose/volumes — outras regras do índice.
+
+---
+
+## Quando ENRIQUECER (atualizar a biblioteca)
+
+**Obrigatório** enriquecer (não só a doc da rota) quando descobrir ou fixar uma convenção que:
+
+| Sinal | Ação |
+|-------|------|
+| Regra vale para **mais de uma rota** ou família | Seção curta ou playbook — não só README do plugin |
+| Bug veio de **interpretação errada** do TOTVS (ex.: média de armazéns) | Documentar o anti-padrão + a regra correta na seção |
+| Constante mágica (`'01'`, `'99'`, `'2'`) aparece em SQL novo | Preferir/estender `app/domain/totvs/` + citar na seção |
+| Playbook/changelog longo descreve regra estável | Extrair **resumo** na seção curta; detalhe fica no playbook |
+| Tema está no **backlog** do README e ficou estável | Promover a seção curta e tirar do backlog |
+
+**Não enriquecer com:** one-off de uma única rota sem reuso; texto de UI/MFE; playbooks de CI/ops.
+
+---
+
+## Como enriquecer (checklist)
+
+### A) Seção curta (`padroes-totvs/<tema>.md`)
+
+1. Tabela do vocabulário Delpi (códigos, campos, significado).
+2. Blocos **O que fazer** / **O que NÃO fazer**.
+3. Link para playbook (se houver) e para constante Python.
+4. Entrada no índice do `padroes-totvs/README.md`.
+
+### B) Playbook (`padroes-totvs/playbooks/playbook-<tema>.md`)
+
+1. Detalhe de implementação, SQL de referência, homologação.
+2. Stub em `docs/roadmaps/playbook-<tema>.md` se o path legado existir ou for citado fora.
+3. Links relativos corretos a partir de `playbooks/` (`../../` para docs api, `../../../../app/`, etc.).
+4. Linha no índice de playbooks do README hub + `playbooks/README.md`.
+
+### C) Código
+
+1. Constante transversal → `app/domain/totvs/` (+ teste mínimo).
+2. Módulo específico pode **reexportar** (ex.: `REFUGOS_COST_WAREHOUSE`), não duplicar literal sem ponte.
+3. Doc da **rota** só referencia a seção/playbook — **não** copia tabelas inteiras.
+
+### D) Regras Cursor
+
+1. Regra frequente de PR → linha em `development-standards-index.mdc` (fluxo).
+2. Tema de custo/armazém → manter `totvs-warehouse-cost-standards.mdc` alinhado à seção.
+
+---
+
+## O que NÃO fazer
+
+- Inventar convenção TOTVS só no `system_prompt` do agente ou só no MFE.
+- Duplicar a mesma tabela de armazém/filial em três docs de rota.
+- Colocar playbook de domínio produto de volta só em `docs/roadmaps/` (ops/CI ficam lá).
+- Enriquecer a lib e **não** ligar a SQL/constante/teste quando a regra for executável.
+- Usar `AVG(B2_CM1)` entre locais para ValorPerda — ver `totvs-warehouse-cost-standards.mdc`.
+
+---
+
+## Seções rápidas (atalho)
 
 | Tema | Arquivo |
 |------|---------|
 | Armazém + `B2_CM1` | `padroes-totvs/armazem-custo.md` |
 | Filiais SC/ES | `padroes-totvs/filiais.md` |
 | SQL base | `padroes-totvs/principios-sql.md` |
-| Unidades (MI) | `padroes-totvs/unidades-medida.md` |
+| Unidades (MI) | `padroes-totvs/unidades-medida.md` + playbook conversão |
 | Cadastro SB1 / terceiro | `padroes-totvs/cadastro-produto.md` |
-
-Código transversal: `api-delpi/app/domain/totvs/`.
-
-**Padrão novo:** seção na pasta + constante em `domain/totvs/` se couber + link na doc da rota (não copiar tabelas).
-
-Valoração R$ → também `totvs-warehouse-cost-standards.mdc`.

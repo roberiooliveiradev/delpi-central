@@ -63,12 +63,12 @@ Doc: `infra/README-ambiente.md`.
 | `api-delpi-response-contract.mdc` | Envelope, `meta`, `route_contract_registry`, RBAC |
 | `new-api-route-checklist.mdc` | HTTP + chat + apresentação + CI (três pacotes) |
 | `sql-query-development.mdc` | SQL TOTVS — práticas, medição de latência/peso, NOLOCK, cache |
-| `totvs-product-patterns.mdc` | **Biblioteca** de padrões TOTVS do produto (`padroes-totvs/`) |
+| `totvs-product-patterns.mdc` | **Biblioteca** `padroes-totvs/` — **quando usar** e **como enriquecer** (seções + playbooks) |
 | `totvs-warehouse-cost-standards.mdc` | Armazéns Delpi (`01` almox / `99` fábrica) + `B2_CM1` em rotas novas |
 | `persistent-upload-storage.mdc` | Evidências PAC, anexos NC, qualquer `*_UPLOAD_DIR` |
 
 Doc: [openapi-bilingue-catalogo-canonico.md](../api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md).  
-Padrões TOTVS: [padroes-totvs/README.md](../api-delpi/docs/api/padroes-totvs/README.md).  
+Padrões TOTVS: [padroes-totvs/README.md](../api-delpi/docs/api/padroes-totvs/README.md) · playbooks: [padroes-totvs/playbooks/](../api-delpi/docs/api/padroes-totvs/playbooks/).  
 Armazém/custo: [padroes-totvs/armazem-custo.md](../api-delpi/docs/api/padroes-totvs/armazem-custo.md).  
 Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roadmaps/playbook-route-test-coverage-100.md) (`audit_route_test_coverage.py --check-complete`).
 
@@ -93,7 +93,8 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 ```
 Nova rota REST          → api-delpi-openapi-route-standards → api-delpi-response-contract → new-api-route-checklist → smoke Nível A + audit_route_test_coverage → playbook-22
 Query SQL nova/alterada → sql-query-development → teste *_sql.py + Saúde SQL / Cache
-Convenção TOTVS / produto → totvs-product-patterns → padroes-totvs/README.md
+Convenção TOTVS / produto → totvs-product-patterns (usar hub) → padroes-totvs/README.md
+Regra TOTVS nova/estável descoberta no fix → totvs-product-patterns (enriquecer seção/playbook + domain/totvs) — não só doc da rota
 Valoração R$ / B2_CM1 / armazém → totvs-warehouse-cost-standards → padroes-totvs/armazem-custo.md (local 01 almox)
 Bug apresentação chat   → root-cause-generalized-fix → schema-first-presentation-delivered → presentation-delivered-pure doc → ChatPresentationApiDeliveredMetadataService
 Prosa template vs LLM   → playbook-18 → ChatPresentationProseDeliveryService → audit_presentation_prose_delivery

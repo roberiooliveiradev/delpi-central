@@ -88,11 +88,11 @@ Respostas `composite_analysis` incluem `meta.sections[]` com `{ key, label, item
 
 Preferir `/factory-status` quando o usuário pedir status completo do produto na fábrica.
 
-**Playbook diretivas** (jun/2026): [`playbook-diretivas-produto.md`](../roadmaps/playbook-diretivas-produto.md) — SQL e resolução `B1_REFEREN` × `9026xxxx`.
+**Playbook diretivas** (jun/2026): [`playbook-diretivas-produto.md`](./padroes-totvs/playbooks/playbook-diretivas-produto.md) — SQL e resolução `B1_REFEREN` × `9026xxxx`.
 
-**Playbook conversão de unidades** (jun/2026): [`playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md) — MI/milheiro, BOM por 1 PA vs por 1 peça, fiscal (`SB5010`), impacto em `/structure`, `/stock` e `/cost-impact-simulation`.
+**Playbook conversão de unidades** (jun/2026): [`playbook-conversao-unidades-protheus.md`](./padroes-totvs/playbooks/playbook-conversao-unidades-protheus.md) — MI/milheiro, BOM por 1 PA vs por 1 peça, fiscal (`SB5010`), impacto em `/structure`, `/stock` e `/cost-impact-simulation`.
 
-**Playbook simulador de custo PA:** [`playbook-simulador-impacto-custos-pa.md`](../roadmaps/playbook-simulador-impacto-custos-pa.md) — homologado com `90261255`.
+**Playbook simulador de custo PA:** [`playbook-simulador-impacto-custos-pa.md`](./padroes-totvs/playbooks/playbook-simulador-impacto-custos-pa.md) — homologado com `90261255`.
 
 Código com máscara (`10.080.055`) é válido. Follow-up (“estoque **desse** produto”) usa contexto da conversa.
 

@@ -4,8 +4,8 @@ Registro da correção em **última compra**, **diretivas** e **ranking de compr
 
 Playbooks relacionados:
 
-- [playbook-diretivas-produto.md](../roadmaps/playbook-diretivas-produto.md)
-- [playbook-analise-preco-materia-prima.md](../roadmaps/playbook-analise-preco-materia-prima.md)
+- [playbook-diretivas-produto.md](./padroes-totvs/playbooks/playbook-diretivas-produto.md)
+- [playbook-analise-preco-materia-prima.md](./padroes-totvs/playbooks/playbook-analise-preco-materia-prima.md)
 
 ---
 

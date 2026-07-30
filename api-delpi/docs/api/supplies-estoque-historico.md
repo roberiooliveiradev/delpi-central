@@ -218,7 +218,7 @@ Campos de auditoria (W1, jun/2026): `closing_base_*`, `bridge_value`, `period_ne
 ## Limitações
 
 - Resultado de **análise gerencial**, não substitui fechamento contábil oficial na SB9.
-- Comparação com **Registro de Inventário** (MATR460): [resumo](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md) · [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md) · [playbook W0–W5](../roadmaps/playbook-correcao-estoque-supplies-inventario.md)
+- Comparação com **Registro de Inventário** (MATR460): [resumo](../roadmaps/estoque-supplies-matr460-resumo-jun2026.md) · [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md) · [playbook W0–W5](./padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md)
 - Detalhamento por produto/local é estimado (não replica saldo SB2 linha a linha).
 - Depende da consistência das movimentações SD3 e do último fechamento SB9 disponível.
 

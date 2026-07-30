@@ -36,7 +36,7 @@ Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **C
 | 11 | Baseline + catálogo TV | `sync_openapi_baseline.py` + `generate_tv_data_routes_from_openapi.py --check` |
 | 12 | Smoke Nível A + inventário | `operationId` em `tests/**/*.py`; `audit_route_test_coverage.py --write && --check` (CI: `--check-complete`) — `playbook-route-test-coverage-100.md` |
 | 13 | **Valoração R$ / `B2_CM1`:** custo do almoxarifado `01` (nunca média de locais) | `totvs-warehouse-cost-standards.mdc` + [padroes-totvs/armazem-custo.md](../api-delpi/docs/api/padroes-totvs/armazem-custo.md) |
-| 14 | **Padrões TOTVS do produto:** consultar biblioteca antes de inventar convenção | `totvs-product-patterns.mdc` + [padroes-totvs/README.md](../api-delpi/docs/api/padroes-totvs/README.md) |
+| 14 | **Padrões TOTVS do produto:** consultar biblioteca antes de inventar convenção; se regra nova for transversal, **enriquecer** a lib | `totvs-product-patterns.mdc` (§ usar / enriquecer) + [padroes-totvs/README.md](../api-delpi/docs/api/padroes-totvs/README.md) |
 
 Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
 
