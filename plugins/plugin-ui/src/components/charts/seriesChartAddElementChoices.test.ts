@@ -20,6 +20,41 @@ describe("applyChartAddElementChoice", () => {
     expect(next.showAxes).toBe(true);
   });
 
+  it("axes:x desliga só o horizontal e preserva o vertical", () => {
+    const base = mergeSeriesChartOptions({
+      showAxes: true,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+    });
+    const next = applyChartAddElementChoice("axes:x", base);
+    expect(next.showXAxisLabels).toBe(false);
+    expect(next.showYAxisLabels).toBe(true);
+    expect(next.showAxes).toBe(true);
+  });
+
+  it("axes:y desliga só o vertical e preserva o horizontal", () => {
+    const base = mergeSeriesChartOptions({
+      showAxes: true,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+    });
+    const next = applyChartAddElementChoice("axes:y", base);
+    expect(next.showYAxisLabels).toBe(false);
+    expect(next.showXAxisLabels).toBe(true);
+    expect(next.showAxes).toBe(true);
+  });
+
+  it("axes:x WithParts não apaga axis:y no round-trip", () => {
+    const base = mergeSeriesChartOptions({});
+    const offX = applyChartAddElementChoiceWithParts("axes:x", base, null);
+    expect(offX.options.showXAxisLabels).toBe(false);
+    expect(offX.options.showYAxisLabels).toBe(true);
+    expect(offX.options.showAxes).toBe(true);
+    expect(offX.parts["axis:x"]?.visible).toBe(false);
+    expect(offX.parts["axis:y"]?.visible).toBe(true);
+    expect(offX.parts.axes?.visible).toBe(true);
+  });
+
   it("axes:none desliga ambos os eixos", () => {
     const next = applyChartAddElementChoice("axes:none", {});
     expect(next.showAxes).toBe(false);

@@ -99,6 +99,11 @@ export type BuildSeriesChartLayoutInput = {
   /** Valores para eixo Y secundário (direita). */
   secondaryAxisValues?: number[];
   showXAxisLabels: boolean;
+  /**
+   * Rótulos do eixo Y (valores no vertical; categorias no `horizontal_bar`).
+   * Default `true` quando omitido — mantém compat com callers legados.
+   */
+  showYAxisLabels?: boolean;
   showXAxisTitle: boolean;
   /** Reserva faixa esquerda para título Y rotacionado (evita clip no overflow do SVG). */
   showYAxisTitle?: boolean;
@@ -602,27 +607,36 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       ? viewH - framedEarly.top - framedEarly.bottom
       : viewH - baseMargin.top - baseMargin.bottom,
   );
+  /*
+   * Categoria física: eixo X no vertical, eixo Y no horizontal_bar.
+   * `visibleXLabelIndices` (nome legado) indexa categorias — não o eixo de valor.
+   * Desligar só «Horizontal principal» (showX) não pode zerar categorias no Y.
+   */
+  const showXAxisLabels = Boolean(input.showXAxisLabels);
+  const showYAxisLabels = input.showYAxisLabels !== false;
+  const showCategoryLabels =
+    orientation === "horizontal" ? showYAxisLabels : showXAxisLabels;
   const categoryAxisSpan = orientation === "horizontal" ? plotHProbe : plotWProbe;
   const skipDense = categoryLabelOverflow === "skip";
   const xLabelStep =
-    input.showXAxisLabels && skipDense
+    showCategoryLabels && skipDense
       ? resolveXLabelStep(input.points.length, categoryAxisSpan, labels, axisFontSize)
       : 1;
   const autoRotate =
     orientation === "vertical" &&
-    input.showXAxisLabels &&
+    showCategoryLabels &&
     shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels, axisFontSize);
   const categoryLabelRotationDeg = resolveCategoryLabelRotationDeg(
     input.categoryLabelRotation,
     autoRotate,
   );
   const xLabelsRotated = categoryLabelRotationDeg !== 0;
-  const visibleXLabelIndices = input.showXAxisLabels
+  const visibleXLabelIndices = showCategoryLabels
     ? resolveVisibleXLabelIndices(input.points.length, xLabelStep)
     : [];
 
   const sides = resolveSideMargins(
-    orientation === "vertical" && input.showXAxisLabels,
+    orientation === "vertical" && showCategoryLabels,
     labels,
     visibleXLabelIndices,
     baseMargin,
@@ -630,7 +644,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   );
   const showYAxisTitle = Boolean(input.showYAxisTitle);
   const categoryLabelLeftPad =
-    orientation === "horizontal" && input.showXAxisLabels
+    orientation === "horizontal" && showCategoryLabels
       ? Math.max(
           Math.round(axisFontSize * 3.5),
           Math.ceil(
@@ -651,7 +665,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       orientation === "horizontal" ? Math.round(axisFontSize * 2.2) : sides.right,
     ),
     bottom: resolveBottomMargin(
-      orientation === "vertical" && input.showXAxisLabels,
+      orientation === "vertical" && showCategoryLabels,
       input.showXAxisTitle,
       xLabelsRotated,
       baseMargin,

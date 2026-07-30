@@ -478,4 +478,54 @@ describe("category label rotation + horizontal_bar", () => {
     expect(typeof layout.categoryBandStartY).toBe("function");
     expect(layout.toValueX!(20)).toBeGreaterThan(layout.toValueX!(10));
   });
+
+  it("orientation horizontal: desligar showX mantém índices de categoria (eixo Y)", () => {
+    const points = [
+      { label: "A", value: 10 },
+      { label: "B", value: 20 },
+      { label: "C", value: 30 },
+    ];
+    const both = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+    });
+    const onlyY = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: false,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+    });
+    const onlyX = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showYAxisLabels: false,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+    });
+    expect(both.visibleXLabelIndices.length).toBe(3);
+    expect(onlyY.visibleXLabelIndices.length).toBe(3);
+    expect(onlyX.visibleXLabelIndices).toEqual([]);
+  });
+
+  it("orientation vertical: desligar showX zera categorias; showY sozinho não as restaura", () => {
+    const points = [
+      { label: "A", value: 10 },
+      { label: "B", value: 20 },
+    ];
+    const offX = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: false,
+      showYAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "vertical",
+    });
+    expect(offX.visibleXLabelIndices).toEqual([]);
+  });
 });

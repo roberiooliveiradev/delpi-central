@@ -7,7 +7,12 @@ import {
   matchDataLabelsPreset,
   type SeriesChartDataLabelsPresetId,
 } from "./seriesChartDataLabels";
-import { mergeChartPartsWithOptions, type ChartPartRef, type ChartPartsMap } from "./seriesChartParts";
+import {
+  mergeChartPartsWithOptions,
+  upsertChartPartState,
+  type ChartPartRef,
+  type ChartPartsMap,
+} from "./seriesChartParts";
 
 /** Preset do flyout «Adicionar elemento» (PPT-like, só efeitos reais). */
 export type ChartAddElementChoiceId =
@@ -236,9 +241,21 @@ export function applyChartAddElementChoiceWithParts(
   parts?: ChartPartsMap | null,
 ): { options: SeriesChartOptions; parts: ChartPartsMap } {
   const nextOptions = applyChartAddElementChoice(choiceId, options);
+  let nextParts = mergeChartPartsWithOptions(parts, nextOptions);
+  /* Eixos: gravar visible por parte após o merge (estilo custom não pode “grudar” o outro eixo). */
+  if (choiceId === "axes:none" || choiceId === "axes:x" || choiceId === "axes:y") {
+    const axesOn = nextOptions.showAxes !== false;
+    nextParts = upsertChartPartState(nextParts, { kind: "axes" }, { visible: axesOn });
+    nextParts = upsertChartPartState(nextParts, { kind: "axis", axis: "x" }, {
+      visible: axesOn && nextOptions.showXAxisLabels !== false,
+    });
+    nextParts = upsertChartPartState(nextParts, { kind: "axis", axis: "y" }, {
+      visible: axesOn && nextOptions.showYAxisLabels !== false,
+    });
+  }
   return {
     options: nextOptions,
-    parts: mergeChartPartsWithOptions(parts, nextOptions),
+    parts: nextParts,
   };
 }
 

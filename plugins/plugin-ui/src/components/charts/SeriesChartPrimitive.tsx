@@ -250,6 +250,8 @@ export function SeriesChartPrimitive({
     secondaryAxisValues,
     showXAxisLabels:
       !centeredPlot && config.showAxes !== false && config.showXAxisLabels !== false,
+    showYAxisLabels:
+      !centeredPlot && config.showAxes !== false && config.showYAxisLabels !== false,
     showXAxisTitle: !centeredPlot && config.showXAxisTitle !== false,
     showYAxisTitle: !centeredPlot && config.showYAxisTitle !== false,
     viewW: viewSize.w,
