@@ -33,11 +33,11 @@ describe("useComunicadoEditorHistory", () => {
     act(() => {
       result.current.commitWithHistory(v2);
     });
-    expect(applyConfig).toHaveBeenLastCalledWith(v2);
+    expect(applyConfig).toHaveBeenLastCalledWith(snapshotConfig(v2));
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
 
-    configRef.current = v2;
+    configRef.current = snapshotConfig(v2);
     act(() => {
       result.current.undo();
     });
@@ -88,12 +88,56 @@ describe("useComunicadoEditorHistory", () => {
     expect(deckHistory.recordBeforeChange).toHaveBeenCalledOnce();
     expect(result.current.canUndo).toBe(true);
 
-    configRef.current = v2;
+    configRef.current = snapshotConfig(v2);
     act(() => {
       result.current.undo();
     });
     expect(deckHistory.undo).not.toHaveBeenCalled();
     expect(applyConfig).toHaveBeenLastCalledWith(v1Snap);
     expect(result.current.canRedo).toBe(true);
+  });
+
+  it("commit idêntico não empilha undo (saída de texto blur+cleanup)", () => {
+    const applyConfig = vi.fn();
+    const configRef = {
+      current: emptyConfig([
+        { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v1" } as never,
+      ]),
+    };
+
+    const { result } = renderHook(() =>
+      useComunicadoEditorHistory({
+        configRef,
+        applyConfig,
+        deckHistory: null,
+      }),
+    );
+
+    const v2 = emptyConfig([
+      { id: "a", type: "text", frame: { x: 0, y: 0, w: 10, h: 10 }, content: "v2" } as never,
+    ]);
+
+    act(() => {
+      result.current.commitWithHistory(v2);
+    });
+    configRef.current = snapshotConfig(v2);
+    applyConfig.mockClear();
+
+    act(() => {
+      result.current.commitWithHistory(v2);
+    });
+    expect(applyConfig).not.toHaveBeenCalled();
+    expect(result.current.canUndo).toBe(true);
+
+    act(() => {
+      result.current.undo();
+    });
+    expect(applyConfig).toHaveBeenCalledOnce();
+    expect(applyConfig.mock.calls[0]![0]).toEqual(
+      expect.objectContaining({
+        blocks: [expect.objectContaining({ content: "v1" })],
+      }),
+    );
+    expect(result.current.canUndo).toBe(false);
   });
 });

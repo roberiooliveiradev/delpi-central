@@ -225,7 +225,7 @@ export function ComunicadoEditorTextBlock({
   });
 
   function exitEditing() {
-    commitPending();
+    /* Commit fica no cleanup do effect [isEditing] — evita undo fantasma (blur+cleanup). */
     clearPartialRangeFallback();
     reportTextEditSelection(null);
     setEditingTextId(null);

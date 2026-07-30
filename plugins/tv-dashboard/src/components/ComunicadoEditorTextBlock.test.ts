@@ -54,6 +54,13 @@ describe("text edit commit cleanup contract", () => {
     expect(shapeSrc).not.toMatch(/\}, \[isEditing, commitDraft\]\)/);
   });
 
+  it("exitEditing não chama commitPending (só o cleanup — evita undo fantasma)", () => {
+    const textSrc = readFileSync(join(base, "ComunicadoEditorTextBlock.tsx"), "utf8");
+    const shapeSrc = readFileSync(join(base, "ComunicadoEditorShapeBlock.tsx"), "utf8");
+    expect(textSrc).not.toMatch(/function exitEditing\(\) \{\s*commitPending\(\)/);
+    expect(shapeSrc).not.toMatch(/function exitEditing\(\) \{\s*commitPending\(\)/);
+  });
+
   it("duplo clique usa enterTextEdit (não selectBlock cru)", () => {
     const textSrc = readFileSync(join(base, "ComunicadoEditorTextBlock.tsx"), "utf8");
     const shapeSrc = readFileSync(join(base, "ComunicadoEditorShapeBlock.tsx"), "utf8");

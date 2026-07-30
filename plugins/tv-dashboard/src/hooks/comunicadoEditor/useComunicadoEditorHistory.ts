@@ -7,6 +7,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
+import { fingerprintComunicadoValue } from "./comunicadoEditorValueSync";
 
 export const COMUNICADO_EDITOR_HISTORY_LIMIT = 50;
 
@@ -42,12 +43,24 @@ export function useComunicadoEditorHistory({
    * Undo/redo do slide é sempre local e imediato.
    * `deckHistory` só registra ponteiro de revisão no servidor (painel / eco);
    * não pode bloquear Ctrl+Z até o save nem apagar a pilha no WS.
+   *
+   * No-op se `next` é equivalente ao atual — evita empilhar undo fantasma
+   * quando a saída da edição de texto chama commit duas vezes (blur + cleanup).
    */
   const commitWithHistory = useCallback(
     (next: ComunicadoConfig) => {
-      pushPast(snapshotConfig(configRef.current));
+      const before = snapshotConfig(configRef.current);
+      const after = snapshotConfig(next);
+      // serializeComunicadoConfig devolve objeto — comparar por fingerprint (string).
+      if (
+        fingerprintComunicadoValue(serializeComunicadoConfig(before)) ===
+        fingerprintComunicadoValue(serializeComunicadoConfig(after))
+      ) {
+        return;
+      }
+      pushPast(before);
       deckHistory?.recordBeforeChange();
-      applyConfig(next);
+      applyConfig(after);
     },
     [applyConfig, configRef, deckHistory, pushPast],
   );
