@@ -11,6 +11,11 @@ export {
 } from "./usePresentationChromeVisibility";
 export { PresentationStageControls } from "./PresentationStageControls";
 export {
+  PresentationPlaybackProvider,
+  usePresentationPlayback,
+} from "./presentationPlaybackContext";
+export { ComunicadoPresentationVideo } from "./ComunicadoPresentationVideo";
+export {
   buildAdminPresentationWsUrl,
   isTvDashboardPortalPath,
   buildPresentationWsUrl,

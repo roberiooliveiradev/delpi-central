@@ -10,6 +10,7 @@ import {
 } from "./comunicadoBlockAnimations";
 import { comunicadoImageCropCssProperties } from "./comunicadoImageCrop";
 import { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
+import { ComunicadoPresentationVideo } from "./ComunicadoPresentationVideo";
 import { blockCssStyle, isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
 import {
   isComunicadoVisualBoxBlock,
@@ -198,14 +199,20 @@ export function ComunicadoBlockView({
 
   if (block.type === "video" && (block.url || interactive)) {
     const media = block.url ? (
-      <video
-        src={block.url}
-        autoPlay={!interactive}
-        muted
-        loop
-        playsInline
-        style={{ objectFit: block.style?.objectFit ?? "contain" }}
-      />
+      interactive ? (
+        <video
+          src={block.url}
+          muted
+          playsInline
+          preload="metadata"
+          style={{ objectFit: block.style?.objectFit ?? "contain" }}
+        />
+      ) : (
+        <ComunicadoPresentationVideo
+          src={block.url}
+          objectFit={block.style?.objectFit ?? "contain"}
+        />
+      )
     ) : (
       <ComunicadoMediaPlaceholder kind="video" />
     );

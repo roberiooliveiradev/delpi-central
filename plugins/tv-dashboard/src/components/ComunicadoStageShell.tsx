@@ -1,4 +1,4 @@
-import { Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize2, Upload, ZoomIn, ZoomOut } from "lucide-react";
 import { NativeRangeControl, InlineLoadingProgress, inlineLoadingProgressBemClasses } from "@delpi/plugin-ui/index";
 import {
   useCallback,
@@ -175,13 +175,24 @@ function ComunicadoStageStatusBar() {
     dataPreviewLoadingProgress,
     dataPreviewLoadingLabel,
     refreshDataPreview,
+    uploading,
+    uploadProgress,
+    uploadStatusMessage,
+    clearUploadStatusMessage,
   } = useComunicadoEditor();
 
   const zoomPercent = Math.round(stageZoom * 100);
-  const hasMessages = Boolean(isDataPreviewStale || dataPreviewError);
-  const showLoadingProgress =
+  const mediaUploadPercent =
+    uploading && typeof uploadProgress === "number" && Number.isFinite(uploadProgress)
+      ? Math.round(Math.min(100, Math.max(0, uploadProgress * 100)))
+      : null;
+  const showMediaUpload = mediaUploadPercent != null;
+  const showDataLoading =
+    !showMediaUpload &&
     typeof dataPreviewLoadingProgress === "number" &&
     Number.isFinite(dataPreviewLoadingProgress);
+  const hasMessages = Boolean(isDataPreviewStale || dataPreviewError || uploadStatusMessage);
+  const showLoadingProgress = showMediaUpload || showDataLoading;
 
   return (
     <div className="td-stage-statusbar" role="toolbar" aria-label="Mostrar, zoom e avisos do palco">
@@ -193,7 +204,16 @@ function ComunicadoStageStatusBar() {
         aria-live="polite"
         aria-label="Avisos e informações"
       >
-        {showLoadingProgress ? (
+        {showMediaUpload ? (
+          <div className="td-stage-statusbar__loading-slot">
+            <InlineLoadingProgress
+              percent={mediaUploadPercent!}
+              label="Enviando mídia"
+              classNames={TD_INLINE_LOADING_PROGRESS_CN}
+            />
+          </div>
+        ) : null}
+        {showDataLoading ? (
           <div className="td-stage-statusbar__loading-slot">
             <InlineLoadingProgress
               percent={dataPreviewLoadingProgress!}
@@ -201,6 +221,16 @@ function ComunicadoStageStatusBar() {
               classNames={TD_INLINE_LOADING_PROGRESS_CN}
             />
           </div>
+        ) : null}
+        {uploadStatusMessage ? (
+          <button
+            type="button"
+            className="td-stage-status-badge td-stage-status-badge--error"
+            title="Clique para dispensar"
+            onClick={() => clearUploadStatusMessage()}
+          >
+            {uploadStatusMessage}
+          </button>
         ) : null}
         {isDataPreviewStale ? (
           <button
@@ -314,9 +344,6 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
     persistStageViewPosition,
     viewportProfile,
     insertDroppedMediaFiles,
-    uploading,
-    uploadProgress,
-    uploadStatusMessage,
   } = useComunicadoEditor();
   const slideDesign = resolveViewportPixelSize(viewportProfile);
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
@@ -548,17 +575,15 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
           {children}
           {fileDropActive ? (
             <div className="td-composer__file-drop-overlay" aria-live="polite">
-              Solte para inserir imagem ou vídeo
-            </div>
-          ) : null}
-          {uploading && uploadProgress != null ? (
-            <div className="td-composer__upload-progress" role="status">
-              Enviando mídia… {Math.round(uploadProgress * 100)}%
-            </div>
-          ) : null}
-          {uploadStatusMessage ? (
-            <div className="td-composer__upload-error" role="alert">
-              {uploadStatusMessage}
+              <div className="td-composer__file-drop-card">
+                <span className="td-composer__file-drop-icon" aria-hidden="true">
+                  <Upload size={20} strokeWidth={2.25} />
+                </span>
+                <strong className="td-composer__file-drop-title">Solte para inserir</strong>
+                <span className="td-composer__file-drop-hint">
+                  Imagem (JPG, PNG, WEBP, GIF) ou vídeo (MP4, WEBM)
+                </span>
+              </div>
             </div>
           ) : null}
         </div>

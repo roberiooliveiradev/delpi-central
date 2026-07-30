@@ -4,6 +4,7 @@ import {
   useFullscreenStage,
   usePresentationChromeVisibility,
   PresentationStageControls,
+  PresentationPlaybackProvider,
   NativeSlideView,
   DesignViewportStage,
   buildAdminPresentationWsUrl,
@@ -163,6 +164,7 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   const nextSlide = slides.length > 1 ? slides[(index + 1) % slides.length] : undefined;
 
   return (
+    <PresentationPlaybackProvider deckPaused={paused}>
     <div
       ref={ref}
       className={[
@@ -245,5 +247,6 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
         </aside>
       ) : null}
     </div>
+    </PresentationPlaybackProvider>
   );
 }

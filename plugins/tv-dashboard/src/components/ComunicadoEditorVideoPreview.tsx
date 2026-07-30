@@ -5,6 +5,7 @@ import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
+import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
 
@@ -32,25 +33,44 @@ type Props = {
   className?: string;
 };
 
+/**
+ * Player do editor: tenta URL streamável (`access_token` + Range).
+ * Se falhar (auth/Range), cai no blob autenticado — mesmo contrato das imagens.
+ */
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
   const { playlistId } = useComunicadoEditor();
   const mediaUrl = resolveEditorMediaUrl(playlistId, block.assetId, block.url);
   const streamSrc = mediaUrl ? withBrowserMediaAccessToken(mediaUrl) : undefined;
+  const [preferBlob, setPreferBlob] = useState(false);
+  const blob = useAuthenticatedBlobUrl(preferBlob ? mediaUrl : undefined);
+  const src = preferBlob ? blob.src : streamSrc;
+  const loading = preferBlob ? blob.loading || (!blob.src && !blob.error) : !streamSrc;
+  const hardError = preferBlob ? blob.error : false;
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    setPreferBlob(false);
+    setLoadError(false);
+    setPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [mediaUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !streamSrc) return;
+    if (!video || !src) return;
     activeEditorVideos.add(video);
     return () => {
       activeEditorVideos.delete(video);
     };
-  }, [streamSrc]);
+  }, [src]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -64,6 +84,13 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     };
     const onPause = () => setPlaying(false);
     const onEnded = () => setPlaying(false);
+    const onError = () => {
+      if (!preferBlob && mediaUrl) {
+        setPreferBlob(true);
+        return;
+      }
+      setLoadError(true);
+    };
 
     video.addEventListener("timeupdate", syncTime);
     video.addEventListener("loadedmetadata", syncDuration);
@@ -71,6 +98,7 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
     video.addEventListener("ended", onEnded);
+    video.addEventListener("error", onError);
 
     return () => {
       video.removeEventListener("timeupdate", syncTime);
@@ -79,14 +107,9 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
       video.removeEventListener("ended", onEnded);
+      video.removeEventListener("error", onError);
     };
-  }, [streamSrc]);
-
-  useEffect(() => {
-    setPlaying(false);
-    setCurrentTime(0);
-    setDuration(0);
-  }, [streamSrc]);
+  }, [src, preferBlob, mediaUrl]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -101,7 +124,9 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     video.muted = false;
     setMuted(false);
     pauseOtherEditorVideos(video);
-    void video.play();
+    void video.play().catch(() => {
+      setLoadError(true);
+    });
   }
 
   function handlePause() {
@@ -140,15 +165,18 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
   let body: ReactNode;
   if (!mediaUrl) {
     body = <ComunicadoMediaPlaceholder kind="video" />;
-  } else if (!streamSrc) {
+  } else if (hardError || loadError) {
+    body = <ComunicadoMediaPlaceholder kind="video" state="error" />;
+  } else if (loading || !src) {
     body = <ComunicadoMediaPlaceholder kind="video" state="loading" />;
   } else {
     body = (
       <>
         <video
+          key={src}
           ref={videoRef}
           className="td-composer__media-preview"
-          src={streamSrc}
+          src={src}
           playsInline
           preload="metadata"
           style={{ objectFit: block.style?.objectFit ?? "contain" }}

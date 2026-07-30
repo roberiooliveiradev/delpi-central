@@ -4,6 +4,7 @@ import {
   DesignViewportStage,
   NativeSlideView,
   PresentationStageControls,
+  PresentationPlaybackProvider,
   applyRuntimeInputValue,
   emptyInputFilterContributions,
   hasInputFilterContributions,
@@ -142,7 +143,8 @@ export function PresentationView({
   }
 
   return (
-    <div className={stageClass} data-viewport={viewport}>
+    <PresentationPlaybackProvider deckPaused={paused}>
+      <div className={stageClass} data-viewport={viewport}>
       {mode === "preview" ? (
         <div
           className={[
@@ -196,6 +198,7 @@ export function PresentationView({
         sections={payload.sections}
         onJumpToSection={goToSection}
       />
-    </div>
+      </div>
+    </PresentationPlaybackProvider>
   );
 }

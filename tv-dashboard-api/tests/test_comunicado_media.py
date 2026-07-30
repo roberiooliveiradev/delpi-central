@@ -49,25 +49,21 @@ def test_media_storage_save_stream_video_and_rejects_oversize(monkeypatch):
     asyncio.run(run())
 
 
-def test_build_media_file_response_range():
+def test_build_media_file_response_inline_file():
+    from starlette.responses import FileResponse
+
     from tv_app.interface.http.media_file_response import build_media_file_response
 
     with tempfile.TemporaryDirectory() as tmp:
         path = Path(tmp) / "clip.bin"
         path.write_bytes(b"ABCDEFGHIJ")
-        full = build_media_file_response(path=path, mime_type="video/mp4")
-        assert full.status_code == 200
-        assert full.headers["accept-ranges"] == "bytes"
-        assert full.headers["content-length"] == "10"
-
-        partial = build_media_file_response(
-            path=path,
-            mime_type="video/mp4",
-            range_header="bytes=2-5",
-        )
-        assert partial.status_code == 206
-        assert partial.headers["content-range"] == "bytes 2-5/10"
-        assert partial.headers["content-length"] == "4"
+        response = build_media_file_response(path=path, mime_type="video/mp4")
+        assert isinstance(response, FileResponse)
+        assert response.status_code == 200
+        assert response.media_type == "video/mp4"
+        assert response.headers.get("accept-ranges") == "bytes"
+        # Inline evita download forçado — necessário para <video src>.
+        assert "inline" in (response.headers.get("content-disposition") or "").lower()
 
 
 def test_media_storage_accepts_woff2_font():
