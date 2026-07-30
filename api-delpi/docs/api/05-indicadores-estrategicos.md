@@ -1,7 +1,7 @@
 # 05 — Indicadores Estratégicos (legado / redirecionamento)
 
 > **As rotas deste módulo foram movidas para a API dedicada.**  
-> Documentação oficial: **[strategic-indicators-api/docs/](../../strategic-indicators-api/docs/README.md)**
+> Documentação oficial: **[strategic-indicators-api/docs/](../../../strategic-indicators-api/docs/README.md)**
 
 ## Base URL atual
 
@@ -45,13 +45,13 @@ Integrações SI correspondentes (token interno):
 
 ## Documentação completa do módulo SI
 
-**Índice:** [strategic-indicators-api/docs/README.md](../../strategic-indicators-api/docs/README.md)
+**Índice:** [strategic-indicators-api/docs/README.md](../../../strategic-indicators-api/docs/README.md)
 
 Inclui: visão geral, arquitetura, API, banco, fontes de dados, MFE, deploy, desenvolvimento, operação e performance.
 
 ## Migrations
 
-Executar apenas via `strategic-indicators-api/scripts/run_migrations.py` — ver [migrations/README.md](../../strategic-indicators-api/migrations/README.md).
+Executar apenas via `strategic-indicators-api/scripts/run_migrations.py` — ver [migrations/README.md](../../../strategic-indicators-api/migrations/README.md).
 
 O diretório `api-delpi/migrations/plugins/strategic-indicators/` permanece como referência histórica; **não** adicionar novas versões lá.
 

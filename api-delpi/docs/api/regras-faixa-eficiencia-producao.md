@@ -100,7 +100,7 @@ pytest tests/test_get_eficiencia_fabril_dashboard_use_case.py -q
 
 - [06-modulos-departamentais.md](./06-modulos-departamentais.md) — rotas `/production/oee` e eficiência fabril
 - [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) — eficiência por tempos, fórmulas legíveis, auto-refresh
-- [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../docs/12-roadmap-e-evolucao/eficiencia-fabril/)
+- [docs/12-roadmap-e-evolucao/eficiencia-fabril/](../../../docs/12-roadmap-e-evolucao/eficiencia-fabril/)
 - `minha-delpi-ai-api/docs/knowledge/api-delpi-rotas-agente.md` — filtro `status` do OEE
 
 ## Alterar a faixa no futuro

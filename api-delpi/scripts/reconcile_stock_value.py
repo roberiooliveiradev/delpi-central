@@ -344,7 +344,7 @@ def _render_markdown(report: dict) -> str:
         f"**Gerado em:** {report.get('generated_at', '')}  ",
         f"**Período:** {report['period']['start']} a {report['period']['end']}",
         "",
-        "Referência: [playbook-correcao-estoque-supplies-inventario.md](../playbook-correcao-estoque-supplies-inventario.md)",
+        "Referência: [playbook-correcao-estoque-supplies-inventario.md](../../api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md)",
         "",
         "## Resumo por filial",
         "",

@@ -385,7 +385,7 @@ Doc: [delpi-reports.md](./delpi-reports.md)
 
 ## Indicadores Estratégicos
 
-Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../strategic-indicators-api/docs/API.md).
+Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../../strategic-indicators-api/docs/API.md).
 
 ---
 

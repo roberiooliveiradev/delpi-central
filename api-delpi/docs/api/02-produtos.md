@@ -157,7 +157,7 @@ Quantidades retornadas (`accumulated_quantity`, `G1_QUANT`) estão na base **por
 
 ## GET /products/{code}/structure/exclusivity
 
-Estrutura vigente multinível com **exclusividade de matérias-primas** (playbook `playbook-estrutura-produto-exclusividade-mp.md`).
+Estrutura vigente multinível com **exclusividade de matérias-primas** ([playbook](./padroes-totvs/playbooks/playbook-estrutura-produto-exclusividade-mp.md)).
 
 | Query | Descrição |
 |---|---|

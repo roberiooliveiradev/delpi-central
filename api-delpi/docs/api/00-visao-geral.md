@@ -242,6 +242,14 @@ Toda rota nova deve seguir o padrão canônico (operationId estável, locale EN/
 
 Diretriz Cursor: `.cursor/rules/api-delpi-openapi-route-standards.mdc` + `new-api-route-checklist.mdc`.
 
+## Padrões TOTVS do produto (negócio Protheus)
+
+Convenções Delpi (armazém/custo, filiais, SQL, unidades, cadastro) e playbooks de domínio:
+
+→ **[padroes-totvs/README.md](./padroes-totvs/README.md)** · playbooks em [`padroes-totvs/playbooks/`](./padroes-totvs/playbooks/)
+
+Diretriz Cursor: `.cursor/rules/totvs-product-patterns.mdc` (quando usar / como enriquecer).
+
 ## Deploy e gateway
 
 Nginx encaminha `/apps/api-delpi/` → container `api-delpi:8000/` (path strip). Socket.IO também exposto em `/apps/api-delpi/socket.io/` para eventos em tempo real, se habilitado.

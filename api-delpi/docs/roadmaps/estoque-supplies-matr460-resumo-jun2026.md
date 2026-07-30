@@ -6,7 +6,7 @@ Documento consolidado do trabalho de reconciliação entre o dashboard Supriment
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [playbook-correcao-estoque-supplies-inventario.md](./playbook-correcao-estoque-supplies-inventario.md) | Plano W0–W4, decisões de negócio, DoD |
+| [playbook-correcao-estoque-supplies-inventario.md](../api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md) | Plano W0–W4, decisões de negócio, DoD |
 | [supplies-estoque-historico.md](../api/supplies-estoque-historico.md) | Contrato API, `stock_method`, breakdown |
 | [2026-06-estoque-supplies-reconciliacao.md](../changelog/2026-06-estoque-supplies-reconciliacao.md) | Changelog técnico |
 | [estoque-reconciliacao-20260531.md](./evidencias/estoque-reconciliacao-20260531.md) | Evidências W0 (maio/2026) |

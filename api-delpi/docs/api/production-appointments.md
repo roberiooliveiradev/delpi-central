@@ -2,7 +2,7 @@
 
 **Status:** implementado (jul/2026)  
 **Plugin previsto:** `production-appointments` (nome portal: Apontamento de Produção)  
-**Spec / Fase 0:** [`docs/12-roadmap-e-evolucao/production-appointments/`](../../../../docs/12-roadmap-e-evolucao/production-appointments/)
+**Spec / Fase 0:** [`docs/12-roadmap-e-evolucao/production-appointments/`](../../../docs/12-roadmap-e-evolucao/production-appointments/)
 
 Acompanha apontamentos de produção (`SH6010`, tipo `P`) por centro de trabalho via `SH1010` → `SHB010`.  
 CT de inspeção final + OP mãe alimentam o total produzido canônico (`/produced-totals`), consumido também por PPM e shipping-status.

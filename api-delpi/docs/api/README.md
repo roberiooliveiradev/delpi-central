@@ -49,12 +49,22 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [02-produtos.md](./02-produtos.md) | Busca, estrutura, playbooks fabril, estoque, NF-es, vendas, analisador e **biblioteca PDF de desenhos**. |
 | [03-vendas.md](./03-vendas.md) | Listagem de ordens de venda. |
 | [04-sistema-e-dados.md](./04-sistema-e-dados.md) | Metadados Protheus (SX2/SX3/SIX/SX9) e execução SQL controlada. |
-| [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Redirecionamento → API dedicada SI ([doc oficial](../../strategic-indicators-api/docs/README.md)). |
+| [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Redirecionamento → API dedicada SI ([doc oficial](../../../strategic-indicators-api/docs/README.md)). |
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [estoque-seguranca.md](./estoque-seguranca.md) | Estoque de segurança — filtros, listagem, detalhe com SC7/SD4 e extrato projetado. |
+| [supplies-estoque-historico.md](./supplies-estoque-historico.md) | Valor de estoque (`/supplies/stock-value`) — modos auto/hybrid/estimated × MATR460. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
+| [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
 | [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Lançamento de NF de entrada — fila, atendimento, conciliação SF1, Já lançada. |
+| [scrap-monitoring.md](./scrap-monitoring.md) | Monitoramento de refugos / scrap. |
+| [inspecoes-entrada.md](./inspecoes-entrada.md) · [inspecoes-processo.md](./inspecoes-processo.md) | Inspeções de entrada e de processo. |
+| [controle-retrabalhos.md](./controle-retrabalhos.md) | Controle de retrabalhos. |
+| [central-agendamento.md](./central-agendamento.md) | Central de agendamento. |
+| [production-appointments.md](./production-appointments.md) | Apontamentos de produção. |
+| [production-machine-programs.md](./production-machine-programs.md) | Programas de máquina. |
+| [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md) | Faixas de eficiência fabril. |
+| [delpi-reports.md](./delpi-reports.md) | Relatórios DELPI. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |
 | [quality-action-plans-pac.md](./quality-action-plans-pac.md) | PAC Qualidade — CRUD, assignable-users, delegação S2S api-pac, equipe 8D (`member_user_id`). |
 | [guias-procedimentos.md](./guias-procedimentos.md) | Guias e Procedimentos — leitura pública (departamentos e procedimentos publicados). |
@@ -66,7 +76,9 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [padroes-totvs/README.md](./padroes-totvs/README.md) | **Biblioteca de padrões TOTVS** (seções + playbooks de domínio Protheus). |
 | [padroes-totvs/playbooks/](./padroes-totvs/playbooks/) | Playbooks de produto (unidades, estrutura, simulador, produção, estoque…). |
 | [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
+| [../roadmaps/README.md](../roadmaps/README.md) | Roadmaps ops/CI (coverage, console, PAC, LMP) — domínio produto em `padroes-totvs/`. |
 | [../roadmaps/playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md) | **Cobertura 100% das rotas** (concluído) — inventário, smoke Nível A, gate `--check-complete`. |
+| [../changelog/](../changelog/) · changelogs `*-jun2026.md` nesta pasta | Snapshots pontuais (estoque, BOM, compras, eficiência) — não substituem playbooks. |
 
 ## Permissões principais
 
