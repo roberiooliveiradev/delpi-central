@@ -76,11 +76,16 @@
 }
 
 .delpi-ui-ribbon-tile__label {
-  max-width: 76px;
+  max-width: 5.5rem;
   text-align: center;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 /* Compacto: ainda denso, mas legível (evita 9px / ícone 24px). */
@@ -98,5 +103,5 @@
 }
 
 [data-delpi-ui-density="compact"] .delpi-ui-ribbon-tile__label {
-  max-width: 72px;
+  max-width: 5.25rem;
 }

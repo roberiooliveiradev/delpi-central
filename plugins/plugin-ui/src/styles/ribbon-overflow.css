@@ -169,19 +169,66 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: min(96vw, 42rem);
   min-width: 12rem;
-  max-width: min(92vw, 36rem);
+  max-width: min(96vw, 42rem);
   padding: 10px 12px 8px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .delpi-ui-ribbon-group__popover-body {
   display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/**
+ * Tiles no popover: quebra em várias linhas (na faixa expandida permanece
+ * fluxo em coluna única horizontal).
+ */
+.delpi-ui-ribbon-group__popover .delpi-ui-ribbon-tiles {
+  display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px 6px;
+  width: 100%;
+  max-width: 100%;
+  grid-auto-flow: unset;
+  grid-template-rows: none;
+  grid-auto-columns: unset;
+}
+
+.delpi-ui-ribbon-group__popover .delpi-ui-ribbon-tiles--rows-2 {
+  /* No popover o wrap substitui o grid de 2 linhas da faixa. */
+  grid-template-rows: none;
+}
+
+.delpi-ui-ribbon-group__popover .delpi-ui-ribbon-tile {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.delpi-ui-ribbon-group__popover .delpi-ui-ribbon-tile__label,
+.delpi-ui-ribbon-group__popover [data-delpi-ui-density="compact"] .delpi-ui-ribbon-tile__label {
+  max-width: 5.75rem;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: unset;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .delpi-ui-ribbon-group__popover-caption {
