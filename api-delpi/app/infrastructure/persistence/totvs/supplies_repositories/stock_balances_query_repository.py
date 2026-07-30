@@ -47,8 +47,9 @@ class StockBalancesQueryRepository(BaseRepository, StockBalancesQueryRepositoryP
         with self as repo:
             resultsets = repo.execute_query_multiple(combined, param_tuple)
 
-        summary_rows = resultsets[0] if resultsets else []
-        by_rows = resultsets[1] if len(resultsets) > 1 else []
+        datasets = [item.get("data") or [] for item in resultsets]
+        summary_rows = datasets[0] if datasets else []
+        by_rows = datasets[1] if len(datasets) > 1 else []
         summary_row = summary_rows[0] if summary_rows else {}
 
         by_warehouse = [

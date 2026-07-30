@@ -59,6 +59,55 @@ def test_sql_valuation_uses_qatu_times_cm1_same_local() -> None:
     assert "SB1010" in items
 
 
+def test_summary_parses_execute_query_multiple_shape() -> None:
+    """execute_query_multiple returns [{data: rows}, ...] — not bare lists."""
+    from unittest.mock import MagicMock, patch
+
+    from app.infrastructure.persistence.totvs.supplies_repositories.stock_balances_query_repository import (
+        StockBalancesQueryRepository,
+    )
+
+    repo = StockBalancesQueryRepository()
+    fake = MagicMock()
+    fake.execute_query_multiple.return_value = [
+        {
+            "index": 1,
+            "data": [
+                {
+                    "product_count": 4,
+                    "total_quantity": 10,
+                    "total_stock_value": 100.5,
+                    "total_stock_value_vatu1": 100.5,
+                    "warehouse_count": 1,
+                }
+            ],
+        },
+        {
+            "index": 2,
+            "data": [
+                {
+                    "branch": "01",
+                    "warehouse": "50",
+                    "product_count": 4,
+                    "total_quantity": 10,
+                    "total_stock_value": 100.5,
+                    "total_stock_value_vatu1": 100.5,
+                }
+            ],
+        },
+    ]
+    fake.__enter__.return_value = fake
+    fake.__exit__.return_value = False
+
+    with patch.object(StockBalancesQueryRepository, "__enter__", return_value=fake):
+        with patch.object(StockBalancesQueryRepository, "__exit__", return_value=False):
+            result = repo.fetch_summary(branch="01", warehouse="50", only_positive=True)
+
+    assert result["summary"]["product_count"] == 4
+    assert result["summary"]["total_stock_value"] == 100.5
+    assert result["by_warehouse"][0]["warehouse"] == "50"
+
+
 @patch(
     "app.interface.http.routes.supplies.stock_balances_router"
     ".build_get_supplies_stock_balances_summary_use_case"
