@@ -70,6 +70,8 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_safety_stock_item": "itens de estoque de segurança",
     "supplies_safety_stock_summary": "resumo de estoque de segurança",
     "supplies_safety_stock_filters": "filtros de estoque de segurança",
+    "supplies_stock_balances_summary": "resumo de saldos de estoque por armazém",
+    "supplies_stock_balances_item": "itens de saldo de estoque por armazém",
     "supplies_safety_stock_consumption_analysis_summary": (
         "resumo da análise de consumo versus estoque de segurança sugerido"
     ),

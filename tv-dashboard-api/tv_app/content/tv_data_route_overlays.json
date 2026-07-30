@@ -291,6 +291,55 @@
         }
       }
     },
+    "get_supplies_stock_balances_summary": {
+      "tableFields": "by_warehouse",
+      "allowedDisplayModes": [
+        "kpi",
+        "table",
+        "auto"
+      ],
+      "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 12,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "product_count",
+        "total_stock_value",
+        "total_quantity"
+      ],
+      "valueFieldLabels": {
+        "product_count": "Qtd. de produtos",
+        "total_stock_value": "Valor do estoque (R$)",
+        "total_quantity": "Quantidade total"
+      },
+      "label": "Suprimentos — saldos por armazém",
+      "description": "Quantidade de produtos e valor do estoque agregados por armazém.",
+      "whenToUse": "Controle de estoque: KPI e tabela por B2_LOCAL (todos os armazéns ou um filtro)."
+    },
+    "get_supplies_stock_balances_items": {
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "paramStrategy": "direct",
+      "tvConstraints": {
+        "maxRows": 15,
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "stock_value",
+        "quantity"
+      ],
+      "valueFieldLabels": {
+        "stock_value": "Valor (R$)",
+        "quantity": "Quantidade"
+      },
+      "label": "Suprimentos — itens de saldo por armazém",
+      "description": "Lista de produtos com quantidade, custo unitário e valor por armazém.",
+      "whenToUse": "Tabela ou barras de produtos dentro de um armazém (ex.: 25, 50) ou consolidado."
+    },
     "get_lmps_dashboard_summary": {
       "valueFields": [
         "total_lmps",

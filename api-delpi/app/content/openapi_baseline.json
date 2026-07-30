@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 493,
+  "operation_count": 495,
   "operations": [
     {
       "method": "POST",
@@ -39905,7 +39905,7 @@
       "method": "GET",
       "path": "/quality/kaizens/{kaizen_id}",
       "operationId": "get_kaizen_by_id",
-      "summary": "Kaizen by id",
+      "summary": "Kaizen detail (PostgreSQL)",
       "tags": [
         "Qualidade"
       ],
@@ -39940,7 +39940,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Kaizen by id."
+      "description": "Full kaizen record by UUID or legacy migrated id (PostgreSQL)."
     },
     {
       "method": "GET",
@@ -43520,7 +43520,7 @@
       "method": "GET",
       "path": "/refugos/rankings",
       "operationId": "get_refugos_rankings",
-      "summary": "Refugos rankings",
+      "summary": "Scrap rankings",
       "tags": [
         "Produção — Acompanhamento de Refugos"
       ],
@@ -43803,7 +43803,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Refugos rankings."
+      "description": "Top scrap rankings by dimension with value (BRL) and share percent."
     },
     {
       "method": "GET",
@@ -49476,6 +49476,318 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Supplies safety stock summary."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/stock-balances/items",
+      "operationId": "get_supplies_stock_balances_items",
+      "summary": "Stock balance items by warehouse",
+      "tags": [
+        "Suprimentos — Saldos de estoque"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse code (B2_LOCAL). Empty = all warehouses.",
+          "type": "string"
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of warehouse — prefer warehouse.",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "only_positive",
+          "in": "query",
+          "required": false,
+          "description": "When true, only rows with B2_QATU > 0.",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort key for stock balance items.",
+          "type": "string",
+          "default": "stock_value_desc",
+          "enum": [
+            "stock_value_desc",
+            "stock_value_asc",
+            "quantity_desc",
+            "quantity_asc",
+            "product_code_asc",
+            "product_code_desc"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_stock_balances_item",
+        "shape": "paged_list",
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Stock balance items by warehouse",
+            "description": "Paged product rows with quantity, unit cost and stock value per warehouse.",
+            "whenToUse": "List or bar chart of products and values inside one or all warehouses.",
+            "label": "Stock balance items"
+          },
+          "pt-BR": {
+            "summary": "Itens de saldo por armazém",
+            "description": "Lista paginada de produtos com quantidade, custo unitário e valor por armazém.",
+            "whenToUse": "Tabela ou barras de produtos e valores em um ou todos os armazéns.",
+            "label": "Itens de saldo por armazém"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "location": {
+            "locale": {
+              "en": {
+                "description": "Location query parameter.",
+                "label": "Location"
+              },
+              "pt-BR": {
+                "description": "Localização / endereço de estoque no Protheus.",
+                "label": "Localização"
+              }
+            }
+          },
+          "only_positive": {
+            "locale": {
+              "en": {
+                "description": "When true, include only warehouse rows with quantity greater than zero.",
+                "label": "Only positive qty"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, inclui apenas linhas de armazém com quantidade maior que zero.",
+                "label": "Somente saldo positivo"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "sort": {
+            "locale": {
+              "en": {
+                "description": "Sort query parameter.",
+                "label": "Sort"
+              },
+              "pt-BR": {
+                "description": "Critério de ordenação da listagem.",
+                "label": "Ordenação"
+              }
+            }
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Tabela ou barras de produtos e valores em um ou todos os armazéns.",
+          "description": "Lista paginada de produtos com quantidade, custo unitário e valor por armazém.",
+          "label": "Itens de saldo por armazém"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Paged product rows with quantity, unit cost and stock value per warehouse."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/stock-balances/summary",
+      "operationId": "get_supplies_stock_balances_summary",
+      "summary": "Stock balances by warehouse",
+      "tags": [
+        "Suprimentos — Saldos de estoque"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "warehouse",
+          "in": "query",
+          "required": false,
+          "description": "Warehouse code (B2_LOCAL). Empty = all warehouses.",
+          "type": "string"
+        },
+        {
+          "name": "location",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of warehouse — prefer warehouse.",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "only_positive",
+          "in": "query",
+          "required": false,
+          "description": "When true, only rows with B2_QATU > 0.",
+          "type": "boolean",
+          "default": true
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_stock_balances_summary",
+        "shape": "playbook_report",
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Stock balances by warehouse",
+            "description": "Product count and stock value (qty × local average cost) aggregated by warehouse.",
+            "whenToUse": "Warehouse stock control KPIs: how many products and total value per B2_LOCAL.",
+            "label": "Stock balances by warehouse"
+          },
+          "pt-BR": {
+            "summary": "Saldos de estoque por armazém",
+            "description": "Quantidade de produtos e valor do estoque (qtd × custo médio do local) agregados por armazém.",
+            "whenToUse": "Controle de estoque por armazém: quantos produtos e valor total em cada B2_LOCAL.",
+            "label": "Saldos por armazém"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "location": {
+            "locale": {
+              "en": {
+                "description": "Location query parameter.",
+                "label": "Location"
+              },
+              "pt-BR": {
+                "description": "Localização / endereço de estoque no Protheus.",
+                "label": "Localização"
+              }
+            }
+          },
+          "only_positive": {
+            "locale": {
+              "en": {
+                "description": "When true, include only warehouse rows with quantity greater than zero.",
+                "label": "Only positive qty"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, inclui apenas linhas de armazém com quantidade maior que zero.",
+                "label": "Somente saldo positivo"
+              }
+            }
+          },
+          "warehouse": {
+            "locale": {
+              "en": {
+                "description": "Warehouse query parameter.",
+                "label": "Warehouse"
+              },
+              "pt-BR": {
+                "description": "Código do armazém/estoque.",
+                "label": "Armazém"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Controle de estoque por armazém: quantos produtos e valor total em cada B2_LOCAL.",
+          "description": "Quantidade de produtos e valor do estoque (qtd × custo médio do local) agregados por armazém.",
+          "label": "Saldos por armazém"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Product count and stock value (qty × local average cost) aggregated by warehouse."
     },
     {
       "method": "GET",

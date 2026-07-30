@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-29",
-  "baselineOperationCount": 493,
-  "operationCount": 493,
-  "coveredCount": 491,
+  "generatedAt": "2026-07-30",
+  "baselineOperationCount": 495,
+  "operationCount": 495,
+  "coveredCount": 493,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -170,8 +170,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 14,
-      "covered": 14,
+      "total": 16,
+      "covered": 16,
       "gap": 0,
       "exempt": 0
     },
@@ -4439,6 +4439,24 @@
       "module": "supplies",
       "entity": "supplies_safety_stock_summary",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_stock_balances_items",
+      "method": "GET",
+      "path": "/supplies/stock-balances/items",
+      "module": "supplies",
+      "entity": "supplies_stock_balances_item",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_stock_balances_summary",
+      "method": "GET",
+      "path": "/supplies/stock-balances/summary",
+      "module": "supplies",
+      "entity": "supplies_stock_balances_summary",
+      "shape": "playbook_report",
       "status": "covered"
     },
     {

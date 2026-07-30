@@ -116,6 +116,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_supplies_cpv": RouteContract("supplies_cpv", "scalar"),
     "get_supplies_otd": RouteContract("supplies_otd", "scalar"),
     "get_supplies_stock_value": RouteContract("supplies_stock_value", "scalar"),
+    "get_supplies_stock_balances_summary": RouteContract(
+        "supplies_stock_balances_summary", "playbook_report"
+    ),
+    "get_supplies_stock_balances_items": RouteContract(
+        "supplies_stock_balances_item", "paged_list"
+    ),
     "get_supplies_inventory_turnover": RouteContract(
         "supplies_inventory_turnover", "scalar"
     ),

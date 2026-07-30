@@ -526,6 +526,14 @@
   },
   "pathRules": [
     {
+      "contains": "/supplies/stock-balances/summary",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/supplies/stock-balances/items",
+      "profile": "table_list"
+    },
+    {
       "contains": "/dashboard/departments-indicators",
       "profile": "playbook_report"
     },
@@ -2014,6 +2022,8 @@
     "supplies_cpv": "/supplies/cpv",
     "supplies_otd": "/supplies/otd",
     "supplies_stock_value": "/supplies/stock-value",
+    "supplies_stock_balances_summary": "/supplies/stock-balances/summary",
+    "supplies_stock_balances_item": "/supplies/stock-balances/items",
     "supplies_inventory_turnover": "/supplies/inventory-turnover",
     "supplies_negotiation_savings": "/supplies/negotiation-savings/summary",
     "supplies_safety_stock_detail": "/supplies/safety-stock/items/0/details",

@@ -22,6 +22,8 @@ Constantes: **`api-delpi/app/domain/totvs/protheus_warehouses.py`**.
 
 ## Valoração em R$ (rota nova)
 
+**Custo de material / ValorPerda:**
+
 ```text
 qtd × COALESCE(B2_CM1 do local 01, B1_CUSTD, 0)
 ```
@@ -30,13 +32,22 @@ qtd × COALESCE(B2_CM1 do local 01, B1_CUSTD, 0)
 - **Proibido** `AVG(B2_CM1)` entre todos os locais para KPI/perda valorizada.
 - **Proibido** join SB2 sem filtrar/agregar local (multiplica linhas).
 
+**Saldo por armazém (controle / TV — `/supplies/stock-balances/*`):**
+
+```text
+B2_QATU × B2_CM1 do mesmo B2_LOCAL
+```
+
+Não forçar `01` nesta família — ver § *Valoração de saldo por armazém* em `armazem-custo.md`.
+
 ## Saldo ≠ custo
 
 - Saldo disponível ESTSEG: tipicamente `01+98+99`.
-- Custo unitário: **só `01`**.
+- Custo unitário (perda/material): **só `01`**.
+- Valor no armazém (painel): CM1 **do local** filtrado.
 
 ## Checklist
 
-1. Constante de `protheus_warehouses` (não literal solto sem doc).
+1. Constante de `protheus_warehouses` quando for custo canônico / labels conhecidos.
 2. Doc da rota linka `padroes-totvs/armazem-custo.md`.
-3. Teste SQL asserta `B2_LOCAL = '01'` quando houver valoração.
+3. Teste SQL: ValorPerda asserta `B2_LOCAL = '01'`; saldo-por-armazém asserta `QATU×CM1` sem `AVG` cross-local.

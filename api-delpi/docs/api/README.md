@@ -53,6 +53,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
 | [estoque-seguranca.md](./estoque-seguranca.md) | Estoque de segurança — filtros, listagem, detalhe com SC7/SD4 e extrato projetado. |
 | [supplies-estoque-historico.md](./supplies-estoque-historico.md) | Valor de estoque (`/supplies/stock-value`) — modos auto/hybrid/estimated × MATR460. |
+| [supplies-stock-balances.md](./supplies-stock-balances.md) | Saldos por armazém (`/supplies/stock-balances`) — qtd produtos + valor QATU×CM1. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |

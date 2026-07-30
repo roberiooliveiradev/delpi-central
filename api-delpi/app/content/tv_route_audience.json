@@ -4097,6 +4097,40 @@
         }
       }
     },
+    "get_supplies_stock_balances_summary": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Stock balances by warehouse",
+          "description": "Product count and stock value (qty × local average cost) aggregated by warehouse.",
+          "whenToUse": "Warehouse stock control KPIs: how many products and total value per B2_LOCAL.",
+          "label": "Stock balances by warehouse"
+        },
+        "pt-BR": {
+          "summary": "Saldos de estoque por armazém",
+          "description": "Quantidade de produtos e valor do estoque (qtd × custo médio do local) agregados por armazém.",
+          "whenToUse": "Controle de estoque por armazém: quantos produtos e valor total em cada B2_LOCAL.",
+          "label": "Saldos por armazém"
+        }
+      }
+    },
+    "get_supplies_stock_balances_items": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Stock balance items by warehouse",
+          "description": "Paged product rows with quantity, unit cost and stock value per warehouse.",
+          "whenToUse": "List or bar chart of products and values inside one or all warehouses.",
+          "label": "Stock balance items"
+        },
+        "pt-BR": {
+          "summary": "Itens de saldo por armazém",
+          "description": "Lista paginada de produtos com quantidade, custo unitário e valor por armazém.",
+          "whenToUse": "Tabela ou barras de produtos e valores em um ou todos os armazéns.",
+          "label": "Itens de saldo por armazém"
+        }
+      }
+    },
     "get_transforma_mais_summary": {
       "locale": {
         "en": {

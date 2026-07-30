@@ -1344,6 +1344,18 @@
         }
       }
     },
+    "only_positive": {
+      "locale": {
+        "en": {
+          "label": "Only positive qty",
+          "description": "When true, include only warehouse rows with quantity greater than zero."
+        },
+        "pt-BR": {
+          "label": "Somente saldo positivo",
+          "description": "Quando verdadeiro, inclui apenas linhas de armazém com quantidade maior que zero."
+        }
+      }
+    },
     "only_with_delays": {
       "locale": {
         "en": {

@@ -62,11 +62,33 @@ valor = quantidade × COALESCE(NULLIF(B2_CM1 do B2_LOCAL=01, 0), NULLIF(B1_CUSTD
 
 ---
 
+## Valoração de saldo por armazém (controle / Power BI)
+
+Rotas de **controle de estoque por `B2_LOCAL`** (ex.: `/supplies/stock-balances/*`) valorizam o **saldo daquele armazém**, alinhadas ao DAX típico do Power BI:
+
+```text
+stock_value = B2_QATU × B2_CM1   -- CM1 da mesma linha SB2 (mesmo B2_LOCAL)
+product_count = COUNT(DISTINCT B2_COD) WHERE B2_QATU > 0
+```
+
+| Caso | Fórmula | Exemplo |
+|------|---------|---------|
+| ValorPerda / custo de material | CM1 do **`01`** (+ fallback `B1_CUSTD`) | `/refugos/*` |
+| Saldo por armazém (TV / painel) | `QATU × CM1` do **próprio** local | `/supplies/stock-balances/*` |
+| KPI consolidado stock-value | `SUM(B2_VATU1)` (± histórico) | `/supplies/stock-value` |
+
+**Não** aplicar `COST_UNIT_WAREHOUSE` (`01`) nesta família: o objetivo é o valor **no** armazém filtrado (25, 50, 01, …), não o custo canônico de perda.
+
+Doc da rota: [supplies-stock-balances.md](../supplies-stock-balances.md).
+
+---
+
 ## Saldo / cobertura (não confundir com custo)
 
 | Necessidade | Locais | Exemplo |
 |-------------|--------|---------|
 | Custo unitário (R$) | só **`01`** | `/refugos/*` |
+| Saldo por armazém (valor no local) | qualquer `B2_LOCAL` (filtro livre) | `/supplies/stock-balances/*` |
 | Saldo disponível / déficit ESTSEG | **`01` + `98` + `99`** | `/supplies/safety-stock/*` |
 | Consumo fabril (baixa OP) | tipicamente **`99`** em `D3_LOCAL` | análise de consumo ESTSEG |
 | WIP | `50`, `98`, `99` | classificação estoque de segurança |
@@ -81,8 +103,9 @@ Filial (`B2_FILIAL`) **não** é armazém (`B2_LOCAL`). Ver [filiais.md](./filia
 
 ## Checklist rápido (PR com SQL novo)
 
-- [ ] A rota valoriza em R$? → CM1 do **`01`**, nunca média de todos os locais.
-- [ ] A rota fala de saldo disponível? → conferir se é `01+98+99` ou só um local.
+- [ ] ValorPerda / custo de material? → CM1 do **`01`**, nunca média de todos os locais.
+- [ ] Saldo por armazém (controle)? → `QATU × CM1` do **mesmo** `B2_LOCAL` (não forçar `01`).
+- [ ] A rota fala de saldo disponível ESTSEG? → conferir se é `01+98+99` ou só um local.
 - [ ] Constante nomeada + doc da rota aponta para esta seção.
 - [ ] Teste unitário da SQL cobre o filtro de local.
 
@@ -93,5 +116,6 @@ Filial (`B2_FILIAL`) **não** é armazém (`B2_LOCAL`). Ver [filiais.md](./filia
 | Módulo | Doc / código |
 |--------|----------------|
 | Refugos | [scrap-monitoring.md](../scrap-monitoring.md) · `refugos_sql.py` · `REFUGOS_COST_WAREHOUSE` |
+| Saldos por armazém | [supplies-stock-balances.md](../supplies-stock-balances.md) · `stock_balances_sql.py` |
 | Estoque de segurança | [estoque-seguranca.md](../estoque-seguranca.md) · `PRIMARY_WAREHOUSE` / `AVAILABLE_BALANCE_*` |
 | Constantes compartilhadas | `app/domain/totvs/protheus_warehouses.py` |

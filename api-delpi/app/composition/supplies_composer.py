@@ -11,6 +11,12 @@ from app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
 from app.application.use_cases.supplies.get_stock_value_use_case import (
     GetStockValueUseCase,
 )
+from app.application.use_cases.supplies.get_supplies_stock_balances_items_use_case import (
+    GetSuppliesStockBalancesItemsUseCase,
+)
+from app.application.use_cases.supplies.get_supplies_stock_balances_summary_use_case import (
+    GetSuppliesStockBalancesSummaryUseCase,
+)
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
     FinancialRepository,
 )
@@ -25,6 +31,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.otd_query_reposi
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_query_repository import (
     StockValueQueryRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.stock_balances_query_repository import (
+    StockBalancesQueryRepository,
 )
 from app.infrastructure.persistence.google_sheets.supplies.negotiation_savings_repository import (
     NegotiationSavingsRepository,
@@ -113,6 +122,22 @@ def build_get_otd_use_case() -> GetOTDUseCase:
 def build_get_stock_value_use_case() -> GetStockValueUseCase:
     repository = StockValueQueryRepository()
     return GetStockValueUseCase(repository)
+
+
+def build_get_supplies_stock_balances_summary_use_case() -> (
+    GetSuppliesStockBalancesSummaryUseCase
+):
+    return GetSuppliesStockBalancesSummaryUseCase(
+        repository=StockBalancesQueryRepository()
+    )
+
+
+def build_get_supplies_stock_balances_items_use_case() -> (
+    GetSuppliesStockBalancesItemsUseCase
+):
+    return GetSuppliesStockBalancesItemsUseCase(
+        repository=StockBalancesQueryRepository()
+    )
 
 
 def build_get_inventory_turnover_use_case() -> GetInventoryTurnoverUseCase:
