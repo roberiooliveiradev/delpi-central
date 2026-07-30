@@ -1,15 +1,15 @@
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
 import {
   Database,
   Grid3x3,
   LayoutTemplate,
   Palette,
+  PenLine,
   Square,
   Shapes,
+  SlidersHorizontal,
 } from "lucide-react";
 import {
-  AnchoredPanelPortal,
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
@@ -32,7 +32,6 @@ import {
   type ComunicadoTableViewBlock,
   type TableElementId,
 } from "@delpi/tv-dashboard-presentation";
-import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 
 import {
   applyTableAddElementChoice,
@@ -54,8 +53,8 @@ import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
-import { DeckRibbonLargeButton } from "../deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
@@ -89,16 +88,6 @@ function useTableDesignControls() {
     openDataPanel,
     setSelectionPanelTab,
   } = useComunicadoEditor();
-
-  const addElementAnchorRef = useRef<HTMLDivElement>(null);
-  const addElementPanelRef = useRef<HTMLDivElement>(null);
-  const stylesAnchorRef = useRef<HTMLDivElement>(null);
-  const stylesPanelRef = useRef<HTMLDivElement>(null);
-  const dataAnchorRef = useRef<HTMLDivElement>(null);
-  const dataPanelRef = useRef<HTMLDivElement>(null);
-  const [addElementOpen, setAddElementOpen] = useState(false);
-  const [stylesOpen, setStylesOpen] = useState(false);
-  const [dataOpen, setDataOpen] = useState(false);
 
   if (!selected || selected.type !== "table_view") {
     return null;
@@ -148,13 +137,11 @@ function useTableDesignControls() {
     const part = tableElementPrimaryPartRef(id);
     if (part) selectTablePart(block.id, part);
     setSelectionPanelTab("element");
-    setAddElementOpen(false);
   };
 
   const openDataFocus = (actionId: TableDataMenuActionId) => {
     openDataPanel();
     setSelectionPanelTab("data");
-    setDataOpen(false);
     const anchorId =
       actionId === "columns" ? "td-view-table-columns" : "td-view-data-source";
     requestAnimationFrame(() => {
@@ -199,18 +186,6 @@ function useTableDesignControls() {
     shadeTarget,
     shadeValue,
     borderWidthOptions,
-    addElementAnchorRef,
-    addElementPanelRef,
-    addElementOpen,
-    setAddElementOpen,
-    stylesAnchorRef,
-    stylesPanelRef,
-    stylesOpen,
-    setStylesOpen,
-    dataAnchorRef,
-    dataPanelRef,
-    dataOpen,
-    setDataOpen,
     applyOptions,
     applyRecipe,
     applyGalleryPreset,
@@ -248,8 +223,7 @@ function wrapPane(
 }
 
 /**
- * Layout / elementos da tabela — paridade com ChartLayoutSection («Adicionar elemento»).
- * Ribbon: botão grande + menu cascata; painel: menu embutido.
+ * Layout / elementos da tabela — molde Tela/Programação (tile + popover).
  */
 export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
@@ -272,53 +246,38 @@ function TableStyleOptionsBandOrInline({
 }) {
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const addElementMenu = (
+  const addElementMenu = (close?: () => void) => (
     <TableAddElementMenu
       options={ctrl.options}
       onApplyChoice={ctrl.applyAddElementChoice}
-      onMoreOptions={ctrl.openAddElementMoreOptions}
+      onMoreOptions={(elementId) => {
+        ctrl.openAddElementMoreOptions(elementId);
+        close?.();
+      }}
     />
   );
 
   if (inSectionPopover) {
-    return addElementMenu;
+    return addElementMenu();
   }
 
   return (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-      <div ref={ctrl.addElementAnchorRef} className="td-composer__dropdown">
-        <DeckRibbonLargeButton
-          icon={LayoutTemplate}
-          label={"Adicionar\nelemento"}
-          hint={H.tableStyleOptions}
-          onClick={() => {
-            ctrl.setAddElementOpen((open) => !open);
-            ctrl.setStylesOpen(false);
-            ctrl.setDataOpen(false);
-          }}
-        />
-        {ctrl.addElementOpen ? (
-          <AnchoredPanelPortal
-            open={ctrl.addElementOpen}
-            anchorRef={ctrl.addElementAnchorRef}
-            panelRef={ctrl.addElementPanelRef}
-            variant="bare"
-            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-            className="td-chart-add-element-portal"
-            role="menu"
-            aria-label="Adicionar elemento de tabela"
-            exclusive={!inSectionPopover}
-            onDismiss={() => ctrl.setAddElementOpen(false)}
-          >
-            <div>{addElementMenu}</div>
-          </AnchoredPanelPortal>
-        ) : null}
-      </div>
+      <DeckRibbonTilePopover
+        icon={LayoutTemplate}
+        label="Adicionar elemento"
+        hint={H.tableStyleOptions}
+        panelLabel="Adicionar elemento de tabela"
+        panelVariant="menu"
+        panelClassName="td-chart-add-element-portal"
+      >
+        {(close) => addElementMenu(close)}
+      </DeckRibbonTilePopover>
     </div>
   );
 }
 
-/** Galeria + sombreamento. Ribbon: «Alterar estilos» (paridade gráfico); painel: faixa de thumbs. */
+/** Galeria + sombreamento. Ribbon: tile «Alterar estilos» + popover. */
 export function TableStylesSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
   if (!ctrl) return null;
@@ -383,55 +342,37 @@ function TableStylesBandOrInline({
 }) {
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const stylesMenu = (
-    <div className="td-chart-float__popover td-chart-float__popover--style">
-      <TableStylesMenu
-        options={ctrl.options}
-        preset={ctrl.block.tablePreset}
-        onApplyRecipe={(recipe) => {
-          ctrl.applyRecipe(recipe);
-          ctrl.setStylesOpen(false);
-        }}
-        onClear={() => {
-          ctrl.clearTableStyle();
-          ctrl.setStylesOpen(false);
-        }}
-      />
-    </div>
+  const stylesMenu = (close?: () => void) => (
+    <TableStylesMenu
+      options={ctrl.options}
+      preset={ctrl.block.tablePreset}
+      onApplyRecipe={(recipe) => {
+        ctrl.applyRecipe(recipe);
+        close?.();
+      }}
+      onClear={() => {
+        ctrl.clearTableStyle();
+        close?.();
+      }}
+    />
   );
 
   if (inSectionPopover) {
-    return stylesMenu;
+    return stylesMenu();
   }
 
   return (
-    <div ref={ctrl.stylesAnchorRef} className="td-composer__dropdown">
-      <DeckRibbonLargeButton
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTilePopover
         icon={Palette}
-        label={"Alterar\nestilos"}
+        label="Alterar estilos"
         hint={H.tableStyles}
-        onClick={() => {
-          ctrl.setStylesOpen((open) => !open);
-          ctrl.setAddElementOpen(false);
-          ctrl.setDataOpen(false);
-        }}
-      />
-      {ctrl.stylesOpen ? (
-        <AnchoredPanelPortal
-          open={ctrl.stylesOpen}
-          anchorRef={ctrl.stylesAnchorRef}
-          panelRef={ctrl.stylesPanelRef}
-          variant="bare"
-          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-          className="td-chart-colors-portal"
-          role="menu"
-          aria-label="Alterar estilos da tabela"
-          exclusive={!inSectionPopover}
-          onDismiss={() => ctrl.setStylesOpen(false)}
-        >
-          {stylesMenu}
-        </AnchoredPanelPortal>
-      ) : null}
+        panelLabel="Alterar estilos da tabela"
+        panelVariant="menu"
+        panelClassName="td-chart-float__popover--style"
+      >
+        {(close) => stylesMenu(close)}
+      </DeckRibbonTilePopover>
     </div>
   );
 }
@@ -441,9 +382,62 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
   const ctrl = useTableDesignControls();
   if (!ctrl) return null;
 
-  const borders = (
-    <>
-      <div className="td-deck-ribbon__border-controls">
+  const borderPenFields = (
+    <div className="td-deck-ribbon__border-pen td-deck-ribbon__toolbar-row--dense">
+      <ToolbarSelectField
+        label="Peso"
+        value={String(ctrl.borderWidth)}
+        allowEmptyOption={false}
+        options={ctrl.borderWidthOptions}
+        onChange={(value) => {
+          const width = Number(value);
+          if (!Number.isFinite(width)) return;
+          ctrl.applyOptions({ borderWidth: width, showBorders: true });
+        }}
+      />
+      <ToolbarSelectField
+        label="Estilo"
+        value={ctrl.borderStyle}
+        allowEmptyOption={false}
+        options={BORDER_STYLE_OPTIONS}
+        onChange={(value) =>
+          ctrl.applyOptions({
+            borderStyle: value as NonNullable<ComunicadoTableOptions["borderStyle"]>,
+            showBorders: true,
+          })
+        }
+      />
+    </div>
+  );
+
+  const borders =
+    layout === "pane" ? (
+      <>
+        <div className="td-deck-ribbon__border-controls">
+          <DeckRibbonTile
+            icon={Square}
+            label="Sem borda"
+            hint="Remove as linhas separadoras das células."
+            active={ctrl.options.showBorders === false}
+            onClick={() => ctrl.applyOptions({ showBorders: false })}
+          />
+          <DeckRibbonTile
+            icon={Grid3x3}
+            label="Todas"
+            hint="Mostra todas as bordas da grade."
+            active={ctrl.options.showBorders !== false}
+            onClick={() => ctrl.applyOptions({ showBorders: true })}
+          />
+          <ColorPickerPopoverTrigger
+            value={ctrl.options.borderColor ?? "#e2e8f0"}
+            triggerLabel="Cor"
+            onChange={(color) => ctrl.applyOptions({ borderColor: color, showBorders: true })}
+          />
+        </div>
+        {borderPenFields}
+      </>
+    ) : (
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         <DeckRibbonTile
           icon={Square}
           label="Sem borda"
@@ -463,34 +457,17 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
           triggerLabel="Cor"
           onChange={(color) => ctrl.applyOptions({ borderColor: color, showBorders: true })}
         />
+        <DeckRibbonTilePopover
+          icon={PenLine}
+          label="Caneta"
+          hint="Peso e estilo do traço das bordas."
+          panelLabel="Caneta de borda"
+          panelClassName="td-deck-ribbon-tile-popover--narrow"
+        >
+          {borderPenFields}
+        </DeckRibbonTilePopover>
       </div>
-      <div className="td-deck-ribbon__border-pen td-deck-ribbon__toolbar-row--dense">
-        <ToolbarSelectField
-          label="Peso"
-          value={String(ctrl.borderWidth)}
-          allowEmptyOption={false}
-          options={ctrl.borderWidthOptions}
-          onChange={(value) => {
-            const width = Number(value);
-            if (!Number.isFinite(width)) return;
-            ctrl.applyOptions({ borderWidth: width, showBorders: true });
-          }}
-        />
-        <ToolbarSelectField
-          label="Estilo"
-          value={ctrl.borderStyle}
-          allowEmptyOption={false}
-          options={BORDER_STYLE_OPTIONS}
-          onChange={(value) =>
-            ctrl.applyOptions({
-              borderStyle: value as NonNullable<ComunicadoTableOptions["borderStyle"]>,
-              showBorders: true,
-            })
-          }
-        />
-      </div>
-    </>
-  );
+    );
 
   const effects = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
@@ -505,8 +482,32 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
     </div>
   );
 
-  const formaChrome = (
-    <>
+  const formaAdjustFields = (
+    <div className="td-deck-ribbon__organize-props td-forma-opacity">
+      <ShapeCornerRadiusControl
+        id="td-table-design-corner-radius"
+        value={ctrl.cornerRadius}
+        onChange={ctrl.patchCornerRadius}
+        embedded
+      />
+      <FormatRibbonOpacityFields className="td-forma-opacity__slot" />
+    </div>
+  );
+
+  const formaChrome =
+    layout === "pane" ? (
+      <>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={Shapes}
+            label="Forma"
+            hint={H.tableOpenFrameShape}
+            onClick={ctrl.openFrameShapeChrome}
+          />
+        </div>
+        {formaAdjustFields}
+      </>
+    ) : (
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         <DeckRibbonTile
           icon={Shapes}
@@ -514,18 +515,17 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
           hint={H.tableOpenFrameShape}
           onClick={ctrl.openFrameShapeChrome}
         />
+        <DeckRibbonTilePopover
+          icon={SlidersHorizontal}
+          label="Ajuste"
+          hint={H.tableFrameChrome}
+          panelLabel="Raio e opacidade da moldura"
+          panelClassName="td-deck-ribbon-tile-popover--narrow"
+        >
+          {formaAdjustFields}
+        </DeckRibbonTilePopover>
       </div>
-      <div className="td-deck-ribbon__organize-props td-forma-opacity">
-        <ShapeCornerRadiusControl
-          id="td-table-design-corner-radius"
-          value={ctrl.cornerRadius}
-          onChange={ctrl.patchCornerRadius}
-          embedded
-        />
-        <FormatRibbonOpacityFields className="td-forma-opacity__slot" />
-      </div>
-    </>
-  );
+    );
 
   if (layout === "pane") {
     return (
@@ -571,42 +571,31 @@ function TableDataBandOrInline({
 }) {
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const dataMenu = (
-    <TableDataMenu onSelect={ctrl.openDataFocus} />
+  const dataMenu = (close?: () => void) => (
+    <TableDataMenu
+      onSelect={(actionId) => {
+        ctrl.openDataFocus(actionId);
+        close?.();
+      }}
+    />
   );
 
   if (inSectionPopover) {
-    return dataMenu;
+    return dataMenu();
   }
 
   return (
-    <div ref={ctrl.dataAnchorRef} className="td-composer__dropdown">
-      <DeckRibbonLargeButton
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTilePopover
         icon={Database}
-        label={"Selecionar\ndados"}
+        label="Selecionar dados"
         hint={H.openDataPanel}
-        onClick={() => {
-          ctrl.setDataOpen((open) => !open);
-          ctrl.setAddElementOpen(false);
-          ctrl.setStylesOpen(false);
-        }}
-      />
-      {ctrl.dataOpen ? (
-        <AnchoredPanelPortal
-          open={ctrl.dataOpen}
-          anchorRef={ctrl.dataAnchorRef}
-          panelRef={ctrl.dataPanelRef}
-          variant="bare"
-          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-          className="td-chart-add-element-portal"
-          role="menu"
-          aria-label="Dados da tabela"
-          exclusive={!inSectionPopover}
-          onDismiss={() => ctrl.setDataOpen(false)}
-        >
-          <div>{dataMenu}</div>
-        </AnchoredPanelPortal>
-      ) : null}
+        panelLabel="Dados da tabela"
+        panelVariant="menu"
+        panelClassName="td-chart-float__popover--actions"
+      >
+        {(close) => dataMenu(close)}
+      </DeckRibbonTilePopover>
     </div>
   );
 }

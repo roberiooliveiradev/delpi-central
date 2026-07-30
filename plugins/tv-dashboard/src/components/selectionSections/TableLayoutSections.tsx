@@ -6,6 +6,7 @@ import {
   Columns3,
   Database,
   Grid3x3,
+  Ruler,
   Rows3,
   WrapText,
 } from "lucide-react";
@@ -26,6 +27,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { DeckRibbonTilePopover } from "../deck/DeckRibbonTilePopover";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
@@ -311,8 +313,34 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
 
   return (
     <DeckRibbonGroup groupId="table-layout-size" label="Tamanho" hint={hint}>
-      {fields}
-      {distributeTiles}
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+        <DeckRibbonTilePopover
+          icon={Ruler}
+          label="Dimensões"
+          hint={hint}
+          panelLabel="Altura de linha e largura de coluna"
+          panelClassName="td-deck-ribbon-tile-popover--wide"
+        >
+          {fields}
+        </DeckRibbonTilePopover>
+        <DeckRibbonTile
+          icon={Rows3}
+          label="Distribuir linhas"
+          hint={D.tableDistributeRows}
+          onClick={() => applyOptions({ rowHeightPx: undefined })}
+        />
+        <DeckRibbonTile
+          icon={Columns3}
+          label="Distribuir colunas"
+          hint={D.tableDistributeColumns}
+          disabled={projectionColumns.length === 0}
+          onClick={() =>
+            updateSelected({
+              tableProjection: distributeTableProjectionColumnWidths(block),
+            } as Partial<ComunicadoBlock>)
+          }
+        />
+      </div>
     </DeckRibbonGroup>
   );
 }

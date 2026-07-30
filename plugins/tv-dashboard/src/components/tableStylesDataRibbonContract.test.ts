@@ -11,8 +11,8 @@ describe("table styles/data ribbon parity", () => {
     const floatToolbar = readFileSync(join(here, "TableSelectionFloatToolbar.tsx"), "utf8");
     expect(sections).toContain("TableStylesMenu");
     expect(sections).toContain("TableDataMenu");
-    expect(sections).toContain("Alterar\\nestilos");
-    expect(sections).toContain("Selecionar\\ndados");
+    expect(sections).toContain("Alterar estilos");
+    expect(sections).toContain("Selecionar dados");
     expect(floatToolbar).toContain("TableStylesMenu");
     expect(floatToolbar).toContain("TableDataMenu");
     expect(floatToolbar).not.toContain("FloatChecklist");

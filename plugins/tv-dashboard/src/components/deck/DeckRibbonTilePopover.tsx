@@ -10,9 +10,14 @@ type Props = {
   label: string;
   hint?: string;
   panelLabel: string;
-  children: ReactNode;
-  /** Classe extra no painel (largura do formulário). */
+  children: ReactNode | ((close: () => void) => ReactNode);
+  /** Classe extra no painel (largura do formulário / portal de menu). */
   panelClassName?: string;
+  /**
+   * `form` (padrão): chrome do tile-popover.
+   * `menu`: sem chrome — cascata/galeria traz o próprio fundo.
+   */
+  panelVariant?: "form" | "menu";
 };
 
 /**
@@ -26,10 +31,12 @@ export function DeckRibbonTilePopover({
   panelLabel,
   children,
   panelClassName,
+  panelVariant = "form",
 }: Props) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const close = () => setOpen(false);
 
   return (
     <div ref={anchorRef} className="td-composer__dropdown">
@@ -47,12 +54,17 @@ export function DeckRibbonTilePopover({
           panelRef={panelRef}
           variant="bare"
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-          className={["td-deck-ribbon-tile-popover", panelClassName].filter(Boolean).join(" ")}
+          className={[
+            panelVariant === "form" ? "td-deck-ribbon-tile-popover" : null,
+            panelClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           role="dialog"
           aria-label={panelLabel}
-          onDismiss={() => setOpen(false)}
+          onDismiss={close}
         >
-          {children}
+          {typeof children === "function" ? children(close) : children}
         </AnchoredPanelPortal>
       ) : null}
     </div>
