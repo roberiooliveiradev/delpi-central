@@ -14,6 +14,9 @@ from app.domain.services.quality.nonconformity_display_service import (
     resolve_nonconformity_status_label,
     resolve_nonconformity_type_label,
 )
+from app.domain.services.quality.nonconformity_query_filter_service import (
+    qi2_tipo_codes_for_filter,
+)
 from app.infrastructure.persistence.totvs.nonconformity_repositories.nonconformity_query_filters import (
     apply_nonconformity_text_filters,
 )
@@ -29,9 +32,6 @@ from app.application.models.page import Page
 
 
 class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryPort):
-
-    INTERNAL_TYPES = ["1"]
-    EXTERNAL_TYPES = ["2", "3"]
 
     def _map_nonconformity(self, row: dict) -> Nonconformity:
         code = str(row.get("code") or "").strip()
@@ -86,10 +86,9 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
             end=request.date_end
         )
 
-        if request.type == "internal":
-            qb.in_list("QI2_TIPO", self.INTERNAL_TYPES)
-        elif request.type == "external":
-            qb.in_list("QI2_TIPO", self.EXTERNAL_TYPES)
+        type_codes = qi2_tipo_codes_for_filter(request.type)
+        if type_codes:
+            qb.in_list("QI2_TIPO", type_codes)
 
         where_clause, params = qb.build()
 
@@ -204,10 +203,9 @@ class NonconformityQueryRepository(BaseRepository, NonconformityQueryRepositoryP
             end=occurrence_date_end,
         )
 
-        if request.type == "internal":
-            qb.in_list("QI2_TIPO", self.INTERNAL_TYPES)
-        elif request.type == "external":
-            qb.in_list("QI2_TIPO", self.EXTERNAL_TYPES)
+        type_codes = qi2_tipo_codes_for_filter(request.type)
+        if type_codes:
+            qb.in_list("QI2_TIPO", type_codes)
 
         where_clause, params = qb.build()
 

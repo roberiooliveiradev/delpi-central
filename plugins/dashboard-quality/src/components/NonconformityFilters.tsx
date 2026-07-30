@@ -32,8 +32,10 @@ type NonconformityFiltersProps = {
 };
 
 const TYPE_OPTIONS = [
+  { value: "all", label: "Todos" },
   { value: "internal", label: "Interna" },
-  { value: "external", label: "Externa" },
+  { value: "customer", label: "Cliente" },
+  { value: "supplier", label: "Fornecedor" },
 ] as const;
 
 export function NonconformityFilters({

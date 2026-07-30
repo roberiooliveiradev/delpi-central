@@ -40888,11 +40888,13 @@
           "name": "type",
           "in": "query",
           "required": false,
-          "description": "Nonconformity type filter.",
+          "description": "Nonconformity type filter: internal (QI2_TIPO=1), customer (2), supplier (3), external (2+3 legacy), or all.",
           "type": "string",
           "default": "all",
           "enum": [
             "internal",
+            "customer",
+            "supplier",
             "external",
             "all"
           ]
@@ -41161,11 +41163,13 @@
           "name": "type",
           "in": "query",
           "required": false,
-          "description": "Nonconformity type filter.",
+          "description": "Nonconformity type filter: internal (QI2_TIPO=1), customer (2), supplier (3), external (2+3 legacy), or all.",
           "type": "string",
           "default": "all",
           "enum": [
             "internal",
+            "customer",
+            "supplier",
             "external",
             "all"
           ]

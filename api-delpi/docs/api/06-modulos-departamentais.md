@@ -454,7 +454,7 @@ Documentação completa: [scrap-monitoring.md](./scrap-monitoring.md).
 
 | Query | Descrição |
 |---|---|
-| `type` | `internal`, `external` ou `all` (default). |
+| `type` | `internal`, `customer`, `supplier`, `external` (legado: 2+3) ou `all` (default). |
 | `branch`, `date_start`, `date_end` | Filtros. |
 | `status`, `item_code`, `description` | Filtros adicionais. |
 | `page`, `page_size` | Paginação. |
