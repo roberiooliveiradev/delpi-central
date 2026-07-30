@@ -1,5 +1,11 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
+  resolveSeriesCategoryColor,
+  resolveValueScaleColor,
+  seriesValueExtent,
+  type SeriesChartColorScale,
+} from "../seriesChartOptions";
+import {
   chartPartDomProps,
   isChartPartRefEqual,
   type SeriesChartInteraction,
@@ -12,11 +18,15 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
   seriesIndex?: number;
   /** Total de séries no grupo (barras lado a lado). Default 1 = ocupa a categoria inteira. */
   seriesCount?: number;
+  /** Paleta por categoria / rampa semântica (série única). */
+  categoryColors?: string[] | null;
+  colorScale?: SeriesChartColorScale | null;
 };
 
 /**
  * Colunas (vertical) ou barras (horizontal) cartesianas.
  * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped).
+ * Com `colorScale.mode === "by_value"` (ou `categoryColors` na série única), cada barra tem cor própria.
  */
 export function ChartSeriesBar({
   layout,
@@ -25,6 +35,8 @@ export function ChartSeriesBar({
   interaction,
   seriesIndex = 0,
   seriesCount = 1,
+  categoryColors,
+  colorScale,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotH, toY, axisMin, axisMax, orientation, toValueX } = layout;
@@ -35,6 +47,28 @@ export function ChartSeriesBar({
   const baselineX = margin.left;
   const categoryCount = Math.max(points.length, 1);
   const horizontal = orientation === "horizontal";
+  const extent = seriesValueExtent(points.map((p) => p.value));
+  const usePerBarColor =
+    seriesCount <= 1 &&
+    (colorScale?.mode === "by_value" || Boolean(categoryColors && categoryColors.length > 0));
+
+  const resolveFill = (point: (typeof points)[number], index: number): string => {
+    if (!usePerBarColor) return seriesColor;
+    const slotIndex =
+      typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
+        ? point.sourceIndex
+        : index;
+    if (colorScale?.mode === "by_value" && categoryColors && categoryColors.length > 0) {
+      return resolveValueScaleColor({
+        value: Number(point.value) || 0,
+        min: extent.min,
+        max: extent.max,
+        colors: categoryColors,
+        polarity: colorScale.polarity ?? "high_is_bad",
+      });
+    }
+    return resolveSeriesCategoryColor(slotIndex, seriesColor, categoryColors);
+  };
 
   return (
     <g
@@ -73,6 +107,7 @@ export function ChartSeriesBar({
           seriesIndex,
           seriesCount,
         });
+        const fill = resolveFill(point, index);
 
         if (horizontal && toValueX) {
           const x0 = toValueX(Math.min(axisMin, 0));
@@ -86,7 +121,7 @@ export function ChartSeriesBar({
               y={slot.y}
               width={width}
               height={slot.height}
-              fill={seriesColor}
+              fill={fill}
               rx={1}
               className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
                 .filter(Boolean)
@@ -104,7 +139,7 @@ export function ChartSeriesBar({
             y={y}
             width={slot.width}
             height={height}
-            fill={seriesColor}
+            fill={fill}
             rx={1}
             className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
               .filter(Boolean)

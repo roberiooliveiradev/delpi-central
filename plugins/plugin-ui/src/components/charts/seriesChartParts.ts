@@ -16,6 +16,8 @@ import {
   OFFICE_CHART_PLOT_STROKE,
   OFFICE_CHART_SERIES_COLOR,
   SERIES_CHART_CATEGORY_PALETTE,
+  resolveValueScaleColor,
+  type SeriesChartColorScale,
   type SeriesChartKind,
 } from "./seriesChartOptions";
 import { DECK_CHART_DEFAULTS, DECK_THEME_DARK } from "../../theme/deckColorCatalog";
@@ -977,13 +979,17 @@ export function resolveSeriesPaintColor(args: {
 
 /**
  * Cor de fatia/categoria (pizza, rosca, funil, empilhado) — mesma ordem da legenda.
- * Marcador da fatia → série/categoria N → categoryColors → paleta.
+ * Marcador da fatia → (opcional) escala por valor → série/categoria N → categoryColors → paleta.
  */
 export function resolveCategorySlicePaintColor(args: {
   index: number;
   sourceIndex?: number;
+  value?: number | null;
+  valueMin?: number;
+  valueMax?: number;
   seriesColor: string;
   categoryColors?: string[] | null;
+  colorScale?: SeriesChartColorScale | null;
   parts?: ChartPartsMap | null;
   parentSeriesIndex?: number;
 }): string {
@@ -994,6 +1000,24 @@ export function resolveCategorySlicePaintColor(args: {
     pointIndex,
   })?.style?.fill?.trim();
   if (markerFill) return markerFill;
+
+  const scale = args.colorScale;
+  const ramp = args.categoryColors?.filter((c) => c?.trim()) ?? [];
+  if (
+    scale?.mode === "by_value" &&
+    ramp.length > 0 &&
+    args.valueMin != null &&
+    args.valueMax != null
+  ) {
+    return resolveValueScaleColor({
+      value: Number(args.value) || 0,
+      min: args.valueMin,
+      max: args.valueMax,
+      colors: ramp,
+      polarity: scale.polarity ?? "high_is_bad",
+    });
+  }
+
   return resolveSeriesPaintColor({
     seriesIndex: args.index,
     seriesColor: args.seriesColor,

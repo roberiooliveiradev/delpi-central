@@ -6,11 +6,16 @@ import {
   formatSeriesChartCategoryLabel,
   formatSeriesChartValue,
   migrateSeriesChartOptionsOnLoad,
+  resolveSeriesCategoryColor,
   resolveSeriesChartDisplayOptions,
   resolveSeriesChartLegendLayout,
   resolveSeriesChartLegendSort,
   resolveSeriesChartTicks,
+  resolveValueScaleColor,
+  seriesValueExtent,
 } from "./seriesChartOptions";
+
+const RAG_RAMP = ["#15803d", "#2563eb", "#eab308", "#ea580c", "#be123c"] as const;
 
 describe("seriesChartOptions — títulos de eixo", () => {
   it("liga títulos de eixo por padrão", () => {
@@ -150,6 +155,53 @@ describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
     const ticks = resolveSeriesChartTicks(0, 800);
     expect(ticks[0]).toBe(0);
     expect(ticks[ticks.length - 1]).toBe(800);
+  });
+});
+
+describe("resolveValueScaleColor — colorir por valor", () => {
+  it("high_is_bad: valor alto → vermelho (fim da rampa Melhor→pior)", () => {
+    expect(
+      resolveValueScaleColor({
+        value: 100,
+        min: 0,
+        max: 100,
+        colors: RAG_RAMP,
+        polarity: "high_is_bad",
+      }),
+    ).toBe("#be123c");
+  });
+
+  it("high_is_good: valor alto → verde (início da rampa)", () => {
+    expect(
+      resolveValueScaleColor({
+        value: 100,
+        min: 0,
+        max: 100,
+        colors: RAG_RAMP,
+        polarity: "high_is_good",
+      }),
+    ).toBe("#15803d");
+  });
+
+  it("high_is_bad: valor baixo → verde", () => {
+    expect(
+      resolveValueScaleColor({
+        value: 0,
+        min: 0,
+        max: 100,
+        colors: RAG_RAMP,
+        polarity: "high_is_bad",
+      }),
+    ).toBe("#15803d");
+  });
+
+  it("mode off equivalente: resolveSeriesCategoryColor usa índice", () => {
+    expect(resolveSeriesCategoryColor(0, "#089bdb", [...RAG_RAMP])).toBe("#15803d");
+    expect(resolveSeriesCategoryColor(4, "#089bdb", [...RAG_RAMP])).toBe("#be123c");
+  });
+
+  it("seriesValueExtent ignora null/NaN", () => {
+    expect(seriesValueExtent([10, null, 40, Number.NaN, 5])).toEqual({ min: 5, max: 40 });
   });
 });
 

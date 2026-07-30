@@ -116,6 +116,8 @@ export function ChartPlotAreaGroup({
             points={points}
             seriesColor={seriesColor}
             interaction={interaction}
+            categoryColors={config.categoryColors}
+            colorScale={config.colorScale}
           />
         )
       ) : null}
@@ -136,6 +138,7 @@ export function ChartPlotAreaGroup({
             interaction={interaction}
             chartParts={chartParts}
             categoryColors={config.categoryColors}
+            colorScale={config.colorScale}
           />
         )
       ) : null}
@@ -198,6 +201,7 @@ export function ChartPlotAreaGroup({
           interaction={interaction}
           chartParts={chartParts}
           categoryColors={config.categoryColors}
+          colorScale={config.colorScale}
         />
       ) : null}
 
@@ -222,6 +226,7 @@ export function ChartPlotAreaGroup({
           chartParts={chartParts}
           innerRadiusRatio={pieInnerRadiusRatio}
           categoryColors={config.categoryColors}
+          colorScale={config.colorScale}
         />
       ) : null}
 

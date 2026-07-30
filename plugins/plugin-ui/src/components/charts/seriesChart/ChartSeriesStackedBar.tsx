@@ -1,5 +1,8 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
-import { OFFICE_CHART_SERIES_COLOR } from "../seriesChartOptions";
+import {
+  OFFICE_CHART_SERIES_COLOR,
+  type SeriesChartColorScale,
+} from "../seriesChartOptions";
 import {
   bindChartPartPointer,
   filterVisibleSeriesPoints,
@@ -15,6 +18,7 @@ export type ChartSeriesStackedBarProps = Pick<SeriesChartSharedProps, "layout" |
   seriesIndex?: number;
   chartParts?: ChartPartsMap | null;
   categoryColors?: string[] | null;
+  colorScale?: SeriesChartColorScale | null;
 };
 
 /**
@@ -30,6 +34,7 @@ export function ChartSeriesStackedBar({
   seriesIndex = 0,
   chartParts,
   categoryColors,
+  colorScale,
 }: ChartSeriesStackedBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
@@ -71,8 +76,12 @@ export function ChartSeriesStackedBar({
         const fill = resolveCategorySlicePaintColor({
           index: i,
           sourceIndex: point.sourceIndex,
+          value,
+          valueMin: Math.min(...values),
+          valueMax: Math.max(...values),
           seriesColor: seriesColor || OFFICE_CHART_SERIES_COLOR,
           categoryColors,
+          colorScale,
           parts: chartParts,
           parentSeriesIndex: seriesIndex,
         });

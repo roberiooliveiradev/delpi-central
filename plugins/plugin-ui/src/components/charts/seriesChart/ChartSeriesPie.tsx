@@ -7,6 +7,7 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import type { SeriesChartColorScale } from "../seriesChartOptions";
 import type { SeriesChartSharedProps } from "./types";
 
 export type ChartSeriesPieProps = Pick<SeriesChartSharedProps, "layout" | "points" | "seriesColor"> & {
@@ -16,6 +17,7 @@ export type ChartSeriesPieProps = Pick<SeriesChartSharedProps, "layout" | "point
   /** Rosca (doughnut): raio interno relativo 0–0.9. */
   innerRadiusRatio?: number;
   categoryColors?: string[] | null;
+  colorScale?: SeriesChartColorScale | null;
 };
 
 function polar(cx: number, cy: number, r: number, angleRad: number) {
@@ -62,6 +64,7 @@ export function ChartSeriesPie({
   chartParts,
   innerRadiusRatio = 0,
   categoryColors,
+  colorScale,
 }: ChartSeriesPieProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
@@ -109,8 +112,12 @@ export function ChartSeriesPie({
         const fill = resolveCategorySlicePaintColor({
           index: i,
           sourceIndex: point.sourceIndex,
+          value,
+          valueMin: Math.min(...values),
+          valueMax: Math.max(...values),
           seriesColor,
           categoryColors,
+          colorScale,
           parts: chartParts,
           parentSeriesIndex: seriesIndex,
         });

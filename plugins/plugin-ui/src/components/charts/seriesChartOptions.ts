@@ -52,6 +52,18 @@ export type SeriesChartLegendSort =
 
 export type SeriesChartTheme = "light" | "dark";
 
+/**
+ * Escala semântica por valor (Excel/Power BI color scales).
+ * `off` = cor por índice de categoria/série (padrão).
+ */
+export type SeriesChartColorScale = {
+  mode: "off" | "by_value";
+  /** high = pior (refugo, NC) | high = melhor (eficiência, OEE). */
+  polarity: "high_is_bad" | "high_is_good";
+  /** Id da paleta semântica cujos `colors` definem a rampa. */
+  paletteId?: string;
+};
+
 /** @deprecated Preferir import de `@delpi/plugin-ui` theme / DECK_COLOR_*. */
 export {
   OFFICE_CHART_AREA_FILL,
@@ -111,6 +123,11 @@ export type SeriesChartOptions = {
    * Vinda de «Alterar cores»; ausente = catálogo Delpi padrão.
    */
   categoryColors?: string[];
+  /**
+   * Colorir marcas (barra/fatia) pelo valor da medida.
+   * Ausente ou `mode: "off"` = comportamento por índice.
+   */
+  colorScale?: SeriesChartColorScale;
   /** Padrão Office: fundo claro. `dark` só sob pedido explícito. */
   theme?: SeriesChartTheme;
   backgroundColor?: string;
@@ -586,4 +603,56 @@ export function resolveSeriesCategoryColor(
   }
   if (index === 0) return seriesColor ?? fallbackPalette[0]!;
   return fallbackPalette[index % fallbackPalette.length]!;
+}
+
+/**
+ * Mapeia um valor na rampa semântica (stops discretos).
+ * `high_is_bad`: valor alto → fim da rampa (ex. vermelho em Melhor→pior).
+ * `high_is_good`: valor alto → início da rampa.
+ */
+export function resolveValueScaleColor(args: {
+  value: number;
+  min: number;
+  max: number;
+  colors: readonly string[];
+  polarity: "high_is_bad" | "high_is_good";
+}): string {
+  const colors = args.colors.filter((c) => typeof c === "string" && c.trim());
+  if (colors.length === 0) return SERIES_CHART_CATEGORY_PALETTE[0]!;
+  if (colors.length === 1) return colors[0]!;
+
+  const raw = Number(args.value);
+  const min = Number(args.min);
+  const max = Number(args.max);
+  let t = 0.5;
+  if (Number.isFinite(raw) && Number.isFinite(min) && Number.isFinite(max) && max !== min) {
+    t = (raw - min) / (max - min);
+  }
+  t = Math.min(1, Math.max(0, t));
+  if (args.polarity === "high_is_good") {
+    t = 1 - t;
+  }
+  const bucket = Math.min(colors.length - 1, Math.floor(t * colors.length));
+  /* Valor no máximo cai no último stop (não no penúltimo por floor). */
+  const index = t >= 1 ? colors.length - 1 : bucket;
+  return colors[index]!;
+}
+
+/** Min/max finitos de uma lista de valores (ignora null/NaN). */
+export function seriesValueExtent(
+  values: readonly (number | null | undefined)[],
+): { min: number; max: number } {
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  for (const raw of values) {
+    if (raw == null) continue;
+    const n = Number(raw);
+    if (!Number.isFinite(n)) continue;
+    if (n < min) min = n;
+    if (n > max) max = n;
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) {
+    return { min: 0, max: 0 };
+  }
+  return { min, max };
 }
