@@ -14,8 +14,11 @@ export type TransformometroView =
   | "recurso"
   | "processos"
   | "processo"
+  | "processoDiagramaEdit"
   | "instancia"
+  | "instanciaDiagramaEdit"
   | "revisao"
+  | "revisaoDiagramaEdit"
   | "atas"
   | "ata"
   | "ataEdit"
@@ -73,6 +76,39 @@ export function parseTransformometroPath(pathname: string): ParsedTransformometr
     return {
       view: ataMatch[2] === "edit" ? "ataEdit" : ataMatch[2] === "sign" ? "ataSign" : "ata",
       ataId: ataMatch[1],
+    };
+  }
+
+  const revisaoDiagramaEditMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/instancias\/([^/]+)\/revisoes\/([^/]+)\/diagrama\/edit$/
+  );
+  if (revisaoDiagramaEditMatch) {
+    return {
+      view: "revisaoDiagramaEdit",
+      processoId: revisaoDiagramaEditMatch[1],
+      instanciaId: revisaoDiagramaEditMatch[2],
+      revisaoId: revisaoDiagramaEditMatch[3],
+    };
+  }
+
+  const instanciaDiagramaEditMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/instancias\/([^/]+)\/diagrama\/edit$/
+  );
+  if (instanciaDiagramaEditMatch) {
+    return {
+      view: "instanciaDiagramaEdit",
+      processoId: instanciaDiagramaEditMatch[1],
+      instanciaId: instanciaDiagramaEditMatch[2],
+    };
+  }
+
+  const processoDiagramaEditMatch = path.match(
+    /^\/apps\/transformometro\/processos\/([^/]+)\/diagrama\/edit$/
+  );
+  if (processoDiagramaEditMatch) {
+    return {
+      view: "processoDiagramaEdit",
+      processoId: processoDiagramaEditMatch[1],
     };
   }
 
@@ -223,6 +259,22 @@ export function buildProcessoPath(
     return buildInstanciaPath(processoId, instanciaId);
   }
   return `${TRANSFORMOMETRO_ROUTES.processos}/${processoId}`;
+}
+
+export function buildProcessoDiagramaEditPath(processoId: string): string {
+  return `${buildProcessoPath(processoId)}/diagrama/edit`;
+}
+
+export function buildInstanciaDiagramaEditPath(processoId: string, instanciaId: string): string {
+  return `${buildInstanciaPath(processoId, instanciaId)}/diagrama/edit`;
+}
+
+export function buildRevisaoDiagramaEditPath(
+  processoId: string,
+  instanciaId: string,
+  revisaoId: string
+): string {
+  return `${buildProcessoPath(processoId, revisaoId, instanciaId)}/diagrama/edit`;
 }
 
 export function buildRecursoPath(recursoId: string): string {

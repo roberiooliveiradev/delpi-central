@@ -23,6 +23,11 @@ import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
+  buildProcessoDiagramaEditPath,
+  buildInstanciaPath,
+  buildProcessoPath,
+} from "../../utils/routeParser";
+import {
   createProcessoInstancia,
   deleteInstancia,
   deleteProcesso,
@@ -47,7 +52,6 @@ import { fetchProcessoDecomposicao } from "../../data/api/transformometroDecompo
 import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArquivoApi";
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
-import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
@@ -517,11 +521,19 @@ export function ProcessoDetailPage({
           </div>
           <EditableSectionCard
             title="Diagrama macro base"
-            description="Mapa canônico cadastrado. Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
+            description="Mapa canônico cadastrado. Edite em página dedicada; as revisões vigentes aparecem acima na visão composta."
             hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
-            isEditing={sectionEdit.isEditing("diagrama_macro")}
-            onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
-            onCancel={() => sectionEdit.cancelEdit("diagrama_macro")}
+            isEditing={false}
+            editable={
+              !(
+                sectionEdit.presence?.editors.some(
+                  (item) => item.lock_active && item.section_key === "diagrama_macro",
+                ) ?? false
+              )
+            }
+            editLabel="Editar diagrama"
+            onEdit={() => onNavigate(buildProcessoDiagramaEditPath(processoId))}
+            onCancel={() => undefined}
             readContent={
               <ProcessoDiagramSection
                 embeddedInCard
@@ -533,16 +545,7 @@ export function ProcessoDetailPage({
                 onEntityChanged={() => void loadTimeline()}
               />
             }
-            editContent={
-              <ProcessoDiagramSection
-                embeddedInCard
-                processoId={processoId}
-                getAccessToken={getAccessToken}
-                onError={setError}
-                resyncVersion={panelResyncVersion}
-                onEntityChanged={() => void loadTimeline()}
-              />
-            }
+            editContent={null}
           />
           </ProcessoWorkspaceSectionPanel>
         ) : null}

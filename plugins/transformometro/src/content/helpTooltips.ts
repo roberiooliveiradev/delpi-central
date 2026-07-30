@@ -157,7 +157,7 @@ export const TM_HELP_TOOLTIPS = {
       "Histórico auditado de alterações neste processo e entidades vinculadas (mapeamento WBS, diagramas, melhorias, revisões, medições, investimentos e recursos).",
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
-      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões.",
+      "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões. «Editar diagrama» abre o editor em página dedicada (com trava colaborativa).",
     diagramaComposto:
       "Visão do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
     arquivos:
@@ -218,7 +218,7 @@ export const TM_HELP_TOOLTIPS = {
     rotulo:
       "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
-      "Define quais etapas do diagrama-macro desta melhoria entram no fluxo. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo se você marcar o macro completo.",
+      "Define quais etapas do diagrama-macro desta melhoria entram no fluxo. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo se você marcar o macro completo. «Editar diagrama» abre o editor em página dedicada.",
     diagramaEscopoMacroCompleto:
       "Marcado: esta melhoria enxerga todo o diagrama-macro (todas as faixas e etapas). Desmarcado: clique nos nós do desenho para escolher só as etapas relevantes; o restante fica fora do escopo e das revisões desta melhoria.",
     diagramaEscopoArestasFronteira:
@@ -264,7 +264,7 @@ export const TM_HELP_TOOLTIPS = {
     evidencias:
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
     diagramaRevisao:
-      "Âncora = diagrama da revisão de referência (exceto baseline). Edite o delta a partir desse fluxo; na gravação o overlay fica absoluto no macro para o diagrama composto «agora» refletir as revisões vigentes.",
+      "Âncora = diagrama da revisão de referência (exceto baseline). Edite o delta a partir desse fluxo em página dedicada; na gravação o overlay fica absoluto no macro para o diagrama composto «agora» refletir as revisões vigentes.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:

@@ -17,6 +17,7 @@ import { AtaDetailPage } from "./ui/pages/AtaDetailPage";
 import { AtaSignPage } from "./ui/pages/AtaSignPage";
 import { AtasPendingPage } from "./ui/pages/AtasPendingPage";
 import { MinhaAssinaturaPage } from "./ui/pages/MinhaAssinaturaPage";
+import { DiagramEditorPage } from "./ui/pages/DiagramEditorPage";
 import { useDelpiPortalBridge } from "./hooks/useDelpiPortalBridge";
 import { useTransformometroRouterPath } from "./hooks/useTransformometroRouterPath";
 import { TRANSFORMOMETRO_ROUTES } from "./constants/routes";
@@ -68,6 +69,45 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     page = <AtasPendingPage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
   } else if (route.view === "minhaAssinatura") {
     page = <MinhaAssinaturaPage getAccessToken={getAccessToken} onNavigate={onNavigate} />;
+  } else if (route.view === "processoDiagramaEdit" && route.processoId) {
+    page = (
+      <DiagramEditorPage
+        kind="processo"
+        processoId={route.processoId}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (
+    route.view === "instanciaDiagramaEdit" &&
+    route.processoId &&
+    route.instanciaId
+  ) {
+    page = (
+      <DiagramEditorPage
+        kind="instancia"
+        processoId={route.processoId}
+        instanciaId={route.instanciaId}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+      />
+    );
+  } else if (
+    route.view === "revisaoDiagramaEdit" &&
+    route.processoId &&
+    route.instanciaId &&
+    route.revisaoId
+  ) {
+    page = (
+      <DiagramEditorPage
+        kind="revisao"
+        processoId={route.processoId}
+        instanciaId={route.instanciaId}
+        revisaoId={route.revisaoId}
+        getAccessToken={getAccessToken}
+        onNavigate={onNavigate}
+      />
+    );
   } else if (isConfiguracoesWorkspaceRoute(route)) {
     page = (
       <ConfiguracoesWorkspacePage

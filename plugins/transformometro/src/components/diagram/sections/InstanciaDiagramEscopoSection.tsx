@@ -12,6 +12,7 @@ import {
   emptyEscopo,
   emptyFlowchart,
   DiagramFullscreenFrame,
+  DiagramLayoutProvider,
   NativeCheckboxControl,
   useEditableDraft,
   type FlowchartEscopo,
@@ -25,6 +26,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   instanciaId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
+  variant?: "embedded" | "page";
   resyncVersion?: number;
   onError: (message: string | null) => void;
   /** Após salvar — invalida diagrama composto do processo (keep-alive). */
@@ -37,6 +40,7 @@ export function InstanciaDiagramEscopoSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  variant = "embedded",
   resyncVersion = 0,
   onError,
   onSaved,
@@ -129,10 +133,43 @@ export function InstanciaDiagramEscopoSection({
     );
   }
 
+  const canvas = (
+    <>
+      <FlowchartEditor
+        value={macro}
+        readOnly
+        selectedScopeIds={selectedScopeIds}
+        onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
+        showTemplates={false}
+        showPreviewTab={false}
+      />
+
+      {!readOnly ? (
+        <DirtySaveActions
+          dirty={dirty}
+          saving={saving}
+          label="Salvar escopo"
+          onSave={() => void handleSave()}
+        />
+      ) : null}
+    </>
+  );
+
   return (
-    <div className="delpi-ui-bpmn-section">
-      {!embeddedInCard ? (
-        <FieldLabel className="tm-field__label" label="Escopo no diagrama" hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo} />
+    <div
+      className={[
+        "delpi-ui-bpmn-section",
+        variant === "page" ? "delpi-ui-bpmn-section--page" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {!embeddedInCard && variant !== "page" ? (
+        <FieldLabel
+          className="tm-field__label"
+          label="Escopo no diagrama"
+          hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
+        />
       ) : null}
 
       <NativeCheckboxControl
@@ -161,34 +198,26 @@ export function InstanciaDiagramEscopoSection({
         hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopoArestasFronteira}
       />
 
-      <DiagramFullscreenFrame
-        title="Escopo no diagrama"
-        subtitle={
-          escopo.inherit_all
-            ? "Macro completo: todas as etapas desta melhoria. Desmarque a opção acima para selecionar um subset no desenho."
-            : "Clique nos nós para incluir ou excluir do escopo. Arestas de fronteira seguem a opção acima."
-        }
-        portalScopeClassName="dashboard-transformometro"
-        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
-      >
-        <FlowchartEditor
-          value={macro}
-          readOnly
-          selectedScopeIds={selectedScopeIds}
-          onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
-          showTemplates={false}
-          showPreviewTab={false}
-        />
-
-        {!readOnly ? (
-          <DirtySaveActions
-            dirty={dirty}
-            saving={saving}
-            label="Salvar escopo"
-            onSave={() => void handleSave()}
-          />
-        ) : null}
-      </DiagramFullscreenFrame>
+      {variant === "page" ? (
+        <DiagramLayoutProvider layout="fill">
+          <div className="delpi-ui-bpmn-workspace delpi-ui-bpmn-workspace--page">
+            <div className="delpi-ui-bpmn-workspace__body">{canvas}</div>
+          </div>
+        </DiagramLayoutProvider>
+      ) : (
+        <DiagramFullscreenFrame
+          title="Escopo no diagrama"
+          subtitle={
+            escopo.inherit_all
+              ? "Macro completo: todas as etapas desta melhoria. Desmarque a opção acima para selecionar um subset no desenho."
+              : "Clique nos nós para incluir ou excluir do escopo. Arestas de fronteira seguem a opção acima."
+          }
+          portalScopeClassName="dashboard-transformometro"
+          labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
+        >
+          {canvas}
+        </DiagramFullscreenFrame>
+      )}
     </div>
   );
 }

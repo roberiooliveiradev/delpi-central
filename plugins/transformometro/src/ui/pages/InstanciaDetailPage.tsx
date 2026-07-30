@@ -55,7 +55,7 @@ import {
   buildComparativoColumns,
   buildRevisaoColumns,
 } from "../../utils/processoDetailTables";
-import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { buildInstanciaDiagramaEditPath, buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
 import {
   TRANSFORMOMETRO_WORKSPACE_HASH_EVENT,
   requestWorkspaceTreeRefresh,
@@ -547,11 +547,19 @@ export function InstanciaDetailPage({
       <InstanciaWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
         <EditableSectionCard
           title="Escopo no diagrama"
-          description="Quais etapas do diagrama-macro esta melhoria cobre — e se setas na borda do recorte entram no fluxo."
+          description="Quais etapas do diagrama-macro esta melhoria cobre — e se setas na borda do recorte entram no fluxo. Edite em página dedicada."
           hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
-          isEditing={sectionEdit.isEditing("diagrama_escopo")}
-          onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
-          onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
+          isEditing={false}
+          editable={
+            !(
+              sectionEdit.presence?.editors.some(
+                (item) => item.lock_active && item.section_key === "diagrama_escopo",
+              ) ?? false
+            )
+          }
+          editLabel="Editar diagrama"
+          onEdit={() => onNavigate(buildInstanciaDiagramaEditPath(processoId, instanciaId))}
+          onCancel={() => undefined}
           readContent={
             <InstanciaDiagramEscopoSection
               embeddedInCard
@@ -563,20 +571,7 @@ export function InstanciaDetailPage({
               resyncVersion={sectionEdit.resyncVersion}
             />
           }
-          editContent={
-            <InstanciaDiagramEscopoSection
-              embeddedInCard
-              processoId={processoId}
-              instanciaId={instanciaId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
-              onSaved={() => {
-                sectionEdit.stopEdit("diagrama_escopo");
-                requestWorkspaceTreeRefresh();
-              }}
-            />
-          }
+          editContent={null}
         />
       </InstanciaWorkspaceSectionPanel>
 

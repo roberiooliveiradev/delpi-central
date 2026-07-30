@@ -32,6 +32,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { optionalTrimmedText } from "../../utils/optionalTrimmedText";
 import { createCoalescedAsyncRunner } from "../../utils/coalescedAsync";
+import { buildRevisaoDiagramaEditPath } from "../../utils/routeParser";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { parseApiEnvelope } from "../../data/api/transformometroHttp";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
@@ -488,11 +489,31 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
       <EditableSectionCard
         title="Diagrama da revisão"
-        description="Parte do diagrama da revisão de referência; o delta alimenta o diagrama composto pelas vigentes."
+        description="Parte do diagrama da revisão de referência; o delta alimenta o diagrama composto pelas vigentes. Edite em página dedicada."
         hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
-        isEditing={sectionEdit.isEditing("diagrama_revisao")}
-        onEdit={() => void sectionEdit.startEdit("diagrama_revisao")}
-        onCancel={() => sectionEdit.cancelEdit("diagrama_revisao")}
+        isEditing={false}
+        editable={
+          Boolean(onNavigate) &&
+          Boolean(revisao.processo_id) &&
+          Boolean(revisao.instancia_id) &&
+          !(
+            sectionEdit.presence?.editors.some(
+              (item) => item.lock_active && item.section_key === "diagrama_revisao",
+            ) ?? false
+          )
+        }
+        editLabel="Editar diagrama"
+        onEdit={() => {
+          if (!onNavigate || !revisao.processo_id || !revisao.instancia_id) return;
+          onNavigate(
+            buildRevisaoDiagramaEditPath(
+              revisao.processo_id,
+              revisao.instancia_id,
+              revisao.revisao_id,
+            ),
+          );
+        }}
+        onCancel={() => undefined}
         readContent={
           <RevisaoDiagramSection
             embeddedInCard
@@ -505,17 +526,7 @@ export function RevisaoCadastroPanel({
             resyncVersion={sectionEdit.resyncVersion}
           />
         }
-        editContent={
-          <RevisaoDiagramSection
-            embeddedInCard
-            revisaoId={revisao.revisao_id}
-            cenarioTipo={revisao.cenario_tipo}
-            getAccessToken={getAccessToken}
-            onError={onError}
-            onReload={reloadCadastroAndPropagate}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
+        editContent={null}
       />
       </RevisaoWorkspaceSectionPanel>
 

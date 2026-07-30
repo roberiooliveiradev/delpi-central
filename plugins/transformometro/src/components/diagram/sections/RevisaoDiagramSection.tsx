@@ -17,6 +17,7 @@ import {
   flowchartToMermaid,
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
+  DiagramLayoutProvider,
   type FlowchartOverlayV1,
   type FlowchartV1,
   type FlowchartEditorHandle,
@@ -37,6 +38,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   cenarioTipo?: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
+  variant?: "embedded" | "page";
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onReload?: () => void;
@@ -48,6 +51,7 @@ export function RevisaoDiagramSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  variant = "embedded",
   resyncVersion = 0,
   onError,
   onReload,
@@ -162,10 +166,81 @@ export function RevisaoDiagramSection({
     Boolean(diff) &&
     (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
 
+  const editorBody = (
+    <>
+      <FlowchartEditor
+        ref={editorRef}
+        value={displayFlowchart}
+        onChange={
+          readOnly
+            ? undefined
+            : (next) => {
+                if (!showDiff || !diff?.removed?.length) {
+                  setEditable(next);
+                  return;
+                }
+                // Fantasmas do diff não entram no estado editável.
+                const removed = new Set(diff.removed);
+                setEditable({
+                  ...next,
+                  nodes: next.nodes.filter((node) => !removed.has(node.id)),
+                  edges: (next.edges ?? []).filter(
+                    (edge) => !removed.has(edge.from) && !removed.has(edge.to),
+                  ),
+                });
+              }
+        }
+        readOnly={readOnly}
+        diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
+      />
+
+      <details
+        className="delpi-ui-bpmn-section__preview"
+        open={false}
+        onToggle={(event) => {
+          const el = event.currentTarget;
+          if (el.open) setMermaidPreviewOpen(true);
+        }}
+      >
+        <summary>Preview Mermaid (mesclado)</summary>
+        {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
+      </details>
+
+      <div className="delpi-ui-bpmn-section__actions">
+        {!readOnly ? (
+          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+            {saving ? "Salvando…" : "Salvar diagrama da revisão"}
+          </button>
+        ) : null}
+        <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(false)}>
+          <Download size={16} />
+          Exportar PNG
+        </button>
+        {!readOnly ? (
+          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(true)}>
+            <ImagePlus size={16} />
+            PNG como evidência
+          </button>
+        ) : null}
+      </div>
+    </>
+  );
+
   return (
-    <div className="delpi-ui-bpmn-section">
-      {!embeddedInCard ? (
-        <FieldLabel className="tm-field__label" label="Diagrama da revisão" hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao} />
+    <div
+      className={[
+        "delpi-ui-bpmn-section",
+        variant === "page" ? "delpi-ui-bpmn-section--page" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {!embeddedInCard && variant !== "page" ? (
+        <FieldLabel
+          className="tm-field__label"
+          label="Diagrama da revisão"
+          hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
+        />
       ) : null}
 
       {!readOnly ? (
@@ -206,72 +281,26 @@ export function RevisaoDiagramSection({
         />
       ) : null}
 
-      <DiagramFullscreenFrame
-        title="Diagrama da revisão"
-        subtitle={
-          refLabel
-            ? `Âncora: referência ${refLabel}. Overlay as-is / to-be no escopo da melhoria.`
-            : "Overlay as-is / to-be sobre o mapa macro do processo."
-        }
-        portalScopeClassName="dashboard-transformometro"
-        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
-      >
-        <FlowchartEditor
-          ref={editorRef}
-          value={displayFlowchart}
-          onChange={
-            readOnly
-              ? undefined
-              : (next) => {
-                  if (!showDiff || !diff?.removed?.length) {
-                    setEditable(next);
-                    return;
-                  }
-                  // Fantasmas do diff não entram no estado editável.
-                  const removed = new Set(diff.removed);
-                  setEditable({
-                    ...next,
-                    nodes: next.nodes.filter((node) => !removed.has(node.id)),
-                    edges: (next.edges ?? []).filter(
-                      (edge) => !removed.has(edge.from) && !removed.has(edge.to),
-                    ),
-                  });
-                }
+      {variant === "page" ? (
+        <DiagramLayoutProvider layout="fill">
+          <div className="delpi-ui-bpmn-workspace delpi-ui-bpmn-workspace--page">
+            <div className="delpi-ui-bpmn-workspace__body">{editorBody}</div>
+          </div>
+        </DiagramLayoutProvider>
+      ) : (
+        <DiagramFullscreenFrame
+          title="Diagrama da revisão"
+          subtitle={
+            refLabel
+              ? `Âncora: referência ${refLabel}. Overlay as-is / to-be no escopo da melhoria.`
+              : "Overlay as-is / to-be sobre o mapa macro do processo."
           }
-          readOnly={readOnly}
-          diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
-        />
-
-        <details
-          className="delpi-ui-bpmn-section__preview"
-          open={false}
-          onToggle={(event) => {
-            const el = event.currentTarget;
-            if (el.open) setMermaidPreviewOpen(true);
-          }}
+          portalScopeClassName="dashboard-transformometro"
+          labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
         >
-          <summary>Preview Mermaid (mesclado)</summary>
-          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
-        </details>
-
-        <div className="delpi-ui-bpmn-section__actions">
-          {!readOnly ? (
-            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-              {saving ? "Salvando…" : "Salvar diagrama da revisão"}
-            </button>
-          ) : null}
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(false)}>
-            <Download size={16} />
-            Exportar PNG
-          </button>
-          {!readOnly ? (
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(true)}>
-              <ImagePlus size={16} />
-              PNG como evidência
-            </button>
-          ) : null}
-        </div>
-      </DiagramFullscreenFrame>
+          {editorBody}
+        </DiagramFullscreenFrame>
+      )}
     </div>
   );
 }

@@ -3370,6 +3370,42 @@
   }
 }
 
+/* —— Editor de diagrama BPMN (página dedicada) —— */
+.dashboard-transformometro .tm-diagram-editor-page{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: calc(100vh - 2 * var(--ds-page-padding, 16px));
+}
+.dashboard-transformometro .tm-diagram-editor-page__lock-hint{
+  margin: 0;
+}
+.dashboard-transformometro .tm-diagram-editor-page__canvas{
+  flex: 1 1 auto;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-section--page,
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-workspace--page{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-workspace--page .delpi-ui-bpmn-workspace__body{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-editor--fill,
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas{
+  flex: 1 1 auto;
+  min-height: 360px;
+}
+
 /* —— Editor de ata (nova / editar) —— */
 .dashboard-transformometro .tm-ata-editor{
   display: flex;

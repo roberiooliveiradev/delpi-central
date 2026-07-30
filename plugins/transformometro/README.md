@@ -9,8 +9,11 @@ Plugin microfrontend do Transformômetro para o portal Minha Delpi.
 | `/apps/transformometro/dashboard` | KPIs, 3 visões (consolidado/filial/dept), alertas, export, recalcular |
 | `/apps/transformometro/processos` | Lista; create com primeira instância |
 | `/apps/transformometro/processos/{id}` | **Workspace** do processo-mestre (árvore lateral) |
+| `/apps/transformometro/processos/{id}/diagrama/edit` | Editor full-page do diagrama macro (lock colaborativo) |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}` | Melhoria no workspace |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/diagrama/edit` | Editor full-page do escopo no diagrama |
 | `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}` | URL canônica da revisão + subpastas na árvore |
+| `/apps/transformometro/processos/{id}/instancias/{instanciaId}/revisoes/{revisaoId}/diagrama/edit` | Editor full-page do overlay da revisão |
 | `/apps/transformometro/configuracoes/unidades` | **Workspace Configurações** — catálogo de unidades |
 | `/apps/transformometro/configuracoes/departamentos` | Departamentos no workspace |
 | `/apps/transformometro/configuracoes/recursos` | Recursos compartilhados no workspace |
@@ -57,9 +60,11 @@ Na revisão, cada subpasta corresponde a uma seção do cadastro (hash `#matriz`
 
 | Camada | Onde na UI |
 |--------|------------|
-| **Macro** | Workspace processo → **Diagrama macro** |
-| **Escopo** | Workspace melhoria → **Escopo no diagrama** |
-| **Overlay** | Workspace revisão → **Diagrama da revisão** (as-is / to-be) |
+| **Macro** | Workspace processo → preview em **#diagrama** → **Editar diagrama** (página `/diagrama/edit`) |
+| **Escopo** | Workspace melhoria → preview → **Editar diagrama** (página `/diagrama/edit`) |
+| **Overlay** | Workspace revisão → preview → **Editar diagrama** (página `/diagrama/edit`) |
+
+Preview na seção `#diagrama` é somente leitura (com «Tela cheia» ampliada). A edição abre página dedicada full-page (mesmo padrão das atas), com lock colaborativo nas chaves `diagrama_macro` / `diagrama_escopo` / `diagrama_revisao`.
 
 Editor: React Flow (`FlowchartEditor`, lazy) — BPMN-lite, swimlanes, templates, auto-layout, export PNG.
 

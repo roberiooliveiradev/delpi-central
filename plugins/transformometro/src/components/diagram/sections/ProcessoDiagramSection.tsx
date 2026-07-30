@@ -17,6 +17,7 @@ import {
   flowchartToMermaid,
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
+  DiagramLayoutProvider,
   type FlowchartV1,
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
@@ -28,6 +29,8 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
   readOnly?: boolean;
   embeddedInCard?: boolean;
+  /** `page` = editor full-page (sem modal de tela cheia; layout fill). */
+  variant?: "embedded" | "page";
   resyncVersion?: number;
   onError: (message: string | null) => void;
   onEntityChanged?: () => void;
@@ -38,6 +41,7 @@ export function ProcessoDiagramSection({
   getAccessToken,
   readOnly = false,
   embeddedInCard = false,
+  variant = "embedded",
   resyncVersion = 0,
   onError,
   onEntityChanged,
@@ -154,85 +158,99 @@ export function ProcessoDiagramSection({
     return <p className="ds-hint">Carregando diagrama macro…</p>;
   }
 
+  const editorBody = (
+    <>
+      <FlowchartEditor
+        ref={editorRef}
+        value={flowchart}
+        onChange={readOnly ? undefined : setFlowchart}
+        readOnly={readOnly}
+      />
+
+      <DiagramValidationPanel report={validation} loading={validating} />
+
+      <details
+        className="delpi-ui-bpmn-section__preview"
+        open={false}
+        onToggle={(event) => {
+          const el = event.currentTarget;
+          if (el.open) setMermaidPreviewOpen(true);
+        }}
+      >
+        <summary>Preview Mermaid</summary>
+        {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
+      </details>
+
+      {!readOnly ? (
+        <div className="delpi-ui-bpmn-section__actions">
+          <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
+            {saving ? "Salvando…" : "Salvar diagrama"}
+          </button>
+          <button type="button" className={DS_GHOST_BTN} disabled={validating} onClick={() => void runValidation()}>
+            <ShieldCheck size={16} />
+            Validar / simular
+          </button>
+          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
+            <Download size={16} />
+            Exportar PNG
+          </button>
+          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
+            <FileCode2 size={16} />
+            Exportar BPMN XML
+          </button>
+          <button type="button" className={DS_GHOST_BTN} onClick={() => importInputRef.current?.click()}>
+            <Upload size={16} />
+            Importar BPMN XML
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".bpmn,.xml,text/xml,application/xml"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (file) void importBpmnXml(file);
+            }}
+          />
+        </div>
+      ) : (
+        <div className="delpi-ui-bpmn-section__actions">
+          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
+            <Download size={16} />
+            Exportar PNG
+          </button>
+          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
+            <FileCode2 size={16} />
+            Exportar BPMN XML
+          </button>
+        </div>
+      )}
+    </>
+  );
+
   return (
-    <div className="delpi-ui-bpmn-section">
-      {!embeddedInCard ? (
+    <div className={["delpi-ui-bpmn-section", variant === "page" ? "delpi-ui-bpmn-section--page" : ""].filter(Boolean).join(" ")}>
+      {!embeddedInCard && variant !== "page" ? (
         <FieldLabel className="tm-field__label" label="Diagrama macro" hint={TM_HELP_TOOLTIPS.processos.diagramaMacro} />
       ) : null}
 
-      <DiagramFullscreenFrame
-        title="Diagrama macro"
-        subtitle="Mapa canônico do fluxo end-to-end deste processo-mestre."
-        portalScopeClassName="dashboard-transformometro"
-        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
-      >
-        <FlowchartEditor
-          ref={editorRef}
-          value={flowchart}
-          onChange={readOnly ? undefined : setFlowchart}
-          readOnly={readOnly}
-        />
-
-        <DiagramValidationPanel report={validation} loading={validating} />
-
-        <details
-          className="delpi-ui-bpmn-section__preview"
-          open={false}
-          onToggle={(event) => {
-            const el = event.currentTarget;
-            if (el.open) setMermaidPreviewOpen(true);
-          }}
+      {variant === "page" ? (
+        <DiagramLayoutProvider layout="fill">
+          <div className="delpi-ui-bpmn-workspace delpi-ui-bpmn-workspace--page">
+            <div className="delpi-ui-bpmn-workspace__body">{editorBody}</div>
+          </div>
+        </DiagramLayoutProvider>
+      ) : (
+        <DiagramFullscreenFrame
+          title="Diagrama macro"
+          subtitle="Mapa canônico do fluxo end-to-end deste processo-mestre."
+          portalScopeClassName="dashboard-transformometro"
+          labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
         >
-          <summary>Preview Mermaid</summary>
-          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
-        </details>
-
-        {!readOnly ? (
-          <div className="delpi-ui-bpmn-section__actions">
-            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-              {saving ? "Salvando…" : "Salvar diagrama"}
-            </button>
-            <button type="button" className={DS_GHOST_BTN} disabled={validating} onClick={() => void runValidation()}>
-              <ShieldCheck size={16} />
-              Validar / simular
-            </button>
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
-              <Download size={16} />
-              Exportar PNG
-            </button>
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
-              <FileCode2 size={16} />
-              Exportar BPMN XML
-            </button>
-            <button type="button" className={DS_GHOST_BTN} onClick={() => importInputRef.current?.click()}>
-              <Upload size={16} />
-              Importar BPMN XML
-            </button>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".bpmn,.xml,text/xml,application/xml"
-              hidden
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void importBpmnXml(file);
-              }}
-            />
-          </div>
-        ) : (
-          <div className="delpi-ui-bpmn-section__actions">
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
-              <Download size={16} />
-              Exportar PNG
-            </button>
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
-              <FileCode2 size={16} />
-              Exportar BPMN XML
-            </button>
-          </div>
-        )}
-      </DiagramFullscreenFrame>
+          {editorBody}
+        </DiagramFullscreenFrame>
+      )}
     </div>
   );
 }
