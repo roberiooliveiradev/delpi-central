@@ -30,6 +30,8 @@ Base: `/apps/api-delpi` (gateway). Header: `X-Delpi-Caller-App: scrap-monitoring
 
 Todos os endpoints acima respeitam a exclusão de produto de terceiro na api-delpi.
 
+**Valor (R$):** `BC_QUANT × B2_CM1` do armazém **`01` (almoxarifado)**; fallback `B1_CUSTD`. O local **`99` é fábrica** e não entra no custo. Detalhe: [scrap-monitoring.md](../../api-delpi/docs/api/scrap-monitoring.md) § Valor.
+
 Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/scrap-monitoring.md).
 
 ## Estado desta entrega

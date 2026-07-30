@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Fase 0 — comparar estratégias de custo sem multiplicar linhas SB2."""
+"""Comparar estratégias de custo — almoxarifado (01) vs média vs B1_CUSTD."""
 from __future__ import annotations
 
 import os
 
 import pyodbc
+
+# Alinhado a REFUGOS_COST_WAREHOUSE / REFUGOS_FACTORY_WAREHOUSE no domínio.
+ALMOX = "01"
+FABRICA = "99"
 
 
 def main() -> None:
@@ -19,7 +23,20 @@ def main() -> None:
     cur = conn.cursor()
     for label, cost_expr, join in [
         (
-            "avg_cm1",
+            "almox_01",
+            "COALESCE(NULLIF(CM.CM1,0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT),0), 0)",
+            f"""
+LEFT JOIN (
+  SELECT B2_FILIAL, B2_COD,
+         NULLIF(CAST(B2_CM1 AS FLOAT), 0) AS CM1
+  FROM SB2010 WITH (NOLOCK)
+  WHERE D_E_L_E_T_ = ''
+    AND LTRIM(RTRIM(B2_LOCAL)) = '{ALMOX}'
+) CM ON CM.B2_FILIAL = BC.BC_FILIAL AND CM.B2_COD = BC.BC_PRODUTO
+""",
+        ),
+        (
+            "avg_all_locals",
             "COALESCE(NULLIF(CM.AVG_CM1,0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT),0), 0)",
             """
 LEFT JOIN (
@@ -52,21 +69,21 @@ WHERE BC.D_E_L_E_T_='' AND BC.BC_TIPO='R' AND BC.BC_FILIAL='01'
         print(label, dict(zip([d[0] for d in cur.description], cur.fetchone())), flush=True)
 
     cur.execute(
-        """
-SELECT SUM(BC.BC_QUANT * COALESCE(NULLIF(CM.AVG_CM1,0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT),0), 0)) AS DIA
+        f"""
+SELECT
+  SUM(BC.BC_QUANT * COALESCE(NULLIF(CM.CM1,0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT),0), 0)) AS DIA_ALMOX
 FROM SBC010 BC WITH (NOLOCK)
 INNER JOIN SB1010 SB1 WITH (NOLOCK) ON SB1.B1_COD=BC.BC_PRODUTO AND SB1.D_E_L_E_T_=''
 LEFT JOIN (
-  SELECT B2_FILIAL, B2_COD, AVG(NULLIF(CAST(B2_CM1 AS FLOAT), 0)) AS AVG_CM1
-  FROM SB2010 WITH (NOLOCK) WHERE D_E_L_E_T_='' GROUP BY B2_FILIAL, B2_COD
+  SELECT B2_FILIAL, B2_COD, NULLIF(CAST(B2_CM1 AS FLOAT), 0) AS CM1
+  FROM SB2010 WITH (NOLOCK)
+  WHERE D_E_L_E_T_='' AND LTRIM(RTRIM(B2_LOCAL)) = '{ALMOX}'
 ) CM ON CM.B2_FILIAL=BC.BC_FILIAL AND CM.B2_COD=BC.BC_PRODUTO
-WHERE BC.D_E_L_E_T_='' AND BC.BC_TIPO='R' AND BC.BC_FILIAL='01' AND BC.BC_DATA='20260427'
+WHERE BC.D_E_L_E_T_='' AND BC.BC_TIPO='R' AND BC.BC_FILIAL='01' AND BC.BC_DATA='20260730'
 """
     )
-    print("dia27", cur.fetchone()[0], flush=True)
-
-    cur.execute("SELECT DISTINCT RTRIM(CYO_FILIAL) AS f FROM CYO010 WHERE D_E_L_E_T_=''")
-    print("cyo_filiais", [r[0] for r in cur.fetchall()], flush=True)
+    print("dia_hoje_almox", cur.fetchone()[0], flush=True)
+    print(f"nota: local {ALMOX}=almoxarifado (custo); {FABRICA}=fábrica (fora do ValorPerda)", flush=True)
     conn.close()
 
 

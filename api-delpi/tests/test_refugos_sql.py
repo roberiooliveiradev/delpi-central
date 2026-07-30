@@ -1,9 +1,18 @@
+from app.domain.quality.refugos.refugos_scope import (
+    REFUGOS_COST_WAREHOUSE,
+    REFUGOS_FACTORY_WAREHOUSE,
+)
 from app.infrastructure.persistence.totvs.refugos.refugos_sql import (
     build_base_where,
     build_ranking_query,
     build_resumo_query,
     build_serie_query,
 )
+
+
+def test_cost_warehouse_constants_document_almox_and_factory() -> None:
+    assert REFUGOS_COST_WAREHOUSE == "01"
+    assert REFUGOS_FACTORY_WAREHOUSE == "99"
 
 
 def test_base_where_filters_refugo_branch_and_closed_open_dates() -> None:
@@ -33,7 +42,7 @@ def test_base_where_consolidated_uses_valid_branch_in_clause() -> None:
     assert params == ["R", "01", "02", "20260401", "20260428", "2"]
 
 
-def test_resumo_query_uses_nolock_and_avg_cost_join() -> None:
+def test_resumo_query_uses_nolock_and_almox_cost_join() -> None:
     query, params = build_resumo_query(
         date_start="20260401",
         date_end_exclusive="20260428",
@@ -46,7 +55,9 @@ def test_resumo_query_uses_nolock_and_avg_cost_join() -> None:
 
     assert "SBC010 BC WITH (NOLOCK)" in query
     assert "SB2010 WITH (NOLOCK)" in query
-    assert "AVG(NULLIF(CAST(B2_CM1 AS FLOAT), 0))" in query
+    assert "LTRIM(RTRIM(B2_LOCAL)) = '01'" in query
+    assert "AVG(NULLIF(CAST(B2_CM1 AS FLOAT), 0))" not in query
+    assert "CM.CM1" in query or "NULLIF(CM.CM1" in query
     assert "CYO010" in query
     assert "SYS_USR" in query
     assert "LTRIM(RTRIM(SB1.B1_TPMAT)) <> ?" in query

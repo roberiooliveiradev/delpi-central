@@ -25,7 +25,7 @@ export const SCRAP_HELP_TOOLTIPS = {
     quantidade:
       "Soma das quantidades apontadas (BC_QUANT) no período filtrado, sem produto de terceiro.",
     semCusto:
-      "Registros cujo custo unitário ficou zerado (sem B2_CM1 nem B1_CUSTD), impossibilitando o cálculo em R$.",
+      "Registros cujo custo unitário ficou zerado (sem B2_CM1 do almoxarifado 01 nem B1_CUSTD), impossibilitando o cálculo em R$.",
   },
   charts: {
     motivo:
@@ -53,7 +53,7 @@ export const SCRAP_HELP_TOOLTIPS = {
     financial:
       "Quantidade apontada, custo unitário usado no cálculo e valor total em R$.",
     unitCost:
-      "Custo médio (B2_CM1) ou custo padrão (B1_CUSTD) usado no cálculo do valor.",
+      "Custo unitário do almoxarifado (B2_CM1 no B2_LOCAL=01) ou, se ausente, custo padrão (B1_CUSTD). O local 99 é fábrica e não entra no cálculo.",
     product:
       "Matéria-prima da perda e produto acabado da OP, com descrições do cadastro SB1.",
   },
@@ -69,7 +69,7 @@ export const SCRAP_HELP_TOOLTIPS = {
     ct: "Centro de trabalho / recurso (BC_RECURSO).",
     colaborador: "Operador associado ao apontamento (SYS_USR).",
     qtd: "Quantidade apontada (BC_QUANT) e unidade de medida.",
-    valor: "Valor em R$ (quantidade × custo unitário médio ou custo padrão).",
+    valor: "Valor em R$ (quantidade × B2_CM1 do almoxarifado 01, ou B1_CUSTD).",
   },
   pagination: {
     info: "Paginação server-side: tamanho da página e navegação disparam nova consulta na API.",

@@ -1,15 +1,17 @@
 """SQL builders — Acompanhamento de Refugos (SBC010 + joins).
 
-ValorPerda (Fase 0 validada):
-  BC_QUANT * COALESCE(NULLIF(AVG(B2_CM1), 0), NULLIF(B1_CUSTD, 0), 0)
+ValorPerda (alinhado ao Power BI / almoxarifado):
+  BC_QUANT * COALESCE(NULLIF(B2_CM1 do local 01, 0), NULLIF(B1_CUSTD, 0), 0)
 
-Join SB2 agregado por filial+produto evita multiplicação por B2_LOCAL.
+B2_LOCAL=01 = almoxarifado (custo canônico); B2_LOCAL=99 = fábrica (não entra no CM1).
+Join SB2 filtrado por local evita multiplicação por vários B2_LOCAL.
 Exclui produto de terceiro (SB1.B1_TPMAT = 2).
 """
 
 from __future__ import annotations
 
 from app.domain.quality.refugos.refugos_scope import (
+    REFUGOS_COST_WAREHOUSE,
     REFUGOS_LOSS_TYPE,
     THIRD_PARTY_PRODUCT_TPMAT,
     VALID_REFUGOS_BRANCHES,
@@ -31,28 +33,28 @@ def _branch_filter_sql(
     placeholders = ", ".join("?" for _ in ordered)
     return f"LTRIM(RTRIM({column})) IN ({placeholders})", list(ordered)
 
-# Custo médio sem multiplicar linhas (vários B2_LOCAL).
-_COST_JOIN = """
+# Custo do almoxarifado (B2_LOCAL=01) — sem multiplicar linhas por outros locais.
+_COST_JOIN = f"""
 LEFT JOIN (
     SELECT
         B2_FILIAL,
         B2_COD,
-        AVG(NULLIF(CAST(B2_CM1 AS FLOAT), 0)) AS AVG_CM1
+        NULLIF(CAST(B2_CM1 AS FLOAT), 0) AS CM1
     FROM SB2010 WITH (NOLOCK)
     WHERE D_E_L_E_T_ = ''
-    GROUP BY B2_FILIAL, B2_COD
+      AND LTRIM(RTRIM(B2_LOCAL)) = '{REFUGOS_COST_WAREHOUSE}'
 ) CM
     ON CM.B2_FILIAL = BC.BC_FILIAL
    AND CM.B2_COD = BC.BC_PRODUTO
 """
 
 _VALOR_EXPR = (
-    "BC.BC_QUANT * COALESCE(NULLIF(CM.AVG_CM1, 0), "
+    "BC.BC_QUANT * COALESCE(NULLIF(CM.CM1, 0), "
     "NULLIF(CAST(SB1.B1_CUSTD AS FLOAT), 0), 0)"
 )
 
 _UNIT_COST_EXPR = (
-    "COALESCE(NULLIF(CM.AVG_CM1, 0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT), 0), 0)"
+    "COALESCE(NULLIF(CM.CM1, 0), NULLIF(CAST(SB1.B1_CUSTD AS FLOAT), 0), 0)"
 )
 
 _BASE_FROM = f"""
