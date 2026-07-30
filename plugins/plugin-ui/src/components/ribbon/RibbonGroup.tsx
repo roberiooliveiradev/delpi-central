@@ -210,7 +210,7 @@ export function RibbonGroup({
     >
       {CollapseIcon ? (
         <span className={classNames.collapseIcon} aria-hidden="true">
-          <CollapseIcon size={18} />
+          <CollapseIcon size={20} strokeWidth={2} />
         </span>
       ) : null}
       <span className={classNames.collapseLabel}>{label}</span>

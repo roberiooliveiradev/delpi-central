@@ -382,8 +382,8 @@
   border: 1px solid transparent;
   background: color-mix(in srgb, var(--ds-surface-muted) 70%, transparent);
   border-radius: 999px;
-  padding: 3px 8px;
-  font-size: 10px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--ds-text-muted);
@@ -405,8 +405,8 @@
 .dashboard-transformometro .delpi-ui-bpmn-editor__palette-subtabs--compact .delpi-ui-bpmn-editor__palette-subtab,
 .delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab,
 .dashboard-transformometro .tm-diagram-editor__palette-subtabs--compact .tm-diagram-editor__palette-subtab{
-  font-size: 9px;
-  padding: 2px 7px;
+  font-size: 11px;
+  padding: 3px 9px;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-editor__palette-groups,

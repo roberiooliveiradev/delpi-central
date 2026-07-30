@@ -33,6 +33,17 @@
   box-sizing: border-box;
 }
 
+/* Separador suave entre seções da ribbon (exceto a primeira). */
+.delpi-ui-ribbon-group + .delpi-ui-ribbon-group {
+  margin-left: 2px;
+  padding-left: 10px;
+  border-left: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, rgba(127, 127, 127, 0.4))) 55%,
+    transparent
+  );
+}
+
 .delpi-ui-ribbon-group--wide {
   flex: 1 1 auto;
   min-width: 12rem;
@@ -62,7 +73,7 @@
 }
 
 .delpi-ui-ribbon-group__caption-text {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--delpi-ui-muted, var(--text-muted, #666666));
@@ -130,7 +141,7 @@
 }
 
 .delpi-ui-ribbon-group__collapse-label {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 650;
   line-height: 1.15;
   white-space: nowrap;

@@ -43,7 +43,7 @@ export function RibbonTile({
   active = false,
   disabled = false,
   className,
-  iconSize = 18,
+  iconSize = 20,
   onClick,
   type = "button",
   ...rest
@@ -65,7 +65,7 @@ export function RibbonTile({
       {...rest}
     >
       <span className={DEFAULT_CN.icon} aria-hidden>
-        <Icon size={iconSize} strokeWidth={1.75} />
+        <Icon size={iconSize} strokeWidth={2} />
       </span>
       <span className={DEFAULT_CN.label}>{label}</span>
     </button>
