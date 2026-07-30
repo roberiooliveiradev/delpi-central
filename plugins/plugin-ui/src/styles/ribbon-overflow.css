@@ -166,12 +166,14 @@
 }
 
 .delpi-ui-ribbon-group__popover {
-  display: flex;
+  --delpi-ui-ribbon-popover-max: min(96vw, 42rem);
+  display: inline-flex;
   flex-direction: column;
   gap: 8px;
-  width: min(96vw, 42rem);
-  min-width: 12rem;
-  max-width: min(96vw, 42rem);
+  /* Ajusta ao conteúdo; só cresce até o teto (evita faixa vazia fixa). */
+  width: max-content;
+  max-width: var(--delpi-ui-ribbon-popover-max);
+  min-width: 0;
   padding: 10px 12px 8px;
   box-sizing: border-box;
   overflow: hidden;
@@ -184,14 +186,15 @@
   align-items: stretch;
   gap: 8px;
   min-width: 0;
-  width: 100%;
+  width: max-content;
   max-width: 100%;
-  overflow: hidden;
 }
 
 /**
  * Tiles no popover: quebra em várias linhas (na faixa expandida permanece
  * fluxo em coluna única horizontal).
+ * O max-width absoluto força wrap quando há muitos itens; com poucos, o
+ * container encolhe ao conteúdo (sem width: 100% de um painel largo).
  */
 .delpi-ui-ribbon-group__popover .delpi-ui-ribbon-tiles {
   display: flex;
@@ -200,8 +203,8 @@
   align-items: flex-start;
   justify-content: flex-start;
   gap: 4px 6px;
-  width: 100%;
-  max-width: 100%;
+  width: max-content;
+  max-width: min(calc(96vw - 1.5rem), calc(42rem - 1.5rem));
   grid-auto-flow: unset;
   grid-template-rows: none;
   grid-auto-columns: unset;

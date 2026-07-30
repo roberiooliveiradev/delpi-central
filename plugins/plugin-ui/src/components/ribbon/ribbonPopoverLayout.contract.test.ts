@@ -16,6 +16,18 @@ describe("ribbon popover layout contract", () => {
     expect(overflowCss).toMatch(/\.delpi-ui-ribbon-group__popover-body\s*\{[^}]*flex-direction:\s*column/s);
   });
 
+  it("dimensiona o popover pelo conteúdo (sem largura fixa padrão)", () => {
+    expect(overflowCss).toMatch(
+      /\.delpi-ui-ribbon-group__popover\s*\{[^}]*width:\s*max-content/s,
+    );
+    expect(overflowCss).not.toMatch(
+      /\.delpi-ui-ribbon-group__popover\s*\{[^}]*width:\s*min\(96vw,\s*42rem\)/s,
+    );
+    expect(overflowCss).toMatch(
+      /\.delpi-ui-ribbon-group__popover \.delpi-ui-ribbon-tiles\s*\{[^}]*width:\s*max-content/s,
+    );
+  });
+
   it("permite até 2 linhas no rótulo do tile (sem ellipsis de uma linha)", () => {
     expect(tileCss).toContain("-webkit-line-clamp: 2");
     expect(tileCss).not.toMatch(
