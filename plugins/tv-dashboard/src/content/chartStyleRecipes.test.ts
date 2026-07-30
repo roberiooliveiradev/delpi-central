@@ -4,9 +4,12 @@ import { mergeComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 import {
   CHART_COLOR_PALETTES,
+  CHART_SEMANTIC_PALETTE_IDS,
   CHART_STYLE_RECIPES,
   applyChartColorPalette,
+  applyChartColorScaleMode,
   applyChartStyleRecipe,
+  chartPalettesByKind,
   isChartStyleRecipeActive,
 } from "./chartStyleRecipes";
 
@@ -29,6 +32,27 @@ describe("chartStyleRecipes", () => {
     expect(applyChartColorPalette(gray!, mergeComunicadoChartOptions({})).categoryColors).toEqual(
       gray!.colors,
     );
+  });
+
+  it("inclui 4 escalas semânticas com 5 stops", () => {
+    for (const id of CHART_SEMANTIC_PALETTE_IDS) {
+      const palette = CHART_COLOR_PALETTES.find((item) => item.id === id);
+      expect(palette, id).toBeTruthy();
+      expect(palette!.kind).toBe("semantic");
+      expect(palette!.colors).toHaveLength(5);
+      const next = applyChartColorPalette(palette!, mergeComunicadoChartOptions({}));
+      expect(next.categoryColors).toEqual(palette!.colors);
+      expect(next.colorScale?.paletteId).toBe(id);
+    }
+    expect(chartPalettesByKind("semantic")).toHaveLength(4);
+  });
+
+  it("applyChartColorScaleMode by_value aplica rampa rag-good-first por padrão", () => {
+    const next = applyChartColorScaleMode(mergeComunicadoChartOptions({}), "by_value");
+    expect(next.colorScale?.mode).toBe("by_value");
+    expect(next.colorScale?.polarity).toBe("high_is_bad");
+    expect(next.colorScale?.paletteId).toBe("rag-good-first");
+    expect(next.categoryColors).toHaveLength(5);
   });
 
   it("applyChartColorPalette define seriesColor e categoryColors", () => {

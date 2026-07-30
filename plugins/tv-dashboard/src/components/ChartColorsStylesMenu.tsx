@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import type { ComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 import {
-  CHART_COLOR_PALETTES,
   CHART_STYLE_RECIPES,
   applyChartColorPalette,
+  applyChartColorScaleMode,
+  applyChartColorScalePolarity,
   applyChartStyleRecipe,
+  chartPalettesByKind,
+  isChartColorPaletteActive,
   isChartStyleRecipeActive,
   type ChartColorPalette,
   type ChartStyleRecipe,
@@ -18,8 +21,53 @@ type Props = {
   footer?: ReactNode;
 };
 
+function PaletteGrid({
+  palettes,
+  options,
+  onApply,
+}: {
+  palettes: ChartColorPalette[];
+  options: ComunicadoChartOptions;
+  onApply: (palette: ChartColorPalette) => void;
+}) {
+  return (
+    <div className="td-chart-style-menu__palettes">
+      {palettes.map((palette) => {
+        const active = isChartColorPaletteActive(palette, options);
+        return (
+          <button
+            key={palette.id}
+            type="button"
+            className={[
+              "td-chart-style-menu__palette",
+              active ? "td-chart-style-menu__palette--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            title={palette.hint ? `${palette.label} — ${palette.hint}` : palette.label}
+            aria-label={palette.label}
+            onClick={() => onApply(palette)}
+          >
+            <span className="td-chart-style-menu__swatches" aria-hidden="true">
+              {palette.colors.map((color) => (
+                <span key={`${palette.id}-${color}`} style={{ background: color }} />
+              ))}
+            </span>
+            <span className="td-chart-style-menu__palette-label">{palette.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Painel compartilhado Alterar Cores / Estilos (ribbon + float pincel). */
 export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props) {
+  const categorical = chartPalettesByKind("categorical");
+  const semantic = chartPalettesByKind("semantic");
+  const colorByValue = options.colorScale?.mode === "by_value";
+  const polarity = options.colorScale?.polarity ?? "high_is_bad";
+
   const applyPalette = (palette: ChartColorPalette) => {
     onApplyOptions(applyChartColorPalette(palette, options));
   };
@@ -34,31 +82,71 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
         <p className="td-chart-style-menu__hint">
           Uma série usa a cor principal; pies e categorias usam as demais do swatch.
         </p>
-        <div className="td-chart-style-menu__palettes">
-          {CHART_COLOR_PALETTES.map((palette) => (
+        <PaletteGrid palettes={categorical} options={options} onApply={applyPalette} />
+      </section>
+
+      <section className="td-chart-style-menu__section">
+        <h4>Escalas (melhor / pior)</h4>
+        <p className="td-chart-style-menu__hint">
+          Com «Colorir pelo valor», a rampa segue o número (ex. refugo alto → vermelho). Sem isso, a
+          ordem das categorias define quem fica bom ou ruim.
+        </p>
+        <PaletteGrid palettes={semantic} options={options} onApply={applyPalette} />
+        <div className="td-chart-style-menu__scale-controls">
+          <label className="td-chart-style-menu__scale-toggle">
+            <input
+              type="checkbox"
+              checked={colorByValue}
+              onChange={(event) => {
+                onApplyOptions(
+                  applyChartColorScaleMode(
+                    options,
+                    event.target.checked ? "by_value" : "off",
+                    polarity,
+                  ),
+                );
+              }}
+            />
+            <span>Colorir pelo valor</span>
+          </label>
+          <div
+            className="td-chart-style-menu__polarity"
+            role="group"
+            aria-label="Polaridade da escala"
+          >
             <button
-              key={palette.id}
               type="button"
               className={[
-                "td-chart-style-menu__palette",
-                options.seriesColor === palette.seriesColor
-                  ? "td-chart-style-menu__palette--active"
-                  : "",
+                "td-chart-style-menu__polarity-btn",
+                polarity === "high_is_bad" ? "td-chart-style-menu__polarity-btn--active" : "",
               ]
                 .filter(Boolean)
                 .join(" ")}
-              title={palette.label}
-              aria-label={palette.label}
-              onClick={() => applyPalette(palette)}
+              aria-pressed={polarity === "high_is_bad"}
+              disabled={!colorByValue}
+              onClick={() =>
+                onApplyOptions(applyChartColorScalePolarity(options, "high_is_bad"))
+              }
             >
-              <span className="td-chart-style-menu__swatches" aria-hidden="true">
-                {palette.colors.map((color) => (
-                  <span key={color} style={{ background: color }} />
-                ))}
-              </span>
-              <span className="td-chart-style-menu__palette-label">{palette.label}</span>
+              Alto = pior
             </button>
-          ))}
+            <button
+              type="button"
+              className={[
+                "td-chart-style-menu__polarity-btn",
+                polarity === "high_is_good" ? "td-chart-style-menu__polarity-btn--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-pressed={polarity === "high_is_good"}
+              disabled={!colorByValue}
+              onClick={() =>
+                onApplyOptions(applyChartColorScalePolarity(options, "high_is_good"))
+              }
+            >
+              Alto = melhor
+            </button>
+          </div>
         </div>
       </section>
 
