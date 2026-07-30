@@ -900,7 +900,8 @@ services:
 
 
   comite-etica-conduta:
-    <<: *plugin-ui-federated
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: comite-etica-conduta/Dockerfile
@@ -1535,7 +1536,6 @@ services:
 
 
   comite-etica-conduta-api:
-    <<: *plugin-profile
     build:
       context: ..
       dockerfile: comite-etica-conduta-api/Dockerfile
