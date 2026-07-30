@@ -4,6 +4,7 @@ import {
   applyStagePanScrollDelta,
   centerStageScroll,
   resolveStagePanGutterPx,
+  resolveStageZoomFocusOffset,
   shouldDeferToStagePan,
   stageScrollAfterZoomTowardPoint,
   stageScrollFromViewAnchor,
@@ -29,7 +30,7 @@ describe("applyStagePanScrollDelta", () => {
 });
 
 describe("stageScrollAfterZoomTowardPoint", () => {
-  it("reancora o ponto sob o cursor após zoom in", () => {
+  it("reancora o ponto sob o cursor após zoom in (sem gutter)", () => {
     expect(
       stageScrollAfterZoomTowardPoint({
         prevZoom: 1,
@@ -40,6 +41,22 @@ describe("stageScrollAfterZoomTowardPoint", () => {
         pointerOffsetY: 100,
       }),
     ).toEqual({ scrollLeft: 400, scrollTop: 200 });
+  });
+
+  it("escala só a área do slide — gutter fixo não multiplica", () => {
+    // Ponteiro no centro do slide: scroll 0, gutter 100, offset 300 → slideX=200
+    expect(
+      stageScrollAfterZoomTowardPoint({
+        prevZoom: 1,
+        nextZoom: 2,
+        scrollLeft: 0,
+        scrollTop: 0,
+        pointerOffsetX: 300,
+        pointerOffsetY: 200,
+        gutterX: 100,
+        gutterY: 100,
+      }),
+    ).toEqual({ scrollLeft: 200, scrollTop: 100 });
   });
 
   it("no-op quando o zoom não muda", () => {
@@ -53,6 +70,43 @@ describe("stageScrollAfterZoomTowardPoint", () => {
         pointerOffsetY: 5,
       }),
     ).toEqual({ scrollLeft: 10, scrollTop: 20 });
+  });
+});
+
+describe("resolveStageZoomFocusOffset", () => {
+  const wrapRect = { left: 100, top: 50, right: 500, bottom: 350, width: 400, height: 300 };
+
+  it("usa o ponteiro quando está sobre o wrap", () => {
+    expect(
+      resolveStageZoomFocusOffset({
+        wrapRect,
+        clientWidth: 400,
+        clientHeight: 300,
+        pointerClient: { x: 220, y: 110 },
+      }),
+    ).toEqual({ pointerOffsetX: 120, pointerOffsetY: 60, focus: "pointer" });
+  });
+
+  it("usa o centro da viewport quando o ponteiro está fora", () => {
+    expect(
+      resolveStageZoomFocusOffset({
+        wrapRect,
+        clientWidth: 400,
+        clientHeight: 300,
+        pointerClient: { x: 10, y: 10 },
+      }),
+    ).toEqual({ pointerOffsetX: 200, pointerOffsetY: 150, focus: "center" });
+  });
+
+  it("usa o centro quando não há ponteiro", () => {
+    expect(
+      resolveStageZoomFocusOffset({
+        wrapRect,
+        clientWidth: 400,
+        clientHeight: 300,
+        pointerClient: null,
+      }),
+    ).toEqual({ pointerOffsetX: 200, pointerOffsetY: 150, focus: "center" });
   });
 });
 

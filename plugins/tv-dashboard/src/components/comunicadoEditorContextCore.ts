@@ -415,6 +415,10 @@ export type ComunicadoEditorContextValue = {
   focusFrameRotationField: () => void;
   stageZoom: number;
   setStageZoom: (zoom: number) => void;
+  /** Zoom ancorado no ponteiro do evento (Ctrl+wheel). */
+  setStageZoomTowardPointer: (zoom: number, pointerClient: { x: number; y: number }) => void;
+  /** Atualiza se o ponteiro está sobre a área de desenho (wrap). */
+  reportStagePointerClient: (point: { x: number; y: number } | null) => void;
   fitStageToView: () => void;
   restoreStageViewPosition: () => boolean;
   /** Load: restaura ou Ajustar + grava 1ª posição. */

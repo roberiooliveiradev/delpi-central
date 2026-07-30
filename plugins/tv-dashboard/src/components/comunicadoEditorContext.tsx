@@ -812,6 +812,8 @@ export function ComunicadoEditorProvider({
     focusFrameRotationField: blockActions.focusFrameRotationField,
     stageZoom: stage.stageZoom,
     setStageZoom: stage.setStageZoom,
+    setStageZoomTowardPointer: stage.setStageZoomTowardPointer,
+    reportStagePointerClient: stage.reportStagePointerClient,
     fitStageToView: stage.fitStageToView,
     restoreStageViewPosition: stage.restoreStageViewPosition,
     bootstrapStageViewPosition: stage.bootstrapStageViewPosition,

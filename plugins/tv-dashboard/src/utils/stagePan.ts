@@ -31,7 +31,7 @@ export function applyStagePanScrollDelta(
 
 /**
  * Após mudar o zoom, mantém o ponto sob o cursor (coords do wrap).
- * `contentX/Y` = scroll + offset do ponteiro no zoom anterior; `ratio = next/prev`.
+ * O gutter do pasteboard **não** escala — a origem da escala é (gutterX, gutterY).
  */
 export function stageScrollAfterZoomTowardPoint(args: {
   prevZoom: number;
@@ -40,17 +40,70 @@ export function stageScrollAfterZoomTowardPoint(args: {
   scrollTop: number;
   pointerOffsetX: number;
   pointerOffsetY: number;
+  /** Padding esquerdo do zoom-sizer (px). Default 0. */
+  gutterX?: number;
+  /** Padding superior do zoom-sizer (px). Default 0. */
+  gutterY?: number;
 }): StageScrollPoint {
-  const { prevZoom, nextZoom, scrollLeft, scrollTop, pointerOffsetX, pointerOffsetY } = args;
+  const {
+    prevZoom,
+    nextZoom,
+    scrollLeft,
+    scrollTop,
+    pointerOffsetX,
+    pointerOffsetY,
+    gutterX = 0,
+    gutterY = 0,
+  } = args;
   if (!(prevZoom > 0) || !(nextZoom > 0) || prevZoom === nextZoom) {
     return { scrollLeft, scrollTop };
   }
   const ratio = nextZoom / prevZoom;
-  const contentX = scrollLeft + pointerOffsetX;
-  const contentY = scrollTop + pointerOffsetY;
+  const slideX = scrollLeft + pointerOffsetX - gutterX;
+  const slideY = scrollTop + pointerOffsetY - gutterY;
   return {
-    scrollLeft: contentX * ratio - pointerOffsetX,
-    scrollTop: contentY * ratio - pointerOffsetY,
+    scrollLeft: gutterX + slideX * ratio - pointerOffsetX,
+    scrollTop: gutterY + slideY * ratio - pointerOffsetY,
+  };
+}
+
+export type StageZoomFocusOffset = {
+  pointerOffsetX: number;
+  pointerOffsetY: number;
+  /** `pointer` = ponteiro sobre o wrap; `center` = centro da viewport. */
+  focus: "pointer" | "center";
+};
+
+/**
+ * Âncora do zoom: ponteiro se estiver sobre a área de desenho (wrap);
+ * senão o centro da visualização.
+ */
+export function resolveStageZoomFocusOffset(args: {
+  wrapRect: Pick<DOMRect, "left" | "top" | "right" | "bottom" | "width" | "height">;
+  clientWidth: number;
+  clientHeight: number;
+  pointerClient: { x: number; y: number } | null | undefined;
+}): StageZoomFocusOffset {
+  const { wrapRect, clientWidth, clientHeight, pointerClient } = args;
+  const inside =
+    pointerClient != null &&
+    Number.isFinite(pointerClient.x) &&
+    Number.isFinite(pointerClient.y) &&
+    pointerClient.x >= wrapRect.left &&
+    pointerClient.x <= wrapRect.right &&
+    pointerClient.y >= wrapRect.top &&
+    pointerClient.y <= wrapRect.bottom;
+  if (inside && pointerClient) {
+    return {
+      pointerOffsetX: pointerClient.x - wrapRect.left,
+      pointerOffsetY: pointerClient.y - wrapRect.top,
+      focus: "pointer",
+    };
+  }
+  return {
+    pointerOffsetX: Math.max(0, clientWidth) / 2,
+    pointerOffsetY: Math.max(0, clientHeight) / 2,
+    focus: "center",
   };
 }
 

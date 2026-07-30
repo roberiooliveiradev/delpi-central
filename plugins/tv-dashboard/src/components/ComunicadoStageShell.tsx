@@ -13,7 +13,7 @@ import {
 } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { applyStagePanScrollDelta, stageScrollAfterZoomTowardPoint } from "../utils/stagePan";
+import { applyStagePanScrollDelta } from "../utils/stagePan";
 import { resolveViewportPixelSize } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -299,6 +299,8 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
   const {
     stageZoom,
     setStageZoom,
+    setStageZoomTowardPointer,
+    reportStagePointerClient,
     showStageRulers,
     canvasWrapRef,
     canvasRef,
@@ -317,9 +319,6 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
   } | null>(null);
   const stageZoomRef = useRef(stageZoom);
   stageZoomRef.current = stageZoom;
-  const pendingZoomScrollRef = useRef<ReturnType<typeof stageScrollAfterZoomTowardPoint> | null>(
-    null,
-  );
 
   const panActive = stagePanMode || ctrlPanHeld;
 
@@ -341,13 +340,6 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
   }, [canvasRef, canvasWrapRef, refreshMetrics]);
 
   useEffect(() => {
-    const scroll = pendingZoomScrollRef.current;
-    if (!scroll) return;
-    pendingZoomScrollRef.current = null;
-    const wrap = canvasWrapRef.current;
-    if (!wrap) return;
-    wrap.scrollLeft = scroll.scrollLeft;
-    wrap.scrollTop = scroll.scrollTop;
     refreshMetrics();
     persistStageViewPosition({ immediate: true });
   }, [canvasWrapRef, persistStageViewPosition, refreshMetrics, stageZoom]);
@@ -393,21 +385,25 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
       const prevZoom = stageZoomRef.current;
       const nextZoom = stageZoomFromWheelDelta(prevZoom, event.deltaY);
       if (nextZoom === prevZoom) return;
-      const rect = wrap.getBoundingClientRect();
-      pendingZoomScrollRef.current = stageScrollAfterZoomTowardPoint({
-        prevZoom,
-        nextZoom,
-        scrollLeft: wrap.scrollLeft,
-        scrollTop: wrap.scrollTop,
-        pointerOffsetX: event.clientX - rect.left,
-        pointerOffsetY: event.clientY - rect.top,
-      });
-      setStageZoom(nextZoom);
+      setStageZoomTowardPointer(nextZoom, { x: event.clientX, y: event.clientY });
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      reportStagePointerClient({ x: event.clientX, y: event.clientY });
+    };
+    const onPointerLeave = () => {
+      reportStagePointerClient(null);
     };
 
     wrap.addEventListener("wheel", onWheel, { passive: false });
-    return () => wrap.removeEventListener("wheel", onWheel);
-  }, [canvasWrapRef, setStageZoom]);
+    wrap.addEventListener("pointermove", onPointerMove);
+    wrap.addEventListener("pointerleave", onPointerLeave);
+    return () => {
+      wrap.removeEventListener("wheel", onWheel);
+      wrap.removeEventListener("pointermove", onPointerMove);
+      wrap.removeEventListener("pointerleave", onPointerLeave);
+    };
+  }, [canvasWrapRef, reportStagePointerClient, setStageZoomTowardPointer]);
 
   const handleScroll = useCallback(() => {
     refreshMetrics();

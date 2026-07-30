@@ -9,6 +9,10 @@ import {
   applyCenteredStageScroll,
   applyStageViewAnchor,
   captureStageViewAnchor,
+  resolveStagePanGutterPx,
+  resolveStageZoomFocusOffset,
+  stageScrollAfterZoomTowardPoint,
+  type StageScrollPoint,
 } from "../../utils/stagePan";
 import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
 
@@ -49,6 +53,10 @@ export function useComunicadoEditorStage() {
   const fitGenerationRef = useRef(0);
   /** Após patch de zoom, centraliza no layout effect (DOM já com o novo scale). */
   const pendingFitCenterRef = useRef(false);
+  /** Scroll a aplicar após zoom (ponteiro ou centro) — distinto do fit. */
+  const pendingZoomScrollRef = useRef<StageScrollPoint | null>(null);
+  /** Último ponteiro sobre o wrap; null = fora da área de desenho. */
+  const lastPointerClientRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     snapToGridRef.current = prefs.snapToGrid;
@@ -219,12 +227,58 @@ export function useComunicadoEditorStage() {
    * Centraliza depois que o React aplica o novo `stageZoom` no DOM.
    * Sem isso, o scroll usava o zoom antigo do localStorage e a página
    * voltava deslocada (réguas em ~1000/600 no canto aparente).
+   * Zoom incremental (wheel/botões) aplica `pendingZoomScroll` (ponteiro/centro).
    */
   useLayoutEffect(() => {
-    if (!pendingFitCenterRef.current) return;
-    const generation = fitGenerationRef.current;
-    finishFitCenter(generation, 0);
-  }, [prefs.stageZoom, finishFitCenter]);
+    if (pendingFitCenterRef.current) {
+      pendingZoomScrollRef.current = null;
+      const generation = fitGenerationRef.current;
+      finishFitCenter(generation, 0);
+      return;
+    }
+    const scroll = pendingZoomScrollRef.current;
+    if (!scroll) return;
+    pendingZoomScrollRef.current = null;
+    const wrap = canvasWrapRef.current;
+    if (!wrap) return;
+    wrap.scrollLeft = scroll.scrollLeft;
+    wrap.scrollTop = scroll.scrollTop;
+    persistStageViewPosition({ immediate: true });
+  }, [prefs.stageZoom, finishFitCenter, persistStageViewPosition]);
+
+  const queueZoomScrollTowardFocus = useCallback(
+    (prevZoom: number, nextZoom: number, pointerClient?: { x: number; y: number } | null) => {
+      const wrap = canvasWrapRef.current;
+      if (!wrap || wrap.clientWidth <= 0 || wrap.clientHeight <= 0) {
+        pendingZoomScrollRef.current = null;
+        return;
+      }
+      if (!(prevZoom > 0) || Math.abs(nextZoom - prevZoom) < 1e-6) {
+        pendingZoomScrollRef.current = null;
+        return;
+      }
+      const pointer =
+        pointerClient !== undefined ? pointerClient : lastPointerClientRef.current;
+      const focus = resolveStageZoomFocusOffset({
+        wrapRect: wrap.getBoundingClientRect(),
+        clientWidth: wrap.clientWidth,
+        clientHeight: wrap.clientHeight,
+        pointerClient: pointer,
+      });
+      const gutter = resolveStagePanGutterPx(wrap.clientWidth, wrap.clientHeight);
+      pendingZoomScrollRef.current = stageScrollAfterZoomTowardPoint({
+        prevZoom,
+        nextZoom,
+        scrollLeft: wrap.scrollLeft,
+        scrollTop: wrap.scrollTop,
+        pointerOffsetX: focus.pointerOffsetX,
+        pointerOffsetY: focus.pointerOffsetY,
+        gutterX: gutter.x,
+        gutterY: gutter.y,
+      });
+    },
+    [],
+  );
 
   /** Ajustar: fit + grava âncora (primeira posição ou clique do usuário). */
   const fitStageToView = useCallback(() => {
@@ -281,8 +335,32 @@ export function useComunicadoEditorStage() {
   return {
     stageZoom: prefs.stageZoom,
     setStageZoom: (zoom: number | ((prev: number) => number)) => {
-      const next = typeof zoom === "function" ? zoom(prefsRef.current.stageZoom) : zoom;
-      patchPrefs({ stageZoom: clampStageZoom(next) });
+      const prev = prefsRef.current.stageZoom;
+      const raw = typeof zoom === "function" ? zoom(prev) : zoom;
+      const next = clampStageZoom(raw);
+      if (!pendingFitCenterRef.current) {
+        queueZoomScrollTowardFocus(prev, next);
+      }
+      patchPrefs({ stageZoom: next });
+    },
+    /**
+     * Zoom com âncora explícita (Ctrl+wheel): ponteiro do evento.
+     * Botões/slider usam `setStageZoom` (último ponteiro no wrap ou centro).
+     */
+    setStageZoomTowardPointer: (
+      zoom: number,
+      pointerClient: { x: number; y: number },
+    ) => {
+      const prev = prefsRef.current.stageZoom;
+      const next = clampStageZoom(zoom);
+      lastPointerClientRef.current = pointerClient;
+      if (!pendingFitCenterRef.current) {
+        queueZoomScrollTowardFocus(prev, next, pointerClient);
+      }
+      patchPrefs({ stageZoom: next });
+    },
+    reportStagePointerClient: (point: { x: number; y: number } | null) => {
+      lastPointerClientRef.current = point;
     },
     showStageRulers: prefs.showStageRulers,
     setShowStageRulers: (value: boolean | ((prev: boolean) => boolean)) => {
