@@ -6,7 +6,7 @@
   color: #f4f7fb;
   background: radial-gradient(circle at 20% 0%, #0d2840 0%, #05070a 55%);
   /* Reserva visual da barra do deck — controles de vídeo ficam acima/à esquerda. */
-  --tdp-deck-chrome-reserve: 72px;
+  --tdp-deck-chrome-reserve: 120px;
   --tdp-chrome-gutter: max(12px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
 }
 
@@ -436,9 +436,9 @@
   pointer-events: auto;
 }
 
-/* No deck, sobe a barra do vídeo para não ficar sob Anterior/Pausar/Próxima. */
+/* No deck, sobe a barra do vídeo (coords de design) e ancora à esquerda para não cruzar Anterior/Pausar/Próxima. */
 .tdp-stage .tdp-slide .tdp-presentation-video__controls {
-  bottom: max(12px, calc(var(--tdp-deck-chrome-reserve, 72px) * 0.55));
+  bottom: max(16px, var(--tdp-deck-chrome-reserve, 120px), 6%);
   max-width: min(420px, calc(100% - 16px));
 }
 
