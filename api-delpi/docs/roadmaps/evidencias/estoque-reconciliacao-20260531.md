@@ -3,7 +3,7 @@
 **Gerado em:** 2026-06-24T18:36:34.868076Z  
 **Período:** 2026-05-01 a 2026-05-31
 
-Referência: [playbook-correcao-estoque-supplies-inventario.md](../playbook-correcao-estoque-supplies-inventario.md)
+Referência: [playbook-correcao-estoque-supplies-inventario.md](../../api/padroes-totvs/playbooks/playbook-correcao-estoque-supplies-inventario.md)
 
 ## Resumo por filial
 
