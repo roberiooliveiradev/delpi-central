@@ -11,6 +11,8 @@ type Props = {
   onSelectionAction: (actionId: DiagramEditorAction["id"]) => void;
   isSelectionActionDisabled: (actionId: DiagramEditorAction["id"]) => boolean;
   onPointerDownCapture?: (event: PointerEvent<HTMLDivElement>) => void;
+  /** `statusbar` = faixa inferior horizontal; `floating` = legado vertical. */
+  variant?: "statusbar" | "floating";
 };
 
 export function FlowchartEditorActionDock({
@@ -20,10 +22,16 @@ export function FlowchartEditorActionDock({
   onSelectionAction,
   isSelectionActionDisabled,
   onPointerDownCapture,
+  variant = "statusbar",
 }: Props) {
   return (
     <div
-      className="delpi-ui-bpmn-editor__action-dock"
+      className={[
+        "delpi-ui-bpmn-editor__action-dock",
+        variant === "statusbar"
+          ? "delpi-ui-bpmn-editor__action-dock--statusbar"
+          : "delpi-ui-bpmn-editor__action-dock--floating",
+      ].join(" ")}
       role="toolbar"
       aria-label={labels.selectionDockAriaLabel}
       onPointerDownCapture={onPointerDownCapture}
@@ -45,6 +53,7 @@ export function FlowchartEditorActionDock({
             icon={action.icon}
             disabled={disabled}
             active={active}
+            variant={variant}
             onClick={() => onSelectionAction(action.id)}
           />
         );

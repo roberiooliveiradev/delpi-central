@@ -1,6 +1,5 @@
 import {
   Background,
-  Controls,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
@@ -80,7 +79,6 @@ import {
   FlowchartEditorToolbar,
   type FlowchartEditorToolbarTab,
 } from "./FlowchartEditorToolbar";
-import { FlowchartEditorActionDock } from "./FlowchartEditorActionDock";
 import { FlowchartEditorStatusBar } from "./FlowchartEditorStatusBar";
 import { useFlowchartEditorHistory } from "../hooks/useFlowchartEditorHistory";
 import { useDiagramEditorLayout } from "../shell/DiagramLayoutContext";
@@ -385,6 +383,7 @@ function FlowchartEditorInner({
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
   const [showGrid, setShowGrid] = useState(true);
+  const [nodesInteractive, setNodesInteractive] = useState(true);
   const history = useFlowchartEditorHistory();
   const { pushPast, undo, redo, canUndo, canRedo } = history;
   const valueRef = useRef(value);
@@ -1354,19 +1353,6 @@ function FlowchartEditorInner({
           (() => {
             const stageBody = (
               <>
-                {!readOnly ? (
-                  <FlowchartEditorActionDock
-                    labels={labels}
-                    selectionActions={selectionActions}
-                    clipboardReady={clipboardReady}
-                    onSelectionAction={runSelectionAction}
-                    isSelectionActionDisabled={isSelectionActionDisabled}
-                    onPointerDownCapture={(event) => {
-                      event.preventDefault();
-                    }}
-                  />
-                ) : null}
-
                 <div
                   ref={canvasWrapperRef}
                   tabIndex={readOnly ? -1 : 0}
@@ -1403,16 +1389,16 @@ function FlowchartEditorInner({
                     onNodesDelete={onNodesDelete}
                     onEdgesDelete={onEdgesDelete}
                     deleteKeyCode={readOnly ? null : ["Delete", "Backspace"]}
-                    selectionOnDrag={!readOnly}
+                    selectionOnDrag={!readOnly && nodesInteractive}
                     selectionMode={SelectionMode.Partial}
                     selectionKeyCode={null}
                     multiSelectionKeyCode={readOnly ? null : [...DIAGRAM_MULTI_SELECT_KEYS]}
-                    panOnDrag={readOnly ? true : [1, 2]}
+                    panOnDrag={readOnly || !nodesInteractive ? true : [1, 2]}
                     minZoom={0.08}
                     maxZoom={3}
                     connectionRadius={36}
-                    nodesDraggable={!readOnly}
-                    nodesConnectable={!readOnly}
+                    nodesDraggable={!readOnly && nodesInteractive}
+                    nodesConnectable={!readOnly && nodesInteractive}
                     nodesFocusable={!readOnly}
                     elementsSelectable={!readOnly}
                     proOptions={{ hideAttribution: true }}
@@ -1420,12 +1406,21 @@ function FlowchartEditorInner({
                     <FlowchartSwimlaneBackdrop />
                     {showGrid ? <Background gap={20} size={1} /> : null}
                     <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
-                    <Controls showInteractive={!readOnly} position="bottom-left" />
                   </ReactFlow>
                   <FlowchartEditorStatusBar
                     labels={labels}
                     showGrid={showGrid}
                     onShowGridChange={setShowGrid}
+                    readOnly={readOnly}
+                    nodesInteractive={nodesInteractive}
+                    onNodesInteractiveChange={setNodesInteractive}
+                    selectionActions={selectionActions}
+                    clipboardReady={clipboardReady}
+                    onSelectionAction={runSelectionAction}
+                    isSelectionActionDisabled={isSelectionActionDisabled}
+                    onSelectionPointerDownCapture={(event) => {
+                      event.preventDefault();
+                    }}
                   />
                 </div>
               </>

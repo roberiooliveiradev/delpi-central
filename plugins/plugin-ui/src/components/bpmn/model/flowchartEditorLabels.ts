@@ -62,6 +62,9 @@ export type FlowchartEditorLabels = {
   statusBarAriaLabel: string;
   gridToggle: string;
   gridToggleHint: string;
+  nodesInteractiveOn: string;
+  nodesInteractiveOff: string;
+  nodesInteractiveHint: string;
   zoomLabel: string;
   zoomIn: string;
   zoomOut: string;

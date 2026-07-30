@@ -405,6 +405,8 @@ export const TM_HELP_TOOLTIPS = {
     undo: "Desfaz a última alteração no diagrama. Atalho: Ctrl+Z.",
     redo: "Refaz a alteração desfeita. Atalho: Ctrl+Y ou Ctrl+Shift+Z.",
     gridToggle: "Mostra ou oculta a grade de fundo na área de desenho.",
+    nodesInteractive:
+      "Permite ou bloqueia arrastar e conectar nós no canvas (equivalente ao cadeado dos controles do React Flow).",
     zoomIn: "Aproxima a visualização do diagrama.",
     zoomOut: "Afasta a visualização do diagrama.",
     zoomFit: "Ajusta o zoom para caber todo o diagrama na área visível.",
