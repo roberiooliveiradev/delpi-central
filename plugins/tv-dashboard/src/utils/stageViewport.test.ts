@@ -69,8 +69,8 @@ describe("stageViewport", () => {
   });
 
   it("Ctrl+scroll aproxima com deltaY negativo", () => {
-    expect(stageZoomFromWheelDelta(1, -100)).toBe(1.05);
-    expect(stageZoomFromWheelDelta(1, 100)).toBe(0.95);
+    expect(stageZoomFromWheelDelta(1, -100)).toBe(1.08);
+    expect(stageZoomFromWheelDelta(1, 100)).toBe(0.93);
     expect(stageZoomFromWheelDelta(0.12, 400)).toBe(0.1);
   });
 });

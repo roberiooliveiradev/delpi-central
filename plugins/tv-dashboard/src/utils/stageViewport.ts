@@ -2,8 +2,8 @@ export const STAGE_ZOOM_MIN = 0.1;
 export const STAGE_ZOOM_MAX = 2;
 /** Abaixo disso a grade some (linhas ficam densas demais no zoom out). */
 export const STAGE_GRID_MIN_ZOOM = 0.5;
-/** Passo base do Ctrl+scroll (ajustado pela magnitude do wheel). */
-export const STAGE_ZOOM_WHEEL_STEP = 0.05;
+/** Passo base do Ctrl+scroll (ajustado pela magnitude do wheel). +50% vs 0.05. */
+export const STAGE_ZOOM_WHEEL_STEP = 0.075;
 /** @deprecated Régua passa a usar px de design do viewport; mantido para testes legados. */
 export const STAGE_RULER_UNITS = 100;
 export const STAGE_RULER_SIZE_PX = 22;
