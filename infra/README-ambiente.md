@@ -698,3 +698,11 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 | `/app/data/cipa/signatures` | `…/cipa/signatures` |
 | `/app/data/cipa/attachments` | `…/cipa/attachments` |
 | `/app/data/cipa/pdfs` | `…/cipa/pdfs` |
+
+### Comitê de Ética e Conduta (atas / assinaturas)
+
+| Path no container | Host (`DELPI_DATA_HOST_DIR`) |
+|---|---|
+| `/app/data/comite-etica-conduta/signatures` | `…/comite-etica-conduta/signatures` |
+| `/app/data/comite-etica-conduta/attachments` | `…/comite-etica-conduta/attachments` |
+| `/app/data/comite-etica-conduta/pdfs` | `…/comite-etica-conduta/pdfs` |

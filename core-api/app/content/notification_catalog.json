@@ -99,6 +99,14 @@
       "sourceApps": ["lancamento-notas-fiscais"],
       "pluginId": "lancamento-notas-fiscais"
     },
+    "comite_etica_conduta": {
+      "label": "Comitê de Ética e Conduta",
+      "icon": "clipboard-check",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["comite-etica-conduta"],
+      "pluginId": "comite-etica-conduta"
+    },
     "tv_dashboard": {
       "label": "Painéis TV",
       "icon": "tv",
