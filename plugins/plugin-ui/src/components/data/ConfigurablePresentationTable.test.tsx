@@ -89,7 +89,7 @@ describe("ConfigurablePresentationTable", () => {
   });
 
   it("renderiza linha de totais quando habilitada", () => {
-    render(
+    const { container } = render(
       <ConfigurablePresentationTable
         columns={columns}
         rows={[
@@ -101,6 +101,20 @@ describe("ConfigurablePresentationTable", () => {
     );
     expect(screen.getByText("Total")).toBeTruthy();
     expect(screen.getByText("150")).toBeTruthy();
+    expect(container.querySelector('[data-table-total="true"]')).toBeTruthy();
+  });
+
+  it("marca primeira/última coluna quando enfatizadas", () => {
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        options={{ emphasizeFirstColumn: true, emphasizeLastColumn: true }}
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-config-table");
+    expect(root?.className).toMatch(/--first-column/);
+    expect(root?.className).toMatch(/--last-column/);
   });
 
   it("aplica quebra automática e colgroup quando há larguras", () => {

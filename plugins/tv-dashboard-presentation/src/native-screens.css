@@ -1144,22 +1144,78 @@
   );
 }
 
+/*
+ * Congelar painéis (paridade título fora do scroll / editor kit):
+ * — linha de totais: sticky bottom
+ * — 1ª / última coluna: sticky left / right
+ */
 .tdp-configurable-table--first-column .tdp-table-header-cell:first-child,
 .tdp-configurable-table--first-column .tdp-table-cell:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
   font-weight: 700;
-  background: color-mix(in srgb, var(--tdp-table-header-bg, #f1f5f9) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--tdp-table-header-bg, #f1f5f9) 70%,
+    var(--tdp-table-cell-bg, #ffffff)
+  );
+}
+
+.tdp-configurable-table--first-column .tdp-table-header-cell:first-child {
+  top: 0;
+  z-index: 3;
+  background: color-mix(
+    in srgb,
+    var(--tdp-table-header-bg, #f1f5f9) 85%,
+    var(--tdp-table-cell-bg, #ffffff)
+  );
 }
 
 .tdp-configurable-table--last-column .tdp-table-header-cell:last-child,
 .tdp-configurable-table--last-column .tdp-table-cell:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
   font-weight: 700;
-  background: color-mix(in srgb, var(--tdp-table-header-bg, #f1f5f9) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--tdp-table-header-bg, #f1f5f9) 70%,
+    var(--tdp-table-cell-bg, #ffffff)
+  );
+}
+
+.tdp-configurable-table--last-column .tdp-table-header-cell:last-child {
+  top: 0;
+  z-index: 3;
+  background: color-mix(
+    in srgb,
+    var(--tdp-table-header-bg, #f1f5f9) 85%,
+    var(--tdp-table-cell-bg, #ffffff)
+  );
 }
 
 .tdp-table-row--total .tdp-table-cell {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   font-weight: 700;
   border-top: 2px solid var(--tdp-table-border-color, #e2e8f0);
-  background: color-mix(in srgb, var(--tdp-table-header-bg, #f1f5f9) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--tdp-table-header-bg, #f1f5f9) 55%,
+    var(--tdp-table-cell-bg, #ffffff)
+  );
+}
+
+.tdp-configurable-table--first-column .tdp-table-row--total .tdp-table-cell:first-child {
+  left: 0;
+  z-index: 3;
+}
+
+.tdp-configurable-table--last-column .tdp-table-row--total .tdp-table-cell:last-child {
+  right: 0;
+  z-index: 3;
 }
 
 .tdp-configurable-table--minimal .tdp-table-header-cell,

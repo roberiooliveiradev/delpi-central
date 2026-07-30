@@ -49,4 +49,37 @@ describe("table scroll parity contract (editor ↔ TV)", () => {
     expect(tableWrap).toMatch(/touch-action:\s*pan-x\s+pan-y/);
     expect(composerSrc).toMatch(/td-composer__block-wrap--table/);
   });
+
+  it("linha de totais e 1ª/última coluna ficam sticky (fora do scroll de dados)", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const kitCss = readFileSync(
+      join(here, "../../plugin-ui/src/styles/configurable-table.css"),
+      "utf8",
+    );
+    const presentationCss = readFileSync(
+      join(here, "../../tv-dashboard-presentation/src/native-screens.css"),
+      "utf8",
+    );
+
+    const kitTotal = ruleBody(kitCss, ".delpi-ui-config-table__row--total .delpi-ui-config-table__cell");
+    expect(kitTotal).toMatch(/position:\s*sticky/);
+    expect(kitTotal).toMatch(/bottom:\s*0/);
+
+    const tvTotal = ruleBody(presentationCss, ".tdp-table-row--total .tdp-table-cell");
+    expect(tvTotal).toMatch(/position:\s*sticky/);
+    expect(tvTotal).toMatch(/bottom:\s*0/);
+
+    expect(kitCss).toMatch(
+      /\.delpi-ui-config-table--first-column[\s\S]*?position:\s*sticky;[\s\S]*?left:\s*0/,
+    );
+    expect(kitCss).toMatch(
+      /\.delpi-ui-config-table--last-column[\s\S]*?position:\s*sticky;[\s\S]*?right:\s*0/,
+    );
+    expect(presentationCss).toMatch(
+      /\.tdp-configurable-table--first-column[\s\S]*?position:\s*sticky;[\s\S]*?left:\s*0/,
+    );
+    expect(presentationCss).toMatch(
+      /\.tdp-configurable-table--last-column[\s\S]*?position:\s*sticky;[\s\S]*?right:\s*0/,
+    );
+  });
 });

@@ -15,7 +15,8 @@ export type TableFrameProps = {
 
 /**
  * Área rolável da grade — scroll vertical/horizontal quando linhas/colunas
- * excedem o bloco; o título fica fora (não rola junto).
+ * excedem o bloco. Título fica fora do frame; cabeçalho, linha de totais e
+ * 1ª/última coluna (quando habilitadas) ficam sticky no CSS do kit/TV.
  */
 export function TableFrame({
   children,

@@ -176,24 +176,80 @@
   background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 45%, transparent);
 }
 
+/*
+ * Congelar painéis (paridade título fora do scroll):
+ * — linha de totais: sticky bottom
+ * — 1ª / última coluna (Excel First/Last Column): sticky left / right
+ */
 .delpi-ui-config-table--first-column .delpi-ui-config-table__header-cell:first-child,
 .delpi-ui-config-table--first-column .delpi-ui-config-table__cell:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
   font-weight: 700;
-  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
+}
+
+.delpi-ui-config-table--first-column .delpi-ui-config-table__header-cell:first-child {
+  top: 0;
+  z-index: 3;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 85%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
 }
 
 .delpi-ui-config-table--last-column .delpi-ui-config-table__header-cell:last-child,
 .delpi-ui-config-table--last-column .delpi-ui-config-table__cell:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
   font-weight: 700;
-  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 70%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
+}
+
+.delpi-ui-config-table--last-column .delpi-ui-config-table__header-cell:last-child {
+  top: 0;
+  z-index: 3;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 85%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
 }
 
 .delpi-ui-config-table__row--total .delpi-ui-config-table__cell {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   font-weight: 700;
   border-top: calc(var(--delpi-ui-config-table-border-width, 1px) * 2)
     var(--delpi-ui-config-table-border-style, solid)
     var(--delpi-ui-config-table-border-color, #e2e8f0);
-  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 55%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
+}
+
+.delpi-ui-config-table--first-column .delpi-ui-config-table__row--total .delpi-ui-config-table__cell:first-child {
+  left: 0;
+  z-index: 3;
+}
+
+.delpi-ui-config-table--last-column .delpi-ui-config-table__row--total .delpi-ui-config-table__cell:last-child {
+  right: 0;
+  z-index: 3;
 }
 
 .delpi-ui-config-table--minimal .delpi-ui-config-table__header-cell,
