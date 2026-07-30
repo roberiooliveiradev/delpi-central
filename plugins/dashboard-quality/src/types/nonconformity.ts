@@ -1,6 +1,11 @@
 import type { PaginationParams } from "./pagination";
 
-export type NonconformityType = "internal" | "external" | "all";
+export type NonconformityType =
+  | "internal"
+  | "customer"
+  | "supplier"
+  | "external"
+  | "all";
 
 export type ListNonconformitiesParams = PaginationParams & {
   type?: NonconformityType;

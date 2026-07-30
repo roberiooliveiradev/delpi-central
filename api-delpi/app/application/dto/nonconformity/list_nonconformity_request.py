@@ -6,7 +6,7 @@ from typing import Optional
 
 @dataclass
 class ListNonconformityRequest:
-    type: str = "all"                  # internal | external | all
+    type: str = "all"  # internal | customer | supplier | external | all
     branch: Optional[str] = None
     date_start: Optional[str] = None
     date_end: Optional[str] = None

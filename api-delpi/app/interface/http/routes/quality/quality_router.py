@@ -169,6 +169,9 @@ def get_nonconformity_series(
             result.to_dict(),
             operation_id="get_nonconformity_series",
         )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar série de NC: {exc}")
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:
@@ -220,6 +223,9 @@ def list_nonconformity_route(
             result.to_dict(),
             operation_id="list_nonconformities",
         )
+
+    except ValueError as exc:
+        log_error(f"Erro de validação ao buscar não conformidades: {exc}")
         return error_response(str(exc), status_code=400)
 
     except Exception as exc:

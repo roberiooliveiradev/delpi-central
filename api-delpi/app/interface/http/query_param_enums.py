@@ -26,7 +26,7 @@ CUSTOMER_SEGMENT_VALUES = ("weg", "new_business")
 PRODUCT_TYPE_VALUES = ("PA", "PI")
 LOSS_TYPE_VALUES = ("refugo", "scrap", "both")
 STOCK_METHOD_VALUES = ("auto", "hybrid", "estimated", "official_closure")
-NONCONFORMITY_TYPE_VALUES = ("internal", "external", "all")
+NONCONFORMITY_TYPE_VALUES = ("internal", "customer", "supplier", "external", "all")
 NONCONFORMITY_SCOPE_VALUES = ("internal", "external")
 BRANCH_CODE_VALUES = ("01", "02")
 SI_DEPARTMENT_ID_VALUES = (
@@ -258,7 +258,10 @@ def STOCK_METHOD_QUERY():
 def NONCONFORMITY_TYPE_QUERY():
     return Query(
     "all",
-    description="Nonconformity type filter.",
+    description=(
+        "Nonconformity type filter: internal (QI2_TIPO=1), customer (2), "
+        "supplier (3), external (2+3 legacy), or all."
+    ),
     pattern=_enum_pattern(NONCONFORMITY_TYPE_VALUES),
     enum=list(NONCONFORMITY_TYPE_VALUES),
 )

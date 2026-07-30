@@ -14,7 +14,7 @@ export const QUALITY_HELP_TOOLTIPS = {
     ppmProductScope:
       "Recorte de PPM por família: filtra devoluções (QI2_ITEM) por prefixo — plugues 9048, componentes 9026. A produção do denominador permanece geral.",
     nonconformityType:
-      "Interna (tipo 1) ou externa (cliente/fornecedor). Vazio = todos os tipos.",
+      "Interna (QI2_TIPO=1), Cliente (2) ou Fornecedor (3). Todos = sem filtro de tipo.",
     nonconformityStatus:
       "Busca aproximada por situação: aceita parte do rótulo (ex.: «procede», «análise») ou do código TOTVS.",
     nonconformityItem:

@@ -54,6 +54,8 @@ Documentação oficial: `api-delpi/docs/api/06-modulos-departamentais.md` (seç�
 ```text
 GET /apps/api-delpi/quality/ppm/internal/summary?branch=01&date_start=2026-01-01&date_end=2026-05-18
 GET /apps/api-delpi/quality/nonconformities?type=all&page=1&page_size=50
+GET /apps/api-delpi/quality/nonconformities?type=customer&start_date=2026-07-01&end_date=2026-07-31
+# type: all | internal | customer | supplier | external (legado = cliente+fornecedor)
 GET /apps/api-delpi/quality/kaizens/summary?branch=01
 GET /apps/api-delpi/quality/audit-5s/summary?start_date=2026-01-01&end_date=2026-05-18
 ```

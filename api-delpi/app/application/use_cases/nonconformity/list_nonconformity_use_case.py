@@ -8,6 +8,9 @@ from app.application.dto.nonconformity.list_nonconformity_request import (
 from app.domain.ports.nonconformity.nonconformity_query_repository_port import (
     NonconformityQueryRepositoryPort,
 )
+from app.domain.services.quality.nonconformity_query_filter_service import (
+    normalize_nonconformity_filter_type,
+)
 
 
 class ListNonconformityUseCase:
@@ -23,7 +26,6 @@ class ListNonconformityUseCase:
         request: ListNonconformityRequest
     ) -> Page[Nonconformity]:
 
-        if request.type not in {"internal", "external", "all"}:
-            raise ValueError("type deve ser internal, external ou all")
+        request.type = normalize_nonconformity_filter_type(request.type)
 
         return self._repository.list_nonconformities(request)
