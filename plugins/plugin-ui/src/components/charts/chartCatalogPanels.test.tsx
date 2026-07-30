@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ChartBar, ChartColumn } from "lucide-react";
+import { BarChartHorizontal, ChartColumn } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChartTypeCatalogPanel, DELPI_CHART_TYPE_CATALOG } from "./ChartTypeCatalogPanel";
@@ -23,13 +23,19 @@ describe("ChartTypeCatalogPanel", () => {
     expect(onSelect).toHaveBeenCalledWith("line");
   });
 
-  it("Barras usa ícone horizontal (ChartBar), distinto de Colunas", () => {
+  it("Barras usa BarChartHorizontal, distinto de Colunas", () => {
     const bars = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.type === "horizontal_bar");
     const columns = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.type === "bar");
-    expect(bars?.icon).toBe("ChartBar");
+    expect(bars?.icon).toBe("BarChartHorizontal");
     expect(columns?.icon).toBe("ChartColumn");
-    expect(resolveChartCatalogIcon(bars?.icon)).toBe(ChartBar);
+    expect(resolveChartCatalogIcon(bars?.icon)).toBe(BarChartHorizontal);
     expect(resolveChartCatalogIcon(columns?.icon)).toBe(ChartColumn);
+  });
+
+  it("destaca selectedType no item atual", () => {
+    render(<ChartTypeCatalogPanel selectedType="line" onSelect={() => {}} />);
+    expect(screen.getByTitle("Linhas").getAttribute("aria-current")).toBe("true");
+    expect(screen.getByTitle("Colunas").getAttribute("aria-current")).toBeNull();
   });
 });
 

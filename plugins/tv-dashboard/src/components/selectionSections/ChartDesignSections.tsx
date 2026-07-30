@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   AnchoredPanelPortal,
+  ChartTypeCatalogPanel,
   ElementTogglePopover,
   type DelpiChartType,
   useRibbonSectionPopoverSurface,
@@ -39,8 +40,8 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import { ChartAddElementMenu } from "../ChartAddElementMenu";
-import { ChartChangeTypeDialog } from "../ChartChangeTypeDialog";
 import { ChartColorsStylesMenu } from "../ChartColorsStylesMenu";
+import { InsertCatalogPortal } from "../InsertCatalogPortal";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "../deck/DeckRibbonLargeButton";
@@ -88,6 +89,8 @@ function useChartDesignControls() {
   const layoutPanelRef = useRef<HTMLDivElement>(null);
   const colorsAnchorRef = useRef<HTMLDivElement>(null);
   const colorsPanelRef = useRef<HTMLDivElement>(null);
+  const changeTypeAnchorRef = useRef<HTMLDivElement>(null);
+  const changeTypePanelRef = useRef<HTMLDivElement>(null);
   const [addElementOpen, setAddElementOpen] = useState(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
@@ -164,6 +167,8 @@ function useChartDesignControls() {
     layoutPanelRef,
     colorsAnchorRef,
     colorsPanelRef,
+    changeTypeAnchorRef,
+    changeTypePanelRef,
     addElementOpen,
     setAddElementOpen,
     layoutOpen,
@@ -244,6 +249,7 @@ function ChartLayoutBandOrInline({
             ctrl.setAddElementOpen((open) => !open);
             ctrl.setLayoutOpen(false);
             ctrl.setColorsOpen(false);
+            ctrl.setChangeTypeOpen(false);
           }}
         />
         {ctrl.addElementOpen ? (
@@ -273,6 +279,7 @@ function ChartLayoutBandOrInline({
             ctrl.setLayoutOpen((open) => !open);
             ctrl.setAddElementOpen(false);
             ctrl.setColorsOpen(false);
+            ctrl.setChangeTypeOpen(false);
           }}
         />
         {ctrl.layoutOpen ? (
@@ -373,6 +380,7 @@ function ChartStylesBandOrInline({
           ctrl.setColorsOpen((open) => !open);
           ctrl.setAddElementOpen(false);
           ctrl.setLayoutOpen(false);
+          ctrl.setChangeTypeOpen(false);
         }}
       />
       {ctrl.colorsOpen ? (
@@ -400,20 +408,35 @@ export function ChartTypeSection({ layout }: { layout: SelectionSectionLayout })
   if (!ctrl) return null;
 
   const body = (
-    <>
+    <div ref={ctrl.changeTypeAnchorRef} className="td-composer__dropdown">
       <DeckRibbonLargeButton
         icon={Replace}
         label={"Alterar tipo\nde gráfico"}
-        hint="Abre o diálogo com o mesmo catálogo de tipos de Inserir → Gráficos."
-        onClick={() => ctrl.setChangeTypeOpen(true)}
+        hint="Mesmo catálogo de tipos de Inserir → Gráficos."
+        onClick={() => {
+          ctrl.setChangeTypeOpen((open) => !open);
+          ctrl.setAddElementOpen(false);
+          ctrl.setLayoutOpen(false);
+          ctrl.setColorsOpen(false);
+        }}
       />
-      <ChartChangeTypeDialog
-        open={ctrl.changeTypeOpen}
-        currentType={ctrl.block.chartType as DelpiChartType}
-        onClose={() => ctrl.setChangeTypeOpen(false)}
-        onConfirm={ctrl.setChartType}
-      />
-    </>
+      {ctrl.changeTypeOpen ? (
+        <InsertCatalogPortal
+          open={ctrl.changeTypeOpen}
+          anchorRef={ctrl.changeTypeAnchorRef}
+          panelRef={ctrl.changeTypePanelRef}
+          className="td-chart-catalog-portal"
+          ariaLabel="Alterar tipo de gráfico"
+          onDismiss={() => ctrl.setChangeTypeOpen(false)}
+        >
+          <ChartTypeCatalogPanel
+            title="Alterar tipo de gráfico"
+            selectedType={ctrl.block.chartType as DelpiChartType}
+            onSelect={ctrl.setChartType}
+          />
+        </InsertCatalogPortal>
+      ) : null}
+    </div>
   );
 
   return wrapPane("Tipo", H.chartType, layout, body, false, "chart-type");

@@ -41,6 +41,30 @@ describe("buildSelectedTextFormatBlockPatch", () => {
     expect(patch?.chartParts?.["axis:x"]?.style?.fontWeight).toBe("bold");
   });
 
+  it("parte Eixos altera só axis:x/y e não dataLabels/título/legenda", () => {
+    const selected = {
+      id: "c1",
+      type: "chart_view",
+      chartType: "bar",
+      frame: { x: 0, y: 0, w: 40, h: 30 },
+      chartParts: {
+        dataLabels: { style: { fontSize: 12 } },
+        title: { style: { fontSize: 22 } },
+        legend: { style: { fontSize: 16 } },
+      },
+    } as ComunicadoBlock;
+    const patch = buildSelectedTextFormatBlockPatch({
+      selected,
+      selectedChartPart: { kind: "axes" },
+      patch: { fontSize: 35 },
+    });
+    expect(patch?.chartParts?.["axis:x"]?.style?.fontSize).toBe(35);
+    expect(patch?.chartParts?.["axis:y"]?.style?.fontSize).toBe(35);
+    expect(patch?.chartParts?.dataLabels?.style?.fontSize).toBe(12);
+    expect(patch?.chartParts?.title?.style?.fontSize).toBe(22);
+    expect(patch?.chartParts?.legend?.style?.fontSize).toBe(16);
+  });
+
   it("tipografia global do KPI replica title/value/hint", () => {
     const selected = {
       id: "k1",

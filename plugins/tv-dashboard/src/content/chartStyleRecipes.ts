@@ -57,6 +57,18 @@ export const CHART_COLOR_PALETTES: ChartColorPalette[] = [
     seriesColor: "#2e7d32",
     colors: ["#2e7d32", "#4caf50", "#1b5e20", "#a5d6a7"],
   },
+  {
+    id: "red",
+    label: "Vermelho",
+    seriesColor: "#9f1239",
+    colors: ["#9f1239", "#e11d48", "#be123c", "#fb7185"],
+  },
+  {
+    id: "gray",
+    label: "Cinza",
+    seriesColor: "#1f2937",
+    colors: ["#1f2937", "#4b5563", "#9ca3af", "#d1d5db"],
+  },
 ];
 
 export const CHART_STYLE_RECIPES: ChartStyleRecipe[] = [

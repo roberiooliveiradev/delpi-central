@@ -17,11 +17,9 @@ import {
   Video,
 } from "lucide-react";
 import {
-  AnchoredPanelPortal,
   ChartTypeCatalogPanel,
   LucideIconPickerPopover,
   TableInsertCatalogPanel,
-  useRibbonSectionPopoverSurface,
   type DelpiChartType,
   type DelpiTableInsertSelection,
 } from "@delpi/plugin-ui/index";
@@ -34,7 +32,6 @@ import {
   type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
 
-import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DECK_INSERT_ACTION_KEYTIPS } from "../utils/deckKeyTips";
@@ -43,46 +40,10 @@ import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
+import { InsertCatalogPortal } from "./InsertCatalogPortal";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Labels = Record<string, string>;
-
-/** Catálogo Inserir: portal na faixa; inline no popover da seção colapsada. */
-function InsertCatalogPortal({
-  open,
-  anchorRef,
-  panelRef,
-  className,
-  ariaLabel,
-  onDismiss,
-  children,
-}: {
-  open: boolean;
-  anchorRef: React.RefObject<HTMLDivElement | null>;
-  panelRef: React.RefObject<HTMLDivElement | null>;
-  className: string;
-  ariaLabel: string;
-  onDismiss: () => void;
-  children: React.ReactNode;
-}) {
-  const inSectionPopover = useRibbonSectionPopoverSurface();
-  return (
-    <AnchoredPanelPortal
-      open={open}
-      anchorRef={anchorRef}
-      panelRef={panelRef}
-      variant="bare"
-      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-      className={className}
-      role="menu"
-      aria-label={ariaLabel}
-      exclusive={!inSectionPopover}
-      onDismiss={onDismiss}
-    >
-      {children}
-    </AnchoredPanelPortal>
-  );
-}
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const K = DECK_INSERT_ACTION_KEYTIPS;

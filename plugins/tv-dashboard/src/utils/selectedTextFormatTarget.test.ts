@@ -109,6 +109,19 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
+  it("parte grupo Eixos resolve tipografia de part (não complexGlobal)", () => {
+    const target = resolveSelectedTextFormatTarget({
+      selected: chartBlock,
+      selectedChartPart: { kind: "axes" },
+    });
+    expect(target?.mode).toBe("part");
+    if (target?.mode === "part") {
+      expect(target.source).toBe("chart");
+      expect(target.partLabel).toBe("Eixos");
+      expect(target.style.fontSize).toBe(14);
+    }
+  });
+
   it("resolve eixo do gráfico com default canônico quando sem fontSize persistido", () => {
     const bare = {
       ...chartBlock,

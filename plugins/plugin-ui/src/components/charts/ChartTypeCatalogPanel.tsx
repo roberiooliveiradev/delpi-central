@@ -10,20 +10,30 @@ export type ChartTypeCatalogPanelProps = {
   title?: string;
   onSelect: (chartType: DelpiChartType) => void;
   className?: string;
+  /** Tipo atual (ex.: Alterar tipo) — destaca o item correspondente. */
+  selectedType?: DelpiChartType | null;
 };
 
 function ChartCatalogItem({
   entry,
+  selected,
   onSelect,
 }: {
   entry: DelpiChartCatalogEntry;
+  selected: boolean;
   onSelect: (chartType: DelpiChartType) => void;
 }) {
   const Icon = resolveChartCatalogIcon(entry.icon);
   return (
     <button
       type="button"
-      className="delpi-ui-chart-catalog__item"
+      className={[
+        "delpi-ui-chart-catalog__item",
+        selected ? "delpi-ui-chart-catalog__item--selected" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-current={selected ? "true" : undefined}
       onClick={() => onSelect(entry.type)}
       title={entry.label}
     >
@@ -38,6 +48,7 @@ export function ChartTypeCatalogPanel({
   title = "Inserir gráfico",
   onSelect,
   className = "",
+  selectedType = null,
 }: ChartTypeCatalogPanelProps) {
   return (
     <div className={["delpi-ui-chart-catalog", className].filter(Boolean).join(" ")} role="menu">
@@ -50,7 +61,12 @@ export function ChartTypeCatalogPanel({
             <h4 className="delpi-ui-chart-catalog__category-label">{category.label}</h4>
             <div className="delpi-ui-chart-catalog__grid">
               {items.map((entry) => (
-                <ChartCatalogItem key={entry.type} entry={entry} onSelect={onSelect} />
+                <ChartCatalogItem
+                  key={entry.type}
+                  entry={entry}
+                  selected={selectedType === entry.type}
+                  onSelect={onSelect}
+                />
               ))}
             </div>
           </section>

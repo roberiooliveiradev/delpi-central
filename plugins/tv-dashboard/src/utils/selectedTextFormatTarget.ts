@@ -99,6 +99,7 @@ const CHART_TEXT_FORMAT_KINDS = new Set([
   "dataLabel",
   "dataLabels",
   "axis",
+  "axes",
 ]);
 const TABLE_TEXT_FORMAT_KINDS = new Set(["title", "header", "headerCell", "cell"]);
 
@@ -109,7 +110,14 @@ export function isKpiTextFormatPart(part: ComunicadoKpiPartRef | null | undefine
 export function isChartTextFormatPart(part: ComunicadoChartPartRef | null | undefined): boolean {
   if (!part) return false;
   if (!CHART_TEXT_FORMAT_KINDS.has(part.kind)) return false;
-  if (part.kind === "axis" || part.kind === "dataLabel" || part.kind === "dataLabels") return true;
+  if (
+    part.kind === "axis" ||
+    part.kind === "axes" ||
+    part.kind === "dataLabel" ||
+    part.kind === "dataLabels"
+  ) {
+    return true;
+  }
   return chartPartAllowsEdit(part);
 }
 
@@ -285,8 +293,18 @@ export function resolveSelectedTextFormatTarget(params: {
 
   if (selected.type === "chart_view") {
     if (isChartTextFormatPart(selectedChartPart) && selectedChartPart) {
-      const partStyle = getChartPartState(selected.chartParts, selectedChartPart)?.style;
-      const kind = isChartTextPartKind(selectedChartPart.kind) ? selectedChartPart.kind : null;
+      /* Grupo «Eixos»: tipografia da ribbon aplica só a axis:x/y — snapshot a partir do X. */
+      const styleSourceRef =
+        selectedChartPart.kind === "axes"
+          ? ({ kind: "axis", axis: "x" } as const)
+          : selectedChartPart;
+      const partStyle = getChartPartState(selected.chartParts, styleSourceRef)?.style;
+      const kind =
+        selectedChartPart.kind === "axes"
+          ? ("axis" as const)
+          : isChartTextPartKind(selectedChartPart.kind)
+            ? selectedChartPart.kind
+            : null;
       const style = snapshotFromPartStyle(
         partStyle,
         kind ? resolveChartPartFontSize(kind, partStyle) : (partStyle?.fontSize ?? 16),

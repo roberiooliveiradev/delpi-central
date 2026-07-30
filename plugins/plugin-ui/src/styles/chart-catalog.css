@@ -74,6 +74,16 @@
   outline: none;
 }
 
+.delpi-ui-chart-catalog__item--selected {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    var(--delpi-ui-surface, #fff)
+  );
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
+}
+
 .delpi-ui-chart-catalog__item:active {
   transform: scale(0.98);
 }

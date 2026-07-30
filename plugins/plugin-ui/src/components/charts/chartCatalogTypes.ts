@@ -36,7 +36,7 @@ export const DELPI_CHART_TYPE_CATALOG: DelpiChartCatalogEntry[] = [
   { type: "line", label: "Linhas", category: "series", icon: "ChartLine" },
   { type: "area", label: "Área", category: "series", icon: "ChartArea" },
   { type: "bar", label: "Colunas", category: "comparison", icon: "ChartColumn" },
-  { type: "horizontal_bar", label: "Barras", category: "comparison", icon: "ChartBar" },
+  { type: "horizontal_bar", label: "Barras", category: "comparison", icon: "BarChartHorizontal" },
   { type: "stacked_bar", label: "Colunas empilhadas", category: "comparison", icon: "ChartColumnStacked" },
   { type: "histogram", label: "Histograma", category: "distribution", icon: "ChartColumn" },
   { type: "pie", label: "Pizza", category: "distribution", icon: "ChartPie" },

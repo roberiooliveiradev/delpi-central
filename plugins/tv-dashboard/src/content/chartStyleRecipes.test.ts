@@ -16,6 +16,21 @@ describe("chartStyleRecipes", () => {
     expect(CHART_STYLE_RECIPES.length).toBeGreaterThanOrEqual(3);
   });
 
+  it("inclui paletas Vermelho e Cinza", () => {
+    const red = CHART_COLOR_PALETTES.find((item) => item.id === "red");
+    const gray = CHART_COLOR_PALETTES.find((item) => item.id === "gray");
+    expect(red?.label).toBe("Vermelho");
+    expect(red?.colors).toHaveLength(4);
+    expect(gray?.label).toBe("Cinza");
+    expect(gray?.colors).toHaveLength(4);
+    expect(applyChartColorPalette(red!, mergeComunicadoChartOptions({})).seriesColor).toBe(
+      red!.seriesColor,
+    );
+    expect(applyChartColorPalette(gray!, mergeComunicadoChartOptions({})).categoryColors).toEqual(
+      gray!.colors,
+    );
+  });
+
   it("applyChartColorPalette define seriesColor e categoryColors", () => {
     const palette = CHART_COLOR_PALETTES[0]!;
     const next = applyChartColorPalette(palette, mergeComunicadoChartOptions({}));

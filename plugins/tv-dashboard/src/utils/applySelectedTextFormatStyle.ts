@@ -178,13 +178,26 @@ export function buildSelectedTextFormatBlockPatch(params: {
 
   if (target.mode === "part" && target.source === "chart" && selected.type === "chart_view") {
     if (!isChartTextFormatPart(selectedChartPart) || !selectedChartPart) return null;
+    const typographyPatch = {
+      ...patch,
+      fontWeight: pickFontWeight(patch.fontWeight) ?? patch.fontWeight,
+      fontStyle: pickFontStyle(patch.fontStyle) ?? patch.fontStyle,
+    };
+    /* Parte grupo «Eixos»: só axis:x e axis:y — não vaza para dataLabels/título/legenda. */
+    if (selectedChartPart.kind === "axes") {
+      let nextParts = selected.chartParts;
+      for (const axis of ["x", "y"] as const) {
+        const axisRef = { kind: "axis" as const, axis };
+        const prev = getChartPartState(nextParts, axisRef)?.style;
+        nextParts = upsertChartPartState(nextParts, axisRef, {
+          style: mergeTypographyStyle(prev, typographyPatch) as ComunicadoChartPartStyle,
+        });
+      }
+      return { chartParts: nextParts } as Partial<ComunicadoBlock>;
+    }
     const prev = getChartPartState(selected.chartParts, selectedChartPart)?.style;
     const nextParts = upsertChartPartState(selected.chartParts, selectedChartPart, {
-      style: mergeTypographyStyle(prev, {
-        ...patch,
-        fontWeight: pickFontWeight(patch.fontWeight) ?? patch.fontWeight,
-        fontStyle: pickFontStyle(patch.fontStyle) ?? patch.fontStyle,
-      }) as ComunicadoChartPartStyle,
+      style: mergeTypographyStyle(prev, typographyPatch) as ComunicadoChartPartStyle,
     });
     return { chartParts: nextParts } as Partial<ComunicadoBlock>;
   }

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BarChartHorizontal,
   ChartArea,
   ChartBar,
   ChartColumn,
@@ -18,13 +19,14 @@ import {
 
 /**
  * Mapa canônico nome → Lucide para `DELPI_CHART_TYPE_CATALOG.icon`.
- * Colunas = ChartColumn (verticais); Barras = ChartBar (horizontais).
+ * Colunas = ChartColumn (verticais); Barras = BarChartHorizontal.
  */
 export const DELPI_CHART_CATALOG_ICON_MAP: Record<string, LucideIcon> = {
   ChartLine,
   ChartArea,
   ChartColumn,
   ChartBar,
+  BarChartHorizontal,
   ChartColumnStacked,
   ChartNoAxesColumnIncreasing,
   ChartPie,
