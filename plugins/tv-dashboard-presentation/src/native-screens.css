@@ -5,6 +5,9 @@
   overflow: hidden;
   color: #f4f7fb;
   background: radial-gradient(circle at 20% 0%, #0d2840 0%, #05070a 55%);
+  /* Reserva visual da barra do deck — controles de vídeo ficam acima/à esquerda. */
+  --tdp-deck-chrome-reserve: 72px;
+  --tdp-chrome-gutter: max(12px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
 }
 
 .tdp-stage[data-viewport="4k"] {
@@ -309,8 +312,13 @@
   transform: translateX(-50%);
   z-index: 25;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - (2 * var(--tdp-chrome-gutter, 12px)));
   padding: 8px 12px;
   border-radius: 999px;
   background: color-mix(in srgb, #05070a 85%, transparent);
@@ -407,20 +415,31 @@
 }
 
 .tdp-presentation-video__controls {
+  /* Controles do vídeo — âncora no bloco (não no centro do stage), sem cruzar a barra do deck. */
   position: absolute;
-  left: 50%;
-  bottom: 10px;
-  transform: translateX(-50%);
-  z-index: 3;
+  left: max(8px, 1.2%);
+  right: auto;
+  bottom: max(8px, 1.2%);
+  z-index: 6;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 16px);
   padding: 6px 10px;
   border-radius: 999px;
   background: color-mix(in srgb, #05070a 88%, transparent);
   border: 1px solid color-mix(in srgb, #089bdb 40%, transparent);
   transition: opacity 0.25s ease, visibility 0.25s ease;
   pointer-events: auto;
+}
+
+/* No deck, sobe a barra do vídeo para não ficar sob Anterior/Pausar/Próxima. */
+.tdp-stage .tdp-slide .tdp-presentation-video__controls {
+  bottom: max(12px, calc(var(--tdp-deck-chrome-reserve, 72px) * 0.55));
+  max-width: min(420px, calc(100% - 16px));
 }
 
 .tdp-presentation-video__controls--visible {

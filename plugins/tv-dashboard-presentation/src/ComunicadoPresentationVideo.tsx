@@ -21,7 +21,7 @@ function isSlideActive(node: HTMLElement | null): boolean {
 
 /**
  * Vídeo na apresentação/prévia: autoplay com áudio ao entrar no slide,
- * controles play/pause/mute e sincroniza com pausa do deck.
+ * controles próprios (play/pause/mute) e sincroniza pausa com o deck.
  */
 export function ComunicadoPresentationVideo({ src, objectFit = "contain", className = "" }: Props) {
   const { deckPaused } = usePresentationPlayback();
@@ -63,28 +63,49 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    let cancelled = false;
 
     if (!slideActive) {
       video.pause();
       video.currentTime = 0;
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (deckPaused) {
       video.pause();
-      return;
+      return () => {
+        cancelled = true;
+      };
     }
 
     video.muted = false;
     setMuted(false);
-    void video.play().catch(() => {
-      /* Autoplay com áudio bloqueado — tenta mudo e deixa unmute no player. */
-      video.muted = true;
-      setMuted(true);
-      void video.play().catch(() => {
-        /* Usuário usa o botão Play. */
+
+    const tryPlay = (withMuteFallback: boolean) => {
+      void video.play().then(() => {
+        if (cancelled) {
+          video.pause();
+        }
+      }).catch(() => {
+        if (cancelled || !withMuteFallback) return;
+        video.muted = true;
+        setMuted(true);
+        void video.play().then(() => {
+          if (cancelled) video.pause();
+        }).catch(() => {
+          /* Usuário usa o botão Play. */
+        });
       });
-    });
+    };
+
+    tryPlay(true);
+
+    return () => {
+      cancelled = true;
+      video.pause();
+    };
   }, [slideActive, deckPaused, src]);
 
   useEffect(() => {
@@ -162,6 +183,7 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
             ].join(" "),
           )}
           onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
         >
           <button
             type="button"

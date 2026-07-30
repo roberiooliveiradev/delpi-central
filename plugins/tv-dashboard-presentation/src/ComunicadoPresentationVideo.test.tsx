@@ -83,4 +83,45 @@ describe("ComunicadoPresentationVideo", () => {
 
     await waitFor(() => expect(pause).toHaveBeenCalled());
   });
+
+  it("cancela autoplay pendente quando o deck pausa", async () => {
+    let resolvePlay: ((value?: void) => void) | null = null;
+    const play = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvePlay = resolve;
+        }),
+    );
+    const pause = vi.fn(function pause(this: HTMLMediaElement) {
+      Object.defineProperty(this, "paused", { configurable: true, get: () => true });
+      this.dispatchEvent(new Event("pause"));
+    });
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play);
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(pause);
+
+    const { rerender, container } = render(
+      <PresentationPlaybackProvider deckPaused={false}>
+        <div className="tdp-slide tdp-slide--active">
+          <ComunicadoPresentationVideo src="/media/clip.mp4" />
+        </div>
+      </PresentationPlaybackProvider>,
+    );
+
+    await waitFor(() => expect(play).toHaveBeenCalled());
+    const pauseCallsBefore = pause.mock.calls.length;
+
+    rerender(
+      <PresentationPlaybackProvider deckPaused>
+        <div className="tdp-slide tdp-slide--active">
+          <ComunicadoPresentationVideo src="/media/clip.mp4" />
+        </div>
+      </PresentationPlaybackProvider>,
+    );
+
+    await waitFor(() => expect(pause.mock.calls.length).toBeGreaterThan(pauseCallsBefore));
+    resolvePlay?.();
+    await Promise.resolve();
+    const video = container.querySelector("video");
+    expect(video?.paused).toBe(true);
+  });
 });
