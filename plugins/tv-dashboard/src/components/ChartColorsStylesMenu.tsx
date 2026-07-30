@@ -79,17 +79,14 @@ export function ChartColorsStylesMenu({ options, onApplyOptions, footer }: Props
     <div className="td-chart-style-menu" role="menu" aria-label="Cores e estilos do gráfico">
       <section className="td-chart-style-menu__section">
         <h4>Alterar cores</h4>
-        <p className="td-chart-style-menu__hint">
-          Uma série usa a cor principal; pies e categorias usam as demais do swatch.
-        </p>
+        <p className="td-chart-style-menu__hint">Série = 1ª cor; categorias usam o swatch.</p>
         <PaletteGrid palettes={categorical} options={options} onApply={applyPalette} />
       </section>
 
       <section className="td-chart-style-menu__section">
         <h4>Escalas (melhor / pior)</h4>
         <p className="td-chart-style-menu__hint">
-          Com «Colorir pelo valor», a rampa segue o número (ex. refugo alto → vermelho). Sem isso, a
-          ordem das categorias define quem fica bom ou ruim.
+          Pelo valor: rampa no número. Sem isso: ordem das categorias.
         </p>
         <PaletteGrid palettes={semantic} options={options} onApply={applyPalette} />
         <div className="td-chart-style-menu__scale-controls">
