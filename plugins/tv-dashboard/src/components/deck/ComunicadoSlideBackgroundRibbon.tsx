@@ -41,13 +41,13 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
             onChange={setBackgroundColor}
           />
           <TvRibbonColorPicker
-            label="Grad. ini."
+            label="Início"
             ariaLabel="Gradiente — cor inicial"
             value={gradientFrom}
             onChange={(color) => setBackgroundGradient(color, gradientTo)}
           />
           <TvRibbonColorPicker
-            label="Grad. fim"
+            label="Fim"
             ariaLabel="Gradiente — cor final"
             value={gradientTo}
             onChange={(color) => setBackgroundGradient(gradientFrom, color)}
@@ -73,7 +73,7 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
         label="Presets"
         hint="Gradientes prontos para o fundo do slide."
       >
-        <div className="td-deck-ribbon__controls td-deck-ribbon__controls--presets">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__controls--presets">
           {COMUNICADO_BACKGROUND_GRADIENT_PRESETS.map((preset) => (
             <button
               key={preset.label}

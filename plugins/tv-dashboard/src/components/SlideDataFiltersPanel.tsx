@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Filter } from "lucide-react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
@@ -49,7 +50,11 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
 
   if (compact) {
     return (
-      <DeckSettingsAccordion summary="Filtros" ariaLabel="Filtros de dados do slide">
+      <DeckSettingsAccordion
+        summary="Filtros"
+        ariaLabel="Filtros de dados do slide"
+        icon={Filter}
+      >
         {body}
       </DeckSettingsAccordion>
     );

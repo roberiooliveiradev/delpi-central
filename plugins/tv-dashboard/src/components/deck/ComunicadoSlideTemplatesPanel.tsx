@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LayoutTemplate } from "lucide-react";
 import { getSlidePreset, listSlidePresets, type SlidePreset } from "../../api/tvDashboardApi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { COMUNICADO_SLIDE_THEMES } from "../../content/comunicadoSlideThemes";
@@ -94,7 +95,11 @@ export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: b
 
   if (compact) {
     return (
-      <DeckSettingsAccordion summary="Templates" ariaLabel="Templates e temas do slide">
+      <DeckSettingsAccordion
+        summary="Templates"
+        ariaLabel="Templates e temas do slide"
+        icon={LayoutTemplate}
+      >
         {body}
       </DeckSettingsAccordion>
     );

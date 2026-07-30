@@ -10,6 +10,7 @@ export { DeckActionRow } from "./DeckActionRow";
 export { DeckElementSidePanel } from "./DeckElementSidePanel";
 export { DeckIconField } from "./DeckIconField";
 export { DeckSettingsAccordion } from "./DeckSettingsAccordion";
+export { DeckRibbonTilePopover } from "./DeckRibbonTilePopover";
 export { DeckInspectorLayout } from "./DeckInspectorLayout";
 export { DeckPropertySection } from "./DeckPropertySection";
 export { DeckRangeField } from "./DeckRangeField";

@@ -30,10 +30,10 @@ import {
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
-import { DeckIconField } from "./deck/DeckIconField";
 import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
+import { DeckRibbonTilePopover } from "./deck/DeckRibbonTilePopover";
 import { TdNativeTextField } from "./tdFormFields";
 import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -247,22 +247,29 @@ export function DeckSettingsPanel({
     return (
       <>
         <DeckRibbonGroup groupId="slide-properties" label="Propriedades" hint={F.slideTitle}>
-          <div className="td-deck-ribbon__prop-cols">
-            <DeckIconField id="td-slide-title" icon={Type} label="Título" hint={F.slideTitle}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTilePopover
+              icon={Type}
+              label="Título"
+              hint={F.slideTitle}
+              panelLabel="Título da tela"
+              panelClassName="td-deck-ribbon-tile-popover--narrow"
+            >
               <TdNativeTextField
                 id="td-slide-title"
-                label=""
+                label="Título"
                 value={title}
                 onChange={setTitle}
                 onBlur={() => saveSlidePatch({ title })}
               />
-            </DeckIconField>
-            <DeckIconField
-              id="td-slide-duration"
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
               icon={Clock}
-              label="Duração (s)"
+              label="Duração"
               hint={F.slideDuration}
-              className="td-deck-icon-field--medium"
+              panelLabel="Duração da tela"
+              panelClassName="td-deck-ribbon-tile-popover--timing"
             >
               <div className="td-deck-slide-timing">
                 <NativeCheckboxControl
@@ -291,7 +298,7 @@ export function DeckSettingsPanel({
                 ) : (
                   <DeckRangeField
                     id="td-slide-duration-range"
-                    label=""
+                    label="Segundos"
                     hint={F.slideDuration}
                     min={5}
                     max={600}
@@ -304,13 +311,14 @@ export function DeckSettingsPanel({
                   />
                 )}
               </div>
-            </DeckIconField>
-            <DeckIconField
-              id="td-slide-transition"
+            </DeckRibbonTilePopover>
+
+            <DeckRibbonTilePopover
               icon={ArrowLeftRight}
               label="Transição"
               hint={F.slideTransition}
-              className="td-deck-icon-field--medium"
+              panelLabel="Transição da tela"
+              panelClassName="td-deck-ribbon-tile-popover--narrow"
             >
               <TdRibbonSelect
                 id="td-slide-transition"
@@ -322,29 +330,37 @@ export function DeckSettingsPanel({
                 }}
                 options={SLIDE_TRANSITION_OPTIONS}
               />
-            </DeckIconField>            {slide.slideType === "external" ? (
-              <DeckIconField
-                id="td-slide-url"
+            </DeckRibbonTilePopover>
+
+            {slide.slideType === "external" ? (
+              <DeckRibbonTilePopover
                 icon={Globe}
                 label="URL"
                 hint={F.slideUrl}
-                className="td-deck-icon-field--wide"
+                panelLabel="URL externa"
+                panelClassName="td-deck-ribbon-tile-popover--wide"
               >
                 <TdNativeTextField
                   id="td-slide-url"
-                  label=""
+                  label="URL"
                   className="td-deck-tabs__field--wide"
                   value={externalUrl}
                   onChange={setExternalUrl}
                   onBlur={() => saveSlidePatch({ externalUrl })}
                 />
-              </DeckIconField>
+              </DeckRibbonTilePopover>
             ) : !isCustomSlide && slide.nativeScreenKey !== "supplies_stock_value" ? (
               <>
-                <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
+                <DeckRibbonTilePopover
+                  icon={Building2}
+                  label="Filial"
+                  hint={F.slideBranch}
+                  panelLabel="Filial da tela"
+                  panelClassName="td-deck-ribbon-tile-popover--narrow"
+                >
                   <BranchField
                     id="td-slide-branch"
-                    label=""
+                    label="Filial"
                     scope={branchScope}
                     value={branch}
                     onChange={(value) => {
@@ -352,25 +368,39 @@ export function DeckSettingsPanel({
                       saveSlidePatch({ branch: value });
                     }}
                   />
-                </DeckIconField>
-                <DeckRangeField
-                  id="td-slide-period"
-                  label="Período (dias)"
+                </DeckRibbonTilePopover>
+                <DeckRibbonTilePopover
+                  icon={Clock}
+                  label="Período"
                   hint={F.slidePeriod}
-                  min={1}
-                  max={365}
-                  value={periodDays}
-                  onChange={(value) => {
-                    setPeriodDays(value);
-                    saveSlidePatch({ periodDays: value });
-                  }}
-                />
+                  panelLabel="Período em dias"
+                  panelClassName="td-deck-ribbon-tile-popover--narrow"
+                >
+                  <DeckRangeField
+                    id="td-slide-period"
+                    label="Período (dias)"
+                    hint={F.slidePeriod}
+                    min={1}
+                    max={365}
+                    value={periodDays}
+                    onChange={(value) => {
+                      setPeriodDays(value);
+                      saveSlidePatch({ periodDays: value });
+                    }}
+                  />
+                </DeckRibbonTilePopover>
               </>
             ) : !isCustomSlide ? (
-              <DeckIconField icon={Building2} label="Filial" hint={F.slideBranch}>
+              <DeckRibbonTilePopover
+                icon={Building2}
+                label="Filial"
+                hint={F.slideBranch}
+                panelLabel="Filial da tela"
+                panelClassName="td-deck-ribbon-tile-popover--narrow"
+              >
                 <BranchField
                   id="td-slide-branch-stock"
-                  label=""
+                  label="Filial"
                   scope={branchScope}
                   value={branch}
                   onChange={(value) => {
@@ -378,21 +408,28 @@ export function DeckSettingsPanel({
                     saveSlidePatch({ branch: value });
                   }}
                 />
-              </DeckIconField>
+              </DeckRibbonTilePopover>
             ) : null}
           </div>
         </DeckRibbonGroup>
         {isCustomSlide || catalogItem ? (
           <DeckRibbonGroup groupId="slide-type" label="Tipo" hint={F.customSlideType}>
-            <span className="td-deck-settings-chip" title={isCustomSlide ? F.customSlideType : `Tipo: ${catalogItem?.label}`}>
-              <LayoutTemplate size={13} aria-hidden="true" />
-              {isCustomSlide ? "Tela livre" : catalogItem?.label}
-            </span>
+            <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+              <DeckRibbonTile
+                icon={LayoutTemplate}
+                label={isCustomSlide ? "Livre" : (catalogItem?.label ?? "Tipo")}
+                hint={isCustomSlide ? F.customSlideType : `Tipo: ${catalogItem?.label}`}
+                disabled
+                onClick={() => undefined}
+              />
+            </div>
           </DeckRibbonGroup>
         ) : null}
         {slideTabExtra ? (
           <DeckRibbonGroup groupId="slide-tools" label="Ferramentas">
-            <div className="td-deck-settings-strip__tools">{slideTabExtra}</div>
+            <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-settings-tools-row">
+              {slideTabExtra}
+            </div>
           </DeckRibbonGroup>
         ) : null}
       </>
