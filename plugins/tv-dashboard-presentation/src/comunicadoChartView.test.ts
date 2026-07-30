@@ -6,6 +6,7 @@ import { chartTypeHasBasicRender, toSeriesChartKind } from "./comunicadoChartVie
 const ALL_CHART_TYPES: ComunicadoChartType[] = [
   "line",
   "bar",
+  "horizontal_bar",
   "area",
   "stacked_bar",
   "pie",

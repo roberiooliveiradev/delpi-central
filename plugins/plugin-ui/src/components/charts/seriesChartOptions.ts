@@ -12,7 +12,22 @@ export type SeriesChartValueFormat =
   | "number"
   | "currency"
   | "currency4"
-  | "percent";
+  | "percent"
+  | "compact";
+
+/** Rotação dos rótulos de categoria (eixo X vertical / Y horizontal). */
+export type SeriesChartCategoryLabelRotation = "auto" | 0 | -45 | -90;
+
+/** Densidade dos rótulos de categoria quando há colisão. */
+export type SeriesChartCategoryLabelOverflow = "skip" | "wrap" | "truncate";
+
+/** Formatação de rótulos de categoria (datas ISO / YYYY-MM). */
+export type SeriesChartCategoryLabelFormat =
+  | "raw"
+  | "autoDate"
+  | "day"
+  | "month"
+  | "year";
 
 export type SeriesChartLegendPosition = "top" | "bottom" | "left" | "right" | "hidden";
 
@@ -79,6 +94,17 @@ export type SeriesChartOptions = {
    */
   smoothLines?: boolean;
   valueFormat?: SeriesChartValueFormat;
+  /**
+   * Casas decimais fixas; `null`/ausente = comportamento do format (auto).
+   * Aplica a ticks, data labels e tabela.
+   */
+  decimalPlaces?: number | null;
+  /** Rotação dos rótulos de categoria. Default `auto` (−38° quando necessário). */
+  categoryLabelRotation?: SeriesChartCategoryLabelRotation;
+  /** Como lidar com rótulos de categoria densos. Default `skip`. */
+  categoryLabelOverflow?: SeriesChartCategoryLabelOverflow;
+  /** Formato de rótulo de categoria (datas). Default `raw`. */
+  categoryLabelFormat?: SeriesChartCategoryLabelFormat;
   seriesColor?: string;
   /**
    * Paleta cíclica (pie/fatias/categorias). Índice 0 ≈ série; índice 1 ≈ fill de área.
@@ -107,6 +133,8 @@ export const SERIES_CHART_CHROME_VERSION = 2;
 export type SeriesChartPoint = {
   label?: string;
   value?: number | null;
+  /** Canal tamanho (bubble); ausente → paint usa |value|. */
+  size?: number | null;
   /** Índice estável na série de origem (legenda/cores por categoria). */
   sourceIndex?: number;
 };
@@ -124,6 +152,7 @@ export type SeriesChartSeriesSpec = {
 export type SeriesChartKind =
   | "line"
   | "bar"
+  | "horizontal_bar"
   | "area"
   | "pie"
   | "combo"
@@ -159,6 +188,10 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showMarkers: true,
   smoothLines: false,
   valueFormat: "auto",
+  decimalPlaces: null,
+  categoryLabelRotation: "auto",
+  categoryLabelOverflow: "skip",
+  categoryLabelFormat: "raw",
   seriesColor: OFFICE_CHART_SERIES_COLOR,
   theme: "light",
   backgroundColor: OFFICE_CHART_AREA_FILL,
@@ -270,9 +303,31 @@ export function resolveSeriesChartDisplayOptions(
 export const SERIES_CHART_VALUE_FORMAT_OPTIONS = [
   { value: "auto", label: "Geral" },
   { value: "number", label: "Número" },
+  { value: "compact", label: "Compacto" },
   { value: "currency", label: "Moeda (R$)" },
   { value: "currency4", label: "Moeda (R$ · 4 casas)" },
   { value: "percent", label: "Percentual" },
+] as const;
+
+export const SERIES_CHART_CATEGORY_LABEL_ROTATION_OPTIONS = [
+  { value: "auto", label: "Automático" },
+  { value: "0", label: "Horizontal (0°)" },
+  { value: "-45", label: "−45°" },
+  { value: "-90", label: "−90°" },
+] as const;
+
+export const SERIES_CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS = [
+  { value: "skip", label: "Omitir (pular)" },
+  { value: "truncate", label: "Truncar" },
+  { value: "wrap", label: "Quebrar linha" },
+] as const;
+
+export const SERIES_CHART_CATEGORY_LABEL_FORMAT_OPTIONS = [
+  { value: "raw", label: "Como está" },
+  { value: "autoDate", label: "Data (auto)" },
+  { value: "day", label: "Dia" },
+  { value: "month", label: "Mês" },
+  { value: "year", label: "Ano" },
 ] as const;
 
 export const SERIES_CHART_LEGEND_POSITION_OPTIONS = [
@@ -346,32 +401,123 @@ export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChart
   });
 }
 
-export function formatSeriesChartValue(value: number, format: SeriesChartValueFormat): string {
+function resolveFractionDigits(
+  decimalPlaces: number | null | undefined,
+  fallbackMax: number,
+  fallbackMin = 0,
+): { minimumFractionDigits: number; maximumFractionDigits: number } {
+  if (typeof decimalPlaces === "number" && Number.isFinite(decimalPlaces) && decimalPlaces >= 0) {
+    const places = Math.min(8, Math.floor(decimalPlaces));
+    return { minimumFractionDigits: places, maximumFractionDigits: places };
+  }
+  return { minimumFractionDigits: fallbackMin, maximumFractionDigits: fallbackMax };
+}
+
+export function formatSeriesChartValue(
+  value: number,
+  format: SeriesChartValueFormat,
+  decimalPlaces?: number | null,
+): string {
+  if (format === "compact") {
+    const digits = resolveFractionDigits(decimalPlaces, 1);
+    return value.toLocaleString("pt-BR", {
+      notation: "compact",
+      compactDisplay: "short",
+      ...digits,
+    });
+  }
   if (format === "currency") {
     const hasCents = Math.abs(value % 1) > 1e-9;
+    const digits = resolveFractionDigits(decimalPlaces, hasCents ? 2 : 0, hasCents ? 2 : 0);
     return value.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-      minimumFractionDigits: hasCents ? 2 : 0,
-      maximumFractionDigits: hasCents ? 2 : 0,
+      ...digits,
     });
   }
   if (format === "currency4") {
+    const digits = resolveFractionDigits(decimalPlaces, 4, 2);
     return value.toLocaleString("pt-BR", {
       style: "currency",
       currency: "BRL",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4,
+      ...digits,
     });
   }
   if (format === "percent") {
-    return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+    const digits = resolveFractionDigits(decimalPlaces, 1);
+    return `${value.toLocaleString("pt-BR", digits)}%`;
   }
   if (format === "number") {
-    return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+    const digits = resolveFractionDigits(decimalPlaces, 2);
+    return value.toLocaleString("pt-BR", digits);
   }
   /* Geral (auto): número localizado — sem inferir % ou R$ (escolha do usuário). */
-  return value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  const digits = resolveFractionDigits(decimalPlaces, 2);
+  return value.toLocaleString("pt-BR", digits);
+}
+
+/** Parse ISO / YYYY-MM / YYYY-MM-DD (e variantes com hora). */
+export function parseSeriesChartCategoryDate(raw: string): Date | null {
+  const text = raw.trim();
+  if (!text) return null;
+  const ym = /^(\d{4})-(\d{2})$/.exec(text);
+  if (ym) {
+    const year = Number(ym[1]);
+    const month = Number(ym[2]);
+    if (month < 1 || month > 12) return null;
+    return new Date(Date.UTC(year, month - 1, 1));
+  }
+  const ymd = /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/.exec(text);
+  if (ymd) {
+    const year = Number(ymd[1]);
+    const month = Number(ymd[2]);
+    const day = Number(ymd[3]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+  const parsed = Date.parse(text);
+  if (!Number.isFinite(parsed)) return null;
+  return new Date(parsed);
+}
+
+export function formatSeriesChartCategoryLabel(
+  raw: string,
+  format: SeriesChartCategoryLabelFormat = "raw",
+): string {
+  if (format === "raw") return raw;
+  const date = parseSeriesChartCategoryDate(raw);
+  if (!date) return raw;
+  if (format === "year") {
+    return String(date.getUTCFullYear());
+  }
+  if (format === "month") {
+    return date.toLocaleDateString("pt-BR", { month: "short", year: "numeric", timeZone: "UTC" });
+  }
+  if (format === "day") {
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  }
+  /* autoDate: curto e legível */
+  const hasDay = /^\d{4}-\d{2}-\d{2}/.test(raw.trim());
+  if (hasDay) {
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      timeZone: "UTC",
+    });
+  }
+  return date.toLocaleDateString("pt-BR", { month: "short", year: "2-digit", timeZone: "UTC" });
+}
+
+/** Trunca rótulo de categoria com reticências (overflow=truncate). */
+export function truncateSeriesChartCategoryLabel(label: string, maxChars = 12): string {
+  const text = label.trim();
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, Math.max(1, maxChars - 1))}…`;
 }
 
 const LIGHT_CHART_THEME = DECK_THEME_LIGHT;

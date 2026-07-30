@@ -34,3 +34,8 @@ export {
   useRibbonSectionPopoverSurface,
   type RibbonGroupSurface,
 } from "./RibbonGroupSurfaceContext";
+export {
+  ElementTogglePopover,
+  type ElementTogglePopoverProps,
+  type ElementTogglePresence,
+} from "./ElementTogglePopover";

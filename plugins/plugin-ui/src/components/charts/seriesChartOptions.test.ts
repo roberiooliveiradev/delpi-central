@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_SERIES_CHART_OPTIONS,
   SERIES_CHART_CHROME_VERSION,
+  formatSeriesChartCategoryLabel,
+  formatSeriesChartValue,
   migrateSeriesChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions,
   resolveSeriesChartLegendLayout,
@@ -111,6 +113,24 @@ describe("seriesChartOptions — títulos de eixo", () => {
     });
     expect(migrated.categoryPaddingPercent).toBe(0);
     expect(migrated.chromeVersion).toBe(SERIES_CHART_CHROME_VERSION);
+  });
+});
+
+describe("formatSeriesChartValue / category label", () => {
+  it("compact formata em notação curta pt-BR", () => {
+    const formatted = formatSeriesChartValue(28000, "compact");
+    expect(formatted.toLowerCase()).toMatch(/28/);
+    expect(formatted.toLowerCase()).toMatch(/mil|k/);
+  });
+
+  it("autoDate encurta ISO date", () => {
+    expect(formatSeriesChartCategoryLabel("2026-07-01", "autoDate")).toMatch(/jul/i);
+  });
+
+  it("defaults de label format preservam playlists antigas", () => {
+    expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelRotation).toBe("auto");
+    expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelOverflow).toBe("skip");
+    expect(DEFAULT_SERIES_CHART_OPTIONS.categoryLabelFormat).toBe("raw");
   });
 });
 

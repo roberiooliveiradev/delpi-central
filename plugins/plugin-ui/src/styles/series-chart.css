@@ -128,6 +128,14 @@
   transform-box: fill-box;
 }
 
+.delpi-ui-series-chart__tick--x-rotated-45 {
+  transform-box: fill-box;
+}
+
+.delpi-ui-series-chart__tick--x-rotated-90 {
+  transform-box: fill-box;
+}
+
 .delpi-ui-series-chart__axis-title {
   fill: var(--delpi-ui-series-chart-text, #1e293b);
   font-size: var(--delpi-ui-series-chart-axis-title-font-size, 14px);

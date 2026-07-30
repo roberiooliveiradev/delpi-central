@@ -10,7 +10,12 @@ import type { SeriesChartLayout } from "./layout";
 
 export type ChartAxisLinesProps = {
   layout: SeriesChartLayout;
+  /** @deprecated Use showX / showY. When false, neither line renders. */
   visible?: boolean;
+  /** Linha do eixo X (base). Default true when `visible` is not false. */
+  showX?: boolean;
+  /** Linha do eixo Y (esquerda). Default true when `visible` is not false. */
+  showY?: boolean;
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
 };
@@ -18,11 +23,15 @@ export type ChartAxisLinesProps = {
 export function ChartAxisLines({
   layout,
   visible = true,
+  showX,
+  showY,
   interaction,
   chartParts,
 }: ChartAxisLinesProps) {
   const cn = useSeriesChartClasses();
-  if (!visible) return null;
+  const drawX = visible !== false && showX !== false;
+  const drawY = visible !== false && showY !== false;
+  if (!drawX && !drawY) return null;
 
   const { margin, plotW, plotH } = layout;
   const xAxisY = margin.top + plotH;
@@ -36,96 +45,102 @@ export function ChartAxisLines({
 
   return (
     <>
-      <g
-        {...chartPartDomProps(xRef, interaction?.selectedPart)}
-        onPointerDown={
-          interactive
-            ? (event) => {
-                event.stopPropagation();
-                interaction?.onPartPointerDown?.(xRef, event);
-              }
-            : undefined
-        }
-        onDoubleClick={
-          interactive
-            ? (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                interaction?.onPartDoubleClick?.(xRef, event);
-              }
-            : undefined
-        }
-      >
-        {interactive ? (
+      {drawX ? (
+        <g
+          {...chartPartDomProps(xRef, interaction?.selectedPart)}
+          onPointerDown={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  interaction?.onPartPointerDown?.(xRef, event);
+                }
+              : undefined
+          }
+          onDoubleClick={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  interaction?.onPartDoubleClick?.(xRef, event);
+                }
+              : undefined
+          }
+        >
+          {interactive ? (
+            <line
+              x1={margin.left}
+              y1={xAxisY}
+              x2={margin.left + plotW}
+              y2={xAxisY}
+              stroke="transparent"
+              strokeWidth={10}
+              pointerEvents="stroke"
+            />
+          ) : null}
           <line
             x1={margin.left}
             y1={xAxisY}
             x2={margin.left + plotW}
             y2={xAxisY}
-            stroke="transparent"
-            strokeWidth={10}
-            pointerEvents="stroke"
+            className={[cn.axisLine, xSelected ? `${cn.root}__part--selected` : ""]
+              .filter(Boolean)
+              .join(" ")}
+            pointerEvents="none"
+            data-axis="x"
+            {...(xStroke.stroke ? { stroke: xStroke.stroke } : {})}
+            {...(xStroke.strokeWidth != null ? { strokeWidth: xStroke.strokeWidth } : {})}
+            {...(xStroke.opacity != null ? { opacity: xStroke.opacity } : {})}
           />
-        ) : null}
-        <line
-          x1={margin.left}
-          y1={xAxisY}
-          x2={margin.left + plotW}
-          y2={xAxisY}
-          className={[cn.axisLine, xSelected ? `${cn.root}__part--selected` : ""]
-            .filter(Boolean)
-            .join(" ")}
-          pointerEvents="none"
-          {...(xStroke.stroke ? { stroke: xStroke.stroke } : {})}
-          {...(xStroke.strokeWidth != null ? { strokeWidth: xStroke.strokeWidth } : {})}
-          {...(xStroke.opacity != null ? { opacity: xStroke.opacity } : {})}
-        />
-      </g>
-      <g
-        {...chartPartDomProps(yRef, interaction?.selectedPart)}
-        onPointerDown={
-          interactive
-            ? (event) => {
-                event.stopPropagation();
-                interaction?.onPartPointerDown?.(yRef, event);
-              }
-            : undefined
-        }
-        onDoubleClick={
-          interactive
-            ? (event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                interaction?.onPartDoubleClick?.(yRef, event);
-              }
-            : undefined
-        }
-      >
-        {interactive ? (
+        </g>
+      ) : null}
+      {drawY ? (
+        <g
+          {...chartPartDomProps(yRef, interaction?.selectedPart)}
+          onPointerDown={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  interaction?.onPartPointerDown?.(yRef, event);
+                }
+              : undefined
+          }
+          onDoubleClick={
+            interactive
+              ? (event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  interaction?.onPartDoubleClick?.(yRef, event);
+                }
+              : undefined
+          }
+        >
+          {interactive ? (
+            <line
+              x1={margin.left}
+              y1={margin.top}
+              x2={margin.left}
+              y2={xAxisY}
+              stroke="transparent"
+              strokeWidth={10}
+              pointerEvents="stroke"
+            />
+          ) : null}
           <line
             x1={margin.left}
             y1={margin.top}
             x2={margin.left}
             y2={xAxisY}
-            stroke="transparent"
-            strokeWidth={10}
-            pointerEvents="stroke"
+            className={[cn.axisLine, ySelected ? `${cn.root}__part--selected` : ""]
+              .filter(Boolean)
+              .join(" ")}
+            pointerEvents="none"
+            data-axis="y"
+            {...(yStroke.stroke ? { stroke: yStroke.stroke } : {})}
+            {...(yStroke.strokeWidth != null ? { strokeWidth: yStroke.strokeWidth } : {})}
+            {...(yStroke.opacity != null ? { opacity: yStroke.opacity } : {})}
           />
-        ) : null}
-        <line
-          x1={margin.left}
-          y1={margin.top}
-          x2={margin.left}
-          y2={xAxisY}
-          className={[cn.axisLine, ySelected ? `${cn.root}__part--selected` : ""]
-            .filter(Boolean)
-            .join(" ")}
-          pointerEvents="none"
-          {...(yStroke.stroke ? { stroke: yStroke.stroke } : {})}
-          {...(yStroke.strokeWidth != null ? { strokeWidth: yStroke.strokeWidth } : {})}
-          {...(yStroke.opacity != null ? { opacity: yStroke.opacity } : {})}
-        />
-      </g>
+        </g>
+      ) : null}
     </>
   );
 }

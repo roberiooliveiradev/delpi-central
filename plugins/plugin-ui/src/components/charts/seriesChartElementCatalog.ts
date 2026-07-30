@@ -42,6 +42,7 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     chartTypes: [
       "line",
       "bar",
+      "horizontal_bar",
       "area",
       "combo",
       "stacked_bar",
@@ -58,6 +59,7 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     chartTypes: [
       "line",
       "bar",
+      "horizontal_bar",
       "area",
       "combo",
       "stacked_bar",
@@ -74,6 +76,7 @@ export const SERIES_CHART_ELEMENT_CATALOG: SeriesChartElementDefinition[] = [
     chartTypes: [
       "line",
       "bar",
+      "horizontal_bar",
       "area",
       "combo",
       "stacked_bar",

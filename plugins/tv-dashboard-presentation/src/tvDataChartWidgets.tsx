@@ -45,6 +45,12 @@ export function TvDataSeriesChartWidget({
       points: series.points.map((point) => ({
         label: point.label != null ? String(point.label) : undefined,
         value: point.value == null ? null : Number(point.value),
+        size:
+          point.size == null || point.size === ""
+            ? null
+            : Number.isFinite(Number(point.size))
+              ? Number(point.size)
+              : null,
       })),
     }));
   const points =
@@ -53,12 +59,21 @@ export function TvDataSeriesChartWidget({
       : (resolved.chart?.points ?? []).map((point) => ({
           label: point.label != null ? String(point.label) : undefined,
           value: point.value == null ? null : Number(point.value),
+          size:
+            point.size == null || point.size === ""
+              ? null
+              : Number.isFinite(Number(point.size))
+                ? Number(point.size)
+                : null,
         }));
+  // Bubble: size é canal no ponto — nunca overlay de 2ª série na legenda.
+  const multiSeriesList =
+    chartType === "bubble" ? undefined : seriesList.length > 1 ? seriesList : undefined;
   return (
     <ConfigurableSeriesChart
       chartType={kind}
       points={points}
-      seriesList={seriesList.length > 1 ? seriesList : undefined}
+      seriesList={multiSeriesList}
       options={resolveChartDisplayOptions(chartOptions, resolved)}
       chartParts={chartParts}
       interaction={interaction}

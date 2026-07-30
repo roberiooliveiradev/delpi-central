@@ -44,7 +44,7 @@ describe("ChartAxesProjectionEditor", () => {
     expect(onSeriesActivate).toHaveBeenCalledWith("quantidade", 0);
   });
 
-  it("barra: só permite 1 série — marcar outra substitui a atual", () => {
+  it("colunas: aceita múltiplas séries (até 6)", () => {
     const onChange = vi.fn();
 
     render(
@@ -64,12 +64,15 @@ describe("ChartAxesProjectionEditor", () => {
       />,
     );
 
-    expect(screen.getByText(/uma série de valor/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole("checkbox", { name: /Incluir Valor · Filial/i }));
+    expect(screen.getByText(/Até 6 séries/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("checkbox", { name: /Incluir Séries \(Y\) · Filial/i }));
     expect(onChange).toHaveBeenCalled();
     const next = onChange.mock.calls.at(-1)?.[0];
-    expect(next.series).toHaveLength(1);
-    expect(next.series[0].field).toBe("filial");
+    expect(next.series).toHaveLength(2);
+    expect(next.series.map((s: { field: string }) => s.field)).toEqual([
+      "quantidade",
+      "filial",
+    ]);
   });
 
   it("rosca: ao trocar série numérica usa Soma (não Contagem de linhas)", () => {

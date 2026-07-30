@@ -335,6 +335,42 @@ function buildSeriesFromTable(
     return String(index + 1);
   });
 
+  // Bubble: series[0]=Y, series[1]=size → um canal plotável + size no ponto (não overlay).
+  if (policy.chartType === "bubble" && seriesDefs.length >= 1) {
+    const yDef = seriesDefs[0]!;
+    const sizeDef = seriesDefs[1];
+    const points = rows.map((row, index) => {
+      const point: {
+        label: string;
+        value: number | null;
+        size?: number | null;
+      } = {
+        label: categories[index]!,
+        value: resolveSeriesPointValue(row, yDef.field, yDef.aggregation, policy),
+      };
+      if (sizeDef?.field) {
+        point.size = resolveSeriesPointValue(row, sizeDef.field, sizeDef.aggregation, policy);
+      }
+      return point;
+    });
+    return {
+      points,
+      chartType,
+      series: [
+        {
+          name: resolveFieldDisplayLabel({
+            field: yDef.field,
+            projectionLabel: yDef.label,
+          }),
+          field: yDef.field,
+          points,
+          color: yDef.color,
+          plotOn: yDef.plotOn,
+        },
+      ],
+    };
+  }
+
   if (seriesDefs.length <= 1) {
     const def = seriesDefs[0];
     const field = def?.field;

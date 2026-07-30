@@ -449,3 +449,42 @@ describe("normalizeTableProjection", () => {
     expect(projection?.columns?.[1]?.widthPct).toBe(100);
   });
 });
+
+describe("bubble projection", () => {
+  it("mapeia 2ª série como size no ponto e legenda de 1 série", () => {
+    const resolved: ComunicadoDataResolved = {
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "economia", label: "Economia" },
+          { key: "investimento", label: "Investimento" },
+        ],
+        rows: [
+          { periodo: 1, economia: 100, investimento: 10 },
+          { periodo: 2, economia: 200, investimento: 40 },
+        ],
+      },
+    };
+    const next = applyViewProjection(resolved, {
+      chartType: "bubble",
+      chartProjection: {
+        categoryField: "periodo",
+        series: [
+          { field: "economia", aggregation: "first" },
+          { field: "investimento", aggregation: "first" },
+        ],
+      },
+    });
+    expect(next?.chart?.series).toHaveLength(1);
+    expect(next?.chart?.points?.[0]).toMatchObject({
+      label: "1",
+      value: 100,
+      size: 10,
+    });
+    expect(next?.chart?.points?.[1]).toMatchObject({
+      label: "2",
+      value: 200,
+      size: 40,
+    });
+  });
+});

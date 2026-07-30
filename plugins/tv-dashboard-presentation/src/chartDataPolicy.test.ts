@@ -27,11 +27,11 @@ describe("chartDataPolicy", () => {
     expect(resolveChartDataPolicy("area").rowMode).toBe("rowwise");
   });
 
-  it("comparação e funil agrupam por categoria", () => {
-    expect(resolveChartDataPolicy("bar").rowMode).toBe("groupByCategory");
-    expect(resolveChartDataPolicy("stacked_bar").rowMode).toBe("groupByCategory");
-    expect(resolveChartDataPolicy("funnel").rowMode).toBe("groupByCategory");
-    expect(resolveChartDataPolicy("waterfall").rowMode).toBe("groupByCategory");
+  it("bar/horizontal_bar multi-série com wells SERIES", () => {
+    expect(resolveChartDataPolicy("bar").maxSeries).toBe(6);
+    expect(resolveChartDataPolicy("bar").wells.some((w) => w.role === "series")).toBe(true);
+    expect(resolveChartDataPolicy("horizontal_bar").maxSeries).toBe(6);
+    expect(resolveChartDataPolicy("horizontal_bar").rowMode).toBe("groupByCategory");
   });
 
   it("scatter/bubble são rowwise; histogram bins", () => {

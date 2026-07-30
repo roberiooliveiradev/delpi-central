@@ -16,6 +16,8 @@ export type SeriesChartClassNames = {
   tick: string;
   tickX: string;
   tickXRotated: string;
+  tickXRotated45: string;
+  tickXRotated90: string;
   tickY: string;
   axisTitle: string;
   axisTitleX: string;
@@ -64,6 +66,8 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     tick: `${prefix}__tick`,
     tickX: `${prefix}__tick--x`,
     tickXRotated: `${prefix}__tick--x-rotated`,
+    tickXRotated45: `${prefix}__tick--x-rotated-45`,
+    tickXRotated90: `${prefix}__tick--x-rotated-90`,
     tickY: `${prefix}__tick--y`,
     axisTitle: `${prefix}__axis-title`,
     axisTitleX: `${prefix}__axis-title--x`,

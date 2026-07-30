@@ -112,9 +112,18 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     family: "comparison",
     rowMode: "groupByCategory",
     defaultAggregation: "sum",
-    maxSeries: 1,
+    maxSeries: 6,
     maxCategories: 20,
-    wells: [WELL_CATEGORY, WELL_VALUE],
+    wells: [WELL_CATEGORY, WELL_SERIES],
+  },
+  horizontal_bar: {
+    chartType: "horizontal_bar",
+    family: "comparison",
+    rowMode: "groupByCategory",
+    defaultAggregation: "sum",
+    maxSeries: 6,
+    maxCategories: 20,
+    wells: [WELL_CATEGORY, WELL_SERIES],
   },
   stacked_bar: {
     chartType: "stacked_bar",
@@ -165,6 +174,7 @@ const POLICIES: Record<ComunicadoChartType, ChartDataPolicy> = {
     family: "distribution",
     rowMode: "rowwise",
     defaultAggregation: "first",
+    /** Y + size (size não é overlay de legenda — ver buildSeriesFromTable). */
     maxSeries: 2,
     wells: [WELL_X_MEASURE, WELL_Y_MEASURE, WELL_SIZE],
   },

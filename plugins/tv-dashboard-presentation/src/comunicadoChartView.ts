@@ -6,6 +6,7 @@ export function chartTypeLabel(chartType: ComunicadoChartType): string {
   const labels: Record<ComunicadoChartType, string> = {
     line: "Linhas",
     bar: "Colunas",
+    horizontal_bar: "Barras",
     area: "Área",
     stacked_bar: "Colunas empilhadas",
     pie: "Pizza",
@@ -39,6 +40,8 @@ export function toSeriesChartKind(chartType: ComunicadoChartType): SeriesChartKi
       return "line";
     case "bar":
       return "bar";
+    case "horizontal_bar":
+      return "horizontal_bar";
     case "stacked_bar":
       return "stacked_bar";
     case "histogram":
@@ -77,6 +80,7 @@ export function chartTypeToLegacyDisplayMode(
   const kind = toSeriesChartKind(chartType);
   if (
     kind === "bar" ||
+    kind === "horizontal_bar" ||
     kind === "stacked_bar" ||
     kind === "histogram" ||
     kind === "waterfall"

@@ -46,6 +46,7 @@ import {
 import {
   buildSeriesChartLayout,
   resolveSeriesChartCategoryScale,
+  resolveSeriesChartOrientation,
   ChartContainer,
   ChartDataTable,
   ChartFrame,
@@ -54,6 +55,7 @@ import {
   ChartPlotAreaChrome,
   ChartTitle,
   resolveSeriesName,
+  SERIES_CHART_BUBBLE_MAX_R,
   SERIES_CHART_VIEW_H,
   SERIES_CHART_VIEW_W,
   type SeriesChartLayout,
@@ -260,6 +262,11 @@ export function SeriesChartPrimitive({
     },
     centeredPlot,
     categoryScale: resolveSeriesChartCategoryScale(chartType),
+    orientation: resolveSeriesChartOrientation(chartType),
+    categoryLabelRotation: config.categoryLabelRotation,
+    categoryLabelOverflow: config.categoryLabelOverflow,
+    categoryLabelFormat: config.categoryLabelFormat,
+    markerGutterPx: chartType === "bubble" ? SERIES_CHART_BUBBLE_MAX_R + 2 : undefined,
     plotPadExtraPx: centeredPlot
       ? dataLabelOutsideGutterPx(resolvedDataLabels, chartType)
       : dataLabelOutsideGutterPx(resolvedDataLabels, chartType) > 0

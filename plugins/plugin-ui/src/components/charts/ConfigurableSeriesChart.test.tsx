@@ -342,7 +342,7 @@ describe("ConfigurableSeriesChart", () => {
     expect(plot!.getAttribute("opacity")).toBe("0");
   });
 
-  it("clipa cantos arredondados da chartArea (overflow hidden na raiz)", () => {
+  it("mantém overflow visible na raiz (legenda/título) e aplica borderRadius da chartArea", () => {
     const { container } = render(
       <ConfigurableSeriesChart
         chartType="line"
@@ -358,7 +358,7 @@ describe("ConfigurableSeriesChart", () => {
     );
     const root = container.querySelector(".delpi-ui-series-chart") as HTMLElement;
     expect(root).toBeTruthy();
-    expect(root.style.overflow).toBe("hidden");
+    expect(root.style.overflow).toBe("visible");
     expect(root.style.borderRadius).toMatch(/16/);
   });
 

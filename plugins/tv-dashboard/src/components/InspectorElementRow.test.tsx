@@ -25,7 +25,7 @@ describe("InspectorElementRow", () => {
     expect(container.querySelector(".td-chart-element__label:not(.td-chart-element__label-btn)")).toBeNull();
     fireEvent.click(labelBtn!);
     expect(onSelect).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole("checkbox", { name: /Exibir Linha de cabeçalho/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Remover Linha de cabeçalho/i }));
     expect(onToggle).toHaveBeenCalledWith(false);
   });
 
@@ -49,7 +49,7 @@ describe("InspectorElementRow", () => {
       />,
     );
     expect(
-      (screen.getByRole("checkbox", { name: /Exibir Controle/i }) as HTMLInputElement).disabled,
+      (screen.getByRole("checkbox", { name: /Remover Controle/i }) as HTMLInputElement).disabled,
     ).toBe(true);
   });
 
@@ -65,7 +65,7 @@ describe("InspectorElementRow", () => {
         onSelect={onSelect}
       />,
     );
-    fireEvent.click(screen.getByRole("checkbox", { name: /Exibir Linha de cabeçalho/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Remover Linha de cabeçalho/i }));
     expect(onToggle).toHaveBeenCalledWith(false);
     expect(onSelect).not.toHaveBeenCalled();
   });

@@ -15,11 +15,8 @@ export type ChartSeriesBarProps = Pick<SeriesChartSharedProps, "layout" | "point
 };
 
 /**
- * Colunas cartesianas — topo via toY (domínio do eixo); base no fundo do plot.
- * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped bars).
- *
- * Seleção: hit-target no `<g>` (série inteira); outline em todas as barras.
- * X alinha com rótulos via band scale (`toX` / `categoryBand*`) + `sourceIndex`.
+ * Colunas (vertical) ou barras (horizontal) cartesianas.
+ * Com `seriesCount` > 1, divide o slot da categoria entre as séries (grouped).
  */
 export function ChartSeriesBar({
   layout,
@@ -30,12 +27,14 @@ export function ChartSeriesBar({
   seriesCount = 1,
 }: ChartSeriesBarProps) {
   const cn = useSeriesChartClasses();
-  const { margin, plotH, toY, axisMin, axisMax } = layout;
+  const { margin, plotH, toY, axisMin, axisMax, orientation, toValueX } = layout;
   const ref = { kind: "series" as const, seriesIndex };
   const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const baseline = margin.top + plotH;
+  const baselineY = margin.top + plotH;
+  const baselineX = margin.left;
   const categoryCount = Math.max(points.length, 1);
+  const horizontal = orientation === "horizontal";
 
   return (
     <g
@@ -67,22 +66,43 @@ export function ChartSeriesBar({
           typeof point.sourceIndex === "number" && Number.isFinite(point.sourceIndex)
             ? point.sourceIndex
             : index;
-        const { x, width: barW } = resolveSeriesChartCategoryBarSlot({
+        const slot = resolveSeriesChartCategoryBarSlot({
           layout,
           categoryIndex: slotIndex,
           categoryCount,
           seriesIndex,
           seriesCount,
         });
-        const y = toY(value);
-        const height = Math.max(0, baseline - y);
 
+        if (horizontal && toValueX) {
+          const x0 = toValueX(Math.min(axisMin, 0));
+          const x1 = toValueX(value);
+          const x = Math.min(x0, x1);
+          const width = Math.max(0, Math.abs(x1 - x0));
+          return (
+            <rect
+              key={`hbar-${seriesIndex}-${slotIndex}`}
+              x={x || baselineX}
+              y={slot.y}
+              width={width}
+              height={slot.height}
+              fill={seriesColor}
+              rx={1}
+              className={[cn.seriesBar, selected ? `${cn.root}__part--selected` : ""]
+                .filter(Boolean)
+                .join(" ")}
+            />
+          );
+        }
+
+        const y = toY(value);
+        const height = Math.max(0, baselineY - y);
         return (
           <rect
             key={`bar-${seriesIndex}-${slotIndex}`}
-            x={x}
+            x={slot.x}
             y={y}
-            width={barW}
+            width={slot.width}
             height={height}
             fill={seriesColor}
             rx={1}

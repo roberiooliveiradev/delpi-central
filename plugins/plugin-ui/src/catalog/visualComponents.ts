@@ -277,6 +277,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     description:
       "Grupo expandido (controles + caption) ou colapsado (trigger + AnchoredPanelPortal).",
   }),
+  vc("layout", "ElementTogglePopover", {
+    addedAt: "2026-07-30",
+    description:
+      "Chip de elemento: popover Adicionar/Remover + Opções (presença ≠ formato).",
+  }),
   vc("layout", "DeckSectionHeader", {
     addedAt: "2026-07-28",
     description: "Cabeçalho colapsável de seção no filmstrip/deck (nome, contagem, menu).",

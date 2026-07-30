@@ -9,6 +9,9 @@ import {
   CHART_LEGEND_POSITION_OPTIONS,
   CHART_LEGEND_LAYOUT_OPTIONS,
   CHART_LEGEND_SORT_OPTIONS,
+  CHART_VALUE_FORMAT_OPTIONS,
+  CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
+  CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   clampChartPartFrame,
   defaultChartPartFrame,
   deleteChartPart,
@@ -475,27 +478,93 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedChartPart.kind === "axis" ? (
-        <DeckField
-          id={`td-chart-part-axis-labels-${selectedChartPart.axis}`}
-          label={selectedChartPart.axis === "x" ? "Rótulos eixo X" : "Rótulos eixo Y"}
-        >
-          <NativeCheckboxControl
+        <>
+          <DeckField
             id={`td-chart-part-axis-labels-${selectedChartPart.axis}`}
-            checked={
-              selectedChartPart.axis === "x"
-                ? options.showXAxisLabels !== false
-                : options.showYAxisLabels !== false
-            }
-            label={selectedChartPart.axis === "x" ? "Períodos e categorias" : "Escala de valores"}
-            onChange={(checked) =>
-              persistOptions(
+            label={selectedChartPart.axis === "x" ? "Rótulos eixo X" : "Rótulos eixo Y"}
+          >
+            <NativeCheckboxControl
+              id={`td-chart-part-axis-labels-${selectedChartPart.axis}`}
+              checked={
                 selectedChartPart.axis === "x"
-                  ? { ...options, showXAxisLabels: checked, showAxes: true }
-                  : { ...options, showYAxisLabels: checked, showAxes: true },
-              )
-            }
-          />
-        </DeckField>
+                  ? options.showXAxisLabels !== false
+                  : options.showYAxisLabels !== false
+              }
+              label={selectedChartPart.axis === "x" ? "Períodos e categorias" : "Escala de valores"}
+              onChange={(checked) =>
+                persistOptions(
+                  selectedChartPart.axis === "x"
+                    ? { ...options, showXAxisLabels: checked, showAxes: true }
+                    : { ...options, showYAxisLabels: checked, showAxes: true },
+                )
+              }
+            />
+          </DeckField>
+          {selectedChartPart.axis === "x" ? (
+            <>
+              <DeckField id="td-chart-part-axis-rotation" label="Rotação">
+                <FormSelectControl
+                  id="td-chart-part-axis-rotation"
+                  ariaLabel="Rotação dos rótulos"
+                  value={
+                    options.categoryLabelRotation == null
+                      ? "auto"
+                      : String(options.categoryLabelRotation)
+                  }
+                  onChange={(value) =>
+                    persistOptions({
+                      ...options,
+                      categoryLabelRotation:
+                        value === "auto"
+                          ? "auto"
+                          : (Number(value) as ComunicadoChartOptions["categoryLabelRotation"]),
+                    })
+                  }
+                  options={CHART_CATEGORY_LABEL_ROTATION_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+              <DeckField id="td-chart-part-axis-cat-format" label="Formato">
+                <FormSelectControl
+                  id="td-chart-part-axis-cat-format"
+                  ariaLabel="Formato da categoria"
+                  value={options.categoryLabelFormat ?? "raw"}
+                  onChange={(value) =>
+                    persistOptions({
+                      ...options,
+                      categoryLabelFormat:
+                        value as ComunicadoChartOptions["categoryLabelFormat"],
+                    })
+                  }
+                  options={CHART_CATEGORY_LABEL_FORMAT_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+            </>
+          ) : (
+            <DeckField id="td-chart-part-axis-value-format" label="Formato dos valores">
+              <FormSelectControl
+                id="td-chart-part-axis-value-format"
+                ariaLabel="Formato dos valores"
+                value={options.valueFormat ?? "auto"}
+                onChange={(value) =>
+                  persistOptions({
+                    ...options,
+                    valueFormat: value as ComunicadoChartOptions["valueFormat"],
+                  })
+                }
+                options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
+                  value: entry.value,
+                  label: entry.label,
+                }))}
+              />
+            </DeckField>
+          )}
+        </>
       ) : null}
 
       {selectedChartPart.kind === "grid" ? (

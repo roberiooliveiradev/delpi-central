@@ -1,6 +1,11 @@
 import {
+  formatSeriesChartCategoryLabel,
   formatSeriesChartValue,
   resolveSeriesChartTicks,
+  truncateSeriesChartCategoryLabel,
+  type SeriesChartCategoryLabelFormat,
+  type SeriesChartCategoryLabelOverflow,
+  type SeriesChartCategoryLabelRotation,
   type SeriesChartKind,
   type SeriesChartOptions,
   type SeriesChartValueFormat,
@@ -21,6 +26,9 @@ export const SERIES_CHART_PLOT_INSET = 14;
  */
 export type SeriesChartCategoryScale = "point" | "band";
 
+/** Orientação do plot: colunas (vertical) vs barras (horizontal). */
+export type SeriesChartOrientation = "vertical" | "horizontal";
+
 export type SeriesChartMargin = {
   top: number;
   right: number;
@@ -38,12 +46,18 @@ export type SeriesChartLayout = {
   plotInset: number;
   /** Escala X ativa — barras e rótulos devem concordar. */
   categoryScale: SeriesChartCategoryScale;
+  /** `horizontal` = categoria no Y, valor no X (barras). */
+  orientation: SeriesChartOrientation;
   ticks: number[];
   axisMin: number;
   axisMax: number;
   axisRange: number;
   xLabelStep: number;
   xLabelsRotated: boolean;
+  /** Graus de rotação dos rótulos de categoria (0 = sem rotação). */
+  categoryLabelRotationDeg: number;
+  /** Overflow efetivo dos rótulos de categoria. */
+  categoryLabelOverflow: SeriesChartCategoryLabelOverflow;
   /** Índices de rótulos X sem colisão (inclui último só se couber). */
   visibleXLabelIndices: number[];
   /** Âncora X da categoria: centro da banda (`band`) ou ponto (`point`). */
@@ -53,6 +67,12 @@ export type SeriesChartLayout = {
   /** Largura da banda de categoria. */
   categoryBandWidth: (count: number) => number;
   toY: (value: number) => number;
+  /** Valor → X (só orientation=horizontal). */
+  toValueX?: (value: number) => number;
+  /** Início (topo) da banda de categoria no Y (horizontal). */
+  categoryBandStartY?: (index: number, count: number) => number;
+  /** Altura da banda de categoria (horizontal). */
+  categoryBandHeight?: (count: number) => number;
   /** Escala Y direita (séries com plotOn=secondary). */
   toYSecondary?: (value: number) => number;
   secondaryTicks?: number[];
@@ -105,18 +125,32 @@ export type BuildSeriesChartLayoutInput = {
   /** Folga extra (px) quando rótulos ficam fora do anel/área (evita clip). */
   plotPadExtraPx?: number;
   /**
+   * Gutter interno para marcadores grandes (bubble): inset X + faixa Y
+   * para centro±r caber no clipPath.
+   */
+  markerGutterPx?: number;
+  /**
    * Escala de categoria X. Default `point`.
    * Tipos coluna/barra devem passar `band` (via `resolveSeriesChartCategoryScale`).
    */
   categoryScale?: SeriesChartCategoryScale;
+  /** Orientação do plot. Default `vertical`. */
+  orientation?: SeriesChartOrientation;
+  /** Rotação dos rótulos de categoria. Default `auto`. */
+  categoryLabelRotation?: SeriesChartCategoryLabelRotation;
+  /** Overflow dos rótulos de categoria. Default `skip`. */
+  categoryLabelOverflow?: SeriesChartCategoryLabelOverflow;
+  /** Formato dos rótulos de categoria (já aplicados nos `points[].label` preferencialmente). */
+  categoryLabelFormat?: SeriesChartCategoryLabelFormat;
 };
 
-/** Tipos que usam band scale no eixo X (barras centradas na categoria). */
+/** Tipos que usam band scale no eixo de categoria. */
 export function resolveSeriesChartCategoryScale(
   chartType: SeriesChartKind | null | undefined,
 ): SeriesChartCategoryScale {
   switch (chartType) {
     case "bar":
+    case "horizontal_bar":
     case "stacked_bar":
     case "histogram":
     case "waterfall":
@@ -127,19 +161,43 @@ export function resolveSeriesChartCategoryScale(
   }
 }
 
+export function resolveSeriesChartOrientation(
+  chartType: SeriesChartKind | null | undefined,
+): SeriesChartOrientation {
+  return chartType === "horizontal_bar" ? "horizontal" : "vertical";
+}
+
+/** Resolve graus de rotação a partir da option + heurística. */
+export function resolveCategoryLabelRotationDeg(
+  rotation: SeriesChartCategoryLabelRotation | undefined,
+  autoRotate: boolean,
+): number {
+  if (rotation === 0) return 0;
+  if (rotation === -45) return -45;
+  if (rotation === -90) return -90;
+  return autoRotate ? -38 : 0;
+}
+
 /**
- * Geometria de coluna dentro da banda — mesma conta para paint e data labels.
- * Alinha ao centro retornado por `layout.toX` em modo `band`.
+ * Geometria de coluna/barra dentro da banda — mesma conta para paint e data labels.
+ * Vertical: banda no X. Horizontal: banda no Y (`orientation === "horizontal"`).
  */
 export function resolveSeriesChartCategoryBarSlot(args: {
-  layout: Pick<SeriesChartLayout, "categoryBandStart" | "categoryBandWidth">;
+  layout: Pick<
+    SeriesChartLayout,
+    | "categoryBandStart"
+    | "categoryBandWidth"
+    | "categoryBandStartY"
+    | "categoryBandHeight"
+    | "orientation"
+  >;
   categoryIndex: number;
   categoryCount: number;
   seriesIndex?: number;
   seriesCount?: number;
   padRatio?: number;
   fillRatio?: number;
-}): { x: number; width: number; centerX: number } {
+}): { x: number; y: number; width: number; height: number; centerX: number; centerY: number } {
   const {
     layout,
     categoryIndex,
@@ -150,12 +208,35 @@ export function resolveSeriesChartCategoryBarSlot(args: {
     fillRatio = 0.8,
   } = args;
   const count = Math.max(1, categoryCount);
+  const seriesN = Math.max(1, seriesCount);
+  const safeIndex = Math.min(Math.max(0, seriesIndex), seriesN - 1);
+
+  if (layout.orientation === "horizontal" && layout.categoryBandStartY && layout.categoryBandHeight) {
+    const slotH = layout.categoryBandHeight(count);
+    const bandStart = layout.categoryBandStartY(categoryIndex, count);
+    const groupPad = Math.min(slotH * padRatio, padRatio >= 0.15 ? 8 : 6);
+    const usable = Math.max(slotH - groupPad * 2, 2);
+    const innerGap = seriesN > 1 ? Math.min(usable * 0.08, 3) : 0;
+    const barH =
+      seriesN > 1
+        ? Math.max((usable - innerGap * (seriesN - 1)) / seriesN, 2)
+        : Math.max(usable * fillRatio, 2);
+    const clusterOffset = seriesN > 1 ? 0 : (usable - barH) / 2;
+    const y = bandStart + groupPad + clusterOffset + safeIndex * (barH + innerGap);
+    return {
+      x: 0,
+      y,
+      width: 0,
+      height: barH,
+      centerX: 0,
+      centerY: y + barH / 2,
+    };
+  }
+
   const slotW = layout.categoryBandWidth(count);
   const bandStart = layout.categoryBandStart(categoryIndex, count);
   const groupPad = Math.min(slotW * padRatio, padRatio >= 0.15 ? 8 : 6);
   const usable = Math.max(slotW - groupPad * 2, 2);
-  const seriesN = Math.max(1, seriesCount);
-  const safeIndex = Math.min(Math.max(0, seriesIndex), seriesN - 1);
   const innerGap = seriesN > 1 ? Math.min(usable * 0.08, 3) : 0;
   const barW =
     seriesN > 1
@@ -163,7 +244,14 @@ export function resolveSeriesChartCategoryBarSlot(args: {
       : Math.max(usable * fillRatio, 2);
   const clusterOffset = seriesN > 1 ? 0 : (usable - barW) / 2;
   const x = bandStart + groupPad + clusterOffset + safeIndex * (barW + innerGap);
-  return { x, width: barW, centerX: x + barW / 2 };
+  return {
+    x,
+    y: 0,
+    width: barW,
+    height: 0,
+    centerX: x + barW / 2,
+    centerY: 0,
+  };
 }
 
 /** Converte margens atuais do layout em frame % (materializar ao selecionar). */
@@ -386,10 +474,13 @@ function resolveBottomMargin(
   base: SeriesChartMargin,
   axisFontSize: number,
   axisTitleFontSize: number,
+  rotationDeg = 0,
 ): number {
   let bottom = base.bottom;
   if (showXAxisLabels) {
-    bottom += Math.round(axisFontSize * (xLabelsRotated ? 1.6 : 1.1));
+    const absRot = Math.abs(rotationDeg);
+    const rotFactor = absRot >= 90 ? 2.4 : absRot >= 45 ? 2.0 : xLabelsRotated ? 1.6 : 1.1;
+    bottom += Math.round(axisFontSize * rotFactor);
   }
   if (showXAxisTitle) {
     bottom += Math.round(axisTitleFontSize * 1.15);
@@ -494,6 +585,9 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const axisTitleFontSize = resolveAxisTitleFontSize(input.typography);
   const baseMargin = scaledBaseMargin(axisFontSize);
 
+  const orientation: SeriesChartOrientation = input.orientation ?? "vertical";
+  const categoryLabelOverflow: SeriesChartCategoryLabelOverflow =
+    input.categoryLabelOverflow ?? "skip";
   const labels = input.points.map((point, index) => String(point.label ?? index + 1));
   const framedEarly = marginsFromPlotFrame(input.plotFrame, viewW, viewH);
   const plotWProbe = Math.max(
@@ -502,38 +596,68 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       ? viewW - framedEarly.left - framedEarly.right
       : viewW - baseMargin.left - baseMargin.right,
   );
-  const xLabelStep = input.showXAxisLabels
-    ? resolveXLabelStep(input.points.length, plotWProbe, labels, axisFontSize)
-    : 1;
-  const xLabelsRotated = input.showXAxisLabels
-    ? shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels, axisFontSize)
-    : false;
+  const plotHProbe = Math.max(
+    40,
+    framedEarly
+      ? viewH - framedEarly.top - framedEarly.bottom
+      : viewH - baseMargin.top - baseMargin.bottom,
+  );
+  const categoryAxisSpan = orientation === "horizontal" ? plotHProbe : plotWProbe;
+  const skipDense = categoryLabelOverflow === "skip";
+  const xLabelStep =
+    input.showXAxisLabels && skipDense
+      ? resolveXLabelStep(input.points.length, categoryAxisSpan, labels, axisFontSize)
+      : 1;
+  const autoRotate =
+    orientation === "vertical" &&
+    input.showXAxisLabels &&
+    shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels, axisFontSize);
+  const categoryLabelRotationDeg = resolveCategoryLabelRotationDeg(
+    input.categoryLabelRotation,
+    autoRotate,
+  );
+  const xLabelsRotated = categoryLabelRotationDeg !== 0;
   const visibleXLabelIndices = input.showXAxisLabels
     ? resolveVisibleXLabelIndices(input.points.length, xLabelStep)
     : [];
 
   const sides = resolveSideMargins(
-    input.showXAxisLabels,
+    orientation === "vertical" && input.showXAxisLabels,
     labels,
     visibleXLabelIndices,
     baseMargin,
     axisFontSize,
   );
   const showYAxisTitle = Boolean(input.showYAxisTitle);
+  const categoryLabelLeftPad =
+    orientation === "horizontal" && input.showXAxisLabels
+      ? Math.max(
+          Math.round(axisFontSize * 3.5),
+          Math.ceil(
+            Math.max(...labels.map((label) => estimateLabelWidth(label, axisFontSize)), axisFontSize) *
+              0.55,
+          ),
+        )
+      : 0;
   const cartesianAutoMargin: SeriesChartMargin = {
     top: baseMargin.top,
-    left: resolveLeftMarginWithYTitle(showYAxisTitle, sides.left, axisTitleFontSize),
+    left: Math.max(
+      resolveLeftMarginWithYTitle(showYAxisTitle, sides.left, axisTitleFontSize),
+      categoryLabelLeftPad,
+    ),
     right: Math.max(
       sides.right,
       hasSecondaryAxis ? Math.round(axisFontSize * 3.2) + 10 : sides.right,
+      orientation === "horizontal" ? Math.round(axisFontSize * 2.2) : sides.right,
     ),
     bottom: resolveBottomMargin(
-      input.showXAxisLabels,
+      orientation === "vertical" && input.showXAxisLabels,
       input.showXAxisTitle,
       xLabelsRotated,
       baseMargin,
       axisFontSize,
       axisTitleFontSize,
+      categoryLabelRotationDeg,
     ),
   };
   const minLeftForYTitle = showYAxisTitle
@@ -570,6 +694,7 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);
   const padPct = Math.max(0, Math.min(40, input.categoryPaddingPercent ?? 0));
+  const markerGutter = Math.max(0, input.markerGutterPx ?? 0);
   // Cartesiano: inset 0 por padrão (extremos no eixo Y / borda direita).
   // Plot centralizado (pizza/funil) mantém folga mínima para não colar na moldura.
   const insetFromPercent =
@@ -579,10 +704,14 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
         ? SERIES_CHART_PLOT_INSET
         : 0;
   const plotInset =
-    insetFromPercent > 0
-      ? Math.min(Math.floor(Math.min(plotW, plotH) / 6), Math.max(4, insetFromPercent))
+    Math.max(insetFromPercent, markerGutter) > 0
+      ? Math.min(
+          Math.floor(Math.min(plotW, plotH) / 6),
+          Math.max(4, Math.max(insetFromPercent, markerGutter)),
+        )
       : 0;
   const innerW = Math.max(1, plotW - 2 * plotInset);
+  const yGutter = Math.min(plotInset, Math.floor(plotH / 4));
   const categoryScale: SeriesChartCategoryScale = input.categoryScale ?? "point";
 
   const categoryBandWidth = (count: number) => {
@@ -593,6 +722,16 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     const n = Math.max(1, count);
     const i = Math.min(Math.max(0, index), n - 1);
     return margin.left + plotInset + (i / n) * innerW;
+  };
+  const innerH = Math.max(1, plotH - 2 * yGutter);
+  const categoryBandHeight = (count: number) => {
+    const n = Math.max(1, count);
+    return innerH / n;
+  };
+  const categoryBandStartY = (index: number, count: number) => {
+    const n = Math.max(1, count);
+    const i = Math.min(Math.max(0, index), n - 1);
+    return margin.top + yGutter + (i / n) * innerH;
   };
 
   // point: extremos nas bordas (linha). band: centro de cada categoria (coluna).
@@ -608,12 +747,16 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   };
   const toY = (value: number) => {
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
-    return margin.top + (1 - t) * plotH;
+    return margin.top + yGutter + (1 - t) * innerH;
+  };
+  const toValueX = (value: number) => {
+    const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
+    return margin.left + plotInset + t * innerW;
   };
   const toYSecondary = hasSecondaryAxis
     ? (value: number) => {
         const t = Math.min(1, Math.max(0, (value - secondaryMin) / secondaryRange));
-        return margin.top + (1 - t) * plotH;
+        return margin.top + yGutter + (1 - t) * innerH;
       }
     : undefined;
 
@@ -625,17 +768,23 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     plotH,
     plotInset,
     categoryScale,
+    orientation,
     ticks,
     axisMin,
     axisMax,
     axisRange,
     xLabelStep,
     xLabelsRotated,
+    categoryLabelRotationDeg,
+    categoryLabelOverflow,
     visibleXLabelIndices,
     toX,
     categoryBandStart,
     categoryBandWidth,
     toY,
+    ...(orientation === "horizontal"
+      ? { toValueX, categoryBandStartY, categoryBandHeight }
+      : {}),
     ...(hasSecondaryAxis
       ? { toYSecondary, secondaryTicks, hasSecondaryAxis: true }
       : {}),
@@ -647,6 +796,23 @@ export function resolveSeriesName(config: SeriesChartOptions): string {
   return config.seriesName?.trim() || title || "Série";
 }
 
-export function formatChartTick(value: number, valueFormat: SeriesChartValueFormat): string {
-  return formatSeriesChartValue(value, valueFormat);
+export function formatChartTick(
+  value: number,
+  valueFormat: SeriesChartValueFormat,
+  decimalPlaces?: number | null,
+): string {
+  return formatSeriesChartValue(value, valueFormat, decimalPlaces);
+}
+
+/** Aplica formato + overflow ao rótulo de categoria para paint. */
+export function resolveCategoryAxisLabelText(
+  raw: string,
+  format: SeriesChartCategoryLabelFormat | undefined,
+  overflow: SeriesChartCategoryLabelOverflow | undefined,
+): string {
+  let text = formatSeriesChartCategoryLabel(raw, format ?? "raw");
+  if (overflow === "truncate") {
+    text = truncateSeriesChartCategoryLabel(text);
+  }
+  return text;
 }

@@ -41,7 +41,7 @@ export function InspectorElementRow({
             <NativeCheckboxControl
               checked={enabled}
               disabled={toggleDisabled}
-              aria-label={`Exibir ${label}`}
+              aria-label={enabled ? `Remover ${label}` : `Adicionar ${label}`}
               onChange={onToggle}
             />
           ) : (

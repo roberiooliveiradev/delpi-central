@@ -20,6 +20,7 @@ import {
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
+  ElementTogglePopover,
   HintAction,
   ShapeShadowMenu,
   TableStyleMenu,
@@ -261,9 +262,7 @@ function TableStyleOptionTiles({
 }: {
   options: ComunicadoTableOptions;
   onToggle: (id: TableElementId, enabled: boolean) => void;
-  /** Clique no rótulo do tile foca a parte no palco (não no ícone sozinho — o tile inteiro só alterna). */
   onSelectLabel?: (id: TableElementId) => void;
-  /** `pane`: grade estreita da sidebar. */
   density?: "ribbon" | "pane";
 }) {
   return (
@@ -282,21 +281,17 @@ function TableStyleOptionTiles({
       {STYLE_OPTION_TILES.map((item) => {
         const checked = isTableElementEnabled(item.id, options);
         return (
-          <DeckRibbonTile
+          <ElementTogglePopover
             key={item.id}
             icon={item.icon}
             label={item.label}
             hint={item.hint}
             active={checked}
-            onClick={(event) => {
-              /* Clique no texto do rótulo → só foca a parte; ícone/área do botão → toggle. */
-              const target = event.target as HTMLElement | null;
-              if (onSelectLabel && target?.closest?.(".td-ribbon-tile__label")) {
-                event.preventDefault();
-                onSelectLabel(item.id);
-                return;
-              }
-              onToggle(item.id, !checked);
+            presence={{
+              enabled: checked,
+              onAdd: () => onToggle(item.id, true),
+              onRemove: () => onToggle(item.id, false),
+              onOpenOptions: () => onSelectLabel?.(item.id),
             }}
           />
         );

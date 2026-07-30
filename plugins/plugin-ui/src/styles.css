@@ -31,6 +31,7 @@
 @import "./styles/inline-loading-progress.css";
 @import "./styles/screen-loading.css";
 @import "./styles/ribbon-overflow.css";
+@import "./styles/element-toggle-popover.css";
 @import "./styles/state-box.css";
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";

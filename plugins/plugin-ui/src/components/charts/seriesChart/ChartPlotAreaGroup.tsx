@@ -87,12 +87,15 @@ export function ChartPlotAreaGroup({
     (chartType === "line" || chartType === "area") &&
     seriesList &&
     seriesList.length > 1;
-  const multiBar = chartType === "bar" && seriesList && seriesList.length > 1;
+  const multiBar =
+    (chartType === "bar" || chartType === "horizontal_bar") &&
+    seriesList &&
+    seriesList.length > 1;
   const multiStacked = chartType === "stacked_bar" && seriesList && seriesList.length > 1;
 
   const series = (
     <>
-      {chartType === "bar" ? (
+      {chartType === "bar" || chartType === "horizontal_bar" ? (
         multiBar && seriesList ? (
           <>
             {seriesList.map((entry, index) => (
@@ -382,6 +385,9 @@ export function ChartPlotAreaGroup({
           showTitle={config.showYAxisTitle !== false}
           title={config.yAxisTitle}
           valueFormat={valueFormat}
+          decimalPlaces={config.decimalPlaces}
+          points={points}
+          categoryLabelFormat={config.categoryLabelFormat}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -391,6 +397,8 @@ export function ChartPlotAreaGroup({
         <ChartAxisLines
           layout={layout}
           visible={cartesianAxes}
+          showX={cartesianAxes && config.showXAxisLabels !== false}
+          showY={cartesianAxes && config.showYAxisLabels !== false}
           interaction={interaction}
           chartParts={chartParts}
         />
@@ -471,6 +479,9 @@ export function ChartPlotAreaGroup({
           showLabels={cartesianAxes && config.showXAxisLabels !== false}
           showTitle={config.showXAxisTitle !== false}
           title={config.xAxisTitle}
+          valueFormat={valueFormat}
+          decimalPlaces={config.decimalPlaces}
+          categoryLabelFormat={config.categoryLabelFormat}
           interaction={interaction}
           chartParts={chartParts}
         />

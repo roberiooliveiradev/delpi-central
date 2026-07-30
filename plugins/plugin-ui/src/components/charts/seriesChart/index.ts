@@ -13,7 +13,7 @@ export { ChartPlotAreaChrome } from "./ChartPlotAreaChrome";
 export { ChartPlotAreaGroup } from "./ChartPlotAreaGroup";
 export { ChartSeriesArea } from "./ChartSeriesArea";
 export { ChartSeriesBar } from "./ChartSeriesBar";
-export { ChartSeriesBubble } from "./ChartSeriesBubble";
+export { ChartSeriesBubble, SERIES_CHART_BUBBLE_MAX_R, SERIES_CHART_BUBBLE_MIN_R } from "./ChartSeriesBubble";
 export { ChartSeriesFunnel } from "./ChartSeriesFunnel";
 export { ChartSeriesHistogram } from "./ChartSeriesHistogram";
 export { ChartSeriesLine } from "./ChartSeriesLine";
@@ -29,8 +29,11 @@ export {
   buildSeriesChartLayout,
   chartPartFrameFromPlotLayout,
   marginsFromPlotFrame,
+  resolveCategoryAxisLabelText,
+  resolveCategoryLabelRotationDeg,
   resolveSeriesChartCategoryBarSlot,
   resolveSeriesChartCategoryScale,
+  resolveSeriesChartOrientation,
   resolveSeriesName,
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
@@ -43,4 +46,5 @@ export {
   SERIES_CHART_VIEW_W,
   type SeriesChartCategoryScale,
   type SeriesChartLayout,
+  type SeriesChartOrientation,
 } from "./layout";

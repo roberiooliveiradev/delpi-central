@@ -165,6 +165,7 @@ export function ChartValueLabels({
       value,
       total,
       valueFormat,
+      decimalPlaces: config.decimalPlaces,
     });
 
   const categoryFill = (index: number) =>
@@ -379,10 +380,16 @@ export function ChartValueLabels({
     );
   }
 
-  if (chartType === "bar" || chartType === "histogram" || chartType === "waterfall") {
+  if (
+    chartType === "bar" ||
+    chartType === "horizontal_bar" ||
+    chartType === "histogram" ||
+    chartType === "waterfall"
+  ) {
     const count = Math.max(1, seriesCount);
     const baseline = margin.top + plotH;
     const categoryCount = Math.max(points.length, 1);
+    const horizontal = layout.orientation === "horizontal" && layout.toValueX;
 
     return (
       <>
@@ -395,13 +402,31 @@ export function ChartValueLabels({
           const clamped = Number.isFinite(raw)
             ? Math.min(axisMax, Math.max(axisMin, raw))
             : axisMin;
-          const { centerX: x } = resolveSeriesChartCategoryBarSlot({
+          const slot = resolveSeriesChartCategoryBarSlot({
             layout,
             categoryIndex: point.sourceIndex,
             categoryCount,
             seriesIndex,
             seriesCount: count,
           });
+          if (horizontal) {
+            const xEnd = layout.toValueX!(clamped);
+            let x = xEnd + 6;
+            if (position === "center") x = (margin.left + xEnd) / 2;
+            if (position === "insideEnd") x = xEnd - 8;
+            return (
+              <DataLabelText
+                key={`hbar-label-${seriesIndex}-${point.sourceIndex}`}
+                x={x}
+                y={slot.centerY}
+                text={text}
+                textAnchor={position === "insideEnd" ? "end" : "start"}
+                dominantBaseline="middle"
+                pointIndex={point.sourceIndex}
+                {...labelShared}
+              />
+            );
+          }
           const yTop = toY(clamped);
           let y = yTop - 6;
           if (position === "center") y = (yTop + baseline) / 2;
@@ -409,7 +434,7 @@ export function ChartValueLabels({
           return (
             <DataLabelText
               key={`bar-label-${seriesIndex}-${point.sourceIndex}`}
-              x={x}
+              x={slot.centerX}
               y={y}
               text={text}
               dominantBaseline={position === "center" || position === "insideEnd" ? "middle" : undefined}

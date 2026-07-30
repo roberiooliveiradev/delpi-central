@@ -1,0 +1,112 @@
+/* ElementTogglePopover — chip + menu presença/opções */
+.delpi-ui-element-toggle {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.delpi-ui-element-toggle__trigger {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 3.25rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--delpi-ui-text, #0f172a);
+  cursor: pointer;
+  font: inherit;
+}
+
+.delpi-ui-element-toggle__trigger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+}
+
+.delpi-ui-element-toggle__trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.delpi-ui-element-toggle--active .delpi-ui-element-toggle__trigger,
+.delpi-ui-element-toggle--open .delpi-ui-element-toggle__trigger {
+  border-color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-element-toggle--focused .delpi-ui-element-toggle__trigger {
+  box-shadow: inset 0 0 0 1px var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-element-toggle__icon {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.delpi-ui-element-toggle__label {
+  font-size: 0.65rem;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 4.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-element-toggle__menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 11rem;
+  padding: 0.35rem;
+  border-radius: 0.4rem;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #0f172a);
+  border: 1px solid var(--delpi-ui-border, #e2e8f0);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.delpi-ui-element-toggle__action {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border: none;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.delpi-ui-element-toggle__action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, transparent);
+}
+
+.delpi-ui-element-toggle__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delpi-ui-element-toggle__action--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, #dc2626 12%, transparent);
+  color: #b91c1c;
+}
+
+.delpi-ui-element-toggle__extra {
+  margin-top: 0.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--delpi-ui-border, #e2e8f0);
+}
+
+.delpi-ui-element-toggle__inline {
+  margin-top: 0.35rem;
+}
+
+.delpi-ui-element-toggle__portal {
+  z-index: 12000;
+}

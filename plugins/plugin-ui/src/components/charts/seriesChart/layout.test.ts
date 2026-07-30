@@ -448,3 +448,34 @@ describe("buildSeriesChartLayout secondary axis", () => {
     expect(ySecondary).toBeTypeOf("number");
   });
 });
+
+describe("category label rotation + horizontal_bar", () => {
+  it("categoryLabelRotation -90 força rótulos verticais", () => {
+    const labels = Array.from({ length: 12 }, (_, i) => `cat-${i}`);
+    const layout = buildSeriesChartLayout({
+      points: labels.map((label) => ({ label, value: 10 })),
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      categoryLabelRotation: -90,
+    });
+    expect(layout.categoryLabelRotationDeg).toBe(-90);
+    expect(layout.xLabelsRotated).toBe(true);
+  });
+
+  it("orientation horizontal expõe toValueX e bandas Y", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "A", value: 10 },
+        { label: "B", value: 20 },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      orientation: "horizontal",
+      categoryScale: "band",
+    });
+    expect(layout.orientation).toBe("horizontal");
+    expect(typeof layout.toValueX).toBe("function");
+    expect(typeof layout.categoryBandStartY).toBe("function");
+    expect(layout.toValueX!(20)).toBeGreaterThan(layout.toValueX!(10));
+  });
+});

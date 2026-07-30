@@ -144,6 +144,7 @@ export function formatSeriesChartDataLabelText(args: {
   value: number;
   total: number;
   valueFormat: SeriesChartValueFormat;
+  decimalPlaces?: number | null;
 }): string {
   const { config, value, total, valueFormat } = args;
   const parts: string[] = [];
@@ -156,7 +157,7 @@ export function formatSeriesChartDataLabelText(args: {
     if (cat) parts.push(cat);
   }
   if (config.showValue) {
-    parts.push(formatSeriesChartValue(value, valueFormat));
+    parts.push(formatSeriesChartValue(value, valueFormat, args.decimalPlaces));
   }
   if (config.showPercentage) {
     const pct = total > 0 ? Math.round((Math.abs(value) / total) * 100) : 0;

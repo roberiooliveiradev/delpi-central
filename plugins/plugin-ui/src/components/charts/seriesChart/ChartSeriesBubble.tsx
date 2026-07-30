@@ -14,10 +14,10 @@ export type ChartSeriesBubbleProps = Pick<SeriesChartSharedProps, "layout" | "po
   chartParts?: ChartPartsMap | null;
 };
 
-const MIN_R = 4;
-const MAX_R = 22;
+export const SERIES_CHART_BUBBLE_MIN_R = 4;
+export const SERIES_CHART_BUBBLE_MAX_R = 22;
 
-/** Bolhas: dispersão com raio ∝ |valor|. */
+/** Bolhas: X numérico (ou índice), Y = value, raio ∝ size (fallback |value|). */
 export function ChartSeriesBubble({
   layout,
   points,
@@ -27,7 +27,7 @@ export function ChartSeriesBubble({
   chartParts,
 }: ChartSeriesBubbleProps) {
   const cn = useSeriesChartClasses();
-  const { toX, toY } = layout;
+  const { toX, toY, margin, plotW, plotInset } = layout;
   const seriesRef = { kind: "series" as const, seriesIndex };
   const seriesVisible = getChartPartState(chartParts, seriesRef)?.visible !== false;
   if (!seriesVisible) return null;
@@ -35,8 +35,21 @@ export function ChartSeriesBubble({
   const visiblePoints = filterVisibleSeriesPoints(points, chartParts, seriesIndex);
   if (visiblePoints.length === 0) return null;
 
-  const absValues = visiblePoints.map((p) => Math.abs(Number(p.value) || 0));
-  const maxAbs = Math.max(...absValues, 1e-6);
+  const numericXs = visiblePoints.map((p) => {
+    const n = p.label != null && String(p.label).trim() !== "" ? Number(p.label) : NaN;
+    return Number.isFinite(n) ? n : null;
+  });
+  const allNumeric = numericXs.every((n) => n != null);
+  const xMin = allNumeric ? Math.min(...(numericXs as number[])) : 0;
+  const xMax = allNumeric ? Math.max(...(numericXs as number[])) : 1;
+  const xRange = Math.max(xMax - xMin, 1e-6);
+  const innerW = Math.max(1, plotW - 2 * plotInset);
+
+  const sizeValues = visiblePoints.map((p) => {
+    if (p.size != null && Number.isFinite(Number(p.size))) return Math.abs(Number(p.size));
+    return Math.abs(Number(p.value) || 0);
+  });
+  const maxSize = Math.max(...sizeValues, 1e-6);
 
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(seriesRef, interaction, {
     moveWhenSelected: false,
@@ -52,13 +65,19 @@ export function ChartSeriesBubble({
       onDoubleClick={onDoubleClick}
     >
       {visiblePoints.map((point, i) => {
-        const abs = absValues[i]!;
-        const r = MIN_R + (Math.sqrt(abs / maxAbs) * (MAX_R - MIN_R));
+        const sizeAbs = sizeValues[i]!;
+        const r =
+          SERIES_CHART_BUBBLE_MIN_R +
+          Math.sqrt(sizeAbs / maxSize) * (SERIES_CHART_BUBBLE_MAX_R - SERIES_CHART_BUBBLE_MIN_R);
+        const cx = allNumeric
+          ? margin.left + plotInset + ((numericXs[i]! - xMin) / xRange) * innerW
+          : toX(point.sourceIndex ?? i, points.length);
+        const cy = toY(Number(point.value));
         return (
           <circle
-            key={`bubble-${point.sourceIndex}`}
-            cx={toX(point.sourceIndex, points.length)}
-            cy={toY(Number(point.value))}
+            key={`bubble-${point.sourceIndex ?? i}`}
+            cx={cx}
+            cy={cy}
             r={r}
             fill={seriesColor}
             fillOpacity={0.55}

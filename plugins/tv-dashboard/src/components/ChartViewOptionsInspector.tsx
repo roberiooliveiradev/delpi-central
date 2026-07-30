@@ -2,6 +2,9 @@ import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
   CHART_VALUE_FORMAT_OPTIONS,
+  CHART_CATEGORY_LABEL_ROTATION_OPTIONS,
+  CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS,
+  CHART_CATEGORY_LABEL_FORMAT_OPTIONS,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   toSeriesChartKind,
@@ -148,6 +151,85 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
                     setOptions({ valueFormat: value as ComunicadoChartOptions["valueFormat"] })
                   }
                   options={CHART_VALUE_FORMAT_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+              <DeckField id="td-chart-decimal-places" label="Casas decimais">
+                <FormSelectControl
+                  id="td-chart-decimal-places"
+                  ariaLabel="Casas decimais"
+                  value={
+                    options.decimalPlaces == null ? "auto" : String(options.decimalPlaces)
+                  }
+                  onChange={(value) =>
+                    setOptions({
+                      decimalPlaces: value === "auto" ? null : Number(value),
+                    })
+                  }
+                  options={[
+                    { value: "auto", label: "Automático" },
+                    { value: "0", label: "0" },
+                    { value: "1", label: "1" },
+                    { value: "2", label: "2" },
+                    { value: "3", label: "3" },
+                    { value: "4", label: "4" },
+                  ]}
+                />
+              </DeckField>
+              <DeckField id="td-chart-category-rotation" label="Rotação dos rótulos (categoria)">
+                <FormSelectControl
+                  id="td-chart-category-rotation"
+                  ariaLabel="Rotação dos rótulos de categoria"
+                  value={
+                    options.categoryLabelRotation == null
+                      ? "auto"
+                      : String(options.categoryLabelRotation)
+                  }
+                  onChange={(value) =>
+                    setOptions({
+                      categoryLabelRotation:
+                        value === "auto"
+                          ? "auto"
+                          : (Number(value) as ComunicadoChartOptions["categoryLabelRotation"]),
+                    })
+                  }
+                  options={CHART_CATEGORY_LABEL_ROTATION_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+              <DeckField id="td-chart-category-overflow" label="Rótulos densos">
+                <FormSelectControl
+                  id="td-chart-category-overflow"
+                  ariaLabel="Rótulos densos"
+                  value={options.categoryLabelOverflow ?? "skip"}
+                  onChange={(value) =>
+                    setOptions({
+                      categoryLabelOverflow:
+                        value as ComunicadoChartOptions["categoryLabelOverflow"],
+                    })
+                  }
+                  options={CHART_CATEGORY_LABEL_OVERFLOW_OPTIONS.map((entry) => ({
+                    value: entry.value,
+                    label: entry.label,
+                  }))}
+                />
+              </DeckField>
+              <DeckField id="td-chart-category-format" label="Formato da categoria">
+                <FormSelectControl
+                  id="td-chart-category-format"
+                  ariaLabel="Formato da categoria"
+                  value={options.categoryLabelFormat ?? "raw"}
+                  onChange={(value) =>
+                    setOptions({
+                      categoryLabelFormat:
+                        value as ComunicadoChartOptions["categoryLabelFormat"],
+                    })
+                  }
+                  options={CHART_CATEGORY_LABEL_FORMAT_OPTIONS.map((entry) => ({
                     value: entry.value,
                     label: entry.label,
                   }))}

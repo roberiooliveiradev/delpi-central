@@ -344,6 +344,7 @@ export type ComunicadoDataBlockType = "data_kpi" | "data_chart" | "data_table" |
 export type ComunicadoChartType =
   | "line"
   | "bar"
+  | "horizontal_bar"
   | "area"
   | "stacked_bar"
   | "pie"
@@ -570,7 +571,7 @@ export type ComunicadoDataResolved = {
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];
   chart?: {
-    points?: Array<{ label?: unknown; value?: unknown }>;
+    points?: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
     chartType?: "line" | "bar";
     /** Multi-série (Fase 4); `points` permanece a 1ª série / fallback. */
     series?: Array<{
@@ -578,7 +579,7 @@ export type ComunicadoDataResolved = {
       field?: string;
       color?: string;
       plotOn?: "primary" | "secondary";
-      points: Array<{ label?: unknown; value?: unknown }>;
+      points: Array<{ label?: unknown; value?: unknown; size?: unknown }>;
     }>;
   };
   table?: {

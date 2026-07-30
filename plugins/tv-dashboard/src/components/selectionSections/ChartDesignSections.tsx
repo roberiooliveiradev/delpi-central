@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   AnchoredPanelPortal,
+  ElementTogglePopover,
   type DelpiChartType,
   useRibbonSectionPopoverSurface,
 } from "@delpi/plugin-ui/index";
@@ -430,7 +431,7 @@ export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout 
         const enabled = isChartElementEnabled(item.id, ctrl.options);
         const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
         return (
-          <DeckRibbonTile
+          <ElementTogglePopover
             key={item.id}
             icon={item.icon}
             label={item.label.split(" ")[0] ?? item.label}
@@ -439,18 +440,13 @@ export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout 
                 ? "Liga os rótulos e edita tipografia de todos de uma vez."
                 : item.label
             }
-            active={enabled || focused}
-            onClick={() => {
-              if (item.id === "dataLabels" && enabled) {
-                if (focused) {
-                  ctrl.toggleElement(item.id, false);
-                } else {
-                  const part = chartElementPrimaryPartRef(item.id);
-                  if (part) ctrl.selectChartPart(ctrl.block.id, part);
-                }
-                return;
-              }
-              ctrl.toggleElement(item.id, !enabled);
+            active={enabled}
+            focused={focused}
+            presence={{
+              enabled,
+              onAdd: () => ctrl.toggleElement(item.id, true),
+              onRemove: () => ctrl.toggleElement(item.id, false),
+              onOpenOptions: () => ctrl.openAddElementMoreOptions(item.id),
             }}
           />
         );
@@ -473,7 +469,7 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
             id: "axes" as const,
             icon: BarChart3,
             label: "Eixos",
-            hint: "Liga os eixos e seleciona ambos para contorno/estilo.",
+            hint: "Liga os eixos e abre opções de estilo.",
           },
           {
             id: "gridlines" as const,
@@ -486,23 +482,18 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
         const enabled = isChartElementEnabled(item.id, ctrl.options);
         const focused = isChartElementOpenForPart(item.id, ctrl.selectedChartPart);
         return (
-          <DeckRibbonTile
+          <ElementTogglePopover
             key={item.id}
             icon={item.icon}
             label={item.label}
             hint={item.hint}
-            active={enabled || focused}
-            onClick={() => {
-              if (enabled) {
-                if (focused) {
-                  ctrl.toggleElement(item.id, false);
-                } else {
-                  const part = chartElementPrimaryPartRef(item.id);
-                  if (part) ctrl.selectChartPart(ctrl.block.id, part);
-                }
-                return;
-              }
-              ctrl.toggleElement(item.id, true);
+            active={enabled}
+            focused={focused}
+            presence={{
+              enabled,
+              onAdd: () => ctrl.toggleElement(item.id, true),
+              onRemove: () => ctrl.toggleElement(item.id, false),
+              onOpenOptions: () => ctrl.openAddElementMoreOptions(item.id),
             }}
           />
         );
