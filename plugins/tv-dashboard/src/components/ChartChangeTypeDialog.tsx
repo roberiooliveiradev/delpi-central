@@ -1,43 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  AreaChart,
-  BarChart3,
-  BarChart4,
-  ChartColumn,
-  ChartNoAxesColumnIncreasing,
-  ChartSpline,
-  Circle,
-  CircleDot,
-  Filter,
-  LineChart,
-  PieChart,
-  Radar,
-  ScatterChart,
-  type LucideIcon,
-} from "lucide-react";
-import {
   DELPI_CHART_CATALOG_CATEGORIES,
   DELPI_CHART_TYPE_CATALOG,
+  resolveChartCatalogIcon,
   type DelpiChartType,
 } from "@delpi/plugin-ui/index";
 
 import { HostContainedDialog } from "./ui/Modal";
-
-const CHART_ICON_MAP: Record<string, LucideIcon> = {
-  LineChart,
-  AreaChart,
-  BarChart3,
-  BarChart4,
-  ChartColumn,
-  PieChart,
-  CircleDot,
-  ScatterChart,
-  Circle,
-  Radar,
-  ChartSpline,
-  ChartNoAxesColumnIncreasing,
-  Filter,
-};
 
 type CatalogCategoryId = (typeof DELPI_CHART_CATALOG_CATEGORIES)[number]["id"];
 
@@ -72,7 +41,20 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
     [categoryId],
   );
   const draftEntry = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.type === draftType);
-  const DraftIcon = draftEntry ? (CHART_ICON_MAP[draftEntry.icon] ?? BarChart3) : BarChart3;
+  const DraftIcon = resolveChartCatalogIcon(draftEntry?.icon);
+  const categoryLabel =
+    DELPI_CHART_CATALOG_CATEGORIES.find((category) => category.id === categoryId)?.label ?? "";
+
+  const selectCategory = (nextId: CatalogCategoryId) => {
+    setCategoryId(nextId);
+    const inCategory = DELPI_CHART_TYPE_CATALOG.some(
+      (entry) => entry.category === nextId && entry.type === draftType,
+    );
+    if (!inCategory) {
+      const first = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.category === nextId);
+      if (first) setDraftType(first.type);
+    }
+  };
 
   return (
     <HostContainedDialog
@@ -97,6 +79,7 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
     >
       <div className="td-chart-type-dialog">
         <aside className="td-chart-type-dialog__nav" aria-label="Categorias">
+          <p className="td-chart-type-dialog__nav-label">Categorias</p>
           {DELPI_CHART_CATALOG_CATEGORIES.map((category) => (
             <button
               key={category.id}
@@ -107,7 +90,7 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
               ]
                 .filter(Boolean)
                 .join(" ")}
-              onClick={() => setCategoryId(category.id)}
+              onClick={() => selectCategory(category.id)}
             >
               {category.label}
             </button>
@@ -115,9 +98,16 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
         </aside>
 
         <div className="td-chart-type-dialog__main">
+          <header className="td-chart-type-dialog__heading">
+            <h3 className="td-chart-type-dialog__heading-title">{categoryLabel}</h3>
+            <p className="td-chart-type-dialog__heading-hint">
+              Escolha o tipo · clique duplo confirma
+            </p>
+          </header>
+
           <div className="td-chart-type-dialog__grid" role="listbox" aria-label="Tipos de gráfico">
             {items.map((entry) => {
-              const Icon = CHART_ICON_MAP[entry.icon] ?? BarChart3;
+              const Icon = resolveChartCatalogIcon(entry.icon);
               const active = draftType === entry.type;
               return (
                 <button
@@ -135,16 +125,25 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
                   onDoubleClick={() => onConfirm(entry.type)}
                   title={entry.label}
                 >
-                  <Icon size={22} strokeWidth={1.75} aria-hidden="true" />
-                  <span>{entry.label}</span>
+                  <span className="td-chart-type-dialog__item-icon" aria-hidden="true">
+                    <Icon size={28} strokeWidth={1.5} />
+                  </span>
+                  <span className="td-chart-type-dialog__item-label">{entry.label}</span>
                 </button>
               );
             })}
           </div>
 
           <div className="td-chart-type-dialog__preview" aria-live="polite">
-            <DraftIcon size={48} strokeWidth={1.5} aria-hidden="true" />
-            <p>{draftEntry?.label ?? draftType}</p>
+            <span className="td-chart-type-dialog__preview-icon" aria-hidden="true">
+              <DraftIcon size={36} strokeWidth={1.5} />
+            </span>
+            <div className="td-chart-type-dialog__preview-copy">
+              <p className="td-chart-type-dialog__preview-eyebrow">Selecionado</p>
+              <p className="td-chart-type-dialog__preview-title">
+                {draftEntry?.label ?? draftType}
+              </p>
+            </div>
           </div>
         </div>
       </div>

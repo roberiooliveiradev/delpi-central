@@ -21,7 +21,7 @@ export type DelpiChartCatalogEntry = {
   type: DelpiChartType;
   label: string;
   category: DelpiChartCatalogCategory;
-  /** Nome do ícone Lucide (renderizado pelo painel). */
+  /** Nome do ícone Lucide (via `resolveChartCatalogIcon`). */
   icon: string;
 };
 
@@ -33,15 +33,15 @@ export const DELPI_CHART_CATALOG_CATEGORIES: Array<{ id: DelpiChartCatalogCatego
 ];
 
 export const DELPI_CHART_TYPE_CATALOG: DelpiChartCatalogEntry[] = [
-  { type: "line", label: "Linhas", category: "series", icon: "LineChart" },
-  { type: "area", label: "Área", category: "series", icon: "AreaChart" },
-  { type: "bar", label: "Colunas", category: "comparison", icon: "BarChart3" },
-  { type: "horizontal_bar", label: "Barras", category: "comparison", icon: "ChartColumn" },
-  { type: "stacked_bar", label: "Colunas empilhadas", category: "comparison", icon: "BarChart4" },
+  { type: "line", label: "Linhas", category: "series", icon: "ChartLine" },
+  { type: "area", label: "Área", category: "series", icon: "ChartArea" },
+  { type: "bar", label: "Colunas", category: "comparison", icon: "ChartColumn" },
+  { type: "horizontal_bar", label: "Barras", category: "comparison", icon: "ChartBar" },
+  { type: "stacked_bar", label: "Colunas empilhadas", category: "comparison", icon: "ChartColumnStacked" },
   { type: "histogram", label: "Histograma", category: "distribution", icon: "ChartColumn" },
-  { type: "pie", label: "Pizza", category: "distribution", icon: "PieChart" },
+  { type: "pie", label: "Pizza", category: "distribution", icon: "ChartPie" },
   { type: "doughnut", label: "Rosca", category: "distribution", icon: "CircleDot" },
-  { type: "scatter", label: "Dispersão", category: "distribution", icon: "ScatterChart" },
+  { type: "scatter", label: "Dispersão", category: "distribution", icon: "ChartScatter" },
   { type: "bubble", label: "Bolhas", category: "distribution", icon: "Circle" },
   { type: "radar", label: "Radar", category: "special", icon: "Radar" },
   { type: "combo", label: "Combinado", category: "special", icon: "ChartSpline" },

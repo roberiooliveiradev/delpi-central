@@ -1,42 +1,10 @@
 import {
-  AreaChart,
-  BarChart3,
-  BarChart4,
-  ChartColumn,
-  ChartNoAxesColumnIncreasing,
-  ChartSpline,
-  Circle,
-  CircleDot,
-  Filter,
-  LineChart,
-  PieChart,
-  Radar,
-  ScatterChart,
-  type LucideIcon,
-} from "lucide-react";
-
-import {
   DELPI_CHART_CATALOG_CATEGORIES,
   DELPI_CHART_TYPE_CATALOG,
   type DelpiChartCatalogEntry,
   type DelpiChartType,
 } from "./chartCatalogTypes";
-
-const CHART_ICON_MAP: Record<string, LucideIcon> = {
-  LineChart,
-  AreaChart,
-  BarChart3,
-  BarChart4,
-  ChartColumn,
-  PieChart,
-  CircleDot,
-  ScatterChart,
-  Circle,
-  Radar,
-  ChartSpline,
-  ChartNoAxesColumnIncreasing,
-  Filter,
-};
+import { resolveChartCatalogIcon } from "./chartCatalogIcons";
 
 export type ChartTypeCatalogPanelProps = {
   title?: string;
@@ -51,7 +19,7 @@ function ChartCatalogItem({
   entry: DelpiChartCatalogEntry;
   onSelect: (chartType: DelpiChartType) => void;
 }) {
-  const Icon = CHART_ICON_MAP[entry.icon] ?? BarChart3;
+  const Icon = resolveChartCatalogIcon(entry.icon);
   return (
     <button
       type="button"
@@ -59,7 +27,7 @@ function ChartCatalogItem({
       onClick={() => onSelect(entry.type)}
       title={entry.label}
     >
-      <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
+      <Icon size={22} strokeWidth={1.6} aria-hidden="true" />
       <span className="delpi-ui-chart-catalog__item-label">{entry.label}</span>
     </button>
   );
@@ -94,3 +62,4 @@ export function ChartTypeCatalogPanel({
 
 export { DELPI_CHART_TYPE_CATALOG, DELPI_CHART_CATALOG_CATEGORIES } from "./chartCatalogTypes";
 export type { DelpiChartType, DelpiChartCatalogEntry } from "./chartCatalogTypes";
+export { resolveChartCatalogIcon, DELPI_CHART_CATALOG_ICON_MAP } from "./chartCatalogIcons";

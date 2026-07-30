@@ -2,6 +2,8 @@ export {
   ChartTypeCatalogPanel,
   DELPI_CHART_CATALOG_CATEGORIES,
   DELPI_CHART_TYPE_CATALOG,
+  DELPI_CHART_CATALOG_ICON_MAP,
+  resolveChartCatalogIcon,
   type ChartTypeCatalogPanelProps,
   type DelpiChartCatalogEntry,
   type DelpiChartType,

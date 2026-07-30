@@ -1,7 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { ChartBar, ChartColumn } from "lucide-react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ChartTypeCatalogPanel, DELPI_CHART_TYPE_CATALOG } from "./ChartTypeCatalogPanel";
+import { resolveChartCatalogIcon } from "./chartCatalogIcons";
 import { TableInsertCatalogPanel } from "./TableInsertCatalogPanel";
 
 afterEach(() => cleanup());
@@ -19,6 +21,15 @@ describe("ChartTypeCatalogPanel", () => {
     render(<ChartTypeCatalogPanel onSelect={onSelect} />);
     fireEvent.click(screen.getByTitle("Linhas"));
     expect(onSelect).toHaveBeenCalledWith("line");
+  });
+
+  it("Barras usa ícone horizontal (ChartBar), distinto de Colunas", () => {
+    const bars = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.type === "horizontal_bar");
+    const columns = DELPI_CHART_TYPE_CATALOG.find((entry) => entry.type === "bar");
+    expect(bars?.icon).toBe("ChartBar");
+    expect(columns?.icon).toBe("ChartColumn");
+    expect(resolveChartCatalogIcon(bars?.icon)).toBe(ChartBar);
+    expect(resolveChartCatalogIcon(columns?.icon)).toBe(ChartColumn);
   });
 });
 

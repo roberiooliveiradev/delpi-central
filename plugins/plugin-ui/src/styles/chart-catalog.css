@@ -44,21 +44,33 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: 64px;
-  padding: 8px 6px;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 96%, var(--delpi-ui-accent, var(--primary, #089bdb)) 4%);
+  gap: 6px;
+  min-height: 68px;
+  padding: 10px 6px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111)) 4%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
   color: inherit;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
 .delpi-ui-chart-catalog__item:hover,
 .delpi-ui-chart-catalog__item:focus-visible {
-  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
-  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, var(--delpi-ui-surface, #fff));
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    var(--delpi-ui-surface, #fff)
+  );
   outline: none;
 }
 
