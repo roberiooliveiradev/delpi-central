@@ -28,6 +28,11 @@ import {
 import { ShortcutTip } from "./ShortcutTip";
 import { StageStatusShowToggles } from "./StageStatusShowToggles";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import {
+  dataTransferHasCanvasMediaFiles,
+  dataTransferLooksLikeOsFileDrag,
+  isEditableDropTarget,
+} from "../utils/canvasFileDrop";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const TD_INLINE_LOADING_PROGRESS_CN = inlineLoadingProgressBemClasses("td");
@@ -308,10 +313,15 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
     setStagePanMode,
     persistStageViewPosition,
     viewportProfile,
+    insertDroppedMediaFiles,
+    uploading,
+    uploadProgress,
+    uploadStatusMessage,
   } = useComunicadoEditor();
   const slideDesign = resolveViewportPixelSize(viewportProfile);
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
   const [ctrlPanHeld, setCtrlPanHeld] = useState(false);
+  const [fileDropActive, setFileDropActive] = useState(false);
   const panDragRef = useRef<{
     pointerId: number;
     lastX: number;
@@ -498,6 +508,7 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
             "td-composer__canvas-wrap--full",
             "td-composer__canvas-wrap--zoom",
             panActive ? "td-composer__canvas-wrap--pan" : "",
+            fileDropActive ? "td-composer__canvas-wrap--file-drop" : "",
           ]
             .filter(Boolean)
             .join(" ")}
@@ -507,8 +518,49 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
           onPointerUp={endPanDrag}
           onPointerCancel={endPanDrag}
           onContextMenu={onStageContextMenu}
+          onDragEnter={(event) => {
+            if (isEditableDropTarget(event.target)) return;
+            if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
+            event.preventDefault();
+            setFileDropActive(true);
+          }}
+          onDragOver={(event) => {
+            if (isEditableDropTarget(event.target)) return;
+            if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "copy";
+            setFileDropActive(true);
+          }}
+          onDragLeave={(event) => {
+            const next = event.relatedTarget;
+            if (next instanceof Node && event.currentTarget.contains(next)) return;
+            setFileDropActive(false);
+          }}
+          onDrop={(event) => {
+            if (isEditableDropTarget(event.target)) return;
+            setFileDropActive(false);
+            if (!dataTransferHasCanvasMediaFiles(event.dataTransfer)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            void insertDroppedMediaFiles(event.dataTransfer, event.clientX, event.clientY);
+          }}
         >
           {children}
+          {fileDropActive ? (
+            <div className="td-composer__file-drop-overlay" aria-live="polite">
+              Solte para inserir imagem ou vídeo
+            </div>
+          ) : null}
+          {uploading && uploadProgress != null ? (
+            <div className="td-composer__upload-progress" role="status">
+              Enviando mídia… {Math.round(uploadProgress * 100)}%
+            </div>
+          ) : null}
+          {uploadStatusMessage ? (
+            <div className="td-composer__upload-error" role="alert">
+              {uploadStatusMessage}
+            </div>
+          ) : null}
         </div>
       </div>
       <ComunicadoStageStatusBar />

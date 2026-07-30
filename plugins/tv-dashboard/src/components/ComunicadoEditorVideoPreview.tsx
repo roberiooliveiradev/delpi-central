@@ -1,14 +1,22 @@
-import { Pause, Play, Square } from "lucide-react";
+import { Pause, Play, Square, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+import { withBrowserMediaAccessToken } from "../api/browserSafeMediaUrl";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
 
 type VideoBlock = ComunicadoMediaBlock;
+
+const activeEditorVideos = new Set<HTMLVideoElement>();
+
+function pauseOtherEditorVideos(except: HTMLVideoElement) {
+  for (const video of activeEditorVideos) {
+    if (video !== except && !video.paused) video.pause();
+  }
+}
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -27,11 +35,22 @@ type Props = {
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
   const { playlistId } = useComunicadoEditor();
   const mediaUrl = resolveEditorMediaUrl(playlistId, block.assetId, block.url);
-  const { src, loading, error } = useAuthenticatedBlobUrl(mediaUrl);
+  const streamSrc = mediaUrl ? withBrowserMediaAccessToken(mediaUrl) : undefined;
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !streamSrc) return;
+    activeEditorVideos.add(video);
+    return () => {
+      activeEditorVideos.delete(video);
+    };
+  }, [streamSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -39,7 +58,10 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
 
     const syncTime = () => setCurrentTime(video.currentTime);
     const syncDuration = () => setDuration(Number.isFinite(video.duration) ? video.duration : 0);
-    const onPlay = () => setPlaying(true);
+    const onPlay = () => {
+      pauseOtherEditorVideos(video);
+      setPlaying(true);
+    };
     const onPause = () => setPlaying(false);
     const onEnded = () => setPlaying(false);
 
@@ -58,16 +80,28 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
       video.removeEventListener("pause", onPause);
       video.removeEventListener("ended", onEnded);
     };
-  }, [src]);
+  }, [streamSrc]);
 
   useEffect(() => {
     setPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-  }, [src]);
+  }, [streamSrc]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = muted;
+    video.volume = volume;
+  }, [muted, volume]);
 
   function handlePlay() {
-    void videoRef.current?.play();
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    setMuted(false);
+    pauseOtherEditorVideos(video);
+    void video.play();
   }
 
   function handlePause() {
@@ -81,6 +115,13 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     video.currentTime = 0;
     setCurrentTime(0);
     setPlaying(false);
+  }
+
+  function handleSeek(next: number) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(next)) return;
+    video.currentTime = next;
+    setCurrentTime(next);
   }
 
   const blockClass = ensureComunicadoDualClass(
@@ -99,19 +140,16 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
   let body: ReactNode;
   if (!mediaUrl) {
     body = <ComunicadoMediaPlaceholder kind="video" />;
-  } else if (loading || (!src && !error)) {
+  } else if (!streamSrc) {
     body = <ComunicadoMediaPlaceholder kind="video" state="loading" />;
-  } else if (error || !src) {
-    body = <ComunicadoMediaPlaceholder kind="video" state="error" />;
   } else {
     body = (
       <>
         <video
           ref={videoRef}
           className="td-composer__media-preview"
-          src={src}
+          src={streamSrc}
           playsInline
-          muted
           preload="metadata"
           style={{ objectFit: block.style?.objectFit ?? "contain" }}
         />
@@ -124,8 +162,8 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
             className="td-composer__video-btn"
             onClick={handlePlay}
             disabled={playing}
-            title="Reproduzir"
-            aria-label="Reproduzir"
+            title="Reproduzir com áudio"
+            aria-label="Reproduzir com áudio"
           >
             <Play size={14} aria-hidden="true" />
           </button>
@@ -148,6 +186,44 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
           >
             <Square size={14} aria-hidden="true" />
           </button>
+          <button
+            type="button"
+            className="td-composer__video-btn"
+            onClick={() => setMuted((value) => !value)}
+            title={muted ? "Ativar som" : "Silenciar"}
+            aria-label={muted ? "Ativar som" : "Silenciar"}
+          >
+            {muted || volume === 0 ? (
+              <VolumeX size={14} aria-hidden="true" />
+            ) : (
+              <Volume2 size={14} aria-hidden="true" />
+            )}
+          </button>
+          <input
+            type="range"
+            className="td-composer__video-volume"
+            min={0}
+            max={1}
+            step={0.05}
+            value={muted ? 0 : volume}
+            aria-label="Volume"
+            onChange={(event) => {
+              const next = Number(event.target.value);
+              setVolume(next);
+              setMuted(next === 0);
+            }}
+          />
+          <input
+            type="range"
+            className="td-composer__video-seek"
+            min={0}
+            max={duration > 0 ? duration : 0}
+            step={0.1}
+            value={Math.min(currentTime, duration || 0)}
+            aria-label="Posição do vídeo"
+            disabled={!(duration > 0)}
+            onChange={(event) => handleSeek(Number(event.target.value))}
+          />
           <span className="td-composer__video-time" aria-live="polite">
             {formatTime(currentTime)} / {formatTime(duration)}
           </span>

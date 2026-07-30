@@ -8,13 +8,15 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
+import { validateMediaUploadFile } from "../../api/mediaUploadLimits";
 import type { MediaLibraryTarget } from "../../components/comunicadoEditorTypes";
 import { resolveEditorMediaUrl } from "../../components/slideCardPreview";
 import {
   dataTransferHasImageFiles,
   firstDataTransferImageFile,
 } from "../../utils/externalClipboardPaste";
-import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
+import { collectCanvasMediaFiles, planCanvasMediaDrop } from "../../utils/canvasFileDrop";
+import { placeBlockAtClientPoint, placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 import { readSystemClipboardDataTransfer } from "../../utils/readSystemClipboardDataTransfer";
 
 type Options = {
@@ -49,6 +51,8 @@ export function useComunicadoEditorMedia({
   canvasWrapRef,
 }: Options) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadStatusMessage, setUploadStatusMessage] = useState<string | null>(null);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
   const [mediaLibraryTarget, setMediaLibraryTarget] = useState<MediaLibraryTarget>("block");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +60,11 @@ export function useComunicadoEditorMedia({
   const mediaLibraryTargetRef = useRef<MediaLibraryTarget>("block");
 
   const applyMediaAsset = useCallback(
-    (asset: MediaAsset, target?: MediaLibraryTarget) => {
+    (
+      asset: MediaAsset,
+      target?: MediaLibraryTarget,
+      options?: { clientX?: number; clientY?: number; cascadeIndex?: number },
+    ) => {
       const resolvedTarget = target ?? mediaLibraryTargetRef.current;
       const url = resolveEditorMediaUrl(playlistId, asset.id) ?? "";
 
@@ -82,24 +90,38 @@ export function useComunicadoEditorMedia({
         return;
       }
 
-      if (resolvedTarget === "insert-image") {
-        const block = placeBlockInViewportCenter(
-          { ...createBlock("image"), assetId: asset.id, url } as ComunicadoBlock,
-          canvasRef?.current,
-          canvasWrapRef?.current,
-        );
-        const nextBlocks = [...(configRef.current.blocks ?? []), block];
-        updateBlocks(nextBlocks);
-        setSelectedId(block.id);
-        return;
-      }
-
-      if (resolvedTarget === "insert-video") {
-        const block = placeBlockInViewportCenter(
-          { ...createBlock("video"), assetId: asset.id, url } as ComunicadoBlock,
-          canvasRef?.current,
-          canvasWrapRef?.current,
-        );
+      if (resolvedTarget === "insert-image" || resolvedTarget === "insert-video") {
+        const blockType = resolvedTarget === "insert-video" ? "video" : "image";
+        let block = {
+          ...createBlock(blockType),
+          assetId: asset.id,
+          url,
+        } as ComunicadoBlock;
+        const cascade = options?.cascadeIndex ?? 0;
+        if (
+          typeof options?.clientX === "number" &&
+          typeof options?.clientY === "number" &&
+          canvasRef?.current
+        ) {
+          block = placeBlockAtClientPoint(
+            block,
+            canvasRef.current,
+            options.clientX,
+            options.clientY,
+          );
+          if (cascade > 0) {
+            block = {
+              ...block,
+              frame: {
+                ...block.frame,
+                x: Math.min(100 - block.frame.w, block.frame.x + cascade * 2),
+                y: Math.min(100 - block.frame.h, block.frame.y + cascade * 2),
+              },
+            };
+          }
+        } else {
+          block = placeBlockInViewportCenter(block, canvasRef?.current, canvasWrapRef?.current);
+        }
         const nextBlocks = [...(configRef.current.blocks ?? []), block];
         updateBlocks(nextBlocks);
         setSelectedId(block.id);
@@ -128,12 +150,59 @@ export function useComunicadoEditorMedia({
 
   const handleUploadFile = useCallback(
     async (file: File, target: "block" | "background") => {
+      const validationError = validateMediaUploadFile(
+        file,
+        target === "background" ? ["image"] : ["image", "video"],
+      );
+      if (validationError) {
+        setUploadStatusMessage(validationError);
+        return;
+      }
       setUploading(true);
+      setUploadProgress(0);
+      setUploadStatusMessage(null);
       try {
-        const asset: MediaAsset = await uploadPlaylistMedia(playlistId, file);
-        applyMediaAsset(asset, target);
+        const asset: MediaAsset = await uploadPlaylistMedia(playlistId, file, {
+          onProgress: (ratio) => setUploadProgress(ratio),
+        });
+        /* "block" cai no ramo de substituir mídia selecionada (não é MediaLibraryTarget). */
+        applyMediaAsset(asset, target === "background" ? "background" : ("block" as MediaLibraryTarget));
+      } catch (err) {
+        setUploadStatusMessage(err instanceof Error ? err.message : "Falha ao enviar arquivo.");
       } finally {
         setUploading(false);
+        setUploadProgress(null);
+      }
+    },
+    [applyMediaAsset, playlistId],
+  );
+
+  const insertDroppedMediaFiles = useCallback(
+    async (data: DataTransfer, clientX: number, clientY: number) => {
+      const files = collectCanvasMediaFiles(data);
+      const { accepted, errors } = planCanvasMediaDrop(files);
+      if (errors.length) {
+        setUploadStatusMessage(errors[0] ?? null);
+      }
+      if (!accepted.length) return;
+      setUploading(true);
+      setUploadStatusMessage(null);
+      try {
+        for (let index = 0; index < accepted.length; index += 1) {
+          const file = accepted[index]!;
+          setUploadProgress(0);
+          const asset = await uploadPlaylistMedia(playlistId, file, {
+            onProgress: (ratio) => setUploadProgress(ratio),
+          });
+          const target: MediaLibraryTarget =
+            asset.mediaKind === "video" ? "insert-video" : "insert-image";
+          applyMediaAsset(asset, target, { clientX, clientY, cascadeIndex: index });
+        }
+      } catch (err) {
+        setUploadStatusMessage(err instanceof Error ? err.message : "Falha ao enviar arquivo.");
+      } finally {
+        setUploading(false);
+        setUploadProgress(null);
       }
     },
     [applyMediaAsset, playlistId],
@@ -141,12 +210,23 @@ export function useComunicadoEditorMedia({
 
   const uploadCustomFont = useCallback(
     async (file: File) => {
+      const validationError = validateMediaUploadFile(file, ["font"]);
+      if (validationError) {
+        setUploadStatusMessage(validationError);
+        return;
+      }
       setUploading(true);
+      setUploadProgress(0);
       try {
-        const asset = await uploadPlaylistMedia(playlistId, file);
+        const asset = await uploadPlaylistMedia(playlistId, file, {
+          onProgress: (ratio) => setUploadProgress(ratio),
+        });
         applyMediaAsset(asset, "custom-font");
+      } catch (err) {
+        setUploadStatusMessage(err instanceof Error ? err.message : "Falha ao enviar fonte.");
       } finally {
         setUploading(false);
+        setUploadProgress(null);
       }
     },
     [applyMediaAsset, playlistId],
@@ -187,6 +267,9 @@ export function useComunicadoEditorMedia({
 
   return {
     uploading,
+    uploadProgress,
+    uploadStatusMessage,
+    clearUploadStatusMessage: () => setUploadStatusMessage(null),
     mediaLibraryOpen,
     mediaLibraryTarget,
     fileInputRef: fileInputRef as RefObject<HTMLInputElement | null>,
@@ -196,6 +279,7 @@ export function useComunicadoEditorMedia({
     applyMediaAsset,
     triggerUpload,
     handleUploadFile,
+    insertDroppedMediaFiles,
     uploadCustomFont,
     probeClipboardHasImage,
     replaceSelectedMediaFromClipboard,

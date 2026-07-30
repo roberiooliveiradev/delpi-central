@@ -86,7 +86,8 @@ Configuração global relevante:
 
 | Diretiva | Valor | Efeito |
 |---|---|---|
-| `client_max_body_size` | `20m` | Uploads / manifestos grandes |
+| `client_max_body_size` | `20m` (global) | Uploads / manifestos grandes |
+| `client_max_body_size` | `220m` em `/apps/tv-dashboard-api/` | Biblioteca TV — vídeo até 200 MB (+ margem multipart) |
 | `proxy_buffer_size` | `256k` | JWT e cookies grandes |
 | `large_client_header_buffers` | `8 256k` | Evita 494 em headers extensos |
 | `proxy_read_timeout` | `86400` em sockets/long poll | SSE/chat |

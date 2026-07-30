@@ -34,6 +34,9 @@ function authHeaders(): Record<string, string> {
 
 /** Extrai mensagem legível de envelope TV (`message`) ou FastAPI (`detail`). */
 export function resolveHttpErrorMessage(body: unknown, status: number): string {
+  if (status === 413) {
+    return "Arquivo grande demais para o servidor (limite 200 MB).";
+  }
   const fallback = `Erro HTTP ${status}`;
   if (!body || typeof body !== "object") {
     return status === 401 ? "Não autorizado. Faça login novamente." : fallback;
@@ -126,18 +129,82 @@ export async function httpDelete<T>(url: string, options: RequestOptions = {}): 
 export async function httpGetBlob(url: string): Promise<Blob> {
   const response = await fetch(url, { method: "GET", headers: authHeaders() });
   if (!response.ok) {
-    throw new HttpRequestError(`Erro HTTP ${response.status}`, response.status);
+    throw new HttpRequestError(
+      resolveHttpErrorMessage(null, response.status),
+      response.status,
+    );
   }
   return response.blob();
 }
 
-export async function httpPostForm<T>(url: string, form: FormData): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: authHeaders(),
-    body: form,
+export type HttpPostFormOptions = {
+  signal?: AbortSignal;
+  onProgress?: (ratio: number) => void;
+};
+
+/**
+ * Upload multipart com progresso (XHR). `onProgress` recebe 0–1.
+ */
+export async function httpPostForm<T>(
+  url: string,
+  form: FormData,
+  options: HttpPostFormOptions = {},
+): Promise<T> {
+  const { signal, onProgress } = options;
+  if (!onProgress && !signal) {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: authHeaders(),
+      body: form,
+    });
+    return parseJson<T>(response);
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    const headers = authHeaders();
+    for (const [key, value] of Object.entries(headers)) {
+      xhr.setRequestHeader(key, value);
+    }
+    xhr.responseType = "json";
+
+    const onAbort = () => {
+      xhr.abort();
+    };
+    if (signal) {
+      if (signal.aborted) {
+        reject(new DOMException("Aborted", "AbortError"));
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (!onProgress || !event.lengthComputable || event.total <= 0) return;
+      onProgress(Math.min(1, Math.max(0, event.loaded / event.total)));
+    };
+
+    xhr.onload = () => {
+      signal?.removeEventListener("abort", onAbort);
+      const status = xhr.status;
+      const body = xhr.response;
+      if (status < 200 || status >= 300) {
+        reject(new HttpRequestError(resolveHttpErrorMessage(body, status), status));
+        return;
+      }
+      resolve(body as T);
+    };
+    xhr.onerror = () => {
+      signal?.removeEventListener("abort", onAbort);
+      reject(new HttpRequestError("Falha de rede no upload.", 0));
+    };
+    xhr.onabort = () => {
+      signal?.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    xhr.send(form);
   });
-  return parseJson<T>(response);
 }
 
 export { API_BASE };

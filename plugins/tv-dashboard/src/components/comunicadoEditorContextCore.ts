@@ -235,6 +235,10 @@ export type ComunicadoEditorContextValue = {
   toggleSelectedTextListType: (listType: ComunicadoListType) => void;
   applySelectedNamedTextStyle: (namedStyle: ComunicadoNamedTextStyle) => void;
   uploading: boolean;
+  uploadProgress: number | null;
+  uploadStatusMessage: string | null;
+  clearUploadStatusMessage: () => void;
+  insertDroppedMediaFiles: (data: DataTransfer, clientX: number, clientY: number) => Promise<void>;
   shapeMenuOpen: boolean;
   setShapeMenuOpen: (open: boolean) => void;
   /**

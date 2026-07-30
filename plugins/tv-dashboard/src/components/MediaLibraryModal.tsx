@@ -8,6 +8,10 @@ import {
   uploadPlaylistMedia,
   type MediaAsset,
 } from "../api/tvDashboardApi";
+import {
+  validateMediaUploadFile,
+  type MediaUploadKind,
+} from "../api/mediaUploadLimits";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
 import { HostContainedDialog } from "./ui/Modal";
@@ -98,6 +102,7 @@ export function MediaLibraryModal({
   const [items, setItems] = useState<MediaAsset[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const kindFilter = targetMediaKind(target);
@@ -106,6 +111,7 @@ export function MediaLibraryModal({
     if (!open) {
       setQuery("");
       setError(null);
+      setUploadProgress(null);
       return;
     }
     setLoading(true);
@@ -126,10 +132,19 @@ export function MediaLibraryModal({
   }, [items, query]);
 
   async function handleUpload(file: File) {
+    const allowed: MediaUploadKind[] | undefined = kindFilter ? [kindFilter] : undefined;
+    const validationError = validateMediaUploadFile(file, allowed);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setLoading(true);
     setError(null);
+    setUploadProgress(0);
     try {
-      const asset = await uploadPlaylistMedia(playlistId, file);
+      const asset = await uploadPlaylistMedia(playlistId, file, {
+        onProgress: (ratio) => setUploadProgress(ratio),
+      });
       onPick(asset);
       onUploaded();
       onClose();
@@ -137,8 +152,11 @@ export function MediaLibraryModal({
       setError(err instanceof Error ? err.message : "Falha ao enviar arquivo.");
     } finally {
       setLoading(false);
+      setUploadProgress(null);
     }
   }
+
+  const busy = uploading || loading;
 
   return (
     <HostContainedDialog open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
@@ -153,7 +171,7 @@ export function MediaLibraryModal({
         <button
           type="button"
           className="td-btn td-btn--sm"
-          disabled={uploading || loading}
+          disabled={busy}
           onClick={() => fileInputRef.current?.click()}
         >
           <Upload size={15} aria-hidden />
@@ -179,7 +197,12 @@ export function MediaLibraryModal({
           }}
         />
       </div>
-      {loading ? <p className="td-subtitle">Carregando biblioteca…</p> : null}
+      {uploadProgress != null ? (
+        <p className="td-subtitle" role="status">
+          Enviando… {Math.round(uploadProgress * 100)}%
+        </p>
+      ) : null}
+      {loading && uploadProgress == null ? <p className="td-subtitle">Carregando biblioteca…</p> : null}
       {error ? <p className="td-error">{error}</p> : null}
       {!loading && filtered.length === 0 ? (
         <p className="td-subtitle">Nenhum arquivo na playlist. Envie o primeiro acima.</p>

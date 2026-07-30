@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
+from typing import BinaryIO
 
 from tv_app.application.services.tv_dashboard_content_service import (
     media_setting_int,
     media_setting_mime_ext,
 )
 from tv_app.config import settings
+
+_STREAM_CHUNK_SIZE = 1024 * 1024
 
 
 class MediaValidationError(ValueError):
@@ -26,7 +30,7 @@ class MediaStorageService:
 
     def _max_bytes(self, media_kind: str) -> int:
         if media_kind == "video":
-            return media_setting_int("maxVideoBytes", 100 * 1024 * 1024)
+            return media_setting_int("maxVideoBytes", 200 * 1024 * 1024)
         if media_kind == "font":
             return media_setting_int("maxFontBytes", 5 * 1024 * 1024)
         return media_setting_int("maxImageBytes", 10 * 1024 * 1024)
@@ -41,19 +45,29 @@ class MediaStorageService:
             return "font"
         return None
 
-    def validate(self, *, content: bytes, mime_type: str | None) -> tuple[str, str]:
+    def resolve_path(self, stored_name: str) -> Path | None:
+        target = self.base_dir / stored_name
+        if not target.is_file():
+            return None
+        return target
+
+    def validate_kind_and_mime(self, mime_type: str | None) -> tuple[str, str]:
         kind = self.detect_kind(mime_type)
         if not kind:
             raise MediaValidationError(
                 "Formato não suportado. Envie JPG, PNG, WEBP, GIF, MP4, WEBM, WOFF2, TTF ou OTF."
             )
+        normalized = (mime_type or "").split(";", 1)[0].strip().lower()
+        return kind, normalized
+
+    def validate(self, *, content: bytes, mime_type: str | None) -> tuple[str, str]:
+        kind, normalized = self.validate_kind_and_mime(mime_type)
         if not content:
             raise MediaValidationError("Arquivo vazio.")
         max_bytes = self._max_bytes(kind)
         if len(content) > max_bytes:
             limit_mb = max(1, max_bytes // (1024 * 1024))
             raise MediaValidationError(f"Arquivo acima do limite de {limit_mb} MB.")
-        normalized = (mime_type or "").split(";", 1)[0].strip().lower()
         return kind, normalized
 
     def save(self, *, content: bytes, mime_type: str | None) -> tuple[str, str, str]:
@@ -64,11 +78,59 @@ class MediaStorageService:
         (self.base_dir / stored_name).write_bytes(content)
         return stored_name, normalized, kind
 
+    async def save_stream(
+        self,
+        *,
+        chunks: AsyncIterator[bytes],
+        mime_type: str | None,
+        expected_size: int | None = None,
+    ) -> tuple[str, str, str, int]:
+        """
+        Grava em temp no volume, valida tamanho enquanto copia e faz rename atômico.
+        Retorna (stored_name, mime, kind, size_bytes).
+        """
+        kind, normalized = self.validate_kind_and_mime(mime_type)
+        max_bytes = self._max_bytes(kind)
+        if expected_size is not None and expected_size > max_bytes:
+            limit_mb = max(1, max_bytes // (1024 * 1024))
+            raise MediaValidationError(f"Arquivo acima do limite de {limit_mb} MB.")
+
+        ext = self._mime_map(kind)[normalized]
+        self._ensure_dir()
+        stored_name = f"{uuid.uuid4().hex}{ext}"
+        final_path = self.base_dir / stored_name
+        temp_path = self.base_dir / f".{stored_name}.part"
+        size = 0
+        try:
+            with temp_path.open("wb") as out:
+                async for chunk in chunks:
+                    if not chunk:
+                        continue
+                    size += len(chunk)
+                    if size > max_bytes:
+                        limit_mb = max(1, max_bytes // (1024 * 1024))
+                        raise MediaValidationError(f"Arquivo acima do limite de {limit_mb} MB.")
+                    out.write(chunk)
+            if size == 0:
+                raise MediaValidationError("Arquivo vazio.")
+            temp_path.replace(final_path)
+        except Exception:
+            if temp_path.exists():
+                temp_path.unlink(missing_ok=True)
+            raise
+        return stored_name, normalized, kind, size
+
     def read(self, stored_name: str) -> bytes | None:
-        target = self.base_dir / stored_name
-        if not target.is_file():
+        target = self.resolve_path(stored_name)
+        if target is None:
             return None
         return target.read_bytes()
+
+    def open_for_read(self, stored_name: str) -> BinaryIO | None:
+        target = self.resolve_path(stored_name)
+        if target is None:
+            return None
+        return target.open("rb")
 
     def delete(self, stored_name: str | None) -> None:
         if not stored_name:
@@ -76,3 +138,22 @@ class MediaStorageService:
         target = self.base_dir / stored_name
         if target.is_file():
             target.unlink()
+
+
+def iter_file_range(
+    path: Path,
+    *,
+    start: int,
+    end: int,
+    chunk_size: int = _STREAM_CHUNK_SIZE,
+) -> Iterator[bytes]:
+    """Lê bytes inclusivos [start, end] do arquivo em chunks."""
+    remaining = end - start + 1
+    with path.open("rb") as handle:
+        handle.seek(start)
+        while remaining > 0:
+            chunk = handle.read(min(chunk_size, remaining))
+            if not chunk:
+                break
+            remaining -= len(chunk)
+            yield chunk

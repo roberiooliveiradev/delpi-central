@@ -19,4 +19,10 @@ describe("resolveHttpErrorMessage", () => {
     expect(resolveHttpErrorMessage(null, 502)).toBe("Erro HTTP 502");
     expect(resolveHttpErrorMessage(null, 401)).toBe("Não autorizado. Faça login novamente.");
   });
+
+  it("413 explica limite de upload de vídeo", () => {
+    expect(resolveHttpErrorMessage(null, 413)).toBe(
+      "Arquivo grande demais para o servidor (limite 200 MB).",
+    );
+  });
 });

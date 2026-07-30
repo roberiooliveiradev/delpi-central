@@ -3,7 +3,6 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
-from fastapi.responses import Response
 
 from tv_app.application.services.media_storage_service import MediaStorageService
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
@@ -12,6 +11,7 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
+from tv_app.interface.http.media_file_response import build_media_file_response
 
 router = APIRouter(prefix="/public", tags=["Public"])
 _present = PresentationPayloadService()
@@ -21,17 +21,17 @@ _storage = MediaStorageService()
 
 
 @router.get("/present/{token}/media/{asset_id}")
-def public_media(token: str, asset_id: UUID):
+def public_media(token: str, asset_id: UUID, request: Request):
     asset = _media_repo.get_for_token(token, asset_id)
     if not asset:
         return fail(message("mediaNotFound"), 404)
-    data = _storage.read(asset["storedName"])
-    if data is None:
+    path = _storage.resolve_path(asset["storedName"])
+    if path is None:
         return fail(message("mediaNotFound"), 404)
-    return Response(
-        content=data,
-        media_type=asset["mimeType"],
-        headers={"Cache-Control": "public, max-age=86400"},
+    return build_media_file_response(
+        path=path,
+        mime_type=asset["mimeType"],
+        range_header=request.headers.get("range"),
     )
 
 

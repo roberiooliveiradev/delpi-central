@@ -73,7 +73,7 @@
   },
   "mediaUpload": {
     "maxImageBytes": 10485760,
-    "maxVideoBytes": 104857600,
+    "maxVideoBytes": 209715200,
     "maxFontBytes": 5242880,
     "imageMimeExtensions": {
       "image/jpeg": ".jpg",

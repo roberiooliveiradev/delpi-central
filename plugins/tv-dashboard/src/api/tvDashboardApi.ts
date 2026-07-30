@@ -287,11 +287,19 @@ export function publicPresentMediaUrl(publicToken: string, assetId: string) {
   return `${API_BASE}/public/present/${encodeURIComponent(publicToken)}/media/${assetId}`;
 }
 
-export async function uploadPlaylistMedia(playlistId: string, file: File) {
+export async function uploadPlaylistMedia(
+  playlistId: string,
+  file: File,
+  options?: { signal?: AbortSignal; onProgress?: (ratio: number) => void },
+) {
   const form = new FormData();
   form.append("file", file);
   return unwrap(
-    httpPostForm<ApiEnvelope<MediaAsset>>(`${API_BASE}/playlists/${playlistId}/media`, form),
+    httpPostForm<ApiEnvelope<MediaAsset>>(
+      `${API_BASE}/playlists/${playlistId}/media`,
+      form,
+      options,
+    ),
   );
 }
 

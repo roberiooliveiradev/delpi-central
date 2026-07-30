@@ -59,6 +59,10 @@ vi.mock("./comunicadoEditorContext", () => ({
     applySelectedNamedTextStyle: vi.fn(),
     uploadCustomFont: vi.fn(),
     uploading: false,
+    uploadProgress: null,
+    uploadStatusMessage: null,
+    clearUploadStatusMessage: vi.fn(),
+    insertDroppedMediaFiles: vi.fn(),
     background: "#ffffff",
   }),
 }));

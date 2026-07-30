@@ -53,6 +53,33 @@ export function placeFrameInViewportCenter(
   return placeFrameCenteredAt(frame, center);
 }
 
+/** Converte ponto client (viewport) em % do slide. */
+export function clientPointToCanvasPercent(
+  canvas: HTMLElement | null | undefined,
+  clientX: number,
+  clientY: number,
+): { x: number; y: number } | null {
+  if (!canvas) return null;
+  const canvasRect = canvas.getBoundingClientRect();
+  if (!(canvasRect.width > 0) || !(canvasRect.height > 0)) return null;
+  return {
+    x: ((clientX - canvasRect.left) / canvasRect.width) * 100,
+    y: ((clientY - canvasRect.top) / canvasRect.height) * 100,
+  };
+}
+
+/** Reposiciona o bloco para que o centro coincida com o ponto client no slide. */
+export function placeBlockAtClientPoint<T extends { frame: ComunicadoFrame }>(
+  block: T,
+  canvas: HTMLElement | null | undefined,
+  clientX: number,
+  clientY: number,
+): T {
+  const center = clientPointToCanvasPercent(canvas, clientX, clientY);
+  if (!center) return block;
+  return { ...block, frame: placeFrameCenteredAt(block.frame, center) };
+}
+
 /** Reposiciona o frame do bloco no centro da viewport do editor. */
 export function placeBlockInViewportCenter<T extends { frame: ComunicadoFrame }>(
   block: T,

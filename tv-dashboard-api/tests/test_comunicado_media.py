@@ -18,6 +18,58 @@ def test_media_storage_accepts_png():
         assert storage.read(stored) == b"\x89PNG"
 
 
+def test_media_storage_save_stream_video_and_rejects_oversize(monkeypatch):
+    import asyncio
+
+    async def chunks_of(data: bytes, size: int = 4):
+        for i in range(0, len(data), size):
+            yield data[i : i + size]
+
+    async def run() -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            storage = MediaStorageService(base_dir=tmp)
+            monkeypatch.setattr(storage, "_max_bytes", lambda kind: 10 if kind == "video" else 10)
+            stored, mime, kind, size = await storage.save_stream(
+                chunks=chunks_of(b"0123456789"),
+                mime_type="video/mp4",
+            )
+            assert kind == "video"
+            assert mime == "video/mp4"
+            assert size == 10
+            assert storage.read(stored) == b"0123456789"
+            assert not list(Path(tmp).glob("*.part"))
+
+            with pytest.raises(MediaValidationError, match="limite"):
+                await storage.save_stream(
+                    chunks=chunks_of(b"0123456789X"),
+                    mime_type="video/mp4",
+                )
+            assert not list(Path(tmp).glob("*.part"))
+
+    asyncio.run(run())
+
+
+def test_build_media_file_response_range():
+    from tv_app.interface.http.media_file_response import build_media_file_response
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "clip.bin"
+        path.write_bytes(b"ABCDEFGHIJ")
+        full = build_media_file_response(path=path, mime_type="video/mp4")
+        assert full.status_code == 200
+        assert full.headers["accept-ranges"] == "bytes"
+        assert full.headers["content-length"] == "10"
+
+        partial = build_media_file_response(
+            path=path,
+            mime_type="video/mp4",
+            range_header="bytes=2-5",
+        )
+        assert partial.status_code == 206
+        assert partial.headers["content-range"] == "bytes 2-5/10"
+        assert partial.headers["content-length"] == "4"
+
+
 def test_media_storage_accepts_woff2_font():
     with tempfile.TemporaryDirectory() as tmp:
         storage = MediaStorageService(base_dir=tmp)
