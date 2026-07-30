@@ -25,6 +25,9 @@ describe("portal CSS contract", () => {
       const source = readFileSync(join(base, relative), "utf8");
       expect(source, relative).toMatch(/portalScopeClassName/);
       expect(source, relative).toMatch(/TV_DASHBOARD_ROOT_CLASS/);
+      expect(source, relative).toMatch(
+        /import\s*\{[^}]*TV_DASHBOARD_ROOT_CLASS[^}]*\}\s*from\s*["'][^"']*pluginRootClass["']/,
+      );
     }
   });
 });

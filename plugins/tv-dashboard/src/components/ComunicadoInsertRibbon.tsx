@@ -32,6 +32,7 @@ import {
   type ComunicadoTablePreset,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DECK_INSERT_ACTION_KEYTIPS } from "../utils/deckKeyTips";
