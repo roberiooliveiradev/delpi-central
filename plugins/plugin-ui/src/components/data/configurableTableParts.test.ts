@@ -19,6 +19,7 @@ import {
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
   applyTablePartStyleToParts,
+  clearTablePartThemePaint,
   resolveTableBodyCellPaintStyle,
 } from "./configurableTableParts";
 
@@ -203,5 +204,20 @@ describe("configurableTableParts", () => {
     expect(next["headerCell:0"]?.style).toMatchObject({ color: "#f00", fontSize: 22 });
     expect(next["headerCell:2"]?.style).toMatchObject({ color: "#f00", fontSize: 22 });
     expect(next["headerCell:1"]).toBeUndefined();
+  });
+
+  it("clearTablePartThemePaint remove fill/color sem tocar moldura/tipografia", () => {
+    const cleared = clearTablePartThemePaint({
+      frame: { style: { fill: "#111", borderRadius: 4 } },
+      title: { content: "T", style: { color: "#fff", fontSize: 20 } },
+      "cell:0:0": { style: { color: "#eee", fill: "#222", fontWeight: "bold" } },
+    });
+    expect(cleared.frame?.style?.fill).toBe("#111");
+    expect(cleared.title?.content).toBe("T");
+    expect(cleared.title?.style?.fontSize).toBe(20);
+    expect(cleared.title?.style?.color).toBeUndefined();
+    expect(cleared["cell:0:0"]?.style?.fontWeight).toBe("bold");
+    expect(cleared["cell:0:0"]?.style?.color).toBeUndefined();
+    expect(cleared["cell:0:0"]?.style?.fill).toBeUndefined();
   });
 });

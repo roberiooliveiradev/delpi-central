@@ -66,6 +66,7 @@ export {
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
   applyTablePartStyleToParts,
+  clearTablePartThemePaint,
   type TableGridDimensions,
   type TableInteraction,
   type TablePartCapabilities,

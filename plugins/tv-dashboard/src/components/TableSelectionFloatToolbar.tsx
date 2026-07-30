@@ -13,7 +13,7 @@ import {
   applyTableAddElementChoice,
   type TableAddElementChoiceId,
 } from "../content/tableAddElementMenuCatalog";
-import { type TableStyleRecipe } from "../content/tableStyleRecipes";
+import { type TableStyleRecipe, buildTableStyleRecipeApplication } from "../content/tableStyleRecipes";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
 import { TableAddElementMenu } from "./TableAddElementMenu";
 import { TableDataMenu, type TableDataMenuActionId } from "./TableDataMenu";
@@ -54,15 +54,28 @@ export function TableSelectionFloatToolbar({ block }: Props) {
   };
 
   const applyRecipe = (recipe: TableStyleRecipe) => {
-    const next = mergeComunicadoTableOptions(
-      { ...options, ...recipe.options },
-      recipe.preset,
-    );
-    persistOptions(next, recipe.preset);
+    const applied = buildTableStyleRecipeApplication({
+      currentOptions: block.tableOptions,
+      currentParts: block.tableParts,
+      recipe,
+    });
+    updateSelected({
+      tableOptions: applied.tableOptions,
+      tableParts: applied.tableParts,
+      tablePreset: applied.tablePreset,
+    } as Partial<ComunicadoBlock>);
   };
 
   const clearTableStyle = () => {
-    persistOptions(presetDefaultTableOptions("grid"), "grid");
+    const defaults = presetDefaultTableOptions("grid");
+    updateSelected({
+      tableOptions: defaults,
+      tablePreset: "grid",
+      tableParts: mergeTablePartsWithOptions(
+        clearTablePartThemePaint(block.tableParts),
+        defaults,
+      ),
+    } as Partial<ComunicadoBlock>);
   };
 
   const openDataFocus = (actionId: TableDataMenuActionId) => {

@@ -167,13 +167,24 @@
   text-align: right;
 }
 
-.delpi-ui-config-table--banded .delpi-ui-config-table__body .delpi-ui-config-table__row:nth-child(even) .delpi-ui-config-table__cell {
-  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 45%, transparent);
+.delpi-ui-config-table--banded
+  .delpi-ui-config-table__body
+  .delpi-ui-config-table__row:nth-child(even):not(.delpi-ui-config-table__row--total)
+  .delpi-ui-config-table__cell {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 28%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
 }
 
 .delpi-ui-config-table--banded-cols .delpi-ui-config-table__header-cell:nth-child(even),
 .delpi-ui-config-table--banded-cols .delpi-ui-config-table__cell:nth-child(even) {
-  background: color-mix(in srgb, var(--delpi-ui-config-table-header-bg, #f1f5f9) 45%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-config-table-header-bg, #f1f5f9) 28%,
+    var(--delpi-ui-config-table-cell-bg, #ffffff)
+  );
 }
 
 /*
@@ -235,11 +246,9 @@
   border-top: calc(var(--delpi-ui-config-table-border-width, 1px) * 2)
     var(--delpi-ui-config-table-border-style, solid)
     var(--delpi-ui-config-table-border-color, #e2e8f0);
-  background: color-mix(
-    in srgb,
-    var(--delpi-ui-config-table-header-bg, #f1f5f9) 55%,
-    var(--delpi-ui-config-table-cell-bg, #ffffff)
-  );
+  /* Paridade thumb/Excel: rodapé usa o par do cabeçalho (legível). */
+  background: var(--delpi-ui-config-table-header-bg, #f1f5f9);
+  color: var(--delpi-ui-config-table-header-color, #0f172a);
 }
 
 .delpi-ui-config-table--first-column .delpi-ui-config-table__row--total .delpi-ui-config-table__cell:first-child {

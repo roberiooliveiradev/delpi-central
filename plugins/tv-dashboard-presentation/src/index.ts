@@ -936,6 +936,7 @@ export {
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
   applyTablePartStyleToParts,
+  clearTablePartThemePaint,
   type TableGridDimensions,
   type ComunicadoTableInteraction,
   type ComunicadoTablePartPaintStyle,

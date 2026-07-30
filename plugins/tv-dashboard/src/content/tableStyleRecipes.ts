@@ -1,5 +1,15 @@
-import type { ComunicadoTableOptions, ComunicadoTablePreset } from "@delpi/tv-dashboard-presentation";
 import type { TableStylePreset } from "@delpi/plugin-ui/index";
+import { resolveAutomaticTextColor } from "@delpi/plugin-ui/index";
+import type {
+  ComunicadoTableOptions,
+  ComunicadoTablePartsMap,
+  ComunicadoTablePreset,
+} from "@delpi/tv-dashboard-presentation";
+import {
+  clearTablePartThemePaint,
+  mergeComunicadoTableOptions,
+  mergeTablePartsWithOptions,
+} from "@delpi/tv-dashboard-presentation";
 
 /** Receita visual Delpi para galeria «Estilos de tabela» (não é matriz Office). */
 export type TableStyleRecipe = {
@@ -21,8 +31,83 @@ const DELPI_THEME = {
   ink: "#0f172a",
 } as const;
 
+const INK = DELPI_THEME.ink;
+const ON_DARK = "#f8fafc";
+
+/** Fundo transparente (minimal) — contraste como sobre branco. */
+function contrastBg(background: string | undefined, fallback: string): string {
+  const value = (background ?? fallback).trim().toLowerCase();
+  if (!value || value === "transparent") return fallback;
+  return background ?? fallback;
+}
+
+/**
+ * Garante header/célula com pares fundo+texto legíveis.
+ * Sempre define as quatro chaves para a troca de estilo sobrescrever tema anterior.
+ */
+export function normalizeTableStyleRecipeOptions(
+  options: Partial<ComunicadoTableOptions>,
+): Partial<ComunicadoTableOptions> {
+  const headerBg = options.headerBg ?? "#e2e8f0";
+  const cellBg = options.cellBg ?? "#ffffff";
+  const headerTextColor =
+    options.headerTextColor ??
+    resolveAutomaticTextColor(contrastBg(headerBg, "#ffffff"));
+  const cellTextColor =
+    options.cellTextColor ??
+    resolveAutomaticTextColor(contrastBg(cellBg, "#ffffff"));
+  return {
+    ...options,
+    headerBg,
+    cellBg,
+    headerTextColor,
+    cellTextColor,
+  };
+}
+
+/**
+ * Aplica receita de galeria: cores completas + limpa fill/color órfãos em partes.
+ */
+export function buildTableStyleRecipeApplication(params: {
+  currentOptions?: ComunicadoTableOptions | null;
+  currentParts?: ComunicadoTablePartsMap | null;
+  recipe: TableStyleRecipe;
+}): {
+  tableOptions: ComunicadoTableOptions;
+  tableParts: ComunicadoTablePartsMap;
+  tablePreset: ComunicadoTablePreset;
+} {
+  const theme = normalizeTableStyleRecipeOptions(params.recipe.options);
+  const tableOptions = mergeComunicadoTableOptions(
+    {
+      ...(params.currentOptions ?? {}),
+      ...theme,
+    },
+    params.recipe.preset,
+  );
+  /* Força o tema da receita (merge com preset não pode reintroduzir texto antigo). */
+  tableOptions.headerBg = theme.headerBg;
+  tableOptions.cellBg = theme.cellBg;
+  tableOptions.headerTextColor = theme.headerTextColor;
+  tableOptions.cellTextColor = theme.cellTextColor;
+  if (theme.showBorders != null) tableOptions.showBorders = theme.showBorders;
+  if (theme.zebraStripe != null) tableOptions.zebraStripe = theme.zebraStripe;
+  if (theme.borderColor != null) tableOptions.borderColor = theme.borderColor;
+
+  const tableParts = mergeTablePartsWithOptions(
+    clearTablePartThemePaint(params.currentParts),
+    tableOptions,
+  );
+  return {
+    tableOptions,
+    tableParts,
+    tablePreset: params.recipe.preset,
+  };
+}
+
 /**
  * Galeria compacta Claros / Médios / Escuros — thumbs mapeiam a tablePreset + options.
+ * Toda receita declara cellTextColor + headerTextColor (legibilidade na troca).
  */
 export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
   {
@@ -34,9 +119,9 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       showBorders: true,
       zebraStripe: false,
       headerBg: "#e2e8f0",
-      headerTextColor: DELPI_THEME.ink,
+      headerTextColor: INK,
       cellBg: "#ffffff",
-      cellTextColor: DELPI_THEME.ink,
+      cellTextColor: INK,
       borderColor: "#cbd5e1",
     },
   },
@@ -51,6 +136,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: "#dbeafe",
       headerTextColor: DELPI_THEME.navy,
       cellBg: "#ffffff",
+      cellTextColor: INK,
       borderColor: "#bfdbfe",
     },
   },
@@ -63,8 +149,9 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       showBorders: false,
       zebraStripe: false,
       headerBg: "transparent",
-      headerTextColor: DELPI_THEME.ink,
+      headerTextColor: INK,
       cellBg: "transparent",
+      cellTextColor: INK,
     },
   },
   {
@@ -78,6 +165,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: DELPI_THEME.blue,
       headerTextColor: "#ffffff",
       cellBg: "#ffffff",
+      cellTextColor: INK,
       borderColor: "#e2e8f0",
     },
   },
@@ -92,6 +180,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: DELPI_THEME.teal,
       headerTextColor: "#ffffff",
       cellBg: "#f8fafc",
+      cellTextColor: INK,
       borderColor: "#ccfbf1",
     },
   },
@@ -106,6 +195,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: DELPI_THEME.orange,
       headerTextColor: "#ffffff",
       cellBg: "#fffbeb",
+      cellTextColor: INK,
       borderColor: "#fde68a",
     },
   },
@@ -120,6 +210,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: DELPI_THEME.navy,
       headerTextColor: "#ffffff",
       cellBg: "#ffffff",
+      cellTextColor: INK,
       borderColor: "#94a3b8",
     },
   },
@@ -134,7 +225,7 @@ export const TABLE_STYLE_RECIPES: TableStyleRecipe[] = [
       headerBg: DELPI_THEME.ink,
       headerTextColor: "#ffffff",
       cellBg: "#1e293b",
-      cellTextColor: "#f8fafc",
+      cellTextColor: ON_DARK,
       borderColor: "#334155",
     },
   },
@@ -180,14 +271,17 @@ export function tableStyleRecipesByCategory(
 export function tableStyleRecipesAsPresets(
   recipes: readonly TableStyleRecipe[] = TABLE_STYLE_RECIPES,
 ): TableStylePreset[] {
-  return recipes.map((recipe) => ({
-    id: recipe.id,
-    label: recipe.label,
-    category: recipe.category,
-    headerBg: recipe.options.headerBg ?? "#e2e8f0",
-    cellBg: recipe.options.cellBg ?? "#ffffff",
-    borderColor: recipe.options.borderColor ?? "#cbd5e1",
-  }));
+  return recipes.map((recipe) => {
+    const theme = normalizeTableStyleRecipeOptions(recipe.options);
+    return {
+      id: recipe.id,
+      label: recipe.label,
+      category: recipe.category,
+      headerBg: theme.headerBg ?? "#e2e8f0",
+      cellBg: theme.cellBg ?? "#ffffff",
+      borderColor: recipe.options.borderColor ?? "#cbd5e1",
+    };
+  });
 }
 
 export function findTableStyleRecipe(id: string): TableStyleRecipe | undefined {

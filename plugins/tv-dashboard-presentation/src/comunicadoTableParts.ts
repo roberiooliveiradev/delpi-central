@@ -30,6 +30,7 @@ export {
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
   applyTablePartStyleToParts,
+  clearTablePartThemePaint,
   type TableGridDimensions,
   type TableInteraction as ComunicadoTableInteraction,
   type TablePartCapabilities as ComunicadoTablePartCapabilities,

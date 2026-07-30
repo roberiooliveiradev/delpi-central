@@ -267,6 +267,27 @@ export function applyTablePartStyleToParts(
   return next;
 }
 
+/**
+ * Remove fill/color de partes de conteúdo ao aplicar receita de estilo —
+ * evita texto branco órfão de tema escuro em fundo claro (e o inverso).
+ * Mantém moldura, tipografia pontual e conteúdo (título).
+ */
+export function clearTablePartThemePaint(
+  parts: TablePartsMap | null | undefined,
+): TablePartsMap {
+  const next: TablePartsMap = { ...(parts ?? {}) };
+  for (const [key, state] of Object.entries(next)) {
+    if (!state?.style) continue;
+    if (key === "frame") continue;
+    const { fill: _fill, color: _color, ...restStyle } = state.style;
+    next[key] = {
+      ...state,
+      style: Object.keys(restStyle).length > 0 ? restStyle : undefined,
+    };
+  }
+  return next;
+}
+
 export function tablePartDomProps(ref: TablePartRef, selectedPart?: TablePartRef | null) {
   const selected = isTablePartRefEqual(ref, selectedPart);
   return {

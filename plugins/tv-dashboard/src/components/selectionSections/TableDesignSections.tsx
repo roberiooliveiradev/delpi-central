@@ -43,6 +43,7 @@ import {
 import {
   findTableStyleRecipe,
   resolveActiveTableStyleRecipeId,
+  buildTableStyleRecipeApplication,
   tableStyleRecipesAsPresets,
   type TableStyleRecipe,
 } from "../../content/tableStyleRecipes";
@@ -121,7 +122,16 @@ function useTableDesignControls() {
   };
 
   const applyRecipe = (recipe: TableStyleRecipe) => {
-    applyOptions(recipe.options, recipe.preset);
+    const applied = buildTableStyleRecipeApplication({
+      currentOptions: block.tableOptions,
+      currentParts: block.tableParts,
+      recipe,
+    });
+    updateSelected({
+      tableOptions: applied.tableOptions,
+      tableParts: applied.tableParts,
+      tablePreset: applied.tablePreset,
+    } as Partial<ComunicadoBlock>);
   };
 
   const applyGalleryPreset = (preset: TableStylePreset) => {
@@ -130,7 +140,15 @@ function useTableDesignControls() {
   };
 
   const clearTableStyle = () => {
-    applyOptions(presetDefaultTableOptions("grid"), "grid");
+    const defaults = presetDefaultTableOptions("grid");
+    updateSelected({
+      tableOptions: defaults,
+      tablePreset: "grid",
+      tableParts: mergeTablePartsWithOptions(
+        clearTablePartThemePaint(block.tableParts),
+        defaults,
+      ),
+    } as Partial<ComunicadoBlock>);
   };
 
   const applyAddElementChoice = (choiceId: TableAddElementChoiceId) => {

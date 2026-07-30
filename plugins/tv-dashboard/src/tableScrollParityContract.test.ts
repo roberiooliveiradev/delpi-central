@@ -64,10 +64,14 @@ describe("table scroll parity contract (editor ↔ TV)", () => {
     const kitTotal = ruleBody(kitCss, ".delpi-ui-config-table__row--total .delpi-ui-config-table__cell");
     expect(kitTotal).toMatch(/position:\s*sticky/);
     expect(kitTotal).toMatch(/bottom:\s*0/);
+    expect(kitTotal).toMatch(/--delpi-ui-config-table-header-bg/);
+    expect(kitTotal).toMatch(/--delpi-ui-config-table-header-color/);
 
     const tvTotal = ruleBody(presentationCss, ".tdp-table-row--total .tdp-table-cell");
     expect(tvTotal).toMatch(/position:\s*sticky/);
     expect(tvTotal).toMatch(/bottom:\s*0/);
+    expect(tvTotal).toMatch(/--tdp-table-header-bg/);
+    expect(tvTotal).toMatch(/--tdp-table-header-color/);
 
     expect(kitCss).toMatch(
       /\.delpi-ui-config-table--first-column[\s\S]*?position:\s*sticky;[\s\S]*?left:\s*0/,
