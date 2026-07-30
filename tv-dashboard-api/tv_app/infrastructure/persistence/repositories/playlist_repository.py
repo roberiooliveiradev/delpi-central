@@ -858,6 +858,12 @@ class PlaylistRepository:
             else:
                 fields.append("transition_style = %s")
                 values.append(payload["transitionStyle"])
+        if "durationSec" in payload:
+            if payload["durationSec"] is None:
+                fields.append("duration_sec = NULL")
+            else:
+                fields.append("duration_sec = %s")
+                values.append(payload["durationSec"])
         if "sectionId" in payload:
             if payload["sectionId"] is None:
                 fields.append("section_id = NULL")
@@ -866,7 +872,6 @@ class PlaylistRepository:
                 values.append(str(payload["sectionId"]))
         mapping = {
             "sort_order": payload.get("sortOrder"),
-            "duration_sec": payload.get("durationSec"),
             "title": payload.get("title"),
             "native_config": json.dumps(payload["nativeConfig"]) if "nativeConfig" in payload else None,
             "external_url": payload.get("externalUrl"),

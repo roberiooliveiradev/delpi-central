@@ -111,7 +111,7 @@ type DeckSettingsProps = {
     slide: Slide,
     payload: {
       title: string;
-      durationSec: number;
+      durationSec: number | null;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
       transitionStyle?: string | null;
@@ -660,7 +660,7 @@ export function PlaylistEditorPage({
         const draftVersion = draft.version;
         void updateSlide(playlistId, slide.id, {
           title: slide.title,
-          durationSec: slide.durationSec ?? merged.defaultDurationSec ?? 30,
+          durationSec: slide.durationSec ?? null,
           nativeConfig: draft.nativeConfig,
         })
           .then(() => {
@@ -1289,7 +1289,7 @@ export function PlaylistEditorPage({
     slide: Slide,
     payload: {
       title: string;
-      durationSec: number;
+      durationSec: number | null;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string | null;
       transitionStyle?: string | null;
@@ -1389,7 +1389,7 @@ export function PlaylistEditorPage({
           captured.slide.id,
           {
             title: captured.slide.title,
-            durationSec: captured.slide.durationSec ?? pl.defaultDurationSec ?? 30,
+            durationSec: captured.slide.durationSec ?? null,
             nativeConfig: captured.nativeConfig,
           },
           { keepalive: options?.keepalive },
@@ -1511,7 +1511,7 @@ export function PlaylistEditorPage({
         slide,
         {
           title: slide.title,
-          durationSec: slide.durationSec ?? playlistRef.current?.defaultDurationSec ?? 30,
+          durationSec: slide.durationSec ?? null,
           nativeConfig,
         },
         { autosaveVersion: version },
@@ -1758,6 +1758,7 @@ export function PlaylistEditorPage({
   const chromeProps = {
     playlist,
     slide: selectedSlide,
+    sections,
     catalog,
     branchScope,
     isCustomSlide,
@@ -1788,6 +1789,8 @@ export function PlaylistEditorPage({
     canPasteSlide,
     viewportProfile: playlist.viewportProfile,
     masterConfig: playlist.masterConfig,
+    defaultDurationSec: playlist.defaultDurationSec,
+    defaultTransitionStyle: playlist.transitionStyle,
     publicToken: playlist.publicToken,
     onSelect: handleFilmstripSelect,
     onLongPressSelect: handleFilmstripLongPress,

@@ -7075,6 +7075,43 @@ body.td-composer--marqueeing *{
   background: color-mix(in srgb, #f79009 16%, transparent);
   color: #b54708;
 }
+.dashboard-tv-dashboard .td-deck-filmstrip__timing{
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--td-text) 8%, transparent);
+  color: var(--td-muted, #64748b);
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__timing--override{
+  background: color-mix(in srgb, var(--td-accent, #3b82f6) 18%, transparent);
+  color: color-mix(in srgb, var(--td-accent, #3b82f6) 80%, #0f172a);
+}
+.dashboard-tv-dashboard .td-deck-slide-timing{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+.dashboard-tv-dashboard .td-deck-slide-timing__inherited{
+  margin: 0;
+  font-size: 12px;
+  color: var(--td-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.dashboard-tv-dashboard .td-deck-slide-timing__badge{
+  font-size: 10px;
+  font-weight: 650;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--td-text) 8%, transparent);
+  color: var(--td-muted, #64748b);
+}
 .dashboard-tv-dashboard .td-deck-filmstrip .td-slide-thumb{
   width: 100%;
   /* Proporção via style inline (viewportProfile); altura mínima para CenteredScaledPreview. */

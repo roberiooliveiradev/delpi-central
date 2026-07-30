@@ -49,6 +49,7 @@ type SlideDeckProps = {
 type Props = {
   playlist: Playlist;
   slide: Slide | null;
+  sections?: Playlist["sections"];
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
   isCustomSlide: boolean;
@@ -60,7 +61,7 @@ type Props = {
     slide: Slide,
     payload: {
       title: string;
-      durationSec: number;
+      durationSec: number | null;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
       transitionStyle?: string | null;
@@ -110,6 +111,7 @@ function ribbonDensityFor(_tab: DeckRibbonTabId): "band" | "fit" {
 export function DeckEditorChrome({
   playlist,
   slide,
+  sections,
   catalog,
   branchScope,
   isCustomSlide,
@@ -315,6 +317,7 @@ export function DeckEditorChrome({
                     activeTab={activeTab}
                     playlist={playlist}
                     slide={slide}
+                    sections={sections}
                     catalog={catalog}
                     branchScope={branchScope}
                     slideTabExtra={slideTabExtra}

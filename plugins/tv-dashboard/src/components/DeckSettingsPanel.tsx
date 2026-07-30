@@ -3,6 +3,7 @@ import { NativeCheckboxControl, ToolbarSelectField } from "@delpi/plugin-ui/inde
 import {
   ArrowLeftRight,
   Building2,
+  Clock,
   Copy,
   Globe,
   LayoutTemplate,
@@ -16,11 +17,16 @@ import type {
   NativeScreenCatalogItem,
   Playlist,
   PlaylistMasterConfig,
+  PlaylistSection,
   Slide,
 } from "../api/tvDashboardApi";
 import { adminMediaUrl, uploadPlaylistMedia } from "../api/tvDashboardApi";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  resolveSlideDurationSec,
+  slideDurationIsOverride,
+} from "../utils/slideTimingInheritance";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 import { BranchField } from "./BranchField";
 import type { DeckRibbonTabId } from "./deck/deckRibbonTabMeta";
@@ -36,6 +42,7 @@ type Props = {
   activeTab: Extract<DeckRibbonTabId, "slide" | "playlist">;
   playlist: Playlist;
   slide: Slide | null;
+  sections?: PlaylistSection[];
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
   slideTabExtra?: ReactNode;
@@ -44,7 +51,7 @@ type Props = {
     slide: Slide,
     payload: {
       title: string;
-      durationSec: number;
+      durationSec: number | null;
       nativeConfig?: Record<string, unknown>;
       externalUrl?: string;
       transitionStyle?: string | null;
@@ -66,7 +73,7 @@ const TRANSITION_OPTIONS = [
 ];
 
 const SLIDE_TRANSITION_OPTIONS = [
-  { value: "", label: "Herdar da programação" },
+  { value: "", label: "Herdar (seção / programação)" },
   ...TRANSITION_OPTIONS,
 ];
 
@@ -86,6 +93,7 @@ export function DeckSettingsPanel({
   activeTab,
   playlist,
   slide,
+  sections = [],
   catalog,
   branchScope,
   slideTabExtra,
@@ -94,6 +102,7 @@ export function DeckSettingsPanel({
 }: Props) {
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState(playlist.defaultDurationSec);
+  const [durationInherit, setDurationInherit] = useState(true);
   const [transitionStyle, setTransitionStyle] = useState("");
   const [externalUrl, setExternalUrl] = useState("");
   const [branch, setBranch] = useState("");
@@ -103,16 +112,36 @@ export function DeckSettingsPanel({
   const logoInputRef = useRef<HTMLInputElement>(null);
   const bgInputRef = useRef<HTMLInputElement>(null);
 
+  const slideSection = slide?.sectionId
+    ? sections.find((section) => section.id === slide.sectionId)
+    : undefined;
+  const inheritedDuration = resolveSlideDurationSec({
+    slideDuration: null,
+    sectionDefault: slideSection?.defaultDurationSec,
+    playlistDefault: playlist.defaultDurationSec,
+  });
+  const effectiveDuration = durationInherit ? inheritedDuration : durationSec;
+
   useEffect(() => {
     if (!slide) return;
     setTitle(slide.title);
-    setDurationSec(slide.durationSec ?? playlist.defaultDurationSec);
+    const inherit = !slideDurationIsOverride(slide.durationSec);
+    setDurationInherit(inherit);
+    setDurationSec(
+      resolveSlideDurationSec({
+        slideDuration: slide.durationSec,
+        sectionDefault: slide.sectionId
+          ? sections.find((section) => section.id === slide.sectionId)?.defaultDurationSec
+          : null,
+        playlistDefault: playlist.defaultDurationSec,
+      }),
+    );
     setTransitionStyle(slide.transitionStyle ?? "");
     setExternalUrl(slide.externalUrl ?? "");
     const cfg = slide.nativeConfig ?? {};
     setBranch(String(cfg.branch ?? ""));
     setPeriodDays(Number(cfg.periodDays ?? 30));
-  }, [slide, playlist.defaultDurationSec]);
+  }, [slide, playlist.defaultDurationSec, sections]);
 
   const catalogItem = slide?.nativeScreenKey
     ? catalog.find((item) => item.key === slide.nativeScreenKey)
@@ -161,7 +190,8 @@ export function DeckSettingsPanel({
   function saveSlidePatch(
     patch: Partial<{
       title: string;
-      durationSec: number;
+      durationSec: number | null;
+      durationInherit: boolean;
       externalUrl: string;
       branch: string;
       periodDays: number;
@@ -170,7 +200,13 @@ export function DeckSettingsPanel({
   ) {
     if (!slide) return;
     const nextTitle = patch.title ?? title;
-    const nextDuration = patch.durationSec ?? durationSec;
+    const nextInherit = patch.durationInherit ?? durationInherit;
+    const nextDurationValue = patch.durationSec !== undefined ? patch.durationSec : durationSec;
+    const durationPayload: number | null = nextInherit
+      ? null
+      : typeof nextDurationValue === "number"
+        ? nextDurationValue
+        : effectiveDuration;
     const nextBranch = patch.branch ?? branch;
     const nextPeriod = patch.periodDays ?? periodDays;
     const nextTransition = patch.transitionStyle ?? transitionStyle;
@@ -179,7 +215,7 @@ export function DeckSettingsPanel({
     if (slide.slideType === "external") {
       onSaveSlide(slide, {
         title: nextTitle.trim() || slide.title,
-        durationSec: nextDuration,
+        durationSec: durationPayload,
         externalUrl: (patch.externalUrl ?? externalUrl).trim(),
         transitionStyle: transitionPayload,
       });
@@ -197,7 +233,7 @@ export function DeckSettingsPanel({
     }
     onSaveSlide(slide, {
       title: nextTitle.trim() || slide.title,
-      durationSec: nextDuration,
+      durationSec: durationPayload,
       nativeConfig,
       transitionStyle: transitionPayload,
     });
@@ -221,18 +257,54 @@ export function DeckSettingsPanel({
                 onBlur={() => saveSlidePatch({ title })}
               />
             </DeckIconField>
-            <DeckRangeField
+            <DeckIconField
               id="td-slide-duration"
+              icon={Clock}
               label="Duração (s)"
               hint={F.slideDuration}
-              min={5}
-              max={600}
-              value={durationSec}
-              onChange={(value) => {
-                setDurationSec(value);
-                saveSlidePatch({ durationSec: value });
-              }}
-            />
+              className="td-deck-icon-field--medium"
+            >
+              <div className="td-deck-slide-timing">
+                <NativeCheckboxControl
+                  id="td-slide-duration-inherit"
+                  checked={durationInherit}
+                  label="Herdar duração"
+                  onChange={(checked) => {
+                    setDurationInherit(checked);
+                    if (checked) {
+                      setDurationSec(effectiveDuration);
+                      saveSlidePatch({ durationInherit: true, durationSec: null });
+                      return;
+                    }
+                    setDurationSec(effectiveDuration);
+                    saveSlidePatch({
+                      durationInherit: false,
+                      durationSec: effectiveDuration,
+                    });
+                  }}
+                />
+                {durationInherit ? (
+                  <p className="td-deck-slide-timing__inherited" aria-live="polite">
+                    Efetivo: <strong>{effectiveDuration}s</strong>
+                    <span className="td-deck-slide-timing__badge">Herdado</span>
+                  </p>
+                ) : (
+                  <DeckRangeField
+                    id="td-slide-duration-range"
+                    label=""
+                    hint={F.slideDuration}
+                    min={5}
+                    max={600}
+                    value={durationSec}
+                    onChange={(value) => {
+                      setDurationSec(value);
+                      setDurationInherit(false);
+                      saveSlidePatch({ durationInherit: false, durationSec: value });
+                    }}
+                  />
+                )}
+              </div>
+            </DeckIconField>
             <DeckIconField
               id="td-slide-transition"
               icon={ArrowLeftRight}
@@ -250,8 +322,7 @@ export function DeckSettingsPanel({
                 }}
                 options={SLIDE_TRANSITION_OPTIONS}
               />
-            </DeckIconField>
-            {slide.slideType === "external" ? (
+            </DeckIconField>            {slide.slideType === "external" ? (
               <DeckIconField
                 id="td-slide-url"
                 icon={Globe}

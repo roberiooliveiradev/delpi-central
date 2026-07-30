@@ -772,7 +772,7 @@ export async function updateSlide(
   slideId: string,
   body: Partial<{
     title: string;
-    durationSec: number;
+    durationSec: number | null;
     nativeConfig: Record<string, unknown>;
     externalUrl: string;
     isActive: boolean;

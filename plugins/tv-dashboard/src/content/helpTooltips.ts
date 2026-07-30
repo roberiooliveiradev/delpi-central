@@ -259,7 +259,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   fields: {
     slideTitle: "Nome curto para identificar a tela no filmstrip e nos relatórios internos.",
     slideDuration:
-      "Tempo em segundos que a tela permanece visível antes de passar para a próxima. Mínimo 5 s.",
+      "Tempo em segundos nesta tela. Marque «Herdar» para usar o padrão da seção ou da programação (5–600 s).",
     slideUrl: "Endereço HTTPS exibido em tela cheia nesta slide (página externa ou dashboard embutido).",
     slideBranch: "Filtra os dados operacionais desta tela para uma filial. Vazio = consolidado.",
     slidePeriod: "Janela de dias usada nas consultas de KPIs e indicadores desta tela.",
@@ -267,9 +267,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Resolução de referência para o layout. Escolha o perfil mais próximo do monitor da TV.",
     transition: "Efeito visual ao trocar de tela na exibição (fade, deslizar ou corte direto).",
     slideTransition:
-      "Substitui a transição padrão da programação só nesta tela. Deixe em «Herdar» para usar o padrão.",
+      "Substitui a transição padrão só nesta tela. «Herdar» usa a seção (se houver) ou a programação.",
     defaultDuration:
-      "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
+      "Duração padrão da programação: vale para telas que herdam (sem tempo individual).",
     refreshInterval:
       "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
     dataBlockRefreshInterval:

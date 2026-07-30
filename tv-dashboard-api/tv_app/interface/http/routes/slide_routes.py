@@ -36,7 +36,7 @@ _access = PlaylistAccessService()
 class CreateSlideBody(BaseModel):
     slideType: str = Field(pattern="^(native|external)$")
     title: str = Field(min_length=1, max_length=200)
-    durationSec: int | None = Field(default=None, ge=5, le=600)
+    durationSec: int | None = Field(default=None)
     sortOrder: int | None = None
     nativeScreenKey: str | None = None
     nativeConfig: dict | None = None
@@ -44,6 +44,15 @@ class CreateSlideBody(BaseModel):
     externalSandbox: str | None = None
     transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
     sectionId: UUID | None = None
+
+    @field_validator("durationSec")
+    @classmethod
+    def validate_duration_sec(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if value < 5 or value > 600:
+            raise ValueError("Duração deve estar entre 5 e 600 segundos.")
+        return value
 
     @field_validator("externalUrl")
     @classmethod
@@ -66,7 +75,7 @@ class CreateSlideBody(BaseModel):
 
 class UpdateSlideBody(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=200)
-    durationSec: int | None = Field(default=None, ge=5, le=600)
+    durationSec: int | None = Field(default=None)
     sortOrder: int | None = None
     nativeConfig: dict | None = None
     externalUrl: str | None = None
@@ -74,6 +83,15 @@ class UpdateSlideBody(BaseModel):
     isActive: bool | None = None
     transitionStyle: str | None = Field(default=None, pattern="^(fade|slide|none)$")
     sectionId: UUID | None = None
+
+    @field_validator("durationSec")
+    @classmethod
+    def validate_duration_sec(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        if value < 5 or value > 600:
+            raise ValueError("Duração deve estar entre 5 e 600 segundos.")
+        return value
 
     @field_validator("externalUrl")
     @classmethod

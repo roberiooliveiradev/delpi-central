@@ -28,6 +28,12 @@ import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { groupSlidesBySection } from "../utils/groupSlidesBySection";
 import { shouldShowSectionChrome, shouldShowSectionInFilmstrip } from "../utils/sectionChromeVisibility";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
+import {
+  formatSlideTransitionLabel,
+  resolveSlideDurationSec,
+  resolveSlideTransitionStyle,
+  slideDurationIsOverride,
+} from "../utils/slideTimingInheritance";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
 import { SlideFilmstripControls } from "./SlideFilmstripControls";
@@ -49,6 +55,10 @@ type Props = {
   canPasteSlide: boolean;
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
+  /** Duração padrão da playlist (para badge efetivo). */
+  defaultDurationSec?: number;
+  /** Transição padrão da playlist (tooltip). */
+  defaultTransitionStyle?: string | null;
   publicToken?: string | null;
   multiMode?: boolean;
   onSelect: (slideId: string, modifiers?: FilmstripSelectionModifiers) => void;
@@ -95,6 +105,8 @@ export function SlideFilmstrip({
   canPasteSlide,
   viewportProfile = "1080p",
   masterConfig,
+  defaultDurationSec = 30,
+  defaultTransitionStyle = "fade",
   publicToken,
   multiMode = false,
   onSelect,
@@ -323,10 +335,25 @@ export function SlideFilmstrip({
     const isPrimary = slide.id === selectedSlideId;
     const inMulti = selectedIdSet.has(slide.id);
     const renaming = renamingSlideId === slide.id;
-    const sectionMaster = slide.sectionId
-      ? sections.find((section) => section.id === slide.sectionId)?.masterConfig
+    const section = slide.sectionId
+      ? sections.find((item) => item.id === slide.sectionId)
       : undefined;
+    const sectionMaster = section?.masterConfig;
     const effectiveMaster = mergeMasterConfigs(masterConfig, sectionMaster);
+    const durationSec = resolveSlideDurationSec({
+      slideDuration: slide.durationSec,
+      sectionDefault: section?.defaultDurationSec,
+      playlistDefault: defaultDurationSec,
+    });
+    const durationOverride = slideDurationIsOverride(slide.durationSec);
+    const transitionStyle = resolveSlideTransitionStyle({
+      slideTransition: slide.transitionStyle,
+      sectionTransition: section?.transitionStyle,
+      playlistTransition: defaultTransitionStyle,
+    });
+    const timingTitle = `${durationSec}s · ${formatSlideTransitionLabel(transitionStyle)}${
+      durationOverride || slide.transitionStyle ? " (ajuste nesta tela)" : " (herdado)"
+    }`;
     const itemClass = [
       "td-deck-filmstrip__item",
       isPrimary ? "td-deck-filmstrip__item--selected" : "",
@@ -420,6 +447,17 @@ export function SlideFilmstrip({
           {!slide.isActive ? (
             <span className="td-deck-filmstrip__badge">{inactiveLabel}</span>
           ) : null}
+          <span
+            className={[
+              "td-deck-filmstrip__timing",
+              durationOverride ? "td-deck-filmstrip__timing--override" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            title={timingTitle}
+          >
+            {durationSec}s
+          </span>
         </div>
       </div>
     );
