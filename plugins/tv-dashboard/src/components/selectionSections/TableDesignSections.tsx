@@ -234,7 +234,7 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
     H.tableStyleOptions,
     layout,
     <TableStyleOptionsBandOrInline ctrl={ctrl} />,
-    true,
+    false,
     "table-style-options",
   );
 }

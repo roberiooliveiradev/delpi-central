@@ -20,6 +20,10 @@ describe("table ribbon layout contract", () => {
     expect(design).toContain('label="Ajuste"');
     expect(design).not.toContain("DeckRibbonLargeButton");
     expect(design).not.toContain("AnchoredPanelPortal");
+    /* Um tile só — wide forçava min-width ~240px e buraco na band. */
+    expect(design).toMatch(
+      /TableStyleOptionsBandOrInline[\s\S]*?false,\s*"table-style-options"/,
+    );
   });
 
   it("Layout Tamanho usa tile Dimensões + popover, sem frame-grid na band", () => {
