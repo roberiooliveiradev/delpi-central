@@ -43,6 +43,23 @@ describe("ComunicadoPresentationVideo", () => {
     expect(pause).toHaveBeenCalled();
   });
 
+  it("não autoplaya fora do deck de apresentação (miniatura/editor)", async () => {
+    const { play } = mockMediaPlayback();
+
+    const { queryByLabelText, container } = render(
+      <PresentationPlaybackProvider deckPaused={false}>
+        <div className="td-slide-thumb__stage">
+          <ComunicadoPresentationVideo src="/media/clip.mp4" />
+        </div>
+      </PresentationPlaybackProvider>,
+    );
+
+    await waitFor(() => expect(container.querySelector("video")).toBeTruthy());
+    expect(play).not.toHaveBeenCalled();
+    expect(queryByLabelText("Reproduzir vídeo")).toBeNull();
+    expect(queryByLabelText("Pausar vídeo")).toBeNull();
+  });
+
   it("pausa o vídeo quando o deck está pausado", async () => {
     const { play, pause } = mockMediaPlayback();
 

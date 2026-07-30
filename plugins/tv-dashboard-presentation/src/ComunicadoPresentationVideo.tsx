@@ -11,11 +11,12 @@ type Props = {
 };
 
 function isSlideActive(node: HTMLElement | null): boolean {
-  if (!node) return true;
+  if (!node) return false;
   const slide = node.closest(".tdp-slide");
-  if (!slide) return true;
+  // Miniaturas / palco do editor não montam `.tdp-slide` — sem autoplay nem áudio.
+  if (!slide) return false;
   if (slide.getAttribute("aria-hidden") === "true") return false;
-  return slide.classList.contains("tdp-slide--active") || !slide.classList.contains("tdp-slide");
+  return slide.classList.contains("tdp-slide--active");
 }
 
 /**
@@ -26,7 +27,8 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
   const { deckPaused } = usePresentationPlayback();
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [slideActive, setSlideActive] = useState(true);
+  const [slideActive, setSlideActive] = useState(false);
+  const [inPresentationDeck, setInPresentationDeck] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -35,11 +37,13 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    const slide = root.closest(".tdp-slide") ?? root;
+    const slide = root.closest(".tdp-slide");
+    setInPresentationDeck(Boolean(slide));
     const sync = () => setSlideActive(isSlideActive(root));
     sync();
+    const observeTarget = slide ?? root;
     const observer = new MutationObserver(sync);
-    observer.observe(slide, { attributes: true, attributeFilter: ["class", "aria-hidden"] });
+    observer.observe(observeTarget, { attributes: true, attributeFilter: ["class", "aria-hidden"] });
     return () => observer.disconnect();
   }, [src]);
 
@@ -147,41 +151,43 @@ export function ComunicadoPresentationVideo({ src, objectFit = "contain", classN
         preload="auto"
         style={{ objectFit }}
       />
-      <div
-        className={ensureComunicadoDualClass(
-          [
-            "tdp-presentation-video__controls",
-            controlsVisible || !playing
-              ? "tdp-presentation-video__controls--visible"
-              : "tdp-presentation-video__controls--hidden",
-          ].join(" "),
-        )}
-        onPointerDown={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          className={ensureComunicadoDualClass("tdp-presentation-video__btn")}
-          onClick={handlePlayPause}
-          title={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
-          aria-label={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
+      {inPresentationDeck ? (
+        <div
+          className={ensureComunicadoDualClass(
+            [
+              "tdp-presentation-video__controls",
+              controlsVisible || !playing
+                ? "tdp-presentation-video__controls--visible"
+                : "tdp-presentation-video__controls--hidden",
+            ].join(" "),
+          )}
+          onPointerDown={(event) => event.stopPropagation()}
         >
-          {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
-        </button>
-        <button
-          type="button"
-          className={ensureComunicadoDualClass("tdp-presentation-video__btn")}
-          onClick={handleMuteToggle}
-          title={muted ? "Ativar áudio" : "Silenciar"}
-          aria-label={muted ? "Ativar áudio" : "Silenciar"}
-        >
-          {muted ? <VolumeX size={16} aria-hidden /> : <Volume2 size={16} aria-hidden />}
-        </button>
-        {muted ? (
-          <span className={ensureComunicadoDualClass("tdp-presentation-video__hint")}>
-            Toque no alto-falante para ouvir
-          </span>
-        ) : null}
-      </div>
+          <button
+            type="button"
+            className={ensureComunicadoDualClass("tdp-presentation-video__btn")}
+            onClick={handlePlayPause}
+            title={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
+            aria-label={playing ? "Pausar vídeo" : "Reproduzir vídeo"}
+          >
+            {playing ? <Pause size={16} aria-hidden /> : <Play size={16} aria-hidden />}
+          </button>
+          <button
+            type="button"
+            className={ensureComunicadoDualClass("tdp-presentation-video__btn")}
+            onClick={handleMuteToggle}
+            title={muted ? "Ativar áudio" : "Silenciar"}
+            aria-label={muted ? "Ativar áudio" : "Silenciar"}
+          >
+            {muted ? <VolumeX size={16} aria-hidden /> : <Volume2 size={16} aria-hidden />}
+          </button>
+          {muted ? (
+            <span className={ensureComunicadoDualClass("tdp-presentation-video__hint")}>
+              Toque no alto-falante para ouvir
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
