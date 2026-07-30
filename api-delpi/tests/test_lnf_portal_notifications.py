@@ -6,14 +6,18 @@ from app.application.services.lnf_portal_notification_service import (
     block_reason_label,
     build_block_assigned_copy,
     build_block_resolved_copy,
+    build_comment_mention_copy,
+    format_comment_text_plain_without_at,
     lnf_portal_notifications_enabled,
     notify_block_assignee,
     notify_block_resolved,
+    notify_comment_mentions,
     request_portal_route,
     resolve_block_requester_user_id,
     send_lnf_portal_notification,
     should_notify_block_assignee,
     should_notify_block_requester,
+    should_notify_comment_mention,
 )
 
 
@@ -247,3 +251,65 @@ def test_notify_block_resolved_skips_self() -> None:
         requester_user_id="u-fiscal",
         actor_user_id="u-compras",
     )
+
+
+def test_should_notify_comment_mention_skips_self() -> None:
+    assert (
+        should_notify_comment_mention(
+            mentioned_user_id="u1",
+            actor_user_id="u1",
+        )
+        is False
+    )
+    assert (
+        should_notify_comment_mention(
+            mentioned_user_id="u2",
+            actor_user_id="u1",
+        )
+        is True
+    )
+
+
+def test_build_comment_mention_copy_strips_at_in_plain() -> None:
+    title, message, html_content = build_comment_mention_copy(
+        actor_name="Fiscal",
+        document_number="4041160",
+        series="1",
+        comment_text="Oi @Maria Silva, conferir?",
+    )
+    assert title == "Você foi mencionado por Fiscal"
+    assert "004041160 / 1" in message
+    assert "Oi Maria Silva, conferir?" in message
+    assert "@Maria" not in message
+    assert "<strong>Maria Silva</strong>" in html_content
+    assert format_comment_text_plain_without_at("@João") == "João"
+
+
+def test_notify_comment_mentions_sends_html_payload() -> None:
+    with patch(
+        "app.application.services.lnf_portal_notification_service.send_lnf_portal_notification",
+        return_value=True,
+    ) as send:
+        sent = notify_comment_mentions(
+            request={
+                "id": "req-1",
+                "branch_code": "01",
+                "document_number": "000012078",
+                "series": "",
+            },
+            comment_id="c-9",
+            mentioned_user_ids=["user-42", "user-42", "actor-1"],
+            comment_text="Segue o combinado @Maria.",
+            actor_user_id="actor-1",
+            actor_name="Fiscal",
+        )
+
+    assert sent == 1
+    kwargs = send.call_args.kwargs
+    assert kwargs["recipient_user_id"] == "user-42"
+    assert kwargs["action_target"] == "/apps/lancamento-notas-fiscais/filial-01?requestId=req-1"
+    assert kwargs["dedupe_key"] == "lnf:comment_mention:c-9:user-42"
+    assert kwargs["event_type"] == "lnf_comment_mention"
+    assert kwargs["html_content"]
+    assert "Segue o combinado" in kwargs["message"]
+    assert kwargs["metadata"]["commentId"] == "c-9"

@@ -414,6 +414,6 @@ describe("RequestDetailPage", () => {
       target: { value: "  olá  " },
     });
     fireEvent.click(screen.getByRole("button", { name: "Comentar" }));
-    await waitFor(() => expect(api.addComment).toHaveBeenCalledWith("req-1", "olá"));
+    await waitFor(() => expect(api.addComment).toHaveBeenCalledWith("req-1", "olá", []));
   });
 });

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import logging
+import re
 from decimal import Decimal
 from typing import Any, Sequence
 
@@ -18,6 +19,8 @@ _CATEGORY = "lancamento_notas_fiscais"
 _APP_BASE = "/apps/lancamento-notas-fiscais"
 _EVENT_BLOCK_ASSIGNED = "lnf_request_blocked_assigned"
 _EVENT_BLOCK_RESOLVED = "lnf_request_block_resolved"
+_EVENT_COMMENT_MENTION = "lnf_comment_mention"
+_COMMENT_MESSAGE_MAX = 1200
 
 BLOCK_REASON_LABELS: dict[str, str] = {
     "purchase_order": "Aguardando pedido de compra",
@@ -423,3 +426,146 @@ def notify_block_resolved(
         },
         html_content=html_content,
     )
+
+
+def comment_mention_dedupe_key(*, comment_id: str, user_id: str) -> str:
+    return f"lnf:comment_mention:{comment_id}:{user_id}"
+
+
+def should_notify_comment_mention(
+    *,
+    mentioned_user_id: str | None,
+    actor_user_id: str | None = None,
+) -> bool:
+    return should_notify_block_assignee(
+        assignee_user_id=mentioned_user_id,
+        actor_user_id=actor_user_id,
+    )
+
+
+_MENTION_TOKEN_RE = re.compile(
+    r"@([A-ZÀ-Ý][\wÀ-ÿ'’.-]*(?:\s+(?:(?:de|da|do|das|dos|e)|[A-ZÀ-Ý][\wÀ-ÿ'’.-]*))*)",
+    re.UNICODE,
+)
+
+
+def _clip_comment_text(text: str) -> str:
+    cleaned = (text or "").strip()
+    if len(cleaned) <= _COMMENT_MESSAGE_MAX:
+        return cleaned
+    return f"{cleaned[: _COMMENT_MESSAGE_MAX - 1].rstrip()}…"
+
+
+def format_comment_text_plain_without_at(note_text: str) -> str:
+    """Remove o @ das menções no texto plano da notificação."""
+    return _MENTION_TOKEN_RE.sub(r"\1", note_text or "")
+
+
+def format_comment_text_html_with_mentions(note_text: str) -> str:
+    """HTML seguro: menções em negrito sem @, restante escapado."""
+    source = note_text or ""
+    parts: list[str] = []
+    last = 0
+    for match in _MENTION_TOKEN_RE.finditer(source):
+        if match.start() > last:
+            parts.append(
+                html.escape(source[last : match.start()]).replace("\n", "<br />")
+            )
+        name = (match.group(1) or "").strip()
+        if name:
+            parts.append(f"<strong>{html.escape(name)}</strong>")
+        last = match.end()
+    if last < len(source):
+        parts.append(html.escape(source[last:]).replace("\n", "<br />"))
+    return "".join(parts) if parts else html.escape(source).replace("\n", "<br />")
+
+
+def build_comment_mention_copy(
+    *,
+    actor_name: str | None,
+    document_number: str | None,
+    series: str | None,
+    comment_text: str,
+) -> tuple[str, str, str]:
+    actor = (actor_name or "").strip() or "alguém"
+    document = _format_document(document_number, series)
+    note = _clip_comment_text(comment_text)
+    note_plain = format_comment_text_plain_without_at(note)
+    title = f"Você foi mencionado por {actor}"
+    message = (
+        f"Você foi mencionado por {actor} no comentário da nota {document}:\n\n"
+        f"{note_plain}"
+    )
+    safe_actor = html.escape(actor)
+    safe_document = html.escape(document)
+    safe_note = format_comment_text_html_with_mentions(note)
+    html_content = (
+        f"<p>Você foi mencionado por <strong>{safe_actor}</strong> "
+        f"no comentário da nota <strong>{safe_document}</strong>:</p>"
+        f'<span class="notification-note-bubble">{safe_note}</span>'
+    )
+    return title, message, html_content
+
+
+def notify_comment_mentions(
+    *,
+    request: dict[str, Any],
+    comment_id: str,
+    mentioned_user_ids: list[str] | None,
+    comment_text: str,
+    actor_user_id: str | None = None,
+    actor_name: str | None = None,
+) -> int:
+    """Notifica usuários mencionados em um comentário da solicitação LNF."""
+    unique_ids: list[str] = []
+    seen: set[str] = set()
+    for raw in mentioned_user_ids or []:
+        uid = str(raw or "").strip()
+        if not uid or uid in seen:
+            continue
+        seen.add(uid)
+        unique_ids.append(uid)
+
+    request_id = str(request.get("id") or "").strip()
+    comment_key = str(comment_id or "").strip()
+    if not unique_ids or not (comment_text or "").strip() or not request_id or not comment_key:
+        return 0
+
+    title, message, html_content = build_comment_mention_copy(
+        actor_name=actor_name,
+        document_number=str(request.get("document_number") or ""),
+        series=str(request.get("series") or ""),
+        comment_text=comment_text,
+    )
+    sent = 0
+    for user_id in unique_ids:
+        if not should_notify_comment_mention(
+            mentioned_user_id=user_id,
+            actor_user_id=actor_user_id,
+        ):
+            continue
+        ok = send_lnf_portal_notification(
+            recipient_user_id=user_id,
+            title=title,
+            message=message,
+            notification_type="info",
+            action_label="Abrir solicitação",
+            action_target=request_portal_route(
+                branch_code=str(request.get("branch_code") or ""),
+                request_id=request_id,
+            ),
+            dedupe_key=comment_mention_dedupe_key(
+                comment_id=comment_key,
+                user_id=user_id,
+            ),
+            event_type=_EVENT_COMMENT_MENTION,
+            metadata={
+                "requestId": request_id,
+                "commentId": comment_key,
+                "branchCode": str(request.get("branch_code") or ""),
+            },
+            html_content=html_content,
+        )
+        if ok:
+            sent += 1
+    return sent
