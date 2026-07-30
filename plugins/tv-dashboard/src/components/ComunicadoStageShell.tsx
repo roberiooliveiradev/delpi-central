@@ -529,50 +529,58 @@ export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
           </>
         ) : null}
         <div
-          ref={canvasWrapRef}
           className={[
-            "td-composer__canvas-wrap",
-            "td-composer__canvas-wrap--full",
-            "td-composer__canvas-wrap--zoom",
-            panActive ? "td-composer__canvas-wrap--pan" : "",
-            fileDropActive ? "td-composer__canvas-wrap--file-drop" : "",
+            "td-composer__canvas-slot",
+            fileDropActive ? "td-composer__canvas-slot--file-drop" : "",
           ]
             .filter(Boolean)
             .join(" ")}
-          onScroll={handleScroll}
-          onPointerDown={handlePanPointerDown}
-          onPointerMove={handlePanPointerMove}
-          onPointerUp={endPanDrag}
-          onPointerCancel={endPanDrag}
-          onContextMenu={onStageContextMenu}
-          onDragEnter={(event) => {
-            if (isEditableDropTarget(event.target)) return;
-            if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
-            event.preventDefault();
-            setFileDropActive(true);
-          }}
-          onDragOver={(event) => {
-            if (isEditableDropTarget(event.target)) return;
-            if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "copy";
-            setFileDropActive(true);
-          }}
-          onDragLeave={(event) => {
-            const next = event.relatedTarget;
-            if (next instanceof Node && event.currentTarget.contains(next)) return;
-            setFileDropActive(false);
-          }}
-          onDrop={(event) => {
-            if (isEditableDropTarget(event.target)) return;
-            setFileDropActive(false);
-            if (!dataTransferHasCanvasMediaFiles(event.dataTransfer)) return;
-            event.preventDefault();
-            event.stopPropagation();
-            void insertDroppedMediaFiles(event.dataTransfer, event.clientX, event.clientY);
-          }}
         >
-          {children}
+          <div
+            ref={canvasWrapRef}
+            className={[
+              "td-composer__canvas-wrap",
+              "td-composer__canvas-wrap--full",
+              "td-composer__canvas-wrap--zoom",
+              panActive ? "td-composer__canvas-wrap--pan" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onScroll={handleScroll}
+            onPointerDown={handlePanPointerDown}
+            onPointerMove={handlePanPointerMove}
+            onPointerUp={endPanDrag}
+            onPointerCancel={endPanDrag}
+            onContextMenu={onStageContextMenu}
+            onDragEnter={(event) => {
+              if (isEditableDropTarget(event.target)) return;
+              if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
+              event.preventDefault();
+              setFileDropActive(true);
+            }}
+            onDragOver={(event) => {
+              if (isEditableDropTarget(event.target)) return;
+              if (!dataTransferLooksLikeOsFileDrag(event.dataTransfer)) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "copy";
+              setFileDropActive(true);
+            }}
+            onDragLeave={(event) => {
+              const next = event.relatedTarget;
+              if (next instanceof Node && event.currentTarget.contains(next)) return;
+              setFileDropActive(false);
+            }}
+            onDrop={(event) => {
+              if (isEditableDropTarget(event.target)) return;
+              setFileDropActive(false);
+              if (!dataTransferHasCanvasMediaFiles(event.dataTransfer)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              void insertDroppedMediaFiles(event.dataTransfer, event.clientX, event.clientY);
+            }}
+          >
+            {children}
+          </div>
           {fileDropActive ? (
             <div className="td-composer__file-drop-overlay" aria-live="polite">
               <div className="td-composer__file-drop-card">
