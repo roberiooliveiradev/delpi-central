@@ -14,7 +14,10 @@ export {
   isStartEventType,
   normalizeFlowchartNodeType,
   paletteByCategory,
+  searchBpmnPalette,
 } from "./bpmnNodeCatalog";
+
+export type { BpmnPaletteSearchHit } from "./bpmnNodeCatalog";
 
 export type FlowchartLane = {
   id: string;

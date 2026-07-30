@@ -43,7 +43,9 @@ export {
   isStartEventType,
   normalizeFlowchartNodeType,
   paletteByCategory,
+  searchBpmnPalette,
 } from "./model/diagram";
+export type { BpmnPaletteSearchHit } from "./model/diagram";
 export { flowchartToMermaid, mermaidToFlowchart, MermaidImportError } from "./mermaid/flowchartMermaid";
 export { exportReactFlowDiagramPng } from "./export/exportFlowchartImage";
 export { getDiagramFitNodes, getDiagramExportNodes, DIAGRAM_FIT_VIEW_OPTIONS } from "./layout/diagramViewFit";

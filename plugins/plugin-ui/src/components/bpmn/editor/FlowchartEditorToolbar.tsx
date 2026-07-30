@@ -21,6 +21,7 @@ import type { FlowchartEditorLabels } from "../model/flowchartEditorLabels";
 import type { BpmnPaletteCategoryId } from "../model/bpmnNodeCatalog";
 import type { FlowchartLane, FlowchartNodeType } from "../model/diagram";
 import { FlowchartEditorHistoryActions } from "./FlowchartEditorHistoryActions";
+import { FlowchartComponentSearch } from "./FlowchartComponentSearch";
 import { FlowchartLaneToolbar } from "../nodes/FlowchartLaneToolbar";
 import {
   diagramEditorAddLaneAction,
@@ -207,6 +208,11 @@ export function FlowchartEditorToolbar({
 
   const trailing = (
     <>
+      <FlowchartComponentSearch
+        labels={labels}
+        onAddNode={onAddNode}
+        portalScopeClassName={portalScopeClassName}
+      />
       <HelpTooltip
         content={labels.usoGeral}
         ariaLabel={labels.toolbarHowToUseAriaLabel}

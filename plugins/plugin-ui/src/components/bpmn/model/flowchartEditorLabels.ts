@@ -43,6 +43,10 @@ export type FlowchartEditorLabels = {
   toolbarAriaLabel: string;
   toolbarGroupsAriaLabel: string;
   toolbarHowToUseAriaLabel: string;
+  componentSearchPlaceholder: string;
+  componentSearchAriaLabel: string;
+  componentSearchEmpty: string;
+  componentSearchClear: string;
   paletteCategoriesAriaLabel: string;
   paletteEventsAriaLabel: string;
   selectionDockAriaLabel: string;

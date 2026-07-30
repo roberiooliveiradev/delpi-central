@@ -58,9 +58,10 @@ Referência de labels: `plugins/transformometro/src/content/flowchartEditorLabel
 
 Em modo editável (`!readOnly` + `showTemplates`), o editor monta [`EditorChrome`](../src/components/layout/EditorChrome.tsx) + ribbon com [`EditorRibbonSection`](../src/components/ribbon/EditorRibbonSection.tsx) / [`RibbonTile`](../src/components/ribbon/RibbonTile.tsx):
 
-- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo · Elementos/Modelos · Como usar · Desenho/Mermaid · título
+- **Head:** Voltar (`chromeLeading.onBack`) · undo/redo · Elementos/Modelos · **Buscar componente** · Como usar · Desenho/Mermaid · título
 - **Ribbon:** seções por categoria BPMN; colapso responsivo (direita→esquerda) abre popover via `RibbonGroup`
 - **Props:** `chromeLeading?: { onBack?; backLabel?; title? }` — o Transformômetro passa isso em `/diagrama/edit`
+- **Busca:** `FlowchartComponentSearch` filtra `searchBpmnPalette` (rótulo/hint/categoria) e chama `onAddNode`
 
 CSS: `styles/editor-chrome.css`, `styles/ribbon-tile.css`, `styles/ribbon-overflow.css`.
 

@@ -49,6 +49,11 @@
   padding: 0 4px;
 }
 
+.delpi-ui-editor-chrome__head-trailing {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+
 .delpi-ui-editor-chrome__head-tabs {
   flex: 1 1 auto;
   overflow: hidden;

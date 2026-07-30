@@ -698,3 +698,57 @@ export function isNonFlowNodeType(type: string): boolean {
 export function paletteByCategory(category: BpmnPaletteCategoryId) {
   return FLOWCHART_NODE_PALETTE.filter((item) => item.category === category);
 }
+
+function normalizePaletteSearchText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .trim();
+}
+
+export type BpmnPaletteSearchHit = {
+  type: FlowchartNodeType;
+  label: string;
+  category: BpmnPaletteCategoryId;
+  categoryLabel: string;
+  hint: string;
+};
+
+/** Busca no catálogo BPMN (rótulo, hint, categoria e id). */
+export function searchBpmnPalette(query: string, limit = 24): BpmnPaletteSearchHit[] {
+  const needle = normalizePaletteSearchText(query);
+  if (!needle) return [];
+
+  const categoryLabelById = Object.fromEntries(
+    BPMN_PALETTE_CATEGORIES.map((category) => [category.id, category.label]),
+  ) as Record<BpmnPaletteCategoryId, string>;
+
+  const hits: Array<BpmnPaletteSearchHit & { score: number }> = [];
+  for (const type of FLOWCHART_NODE_TYPES) {
+    const def = BPMN_NODE_DEFINITIONS[type];
+    const categoryLabel = categoryLabelById[def.category];
+    const labelNorm = normalizePaletteSearchText(def.label);
+    const haystack = normalizePaletteSearchText(
+      [def.label, def.hint, categoryLabel, type.replace(/_/g, " ")].join(" "),
+    );
+    if (!haystack.includes(needle)) continue;
+    let score = 3;
+    if (labelNorm === needle) score = 0;
+    else if (labelNorm.startsWith(needle)) score = 1;
+    else if (labelNorm.includes(needle)) score = 2;
+    hits.push({
+      type,
+      label: def.label,
+      category: def.category,
+      categoryLabel,
+      hint: def.hint,
+      score,
+    });
+  }
+
+  hits.sort(
+    (a, b) => a.score - b.score || a.label.localeCompare(b.label, "pt-BR"),
+  );
+  return hits.slice(0, limit).map(({ score: _score, ...hit }) => hit);
+}
