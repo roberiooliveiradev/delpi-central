@@ -46,6 +46,7 @@ export function TableHeaderCell({
     event.preventDefault();
     event.stopPropagation();
     const handle = event.currentTarget;
+    const edge = handle.dataset.columnResizeEdge === "west" ? "west" : "east";
     const cell = handle.closest("th");
     const table = handle.closest("table");
     if (!cell || !table || !interaction?.onColumnResize) return;
@@ -59,7 +60,9 @@ export function TableHeaderCell({
     handle.setPointerCapture?.(pointerId);
 
     const onPointerMove = (moveEvent: PointerEvent) => {
-      const nextWidthPx = Math.max(8, startWidthPx + moveEvent.clientX - startX);
+      const deltaX =
+        edge === "west" ? startX - moveEvent.clientX : moveEvent.clientX - startX;
+      const nextWidthPx = Math.max(8, startWidthPx + deltaX);
       const nextWidthPct = Math.max(
         1,
         Math.min(100, Math.round((nextWidthPx / tableWidthPx) * 1000) / 10),
@@ -115,9 +118,27 @@ export function TableHeaderCell({
     interaction.onColumnResize(columnKey, nextWidthPct);
   };
 
+  const resizeHandles: Array<{
+    corner: "nw" | "ne" | "sw" | "se" | "w" | "e";
+    edge: "west" | "east";
+  }> = [
+    { corner: "nw", edge: "west" },
+    { corner: "ne", edge: "east" },
+    { corner: "w", edge: "west" },
+    { corner: "e", edge: "east" },
+    { corner: "sw", edge: "west" },
+    { corner: "se", edge: "east" },
+  ];
+
   return (
     <th
-      className={[cn.headerCell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
+      className={[
+        cn.headerCell,
+        selected ? `${cn.root}__part--selected` : "",
+        resizable ? `${cn.root}__header-cell--resizable` : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       style={style}
       {...dom}
       onPointerDown={editing ? undefined : onPointerDown}
@@ -145,26 +166,26 @@ export function TableHeaderCell({
       ) : (
         children
       )}
-      {resizable && !editing ? (
-        <>
-          <span
-            className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--top`}
-            role="separator"
-            aria-orientation="vertical"
-            data-column-resize-handle="top"
-            onPointerDown={startColumnResize}
-            onDoubleClick={autoFitColumn}
-          />
-          <span
-            className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--bottom`}
-            role="separator"
-            aria-orientation="vertical"
-            data-column-resize-handle="bottom"
-            onPointerDown={startColumnResize}
-            onDoubleClick={autoFitColumn}
-          />
-        </>
-      ) : null}
+      {resizable && !editing
+        ? resizeHandles.map(({ corner, edge }) => (
+            <span
+              key={corner}
+              className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--${corner}`}
+              role="separator"
+              aria-orientation="vertical"
+              aria-hidden="true"
+              title={
+                edge === "west"
+                  ? "Redimensionar coluna pela esquerda"
+                  : "Redimensionar coluna pela direita"
+              }
+              data-column-resize-handle={corner}
+              data-column-resize-edge={edge}
+              onPointerDown={startColumnResize}
+              onDoubleClick={autoFitColumn}
+            />
+          ))
+        : null}
     </th>
   );
 }

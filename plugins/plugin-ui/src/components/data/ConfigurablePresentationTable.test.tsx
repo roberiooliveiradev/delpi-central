@@ -150,16 +150,46 @@ describe("ConfigurablePresentationTable", () => {
     const table = screen.getByRole("table");
     const header = screen.getByRole("columnheader", { name: "Produto" });
     const handle = container.querySelector(
-      '[data-column-resize-handle="top"]',
+      '[data-column-resize-handle="ne"]',
     ) as HTMLElement | null;
     expect(handle).toBeTruthy();
-    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(2);
+    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(6);
+    expect(container.querySelector('[data-column-resize-handle="nw"]')).toBeTruthy();
+    expect(container.querySelector('[data-column-resize-handle="w"]')).toBeTruthy();
+    expect(container.querySelector('[data-column-resize-handle="e"]')).toBeTruthy();
     expect(container.querySelectorAll(".delpi-ui-config-table__column--selected")).toHaveLength(1);
 
     table.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;
     header.getBoundingClientRect = () => ({ width: 100 }) as DOMRect;
     fireEvent.pointerDown(handle!, { clientX: 100, pointerId: 1 });
     fireEvent.pointerMove(handle!, { clientX: 140, pointerId: 1 });
+
+    expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
+  });
+
+  it("alça esquerda inverte o delta ao redimensionar", () => {
+    const onColumnResize = vi.fn();
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        interaction={{
+          selectedPart: { kind: "headerCell", colIndex: 0 },
+          onColumnResize,
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    const header = screen.getByRole("columnheader", { name: "Produto" });
+    const handle = container.querySelector(
+      '[data-column-resize-handle="nw"]',
+    ) as HTMLElement;
+
+    table.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;
+    header.getBoundingClientRect = () => ({ width: 100 }) as DOMRect;
+    fireEvent.pointerDown(handle, { clientX: 100, pointerId: 1 });
+    /* Arrastar para a esquerda na borda west aumenta a largura. */
+    fireEvent.pointerMove(handle, { clientX: 60, pointerId: 1 });
 
     expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
   });
@@ -182,7 +212,7 @@ describe("ConfigurablePresentationTable", () => {
     expect(container.querySelectorAll(".delpi-ui-config-table__column--selected")).toHaveLength(2);
     const selectedHeaders = container.querySelectorAll('th[aria-selected="true"]');
     expect(selectedHeaders).toHaveLength(2);
-    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(4);
+    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(12);
   });
 
   it("duplo clique na alça ajusta a largura ao conteúdo", () => {
@@ -201,7 +231,7 @@ describe("ConfigurablePresentationTable", () => {
     const frame = table.parentElement as HTMLElement;
     const header = screen.getByRole("columnheader", { name: "Produto" });
     const handle = container.querySelector(
-      '[data-column-resize-handle="top"]',
+      '[data-column-resize-handle="ne"]',
     ) as HTMLElement;
 
     frame.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;

@@ -282,26 +282,67 @@
   outline-offset: 0;
 }
 
+/* Alças de coluna — mesmo molde visual das alças de forma (círculo / pill). */
+.delpi-ui-config-table__header-cell--resizable {
+  overflow: visible;
+  z-index: 4;
+}
+
 .delpi-ui-config-table__column-resize-handle {
   position: absolute;
-  right: -4px;
-  z-index: 3;
-  width: 8px;
-  height: 8px;
+  width: var(--td-selection-handle-size, 10px);
+  height: var(--td-selection-handle-size, 10px);
+  padding: 0;
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 75%, #fff);
-  border-radius: 1px;
-  background: var(--delpi-ui-accent, #089bdb);
+  border: 1.5px solid
+    var(--td-selection-handle-border, var(--delpi-ui-accent, #089bdb));
+  border-radius: 50%;
+  background: var(--td-selection-handle-fill, #fff);
+  box-shadow: none;
   cursor: col-resize;
   touch-action: none;
+  pointer-events: auto;
+  z-index: 6;
 }
 
-.delpi-ui-config-table__column-resize-handle--top {
-  top: -4px;
+.delpi-ui-config-table__column-resize-handle--e,
+.delpi-ui-config-table__column-resize-handle--w {
+  width: var(--td-selection-edge-thickness, 6px);
+  height: var(--td-selection-edge-length, 14px);
+  border-radius: 999px;
+  cursor: ew-resize;
 }
 
-.delpi-ui-config-table__column-resize-handle--bottom {
-  bottom: -4px;
+.delpi-ui-config-table__column-resize-handle--nw {
+  left: calc(-1 * var(--td-selection-handle-half, 5px));
+  top: calc(-1 * var(--td-selection-handle-half, 5px));
+}
+
+.delpi-ui-config-table__column-resize-handle--ne {
+  right: calc(-1 * var(--td-selection-handle-half, 5px));
+  top: calc(-1 * var(--td-selection-handle-half, 5px));
+}
+
+.delpi-ui-config-table__column-resize-handle--sw {
+  left: calc(-1 * var(--td-selection-handle-half, 5px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 5px));
+}
+
+.delpi-ui-config-table__column-resize-handle--se {
+  right: calc(-1 * var(--td-selection-handle-half, 5px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 5px));
+}
+
+.delpi-ui-config-table__column-resize-handle--w {
+  left: calc(-1 * var(--td-selection-edge-thickness, 6px) / 2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.delpi-ui-config-table__column-resize-handle--e {
+  right: calc(-1 * var(--td-selection-edge-thickness, 6px) / 2);
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .delpi-ui-config-table__column--selected {
