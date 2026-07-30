@@ -17,4 +17,16 @@ describe("table styles/data ribbon parity", () => {
     expect(floatToolbar).toContain("TableDataMenu");
     expect(floatToolbar).not.toContain("FloatChecklist");
   });
+
+  it("float não aninha outro popover--style (scroll duplo)", () => {
+    const floatToolbar = readFileSync(join(here, "TableSelectionFloatToolbar.tsx"), "utf8");
+    expect(floatToolbar).not.toMatch(/td-chart-float__popover--style/);
+    const css = readFileSync(join(here, "../index.css"), "utf8");
+    expect(css).toMatch(
+      /\.td-chart-float__popover--style\s*\{[^}]*max-height:\s*min\(calc\(100dvh - 24px\),\s*92vh\)/s,
+    );
+    expect(css).toMatch(
+      /\.td-chart-float__popover \.td-chart-float__popover\s*\{[^}]*overflow:\s*visible/s,
+    );
+  });
 });

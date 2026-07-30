@@ -3384,12 +3384,22 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-chart-float__popover--actions .td-deck-ribbon__cascade-item{
   min-width: 200px;
 }
-/* Estilos: um único scroll no menu chrome (legenda no footer). */
+/*
+ * Estilos (tabela/gráfico): um único scroll.
+ * Cap antigo min(58vh, 380px) forçava barra com espaço sobrando no viewport.
+ * Nested .td-chart-float__popover (wrapper duplicado) não cria segundo scroll.
+ */
 .dashboard-tv-dashboard .td-chart-float__popover--style{
-  max-height: min(58vh, 380px);
+  max-height: min(calc(100dvh - 24px), 92vh);
   overflow: auto;
+  overflow-x: hidden;
   width: max-content;
   max-width: min(280px, 92vw);
+}
+.dashboard-tv-dashboard .td-chart-float__popover--style .td-chart-float__popover,
+.dashboard-tv-dashboard .td-chart-float__popover .td-chart-float__popover{
+  max-height: none;
+  overflow: visible;
 }
 .dashboard-tv-dashboard .td-chart-float__popover--style .td-chart-style-menu{
   max-width: none;

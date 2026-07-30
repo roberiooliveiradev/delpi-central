@@ -95,20 +95,18 @@ export function TableSelectionFloatToolbar({ block }: Props) {
         />
       )}
       renderStyle={(close) => (
-        <div className="td-chart-float__popover td-chart-float__popover--style">
-          <TableStylesMenu
-            options={options}
-            preset={block.tablePreset}
-            onApplyRecipe={(recipe) => {
-              applyRecipe(recipe);
-              close();
-            }}
-            onClear={() => {
-              clearTableStyle();
-              close();
-            }}
-          />
-        </div>
+        <TableStylesMenu
+          options={options}
+          preset={block.tablePreset}
+          onApplyRecipe={(recipe) => {
+            applyRecipe(recipe);
+            close();
+          }}
+          onClear={() => {
+            clearTableStyle();
+            close();
+          }}
+        />
       )}
       renderData={(close) => (
         <TableDataMenu
