@@ -115,6 +115,56 @@
   gap: 8px;
   min-height: 0;
   min-width: 0;
+  flex: 1 1 auto;
+  container-type: inline-size;
+  container-name: bpmn-workspace;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__split,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__split{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__main,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__main{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-workspace__aside,
+.dashboard-transformometro .delpi-ui-bpmn-workspace__aside{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+@container bpmn-workspace (min-width: 1080px) {
+  .delpi-ui-bpmn-workspace__split--with-panel,
+  .dashboard-transformometro .delpi-ui-bpmn-workspace__split--with-panel{
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .delpi-ui-bpmn-workspace__split--with-panel .delpi-ui-bpmn-workspace__main,
+  .dashboard-transformometro .delpi-ui-bpmn-workspace__split--with-panel .delpi-ui-bpmn-workspace__main{
+    flex: 1 1 auto;
+  }
+
+  .delpi-ui-bpmn-workspace__split--with-panel .delpi-ui-bpmn-workspace__aside,
+  .dashboard-transformometro .delpi-ui-bpmn-workspace__split--with-panel .delpi-ui-bpmn-workspace__aside{
+    flex: 0 0 min(360px, 34%);
+    max-width: 400px;
+    min-width: 280px;
+  }
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-export-swimlane-backdrop,
@@ -182,20 +232,195 @@
 .dashboard-transformometro .delpi-ui-bpmn-validation,
 .delpi-ui-flowchart-shell .tm-diagram-validation,
 .dashboard-transformometro .tm-diagram-validation{
-  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 0;
   padding: 12px 14px;
-  border-radius: var(--ds-radius-sm);
+  border-radius: var(--ds-radius-md);
   border: 1px solid var(--ds-card-border);
-  background: var(--ds-surface-muted);
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, transparent);
   font-size: var(--ds-font-sm);
+  box-sizing: border-box;
+  min-height: 0;
+  overflow: auto;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--aside,
+.dashboard-transformometro .delpi-ui-bpmn-validation--aside{
+  height: 100%;
+  max-height: 100%;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--ok,
+.dashboard-transformometro .delpi-ui-bpmn-validation--ok{
+  border-color: color-mix(in srgb, #16a34a 35%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--invalid,
+.dashboard-transformometro .delpi-ui-bpmn-validation--invalid{
+  border-color: color-mix(in srgb, #dc2626 40%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--loading,
+.dashboard-transformometro .delpi-ui-bpmn-validation--loading{
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__spinner,
+.dashboard-transformometro .delpi-ui-bpmn-validation__spinner{
+  animation: delpi-ui-bpmn-spin 0.9s linear infinite;
+  color: var(--ds-accent, #089bdb);
+}
+
+@keyframes delpi-ui-bpmn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__loading-text,
+.dashboard-transformometro .delpi-ui-bpmn-validation__loading-text{
+  margin: 0;
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__header,
+.dashboard-transformometro .delpi-ui-bpmn-validation__header{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__status,
+.dashboard-transformometro .delpi-ui-bpmn-validation__status{
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--ok .delpi-ui-bpmn-validation__status-icon,
+.dashboard-transformometro .delpi-ui-bpmn-validation--ok .delpi-ui-bpmn-validation__status-icon{
+  color: #16a34a;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation--invalid .delpi-ui-bpmn-validation__status-icon,
+.dashboard-transformometro .delpi-ui-bpmn-validation--invalid .delpi-ui-bpmn-validation__status-icon{
+  color: #dc2626;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__status-copy,
+.dashboard-transformometro .delpi-ui-bpmn-validation__status-copy{
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__title,
+.dashboard-transformometro .delpi-ui-bpmn-validation__title{
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__subtitle,
+.dashboard-transformometro .delpi-ui-bpmn-validation__subtitle{
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--ds-text-muted);
+  line-height: 1.35;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__stats,
+.dashboard-transformometro .delpi-ui-bpmn-validation__stats{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__stat,
+.dashboard-transformometro .delpi-ui-bpmn-validation__stat{
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__stat--ok,
+.dashboard-transformometro .delpi-ui-bpmn-validation__stat--ok{
+  color: #15803d;
+  background: color-mix(in srgb, #16a34a 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #16a34a 30%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__stat--stuck,
+.dashboard-transformometro .delpi-ui-bpmn-validation__stat--stuck{
+  color: #b45309;
+  background: color-mix(in srgb, #f59e0b 16%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, #f59e0b 35%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__section,
+.dashboard-transformometro .delpi-ui-bpmn-validation__section{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__section-title,
+.dashboard-transformometro .delpi-ui-bpmn-validation__section-title{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__section-meta,
+.dashboard-transformometro .delpi-ui-bpmn-validation__section-meta{
+  margin-left: auto;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ds-text-muted);
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issues,
 .dashboard-transformometro .delpi-ui-bpmn-validation__issues,
 .delpi-ui-flowchart-shell .tm-diagram-validation__issues,
 .dashboard-transformometro .tm-diagram-validation__issues{
-  margin: 8px 0 0;
-  padding-left: 1.2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issue,
+.dashboard-transformometro .delpi-ui-bpmn-validation__issue{
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ds-card-border) 80%, transparent);
+  background: color-mix(in srgb, var(--ds-surface-muted, var(--ds-card-bg)) 88%, transparent);
+  line-height: 1.35;
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issue--error,
@@ -203,6 +428,7 @@
 .delpi-ui-flowchart-shell .tm-diagram-validation__issue--error,
 .dashboard-transformometro .tm-diagram-validation__issue--error{
   color: var(--ds-danger, #b42318);
+  border-color: color-mix(in srgb, #dc2626 28%, transparent);
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__issue--warning,
@@ -210,11 +436,131 @@
 .delpi-ui-flowchart-shell .tm-diagram-validation__issue--warning,
 .dashboard-transformometro .tm-diagram-validation__issue--warning{
   color: var(--ds-warning, #b54708);
+  border-color: color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__paths,
+.dashboard-transformometro .delpi-ui-bpmn-validation__paths{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--ds-card-border);
+  background: color-mix(in srgb, var(--ds-surface-inset, var(--ds-card-bg)) 90%, transparent);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path--ok,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path--ok{
+  border-color: color-mix(in srgb, #16a34a 28%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path--stuck,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path--stuck{
+  border-color: color-mix(in srgb, #f59e0b 32%, var(--ds-card-border));
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path-head,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path-head{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path-meta,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path-meta{
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ds-text-muted);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path-reason,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path-reason{
+  margin: 0;
+  font-size: 11px;
+  color: #b45309;
+  line-height: 1.35;
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path-steps,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path-steps{
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__path-steps li::marker,
+.dashboard-transformometro .delpi-ui-bpmn-validation__path-steps li::marker{
+  color: var(--ds-text-muted);
 }
 
 .delpi-ui-flowchart-shell .delpi-ui-bpmn-validation__simulation,
 .dashboard-transformometro .delpi-ui-bpmn-validation__simulation,
 .delpi-ui-flowchart-shell .tm-diagram-validation__simulation,
 .dashboard-transformometro .tm-diagram-validation__simulation{
-  margin-top: 10px;
+  margin-top: 0;
 }
+
+/* Menu Importar / exportar */
+.delpi-ui-flowchart-shell .delpi-ui-bpmn-io-menu,
+.dashboard-transformometro .delpi-ui-bpmn-io-menu{
+  display: inline-flex;
+  position: relative;
+}
+
+.delpi-ui-bpmn-io-menu__panel{
+  min-width: 220px;
+  padding: 6px;
+  z-index: 80;
+}
+
+.delpi-ui-bpmn-io-menu__list{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.delpi-ui-bpmn-io-menu__item{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.delpi-ui-bpmn-io-menu__item:hover:not(:disabled){
+  background: color-mix(in srgb, var(--text, currentColor) 8%, transparent);
+}
+
+.delpi-ui-bpmn-io-menu__item:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+

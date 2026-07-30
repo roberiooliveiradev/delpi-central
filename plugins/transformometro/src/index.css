@@ -3409,6 +3409,17 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  container-type: inline-size;
+  container-name: bpmn-workspace;
+}
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-workspace__split{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-workspace__main .delpi-ui-bpmn-editor--fill,
+.dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-workspace__main .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas{
+  flex: 1 1 auto;
+  min-height: 360px;
 }
 .dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-editor--fill,
 .dashboard-transformometro .tm-diagram-editor-page .delpi-ui-bpmn-editor--fill .delpi-ui-bpmn-editor__canvas{

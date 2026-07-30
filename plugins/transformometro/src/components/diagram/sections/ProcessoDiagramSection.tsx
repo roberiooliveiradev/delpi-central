@@ -21,6 +21,7 @@ import {
   type FlowchartV1,
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
+import { DiagramIoMenu } from "../DiagramIoMenu";
 import { DiagramValidationPanel } from "../validation/DiagramValidationPanel";
 import { FlowchartEditor } from "../editor/TransformometroFlowchartEditor";
 import { DS_GHOST_BTN } from "../../ghostChrome";
@@ -170,59 +171,68 @@ export function ProcessoDiagramSection({
     ? "ds-primary-btn delpi-ui-bpmn-editor__chrome-action-btn"
     : "ds-primary-btn";
 
-  const diagramActions: ReactNode = !readOnly ? (
+  const ioItems = [
+    {
+      id: "export-png",
+      label: "Exportar PNG",
+      icon: Download,
+      onSelect: () => void exportPng(),
+    },
+    {
+      id: "export-bpmn",
+      label: "Exportar BPMN XML",
+      icon: FileCode2,
+      onSelect: () => void exportBpmnXml(),
+    },
+    ...(!readOnly
+      ? [
+          {
+            id: "import-bpmn",
+            label: "Importar BPMN XML",
+            icon: Upload,
+            onSelect: () => importInputRef.current?.click(),
+          },
+        ]
+      : []),
+  ];
+
+  const diagramActions: ReactNode = (
     <>
-      <button
-        type="button"
-        className={primaryBtnClass}
-        disabled={saving}
-        onClick={() => void handleSave()}
-      >
-        {saving ? "Salvando…" : "Salvar diagrama"}
-      </button>
-      <button
-        type="button"
-        className={actionBtnClass}
-        disabled={validating}
-        onClick={() => void runValidation()}
-      >
-        <ShieldCheck size={14} />
-        Validar / simular
-      </button>
-      <button type="button" className={actionBtnClass} onClick={() => void exportPng()}>
-        <Download size={14} />
-        Exportar PNG
-      </button>
-      <button type="button" className={actionBtnClass} onClick={() => void exportBpmnXml()}>
-        <FileCode2 size={14} />
-        Exportar BPMN XML
-      </button>
-      <button type="button" className={actionBtnClass} onClick={() => importInputRef.current?.click()}>
-        <Upload size={14} />
-        Importar BPMN XML
-      </button>
-      <input
-        ref={importInputRef}
-        type="file"
-        accept=".bpmn,.xml,text/xml,application/xml"
-        hidden
-        onChange={(event) => {
-          const file = event.target.files?.[0];
-          event.target.value = "";
-          if (file) void importBpmnXml(file);
-        }}
-      />
-    </>
-  ) : (
-    <>
-      <button type="button" className={actionBtnClass} onClick={() => void exportPng()}>
-        <Download size={14} />
-        Exportar PNG
-      </button>
-      <button type="button" className={actionBtnClass} onClick={() => void exportBpmnXml()}>
-        <FileCode2 size={14} />
-        Exportar BPMN XML
-      </button>
+      {!readOnly ? (
+        <>
+          <button
+            type="button"
+            className={primaryBtnClass}
+            disabled={saving}
+            onClick={() => void handleSave()}
+          >
+            {saving ? "Salvando…" : "Salvar diagrama"}
+          </button>
+          <button
+            type="button"
+            className={actionBtnClass}
+            disabled={validating}
+            onClick={() => void runValidation()}
+          >
+            <ShieldCheck size={14} />
+            Validar / simular
+          </button>
+        </>
+      ) : null}
+      <DiagramIoMenu items={ioItems} triggerClassName={actionBtnClass} />
+      {!readOnly ? (
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".bpmn,.xml,text/xml,application/xml"
+          hidden
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) void importBpmnXml(file);
+          }}
+        />
+      ) : null}
     </>
   );
 
@@ -230,19 +240,51 @@ export function ProcessoDiagramSection({
     return <p className="ds-hint">Carregando diagrama macro…</p>;
   }
 
+  const showValidationPanel = validating || validation != null;
+  const validationLayout = isPage ? "aside" : "stack";
+
+  const editorCore = (
+    <FlowchartEditor
+      ref={editorRef}
+      value={flowchart}
+      onChange={readOnly ? undefined : setFlowchart}
+      readOnly={readOnly}
+      chromeLeading={isPage ? chromeLeading : undefined}
+      chromeNotices={isPage ? chromeNotices : undefined}
+      chromeActions={isPage ? diagramActions : undefined}
+    />
+  );
+
+  const validationPanel = showValidationPanel ? (
+    <DiagramValidationPanel
+      report={validation}
+      loading={validating}
+      layout={validationLayout}
+    />
+  ) : null;
+
   const editorBody = (
     <>
-      <FlowchartEditor
-        ref={editorRef}
-        value={flowchart}
-        onChange={readOnly ? undefined : setFlowchart}
-        readOnly={readOnly}
-        chromeLeading={isPage ? chromeLeading : undefined}
-        chromeNotices={isPage ? chromeNotices : undefined}
-        chromeActions={isPage ? diagramActions : undefined}
-      />
-
-      <DiagramValidationPanel report={validation} loading={validating} />
+      {isPage ? (
+        <div
+          className={[
+            "delpi-ui-bpmn-workspace__split",
+            showValidationPanel ? "delpi-ui-bpmn-workspace__split--with-panel" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <div className="delpi-ui-bpmn-workspace__main">{editorCore}</div>
+          {showValidationPanel ? (
+            <div className="delpi-ui-bpmn-workspace__aside">{validationPanel}</div>
+          ) : null}
+        </div>
+      ) : (
+        <>
+          {editorCore}
+          {validationPanel}
+        </>
+      )}
 
       {!isPage ? (
         <details

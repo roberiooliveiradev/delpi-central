@@ -28,6 +28,7 @@ import {
   mergeRemovedNodesIntoFlowchartForDiff,
   stripFlowchartHighlights,
 } from "../../../utils/diffHighlightDisplay";
+import { DiagramIoMenu } from "../DiagramIoMenu";
 import { FlowchartEditor } from "../editor/TransformometroFlowchartEditor";
 import { DiffHighlightToggle } from "../../DiffHighlightToggle";
 import { StateBox } from "../../StateBox";
@@ -193,16 +194,27 @@ export function RevisaoDiagramSection({
           {saving ? "Salvando…" : "Salvar diagrama da revisão"}
         </button>
       ) : null}
-      <button type="button" className={actionBtnClass} onClick={() => void exportPng(false)}>
-        <Download size={14} />
-        Exportar PNG
-      </button>
-      {!readOnly ? (
-        <button type="button" className={actionBtnClass} onClick={() => void exportPng(true)}>
-          <ImagePlus size={14} />
-          PNG como evidência
-        </button>
-      ) : null}
+      <DiagramIoMenu
+        triggerClassName={actionBtnClass}
+        items={[
+          {
+            id: "export-png",
+            label: "Exportar PNG",
+            icon: Download,
+            onSelect: () => void exportPng(false),
+          },
+          ...(!readOnly
+            ? [
+                {
+                  id: "export-evidence",
+                  label: "PNG como evidência",
+                  icon: ImagePlus,
+                  onSelect: () => void exportPng(true),
+                },
+              ]
+            : []),
+        ]}
+      />
     </>
   );
 
