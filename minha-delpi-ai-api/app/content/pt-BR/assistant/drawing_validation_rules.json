@@ -154,7 +154,7 @@
     },
     "segment_length": {
       "section": "Cotas",
-      "description": "Cota de trecho × comprimento 50xx (±5%)",
+      "description": "Cota de trecho × comprimento 50xx (±5%); dispensada quando todos os intermediários declaram comprimento na descrição",
       "defaultEnabled": true,
       "templateKeys": [
         "segment_length_pending",

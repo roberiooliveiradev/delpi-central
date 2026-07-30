@@ -78,18 +78,37 @@ class ChatDrawingIntermediateSemanticsService:
             root=root,
         )
 
+        length_from_description = parsed.get("lengthMm") is not None
+
         return {
             "code": ChatProductQueryIntentService.normalize_product_code(
                 str(item.get("code") or "")
             ),
             "description": str(item.get("description") or ""),
             "lengthMm": length_mm,
+            "lengthFromDescription": length_from_description,
             "leftDecapeMm": parsed.get("leftDecapeMm"),
             "rightDecapeMm": parsed.get("rightDecapeMm"),
             "cableCode": cable_code,
             "cableQuantityMm": cable_qty,
             "cableUnit": cable_unit,
         }
+
+    @classmethod
+    def descriptions_declare_segment_lengths(cls, rows: list[dict[str, Any]]) -> bool:
+        """True quando todos os 50xx estruturais declaram comprimento na descrição.
+
+        Decisão de engenharia (jul/2026): se o comprimento já vem corretamente na
+        descrição do intermediário (ex.: ``CA…-00185/14/06-…``), a cota de trecho
+        no desenho **não** é obrigatória para o checklist.
+        """
+        if not rows:
+            return False
+
+        return all(
+            row.get("lengthFromDescription") is True and row.get("lengthMm") is not None
+            for row in rows
+        )
 
     @classmethod
     def _resolve_length_mm(

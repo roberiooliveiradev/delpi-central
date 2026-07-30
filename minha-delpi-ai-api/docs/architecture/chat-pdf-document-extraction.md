@@ -223,7 +223,9 @@ CT26VERM-00036/04/06-0000-0000  →  comprimento 36 mm, decape E 4 mm, decape D 
 |---------------|-------|
 | `decape_mismatch` | Decape do 50xx × PDF **somente no lado indicado** no desenho (`decapeIndication`) — ±1 mm |
 | `decapes_ed` | Apenas indica se E e D foram **lidos** do PDF — não substitui confronto por código |
-| `segment_length_pending` | Cotas de trecho no PDF × comprimentos 50xx (semânticas distintas; pode ficar pendente) |
+| `segment_length_pending` | Cotas de trecho no PDF × comprimentos 50xx **somente quando** algum intermediário **não** declara comprimento na descrição; se todos os 50xx estruturais já trazem comprimento (ex.: `-00185/14/06`), a cota no desenho **não** é obrigatória |
+
+**Decisão de produto (jul/2026 — âncora `90261842`):** comprimento na descrição do intermediário é fonte canônica de trecho; OCR de cotas ambíguas (termoencolhível, ensaio, ruído) **não** gera pendente de «Comprimento de trecho» nesse caso. Continua valendo `intermediate_length` (descrição × quantidade do cabo filho).
 
 Fallback: se o lado não tiver valor explícito, aceita qualquer candidato em `{leftDecapeMm, rightDecapeMm, cotaDecapeValuesMm}` dentro da tolerância.
 

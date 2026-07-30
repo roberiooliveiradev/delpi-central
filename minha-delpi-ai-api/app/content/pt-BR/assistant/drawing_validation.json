@@ -365,13 +365,13 @@
     "segment_length_pending": {
       "section": "Cotas",
       "item": "Comprimento de trecho",
-      "rule": "Cota de trecho × comprimento 50xx (±5%)",
+      "rule": "Cota de trecho × comprimento 50xx (±5%); não exigida se a descrição 50xx já declara o comprimento",
       "recommendation": "Conferir cotas do desenho com intermediários"
     },
     "segment_lengths_consolidated": {
       "section": "Cotas",
       "item": "Comprimentos de trecho (cotas)",
-      "rule": "Cotas de trecho × comprimentos 50xx (±5%)",
+      "rule": "Cotas de trecho × comprimentos 50xx (±5%); não exigida se a descrição 50xx já declara o comprimento",
       "recommendation": "Conferir cotas do desenho com intermediários"
     },
     "total_length": {

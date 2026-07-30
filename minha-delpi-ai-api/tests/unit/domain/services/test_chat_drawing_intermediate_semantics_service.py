@@ -117,3 +117,60 @@ def test_collect_structure_intermediates_walks_nested_pi_under_pa():
     assert len(rows) == 1
     assert rows[0]["code"] == "50220010"
     assert rows[0]["lengthMm"] == 660.0
+    assert rows[0]["lengthFromDescription"] is True
+
+
+def test_descriptions_declare_segment_lengths_when_all_50xx_have_parsed_length():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50231200",
+                    "description": "CA0,75AZUL-00185/14/06-0000-1145",
+                    "type": "PI",
+                    "components": [
+                        {"code": "10020042", "quantity": 185.0, "unit": "MT"},
+                    ],
+                },
+                {
+                    "code": "50231204",
+                    "description": "CA0,75MARR-00285/14/06-0000-1145",
+                    "type": "PI",
+                    "components": [
+                        {"code": "10020048", "quantity": 285.0, "unit": "MT"},
+                    ],
+                },
+            ]
+        }
+    }
+
+    rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+    assert ChatDrawingIntermediateSemanticsService.descriptions_declare_segment_lengths(
+        rows
+    )
+
+
+def test_descriptions_declare_segment_lengths_false_without_description_length():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50231200",
+                    "description": "INTERMEDIARIO SEM ASSINATURA DE COMPRIMENTO",
+                    "type": "PI",
+                    "components": [
+                        {"code": "10020042", "quantity": 185.0, "unit": "MT"},
+                    ],
+                },
+            ]
+        }
+    }
+
+    rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+    assert rows
+    assert rows[0].get("lengthFromDescription") is False
+    assert not ChatDrawingIntermediateSemanticsService.descriptions_declare_segment_lengths(
+        rows
+    )

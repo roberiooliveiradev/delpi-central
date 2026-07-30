@@ -64,13 +64,14 @@ Essas regras são utilizadas pelo **Agente de Análise de Desenhos** para classi
 | Item | Verificação | Critério |
 |------|--------------|----------|
 | **Cotas principais** | Presentes (comprimento, decape, espaçamentos) | ✅ Todas visíveis / ⚠️ Faltantes |
+| **Comprimento de trecho × 50xx** | Cotas no PDF × comprimento da descrição 50xx | ✅ OK se descrição declara comprimento (cota no desenho **não** obrigatória) / ⚠️ Pendente só se 50xx sem comprimento na descrição e cotas OCR não batem |
 | **Tolerâncias** | Informadas no desenho | ✅ ±1mm ou conforme norma / ⚠️ Ausente |
 | **Decape E/D × 50xx** | Esquerdo e direito confrontados **por lado** (PDF × descrição `xx/xx`) | ✅ ±1 mm / ❌ Divergente |
 | **Escala** | Indicada no carimbo | ✅ 1:1 / ⚠️ Não informada |
 | **Unidade** | Sempre “mm” | ✅ Correta / ❌ Errada |
 | **Legibilidade** | Texto ≥ 2,5mm | ✅ Ok / ⚠️ Ilegível |
 
-📘 *Fonte: Drawing Rules DELPI – seção 4. Implementação: `ChatDrawingStructureValidationService` + [chat-pdf-document-extraction.md](../../../../architecture/chat-pdf-document-extraction.md).*
+📘 *Fonte: Drawing Rules DELPI – seção 4. Implementação: `ChatDrawingStructureValidationService` + [chat-pdf-document-extraction.md](../../../../architecture/chat-pdf-document-extraction.md). Decisão jul/2026: comprimento na descrição 50xx dispensa obrigatoriedade da cota de trecho no PDF.*
 
 ---
 
@@ -107,10 +108,11 @@ Essas regras são utilizadas pelo **Agente de Análise de Desenhos** para classi
 |------|--------------|----------|
 | **Formato do código** | `50xx xxxx xx xxx xxxx-xx/xx-xxxx-xxxx` | ✅ Correto / ❌ Incompleto |
 | **Descrição técnica** | Compatível com o código | ✅ Ok / ⚠️ Incompleta |
+| **Comprimento na descrição** | Campo `-00NNN/` (ex.: `-00185`) | ✅ Fonte canônica do trecho; cota no desenho opcional / ❌ Ausente → confronto com cotas PDF |
 | **Cor e bitola** | Devem corresponder ao código | ✅ Ok / ❌ Divergente |
 | **Terminais e isoladores** | Devem existir no código | ✅ Ok / ⚠️ Faltantes |
 
-📘 *Referência: Entendendo Código Intermediário no TOTVS e Desenhos.md (p.3–14).*
+📘 *Referência: Entendendo Código Intermediário no TOTVS e Desenhos.md (p.3–14). Implementação: `ChatDrawingIntermediateSemanticsService.descriptions_declare_segment_lengths`.*
 
 ---
 

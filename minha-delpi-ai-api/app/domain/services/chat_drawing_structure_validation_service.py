@@ -804,67 +804,74 @@ class ChatDrawingStructureValidationService:
             product_code,
             group_code=group_code,
         ):
-            api_lengths = [
-                row.get("lengthMm")
-                for row in intermediate_rows
-                if row.get("lengthMm") is not None
-            ]
-            structure_piece_quantities = (
-                ChatDrawingBomQuantitySemanticsService.collect_structure_segment_reference_mm(
-                    root
-                )
-            )
-            failing_segments: list[float] = []
-            plausible_segments = (
-                ChatDrawingDimensionsExtractionService.filter_plausible_segment_lengths(
-                    segment_lengths
-                )
-            )
-
-            for segment in plausible_segments[
-                : ChatDrawingPatternsService.max_segment_length_checks()
-            ]:
-                if not api_lengths:
-                    break
-
-                if (
-                    ChatDrawingPatternsService.bom_quantity_semantics_rule(
-                        "rejectSegmentMatchingStructurePieceQuantity",
-                        False,
-                    )
-                    and cls._segment_matches_structure_piece_quantity(
-                        segment,
-                        structure_piece_quantities,
-                        api_lengths,
-                    )
-                ):
-                    continue
-
-                matched = any(
-                    ChatDrawingToleranceService.lengths_within_tolerance(segment, api_len)
-                    is True
-                    for api_len in api_lengths
-                )
-
-                if matched is False:
-                    failing_segments.append(segment)
-
-            if failing_segments:
-                pdf_evidence = content.evidence_format(
-                    "segmentLengthsList",
-                    values="; ".join(
-                        content.evidence_format("segmentLength", value=str(value))
-                        for value in failing_segments
-                    ),
-                )
-                items.append(
-                    content.item_from_template(
-                        "segment_length_pending",
-                        status="pending",
-                        pdf_evidence=pdf_evidence,
-                        api_evidence=", ".join(str(v) for v in api_lengths[:4]),
+            # Comprimento já declarado na descrição 50xx → cota de trecho no PDF
+            # não é obrigatória (evita pendente por OCR de cotas ambíguas/ruído).
+            if not ChatDrawingIntermediateSemanticsService.descriptions_declare_segment_lengths(
+                intermediate_rows
+            ):
+                api_lengths = [
+                    row.get("lengthMm")
+                    for row in intermediate_rows
+                    if row.get("lengthMm") is not None
+                ]
+                structure_piece_quantities = (
+                    ChatDrawingBomQuantitySemanticsService.collect_structure_segment_reference_mm(
+                        root
                     )
                 )
+                failing_segments: list[float] = []
+                plausible_segments = (
+                    ChatDrawingDimensionsExtractionService.filter_plausible_segment_lengths(
+                        segment_lengths
+                    )
+                )
+
+                for segment in plausible_segments[
+                    : ChatDrawingPatternsService.max_segment_length_checks()
+                ]:
+                    if not api_lengths:
+                        break
+
+                    if (
+                        ChatDrawingPatternsService.bom_quantity_semantics_rule(
+                            "rejectSegmentMatchingStructurePieceQuantity",
+                            False,
+                        )
+                        and cls._segment_matches_structure_piece_quantity(
+                            segment,
+                            structure_piece_quantities,
+                            api_lengths,
+                        )
+                    ):
+                        continue
+
+                    matched = any(
+                        ChatDrawingToleranceService.lengths_within_tolerance(
+                            segment, api_len
+                        )
+                        is True
+                        for api_len in api_lengths
+                    )
+
+                    if matched is False:
+                        failing_segments.append(segment)
+
+                if failing_segments:
+                    pdf_evidence = content.evidence_format(
+                        "segmentLengthsList",
+                        values="; ".join(
+                            content.evidence_format("segmentLength", value=str(value))
+                            for value in failing_segments
+                        ),
+                    )
+                    items.append(
+                        content.item_from_template(
+                            "segment_length_pending",
+                            status="pending",
+                            pdf_evidence=pdf_evidence,
+                            api_evidence=", ".join(str(v) for v in api_lengths[:4]),
+                        )
+                    )
 
         api_reference = ChatDrawingTotalLengthReferenceService.resolve(root)
         dimensions_scope = (pdf_extract.get("validationScopes") or {}).get("dimensions")
