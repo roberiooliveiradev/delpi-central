@@ -3,6 +3,7 @@ import {
   mergeTablePartsWithOptions,
   presetDefaultTableOptions,
   tableElementPrimaryPartRef,
+  clearTablePartThemePaint,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,

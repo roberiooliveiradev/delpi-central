@@ -28,6 +28,7 @@ import {
   tableElementPrimaryPartRef,
   upsertTablePartState,
   applyTablePartStyleToParts,
+  clearTablePartThemePaint,
   getTablePartState,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
