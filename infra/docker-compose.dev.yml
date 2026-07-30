@@ -887,6 +887,21 @@ services:
       - delpi-network
 
 
+
+  comite-etica-conduta:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: comite-etica-conduta/Dockerfile
+      target: production
+    container_name: delpi-comite-etica-conduta
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    networks:
+      - delpi-network
+
+
   scrap-monitoring:
     <<: *plugin-ui-federated
     build:
@@ -1469,6 +1484,75 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/signatures:/app/data/cipa/signatures
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/attachments:/app/data/cipa/attachments
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/pdfs:/app/data/cipa/pdfs
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - core-api
+
+    networks:
+      - delpi-network
+
+
+
+  comite-etica-conduta-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: comite-etica-conduta-api/Dockerfile
+
+    container_name: delpi-comite-etica-conduta-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      CEC_API_ROOT_PATH: /apps/comite-etica-conduta-api
+      CEC_RUN_MIGRATIONS_ON_STARTUP: ${CEC_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CORE_API_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-${API_DELPI_INTERNAL_SERVICE_TOKEN:-}}
+      CEC_PORTAL_NOTIFICATIONS_ENABLED: ${CEC_PORTAL_NOTIFICATIONS_ENABLED:-true}
+      CEC_MAIL_ENABLED: ${CEC_MAIL_ENABLED:-true}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+      # Outlook/Graph — mesmas credenciais do Delpi Reports (fallback no Settings)
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
+      GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      CEC_SIGNATURE_UPLOAD_DIR: /app/data/comite-etica-conduta/signatures
+      CEC_ATTACHMENT_UPLOAD_DIR: /app/data/comite-etica-conduta/attachments
+      CEC_PDF_UPLOAD_DIR: /app/data/comite-etica-conduta/pdfs
+
+    volumes:
+      - ../comite-etica-conduta-api:/app
+      - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/comite-etica-conduta/signatures:/app/data/comite-etica-conduta/signatures
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/comite-etica-conduta/attachments:/app/data/comite-etica-conduta/attachments
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/comite-etica-conduta/pdfs:/app/data/comite-etica-conduta/pdfs
 
     depends_on:
       - keycloak

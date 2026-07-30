@@ -76,6 +76,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
+| `plugins/comite-etica-conduta` | `comite-etica-conduta` | microfrontend | plugin | `/apps/comite-etica-conduta` | `delpi-comite-etica-conduta` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
@@ -127,6 +128,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Experiência do Cliente | `/apps/customer-experience-api/*` (participantes + formulários; público por token) |
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
+| Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
 
 ---
 

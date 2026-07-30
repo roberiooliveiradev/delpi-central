@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "comite-etica-conduta",
+  "name": "Comitê de Ética e Conduta",
+  "description": "Registro e assinatura de atas do Comitê de Ética e Conduta, com cadastro de membros e notificações.",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/comite-etica-conduta",
+  "entry": "/apps/comite-etica-conduta/assets/remoteEntry.js",
+  "backend": {
+    "required": true,
+    "serviceName": "comite-etica-conduta-api",
+    "baseUrl": "/apps/comite-etica-conduta-api",
+    "validateJwt": true,
+    "issuer": "http://localhost/auth/realms/delpi",
+    "audience": "delpi-central"
+  },
+  "permissions": [
+    {
+      "code": "comite-etica-conduta.view",
+      "name": "Visualizar atas do Comitê de Ética",
+      "description": "Consultar atas, detalhes e trilha de auditoria.",
+      "module": "comite-etica-conduta"
+    },
+    {
+      "code": "comite-etica-conduta.manage",
+      "name": "Gerenciar atas e membros do Comitê de Ética",
+      "description": "Criar, editar, enviar, cancelar, finalizar atas e cadastrar membros do comitê.",
+      "module": "comite-etica-conduta"
+    },
+    {
+      "code": "comite-etica-conduta.sign",
+      "name": "Assinar atas do Comitê de Ética",
+      "description": "Assinar ou recusar atas pendentes e configurar a assinatura pessoal.",
+      "module": "comite-etica-conduta"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/comite-etica-conduta",
+      "label": "Comitê de Ética e Conduta",
+      "permission": "comite-etica-conduta.view",
+      "icon": "clipboard-check-icon",
+      "order": 45,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/comite-etica-conduta/atas",
+      "label": "Atas",
+      "permission": "comite-etica-conduta.view",
+      "icon": "clipboard-check-icon",
+      "order": 46,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/comite-etica-conduta/membros",
+      "label": "Membros do Comitê",
+      "permission": "comite-etica-conduta.manage",
+      "icon": "users-icon",
+      "order": 47,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/comite-etica-conduta/minha-assinatura",
+      "label": "Minha assinatura",
+      "permission": "comite-etica-conduta.sign",
+      "icon": "pen-icon",
+      "order": 48,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

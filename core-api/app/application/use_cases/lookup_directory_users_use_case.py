@@ -8,7 +8,7 @@ class LookupDirectoryUsersUseCase:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    def execute(self, *, user_ids: list[str]) -> list[dict]:
+    def execute(self, *, user_ids: list[str], mask_email: bool = True) -> list[dict]:
         normalized_ids: list[UUID] = []
 
         for value in user_ids:
@@ -26,7 +26,7 @@ class LookupDirectoryUsersUseCase:
             {
                 "id": str(user.id),
                 "name": user.name,
-                "email": _mask_email(user.email),
+                "email": _mask_email(user.email) if mask_email else user.email,
             }
             for user in users
             if user.active

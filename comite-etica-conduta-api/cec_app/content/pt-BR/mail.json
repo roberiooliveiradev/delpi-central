@@ -1,0 +1,13 @@
+{
+  "signPending": {
+    "subject": "Assinatura pendente — Ata {{minuteNumber}} do Comitê de Ética",
+    "headerTitle": "Comitê de Ética e Conduta",
+    "headerSubtitle": "Integridade, respeito e responsabilidade",
+    "greeting": "Olá, {{displayName}}.",
+    "intro": "A ata {{minuteNumber}} — {{title}} — foi enviada para sua assinatura no Minha DELPI.",
+    "ctaLabel": "Assinar ata no portal",
+    "footerSite": "www.delpi.com.br",
+    "footerMeta": "Minha DELPI — Comitê de Ética e Conduta",
+    "footerNote": "Esta mensagem foi enviada automaticamente. Use o botão acima para assinar no portal."
+  }
+}

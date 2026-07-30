@@ -6,6 +6,9 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
+from app.application.use_cases.lookup_directory_users_use_case import (
+    LookupDirectoryUsersUseCase,
+)
 from app.application.use_cases.search_directory_users_use_case import (
     SearchDirectoryUsersUseCase,
 )
@@ -23,6 +26,7 @@ integrations_directory_bp = Blueprint(
 )
 
 _PAC_QUALITY_APP_ID = "quality-action-plans"
+_LOOKUP_MAX_IDS = 50
 
 
 @integrations_directory_bp.route("/users", methods=["GET"])
@@ -52,6 +56,39 @@ def search_integration_directory_users():
         logger.exception("search_integration_directory_users_failed")
         return api_error(
             "search_integration_directory_users_failed",
+            "Erro ao buscar usuários.",
+            status=500,
+        )
+
+    return jsonify({"items": results}), 200
+
+
+@integrations_directory_bp.route("/users/lookup", methods=["POST"])
+@require_service_token()
+@integration_rate_limit()
+def lookup_integration_directory_users():
+    """Resolve e-mails SMTP reais por user ids (S2S — envio Graph/Outlook)."""
+    body = request.get_json(silent=True) or {}
+    raw_ids = body.get("ids") if isinstance(body, dict) else None
+    if not isinstance(raw_ids, list):
+        return api_error("validation_error", "ids must be an array", status=400)
+    if len(raw_ids) > _LOOKUP_MAX_IDS:
+        return api_error(
+            "validation_error",
+            f"ids must contain at most {_LOOKUP_MAX_IDS} items",
+            status=400,
+        )
+
+    try:
+        with SqlAlchemyUnitOfWork() as uow:
+            results = LookupDirectoryUsersUseCase(uow).execute(
+                user_ids=[str(item) for item in raw_ids if item],
+                mask_email=False,
+            )
+    except Exception:
+        logger.exception("lookup_integration_directory_users_failed")
+        return api_error(
+            "lookup_integration_directory_users_failed",
             "Erro ao buscar usuários.",
             status=500,
         )

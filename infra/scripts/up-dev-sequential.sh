@@ -141,6 +141,7 @@ FASE_MFE=(
   canal-denuncia
   reports
   cipa
+  comite-etica-conduta
   quality-labels
   tv-dashboard
   public-hub
@@ -152,6 +153,7 @@ FASE_API=(
   transformometro-api
   maintenance-api
   cipa-api
+  comite-etica-conduta-api
   customer-experience-api
   tv-dashboard-api
 )
