@@ -108,6 +108,21 @@ class MediaRepository:
                 rows = cur.fetchall()
         return [_row_to_asset(row) for row in rows]
 
+    def delete(self, playlist_id: UUID, asset_id: UUID) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM tv_dashboard.media_assets
+                    WHERE id = %s AND playlist_id = %s
+                    RETURNING *
+                    """,
+                    (str(asset_id), str(playlist_id)),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return _row_to_asset(row) if row else None
+
     def get_for_token(self, token: str, asset_id: UUID) -> dict[str, Any] | None:
         with get_connection() as conn:
             with conn.cursor() as cur:

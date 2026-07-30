@@ -7887,6 +7887,9 @@ body.td-composer--marqueeing *{
   max-height: min(60vh, 520px);
   overflow-y: auto;
 }
+.dashboard-tv-dashboard .td-media-library__item{
+  position: relative;
+}
 .dashboard-tv-dashboard .td-media-library__card{
   display: flex;
   flex-direction: column;
@@ -7902,6 +7905,38 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-media-library__card:hover{
   border-color: color-mix(in srgb, var(--td-accent) 45%, var(--td-border));
   background: color-mix(in srgb, var(--td-accent) 6%, var(--td-surface));
+}
+.dashboard-tv-dashboard .td-media-library__delete{
+  appearance: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, #ef4444 45%, transparent);
+  background: color-mix(in srgb, #0f172a 78%, transparent);
+  color: #fecaca;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.dashboard-tv-dashboard .td-media-library__item:hover .td-media-library__delete,
+.dashboard-tv-dashboard .td-media-library__item:focus-within .td-media-library__delete,
+.dashboard-tv-dashboard .td-media-library__delete:focus-visible{
+  opacity: 1;
+}
+.dashboard-tv-dashboard .td-media-library__delete:hover:not(:disabled){
+  background: color-mix(in srgb, #ef4444 35%, #0f172a);
+}
+.dashboard-tv-dashboard .td-media-library__delete:disabled{
+  opacity: 0.35;
+  cursor: default;
 }
 .dashboard-tv-dashboard .td-media-library__thumb{
   aspect-ratio: 16 / 10;

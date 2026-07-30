@@ -91,3 +91,22 @@ def serve_media(request: Request, playlist_id: UUID, asset_id: UUID):
         mime_type=asset["mimeType"],
         range_header=request.headers.get("range"),
     )
+
+
+@router.delete("/{asset_id}")
+def delete_media(request: Request, playlist_id: UUID, asset_id: UUID):
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    deleted = _media_repo.delete(playlist_id, asset_id)
+    if not deleted:
+        return fail(message("mediaNotFound", "Mídia não encontrada."), 404)
+    _storage.delete(deleted.get("storedName"))
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="media_deleted",
+    )
+    return ok(
+        {"id": deleted["id"], "deleted": True},
+        message=message("mediaDeleted", "Mídia excluída."),
+    )

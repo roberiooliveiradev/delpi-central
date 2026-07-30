@@ -1,9 +1,10 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Image as ImageIcon, Type, Upload, Video } from "lucide-react";
+import { Image as ImageIcon, Trash2, Type, Upload, Video } from "lucide-react";
 
 import {
   adminMediaUrl,
+  deletePlaylistMedia,
   listPlaylistMedia,
   uploadPlaylistMedia,
   type MediaAsset,
@@ -102,6 +103,7 @@ export function MediaLibraryModal({
   const [items, setItems] = useState<MediaAsset[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,7 +158,26 @@ export function MediaLibraryModal({
     }
   }
 
-  const busy = uploading || loading;
+  async function handleDelete(asset: MediaAsset) {
+    const label = asset.originalName ?? asset.storedName;
+    const confirmed = window.confirm(
+      `Excluir “${label}”? Slides que usam este arquivo ficam sem mídia.`,
+    );
+    if (!confirmed) return;
+    setDeletingId(asset.id);
+    setError(null);
+    try {
+      await deletePlaylistMedia(playlistId, asset.id);
+      setItems((current) => current.filter((item) => item.id !== asset.id));
+      onUploaded();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Falha ao excluir arquivo.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const busy = uploading || loading || deletingId != null;
 
   return (
     <HostContainedDialog open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
@@ -209,7 +230,7 @@ export function MediaLibraryModal({
       ) : null}
       <ul className="td-media-library__grid">
         {filtered.map((asset) => (
-          <li key={asset.id}>
+          <li key={asset.id} className="td-media-library__item">
             <button
               type="button"
               className="td-media-library__card"
@@ -230,6 +251,20 @@ export function MediaLibraryModal({
                     : "Imagem"}{" "}
                 · {formatBytes(asset.fileSizeBytes)}
               </span>
+            </button>
+            <button
+              type="button"
+              className="td-media-library__delete"
+              title="Excluir da biblioteca"
+              aria-label={`Excluir ${asset.originalName ?? asset.storedName}`}
+              disabled={busy}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                void handleDelete(asset);
+              }}
+            >
+              <Trash2 size={14} aria-hidden />
             </button>
           </li>
         ))}

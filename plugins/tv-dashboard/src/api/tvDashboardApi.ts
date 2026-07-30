@@ -313,6 +313,14 @@ export async function listPlaylistMedia(playlistId: string, mediaKind?: "image" 
   return data.items;
 }
 
+export async function deletePlaylistMedia(playlistId: string, assetId: string) {
+  return unwrap(
+    httpDelete<ApiEnvelope<{ id: string; deleted: boolean }>>(
+      `${API_BASE}/playlists/${playlistId}/media/${assetId}`,
+    ),
+  );
+}
+
 export async function listPlaylists() {
   const data = await unwrap(httpGet<ApiEnvelope<{ items: Playlist[] }>>(`${API_BASE}/playlists`));
   return data.items;
