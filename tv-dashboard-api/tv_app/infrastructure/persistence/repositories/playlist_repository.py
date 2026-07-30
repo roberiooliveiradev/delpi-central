@@ -696,6 +696,47 @@ class PlaylistRepository:
             conn.commit()
         return _row_to_playlist(new_row)
 
+    def bulk_replace_asset_configs(
+        self,
+        playlist_id: UUID,
+        *,
+        master_config: dict[str, Any],
+        section_master_configs: dict[str, dict[str, Any]],
+        slide_native_configs: dict[str, dict[str, Any]],
+    ) -> None:
+        """Atualiza configs JSON já remapeados (pós-clonagem de mídia). Sem histórico por slide."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlists
+                    SET master_config = %s::jsonb, updated_at = NOW(), revision = revision + 1
+                    WHERE id = %s
+                    """,
+                    (json.dumps(master_config or {}), str(playlist_id)),
+                )
+                if cur.rowcount == 0:
+                    raise PlaylistNotFoundError
+                for section_id, config in section_master_configs.items():
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.playlist_sections
+                        SET master_config = %s::jsonb, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (json.dumps(config or {}), str(section_id), str(playlist_id)),
+                    )
+                for slide_id, config in slide_native_configs.items():
+                    cur.execute(
+                        """
+                        UPDATE tv_dashboard.slides
+                        SET native_config = %s::jsonb, updated_at = NOW()
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (json.dumps(config or {}), str(slide_id), str(playlist_id)),
+                    )
+            conn.commit()
+
     def duplicate_slide(
         self,
         playlist_id: UUID,

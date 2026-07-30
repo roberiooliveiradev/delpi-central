@@ -1556,6 +1556,7 @@ export function PlaylistEditorPage({
 
   async function handleDuplicateSlides(targets: Slide[]) {
     if (!playlist || targets.length === 0) return;
+    await flushPendingComunicadoSave();
     const unique = targets.filter(
       (slide, index, list) => list.findIndex((item) => item.id === slide.id) === index,
     );
@@ -1576,12 +1577,20 @@ export function PlaylistEditorPage({
   }
 
   function handleCopySlide(slide: Slide) {
-    slideClipboardRef.current = slidePayloadForClipboard(slide);
+    const liveConfig =
+      slide.id === selectedSlideId && liveComunicadoConfigRef.current
+        ? liveComunicadoConfigRef.current
+        : slide.nativeConfig;
+    slideClipboardRef.current = slidePayloadForClipboard({
+      ...slide,
+      nativeConfig: liveConfig ?? null,
+    });
     setSlideClipboardRevision((value) => value + 1);
   }
 
   async function handlePasteSlide() {
     if (!playlist || !slideClipboardRef.current) return;
+    await flushPendingComunicadoSave();
     const payload = slideClipboardRef.current;
     const anchorId = selectedSlideId ?? selectedSlide?.id ?? null;
     deckHistory.recordBeforeChange();

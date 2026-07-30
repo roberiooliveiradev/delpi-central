@@ -18,6 +18,7 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_dashboard_portal_notification_service import (
     notify_playlist_share_granted,
 )
+from tv_app.application.services.playlist_media_clone_service import PlaylistMediaCloneService
 from tv_app.application.services.tv_deck_package_service import (
     TvDeckPackageError,
     TvDeckPackageService,
@@ -36,6 +37,7 @@ _repo = PlaylistRepository()
 _present = PresentationPayloadService()
 _access = PlaylistAccessService()
 _deck_package = TvDeckPackageService()
+_media_clone = PlaylistMediaCloneService()
 
 
 class CreatePlaylistBody(BaseModel):
@@ -407,6 +409,16 @@ def duplicate_playlist(request: Request, playlist_id: UUID):
         return fail("Usuário não identificado.", 401)
     try:
         playlist = _repo.duplicate_playlist(playlist_id, created_by=created_by)
+        target_id = UUID(playlist["id"])
+        _media_clone.clone_media_and_remap(
+            source_playlist_id=playlist_id,
+            target_playlist_id=target_id,
+            created_by=created_by,
+        )
+        # Recarrega após remap de assetId (masterConfig / slides / seções).
+        refreshed = _repo.get_by_id(target_id)
+        if refreshed:
+            playlist = refreshed
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     _with_public_url(playlist)

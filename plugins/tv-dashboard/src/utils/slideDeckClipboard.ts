@@ -17,7 +17,9 @@ export function slidePayloadForClipboard(slide: Slide): SlideClipboardPayload {
     title: slide.title,
     durationSec: slide.durationSec ?? undefined,
     nativeScreenKey: slide.nativeScreenKey ?? undefined,
-    nativeConfig: slide.nativeConfig ? { ...slide.nativeConfig } : slide.nativeConfig,
+    nativeConfig: slide.nativeConfig
+      ? (JSON.parse(JSON.stringify(slide.nativeConfig)) as Record<string, unknown>)
+      : slide.nativeConfig,
     externalUrl: slide.externalUrl ?? undefined,
     transitionStyle: slide.transitionStyle ?? undefined,
     sectionId: slide.sectionId ?? undefined,

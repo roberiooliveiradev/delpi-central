@@ -38,10 +38,14 @@ def test_collect_asset_ids_nested():
     ids = collect_asset_ids(
         {
             "masterConfig": {"logo": {"assetId": "a1"}, "background": {"assetId": "a2"}},
-            "blocks": [{"type": "image", "assetId": "a3"}, {"customFonts": [{"assetId": "a4"}]}],
+            "blocks": [
+                {"type": "image", "assetId": "a3"},
+                {"type": "video", "assetId": "a5"},
+                {"customFonts": [{"assetId": "a4"}]},
+            ],
         }
     )
-    assert ids == {"a1", "a2", "a3", "a4"}
+    assert ids == {"a1", "a2", "a3", "a4", "a5"}
 
 
 def test_rewrite_asset_ids():
