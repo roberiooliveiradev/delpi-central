@@ -104,6 +104,9 @@ class ChatPresentationTextFirstPolicyService(ChatAssistantVocabularyService):
         if cls.looks_like_integrated_stack_request(user_message):
             return False
 
+        if cls.visual_bundle_policy(path, entity) == "eager":
+            return False
+
         profile = ChatPresentationProfileService.resolve_profile(path, entity)
         profile_key = ChatPresentationProfileService.resolve_profile_key(path, entity)
 

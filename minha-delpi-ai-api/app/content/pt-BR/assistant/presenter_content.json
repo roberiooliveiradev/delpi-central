@@ -341,7 +341,17 @@
     "payloadEnvelopeKeys": [
       "data",
       "item",
-      "result"
+      "result",
+      "orders",
+      "appointments",
+      "materials"
+    ],
+    "nestedSectionKeysPrefer": [
+      "orders",
+      "appointments",
+      "materials",
+      "production",
+      "shipping"
     ]
   },
   "compositeAnalysis": {

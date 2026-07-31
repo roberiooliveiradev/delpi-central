@@ -37705,8 +37705,8 @@
         }
       ],
       "xDelpi": {
-        "entity": "production_otd",
-        "shape": "paged_list",
+        "entity": "production_otd_detail",
+        "shape": "playbook_report",
         "category": "production",
         "locale": {
           "en": {

@@ -237,7 +237,11 @@ SELECTION_CASES = [
                 "path": "/production/otd",
                 "operationId": "get_production_otd",
                 "summary": "OTD produção — ordens",
-                "parametersSchema": [],
+                "parametersSchema": [
+                    {"name": "status", "in": "query"},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
             },
             {
                 "actionId": "production-otd",
@@ -249,6 +253,61 @@ SELECTION_CASES = [
             },
         ],
         "expected_action_id": "production-otd-detail",
+        "expected_parameters": {"status": "late"},
+    },
+    {
+        "message": "ops em atraso",
+        "actions": [
+            {
+                "actionId": "production-otd-detail",
+                "method": "GET",
+                "path": "/production/otd",
+                "operationId": "get_production_otd",
+                "summary": "OTD produção — ordens",
+                "parametersSchema": [
+                    {"name": "status", "in": "query"},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+            {
+                "actionId": "production-otd",
+                "method": "GET",
+                "path": "/production/on_time_delivery_pct",
+                "operationId": "get_on_time_delivery_pct",
+                "summary": "OTD produção percentual",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-otd-detail",
+        "expected_parameters": {"status": "late"},
+    },
+    {
+        "message": "ordens de produção em atraso",
+        "actions": [
+            {
+                "actionId": "production-otd-detail",
+                "method": "GET",
+                "path": "/production/otd",
+                "operationId": "get_production_otd",
+                "summary": "OTD produção — ordens",
+                "parametersSchema": [
+                    {"name": "status", "in": "query"},
+                    {"name": "page", "in": "query"},
+                    {"name": "page_size", "in": "query"},
+                ],
+            },
+            {
+                "actionId": "production-otd",
+                "method": "GET",
+                "path": "/production/on_time_delivery_pct",
+                "operationId": "get_on_time_delivery_pct",
+                "summary": "OTD produção percentual",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-otd-detail",
+        "expected_parameters": {"status": "late"},
     },
     {
         "message": "listar apontamentos oee fora da faixa",

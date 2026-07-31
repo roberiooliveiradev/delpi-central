@@ -255,6 +255,21 @@ Delegates extraídos (score, metadata, builder, intent operacional). `ChatPresen
 
 ---
 
+## Nested lists + slots de status (jul/2026)
+
+Família de payloads com **summary + lista aninhada** (ex.: `orders.items`, `appointments.items`, `materials.items`):
+
+| Camada | Onde |
+|--------|------|
+| Extração tabular | `presenter_content.json` → `schemaDriven.payloadEnvelopeKeys` / `nestedSectionKeysPrefer` + `ChatSchemaDrivenPresentationService.extract_tabular_rows` |
+| Automático KPI | perfil `kpi_dashboard`: `visualBundlePolicy: eager`, `viewOrder` com kpi/table antes de text |
+| Commentary | `summaryFirstCommentary` em `humanized_data_response.json` — facts do `summary`, não soma de `days_diff` |
+| Slot `status` | `api_route_domains.json` (`status_term_map`) + `OperationalApiParameterBuilderService` na estratégia `date_branch` |
+
+Contrato OTD detalhe: `get_production_otd` → entity `production_otd_detail`, shape `playbook_report` (percentual agregado permanece em `get_on_time_delivery_pct` / `production_otd` scalar).
+
+---
+
 ## Testes e gates
 
 ```bash
@@ -287,6 +302,7 @@ Regressão de intenção: `tests/fixtures/chat_intelligence_regression_cases.py`
 | jun/2026 | Playbook 22 Fase C — `ChatPresentationApiDeliveredMetadataService` único caminho |
 | jun/2026 | Remoção de 12 módulos legacy + 21 presenters por entidade |
 | jun/2026 | `dataAnswer` re-ligado ao caminho as-delivered |
+| jul/2026 | Nested list keys + slot `status` em `date_branch`; OTD detail `production_otd_detail` |
 | jun/2026 | Fase 3 — limpeza JSON (`visualBuilders`/`tableAssembly`), gates auditoria, stubs presenter |
 | jun/2026 | Fase 3b — rich stack automático desligado em `as_delivered`; `structure_exclusivity` → `on_demand` |
 | jun/2026 | Fase 9 — fachada `ChatPresentationDecisionService` mínima (~85 linhas) |

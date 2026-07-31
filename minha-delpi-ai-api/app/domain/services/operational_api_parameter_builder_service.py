@@ -378,8 +378,40 @@ class OperationalApiParameterBuilderService:
         if source == "granularity_inferred":
             return cls._infer_granularity(normalized, date_range, spec)
 
+        if source == "status_term_map":
+            return cls._infer_status_from_term_map(normalized, binding)
+
         if source == "literal":
             return binding.get("value")
+
+        return None
+
+    @classmethod
+    def _infer_status_from_term_map(
+        cls,
+        normalized: str,
+        binding: dict[str, Any],
+    ) -> str | None:
+        term_map = binding.get("termMap")
+
+        if not isinstance(term_map, dict) or not normalized:
+            return None
+
+        prefer = binding.get("preferOrder")
+        order = (
+            [str(key) for key in prefer]
+            if isinstance(prefer, list) and prefer
+            else list(term_map.keys())
+        )
+
+        for status_value in order:
+            markers = term_map.get(status_value)
+
+            if not isinstance(markers, list):
+                continue
+
+            if any(str(marker) in normalized for marker in markers if str(marker).strip()):
+                return str(status_value)
 
         return None
 

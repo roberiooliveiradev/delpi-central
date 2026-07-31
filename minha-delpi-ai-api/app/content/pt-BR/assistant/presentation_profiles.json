@@ -1277,18 +1277,20 @@
     },
     "kpi_dashboard": {
       "defaultViewPolicy": "generic",
+      "visualBundlePolicy": "eager",
       "viewOrder": [
-        "text",
-        "dashboard",
         "kpi",
+        "table",
+        "dashboard",
         "chart",
-        "table"
+        "text"
       ],
       "stackPlan": "default",
       "flags": [
         "kpi",
         "dashboard"
-      ]
+      ],
+      "commentaryProfileKey": "kpi_summary"
     },
     "generic": {
       "defaultViewPolicy": "generic",

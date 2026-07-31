@@ -35,8 +35,15 @@ _TABULAR_LIST_KEYS = (
     "points",
     "indicators",
 )
-_PAYLOAD_ENVELOPE_KEYS = ("data", "item", "result")
+_PAYLOAD_ENVELOPE_KEYS = ("data", "item", "result", "orders", "appointments", "materials")
 _TREE_CHILD_KEYS = ("children", "components", "items", "nodes")
+_NESTED_SECTION_KEYS_PREFER = (
+    "orders",
+    "appointments",
+    "materials",
+    "production",
+    "shipping",
+)
 
 
 class SchemaDrivenPresenterHost(Protocol):
@@ -1203,6 +1210,11 @@ class ChatSchemaDrivenPresentationService:
             if nested_rows:
                 return nested_rows
 
+        nested_section_rows = cls._extract_nested_section_rows(root)
+
+        if nested_section_rows:
+            return nested_section_rows
+
         for key in cls._single_record_object_keys():
             candidate = root.get(key)
 
@@ -1210,6 +1222,55 @@ class ChatSchemaDrivenPresentationService:
                 return [candidate]
 
         return []
+
+    @classmethod
+    def _extract_nested_section_rows(cls, root: dict[str, Any]) -> list[dict[str, Any]]:
+        """Seções tipo ``orders.items`` / ``materials.items`` (mesmo padrão do insight)."""
+        preferred = cls._nested_section_keys_prefer()
+        ordered_keys = list(preferred)
+
+        for key, value in root.items():
+            token = str(key)
+
+            if token in ordered_keys:
+                continue
+
+            if isinstance(value, dict) and isinstance(value.get("items"), list):
+                ordered_keys.append(token)
+
+        for key in ordered_keys:
+            block = root.get(key)
+
+            if not isinstance(block, dict):
+                continue
+
+            items = block.get("items")
+
+            if not isinstance(items, list) or not items:
+                continue
+
+            rows = [row for row in items if isinstance(row, dict)]
+
+            if rows:
+                return rows
+
+        return []
+
+    @classmethod
+    def _nested_section_keys_prefer(cls) -> tuple[str, ...]:
+        raw = ChatAssistantContentService.list(
+            "presenter_content",
+            "schemaDriven",
+            "nestedSectionKeysPrefer",
+        )
+
+        if not raw:
+            return _NESTED_SECTION_KEYS_PREFER
+
+        return (
+            tuple(str(item).strip() for item in raw if str(item).strip())
+            or _NESTED_SECTION_KEYS_PREFER
+        )
 
     @classmethod
     def _tabular_list_keys(cls) -> tuple[str, ...]:

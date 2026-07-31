@@ -113,6 +113,37 @@ def test_extract_tabular_rows_from_department_indicators_item_envelope():
     assert rows[0]["indicator_id"] == "a"
 
 
+def test_extract_tabular_rows_from_nested_orders_items_envelope():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "summary": {"late_ops": 2, "on_time_ops": 8},
+            "orders": {
+                "items": [
+                    {"op": "1", "status": "late", "days_diff": -3},
+                    {"op": "2", "status": "late", "days_diff": -1},
+                ]
+            },
+        }
+    )
+
+    assert len(rows) == 2
+    assert rows[0]["status"] == "late"
+
+
+def test_extract_tabular_rows_from_preferred_nested_section_without_envelope_key():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "summary": {"total": 1},
+            "production": {
+                "items": [{"op": "A", "qty": 10}],
+            },
+        }
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["op"] == "A"
+
+
 def test_build_kpi_from_scalar_metrics():
     presenter = ExternalActionResultPresenter()
     root = {

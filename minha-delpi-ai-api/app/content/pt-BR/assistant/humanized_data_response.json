@@ -299,6 +299,51 @@
     "largeList": "A lista é extensa; considere filtros ou paginação para focar o que importa.",
     "numericTotal": "Total de **{field}**: **{total}**."
   },
+  "summaryFirstCommentary": {
+    "minPreferredKeys": 1,
+    "preferredKeys": [
+      "on_time_delivery_pct",
+      "late_ops",
+      "on_time_ops",
+      "late_percentage",
+      "total_ops",
+      "total_orders",
+      "oee_pct",
+      "availability_pct",
+      "performance_pct",
+      "quality_pct",
+      "efficiency_pct",
+      "appointments_count",
+      "valid_appointments",
+      "outlier_appointments"
+    ],
+    "skipNumericRowKeys": [
+      "days_diff",
+      "days_late",
+      "day_diff",
+      "op",
+      "order",
+      "sequence",
+      "sequen"
+    ],
+    "metricLine": "**{label}**: **{value}**.",
+    "labels": {
+      "on_time_delivery_pct": "OTD %",
+      "late_ops": "OPs em atraso",
+      "on_time_ops": "OPs no prazo",
+      "late_percentage": "% em atraso",
+      "total_ops": "Total de OPs",
+      "total_orders": "Total de ordens",
+      "oee_pct": "OEE %",
+      "availability_pct": "Disponibilidade %",
+      "performance_pct": "Performance %",
+      "quality_pct": "Qualidade %",
+      "efficiency_pct": "Eficiência %",
+      "appointments_count": "Apontamentos",
+      "valid_appointments": "Apontamentos válidos",
+      "outlier_appointments": "Apontamentos fora da faixa"
+    }
+  },
   "anomalies": {
     "empty_list": "Não há registros na consulta ({scope}).",
     "negative_value": "Valor negativo em **{field}** ({scope}).",
@@ -474,6 +519,12 @@
       "contentSection": "genericList",
       "builderStrategy": "none",
       "templateProseCommentary": "full"
+    },
+    "kpi_summary": {
+      "contentSection": "summaryFirstCommentary",
+      "builderStrategy": "none",
+      "templateProseCommentary": "full",
+      "visualHints": ["kpi", "table"]
     },
     "generic_kpi_series": {
       "contentSection": "genericKpiSeries",

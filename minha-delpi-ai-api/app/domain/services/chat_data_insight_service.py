@@ -251,41 +251,51 @@ class ChatDataInsightService:
         shape = ChatPresentationDataShapeAnalyzer.analyze(rows=rows)
         highlights: list[str] = []
         attention: list[str] = []
+        summary_highlights = cls._highlights_from_operational_summary(data)
+        profile_key = "kpi_summary" if summary_highlights else "generic_list"
         commentary: dict[str, Any] = {
-            "profileKey": "generic_list",
+            "profileKey": profile_key,
         }
 
+        if summary_highlights:
+            highlights.extend(summary_highlights)
+
         if not rows:
-            highlights.append(
-                ChatHumanizedDataResponseContentService.get("generic", "emptyList")
-            )
+            if not highlights:
+                highlights.append(
+                    ChatHumanizedDataResponseContentService.get("generic", "emptyList")
+                )
             commentary["highlights"] = highlights
-            commentary["summaryLines"] = highlights
-            return commentary
-
-        highlights.append(
-            ChatHumanizedDataResponseContentService.format(
-                "generic",
-                "rowCount",
-                count=str(len(rows)),
+            commentary["summaryLines"] = highlights[:4]
+            return ChatHumanizedDataResponseService.normalize(
+                commentary,
+                profile_key=profile_key,
             )
-        )
 
-        recommended = str(shape.get("recommended") or "table").strip()
-        visual_label = ChatHumanizedDataResponseContentService.get(
-            "visualHints",
-            recommended,
-            default=recommended,
-        )
-
-        if visual_label:
+        if not summary_highlights:
             highlights.append(
                 ChatHumanizedDataResponseContentService.format(
                     "generic",
-                    "shapeRecommend",
-                    visual=visual_label,
+                    "rowCount",
+                    count=str(len(rows)),
                 )
             )
+
+            recommended = str(shape.get("recommended") or "table").strip()
+            visual_label = ChatHumanizedDataResponseContentService.get(
+                "visualHints",
+                recommended,
+                default=recommended,
+            )
+
+            if visual_label:
+                highlights.append(
+                    ChatHumanizedDataResponseContentService.format(
+                        "generic",
+                        "shapeRecommend",
+                        visual=visual_label,
+                    )
+                )
 
         if int(shape.get("rows") or 0) > 25:
             from app.domain.services.chat_operational_result_completeness_service import (
@@ -315,25 +325,35 @@ class ChatDataInsightService:
                     commentary["limitations"] = limitations
 
         numeric_keys = shape.get("numericKeys") or []
+        skip_numeric = {
+            str(token).strip().casefold()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "summaryFirstCommentary",
+                "skipNumericRowKeys",
+            )
+            if str(token).strip()
+        }
 
-        if numeric_keys and rows:
+        if numeric_keys and rows and not summary_highlights:
             key = str(numeric_keys[0])
-            values = [
-                float(row.get(key))
-                for row in rows
-                if isinstance(row.get(key), (int, float)) and not isinstance(row.get(key), bool)
-            ]
 
-            if values:
-                total = sum(values)
-                highlights.append(
-                    ChatHumanizedDataResponseContentService.format(
-                        "generic",
-                        "numericTotal",
-                        field=key,
-                        total=cls._format_number(total),
+            if key.casefold() not in skip_numeric:
+                values = [
+                    float(row.get(key))
+                    for row in rows
+                    if isinstance(row.get(key), (int, float)) and not isinstance(row.get(key), bool)
+                ]
+
+                if values:
+                    total = sum(values)
+                    highlights.append(
+                        ChatHumanizedDataResponseContentService.format(
+                            "generic",
+                            "numericTotal",
+                            field=key,
+                            total=cls._format_number(total),
+                        )
                     )
-                )
 
         commentary["highlights"] = highlights
         commentary["attention"] = attention
@@ -342,8 +362,89 @@ class ChatDataInsightService:
 
         return ChatHumanizedDataResponseService.normalize(
             commentary,
-            profile_key="generic_list",
+            profile_key=profile_key,
         )
+
+    @classmethod
+    def _highlights_from_operational_summary(cls, data: dict[str, Any]) -> list[str]:
+        """Facts a partir de ``summary`` (KPI), não da 1ª coluna numérica da lista."""
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        if not isinstance(data, dict):
+            return []
+
+        summary = data.get("summary")
+
+        if not isinstance(summary, dict) or not summary:
+            nested = data.get("data")
+
+            if isinstance(nested, dict) and isinstance(nested.get("summary"), dict):
+                summary = nested["summary"]
+            else:
+                return []
+
+        preferred = [
+            str(token).strip()
+            for token in ChatHumanizedDataResponseContentService.list(
+                "summaryFirstCommentary",
+                "preferredKeys",
+            )
+            if str(token).strip()
+        ]
+
+        if not preferred:
+            return []
+
+        labels = ChatHumanizedDataResponseContentService.get_mapping(
+            "summaryFirstCommentary",
+            "labels",
+        )
+        min_keys_raw = ChatHumanizedDataResponseContentService.get_node(
+            "summaryFirstCommentary",
+            "minPreferredKeys",
+        )
+
+        try:
+            min_keys = int(min_keys_raw) if min_keys_raw is not None else 1
+        except (TypeError, ValueError):
+            min_keys = 1
+
+        lines: list[str] = []
+
+        for key in preferred:
+            if key not in summary:
+                continue
+
+            value = summary.get(key)
+
+            if value is None or isinstance(value, bool):
+                continue
+
+            if isinstance(value, (int, float)):
+                formatted = cls._format_number(value)
+            else:
+                formatted = str(value).strip()
+
+            if not formatted:
+                continue
+
+            label = str(labels.get(key) or key).strip() or key
+            line = ChatHumanizedDataResponseContentService.format(
+                "summaryFirstCommentary",
+                "metricLine",
+                label=label,
+                value=formatted,
+            )
+
+            if line:
+                lines.append(line)
+
+        if len(lines) < max(1, min_keys):
+            return []
+
+        return lines
 
     @classmethod
     def _apply_truncation_flags(

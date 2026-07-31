@@ -236,6 +236,49 @@ def test_finalize_metadata_clears_text_and_rebuilds_render_plan():
     assert lead["source"] == "assistantMessage"
 
 
+def test_restore_prose_if_no_visual_evidence_restores_archived_markdown():
+    metadata = {
+        "textPresentation": {"markdown": ""},
+        "humanizedSummary": {"titulo": "OTD", "linhas": []},
+        "templateProseArchive": {
+            "textPresentationMarkdown": "### OTD\n\n25 OPs em atraso.",
+            "humanizedSummary": {"titulo": "OTD", "linhas": ["25 OPs em atraso."]},
+        },
+        "renderPlan": {"segments": [{"kind": "decision", "slot": "lead"}]},
+        "llmProseDecoupled": True,
+    }
+
+    restored = ChatPresentationDataOnlyProseService.restore_prose_if_no_visual_evidence(metadata)
+
+    assert restored is True
+    assert metadata["textPresentation"]["markdown"].startswith("### OTD")
+    assert metadata["humanizedSummary"]["linhas"] == ["25 OPs em atraso."]
+    assert metadata.get("dataOnlyProseRestored") is True
+    assert metadata.get("llmProseDecoupled") is False
+
+
+def test_restore_prose_if_no_visual_evidence_keeps_strip_when_kpi_present():
+    metadata = {
+        "textPresentation": {"markdown": ""},
+        "templateProseArchive": {
+            "textPresentationMarkdown": "texto arquivado",
+        },
+        "renderPlan": {
+            "segments": [
+                {"kind": "decision", "slot": "lead"},
+                {"kind": "kpi", "slot": "primary", "source": "kpiPresentation"},
+            ]
+        },
+        "llmProseDecoupled": True,
+    }
+
+    restored = ChatPresentationDataOnlyProseService.restore_prose_if_no_visual_evidence(metadata)
+
+    assert restored is False
+    assert metadata["textPresentation"]["markdown"] == ""
+    assert metadata.get("llmProseDecoupled") is True
+
+
 def test_apply_pipeline_marks_data_only_when_llm_narrates():
     metadata = {
         "path": "/products/90269002/factory-status",

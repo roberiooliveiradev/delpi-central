@@ -555,6 +555,20 @@ class ChatOperationalDateParameterService:
         if ChatProductionOperationalIntentService.matches_rest_route(message):
             return None
 
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        # Listagens OTD/OEE (summary+itens) aceitam consulta sem período explícito.
+        if OperationalRouteMatcherService.matches_custom_predicate(
+            "productionOtdDetailRoute",
+            normalized,
+        ) or OperationalRouteMatcherService.matches_custom_predicate(
+            "productionOeeDetailRoute",
+            normalized,
+        ):
+            return None
+
         if cls.has_temporal_reference(message, previous_messages=previous_messages):
             return None
 

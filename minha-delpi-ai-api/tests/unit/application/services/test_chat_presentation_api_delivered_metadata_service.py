@@ -95,3 +95,52 @@ def test_api_delivered_metadata_for_safety_stock_detail_composite():
     assert isinstance(dashboard, dict)
     assert dashboard.get("type") == "dashboard"
     assert "table" in meta.get("availableFormats", [])
+
+
+def test_api_delivered_metadata_for_production_otd_nested_orders():
+    use_case = _use_case()
+    envelope = load_api_delpi_fixture_with_meta("production_otd_late_summary.json")
+    path = "/production/otd"
+    data = envelope["data"]
+
+    meta = ChatPresentationApiDeliveredMetadataService.build(
+        action={"path": path},
+        sanitized_data=data,
+        resolved_path=path,
+        request_parameters={"status": "late", "userMessage": "ops em atraso"},
+        presenter=use_case.presenter,
+        extract_response_meta=lambda _data: envelope.get("meta"),
+    )
+
+    decision = meta.get("presentationDecision") or {}
+    selected = str(decision.get("selected") or "").strip().lower()
+    assert selected in {"kpi", "table", "dashboard"}
+    assert "kpi" not in (decision.get("suppressedKinds") or [])
+
+    data_shape = decision.get("dataShape") or meta.get("dataShape") or {}
+    assert int(data_shape.get("rows") or 0) > 0
+
+    table = meta.get("tablePresentation")
+    if not isinstance(table, dict):
+        primary = meta.get("presentation")
+        table = primary if isinstance(primary, dict) and primary.get("type") == "table" else None
+
+    assert isinstance(table, dict)
+    rows = table.get("rows")
+    assert isinstance(rows, list) and len(rows) >= 2
+
+    data_answer = meta.get("dataAnswer") or {}
+    summary = data_answer.get("summary") if isinstance(data_answer.get("summary"), dict) else {}
+    facts = data_answer.get("facts") or []
+    fact_text = " ".join(
+        [
+            str(summary.get("answer") or ""),
+            str(summary.get("meaning") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in facts
+            ],
+        ]
+    )
+    assert "atraso" in fact_text.casefold() or "otd" in fact_text.casefold()
+    assert "days_diff" not in fact_text.casefold()

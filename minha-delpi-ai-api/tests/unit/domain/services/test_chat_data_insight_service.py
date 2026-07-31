@@ -422,3 +422,52 @@ def test_build_generic_commentary_does_not_mark_cost_impact_as_empty_without_tab
     assert "não retornou registros" not in answer
     assert "nao retornou registros" not in answer
     assert "1" in answer
+
+
+def test_build_summary_first_commentary_prefers_summary_over_days_diff_total():
+    metadata = {
+        "path": "/production/otd",
+        "apiDelpiResponseMeta": {
+            "entity": "production_otd_detail",
+            "shape": "playbook_report",
+        },
+        "tablePresentation": {
+            "type": "table",
+            "rows": [
+                {"op": "1", "status": "late", "days_diff": -4},
+                {"op": "2", "status": "late", "days_diff": -2},
+            ],
+        },
+    }
+    data = {
+        "summary": {
+            "late_ops": 25,
+            "on_time_ops": 95,
+            "on_time_delivery_pct": 79.17,
+        },
+        "orders": {
+            "items": [
+                {"op": "1", "status": "late", "days_diff": -4},
+                {"op": "2", "status": "late", "days_diff": -2},
+            ]
+        },
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "kpi_summary"
+    summary = data_answer.get("summary") if isinstance(data_answer.get("summary"), dict) else {}
+    facts = data_answer.get("facts") or []
+    fact_text = " ".join(
+        [
+            str(summary.get("answer") or ""),
+            str(summary.get("meaning") or ""),
+            *[
+                str(item.get("text") if isinstance(item, dict) else item)
+                for item in facts
+            ],
+        ]
+    )
+    assert "atraso" in fact_text.casefold() or "otd" in fact_text.casefold()
+    assert "days_diff" not in fact_text.casefold()

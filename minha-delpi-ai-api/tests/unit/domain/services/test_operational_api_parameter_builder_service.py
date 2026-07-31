@@ -136,3 +136,37 @@ def test_merge_date_range_adds_missing_dates():
     assert merged["page"] == 1
     assert merged["start_date"] == "01-03-2026"
     assert merged["end_date"] == "31-03-2026"
+
+
+def test_build_date_branch_binds_status_late_from_atraso_terms():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "status", "in": "query"},
+                {"name": "page", "in": "query"},
+                {"name": "page_size", "in": "query"},
+            ],
+        },
+        "ops em atraso",
+    )
+
+    assert parameters["status"] == "late"
+    assert parameters["page"] == 1
+    assert parameters["page_size"] == 50
+
+
+def test_build_date_branch_binds_status_on_time_from_no_prazo():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "status", "in": "query"},
+            ],
+        },
+        "ops no prazo na producao",
+    )
+
+    assert parameters["status"] == "on_time"

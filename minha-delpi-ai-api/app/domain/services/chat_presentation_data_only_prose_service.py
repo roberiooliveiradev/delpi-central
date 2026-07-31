@@ -357,6 +357,7 @@ class ChatPresentationDataOnlyProseService:
         )
 
         ChatPresentationRenderPipelineService.finalize(metadata)
+        cls.restore_prose_if_no_visual_evidence(metadata)
         return True
 
     @classmethod
@@ -373,3 +374,71 @@ class ChatPresentationDataOnlyProseService:
         )
 
         ChatPresentationRenderPipelineService.finalize(metadata)
+        cls.restore_prose_if_no_visual_evidence(metadata)
+
+    @classmethod
+    def restore_prose_if_no_visual_evidence(cls, metadata: dict[str, Any]) -> bool:
+        """Evita bolha vazia quando KPI/tabela foram suprimidos por engano."""
+        if not isinstance(metadata, dict):
+            return False
+
+        render_plan = metadata.get("renderPlan")
+        segments = render_plan.get("segments") if isinstance(render_plan, dict) else None
+        visual_kinds = {"kpi", "table", "dashboard", "chart", "tree", "download"}
+        has_visual = False
+
+        if isinstance(segments, list):
+            for segment in segments:
+                if not isinstance(segment, dict):
+                    continue
+
+                kind = str(segment.get("kind") or "").strip().lower()
+
+                if kind in visual_kinds:
+                    has_visual = True
+                    break
+
+        if has_visual:
+            return False
+
+        archive = metadata.get("templateProseArchive")
+
+        if not isinstance(archive, dict):
+            return False
+
+        restored = False
+        archived_markdown = str(archive.get("textPresentationMarkdown") or "").strip()
+        text_presentation = metadata.get("textPresentation")
+
+        if archived_markdown and isinstance(text_presentation, dict):
+            current = str(text_presentation.get("markdown") or "").strip()
+
+            if not current:
+                text_presentation["markdown"] = archived_markdown
+                restored = True
+
+        archived_humanized = archive.get("humanizedSummary")
+        humanized = metadata.get("humanizedSummary")
+
+        if isinstance(archived_humanized, dict) and archived_humanized:
+            if not isinstance(humanized, dict):
+                humanized = {}
+                metadata["humanizedSummary"] = humanized
+
+            for key in ("linhas", "linhas_detalhe", "titulo"):
+                archived_value = archived_humanized.get(key)
+
+                if archived_value in (None, "", []):
+                    continue
+
+                current_value = humanized.get(key)
+
+                if current_value in (None, "", []):
+                    humanized[key] = archived_value
+                    restored = True
+
+        if restored:
+            metadata["llmProseDecoupled"] = False
+            metadata["dataOnlyProseRestored"] = True
+
+        return restored

@@ -57,6 +57,7 @@ _ENTITY_LABELS: dict[str, str] = {
     "quality_rework_cost_pct": "quality rework cost over ROL",
     "overall_equipment_effectiveness": "OEE (eficiência global dos equipamentos)",
     "production_otd": "OTD de produção",
+    "production_otd_detail": "OTD de produção — resumo e ordens",
     "supplies_safety_stock_detail": (
         "detalhe de estoque de segurança com cobertura de compras, "
         "empenhos e extrato projetado de saldo"

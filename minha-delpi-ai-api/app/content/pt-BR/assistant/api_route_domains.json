@@ -216,6 +216,15 @@
         {
           "source": "granularity_inferred",
           "matchAliases": ["granularity"]
+        },
+        {
+          "source": "status_term_map",
+          "matchAliases": ["status"],
+          "termMap": {
+            "late": ["atraso", "atrasad", "em atraso", " late ", "atrasadas", "atrasados"],
+            "on_time": ["no prazo", "pontual", "on time", "on_time", "no_prazo"]
+          },
+          "preferOrder": ["late", "on_time"]
         }
       ],
       "granularityTerms": {

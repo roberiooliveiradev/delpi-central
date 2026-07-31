@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "message": "OTD de produção carregado com sucesso.",
+  "data": {
+    "summary": {
+      "total_ops": 120,
+      "on_time_ops": 95,
+      "late_ops": 25,
+      "on_time_delivery_pct": 79.17,
+      "late_percentage": 20.83
+    },
+    "orders": {
+      "items": [
+        {
+          "op": "000001001",
+          "product_code": "90260144",
+          "status": "late",
+          "days_diff": -4,
+          "branch": "01"
+        },
+        {
+          "op": "000002001",
+          "product_code": "90261805",
+          "status": "late",
+          "days_diff": -2,
+          "branch": "01"
+        }
+      ],
+      "pagination": {
+        "page": 1,
+        "page_size": 20,
+        "total": 25,
+        "is_complete": false
+      }
+    }
+  },
+  "meta": {
+    "operationId": "get_production_otd",
+    "entity": "production_otd_detail",
+    "shape": "playbook_report"
+  }
+}

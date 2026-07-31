@@ -3,6 +3,10 @@
     "entity": "product_search",
     "shape": "paged_list"
   },
+  "search_products_by_supplier_part_number": {
+    "entity": "product_by_supplier_part_number",
+    "shape": "paged_list"
+  },
   "get_product_detail": {
     "entity": "product",
     "shape": "product_snapshot"
@@ -91,10 +95,6 @@
     "entity": "product_suppliers",
     "shape": "paged_list"
   },
-  "search_products_by_supplier_part_number": {
-    "entity": "product_by_supplier_part_number",
-    "shape": "paged_list"
-  },
   "get_product_customers": {
     "entity": "product_customers",
     "shape": "paged_list"
@@ -151,6 +151,14 @@
     "entity": "supplies_stock_value",
     "shape": "scalar"
   },
+  "get_supplies_stock_balances_summary": {
+    "entity": "supplies_stock_balances_summary",
+    "shape": "playbook_report"
+  },
+  "get_supplies_stock_balances_items": {
+    "entity": "supplies_stock_balances_item",
+    "shape": "paged_list"
+  },
   "get_supplies_inventory_turnover": {
     "entity": "supplies_inventory_turnover",
     "shape": "scalar"
@@ -183,6 +191,18 @@
     "entity": "supplies_safety_stock_supplier_price_history",
     "shape": "playbook_report"
   },
+  "get_supplies_safety_stock_consumption_analysis_summary": {
+    "entity": "supplies_safety_stock_consumption_analysis_summary",
+    "shape": "scalar"
+  },
+  "get_supplies_safety_stock_consumption_analysis_items": {
+    "entity": "supplies_safety_stock_consumption_analysis_item",
+    "shape": "paged_list"
+  },
+  "get_supplies_safety_stock_consumption_analysis_item_details": {
+    "entity": "supplies_safety_stock_consumption_analysis_detail",
+    "shape": "composite_analysis"
+  },
   "list_lmps": {
     "entity": "lmp",
     "shape": "paged_list"
@@ -203,6 +223,18 @@
     "entity": "lmp_dashboard_charts",
     "shape": "scalar"
   },
+  "get_dashboard_department_idd": {
+    "entity": "dashboard_department_idd",
+    "shape": "scalar"
+  },
+  "get_dashboard_department_indicators": {
+    "entity": "dashboard_department_indicators",
+    "shape": "playbook_report"
+  },
+  "get_dashboard_departments_indicators": {
+    "entity": "dashboard_departments_indicators",
+    "shape": "playbook_report"
+  },
   "get_lmp_by_sale_number": {
     "entity": "lmp",
     "shape": "product_snapshot"
@@ -215,12 +247,56 @@
     "entity": "lmp_history_flow",
     "shape": "list"
   },
+  "list_lmp_nonconformities": {
+    "entity": "lmp_nonconformity",
+    "shape": "paged_list"
+  },
+  "get_lmp_nonconformity_streak": {
+    "entity": "lmp_nonconformity_streak",
+    "shape": "scalar"
+  },
+  "export_lmp_nonconformities": {
+    "entity": "lmp_nonconformity_export",
+    "shape": "scalar"
+  },
+  "import_lmp_nonconformities": {
+    "entity": "lmp_nonconformity_import",
+    "shape": "scalar"
+  },
+  "list_lmp_problem_tags": {
+    "entity": "lmp_problem_tag",
+    "shape": "list"
+  },
+  "get_lmp_nonconformity": {
+    "entity": "lmp_nonconformity",
+    "shape": "scalar"
+  },
+  "list_lmp_nonconformity_history": {
+    "entity": "lmp_nonconformity_history",
+    "shape": "list"
+  },
+  "create_lmp_nonconformity": {
+    "entity": "lmp_nonconformity",
+    "shape": "scalar"
+  },
+  "update_lmp_nonconformity": {
+    "entity": "lmp_nonconformity",
+    "shape": "scalar"
+  },
+  "delete_lmp_nonconformity": {
+    "entity": "lmp_nonconformity",
+    "shape": "scalar"
+  },
   "list_transforma_mais_processes": {
     "entity": "transforma_mais_process",
     "shape": "paged_list"
   },
   "get_transforma_mais_summary": {
     "entity": "transforma_mais_summary",
+    "shape": "scalar"
+  },
+  "get_transformometro_savings_investment_series": {
+    "entity": "transformometro_savings_investment_series",
     "shape": "scalar"
   },
   "list_mini_applicators_ferramentas": {
@@ -234,6 +310,10 @@
   "list_mini_applicators_pecas": {
     "entity": "mini_applicators_peca",
     "shape": "list"
+  },
+  "list_mini_applicators_pecas_reposicao": {
+    "entity": "mini_applicators_peca",
+    "shape": "paged_list"
   },
   "get_mini_applicators_golpes": {
     "entity": "mini_applicators_golpes",
@@ -275,6 +355,22 @@
     "entity": "commercial_rol_target",
     "shape": "scalar"
   },
+  "get_head_office_weg_rol_target_pct": {
+    "entity": "commercial_rol_weg_target",
+    "shape": "scalar"
+  },
+  "get_branch_weg_rol_target_pct": {
+    "entity": "commercial_rol_weg_target",
+    "shape": "scalar"
+  },
+  "get_head_office_new_business_rol_target_pct": {
+    "entity": "commercial_rol_new_business_target",
+    "shape": "scalar"
+  },
+  "get_branch_new_business_rol_target_pct": {
+    "entity": "commercial_rol_new_business_target",
+    "shape": "scalar"
+  },
   "get_commercial_rol_series": {
     "entity": "commercial_rol_series",
     "shape": "scalar"
@@ -303,6 +399,18 @@
     "entity": "sales_order_otd",
     "shape": "scalar"
   },
+  "get_sales_order_otd_panel": {
+    "entity": "sales_order_otd_panel",
+    "shape": "paged_list"
+  },
+  "get_sales_order_otd_series": {
+    "entity": "sales_order_otd_series",
+    "shape": "scalar"
+  },
+  "get_sales_order_otd_line_detail": {
+    "entity": "sales_order_otd_line",
+    "shape": "playbook_report"
+  },
   "get_new_business_rol_pct": {
     "entity": "new_business_rol_pct",
     "shape": "scalar"
@@ -327,6 +435,30 @@
     "entity": "production_oee_series",
     "shape": "scalar"
   },
+  "get_production_unproductive_hours_summary": {
+    "entity": "production_unproductive_hours_summary",
+    "shape": "playbook_report"
+  },
+  "get_production_unproductive_hours_items": {
+    "entity": "production_unproductive_hours_item",
+    "shape": "paged_list"
+  },
+  "get_production_unproductive_hours_ranking": {
+    "entity": "production_unproductive_hours_ranking",
+    "shape": "list"
+  },
+  "get_production_pcp_orders_summary": {
+    "entity": "production_pcp_orders_summary",
+    "shape": "playbook_report"
+  },
+  "get_production_pcp_orders_items": {
+    "entity": "production_pcp_orders_items",
+    "shape": "paged_list"
+  },
+  "get_production_pcp_orders_ranking": {
+    "entity": "production_pcp_orders_ranking",
+    "shape": "list"
+  },
   "get_production_oee": {
     "entity": "production_oee_detail",
     "shape": "paged_list"
@@ -348,12 +480,16 @@
     "shape": "scalar"
   },
   "get_production_otd": {
-    "entity": "production_otd",
-    "shape": "paged_list"
+    "entity": "production_otd_detail",
+    "shape": "playbook_report"
   },
   "get_production_consumption_top_items": {
     "entity": "production_consumption_top_items",
     "shape": "playbook_report"
+  },
+  "list_production_machine_program_top_intermediates": {
+    "entity": "production_machine_program_intermediate",
+    "shape": "paged_list"
   },
   "get_production_losses_records": {
     "entity": "production_losses_records",
@@ -370,18 +506,6 @@
   "get_production_orders_open": {
     "entity": "production_orders_open",
     "shape": "playbook_report"
-  },
-  "get_production_pcp_orders_summary": {
-    "entity": "production_pcp_orders_summary",
-    "shape": "playbook_report"
-  },
-  "get_production_pcp_orders_items": {
-    "entity": "production_pcp_orders_items",
-    "shape": "paged_list"
-  },
-  "get_production_pcp_orders_ranking": {
-    "entity": "production_pcp_orders_ranking",
-    "shape": "list"
   },
   "get_production_order_by_op": {
     "entity": "production_order_detail",
@@ -435,6 +559,38 @@
     "entity": "inspecoes_entrada_resumo",
     "shape": "scalar"
   },
+  "get_inspecoes_processo_resumo": {
+    "entity": "inspecoes_processo_resumo",
+    "shape": "scalar"
+  },
+  "get_inspecoes_processo_ranking_ensaio": {
+    "entity": "inspecoes_processo_ranking_ensaio",
+    "shape": "list"
+  },
+  "get_inspecoes_processo_por_produto": {
+    "entity": "inspecoes_processo_por_produto",
+    "shape": "list"
+  },
+  "get_inspecoes_processo_por_operacao": {
+    "entity": "inspecoes_processo_por_operacao",
+    "shape": "list"
+  },
+  "get_inspecoes_processo_por_ensaiador": {
+    "entity": "inspecoes_processo_por_ensaiador",
+    "shape": "list"
+  },
+  "get_inspecoes_processo_historico": {
+    "entity": "inspecoes_processo_historico",
+    "shape": "paged_list"
+  },
+  "get_inspecoes_processo_historico_detalhe": {
+    "entity": "inspecoes_processo_historico_detalhe",
+    "shape": "object"
+  },
+  "get_inspecoes_processo_auditoria_apontamentos": {
+    "entity": "inspecoes_processo_auditoria_apontamentos",
+    "shape": "paged_list"
+  },
   "get_inspecoes_entrada_pendentes": {
     "entity": "inspecoes_entrada_pendentes",
     "shape": "paged_list"
@@ -458,6 +614,202 @@
   "get_inspecoes_entrada_historico_detalhe": {
     "entity": "inspecoes_entrada_historico_detalhe",
     "shape": "object"
+  },
+  "search_quality_label_ops": {
+    "entity": "quality_label_op_suggestion",
+    "shape": "object"
+  },
+  "lookup_quality_label_op": {
+    "entity": "quality_label_op_lookup",
+    "shape": "scalar"
+  },
+  "create_quality_label": {
+    "entity": "quality_label",
+    "shape": "scalar"
+  },
+  "list_quality_labels": {
+    "entity": "quality_label",
+    "shape": "paged_list"
+  },
+  "get_quality_label": {
+    "entity": "quality_label",
+    "shape": "scalar"
+  },
+  "set_quality_label_active": {
+    "entity": "quality_label",
+    "shape": "scalar"
+  },
+  "delete_quality_label": {
+    "entity": "quality_label",
+    "shape": "scalar"
+  },
+  "list_quality_label_audit_events": {
+    "entity": "quality_label_audit_event",
+    "shape": "paged_list"
+  },
+  "list_quality_label_checklist_template": {
+    "entity": "quality_label_checklist_item",
+    "shape": "object"
+  },
+  "get_quality_label_inspector": {
+    "entity": "quality_label_inspector",
+    "shape": "scalar"
+  },
+  "save_quality_label_inspector": {
+    "entity": "quality_label_inspector",
+    "shape": "scalar"
+  },
+  "upload_quality_label_inspector_signature": {
+    "entity": "quality_label_inspector",
+    "shape": "scalar"
+  },
+  "get_quality_label_certificate": {
+    "entity": "quality_label_certificate",
+    "shape": "scalar"
+  },
+  "save_quality_label_certificate": {
+    "entity": "quality_label_certificate",
+    "shape": "scalar"
+  },
+  "get_public_quality_label_inspection": {
+    "entity": "quality_label_public_inspection",
+    "shape": "scalar"
+  },
+  "get_financeiro_despesas_centro_custo_filtros": {
+    "entity": "financeiro_despesas_centro_custo_filtros",
+    "shape": "scalar"
+  },
+  "get_financeiro_despesas_centro_custo_resumo": {
+    "entity": "financeiro_despesas_centro_custo_resumo",
+    "shape": "scalar"
+  },
+  "get_financeiro_despesas_centro_custo_serie": {
+    "entity": "financeiro_despesas_centro_custo_serie",
+    "shape": "list"
+  },
+  "get_financeiro_despesas_centro_custo_ranking_centros": {
+    "entity": "financeiro_despesas_centro_custo_ranking_centros",
+    "shape": "list"
+  },
+  "get_financeiro_despesas_centro_custo_ranking_fornecedores": {
+    "entity": "financeiro_despesas_centro_custo_ranking_fornecedores",
+    "shape": "list"
+  },
+  "get_financeiro_despesas_centro_custo_lancamentos": {
+    "entity": "financeiro_despesas_centro_custo_lancamento",
+    "shape": "paged_list"
+  },
+  "get_financeiro_inadimplencia_resumo": {
+    "entity": "financeiro_inadimplencia_resumo",
+    "shape": "scalar"
+  },
+  "get_financeiro_inadimplencia_mensal": {
+    "entity": "financeiro_inadimplencia_mensal",
+    "shape": "list"
+  },
+  "get_financeiro_inadimplencia_faixas_atraso": {
+    "entity": "financeiro_inadimplencia_faixas_atraso",
+    "shape": "list"
+  },
+  "get_financeiro_inadimplencia_clientes": {
+    "entity": "financeiro_inadimplencia_cliente",
+    "shape": "paged_list"
+  },
+  "get_financeiro_inadimplencia_titulos": {
+    "entity": "financeiro_inadimplencia_titulo",
+    "shape": "paged_list"
+  },
+  "get_retrabalhos_health": {
+    "entity": "retrabalho_horas_improdutivas_health",
+    "shape": "scalar"
+  },
+  "get_retrabalhos_filtros": {
+    "entity": "retrabalho_horas_improdutivas_filtros",
+    "shape": "scalar"
+  },
+  "get_retrabalhos_resumo": {
+    "entity": "retrabalho_horas_improdutivas_resumo",
+    "shape": "scalar"
+  },
+  "get_retrabalhos_rework_cost_pct": {
+    "entity": "retrabalho_rework_cost_pct",
+    "shape": "scalar"
+  },
+  "get_retrabalhos_mensal": {
+    "entity": "retrabalho_horas_improdutivas_mensal",
+    "shape": "list"
+  },
+  "get_retrabalhos_recursos": {
+    "entity": "retrabalho_horas_improdutivas_recursos",
+    "shape": "list"
+  },
+  "get_retrabalhos_colaboradores": {
+    "entity": "retrabalho_horas_improdutivas_colaboradores",
+    "shape": "list"
+  },
+  "get_retrabalhos_detalhes": {
+    "entity": "retrabalho_horas_improdutivas_detalhe",
+    "shape": "paged_list"
+  },
+  "get_refugos_health": {
+    "entity": "refugos_health",
+    "shape": "scalar"
+  },
+  "get_refugos_filtros": {
+    "entity": "refugos_filtros",
+    "shape": "scalar"
+  },
+  "get_refugos_resumo": {
+    "entity": "refugos_resumo",
+    "shape": "scalar"
+  },
+  "get_refugos_scrap_cost_pct": {
+    "entity": "refugos_scrap_cost_pct",
+    "shape": "scalar"
+  },
+  "get_refugos_rankings": {
+    "entity": "refugos_rankings",
+    "shape": "playbook_report"
+  },
+  "get_refugos_serie": {
+    "entity": "refugos_serie",
+    "shape": "playbook_report"
+  },
+  "get_refugos_registros": {
+    "entity": "refugos_registros",
+    "shape": "paged_list"
+  },
+  "list_production_appointment_work_centers": {
+    "entity": "production_appointment_work_center",
+    "shape": "paged_list"
+  },
+  "list_production_appointments": {
+    "entity": "production_appointment",
+    "shape": "paged_list"
+  },
+  "get_production_appointments_summary": {
+    "entity": "production_appointments_summary",
+    "shape": "playbook_report"
+  },
+  "get_production_appointments_series": {
+    "entity": "production_appointments_series",
+    "shape": "playbook_report"
+  },
+  "get_production_appointments_finished_ops_series": {
+    "entity": "production_appointments_finished_ops_series",
+    "shape": "playbook_report"
+  },
+  "list_production_appointments_by_op": {
+    "entity": "production_appointments_by_op",
+    "shape": "paged_list"
+  },
+  "list_production_appointments_child_ops": {
+    "entity": "production_appointments_child_ops",
+    "shape": "paged_list"
+  },
+  "get_production_appointments_produced_totals": {
+    "entity": "production_appointments_produced_totals",
+    "shape": "playbook_report"
   },
   "list_pedidos_venda_abertos": {
     "entity": "open_sales_order",
@@ -483,6 +835,14 @@
     "entity": "eficiencia_fabril_appointment",
     "shape": "paged_list"
   },
+  "get_quality_scrap_cost_pct": {
+    "entity": "quality_scrap_cost_pct",
+    "shape": "scalar"
+  },
+  "get_quality_rework_cost_pct": {
+    "entity": "quality_rework_cost_pct",
+    "shape": "scalar"
+  },
   "list_quality_branches": {
     "entity": "quality_branch",
     "shape": "scalar"
@@ -501,6 +861,14 @@
   },
   "get_kaizen_by_id": {
     "entity": "kaizen",
+    "shape": "scalar"
+  },
+  "get_kaizen_records_summary": {
+    "entity": "kaizen_records_summary",
+    "shape": "scalar"
+  },
+  "get_kaizen_savings_investment_series": {
+    "entity": "kaizen_savings_investment_series",
     "shape": "scalar"
   },
   "list_kaizen_records": {
@@ -523,8 +891,76 @@
     "entity": "kaizen_record",
     "shape": "scalar"
   },
+  "export_kaizen_records": {
+    "entity": "kaizen_record_export",
+    "shape": "scalar"
+  },
+  "import_kaizen_records": {
+    "entity": "kaizen_record_import",
+    "shape": "scalar"
+  },
+  "list_kaizen_revisions": {
+    "entity": "kaizen_revision",
+    "shape": "paged_list"
+  },
+  "get_kaizen_revision": {
+    "entity": "kaizen_revision",
+    "shape": "scalar"
+  },
+  "get_kaizen_at_date": {
+    "entity": "kaizen_revision",
+    "shape": "scalar"
+  },
+  "create_kaizen_version": {
+    "entity": "kaizen_revision",
+    "shape": "scalar"
+  },
+  "update_kaizen_version": {
+    "entity": "kaizen_revision",
+    "shape": "scalar"
+  },
+  "delete_kaizen_version": {
+    "entity": "kaizen_revision",
+    "shape": "scalar"
+  },
+  "implement_kaizen_version": {
+    "entity": "kaizen_record",
+    "shape": "scalar"
+  },
+  "list_kaizen_history": {
+    "entity": "kaizen_history",
+    "shape": "paged_list"
+  },
+  "list_kaizen_audit_log": {
+    "entity": "kaizen_audit_log",
+    "shape": "paged_list"
+  },
+  "get_kaizen_savings_timeline": {
+    "entity": "kaizen_savings_timeline",
+    "shape": "scalar"
+  },
+  "list_kaizen_evidences": {
+    "entity": "kaizen_evidence",
+    "shape": "paged_list"
+  },
+  "attach_kaizen_evidence": {
+    "entity": "kaizen_evidence",
+    "shape": "scalar"
+  },
+  "update_kaizen_evidence": {
+    "entity": "kaizen_evidence",
+    "shape": "scalar"
+  },
+  "delete_kaizen_evidence": {
+    "entity": "kaizen_evidence",
+    "shape": "scalar"
+  },
   "get_quality_action_plans_dashboard": {
     "entity": "quality_action_plan_dashboard",
+    "shape": "scalar"
+  },
+  "dispatch_quality_action_plan_notifications": {
+    "entity": "quality_action_plan_notifications",
     "shape": "scalar"
   },
   "list_quality_action_plans_overdue": {
@@ -533,6 +969,14 @@
   },
   "list_quality_action_plans_recurrence": {
     "entity": "quality_action_plan_recurrence",
+    "shape": "paged_list"
+  },
+  "list_quality_action_plan_my_queue": {
+    "entity": "quality_action_plan_action",
+    "shape": "paged_list"
+  },
+  "list_quality_action_plan_assignable_users": {
+    "entity": "directory_user",
     "shape": "paged_list"
   },
   "list_quality_action_plans": {
@@ -551,7 +995,15 @@
     "entity": "quality_action_plan",
     "shape": "scalar"
   },
+  "delete_quality_action_plan": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
   "update_quality_action_plan_status": {
+    "entity": "quality_action_plan",
+    "shape": "scalar"
+  },
+  "reopen_quality_action_plan": {
     "entity": "quality_action_plan",
     "shape": "scalar"
   },
@@ -571,39 +1023,11 @@
     "entity": "quality_action_plan_action",
     "shape": "scalar"
   },
-  "record_quality_action_plan_effectiveness": {
-    "entity": "quality_action_plan",
-    "shape": "scalar"
-  },
-  "upsert_quality_action_plan_rnc_8d": {
-    "entity": "quality_action_plan",
-    "shape": "composite_analysis"
-  },
-  "export_quality_action_plan_rnc_8d": {
-    "entity": "quality_action_plan_export",
-    "shape": "scalar"
-  },
-  "list_quality_action_plan_evidences": {
-    "entity": "quality_action_plan_evidence",
-    "shape": "paged_list"
-  },
-  "attach_quality_action_plan_evidence": {
-    "entity": "quality_action_plan_evidence",
-    "shape": "scalar"
-  },
-  "delete_quality_action_plan_evidence": {
-    "entity": "quality_action_plan_evidence",
-    "shape": "scalar"
-  },
-  "get_quality_action_plan_similar_cases": {
-    "entity": "quality_action_plan_similar_cases",
-    "shape": "composite_analysis"
-  },
-  "list_quality_action_plan_my_queue": {
+  "delete_quality_action_plan_action": {
     "entity": "quality_action_plan_action",
-    "shape": "paged_list"
+    "shape": "scalar"
   },
-  "reopen_quality_action_plan": {
+  "record_quality_action_plan_effectiveness": {
     "entity": "quality_action_plan",
     "shape": "scalar"
   },
@@ -627,12 +1051,92 @@
     "entity": "quality_action_plan_audit_log",
     "shape": "paged_list"
   },
-  "promote_quality_action_plan_solution_pattern": {
-    "entity": "quality_solution_pattern",
+  "list_quality_action_plan_revisions": {
+    "entity": "quality_action_plan_revision",
+    "shape": "paged_list"
+  },
+  "get_quality_action_plan_revision": {
+    "entity": "quality_action_plan_revision",
+    "shape": "composite_analysis"
+  },
+  "restore_quality_action_plan_revision": {
+    "entity": "quality_action_plan",
+    "shape": "composite_analysis"
+  },
+  "upsert_quality_action_plan_rnc_8d": {
+    "entity": "quality_action_plan",
+    "shape": "composite_analysis"
+  },
+  "list_quality_action_plan_export_templates": {
+    "entity": "quality_action_plan_export_template",
+    "shape": "paged_list"
+  },
+  "export_quality_action_plan_rnc_8d": {
+    "entity": "quality_action_plan_export",
     "shape": "scalar"
   },
-  "dispatch_quality_action_plan_notifications": {
-    "entity": "quality_action_plan_notifications",
+  "export_quality_action_plan_pdf": {
+    "entity": "quality_action_plan_export",
+    "shape": "document_export"
+  },
+  "export_quality_action_plan_rnc_8d_pdf": {
+    "entity": "quality_action_plan_export",
+    "shape": "document_export"
+  },
+  "list_quality_action_plan_evidences": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "paged_list"
+  },
+  "search_quality_action_plan_evidences": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "paged_list"
+  },
+  "attach_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "scalar"
+  },
+  "download_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "document_export"
+  },
+  "get_quality_action_plan_evidence_content": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "composite_analysis"
+  },
+  "update_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "scalar"
+  },
+  "delete_quality_action_plan_evidence": {
+    "entity": "quality_action_plan_evidence",
+    "shape": "scalar"
+  },
+  "get_quality_action_plan_similar_cases": {
+    "entity": "quality_action_plan_similar_cases",
+    "shape": "composite_analysis"
+  },
+  "assess_quality_action_plan_recurrence_on_opening": {
+    "entity": "quality_action_plan_recurrence_opening_assessment",
+    "shape": "composite_analysis"
+  },
+  "get_quality_action_plan_knowledge_graph": {
+    "entity": "quality_action_plan_knowledge_graph",
+    "shape": "composite_analysis"
+  },
+  "suggest_quality_action_plan_evidence_tags": {
+    "entity": "quality_action_plan_evidence_tag_suggestions",
+    "shape": "composite_analysis"
+  },
+  "suggest_quality_action_plan_evidence_tags_from_image": {
+    "entity": "quality_action_plan_evidence_tag_suggestions",
+    "shape": "composite_analysis"
+  },
+  "list_quality_solution_patterns": {
+    "entity": "quality_solution_pattern",
+    "shape": "paged_list"
+  },
+  "promote_quality_action_plan_solution_pattern": {
+    "entity": "quality_solution_pattern",
     "shape": "scalar"
   },
   "get_audit_5s_summary": {
@@ -667,6 +1171,10 @@
     "entity": "produced_quantity",
     "shape": "playbook_report"
   },
+  "get_quality_returned_totals": {
+    "entity": "quality_returned_totals",
+    "shape": "playbook_report"
+  },
   "list_audit_5s_areas": {
     "entity": "audit_5s_area",
     "shape": "paged_list"
@@ -679,11 +1187,27 @@
     "entity": "audit_5s_criterion",
     "shape": "paged_list"
   },
+  "get_audit_5s_catalog": {
+    "entity": "audit_5s_catalog",
+    "shape": "scalar"
+  },
+  "list_audit_5s_catalog_publications": {
+    "entity": "audit_5s_catalog_publication",
+    "shape": "paged_list"
+  },
+  "publish_audit_5s_catalog": {
+    "entity": "audit_5s_catalog",
+    "shape": "scalar"
+  },
   "list_audit_5s_audits": {
     "entity": "audit_5s_audit",
     "shape": "paged_list"
   },
   "create_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "update_audit_5s_audit": {
     "entity": "audit_5s_audit",
     "shape": "scalar"
   },
@@ -695,6 +1219,10 @@
     "entity": "audit_5s_audit",
     "shape": "scalar"
   },
+  "force_delete_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
   "join_audit_5s_audit": {
     "entity": "audit_5s_audit",
     "shape": "scalar"
@@ -703,7 +1231,23 @@
     "entity": "audit_5s_response",
     "shape": "scalar"
   },
+  "list_audit_5s_response_attachments": {
+    "entity": "audit_5s_response_attachment",
+    "shape": "paged_list"
+  },
+  "attach_audit_5s_response_photo": {
+    "entity": "audit_5s_response_attachment",
+    "shape": "scalar"
+  },
+  "delete_audit_5s_response_photo": {
+    "entity": "audit_5s_response_attachment",
+    "shape": "scalar"
+  },
   "complete_audit_5s_evaluation": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "reopen_audit_5s_evaluation": {
     "entity": "audit_5s_audit",
     "shape": "scalar"
   },
@@ -712,6 +1256,10 @@
     "shape": "paged_list"
   },
   "list_audit_5s_nonconformities": {
+    "entity": "audit_5s_nonconformity",
+    "shape": "paged_list"
+  },
+  "list_audit_5s_nonconformities_board": {
     "entity": "audit_5s_nonconformity",
     "shape": "paged_list"
   },
@@ -747,11 +1295,19 @@
     "entity": "audit_5s_nc_action",
     "shape": "scalar"
   },
+  "reopen_audit_5s_nc_action": {
+    "entity": "audit_5s_nc_action",
+    "shape": "scalar"
+  },
   "get_audit_5s_analytics_dashboard": {
     "entity": "audit_5s_analytics",
     "shape": "composite_analysis"
   },
   "close_audit_5s_audit": {
+    "entity": "audit_5s_audit",
+    "shape": "scalar"
+  },
+  "close_audit_5s_audit_without_nc_treatment": {
     "entity": "audit_5s_audit",
     "shape": "scalar"
   },
@@ -787,13 +1343,145 @@
     "entity": "scheduling_booking",
     "shape": "paged_list"
   },
+  "list_pending_scheduling_bookings": {
+    "entity": "scheduling_booking",
+    "shape": "paged_list"
+  },
+  "list_my_scheduling_bookings": {
+    "entity": "scheduling_booking",
+    "shape": "paged_list"
+  },
   "create_scheduling_booking": {
+    "entity": "scheduling_booking",
+    "shape": "scalar"
+  },
+  "create_scheduling_recurring_booking": {
+    "entity": "scheduling_booking",
+    "shape": "composite_analysis"
+  },
+  "approve_scheduling_booking": {
+    "entity": "scheduling_booking",
+    "shape": "scalar"
+  },
+  "reject_scheduling_booking": {
     "entity": "scheduling_booking",
     "shape": "scalar"
   },
   "cancel_scheduling_booking": {
     "entity": "scheduling_booking",
     "shape": "scalar"
+  },
+  "create_canal_denuncia": {
+    "entity": "canal_denuncia",
+    "shape": "scalar"
+  },
+  "list_guias_procedimentos_departments": {
+    "entity": "guias_procedimentos_department",
+    "shape": "paged_list"
+  },
+  "get_guias_procedimentos_department": {
+    "entity": "guias_procedimentos_department",
+    "shape": "scalar"
+  },
+  "get_guias_procedimentos_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "list_guias_procedimentos_admin_departments": {
+    "entity": "guias_procedimentos_department",
+    "shape": "paged_list"
+  },
+  "get_guias_procedimentos_admin_department": {
+    "entity": "guias_procedimentos_department",
+    "shape": "scalar"
+  },
+  "create_guias_procedimentos_admin_department": {
+    "entity": "guias_procedimentos_department",
+    "shape": "scalar"
+  },
+  "update_guias_procedimentos_admin_department": {
+    "entity": "guias_procedimentos_department",
+    "shape": "scalar"
+  },
+  "list_guias_procedimentos_admin_procedures": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "paged_list"
+  },
+  "get_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "create_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "update_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "publish_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "unpublish_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "archive_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "restore_guias_procedimentos_admin_procedure": {
+    "entity": "guias_procedimentos_procedure",
+    "shape": "scalar"
+  },
+  "list_guias_procedimentos_admin_procedure_media": {
+    "entity": "guias_procedimentos_media",
+    "shape": "paged_list"
+  },
+  "list_guias_procedimentos_admin_procedure_attachments": {
+    "entity": "guias_procedimentos_attachment",
+    "shape": "paged_list"
+  },
+  "upload_guias_procedimentos_admin_procedure_image": {
+    "entity": "guias_procedimentos_media",
+    "shape": "scalar"
+  },
+  "upload_guias_procedimentos_admin_procedure_video": {
+    "entity": "guias_procedimentos_media",
+    "shape": "scalar"
+  },
+  "create_guias_procedimentos_admin_external_video": {
+    "entity": "guias_procedimentos_media",
+    "shape": "scalar"
+  },
+  "upload_guias_procedimentos_admin_procedure_attachment": {
+    "entity": "guias_procedimentos_attachment",
+    "shape": "scalar"
+  },
+  "update_guias_procedimentos_admin_media": {
+    "entity": "guias_procedimentos_media",
+    "shape": "scalar"
+  },
+  "archive_guias_procedimentos_admin_media": {
+    "entity": "guias_procedimentos_media",
+    "shape": "scalar"
+  },
+  "update_guias_procedimentos_admin_attachment": {
+    "entity": "guias_procedimentos_attachment",
+    "shape": "scalar"
+  },
+  "archive_guias_procedimentos_admin_attachment": {
+    "entity": "guias_procedimentos_attachment",
+    "shape": "scalar"
+  },
+  "list_guias_procedimentos_procedure_media": {
+    "entity": "guias_procedimentos_media",
+    "shape": "paged_list"
+  },
+  "list_guias_procedimentos_procedure_attachments": {
+    "entity": "guias_procedimentos_attachment",
+    "shape": "paged_list"
   },
   "search_tables_by_description": {
     "entity": "protheus_table",
@@ -809,11 +1497,11 @@
   },
   "get_protheus_table_indexes": {
     "entity": "protheus_index",
-    "shape": "scalar"
+    "shape": "paged_list"
   },
   "get_protheus_table_relations": {
     "entity": "protheus_relation",
-    "shape": "scalar"
+    "shape": "paged_list"
   },
   "get_protheus_table_schema": {
     "entity": "protheus_table_schema",
@@ -826,5 +1514,237 @@
   "search_protheus_columns_by_description": {
     "entity": "protheus_column",
     "shape": "paged_list"
+  },
+  "get_cultura_delpi_content": {
+    "entity": "cultura_delpi_content",
+    "shape": "scalar"
+  },
+  "update_cultura_delpi_content": {
+    "entity": "cultura_delpi_content",
+    "shape": "scalar"
+  },
+  "list_report_definitions": {
+    "entity": "report_definition",
+    "shape": "paged_list"
+  },
+  "create_report_definition": {
+    "entity": "report_definition",
+    "shape": "scalar"
+  },
+  "get_report_definition": {
+    "entity": "report_definition",
+    "shape": "scalar"
+  },
+  "update_report_definition": {
+    "entity": "report_definition",
+    "shape": "scalar"
+  },
+  "list_report_runs": {
+    "entity": "report_run",
+    "shape": "paged_list"
+  },
+  "list_report_providers": {
+    "entity": "report_provider",
+    "shape": "paged_list"
+  },
+  "preview_report_provider_safety_stock_shortage_30d": {
+    "entity": "report_dataset",
+    "shape": "paged_list"
+  },
+  "list_report_recipients": {
+    "entity": "report_recipient",
+    "shape": "paged_list"
+  },
+  "replace_report_recipients": {
+    "entity": "report_recipient",
+    "shape": "paged_list"
+  },
+  "get_report_schedule": {
+    "entity": "report_schedule",
+    "shape": "scalar"
+  },
+  "upsert_report_schedule": {
+    "entity": "report_schedule",
+    "shape": "scalar"
+  },
+  "delete_report_schedule": {
+    "entity": "report_schedule",
+    "shape": "scalar"
+  },
+  "run_report_definition": {
+    "entity": "report_run",
+    "shape": "scalar"
+  },
+  "get_report_run": {
+    "entity": "report_run",
+    "shape": "scalar"
+  },
+  "process_pending_report_schedules": {
+    "entity": "report_schedule_batch",
+    "shape": "scalar"
+  },
+  "list_report_shortage_item_notes": {
+    "entity": "report_shortage_item_note",
+    "shape": "paged_list"
+  },
+  "upsert_report_shortage_item_note": {
+    "entity": "report_shortage_item_note",
+    "shape": "scalar"
+  },
+  "delete_report_shortage_item_note": {
+    "entity": "report_shortage_item_note",
+    "shape": "scalar"
+  },
+  "search_customers": {
+    "entity": "customers",
+    "shape": "scalar"
+  },
+  "download_guias_procedimentos_attachment_file": {
+    "entity": "download_guias_procedimentos_attachment_file",
+    "shape": "scalar"
+  },
+  "download_guias_procedimentos_media_file": {
+    "entity": "download_guias_procedimentos_media_file",
+    "shape": "scalar"
+  },
+  "get_health": {
+    "entity": "health",
+    "shape": "scalar"
+  },
+  "export_proposta_comercial_pdf_with_overrides": {
+    "entity": "export_proposta_comercial_pdf_with_overrides",
+    "shape": "scalar"
+  },
+  "create_public_kaizen_suggestion": {
+    "entity": "public_kaizen_suggestion",
+    "shape": "scalar"
+  },
+  "download_audit_5s_response_attachment": {
+    "entity": "download_audit_5s_response_attachment",
+    "shape": "scalar"
+  },
+  "download_audit_5s_nc_attachment": {
+    "entity": "download_audit_5s_nc_attachment",
+    "shape": "scalar"
+  },
+  "download_kaizen_evidence": {
+    "entity": "download_kaizen_evidence",
+    "shape": "scalar"
+  },
+  "get_quality_label_inspector_signature": {
+    "entity": "quality_label_inspector_signature",
+    "shape": "scalar"
+  },
+  "get_quality_label_certificate_pdf": {
+    "entity": "quality_label_certificate_pdf",
+    "shape": "scalar"
+  },
+  "get_quality_label_qr": {
+    "entity": "quality_label_qr",
+    "shape": "scalar"
+  },
+  "get_caller_stats": {
+    "entity": "caller_stats",
+    "shape": "scalar"
+  },
+  "get_console_alerts": {
+    "entity": "console_alerts",
+    "shape": "scalar"
+  },
+  "evaluate_console_alerts": {
+    "entity": "evaluate_console_alerts",
+    "shape": "scalar"
+  },
+  "notify_console_smoke_alerts": {
+    "entity": "notify_console_smoke_alerts",
+    "shape": "scalar"
+  },
+  "get_console_health": {
+    "entity": "console_health",
+    "shape": "scalar"
+  },
+  "get_envelope_contracts": {
+    "entity": "envelope_contracts",
+    "shape": "scalar"
+  },
+  "get_observability_snapshot": {
+    "entity": "observability_snapshot",
+    "shape": "scalar"
+  },
+  "get_openapi_diff": {
+    "entity": "openapi_diff",
+    "shape": "scalar"
+  },
+  "get_query_cache_stats": {
+    "entity": "query_cache_stats",
+    "shape": "scalar"
+  },
+  "get_smoke_definitions": {
+    "entity": "smoke_definitions",
+    "shape": "scalar"
+  },
+  "get_sql_health": {
+    "entity": "sql_health",
+    "shape": "scalar"
+  },
+  "search_lancamento_notas_fiscais_suppliers": {
+    "entity": "invoice_posting_supplier",
+    "shape": "paged_list"
+  },
+  "create_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "list_lancamento_notas_fiscais_requests": {
+    "entity": "invoice_posting_request",
+    "shape": "paged_list"
+  },
+  "get_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "list_lancamento_notas_fiscais_request_purchase_orders": {
+    "entity": "invoice_posting_purchase_order",
+    "shape": "paged_list"
+  },
+  "link_lancamento_notas_fiscais_request_purchase_order": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "update_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "start_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "block_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "resume_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "add_lancamento_notas_fiscais_comment": {
+    "entity": "invoice_posting_comment",
+    "shape": "scalar"
+  },
+  "cancel_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "post_manual_lancamento_notas_fiscais_request": {
+    "entity": "invoice_posting_request",
+    "shape": "scalar"
+  },
+  "run_lancamento_notas_fiscais_reconciliation": {
+    "entity": "invoice_posting_reconciliation_batch",
+    "shape": "scalar"
+  },
+  "refresh_lancamento_notas_fiscais_reconciliation": {
+    "entity": "invoice_posting_reconciliation_refresh",
+    "shape": "scalar"
   }
 }

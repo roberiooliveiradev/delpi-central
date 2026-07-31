@@ -80,6 +80,20 @@ def test_missing_date_not_requested_for_production_operational_rest_route():
     assert answer is None
 
 
+def test_missing_date_not_requested_for_ops_em_atraso_otd_detail():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer("ops em atraso")
+
+    assert answer is None
+
+
+def test_missing_date_not_requested_for_ordens_producao_em_atraso():
+    answer = ChatOperationalParameterService.resolve_missing_date_answer(
+        "ordens de produção em atraso"
+    )
+
+    assert answer is None
+
+
 def test_merge_into_parameters_sets_reference_date_for_playbook_route():
     action = {
         "path": "/products/{code}/factory-status",
