@@ -351,4 +351,24 @@ describe("DataRouteCatalogPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee" }));
   });
+
+  it("em frase NL não zera o catálogo por substring e avisa AI degradada", () => {
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        suggestions={[]}
+        suggestionsQuery="ops em atraso"
+        suggestionsDegraded
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "ops em atraso" } });
+    expect(screen.getByText(/Sugestões indisponíveis/)).toBeTruthy();
+    expect(screen.getByText("OEE geral")).toBeTruthy();
+    expect(screen.getByText("Produtos — busca")).toBeTruthy();
+    expect(screen.queryByText("Nenhuma fonte com esses filtros.")).toBeNull();
+  });
 });

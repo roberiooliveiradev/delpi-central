@@ -115,6 +115,7 @@ export function DataRoutesSidePanel({
   const [suggestions, setSuggestions] = useState<DataRouteCatalogSuggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsQuery, setSuggestionsQuery] = useState("");
+  const [suggestionsDegraded, setSuggestionsDegraded] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -131,6 +132,7 @@ export function DataRoutesSidePanel({
       setSuggestions([]);
       setSuggestionsQuery("");
       setSuggestionsLoading(false);
+      setSuggestionsDegraded(false);
       return;
     }
 
@@ -141,6 +143,7 @@ export function DataRoutesSidePanel({
         .then((payload) => {
           if (cancelled) return;
           setSuggestionsQuery(payload.query || trimmed);
+          setSuggestionsDegraded(Boolean(payload.degraded));
           setSuggestions(
             (payload.suggestions || []).map((route) => ({
               reason: String(route.reason || "").trim(),
@@ -167,6 +170,7 @@ export function DataRoutesSidePanel({
           if (cancelled) return;
           setSuggestions([]);
           setSuggestionsQuery(trimmed);
+          setSuggestionsDegraded(true);
         })
         .finally(() => {
           if (!cancelled) setSuggestionsLoading(false);
@@ -479,6 +483,7 @@ export function DataRoutesSidePanel({
         suggestions={suggestions}
         suggestionsLoading={suggestionsLoading}
         suggestionsQuery={suggestionsQuery}
+        suggestionsDegraded={suggestionsDegraded}
         onQueryChange={setCatalogQuery}
       />
     </div>

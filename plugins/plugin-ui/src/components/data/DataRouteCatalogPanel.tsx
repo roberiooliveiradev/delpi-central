@@ -94,6 +94,8 @@ export type DataRouteCatalogPanelProps = {
   suggestionsLoading?: boolean;
   suggestionsQuery?: string;
   suggestionsEmptyMessage?: string;
+  /** AI/BFF degradado — mensagem distinta de «sem match». */
+  suggestionsDegraded?: boolean;
   /** Host notificado a cada mudança do campo unificado (debounce externo). */
   onQueryChange?: (query: string) => void;
 };
@@ -191,7 +193,8 @@ export function DataRouteCatalogPanel({
   suggestions = [],
   suggestionsLoading = false,
   suggestionsQuery = "",
-  suggestionsEmptyMessage = DATA_ROUTE_CATALOG_CONTENT.suggestionsEmpty,
+  suggestionsEmptyMessage,
+  suggestionsDegraded = false,
   onQueryChange,
 }: DataRouteCatalogPanelProps) {
   const [query, setQuery] = useState("");
@@ -228,6 +231,12 @@ export function DataRouteCatalogPanel({
     suggestionRows.length > 0 ||
     Boolean(String(suggestionsQuery || "").trim());
 
+  const resolvedSuggestionsEmpty =
+    suggestionsEmptyMessage ??
+    (suggestionsDegraded
+      ? DATA_ROUTE_CATALOG_CONTENT.suggestionsUnavailable
+      : DATA_ROUTE_CATALOG_CONTENT.suggestionsEmpty);
+
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const item of enriched) {
@@ -247,6 +256,9 @@ export function DataRouteCatalogPanel({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    // Em modo frase (faixa Sugestões), não exige substring da frase inteira no
+    // catálogo — a IA ranqueia acima; abaixo permanece navegável por chips.
+    const applySubstring = Boolean(q) && !showSuggestionsBand;
     return enriched.filter((item) => {
       if (categoryFilter !== "all" && (item.category || "other") !== categoryFilter) {
         return false;
@@ -255,7 +267,7 @@ export function DataRouteCatalogPanel({
         const kinds = item.displayKinds ?? [];
         if (!kindFilters.some((kind) => kinds.includes(kind))) return false;
       }
-      if (!q) return true;
+      if (!applySubstring) return true;
       const haystack = [
         item.label,
         item.id,
@@ -270,7 +282,7 @@ export function DataRouteCatalogPanel({
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [categoryFilter, categoryLabels, enriched, kindFilters, query]);
+  }, [categoryFilter, categoryLabels, enriched, kindFilters, query, showSuggestionsBand]);
 
   const grouped = useMemo(() => {
     const buckets = new Map<string, typeof filtered>();
@@ -745,7 +757,7 @@ export function DataRouteCatalogPanel({
                   ))}
                 </ul>
               ) : suggestionRows.length === 0 ? (
-                <p className="delpi-ui-data-route-catalog__suggestions-empty">{suggestionsEmptyMessage}</p>
+                <p className="delpi-ui-data-route-catalog__suggestions-empty">{resolvedSuggestionsEmpty}</p>
               ) : (
                 <ul className="delpi-ui-data-route-catalog__list">
                   {suggestionRows.map(({ item, reason }) => {

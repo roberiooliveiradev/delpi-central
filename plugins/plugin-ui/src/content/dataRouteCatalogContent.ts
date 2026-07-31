@@ -5,6 +5,8 @@ export const DATA_ROUTE_CATALOG_CONTENT = {
   suggestionsLoading: "Buscando fontes…",
   suggestionsEmpty:
     "Nenhuma sugestão para essa frase. Tente termos como «estoque», «OEE», «refugo».",
+  suggestionsUnavailable:
+    "Sugestões indisponíveis no momento. Use a busca por nome ou tente de novo em instantes.",
   suggestionsTitlePrefix: "Sugestões para",
 } as const;
 
