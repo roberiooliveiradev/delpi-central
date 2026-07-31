@@ -286,6 +286,14 @@ SELECTION_CASES = [
         "message": "ordens de produção em atraso",
         "actions": [
             {
+                "actionId": "sql-readonly",
+                "method": "POST",
+                "path": "/data/sql",
+                "operationId": "execute_readonly_sql",
+                "summary": "Executar consulta SQL somente leitura",
+                "parametersSchema": [],
+            },
+            {
                 "actionId": "production-otd-detail",
                 "method": "GET",
                 "path": "/production/otd",

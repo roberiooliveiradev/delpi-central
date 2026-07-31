@@ -25,6 +25,31 @@ def test_fallback_policies_loaded_from_registry() -> None:
     assert OperationalRouteRegistryService.sql_refinement_policy()["reasonKey"] == "sqlRefinement"
 
 
+def test_production_sql_preflight_skips_when_otd_rest_route_matches() -> None:
+    policy = next(
+        policy
+        for policy in OperationalRouteRegistryService.fallback_policies()
+        if policy.get("id") == "productionSqlPreflight"
+    )
+    select_sql = MagicMock(
+        return_value={
+            "name": "execute_external_action",
+            "arguments": {"actionId": "sql-action", "body": {"sql": "SELECT 1"}},
+        }
+    )
+
+    selected = ExternalActionSqlFallbackPolicyService.try_policy(
+        policy,
+        message="ordens de produção em atraso",
+        sql_source="ordens de produção em atraso",
+        allowed_action_ids=["sql-action", "production-otd-detail"],
+        select_sql=select_sql,
+    )
+
+    assert selected is None
+    select_sql.assert_not_called()
+
+
 def test_production_sql_preflight_skips_when_rest_route_matches() -> None:
     policy = next(
         policy

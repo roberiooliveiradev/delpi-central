@@ -140,4 +140,44 @@ class ChatProductionOperationalIntentService:
 
     @classmethod
     def matches_rest_route(cls, message: str | None) -> bool:
-        return cls.resolve(message) is not None
+        if cls.resolve(message) is not None:
+            return True
+
+        return cls._matches_additional_rest_route_predicate(message)
+
+    @classmethod
+    def _matches_additional_rest_route_predicate(cls, message: str | None) -> bool:
+        """Rotas REST de produção no registry (OTD/OEE/…) fora do enum Playbook 15.
+
+        Impede preflight ``sql_until_rest`` de engolir perguntas já cobertas por API.
+        """
+        predicates = [
+            str(token).strip()
+            for token in ChatAssistantContentService.list(
+                _BUNDLE,
+                "additionalRestRoutePredicates",
+            )
+            if str(token).strip()
+        ]
+
+        if not predicates:
+            return False
+
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized:
+            return False
+
+        from app.domain.services.operational_route_matcher_service import (
+            OperationalRouteMatcherService,
+        )
+
+        for predicate in predicates:
+            if OperationalRouteMatcherService.matches(
+                {"customPredicate": predicate},
+                message=str(message or ""),
+                normalized=normalized,
+            ):
+                return True
+
+        return False

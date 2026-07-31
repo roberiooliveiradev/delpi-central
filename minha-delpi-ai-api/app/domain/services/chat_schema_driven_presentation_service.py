@@ -1197,6 +1197,11 @@ class ChatSchemaDrivenPresentationService:
             if isinstance(candidate, list) and candidate and isinstance(candidate[0], dict):
                 return [row for row in candidate if isinstance(row, dict)]
 
+        resultset_rows = cls._extract_sql_resultset_rows(root)
+
+        if resultset_rows:
+            return resultset_rows
+
         for envelope_key in cls._payload_envelope_keys():
             nested = root.get(envelope_key)
 
@@ -1220,6 +1225,25 @@ class ChatSchemaDrivenPresentationService:
 
             if isinstance(candidate, dict) and candidate:
                 return [candidate]
+
+        return []
+
+    @classmethod
+    def _extract_sql_resultset_rows(cls, root: dict[str, Any]) -> list[dict[str, Any]]:
+        """Envelope ``resultsets[].data`` do POST /data/sql."""
+        resultsets = root.get("resultsets")
+
+        if not isinstance(resultsets, list):
+            return []
+
+        for block in resultsets:
+            if not isinstance(block, dict):
+                continue
+
+            data = block.get("data")
+
+            if isinstance(data, list) and data and isinstance(data[0], dict):
+                return [row for row in data if isinstance(row, dict)]
 
         return []
 

@@ -25,6 +25,20 @@ def test_resolve_schedule_today_intent() -> None:
     assert kind == ProductionOperationalIntentKind.SCHEDULE_TODAY
 
 
+def test_matches_rest_route_for_late_production_orders_blocks_sql_preflight() -> None:
+    message = "ordens de produção em atraso"
+
+    assert ChatProductionOperationalIntentService.resolve(message) is None
+    assert ChatProductionOperationalIntentService.matches_rest_route(message) is True
+
+
+def test_matches_rest_route_for_ops_em_atraso() -> None:
+    assert (
+        ChatProductionOperationalIntentService.matches_rest_route("ops em atraso")
+        is True
+    )
+
+
 def test_resolve_schedule_membership_for_single_pa() -> None:
     kind = ChatProductionOperationalIntentService.resolve(
         "O produto 90260255 está na programação de hoje? Qual OP e quantidade?"

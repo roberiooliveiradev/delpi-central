@@ -365,6 +365,12 @@
   },
   "lossTypeRefugo": ["refugo"],
   "lossTypeScrap": ["scrap"],
+  "additionalRestRoutePredicates": [
+    "productionOtdDetailRoute",
+    "productionOeeDetailRoute",
+    "productionOeeAppointmentRoute",
+    "productionEficienciaFabrilRoute"
+  ],
   "pathTokens": {
     "consumption": "/production/consumption/top-items",
     "consumptionByWorkCenter": "/production/consumption/top-items-by-work-center",

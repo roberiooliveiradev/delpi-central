@@ -130,6 +130,29 @@ def test_extract_tabular_rows_from_nested_orders_items_envelope():
     assert rows[0]["status"] == "late"
 
 
+def test_extract_tabular_rows_from_sql_resultsets_data():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "sql": "SELECT 1",
+            "total_resultsets": 1,
+            "resultsets": [
+                {
+                    "index": 1,
+                    "columns": ["C2_OP", "COD_PRODUTO"],
+                    "total": 2,
+                    "data": [
+                        {"C2_OP": "1", "COD_PRODUTO": "90260144"},
+                        {"C2_OP": "2", "COD_PRODUTO": "90261805"},
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert len(rows) == 2
+    assert rows[0]["C2_OP"] == "1"
+
+
 def test_extract_tabular_rows_from_preferred_nested_section_without_envelope_key():
     rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
         {
