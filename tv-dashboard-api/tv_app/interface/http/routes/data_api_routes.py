@@ -290,19 +290,22 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
     except PermissionError as exc:
         return fail(str(exc), 403)
 
+    # Sentinels do editor de template (ex.: "template-library") não são UUID —
+    # preview segue sem dataDefaults da programação (mesmo efeito de omitir playlistId).
     playlist_defaults: dict[str, Any] | None = None
     if body.playlistId:
         try:
             playlist_uuid = UUID(body.playlistId)
         except ValueError:
-            return fail("Programação inválida.", 422)
-        guarded = require_playlist_access(request, playlist_uuid, need="read")
-        if is_access_error(guarded):
-            return guarded
-        _, access = guarded
-        playlist = access.playlist or {}
-        defaults = playlist.get("dataDefaults")
-        playlist_defaults = defaults if isinstance(defaults, dict) else {}
+            playlist_uuid = None
+        if playlist_uuid is not None:
+            guarded = require_playlist_access(request, playlist_uuid, need="read")
+            if is_access_error(guarded):
+                return guarded
+            _, access = guarded
+            playlist = access.playlist or {}
+            defaults = playlist.get("dataDefaults")
+            playlist_defaults = defaults if isinstance(defaults, dict) else {}
 
     auth = request.headers.get("Authorization")
     try:

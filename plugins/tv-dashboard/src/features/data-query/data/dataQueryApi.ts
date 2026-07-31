@@ -1,6 +1,7 @@
 import type { MColumnSchemaDto } from "@delpi/tv-dashboard-presentation";
 
 import { API_BASE, httpGet, httpPost } from "../../../api/httpClient";
+import { resolvePreviewPlaylistId } from "../../../utils/previewPlaylistId";
 import type {
   DataQueryCapabilities,
   DataQueryCompileResult,
@@ -100,6 +101,7 @@ export const dataQueryApi: DataQueryApi = {
     return result.items;
   },
   async preview(input, signal) {
+    const previewPlaylistId = resolvePreviewPlaylistId(input.playlistId);
     return adaptPreviewResult(
       await unwrap(
         httpPost<Envelope<unknown>>(
@@ -107,7 +109,7 @@ export const dataQueryApi: DataQueryApi = {
           {
             block: input.block,
             nativeConfig: input.nativeConfig,
-            playlistId: input.playlistId,
+            ...(previewPlaylistId ? { playlistId: previewPlaylistId } : {}),
             forceRefresh: Boolean(input.forceRefresh),
             targetStepName: input.targetStepName ?? null,
             previewOptions: {

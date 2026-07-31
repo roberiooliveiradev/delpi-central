@@ -1,4 +1,5 @@
 import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPostBlob, httpPostForm } from "./httpClient";
+import { resolvePreviewPlaylistId } from "../utils/previewPlaylistId";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -689,7 +690,12 @@ export async function previewDataBlockV2(body: {
   };
   signal?: AbortSignal;
 }) {
-  const { signal, ...payload } = body;
+  const { signal, playlistId, ...rest } = body;
+  const previewPlaylistId = resolvePreviewPlaylistId(playlistId);
+  const payload = {
+    ...rest,
+    ...(previewPlaylistId ? { playlistId: previewPlaylistId } : {}),
+  };
   return unwrap(
     httpPost<ApiEnvelope<{
       block: Record<string, unknown>;

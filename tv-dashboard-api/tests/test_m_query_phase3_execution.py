@@ -419,3 +419,39 @@ def test_preview_http_accepts_target_step_and_keeps_legacy_resolved_contract():
     assert payload["query"]["selectedStepName"] == "A"
     assert payload["preview"]["rows"] == [{"a": 1}]
     assert preview.call_args.kwargs["target_step_name"] == "A"
+
+
+def test_preview_http_ignores_non_uuid_playlist_id_sentinel():
+    """Editor de template usa playlistId sentinel — preview sem dataDefaults, sem 422."""
+    client = TestClient(app)
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    returned = {"id": "source", "resolved": {"data": []}}
+    with (
+        patch("tv_app.interface.http.routes.data_api_routes.resolve_user", return_value=user),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.require_playlist_access",
+        ) as require_access,
+        patch.object(
+            __import__(
+                "tv_app.interface.http.routes.data_api_routes",
+                fromlist=["_preview"],
+            )._preview,
+            "preview_block",
+            return_value=returned,
+        ) as preview,
+    ):
+        response = client.post(
+            "/data/preview-block",
+            json={
+                "block": {"id": "source"},
+                "nativeConfig": {},
+                "playlistId": "template-library",
+            },
+        )
+    assert response.status_code == 200
+    require_access.assert_not_called()
+    assert preview.call_args.kwargs["playlist_defaults"] is None
