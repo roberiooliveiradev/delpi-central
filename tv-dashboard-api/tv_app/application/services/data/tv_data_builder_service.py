@@ -74,21 +74,47 @@ class TvDataBuilderService:
         *,
         message: str | None = None,
         action: dict[str, Any] | None = None,
+        authorization: str | None = None,
+        user: Any = None,
     ) -> dict[str, Any] | None:
+        preview_requested = False
+
         def mutator(payload: dict[str, Any]) -> dict[str, Any]:
+            nonlocal preview_requested
             draft = dict(payload.get("draft") or empty_draft())
             messages = list(payload.get("messages") or [])
             preview = payload.get("preview")
 
             if action and isinstance(action, dict):
-                draft, new_messages, preview = self._apply_action(draft, action, preview)
-                messages.extend(new_messages)
+                kind = str(action.get("type") or action.get("action") or "").strip()
+                if kind == "preview":
+                    preview_requested = True
+                    messages.append(
+                        _msg(
+                            "assistant",
+                            TvDataBuilderContentService.message("previewRequested"),
+                            tool="preview",
+                        )
+                    )
+                else:
+                    draft, new_messages, preview = self._apply_action(draft, action, preview)
+                    messages.extend(new_messages)
             else:
                 text = str(message or "").strip()
                 if text:
                     messages.append(_msg("user", text))
-                    draft, new_messages, preview = self._interpret(text, draft, preview)
-                    messages.extend(new_messages)
+                    if TvDataBuilderContentService.matches("preview", text):
+                        preview_requested = True
+                        messages.append(
+                            _msg(
+                                "assistant",
+                                TvDataBuilderContentService.message("previewRequested"),
+                                tool="preview",
+                            )
+                        )
+                    else:
+                        draft, new_messages, preview = self._interpret(text, draft, preview)
+                        messages.extend(new_messages)
 
             return {
                 **payload,
@@ -97,7 +123,37 @@ class TvDataBuilderService:
                 "preview": preview,
             }
 
-        return self._store.update(session_id, mutator)
+        updated = self._store.update(session_id, mutator)
+        if updated is None:
+            return None
+        if not preview_requested:
+            return updated
+
+        preview_result = self.preview(
+            session_id,
+            authorization=authorization,
+            user=user,
+        )
+        if isinstance(preview_result, dict) and preview_result.get("session"):
+            return preview_result["session"]
+        if isinstance(preview_result, dict) and not preview_result.get("ok"):
+
+            def err_mutator(payload: dict[str, Any]) -> dict[str, Any]:
+                messages = list(payload.get("messages") or [])
+                messages.append(
+                    _msg(
+                        "assistant",
+                        str(
+                            preview_result.get("message")
+                            or TvDataBuilderContentService.message("previewEmpty")
+                        ),
+                        tool="preview",
+                    )
+                )
+                return {**payload, "messages": messages[-80:]}
+
+            return self._store.update(session_id, err_mutator) or updated
+        return updated
 
     def materialize(self, session_id: str) -> dict[str, Any] | None:
         session = self._store.get(session_id)
@@ -211,13 +267,18 @@ class TvDataBuilderService:
                 "rows": table.get("rows") or [],
                 "rowCount": table.get("rowCount") or 0,
             }
+            ok_message = (
+                TvDataBuilderContentService.message("previewOk")
+                if preview_payload["columns"] or preview_payload["rowCount"]
+                else TvDataBuilderContentService.message("previewEmptyResult")
+            )
 
             def mutator(payload: dict[str, Any]) -> dict[str, Any]:
                 messages = list(payload.get("messages") or [])
                 messages.append(
                     _msg(
                         "assistant",
-                        TvDataBuilderContentService.message("previewOk"),
+                        ok_message,
                         tool="preview",
                     )
                 )
@@ -251,14 +312,36 @@ class TvDataBuilderService:
             return {"columns": [], "rows": [], "rowCount": 0}
         resolved = selected.get("resolved") if isinstance(selected.get("resolved"), dict) else {}
         query = resolved.get("query") if isinstance(resolved.get("query"), dict) else {}
-        raw_rows = query.get("rows") or query.get("items") or selected.get("rows") or []
+        table = resolved.get("table") if isinstance(resolved.get("table"), dict) else {}
+        preview = resolved.get("preview") if isinstance(resolved.get("preview"), dict) else {}
+
+        raw_rows = (
+            preview.get("rows")
+            or table.get("rows")
+            or query.get("rows")
+            or query.get("items")
+            or selected.get("rows")
+            or []
+        )
         if not isinstance(raw_rows, list):
             raw_rows = []
+
         columns: list[str] = []
-        if isinstance(query.get("columns"), list):
-            columns = [str(c) for c in query["columns"]]
-        elif raw_rows and isinstance(raw_rows[0], dict):
+        for candidate in (
+            preview.get("columns"),
+            table.get("columns"),
+            query.get("columns"),
+        ):
+            if isinstance(candidate, list) and candidate:
+                columns = [
+                    str(item.get("key") if isinstance(item, dict) else item)
+                    for item in candidate
+                    if item is not None
+                ]
+                break
+        if not columns and raw_rows and isinstance(raw_rows[0], dict):
             columns = [str(k) for k in raw_rows[0].keys()]
+
         rows: list[list[Any]] = []
         for row in raw_rows[:20]:
             if isinstance(row, dict):
@@ -277,7 +360,13 @@ class TvDataBuilderService:
         messages: list[dict[str, Any]] = []
 
         if kind == "add_source":
-            return self._tool_add_source(draft, str(action.get("operationId") or ""), preview)
+            params = action.get("params") if isinstance(action.get("params"), dict) else None
+            return self._tool_add_source(
+                draft,
+                str(action.get("operationId") or ""),
+                preview,
+                params=params,
+            )
         if kind == "remove_source":
             return self._tool_remove_source(
                 draft,
@@ -394,6 +483,8 @@ class TvDataBuilderService:
         draft: dict[str, Any],
         operation_id: str,
         preview: Any,
+        *,
+        params: dict[str, Any] | None = None,
     ) -> tuple[dict[str, Any], list[dict[str, Any]], Any]:
         route = self._catalog.get_route(operation_id)
         if not route:
@@ -418,12 +509,12 @@ class TvDataBuilderService:
                 preview,
             )
         label = str(route.get("label") or operation_id)
-        params = apply_catalog_param_defaults({}, route)
+        merged_params = apply_catalog_param_defaults(params or {}, route)
         draft, source = add_source(
             draft,
             operation_id=str(route.get("operationId") or operation_id),
             label=label,
-            params=params,
+            params=merged_params,
         )
         if source is None:
             text = TvDataBuilderContentService.message("sourceAlreadyAdded", label=label)

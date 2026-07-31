@@ -1,6 +1,6 @@
 {
   "messages": {
-    "welcome": "Descreva o dado que você precisa. Vou sugerir fontes do catálogo e montar um rascunho para o slide.",
+    "welcome": "Escolha Pesquisa (catálogo) ou Assistente IA. Ajuste filial e período abaixo e descreva ou busque o dado para o slide.",
     "sessionCreated": "Sessão do assistente de dados iniciada.",
     "suggestHeader": "Encontrei {count} fonte(s) para «{query}»:",
     "suggestEmpty": "Não encontrei fontes para essa frase. Tente termos como OEE, OTD, estoque ou PCP.",
@@ -15,20 +15,42 @@
     "joinNeedTwoSources": "Para juntar fontes, adicione pelo menos duas fontes ao rascunho.",
     "markReady": "Rascunho pronto para usar no slide ({count} fonte(s)).",
     "markReadyEmpty": "Adicione pelo menos uma fonte antes de usar no slide.",
-    "unknownCommand": "Recebi a mensagem. Use sugestões para adicionar fontes, ou diga por exemplo: «remove a fonte X», «filial 01», «só colunas OP e atraso», «junta pela OP».",
+    "unknownCommand": "Recebi a mensagem. Use sugestões para adicionar fontes, ou diga por exemplo: «remove a fonte X», «filial 01», «só colunas OP e atraso», «junta pela OP», «mostre a prévia».",
     "previewOk": "Prévia atualizada.",
     "previewFailed": "Não foi possível gerar a prévia: {error}",
+    "previewEmptyResult": "Prévia concluída, mas sem linhas para exibir com os filtros atuais.",
     "materializeEmpty": "Nenhuma fonte no rascunho para materializar.",
     "maxSourcesReached": "Limite de {count} fontes no rascunho.",
-    "previewEmpty": "Adicione uma fonte antes de gerar a prévia."
+    "previewEmpty": "Adicione uma fonte antes de gerar a prévia.",
+    "previewRequested": "Gerando prévia do rascunho…"
   },
   "patterns": {
-    "removeSource": ["\\b(?:remove|remover|tira|tirar|exclui|excluir)\\b"],
-    "setColumns": ["\\b(?:s[oó]\\s+colunas?|apenas\\s+colunas?|seleciona(?:r)?\\s+colunas?|colunas?:)\\b"],
-    "proposeJoin": ["\\b(?:junta|juntar|une|unir|merge|join|cruz)\\b"],
-    "markReady": ["\\b(?:pronto|usar\\s+no\\s+slide|finalizar|concluir)\\b"],
-    "branch": ["\\bfilial\\s*(0?[12]|SC|ES)\\b", "\\bbranch\\s*(0?[12]|SC|ES)\\b"],
-    "periodDays": ["\\b(?:[uú]ltimos?|passados?)\\s*(\\d{1,3})\\s*dias?\\b", "\\b(\\d{1,3})\\s*dias?\\b"]
+    "removeSource": [
+      "\\b(?:remove|remover|tira|tirar|exclui|excluir)\\b"
+    ],
+    "setColumns": [
+      "\\b(?:s[oó]\\s+colunas?|apenas\\s+colunas?|seleciona(?:r)?\\s+colunas?|colunas?:)\\b"
+    ],
+    "proposeJoin": [
+      "\\b(?:junta|juntar|une|unir|merge|join|cruz)\\b"
+    ],
+    "markReady": [
+      "\\b(?:pronto|usar\\s+no\\s+slide|finalizar|concluir)\\b"
+    ],
+    "preview": [
+      "\\b(?:pr[eé]via|preview)\\b",
+      "\\bmostre(?:\\s+uma)?\\s+pr[eé]via\\b",
+      "\\bmostrar(?:\\s+a)?\\s+pr[eé]via\\b",
+      "\\bgera(?:r)?\\s+(?:a\\s+)?pr[eé]via\\b"
+    ],
+    "branch": [
+      "\\bfilial\\s*(0?[12]|SC|ES)\\b",
+      "\\bbranch\\s*(0?[12]|SC|ES)\\b"
+    ],
+    "periodDays": [
+      "\\b(?:[uú]ltimos?|passados?)\\s*(\\d{1,3})\\s*dias?\\b",
+      "\\b(\\d{1,3})\\s*dias?\\b"
+    ]
   },
   "settings": {
     "sessionTtlSeconds": 3600,

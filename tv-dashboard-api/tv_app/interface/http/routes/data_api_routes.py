@@ -281,6 +281,8 @@ def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
         session_id,
         message=body.message,
         action=body.action,
+        authorization=request.headers.get("Authorization"),
+        user=user,
     )
     if not session:
         return fail("Sessão do assistente não encontrada ou expirada.", 404)

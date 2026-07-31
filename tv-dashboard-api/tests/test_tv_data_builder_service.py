@@ -131,3 +131,42 @@ def test_turn_suggest_returns_cards():
     last = next_session["messages"][-1]
     assert last["role"] == "assistant"
     assert last["suggestions"][0]["operationId"] == "get_pcp_items"
+
+
+def test_preview_intent_does_not_suggest():
+    store = TvDataBuilderSessionStore()
+    catalog = _FakeCatalog(
+        {"get_otd": {"operationId": "get_otd", "label": "OTD", "parameters": []}}
+    )
+    service = TvDataBuilderService(
+        catalog,
+        store=store,
+        suggest=_FakeSuggest([{"operationId": "get_otd", "label": "OTD"}]),
+    )
+    session = service.create_session()
+    sid = session["id"]
+    service.turn(sid, action={"type": "add_source", "operationId": "get_otd"})
+
+    next_session = service.turn(sid, message="mostre uma prévia")
+    assistant_tools = [
+        m.get("tool")
+        for m in next_session["messages"]
+        if m.get("role") == "assistant"
+    ]
+    assert "suggest_sources" not in assistant_tools[-3:]
+    assert "preview" in assistant_tools
+
+
+def test_extract_preview_table_from_resolved_preview():
+    selected = {
+        "resolved": {
+            "preview": {
+                "columns": [{"key": "op"}, {"key": "days_late"}],
+                "rows": [{"op": "1", "days_late": 3}],
+            }
+        }
+    }
+    table = TvDataBuilderService._extract_preview_table(selected)
+    assert table["columns"] == ["op", "days_late"]
+    assert table["rows"] == [["1", 3]]
+    assert table["rowCount"] == 1

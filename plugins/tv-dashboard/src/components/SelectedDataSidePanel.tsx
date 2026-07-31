@@ -255,6 +255,7 @@ export function SelectedDataSidePanel({
           />
         ) : null}
         <DataBuilderChatPanel
+          branchScope={branchScope}
           onInserted={onInserted}
         />
       </div>

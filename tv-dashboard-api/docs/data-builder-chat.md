@@ -73,3 +73,13 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 - Entregar `renderPlan` do chat como modelo do slide
 - Join só no visual — join no `dataTransform` da âncora
 - Auto-preview a cada tecla (só sob demanda)
+
+
+## Modos de descoberta (MFE)
+
+| Modo | Comportamento |
+|------|----------------|
+| **Pesquisa** | Busca local no catálogo TV por label/path/`operationId` (sem IA). |
+| **Assistente IA** | Mensagem NL → `turn` → suggest S2S. |
+
+«mostre uma prévia» (ou botão **Prévia**) dispara preview do rascunho; a tabela usa `resolved.preview` / `resolved.table` / `resolved.query`.

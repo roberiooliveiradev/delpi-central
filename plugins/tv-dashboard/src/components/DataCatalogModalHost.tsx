@@ -4,13 +4,14 @@ import { useRef } from "react";
 
 import { DATA_BUILDER_CHAT_CONTENT } from "../content/dataBuilderChatContent";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import type { BranchScope } from "../api/tvDashboardApi";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBuilderChatPanel } from "./DataBuilderChatPanel";
 
 /**
  * Assistente conversacional de dados — Inserir (ribbon) ou Trocar rota (inspetor).
  */
-export function DataCatalogModalHost({ branchScope: _branchScope = null }: { branchScope?: unknown }) {
+export function DataCatalogModalHost({ branchScope = null }: { branchScope?: BranchScope | null }) {
   const {
     dataCatalogModalOpen,
     setDataCatalogModalOpen,
@@ -75,6 +76,7 @@ export function DataCatalogModalHost({ branchScope: _branchScope = null }: { bra
             <div className="td-data-catalog-popover__body">
               <DataBuilderChatPanel
                 mode={dataCatalogMode}
+                branchScope={branchScope}
                 onInserted={() => {
                   closeCatalog();
                   setDataPanelIntent("binding");
