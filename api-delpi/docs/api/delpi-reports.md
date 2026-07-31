@@ -12,9 +12,9 @@
 
 | Método | Path | `operationId` | Permissão |
 |--------|------|---------------|-----------|
-| `GET` | `/definitions` | `list_report_definitions` | read |
+| `GET` | `/definitions` | `list_report_definitions` | follow-up read (`notes.manage` ok) |
 | `POST` | `/definitions` | `create_report_definition` | write |
-| `GET` | `/definitions/{id}` | `get_report_definition` | read |
+| `GET` | `/definitions/{id}` | `get_report_definition` | follow-up read |
 | `PATCH` | `/definitions/{id}` | `update_report_definition` | write |
 | `GET` | `/definitions/{id}/recipients` | `list_report_recipients` | read |
 | `PUT` | `/definitions/{id}/recipients` | `replace_report_recipients` | write |
@@ -25,9 +25,9 @@
 | `GET` | `/runs` | `list_report_runs` | read |
 | `GET` | `/runs/{id}` | `get_report_run` | read |
 | `GET` | `/providers` | `list_report_providers` | read |
-| `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | read + filial |
+| `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | follow-up read + filial |
 | `POST` | `/schedules/process-pending` | `process_pending_report_schedules` | write **ou** service token |
-| `GET` | `/definitions/{id}/item-notes` | `list_report_shortage_item_notes` | read + filial |
+| `GET` | `/definitions/{id}/item-notes` | `list_report_shortage_item_notes` | follow-up read + filial |
 | `PUT` | `/definitions/{id}/item-notes/{productCode}` | `upsert_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
 | `DELETE` | `/definitions/{id}/item-notes/{productCode}` | `delete_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
 
@@ -153,7 +153,8 @@ Critério: `first_shortage_date` ∈ `[as_of, as_of + horizonDays]` via `build_s
 
 ## RBAC
 
-`REPORTS_READ_PERMISSIONS`, `REPORTS_WRITE_PERMISSIONS`, `REPORTS_NOTES_WRITE_PERMISSIONS`,
+`REPORTS_READ_PERMISSIONS`, `REPORTS_FOLLOW_UP_READ_PERMISSIONS` (inclui `notes.manage`),
+`REPORTS_WRITE_PERMISSIONS`, `REPORTS_NOTES_WRITE_PERMISSIONS`,
 `REPORTS_BRANCH_VIEW_PERMS`.
 
 Permissão operacional de notas: `reports.notes.manage` (manifest do plugin `reports`).

@@ -1,4 +1,5 @@
 import { ClipboardList, FileText, LayoutDashboard, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useMemo } from "react";
 
 import {
   DELPI_LOGO_URL,
@@ -12,6 +13,8 @@ type Props = {
   active: ReportsNavSection;
   collapsed: boolean;
   mobileOpen: boolean;
+  canUseAdminNav: boolean;
+  canUseFollowUpNav: boolean;
   onToggleCollapsed: () => void;
   onCloseMobile: () => void;
 };
@@ -21,24 +24,32 @@ const NAV_ITEMS: Array<{
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
+  requiresAdmin: boolean;
+  requiresFollowUp: boolean;
 }> = [
   {
     id: "overview",
     label: "Visão geral",
     href: REPORTS_BASE,
     icon: LayoutDashboard,
+    requiresAdmin: true,
+    requiresFollowUp: false,
   },
   {
     id: "reports",
     label: "Relatórios",
     href: REPORTS_LIST_PATH,
     icon: FileText,
+    requiresAdmin: true,
+    requiresFollowUp: false,
   },
   {
     id: "followUp",
     label: "Acompanhamentos",
     href: REPORTS_FOLLOW_UP_LIST_PATH,
     icon: ClipboardList,
+    requiresAdmin: false,
+    requiresFollowUp: true,
   },
 ];
 
@@ -46,9 +57,27 @@ export function ReportsSidebar({
   active,
   collapsed,
   mobileOpen,
+  canUseAdminNav,
+  canUseFollowUpNav,
   onToggleCollapsed,
   onCloseMobile,
 }: Props) {
+  const items = useMemo(
+    () =>
+      NAV_ITEMS.filter((item) => {
+        if (item.requiresAdmin && !canUseAdminNav) return false;
+        if (item.requiresFollowUp && !canUseFollowUpNav) return false;
+        return true;
+      }),
+    [canUseAdminNav, canUseFollowUpNav],
+  );
+
+  const homeHref = canUseAdminNav
+    ? REPORTS_BASE
+    : canUseFollowUpNav
+      ? REPORTS_FOLLOW_UP_LIST_PATH
+      : REPORTS_BASE;
+
   return (
     <aside
       className={[
@@ -61,7 +90,7 @@ export function ReportsSidebar({
       aria-label="Navegação Delpi Reports"
     >
       <div className="rp-sidebar__brand">
-        <a className="rp-sidebar__brand-link" href={REPORTS_BASE} onClick={onCloseMobile}>
+        <a className="rp-sidebar__brand-link" href={homeHref} onClick={onCloseMobile}>
           <img
             className="rp-sidebar__logo"
             src={DELPI_LOGO_URL}
@@ -83,7 +112,7 @@ export function ReportsSidebar({
       </div>
 
       <nav className="rp-sidebar__nav">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           const Icon = item.icon;
           const isActive = active === item.id;
           return (

@@ -29,10 +29,12 @@
 
 | Perfil | Permissões | Pode |
 |--------|------------|------|
-| **Operacional** | `reports.view` (+ `view.filial-*`) + **`reports.notes.manage`** | Abrir tela de acompanhamentos; gravar/remover notas |
+| **Operacional** | **`reports.notes.manage`** + `reports.view.filial-*` (**sem** `reports.view`) | Só aba/menu Acompanhamentos; gravar/remover notas |
+| **Leitura admin** | `reports.view` (+ filial se escopo) | Visão geral, Relatórios, Acompanhamentos (sem gravar definição) |
 | **Admin** | `reports.manage` (+ `manage.filial-*`) | Tudo acima + params/agenda/destinatários/enviar |
 
-Sem `notes.manage` (nem manage), o `PUT`/`DELETE` de `item-notes` retorna **403**.
+Sem `notes.manage` (nem manage), o `PUT`/`DELETE` de `item-notes` retorna **403**.  
+Com `reports.view`, o usuário vê as abas administrativas — **não** atribua `view` no perfil operacional.
 
 Após deploy: **re-registrar o manifest** do plugin `reports` e atribuir `reports.notes.manage` no portal.
 
@@ -124,8 +126,9 @@ cd plugins/reports && npm run build
 
 ### Passo C — Menu do portal
 
-1. Com `reports.notes.manage`, o menu pode exibir **Acompanhamentos**
+1. Com **só** `reports.notes.manage` (+ filial), o menu do portal e a sidebar do MFE exibem **apenas** Acompanhamentos (sem Visão geral / Relatórios)
 2. Lista de definições ativas de ruptura → abrir a mesma tela
+3. Acesso direto a `/apps/reports` redireciona para `/apps/reports/acompanhamentos`
 
 ---
 

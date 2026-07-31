@@ -33,6 +33,7 @@ def branch_view_allowed(branch: str) -> bool:
     if has_permission(user, REPORTS_VIEW) or has_permission(user, REPORTS_MANAGE):
         return True
 
+    # notes.manage sozinho não libera filial — precisa view.filial-* (ou view/manage).
     branch_perm = REPORTS_BRANCH_VIEW_PERMS.get(branch)
     return branch_perm is not None and has_permission(user, branch_perm)
 
