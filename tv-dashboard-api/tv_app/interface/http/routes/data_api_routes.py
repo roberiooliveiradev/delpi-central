@@ -22,7 +22,7 @@ from tv_app.application.services.data.tv_data_openapi_catalog_service import TvD
 from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.core.responses import fail, ok
-from tv_app.core.security import TV_MANAGE, TV_READ, assert_permission
+from tv_app.core.security import TV_MANAGE, TV_READ, TV_WRITE, assert_permission
 from tv_app.interface.http.auth_http import resolve_user
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 
