@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./DataRoutesSidePanel", () => ({
-  DataRoutesSidePanel: () => <div data-testid="data-routes-panel">painel</div>,
+vi.mock("./DataBuilderChatPanel", () => ({
+  DataBuilderChatPanel: () => <div data-testid="data-builder-chat">assistente</div>,
 }));
 
 const setDataCatalogModalOpen = vi.fn();
@@ -30,20 +30,20 @@ describe("DataCatalogModalHost (popover)", () => {
     vi.clearAllMocks();
   });
 
-  it("renderiza popover do catálogo com o painel de rotas", () => {
+  it("renderiza popover do assistente de dados", () => {
     render(<DataCatalogModalHost />);
 
     const dialog = document.querySelector(".td-data-catalog-popover");
     expect(dialog).toBeTruthy();
     expect(dialog?.getAttribute("role")).toBe("dialog");
-    expect(dialog?.getAttribute("aria-label")).toBe("Fontes de dados");
-    expect(screen.getByTestId("data-routes-panel")).toBeTruthy();
+    expect(dialog?.getAttribute("aria-label")).toBe("Assistente de dados");
+    expect(screen.getByTestId("data-builder-chat")).toBeTruthy();
   });
 
   it("fecha pelo botão Fechar e limpa âncora/modo", () => {
     render(<DataCatalogModalHost />);
 
-    fireEvent.click(screen.getByLabelText("Fechar catálogo"));
+    fireEvent.click(screen.getByLabelText("Fechar assistente"));
 
     expect(setDataCatalogModalOpen).toHaveBeenCalledWith(false);
     expect(setDataCatalogMode).toHaveBeenCalledWith("insert");

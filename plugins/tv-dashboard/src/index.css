@@ -1211,6 +1211,170 @@
   -webkit-overflow-scrolling: touch;
   padding: 8px 12px 12px;
 }
+.dashboard-tv-dashboard .td-data-catalog-popover--builder{
+  width: min(720px, calc(100vw - 24px));
+  max-height: min(86dvh, 820px);
+}
+.dashboard-tv-dashboard .td-data-catalog-popover--builder .td-data-catalog-popover__body{
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.dashboard-tv-dashboard .td-data-builder-chat{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  height: min(70dvh, 680px);
+  padding: 10px 12px 12px;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__messages{
+  flex: 1 1 auto;
+  min-height: 140px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__bubble{
+  max-width: 96%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 70%, transparent);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__bubble--user{
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 18%, transparent);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__bubble--assistant{
+  align-self: flex-start;
+  background: color-mix(in srgb, var(--td-surface, #0f172a) 88%, #64748b 12%);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__text{
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--td-text, #e2e8f0);
+  white-space: pre-wrap;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__suggestions{
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__suggestion-card{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 75%, transparent);
+  background: color-mix(in srgb, var(--td-surface) 94%, #089bdb 6%);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__suggestion-card strong{
+  display: block;
+  font-size: 0.85rem;
+  color: var(--td-text, #e2e8f0);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__suggestion-card small{
+  display: block;
+  margin-top: 2px;
+  color: var(--td-text-muted, #94a3b8);
+  font-size: 0.75rem;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__status{
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--td-text-muted, #94a3b8);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__status--error{
+  color: #f87171;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__draft{
+  flex: 0 0 auto;
+  max-height: 34%;
+  overflow: auto;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 70%, transparent);
+  background: color-mix(in srgb, var(--td-surface, #0f172a) 92%, transparent);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__draft-title{
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--td-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__draft-empty,
+.dashboard-tv-dashboard .td-data-builder-chat__draft-meta{
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--td-text-muted, #94a3b8);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__draft-list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__draft-list li{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--td-text, #e2e8f0);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__preview{
+  margin-top: 8px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__preview-scroll{
+  overflow: auto;
+  max-height: 140px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__preview table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__preview th,
+.dashboard-tv-dashboard .td-data-builder-chat__preview td{
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 70%, transparent);
+  padding: 4px 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__composer{
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__input{
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 80%, transparent);
+  background: color-mix(in srgb, var(--td-surface, #0f172a) 90%, transparent);
+  color: var(--td-text, #e2e8f0);
+}
+.dashboard-tv-dashboard .td-data-builder-chat__actions{
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .dashboard-tv-dashboard .td-data-catalog-popover .td-data-routes-panel{
   padding: 4px 4px 10px;
   gap: 6px;

@@ -1,0 +1,38 @@
+{
+  "messages": {
+    "welcome": "Descreva o dado que você precisa. Vou sugerir fontes do catálogo e montar um rascunho para o slide.",
+    "sessionCreated": "Sessão do assistente de dados iniciada.",
+    "suggestHeader": "Encontrei {count} fonte(s) para «{query}»:",
+    "suggestEmpty": "Não encontrei fontes para essa frase. Tente termos como OEE, OTD, estoque ou PCP.",
+    "suggestDegraded": "Sugestões da IA indisponíveis no momento. Tente de novo ou descreva a rota pelo nome.",
+    "sourceAdded": "Fonte «{label}» adicionada ao rascunho.",
+    "sourceAlreadyAdded": "A fonte «{label}» já está no rascunho.",
+    "sourceRemoved": "Fonte «{label}» removida do rascunho.",
+    "sourceNotFound": "Não encontrei essa fonte no rascunho.",
+    "paramsUpdated": "Filtros atualizados em «{label}».",
+    "columnsUpdated": "Colunas do modelo atualizadas ({count}).",
+    "joinProposed": "Junção proposta: «{left}» ⟕ «{right}» pela chave {joinKey}.",
+    "joinNeedTwoSources": "Para juntar fontes, adicione pelo menos duas fontes ao rascunho.",
+    "markReady": "Rascunho pronto para usar no slide ({count} fonte(s)).",
+    "markReadyEmpty": "Adicione pelo menos uma fonte antes de usar no slide.",
+    "unknownCommand": "Recebi a mensagem. Use sugestões para adicionar fontes, ou diga por exemplo: «remove a fonte X», «filial 01», «só colunas OP e atraso», «junta pela OP».",
+    "previewOk": "Prévia atualizada.",
+    "previewFailed": "Não foi possível gerar a prévia: {error}",
+    "materializeEmpty": "Nenhuma fonte no rascunho para materializar.",
+    "maxSourcesReached": "Limite de {count} fontes no rascunho.",
+    "previewEmpty": "Adicione uma fonte antes de gerar a prévia."
+  },
+  "patterns": {
+    "removeSource": ["\\b(?:remove|remover|tira|tirar|exclui|excluir)\\b"],
+    "setColumns": ["\\b(?:s[oó]\\s+colunas?|apenas\\s+colunas?|seleciona(?:r)?\\s+colunas?|colunas?:)\\b"],
+    "proposeJoin": ["\\b(?:junta|juntar|une|unir|merge|join|cruz)\\b"],
+    "markReady": ["\\b(?:pronto|usar\\s+no\\s+slide|finalizar|concluir)\\b"],
+    "branch": ["\\bfilial\\s*(0?[12]|SC|ES)\\b", "\\bbranch\\s*(0?[12]|SC|ES)\\b"],
+    "periodDays": ["\\b(?:[uú]ltimos?|passados?)\\s*(\\d{1,3})\\s*dias?\\b", "\\b(\\d{1,3})\\s*dias?\\b"]
+  },
+  "settings": {
+    "sessionTtlSeconds": 3600,
+    "maxSources": 8,
+    "suggestLimit": 5
+  }
+}

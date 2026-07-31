@@ -232,6 +232,100 @@ class SuggestDataRoutesBody(BaseModel):
     limit: int = Field(default=5, ge=1, le=20)
 
 
+class BuilderTurnBody(BaseModel):
+    message: str | None = None
+    action: dict[str, Any] | None = None
+
+
+@router.post("/builder/sessions")
+def create_data_builder_session(request: Request):
+    """Inicia sessão do assistente conversacional de dados."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
+
+    session = TvDataBuilderService(_catalog).create_session()
+    return ok(session, message="Sessão do assistente de dados iniciada.")
+
+
+@router.get("/builder/sessions/{session_id}")
+def get_data_builder_session(request: Request, session_id: str):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
+
+    session = TvDataBuilderService(_catalog).get_session(session_id)
+    if not session:
+        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    return ok(session)
+
+
+@router.post("/builder/sessions/{session_id}/turn")
+def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not (body.message and str(body.message).strip()) and not body.action:
+        return fail("Informe message ou action.", 400)
+    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
+
+    session = TvDataBuilderService(_catalog).turn(
+        session_id,
+        message=body.message,
+        action=body.action,
+    )
+    if not session:
+        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    return ok(session, message="Turno aplicado.")
+
+
+@router.post("/builder/sessions/{session_id}/materialize")
+def data_builder_materialize(request: Request, session_id: str):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
+
+    result = TvDataBuilderService(_catalog).materialize(session_id)
+    if result is None:
+        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    if not result.get("ok"):
+        return fail(str(result.get("message") or "Rascunho vazio."), 400, data=result)
+    return ok(result, message="Modelo pronto para o slide.")
+
+
+@router.post("/builder/sessions/{session_id}/preview")
+def data_builder_preview(request: Request, session_id: str):
+    """Força prévia tabular do rascunho (sob demanda)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_data_builder_service import TvDataBuilderService
+
+    result = TvDataBuilderService(_catalog).preview(
+        session_id,
+        authorization=request.headers.get("Authorization"),
+        user=user,
+    )
+    if result is None:
+        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    if not result.get("ok"):
+        return fail(str(result.get("message") or "Prévia indisponível."), 400, data=result)
+    return ok(result, message="Prévia atualizada.")
+
+
 @router.get("/routes")
 def list_data_routes_v2(request: Request):
     user = resolve_user(request)

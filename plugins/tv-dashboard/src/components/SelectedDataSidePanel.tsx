@@ -22,7 +22,7 @@ import type {
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBindingInspector } from "./DataBindingInspector";
 import { DataPreparePanel } from "./DataPreparePanel";
-import { DataRoutesSidePanel } from "./DataRoutesSidePanel";
+import { DataBuilderChatPanel } from "./DataBuilderChatPanel";
 import {
   canLinkBlockToProjectDataSource,
   ProjectDataSourcesCatalogSection,
@@ -254,9 +254,7 @@ export function SelectedDataSidePanel({
             onPickSource={linkPrimaryToSource}
           />
         ) : null}
-        <DataRoutesSidePanel
-          layout={layout}
-          branchScope={branchScope}
+        <DataBuilderChatPanel
           onInserted={onInserted}
         />
       </div>

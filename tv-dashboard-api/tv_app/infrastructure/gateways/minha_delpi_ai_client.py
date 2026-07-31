@@ -53,3 +53,21 @@ class MinhaDelpiAiClient:
             if isinstance(nested, dict) and "suggestions" in nested:
                 return nested
             return payload
+
+    def suggest_operational_params(
+        self,
+        *,
+        query: str,
+        operation_id: str | None = None,
+    ) -> dict[str, Any]:
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        apply_internal_service_headers(headers)
+        url = f"{self._base_url}/chat/internal/operational-routes/suggest-params"
+        body: dict[str, Any] = {"query": query}
+        if operation_id:
+            body["operationId"] = operation_id
+        with httpx.Client(timeout=self._timeout) as client:
+            response = client.post(url, headers=headers, json=body)
+            response.raise_for_status()
+            payload = response.json()
+            return payload if isinstance(payload, dict) else {}

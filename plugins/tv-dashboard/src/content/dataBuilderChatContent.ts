@@ -1,0 +1,20 @@
+/** Microcopy do assistente de dados (TV). */
+export const DATA_BUILDER_CHAT_CONTENT = {
+  title: "Assistente de dados",
+  titleReplace: "Trocar fonte com o assistente",
+  placeholder: "Descreva o dado, filtre, junte fontes…",
+  send: "Enviar",
+  useOnSlide: "Usar no slide",
+  discard: "Descartar",
+  draftTitle: "Rascunho",
+  draftEmpty: "Nenhuma fonte no rascunho ainda.",
+  addSuggestion: "Adicionar",
+  removeSource: "Remover",
+  preview: "Prévia",
+  previewTitle: "Prévia tabular",
+  loading: "Pensando…",
+  sessionError: "Não foi possível iniciar o assistente de dados.",
+  materializeError: "Não foi possível aplicar o modelo no slide.",
+  previewError: "Não foi possível gerar a prévia.",
+  primaryMark: "âncora",
+} as const;

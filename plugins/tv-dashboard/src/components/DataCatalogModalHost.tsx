@@ -2,20 +2,15 @@ import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import { X } from "lucide-react";
 import { useRef } from "react";
 
-import type { BranchScope } from "../api/tvDashboardApi";
+import { DATA_BUILDER_CHAT_CONTENT } from "../content/dataBuilderChatContent";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { DataRoutesSidePanel } from "./DataRoutesSidePanel";
-
-type Props = {
-  branchScope?: BranchScope | null;
-};
+import { DataBuilderChatPanel } from "./DataBuilderChatPanel";
 
 /**
- * Catálogo de fontes em popover ancorado — Inserir (ribbon) ou Trocar rota (inspetor).
- * O painel lateral continua com listagem inline quando a aba Dados está vazia.
+ * Assistente conversacional de dados — Inserir (ribbon) ou Trocar rota (inspetor).
  */
-export function DataCatalogModalHost({ branchScope = null }: Props) {
+export function DataCatalogModalHost({ branchScope: _branchScope = null }: { branchScope?: unknown }) {
   const {
     dataCatalogModalOpen,
     setDataCatalogModalOpen,
@@ -38,7 +33,10 @@ export function DataCatalogModalHost({ branchScope = null }: Props) {
     setDataCatalogAnchor(null);
   }
 
-  const title = dataCatalogMode === "replace" ? "Trocar fonte de dados" : "Fontes de dados";
+  const title =
+    dataCatalogMode === "replace"
+      ? DATA_BUILDER_CHAT_CONTENT.titleReplace
+      : DATA_BUILDER_CHAT_CONTENT.title;
 
   return (
     <>
@@ -56,7 +54,7 @@ export function DataCatalogModalHost({ branchScope = null }: Props) {
           preferredPlacement="bottom"
           gap={8}
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-          className="td-data-catalog-popover"
+          className="td-data-catalog-popover td-data-catalog-popover--builder"
           role="dialog"
           aria-label={title}
           density="compact"
@@ -68,18 +66,15 @@ export function DataCatalogModalHost({ branchScope = null }: Props) {
               <button
                 type="button"
                 className="td-data-catalog-popover__close"
-                aria-label="Fechar catálogo"
+                aria-label="Fechar assistente"
                 onClick={closeCatalog}
               >
                 <X size={16} aria-hidden="true" />
               </button>
             </header>
             <div className="td-data-catalog-popover__body">
-              <DataRoutesSidePanel
-                layout="pane"
-                hideHeading
+              <DataBuilderChatPanel
                 mode={dataCatalogMode}
-                branchScope={branchScope}
                 onInserted={() => {
                   closeCatalog();
                   setDataPanelIntent("binding");

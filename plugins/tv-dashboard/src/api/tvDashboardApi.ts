@@ -697,6 +697,119 @@ export async function suggestDataRoutes(query: string, limit = 5) {
   );
 }
 
+export type DataBuilderSuggestionCard = {
+  operationId?: string;
+  label?: string;
+  reason?: string;
+  category?: string;
+  path?: string;
+};
+
+export type DataBuilderMessage = {
+  id: string;
+  role: "user" | "assistant" | string;
+  text: string;
+  suggestions?: DataBuilderSuggestionCard[];
+  tool?: string | null;
+};
+
+export type DataBuilderDraftSource = {
+  localId: string;
+  queryName?: string;
+  operationId: string;
+  params?: Record<string, string | number | boolean | null>;
+  label?: string;
+};
+
+export type DataBuilderDraft = {
+  sources: DataBuilderDraftSource[];
+  primaryLocalId?: string;
+  transform?: { steps?: Array<Record<string, unknown>> } | null;
+  fieldLabels?: Record<string, string>;
+  status?: "draft" | "ready" | string;
+};
+
+export type DataBuilderSession = {
+  id: string;
+  messages: DataBuilderMessage[];
+  draft: DataBuilderDraft;
+  preview?: unknown;
+};
+
+export type DataBuilderMaterializeBlock = {
+  type: "data_source";
+  localId: string;
+  queryName?: string;
+  isPrimary?: boolean;
+  dataBinding: {
+    operationId: string;
+    params?: Record<string, string | number | boolean | null>;
+    displayMode?: string;
+    label?: string;
+  };
+  dataTransform?: { steps?: Array<Record<string, unknown>> };
+};
+
+export type DataBuilderMaterializeResult = {
+  ok: boolean;
+  blocks: DataBuilderMaterializeBlock[];
+  primaryLocalId?: string;
+  preferredView?: "table" | "kpi" | "series" | string;
+  draft?: DataBuilderDraft;
+  message?: string;
+};
+
+export async function createDataBuilderSession() {
+  return unwrap(httpPost<ApiEnvelope<DataBuilderSession>>(`${API_BASE}/data/builder/sessions`, {}));
+}
+
+export async function getDataBuilderSession(sessionId: string) {
+  return unwrap(
+    httpGet<ApiEnvelope<DataBuilderSession>>(`${API_BASE}/data/builder/sessions/${sessionId}`),
+  );
+}
+
+export async function dataBuilderTurn(
+  sessionId: string,
+  body: { message?: string; action?: Record<string, unknown> },
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<DataBuilderSession>>(
+      `${API_BASE}/data/builder/sessions/${sessionId}/turn`,
+      body,
+    ),
+  );
+}
+
+export async function materializeDataBuilderSession(sessionId: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<DataBuilderMaterializeResult>>(
+      `${API_BASE}/data/builder/sessions/${sessionId}/materialize`,
+      {},
+    ),
+  );
+}
+
+export type DataBuilderPreviewTable = {
+  columns: string[];
+  rows: Array<Array<unknown>>;
+  rowCount: number;
+};
+
+export async function previewDataBuilderSession(sessionId: string) {
+  return unwrap(
+    httpPost<
+      ApiEnvelope<{
+        ok: boolean;
+        preview: DataBuilderPreviewTable | null;
+        session?: DataBuilderSession;
+        draft?: DataBuilderDraft;
+        message?: string;
+      }>
+    >(`${API_BASE}/data/builder/sessions/${sessionId}/preview`, {}),
+  );
+}
+
 export async function previewDataBlockV2(body: {
   block: Record<string, unknown>;
   nativeConfig: Record<string, unknown>;
