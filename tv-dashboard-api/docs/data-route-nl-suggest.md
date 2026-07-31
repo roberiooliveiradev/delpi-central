@@ -33,9 +33,21 @@ Se a AI estiver indisponível, o BFF devolve `suggestions: []` com `degraded: tr
 |----------|---------|
 | `MINHA_DELPI_AI_API_URL` | `http://delpi-minha-delpi-ai-api:8000` |
 | `MINHA_DELPI_AI_API_TIMEOUT_SECONDS` | `20` |
-| `API_DELPI_INTERNAL_SERVICE_TOKEN` | (mesmo token S2S das demais integrações) |
+| `API_DELPI_INTERNAL_SERVICE_TOKEN` | **Obrigatório** — mesmo valor em `tv-dashboard-api` e `minha-delpi-ai-api` (header `X-Delpi-Service-Token`) |
 
-Em dev, o serviço `minha-delpi-ai-api` exige profile Compose `chat` (ou `vision`).
+Em prod, o compose injeta o token nos dois serviços a partir de `infra/.env`. Conferência rápida:
+
+```bash
+docker exec delpi-tv-dashboard-api sh -c 'echo TV_TOKEN_LEN=${#API_DELPI_INTERNAL_SERVICE_TOKEN}'
+docker exec delpi-minha-delpi-ai-api sh -c 'echo AI_TOKEN_LEN=${#API_DELPI_INTERNAL_SERVICE_TOKEN}'
+# Ambos > 0 e iguais. Depois:
+docker exec delpi-tv-dashboard-api python -c "
+from tv_app.infrastructure.gateways.minha_delpi_ai_client import MinhaDelpiAiClient
+print(MinhaDelpiAiClient().suggest_operational_routes(query='ops em atraso', limit=3))
+"
+```
+
+Em Compose dev, o serviço `minha-delpi-ai-api` exige profile `chat` (ou `vision`).
 
 ## UX (v1)
 

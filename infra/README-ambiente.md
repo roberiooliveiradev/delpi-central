@@ -566,7 +566,7 @@ Imagens e vídeos dos slides «Comunicado interno» ficam em disco no container 
 
 O catálogo de rotas (`tv_data_routes.json`) é **regenerado no startup** do `tv-dashboard-api` a partir do OpenAPI live da api-delpi (`TV_OPENAPI_SYNC_ON_STARTUP=true`). Persistência no volume `tv-dashboard/catalog` para sobreviver a recreate.
 
-Descoberta NL de fontes (`POST /data/routes/suggest`): `MINHA_DELPI_AI_API_URL` (default `http://delpi-minha-delpi-ai-api:8000`) + `API_DELPI_INTERNAL_SERVICE_TOKEN`. Doc: `tv-dashboard-api/docs/data-route-nl-suggest.md`. Em Compose dev, o AI API exige profile `chat`.
+Descoberta NL de fontes (`POST /data/routes/suggest`): `MINHA_DELPI_AI_API_URL` (default `http://delpi-minha-delpi-ai-api:8000`) + **`API_DELPI_INTERNAL_SERVICE_TOKEN` no TV e no `minha-delpi-ai-api`** (mesmo valor). Sem o token no chat, o S2S responde 401 e a UI mostra «Sugestões indisponíveis». Doc: `tv-dashboard-api/docs/data-route-nl-suggest.md`. Em Compose dev, o AI API exige profile `chat`.
 
 Pós-deploy manual / CI: `./scripts/homologacao/sync-api-delpi-openapi-tv.sh` (também encadeado no workflow `sync-api-delpi-openapi`).
 
