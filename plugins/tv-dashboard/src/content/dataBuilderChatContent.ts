@@ -15,7 +15,7 @@ export const DATA_BUILDER_CHAT_CONTENT = {
   configSourceTitle: "Filtros da fonte âncora",
   modeSearch: "Pesquisa",
   modeAi: "Assistente IA",
-  modeSearchHint: "Busca no catálogo por nome (sem IA).",
+  modeSearchHint: "Catálogo com filtros e sugestões NL, como antes.",
   modeAiHint: "Descreva o dado em linguagem natural.",
   addSuggestion: "Adicionar",
   removeSource: "Remover",

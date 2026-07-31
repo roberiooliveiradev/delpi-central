@@ -12,6 +12,7 @@ import {
   listDataRoutes,
   materializeDataBuilderSession,
   previewDataBuilderSession,
+  suggestDataRoutes,
   type BranchScope,
   type DataBuilderDraft,
   type DataBuilderMessage,
@@ -23,12 +24,20 @@ import {
 import { DATA_BUILDER_CHAT_CONTENT as C } from "../content/dataBuilderChatContent";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
+import { shouldRequestDataRouteSuggestions } from "../utils/shouldRequestDataRouteSuggestions";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { DataCatalogMode } from "./comunicadoEditorContextCore";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { BranchField } from "./BranchField";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  DATA_ROUTE_CATALOG_CONTENT,
+  DataRouteCatalogPanel,
+  NativeTextControl,
+  resolveDataRouteDisplayKinds,
+  summarizeRouteParams,
+  type DataRouteCatalogSuggestion,
+} from "@delpi/plugin-ui/index";
 
 type Props = {
   mode?: DataCatalogMode;
@@ -41,6 +50,39 @@ type DiscoveryMode = "search" | "ai";
 type SessionDefaults = {
   branch: string;
   periodDays: string;
+};
+
+const SUGGEST_DEBOUNCE_MS = 350;
+const SUGGEST_LIMIT = 5;
+
+const CATEGORY_ORDER = [
+  "production",
+  "quality",
+  "supplies",
+  "commercial",
+  "products",
+  "financial",
+  "engineering",
+  "hr",
+  "scheduling",
+  "strategic",
+  "system",
+  "other",
+] as const;
+
+const CATEGORY_LABELS: Record<string, string> = {
+  production: "Produção",
+  quality: "Qualidade",
+  supplies: "Suprimentos",
+  commercial: "Comercial",
+  products: "Produtos",
+  financial: "Financeiro",
+  engineering: "Engenharia",
+  hr: "Recursos Humanos",
+  scheduling: "Agendamento",
+  strategic: "Estratégico",
+  system: "Sistema",
+  other: "Outros",
 };
 
 function remapTransformSourceIds(
@@ -88,13 +130,19 @@ export function DataBuilderChatPanel({
 }: Props) {
   const { addDataSourceBlock, replaceSelectedDataRoute } = useComunicadoEditor();
   const [session, setSession] = useState<DataBuilderSession | null>(null);
-  const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>("ai");
+  const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>("search");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewTable, setPreviewTable] = useState<DataBuilderPreviewTable | null>(null);
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState<string | null>(null);
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<DataRouteCatalogSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsQuery, setSuggestionsQuery] = useState("");
+  const [suggestionsDegraded, setSuggestionsDegraded] = useState(false);
   const [sessionDefaults, setSessionDefaults] = useState<SessionDefaults>({
     branch: "01",
     periodDays: "",
@@ -125,12 +173,16 @@ export function DataBuilderChatPanel({
   useEffect(() => {
     let cancelled = false;
     setRoutesLoading(true);
+    setRoutesError(null);
     void listDataRoutes()
       .then((items) => {
         if (!cancelled) setRoutes(items || []);
       })
-      .catch(() => {
-        if (!cancelled) setRoutes([]);
+      .catch((err: Error) => {
+        if (!cancelled) {
+          setRoutes([]);
+          setRoutesError(err.message || C.catalogEmpty);
+        }
       })
       .finally(() => {
         if (!cancelled) setRoutesLoading(false);
@@ -139,6 +191,62 @@ export function DataBuilderChatPanel({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (discoveryMode !== "search") return;
+    const trimmed = catalogQuery.trim();
+    if (!shouldRequestDataRouteSuggestions(trimmed)) {
+      setSuggestions([]);
+      setSuggestionsQuery("");
+      setSuggestionsLoading(false);
+      setSuggestionsDegraded(false);
+      return;
+    }
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      setSuggestionsLoading(true);
+      void suggestDataRoutes(trimmed, SUGGEST_LIMIT)
+        .then((payload) => {
+          if (cancelled) return;
+          setSuggestionsQuery(payload.query || trimmed);
+          setSuggestionsDegraded(Boolean(payload.degraded));
+          setSuggestions(
+            (payload.suggestions || []).map((route) => ({
+              reason: String(route.reason || "").trim(),
+              item: {
+                id: route.operationId,
+                label: route.label,
+                category: route.category,
+                description: route.description,
+                whenToUse: route.whenToUse,
+                path: route.path,
+                httpMethod: "GET" as const,
+                metaShape: route.metaShape,
+                valueFields: route.valueFields,
+                displayKinds: resolveDataRouteDisplayKinds({
+                  metaShape: route.metaShape,
+                  allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+                }),
+                params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
+              },
+            })),
+          );
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setSuggestions([]);
+          setSuggestionsQuery(trimmed);
+          setSuggestionsDegraded(true);
+        })
+        .finally(() => {
+          if (!cancelled) setSuggestionsLoading(false);
+        });
+    }, SUGGEST_DEBOUNCE_MS);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [catalogQuery, discoveryMode]);
 
   useEffect(() => {
     const el = listRef.current;
@@ -156,26 +264,26 @@ export function DataBuilderChatPanel({
     return routes.find((route) => route.operationId === primarySource.operationId) || null;
   }, [primarySource?.operationId, routes]);
 
-  const searchHits = useMemo(() => {
-    const q = input.trim().toLowerCase();
-    if (discoveryMode !== "search" || !q) return [];
-    return routes
-      .filter((route) => {
-        const hay = [
-          route.label,
-          route.operationId,
-          route.path,
-          route.description,
-          route.whenToUse,
-          route.category,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return hay.includes(q);
-      })
-      .slice(0, 12);
-  }, [discoveryMode, input, routes]);
+  const catalogItems = useMemo(
+    () =>
+      routes.map((route) => ({
+        id: route.operationId,
+        label: route.label,
+        category: route.category,
+        description: route.description,
+        whenToUse: route.whenToUse,
+        path: route.path,
+        httpMethod: "GET" as const,
+        metaShape: route.metaShape,
+        valueFields: route.valueFields,
+        displayKinds: resolveDataRouteDisplayKinds({
+          metaShape: route.metaShape,
+          allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+        }),
+        params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
+      })),
+    [routes],
+  );
 
   function applySession(next: DataBuilderSession) {
     setSession(next);
@@ -446,81 +554,80 @@ export function DataBuilderChatPanel({
         ) : null}
       </section>
 
-      <div ref={listRef} className="td-data-builder-chat__messages" aria-live="polite">
-        {(session?.messages || []).map((message: DataBuilderMessage) => (
-          <div
-            key={message.id}
-            className={[
-              "td-data-builder-chat__bubble",
-              message.role === "user"
-                ? "td-data-builder-chat__bubble--user"
-                : "td-data-builder-chat__bubble--assistant",
-            ].join(" ")}
-          >
-            <p className="td-data-builder-chat__text">{message.text}</p>
-            {message.suggestions?.length ? (
-              <ul className="td-data-builder-chat__suggestions">
-                {message.suggestions.map((card) => (
-                  <li key={`${message.id}-${card.operationId}`}>
-                    <div className="td-data-builder-chat__suggestion-card">
-                      <div>
-                        <strong>{card.label || card.operationId}</strong>
-                        {card.reason ? <small>{card.reason}</small> : null}
+      {discoveryMode === "search" ? (
+        <div className="td-data-builder-chat__catalog">
+          <DataRouteCatalogPanel
+            items={catalogItems}
+            onSelect={(item) => {
+              const route = routes.find((entry) => entry.operationId === item.id);
+              if (route) handleAddRoute(route);
+            }}
+            density="compact"
+            confirmLabel={C.addSuggestion}
+            searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
+            emptyMessage={C.catalogEmpty}
+            loading={routesLoading}
+            error={routesError}
+            categoryLabels={CATEGORY_LABELS}
+            categoryOrder={CATEGORY_ORDER}
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            suggestionsQuery={suggestionsQuery}
+            suggestionsDegraded={suggestionsDegraded}
+            onQueryChange={setCatalogQuery}
+          />
+          {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
+          {error ? (
+            <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div ref={listRef} className="td-data-builder-chat__messages" aria-live="polite">
+          {(session?.messages || []).map((message: DataBuilderMessage) => (
+            <div
+              key={message.id}
+              className={[
+                "td-data-builder-chat__bubble",
+                message.role === "user"
+                  ? "td-data-builder-chat__bubble--user"
+                  : "td-data-builder-chat__bubble--assistant",
+              ].join(" ")}
+            >
+              <p className="td-data-builder-chat__text">{message.text}</p>
+              {message.suggestions?.length ? (
+                <ul className="td-data-builder-chat__suggestions">
+                  {message.suggestions.map((card) => (
+                    <li key={`${message.id}-${card.operationId}`}>
+                      <div className="td-data-builder-chat__suggestion-card">
+                        <div>
+                          <strong>{card.label || card.operationId}</strong>
+                          {card.reason ? <small>{card.reason}</small> : null}
+                        </div>
+                        <button
+                          type="button"
+                          className="td-btn td-btn--sm td-btn--primary"
+                          disabled={busy || !card.operationId}
+                          onClick={() => handleAddSuggestion(card)}
+                        >
+                          {C.addSuggestion}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        className="td-btn td-btn--sm td-btn--primary"
-                        disabled={busy || !card.operationId}
-                        onClick={() => handleAddSuggestion(card)}
-                      >
-                        {C.addSuggestion}
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-        ))}
-
-        {discoveryMode === "search" && input.trim() ? (
-          <div className="td-data-builder-chat__bubble td-data-builder-chat__bubble--assistant">
-            {routesLoading ? (
-              <p className="td-data-builder-chat__text">{C.catalogLoading}</p>
-            ) : searchHits.length === 0 ? (
-              <p className="td-data-builder-chat__text">{C.catalogEmpty}</p>
-            ) : (
-              <ul className="td-data-builder-chat__suggestions">
-                {searchHits.map((route) => (
-                  <li key={route.operationId}>
-                    <div className="td-data-builder-chat__suggestion-card">
-                      <div>
-                        <strong>{route.label || route.operationId}</strong>
-                        {route.path ? <small>{route.path}</small> : null}
-                      </div>
-                      <button
-                        type="button"
-                        className="td-btn td-btn--sm td-btn--primary"
-                        disabled={busy}
-                        onClick={() => handleAddRoute(route)}
-                      >
-                        {C.addSuggestion}
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : null}
-
-        {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
-        {error ? (
-          <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
-            {error}
-          </p>
-        ) : null}
-      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          ))}
+          {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
+          {error ? (
+            <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      )}
 
       <section className="td-data-builder-chat__draft" aria-label={C.draftTitle}>
         <h3 className="td-data-builder-chat__draft-title">{C.draftTitle}</h3>
@@ -586,23 +693,23 @@ export function DataBuilderChatPanel({
         ) : null}
       </section>
 
-      <div className="td-data-builder-chat__composer">
-        <input
-          type="text"
-          className="td-data-builder-chat__input"
-          placeholder={discoveryMode === "search" ? C.placeholderSearch : C.placeholderAi}
-          value={input}
-          disabled={!session || busy}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && discoveryMode === "ai") {
-              event.preventDefault();
-              handleSend();
-            }
-          }}
-          aria-label={discoveryMode === "search" ? C.placeholderSearch : C.placeholderAi}
-        />
-        {discoveryMode === "ai" ? (
+      {discoveryMode === "ai" ? (
+        <div className="td-data-builder-chat__composer">
+          <input
+            type="text"
+            className="td-data-builder-chat__input"
+            placeholder={C.placeholderAi}
+            value={input}
+            disabled={!session || busy}
+            onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                handleSend();
+              }
+            }}
+            aria-label={C.placeholderAi}
+          />
           <button
             type="button"
             className="td-btn td-btn--sm td-btn--primary"
@@ -611,17 +718,8 @@ export function DataBuilderChatPanel({
           >
             {C.send}
           </button>
-        ) : (
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            disabled
-            title={C.modeSearchHint}
-          >
-            {C.search}
-          </button>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       <div className="td-data-builder-chat__actions">
         <button

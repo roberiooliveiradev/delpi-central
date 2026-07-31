@@ -9539,3 +9539,13 @@ body.td-composer--marqueeing *{
   justify-content: flex-end;
   gap: 8px;
 }
+
+.dashboard-tv-dashboard .td-data-builder-chat__catalog{
+  flex: 1 1 auto;
+  min-height: 180px;
+  overflow: auto;
+  padding: 0 2px;
+}
+.dashboard-tv-dashboard .td-data-builder-chat__catalog .delpi-ui-data-route-catalog{
+  min-height: 0;
+}
