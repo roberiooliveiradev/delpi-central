@@ -241,7 +241,11 @@ export function DeckEditorChrome({
       data-delpi-ui-density="compact"
     >
       <div className="td-deck-chrome__head">
-        <DeckHistoryTabActions onBack={playlistChrome?.onBack} />
+        <DeckHistoryTabActions
+          onBack={playlistChrome?.onBack}
+          backLabel={playlistChrome?.backLabel}
+          backHint={playlistChrome?.backHint}
+        />
         <DeckChromeTabsRow
           tabs={tabs}
           activeTab={activeTab}
@@ -271,6 +275,9 @@ export function DeckEditorChrome({
               tvStatusClass={playlistChrome.tvStatusClass}
               onRename={playlistChrome.onRename}
             />
+            {playlistChrome.headActions ? (
+              <div className="td-deck-chrome__head-actions">{playlistChrome.headActions}</div>
+            ) : null}
           </div>
         ) : null}
       </div>

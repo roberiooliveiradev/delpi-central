@@ -22,12 +22,18 @@ function hintWithShortcut(base: string, shortcutId: string): string {
 type Props = {
   /** Voltar à lista de programações — antes de Desfazer/Refazer. */
   onBack?: () => void;
+  /** Rótulo do botão Voltar (default: Lista de Painéis). */
+  backLabel?: string;
+  /** Tooltip / aria do Voltar. */
+  backHint?: string;
 };
 
 /** Voltar + Desfazer/refazer + Atualizar dados (quando a tela tem blocos de dados). */
-export function DeckHistoryTabActions({ onBack }: Props) {
+export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
   const history = useDeckEditorHistoryContext();
   const editor = useOptionalComunicadoEditor();
+  const resolvedBackLabel = backLabel?.trim() || HEADER.backLabel;
+  const resolvedBackHint = backHint?.trim() || HEADER.back;
   const hasDataBlocks = Boolean(
     editor?.config?.blocks?.some((block) => isFetchableDataBlockType(block.type)),
   );
@@ -51,15 +57,15 @@ export function DeckHistoryTabActions({ onBack }: Props) {
   return (
     <div className="td-deck-chrome__history" role="group" aria-label="Ações do editor">
       {onBack ? (
-        <HintAction hint={HEADER.back} ariaLabel={HEADER.back}>
+        <HintAction hint={resolvedBackHint} ariaLabel={resolvedBackHint}>
           <button
             type="button"
             className="td-deck-chrome__history-btn td-deck-chrome__history-btn--back"
             onClick={onBack}
-            aria-label={HEADER.back}
+            aria-label={resolvedBackHint}
           >
             <ArrowLeft size={14} aria-hidden="true" />
-            <span className="td-deck-chrome__history-btn-label">{HEADER.backLabel}</span>
+            <span className="td-deck-chrome__history-btn-label">{resolvedBackLabel}</span>
           </button>
         </HintAction>
       ) : null}

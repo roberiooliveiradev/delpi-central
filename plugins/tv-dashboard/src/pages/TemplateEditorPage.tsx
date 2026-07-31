@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
 
 import {
   getBranchScope,
@@ -16,6 +15,8 @@ import {
 import { HttpRequestError } from "../api/httpClient";
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
 import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
+import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { EditorShortcutsProvider } from "../keyboard";
 import {
   clearTemplateDraft,
@@ -32,6 +33,7 @@ type Props = {
 
 const AUTOSAVE_MS = 800;
 const TEMPLATE_PLAYLIST_ID = "template-library";
+const HEADER = TV_DASHBOARD_HELP_TOOLTIPS.header;
 
 export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   const [template, setTemplate] = useState<SlideTemplate | null>(null);
@@ -44,6 +46,8 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameBusy, setRenameBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
   const versionRef = useRef(1);
@@ -222,6 +226,20 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
     );
   }
 
+  const statusLabel =
+    status === "published"
+      ? "Publicado"
+      : status === "archived"
+        ? "Arquivado"
+        : "Rascunho";
+  const statusDetail = [
+    statusLabel,
+    template?.isSystem ? "Sistema" : null,
+    saving ? "Salvando…" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const chromeProps = {
     playlist: syntheticPlaylist,
     slide: selectedSlide,
@@ -235,7 +253,34 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
       selectedSlide,
       onAdd: () => undefined,
       onSelect: () => undefined,
-      // Sem duplicar / pausar / excluir — template é uma tela só.
+      playlistChrome: {
+        playlistName: label || "Template",
+        tvStatusLabel: statusDetail,
+        tvStatusClass:
+          status === "published" ? "td-badge td-badge--active" : "td-badge td-badge--inactive",
+        linkActive: status === "published",
+        onBack,
+        backLabel: HEADER.backToTemplatesLabel,
+        backHint: HEADER.backToTemplates,
+        headActions: (
+          <button
+            type="button"
+            className="td-btn td-btn--primary td-deck-chrome__publish"
+            title={HEADER.publishTemplate}
+            onClick={() => void handlePublish()}
+          >
+            Publicar
+          </button>
+        ),
+        onPreview: () => undefined,
+        onShare: () => undefined,
+        onCopyLink: () => undefined,
+        onQr: () => undefined,
+        onRegenerateToken: () => undefined,
+        onToggleLink: () => undefined,
+        onDelete: () => undefined,
+        onRename: () => setRenameOpen(true),
+      },
     },
     onSavePlaylistSettings: () => undefined,
     onSaveSlide: (
@@ -288,29 +333,9 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   };
 
   return (
-    <div className="td-template-editor">
-      <header className="td-template-editor__bar">
-        <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
-          <ArrowLeft size={16} aria-hidden="true" /> Biblioteca
-        </button>
-        <input
-          className="td-template-editor__label"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          onBlur={() => void persist({ label })}
-          aria-label="Nome do template"
-        />
-        <span className="td-template-lib__badge">
-          {status === "published" ? "Publicado" : status === "archived" ? "Arquivado" : "Rascunho"}
-          {template?.isSystem ? " · Sistema" : ""}
-          {saving ? " · Salvando…" : ""}
-        </span>
-        <button type="button" className="td-btn" onClick={() => void handlePublish()}>
-          Publicar
-        </button>
-      </header>
+    <>
       <EditorShortcutsProvider active>
-        <div className="td-deck td-deck--editor">
+        <div className="td-deck td-deck--editor td-template-editor">
           <ComunicadoEditorProvider
             playlistId={TEMPLATE_PLAYLIST_ID}
             slideId={selectedSlide.id}
@@ -327,6 +352,24 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
           </ComunicadoEditorProvider>
         </div>
       </EditorShortcutsProvider>
-    </div>
+      <PlaylistRenameDialog
+        open={renameOpen}
+        initialName={label}
+        busy={renameBusy}
+        onClose={() => {
+          if (!renameBusy) setRenameOpen(false);
+        }}
+        onConfirm={async (name) => {
+          setRenameBusy(true);
+          try {
+            setLabel(name);
+            await persist({ label: name });
+            setRenameOpen(false);
+          } finally {
+            setRenameBusy(false);
+          }
+        }}
+      />
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Copy,
   Eye,
@@ -33,6 +34,11 @@ export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
   linkActive: boolean;
   /** Usado pela top bar («Lista de Painéis») — não duplicar tile na ribbon. */
   onBack: () => void;
+  /** Override do rótulo Voltar (ex.: Biblioteca no editor de template). */
+  backLabel?: string;
+  backHint?: string;
+  /** Ações extras à direita na top bar (ex.: Publicar template). */
+  headActions?: ReactNode;
   onPreview: () => void;
   /** Refresh dos dados no editor (não o link público). */
   onRefreshVisual?: () => void;

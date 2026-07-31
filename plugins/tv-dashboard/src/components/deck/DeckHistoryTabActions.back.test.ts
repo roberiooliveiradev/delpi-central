@@ -21,7 +21,9 @@ describe("deck history back button contract", () => {
   });
 
   it("chrome passa onBack da programação para o histórico", () => {
-    expect(chrome).toMatch(/DeckHistoryTabActions onBack=\{playlistChrome\?\.onBack\}/);
+    expect(chrome).toMatch(/DeckHistoryTabActions/);
+    expect(chrome).toMatch(/onBack=\{playlistChrome\?\.onBack\}/);
+    expect(chrome).toMatch(/backLabel=\{playlistChrome\?\.backLabel\}/);
   });
 
   it("ribbon Programação não duplica Voltar (já existe Lista de Painéis na top bar)", () => {
