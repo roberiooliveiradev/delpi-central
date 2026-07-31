@@ -6,10 +6,17 @@ import { ReportsSidebar } from "./ReportsSidebar";
 
 type Props = {
   nav: ReportsNavSection;
+  canUseAdminNav: boolean;
+  canUseFollowUpNav: boolean;
   children: ReactNode;
 };
 
-export function ReportsAppShell({ nav, children }: Props) {
+export function ReportsAppShell({
+  nav,
+  canUseAdminNav,
+  canUseFollowUpNav,
+  children,
+}: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -53,6 +60,8 @@ export function ReportsAppShell({ nav, children }: Props) {
           active={nav}
           collapsed={collapsed}
           mobileOpen={mobileOpen}
+          canUseAdminNav={canUseAdminNav}
+          canUseFollowUpNav={canUseFollowUpNav}
           onToggleCollapsed={() => setCollapsed((value) => !value)}
           onCloseMobile={() => setMobileOpen(false)}
         />

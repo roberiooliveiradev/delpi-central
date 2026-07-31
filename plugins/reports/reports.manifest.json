@@ -4,7 +4,7 @@
   "name": "Delpi Reports",
   "description": "Cadastro, agendamento e envio de relatórios por e-mail aos colaboradores",
   "icon": "file-text-icon",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "microfrontend",
   "basePath": "/apps/reports",
   "entry": "/apps/reports/assets/remoteEntry.js",
@@ -24,7 +24,7 @@
     {
       "code": "reports.notes.manage",
       "name": "Acompanhamentos Delpi Reports",
-      "description": "Registrar e editar acompanhamentos na Observação (sem administrar a definição)",
+      "description": "Só a aba Acompanhamentos: registrar Observação (sem Visão geral/Relatórios; combine com view.filial-*)",
       "module": "reports"
     },
     {

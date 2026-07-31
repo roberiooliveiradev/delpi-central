@@ -12,6 +12,7 @@ from delpi_auth.request_context import get_current_user
 from delpi_auth.service_token import request_has_valid_internal_service_token
 
 from app.application.security.api_delpi_permissions import (
+    REPORTS_FOLLOW_UP_READ_PERMISSIONS,
     REPORTS_NOTES_WRITE_PERMISSIONS,
     REPORTS_READ_PERMISSIONS,
     REPORTS_WRITE_PERMISSIONS,
@@ -197,7 +198,7 @@ def _definition_branch_or_error(definition_id: str):
 
 
 @router.get("/definitions", operation_id="list_report_definitions")
-@require_any_permission(REPORTS_READ_PERMISSIONS)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
 def list_report_definitions():
     try:
         data = build_list_report_definitions_use_case().execute()
@@ -253,7 +254,7 @@ def create_report_definition(
 
 
 @router.get("/definitions/{definition_id}", operation_id="get_report_definition")
-@require_any_permission(REPORTS_READ_PERMISSIONS)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
 def get_report_definition(
     definition_id: Annotated[UUID, Path(...)],
 ):
@@ -367,7 +368,7 @@ def list_report_providers():
     "/providers/safety_stock_shortage_30d/preview",
     operation_id="preview_report_provider_safety_stock_shortage_30d",
 )
-@require_any_permission(REPORTS_READ_PERMISSIONS)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
 def preview_safety_stock_shortage_30d(
     branch: str = BRANCH_QUERY_REQUIRED(),
     horizonDays: Annotated[int, Query(ge=1, le=365)] = 30,
@@ -591,7 +592,7 @@ def get_report_run(run_id: Annotated[UUID, Path(...)]):
     "/definitions/{definition_id}/item-notes",
     operation_id="list_report_shortage_item_notes",
 )
-@require_any_permission(REPORTS_READ_PERMISSIONS)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
 def list_report_shortage_item_notes(definition_id: Annotated[UUID, Path(...)]):
     try:
         branch, err = _definition_branch_or_error(str(definition_id))

@@ -62,8 +62,13 @@ Frequências em `scheduleKind`:
 
 `reports.view`, `reports.manage`, **`reports.notes.manage`**, `reports.view.filial-sc/es`, `reports.manage.filial-sc/es`
 
-Operacional (só Observação): `view` + filial + `notes.manage`.  
-Admin da definição: `manage` (+ filial).
+| Perfil | Permissões | Abas no MFE |
+|--------|------------|-------------|
+| Operacional (só Observação) | `reports.notes.manage` + `reports.view.filial-*` | **somente** Acompanhamentos |
+| Leitura / operação admin | `reports.view` (+ filial se escopo) | Visão geral, Relatórios, Acompanhamentos |
+| Admin da definição | `reports.manage` (+ filial) | todas + gravar definição/agenda |
+
+**Não** atribua `reports.view` a quem deve ver só acompanhamentos — essa permissão abre o menu «Delpi Reports» e as abas Visão geral / Relatórios.
 
 ## Dev
 

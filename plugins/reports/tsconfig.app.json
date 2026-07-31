@@ -26,5 +26,6 @@
       "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.selftest.mts", "src/**/*.selftest.ts"]
 }
