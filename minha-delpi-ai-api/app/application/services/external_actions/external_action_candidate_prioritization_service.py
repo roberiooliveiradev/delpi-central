@@ -26,11 +26,66 @@ class ExternalActionCandidatePrioritizationService:
         if supplies_otd:
             ordered = cls._prioritize_supplies_otd(message, ordered)
 
+        ordered = cls._prioritize_production_pcp_orders(message, ordered)
         ordered = cls._prioritize_production_otd_detail(message, ordered)
         ordered = cls._prioritize_production_oee_appointment(message, ordered)
         ordered = cls._prioritize_quality_kaizen_detail(message, ordered)
         ordered = cls._prioritize_production_eficiencia_fabril(message, ordered)
         return cls._prioritize_production_oee_detail(message, ordered)
+
+    @classmethod
+    def _prioritize_production_pcp_orders(
+        cls,
+        message: str,
+        candidates: list[dict],
+    ) -> list[dict]:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        trigger_terms = ExternalActionResponseContentService.list(
+            "actionSelection",
+            "productionPcpOrdersTriggerTerms",
+        )
+        if not any(term in normalized for term in trigger_terms):
+            return candidates
+
+        path_markers = [
+            str(item).lower()
+            for item in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productionPcpOrdersPathMarkers",
+            )
+            if str(item).strip()
+        ]
+        preferred_list = [
+            str(item).lower()
+            for item in ExternalActionResponseContentService.list(
+                "actionSelection",
+                "productionPcpOrdersPreferredOperationIds",
+            )
+            if str(item).strip()
+        ]
+        preferred_ids = set(preferred_list)
+        preferred_order = {op_id: index for index, op_id in enumerate(preferred_list)}
+
+        def _is_pcp(action: dict) -> bool:
+            path = str(action.get("path") or "").lower()
+            operation_id = str(action.get("operationId") or "").lower()
+            if operation_id in preferred_ids:
+                return True
+            return any(marker in path or marker in operation_id for marker in path_markers)
+
+        pcp_actions = [action for action in candidates if _is_pcp(action)]
+        if not pcp_actions:
+            return candidates
+
+        def _sort_key(action: dict) -> tuple:
+            operation_id = str(action.get("operationId") or "").lower()
+            return (
+                preferred_order.get(operation_id, 99),
+                str(action.get("path") or ""),
+            )
+
+        return sorted(pcp_actions, key=_sort_key)
 
     @classmethod
     def _prioritize_supplies_otd(cls, message: str, candidates: list[dict]) -> list[dict]:

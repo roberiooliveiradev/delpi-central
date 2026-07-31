@@ -8,9 +8,14 @@ from app.application.services.external_actions.operational_route_suggestion_serv
 from app.application.use_cases.suggest_operational_routes_use_case import (
     SuggestOperationalRoutesUseCase,
 )
+from app.composition.content_composer import configure_domain_infrastructure_ports
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
+
+
+def setup_module() -> None:
+    configure_domain_infrastructure_ports()
 
 
 class _FakeRepo:
@@ -121,6 +126,48 @@ def test_operational_route_suggestion_service_ranks_by_query():
     assert rows[0]["actionId"] == "a1"
     assert rows[0]["reason"]
     assert rows[0]["domain"]
+
+
+def test_suggest_ops_em_atraso_pcp_beats_commercial_path_order():
+    """Sem score semântico, path ASC não pode promover comercial sobre PCP."""
+    repo = _FakeRepo(
+        [
+            {
+                "actionId": "c1",
+                "operationId": "get_commercial_branch_rol_target_pct",
+                "path": "/commercial/branch_rol_target_pct",
+                "method": "GET",
+                "summary": "Indicador — Meta percentual rol comercial",
+            },
+            {
+                "actionId": "c2",
+                "operationId": "get_commercial_closing_rate",
+                "path": "/commercial/closing-rate",
+                "method": "GET",
+                "summary": "Comercial — taxa de fechamento",
+            },
+            {
+                "actionId": "p1",
+                "operationId": "get_production_pcp_orders_items",
+                "path": "/production/pcp-orders/items",
+                "method": "GET",
+                "summary": "Itens de OPs PCP com dias de atraso",
+            },
+            {
+                "actionId": "p2",
+                "operationId": "get_production_otd",
+                "path": "/production/otd",
+                "method": "GET",
+                "summary": "OTD produção — resumo e ordens",
+            },
+        ]
+    )
+    service = OperationalRouteSuggestionService(repo, semantic_ranker=None)
+    rows = service.suggest("ops em atraso pcp", limit=4)
+    assert rows
+    assert rows[0]["operationId"] == "get_production_pcp_orders_items"
+    assert all("commercial" not in str(row.get("path") or "").lower() for row in rows)
+    assert "regras operacionais" not in (rows[0].get("reason") or "").lower()
 
 
 def test_suggest_operational_routes_use_case_envelope():

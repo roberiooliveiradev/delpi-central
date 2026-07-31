@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from app.domain.services.chat_message_normalization_service import (
+    ChatMessageNormalizationService,
+)
+
 
 class ExternalActionSelectionSupportService:
     def __init__(self, repository, *, semantic_ranker=None) -> None:
@@ -38,13 +42,81 @@ class ExternalActionSelectionSupportService:
             return []
 
         if self.semantic_ranker:
-            return self.semantic_ranker.rank(
+            ranked = self.semantic_ranker.rank(
                 message,
                 candidates,
                 allowed_action_ids=allowed_action_ids,
             )
+            if ranked and any(action.get("selectionScore") is not None for action in ranked):
+                return ranked
+            return self.ensure_lexical_ranking(message, ranked or candidates)
 
-        return candidates
+        return self.ensure_lexical_ranking(message, candidates)
+
+    @classmethod
+    def ensure_lexical_ranking(cls, message: str, candidates: list[dict]) -> list[dict]:
+        """Reordena por overlap lexical quando não há score semântico."""
+        if not candidates:
+            return []
+
+        if any(action.get("selectionScore") is not None for action in candidates):
+            # Já ranqueado semanticamente — só anexa flag lexical auxiliar.
+            scored = []
+            for action in candidates:
+                row = dict(action)
+                lexical = cls.lexical_overlap_score(message, row)
+                if lexical > 0:
+                    row["selectionLexicalMatched"] = True
+                scored.append(row)
+            return scored
+
+        scored: list[tuple[float, dict]] = []
+        for action in candidates:
+            row = dict(action)
+            lexical = cls.lexical_overlap_score(message, row)
+            row["selectionScore"] = round(lexical, 4)
+            if lexical > 0:
+                row["selectionLexicalMatched"] = True
+                row["selectionReason"] = row.get("selectionReason") or ""
+            scored.append((lexical, row))
+
+        scored.sort(
+            key=lambda item: (
+                -item[0],
+                0 if str(item[1].get("method") or "").upper() == "GET" else 1,
+                len(str(item[1].get("path") or "")),
+            )
+        )
+        return [row for _, row in scored]
+
+    @classmethod
+    def lexical_overlap_score(cls, message: str, action: dict) -> float:
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        tokens = [
+            token
+            for token in normalized.replace("/", " ").replace("-", " ").replace("_", " ").split()
+            if len(token) >= 2
+        ]
+        if not tokens:
+            return 0.0
+
+        haystack = " ".join(
+            [
+                str(action.get("path") or ""),
+                str(action.get("summary") or ""),
+                str(action.get("description") or ""),
+                str(action.get("operationId") or ""),
+                " ".join(str(tag) for tag in (action.get("tags") or [])),
+            ]
+        ).lower()
+        haystack = ChatMessageNormalizationService.normalize_for_matching(haystack)
+
+        hits = 0.0
+        for token in tokens:
+            if token in haystack:
+                # Tokens mais específicos pesam mais.
+                hits += 1.0 + min(len(token), 12) * 0.05
+        return hits
 
     def find_allowed_actions_by_path_token(
         self,

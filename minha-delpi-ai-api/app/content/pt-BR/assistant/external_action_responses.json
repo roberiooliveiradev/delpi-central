@@ -91,7 +91,7 @@
     ],
     "suppliesOtdPathPrefix": "/supplies/",
     "candidatePathPrioritization": {
-      "productionTerms": ["producao", "produção", "fabril", "manufatura"],
+      "productionTerms": ["producao", "produção", "fabril", "manufatura", "pcp", "ops", "op "],
       "commercialTerms": ["comercial", "venda", "pedido de venda"]
     },
     "productionOtdDetailTerms": [
@@ -104,6 +104,7 @@
       "ops",
       "op ",
       "atrasad",
+      "atraso",
       "no prazo",
       "detalhe",
       "detalhar",
@@ -117,8 +118,39 @@
       "fabril",
       "manufatura",
       "op ",
-      "ops"
+      "ops",
+      "pcp"
     ],
+    "productionPcpOrdersTriggerTerms": [
+      "pcp"
+    ],
+    "productionPcpOrdersOpsTerms": [
+      "ops",
+      "op ",
+      "ordens",
+      "ordem de producao",
+      "ordem de produção"
+    ],
+    "productionPcpOrdersLateTerms": [
+      "atraso",
+      "atrasad",
+      "late",
+      "no prazo"
+    ],
+    "productionPcpOrdersPathMarkers": [
+      "/production/pcp-orders",
+      "pcp-orders",
+      "pcp_orders"
+    ],
+    "productionPcpOrdersPreferredOperationIds": [
+      "get_production_pcp_orders_items",
+      "get_production_pcp_orders_ranking",
+      "get_production_pcp_orders_summary"
+    ],
+    "routeSuggestionPoolPathMarkers": {
+      "production": ["/production/"],
+      "pcp": ["/production/pcp-orders", "/production/otd"]
+    },
     "productionOeeContextTerms": [
       "oee",
       "eficiencia",
@@ -820,6 +852,7 @@
     "semanticRankReason": "Action selecionada por similaridade semântica (score {score}).",
     "routeSuggestionSemantic": "Combina com a descrição da fonte (similaridade {score}).",
     "routeSuggestionRegistry": "Rota indicada pelas regras operacionais do chat para esta pergunta.",
+    "routeSuggestionLexical": "Combina com termos da frase na rota ou descrição da fonte.",
     "routeSuggestionEmpty": "Nenhuma fonte operacional correspondente à frase.",
     "productOperational": "A pergunta solicita informações operacionais de produto via OpenAPI.",
     "productProductionStatus": "A pergunta solicita análise produtiva do playbook (PA/PI/OP/apontamentos SH6010).",

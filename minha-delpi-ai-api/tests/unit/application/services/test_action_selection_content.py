@@ -107,6 +107,7 @@ def test_selection_reasons_keys_exist():
         "semanticRankReason",
         "routeSuggestionSemantic",
         "routeSuggestionRegistry",
+        "routeSuggestionLexical",
         "routeSuggestionEmpty",
     )
 
