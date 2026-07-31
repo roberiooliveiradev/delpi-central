@@ -73,6 +73,7 @@ export default function App({
 
   const isFullscreenView = route.view === "preview";
   const isDeckEditor = route.view === "edit";
+  const isTemplateEditor = route.view === "template-edit";
   const playlistId =
     route.view === "edit" || route.view === "preview" || route.view === "share"
       ? route.id
@@ -82,7 +83,7 @@ export default function App({
     playlistId,
     editorSessionPlaylistIdRef.current,
   );
-  const deckChrome = isDeckEditor || (isFullscreenView && keepEditor);
+  const deckChrome = isDeckEditor || isTemplateEditor || (isFullscreenView && keepEditor);
 
   function navigate(next: string) {
     if (typeof window === "undefined") return;
@@ -200,7 +201,7 @@ export default function App({
             .join(" ")}
         >
           <div className={`td-app-shell${deckChrome ? " td-app-shell--deck" : ""}`}>
-            {!isFullscreenView && !isDeckEditor ? (
+            {!isFullscreenView && !isDeckEditor && !isTemplateEditor ? (
               <header className="td-hero">
                 <p className="td-eyebrow">Operações · Displays</p>
                 <h1 className="td-title">Painéis TV</h1>
