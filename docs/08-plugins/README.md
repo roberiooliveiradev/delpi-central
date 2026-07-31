@@ -101,6 +101,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 
 **Painéis TV:** gestão em `/apps/tv-dashboard`; apresentação pública em `/p/tv-dashboard/present/{token}` (sem login). API dedicada: `/apps/tv-dashboard-api/*`. Playbook: [../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md](../12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md).
 **Experiência do Cliente:** admin `/apps/customer-experience`; público `/p/customer-experience/thanks/{token}` e `/form/{token}`. API: `/apps/customer-experience-api/*`. [README do plugin](../../plugins/customer-experience/README.md) · [roadmap](../12-roadmap-e-volucao/customer-experience/).
+**CIPA SIPAT:** admin `/apps/cipa/filial-{01|02}/sipat`; público `/p/cipa/sipat/{token}`. API: `/apps/cipa-api/public/sipat/*`.
 
 
 **Atenção:** o `id` na URL de assets (`/apps/{id}/`) deve coincidir com o sufixo do container `delpi-{id}` no Nginx. Manifestos com `basePath` fora de `/apps/...` ainda precisam de rotas React no Portal compatíveis com o path registrado na Core API.
@@ -129,6 +130,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Painéis TV | `/apps/tv-dashboard-api/*` (programações + payload público); agregadores nativos via api-delpi |
 | Transformômetro | `/apps/transformometro-api/transformometro/*` (Postgres; atas + Kimi) — [README](../../plugins/transformometro/README.md) · [atas](../../plugins/transformometro/docs/atas.md) · [Kimi](../../transformometro-api/docs/atas-kimi.md) |
 | Comitê de Ética e Conduta | `/apps/comite-etica-conduta-api/*` (Postgres; atas + membros) — [README](../../plugins/comite-etica-conduta/README.md) · [API](../../comite-etica-conduta-api/README.md) · [roadmap](../12-roadmap-e-evolucao/comite-etica-conduta/) |
+| CIPA | `/apps/cipa-api/*` (atas, membros, SIPAT); público `/p/cipa/sipat/{token}` — [README](../../plugins/cipa/README.md) · [API](../../cipa-api/README.md) · [playbook](../12-roadmap-e-evolucao/cipa/PLAYBOOK.md) |
 
 ---
 

@@ -46,6 +46,21 @@ export const UNIT_LABELS: Record<string, string> = {
   "02": "Espírito Santo",
 };
 
+export const SIPAT_STATUS_LABELS: Record<string, string> = {
+  draft: "Rascunho",
+  published: "Publicada",
+  closed: "Encerrada",
+};
+
+export const SIPAT_QUESTION_TYPE_LABELS: Record<string, string> = {
+  single_choice: "Escolha única",
+  multi_choice: "Múltipla escolha",
+  likert_5: "Escala 1–5",
+  yes_no: "Sim / Não",
+  text_short: "Texto curto",
+  text_long: "Texto longo",
+};
+
 /** Ações da trilha de auditoria da ata (cipa.meeting_minute_audit_logs). */
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
   create: "Ata criada",

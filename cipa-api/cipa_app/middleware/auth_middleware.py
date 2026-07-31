@@ -2,6 +2,7 @@ from delpi_auth.middleware.fastapi_auth import jwt_middleware as _base_jwt_middl
 from fastapi import Request
 
 PUBLIC_EXACT: frozenset[str] = frozenset({"/health"})
+PUBLIC_PREFIXES: tuple[str, ...] = ("/public/",)
 
 
 def _strip_root_path(request: Request) -> str:
@@ -13,7 +14,9 @@ def _strip_root_path(request: Request) -> str:
 
 
 def _is_public(path: str) -> bool:
-    return path in PUBLIC_EXACT
+    if path in PUBLIC_EXACT:
+        return True
+    return any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES)
 
 
 async def jwt_middleware(request: Request, call_next):

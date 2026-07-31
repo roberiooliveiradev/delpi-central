@@ -9,6 +9,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import {
   Building2,
+  ClipboardList,
   Download,
   FilePlus2,
   PenLine,
@@ -67,6 +68,9 @@ import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteDocumentView } from "../components/MinuteDocumentView";
 import { MinuteSignPage } from "./MinuteSignPage";
 import { MySignaturePage } from "./MySignaturePage";
+import { SipatDetailPage } from "./SipatDetailPage";
+import { SipatListPage } from "./SipatListPage";
+import { SipatWizardPage } from "./SipatWizardPage";
 
 type Props = {
   route: CipaRoute;
@@ -139,6 +143,28 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
   }
 
   if (
+    route.kind === "sipatList" ||
+    route.kind === "sipatNew" ||
+    route.kind === "sipatDetail" ||
+    route.kind === "sipatEdit"
+  ) {
+    const unitCode = route.unitCode;
+    const requiredAction =
+      route.kind === "sipatNew" || route.kind === "sipatEdit"
+        ? "sipat_manage"
+        : "sipat_view";
+    if (!canUnit(access, unitCode, requiredAction)) {
+      return (
+        <div className="dashboard-cipa dashboard-page">
+          <AccessDenied
+            message={`Sem permissão SIPAT nesta unidade (${UNIT_LABELS[unitCode]}).`}
+          />
+        </div>
+      );
+    }
+  }
+
+  if (
     route.kind === "list" ||
     route.kind === "members" ||
     route.kind === "new" ||
@@ -154,7 +180,13 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
           ? "sign"
           : "view";
 
-    if (!canUnit(access, unitCode, requiredAction)) {
+    const allowed =
+      canUnit(access, unitCode, requiredAction) ||
+      (route.kind === "list" &&
+        (canUnit(access, unitCode, "sipat_view") ||
+          canUnit(access, unitCode, "sipat_manage")));
+
+    if (!allowed) {
       return (
         <div className="dashboard-cipa dashboard-page">
           <AccessDenied
@@ -163,6 +195,37 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
         </div>
       );
     }
+  }
+
+  if (route.kind === "sipatNew" || route.kind === "sipatEdit") {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <SipatWizardPage
+          unitCode={route.unitCode}
+          surveyId={route.kind === "sipatEdit" ? route.surveyId : undefined}
+        />
+      </div>
+    );
+  }
+
+  if (route.kind === "sipatDetail") {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <SipatDetailPage
+          unitCode={route.unitCode}
+          surveyId={route.surveyId}
+          access={access}
+        />
+      </div>
+    );
+  }
+
+  if (route.kind === "sipatList") {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <SipatListPage unitCode={route.unitCode} access={access} />
+      </div>
+    );
   }
 
   if (route.kind === "members") {
@@ -295,6 +358,8 @@ function MinuteListPage({
   access: CipaAccess | null;
 }) {
   const canManage = canUnit(access, unitCode, "manage");
+  const canViewMinutes = canUnit(access, unitCode, "view");
+  const canSipat = canUnit(access, unitCode, "sipat_view");
   const canSign = Boolean(access?.can_sign);
   const [items, setItems] = useState<MinuteListItem[]>([]);
   const [status, setStatus] = useState("");
@@ -305,8 +370,19 @@ function MinuteListPage({
   const [deleteTarget, setDeleteTarget] = useState<MinuteListItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!canViewMinutes && canSipat) {
+      navigateCipa(`/apps/cipa/filial-${unitCode}/sipat`);
+    }
+  }, [canViewMinutes, canSipat, unitCode]);
+
   const load = useCallback(
     (signal?: AbortSignal) => {
+      if (!canViewMinutes) {
+        setItems([]);
+        setLoading(false);
+        return Promise.resolve();
+      }
       setLoading(true);
       return listMinutes(
         { unit_code: unitCode, status: status || undefined, q: q || undefined },
@@ -333,7 +409,7 @@ function MinuteListPage({
           if (!signal?.aborted) setLoading(false);
         });
     },
-    [unitCode, status, q],
+    [unitCode, status, q, canViewMinutes],
   );
 
   // Status aplica na hora; busca com debounce para não disparar a cada tecla.
@@ -486,6 +562,13 @@ function MinuteListPage({
                 <PenLine size={16} /> Minha assinatura
               </ActionButton>
             ) : null}
+            {canSipat ? (
+              <ActionButton
+                onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/sipat`)}
+              >
+                <ClipboardList size={16} /> SIPAT
+              </ActionButton>
+            ) : null}
             {canManage ? (
               <>
                 <ActionButton
@@ -493,12 +576,14 @@ function MinuteListPage({
                 >
                   <Users size={16} /> Membros e cargos
                 </ActionButton>
-                <ActionButton
-                  variant="primary"
-                  onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
-                >
-                  <FilePlus2 size={16} /> Nova ata
-                </ActionButton>
+                {canViewMinutes ? (
+                  <ActionButton
+                    variant="primary"
+                    onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
+                  >
+                    <FilePlus2 size={16} /> Nova ata
+                  </ActionButton>
+                ) : null}
               </>
             ) : null}
           </>

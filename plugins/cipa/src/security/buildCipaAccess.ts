@@ -6,6 +6,8 @@ const VIEW_PERMISSION = "cipa.view";
 const MANAGE_PERMISSION = "cipa.manage";
 const SIGN_PERMISSION = "cipa.sign";
 const ADMIN_PERMISSION = "cipa.admin";
+const SIPAT_VIEW_PERMISSION = "cipa.sipat.view";
+const SIPAT_MANAGE_PERMISSION = "cipa.sipat.manage";
 
 const UNIT_PERMISSIONS: Record<CipaUnitCode, string> = {
   "01": "cipa.unit.filial-01",
@@ -30,6 +32,8 @@ const ACTION_PERMISSIONS: Record<string, string> = {
   manage_signers: MANAGE_PERMISSION,
   sign: SIGN_PERMISSION,
   admin: ADMIN_PERMISSION,
+  sipat_view: SIPAT_VIEW_PERMISSION,
+  sipat_manage: SIPAT_MANAGE_PERMISSION,
 };
 
 function hasPermission(
@@ -50,6 +54,19 @@ function hasGlobalAction(
   if (action === "view" || action === "view_audit") {
     return (
       hasPermission(permissions, VIEW_PERMISSION, false) ||
+      hasPermission(permissions, MANAGE_PERMISSION, false)
+    );
+  }
+  if (action === "sipat_view") {
+    return (
+      hasPermission(permissions, SIPAT_VIEW_PERMISSION, false) ||
+      hasPermission(permissions, SIPAT_MANAGE_PERMISSION, false) ||
+      hasPermission(permissions, MANAGE_PERMISSION, false)
+    );
+  }
+  if (action === "sipat_manage") {
+    return (
+      hasPermission(permissions, SIPAT_MANAGE_PERMISSION, false) ||
       hasPermission(permissions, MANAGE_PERMISSION, false)
     );
   }
@@ -100,8 +117,20 @@ export function buildCipaAccessFromPermissions(
     const view = hasUnitReadAccess(permissions, code, isSuperadmin);
     const manage = hasUnitAction(permissions, "create", code, isSuperadmin);
     const sign = hasUnitAction(permissions, "sign", code, isSuperadmin);
-    if (!view && !manage && !sign) return [];
-    return [{ id: code, label: UNIT_LABELS[code], view, manage, sign }];
+    const sipat_view = hasUnitAction(permissions, "sipat_view", code, isSuperadmin);
+    const sipat_manage = hasUnitAction(permissions, "sipat_manage", code, isSuperadmin);
+    if (!view && !manage && !sign && !sipat_view && !sipat_manage) return [];
+    return [
+      {
+        id: code,
+        label: UNIT_LABELS[code],
+        view,
+        manage,
+        sign,
+        sipat_view,
+        sipat_manage,
+      },
+    ];
   });
 
   return {
@@ -109,6 +138,15 @@ export function buildCipaAccessFromPermissions(
     can_view: isAdmin || hasPermission(permissions, VIEW_PERMISSION, false),
     can_manage: isAdmin || hasPermission(permissions, MANAGE_PERMISSION, false),
     can_sign: isAdmin || hasPermission(permissions, SIGN_PERMISSION, false),
+    can_sipat_view:
+      isAdmin ||
+      hasPermission(permissions, SIPAT_VIEW_PERMISSION, false) ||
+      hasPermission(permissions, SIPAT_MANAGE_PERMISSION, false) ||
+      hasPermission(permissions, MANAGE_PERMISSION, false),
+    can_sipat_manage:
+      isAdmin ||
+      hasPermission(permissions, SIPAT_MANAGE_PERMISSION, false) ||
+      hasPermission(permissions, MANAGE_PERMISSION, false),
     units,
   };
 }

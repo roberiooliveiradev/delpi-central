@@ -11,4 +11,6 @@ requests
 bleach
 reportlab
 Pillow
+qrcode[pil]
+openpyxl
 python-multipart

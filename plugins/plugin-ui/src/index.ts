@@ -15,6 +15,11 @@ export * from "./components/charts";
 export * from "./components/bpmn";
 
 export * from "./components/shape";
+/** Export nomeado — evita tree-shake do remote MF omitir a constante usada por hosts. */
+export {
+  SHAPE_CORNER_ADJUST_HANDLE,
+  separateAdjustmentHandleFromChromeControls,
+} from "./components/shape/selectionChromeAdjustSeparation";
 export * from "./components/menu";
 export * from "./components/signature";
 export * from "./components/rich-text";

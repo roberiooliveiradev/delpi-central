@@ -10,6 +10,8 @@ VIEW_PERMISSION = "cipa.view"
 MANAGE_PERMISSION = "cipa.manage"
 SIGN_PERMISSION = "cipa.sign"
 ADMIN_PERMISSION = "cipa.admin"
+SIPAT_VIEW_PERMISSION = "cipa.sipat.view"
+SIPAT_MANAGE_PERMISSION = "cipa.sipat.manage"
 
 UNIT_PERMISSIONS: dict[str, str] = {
     "01": "cipa.unit.filial-01",
@@ -34,6 +36,8 @@ ACTION_PERMISSIONS: dict[str, str] = {
     "manage_signers": MANAGE_PERMISSION,
     "sign": SIGN_PERMISSION,
     "admin": ADMIN_PERMISSION,
+    "sipat_view": SIPAT_VIEW_PERMISSION,
+    "sipat_manage": SIPAT_MANAGE_PERMISSION,
 }
 
 
@@ -65,6 +69,16 @@ def _has_global_action(user, action: str) -> bool:
         return True
     if action in {"view", "view_audit"}:
         return has_permission(user, VIEW_PERMISSION) or has_permission(user, MANAGE_PERMISSION)
+    if action == "sipat_view":
+        return (
+            has_permission(user, SIPAT_VIEW_PERMISSION)
+            or has_permission(user, SIPAT_MANAGE_PERMISSION)
+            or has_permission(user, MANAGE_PERMISSION)
+        )
+    if action == "sipat_manage":
+        return has_permission(user, SIPAT_MANAGE_PERMISSION) or has_permission(
+            user, MANAGE_PERMISSION
+        )
     action_permission = ACTION_PERMISSIONS.get(action)
     if not action_permission:
         return False
@@ -128,7 +142,9 @@ def build_access_payload(user) -> dict[str, object]:
         view = has_unit_read_access(user, code)
         manage = has_unit_action(user, "create", code)
         sign = has_unit_action(user, "sign", code)
-        if view or manage or sign:
+        sipat_view = has_unit_action(user, "sipat_view", code)
+        sipat_manage = has_unit_action(user, "sipat_manage", code)
+        if view or manage or sign or sipat_view or sipat_manage:
             units.append(
                 {
                     "id": code,
@@ -136,6 +152,8 @@ def build_access_payload(user) -> dict[str, object]:
                     "view": view,
                     "manage": manage,
                     "sign": sign,
+                    "sipat_view": sipat_view,
+                    "sipat_manage": sipat_manage,
                 }
             )
 
@@ -144,5 +162,12 @@ def build_access_payload(user) -> dict[str, object]:
         "can_view": is_admin or has_permission(user, VIEW_PERMISSION),
         "can_manage": is_admin or has_permission(user, MANAGE_PERMISSION),
         "can_sign": is_admin or has_permission(user, SIGN_PERMISSION),
+        "can_sipat_view": is_admin
+        or has_permission(user, SIPAT_VIEW_PERMISSION)
+        or has_permission(user, SIPAT_MANAGE_PERMISSION)
+        or has_permission(user, MANAGE_PERMISSION),
+        "can_sipat_manage": is_admin
+        or has_permission(user, SIPAT_MANAGE_PERMISSION)
+        or has_permission(user, MANAGE_PERMISSION),
         "units": units,
     }

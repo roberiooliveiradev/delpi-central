@@ -1510,11 +1510,13 @@ services:
       CIPA_SIGNATURE_UPLOAD_DIR: /app/data/cipa/signatures
       CIPA_ATTACHMENT_UPLOAD_DIR: /app/data/cipa/attachments
       CIPA_PDF_UPLOAD_DIR: /app/data/cipa/pdfs
+      CIPA_SIPAT_QR_DIR: /app/data/cipa/sipat-qr
 
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/signatures:/app/data/cipa/signatures
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/attachments:/app/data/cipa/attachments
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/pdfs:/app/data/cipa/pdfs
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/cipa/sipat-qr:/app/data/cipa/sipat-qr
 
     depends_on:
       keycloak:

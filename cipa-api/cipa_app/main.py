@@ -16,6 +16,10 @@ from cipa_app.interface.http.routes.minutes_routes import router as minutes_rout
 from cipa_app.interface.http.routes.signature_profile_routes import (
     router as signature_profile_router,
 )
+from cipa_app.interface.http.routes.sipat_routes import (
+    public_router as sipat_public_router,
+)
+from cipa_app.interface.http.routes.sipat_routes import router as sipat_router
 from cipa_app.middleware.auth_middleware import jwt_middleware
 from cipa_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -94,3 +98,5 @@ app.include_router(access_router)
 app.include_router(minutes_router)
 app.include_router(signature_profile_router)
 app.include_router(member_router)
+app.include_router(sipat_router)
+app.include_router(sipat_public_router)

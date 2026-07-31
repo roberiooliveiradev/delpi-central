@@ -1,8 +1,19 @@
 import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoTypes";
 import {
-  SHAPE_CORNER_ADJUST_HANDLE,
+  SHAPE_CORNER_ADJUST_HANDLE as remoteShapeCornerAdjustHandle,
   separateAdjustmentHandleFromChromeControls,
 } from "@delpi/plugin-ui/index";
+
+/**
+ * Paridade com `plugin-ui` `SHAPE_CORNER_ADJUST_HANDLE`.
+ * Fallback obrigatório: no public-hub o pacote é bundled e o remote MF pode
+ * tree-shakar o export — sem fallback o módulo quebra em `trackStartPct` no boot.
+ */
+const SHAPE_CORNER_ADJUST_HANDLE = remoteShapeCornerAdjustHandle ?? {
+  trackStartPct: 12,
+  trackEndPct: 48,
+  yPct: 0,
+};
 
 /**
  * Ajustes de geometria no modelo PowerPoint (Adjustments 0..1 tipicamente).

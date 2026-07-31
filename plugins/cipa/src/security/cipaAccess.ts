@@ -6,6 +6,8 @@ export type CipaUnitAccess = {
   view: boolean;
   manage: boolean;
   sign: boolean;
+  sipat_view?: boolean;
+  sipat_manage?: boolean;
 };
 
 export type CipaAccess = {
@@ -13,6 +15,8 @@ export type CipaAccess = {
   can_view: boolean;
   can_manage: boolean;
   can_sign: boolean;
+  can_sipat_view?: boolean;
+  can_sipat_manage?: boolean;
   units: CipaUnitAccess[];
 };
 
@@ -26,11 +30,21 @@ export function unitAccess(
 export function canUnit(
   access: CipaAccess | null | undefined,
   unitCode: string,
-  action: "view" | "manage" | "sign",
+  action: "view" | "manage" | "sign" | "sipat_view" | "sipat_manage",
 ): boolean {
-  return Boolean(unitAccess(access, unitCode)?.[action]);
+  const unit = unitAccess(access, unitCode);
+  if (!unit) return false;
+  if (action === "sipat_view") {
+    return Boolean(unit.sipat_view || unit.sipat_manage || unit.manage);
+  }
+  if (action === "sipat_manage") {
+    return Boolean(unit.sipat_manage || unit.manage);
+  }
+  return Boolean(unit[action]);
 }
 
 export function readableUnits(access: CipaAccess | null | undefined): CipaUnitAccess[] {
-  return (access?.units ?? []).filter((unit) => unit.view);
+  return (access?.units ?? []).filter(
+    (unit) => unit.view || unit.sipat_view || unit.sipat_manage,
+  );
 }

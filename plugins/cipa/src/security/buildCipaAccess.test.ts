@@ -17,11 +17,13 @@ describe("buildCipaAccessFromPermissions", () => {
         view: true,
         manage: false,
         sign: false,
+        sipat_view: false,
+        sipat_manage: false,
       },
     ]);
   });
 
-  it("manage implica leitura na unidade", () => {
+  it("manage implica leitura e SIPAT na unidade", () => {
     const access = buildCipaAccessFromPermissions([
       "cipa.manage",
       "cipa.unit.filial-02",
@@ -31,6 +33,22 @@ describe("buildCipaAccessFromPermissions", () => {
       view: true,
       manage: true,
       sign: false,
+      sipat_view: true,
+      sipat_manage: true,
+    });
+  });
+
+  it("sipat.view + unidade habilita só SIPAT", () => {
+    const access = buildCipaAccessFromPermissions([
+      "cipa.sipat.view",
+      "cipa.unit.filial-01",
+    ]);
+    expect(access.can_sipat_view).toBe(true);
+    expect(access.units[0]).toMatchObject({
+      id: "01",
+      view: false,
+      sipat_view: true,
+      sipat_manage: false,
     });
   });
 

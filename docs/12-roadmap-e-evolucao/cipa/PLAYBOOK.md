@@ -55,3 +55,11 @@ Criar → editar → participantes/signatários → enviar → assinar (mobile) 
 ## Backlog (§23)
 
 Modelos de ata, pauta estruturada, plano de ação completo, QR de validação, MFA na assinatura, dashboard CIPA.
+
+## SIPAT (entregue — jul/2026)
+
+- Migration `V006__sipat_surveys.sql` + rotas `/sipat/surveys` e `/public/sipat/{token}`
+- MFE: lista, wizard, detalhe (link + QR) em `/apps/cipa/filial-{xx}/sipat`
+- Público: `/p/cipa/sipat/{token}` no `public-hub`
+- RBAC: `cipa.sipat.view` / `cipa.sipat.manage` + unidade; `cipa.manage`/`cipa.admin` cobrem
+- Respostas anônimas; tipos: escolha simples/múltipla, Likert 5, sim/não, texto curto/longo

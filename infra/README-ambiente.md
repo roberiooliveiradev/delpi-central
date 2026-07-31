@@ -691,13 +691,14 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 ```
 
 
-### CIPA (atas / assinaturas)
+### CIPA (atas / assinaturas / SIPAT)
 
 | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
 |---|---|
 | `/app/data/cipa/signatures` | `…/cipa/signatures` |
 | `/app/data/cipa/attachments` | `…/cipa/attachments` |
 | `/app/data/cipa/pdfs` | `…/cipa/pdfs` |
+| `/app/data/cipa/sipat-qr` | `…/cipa/sipat-qr` |
 
 ### Comitê de Ética e Conduta (atas / assinaturas)
 

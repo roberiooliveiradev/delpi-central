@@ -43,4 +43,25 @@ describe("parseCipaRoute", () => {
       unitCode: "02",
     });
   });
+
+  it("rotas SIPAT por filial", () => {
+    expect(parseCipaRoute("/apps/cipa/filial-01/sipat")).toEqual({
+      kind: "sipatList",
+      unitCode: "01",
+    });
+    expect(parseCipaRoute("/apps/cipa/filial-02/sipat/new")).toEqual({
+      kind: "sipatNew",
+      unitCode: "02",
+    });
+    expect(parseCipaRoute("/apps/cipa/filial-01/sipat/abc-123")).toEqual({
+      kind: "sipatDetail",
+      unitCode: "01",
+      surveyId: "abc-123",
+    });
+    expect(parseCipaRoute("/apps/cipa/filial-01/sipat/abc-123/edit")).toEqual({
+      kind: "sipatEdit",
+      unitCode: "01",
+      surveyId: "abc-123",
+    });
+  });
 });

@@ -6,6 +6,7 @@ API dedicada do plugin **CIPA** (Comissão Interna de Prevenção de Acidentes).
 
 - Atas de reunião (CRUD, versionamento, participantes, signatários)
 - Cadastro histórico de membros/cargos por filial (`cipa.manage`)
+- Pesquisas SIPAT (wizard, link público, QR) — `cipa.sipat.view` / `cipa.sipat.manage`
 - Assinatura manuscrita (PNG) vinculada ao hash da versão
 - Perfil de assinatura pessoal por usuário (`cipa.sign`) — nome + PNG reutilizável
 - Auditoria de domínio, PDF oficial formal e isolamento por filial `01`/`02`
@@ -21,6 +22,18 @@ API dedicada do plugin **CIPA** (Comissão Interna de Prevenção de Acidentes).
 - Assinatura pessoal: `GET/PUT /signatures/me`, `POST/GET /signatures/me/image`
 - Membros CIPA: `GET/POST /members`, `PATCH /members/{id}`,
   `POST /members/{id}/end`, `DELETE /members/{id}` (soft-delete)
+- SIPAT (auth): `GET/POST /sipat/surveys`, `GET/PATCH /sipat/surveys/{id}`,
+  `POST …/clone`, `POST …/publish`, `POST …/close`, `GET …/qr`, `GET …/summary`,
+  `GET …/export.xlsx`
+- SIPAT (público): `GET /public/sipat/{token}`, `POST /public/sipat/{token}/responses`
+  → formulário em `/p/cipa/sipat/{token}`
+
+### SIPAT
+
+Migration `V006__sipat_surveys.sql`. QR em `CIPA_SIPAT_QR_DIR` (volume
+`cipa/sipat-qr`). Link: `{PUBLIC_BASE_URL}/p/cipa/sipat/{token}`. Respostas
+anônimas (sem PII). `POST …/clone` cria rascunho com as mesmas perguntas
+(título «Cópia de …»), sem token/QR/respostas — edição no wizard antes de publicar.
 
 ### Membros (`cipa.members`)
 
@@ -32,7 +45,7 @@ para pré-carga de novas atas.
 
 ## Stack
 
-FastAPI · Postgres (`schema cipa`) · `delpi_auth` · bleach · ReportLab
+FastAPI · Postgres (`schema cipa`) · `delpi_auth` · bleach · ReportLab · qrcode[pil]
 
 ## Desenvolvimento
 
@@ -45,7 +58,8 @@ pytest -q
 
 Migrations: `CIPA_RUN_MIGRATIONS_ON_STARTUP=true` no Compose.
 
-Volumes persistentes: `cipa/signatures` (inclui `profiles/` para assinatura pessoal), `cipa/attachments`, `cipa/pdfs` sob `DELPI_DATA_HOST_DIR`.
+Volumes persistentes: `cipa/signatures` (inclui `profiles/` para assinatura pessoal),
+`cipa/attachments`, `cipa/pdfs`, `cipa/sipat-qr` sob `DELPI_DATA_HOST_DIR`.
 
 O PDF final é gerado após todas as assinaturas e persistido em
 `cipa/pdfs/{filial}/{ata}/final.pdf`. O código de validação é criado antes da

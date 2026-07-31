@@ -4,7 +4,7 @@
   "name": "CIPA",
   "description": "Gestão de atas, assinaturas e processos da CIPA por unidade",
   "icon": "clipboard-check-icon",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "microfrontend",
   "basePath": "/apps/cipa",
   "entry": "/apps/cipa/assets/remoteEntry.js",
@@ -44,6 +44,18 @@
       "name": "CIPA — Unidade Filial 02",
       "description": "Escopo de dados da filial 02 (ES). Combine com view, manage ou sign.",
       "module": "cipa"
+    },
+    {
+      "code": "cipa.sipat.view",
+      "name": "Visualizar SIPAT",
+      "description": "Consultar pesquisas SIPAT, link público, QR e resumo de respostas por unidade.",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.sipat.manage",
+      "name": "Gerenciar SIPAT",
+      "description": "Criar, editar, publicar e encerrar pesquisas SIPAT (wizard, link e QR).",
+      "module": "cipa"
     }
   ],
   "routes": [
@@ -76,7 +88,7 @@
       "label": "CIPA — Membros Filial 01",
       "permission": "cipa.manage",
       "icon": "clipboard-check-icon",
-      "order": 42.1,
+      "order": 43,
       "showInMenu": false
     },
     {
@@ -84,7 +96,23 @@
       "label": "CIPA — Membros Filial 02",
       "permission": "cipa.manage",
       "icon": "clipboard-check-icon",
-      "order": 42.2,
+      "order": 44,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-01/sipat",
+      "label": "CIPA — SIPAT Filial 01",
+      "permission": "cipa.sipat.view",
+      "icon": "clipboard-check-icon",
+      "order": 45,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-02/sipat",
+      "label": "CIPA — SIPAT Filial 02",
+      "permission": "cipa.sipat.view",
+      "icon": "clipboard-check-icon",
+      "order": 46,
       "showInMenu": false
     },
     {
@@ -92,7 +120,7 @@
       "label": "Minha assinatura",
       "permission": "cipa.sign",
       "icon": "clipboard-check-icon",
-      "order": 43,
+      "order": 47,
       "showInMenu": true
     },
     {
@@ -100,7 +128,7 @@
       "label": "CIPA — Pendências de assinatura",
       "permission": "cipa.sign",
       "icon": "clipboard-check-icon",
-      "order": 44,
+      "order": 48,
       "showInMenu": false
     }
   ],

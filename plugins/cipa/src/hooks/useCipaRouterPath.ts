@@ -22,6 +22,10 @@ export type CipaRoute =
   | { kind: "home" }
   | { kind: "list"; unitCode: "01" | "02" }
   | { kind: "members"; unitCode: "01" | "02" }
+  | { kind: "sipatList"; unitCode: "01" | "02" }
+  | { kind: "sipatNew"; unitCode: "01" | "02" }
+  | { kind: "sipatDetail"; unitCode: "01" | "02"; surveyId: string }
+  | { kind: "sipatEdit"; unitCode: "01" | "02"; surveyId: string }
   | { kind: "new"; unitCode: "01" | "02" }
   | { kind: "detail"; unitCode: "01" | "02"; minuteId: string }
   | { kind: "edit"; unitCode: "01" | "02"; minuteId: string }
@@ -44,6 +48,30 @@ export function parseCipaRoute(pathname: string): CipaRoute {
   const membersMatch = path.match(/\/apps\/cipa\/filial-(01|02)\/members$/);
   if (membersMatch) {
     return { kind: "members", unitCode: membersMatch[1] as "01" | "02" };
+  }
+  const sipatNew = path.match(/\/apps\/cipa\/filial-(01|02)\/sipat\/new$/);
+  if (sipatNew) {
+    return { kind: "sipatNew", unitCode: sipatNew[1] as "01" | "02" };
+  }
+  const sipatEdit = path.match(/\/apps\/cipa\/filial-(01|02)\/sipat\/([^/]+)\/edit$/);
+  if (sipatEdit) {
+    return {
+      kind: "sipatEdit",
+      unitCode: sipatEdit[1] as "01" | "02",
+      surveyId: sipatEdit[2],
+    };
+  }
+  const sipatDetail = path.match(/\/apps\/cipa\/filial-(01|02)\/sipat\/([^/]+)$/);
+  if (sipatDetail) {
+    return {
+      kind: "sipatDetail",
+      unitCode: sipatDetail[1] as "01" | "02",
+      surveyId: sipatDetail[2],
+    };
+  }
+  const sipatList = path.match(/\/apps\/cipa\/filial-(01|02)\/sipat$/);
+  if (sipatList) {
+    return { kind: "sipatList", unitCode: sipatList[1] as "01" | "02" };
   }
   const match = path.match(
     /\/apps\/cipa\/filial-(01|02)(?:\/minutes\/([^/]+))?(?:\/(edit|sign))?$/,

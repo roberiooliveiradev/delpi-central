@@ -36,4 +36,28 @@ describe("cipaAccess", () => {
     expect(canUnit(sampleAccess, "02", "manage")).toBe(false);
     expect(canUnit(sampleAccess, "02", "sign")).toBe(true);
   });
+
+  it("SIPAT herda manage e exige flags dedicadas", () => {
+    expect(canUnit(sampleAccess, "01", "sipat_manage")).toBe(true);
+    expect(canUnit(sampleAccess, "01", "sipat_view")).toBe(true);
+    expect(canUnit(sampleAccess, "02", "sipat_view")).toBe(false);
+
+    const sipatOnly = {
+      ...sampleAccess,
+      units: [
+        {
+          id: "01" as const,
+          label: "Santa Catarina",
+          view: false,
+          manage: false,
+          sign: false,
+          sipat_view: true,
+          sipat_manage: false,
+        },
+      ],
+    };
+    expect(canUnit(sipatOnly, "01", "sipat_view")).toBe(true);
+    expect(canUnit(sipatOnly, "01", "sipat_manage")).toBe(false);
+    expect(readableUnits(sipatOnly)).toHaveLength(1);
+  });
 });

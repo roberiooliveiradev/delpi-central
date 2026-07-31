@@ -63,6 +63,12 @@ class Settings:
         str(_get_env("CIPA_PORTAL_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
         in {"1", "true", "yes", "on"}
     )
+    CIPA_SIPAT_QR_DIR: str = _get_env(
+        "CIPA_SIPAT_QR_DIR", default="/app/data/cipa/sipat-qr"
+    )
+    CIPA_PUBLIC_SIPAT_PATH: str = _get_env(
+        "CIPA_PUBLIC_SIPAT_PATH", default="/p/cipa/sipat"
+    )
 
 
 settings = Settings()

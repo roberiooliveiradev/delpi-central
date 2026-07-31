@@ -351,3 +351,154 @@ export async function deleteCipaMember(memberId: string) {
   );
   return unwrap(envelope);
 }
+
+/* —— SIPAT —— */
+
+export type SipatQuestionType =
+  | "single_choice"
+  | "multi_choice"
+  | "likert_5"
+  | "yes_no"
+  | "text_short"
+  | "text_long";
+
+export type SipatQuestion = {
+  id?: string;
+  position?: number;
+  question_type: SipatQuestionType;
+  label: string;
+  help_text?: string | null;
+  is_required?: boolean;
+  options?: string[] | null;
+};
+
+export type SipatSurvey = {
+  id: string;
+  unit_code: string;
+  title: string;
+  description?: string | null;
+  status: "draft" | "published" | "closed";
+  public_token?: string | null;
+  public_url?: string | null;
+  qr_filename?: string | null;
+  opens_at?: string | null;
+  closes_at?: string | null;
+  response_count: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type SipatTemplate = {
+  id: string;
+  title: string;
+  description: string;
+  question_count: number;
+};
+
+export type SipatSurveyDetail = {
+  survey: SipatSurvey;
+  questions: SipatQuestion[];
+};
+
+export type SipatSummary = {
+  survey: SipatSurvey;
+  response_count: number;
+  questions: Array<{
+    question_id: string;
+    label: string;
+    question_type: string;
+    answer_count: number;
+    counts?: Record<string, number>;
+    sample_texts?: string[];
+  }>;
+};
+
+export async function listSipatSurveys(unitCode: string, signal?: AbortSignal) {
+  const envelope = await httpGet<
+    ApiEnvelope<{ items: SipatSurvey[]; templates: SipatTemplate[]; unit_code: string }>
+  >(`${API}/sipat/surveys?unit_code=${encodeURIComponent(unitCode)}`, { signal });
+  return unwrap(envelope);
+}
+
+export async function getSipatSurvey(id: string, signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<SipatSurveyDetail>>(
+    `${API}/sipat/surveys/${id}`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function createSipatSurvey(body: Record<string, unknown>) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "POST",
+    `${API}/sipat/surveys`,
+    body,
+  );
+  return unwrap(envelope);
+}
+
+export async function updateSipatSurvey(id: string, body: Record<string, unknown>) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "PATCH",
+    `${API}/sipat/surveys/${id}`,
+    body,
+  );
+  return unwrap(envelope);
+}
+
+export async function applySipatTemplate(id: string, templateId: string) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "POST",
+    `${API}/sipat/surveys/${id}/apply-template`,
+    { template_id: templateId },
+  );
+  return unwrap(envelope);
+}
+
+export async function cloneSipatSurvey(id: string) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "POST",
+    `${API}/sipat/surveys/${id}/clone`,
+  );
+  return unwrap(envelope);
+}
+
+export async function publishSipatSurvey(id: string) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "POST",
+    `${API}/sipat/surveys/${id}/publish`,
+  );
+  return unwrap(envelope);
+}
+
+export async function closeSipatSurvey(id: string) {
+  const envelope = await httpJson<ApiEnvelope<SipatSurveyDetail>>(
+    "POST",
+    `${API}/sipat/surveys/${id}/close`,
+  );
+  return unwrap(envelope);
+}
+
+export async function deleteSipatSurvey(id: string) {
+  const envelope = await httpJson<ApiEnvelope<{ survey: SipatSurvey }>>(
+    "DELETE",
+    `${API}/sipat/surveys/${id}`,
+  );
+  return unwrap(envelope);
+}
+
+export async function getSipatSummary(id: string, signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<SipatSummary>>(
+    `${API}/sipat/surveys/${id}/summary`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function downloadSipatQr(id: string) {
+  return httpBlob(`${API}/sipat/surveys/${id}/qr`);
+}
+
+export async function downloadSipatExcel(id: string) {
+  return httpBlob(`${API}/sipat/surveys/${id}/export.xlsx`);
+}
