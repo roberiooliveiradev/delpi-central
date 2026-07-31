@@ -26,7 +26,7 @@ Ranking: `rank_by` (`product` \| `warehouse` \| `op`), `metric` (`order_qty` \| 
 
 ## Contrato de item (canônico)
 
-`production_order` / `op_key`, `product_code`, `product_description` (+ alias `description`), `planned_qty`, `produced_qty`, `pending_qty`, datas, `days_late`, `is_open`, `is_mother`, `is_delayed`, `has_balance`, `branch`, `warehouse`, `observation`.
+`production_order` / `op_key`, `product_code`, `product_description` (+ alias `description`, **só texto** — sem prefixo do código; a view `PRODUTO_DESCRICAO` «código - desc» é normalizada), `planned_qty`, `produced_qty`, `pending_qty`, datas, `days_late`, `is_open`, `is_mother`, `is_delayed`, `has_balance`, `branch`, `warehouse`, `observation`.
 
 ## Relação com outras rotas
 

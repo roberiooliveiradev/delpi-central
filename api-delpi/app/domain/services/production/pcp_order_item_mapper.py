@@ -60,6 +60,24 @@ def _flag_sim_nao(value: Any) -> bool:
     return str(value).strip() == FLAG_YES_TEXT
 
 
+def _product_description_only(product_code: str, row: dict[str, Any]) -> str:
+    """Descrição sem código — a view costuma trazer PRODUTO_DESCRICAO como «código - desc»."""
+    desc = _clean(row.get("desc_produto") or row.get("DESC_PRODUTO"))
+    if desc:
+        return desc
+
+    combined = _clean(row.get("produto_descricao") or row.get("PRODUTO_DESCRICAO"))
+    if not combined:
+        return ""
+    if product_code:
+        for separator in (f"{product_code} - ", f"{product_code} -", f"{product_code}-"):
+            if combined.startswith(separator):
+                return combined[len(separator) :].strip()
+    if " - " in combined:
+        return combined.split(" - ", 1)[1].strip()
+    return combined
+
+
 class PcpOrderItemMapper:
     """Converte linha da VW_PCP_ORDENS_PRODUCAO em item de API."""
 
@@ -76,10 +94,7 @@ class PcpOrderItemMapper:
             pending_qty = round(_as_float(pending), 6)
 
         product_code = _clean(row.get("produto") or row.get("PRODUTO"))
-        desc = _clean(row.get("desc_produto") or row.get("DESC_PRODUTO"))
-        product_description = _clean(
-            row.get("produto_descricao") or row.get("PRODUTO_DESCRICAO")
-        ) or desc
+        product_description = _product_description_only(product_code, row)
 
         op_key = _clean(row.get("op_chave") or row.get("OP_CHAVE"))
         is_open = _flag_bit(row.get("fl_op_em_aberto") or row.get("FL_OP_EM_ABERTO"))

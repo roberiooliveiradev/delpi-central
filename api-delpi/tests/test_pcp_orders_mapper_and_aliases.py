@@ -46,10 +46,25 @@ def test_pcp_mapper_maps_view_flags() -> None:
         }
     )
     assert item["production_order"] == "00160802001"
-    assert item["product_description"] == "90300005 - RESISTOR"
-    assert item["description"] == item["product_description"]
+    assert item["product_code"] == "90300005"
+    assert item["product_description"] == "RESISTOR"
+    assert item["description"] == "RESISTOR"
     assert item["pending_qty"] == 7
     assert item["is_open"] is True
     assert item["is_mother"] is False
     assert item["is_delayed"] is True
     assert item["days_late"] == 5
+
+
+def test_pcp_mapper_strips_code_prefix_when_desc_produto_missing() -> None:
+    item = PcpOrderItemMapper.map_item(
+        {
+            "PRODUTO": "90300076",
+            "PRODUTO_DESCRICAO": "90300076 - RESISTOR ESTRELA 3W 25KVA 62K",
+            "QTD_ORDEM": 1,
+            "QTD_APONTADA": 0,
+        }
+    )
+    assert item["product_code"] == "90300076"
+    assert item["product_description"] == "RESISTOR ESTRELA 3W 25KVA 62K"
+    assert item["description"] == "RESISTOR ESTRELA 3W 25KVA 62K"
