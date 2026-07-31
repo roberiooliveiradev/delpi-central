@@ -302,28 +302,43 @@
   gap: var(--td-grid-gap);
   align-items: stretch;
 }
+/* Uma ação (biblioteca): ocupa a faixa em layout horizontal, sem card “vazio” vertical. */
+.dashboard-tv-dashboard .td-action-grid > .td-nav-card--horizontal{
+  min-height: 0;
+}
 .dashboard-tv-dashboard .td-library-toolbar{
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
   width: 100%;
 }
+/*
+ * Kit FilterBarShell usa column; aqui a toolbar de biblioteca é row:
+ * pills à esquerda, busca à direita (compacta).
+ */
 .dashboard-tv-dashboard .td-library-toolbar .td-filter-bar{
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px 12px;
   width: 100%;
+  margin-bottom: 0;
+  padding: 10px 12px;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-filter-pills{
   display: inline-flex;
   flex-wrap: wrap;
+  flex: 1 1 auto;
   gap: 6px;
   padding: 4px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--td-text) 5%, var(--td-surface));
   border: 1px solid var(--td-border);
+  width: max-content;
+  max-width: 100%;
 }
 .dashboard-tv-dashboard .td-filter-pill{
   border: none;
@@ -344,12 +359,16 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-width: min(280px, 100%);
+  flex: 0 1 280px;
+  width: min(280px, 100%);
+  min-width: min(180px, 100%);
+  margin-inline-start: auto;
   padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--td-border);
   background: var(--td-surface);
   color: var(--td-muted);
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-library-search input{
   flex: 1;
@@ -388,6 +407,11 @@
   flex: 1 1 auto;
   width: 100%;
 }
+.dashboard-tv-dashboard .td-library-card-meta-line{
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
 .dashboard-tv-dashboard .td-library-card-thumb-fallback{
   display: flex;
   align-items: center;
@@ -398,28 +422,58 @@
   color: var(--td-accent);
 }
 .dashboard-tv-dashboard .td-page-header__nav{
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.15rem;
 }
+/* Voltar no header — link textual, não botão “caixa”. */
+.dashboard-tv-dashboard .td-page-back{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--td-muted);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-page-back:hover{
+  color: var(--td-accent);
+}
+/* Share: largura legível no shell 1440 (evita gap enorme nome ↔ lixeira). */
 .dashboard-tv-dashboard .td-share-stack{
   display: flex;
   flex-direction: column;
   gap: var(--td-section-gap);
+  max-width: 44rem;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-share-toolbar{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  margin-top: 12px;
 }
 .dashboard-tv-dashboard .td-share-add-row{
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
 }
 .dashboard-tv-dashboard .td-share-add-row__search{
   flex: 1 1 220px;
   min-width: 0;
+}
+.dashboard-tv-dashboard .td-share-add-row__role{
+  flex: 0 0 11.5rem;
+  width: 11.5rem;
+  max-width: 100%;
+}
+.dashboard-tv-dashboard .td-share-add-row__role > *{
+  width: 100%;
+  max-width: 100%;
 }
 .dashboard-tv-dashboard .td-share-suggestions{
   list-style: none;

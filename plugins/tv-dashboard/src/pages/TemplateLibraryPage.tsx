@@ -201,7 +201,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
           <TvPageHeader
             eyebrow="Operações · Displays"
             nav={
-              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+              <button type="button" className="td-page-back" onClick={onBack}>
                 <ArrowLeft size={16} aria-hidden="true" />
                 Voltar
               </button>
@@ -225,7 +225,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
           <TvPageHeader
             eyebrow="Operações · Displays"
             nav={
-              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+              <button type="button" className="td-page-back" onClick={onBack}>
                 <ArrowLeft size={16} aria-hidden="true" />
                 Voltar
               </button>
@@ -237,6 +237,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
         actions={
           <>
             <TvNavigationCard
+              orientation="horizontal"
               icon={<Upload size={22} strokeWidth={2} />}
               title={importBusy ? "Validando…" : "Importar MDD"}
               description="Preview e confirmação antes de gravar como rascunho."

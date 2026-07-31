@@ -371,8 +371,12 @@ export function PlaylistsPage({
                       >
                         {item.isActive ? "Ativa" : "Inativa"}
                       </span>
-                      <span>{item.viewCount ?? 0} visualizações</span>
-                      <span>Última: {formatLastPresented(item.lastPresentedAt)}</span>
+                      <span className="td-library-card-meta-line">
+                        {item.viewCount ?? 0} visualizações
+                      </span>
+                      <span className="td-library-card-meta-line">
+                        Última: {formatLastPresented(item.lastPresentedAt)}
+                      </span>
                     </>
                   }
                 />

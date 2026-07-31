@@ -212,7 +212,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
           <TvPageHeader
             eyebrow="Operações · Displays"
             nav={
-              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+              <button type="button" className="td-page-back" onClick={onBack}>
                 <ArrowLeft size={16} aria-hidden="true" />
                 Voltar ao editor
               </button>
@@ -232,7 +232,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
         <TvPageHeader
           eyebrow="Operações · Displays"
           nav={
-            <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+            <button type="button" className="td-page-back" onClick={onBack}>
               <ArrowLeft size={16} aria-hidden="true" />
               Voltar ao editor
             </button>
@@ -300,15 +300,17 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
                     aria-label="Buscar usuário"
                   />
                 </div>
-                <FormSelectControl
-                  ariaLabel="Papel"
-                  value={shareRole}
-                  onChange={(value) => setShareRole(value as "viewer" | "editor")}
-                  options={[
-                    { value: "editor", label: "Editor" },
-                    { value: "viewer", label: "Somente leitura" },
-                  ]}
-                />
+                <div className="td-share-add-row__role">
+                  <FormSelectControl
+                    ariaLabel="Papel"
+                    value={shareRole}
+                    onChange={(value) => setShareRole(value as "viewer" | "editor")}
+                    options={[
+                      { value: "editor", label: "Editor" },
+                      { value: "viewer", label: "Somente leitura" },
+                    ]}
+                  />
+                </div>
               </div>
               {suggestions.length > 0 ? (
                 <ul className="td-share-suggestions">
