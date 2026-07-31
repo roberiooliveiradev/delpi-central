@@ -1282,14 +1282,16 @@
     "get_financeiro_despesas_centro_custo_lancamentos": {
       "locale": {
         "en": {
-          "summary": "Paged list — financial expenses cost center lancamento",
-          "description": "financial expenses cost center entries.",
-          "label": "Paged list — financial expenses cost center lancamento"
+          "summary": "Cost-center expenses — ledger entries",
+          "description": "Paged ledger of purchase/expense entries by cost center, branch, supplier and period.",
+          "label": "Cost-center expense entries",
+          "whenToUse": "Use for detailed expense line lists filtered by cost center on TV tables."
         },
         "pt-BR": {
-          "label": "Lista paginada — Financeiro despesas centro custo lancamento",
-          "summary": "Lista paginada — Financeiro despesas centro custo lancamento",
-          "description": "Listagem paginada de «Lista paginada — Financeiro despesas centro custo lancamento» para uso em tabela ou gráfico no TV."
+          "label": "Lançamentos por centro de custo",
+          "summary": "Despesas por centro de custo — lançamentos",
+          "description": "Lista paginada de lançamentos de despesas por centro de custo, filial, fornecedor e período.",
+          "whenToUse": "Use para tabelas detalhadas de lançamentos filtrados por centro de custo no TV."
         }
       },
       "category": "financial"
