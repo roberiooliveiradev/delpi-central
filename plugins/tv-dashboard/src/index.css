@@ -540,10 +540,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0;
   border-radius: 10px;
+}
+/* Lucide no portal (svg display:block) — tamanho explícito evita ícone “ponto”. */
+.dashboard-tv-dashboard .td-btn > svg,
+.dashboard-tv-dashboard .td-page-back > svg{
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: block;
+}
+.dashboard-tv-dashboard .td-share-list__remove > svg{
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: block;
 }
 .dashboard-tv-dashboard .td-eyebrow{
   margin: 0;

@@ -214,7 +214,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
             eyebrow="Operações · Displays"
             nav={
               <button type="button" className="td-page-back" onClick={onBack}>
-                <ArrowLeft size={16} aria-hidden="true" />
+                <ArrowLeft size={18} aria-hidden="true" />
                 Voltar ao editor
               </button>
             }
@@ -235,7 +235,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
           eyebrow="Operações · Displays"
           nav={
             <button type="button" className="td-page-back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden="true" />
+              <ArrowLeft size={18} aria-hidden="true" />
               Voltar ao editor
             </button>
           }
@@ -265,21 +265,21 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
               className="td-btn"
               onClick={() => copyText(presentUrl, "Link da TV copiado.")}
             >
-              <Copy size={16} />
+              <Copy size={18} aria-hidden="true" />
               Copiar link
             </button>
             <button type="button" className="td-btn" onClick={openQr}>
-              <QrCode size={16} />
+              <QrCode size={18} aria-hidden="true" />
               QR code
             </button>
             {isOwner ? (
               <>
                 <button type="button" className="td-btn" onClick={() => void handleRegenerateToken()}>
-                  <RefreshCw size={16} />
+                  <RefreshCw size={18} aria-hidden="true" />
                   Novo link
                 </button>
                 <button type="button" className="td-btn" onClick={() => void handleToggleActive()}>
-                  <Link2 size={16} />
+                  <Link2 size={18} aria-hidden="true" />
                   {playlist.isActive ? "Desativar link" : "Reativar link"}
                 </button>
               </>
@@ -323,7 +323,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
                         className="td-btn"
                         onClick={() => void shareWithUser(user)}
                       >
-                        <UserPlus size={14} />
+                        <UserPlus size={18} aria-hidden="true" />
                         {user.name || user.email} · {user.email}
                       </button>
                     </li>
@@ -353,7 +353,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
                         onClick={() => void removeShare(share.targetUserId)}
                         aria-label="Remover colaborador"
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={18} aria-hidden="true" strokeWidth={2} />
                       </button>
                     </li>
                   ))
@@ -377,7 +377,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
               ) : null}
               <div className="td-share-toolbar">
                 <button type="button" className="td-btn" onClick={() => void createEditLink()}>
-                  <Copy size={16} />
+                  <Copy size={18} aria-hidden="true" />
                   Gerar e copiar link de edição
                 </button>
                 <button type="button" className="td-btn" onClick={() => void revokeEditLinks()}>
