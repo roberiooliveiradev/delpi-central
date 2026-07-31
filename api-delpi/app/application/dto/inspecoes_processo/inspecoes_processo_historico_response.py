@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.application.services.paged_list_envelope_service import (
+    build_has_next_pagination,
+)
+
 
 @dataclass
 class InspecoesProcessoHistoricoItemResponse:
@@ -30,6 +34,7 @@ class InspecoesProcessoHistoricoItemResponse:
 
     def to_dict(self) -> dict:
         return {
+            # PT (legado MFE)
             "filial": self.filial,
             "unidade": self.unidade,
             "ordem_producao": self.ordem_producao,
@@ -52,6 +57,29 @@ class InspecoesProcessoHistoricoItemResponse:
             "ultima_hora_medicao": self.ultima_hora_medicao,
             "matricula_ultimo_ensaiador": self.matricula_ultimo_ensaiador,
             "nome_ultimo_ensaiador": self.nome_ultimo_ensaiador,
+            # EN aliases (aditivos — Wave 3 / estratégia B)
+            "branch": self.filial,
+            "unit": self.unidade,
+            "production_order": self.ordem_producao,
+            "product_code": self.codigo_produto,
+            "product_description": self.descricao_produto,
+            "product_revision": self.revisao_produto,
+            "order_quantity": self.quantidade_op,
+            "inspection_header_key": self.chave_cabecalho_inspecao,
+            "inspection_origin": self.origem_inspecao,
+            "tests_count": self.qtde_ensaios,
+            "approved_tests_count": self.qtde_ensaios_aprovados,
+            "rejected_tests_count": self.qtde_ensaios_reprovados,
+            "tolerance_tests_count": self.qtde_ensaios_tolerancia,
+            "operations_count": self.qtde_operacoes,
+            "inspectors_count": self.qtde_ensaiadores,
+            "inspection_result_code": self.resultado_inspecao_codigo,
+            "inspection_result": self.resultado_inspecao,
+            "first_measurement_date": self.primeira_data_medicao,
+            "last_measurement_date": self.ultima_data_medicao,
+            "last_measurement_time": self.ultima_hora_medicao,
+            "last_inspector_registration": self.matricula_ultimo_ensaiador,
+            "last_inspector_name": self.nome_ultimo_ensaiador,
         }
 
 
@@ -68,4 +96,9 @@ class InspecoesProcessoHistoricoResponse:
             "page": self.page,
             "page_size": self.page_size,
             "has_next": self.has_next,
+            "pagination": build_has_next_pagination(
+                page=self.page,
+                page_size=self.page_size,
+                has_next=self.has_next,
+            ),
         }

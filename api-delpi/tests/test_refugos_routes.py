@@ -209,8 +209,17 @@ def test_registros_returns_paged_meta(
         "items": [],
         "page": 1,
         "pageSize": 25,
+        "page_size": 25,
         "total": 0,
         "totalPages": 0,
+        "total_pages": 0,
+        "pagination": {
+            "page": 1,
+            "page_size": 25,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
     }
     mock_builder.return_value = use_case
 
@@ -224,6 +233,7 @@ def test_registros_returns_paged_meta(
     assert body["meta"]["operationId"] == "get_refugos_registros"
     assert body["meta"]["entity"] == "refugos_registros"
     assert body["meta"]["shape"] == "paged_list"
+    assert body["data"]["pagination"]["is_complete"] is True
 
 
 @patch(

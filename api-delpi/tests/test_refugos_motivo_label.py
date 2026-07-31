@@ -106,3 +106,9 @@ def test_registros_motivo_is_code_dash_description() -> None:
 
     assert result["items"][0]["motivoCodigo"] == "FM"
     assert result["items"][0]["motivo"] == "FM - Falha de material"
+    assert result["items"][0]["reason_code"] == "FM"
+    assert result["items"][0]["reason"] == "FM - Falha de material"
+    assert result["items"][0]["branch"] == "01"
+    assert result["pagination"]["is_complete"] is True
+    assert result["pageSize"] == result["page_size"]
+    assert result["totalPages"] == result["total_pages"]

@@ -12,7 +12,7 @@ import type {
   PeriodFilter,
   SortDirection,
 } from "../../types/inadimplencia";
-import { CLIENTES_SORT_OPTIONS } from "../../types/inadimplencia";
+import { CLIENTES_SORT_OPTIONS, paginationTotal } from "../../types/inadimplencia";
 import {
   formatCurrencyBrl,
   formatInteger,
@@ -79,7 +79,8 @@ export function ClientesTable({
   const pagination = data?.pagination;
   const items = data?.items ?? [];
   const totalPages = pagination?.total_pages ?? 1;
-  const canExport = (pagination?.total_items ?? items.length) > 0;
+  const totalCount = paginationTotal(pagination, items.length);
+  const canExport = totalCount > 0;
   const resolvedPeriodLabel = data?.periodo?.rotulo?.trim() || periodLabel?.trim() || null;
   const periodRangeLabel = formatPeriodRangeLabel(
     data?.periodo?.data_inicio ?? period.startDate,
@@ -122,7 +123,7 @@ export function ClientesTable({
                 </>
               ) : null}
               {pagination
-                ? `${formatInteger(pagination.total_items)} cliente(s) · página ${pagination.page} de ${totalPages}`
+                ? `${formatInteger(totalCount)} cliente(s) · página ${pagination.page} de ${totalPages}`
                 : null}
             </p>
           ) : null}
@@ -294,7 +295,7 @@ export function ClientesTable({
             <Pagination
               page={pagination.page}
               pageSize={pagination.page_size}
-              total={pagination.total_items}
+              total={totalCount}
               totalPages={totalPages}
               onPageChange={onPageChange}
               hideWhenSinglePage

@@ -53,6 +53,10 @@ _STOP_REASON_PATTERN = r"^[A-Za-z0-9]{1,6}$"
 _CODE_PATTERN = r"^.{0,40}$"
 
 _SUMMARY_FIELDS = {
+    "total_appointments": {"label": "Total appointments", "type": "integer"},
+    "total_hours": {"label": "Total hours", "type": "number"},
+    "total_cost": {"label": "Total cost (BRL)", "type": "number"},
+    "avg_cost_per_hour": {"label": "Avg cost/hour (BRL)", "type": "number"},
     "totalApontamentos": {"label": "Total de apontamentos", "type": "integer"},
     "totalHoras": {"label": "Total de horas", "type": "number"},
     "totalCusto": {"label": "Custo total (R$)", "type": "number"},
@@ -63,6 +67,11 @@ _SUMMARY_FIELDS = {
 }
 
 _ITEM_FIELDS = {
+    "reference_date": {"label": "Reference date", "type": "string", "format": "date"},
+    "branch": {"label": "Branch", "type": "string"},
+    "hours": {"label": "Hours", "type": "number"},
+    "stop_reason": {"label": "Stop reason", "type": "string"},
+    "stop_reason_description": {"label": "Stop reason description", "type": "string"},
     "dataReferencia": {"label": "Data de referência", "type": "string", "format": "date"},
     "filial": {"label": "Filial", "type": "string"},
     "op": {"label": "OP", "type": "string"},

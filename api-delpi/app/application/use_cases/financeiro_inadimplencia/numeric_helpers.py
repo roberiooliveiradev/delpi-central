@@ -70,8 +70,10 @@ def build_pagination(
     return {
         "page": page,
         "page_size": page_size,
+        "total": total_items,
         "total_items": total_items,
         "total_pages": total_pages,
         "has_next": page < total_pages,
         "has_previous": page > 1,
+        "is_complete": page >= total_pages if total_pages else True,
     }

@@ -8,6 +8,8 @@ Métricas e consultas analíticas por área, alimentadas principalmente pelo **T
 
 **Datas de calendário na resposta (jul/2026):** campos de data sem hora saem em **ISO `YYYY-MM-DD`** (`ResponseDateFormatService`). Internamente o TOTVS permanece em `YYYYMMDD`. Query params continuam aceitando ISO, `YYYYMMDD` e `dd/mm/yyyy`. Timestamps com hora (PAC, scheduling, `created_at`) ficam fora deste contrato. `meta.dataVersion`: `2026-07`.
 
+**Qualidade de rotas (paged_list, DRY, bilíngue):** [padrao-qualidade-rotas.md](./padrao-qualidade-rotas.md).
+
 Parâmetros comuns de período:
 
 | Parâmetro | Descrição |
@@ -41,6 +43,21 @@ Documentação completa: [financeiro-inadimplencia.md](./financeiro-inadimplenci
 | GET | `/financeiro/inadimplencia/faixas-atraso` | Distribuição por faixa de atraso. |
 | GET | `/financeiro/inadimplencia/clientes` | Ranking paginado de clientes. |
 | GET | `/financeiro/inadimplencia/titulos` | Títulos paginados. |
+
+### Despesas por centro de custo — `/financeiro/despesas-centro-custo`
+
+Documentação completa: [financeiro-despesas-centro-custo.md](./financeiro-despesas-centro-custo.md).  
+**Permissões:** `financeiro-centro-custo.access|view` (ou `api-delpi.access`).  
+Qualidade de rotas: [padrao-qualidade-rotas.md](./padrao-qualidade-rotas.md).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/financeiro/despesas-centro-custo/filtros` | Opções de filtro (filiais, CCs, fornecedores). |
+| GET | `/financeiro/despesas-centro-custo/resumo` | Totais do período. |
+| GET | `/financeiro/despesas-centro-custo/serie` | Série temporal. |
+| GET | `/financeiro/despesas-centro-custo/ranking-centros` | Ranking por centro de custo. |
+| GET | `/financeiro/despesas-centro-custo/ranking-fornecedores` | Ranking por fornecedor. |
+| GET | `/financeiro/despesas-centro-custo/lancamentos` | Lançamentos paginados. |
 
 ### Lançamento de Notas Fiscais — `/lancamento-notas-fiscais`
 

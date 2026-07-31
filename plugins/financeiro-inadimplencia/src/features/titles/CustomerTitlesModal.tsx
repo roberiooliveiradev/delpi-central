@@ -16,7 +16,7 @@ import type {
   SelectedCustomer,
   TituloStatus,
 } from "../../types/inadimplencia";
-import { DELAY_RANGE_OPTIONS } from "../../types/inadimplencia";
+import { DELAY_RANGE_OPTIONS, paginationTotal } from "../../types/inadimplencia";
 import {
   formatCurrencyBrl,
   formatDatePtBr,
@@ -69,7 +69,8 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
   const items = titulos.data?.items ?? [];
   const pagination = titulos.data?.pagination;
   const totalPages = pagination?.total_pages ?? 1;
-  const canExport = (pagination?.total_items ?? items.length) > 0;
+  const totalCount = paginationTotal(pagination, items.length);
+  const canExport = totalCount > 0;
 
   const handleExportExcel = async () => {
     if (exporting || !canExport) return;
@@ -229,7 +230,7 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
             <Pagination
               page={pagination.page}
               pageSize={pagination.page_size}
-              total={pagination.total_items}
+              total={totalCount}
               totalPages={totalPages}
               onPageChange={(page) => setTableState((current) => ({ ...current, page }))}
               hideWhenSinglePage

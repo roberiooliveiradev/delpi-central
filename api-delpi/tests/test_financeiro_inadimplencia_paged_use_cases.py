@@ -46,6 +46,8 @@ def test_clientes_use_case_pagination_total_is_customers_not_titles() -> None:
     result = use_case.execute(request)
     assert result.pagination.total_items == 42
     assert result.pagination.total_pages == 3
+    assert result.pagination.to_dict()["total"] == 42
+    assert result.pagination.to_dict()["is_complete"] is False
     assert len(result.items) == 1
     repository.count_clientes.assert_called_once()
 
@@ -89,3 +91,5 @@ def test_titulos_use_case_maps_faixa_and_dates() -> None:
     assert item.faixa_atraso["codigo"] == "ATRASO_ACIMA_30_DIAS"
     assert item.faixa_atraso["rotulo"] == "Acima de 30 dias"
     assert result.pagination.total_items == 1
+    assert result.pagination.to_dict()["total"] == 1
+    assert result.pagination.to_dict()["is_complete"] is True

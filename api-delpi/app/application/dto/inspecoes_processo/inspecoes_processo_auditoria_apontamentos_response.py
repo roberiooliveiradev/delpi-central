@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.application.services.paged_list_envelope_service import (
+    build_has_next_pagination,
+)
+
 
 @dataclass
 class InspecoesProcessoAuditoriaApontamentoItemResponse:
@@ -81,5 +85,10 @@ class InspecoesProcessoAuditoriaApontamentosResponse:
             "page": self.page,
             "page_size": self.page_size,
             "has_next": self.has_next,
+            "pagination": build_has_next_pagination(
+                page=self.page,
+                page_size=self.page_size,
+                has_next=self.has_next,
+            ),
             "data": self.data,
         }

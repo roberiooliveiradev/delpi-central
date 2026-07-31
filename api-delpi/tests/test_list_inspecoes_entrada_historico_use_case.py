@@ -80,6 +80,7 @@ def test_list_inspecoes_entrada_historico_normalizes_items_and_pagination() -> N
         "page_size": 50,
         "total": 731,
         "total_pages": 15,
+        "is_complete": False,
     }
     assert payload["filters"] == {
         "result": None,

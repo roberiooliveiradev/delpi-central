@@ -85,8 +85,17 @@ def test_list_inspecoes_processo_historico_normalizes_and_pages() -> None:
     assert payload["page"] == 1
     assert payload["page_size"] == 1
     assert payload["has_next"] is True
+    assert payload["pagination"] == {
+        "page": 1,
+        "page_size": 1,
+        "is_complete": False,
+    }
     assert len(payload["items"]) == 1
     assert payload["items"][0]["ordem_producao"] == "10565201002"
+    assert payload["items"][0]["production_order"] == "10565201002"
+    assert payload["items"][0]["branch"] == "02"
+    assert payload["items"][0]["filial"] == "02"
+    assert payload["items"][0]["product_code"] == "50233817"
 
 
 def test_list_inspecoes_processo_historico_clamps_page_size_and_filters() -> None:
@@ -121,6 +130,9 @@ def test_list_inspecoes_processo_historico_clamps_page_size_and_filters() -> Non
     )
     assert result.has_next is False
     assert result.items == []
+    payload = result.to_dict()
+    assert payload["pagination"]["is_complete"] is True
+    assert payload["has_next"] is False
 
 
 def test_list_inspecoes_processo_historico_raises_floor_when_inicio_too_old() -> None:

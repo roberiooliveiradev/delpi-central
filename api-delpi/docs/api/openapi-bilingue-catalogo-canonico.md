@@ -18,6 +18,8 @@ Consumidores **importam** o contrato (baseline / OpenAPI), não reinventam enums
 
 Diretriz Cursor (obrigatória em rotas novas): **`.cursor/rules/api-delpi-openapi-route-standards.mdc`**.
 
+Qualidade transversal (envelope `paged_list`, DRY, migração A/B/C): **[padrao-qualidade-rotas.md](./padrao-qualidade-rotas.md)**.
+
 Cobertura de testes HTTP (meta smoke + gate): **[`playbook-route-test-coverage-100.md`](../roadmaps/playbook-route-test-coverage-100.md)**.
 
 ---

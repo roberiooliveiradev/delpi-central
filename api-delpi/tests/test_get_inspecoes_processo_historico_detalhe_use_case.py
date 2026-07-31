@@ -144,9 +144,17 @@ def test_get_inspecoes_processo_historico_detalhe_normalizes() -> None:
     assert payload["page"] == 1
     assert payload["page_size"] == 1
     assert payload["has_next"] is True
+    assert payload["pagination"] == {
+        "page": 1,
+        "page_size": 1,
+        "is_complete": False,
+    }
     assert payload["cabecalho"]["ordem_producao"] == "10565201002"
+    assert payload["cabecalho"]["production_order"] == "10565201002"
     assert len(payload["items"]) == 1
     assert payload["items"][0]["codigo_ensaio"] == "20"
+    assert payload["items"][0]["test_code"] == "20"
+    assert payload["items"][0]["production_order"] == "10565201002"
     assert payload["items"][0]["medicao_numerica_a"] == 1.23
     assert payload["items"][0]["medicao_textual"] is None
 

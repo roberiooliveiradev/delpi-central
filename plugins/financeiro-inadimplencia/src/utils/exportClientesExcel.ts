@@ -7,6 +7,7 @@ import type {
   PeriodFilter,
   SortDirection,
 } from "../types/inadimplencia";
+import { paginationTotal } from "../types/inadimplencia";
 
 const CLIENTES_EXPORT_COLUMNS = [
   { key: "cliente_codigo", label: "Código" },
@@ -76,7 +77,10 @@ export async function fetchAllClientesForExport(
       onlyWithDelays: filters.onlyWithDelays,
     });
     items.push(...response.items);
-    if (items.length >= response.total_items || response.items.length < pageSize) {
+    if (
+      items.length >= paginationTotal(response.pagination) ||
+      response.items.length < pageSize
+    ) {
       break;
     }
     page += 1;

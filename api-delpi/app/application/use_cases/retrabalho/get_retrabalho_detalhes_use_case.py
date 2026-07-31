@@ -1,13 +1,66 @@
 from __future__ import annotations
 
+from typing import Any
+
 from app.application.dto.retrabalho.retrabalho_detalhes_request import RetrabalhoDetalhesRequest
 from app.application.dto.retrabalho.retrabalho_formatters import (
     display_operador_nome,
     round_cost,
     round_hours,
 )
+from app.application.services.paged_list_envelope_service import build_paged_list_envelope
 from app.domain.ports.retrabalho.retrabalho_repository_port import RetrabalhoRepositoryPort
-from app.infrastructure.persistence.totvs.retrabalho.retrabalho_repository import calc_total_pages
+
+
+def _map_detalhe_item(row: dict[str, Any]) -> dict[str, Any]:
+    reference_date = row.get("DATA_REFERENCIA") or row.get("data_referencia") or ""
+    branch = row.get("filial") or ""
+    production_order = row.get("op") or ""
+    product_code = row.get("produto") or ""
+    operation = row.get("operacao") or ""
+    resource = row.get("recurso") or ""
+    cost_center = row.get("centro_custo") or ""
+    operator_code = row.get("codigo_operador") or ""
+    operator_name = display_operador_nome(row.get("nome_operador"))
+    hours = round_hours(row.get("tempo_horas"))
+    stop_cost = round_cost(row.get("valor_parada"))
+    cost_source = row.get("fonte_custo") or ""
+    stop_reason = row.get("motivo") or ""
+    observation = row.get("observacao") or ""
+    recno = int(row.get("RECNO") or row.get("recno") or 0)
+    return {
+        # EN canônico (aditivo)
+        "reference_date": reference_date,
+        "branch": branch,
+        "production_order": production_order,
+        "product_code": product_code,
+        "operation": operation,
+        "resource": resource,
+        "cost_center": cost_center,
+        "operator_code": operator_code,
+        "operator_name": operator_name,
+        "hours": hours,
+        "stop_cost": stop_cost,
+        "cost_source": cost_source,
+        "stop_reason": stop_reason,
+        "observation": observation,
+        "recno": recno,
+        # camelCase PT (legado MFE)
+        "dataReferencia": reference_date,
+        "filial": branch,
+        "op": production_order,
+        "produto": product_code,
+        "operacao": operation,
+        "recurso": resource,
+        "centroCusto": cost_center,
+        "codigoOperador": operator_code,
+        "nomeOperador": operator_name,
+        "tempoHoras": hours,
+        "valorParada": stop_cost,
+        "fonteCusto": cost_source,
+        "motivo": stop_reason,
+        "observacao": observation,
+    }
 
 
 class GetRetrabalhoDetalhesUseCase:
@@ -38,36 +91,14 @@ class GetRetrabalhoDetalhesUseCase:
             page_size=page_size,
         )
 
-        items = [
-            {
-                "dataReferencia": row.get("DATA_REFERENCIA") or row.get("data_referencia") or "",
-                "filial": row.get("filial") or "",
-                "op": row.get("op") or "",
-                "produto": row.get("produto") or "",
-                "operacao": row.get("operacao") or "",
-                "recurso": row.get("recurso") or "",
-                "centroCusto": row.get("centro_custo") or "",
-                "codigoOperador": row.get("codigo_operador") or "",
-                "nomeOperador": display_operador_nome(row.get("nome_operador")),
-                "tempoHoras": round_hours(row.get("tempo_horas")),
-                "valorParada": round_cost(row.get("valor_parada")),
-                "fonteCusto": row.get("fonte_custo") or "",
-                "motivo": row.get("motivo") or "",
-                "observacao": row.get("observacao") or "",
-                "recno": int(row.get("RECNO") or row.get("recno") or 0),
-            }
-            for row in rows
-        ]
-
-        total_pages = calc_total_pages(total, page_size)
-
-        return {
-            "periodo": request.periodo_dict(),
-            "items": items,
-            "page": page,
-            "pageSize": page_size,
-            "total": total,
-            "totalPages": total_pages,
-            "orderBy": request.sort_by,
-            "orderDir": request.sort_dir,
-        }
+        return build_paged_list_envelope(
+            page=page,
+            page_size=page_size,
+            total=total,
+            items=[_map_detalhe_item(row) for row in rows],
+            extra={
+                "periodo": request.periodo_dict(),
+                "orderBy": request.sort_by,
+                "orderDir": request.sort_dir,
+            },
+        )

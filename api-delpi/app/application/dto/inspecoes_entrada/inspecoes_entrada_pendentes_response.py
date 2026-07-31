@@ -50,6 +50,7 @@ class InspecoesEntradaPendentesPagination:
             "page_size": self.page_size,
             "total": self.total,
             "total_pages": self.total_pages,
+            "is_complete": self.page >= self.total_pages if self.total_pages else True,
         }
 
 

@@ -1,4 +1,4 @@
-import { fetchRetrabalhoDetalhes } from "./retrabalhoApi";
+import { fetchRetrabalhoDetalhes, resolveDetalhesPagination } from "./retrabalhoApi";
 import type { RetrabalhoDetalheItem, RetrabalhoQueryFilters } from "../types/retrabalho";
 
 const EXPORT_PAGE_SIZE = 100;
@@ -9,8 +9,9 @@ export async function fetchAllRetrabalhoDetalhes(
 ): Promise<RetrabalhoDetalheItem[]> {
   const first = await fetchRetrabalhoDetalhes(filters, 1, EXPORT_PAGE_SIZE, { signal });
   const all = [...first.items];
+  const { totalPages } = resolveDetalhesPagination(first);
 
-  for (let page = 2; page <= first.totalPages; page += 1) {
+  for (let page = 2; page <= totalPages; page += 1) {
     const batch = await fetchRetrabalhoDetalhes(filters, page, EXPORT_PAGE_SIZE, { signal });
     all.push(...batch.items);
   }

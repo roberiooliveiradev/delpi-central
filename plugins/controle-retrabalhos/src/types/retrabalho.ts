@@ -87,13 +87,24 @@ export type RetrabalhoDetalheItem = {
   recno: number;
 };
 
+export type RetrabalhoDetalhesPagination = {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+  is_complete?: boolean;
+};
+
 export type RetrabalhoDetalhesData = {
   periodo: RetrabalhoPeriodo;
   items: RetrabalhoDetalheItem[];
   page: number;
   pageSize: number;
+  page_size?: number;
   total: number;
   totalPages: number;
+  total_pages?: number;
+  pagination?: RetrabalhoDetalhesPagination;
 };
 
 export const DEFAULT_PAGE_SIZE = 50;

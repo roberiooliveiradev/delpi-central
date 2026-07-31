@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from app.application.dto.supplies.stock_balances_request import StockBalancesItemsRequest
+from app.application.services.paged_list_envelope_service import build_paged_list_envelope
 from app.domain.ports.supplies.stock_balances_query_repository_port import (
     StockBalancesQueryRepositoryPort,
 )
@@ -26,21 +27,10 @@ class GetSuppliesStockBalancesItemsUseCase:
             offset=request.offset,
             page_size=request.page_size,
         )
-        total_pages = (
-            (total + request.page_size - 1) // request.page_size if total else 0
+        return build_paged_list_envelope(
+            page=request.page,
+            page_size=request.page_size,
+            total=total,
+            items=items,
+            extra={"sort": request.sort},
         )
-        return {
-            "items": items,
-            "page": request.page,
-            "page_size": request.page_size,
-            "total": total,
-            "total_pages": total_pages,
-            "sort": request.sort,
-            "pagination": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "total": total,
-                "total_pages": total_pages,
-                "is_complete": request.page >= total_pages if total_pages else True,
-            },
-        }

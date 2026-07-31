@@ -5,6 +5,7 @@ import type {
   InspecoesProcessoHistoricoItem,
   InspecoesProcessoHistoricoResponse,
 } from "../types/api";
+import { resolveHasNext } from "../utils/format";
 
 export const HISTORICO_DEFAULT_PAGE_SIZE = 25;
 export const HISTORICO_MAX_PAGE_SIZE = 50;
@@ -188,7 +189,7 @@ export function useInspecoesProcessoHistorico(
       });
       return {
         items: Array.isArray(response.items) ? response.items : [],
-        hasNext: Boolean(response.has_next),
+        hasNext: resolveHasNext(response),
       };
     }
 

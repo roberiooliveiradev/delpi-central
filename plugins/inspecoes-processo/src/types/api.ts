@@ -121,11 +121,20 @@ export type InspecoesProcessoHistoricoItem = {
   nome_ultimo_ensaiador: string;
 };
 
+export type InspecoesProcessoPagination = {
+  page: number;
+  page_size: number;
+  is_complete: boolean;
+  total?: number;
+  total_pages?: number;
+};
+
 export type InspecoesProcessoHistoricoResponse = {
   items: InspecoesProcessoHistoricoItem[];
   page: number;
   page_size: number;
   has_next: boolean;
+  pagination?: InspecoesProcessoPagination;
 };
 
 export type FetchHistoricoParams = {
@@ -189,6 +198,7 @@ export type InspecoesProcessoHistoricoDetalheResponse = {
   page: number;
   page_size: number;
   has_next: boolean;
+  pagination?: InspecoesProcessoPagination;
 };
 
 export type FetchHistoricoDetalheParams = {
@@ -234,6 +244,7 @@ export type InspecoesProcessoAuditoriaApontamentosResponse = {
   page: number;
   page_size: number;
   has_next: boolean;
+  pagination?: InspecoesProcessoPagination;
   data: string;
 };
 

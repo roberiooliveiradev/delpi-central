@@ -22,3 +22,14 @@ export function formatIsoDatePt(value: string | null | undefined): string {
   if (!match) return normalized;
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
+
+/** Flat `has_next` with nested `pagination.is_complete` fallback (Wave 3). */
+export function resolveHasNext(data: {
+  has_next?: boolean;
+  pagination?: { is_complete?: boolean } | null;
+}): boolean {
+  return (
+    data.has_next ??
+    (data.pagination ? !data.pagination.is_complete : false)
+  );
+}

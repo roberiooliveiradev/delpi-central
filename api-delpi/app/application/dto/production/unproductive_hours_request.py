@@ -141,7 +141,15 @@ class UnproductiveHoursPeriod:
 
     def periodo_dict(self) -> dict[str, str | None]:
         start, end = self.iso_range()
-        return {"dataInicio": start, "dataFim": end, "filial": self.branch}
+        return {
+            "start_date": start,
+            "end_date": end,
+            "branch": self.branch,
+            # Aliases camelCase PT (legado)
+            "dataInicio": start,
+            "dataFim": end,
+            "filial": self.branch,
+        }
 
 
 @dataclass

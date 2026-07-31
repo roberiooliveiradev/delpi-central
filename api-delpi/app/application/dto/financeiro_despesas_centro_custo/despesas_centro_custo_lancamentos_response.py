@@ -71,15 +71,25 @@ class DespesasCentroCustoLancamentosPagination:
     total_pages: int
     has_next: bool
     has_previous: bool
+    total: int | None = None
+    is_complete: bool | None = None
 
     def to_dict(self) -> dict:
+        total = self.total if self.total is not None else self.total_items
+        is_complete = (
+            self.is_complete
+            if self.is_complete is not None
+            else (self.page >= self.total_pages if self.total_pages else True)
+        )
         return {
             "page": self.page,
             "page_size": self.page_size,
             "total_items": self.total_items,
+            "total": total,
             "total_pages": self.total_pages,
             "has_next": self.has_next,
             "has_previous": self.has_previous,
+            "is_complete": is_complete,
         }
 
 

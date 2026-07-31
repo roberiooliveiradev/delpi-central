@@ -7,7 +7,7 @@ import type {
   InspecoesProcessoHistoricoDetalheItem,
   InspecoesProcessoHistoricoItem,
 } from "../types/api";
-import { formatIsoDatePt, formatNumber } from "../utils/format";
+import { formatIsoDatePt, formatNumber, resolveHasNext } from "../utils/format";
 
 type HistoricoDetailModalProps = {
   branch: string;
@@ -150,7 +150,7 @@ export function HistoricoDetailModal({
 
   const cabecalho = data?.cabecalho ?? null;
   const items = data?.items ?? [];
-  const hasNext = Boolean(data?.has_next);
+  const hasNext = resolveHasNext(data ?? {});
 
   return (
     <div className="ip-modal" role="dialog" aria-modal="true" aria-label="Detalhe da OP">

@@ -5,6 +5,9 @@ from dataclasses import dataclass
 from app.application.dto.inspecoes_processo.inspecoes_processo_historico_response import (
     InspecoesProcessoHistoricoItemResponse,
 )
+from app.application.services.paged_list_envelope_service import (
+    build_has_next_pagination,
+)
 
 
 @dataclass
@@ -52,6 +55,7 @@ class InspecoesProcessoHistoricoDetalheItemResponse:
 
     def to_dict(self) -> dict:
         return {
+            # PT (legado MFE)
             "inspecao_id": self.inspecao_id,
             "ensaio_id": self.ensaio_id,
             "filial": self.filial,
@@ -92,6 +96,33 @@ class InspecoesProcessoHistoricoDetalheItemResponse:
             "nome_ensaiador": self.nome_ensaiador,
             "chave_medicao": self.chave_medicao,
             "qpr_recno": self.qpr_recno,
+            # EN aliases (aditivos — Wave 3 / estratégia B)
+            "inspection_id": self.inspecao_id,
+            "test_id": self.ensaio_id,
+            "branch": self.filial,
+            "unit": self.unidade,
+            "production_order": self.ordem_producao,
+            "product_code": self.codigo_produto,
+            "product_description": self.descricao_produto,
+            "product_revision": self.revisao_produto,
+            "routing": self.roteiro,
+            "operation": self.operacao,
+            "resource": self.recurso,
+            "tool": self.ferramenta,
+            "work_center": self.centro_trabalho,
+            "operation_description": self.descricao_operacao,
+            "laboratory": self.laboratorio,
+            "test_code": self.codigo_ensaio,
+            "test_name": self.nome_ensaio,
+            "textual_specification": self.especificacao_textual,
+            "nominal_value": self.valor_nominal,
+            "result_code": self.resultado_codigo,
+            "result": self.resultado,
+            "measurement_date": self.data_medicao,
+            "measurement_time": self.hora_medicao,
+            "inspector_registration": self.matricula_ensaiador,
+            "inspector_name": self.nome_ensaiador,
+            "measurement_key": self.chave_medicao,
         }
 
 
@@ -110,4 +141,9 @@ class InspecoesProcessoHistoricoDetalheResponse:
             "page": self.page,
             "page_size": self.page_size,
             "has_next": self.has_next,
+            "pagination": build_has_next_pagination(
+                page=self.page,
+                page_size=self.page_size,
+                has_next=self.has_next,
+            ),
         }

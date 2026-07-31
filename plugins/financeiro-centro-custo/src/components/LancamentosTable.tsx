@@ -11,6 +11,7 @@ import type {
   LancamentosSortBy,
   SortDirection,
 } from "../types/despesasCentroCusto";
+import { paginationTotal } from "../types/despesasCentroCusto";
 import {
   formatCostCenterLabel,
   formatCurrencyBrl,
@@ -97,6 +98,7 @@ export function LancamentosTable({
   const items = data?.items ?? [];
   const totalPages = pagination?.total_pages ?? 1;
   const currentPage = pagination?.page ?? 1;
+  const totalCount = paginationTotal(pagination);
 
   const toggleSort = (key: LancamentosSortBy) => {
     if (sortBy === key) {
@@ -113,7 +115,7 @@ export function LancamentosTable({
           <h2 className={FCC_SECTION.title}>Lançamentos</h2>
           {pagination ? (
             <p className={FCC_SECTION.meta}>
-              {pagination.total_items} registro(s) · página {pagination.page} de {totalPages}
+              {totalCount} registro(s) · página {pagination.page} de {totalPages}
             </p>
           ) : null}
         </div>
@@ -192,7 +194,7 @@ export function LancamentosTable({
         <Pagination
           page={currentPage}
           pageSize={pagination.page_size}
-          total={pagination.total_items}
+          total={totalCount}
           totalPages={totalPages}
           onPageChange={onPageChange}
           hideWhenSinglePage

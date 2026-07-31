@@ -8,6 +8,7 @@ import type {
   TituloStatus,
   TitulosSortBy,
 } from "../types/inadimplencia";
+import { paginationTotal } from "../types/inadimplencia";
 
 const TITULOS_EXPORT_COLUMNS = [
   { key: "filial", label: "Filial" },
@@ -91,7 +92,10 @@ export async function fetchAllTitulosForExport(
       sortDir: filters.sortDir,
     });
     items.push(...response.items);
-    if (items.length >= response.total_items || response.items.length < pageSize) {
+    if (
+      items.length >= paginationTotal(response.pagination) ||
+      response.items.length < pageSize
+    ) {
       break;
     }
     page += 1;

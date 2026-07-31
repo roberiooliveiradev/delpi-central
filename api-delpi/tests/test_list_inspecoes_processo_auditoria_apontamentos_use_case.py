@@ -104,3 +104,10 @@ def test_list_auditoria_apontamentos_detects_has_next() -> None:
 
     assert result.has_next is True
     assert len(result.items) == 2
+    payload = result.to_dict()
+    assert payload["has_next"] is True
+    assert payload["pagination"] == {
+        "page": 1,
+        "page_size": 2,
+        "is_complete": False,
+    }

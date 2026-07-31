@@ -19,6 +19,7 @@ import type {
   InadimplenciaMensalData,
   PeriodFilter,
 } from "../../types/inadimplencia";
+import { paginationTotal } from "../../types/inadimplencia";
 import {
   formatCurrencyBrl,
   formatInteger,
@@ -106,7 +107,10 @@ async function fetchAllCustomerOptions(
       const option = toCustomerOption(item);
       if (option) items.push(option);
     }
-    if (items.length >= response.total_items || response.items.length < pageSize) {
+    if (
+      items.length >= paginationTotal(response.pagination) ||
+      response.items.length < pageSize
+    ) {
       break;
     }
     page += 1;

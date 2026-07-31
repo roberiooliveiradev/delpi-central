@@ -96,11 +96,23 @@ export type DespesasLancamentoItem = {
 export type DespesasLancamentosPagination = {
   page: number;
   page_size: number;
+  /** Alias canônico (Wave 4); preferir com fallback para `total_items`. */
+  total?: number;
   total_items: number;
   total_pages: number;
   has_next: boolean;
   has_previous: boolean;
+  is_complete?: boolean;
 };
+
+/** Total de registros da página (`total` canônico ou legado `total_items`). */
+export function paginationTotal(
+  pagination: Pick<DespesasLancamentosPagination, "total" | "total_items"> | null | undefined,
+  fallback = 0,
+): number {
+  if (!pagination) return fallback;
+  return pagination.total ?? pagination.total_items ?? fallback;
+}
 
 export type DespesasLancamentosData = {
   periodo: DespesasPeriodo;

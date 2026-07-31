@@ -1327,14 +1327,16 @@
     "get_financeiro_despesas_centro_custo_resumo": {
       "locale": {
         "en": {
-          "summary": "Financial expenses cost center summary",
-          "description": "Financial expenses cost center summary.",
-          "label": "Financial expenses cost center summary"
+          "summary": "Cost-center expenses — summary KPIs",
+          "description": "Aggregate expense totals and counts by cost center for a period (optional branch/supplier filters).",
+          "label": "Cost-center expenses summary",
+          "whenToUse": "Use for KPI tiles of expenses by cost center on financial TV dashboards."
         },
         "pt-BR": {
-          "label": "Indicador — Financeiro despesas centro custo resumo",
-          "summary": "Indicador — Financeiro despesas centro custo resumo",
-          "description": "Indicador numérico para «Financeiro despesas centro custo resumo»."
+          "label": "Resumo de despesas por centro de custo",
+          "summary": "Despesas por centro de custo — resumo",
+          "description": "Totais e contagens agregadas de despesas por centro de custo no período (filtros opcionais de filial/fornecedor).",
+          "whenToUse": "Use em cards de KPI de despesas por centro de custo no TV."
         }
       },
       "category": "financial"
@@ -1358,15 +1360,16 @@
       "category": "financial",
       "locale": {
         "en": {
-          "summary": "Paged list — financial inadimplencia cliente",
-          "description": "Paged list — financial inadimplencia cliente.",
-          "whenToUse": "Use when you need paged list — financial inadimplencia cliente."
+          "summary": "Delinquency — customers ranking",
+          "description": "Paged ranking of customers by late titles and amounts for a reference period.",
+          "label": "Delinquent customers",
+          "whenToUse": "Use for customer-level delinquency tables on financial TV dashboards."
         },
         "pt-BR": {
-          "summary": "Lista paginada — Financeiro inadimplencia cliente",
-          "description": "Lista paginada — Financeiro inadimplencia cliente.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Financeiro inadimplencia cliente.",
-          "label": "Lista paginada — Financeiro inadimplencia cliente"
+          "summary": "Inadimplência — ranking de clientes",
+          "description": "Ranking paginado de clientes por títulos e valores em atraso no período de referência.",
+          "whenToUse": "Use para tabelas de inadimplência por cliente no TV financeiro.",
+          "label": "Clientes inadimplentes"
         }
       }
     },
@@ -1406,15 +1409,16 @@
       "category": "financial",
       "locale": {
         "en": {
-          "summary": "Financial inadimplencia summary",
-          "description": "Financial inadimplencia summary.",
-          "whenToUse": "Use when you need financial inadimplencia summary."
+          "summary": "Delinquency — summary KPIs",
+          "description": "On-time vs late title counts, amounts and percentages for a reference period.",
+          "label": "Delinquency summary",
+          "whenToUse": "Use for KPI tiles of payment punctuality / delinquency on financial TV dashboards."
         },
         "pt-BR": {
-          "summary": "Indicador — Financeiro inadimplencia resumo",
-          "description": "Indicador — Financeiro inadimplencia resumo.",
-          "whenToUse": "Use quando precisar de: Indicador — Financeiro inadimplencia resumo.",
-          "label": "Indicador — Financeiro inadimplencia resumo"
+          "summary": "Inadimplência — resumo",
+          "description": "Totais e percentuais de títulos em dia vs. em atraso no período de referência.",
+          "whenToUse": "Use em cards de KPI de pontualidade / inadimplência no TV financeiro.",
+          "label": "Resumo de inadimplência"
         }
       }
     },
@@ -1422,15 +1426,16 @@
       "category": "financial",
       "locale": {
         "en": {
-          "summary": "Paged list — financial inadimplencia titulo",
-          "description": "Paged list — financial inadimplencia titulo.",
-          "whenToUse": "Use when you need paged list — financial inadimplencia titulo."
+          "summary": "Delinquency — titles list",
+          "description": "Paged list of receivable titles with delay range, status and amounts for a period.",
+          "label": "Delinquent titles",
+          "whenToUse": "Use for title-level delinquency drill-down tables on financial TV dashboards."
         },
         "pt-BR": {
-          "summary": "Lista paginada — Financeiro inadimplencia titulo",
-          "description": "Lista paginada — Financeiro inadimplencia titulo.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Financeiro inadimplencia titulo.",
-          "label": "Lista paginada — Financeiro inadimplencia titulo"
+          "summary": "Inadimplência — lista de títulos",
+          "description": "Lista paginada de títulos a receber com faixa de atraso, status e valores no período.",
+          "whenToUse": "Use para tabelas detalhadas de títulos inadimplentes no TV financeiro.",
+          "label": "Títulos inadimplentes"
         }
       }
     },
@@ -1668,14 +1673,16 @@
     "get_inspecoes_entrada_historico": {
       "locale": {
         "en": {
-          "summary": "Paged list — incoming inspections history",
-          "description": "incoming inspections history.",
-          "label": "Paged list — incoming inspections history"
+          "summary": "Incoming inspections — history",
+          "description": "Paged history of completed incoming inspections by branch and period.",
+          "label": "Incoming inspections history",
+          "whenToUse": "Use for historical incoming inspection lists on TV dashboards."
         },
         "pt-BR": {
-          "label": "Lista paginada — Inspecoes entrada historico",
-          "summary": "Lista paginada — Inspecoes entrada historico",
-          "description": "Listagem paginada de «Lista paginada — Inspecoes entrada historico» para uso em tabela ou gráfico no TV."
+          "label": "Histórico de inspeções de entrada",
+          "summary": "Inspeções de entrada — histórico",
+          "description": "Listagem paginada do histórico de inspeções de entrada por filial e período.",
+          "whenToUse": "Use para listar o histórico de inspeções de entrada no TV."
         }
       },
       "category": "quality"
@@ -1683,14 +1690,14 @@
     "get_inspecoes_entrada_historico_detalhe": {
       "locale": {
         "en": {
-          "summary": "incoming inspections history detail",
-          "description": "incoming inspections history detail.",
-          "label": "incoming inspections history detail"
+          "summary": "Incoming inspection — history detail",
+          "description": "Detail of one incoming inspection from history (header, tests, totals).",
+          "label": "Incoming inspection detail"
         },
         "pt-BR": {
-          "label": "Consulta — Inspecoes entrada historico detalhe",
-          "summary": "Consulta — Inspecoes entrada historico detalhe",
-          "description": "Consulta operacional: «Consulta — Inspecoes entrada historico detalhe»."
+          "label": "Detalhe da inspeção de entrada",
+          "summary": "Inspeção de entrada — detalhe do histórico",
+          "description": "Detalhe de uma inspeção de entrada do histórico (cabeçalho, ensaios, totais)."
         }
       },
       "category": "quality"
@@ -1698,14 +1705,16 @@
     "get_inspecoes_entrada_pendentes": {
       "locale": {
         "en": {
-          "summary": "Paged list — incoming inspections pending",
-          "description": "incoming inspections pending.",
-          "label": "Paged list — incoming inspections pending"
+          "summary": "Incoming inspections — pending",
+          "description": "Paged list of pending incoming inspections for a branch.",
+          "label": "Pending incoming inspections",
+          "whenToUse": "Use to monitor backlog of incoming inspections awaiting testing."
         },
         "pt-BR": {
-          "label": "Lista paginada — Inspecoes entrada pendentes",
-          "summary": "Lista paginada — Inspecoes entrada pendentes",
-          "description": "Listagem paginada de «Lista paginada — Inspecoes entrada pendentes» para uso em tabela ou gráfico no TV."
+          "label": "Inspeções de entrada pendentes",
+          "summary": "Inspeções de entrada — pendentes",
+          "description": "Listagem paginada de inspeções de entrada pendentes por filial.",
+          "whenToUse": "Use para acompanhar a fila de inspeções de entrada aguardando ensaio."
         }
       },
       "category": "quality"
@@ -1713,14 +1722,14 @@
     "get_inspecoes_entrada_pendentes_fornecedor": {
       "locale": {
         "en": {
-          "summary": "List — incoming inspections pending fornecedor",
-          "description": "incoming inspections pending fornecedor.",
-          "label": "List — incoming inspections pending fornecedor"
+          "summary": "Incoming inspections — pending by supplier",
+          "description": "Pending incoming inspections aggregated by supplier.",
+          "label": "Pending by supplier"
         },
         "pt-BR": {
-          "label": "Lista — Inspecoes entrada pendentes fornecedor",
-          "summary": "Lista — Inspecoes entrada pendentes fornecedor",
-          "description": "Consulta operacional: «Lista — Inspecoes entrada pendentes fornecedor»."
+          "label": "Pendentes por fornecedor",
+          "summary": "Inspeções de entrada — pendentes por fornecedor",
+          "description": "Inspeções de entrada pendentes agregadas por fornecedor."
         }
       },
       "category": "quality"
@@ -1728,14 +1737,14 @@
     "get_inspecoes_entrada_rejeitadas_ensaiador": {
       "locale": {
         "en": {
-          "summary": "List — incoming inspections rejected tester",
-          "description": "incoming inspections rejected tester.",
-          "label": "List — incoming inspections rejected tester"
+          "summary": "Incoming inspections — rejected by tester",
+          "description": "Rejected incoming inspections ranked or listed by tester.",
+          "label": "Rejected by tester"
         },
         "pt-BR": {
-          "label": "Lista — Inspecoes entrada rejeitadas ensaiador",
-          "summary": "Lista — Inspecoes entrada rejeitadas ensaiador",
-          "description": "Consulta operacional: «Lista — Inspecoes entrada rejeitadas ensaiador»."
+          "label": "Rejeitadas por ensaiador",
+          "summary": "Inspeções de entrada — rejeitadas por ensaiador",
+          "description": "Inspeções de entrada rejeitadas, listadas ou ranqueadas por ensaiador."
         }
       },
       "category": "quality"
@@ -1743,14 +1752,14 @@
     "get_inspecoes_entrada_rejeitadas_produto": {
       "locale": {
         "en": {
-          "summary": "Inspections incoming rejected product",
-          "description": "Inspections incoming rejected product.",
-          "label": "Inspections incoming rejected product"
+          "summary": "Incoming inspections — rejected by product",
+          "description": "Rejected incoming inspections aggregated by product.",
+          "label": "Rejected by product"
         },
         "pt-BR": {
-          "label": "Lista — Inspecoes entrada rejeitadas produto",
-          "summary": "Lista — Inspecoes entrada rejeitadas produto",
-          "description": "Consulta operacional: «Lista — Inspecoes entrada rejeitadas produto»."
+          "label": "Rejeitadas por produto",
+          "summary": "Inspeções de entrada — rejeitadas por produto",
+          "description": "Inspeções de entrada rejeitadas agregadas por produto."
         }
       },
       "category": "quality"
@@ -1758,14 +1767,16 @@
     "get_inspecoes_entrada_resumo": {
       "locale": {
         "en": {
-          "summary": "Inspections incoming summary",
-          "description": "Inspections incoming summary.",
-          "label": "Inspections incoming summary"
+          "summary": "Incoming inspections — summary KPIs",
+          "description": "Summary KPIs for incoming inspections (pending, rejected, throughput).",
+          "label": "Incoming inspections summary",
+          "whenToUse": "Use for KPI tiles of the incoming inspections dashboard."
         },
         "pt-BR": {
-          "label": "Indicador — Inspecoes entrada resumo",
-          "summary": "Indicador — Inspecoes entrada resumo",
-          "description": "Indicador numérico para «Inspecoes entrada resumo»."
+          "label": "Resumo de inspeções de entrada",
+          "summary": "Inspeções de entrada — resumo",
+          "description": "KPIs resumidos de inspeções de entrada (pendentes, rejeitadas, fluxo).",
+          "whenToUse": "Use em cards de KPI do painel de inspeções de entrada."
         }
       },
       "category": "quality"
@@ -1790,15 +1801,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Inspections processo history",
-          "description": "Inspections processo history.",
-          "whenToUse": "Use when you need inspections processo history."
+          "summary": "In-process inspections — history",
+          "description": "Paged history of in-process quality inspections by branch, production order or product.",
+          "label": "In-process inspections history",
+          "whenToUse": "Use for historical in-process inspection lists on TV dashboards."
         },
         "pt-BR": {
-          "summary": "Lista paginada — Inspecoes processo historico",
-          "description": "Lista paginada — Inspecoes processo historico.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Inspecoes processo historico.",
-          "label": "Lista paginada — Inspecoes processo historico"
+          "summary": "Inspeções de processo — histórico",
+          "description": "Listagem paginada do histórico de inspeções de processo por filial, OP ou produto.",
+          "whenToUse": "Use para listar o histórico de inspeções de processo no TV.",
+          "label": "Histórico de inspeções de processo"
         }
       }
     },
@@ -1886,15 +1898,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Inspections processo summary",
-          "description": "Inspections processo summary.",
-          "whenToUse": "Use when you need inspections processo summary."
+          "summary": "In-process inspections — summary KPIs",
+          "description": "Summary KPIs for in-process inspections (orders, tests, approval rates).",
+          "label": "In-process inspections summary",
+          "whenToUse": "Use for KPI tiles of the in-process inspections dashboard."
         },
         "pt-BR": {
-          "summary": "Indicador — Inspecoes processo resumo",
-          "description": "Indicador — Inspecoes processo resumo.",
-          "whenToUse": "Use quando precisar de: Indicador — Inspecoes processo resumo.",
-          "label": "Indicador — Inspecoes processo resumo"
+          "summary": "Inspeções de processo — resumo",
+          "description": "KPIs resumidos de inspeções de processo (OPs, ensaios, taxas de aprovação).",
+          "whenToUse": "Use em cards de KPI do painel de inspeções de processo.",
+          "label": "Resumo de inspeções de processo"
         }
       }
     },
@@ -3677,15 +3690,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Refugos registros",
-          "description": "Refugos registros.",
-          "whenToUse": "Use when you need refugos registros."
+          "summary": "Scrap loss records",
+          "description": "Paged scrap (refugo) rows with material, finished product, reason, quantity and valued cost.",
+          "whenToUse": "Use for a table or export of individual scrap loss appointments in the period.",
+          "label": "Scrap loss records"
         },
         "pt-BR": {
-          "summary": "Lista paginada — Refugos registros",
-          "description": "Lista paginada — Refugos registros.",
-          "whenToUse": "Use quando precisar de: Lista paginada — Refugos registros.",
-          "label": "Lista paginada — Refugos registros"
+          "summary": "Registros de refugo",
+          "description": "Lista paginada de perdas (refugo) com MP, PA, motivo, quantidade e custo valorizado.",
+          "whenToUse": "Usar em tabela ou exportação dos apontamentos individuais de refugo no período.",
+          "label": "Registros de refugo"
         }
       }
     },
@@ -3693,15 +3707,16 @@
       "category": "quality",
       "locale": {
         "en": {
-          "summary": "Refugos summary",
-          "description": "Refugos summary.",
-          "whenToUse": "Use when you need refugos summary."
+          "summary": "Scrap losses summary",
+          "description": "KPIs for scrap losses in the period: quantity, valued cost and occurrence counts.",
+          "whenToUse": "Use as a KPI card or panel before listing scrap records or rankings.",
+          "label": "Scrap losses summary"
         },
         "pt-BR": {
-          "summary": "Indicador — Refugos resumo",
-          "description": "Indicador — Refugos resumo.",
-          "whenToUse": "Use quando precisar de: Indicador — Refugos resumo.",
-          "label": "Indicador — Refugos resumo"
+          "summary": "Resumo de refugos",
+          "description": "Indicadores de perdas (refugo) no período: quantidade, custo valorizado e ocorrências.",
+          "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking de refugos.",
+          "label": "Resumo de refugos"
         }
       }
     },
@@ -3753,19 +3768,21 @@
       "category": "other"
     },
     "get_retrabalhos_detalhes": {
+      "category": "quality",
       "locale": {
         "en": {
-          "summary": "Retrabalhos detalhes",
-          "description": "Retrabalhos detalhes.",
-          "label": "Retrabalhos detalhes"
+          "summary": "Rework appointment details",
+          "description": "Paged rework (parada) appointments with hours, stop cost, resource, operator and reason.",
+          "whenToUse": "Use for a table or export of individual rework appointments in the period.",
+          "label": "Rework appointment details"
         },
         "pt-BR": {
-          "label": "Lista paginada — Retrabalho horas improdutivas detalhe",
-          "summary": "Lista paginada — Retrabalho horas improdutivas detalhe",
-          "description": "Listagem paginada de «Lista paginada — Retrabalho horas improdutivas detalhe» para uso em tabela ou gráfico no TV."
+          "summary": "Detalhes de apontamentos de retrabalho",
+          "description": "Lista paginada de apontamentos de retrabalho (parada) com horas, custo, recurso, operador e motivo.",
+          "whenToUse": "Usar em tabela ou exportação dos apontamentos individuais de retrabalho no período.",
+          "label": "Detalhes de retrabalho"
         }
-      },
-      "category": "other"
+      }
     },
     "get_retrabalhos_filtros": {
       "locale": {
@@ -3828,19 +3845,21 @@
       "category": "other"
     },
     "get_retrabalhos_resumo": {
+      "category": "quality",
       "locale": {
         "en": {
-          "summary": "Retrabalhos summary",
-          "description": "Retrabalhos summary.",
-          "label": "Retrabalhos summary"
+          "summary": "Rework hours summary",
+          "description": "KPIs for rework stop appointments: total hours, cost and highlights by resource or operator.",
+          "whenToUse": "Use as a KPI card or panel before listing or ranking rework appointments.",
+          "label": "Rework hours summary"
         },
         "pt-BR": {
-          "label": "Indicador — Retrabalho horas improdutivas resumo",
-          "summary": "Indicador — Retrabalho horas improdutivas resumo",
-          "description": "Indicador numérico para «Retrabalho horas improdutivas resumo»."
+          "summary": "Resumo de horas de retrabalho",
+          "description": "Indicadores de apontamentos de retrabalho (parada): horas, custo e destaques por recurso ou operador.",
+          "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking de retrabalho.",
+          "label": "Resumo de retrabalho"
         }
-      },
-      "category": "other"
+      }
     },
     "get_retrabalhos_rework_cost_pct": {
       "category": "quality",

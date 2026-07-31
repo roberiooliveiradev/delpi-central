@@ -144,8 +144,17 @@ def test_detalhes_returns_paged_meta(mock_builder, _mock_branch, retrabalho_clie
         "items": [],
         "page": 1,
         "pageSize": 25,
+        "page_size": 25,
         "total": 0,
         "totalPages": 0,
+        "total_pages": 0,
+        "pagination": {
+            "page": 1,
+            "page_size": 25,
+            "total": 0,
+            "total_pages": 0,
+            "is_complete": True,
+        },
     }
     mock_builder.return_value = use_case
 
@@ -159,6 +168,7 @@ def test_detalhes_returns_paged_meta(mock_builder, _mock_branch, retrabalho_clie
     assert body["meta"]["operationId"] == "get_retrabalhos_detalhes"
     assert body["meta"]["entity"] == "retrabalho_horas_improdutivas_detalhe"
     assert body["meta"]["shape"] == "paged_list"
+    assert body["data"]["pagination"]["is_complete"] is True
 
 
 @patch(

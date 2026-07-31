@@ -17,6 +17,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useScrapDashboard } from "../hooks/useScrapDashboard";
 import { useScrapFiltros } from "../hooks/useScrapFiltros";
 import { useScrapRegistros } from "../hooks/useScrapRegistros";
+import { resolveRegistrosPagination } from "../api/refugosApi";
 import type { FilterFormState, ScrapRegistroItem } from "../types/scrap";
 import {
   createDefaultFilterFormState,
@@ -119,6 +120,9 @@ function ScrapMonitoringContent({
     page,
     pageSize,
   );
+  const registrosPaging = registros.data
+    ? resolveRegistrosPagination(registros.data)
+    : null;
   const filtrosOptions = useScrapFiltros(isActive ? appliedFilters : null);
 
   const handleChange = (patch: Partial<FilterFormState>) => {
@@ -276,9 +280,9 @@ function ScrapMonitoringContent({
                 filters={appliedFilters}
                 loading={registros.loading}
                 refreshing={registros.loading && Boolean(registros.data)}
-                page={registros.data?.page ?? page}
-                pageSize={registros.data?.pageSize ?? pageSize}
-                total={registros.data?.total ?? 0}
+                page={registrosPaging?.page ?? page}
+                pageSize={registrosPaging?.pageSize ?? pageSize}
+                total={registrosPaging?.total ?? 0}
                 onPageChange={setPage}
                 onPageSizeChange={handlePageSizeChange}
                 onRowClick={handleRowClick}

@@ -97,13 +97,24 @@ export type ScrapRegistroItem = {
   nomeOperador: string;
 };
 
+export type ScrapRegistrosPagination = {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+  is_complete?: boolean;
+};
+
 export type ScrapRegistrosData = {
   periodo: ScrapPeriodo;
   items: ScrapRegistroItem[];
   page: number;
   pageSize: number;
+  page_size?: number;
   total: number;
   totalPages: number;
+  total_pages?: number;
+  pagination?: ScrapRegistrosPagination;
 };
 
 export type ScrapFiltroOption = {

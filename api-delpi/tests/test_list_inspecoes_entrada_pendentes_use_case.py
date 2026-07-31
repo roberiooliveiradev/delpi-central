@@ -51,6 +51,7 @@ def test_list_inspecoes_entrada_pendentes_normalizes_items_and_pagination() -> N
         "page_size": 10,
         "total": 6,
         "total_pages": 1,
+            "is_complete": True,
     }
 
 

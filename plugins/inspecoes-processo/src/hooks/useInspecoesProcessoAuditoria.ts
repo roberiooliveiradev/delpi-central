@@ -5,6 +5,7 @@ import type {
   InspecoesProcessoAuditoriaApontamentoItem,
   InspecoesProcessoAuditoriaApontamentosSummary,
 } from "../types/api";
+import { resolveHasNext } from "../utils/format";
 
 export const AUDITORIA_DEFAULT_PAGE_SIZE = 50;
 export const AUDITORIA_MAX_PAGE_SIZE = 100;
@@ -111,7 +112,7 @@ export function useInspecoesProcessoAuditoria(
         if (cancelled || controller.signal.aborted) return;
         setItems(Array.isArray(response.items) ? response.items : []);
         setSummary(response.summary ?? EMPTY_SUMMARY);
-        setHasNext(Boolean(response.has_next));
+        setHasNext(resolveHasNext(response));
         if (response.data && response.data !== data) {
           setDataState(response.data);
         }

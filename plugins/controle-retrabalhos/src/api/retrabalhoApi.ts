@@ -65,6 +65,17 @@ export async function fetchRetrabalhoColaboradores(
   return data;
 }
 
+/** Prefer nested/EN pagination keys with flat PT fallback (Wave 2 B). */
+export function resolveDetalhesPagination(data: RetrabalhoDetalhesData) {
+  const pagination = data.pagination;
+  return {
+    page: pagination?.page ?? data.page,
+    pageSize: pagination?.page_size ?? data.page_size ?? data.pageSize,
+    total: pagination?.total ?? data.total,
+    totalPages: pagination?.total_pages ?? data.total_pages ?? data.totalPages,
+  };
+}
+
 export async function fetchRetrabalhoDetalhes(
   filters: RetrabalhoQueryFilters,
   page: number,

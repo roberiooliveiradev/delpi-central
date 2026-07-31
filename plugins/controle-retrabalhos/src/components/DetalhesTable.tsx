@@ -8,6 +8,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 import { fetchAllRetrabalhoDetalhes } from "../api/fetchAllRetrabalhoDetalhes";
+import { resolveDetalhesPagination } from "../api/retrabalhoApi";
 import type { RetrabalhoDetalheItem, RetrabalhoDetalhesData, RetrabalhoQueryFilters } from "../types/retrabalho";
 import { exportDetalhesExcel } from "../utils/exportDetalhes";
 import {
@@ -51,9 +52,11 @@ export function DetalhesTable({
 }: DetalhesTableProps) {
   const [exporting, setExporting] = useState(false);
   const items: RetrabalhoDetalheItem[] = data?.items ?? [];
-  const page = data?.page ?? 1;
-  const totalPages = data?.totalPages ?? 1;
-  const total = data?.total ?? 0;
+  const paging = data ? resolveDetalhesPagination(data) : null;
+  const page = paging?.page ?? 1;
+  const totalPages = paging?.totalPages ?? 1;
+  const total = paging?.total ?? 0;
+  const pageSize = paging?.pageSize ?? data?.pageSize ?? 50;
   const showInitialLoading = loading && data === null;
   const showRefreshLoading = loading && data !== null;
   const initialFetchProgress = useTrackedSingleFetchProgress(showInitialLoading);
@@ -118,9 +121,9 @@ export function DetalhesTable({
       <header className={SECTION.header}>
         <div>
           <h2 className={SECTION.title}>Detalhes dos apontamentos</h2>
-          {data ? (
+          {data && paging ? (
             <p className={SECTION.meta}>
-              Página {data.page} de {data.totalPages} — {data.total.toLocaleString("pt-BR")}{" "}
+              Página {page} de {totalPages} — {total.toLocaleString("pt-BR")}{" "}
               registro(s)
             </p>
           ) : null}
@@ -163,7 +166,7 @@ export function DetalhesTable({
       {data ? (
         <Pagination
           page={page}
-          pageSize={data.pageSize}
+          pageSize={pageSize}
           total={total}
           totalPages={totalPages}
           onPageChange={onPageChange}
