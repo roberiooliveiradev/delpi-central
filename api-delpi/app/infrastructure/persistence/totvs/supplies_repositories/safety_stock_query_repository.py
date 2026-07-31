@@ -20,6 +20,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     linked_suppliers_sql,
     last_inbound_party_names_sql,
     last_inventory_date_sql,
+    last_inventory_dates_batch_sql,
     materials_base_cte,
     materials_for_projection_batch_sql,
     open_commitments_sql,
@@ -447,6 +448,35 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       if not row:
           return None
       return self._format_protheus_date(row.get("last_inventory_date"))
+
+  def fetch_last_inventory_dates(
+      self,
+      *,
+      branch: str,
+      product_codes: list[str],
+  ) -> dict[str, str]:
+      """Última data de inventário ISO por produto (SB7), em lotes."""
+      cleaned = [
+          str(code).strip()
+          for code in product_codes
+          if str(code or "").strip()
+      ]
+      if not cleaned:
+          return {}
+      dates: dict[str, str] = {}
+      chunk_size = 200
+      with self as repo:
+          for start in range(0, len(cleaned), chunk_size):
+              chunk = cleaned[start : start + chunk_size]
+              placeholders = ", ".join("?" for _ in chunk)
+              sql = last_inventory_dates_batch_sql(placeholders=placeholders)
+              rows = repo.execute_query(sql, [branch, *chunk])
+              for row in rows:
+                  code = str(row.get("product_code") or "").strip()
+                  formatted = self._format_protheus_date(row.get("last_inventory_date"))
+                  if code and formatted:
+                      dates[code] = formatted
+      return dates
 
   @staticmethod
   def _format_protheus_date(value: Any) -> str | None:

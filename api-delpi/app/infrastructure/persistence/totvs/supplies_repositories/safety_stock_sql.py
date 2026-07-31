@@ -31,6 +31,7 @@ __all__ = [
     "consumption_last_date_sql",
     "consumption_monthly_series_sql",
     "last_inventory_date_sql",
+    "last_inventory_dates_batch_sql",
     "linked_suppliers_sql",
     "materials_base_cte",
     "open_commitments_sql",
@@ -896,6 +897,24 @@ def last_inventory_date_sql(
       AND RTRIM(SB7.B7_FILIAL) = {branch_param}
       AND RTRIM(SB7.B7_COD) = {product_param}
       AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
+    """
+
+
+def last_inventory_dates_batch_sql(*, placeholders: str) -> str:
+    """Última data de inventário (SB7) por produto — lote IN (...).
+
+    Placeholders: ``B7_FILIAL``, depois ``B7_COD IN (...)``.
+    """
+    return f"""
+    SELECT
+        RTRIM(SB7.B7_COD) AS product_code,
+        MAX(RTRIM(SB7.B7_DATA)) AS last_inventory_date
+    FROM SB7010 SB7 WITH (NOLOCK)
+    WHERE SB7.D_E_L_E_T_ = ''
+      AND RTRIM(SB7.B7_FILIAL) = ?
+      AND RTRIM(SB7.B7_COD) IN ({placeholders})
+      AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
+    GROUP BY RTRIM(SB7.B7_COD)
     """
 
 

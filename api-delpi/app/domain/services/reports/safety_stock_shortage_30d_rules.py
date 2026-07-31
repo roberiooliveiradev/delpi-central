@@ -10,6 +10,7 @@ from app.domain.services.supplies.safety_stock_classification_service import TOL
 
 PROVIDER_KEY = "safety_stock_shortage_30d"
 DEFAULT_HORIZON_DAYS = 30
+LAST_INVENTORY_LOOKBACK_DAYS = 30
 VALID_BRANCHES = frozenset({"01", "02"})
 
 DATASET_COLUMNS = (
@@ -18,6 +19,7 @@ DATASET_COLUMNS = (
     "branch",
     "available_stock",
     "first_shortage_date",
+    "last_inventory_date",
     "shortage_balance",
     "next_purchase",
     "observation",
@@ -32,6 +34,7 @@ COLUMN_LABELS_PT = {
     "branch": "Filial",
     "available_stock": "Saldo atual",
     "first_shortage_date": "Data da ruptura",
+    "last_inventory_date": "Último inventário",
     "shortage_balance": "Saldo no evento",
     "next_purchase": "Próximo Pedido",
     "observation": "Observação",
@@ -44,12 +47,13 @@ BRANCH_LABELS_PT = {
 
 # Larguras relativas para Outlook.
 EMAIL_COLUMN_STYLES: dict[str, str] = {
-    "product_description": "min-width:160px;width:26%;",
+    "product_description": "min-width:160px;width:24%;",
     "first_shortage_date": "min-width:96px;width:96px;white-space:nowrap;",
+    "last_inventory_date": "min-width:96px;width:96px;white-space:nowrap;",
     "available_stock": "width:88px;white-space:nowrap;",
     "shortage_balance": "width:96px;white-space:nowrap;",
-    "next_purchase": "min-width:168px;width:26%;text-align:center;vertical-align:middle;",
-    "observation": "min-width:140px;width:18%;",
+    "next_purchase": "min-width:168px;width:24%;text-align:center;vertical-align:middle;",
+    "observation": "min-width:140px;width:16%;",
 }
 
 _NO_ELIGIBLE_ORDER = "Sem pedido elegível"
@@ -136,6 +140,29 @@ def shortage_date_in_horizon(
         return False
     end = as_of + timedelta(days=max(int(horizon_days), 0))
     return shortage <= end
+
+
+def recent_inventory_date(
+    inventory_date: str | None,
+    *,
+    as_of: date,
+    lookback_days: int = LAST_INVENTORY_LOOKBACK_DAYS,
+) -> str | None:
+    """Retorna a data ISO se o inventário ocorreu nos últimos ``lookback_days``.
+
+    Janela inclusiva: ``as_of - lookback_days`` ≤ inventário ≤ ``as_of``.
+    Datas futuras ou inválidas são ignoradas.
+    """
+    if not inventory_date:
+        return None
+    try:
+        inventory = date.fromisoformat(str(inventory_date).strip()[:10])
+    except ValueError:
+        return None
+    start = as_of - timedelta(days=max(int(lookback_days), 0))
+    if start <= inventory <= as_of:
+        return inventory.isoformat()
+    return None
 
 
 def balance_at_first_shortage(projection: Mapping[str, Any]) -> float | None:

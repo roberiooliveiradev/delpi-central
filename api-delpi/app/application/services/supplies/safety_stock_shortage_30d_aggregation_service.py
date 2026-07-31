@@ -11,6 +11,7 @@ from app.domain.ports.supplies.safety_stock_query_repository_port import (
 )
 from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     DEFAULT_HORIZON_DAYS,
+    LAST_INVENTORY_LOOKBACK_DAYS,
     VALID_BRANCHES,
     balance_at_first_shortage,
     build_next_purchase_text,
@@ -20,6 +21,7 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     finished_product_code_at_first_shortage,
     has_open_projection_commitment,
     is_sample_finished_product,
+    recent_inventory_date,
     should_annotate_third_party_observation,
     shortage_date_in_horizon,
 )
@@ -163,6 +165,7 @@ class SafetyStockShortage30dAggregationService:
                     "unit": product_unit,
                     "available_stock": float(material.get("available_stock") or 0),
                     "first_shortage_date": first_shortage,
+                    "last_inventory_date": None,
                     "shortage_balance": balance_at_first_shortage(projection),
                     "next_purchase": build_next_purchase_text(
                         enriched_orders=enriched_orders,
@@ -173,6 +176,18 @@ class SafetyStockShortage30dAggregationService:
                 }
             )
 
+        if rows:
+            inventory_by_code = self._repository.fetch_last_inventory_dates(
+                branch=branch_code,
+                product_codes=[str(row["product_code"]) for row in rows],
+            )
+            for row in rows:
+                row["last_inventory_date"] = recent_inventory_date(
+                    inventory_by_code.get(str(row["product_code"])),
+                    as_of=as_of,
+                    lookback_days=LAST_INVENTORY_LOOKBACK_DAYS,
+                )
+
         rows.sort(key=lambda item: (item["first_shortage_date"], item["product_code"]))
         meta = {
             "branch": branch_code,
@@ -180,5 +195,6 @@ class SafetyStockShortage30dAggregationService:
             "asOfDate": as_of.isoformat(),
             "materialsScanned": len(materials),
             "shortageCount": len(rows),
+            "lastInventoryLookbackDays": LAST_INVENTORY_LOOKBACK_DAYS,
         }
         return rows, meta

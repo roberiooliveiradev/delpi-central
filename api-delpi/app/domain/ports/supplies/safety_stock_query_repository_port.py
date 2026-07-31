@@ -175,3 +175,13 @@ class SafetyStockQueryRepositoryPort(ABC):
         product_code: str,
     ) -> str | None:
         ...
+
+    @abstractmethod
+    def fetch_last_inventory_dates(
+        self,
+        *,
+        branch: str,
+        product_codes: list[str],
+    ) -> dict[str, str]:
+        """Última data de inventário ISO por código de produto."""
+        ...

@@ -89,6 +89,18 @@ def test_last_inventory_date_sql() -> None:
     assert "D_E_L_E_T_" in sql
 
 
+def test_last_inventory_dates_batch_sql() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
+        last_inventory_dates_batch_sql,
+    )
+
+    sql = last_inventory_dates_batch_sql(placeholders="?, ?")
+    assert "SB7010" in sql
+    assert "RTRIM(SB7.B7_COD) IN (?, ?)" in sql
+    assert "GROUP BY RTRIM(SB7.B7_COD)" in sql
+    assert "MAX(RTRIM(SB7.B7_DATA))" in sql
+
+
 def test_consumption_monthly_series_sql() -> None:
     sql = consumption_monthly_series_sql()
     assert "LEFT(RTRIM(SD3.D3_EMISSAO), 6)" in sql

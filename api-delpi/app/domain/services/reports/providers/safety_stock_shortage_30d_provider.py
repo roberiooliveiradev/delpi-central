@@ -211,6 +211,8 @@ def _format_cell(
     unit = (row or {}).get("unit")
     if column == "first_shortage_date":
         return format_date_br(value)
+    if column == "last_inventory_date":
+        return format_date_br(value) or "—"
     if column in {"available_stock", "shortage_balance"}:
         return format_quantity_with_unit(value, unit)
     if column == "next_purchase":

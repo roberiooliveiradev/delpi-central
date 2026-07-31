@@ -22,6 +22,7 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     format_quantity_with_unit,
     is_sample_finished_product,
     next_eligible_purchase_order,
+    recent_inventory_date,
     should_annotate_third_party_observation,
     shortage_date_in_horizon,
 )
@@ -50,6 +51,16 @@ def test_shortage_date_in_horizon_includes_boundaries() -> None:
     # Empenho atrasado: data anterior a as_of entra na janela (mantém a data).
     assert shortage_date_in_horizon("2026-07-15", as_of=as_of, horizon_days=30) is True
     assert shortage_date_in_horizon(None, as_of=as_of, horizon_days=30) is False
+
+
+def test_recent_inventory_date_within_lookback() -> None:
+    as_of = date(2026, 7, 16)
+    assert recent_inventory_date("2026-07-16", as_of=as_of) == "2026-07-16"
+    assert recent_inventory_date("2026-06-16", as_of=as_of) == "2026-06-16"
+    assert recent_inventory_date("2026-06-15", as_of=as_of) is None
+    assert recent_inventory_date("2026-07-17", as_of=as_of) is None
+    assert recent_inventory_date(None, as_of=as_of) is None
+    assert recent_inventory_date("invalid", as_of=as_of) is None
 
 
 def test_balance_at_first_shortage_matches_projection_fixture() -> None:
@@ -346,6 +357,70 @@ def test_aggregation_next_purchase_includes_qty_and_blank_observation() -> None:
     assert rows[0]["unit"] == "MT"
 
 
+def test_aggregation_attaches_recent_last_inventory_date() -> None:
+    as_of = date(2026, 7, 16)
+    repo = MagicMock()
+    repo.fetch_materials_for_projection_batch.return_value = [
+        {
+            "product_code": "WITH_INV",
+            "product_description": "Com inventário recente",
+            "unit": "PC",
+            "secondary_unit": "",
+            "conversion_factor": None,
+            "conversion_type": "",
+            "available_stock": 100.0,
+            "safety_stock": 0.0,
+        },
+        {
+            "product_code": "OLD_INV",
+            "product_description": "Inventário antigo",
+            "unit": "PC",
+            "secondary_unit": "",
+            "conversion_factor": None,
+            "conversion_type": "",
+            "available_stock": 100.0,
+            "safety_stock": 0.0,
+        },
+    ]
+    repo.fetch_open_purchase_orders_for_branch.return_value = []
+    repo.fetch_open_commitments_for_branch.return_value = [
+        {
+            "product_code": "WITH_INV",
+            "warehouse": "01",
+            "unit": "PC",
+            "open_quantity": 150.0,
+            "commitment_date": "20260720",
+            "production_order": "OP1",
+        },
+        {
+            "product_code": "OLD_INV",
+            "warehouse": "01",
+            "unit": "PC",
+            "open_quantity": 150.0,
+            "commitment_date": "20260720",
+            "production_order": "OP2",
+        },
+    ]
+    repo.fetch_last_inventory_dates.return_value = {
+        "WITH_INV": "2026-07-01",
+        "OLD_INV": "2026-05-01",
+    }
+
+    rows, meta = SafetyStockShortage30dAggregationService(repo).collect_rows(
+        branch="01",
+        horizon_days=30,
+        as_of_date=as_of,
+    )
+    assert meta["lastInventoryLookbackDays"] == 30
+    by_code = {row["product_code"]: row for row in rows}
+    assert by_code["WITH_INV"]["last_inventory_date"] == "2026-07-01"
+    assert by_code["OLD_INV"]["last_inventory_date"] is None
+    repo.fetch_last_inventory_dates.assert_called_once_with(
+        branch="01",
+        product_codes=["WITH_INV", "OLD_INV"],
+    )
+
+
 def test_provider_collect_and_render_email() -> None:
     aggregation = MagicMock()
     aggregation.collect_rows.return_value = (
@@ -357,6 +432,7 @@ def test_provider_collect_and_render_email() -> None:
                 "unit": "MT",
                 "available_stock": 10.0,
                 "first_shortage_date": "2026-07-20",
+                "last_inventory_date": "2026-07-01",
                 "shortage_balance": -5.0,
                 "next_purchase": "PC200/01 — TRAMAR — Entrega 30/07/2026 — 200 MT",
                 "observation": "",
@@ -385,10 +461,12 @@ def test_provider_collect_and_render_email() -> None:
     assert "Gerado pelo Minha DELPI" in email.html_body
     assert email.attachments == ()
     assert "20/07/2026" in email.html_body
+    assert "01/07/2026" in email.html_body
+    assert "Último inventário" in email.html_body
     assert "16/07/2026" in email.html_body
     assert "2026-07-20" not in email.html_body
     assert "min-width:96px" in email.html_body
-    assert "width:26%" in email.html_body
+    assert "width:24%" in email.html_body
     assert "text-align:center;vertical-align:middle" in email.html_body
     assert "Próximo Pedido" in email.html_body
     assert "Observação" in email.html_body
