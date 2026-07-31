@@ -1,17 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExcelExportButton } from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
-import { EmptyState } from "../../components/EmptyState";
 import { FiModal } from "../../components/FiModal";
-import { LoadingState } from "../../components/LoadingState";
-import { Pagination } from "../../components/Pagination";
+import {
+  DataTableSection,
+  type DataTableColumn,
+} from "../../components/dataTableUi";
 import {
   defaultTitulosTableState,
   useInadimplenciaTitulos,
   type TitulosTableState,
 } from "../../hooks/useInadimplenciaTitulos";
 import type {
+  InadimplenciaTituloItem,
   PeriodFilter,
   SelectedCustomer,
   TituloStatus,
@@ -68,9 +70,56 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
 
   const items = titulos.data?.items ?? [];
   const pagination = titulos.data?.pagination;
-  const totalPages = pagination?.total_pages ?? 1;
   const totalCount = paginationTotal(pagination, items.length);
   const canExport = totalCount > 0;
+
+  const columns = useMemo<DataTableColumn<InadimplenciaTituloItem>[]>(
+    () => [
+      {
+        key: "titulo",
+        header: "Título",
+        render: (item) => formatTituloLabel(item.prefixo, item.numero, item.parcela),
+      },
+      {
+        key: "tipo",
+        header: "Tipo",
+        render: (item) => item.tipo || "—",
+      },
+      {
+        key: "emissao",
+        header: "Emissão",
+        render: (item) => formatDatePtBr(item.data_emissao),
+      },
+      {
+        key: "vencimento",
+        header: "Vencimento real",
+        render: (item) => formatDatePtBr(item.data_vencimento_real),
+      },
+      {
+        key: "baixa",
+        header: "Baixa",
+        render: (item) => formatDatePtBr(item.data_baixa),
+      },
+      {
+        key: "valor",
+        header: "Valor",
+        align: "right",
+        render: (item) => formatCurrencyBrl(item.valor_titulo),
+      },
+      {
+        key: "dias_atraso",
+        header: "Dias de atraso",
+        align: "right",
+        render: (item) => formatInteger(item.dias_atraso),
+      },
+      {
+        key: "faixa",
+        header: "Faixa",
+        render: (item) => item.faixa_atraso?.rotulo || item.faixa_atraso?.codigo || "—",
+      },
+    ],
+    [],
+  );
 
   const handleExportExcel = async () => {
     if (exporting || !canExport) return;
@@ -98,146 +147,96 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
 
   return (
     <>
-      <div className="fi-titulos-toolbar">
-        <label className="fi-field">
-          <span>Status</span>
-          <select
-            value={tableState.status}
-            onChange={(event) =>
-              setTableState((current) => ({
-                ...current,
-                status: event.target.value as TituloStatus,
-                page: 1,
-              }))
-            }
-          >
-            <option value="late">Somente atrasados</option>
-            <option value="on_time">Em dia</option>
-            <option value="all">Todos</option>
-          </select>
-        </label>
-
-        <label className="fi-field">
-          <span>Faixa</span>
-          <select
-            value={tableState.delayRange}
-            onChange={(event) =>
-              setTableState((current) => ({
-                ...current,
-                delayRange: event.target.value,
-                page: 1,
-              }))
-            }
-          >
-            {DELAY_RANGE_OPTIONS.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="fi-field fi-field--grow">
-          <span>Busca</span>
-          <input
-            type="search"
-            value={draftSearch}
-            placeholder="Número, prefixo ou nome"
-            onChange={(event) => setDraftSearch(event.target.value)}
-          />
-        </label>
-
-        <ExcelExportButton
-          disabled={!canExport || titulos.isLoading}
-          exporting={exporting}
-          onExport={handleExportExcel}
-          className="fi-export-actions fi-no-print"
-          buttonClassName="fi-btn fi-btn--secondary"
-          label="Excel"
-          exportingLabel="Exportando…"
-        />
-      </div>
-
+      {titulos.error ? (
+        <ErrorState message={titulos.error} onRetry={titulos.reload} />
+      ) : null}
       {exportError ? (
         <p className="fi-filters__error" role="alert">
           {exportError}
         </p>
       ) : null}
 
-      {titulos.error ? (
-        <ErrorState message={titulos.error} onRetry={titulos.reload} />
-      ) : null}
+      <DataTableSection
+        embedded
+        columnPreferencesKey="financeiro-inadimplencia:titulos-cliente:v1"
+        title="Títulos"
+        columns={columns}
+        rows={items}
+        rowKey={(item) =>
+          `${item.prefixo}-${item.numero}-${item.parcela}-${item.data_baixa}-${item.valor_titulo}`
+        }
+        loading={titulos.isLoading && items.length === 0}
+        refreshing={titulos.isLoading && items.length > 0}
+        emptyMessage="Nenhum título encontrado para os filtros aplicados."
+        searchPlaceholder="Número, prefixo ou nome"
+        serverSearch={{
+          value: draftSearch,
+          onChange: setDraftSearch,
+        }}
+        serverPagination={{
+          page: pagination?.page ?? tableState.page,
+          pageSize: pagination?.page_size ?? tableState.pageSize,
+          total: totalCount,
+          onPageChange: (page) => setTableState((current) => ({ ...current, page })),
+          onPageSizeChange: (nextPageSize) =>
+            setTableState((current) => ({
+              ...current,
+              pageSize: nextPageSize,
+              page: 1,
+            })),
+        }}
+        toolbarExtra={
+          <>
+            <label className="fi-field fi-field--inline">
+              <span>Status</span>
+              <select
+                value={tableState.status}
+                onChange={(event) =>
+                  setTableState((current) => ({
+                    ...current,
+                    status: event.target.value as TituloStatus,
+                    page: 1,
+                  }))
+                }
+              >
+                <option value="late">Somente atrasados</option>
+                <option value="on_time">Em dia</option>
+                <option value="all">Todos</option>
+              </select>
+            </label>
 
-      {titulos.isLoading && items.length === 0 ? (
-        <LoadingState message="Carregando títulos…" />
-      ) : null}
-
-      {!titulos.isLoading && !titulos.error && items.length === 0 ? (
-        <EmptyState
-          title="Nenhum título encontrado"
-          message="Nenhum título encontrado para os filtros aplicados."
-        />
-      ) : null}
-
-      {items.length > 0 ? (
-        <>
-          <div className={`fi-table-wrap${titulos.isLoading ? " fi-table-wrap--loading" : ""}`}>
-            <table className="fi-table">
-              <thead>
-                <tr>
-                  <th scope="col">Título</th>
-                  <th scope="col">Tipo</th>
-                  <th scope="col">Emissão</th>
-                  <th scope="col">Vencimento real</th>
-                  <th scope="col">Baixa</th>
-                  <th scope="col" className="fi-table__numeric">
-                    Valor
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Dias de atraso
-                  </th>
-                  <th scope="col">Faixa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr
-                    key={`${item.prefixo}-${item.numero}-${item.parcela}-${item.data_baixa}-${item.valor_titulo}`}
-                  >
-                    <td data-label="Título">
-                      {formatTituloLabel(item.prefixo, item.numero, item.parcela)}
-                    </td>
-                    <td data-label="Tipo">{item.tipo || "—"}</td>
-                    <td data-label="Emissão">{formatDatePtBr(item.data_emissao)}</td>
-                    <td data-label="Vencimento real">
-                      {formatDatePtBr(item.data_vencimento_real)}
-                    </td>
-                    <td data-label="Baixa">{formatDatePtBr(item.data_baixa)}</td>
-                    <td data-label="Valor" className="fi-table__numeric">
-                      {formatCurrencyBrl(item.valor_titulo)}
-                    </td>
-                    <td data-label="Dias de atraso" className="fi-table__numeric">
-                      {formatInteger(item.dias_atraso)}
-                    </td>
-                    <td data-label="Faixa">{item.faixa_atraso?.rotulo || item.faixa_atraso?.codigo || "—"}</td>
-                  </tr>
+            <label className="fi-field fi-field--inline">
+              <span>Faixa</span>
+              <select
+                value={tableState.delayRange}
+                onChange={(event) =>
+                  setTableState((current) => ({
+                    ...current,
+                    delayRange: event.target.value,
+                    page: 1,
+                  }))
+                }
+              >
+                {DELAY_RANGE_OPTIONS.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
-              </tbody>
-            </table>
-          </div>
-
-          {pagination ? (
-            <Pagination
-              page={pagination.page}
-              pageSize={pagination.page_size}
-              total={totalCount}
-              totalPages={totalPages}
-              onPageChange={(page) => setTableState((current) => ({ ...current, page }))}
-              hideWhenSinglePage
-            />
-          ) : null}
-        </>
-      ) : null}
+              </select>
+            </label>
+          </>
+        }
+        headerActions={
+          <ExcelExportButton
+            disabled={!canExport || titulos.isLoading}
+            exporting={exporting}
+            onExport={handleExportExcel}
+            className="fi-no-print"
+            label="Excel"
+            exportingLabel="Exportando…"
+          />
+        }
+      />
     </>
   );
 }

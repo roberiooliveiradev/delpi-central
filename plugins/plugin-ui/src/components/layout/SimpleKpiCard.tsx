@@ -28,6 +28,8 @@ export type SimpleKpiCardProps = {
   variant?: string;
   wide?: boolean;
   valueTone?: "default" | "danger";
+  /** Classe extra no wrapper do ícone (ex.: tom danger/warning/success). */
+  iconClassName?: string;
   valueTag?: "h3" | "p" | "strong";
   layout?: SimpleKpiCardLayout;
   classNames: SimpleKpiCardClassNames;
@@ -193,12 +195,14 @@ export function SimpleKpiCard({
   loading = false,
   subtitle,
   valueTone = "default",
+  iconClassName,
   valueTag = "h3",
   layout = "iconStart",
   classNames,
   className,
 }: SimpleKpiCardProps) {
   const articleClass = [classNames.article, className].filter(Boolean).join(" ");
+  const iconWrapperClass = [classNames.icon, iconClassName].filter(Boolean).join(" ");
   const ValueTag = valueTag;
   const valueClassName =
     valueTone === "danger" && classNames.valueDanger
@@ -229,7 +233,7 @@ export function SimpleKpiCard({
       <article className={articleClass}>
         <div className={classNames.header}>
           {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
-          <div className={classNames.icon} aria-hidden="true">
+          <div className={iconWrapperClass} aria-hidden="true">
             {icon}
           </div>
         </div>
@@ -239,7 +243,7 @@ export function SimpleKpiCard({
 
   return (
     <article className={articleClass}>
-      <div className={classNames.icon} aria-hidden="true">
+      <div className={iconWrapperClass} aria-hidden="true">
         {icon}
       </div>
       {classNames.body ? <div className={classNames.body}>{content}</div> : <div>{content}</div>}
@@ -247,7 +251,12 @@ export function SimpleKpiCard({
   );
 }
 
-export type DashboardSimpleKpiCardProps = Omit<SimpleKpiCardProps, "classNames" | "layout">;
+export type DashboardSimpleKpiCardProps = Omit<
+  SimpleKpiCardProps,
+  "classNames" | "layout" | "iconClassName"
+> & {
+  iconTone?: "danger" | "warning" | "success";
+};
 
 export function createSimpleKpiCard(
   prefix: string,
@@ -271,11 +280,15 @@ export function createSimpleKpiCard(
     wide,
     className,
     valueTag,
+    iconTone,
     ...props
   }: DashboardSimpleKpiCardProps) {
     const variantClass = variant ? simpleKpiCardVariantClass(prefix, variant) : undefined;
     const wideClass = wide ? simpleKpiCardWideClass(prefix) : undefined;
     const mergedClassName = [variantClass, wideClass, className].filter(Boolean).join(" ") || undefined;
+    const iconClassName = iconTone
+      ? simpleKpiCardIconToneClass(prefix, iconTone)
+      : undefined;
 
     return (
       <SimpleKpiCard
@@ -283,6 +296,7 @@ export function createSimpleKpiCard(
         className={mergedClassName}
         layout={layout}
         valueTag={valueTag ?? defaultValueTag}
+        iconClassName={iconClassName}
         {...props}
       />
     );

@@ -131,6 +131,10 @@
   font-size: var(--delpi-ui-font-kpi-sm, clamp(1.15rem, 1.6vw, 1.5rem));
 }
 
+.delpi-ui-kpi-value--danger {
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+}
+
 .delpi-ui-kpi-context,
 .delpi-ui-kpi-subtitle {
   display: block;

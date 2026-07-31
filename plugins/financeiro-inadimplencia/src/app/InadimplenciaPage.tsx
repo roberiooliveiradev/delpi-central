@@ -130,6 +130,7 @@ export function InadimplenciaPage() {
             sortBy={clientesTable.sortBy}
             sortDir={clientesTable.sortDir}
             onlyWithDelays={clientesTable.onlyWithDelays}
+            pageSize={clientesTable.pageSize}
             onSearchChange={(value) =>
               setClientesTable((current) => ({ ...current, search: value, page: 1 }))
             }
@@ -144,6 +145,13 @@ export function InadimplenciaPage() {
               }))
             }
             onPageChange={(page) => setClientesTable((current) => ({ ...current, page }))}
+            onPageSizeChange={(nextPageSize) =>
+              setClientesTable((current) => ({
+                ...current,
+                pageSize: nextPageSize,
+                page: 1,
+              }))
+            }
             onOpenTitles={(customer) =>
               setSelectedCustomer({
                 cliente_codigo: customer.cliente_codigo,

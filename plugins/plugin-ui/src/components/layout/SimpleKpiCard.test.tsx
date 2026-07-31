@@ -81,6 +81,22 @@ describe("SimpleKpiCard", () => {
     expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
   });
 
+  it("aplica iconClassName no wrapper do ícone", () => {
+    render(
+      <SimpleKpiCard
+        title="Risco"
+        value="7%"
+        icon={<span data-testid="icon">!</span>}
+        iconClassName={simpleKpiCardIconToneClass("fi", "danger")}
+        classNames={simpleKpiCardBemClasses("fi", "kpi-card", { withBody: true })}
+      />,
+    );
+
+    const icon = document.querySelector(".fi-kpi-card__icon");
+    expect(icon?.className).toContain("delpi-ui-kpi-icon--danger");
+    expect(icon?.className).toContain("fi-kpi-card__icon--danger");
+  });
+
   it("simpleKpiCardIconToneClass emite dual-class do tom do ícone", () => {
     expect(simpleKpiCardIconToneClass("dm", "danger")).toBe(
       "dm-kpi-card__icon--danger delpi-ui-kpi-icon--danger",

@@ -57,57 +57,54 @@ export function SummaryCards({
     deltaText = `${deltaFormatter.format(comparison.deltaPp)}% vs ${previousLabel} — ${trendLabel}`;
   }
 
-  const heroToneClass =
-    comparison.trend === "melhor"
-      ? " fi-kpi-hero__delta--up"
-      : comparison.trend === "pior"
-        ? " fi-kpi-hero__delta--down"
-        : "";
+  const pontualidadeMeta = current
+    ? `${formatInteger(current.titulos_em_dia)} de ${formatInteger(current.total_titulos)} títulos pagos em dia`
+    : "Sem dados do mês atual no período.";
 
   const topClienteNome = topClienteMes?.nome_reduzido?.trim() || "—";
   const topClienteSubtitle = topClienteMes
-    ? `${topClienteMes.cliente_codigo}/${topClienteMes.loja} · ${formatInteger(topClienteMes.titulos_atraso)} atrasado(s) · ${formatCurrencyBrl(topClienteMes.valor_atraso)}`
+    ? `${topClienteMes.cliente_codigo}/${topClienteMes.loja} · ${formatInteger(topClienteMes.titulos_atraso)} atrasado(s) · ${formatCurrencyBrl(topClienteMes.valor_atraso)} · Clique para ver o ranking do mês`
     : loading
       ? "Buscando ranking do mês…"
       : "Nenhum cliente com atraso no mês atual";
 
+  const topClienteCard = (
+    <KpiCard
+      title="Cliente mais inadimplente"
+      value={loading ? "…" : topClienteNome}
+      subtitle={topClienteSubtitle}
+      icon={<UserRoundX size={20} aria-hidden="true" />}
+      loading={loading}
+      valueTone="danger"
+      iconTone="danger"
+    />
+  );
+
   return (
     <div className="fi-kpi-grid" aria-label="Indicadores principais">
-      {/* Domínio: hero composto (não é SimpleKpi do kit). */}
-      <section className="fi-card fi-kpi-hero" aria-label="Pontualidade do mês atual">
-        <div className="fi-kpi-hero__head">
-          <span className="fi-kpi-hero__icon" aria-hidden="true">
-            <BadgeCheck size={22} />
-          </span>
-          <div>
-            <p className="fi-kpi-hero__eyebrow">Pontualidade por quantidade</p>
-            <p className="fi-kpi-hero__month">Mês atual · {currentLabel}</p>
-          </div>
-        </div>
-
-        <p className="fi-kpi-hero__value">
-          {loading ? "…" : formatPercent(current?.percentual_em_dia_qtd)}
-        </p>
-
-        <p className={`fi-kpi-hero__delta${heroToneClass}`}>
-          {loading ? "Comparando…" : deltaText}
-        </p>
-
-        <p className="fi-kpi-hero__meta">
-          {loading
-            ? "Carregando…"
-            : current
-              ? `${formatInteger(current.titulos_em_dia)} de ${formatInteger(current.total_titulos)} títulos pagos em dia`
-              : "Sem dados do mês atual no período."}
-        </p>
-      </section>
+      <KpiCard
+        title="Pontualidade por quantidade"
+        value={formatPercent(current?.percentual_em_dia_qtd)}
+        subtitle={
+          loading
+            ? "Comparando…"
+            : `Mês atual · ${currentLabel} · ${deltaText} · ${pontualidadeMeta}`
+        }
+        icon={<BadgeCheck size={20} aria-hidden="true" />}
+        loading={loading}
+        iconTone={
+          comparison.trend === "melhor"
+            ? "success"
+            : comparison.trend === "pior"
+              ? "danger"
+              : undefined
+        }
+      />
 
       <KpiCard
         title="Inadimplência do mês"
         value={formatPercent(
-          current
-            ? Math.max(0, 100 - current.percentual_em_dia_qtd)
-            : null,
+          current ? Math.max(0, 100 - current.percentual_em_dia_qtd) : null,
         )}
         subtitle={
           current
@@ -117,41 +114,32 @@ export function SummaryCards({
         icon={<TimerOff size={20} aria-hidden="true" />}
         loading={loading}
         valueTone="danger"
+        iconTone="danger"
       />
 
       <KpiCard
         title="Valor pago com atraso"
         value={formatCurrencyBrl(current?.valor_atraso)}
-        subtitle={
-          current
-            ? `Referente a ${currentLabel}`
-            : "Sem dados do mês atual"
-        }
+        subtitle={current ? `Referente a ${currentLabel}` : "Sem dados do mês atual"}
         icon={<AlertTriangle size={20} aria-hidden="true" />}
         loading={loading}
         valueTone="danger"
+        iconTone="warning"
       />
 
-      {/* Domínio: card clicável do ranking (não dual-class parcial do kit). */}
-      <button
-        type="button"
-        className="fi-card fi-kpi-hero fi-kpi-hero--clickable fi-kpi-hero--danger"
-        onClick={onOpenTopClientes}
-        disabled={!onOpenTopClientes || loading}
-        aria-label="Abrir ranking de clientes inadimplentes do mês"
-      >
-        <div className="fi-kpi-hero__head">
-          <span className="fi-kpi-hero__icon fi-kpi-hero__icon--danger" aria-hidden="true">
-            <UserRoundX size={20} />
-          </span>
-          <p className="fi-kpi-hero__eyebrow">Cliente mais inadimplente</p>
-        </div>
-        <p className="fi-kpi-hero__value fi-kpi-hero__value--danger">
-          {loading ? "…" : topClienteNome}
-        </p>
-        <p className="fi-kpi-hero__meta">{topClienteSubtitle}</p>
-        <p className="fi-kpi-hero__cta">Clique para ver o ranking do mês</p>
-      </button>
+      {onOpenTopClientes ? (
+        <button
+          type="button"
+          className="fi-kpi-as-button"
+          onClick={onOpenTopClientes}
+          disabled={loading}
+          aria-label="Abrir ranking de clientes inadimplentes do mês"
+        >
+          {topClienteCard}
+        </button>
+      ) : (
+        topClienteCard
+      )}
     </div>
   );
 }

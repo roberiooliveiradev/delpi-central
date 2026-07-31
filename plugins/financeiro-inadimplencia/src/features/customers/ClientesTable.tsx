@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { ExcelExportButton } from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState } from "react";
+import { ActionButton, ExcelExportButton } from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
-import { EmptyState } from "../../components/EmptyState";
-import { LoadingState } from "../../components/LoadingState";
-import { Pagination } from "../../components/Pagination";
+import {
+  DataTableSection,
+  type DataTableColumn,
+} from "../../components/dataTableUi";
 import type {
   ClientesSortBy,
   InadimplenciaClienteItem,
@@ -31,10 +32,12 @@ type ClientesTableProps = {
   sortBy: ClientesSortBy;
   sortDir: SortDirection;
   onlyWithDelays: boolean;
+  pageSize: number;
   onSearchChange: (value: string) => void;
   onSortChange: (sortBy: ClientesSortBy, sortDir: SortDirection) => void;
   onOnlyWithDelaysChange: (value: boolean) => void;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
   onOpenTitles: (customer: InadimplenciaClienteItem) => void;
   onRetry?: () => void;
 };
@@ -49,10 +52,12 @@ export function ClientesTable({
   sortBy,
   sortDir,
   onlyWithDelays,
+  pageSize,
   onSearchChange,
   onSortChange,
   onOnlyWithDelaysChange,
   onPageChange,
+  onPageSizeChange,
   onOpenTitles,
   onRetry,
 }: ClientesTableProps) {
@@ -61,7 +66,6 @@ export function ClientesTable({
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
-  // Sincroniza rascunho quando a busca externa muda (padrão React: ajustar state na renderização).
   if (search !== prevSearch) {
     setPrevSearch(search);
     setDraftSearch(search);
@@ -87,6 +91,84 @@ export function ClientesTable({
     data?.periodo?.data_fim_exclusiva ?? period.endDate,
   );
 
+  const hintParts = [
+    resolvedPeriodLabel || periodRangeLabel
+      ? `Período: ${resolvedPeriodLabel || periodRangeLabel}${
+          resolvedPeriodLabel && periodRangeLabel ? ` (${periodRangeLabel})` : ""
+        }`
+      : null,
+    pagination
+      ? `${formatInteger(totalCount)} cliente(s) · página ${pagination.page} de ${totalPages}`
+      : null,
+  ].filter(Boolean);
+
+  const columns = useMemo<DataTableColumn<InadimplenciaClienteItem>[]>(
+    () => [
+      {
+        key: "customer",
+        header: "Cliente",
+        render: (item) => (
+          <div className="fi-customer-cell">
+            <strong>{item.nome_cliente || item.nome_reduzido || "—"}</strong>
+            <span>
+              {item.cliente_codigo}/{item.loja}
+              {item.total_titulos <= 3
+                ? ` · base pequena (${formatInteger(item.total_titulos)} título(s))`
+                : ""}
+            </span>
+          </div>
+        ),
+      },
+      {
+        key: "total_titulos",
+        header: "Títulos",
+        align: "right",
+        render: (item) => formatInteger(item.total_titulos),
+      },
+      {
+        key: "titulos_em_dia",
+        header: "Em dia",
+        align: "right",
+        render: (item) => formatInteger(item.titulos_em_dia),
+      },
+      {
+        key: "titulos_atraso",
+        header: "Atrasados",
+        align: "right",
+        render: (item) => formatInteger(item.titulos_atraso),
+      },
+      {
+        key: "percentual_em_dia_qtd",
+        header: "Pontualidade (qtd)",
+        align: "right",
+        render: (item) => formatPercent(item.percentual_em_dia_qtd),
+      },
+      {
+        key: "valor_total",
+        header: "Valor total",
+        align: "right",
+        render: (item) => formatCurrencyBrl(item.valor_total),
+      },
+      {
+        key: "valor_atraso",
+        header: "Valor atrasado",
+        align: "right",
+        render: (item) => formatCurrencyBrl(item.valor_atraso),
+      },
+      {
+        key: "action",
+        header: "Ação",
+        interactive: true,
+        render: (item) => (
+          <ActionButton variant="ghost" onClick={() => onOpenTitles(item)}>
+            Ver títulos
+          </ActionButton>
+        ),
+      },
+    ],
+    [onOpenTitles],
+  );
+
   const handleExportExcel = async () => {
     if (exporting || !canExport) return;
     setExporting(true);
@@ -109,200 +191,94 @@ export function ClientesTable({
   };
 
   return (
-    <section className="fi-card fi-table-section" aria-label="Clientes com maior impacto">
-      <header className="fi-table-section__header">
-        <div>
-          <h2 className="fi-table-section__title">Clientes com maior impacto</h2>
-          {resolvedPeriodLabel || periodRangeLabel || pagination ? (
-            <p className="fi-table-section__meta">
-              {resolvedPeriodLabel || periodRangeLabel ? (
-                <>
-                  Período: {resolvedPeriodLabel || periodRangeLabel}
-                  {resolvedPeriodLabel && periodRangeLabel ? ` (${periodRangeLabel})` : ""}
-                  {pagination ? " · " : ""}
-                </>
-              ) : null}
-              {pagination
-                ? `${formatInteger(totalCount)} cliente(s) · página ${pagination.page} de ${totalPages}`
-                : null}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="fi-table-toolbar">
-          <label className="fi-field fi-field--inline">
-            <span className="fi-sr-only">Buscar cliente</span>
-            <input
-              type="search"
-              placeholder="Código, razão social ou nome reduzido"
-              value={draftSearch}
-              onChange={(event) => setDraftSearch(event.target.value)}
-              aria-label="Buscar cliente"
-            />
-          </label>
-
-          <label className="fi-field fi-field--inline">
-            <span>Ordenar</span>
-            <select
-              value={sortBy}
-              onChange={(event) =>
-                onSortChange(event.target.value as ClientesSortBy, sortDir)
-              }
-              aria-label="Campo de ordenação"
-            >
-              {CLIENTES_SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="fi-field fi-field--inline">
-            <span>Direção</span>
-            <select
-              value={sortDir}
-              onChange={(event) =>
-                onSortChange(sortBy, event.target.value as SortDirection)
-              }
-              aria-label="Direção da ordenação"
-            >
-              <option value="desc">Descendente</option>
-              <option value="asc">Ascendente</option>
-            </select>
-          </label>
-
-          <label className="fi-check">
-            <input
-              type="checkbox"
-              checked={onlyWithDelays}
-              onChange={(event) => onOnlyWithDelaysChange(event.target.checked)}
-            />
-            Somente com atraso
-          </label>
-
-          <ExcelExportButton
-            disabled={!canExport || loading}
-            exporting={exporting}
-            onExport={handleExportExcel}
-            className="fi-export-actions fi-no-print"
-            buttonClassName="fi-btn fi-btn--secondary"
-            label="Excel"
-            exportingLabel="Exportando…"
-          />
-        </div>
-      </header>
-
+    <>
+      {error ? <ErrorState message={error} onRetry={onRetry} /> : null}
       {exportError ? (
         <p className="fi-filters__error" role="alert">
           {exportError}
         </p>
       ) : null}
 
-      {error ? <ErrorState message={error} onRetry={onRetry} /> : null}
-
-      {loading && items.length === 0 ? (
-        <LoadingState message="Carregando ranking de clientes…" />
-      ) : null}
-
-      {!loading && !error && items.length === 0 ? (
-        <EmptyState
-          title="Nenhum cliente encontrado"
-          message={
-            onlyWithDelays
-              ? "Nenhum cliente com atraso encontrado."
-              : "Nenhum título encontrado para o período selecionado."
-          }
-        />
-      ) : null}
-
-      {items.length > 0 ? (
-        <>
-          <div className={`fi-table-wrap${loading ? " fi-table-wrap--loading" : ""}`}>
-            <table className="fi-table">
-              <thead>
-                <tr>
-                  <th scope="col">Cliente</th>
-                  <th scope="col" className="fi-table__numeric">
-                    Títulos
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Em dia
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Atrasados
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Pontualidade (qtd)
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Valor total
-                  </th>
-                  <th scope="col" className="fi-table__numeric">
-                    Valor atrasado
-                  </th>
-                  <th scope="col">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={`${item.cliente_codigo}-${item.loja}`}>
-                    <td data-label="Cliente">
-                      <div className="fi-customer-cell">
-                        <strong>{item.nome_cliente || item.nome_reduzido || "—"}</strong>
-                        <span>
-                          {item.cliente_codigo}/{item.loja}
-                          {item.total_titulos <= 3
-                            ? ` · base pequena (${formatInteger(item.total_titulos)} título(s))`
-                            : ""}
-                        </span>
-                      </div>
-                    </td>
-                    <td data-label="Títulos" className="fi-table__numeric">
-                      {formatInteger(item.total_titulos)}
-                    </td>
-                    <td data-label="Em dia" className="fi-table__numeric">
-                      {formatInteger(item.titulos_em_dia)}
-                    </td>
-                    <td data-label="Atrasados" className="fi-table__numeric">
-                      {formatInteger(item.titulos_atraso)}
-                    </td>
-                    <td data-label="Pontualidade (qtd)" className="fi-table__numeric">
-                      {formatPercent(item.percentual_em_dia_qtd)}
-                    </td>
-                    <td data-label="Valor total" className="fi-table__numeric">
-                      {formatCurrencyBrl(item.valor_total)}
-                    </td>
-                    <td data-label="Valor atrasado" className="fi-table__numeric">
-                      {formatCurrencyBrl(item.valor_atraso)}
-                    </td>
-                    <td data-label="Ação">
-                      <button
-                        type="button"
-                        className="fi-btn fi-btn--secondary"
-                        onClick={() => onOpenTitles(item)}
-                      >
-                        Ver títulos
-                      </button>
-                    </td>
-                  </tr>
+      <DataTableSection
+        columnPreferencesKey="financeiro-inadimplencia:clientes:v1"
+        title="Clientes com maior impacto"
+        hint={hintParts.length > 0 ? hintParts.join(" · ") : undefined}
+        columns={columns}
+        rows={items}
+        rowKey={(row) => `${row.cliente_codigo}-${row.loja}`}
+        loading={loading && items.length === 0}
+        refreshing={loading && items.length > 0}
+        emptyMessage={
+          onlyWithDelays
+            ? "Nenhum cliente com atraso encontrado."
+            : "Nenhum título encontrado para o período selecionado."
+        }
+        searchPlaceholder="Código, razão social ou nome reduzido"
+        serverSearch={{
+          value: draftSearch,
+          onChange: setDraftSearch,
+        }}
+        serverPagination={{
+          page: pagination?.page ?? 1,
+          pageSize: pagination?.page_size ?? pageSize,
+          total: totalCount,
+          onPageChange,
+          onPageSizeChange,
+        }}
+        toolbarExtra={
+          <>
+            <label className="fi-field fi-field--inline">
+              <span>Ordenar</span>
+              <select
+                value={sortBy}
+                onChange={(event) =>
+                  onSortChange(event.target.value as ClientesSortBy, sortDir)
+                }
+                aria-label="Campo de ordenação"
+              >
+                {CLIENTES_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </select>
+            </label>
 
-          {pagination ? (
-            <Pagination
-              page={pagination.page}
-              pageSize={pagination.page_size}
-              total={totalCount}
-              totalPages={totalPages}
-              onPageChange={onPageChange}
-              hideWhenSinglePage
-            />
-          ) : null}
-        </>
-      ) : null}
-    </section>
+            <label className="fi-field fi-field--inline">
+              <span>Direção</span>
+              <select
+                value={sortDir}
+                onChange={(event) =>
+                  onSortChange(sortBy, event.target.value as SortDirection)
+                }
+                aria-label="Direção da ordenação"
+              >
+                <option value="desc">Descendente</option>
+                <option value="asc">Ascendente</option>
+              </select>
+            </label>
+
+            <label className="fi-check">
+              <input
+                type="checkbox"
+                checked={onlyWithDelays}
+                onChange={(event) => onOnlyWithDelaysChange(event.target.checked)}
+              />
+              Somente com atraso
+            </label>
+          </>
+        }
+        headerActions={
+          <ExcelExportButton
+            disabled={!canExport || loading}
+            exporting={exporting}
+            onExport={handleExportExcel}
+            className="fi-no-print"
+            label="Excel"
+            exportingLabel="Exportando…"
+          />
+        }
+      />
+    </>
   );
 }
