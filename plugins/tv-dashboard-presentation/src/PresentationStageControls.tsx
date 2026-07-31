@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState } from "react";
 import type { PresentationSection } from "./types";
 
 type Props = {
@@ -42,6 +43,37 @@ export function PresentationStageControls({
   const jumpSections = onlyMain ? [] : namedSections;
   const showSectionJump = jumpSections.length >= 1 && typeof onJumpToSection === "function";
 
+  const menuId = useId();
+  const jumpRef = useRef<HTMLDivElement | null>(null);
+  const [sectionMenuOpen, setSectionMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!visible) setSectionMenuOpen(false);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!sectionMenuOpen) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const root = jumpRef.current;
+      if (!root) return;
+      if (event.target instanceof Node && !root.contains(event.target)) {
+        setSectionMenuOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSectionMenuOpen(false);
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [sectionMenuOpen]);
+
   return (
     <div className={rootClass} aria-hidden={!visible}>
       <button
@@ -75,27 +107,50 @@ export function PresentationStageControls({
         Próxima
       </button>
       {showSectionJump ? (
-        <label className="tdp-preview-controls__section-jump">
-          <span className="tdp-preview-controls__section-jump-label">Ir para seção</span>
-          <select
-            className="tdp-preview-controls__section-select"
+        <div ref={jumpRef} className="tdp-preview-controls__section-jump">
+          <button
+            type="button"
+            className={[
+              "tdp-preview-controls__btn",
+              "tdp-preview-controls__section-trigger",
+              sectionMenuOpen ? "tdp-preview-controls__section-trigger--open" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             aria-label="Ir para seção"
-            value=""
+            aria-haspopup="listbox"
+            aria-expanded={sectionMenuOpen}
+            aria-controls={menuId}
             tabIndex={visible ? 0 : -1}
-            onChange={(event) => {
-              const sectionId = event.target.value;
-              if (sectionId) onJumpToSection?.(sectionId);
-              event.target.value = "";
-            }}
+            onClick={() => setSectionMenuOpen((open) => !open)}
           >
-            <option value="">Seção…</option>
-            {jumpSections.map((section) => (
-              <option key={section.id} value={section.id}>
-                {section.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            Seção…
+          </button>
+          {sectionMenuOpen ? (
+            <ul
+              id={menuId}
+              className="tdp-preview-controls__section-menu"
+              role="listbox"
+              aria-label="Seções"
+            >
+              {jumpSections.map((section) => (
+                <li key={section.id} role="presentation">
+                  <button
+                    type="button"
+                    role="option"
+                    className="tdp-preview-controls__section-option"
+                    onClick={() => {
+                      onJumpToSection?.(section.id);
+                      setSectionMenuOpen(false);
+                    }}
+                  >
+                    {section.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
