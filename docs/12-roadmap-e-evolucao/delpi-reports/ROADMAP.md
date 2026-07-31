@@ -16,8 +16,30 @@
 | **3** | Cadastro, destinatários, agenda, e-mail | **Concluída** | Envio real de `minhadelpi@delpi.com.br` |
 | **4** | Robustez e escala | **Concluída** | Claim, retries, lotes, artefato HTML, ops |
 | **5** | Ecossistema multi-app | Planejada | 2º provider; templates; grupos |
+| **6** | Acompanhamento na Observação | Em andamento | Nota humana na coluna Observação (sem ocultar) |
 
-**Ordem sugerida:** 0 → 1 em paralelo com início de 2 → fechar 2 → 3 → 4/5 sob demanda.
+**Ordem sugerida:** 0 → 1 em paralelo com início de 2 → fechar 2 → 3 → 4/5 sob demanda · Fase 6 sob demanda operacional.
+
+---
+
+## Fase 6 — Acompanhamento na Observação (ruptura 30d)
+
+**Objetivo:** permitir que responsáveis registrem texto (e previsão opcional) por item; o e-mail continua listando o item, com a Observação enriquecida (`Acompanhamento (Nome): …`).
+
+**Playbook:** [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md)  
+**Testes manuais:** [PLAYBOOK-testes-acompanhamento-observacao.md](./PLAYBOOK-testes-acompanhamento-observacao.md)
+
+| Subfase | Entrega | Status |
+|---------|---------|--------|
+| 6.0 Doc | Playbook + SCHEMA | **Concluída** |
+| 6.1 Persistência | `V004__shortage_item_notes.sql` + repository | **Concluída** |
+| 6.2 API | GET/PUT/DELETE item-notes | **Concluída** |
+| 6.3 Enrich | Observação no run/preview | **Concluída** |
+| 6.4 MFE | Seção Acompanhamentos | **Concluída** |
+| 6.4b Link | Rodapé e-mail + tela `/acompanhamentos/{id}` + `reports.notes.manage` | **Concluída** |
+| 6.5 Testes/deploy | api-delpi + reports | Pendente |
+
+**Fora de escopo desta fase:** snooze/ocultar do e-mail; reply Outlook; histórico versionado.
 
 ---
 

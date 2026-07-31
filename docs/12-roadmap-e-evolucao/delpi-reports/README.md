@@ -14,6 +14,8 @@ App plugin para **cadastrar, agendar e enviar relatórios por e-mail** aos colab
 | [OPS.md](./OPS.md) | Runbook Graph, cron, claim, troubleshooting |
 | [ADR-001-fundacao.md](./ADR-001-fundacao.md) | ADR Fase 0 — decisões de fundação |
 | [SCHEMA.md](./SCHEMA.md) | Modelo Postgres `reports` |
+| [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md) | Notas na Observação do e-mail de ruptura (sem ocultar itens) |
+| [PLAYBOOK-testes-acompanhamento-observacao.md](./PLAYBOOK-testes-acompanhamento-observacao.md) | **Como testar** o fluxo (UI, API, e-mail, checklist) |
 
 ---
 

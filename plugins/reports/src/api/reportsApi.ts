@@ -7,6 +7,9 @@ import type {
   ReportRecipient,
   ReportRun,
   ReportSchedule,
+  ShortageItemNote,
+  ShortageItemNotesList,
+  ShortagePreviewItem,
 } from "../types/reports";
 
 export const REPORTS_API_BASE = "/apps/api-delpi/reports";
@@ -147,6 +150,81 @@ export async function listReportRuns(
     ApiSuccessResponse<{ items: ReportRun[]; total: number }>
   >(`${REPORTS_API_BASE}/runs${qs}`, { signal });
   return unwrapApiDelpiEnvelope(response, "Erro ao carregar execuções.");
+}
+
+export async function listShortageItemNotes(
+  definitionId: string,
+  signal?: AbortSignal,
+): Promise<ShortageItemNotesList> {
+  const response = await httpGet<ApiSuccessResponse<ShortageItemNotesList>>(
+    `${REPORTS_API_BASE}/definitions/${encodeURIComponent(definitionId)}/item-notes`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(
+    response,
+    "Erro ao carregar acompanhamentos.",
+  );
+}
+
+export async function upsertShortageItemNote(
+  definitionId: string,
+  productCode: string,
+  body: {
+    noteText: string;
+    authorDisplayName?: string;
+    expectedReceiptDate?: string | null;
+  },
+): Promise<ShortageItemNote> {
+  const response = await httpPut<ApiSuccessResponse<ShortageItemNote>>(
+    `${REPORTS_API_BASE}/definitions/${encodeURIComponent(definitionId)}/item-notes/${encodeURIComponent(productCode)}`,
+    {
+      noteText: body.noteText,
+      authorDisplayName: body.authorDisplayName,
+      expectedReceiptDate: body.expectedReceiptDate || null,
+    },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao gravar acompanhamento.");
+}
+
+export async function deleteShortageItemNote(
+  definitionId: string,
+  productCode: string,
+): Promise<void> {
+  await httpDelete(
+    `${REPORTS_API_BASE}/definitions/${encodeURIComponent(definitionId)}/item-notes/${encodeURIComponent(productCode)}`,
+  );
+}
+
+export async function previewShortage30d(
+  params: {
+    branch: string;
+    horizonDays?: number;
+    definitionId?: string;
+  },
+  signal?: AbortSignal,
+): Promise<{
+  items: ShortagePreviewItem[];
+  total: number;
+  title?: string;
+}> {
+  const qs = new URLSearchParams({
+    branch: params.branch,
+    horizonDays: String(params.horizonDays ?? 30),
+  });
+  if (params.definitionId) {
+    qs.set("definitionId", params.definitionId);
+  }
+  const response = await httpGet<
+    ApiSuccessResponse<{
+      items: ShortagePreviewItem[];
+      total: number;
+      title?: string;
+    }>
+  >(
+    `${REPORTS_API_BASE}/providers/safety_stock_shortage_30d/preview?${qs.toString()}`,
+    { signal },
+  );
+  return unwrapApiDelpiEnvelope(response, "Erro ao gerar preview.");
 }
 
 export async function searchDirectoryUsers(

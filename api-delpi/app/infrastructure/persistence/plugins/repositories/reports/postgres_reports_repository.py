@@ -665,3 +665,164 @@ class PostgresReportsRepository(PluginBaseRepository):
             "error": row.get("error"),
             "createdAt": _iso(row.get("created_at")),
         }
+
+    # --- shortage item notes (acompanhamento na Observação) ---
+
+    def list_shortage_item_notes(
+        self,
+        *,
+        definition_id: str,
+        branch: str | None = None,
+    ) -> list[dict[str, Any]]:
+        if branch:
+            rows = self.fetch_all(
+                """
+                SELECT id, definition_id, branch, product_code, note_text,
+                       expected_receipt_date, author_user_id, author_display_name,
+                       created_at, updated_at
+                  FROM reports.shortage_item_notes
+                 WHERE definition_id = %s
+                   AND branch = %s
+                 ORDER BY product_code ASC
+                """,
+                (definition_id, branch),
+            )
+        else:
+            rows = self.fetch_all(
+                """
+                SELECT id, definition_id, branch, product_code, note_text,
+                       expected_receipt_date, author_user_id, author_display_name,
+                       created_at, updated_at
+                  FROM reports.shortage_item_notes
+                 WHERE definition_id = %s
+                 ORDER BY branch ASC, product_code ASC
+                """,
+                (definition_id,),
+            )
+        return [self.shortage_item_note_to_payload(row) for row in rows]
+
+    def get_shortage_item_notes_by_product(
+        self,
+        *,
+        definition_id: str,
+        branch: str,
+    ) -> dict[str, dict[str, Any]]:
+        """Mapa ``product_code`` → payload (para enrich da observação)."""
+        notes = self.list_shortage_item_notes(
+            definition_id=definition_id,
+            branch=branch,
+        )
+        return {
+            str(note.get("productCode") or "").strip(): note
+            for note in notes
+            if str(note.get("productCode") or "").strip()
+        }
+
+    def upsert_shortage_item_note(
+        self,
+        *,
+        definition_id: str,
+        branch: str,
+        product_code: str,
+        note_text: str,
+        author_user_id: str,
+        author_display_name: str,
+        expected_receipt_date: str | None = None,
+    ) -> dict[str, Any]:
+        code = str(product_code or "").strip()
+        text = str(note_text or "").strip()
+        author_id = str(author_user_id or "").strip()
+        author_name = str(author_display_name or "").strip()
+        branch_code = str(branch or "").strip()
+        if branch_code not in {"01", "02"}:
+            raise PluginsRepositoryError("Filial inválida para nota de acompanhamento.")
+        if not code:
+            raise PluginsRepositoryError("Informe o código do produto.")
+        if not text:
+            raise PluginsRepositoryError("Informe o texto do acompanhamento.")
+        if not author_id:
+            raise PluginsRepositoryError("Usuário autor obrigatório.")
+        if not author_name:
+            raise PluginsRepositoryError("Nome do autor obrigatório.")
+
+        row = self.execute_returning_one(
+            """
+            INSERT INTO reports.shortage_item_notes (
+                definition_id, branch, product_code, note_text,
+                expected_receipt_date, author_user_id, author_display_name
+            ) VALUES (
+                %s, %s, %s, %s, %s::date, %s, %s
+            )
+            ON CONFLICT (definition_id, branch, product_code)
+            DO UPDATE SET
+                note_text = EXCLUDED.note_text,
+                expected_receipt_date = EXCLUDED.expected_receipt_date,
+                author_user_id = EXCLUDED.author_user_id,
+                author_display_name = EXCLUDED.author_display_name,
+                updated_at = NOW()
+            RETURNING id, definition_id, branch, product_code, note_text,
+                      expected_receipt_date, author_user_id, author_display_name,
+                      created_at, updated_at
+            """,
+            (
+                definition_id,
+                branch_code,
+                code,
+                text,
+                expected_receipt_date or None,
+                author_id,
+                author_name,
+            ),
+        )
+        if row is None:
+            raise PluginsRepositoryError("Falha ao gravar nota de acompanhamento.")
+        return self.shortage_item_note_to_payload(row)
+
+    def delete_shortage_item_note(
+        self,
+        *,
+        definition_id: str,
+        branch: str,
+        product_code: str,
+    ) -> bool:
+        code = str(product_code or "").strip()
+        branch_code = str(branch or "").strip()
+        if not code or branch_code not in {"01", "02"}:
+            return False
+        row = self.execute_returning_one(
+            """
+            DELETE FROM reports.shortage_item_notes
+             WHERE definition_id = %s
+               AND branch = %s
+               AND product_code = %s
+         RETURNING id
+            """,
+            (definition_id, branch_code, code),
+        )
+        return row is not None
+
+    @staticmethod
+    def shortage_item_note_to_payload(row: dict[str, Any]) -> dict[str, Any]:
+        def _id(value: Any) -> str:
+            return str(value) if value is not None else ""
+
+        receipt = row.get("expected_receipt_date")
+        if hasattr(receipt, "isoformat"):
+            receipt_iso = receipt.isoformat()
+        elif receipt is None:
+            receipt_iso = None
+        else:
+            receipt_iso = str(receipt)[:10] or None
+
+        return {
+            "id": _id(row.get("id")),
+            "definitionId": _id(row.get("definition_id")),
+            "branch": str(row.get("branch") or "").strip(),
+            "productCode": str(row.get("product_code") or "").strip(),
+            "noteText": str(row.get("note_text") or "").strip(),
+            "expectedReceiptDate": receipt_iso,
+            "authorUserId": str(row.get("author_user_id") or "").strip(),
+            "authorDisplayName": str(row.get("author_display_name") or "").strip(),
+            "createdAt": _iso(row.get("created_at")),
+            "updatedAt": _iso(row.get("updated_at")),
+        }

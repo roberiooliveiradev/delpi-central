@@ -17,7 +17,9 @@ Portal → /apps/reports (MFE federado)
 |------|-----|
 | `/apps/reports` | Lista de definições |
 | `/apps/reports/new` | Criar definição |
-| `/apps/reports/{id}` | Editar params, destinatários, agenda, enviar agora, histórico |
+| `/apps/reports/{id}` | Editar params, destinatários, acompanhamentos, agenda, enviar agora, histórico |
+| `/apps/reports/acompanhamentos` | Lista operacional (rupturas ativas) |
+| `/apps/reports/acompanhamentos/{id}` | Acompanhamentos da definição (link do e-mail) |
 
 ## API
 
@@ -26,6 +28,19 @@ Base: `/apps/api-delpi/reports`
 Doc: `api-delpi/docs/api/delpi-reports.md`
 
 Provider atual: `safety_stock_shortage_30d`.
+
+## Acompanhamentos (Observação)
+
+Na definição, seção **Acompanhamentos**:
+
+- Gravar comentário + previsão opcional por código de produto
+- O texto entra na coluna Observação do e-mail (`Acompanhamento (Nome): …`)
+- Itens **não** são ocultados do relatório
+
+API: `GET/PUT/DELETE …/definitions/{id}/item-notes`
+
+Testes (passo a passo):  
+[docs/…/PLAYBOOK-testes-acompanhamento-observacao.md](../../docs/12-roadmap-e-evolucao/delpi-reports/PLAYBOOK-testes-acompanhamento-observacao.md)
 
 ## Agenda
 
@@ -45,7 +60,10 @@ Frequências em `scheduleKind`:
 
 ## Permissões
 
-`reports.view`, `reports.manage`, `reports.view.filial-sc/es`, `reports.manage.filial-sc/es`
+`reports.view`, `reports.manage`, **`reports.notes.manage`**, `reports.view.filial-sc/es`, `reports.manage.filial-sc/es`
+
+Operacional (só Observação): `view` + filial + `notes.manage`.  
+Admin da definição: `manage` (+ filial).
 
 ## Dev
 

@@ -12,12 +12,14 @@ from delpi_auth.request_context import get_current_user
 from delpi_auth.service_token import request_has_valid_internal_service_token
 
 from app.application.security.api_delpi_permissions import (
+    REPORTS_NOTES_WRITE_PERMISSIONS,
     REPORTS_READ_PERMISSIONS,
     REPORTS_WRITE_PERMISSIONS,
 )
 from app.composition.reports_composer import (
     build_create_report_definition_use_case,
     build_delete_report_schedule_use_case,
+    build_delete_shortage_item_note_use_case,
     build_get_report_definition_use_case,
     build_get_report_run_use_case,
     build_get_report_schedule_use_case,
@@ -25,12 +27,14 @@ from app.composition.reports_composer import (
     build_list_report_providers_use_case,
     build_list_report_recipients_use_case,
     build_list_report_runs_use_case,
+    build_list_shortage_item_notes_use_case,
     build_preview_safety_stock_shortage_30d_use_case,
     build_process_due_report_schedules_use_case,
     build_replace_report_recipients_use_case,
     build_run_report_definition_use_case,
     build_update_report_definition_use_case,
     build_upsert_report_schedule_use_case,
+    build_upsert_shortage_item_note_use_case,
 )
 from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
@@ -38,7 +42,10 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 )
 from app.interface.http.query_param_enums import BRANCH_QUERY_REQUIRED
 from app.interface.http.route_response_helpers import api_delpi_success
-from app.interface.http.routes.reports.reports_branch_access import branch_access_error
+from app.interface.http.routes.reports.reports_branch_access import (
+    branch_access_error,
+    branch_notes_write_error,
+)
 from app.utils.logger import log_error
 
 router = APIRouter(tags=["Delpi Reports"])
@@ -114,6 +121,39 @@ class UpsertScheduleBody(BaseModel):
         return text
 
 
+class UpsertShortageItemNoteBody(BaseModel):
+    note_text: str = Field(min_length=1, alias="noteText")
+    author_display_name: str | None = Field(
+        default=None, max_length=200, alias="authorDisplayName"
+    )
+    expected_receipt_date: str | None = Field(
+        default=None, alias="expectedReceiptDate"
+    )
+    branch: str | None = Field(default=None, max_length=2)
+
+    model_config = {"populate_by_name": True}
+
+    @field_validator("note_text", mode="before")
+    @classmethod
+    def strip_note(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("deve ser string")
+        text = value.strip()
+        if not text:
+            raise ValueError("não pode ser vazio")
+        return text
+
+    @field_validator("author_display_name", "expected_receipt_date", "branch", mode="before")
+    @classmethod
+    def strip_optional(cls, value: object) -> str | None:
+        if value is None:
+            return None
+        if not isinstance(value, str):
+            raise ValueError("deve ser string")
+        text = value.strip()
+        return text or None
+
+
 def _permission_denied_if_missing(permission_codes: list[str]):
     user = get_current_user()
     if user is None:
@@ -131,6 +171,29 @@ def _current_user_id() -> str | None:
         return None
     user_id = getattr(user, "id", None)
     return str(user_id) if user_id else None
+
+
+def _current_user_display_name(fallback: str | None = None) -> str:
+    if fallback and fallback.strip():
+        return fallback.strip()
+    user = get_current_user()
+    if user is None:
+        return "Usuário"
+    for attr in ("display_name", "name", "full_name", "email"):
+        value = getattr(user, attr, None)
+        if value and str(value).strip():
+            return str(value).strip()
+    user_id = getattr(user, "id", None)
+    return str(user_id) if user_id else "Usuário"
+
+
+def _definition_branch_or_error(definition_id: str):
+    definition = build_get_report_definition_use_case().execute(definition_id)
+    if definition is None:
+        return None, not_found_response("Definição de relatório não encontrada.")
+    params = definition.get("params") or {}
+    branch = str(params.get("branch") or "").strip()
+    return branch, None
 
 
 @router.get("/definitions", operation_id="list_report_definitions")
@@ -313,6 +376,7 @@ def preview_safety_stock_shortage_30d(
     unit: Annotated[str | None, Query()] = None,
     search: Annotated[str | None, Query()] = None,
     includeWithoutSafetyStock: Annotated[bool, Query()] = True,
+    definitionId: Annotated[UUID | None, Query()] = None,
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -328,7 +392,8 @@ def preview_safety_stock_shortage_30d(
                 "unit": unit,
                 "search": search,
                 "includeWithoutSafetyStock": includeWithoutSafetyStock,
-            }
+            },
+            definition_id=str(definitionId) if definitionId is not None else None,
         )
         return api_delpi_success(
             data,
@@ -520,6 +585,136 @@ def get_report_run(run_id: Annotated[UUID, Path(...)]):
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao obter run Reports: {exc}")
         return error_response("Erro interno ao obter execução.", status_code=500)
+
+
+@router.get(
+    "/definitions/{definition_id}/item-notes",
+    operation_id="list_report_shortage_item_notes",
+)
+@require_any_permission(REPORTS_READ_PERMISSIONS)
+def list_report_shortage_item_notes(definition_id: Annotated[UUID, Path(...)]):
+    try:
+        branch, err = _definition_branch_or_error(str(definition_id))
+        if err is not None:
+            return err
+        if branch:
+            denied = branch_access_error(branch)
+            if denied:
+                return denied
+        data = build_list_shortage_item_notes_use_case().execute(str(definition_id))
+        return api_delpi_success(
+            data,
+            operation_id="list_report_shortage_item_notes",
+            message="Acompanhamentos listados com sucesso.",
+        )
+    except LookupError:
+        return not_found_response("Definição de relatório não encontrada.")
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao listar item-notes Reports: {exc}")
+        return error_response(
+            "Erro interno ao listar acompanhamentos.",
+            status_code=500,
+        )
+
+
+@router.put(
+    "/definitions/{definition_id}/item-notes/{product_code}",
+    operation_id="upsert_report_shortage_item_note",
+)
+@require_any_permission(REPORTS_NOTES_WRITE_PERMISSIONS)
+def upsert_report_shortage_item_note(
+    definition_id: Annotated[UUID, Path(...)],
+    product_code: Annotated[str, Path(min_length=1, max_length=30)],
+    body: Annotated[UpsertShortageItemNoteBody, Body(...)],
+):
+    try:
+        branch, err = _definition_branch_or_error(str(definition_id))
+        if err is not None:
+            return err
+        resolved_branch = str(body.branch or branch or "").strip()
+        if resolved_branch not in {"01", "02"}:
+            return error_response(
+                "Filial da definição inválida para acompanhamento.",
+                status_code=400,
+            )
+        denied = branch_notes_write_error(resolved_branch)
+        if denied:
+            return denied
+
+        author_id = _current_user_id()
+        if not author_id:
+            return error_response("Não autenticado.", status_code=401)
+
+        data = build_upsert_shortage_item_note_use_case().execute(
+            definition_id=str(definition_id),
+            product_code=product_code,
+            note_text=body.note_text,
+            author_user_id=author_id,
+            author_display_name=_current_user_display_name(body.author_display_name),
+            expected_receipt_date=body.expected_receipt_date,
+            branch=resolved_branch,
+        )
+        return api_delpi_success(
+            data,
+            operation_id="upsert_report_shortage_item_note",
+            message="Acompanhamento gravado com sucesso.",
+        )
+    except LookupError:
+        return not_found_response("Definição de relatório não encontrada.")
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao gravar item-note Reports: {exc}")
+        return error_response(
+            "Erro interno ao gravar acompanhamento.",
+            status_code=500,
+        )
+
+
+@router.delete(
+    "/definitions/{definition_id}/item-notes/{product_code}",
+    operation_id="delete_report_shortage_item_note",
+)
+@require_any_permission(REPORTS_NOTES_WRITE_PERMISSIONS)
+def delete_report_shortage_item_note(
+    definition_id: Annotated[UUID, Path(...)],
+    product_code: Annotated[str, Path(min_length=1, max_length=30)],
+):
+    try:
+        branch, err = _definition_branch_or_error(str(definition_id))
+        if err is not None:
+            return err
+        if not branch or branch not in {"01", "02"}:
+            return error_response(
+                "Filial da definição inválida para acompanhamento.",
+                status_code=400,
+            )
+        denied = branch_notes_write_error(branch)
+        if denied:
+            return denied
+
+        deleted = build_delete_shortage_item_note_use_case().execute(
+            definition_id=str(definition_id),
+            product_code=product_code,
+            branch=branch,
+        )
+        if not deleted:
+            return not_found_response("Acompanhamento não encontrado.")
+        return api_delpi_success(
+            {"deleted": True, "productCode": product_code.strip()},
+            operation_id="delete_report_shortage_item_note",
+            message="Acompanhamento removido com sucesso.",
+        )
+    except LookupError:
+        return not_found_response("Definição de relatório não encontrada.")
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except PluginsRepositoryError as exc:
+        log_error(f"Erro ao remover item-note Reports: {exc}")
+        return error_response(
+            "Erro interno ao remover acompanhamento.",
+            status_code=500,
+        )
 
 
 @router.post(

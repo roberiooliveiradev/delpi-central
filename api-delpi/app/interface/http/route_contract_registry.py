@@ -822,6 +822,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "run_report_definition": RouteContract("report_run", "scalar"),
     "get_report_run": RouteContract("report_run", "scalar"),
     "process_pending_report_schedules": RouteContract("report_schedule_batch", "scalar"),
+    "list_report_shortage_item_notes": RouteContract(
+        "report_shortage_item_note", "paged_list"
+    ),
+    "upsert_report_shortage_item_note": RouteContract(
+        "report_shortage_item_note", "scalar"
+    ),
+    "delete_report_shortage_item_note": RouteContract(
+        "report_shortage_item_note", "scalar"
+    ),
     "search_customers": RouteContract("customers", "scalar"),
     "download_guias_procedimentos_attachment_file": RouteContract(
         "download_guias_procedimentos_attachment_file", "scalar"

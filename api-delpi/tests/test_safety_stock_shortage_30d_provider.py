@@ -11,8 +11,10 @@ from app.application.services.supplies.safety_stock_shortage_30d_aggregation_ser
 from app.domain.services.reports.providers.safety_stock_shortage_30d_provider import (
     SafetyStockShortage30dProvider,
 )
+from app.domain.services.reports.report_types import ReportDataset
 from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     balance_at_first_shortage,
+    build_follow_up_observation,
     build_next_purchase_text,
     build_sample_observation,
     build_third_party_observation,
@@ -506,6 +508,35 @@ def test_provider_render_email_includes_logo_attachment() -> None:
     assert "2026-07-21" not in email.html_body
     assert "Rio Bananal/ES" in email.html_body
     assert "Rio Bananal/ES" in email.subject
+    assert "Abrir acompanhamentos" not in email.html_body
+
+
+def test_provider_render_email_includes_follow_up_footer_when_url_in_meta() -> None:
+    aggregation = MagicMock()
+    aggregation.collect_rows.return_value = (
+        [],
+        {"branch": "01", "horizonDays": 30, "asOfDate": "2026-07-21"},
+    )
+    provider = SafetyStockShortage30dProvider(aggregation)
+    dataset = provider.collect({"branch": "01"})
+    dataset = ReportDataset(
+        provider_key=dataset.provider_key,
+        title=dataset.title,
+        columns=dataset.columns,
+        rows=dataset.rows,
+        meta={
+            **dict(dataset.meta),
+            "followUpPortalUrl": (
+                "https://portal.example/apps/reports/acompanhamentos/def-1"
+            ),
+        },
+    )
+    email = provider.render_email(dataset)
+    assert "Abrir acompanhamentos no Delpi Reports" in email.html_body
+    assert (
+        'href="https://portal.example/apps/reports/acompanhamentos/def-1"'
+        in email.html_body
+    )
 
 
 def test_third_party_observation_helpers() -> None:
@@ -535,6 +566,10 @@ def test_sample_observation_helpers() -> None:
             "AMOSTRA - 80123456",
         )
         == "Material de terceiro - WEG | AMOSTRA - 80123456"
+    )
+    assert (
+        build_follow_up_observation("Maria", "Negociado")
+        == "Acompanhamento (Maria): Negociado"
     )
 
 

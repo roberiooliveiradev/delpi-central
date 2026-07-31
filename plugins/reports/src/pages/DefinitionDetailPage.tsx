@@ -23,6 +23,7 @@ import {
   updateReportDefinition,
   upsertReportSchedule,
 } from "../api/reportsApi";
+import { ShortageItemNotesSection } from "../components/ShortageItemNotesSection";
 import type {
   DirectoryUser,
   ReportDefinition,
@@ -35,7 +36,7 @@ import {
   formatRunStatusLabel,
   formatTriggerLabel,
 } from "../utils/format";
-import { REPORTS_LIST_PATH } from "../utils/route";
+import { REPORTS_LIST_PATH, followUpPath } from "../utils/route";
 
 type Props = {
   definitionId: string;
@@ -255,7 +256,8 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                     ) : null}
                   </div>
                   <p className="rp-page-header__subtitle">
-                    Parâmetros, destinatários, agenda e envio por e-mail
+                    Parâmetros, destinatários, acompanhamentos, agenda e envio
+                    por e-mail
                   </p>
                 </div>
               </div>
@@ -551,6 +553,25 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                 </p>
               ) : null}
             </section>
+
+            <ShortageItemNotesSection
+              definitionId={definitionId}
+              branch={branch}
+              horizonDays={horizonDays}
+              disabled={busy}
+              onStatus={(message) => {
+                setStatusMsg(message);
+                setError(null);
+              }}
+              onError={(message) => {
+                setError(message);
+                setStatusMsg(null);
+              }}
+            />
+            <p className="rp-inline-note">
+              Tela operacional (link do e-mail):{" "}
+              <a href={followUpPath(definitionId)}>{followUpPath(definitionId)}</a>
+            </p>
 
             <section className="rp-card">
               <div className="rp-card__header">

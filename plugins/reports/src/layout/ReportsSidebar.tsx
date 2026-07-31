@@ -1,8 +1,9 @@
-import { FileText, LayoutDashboard, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ClipboardList, FileText, LayoutDashboard, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import {
   DELPI_LOGO_URL,
   REPORTS_BASE,
+  REPORTS_FOLLOW_UP_LIST_PATH,
   REPORTS_LIST_PATH,
   type ReportsNavSection,
 } from "../utils/route";
@@ -32,6 +33,12 @@ const NAV_ITEMS: Array<{
     label: "Relatórios",
     href: REPORTS_LIST_PATH,
     icon: FileText,
+  },
+  {
+    id: "followUp",
+    label: "Acompanhamentos",
+    href: REPORTS_FOLLOW_UP_LIST_PATH,
+    icon: ClipboardList,
   },
 ];
 

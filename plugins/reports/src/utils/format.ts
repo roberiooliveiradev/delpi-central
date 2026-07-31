@@ -23,6 +23,16 @@ export function formatDateTimeBr(value: string | null | undefined): string {
   });
 }
 
+export function formatDateBr(value: string | null | undefined): string {
+  if (!value) return "—";
+  const text = String(value).trim();
+  if (!text) return "—";
+  const iso = text.slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!match) return text;
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
 export function formatTriggerLabel(trigger: string): string {
   switch (trigger) {
     case "manual":

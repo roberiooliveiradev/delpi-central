@@ -5,7 +5,15 @@ from __future__ import annotations
 import logging
 from typing import Any, Mapping, Protocol, Sequence
 
+from app.application.services.reports.shortage_item_note_observation_enrichment_service import (
+    ShortageItemNoteObservationEnrichmentService,
+)
 from app.config import settings
+from app.domain.services.reports.report_follow_up_portal_url import (
+    build_follow_up_portal_url,
+)
+from app.domain.services.reports.report_types import ReportDataset
+from app.domain.services.reports.safety_stock_shortage_30d_rules import PROVIDER_KEY
 from app.infrastructure.providers.microsoft_graph.microsoft_graph_mail_client import (
     GraphMailError,
     sanitize_graph_error,
@@ -27,6 +35,12 @@ class _ReportsRepo(Protocol):
     def create_delivery(self, **kwargs: Any) -> dict[str, Any]: ...
     def finish_delivery(self, **kwargs: Any) -> dict[str, Any] | None: ...
     def list_deliveries_for_run(self, run_id: str) -> list[dict[str, Any]]: ...
+    def get_shortage_item_notes_by_product(
+        self,
+        *,
+        definition_id: str,
+        branch: str,
+    ) -> dict[str, dict[str, Any]]: ...
 
 
 class _ProviderRegistry(Protocol):
@@ -118,7 +132,15 @@ class RunReportDefinitionUseCase:
 
         artifact_path: str | None = None
         try:
-            dataset = provider.collect(params)
+            dataset = self._enrich_observation_notes(
+                provider.collect(params),
+                definition_id=definition_id,
+                params=params,
+            )
+            dataset = self._attach_follow_up_portal_meta(
+                dataset,
+                definition_id=definition_id,
+            )
             email_payload = provider.render_email(dataset)
             artifact_path = self._artifacts.save_html(
                 run_id=run_id,
@@ -290,6 +312,55 @@ class RunReportDefinitionUseCase:
                 message,
             )
             return self._with_deliveries(finished or run)
+
+    def _attach_follow_up_portal_meta(
+        self,
+        dataset: ReportDataset,
+        *,
+        definition_id: str,
+    ) -> ReportDataset:
+        meta = dict(dataset.meta)
+        meta["definitionId"] = definition_id
+        url = build_follow_up_portal_url(
+            settings.PUBLIC_BASE_URL,
+            definition_id,
+        )
+        if url:
+            meta["followUpPortalUrl"] = url
+        else:
+            logger.warning(
+                "report_follow_up_url_missing definitionId=%s "
+                "(PUBLIC_BASE_URL vazio — rodapé sem link)",
+                definition_id,
+            )
+        return ReportDataset(
+            provider_key=dataset.provider_key,
+            title=dataset.title,
+            columns=dataset.columns,
+            rows=dataset.rows,
+            meta=meta,
+        )
+
+    def _enrich_observation_notes(
+        self,
+        dataset: ReportDataset,
+        *,
+        definition_id: str,
+        params: Mapping[str, Any],
+    ) -> ReportDataset:
+        if getattr(dataset, "provider_key", None) != PROVIDER_KEY:
+            return dataset
+        branch = str(params.get("branch") or "").strip()
+        if not branch:
+            return dataset
+        getter = getattr(self._repository, "get_shortage_item_notes_by_product", None)
+        if not callable(getter):
+            return dataset
+        notes = getter(definition_id=definition_id, branch=branch)
+        return ShortageItemNoteObservationEnrichmentService.enrich_dataset(
+            dataset,
+            notes if isinstance(notes, dict) else None,
+        )
 
     def _with_deliveries(self, run: dict[str, Any]) -> dict[str, Any]:
         payload = dict(run)

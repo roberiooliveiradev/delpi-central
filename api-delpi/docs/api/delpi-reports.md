@@ -27,6 +27,9 @@
 | `GET` | `/providers` | `list_report_providers` | read |
 | `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | read + filial |
 | `POST` | `/schedules/process-pending` | `process_pending_report_schedules` | write **ou** service token |
+| `GET` | `/definitions/{id}/item-notes` | `list_report_shortage_item_notes` | read + filial |
+| `PUT` | `/definitions/{id}/item-notes/{productCode}` | `upsert_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
+| `DELETE` | `/definitions/{id}/item-notes/{productCode}` | `delete_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
 
 ### Create body
 
@@ -99,17 +102,61 @@ export API_DELPI_INTERNAL_SERVICE_TOKEN=…
 
 Claim atômico (`FOR UPDATE SKIP LOCKED`) + avanço de `next_run_at` no claim (anti-duplicata). Sugestão crontab: `*/15 * * * *`.
 
+## Acompanhamento por item (Observação)
+
+Notas humanas por produto — **não** ocultam o e-mail; na Fase 3 entram na coluna Observação.
+
+```http
+GET  /reports/definitions/{id}/item-notes
+PUT  /reports/definitions/{id}/item-notes/{productCode}
+DELETE /reports/definitions/{id}/item-notes/{productCode}
+```
+
+Body do `PUT`:
+
+```json
+{
+  "noteText": "Previsão confirmada com o fornecedor",
+  "authorDisplayName": "Maria Silva",
+  "expectedReceiptDate": "2026-08-05"
+}
+```
+
+`authorUserId` vem do JWT. Filial = `params.branch` da definição.
+
+**Permissão de gravação:** `reports.notes.manage` **e** view da filial, **ou** `reports.manage` / `manage.filial-*`.  
+Admins da definição não precisam da permissão nova.
+
+### Link no e-mail (rodapé)
+
+Com `PUBLIC_BASE_URL` configurado, o run injeta `meta.followUpPortalUrl`:
+
+`{PUBLIC_BASE_URL}/apps/reports/acompanhamentos/{definitionId}`
+
+O HTML do e-mail inclui o CTA «Abrir acompanhamentos no Delpi Reports». Sem `PUBLIC_BASE_URL`, o e-mail segue sem o link (warning no log).
+
+Playbook: `docs/12-roadmap-e-evolucao/delpi-reports/PLAYBOOK-acompanhamento-observacao-ruptura.md`.
+
 ## Preview — rupturas 30 dias
 
+`GET /reports/providers/safety_stock_shortage_30d/preview`
+
+Query opcional `definitionId`: quando informado, a coluna **Observação** inclui
+acompanhamentos gravados na definição (`item-notes`), no mesmo formato do e-mail
+agendado / «Enviar agora».
+
 ```
-GET /reports/providers/safety_stock_shortage_30d/preview?branch=01&horizonDays=30
+GET /reports/providers/safety_stock_shortage_30d/preview?branch=01&horizonDays=30&definitionId=<uuid>
 ```
 
 Critério: `first_shortage_date` ∈ `[as_of, as_of + horizonDays]` via `build_stock_projection` (3 SQL/filial).
 
 ## RBAC
 
-`REPORTS_READ_PERMISSIONS`, `REPORTS_WRITE_PERMISSIONS`, `REPORTS_BRANCH_VIEW_PERMS`.
+`REPORTS_READ_PERMISSIONS`, `REPORTS_WRITE_PERMISSIONS`, `REPORTS_NOTES_WRITE_PERMISSIONS`,
+`REPORTS_BRANCH_VIEW_PERMS`.
+
+Permissão operacional de notas: `reports.notes.manage` (manifest do plugin `reports`).
 
 ## Migration
 
@@ -123,5 +170,10 @@ docker exec delpi-api-delpi python scripts/run_plugins_migrations.py up --plugin
 docker exec delpi-api-delpi python -m pytest \
   tests/test_reports_routes_smoke.py \
   tests/test_report_schedule_and_run.py \
-  tests/test_safety_stock_shortage_30d_provider.py -q
+  tests/test_safety_stock_shortage_30d_provider.py \
+  tests/test_shortage_item_notes_repository.py \
+  tests/test_shortage_item_notes_use_cases.py \
+  tests/test_shortage_item_note_observation_enrichment.py \
+  tests/test_report_follow_up_portal_url.py \
+  tests/test_reports_branch_access.py -q
 ```

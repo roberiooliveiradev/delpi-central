@@ -1,8 +1,10 @@
 # Delpi Reports — schema Postgres
 
-> **Migrations:** `V001__create_reports_core.sql`, `V002__reports_schedule_claim.sql`  
+> **Migrations:** `V001__create_reports_core.sql`, `V002__reports_schedule_claim.sql`,
+> `V003__reports_schedule_weekdays.sql`, `V004__shortage_item_notes.sql`  
 > **Schema:** `reports` (slug `--plugin reports`)  
-> **ADR:** [ADR-001-fundacao.md](./ADR-001-fundacao.md)
+> **ADR:** [ADR-001-fundacao.md](./ADR-001-fundacao.md)  
+> **Acompanhamento:** [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md)
 
 Aplicar:
 
@@ -84,3 +86,22 @@ python scripts/run_plugins_migrations.py up --plugin reports
 | `error` | TEXT | |
 | `sent_at` | TIMESTAMPTZ | |
 | `created_at` | TIMESTAMPTZ | |
+
+### `shortage_item_notes` (V004)
+
+Notas de acompanhamento humano por item de ruptura (não ocultam o e-mail).
+
+| Coluna | Tipo | Notas |
+|--------|------|--------|
+| `id` | UUID PK | `gen_random_uuid()` |
+| `definition_id` | UUID FK → definitions | ON DELETE CASCADE |
+| `branch` | VARCHAR(2) | `01` \| `02` |
+| `product_code` | VARCHAR(30) | código Protheus |
+| `note_text` | TEXT | obrigatório, não blank |
+| `expected_receipt_date` | DATE | opcional (informativo) |
+| `author_user_id` | VARCHAR(100) | Core user id |
+| `author_display_name` | VARCHAR(200) | nome exibido na Observação |
+| `created_at` / `updated_at` | TIMESTAMPTZ | |
+
+Único: `(definition_id, branch, product_code)`.  
+Índice: `(definition_id, branch)`.
