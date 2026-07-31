@@ -53,9 +53,12 @@ export function DeckRibbonTilePopover({
           anchorRef={anchorRef}
           panelRef={panelRef}
           variant="bare"
+          density="compact"
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className={[
-            panelVariant === "form" ? "td-deck-ribbon-tile-popover" : null,
+            panelVariant === "form"
+              ? "td-deck-ribbon-tile-popover delpi-ui-popover-surface"
+              : null,
             panelClassName,
           ]
             .filter(Boolean)

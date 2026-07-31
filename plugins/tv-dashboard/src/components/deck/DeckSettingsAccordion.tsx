@@ -34,8 +34,9 @@ export function DeckSettingsAccordion({ summary, ariaLabel, icon, children }: Pr
         anchorRef={anchorRef}
         panelRef={panelRef}
         variant="bare"
+        density="compact"
         portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-        className="td-deck-settings-accordion__body td-deck-settings-accordion__body--portal"
+        className="td-deck-settings-accordion__body td-deck-settings-accordion__body--portal delpi-ui-popover-surface"
         role="dialog"
         aria-label={ariaLabel}
         onDismiss={() => setOpen(false)}
