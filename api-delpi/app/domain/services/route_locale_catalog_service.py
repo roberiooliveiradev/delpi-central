@@ -25,6 +25,25 @@ def _clean_locale_block(raw: Any) -> dict[str, str]:
     return cleaned
 
 
+def _clean_enum_labels(raw: Any) -> dict[str, dict[str, dict[str, str]]]:
+    """enumLabels: { value: { en: {label}, pt-BR: {label} } }."""
+    if not isinstance(raw, dict):
+        return {}
+    indexed: dict[str, dict[str, dict[str, str]]] = {}
+    for value_key, value in raw.items():
+        code = str(value_key if value_key is not None else "").strip()
+        if not code or not isinstance(value, dict):
+            continue
+        langs: dict[str, dict[str, str]] = {}
+        for lang in ("en", "pt-BR"):
+            block = _clean_locale_block(value.get(lang))
+            if block.get("label"):
+                langs[lang] = {"label": block["label"]}
+        if langs:
+            indexed[code] = langs
+    return indexed
+
+
 def _clean_params(raw: Any) -> dict[str, dict[str, Any]]:
     if not isinstance(raw, dict):
         return {}
@@ -45,6 +64,9 @@ def _clean_params(raw: Any) -> dict[str, dict[str, Any]]:
         fmt = str(value.get("format") or "").strip()
         if fmt:
             cleaned["format"] = fmt
+        enum_labels = _clean_enum_labels(value.get("enumLabels"))
+        if enum_labels:
+            cleaned["enumLabels"] = enum_labels
         if cleaned:
             indexed[key] = cleaned
     return indexed
@@ -137,6 +159,25 @@ def tv_audience_for_operation(operation_id: str) -> dict[str, Any] | None:
     return cleaned or None
 
 
+def _merge_enum_labels(
+    base: dict[str, dict[str, dict[str, str]]] | None,
+    overlay: dict[str, dict[str, dict[str, str]]] | None,
+) -> dict[str, dict[str, dict[str, str]]]:
+    merged: dict[str, dict[str, dict[str, str]]] = {
+        k: {lang: dict(block) for lang, block in langs.items()}
+        for k, langs in (base or {}).items()
+    }
+    for code, langs in (overlay or {}).items():
+        if code not in merged:
+            merged[code] = {lang: dict(block) for lang, block in langs.items()}
+            continue
+        left = merged[code]
+        for lang, block in langs.items():
+            left[lang] = {**(left.get(lang) or {}), **block}
+        merged[code] = left
+    return merged
+
+
 def _merge_param_locale(
     base: dict[str, dict[str, Any]] | None,
     overlay: dict[str, dict[str, Any]] | None,
@@ -158,6 +199,11 @@ def _merge_param_locale(
         fmt = str(value.get("format") or left.get("format") or "").strip()
         if fmt:
             left["format"] = fmt
+        left_enums = left.get("enumLabels") if isinstance(left.get("enumLabels"), dict) else {}
+        right_enums = value.get("enumLabels") if isinstance(value.get("enumLabels"), dict) else {}
+        enums = _merge_enum_labels(left_enums, right_enums)
+        if enums:
+            left["enumLabels"] = enums
         merged[name] = left
     return merged
 

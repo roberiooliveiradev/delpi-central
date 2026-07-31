@@ -39,6 +39,24 @@ def test_global_param_locale_catalog():
     assert params["branch"]["locale"]["pt-BR"]["label"] == "Filial"
 
 
+def test_global_param_enum_labels_bilingual():
+    params = load_global_param_locale()
+    rank = params["rank_by"]["enumLabels"]["stop_reason"]
+    assert rank["en"]["label"] == "Stop reason"
+    assert rank["pt-BR"]["label"] == "Motivo de parada"
+    metric = params["metric"]["enumLabels"]
+    assert metric["hours"]["en"]["label"] == "Hours"
+    assert metric["hours"]["pt-BR"]["label"] == "Horas"
+    # Todo valor de enum label exige EN e pt-BR.
+    for param, entry in params.items():
+        enums = entry.get("enumLabels")
+        if not isinstance(enums, dict):
+            continue
+        for code, langs in enums.items():
+            assert langs.get("en", {}).get("label"), f"{param}.{code}.en"
+            assert langs.get("pt-BR", {}).get("label"), f"{param}.{code}.pt-BR"
+
+
 def test_apply_route_locale_to_x_delpi_merges():
     base = {
         "entity": "dashboard_department_idd",
@@ -56,6 +74,10 @@ def test_apply_route_locale_to_x_delpi_merges():
     assert merged["params"]["branch"]["locale"]["pt-BR"]["label"] == "Filial"
     # Route-specific sobrescreve / complementa.
     assert merged["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
+    # enumLabels bilíngues sobem no x-delpi.params.
+    dept = merged["params"]["department_id"]["enumLabels"]["production"]
+    assert dept["en"]["label"] == "Production"
+    assert dept["pt-BR"]["label"] == "Produção"
 
 
 def test_apply_route_locale_filters_global_params_to_route():

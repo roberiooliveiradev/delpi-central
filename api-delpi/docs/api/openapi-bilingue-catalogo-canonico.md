@@ -9,6 +9,7 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para catálogos (TV, cha
 | `summary` / `description` nativos | **Inglês** — preenchidos no OpenAPI ao vivo a partir de `x-delpi.locale.en` (Swagger UI) |
 | `x-delpi.locale` | **EN + pt-BR** (summary, description, whenToUse) — chat/TV leem daqui |
 | `x-delpi.params.<name>.locale` | Labels/descrições de query params em EN + pt-BR; EN também hidrata `parameters[].description` no Swagger (substitui vazio, eco do nome ou texto PT) |
+| `x-delpi.params.<name>.enumLabels` | Rótulos bilíngues das opções de `enum` (`en` + `pt-BR`, cada um com `label`) — fonte em `openapi_param_locale.json`; TV sincroniza pt-BR via `sync_tv_data_param_catalog.py` |
 | `x-delpi.params.<name>.format` | Hint OpenAPI (ex.: `"date"`) — Swagger mostra date picker; declarado em `openapi_param_locale.json` |
 | `x-delpi.category` | Categoria de produto (`commercial`, `production`, …) |
 | `x-delpi.tv` | Espelho de `locale.pt-BR` para compatibilidade |

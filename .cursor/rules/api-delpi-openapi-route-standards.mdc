@@ -25,6 +25,7 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger.
 | 6 | Locale bilíngue | Entrada em `tv_route_audience.json` (`locale.en` + `locale.pt-BR`, `en.summary ≠ pt-BR.summary`) |
 | 7 | Params tipados | Domínio fechado → factory `*_QUERY()` de `query_param_enums.py` com **`enum=` + `pattern=`** (OpenAPI + **422 em runtime**); **nova instância por parâmetro** — não reutilizar o mesmo `Query()` |
 | 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR; datas com `"format": "date"`); injector hidrata description EN e format no Swagger |
+| 8b | Labels de enums | Domínio fechado (`Query(enum=…)`) → `enumLabels` bilíngues no mesmo JSON (`en` + `pt-BR` por valor); `sync_tv_data_param_catalog.py --check` cobre enums do catálogo TV |
 | 9 | Chat-critical | `**agent_route(...)` / `OpenApiAgentMetadataBuilder` — **não** duplicar `operation_id=` além do `**META` |
 | 10 | RBAC | Constantes em `api_delpi_permissions.py`; filial → `branch_access_error` |
 | 11 | Sync pós-merge | Baseline + catálogo TV + reimport chat (ver doc) |

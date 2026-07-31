@@ -1,8 +1,9 @@
 /**
  * Fonte única de rótulos e enums de fallback para parâmetros de dados no MFE TV Dashboard.
- * Labels/hints gerados de api-delpi/app/content/openapi_param_locale.json —
+ * Labels/hints/ENUM_OPTION_LABELS gerados de api-delpi/app/content/openapi_param_locale.json —
  * rode: python3 scripts/sync_tv_data_param_catalog.py --write
  * Preferir meta/OpenAPI da API quando disponível; estes mapas cobrem UI estável entre rotas.
+ * enumLabels no JSON são bilíngues (en + pt-BR); o MFE consome pt-BR.
  */
 
 export const PARAM_FIELD_LABELS: Record<string, string> = {
@@ -157,6 +158,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "responsible": "Responsável",
   "responsible_user_id": "Usuário responsável",
   "result": "Resultado",
+  "resultado": "Resultado",
   "revision": "Revisão",
   "root_cause_category": "Categoria da causa raiz",
   "savings_type": "Tipo de economia",
@@ -353,6 +355,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "responsible": "Filtro por nome do responsável.",
   "responsible_user_id": "Filtro por id do usuário responsável.",
   "result": "Resultado da inspeção ou avaliação.",
+  "resultado": "Resultado da inspeção: A (aprovado), R (reprovado) ou T (pendente).",
   "revision": "Número ou código da revisão.",
   "root_cause_category": "Categoria da causa raiz.",
   "savings_type": "Tipo de economia (Kaizen).",
@@ -397,33 +400,45 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "work_center": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
 };
 
+/** Rótulos PT-BR das opções de enum — gerados de openapi_param_locale.json enumLabels. */
 export const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
-  granularity: { day: "Dia", week: "Semana", month: "Mês", year: "Ano" },
-  customer_segment: { weg: "WEG", new_business: "Novos negócios" },
-  loss_type: { refugo: "Refugo", scrap: "Scrap", both: "Ambos" },
-  product_type: { PA: "Produto acabado (PA)", PI: "Produto intermediário (PI)" },
-  sort_dir: { asc: "Crescente", desc: "Decrescente" },
-  direction: { asc: "Crescente", desc: "Decrescente" },
-  orderDir: { asc: "Crescente", desc: "Decrescente" },
-  linked_sort_dir: { asc: "Crescente", desc: "Decrescente" },
-  stock_method: {
-    auto: "Automático",
-    hybrid: "Híbrido",
-    estimated: "Estimado",
-    official_closure: "Fechamento oficial",
-  },
-  view: {
-    by_material: "Por material",
-    by_finished_product: "Por produto acabado",
-    full: "Completo",
-    summary: "Resumo",
-    consolidated: "Consolidado",
-    filial: "Filial",
-    department: "Departamento",
-  },
-  orderBy: { horas: "Horas", custo: "Custo", data: "Data" },
-  listing_type: { Todos: "Todos", LMP: "LMP", Amostra: "Amostra", Outro: "Outro" },
-  group_by: { general: "Geral", branch: "Filial", product: "Produto" },
+  audit_status: { "closed": "Encerrada", "closed_without_nc_treatment": "Encerrada sem tratamento de NC", "draft": "Rascunho", "evaluation_complete": "Avaliação concluída", "nc_in_progress": "NC em andamento" },
+  branch: { "01": "Filial 01", "02": "Filial 02", "ES": "ES", "SC": "SC" },
+  branch_code: { "01": "Filial 01", "02": "Filial 02" },
+  customer_segment: { "new_business": "Novos negócios", "weg": "WEG" },
+  department_id: { "commercial": "Comercial", "engineering": "Engenharia", "financial": "Financeiro", "hr": "RH", "production": "Produção", "quality": "Qualidade", "supplies": "Suprimentos" },
+  dimension: { "centro_trabalho": "Centro de trabalho", "colaborador": "Colaborador", "materia_prima": "Matéria-prima", "motivo": "Motivo", "produto_acabado": "Produto acabado" },
+  direction: { "asc": "Crescente", "desc": "Decrescente" },
+  evidence_type: { "email": "E-mail", "image": "Imagem", "manual_text": "Texto manual", "message": "Mensagem", "other": "Outro", "pdf": "PDF", "spreadsheet": "Planilha", "system_reference": "Referência do sistema" },
+  filial: { "01": "Filial 01", "02": "Filial 02" },
+  filial_id: { "01": "Filial 01", "02": "Filial 02" },
+  granularity: { "auto": "Automático", "day": "Dia", "month": "Mês", "week": "Semana", "year": "Ano" },
+  group_by: { "branch": "Filial", "branch_summary": "Resumo por filial", "day": "Dia", "day_work_center": "Dia × centro de trabalho", "general": "Geral", "product": "Produto", "product_group": "Grupo de produto", "unit": "Unidade" },
+  linked_sort_dir: { "asc": "Crescente", "desc": "Decrescente" },
+  listing_type: { "Amostra": "Amostra", "LMP": "LMP", "Outro": "Outro", "Todos": "Todos" },
+  loss_type: { "both": "Ambos", "refugo": "Refugo", "scrap": "Scrap" },
+  metric: { "cost": "Custo", "hours": "Horas" },
+  nonconformity_scope: { "external": "Externa", "internal": "Interna" },
+  orderBy: { "custo": "Custo", "data": "Data", "horas": "Horas" },
+  orderDir: { "asc": "Crescente", "desc": "Decrescente" },
+  priority: { "high": "Alta", "low": "Baixa", "medium": "Média" },
+  product_type: { "PA": "Produto acabado (PA)", "PI": "Produto intermediário (PI)" },
+  rank_by: { "cost_center": "Centro de custo", "operation": "Operação", "operator": "Operador", "product": "Produto", "resource": "Recurso", "stop_reason": "Motivo de parada" },
+  result: { "A": "Aprovado (A)", "R": "Reprovado (R)", "T": "Pendente (T)" },
+  resultado: { "A": "Aprovado (A)", "R": "Reprovado (R)", "T": "Pendente (T)" },
+  savings_type: { "financeiro": "Financeiro", "material": "Material", "misto": "Misto", "qualitativo": "Qualitativo", "tempo": "Tempo" },
+  section: { "attachments": "Anexos", "containment": "Contenção", "corrective": "Corretiva", "documentation": "Documentação", "effectiveness": "Eficácia", "general": "Geral", "nc_description": "Descrição da NC", "preventive": "Preventiva", "root_cause": "Causa raiz" },
+  severity: { "critical": "Crítica", "high": "Alta", "low": "Baixa", "medium": "Média" },
+  shift: { "ADMINISTRATIVO": "Administrativo", "TURNO_1": "Turno 1", "TURNO_2": "Turno 2", "TURNO_3": "Turno 3" },
+  sort: { "cost_asc": "Custo ↑", "cost_desc": "Custo ↓", "created_desc": "Criação ↓", "date_asc": "Data ↑", "date_desc": "Data ↓", "due_date_asc": "Vencimento ↑", "due_date_desc": "Vencimento ↓", "hours_asc": "Horas ↑", "hours_desc": "Horas ↓", "priority_desc": "Prioridade ↓", "product_code_asc": "Código ↑", "product_code_desc": "Código ↓", "quantity_asc": "Quantidade ↑", "quantity_desc": "Quantidade ↓", "stock_value_asc": "Valor ↑", "stock_value_desc": "Valor ↓" },
+  sortDirection: { "asc": "Crescente", "desc": "Decrescente" },
+  sort_by: { "customer_name": "Nome do cliente", "defect_description": "Descrição do defeito", "executed_by": "Executado por", "last_revision_date": "Data da última revisão", "launch_date": "Data de lançamento", "lmp_number": "Número LMP", "occurrence_date": "Data da ocorrência", "problem_tags": "Tags do problema", "products": "Produtos", "registered_at": "Registrado em", "released_by": "Liberado por", "sale_number": "Número da venda", "status": "Status" },
+  sort_dir: { "asc": "Crescente", "desc": "Decrescente" },
+  status: { "1": "Registrada (1)", "2": "Em análise (2)", "3": "Procede (3)", "4": "Não procede (4)", "5": "Cancelada (5)", "Andamento": "Andamento", "Atrasado": "Atrasado", "Pontual": "Pontual", "Retornada": "Retornada", "Todos": "Todos", "above_safety_stock": "Acima do estoque de segurança", "action_plan_defined": "Plano de ação definido", "all": "Todos", "aprovado": "Aprovado", "archived": "Arquivado", "at_safety_stock": "No estoque de segurança", "below_safety_stock": "Abaixo do estoque de segurança", "cancelado": "Cancelado", "cancelled": "Cancelado", "closed": "Encerrado", "closed_without_nc_treatment": "Encerrada sem tratamento de NC", "completed": "Concluído", "containment": "Contenção", "descontinuado": "Descontinuado", "done": "Concluído", "draft": "Rascunho", "evaluation_complete": "Avaliação concluída", "implantado": "Implantado", "in_progress": "Em andamento", "late": "Atrasado", "nc_in_progress": "NC em andamento", "on_time": "No prazo", "open": "Aberto", "outlier": "Fora da faixa", "published": "Publicado", "recebido": "Recebido", "root_cause_analysis": "Análise de causa raiz", "triage": "Triagem", "valid": "Válido", "waiting_validation": "Aguardando validação", "without_safety_stock": "Sem estoque de segurança", "won": "Ganha" },
+  stock_method: { "auto": "Automático", "estimated": "Estimado", "hybrid": "Híbrido", "official_closure": "Fechamento oficial" },
+  summary_mode: { "full": "Completo", "kpi": "Somente KPI" },
+  type: { "all": "Todos", "customer": "Cliente", "external": "Externo", "internal": "Interno", "supplier": "Fornecedor" },
+  view: { "by_finished_product": "Por produto acabado", "by_material": "Por material", "consolidated": "Consolidado", "department": "Departamento", "filial": "Filial", "full": "Completo", "summary": "Resumo" },
 };
 
 /** Enums de UI quando o OpenAPI não declara `enum` (valores estáveis entre rotas). */

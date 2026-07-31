@@ -54,8 +54,8 @@ describe("resolveParamSelectOptions", () => {
 
   it("branch com enum no schema vira select mesmo sem branchScope", () => {
     expect(resolveParamSelectOptions("branch", { enum: ["01", "02"] })).toEqual([
-      { value: "01", label: "01" },
-      { value: "02", label: "02" },
+      { value: "01", label: "Filial 01" },
+      { value: "02", label: "Filial 02" },
     ]);
   });
 
@@ -67,6 +67,56 @@ describe("resolveParamSelectOptions", () => {
 describe("enumOptionLabel", () => {
   it("mapeia customer_segment", () => {
     expect(enumOptionLabel("customer_segment", "new_business")).toBe("Novos negócios");
+  });
+
+  it("traduz rank_by / metric / sort de horas improdutivas", () => {
+    expect(enumOptionLabel("rank_by", "stop_reason")).toBe("Motivo de parada");
+    expect(enumOptionLabel("rank_by", "resource")).toBe("Recurso");
+    expect(enumOptionLabel("rank_by", "cost_center")).toBe("Centro de custo");
+    expect(enumOptionLabel("rank_by", "operator")).toBe("Operador");
+    expect(enumOptionLabel("rank_by", "product")).toBe("Produto");
+    expect(enumOptionLabel("rank_by", "operation")).toBe("Operação");
+    expect(enumOptionLabel("metric", "hours")).toBe("Horas");
+    expect(enumOptionLabel("metric", "cost")).toBe("Custo");
+    expect(enumOptionLabel("sort", "date_desc")).toBe("Data ↓");
+    expect(enumOptionLabel("sort", "hours_asc")).toBe("Horas ↑");
+    expect(enumOptionLabel("sort", "cost_desc")).toBe("Custo ↓");
+  });
+
+  it("traduz enums que antes apareciam crus no TV", () => {
+    expect(enumOptionLabel("department_id", "production")).toBe("Produção");
+    expect(enumOptionLabel("audit_status", "evaluation_complete")).toBe("Avaliação concluída");
+    expect(enumOptionLabel("severity", "critical")).toBe("Crítica");
+    expect(enumOptionLabel("shift", "TURNO_1")).toBe("Turno 1");
+    expect(enumOptionLabel("status", "below_safety_stock")).toBe("Abaixo do estoque de segurança");
+    expect(enumOptionLabel("status", "1")).toBe("Registrada (1)");
+    expect(enumOptionLabel("result", "A")).toBe("Aprovado (A)");
+    expect(enumOptionLabel("group_by", "product_group")).toBe("Grupo de produto");
+    expect(enumOptionLabel("granularity", "auto")).toBe("Automático");
+  });
+});
+
+describe("resolveParamSelectOptions horas improdutivas", () => {
+  it("exibe labels PT para rank_by", () => {
+    expect(
+      resolveParamSelectOptions("rank_by", {
+        enum: ["stop_reason", "resource", "cost_center", "operator", "product", "operation"],
+      }),
+    ).toEqual([
+      { value: "stop_reason", label: "Motivo de parada" },
+      { value: "resource", label: "Recurso" },
+      { value: "cost_center", label: "Centro de custo" },
+      { value: "operator", label: "Operador" },
+      { value: "product", label: "Produto" },
+      { value: "operation", label: "Operação" },
+    ]);
+  });
+
+  it("exibe labels PT para metric", () => {
+    expect(resolveParamSelectOptions("metric", { enum: ["hours", "cost"] })).toEqual([
+      { value: "hours", label: "Horas" },
+      { value: "cost", label: "Custo" },
+    ]);
   });
 });
 

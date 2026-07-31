@@ -124,8 +124,36 @@ def extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
             if not key or not isinstance(value, dict):
                 continue
             param_locale = _clean_locale_map(value.get("locale"))
+            cleaned_param: dict[str, Any] = {}
             if param_locale:
-                params_out[key] = {"locale": param_locale}
+                cleaned_param["locale"] = param_locale
+            fmt = str(value.get("format") or "").strip()
+            if fmt:
+                cleaned_param["format"] = fmt
+            enum_raw = value.get("enumLabels")
+            if isinstance(enum_raw, dict) and enum_raw:
+                enum_out: dict[str, Any] = {}
+                for code, langs in enum_raw.items():
+                    key_code = str(code if code is not None else "").strip()
+                    if not key_code or not isinstance(langs, dict):
+                        continue
+                    lang_map = _clean_locale_map(langs)
+                    # _clean_locale_map expects {en:{summary...}} — enum uses {en:{label}}
+                    # Reuse per-lang label blocks already shaped like locale maps.
+                    cleaned_langs: dict[str, dict[str, str]] = {}
+                    for lang in ("en", "pt-BR"):
+                        block = langs.get(lang)
+                        if not isinstance(block, dict):
+                            continue
+                        label = str(block.get("label") or "").strip()
+                        if label:
+                            cleaned_langs[lang] = {"label": label}
+                    if cleaned_langs:
+                        enum_out[key_code] = cleaned_langs
+                if enum_out:
+                    cleaned_param["enumLabels"] = enum_out
+            if cleaned_param:
+                params_out[key] = cleaned_param
         if params_out:
             out["params"] = params_out
     tv = raw.get("tv")

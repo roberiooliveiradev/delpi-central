@@ -33,6 +33,7 @@ Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **C
 | 8 | Locale EN + pt-BR (`en.summary ≠ pt-BR.summary`) | `tv_route_audience.json` |
 | 9 | Domínio fechado → `enum=` + `pattern=` (runtime **422**) | `query_param_enums.py` — `enum` sozinho **não** valida em runtime |
 | 10 | Param novo → labels bilíngues | `openapi_param_locale.json` + `sync_tv_data_param_catalog.py --write` |
+| 10b | Enum novo → `enumLabels` EN+pt-BR | mesmo JSON; `--check` falha se valor do catálogo TV ficar sem tradução |
 | 11 | Baseline + catálogo TV | `sync_openapi_baseline.py` + `generate_tv_data_routes_from_openapi.py --check` |
 | 12 | Smoke Nível A + inventário | `operationId` em `tests/**/*.py`; `audit_route_test_coverage.py --write && --check` (CI: `--check-complete`) — `playbook-route-test-coverage-100.md` |
 | 13 | **Valoração R$ / `B2_CM1`:** custo do almoxarifado `01` (nunca média de locais) | `totvs-warehouse-cost-standards.mdc` + [padroes-totvs/armazem-custo.md](../api-delpi/docs/api/padroes-totvs/armazem-custo.md) |
