@@ -16,6 +16,10 @@ type Props = {
   masterConfig?: PlaylistMasterConfig;
   /** Token público — mídia do filmstrip via `/public/present/...` (sem JWT). */
   publicToken?: string | null;
+  /**
+   * Preenche o container pai (home / biblioteca) em vez do tamanho fixo do filmstrip.
+   */
+  fillContainer?: boolean;
 };
 
 export function SlideCardThumbnail({
@@ -25,10 +29,20 @@ export function SlideCardThumbnail({
   viewportProfile = "1080p",
   masterConfig,
   publicToken,
+  fillContainer = false,
 }: Props) {
   if (slide.slideType === "external") {
     return (
-      <div className="td-slide-thumb td-slide-thumb--external" aria-hidden="true">
+      <div
+        className={[
+          "td-slide-thumb",
+          "td-slide-thumb--external",
+          fillContainer ? "td-slide-thumb--fill" : null,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden="true"
+      >
         <Globe size={18} strokeWidth={1.6} />
         <span>{externalSlideHost(slide.externalUrl)}</span>
       </div>
@@ -43,16 +57,29 @@ export function SlideCardThumbnail({
     publicToken,
   );
   if (!native) {
-    return <div className="td-slide-thumb td-slide-thumb--empty" aria-hidden="true" />;
+    return (
+      <div
+        className={[
+          "td-slide-thumb",
+          "td-slide-thumb--empty",
+          fillContainer ? "td-slide-thumb--fill" : null,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        aria-hidden="true"
+      />
+    );
   }
 
   const { width, height } = resolveViewportPixelSize(viewportProfile);
 
   return (
     <div
-      className="td-slide-thumb"
+      className={["td-slide-thumb", fillContainer ? "td-slide-thumb--fill" : null]
+        .filter(Boolean)
+        .join(" ")}
       aria-hidden="true"
-      style={{ aspectRatio: `${width} / ${height}` }}
+      style={fillContainer ? undefined : { aspectRatio: `${width} / ${height}` }}
     >
       <CenteredScaledPreview
         referenceWidth={width}

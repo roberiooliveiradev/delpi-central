@@ -28,6 +28,7 @@ export function PlaylistHomeThumb({ playlist }: Props) {
       viewportProfile={playlist.viewportProfile || "1080p"}
       masterConfig={playlist.masterConfig}
       publicToken={playlist.publicToken}
+      fillContainer
     />
   );
 }

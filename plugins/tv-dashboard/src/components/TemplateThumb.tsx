@@ -26,15 +26,13 @@ export function TemplateThumb({ template, viewportProfile = "1080p" }: Props) {
   const { width, height } = resolveViewportPixelSize(viewportProfile);
 
   if (!native) {
-    return <div className="td-slide-thumb td-slide-thumb--empty" aria-hidden="true" />;
+    return (
+      <div className="td-slide-thumb td-slide-thumb--empty td-slide-thumb--fill" aria-hidden="true" />
+    );
   }
 
   return (
-    <div
-      className="td-slide-thumb"
-      aria-hidden="true"
-      style={{ aspectRatio: `${width} / ${height}` }}
-    >
+    <div className="td-slide-thumb td-slide-thumb--fill" aria-hidden="true">
       <CenteredScaledPreview
         referenceWidth={width}
         referenceHeight={height}
