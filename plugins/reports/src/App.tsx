@@ -3,6 +3,8 @@ import { ReportsAppShell } from "./layout/ReportsAppShell";
 import { CreateDefinitionPage } from "./pages/CreateDefinitionPage";
 import { DefinitionDetailPage } from "./pages/DefinitionDetailPage";
 import { DefinitionsListPage } from "./pages/DefinitionsListPage";
+import { FollowUpNotesListPage } from "./pages/FollowUpNotesListPage";
+import { FollowUpNotesPage } from "./pages/FollowUpNotesPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { resolveReportsRoute } from "./utils/route";
 
@@ -23,6 +25,15 @@ export default function App({ getAccessToken, pathname }: AppProps) {
     content = <CreateDefinitionPage />;
   } else if (route.kind === "detail") {
     content = <DefinitionDetailPage definitionId={route.definitionId} />;
+  } else if (route.kind === "followUpList") {
+    content = <FollowUpNotesListPage />;
+  } else if (route.kind === "followUp") {
+    content = (
+      <FollowUpNotesPage
+        definitionId={route.definitionId}
+        initialProductCode={route.productCode}
+      />
+    );
   }
 
   return <ReportsAppShell nav={route.nav}>{content}</ReportsAppShell>;

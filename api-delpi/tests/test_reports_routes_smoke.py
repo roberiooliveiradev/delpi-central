@@ -11,7 +11,9 @@ from app.interface.http.routes.reports.reports_router import (
     RecipientItemBody,
     UpdateReportDefinitionBody,
     UpsertScheduleBody,
+    UpsertShortageItemNoteBody,
     create_report_definition,
+    delete_report_shortage_item_note,
     get_report_definition,
     get_report_run,
     get_report_schedule,
@@ -19,12 +21,14 @@ from app.interface.http.routes.reports.reports_router import (
     list_report_providers,
     list_report_recipients,
     list_report_runs,
+    list_report_shortage_item_notes,
     preview_safety_stock_shortage_30d,
     process_pending_report_schedules,
     replace_report_recipients,
     run_report_definition,
     update_report_definition,
     upsert_report_schedule,
+    upsert_report_shortage_item_note,
 )
 from tests.support.route_contract_smoke import assert_envelope_meta, body_json
 
@@ -180,6 +184,7 @@ def test_preview_safety_stock_shortage_30d_returns_meta(
     params = use_case.execute.call_args.args[0]
     assert params["branch"] == "01"
     assert params["horizonDays"] == 30
+    assert use_case.execute.call_args.kwargs.get("definition_id") is None
 
 
 @patch(
@@ -321,5 +326,124 @@ def test_process_pending_report_schedules_returns_meta(
     assert_envelope_meta(
         body_json(response),
         operation_id="process_pending_report_schedules",
+        shape="scalar",
+    )
+
+
+_NOTE = {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "definitionId": str(_DEF_ID),
+    "branch": "01",
+    "productCode": "10020113",
+    "noteText": "Chega na próxima semana",
+    "expectedReceiptDate": "2026-08-05",
+    "authorUserId": "user-1",
+    "authorDisplayName": "Maria Silva",
+    "createdAt": "2026-07-31T12:00:00+00:00",
+    "updatedAt": "2026-07-31T12:00:00+00:00",
+}
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_get_report_definition_use_case"
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_list_shortage_item_notes_use_case"
+)
+def test_list_report_shortage_item_notes_returns_meta(
+    mock_list_build,
+    mock_get_def,
+    _mock_branch,
+) -> None:
+    mock_get_def.return_value.execute.return_value = _DEFINITION
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [_NOTE],
+        "total": 1,
+        "definitionId": str(_DEF_ID),
+        "branch": "01",
+    }
+    mock_list_build.return_value = use_case
+
+    response = list_report_shortage_item_notes(definition_id=_DEF_ID)
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="list_report_shortage_item_notes",
+        shape="paged_list",
+    )
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router._current_user_id",
+    return_value="user-1",
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.branch_notes_write_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_get_report_definition_use_case"
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_upsert_shortage_item_note_use_case"
+)
+def test_upsert_report_shortage_item_note_returns_meta(
+    mock_upsert_build,
+    mock_get_def,
+    _mock_manage,
+    _mock_user,
+) -> None:
+    mock_get_def.return_value.execute.return_value = _DEFINITION
+    use_case = MagicMock()
+    use_case.execute.return_value = _NOTE
+    mock_upsert_build.return_value = use_case
+
+    response = upsert_report_shortage_item_note(
+        definition_id=_DEF_ID,
+        product_code="10020113",
+        body=UpsertShortageItemNoteBody(
+            noteText="Chega na próxima semana",
+            authorDisplayName="Maria Silva",
+            expectedReceiptDate="2026-08-05",
+        ),
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="upsert_report_shortage_item_note",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.branch_notes_write_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_get_report_definition_use_case"
+)
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_delete_shortage_item_note_use_case"
+)
+def test_delete_report_shortage_item_note_returns_meta(
+    mock_delete_build,
+    mock_get_def,
+    _mock_manage,
+) -> None:
+    mock_get_def.return_value.execute.return_value = _DEFINITION
+    use_case = MagicMock()
+    use_case.execute.return_value = True
+    mock_delete_build.return_value = use_case
+
+    response = delete_report_shortage_item_note(
+        definition_id=_DEF_ID,
+        product_code="10020113",
+    )
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="delete_report_shortage_item_note",
         shape="scalar",
     )

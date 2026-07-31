@@ -173,6 +173,8 @@ class SafetyStockShortage30dProvider:
                 raw_html_columns=frozenset({next_purchase_idx}),
             )
 
+        body += _follow_up_cta_html(dataset.meta.get("followUpPortalUrl"))
+
         subtitle_parts: list[str] = []
         if branch_label:
             subtitle_parts.append(branch_label)
@@ -200,6 +202,27 @@ def _optional_str(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _follow_up_cta_html(portal_url: Any) -> str:
+    """Rodapé Outlook-safe com link para a tela operacional de acompanhamentos."""
+    url = str(portal_url or "").strip()
+    if not url:
+        return ""
+    safe_url = html.escape(url, quote=True)
+    return (
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
+        'border="0" style="border-collapse:collapse;margin:20px 0 0 0;">'
+        "<tr><td style=\"padding:14px 12px;background:#F8FAFC;border:1px solid #E2E8F0;"
+        "border-radius:8px;font-family:Arial,Helvetica,sans-serif;\">"
+        '<p style="margin:0 0 8px 0;font-size:13px;color:#1A202C;line-height:1.45;">'
+        "Para registrar ou atualizar um acompanhamento na Observação "
+        "(sem alterar o relatório):</p>"
+        f'<p style="margin:0;"><a href="{safe_url}" '
+        'style="color:#015488;font-size:13px;font-weight:700;text-decoration:underline;">'
+        "Abrir acompanhamentos no Delpi Reports</a></p>"
+        "</td></tr></table>"
+    )
 
 
 def _format_cell(

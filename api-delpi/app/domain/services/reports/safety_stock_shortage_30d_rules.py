@@ -239,6 +239,24 @@ def compose_observation_parts(*parts: Any) -> str:
     return _OBSERVATION_SEPARATOR.join(cleaned)
 
 
+def build_follow_up_observation(
+    author_display_name: Any,
+    note_text: Any,
+    expected_receipt_date: Any = None,
+) -> str:
+    """Trecho humano da coluna Observação (acompanhamento).
+
+    Formato: ``Acompanhamento (Nome): [Previsão DD/MM/AAAA — ]texto``
+    """
+    text = str(note_text or "").strip()
+    if not text:
+        return ""
+    name = str(author_display_name or "").strip() or "Usuário"
+    date_br = format_date_br(expected_receipt_date)
+    body = f"Previsão {date_br} — {text}" if date_br else text
+    return f"Acompanhamento ({name}): {body}"
+
+
 def observation_from_summary(summary: Mapping[str, Any]) -> str:
     warnings = summary.get("warnings") or []
     if not isinstance(warnings, (list, tuple)):

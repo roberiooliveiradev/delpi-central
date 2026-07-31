@@ -4,7 +4,7 @@
   "name": "Delpi Reports",
   "description": "Cadastro, agendamento e envio de relatórios por e-mail aos colaboradores",
   "icon": "file-text-icon",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "microfrontend",
   "basePath": "/apps/reports",
   "entry": "/apps/reports/assets/remoteEntry.js",
@@ -19,6 +19,12 @@
       "code": "reports.manage",
       "name": "Administrar Delpi Reports",
       "description": "Criar/editar definições, destinatários, agendas e disparar envios",
+      "module": "reports"
+    },
+    {
+      "code": "reports.notes.manage",
+      "name": "Acompanhamentos Delpi Reports",
+      "description": "Registrar e editar acompanhamentos na Observação (sem administrar a definição)",
       "module": "reports"
     },
     {
@@ -53,6 +59,14 @@
       "permission": "reports.view",
       "icon": "file-text-icon",
       "order": 40,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/reports/acompanhamentos",
+      "label": "Acompanhamentos",
+      "permission": "reports.notes.manage",
+      "icon": "clipboard-list-icon",
+      "order": 41,
       "showInMenu": true
     }
   ],

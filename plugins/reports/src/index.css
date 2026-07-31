@@ -798,6 +798,64 @@
   color: var(--rp-muted);
 }
 
+.dashboard-reports .rp-field__hint {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--rp-muted);
+}
+
+.dashboard-reports .rp-field textarea {
+  min-height: 84px;
+  resize: vertical;
+  font: inherit;
+  padding: 10px 12px;
+  border-radius: var(--rp-control-radius);
+  border: 1px solid var(--rp-border);
+  background: var(--rp-surface);
+  color: var(--rp-text);
+}
+
+.dashboard-reports .rp-field textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--rp-accent) 35%, transparent);
+  border-color: var(--rp-accent);
+}
+
+.dashboard-reports .rp-notes-form {
+  margin-bottom: 18px;
+}
+
+.dashboard-reports .rp-notes-form__actions {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dashboard-reports .rp-notes-table__text {
+  max-width: 320px;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.dashboard-reports .rp-notes-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dashboard-reports .rp-btn--compact {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.dashboard-reports .rp-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .dashboard-reports .rp-field input,
 .dashboard-reports .rp-field select {
   min-height: var(--rp-control-height);

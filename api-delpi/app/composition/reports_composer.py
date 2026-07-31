@@ -59,7 +59,10 @@ def build_preview_safety_stock_shortage_30d_use_case():
     )
 
     provider = build_report_provider_registry().require("safety_stock_shortage_30d")
-    return PreviewReportProviderUseCase(provider)
+    return PreviewReportProviderUseCase(
+        provider,
+        repository=build_reports_repository(),
+    )
 
 
 def build_list_report_definitions_use_case():
@@ -179,3 +182,27 @@ def build_process_due_report_schedules_use_case():
         build_reports_repository(),
         build_run_report_definition_use_case(),
     )
+
+
+def build_list_shortage_item_notes_use_case():
+    from app.application.use_cases.reports.shortage_item_notes_use_cases import (
+        ListShortageItemNotesUseCase,
+    )
+
+    return ListShortageItemNotesUseCase(build_reports_repository())
+
+
+def build_upsert_shortage_item_note_use_case():
+    from app.application.use_cases.reports.shortage_item_notes_use_cases import (
+        UpsertShortageItemNoteUseCase,
+    )
+
+    return UpsertShortageItemNoteUseCase(build_reports_repository())
+
+
+def build_delete_shortage_item_note_use_case():
+    from app.application.use_cases.reports.shortage_item_notes_use_cases import (
+        DeleteShortageItemNoteUseCase,
+    )
+
+    return DeleteShortageItemNoteUseCase(build_reports_repository())

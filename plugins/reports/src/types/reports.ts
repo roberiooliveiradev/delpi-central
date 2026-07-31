@@ -62,3 +62,29 @@ export type DirectoryUser = {
   name: string;
   email: string;
 };
+
+export type ShortageItemNote = {
+  id: string;
+  definitionId: string;
+  branch: string;
+  productCode: string;
+  noteText: string;
+  expectedReceiptDate: string | null;
+  authorUserId: string;
+  authorDisplayName: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
+export type ShortageItemNotesList = {
+  items: ShortageItemNote[];
+  total: number;
+  definitionId: string;
+  branch: string;
+};
+
+export type ShortagePreviewItem = {
+  product_code: string;
+  product_description?: string;
+  observation?: string;
+};
