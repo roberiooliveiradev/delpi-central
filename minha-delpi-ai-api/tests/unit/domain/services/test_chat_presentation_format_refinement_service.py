@@ -50,6 +50,26 @@ def test_looks_like_format_refinement_with_last_result_phrase():
     )
 
 
+def test_detects_kpi_from_recommendation_query_como_indicador():
+    """Chip «Ver como KPI» usa a query canônica em presentation_vocabulary."""
+    from app.domain.services.chat_presentation_format_refinement_intent_service import (
+        ChatPresentationFormatRefinementIntentService,
+    )
+
+    message = "mostre o último resultado como indicador"
+
+    assert ChatPresentationFormatRefinementService.detect_requested_format(message) == "kpi"
+    assert ChatPresentationFormatRefinementService.looks_like_format_refinement(message)
+
+    intent = ChatPresentationFormatRefinementIntentService.resolve(
+        message,
+        has_prior_operation=True,
+    )
+
+    assert intent.is_refinement is True
+    assert intent.requested_format == "kpi"
+
+
 def test_looks_like_format_refinement_with_same_data_phrase():
     assert ChatPresentationFormatRefinementService.looks_like_format_refinement(
         "mostre os mesmos dados em tabela",

@@ -195,6 +195,16 @@
       "mostre kpi",
       "mostre em kpi",
       "modo kpi",
+      "como indicador",
+      "em indicador",
+      "como indicadores",
+      "em indicadores",
+      "ver como indicador",
+      "ver como indicadores",
+      "mostre como indicador",
+      "mostre como indicadores",
+      "mostre o último resultado como indicador",
+      "mostre o ultimo resultado como indicador",
       "indicadores em cards",
       "cards de indicador"
     ],
@@ -374,6 +384,7 @@
       ],
       "kpi": [
         " kpi",
+        " indicador",
         " indicadores"
       ]
     },
