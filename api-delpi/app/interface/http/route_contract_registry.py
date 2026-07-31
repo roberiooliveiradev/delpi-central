@@ -263,6 +263,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_unproductive_hours_ranking": RouteContract(
         "production_unproductive_hours_ranking", "list"
     ),
+    "get_production_pcp_orders_summary": RouteContract(
+        "production_pcp_orders_summary", "playbook_report"
+    ),
+    "get_production_pcp_orders_items": RouteContract(
+        "production_pcp_orders_items", "paged_list"
+    ),
+    "get_production_pcp_orders_ranking": RouteContract(
+        "production_pcp_orders_ranking", "list"
+    ),
     "get_production_oee": RouteContract("production_oee_detail", "paged_list"),
     "get_production_oee_appointment_by_id": RouteContract(
         "production_oee_appointment",

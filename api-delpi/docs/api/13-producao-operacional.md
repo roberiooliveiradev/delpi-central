@@ -63,6 +63,8 @@ Rotas REST que encapsulam SQL validado de produção, consumo, perdas, OPs e ran
 | GET | `/production/allocation-gaps` | `get_production_allocation_gaps` | Componentes sem empenho (travamento) |
 | GET | `/production/planned-vs-real-time` | `get_production_planned_vs_real_time` | Planejado × real por OP (OK/ATENÇÃO/ESTOURO) |
 
+**Catálogo PCP (view `VW_PCP_ORDENS_PRODUCAO`):** `/production/pcp-orders/{summary,items,ranking}` — ver [production-pcp-orders.md](./production-pcp-orders.md). Não confundir com `/production/orders/*` (SC2010).
+
 ---
 
 ## Compras — ranking global (`/purchases`)

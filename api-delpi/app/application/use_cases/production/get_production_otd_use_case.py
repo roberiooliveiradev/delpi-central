@@ -50,6 +50,15 @@ class GetProductionOtdUseCase:
         orders_page = self._on_time_delivery_repository.list_production_orders_otd(
             request
         )
+        orders_payload = orders_page.to_dict()
+        from app.domain.services.production.production_order_item_alias_service import (
+            ProductionOrderItemAliasService,
+        )
+
+        if isinstance(orders_payload.get("items"), list):
+            orders_payload["items"] = ProductionOrderItemAliasService.enrich_items(
+                orders_payload["items"]
+            )
 
         return {
             "branch": request.branch or "consolidated",
@@ -64,5 +73,5 @@ class GetProductionOtdUseCase:
                 ),
                 "late_percentage": late_percentage,
             },
-            "orders": orders_page.to_dict(),
+            "orders": orders_payload,
         }

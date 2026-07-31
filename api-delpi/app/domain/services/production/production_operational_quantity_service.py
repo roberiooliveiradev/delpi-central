@@ -87,18 +87,22 @@ class ProductionOperationalQuantityService:
         unit = cls._resolve_item_unit(item)
         profile = cls.resolve(unit)
         if not profile.converts_catalog_unit():
-            return dict(item)
+            normalized = dict(item)
+        else:
+            normalized = dict(item)
+            for field in cls.quantity_fields():
+                if field not in normalized:
+                    continue
+                normalized[field] = cls.convert_quantity(normalized[field], unit)
 
-        normalized = dict(item)
-        for field in cls.quantity_fields():
-            if field not in normalized:
-                continue
-            normalized[field] = cls.convert_quantity(normalized[field], unit)
+            if profile.display_unit:
+                normalized["unit"] = profile.display_unit
 
-        if profile.display_unit:
-            normalized["unit"] = profile.display_unit
+        from app.domain.services.production.production_order_item_alias_service import (
+            ProductionOrderItemAliasService,
+        )
 
-        return normalized
+        return ProductionOrderItemAliasService.enrich_list_item(normalized) or normalized
 
     @classmethod
     def normalize_items(cls, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

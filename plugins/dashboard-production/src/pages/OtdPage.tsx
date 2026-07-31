@@ -13,6 +13,10 @@ import { KpiCard } from "../components/KpiCard";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { OtdEvolutionChart } from "../components/OtdEvolutionChart";
 import { OtdStatusBadge } from "../components/OtdStatusBadge";
+import {
+  resolveOtdDaysLate,
+  resolveOtdListStatus,
+} from "../utils/productionOtdStatus";
 import { FieldLabel, useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { DP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { PRODUCTION_ROUTES } from "../constants/routes";
@@ -185,7 +189,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         header: "Status",
         headerHint: DP_HELP_TOOLTIPS.otd.table.status,
         sortable: true,
-        render: (row) => <OtdStatusBadge status={row.status} />,
+        render: (row) => <OtdStatusBadge status={resolveOtdListStatus(row)} />,
       },
       { key: "branch", header: OPERATIONAL_UNIT_COLUMN_LABEL, headerHint: DP_HELP_TOOLTIPS.otd.table.branch, sortable: true, render: (row) => formatOperationalUnitCode(row.branch) },
       { key: "production_order", header: "OP", headerHint: DP_HELP_TOOLTIPS.otd.table.productionOrder, sortable: true, render: (row) => row.production_order ?? "—" },
@@ -208,7 +212,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
         headerHint: DP_HELP_TOOLTIPS.otd.table.daysDiff,
         className: "dp-table__col--numeric",
         sortable: true,
-        render: (row) => formatInteger(row.days_diff),
+        render: (row) => formatInteger(resolveOtdDaysLate(row)),
       },
     ],
     []
@@ -413,7 +417,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
             row.order_item,
             row.product_code,
             row.product_description,
-            row.status,
+            resolveOtdListStatus(row),
           ]
             .filter(Boolean)
             .join(" ")

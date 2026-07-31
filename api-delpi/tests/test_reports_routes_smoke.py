@@ -13,6 +13,7 @@ from app.interface.http.routes.reports.reports_router import (
     UpsertScheduleBody,
     UpsertShortageItemNoteBody,
     create_report_definition,
+    delete_report_schedule,
     delete_report_shortage_item_note,
     get_report_definition,
     get_report_run,
@@ -264,6 +265,21 @@ def test_upsert_report_schedule_returns_meta(mock_build) -> None:
     assert_envelope_meta(
         body_json(response),
         operation_id="upsert_report_schedule",
+        shape="scalar",
+    )
+
+
+@patch(
+    "app.interface.http.routes.reports.reports_router.build_delete_report_schedule_use_case"
+)
+def test_delete_report_schedule_returns_meta(mock_build) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = True
+    mock_build.return_value = use_case
+    response = delete_report_schedule(definition_id=_DEF_ID)
+    assert_envelope_meta(
+        body_json(response),
+        operation_id="delete_report_schedule",
         shape="scalar",
     )
 

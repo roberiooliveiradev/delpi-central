@@ -1,10 +1,10 @@
 {
   "version": 1,
   "generatedAt": "2026-07-31",
-  "baselineOperationCount": 498,
-  "operationCount": 498,
-  "coveredCount": 496,
-  "gapCount": 1,
+  "baselineOperationCount": 504,
+  "operationCount": 504,
+  "coveredCount": 503,
+  "gapCount": 0,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -104,8 +104,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 39,
-      "covered": 39,
+      "total": 42,
+      "covered": 42,
       "gap": 0,
       "exempt": 0
     },
@@ -146,9 +146,9 @@
       "exempt": 0
     },
     "reports": {
-      "total": 15,
-      "covered": 14,
-      "gap": 1,
+      "total": 18,
+      "covered": 18,
+      "gap": 0,
       "exempt": 0
     },
     "retrabalhos": {
@@ -2282,6 +2282,33 @@
       "status": "covered"
     },
     {
+      "operationId": "get_production_pcp_orders_items",
+      "method": "GET",
+      "path": "/production/pcp-orders/items",
+      "module": "production",
+      "entity": "production_pcp_orders_items",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_pcp_orders_ranking",
+      "method": "GET",
+      "path": "/production/pcp-orders/ranking",
+      "module": "production",
+      "entity": "production_pcp_orders_ranking",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_pcp_orders_summary",
+      "method": "GET",
+      "path": "/production/pcp-orders/summary",
+      "module": "production",
+      "entity": "production_pcp_orders_summary",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
       "operationId": "get_production_planned_vs_real_time",
       "method": "GET",
       "path": "/production/planned-vs-real-time",
@@ -4082,6 +4109,33 @@
       "status": "covered"
     },
     {
+      "operationId": "list_report_shortage_item_notes",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/item-notes",
+      "module": "reports",
+      "entity": "report_shortage_item_note",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_report_shortage_item_note",
+      "method": "DELETE",
+      "path": "/reports/definitions/{definition_id}/item-notes/{product_code}",
+      "module": "reports",
+      "entity": "report_shortage_item_note",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upsert_report_shortage_item_note",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/item-notes/{product_code}",
+      "module": "reports",
+      "entity": "report_shortage_item_note",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_report_recipients",
       "method": "GET",
       "path": "/reports/definitions/{definition_id}/recipients",
@@ -4115,7 +4169,7 @@
       "module": "reports",
       "entity": "report_schedule",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_report_schedule",
