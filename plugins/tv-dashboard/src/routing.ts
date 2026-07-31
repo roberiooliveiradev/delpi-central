@@ -6,7 +6,9 @@ export type TvDashboardRoute =
   | { view: "edit"; id: string }
   | { view: "preview"; id: string }
   | { view: "share"; id: string }
-  | { view: "accept-invite"; id: string; token: string };
+  | { view: "accept-invite"; id: string; token: string }
+  | { view: "templates" }
+  | { view: "template-edit"; id: string };
 
 export function normalizeTvDashboardPath(pathname?: string) {
   const raw = pathname ?? (typeof window !== "undefined" ? window.location.pathname : PREFIX);
@@ -17,6 +19,11 @@ export function normalizeTvDashboardPath(pathname?: string) {
 export function parseTvDashboardRoute(path: string, search?: string): TvDashboardRoute {
   const pathOnly = path.split("?")[0] ?? path;
   if (pathOnly === PREFIX) return { view: "list" };
+
+  const templatesRoot = `${PREFIX}/templates`;
+  if (pathOnly === templatesRoot) return { view: "templates" };
+  const templateEdit = pathOnly.match(/^\/apps\/tv-dashboard\/templates\/([^/]+)$/);
+  if (templateEdit?.[1]) return { view: "template-edit", id: templateEdit[1] };
 
   const playlistsNew = `${PREFIX}/playlists/new`;
   if (pathOnly === playlistsNew) return { view: "new" };
@@ -41,7 +48,12 @@ export function parseTvDashboardRoute(path: string, search?: string): TvDashboar
   }
 
   const legacyMatch = pathOnly.match(/^\/apps\/tv-dashboard\/([^/]+)$/);
-  if (legacyMatch?.[1] && legacyMatch[1] !== "assets" && legacyMatch[1] !== "playlists") {
+  if (
+    legacyMatch?.[1] &&
+    legacyMatch[1] !== "assets" &&
+    legacyMatch[1] !== "playlists" &&
+    legacyMatch[1] !== "templates"
+  ) {
     return { view: "edit", id: legacyMatch[1] };
   }
 
@@ -66,6 +78,14 @@ export function playlistAcceptInvitePath(id: string, token: string) {
 
 export function newPlaylistPath() {
   return `${PREFIX}/playlists/new`;
+}
+
+export function templatesLibraryPath() {
+  return `${PREFIX}/templates`;
+}
+
+export function templateEditPath(id: string) {
+  return `${PREFIX}/templates/${id}`;
 }
 
 export { PREFIX as TV_DASHBOARD_PREFIX };

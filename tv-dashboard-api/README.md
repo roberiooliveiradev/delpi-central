@@ -27,6 +27,7 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 |---|---|
 | Programações | `/playlists` |
 | **Pacote MDD** | `GET /playlists/{id}/export`, `POST /playlists/import/preview`, `POST /playlists/import/apply` — ver [MDD](../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md) |
+| **Biblioteca de templates** | `GET/POST /slide-templates`, lifecycle publish/unpublish/archive/clone, `import/preview|apply`, `from-slide` — perm. `tv-dashboard.templates.manage` |
 | Telas | `/playlists/{id}/slides` |
 | Histórico | `/playlists/{id}/history` — até 500 versões, detalhes e restauração atômica |
 | Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |

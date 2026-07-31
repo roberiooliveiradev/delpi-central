@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Download, LayoutTemplate, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { LayoutTemplate, Save } from "lucide-react";
 import {
-  exportSlideAsTemplateMdd,
-  getSlidePreset,
-  importSlideTemplateMdd,
-  listSlidePresets,
-  type SlidePreset,
+  listPublishedSlideTemplates,
+  type SlideTemplate,
 } from "../../api/tvDashboardApi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import {
@@ -14,15 +11,10 @@ import {
 } from "../../content/comunicadoSlideThemes";
 import { DeckPropertySection } from "./DeckPropertySection";
 import { DeckSettingsAccordion } from "./DeckSettingsAccordion";
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
+import { SaveAsTemplateModal } from "../SaveAsTemplateModal";
+import { TemplateThumb } from "../TemplateThumb";
+import { useTvDashboardSession } from "../../context/TvDashboardSessionContext";
+import type { CSSProperties } from "react";
 
 function themeSwatchLabelStyle(theme: ComunicadoSlideTheme): CSSProperties {
   const color = theme.textColor;
@@ -33,130 +25,96 @@ function themeSwatchLabelStyle(theme: ComunicadoSlideTheme): CSSProperties {
   };
 }
 
-export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: boolean }) {
+type Props = {
+  compact?: boolean;
+};
+
+/**
+ * Painel Aplicar: só templates **published** do Postgres (cutover).
+ * Import/Export MDD ficam na Biblioteca (templates.manage).
+ */
+export function ComunicadoSlideTemplatesPanel({ compact = false }: Props) {
   const { config, applySlideTemplate, applySlideTheme } = useComunicadoEditor();
-  const [presets, setPresets] = useState<SlidePreset[]>([]);
+  const { canManageTemplates: canSaveAs } = useTvDashboardSession();
+  const [templates, setTemplates] = useState<SlideTemplate[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [applyingKey, setApplyingKey] = useState<string | null>(null);
-  const [busy, setBusy] = useState<"export" | "import" | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [saveOpen, setSaveOpen] = useState(false);
 
   useEffect(() => {
-    void listSlidePresets()
-      .then(setPresets)
+    void listPublishedSlideTemplates()
+      .then(setTemplates)
       .catch((err: Error) => setError(err.message));
   }, []);
 
-  const comunicadoPresets = useMemo(
+  const published = useMemo(
     () =>
-      presets.filter(
-        (preset) =>
-          preset.slideType === "native" &&
-          preset.key.startsWith("preset_comunicado") &&
-          preset.key !== "preset_comunicado",
+      templates.filter(
+        (item) =>
+          item.status === "published" &&
+          (item.nativeScreenKey === "custom_message" || !item.nativeScreenKey),
       ),
-    [presets],
+    [templates],
   );
 
-  async function applyPreset(presetKey: string) {
-    setApplyingKey(presetKey);
+  async function applyTemplate(item: SlideTemplate) {
+    setApplyingId(item.id);
     setError(null);
     try {
-      const detail = await getSlidePreset(presetKey);
-      if (detail.nativeConfig) applySlideTemplate(detail.nativeConfig);
+      // Cópia no slide — não muta o master.
+      if (item.nativeConfig) applySlideTemplate(item.nativeConfig);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao carregar template.");
+      setError(err instanceof Error ? err.message : "Erro ao aplicar template.");
     } finally {
-      setApplyingKey(null);
-    }
-  }
-
-  async function exportCurrentAsMdd() {
-    setBusy("export");
-    setError(null);
-    try {
-      const key = `preset_comunicado_${Date.now().toString(36)}`;
-      const blob = await exportSlideAsTemplateMdd({
-        key,
-        label: "Template do slide",
-        description: "Exportado do editor — versionar em slide_templates/.",
-        title: "Slide personalizado",
-        durationSec: 45,
-        nativeConfig: config as unknown as Record<string, unknown>,
-      });
-      downloadBlob(blob, `${key}.mdd`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao exportar MDD.");
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function onImportFile(file: File | null) {
-    if (!file) return;
-    setBusy("import");
-    setError(null);
-    try {
-      const parsed = await importSlideTemplateMdd(file);
-      if (parsed.nativeConfig) applySlideTemplate(parsed.nativeConfig);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao importar MDD.");
-    } finally {
-      setBusy(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setApplyingId(null);
     }
   }
 
   const body = (
     <>
-      <DeckPropertySection title="Templates" hint="Substitui o conteúdo do slide pelo layout do template (.mdd)." compact={compact}>
+      <DeckPropertySection
+        title="Templates"
+        hint="Aplica uma cópia do template publicado no slide atual."
+        compact={compact}
+      >
         {error ? <p className="td-error">{error}</p> : null}
+        {published.length === 0 && !error ? (
+          <p className="td-template-list__empty">Nenhum template publicado.</p>
+        ) : null}
         <ul className="td-template-list">
-          {comunicadoPresets.map((preset) => (
-            <li key={preset.key}>
+          {published.map((item) => (
+            <li key={item.id}>
               <button
                 type="button"
-                className="td-template-list__item"
-                disabled={applyingKey === preset.key}
-                onClick={() => void applyPreset(preset.key)}
+                className="td-template-list__item td-template-list__item--with-thumb"
+                disabled={applyingId === item.id}
+                onClick={() => void applyTemplate(item)}
               >
-                <span className="td-template-list__label">
-                  {applyingKey === preset.key ? "Aplicando…" : preset.label}
+                <span className="td-template-list__thumb">
+                  <TemplateThumb template={item} />
                 </span>
-                {!compact && preset.description ? (
-                  <span className="td-template-list__meta">{preset.description}</span>
+                <span className="td-template-list__label">
+                  {applyingId === item.id ? "Aplicando…" : item.label}
+                </span>
+                {!compact && item.description ? (
+                  <span className="td-template-list__meta">{item.description}</span>
                 ) : null}
               </button>
             </li>
           ))}
         </ul>
-        <div className="td-template-mdd-actions">
-          <button
-            type="button"
-            className="td-template-mdd-actions__btn"
-            disabled={busy !== null}
-            onClick={() => void exportCurrentAsMdd()}
-          >
-            <Download size={14} aria-hidden="true" />
-            {busy === "export" ? "Exportando…" : "Exportar MDD"}
-          </button>
-          <button
-            type="button"
-            className="td-template-mdd-actions__btn"
-            disabled={busy !== null}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload size={14} aria-hidden="true" />
-            {busy === "import" ? "Importando…" : "Importar MDD"}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".mdd,application/zip"
-            hidden
-            onChange={(event) => void onImportFile(event.target.files?.[0] ?? null)}
-          />
-        </div>
+        {canSaveAs ? (
+          <div className="td-template-mdd-actions">
+            <button
+              type="button"
+              className="td-template-mdd-actions__btn"
+              onClick={() => setSaveOpen(true)}
+            >
+              <Save size={14} aria-hidden="true" />
+              Salvar slide como template…
+            </button>
+          </div>
+        ) : null}
       </DeckPropertySection>
 
       <DeckPropertySection title="Temas de cor" hint="Aplica paleta ao fundo e aos blocos de texto/forma." compact={compact}>
@@ -182,6 +140,12 @@ export function ComunicadoSlideTemplatesPanel({ compact = false }: { compact?: b
           ))}
         </div>
       </DeckPropertySection>
+
+      <SaveAsTemplateModal
+        open={saveOpen}
+        nativeConfig={config as unknown as Record<string, unknown>}
+        onClose={() => setSaveOpen(false)}
+      />
     </>
   );
 

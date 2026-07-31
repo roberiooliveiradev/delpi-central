@@ -132,13 +132,21 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 | 4B.5 | Formas `star`, `chevron-right` + bloco `icon` (Lucide) |
 | 4B.6 | Crop de imagem (`imageCrop` x/y/w/h % + `comunicadoImageCrop.ts`) |
 | 4B.7 | **Templates `.mdd`** em `tv-dashboard-api/tv_app/content/slide_templates/` — fundo claro; export/import no editor; loader mescla com JSON legado |
+| 4B.8 | **Biblioteca de templates (plataforma)** — Postgres `slide_templates`, permissão `tv-dashboard.templates.manage`, draft/publish/archive, apply=cópia, editor `/templates`, seed system a partir dos `.mdd` |
 
-**Templates MDD (4B.7) — fluxo:**
+**Templates MDD (4B.7) — fluxo legado (seed):**
 
-1. Pasta versionada: `content/slide_templates/*.mdd` (OEE / Estoque TOP 5).
-2. API: `GET /slide-presets` lista JSON + MDD; `GET …/export`, `POST /slide-templates/export|import`.
-3. Editor (Templates): aplicar → editar no palco → **Exportar MDD** → commit na pasta → rebuild API.
-4. Padrão visual: fundo `#f8fafc`, tipografia `#0f172a`, tabela `banded` Delpi.
+1. Pasta versionada: `content/slide_templates/*.mdd` (OEE / Estoque TOP 5) — **fonte de seed**, não listagem runtime.
+2. API legado: `GET /slide-presets` (nativos/JSON); `POST /slide-templates/export|import` (efêmero no editor).
+3. Padrão visual: fundo `#f8fafc`, tipografia `#0f172a`, tabela `banded` Delpi.
+
+**Biblioteca (4B.8) — fluxo canônico:**
+
+1. Permissão `tv-dashboard.templates.manage` (curador) ≠ `write` (só aplica published).
+2. Home → **Biblioteca de templates** → CRUD / import preview→apply / publish / clone / export MDD.
+3. Editor de playlist → Templates: lista só **published** do Postgres; aplicar = cópia no `nativeConfig`.
+4. Migration `V012__slide_templates.sql` + seed no boot; `register-manifest.sh` após bump SemVer.
+5. Runbook RBAC: atribuir `templates.manage` só ao papel curador (não a todos com write).
 
 **Layout avançado (4D):**
 

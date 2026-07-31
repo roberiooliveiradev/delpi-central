@@ -136,6 +136,29 @@ export type SlidePresetDetail = {
   source?: string;
 };
 
+export type SlideTemplateStatus = "draft" | "published" | "archived";
+
+export type SlideTemplate = {
+  id: string;
+  key: string;
+  label: string;
+  description?: string | null;
+  nativeScreenKey: string;
+  nativeConfig: Record<string, unknown>;
+  durationSec?: number | null;
+  status: SlideTemplateStatus;
+  isSystem: boolean;
+  version: number;
+  thumbnailJson?: Record<string, unknown> | null;
+  ownerUserId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+  slideType?: "native";
+  title?: string;
+  source?: string;
+};
+
 export type TvDashboardUiContent = {
   messages?: Record<string, string>;
   presentation?: Record<string, string | number>;
@@ -735,6 +758,135 @@ export async function importSlideTemplateMdd(file: File): Promise<SlidePresetDet
   return unwrap(
     httpPostForm<ApiEnvelope<SlidePresetDetail & { key: string; label: string }>>(
       `${API_BASE}/slide-templates/import`,
+      form,
+    ),
+  );
+}
+
+export async function listPublishedSlideTemplates() {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: SlideTemplate[] }>>(
+      `${API_BASE}/slide-templates?status=published`,
+    ),
+  );
+  return data.items;
+}
+
+export async function listLibrarySlideTemplates(params?: {
+  status?: SlideTemplateStatus | "";
+  q?: string;
+  isSystem?: boolean;
+}) {
+  const search = new URLSearchParams();
+  if (params?.status) search.set("status", params.status);
+  if (params?.q?.trim()) search.set("q", params.q.trim());
+  if (typeof params?.isSystem === "boolean") search.set("isSystem", String(params.isSystem));
+  const qs = search.toString();
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: SlideTemplate[] }>>(
+      `${API_BASE}/slide-templates${qs ? `?${qs}` : ""}`,
+    ),
+  );
+  return data.items;
+}
+
+export async function getSlideTemplate(id: string) {
+  return unwrap(httpGet<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}`));
+}
+
+export async function createSlideTemplate(body: {
+  label: string;
+  description?: string;
+  nativeConfig: Record<string, unknown>;
+  nativeScreenKey?: string;
+  durationSec?: number;
+  key?: string;
+  publishNow?: boolean;
+}) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates`, body),
+  );
+}
+
+export async function createSlideTemplateFromSlide(body: {
+  label: string;
+  description?: string;
+  nativeConfig: Record<string, unknown>;
+  nativeScreenKey?: string;
+  durationSec?: number;
+}) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/from-slide`, body),
+  );
+}
+
+export async function updateSlideTemplate(
+  id: string,
+  body: {
+    version: number;
+    label?: string;
+    description?: string;
+    nativeConfig?: Record<string, unknown>;
+    nativeScreenKey?: string;
+    durationSec?: number;
+  },
+) {
+  return unwrap(
+    httpPatch<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}`, body),
+  );
+}
+
+export async function deleteSlideTemplate(id: string) {
+  return unwrap(httpDelete<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}`));
+}
+
+export async function publishSlideTemplate(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}/publish`, {}),
+  );
+}
+
+export async function unpublishSlideTemplate(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}/unpublish`, {}),
+  );
+}
+
+export async function archiveSlideTemplate(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}/archive`, {}),
+  );
+}
+
+export async function cloneSlideTemplate(id: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<SlideTemplate>>(`${API_BASE}/slide-templates/${id}/clone`, {}),
+  );
+}
+
+export async function exportLibrarySlideTemplateMdd(id: string): Promise<Blob> {
+  return httpGetBlob(`${API_BASE}/slide-templates/${encodeURIComponent(id)}/export`);
+}
+
+export async function previewImportSlideTemplateMdd(
+  file: File,
+): Promise<SlidePresetDetail & { key: string; label: string; description?: string | null }> {
+  const form = new FormData();
+  form.append("file", file);
+  return unwrap(
+    httpPostForm<
+      ApiEnvelope<SlidePresetDetail & { key: string; label: string; description?: string | null }>
+    >(`${API_BASE}/slide-templates/import/preview`, form),
+  );
+}
+
+export async function applyImportSlideTemplateMdd(file: File, publishNow = false) {
+  const form = new FormData();
+  form.append("file", file);
+  const qs = publishNow ? "?publishNow=true" : "";
+  return unwrap(
+    httpPostForm<ApiEnvelope<SlideTemplate>>(
+      `${API_BASE}/slide-templates/import/apply${qs}`,
       form,
     ),
   );

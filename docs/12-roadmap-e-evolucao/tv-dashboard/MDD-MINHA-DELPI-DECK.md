@@ -45,20 +45,26 @@ Duplicar playlist **dentro da mesma conta** continua sendo atalho rápido (não 
 |------|------|
 | **Exportar MDD** | Home → menu de contexto da programação → «Exportar MDD» |
 | **Importar MDD** | Home → card «Importar MDD» → upload → preview → confirmar |
-| **Templates de slide (`.mdd`)** | Editor → Templates → Exportar / Importar MDD; arquivos em `tv-dashboard-api/tv_app/content/slide_templates/` |
+| **Biblioteca de templates** | Home → card «Biblioteca de templates» (perm. `tv-dashboard.templates.manage`) → `/templates` |
+| **Aplicar template no slide** | Editor → Templates → só **published** (cópia no slide; não edita o master) |
+| **Seed system** | Pasta `tv-dashboard-api/tv_app/content/slide_templates/*.mdd` → upsert no boot |
 
 Fluxo de importação (programação): **preview → apply** (token de curta duração). A programação importada nasce **inativa**, com novo `publicToken` e novos UUIDs.
 
-### Templates de slide (pasta versionada)
+### Templates de slide (biblioteca + seed)
 
 | | |
 |--|--|
-| Pasta | `tv-dashboard-api/tv_app/content/slide_templates/` |
-| Manifest | `kind: slide_template` + `template.{key,label,description,…}` |
-| Serviço | `slide_template_mdd_service.py` + loader em `slide_preset_service.py` |
-| API | `GET /slide-presets/{key}/export` · `POST /slide-templates/export` · `POST /slide-templates/import` |
+| Tabela | `tv_dashboard.slide_templates` (V012) — `draft` / `published` / `archived`, `is_system`, `version` |
+| Permissão curador | `tv-dashboard.templates.manage` |
+| Pasta seed | `tv-dashboard-api/tv_app/content/slide_templates/` (git; não é listagem runtime) |
+| Manifest MDD | `kind: slide_template` + `template.{key,label,description,…}` |
+| Serviço | `slide_template_library_service.py` + `slide_template_mdd_service.py` |
+| API biblioteca | `GET/POST /slide-templates`, `PATCH/DELETE /{id}`, `publish` / `unpublish` / `archive` / `clone`, `import/preview` / `import/apply`, `export`, `from-slide` |
 
-Ciclo de edição: aplicar template no editor → ajustar → Exportar MDD → colocar/substituir o arquivo na pasta → commit.
+Ciclo de curadoria: Biblioteca → editar → **Publicar** → gestores com `write` aplicam no slide. Editar published volta a draft até republicar.
+
+**Ops:** após deploy, `register-manifest.sh` (manifest ≥ 0.2.0) e atribuir `tv-dashboard.templates.manage` ao papel curador no admin RBAC. Migration: `python -m tv_app.infrastructure.persistence.migrations_runner up` (nunca reset do schema).
 
 ---
 
@@ -69,6 +75,8 @@ Ciclo de edição: aplicar template no editor → ajustar → Exportar MDD → c
 | `GET` | `/apps/tv-dashboard-api/playlists/{id}/export` | Download `.mdd` |
 | `POST` | `/apps/tv-dashboard-api/playlists/import/preview` | `multipart` arquivo → relatório + `importToken` |
 | `POST` | `/apps/tv-dashboard-api/playlists/import/apply` | Cria programação a partir do token |
+| `GET` | `/apps/tv-dashboard-api/slide-templates?status=published` | Lista published (read/write) |
+| `GET` | `/apps/tv-dashboard-api/slide-templates` | Biblioteca completa (manage) |
 
 Apply (corpo JSON):
 

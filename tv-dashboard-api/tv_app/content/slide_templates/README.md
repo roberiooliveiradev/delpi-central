@@ -1,10 +1,9 @@
-"""README — templates de slide MDD (Minha Delpi Deck).
+# Templates de slide MDD (seed)
 
-Coloque um arquivo `.mdd` por template nesta pasta.
-O loader (`slide_preset_service`) lista e resolve automaticamente.
+Arquivos `.mdd` nesta pasta alimentam o **seed** de templates `is_system` no Postgres (`slide_templates`) no boot da API.
 
-Edição: no editor do Painéis TV, aplique o template, ajuste o slide e
-exporte novamente como `.mdd` (commit nesta pasta).
+- **Runtime / Aplicar no editor:** lista só templates **published** do banco (Biblioteca).
+- **Curadoria:** MFE `/apps/tv-dashboard/templates` com permissão `tv-dashboard.templates.manage`.
+- **Não** editar o banco diretamente pela pasta — para templates de sistema versionados no git, atualize o `.mdd` e reinicie (seed idempotente).
 
-Ver: docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md
-"""
+Ver: `docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md` · PLAYBOOK 4B.8

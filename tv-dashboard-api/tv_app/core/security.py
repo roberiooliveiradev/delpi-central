@@ -8,6 +8,7 @@ from fastapi import Request
 TV_READ = "tv-dashboard.read"
 TV_WRITE = "tv-dashboard.write"
 TV_MANAGE = "tv-dashboard.manage"
+TV_TEMPLATES_MANAGE = "tv-dashboard.templates.manage"
 TV_ADMIN = "tv-dashboard.admin"
 
 

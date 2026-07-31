@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
-import { MonitorPlay, Plus, Search, Upload } from "lucide-react";
+import { MonitorPlay, Plus, Search, Upload, LayoutTemplate } from "lucide-react";
 
 import {
   activatePlaylist,
@@ -41,6 +41,8 @@ type Props = {
   onCreate: () => void;
   onPreview: (id: string) => void;
   onShare: (id: string) => void;
+  onOpenTemplates?: () => void;
+  canManageTemplates?: boolean;
 };
 
 export function filterPlaylists(
@@ -67,7 +69,14 @@ export function filterPlaylists(
   );
 }
 
-export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
+export function PlaylistsPage({
+  onOpen,
+  onCreate,
+  onPreview,
+  onShare,
+  onOpenTemplates,
+  canManageTemplates = false,
+}: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -271,6 +280,21 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
               Traga uma programação de outra conta via arquivo .mdd (Minha Delpi Deck).
             </span>
           </button>
+          {canManageTemplates && onOpenTemplates ? (
+            <button
+              type="button"
+              className="td-home__create-card"
+              onClick={onOpenTemplates}
+            >
+              <span className="td-home__create-icon" aria-hidden="true">
+                <LayoutTemplate size={28} strokeWidth={2} />
+              </span>
+              <span className="td-home__create-title">Biblioteca de templates</span>
+              <span className="td-home__create-hint">
+                Criar, publicar e importar templates de slide (.mdd) para a organização.
+              </span>
+            </button>
+          ) : null}
         </div>
       </section>
 

@@ -4,7 +4,7 @@
   "name": "Painéis TV",
   "description": "Programações rotativas para TVs corporativas com link público",
   "icon": "monitor-icon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/tv-dashboard",
   "entry": "/apps/tv-dashboard/assets/remoteEntry.js",
@@ -33,6 +33,12 @@
       "code": "tv-dashboard.manage",
       "name": "Gerenciar Painéis TV",
       "description": "Ativar, desativar e excluir links públicos",
+      "module": "tv-dashboard"
+    },
+    {
+      "code": "tv-dashboard.templates.manage",
+      "name": "Gerenciar biblioteca de templates",
+      "description": "Criar, editar, publicar e importar/exportar templates de slide (MDD) na Biblioteca",
       "module": "tv-dashboard"
     },
     {

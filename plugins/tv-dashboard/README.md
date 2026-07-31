@@ -53,6 +53,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Fontes personalizadas:** upload WOFF2/TTF/OTF na faixa Fonte, persistido como mídia da playlist e disponível no seletor tipográfico
 - **Cores recentes** no seletor de cor; **export PNG/PDF/PPTX (MVP)** na faixa Início
 - **MDD (Minha Delpi Deck):** padrão oficial de exportação/importação da **programação completa** (`.mdd`) — home «Exportar MDD» / «Importar MDD»; ver [MDD](../../docs/12-roadmap-e-evolucao/tv-dashboard/MDD-MINHA-DELPI-DECK.md)
+- **Biblioteca de templates (4B.8):** home «Biblioteca de templates» (perm. `tv-dashboard.templates.manage`) — CRUD, publish/draft/archive, import preview→apply, editor em `/templates/:id`; no editor de playlist só **aplicar published** (cópia). Runbook: `register-manifest.sh` + atribuir permissão ao curador no RBAC.
 - **Tabela (canvas):** grade estática editável, separada de `table_view` (dados live)
 - **Notas do apresentador:** salvas por tela; preview admin com `?presenter=1` mostra notas e próxima tela sem afetar o kiosk
 - **Presença no editor:** chip «Também editando» via WebSocket (sem merge CRDT)

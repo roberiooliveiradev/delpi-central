@@ -4,6 +4,7 @@ import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
 import { DataSourceDuplicateChoiceProvider } from "./context/DataSourceDuplicateChoiceProvider";
 import { NoticeDialogProvider } from "./context/NoticeDialogProvider";
+import { TvDashboardSessionProvider } from "./context/TvDashboardSessionContext";
 import { useSuppressBrowserContextMenu } from "./hooks/useSuppressBrowserContextMenu";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
@@ -11,6 +12,8 @@ import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
 import { PlaylistPreviewPage } from "./pages/PlaylistPreviewPage";
 import { AcceptPlaylistInvitePage, PlaylistSharePage } from "./pages/PlaylistSharePage";
 import { PlaylistsPage } from "./pages/PlaylistsPage";
+import { TemplateEditorPage } from "./pages/TemplateEditorPage";
+import { TemplateLibraryPage } from "./pages/TemplateLibraryPage";
 import {
   newPlaylistPath,
   normalizeTvDashboardPath,
@@ -18,6 +21,8 @@ import {
   playlistPath,
   playlistPreviewPath,
   playlistSharePath,
+  templateEditPath,
+  templatesLibraryPath,
 } from "./routing";
 import {
   isDeckEditorSurfaceActive,
@@ -25,15 +30,25 @@ import {
 } from "./utils/editorSurface";
 import { preparePreviewNavigation } from "./utils/previewHandoff";
 import { TV_DASHBOARD_ROOT_CLASS } from "./constants/pluginRootClass";
+import { canManageTemplates } from "./utils/tvDashboardPermissions";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  permissions?: string[];
+  isSuperadmin?: boolean;
+  hasPermission?: (code: string) => boolean;
 };
 
 export { isDeckEditorSurfaceActive, shouldKeepEditorUnderPreview } from "./utils/editorSurface";
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+export default function App({
+  getAccessToken,
+  pathname: pathnameFromHost,
+  permissions,
+  isSuperadmin,
+  hasPermission,
+}: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   useSuppressBrowserContextMenu(true);
 
@@ -47,6 +62,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       ),
     [path],
   );
+  const templatesManage = canManageTemplates({ permissions, isSuperadmin, hasPermission });
 
   const editorSessionPlaylistIdRef = useRef<string | null>(null);
   if (route.view === "edit") {
@@ -79,14 +95,32 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
       case "list":
         return (
           <PlaylistsPage
+            canManageTemplates={templatesManage}
             onOpen={(id) => navigate(playlistPath(id))}
             onCreate={() => navigate(newPlaylistPath())}
+            onOpenTemplates={() => navigate(templatesLibraryPath())}
             onPreview={(id) => {
               void preparePreviewNavigation(id).then(() => {
                 navigate(playlistPreviewPath(id));
               });
             }}
             onShare={(id) => navigate(playlistSharePath(id))}
+          />
+        );
+      case "templates":
+        return (
+          <TemplateLibraryPage
+            canManage={templatesManage}
+            onBack={() => navigate("/apps/tv-dashboard")}
+            onOpen={(id) => navigate(templateEditPath(id))}
+          />
+        );
+      case "template-edit":
+        return (
+          <TemplateEditorPage
+            templateId={route.id}
+            canManage={templatesManage}
+            onBack={() => navigate(templatesLibraryPath())}
           />
         );
       case "new":
@@ -151,6 +185,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   }
 
   return (
+    <TvDashboardSessionProvider permissions={permissions} isSuperadmin={isSuperadmin}>
     <NoticeDialogProvider>
       <ConfirmDialogProvider>
         <DataSourceDuplicateChoiceProvider>
@@ -182,5 +217,6 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         </DataSourceDuplicateChoiceProvider>
       </ConfirmDialogProvider>
     </NoticeDialogProvider>
+    </TvDashboardSessionProvider>
   );
 }

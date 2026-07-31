@@ -22,4 +22,6 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua tv-dashboard.read ao perfil desejado no RBAC."
+echo "[OK] Atribua permissões no RBAC: tv-dashboard.read / write / manage."
+echo "[OK] Curadores de template: tv-dashboard.templates.manage (não conceder a todos com write)."
+echo "[OK] Manifest v$(python3 -c "import json; print(json.load(open('$MANIFEST'))['version'])" 2>/dev/null || echo '?') registrado."
