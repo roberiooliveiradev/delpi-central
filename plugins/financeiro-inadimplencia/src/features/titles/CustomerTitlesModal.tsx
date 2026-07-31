@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ExcelExportButton } from "@delpi/plugin-ui/index";
+import { ExcelExportButton, ToolbarSelectField } from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
 import { FiModal } from "../../components/FiModal";
@@ -187,43 +187,43 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
         }}
         toolbarExtra={
           <>
-            <label className="fi-field fi-field--inline">
-              <span>Status</span>
-              <select
-                value={tableState.status}
-                onChange={(event) =>
-                  setTableState((current) => ({
-                    ...current,
-                    status: event.target.value as TituloStatus,
-                    page: 1,
-                  }))
-                }
-              >
-                <option value="late">Somente atrasados</option>
-                <option value="on_time">Em dia</option>
-                <option value="all">Todos</option>
-              </select>
-            </label>
+            <ToolbarSelectField
+              label="Status"
+              value={tableState.status}
+              allowEmptyOption={false}
+              options={[
+                { value: "late", label: "Somente atrasados" },
+                { value: "on_time", label: "Em dia" },
+                { value: "all", label: "Todos" },
+              ]}
+              onChange={(status) =>
+                setTableState((current) => ({
+                  ...current,
+                  status: status as TituloStatus,
+                  page: 1,
+                }))
+              }
+            />
 
-            <label className="fi-field fi-field--inline">
-              <span>Faixa</span>
-              <select
-                value={tableState.delayRange}
-                onChange={(event) =>
-                  setTableState((current) => ({
-                    ...current,
-                    delayRange: event.target.value,
-                    page: 1,
-                  }))
-                }
-              >
-                {DELAY_RANGE_OPTIONS.map((option) => (
-                  <option key={option.value || "all"} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ToolbarSelectField
+              label="Faixa"
+              value={tableState.delayRange}
+              allowEmptyOption
+              placeholderOption="Todas as faixas"
+              options={DELAY_RANGE_OPTIONS.filter((option) => option.value !== "").map(
+                (option) => ({
+                  value: option.value,
+                  label: option.label,
+                }),
+              )}
+              onChange={(delayRange) =>
+                setTableState((current) => ({
+                  ...current,
+                  delayRange,
+                  page: 1,
+                }))
+              }
+            />
           </>
         }
         headerActions={

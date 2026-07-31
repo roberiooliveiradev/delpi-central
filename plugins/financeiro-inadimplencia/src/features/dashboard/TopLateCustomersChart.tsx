@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 import {
   Bar,
   BarChart,
@@ -130,14 +131,9 @@ export function TopLateCustomersChart({ onOpenRanking }: TopLateCustomersChartPr
       hint={`Top ${TOP_CHART_LIMIT} do mês atual (${monthLabel}) por títulos em atraso.`}
       headerActions={
         onOpenRanking ? (
-          <button
-            type="button"
-            className="fi-btn fi-btn--secondary"
-            onClick={onOpenRanking}
-            disabled={loading}
-          >
+          <ActionButton variant="ghost" onClick={onOpenRanking} disabled={loading}>
             Ver ranking
-          </button>
+          </ActionButton>
         ) : undefined
       }
     >

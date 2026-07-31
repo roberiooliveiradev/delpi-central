@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 
 type FiModalProps = {
   open: boolean;
@@ -45,14 +46,10 @@ export function FiModal({ open, title, subtitle, onClose, children }: FiModalPro
             </h2>
             {subtitle ? <p className="fi-modal__subtitle">{subtitle}</p> : null}
           </div>
-          <button
-            type="button"
-            className="fi-btn fi-btn--secondary fi-modal__close"
-            onClick={onClose}
-          >
+          <ActionButton variant="ghost" onClick={onClose} aria-label="Fechar">
             <X size={16} aria-hidden="true" />
             Fechar
-          </button>
+          </ActionButton>
         </header>
         <div className="fi-modal__body">{children}</div>
       </div>

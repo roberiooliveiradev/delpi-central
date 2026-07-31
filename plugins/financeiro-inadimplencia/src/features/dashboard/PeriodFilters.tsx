@@ -1,5 +1,11 @@
+import {
+  ActionButton,
+  SegmentToggle,
+} from "@delpi/plugin-ui/index";
+
 import type { PeriodFormState, PeriodPreset } from "../../types/inadimplencia";
 import { resolvePeriodPreset, validatePeriodRange } from "../../utils/period";
+import { FilterBarShell, FiTextField } from "../../components/fiFormFields";
 
 type PeriodFiltersProps = {
   value: PeriodFormState;
@@ -38,62 +44,60 @@ export function PeriodFilters({
   };
 
   return (
-    <section className="fi-filters" aria-label="Filtros de período">
-      <div className="fi-filters__presets" role="group" aria-label="Períodos rápidos">
-        {PRESETS.map((preset) => (
-          <button
-            key={preset.value}
-            type="button"
-            className={`fi-chip${value.preset === preset.value ? " fi-chip--active" : ""}`}
-            onClick={() => handlePreset(preset.value)}
+    <>
+      <FilterBarShell
+        leading={
+          <SegmentToggle
+            prefix="fi"
+            idPrefix="fi-period"
+            ariaLabel="Períodos rápidos"
+            options={PRESETS}
+            value={value.preset}
+            onChange={handlePreset}
             disabled={disabled}
-            aria-pressed={value.preset === preset.value}
-          >
-            {preset.label}
-          </button>
-        ))}
-      </div>
-
-      {value.preset === "custom" ? (
-        <div className="fi-filters__custom">
-          <label className="fi-field">
-            <span>Data inicial</span>
-            <input
+          />
+        }
+      >
+        {value.preset === "custom" ? (
+          <>
+            <FiTextField
+              id="fi-period-start"
+              label="Data inicial"
               type="date"
               value={value.startDate}
               disabled={disabled}
-              onChange={(event) =>
-                onChange({ ...value, startDate: event.target.value, preset: "custom" })
+              onChange={(startDate) =>
+                onChange({ ...value, startDate, preset: "custom" })
               }
             />
-          </label>
-          <label className="fi-field">
-            <span>Data final (exclusiva)</span>
-            <input
+            <FiTextField
+              id="fi-period-end"
+              label="Data final (exclusiva)"
               type="date"
               value={value.endDate}
               disabled={disabled}
-              onChange={(event) =>
-                onChange({ ...value, endDate: event.target.value, preset: "custom" })
+              onChange={(endDate) =>
+                onChange({ ...value, endDate, preset: "custom" })
               }
             />
-          </label>
-          <button
-            type="button"
-            className="fi-btn fi-btn--primary"
-            disabled={disabled || Boolean(validatePeriodRange(value.startDate, value.endDate))}
-            onClick={onApplyCustom}
-          >
-            Aplicar período
-          </button>
-        </div>
-      ) : null}
+            <ActionButton
+              variant="primary"
+              disabled={
+                disabled || Boolean(validatePeriodRange(value.startDate, value.endDate))
+              }
+              onClick={onApplyCustom}
+            >
+              Aplicar período
+            </ActionButton>
+          </>
+        ) : null}
+      </FilterBarShell>
 
       {validationError ? (
         <p className="fi-filters__error" role="alert">
           {validationError}
         </p>
       ) : null}
-    </section>
+    </>
   );
 }

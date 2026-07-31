@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 
 import {
   fetchInadimplenciaClientes,
@@ -358,30 +359,27 @@ export function MonthlyEvolutionChart({
               className="fi-field--chart-filter-multi"
             />
           </div>
-          <label className="fi-check fi-check--novos-negocios">
-            <input
-              type="checkbox"
-              checked={novosNegocios}
-              disabled={optionsLoading || loading}
-              onChange={(event) => {
-                const enabled = event.target.checked;
-                setNovosNegocios(enabled);
-                setSelectionSyncedFor(periodKey);
-                const nextKeys = enabled
-                  ? customerOptions
-                      .filter((option) => isNovosNegociosCustomer(option.cliente_codigo))
-                      .map((option) => option.key)
-                  : customerOptions.map((option) => option.key);
-                setSelectedKeys(nextKeys);
-                if (!enabled) {
-                  setFilteredMensal(null);
-                  setFilteredError(null);
-                  setFilteredLoading(false);
-                }
-              }}
-            />
-            <span>Novos Negócios</span>
-          </label>
+          <NativeCheckboxControl
+            className="fi-chart-filters__novos-negocios"
+            checked={novosNegocios}
+            disabled={optionsLoading || loading}
+            label="Novos Negócios"
+            onChange={(enabled) => {
+              setNovosNegocios(enabled);
+              setSelectionSyncedFor(periodKey);
+              const nextKeys = enabled
+                ? customerOptions
+                    .filter((option) => isNovosNegociosCustomer(option.cliente_codigo))
+                    .map((option) => option.key)
+                : customerOptions.map((option) => option.key);
+              setSelectedKeys(nextKeys);
+              if (!enabled) {
+                setFilteredMensal(null);
+                setFilteredError(null);
+                setFilteredLoading(false);
+              }
+            }}
+          />
         </div>
       }
     >

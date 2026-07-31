@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActionButton, ExcelExportButton } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  ExcelExportButton,
+  NativeCheckboxControl,
+  ToolbarSelectField,
+} from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
 import {
@@ -227,45 +232,33 @@ export function ClientesTable({
         }}
         toolbarExtra={
           <>
-            <label className="fi-field fi-field--inline">
-              <span>Ordenar</span>
-              <select
-                value={sortBy}
-                onChange={(event) =>
-                  onSortChange(event.target.value as ClientesSortBy, sortDir)
-                }
-                aria-label="Campo de ordenação"
-              >
-                {CLIENTES_SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <ToolbarSelectField
+              label="Ordenar"
+              value={sortBy}
+              allowEmptyOption={false}
+              options={CLIENTES_SORT_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+              onChange={(value) => onSortChange(value as ClientesSortBy, sortDir)}
+            />
 
-            <label className="fi-field fi-field--inline">
-              <span>Direção</span>
-              <select
-                value={sortDir}
-                onChange={(event) =>
-                  onSortChange(sortBy, event.target.value as SortDirection)
-                }
-                aria-label="Direção da ordenação"
-              >
-                <option value="desc">Descendente</option>
-                <option value="asc">Ascendente</option>
-              </select>
-            </label>
+            <ToolbarSelectField
+              label="Direção"
+              value={sortDir}
+              allowEmptyOption={false}
+              options={[
+                { value: "desc", label: "Descendente" },
+                { value: "asc", label: "Ascendente" },
+              ]}
+              onChange={(value) => onSortChange(sortBy, value as SortDirection)}
+            />
 
-            <label className="fi-check">
-              <input
-                type="checkbox"
-                checked={onlyWithDelays}
-                onChange={(event) => onOnlyWithDelaysChange(event.target.checked)}
-              />
-              Somente com atraso
-            </label>
+            <NativeCheckboxControl
+              checked={onlyWithDelays}
+              label="Somente com atraso"
+              onChange={onOnlyWithDelaysChange}
+            />
           </>
         }
         headerActions={

@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { ActionButton } from "@delpi/plugin-ui/index";
 
 type PageHeaderProps = {
   title: string;
@@ -57,19 +58,14 @@ export function PageHeader({
               </p>
             ) : null}
             {onRefresh ? (
-              <button
-                type="button"
-                className="fi-btn fi-btn--primary"
-                onClick={onRefresh}
-                disabled={refreshing}
-              >
+              <ActionButton variant="primary" onClick={onRefresh} disabled={refreshing}>
                 <RefreshCw
                   size={16}
                   aria-hidden="true"
                   className={refreshing ? "fi-spin" : undefined}
                 />
                 {refreshing ? "Atualizando…" : "Atualizar"}
-              </button>
+              </ActionButton>
             ) : null}
           </div>
         </div>
