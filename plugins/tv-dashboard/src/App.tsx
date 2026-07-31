@@ -74,6 +74,8 @@ export default function App({
   const isFullscreenView = route.view === "preview";
   const isDeckEditor = route.view === "edit";
   const isTemplateEditor = route.view === "template-edit";
+  const isLibraryShell =
+    route.view === "list" || route.view === "templates" || route.view === "share";
   const playlistId =
     route.view === "edit" || route.view === "preview" || route.view === "share"
       ? route.id
@@ -200,8 +202,16 @@ export default function App({
             .filter(Boolean)
             .join(" ")}
         >
-          <div className={`td-app-shell${deckChrome ? " td-app-shell--deck" : ""}`}>
-            {!isFullscreenView && !isDeckEditor && !isTemplateEditor ? (
+          <div
+            className={[
+              "td-app-shell",
+              deckChrome ? "td-app-shell--deck" : null,
+              isLibraryShell ? "td-app-shell--library" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {!isFullscreenView && !isDeckEditor && !isTemplateEditor && !isLibraryShell ? (
               <header className="td-hero">
                 <p className="td-eyebrow">Operações · Displays</p>
                 <h1 className="td-title">Painéis TV</h1>

@@ -15,7 +15,7 @@ export function PlaylistHomeThumb({ playlist }: Props) {
   const cover = playlist.coverSlide as Slide | null | undefined;
   if (!cover) {
     return (
-      <span className="td-home__card-thumb-fallback" aria-hidden="true">
+      <span className="td-library-card-thumb-fallback" aria-hidden="true">
         <MonitorPlay size={28} strokeWidth={1.6} />
       </span>
     );

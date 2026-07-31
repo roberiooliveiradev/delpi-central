@@ -21,6 +21,8 @@ import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading
 import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { HostContainedDialog } from "../components/ui/Modal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
+import { TvLibraryPageLayout } from "../layout/TvLibraryPageLayout";
+import { TvFilterBarShell, TvNavigationCard, TvPageHeader } from "../layout/tvUi";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 type Props = {
@@ -37,7 +39,7 @@ function statusLabel(status: string) {
   return "Rascunho";
 }
 
-/** Mesmo layout da home (`td-home`), com ContextMenu do plugin-ui. */
+/** Biblioteca de templates — mesmo shell da home (TvLibraryPageLayout). */
 export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<SlideTemplate[]>([]);
@@ -194,104 +196,113 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
 
   if (!canManage) {
     return (
-      <div className="td-home">
-        <section className="td-home__greeting" aria-label="Biblioteca de templates">
-          <button type="button" className="td-home__back" onClick={onBack}>
-            <ArrowLeft size={16} aria-hidden="true" />
-            Voltar
-          </button>
-          <h2 className="td-home__hello">Biblioteca de templates</h2>
-          <p className="td-home__empty">{emptyHint}</p>
-        </section>
-      </div>
+      <TvLibraryPageLayout
+        header={
+          <TvPageHeader
+            eyebrow="Operações · Displays"
+            nav={
+              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+                <ArrowLeft size={16} aria-hidden="true" />
+                Voltar
+              </button>
+            }
+            title="Biblioteca de templates"
+            subtitle="Templates de slide compartilhados na organização."
+          />
+        }
+      >
+        <div className="td-library-empty">
+          <p>{emptyHint}</p>
+        </div>
+      </TvLibraryPageLayout>
     );
   }
 
   return (
-    <div className="td-home">
-      <section className="td-home__greeting" aria-label="Biblioteca de templates">
-        <button type="button" className="td-home__back" onClick={onBack}>
-          <ArrowLeft size={16} aria-hidden="true" />
-          Voltar
-        </button>
-        <h2 className="td-home__hello">Biblioteca de templates</h2>
-        <div className="td-home__create-row">
-          <button
-            type="button"
-            className="td-home__create-card"
-            disabled={importBusy}
-            onClick={() => fileRef.current?.click()}
-          >
-            <span className="td-home__create-icon" aria-hidden="true">
-              <Upload size={28} strokeWidth={2} />
-            </span>
-            <span className="td-home__create-title">
-              {importBusy ? "Validando…" : "Importar MDD"}
-            </span>
-            <span className="td-home__create-hint">
-              Preview e confirmação antes de gravar como rascunho.
-            </span>
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".mdd,application/zip"
-            hidden
-            onChange={(e) => void onPickImport(e.target.files?.[0] ?? null)}
-          />
-        </div>
-      </section>
-
-      <section className="td-home__library" aria-label="Templates">
-        <div className="td-home__library-bar">
-          <div className="td-home__filters" role="tablist" aria-label="Filtrar templates">
-            {(
-              [
-                ["", "Todos"],
-                ["published", "Publicados"],
-                ["draft", "Rascunhos"],
-                ["archived", "Arquivados"],
-                ["system", "Sistema"],
-                ["custom", "Custom"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id || "all"}
-                type="button"
-                role="tab"
-                aria-selected={filter === id}
-                className={[
-                  "td-home__filter",
-                  filter === id ? "td-home__filter--active" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => setFilter(id)}
-              >
-                {label}
+    <>
+      <TvLibraryPageLayout
+        header={
+          <TvPageHeader
+            eyebrow="Operações · Displays"
+            nav={
+              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+                <ArrowLeft size={16} aria-hidden="true" />
+                Voltar
               </button>
-            ))}
-          </div>
-          <label className="td-home__search">
-            <Search size={16} aria-hidden="true" />
-            <span className="td-sr-only">Buscar template</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar template"
-              autoComplete="off"
+            }
+            title="Biblioteca de templates"
+            subtitle="Criar, publicar e importar templates de slide (.mdd) para a organização."
+          />
+        }
+        actions={
+          <>
+            <TvNavigationCard
+              icon={<Upload size={22} strokeWidth={2} />}
+              title={importBusy ? "Validando…" : "Importar MDD"}
+              description="Preview e confirmação antes de gravar como rascunho."
+              disabled={importBusy}
+              onClick={() => fileRef.current?.click()}
             />
-          </label>
-        </div>
-
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".mdd,application/zip"
+              hidden
+              onChange={(e) => void onPickImport(e.target.files?.[0] ?? null)}
+            />
+          </>
+        }
+        toolbar={
+          <TvFilterBarShell ariaLabel="Filtrar templates">
+            <div className="td-filter-pills" role="tablist" aria-label="Filtrar templates">
+              {(
+                [
+                  ["", "Todos"],
+                  ["published", "Publicados"],
+                  ["draft", "Rascunhos"],
+                  ["archived", "Arquivados"],
+                  ["system", "Sistema"],
+                  ["custom", "Custom"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id || "all"}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === id}
+                  className={[
+                    "td-filter-pill",
+                    filter === id ? "td-filter-pill--active" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => setFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label className="td-library-search">
+              <Search size={16} aria-hidden="true" />
+              <span className="td-sr-only">Buscar template</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar template"
+                autoComplete="off"
+              />
+            </label>
+          </TvFilterBarShell>
+        }
+      >
         {error ? <div className="td-state">{error}</div> : null}
         {loading ? (
           <TvDashboardScreenLoading label="Carregando templates…" variant="embedded" />
         ) : null}
 
         {!loading && !error && items.length === 0 ? (
-          <div className="td-home__empty">
+          <div className="td-library-empty">
             <LayoutTemplate size={28} aria-hidden="true" />
             <p>{emptyHint}</p>
             <button
@@ -306,11 +317,11 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
         ) : null}
 
         {!loading && !error && items.length > 0 ? (
-          <ul className="td-home__grid">
+          <ul className="td-library-grid" aria-label="Templates">
             {items.map((item) => (
               <li
                 key={item.id}
-                className="td-home__card"
+                className="td-library-card"
                 onContextMenu={(event) => {
                   event.preventDefault();
                   setContextMenu({
@@ -342,7 +353,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
             ))}
           </ul>
         ) : null}
-      </section>
+      </TvLibraryPageLayout>
 
       {contextMenu ? (
         <TemplateLibraryContextMenu
@@ -392,6 +403,6 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
           </div>
         ) : null}
       </HostContainedDialog>
-    </div>
+    </>
   );
 }

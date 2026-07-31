@@ -206,7 +206,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
 
   if (!canManage) {
     return (
-      <div className="td-home">
+      <div className="td-page-stack">
         <p className="td-state">Você não tem permissão para editar templates.</p>
         <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
           Voltar
@@ -220,7 +220,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   }
   if (error) {
     return (
-      <div className="td-home">
+      <div className="td-page-stack">
         <p className="td-state">{error}</p>
         <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
           Voltar

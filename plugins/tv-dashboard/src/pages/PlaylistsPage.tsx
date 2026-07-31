@@ -21,6 +21,8 @@ import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { useConfirm } from "../context/ConfirmDialogProvider";
+import { TvLibraryPageLayout } from "../layout/TvLibraryPageLayout";
+import { TvFilterBarShell, TvNavigationCard, TvPageHeader } from "../layout/tvUi";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
 function formatLastPresented(value?: string | null) {
@@ -253,94 +255,80 @@ export function PlaylistsPage({
   const greeting = useMemo(() => greetingPt(), []);
 
   return (
-    <div className="td-home">
-      <section className="td-home__greeting" aria-label="Início">
-        <h2 className="td-home__hello">{greeting}</h2>
-        <div className="td-home__create-row">
-          <button
-            type="button"
-            className="td-home__create-card"
-            onClick={onCreate}
-          >
-            <span className="td-home__create-icon" aria-hidden="true">
-              <Plus size={28} strokeWidth={2} />
-            </span>
-            <span className="td-home__create-title">Nova programação</span>
-            <span className="td-home__create-hint">
-              Monte playlists de telas e gere um link público para TVs.
-            </span>
-          </button>
-          <button
-            type="button"
-            className="td-home__create-card"
-            onClick={() => setImportOpen(true)}
-          >
-            <span className="td-home__create-icon" aria-hidden="true">
-              <Upload size={28} strokeWidth={2} />
-            </span>
-            <span className="td-home__create-title">Importar MDD</span>
-            <span className="td-home__create-hint">
-              Traga uma programação de outra conta via arquivo .mdd (Minha Delpi Deck).
-            </span>
-          </button>
-          {canManageTemplates && onOpenTemplates ? (
-            <button
-              type="button"
-              className="td-home__create-card"
-              onClick={onOpenTemplates}
-            >
-              <span className="td-home__create-icon" aria-hidden="true">
-                <LayoutTemplate size={28} strokeWidth={2} />
-              </span>
-              <span className="td-home__create-title">Biblioteca de templates</span>
-              <span className="td-home__create-hint">
-                Criar, publicar e importar templates de slide (.mdd) para a organização.
-              </span>
-            </button>
-          ) : null}
-        </div>
-      </section>
-
-      <section className="td-home__library" aria-label="Programações">
-        <div className="td-home__library-bar">
-          <div className="td-home__filters" role="tablist" aria-label="Filtrar programações">
-            {(
-              [
-                ["recent", "Recentes"],
-                ["active", "Ativas"],
-                ["inactive", "Inativas"],
-              ] as const
-            ).map(([id, label]) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={filter === id}
-                className={[
-                  "td-home__filter",
-                  filter === id ? "td-home__filter--active" : null,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => setFilter(id)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <label className="td-home__search">
-            <Search size={16} aria-hidden="true" />
-            <span className="td-sr-only">Buscar programação</span>
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Buscar programação"
-              autoComplete="off"
+    <>
+      <TvLibraryPageLayout
+        header={
+          <TvPageHeader
+            eyebrow="Operações · Displays"
+            title="Painéis TV"
+            subtitle={`${greeting} · Crie programações rotativas para TVs da empresa e compartilhe um link público sem login.`}
+          />
+        }
+        actions={
+          <>
+            <TvNavigationCard
+              icon={<Plus size={22} strokeWidth={2} />}
+              title="Nova programação"
+              description="Monte playlists de telas e gere um link público para TVs."
+              onClick={onCreate}
             />
-          </label>
-        </div>
-
+            <TvNavigationCard
+              icon={<Upload size={22} strokeWidth={2} />}
+              title="Importar MDD"
+              description="Traga uma programação de outra conta via arquivo .mdd (Minha Delpi Deck)."
+              onClick={() => setImportOpen(true)}
+            />
+            {canManageTemplates && onOpenTemplates ? (
+              <TvNavigationCard
+                icon={<LayoutTemplate size={22} strokeWidth={2} />}
+                title="Biblioteca de templates"
+                description="Criar, publicar e importar templates de slide (.mdd) para a organização."
+                onClick={onOpenTemplates}
+              />
+            ) : null}
+          </>
+        }
+        toolbar={
+          <TvFilterBarShell ariaLabel="Filtrar programações">
+            <div className="td-filter-pills" role="tablist" aria-label="Filtrar programações">
+              {(
+                [
+                  ["recent", "Recentes"],
+                  ["active", "Ativas"],
+                  ["inactive", "Inativas"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={filter === id}
+                  className={[
+                    "td-filter-pill",
+                    filter === id ? "td-filter-pill--active" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => setFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <label className="td-library-search">
+              <Search size={16} aria-hidden="true" />
+              <span className="td-sr-only">Buscar programação</span>
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Buscar programação"
+                autoComplete="off"
+              />
+            </label>
+          </TvFilterBarShell>
+        }
+      >
         {error ? <div className="td-state">{error}</div> : null}
 
         {loading ? (
@@ -348,7 +336,7 @@ export function PlaylistsPage({
         ) : null}
 
         {!loading && !error && visible.length === 0 ? (
-          <div className="td-home__empty">
+          <div className="td-library-empty">
             <p>Nenhuma programação neste filtro.</p>
             <button type="button" className="td-btn td-btn--primary" onClick={onCreate}>
               <Plus size={16} aria-hidden="true" />
@@ -358,11 +346,11 @@ export function PlaylistsPage({
         ) : null}
 
         {!loading && !error && visible.length > 0 ? (
-          <ul className="td-home__grid">
+          <ul className="td-library-grid" aria-label="Programações">
             {visible.map((item) => (
               <li
                 key={item.id}
-                className="td-home__card"
+                className="td-library-card"
                 onContextMenu={(event) => {
                   event.preventDefault();
                   setContextMenu({
@@ -392,7 +380,7 @@ export function PlaylistsPage({
             ))}
           </ul>
         ) : null}
-      </section>
+      </TvLibraryPageLayout>
 
       {contextMenu ? (
         <PlaylistHomeContextMenu
@@ -430,6 +418,6 @@ export function PlaylistsPage({
         }}
         onConfirm={handleRenameConfirm}
       />
-    </div>
+    </>
   );
 }

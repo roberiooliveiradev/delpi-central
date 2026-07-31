@@ -20,6 +20,8 @@ import {
 } from "../api/tvDashboardApi";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
+import { TvLibraryPageLayout } from "../layout/TvLibraryPageLayout";
+import { TvContentCard, TvPageHeader } from "../layout/tvUi";
 import { playlistPath } from "../routing";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -203,173 +205,193 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
   if (loading) {
     return <TvDashboardScreenLoading label="Carregando…" variant="embedded" />;
   }
-  if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
+  if (error || !playlist) {
+    return (
+      <TvLibraryPageLayout
+        header={
+          <TvPageHeader
+            eyebrow="Operações · Displays"
+            nav={
+              <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+                <ArrowLeft size={16} aria-hidden="true" />
+                Voltar ao editor
+              </button>
+            }
+            title="Compartilhar"
+          />
+        }
+      >
+        <div className="td-state">{error ?? "Programação não encontrada."}</div>
+      </TvLibraryPageLayout>
+    );
+  }
 
   return (
-    <>
-      <div className="td-toolbar">
-        <button type="button" className="td-btn" onClick={onBack}>
-          <ArrowLeft size={16} />
-          Voltar ao editor
-        </button>
-      </div>
+    <TvLibraryPageLayout
+      header={
+        <TvPageHeader
+          eyebrow="Operações · Displays"
+          nav={
+            <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
+              <ArrowLeft size={16} aria-hidden="true" />
+              Voltar ao editor
+            </button>
+          }
+          title="Compartilhar"
+          subtitle={playlist.name}
+        />
+      }
+    >
+      <div className="td-share-stack">
+        <TvContentCard
+          title="Link da TV (apresentação)"
+          description={`${playlist.viewCount ?? 0} visualizações${
+            playlist.isActive ? "" : " · link inativo"
+          } · só exibe, sem edição`}
+        >
+          <div className="td-link-box">
+            <NativeTextControl
+              readOnly
+              value={presentUrl}
+              aria-label="Link público da TV"
+              onChange={() => undefined}
+            />
+          </div>
+          <div className="td-share-toolbar">
+            <button
+              type="button"
+              className="td-btn"
+              onClick={() => copyText(presentUrl, "Link da TV copiado.")}
+            >
+              <Copy size={16} />
+              Copiar link
+            </button>
+            <button type="button" className="td-btn" onClick={openQr}>
+              <QrCode size={16} />
+              QR code
+            </button>
+            {isOwner ? (
+              <>
+                <button type="button" className="td-btn" onClick={() => void handleRegenerateToken()}>
+                  <RefreshCw size={16} />
+                  Novo link
+                </button>
+                <button type="button" className="td-btn" onClick={() => void handleToggleActive()}>
+                  <Link2 size={16} />
+                  {playlist.isActive ? "Desativar link" : "Reativar link"}
+                </button>
+              </>
+            ) : null}
+          </div>
+        </TvContentCard>
 
-      <div className="td-card" style={{ maxWidth: 720, marginBottom: 16 }}>
-        <h2 style={{ marginTop: 0 }}>Link da TV (apresentação)</h2>
-        <p className="td-subtitle">
-          {playlist.viewCount ?? 0} visualizações
-          {playlist.isActive ? "" : " · link inativo"} · só exibe, sem edição
-        </p>
-        <div className="td-link-box">
-          <NativeTextControl
-            readOnly
-            value={presentUrl}
-            aria-label="Link público da TV"
-            onChange={() => undefined}
-          />
-        </div>
-        <div className="td-toolbar" style={{ marginTop: 16 }}>
-          <button type="button" className="td-btn" onClick={() => copyText(presentUrl, "Link da TV copiado.")}>
-            <Copy size={16} />
-            Copiar link
-          </button>
-          <button type="button" className="td-btn" onClick={openQr}>
-            <QrCode size={16} />
-            QR code
-          </button>
-          {isOwner ? (
-            <>
-              <button type="button" className="td-btn" onClick={() => void handleRegenerateToken()}>
-                <RefreshCw size={16} />
-                Novo link
-              </button>
-              <button type="button" className="td-btn" onClick={() => void handleToggleActive()}>
-                <Link2 size={16} />
-                {playlist.isActive ? "Desativar link" : "Reativar link"}
-              </button>
-            </>
-          ) : null}
-        </div>
-      </div>
-
-      {isOwner ? (
-        <>
-          <div className="td-card" style={{ maxWidth: 720, marginBottom: 16 }}>
-            <h2 style={{ marginTop: 0 }}>Colaboradores (edição)</h2>
-            <p className="td-subtitle">
-              Só aparecem usuários que já têm acesso ao Painéis TV. Ao compartilhar, a pessoa
-              recebe uma notificação com o privilégio (editor ou somente leitura).
-            </p>
-            <div className="td-toolbar" style={{ gap: 8, flexWrap: "wrap" }}>
-              <div style={{ flex: "1 1 220px" }}>
-                <NativeTextControl
-                  value={query}
-                  onChange={(value) => setQuery(value)}
-                  placeholder="Buscar por nome ou e-mail…"
-                  aria-label="Buscar usuário"
+        {isOwner ? (
+          <>
+            <TvContentCard
+              title="Colaboradores (edição)"
+              description="Só aparecem usuários que já têm acesso ao Painéis TV. Ao compartilhar, a pessoa recebe uma notificação com o privilégio (editor ou somente leitura)."
+            >
+              <div className="td-share-add-row">
+                <div className="td-share-add-row__search">
+                  <NativeTextControl
+                    value={query}
+                    onChange={(value) => setQuery(value)}
+                    placeholder="Buscar por nome ou e-mail…"
+                    aria-label="Buscar usuário"
+                  />
+                </div>
+                <FormSelectControl
+                  ariaLabel="Papel"
+                  value={shareRole}
+                  onChange={(value) => setShareRole(value as "viewer" | "editor")}
+                  options={[
+                    { value: "editor", label: "Editor" },
+                    { value: "viewer", label: "Somente leitura" },
+                  ]}
                 />
               </div>
-              <FormSelectControl
-                ariaLabel="Papel"
-                value={shareRole}
-                onChange={(value) => setShareRole(value as "viewer" | "editor")}
-                options={[
-                  { value: "editor", label: "Editor" },
-                  { value: "viewer", label: "Somente leitura" },
-                ]}
-              />
-            </div>
-            {suggestions.length > 0 ? (
-              <ul className="td-share-suggestions" style={{ listStyle: "none", padding: 0, marginTop: 8 }}>
-                {suggestions.map((user) => (
-                  <li key={user.id} style={{ marginBottom: 6 }}>
-                    <button
-                      type="button"
-                      className="td-btn"
-                      onClick={() => void shareWithUser(user)}
-                    >
-                      <UserPlus size={14} />
-                      {user.name || user.email} · {user.email}
-                    </button>
-                  </li>
-                ))}
+              {suggestions.length > 0 ? (
+                <ul className="td-share-suggestions">
+                  {suggestions.map((user) => (
+                    <li key={user.id}>
+                      <button
+                        type="button"
+                        className="td-btn"
+                        onClick={() => void shareWithUser(user)}
+                      >
+                        <UserPlus size={14} />
+                        {user.name || user.email} · {user.email}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : query.trim().length >= 2 ? (
+                <p className="td-subtitle">
+                  Nenhum usuário com acesso ao Painéis TV encontrado para essa busca.
+                </p>
+              ) : null}
+              <ul className="td-share-list">
+                {shareList.length === 0 ? (
+                  <li className="td-share-list__meta">Nenhum colaborador ainda.</li>
+                ) : (
+                  shareList.map((share) => (
+                    <li key={share.id} className="td-share-list__row">
+                      <span>
+                        <strong>{share.label}</strong>
+                        {share.email && share.email !== share.label ? (
+                          <span className="td-share-list__meta"> · {share.email}</span>
+                        ) : null}
+                        <span className="td-share-list__meta"> · {share.role}</span>
+                      </span>
+                      <button
+                        type="button"
+                        className="td-btn"
+                        onClick={() => void removeShare(share.targetUserId)}
+                        aria-label="Remover colaborador"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </li>
+                  ))
+                )}
               </ul>
-            ) : query.trim().length >= 2 ? (
-              <p className="td-subtitle" style={{ marginTop: 8 }}>
-                Nenhum usuário com acesso ao Painéis TV encontrado para essa busca.
-              </p>
-            ) : null}
-            <ul style={{ listStyle: "none", padding: 0, marginTop: 16 }}>
-              {shareList.length === 0 ? (
-                <li className="td-subtitle">Nenhum colaborador ainda.</li>
-              ) : (
-                shareList.map((share) => (
-                  <li
-                    key={share.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 8,
-                      marginBottom: 8,
-                    }}
-                  >
-                    <span>
-                      <strong>{share.label}</strong>
-                      {share.email && share.email !== share.label ? (
-                        <span className="td-subtitle"> · {share.email}</span>
-                      ) : null}
-                      <span className="td-subtitle"> · {share.role}</span>
-                    </span>
-                    <button
-                      type="button"
-                      className="td-btn"
-                      onClick={() => void removeShare(share.targetUserId)}
-                      aria-label="Remover colaborador"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
+            </TvContentCard>
 
-          <div className="td-card" style={{ maxWidth: 720 }}>
-            <h2 style={{ marginTop: 0 }}>Link de edição</h2>
-            <p className="td-subtitle">
-              Quem abrir o link (já autenticado na Minha DELPI) ganha acesso de editor nesta programação.
-            </p>
-            {editInviteUrl ? (
-              <div className="td-link-box" style={{ marginBottom: 12 }}>
-                <NativeTextControl
-                  readOnly
-                  value={editInviteUrl}
-                  aria-label="Link de edição"
-                  onChange={() => undefined}
-                />
+            <TvContentCard
+              title="Link de edição"
+              description="Quem abrir o link (já autenticado na Minha DELPI) ganha acesso de editor nesta programação."
+            >
+              {editInviteUrl ? (
+                <div className="td-link-box">
+                  <NativeTextControl
+                    readOnly
+                    value={editInviteUrl}
+                    aria-label="Link de edição"
+                    onChange={() => undefined}
+                  />
+                </div>
+              ) : null}
+              <div className="td-share-toolbar">
+                <button type="button" className="td-btn" onClick={() => void createEditLink()}>
+                  <Copy size={16} />
+                  Gerar e copiar link de edição
+                </button>
+                <button type="button" className="td-btn" onClick={() => void revokeEditLinks()}>
+                  Revogar links de edição
+                </button>
               </div>
-            ) : null}
-            <div className="td-toolbar">
-              <button type="button" className="td-btn" onClick={() => void createEditLink()}>
-                <Copy size={16} />
-                Gerar e copiar link de edição
-              </button>
-              <button type="button" className="td-btn" onClick={() => void revokeEditLinks()}>
-                Revogar links de edição
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="td-card" style={{ maxWidth: 720 }}>
-          <p className="td-subtitle">
-            Você acessa esta programação como <strong>{playlist.accessRole ?? "colaborador"}</strong>.
-            Apenas o dono gerencia compartilhamentos.
-          </p>
-        </div>
-      )}
-    </>
+            </TvContentCard>
+          </>
+        ) : (
+          <TvContentCard title="Acesso">
+            <p className="td-subtitle">
+              Você acessa esta programação como <strong>{playlist.accessRole ?? "colaborador"}</strong>.
+              Apenas o dono gerencia compartilhamentos.
+            </p>
+          </TvContentCard>
+        )}
+      </div>
+    </TvLibraryPageLayout>
   );
 }
 
