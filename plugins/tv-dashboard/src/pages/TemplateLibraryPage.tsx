@@ -18,6 +18,7 @@ import {
 import { TemplateLibraryContextMenu } from "../components/TemplateLibraryContextMenu";
 import { TemplateThumb } from "../components/TemplateThumb";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
+import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { HostContainedDialog } from "../components/ui/Modal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
@@ -318,18 +319,13 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
                   });
                 }}
               >
-                <button
-                  type="button"
-                  className="td-home__card-main"
-                  onClick={() => onOpen(item.id)}
+                <TvPreviewDetailCard
                   aria-label={`Abrir ${item.label}`}
-                >
-                  <span className="td-home__card-thumb td-home__card-thumb--preview" aria-hidden="true">
-                    <TemplateThumb template={item} />
-                  </span>
-                  <span className="td-home__card-body">
-                    <span className="td-home__card-name">{item.label}</span>
-                    <span className="td-home__card-meta">
+                  onClick={() => onOpen(item.id)}
+                  media={<TemplateThumb template={item} />}
+                  title={item.label}
+                  meta={
+                    <>
                       <span
                         className={`td-badge ${
                           item.status === "published" ? "td-badge--active" : "td-badge--inactive"
@@ -339,9 +335,9 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
                         {item.isSystem ? " · Sistema" : ""}
                       </span>
                       {item.description ? <span>{item.description}</span> : null}
-                    </span>
-                  </span>
-                </button>
+                    </>
+                  }
+                />
               </li>
             ))}
           </ul>

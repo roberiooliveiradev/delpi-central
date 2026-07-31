@@ -70,6 +70,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-16",
     description: "Card clicável de navegação/atalho (unidades, submódulos).",
   }),
+  vc("layout", "PreviewDetailCard", {
+    addedAt: "2026-07-31",
+    description:
+      "Card de biblioteca com capa + detalhe que cresce para preencher altura uniforme na grade.",
+  }),
   vc("layout", "DocumentReader", {
     addedAt: "2026-07-16",
     description: "Viewport e toolbar para leitura/impressão de documentos formais.",

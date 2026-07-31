@@ -19,6 +19,7 @@ import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
 import { PlaylistHomeThumb } from "../components/PlaylistHomeThumb";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
+import { TvPreviewDetailCard } from "../components/TvPreviewDetailCard";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -370,18 +371,13 @@ export function PlaylistsPage({
                   });
                 }}
               >
-                <button
-                  type="button"
-                  className="td-home__card-main"
-                  onClick={() => onOpen(item.id)}
+                <TvPreviewDetailCard
                   aria-label={`Abrir ${item.name}`}
-                >
-                  <span className="td-home__card-thumb td-home__card-thumb--preview" aria-hidden="true">
-                    <PlaylistHomeThumb playlist={item} />
-                  </span>
-                  <span className="td-home__card-body">
-                    <span className="td-home__card-name">{item.name}</span>
-                    <span className="td-home__card-meta">
+                  onClick={() => onOpen(item.id)}
+                  media={<PlaylistHomeThumb playlist={item} />}
+                  title={item.name}
+                  meta={
+                    <>
                       <span
                         className={`td-badge ${item.isActive ? "td-badge--active" : "td-badge--inactive"}`}
                       >
@@ -389,9 +385,9 @@ export function PlaylistsPage({
                       </span>
                       <span>{item.viewCount ?? 0} visualizações</span>
                       <span>Última: {formatLastPresented(item.lastPresentedAt)}</span>
-                    </span>
-                  </span>
-                </button>
+                    </>
+                  }
+                />
               </li>
             ))}
           </ul>

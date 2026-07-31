@@ -299,6 +299,14 @@ export {
   type NavigationCardProps,
 } from "./NavigationCard";
 export {
+  PreviewDetailCard,
+  createDashboardPreviewDetailCard,
+  previewDetailCardBemClasses,
+  type DashboardPreviewDetailCardProps,
+  type PreviewDetailCardClassNames,
+  type PreviewDetailCardProps,
+} from "./PreviewDetailCard";
+export {
   SectionBlock,
   createDashboardSectionBlock,
   sectionBlockBemClasses,

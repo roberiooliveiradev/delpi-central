@@ -1,0 +1,91 @@
+/**
+ * PreviewDetailCard — capa + detalhe em grade (biblioteca / home).
+ * Tokens: --delpi-ui-surface, --delpi-ui-border, --delpi-ui-accent, --delpi-ui-text, --delpi-ui-muted
+ */
+
+.delpi-ui-preview-detail-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 4px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 6%, transparent);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.delpi-ui-preview-detail-card:hover:not(:disabled) .delpi-ui-preview-detail-card__title {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-preview-detail-card:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
+.delpi-ui-preview-detail-card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-preview-detail-card__media {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-preview-detail-card__media > * {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.delpi-ui-preview-detail-card__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 14px 14px;
+  box-sizing: border-box;
+}
+
+.delpi-ui-preview-detail-card__title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  color: inherit;
+  transition: color 0.15s ease;
+}
+
+.delpi-ui-preview-detail-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--delpi-ui-muted, var(--delpi-ui-text-muted, rgba(17, 17, 17, 0.65)));
+}

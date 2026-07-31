@@ -39,6 +39,8 @@ import {
   pageHeaderBrandBemClasses,
   PanelCard,
   panelCardBemClasses,
+  PreviewDetailCard,
+  previewDetailCardBemClasses,
   SectionBlock,
   sectionBlockBemClasses,
   SectionCard,
@@ -52,6 +54,7 @@ const ribbonGroupsCn = ribbonGroupsRowBemClasses(PUC_PREFIX);
 const ribbonGroupCn = ribbonGroupBemClasses(PUC_PREFIX);
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
 const navCardCn = navigationCardBemClasses(PUC_PREFIX);
+const previewDetailCardCn = previewDetailCardBemClasses(PUC_PREFIX);
 const panelCn = panelCardBemClasses(PUC_PREFIX);
 const contentCn = contentCardBemClasses(PUC_PREFIX);
 const kpiCn = kpiCardBemClasses(PUC_PREFIX);
@@ -230,6 +233,52 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
               meta="Filial 01"
               onClick={() => undefined}
             />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.PreviewDetailCard",
+    family: "layout",
+    exportName: "PreviewDetailCard",
+    title: "PreviewDetailCard",
+    description:
+      "Capa + detalhe; o bloco de meta cresce para ocupar a altura da grade quando o conteúdo é curto.",
+    docAnchor: "previewdetailcard",
+    propsSummary: ["media", "title", "meta", "onClick", "classNames"],
+    demos: [
+      {
+        id: "default",
+        label: "Grade uniforme",
+        render: () => (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(180px, 1fr))",
+              gap: 12,
+              alignItems: "stretch",
+              maxWidth: 480,
+            }}
+          >
+            <li style={{ listStyle: "none", display: "flex", minHeight: 0 }}>
+              <PreviewDetailCard
+                classNames={previewDetailCardCn}
+                media={<span style={{ display: "grid", placeItems: "center" }}>16:9</span>}
+                title="Com data"
+                meta={<span>Última: 31/07/2026, 10:51</span>}
+                onClick={() => undefined}
+              />
+            </li>
+            <li style={{ listStyle: "none", display: "flex", minHeight: 0 }}>
+              <PreviewDetailCard
+                classNames={previewDetailCardCn}
+                media={<span style={{ display: "grid", placeItems: "center" }}>16:9</span>}
+                title="Sem data"
+                meta={<span>Última: —</span>}
+                onClick={() => undefined}
+              />
+            </li>
           </div>
         ),
       },
