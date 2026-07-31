@@ -61,6 +61,7 @@ import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
 import { EditorShortcutsProvider } from "../keyboard";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
@@ -1722,7 +1723,9 @@ export function PlaylistEditorPage({
       });
   }
 
-  if (loading) return <div className="td-state">Carregando programação…</div>;
+  if (loading) {
+    return <TvDashboardScreenLoading label="Carregando programação…" variant="fullscreen" />;
+  }
   if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
 
   const admin = uiContent?.admin ?? {};

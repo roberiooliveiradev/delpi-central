@@ -19,6 +19,7 @@ import {
   type PlaylistShare,
 } from "../api/tvDashboardApi";
 import { useConfirm } from "../context/ConfirmDialogProvider";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { playlistPath } from "../routing";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -199,7 +200,9 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
     [shares, shareLabels],
   );
 
-  if (loading) return <div className="td-state">Carregando…</div>;
+  if (loading) {
+    return <TvDashboardScreenLoading label="Carregando…" variant="embedded" />;
+  }
   if (error || !playlist) return <div className="td-state">{error ?? "Programação não encontrada."}</div>;
 
   return (

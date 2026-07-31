@@ -1,6 +1,6 @@
 /**
  * Mantém o editor montado sob a prévia da mesma playlist para não piscar
- * «Carregando programação…» nem refetch ao Voltar.
+ * ScreenLoading nem refetch ao Voltar.
  */
 export function shouldKeepEditorUnderPreview(
   view: string,

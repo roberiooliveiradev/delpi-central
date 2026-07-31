@@ -68,6 +68,8 @@ export type Playlist = {
   masterConfig?: PlaylistMasterConfig;
   sections?: PlaylistSection[];
   slides?: Slide[];
+  /** 1ª tela (preferência: ativa) — capa na lista da home. */
+  coverSlide?: Slide | null;
 };
 
 export type PlaylistShare = {

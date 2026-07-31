@@ -17,6 +17,7 @@ import {
 } from "../api/tvDashboardApi";
 import { TemplateLibraryContextMenu } from "../components/TemplateLibraryContextMenu";
 import { TemplateThumb } from "../components/TemplateThumb";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { HostContainedDialog } from "../components/ui/Modal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
@@ -284,7 +285,9 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
         </div>
 
         {error ? <div className="td-state">{error}</div> : null}
-        {loading ? <div className="td-state">Carregando templates…</div> : null}
+        {loading ? (
+          <TvDashboardScreenLoading label="Carregando templates…" variant="embedded" />
+        ) : null}
 
         {!loading && !error && items.length === 0 ? (
           <div className="td-home__empty">

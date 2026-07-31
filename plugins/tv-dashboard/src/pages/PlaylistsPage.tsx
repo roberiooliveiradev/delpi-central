@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
-import { MonitorPlay, Plus, Search, Upload, LayoutTemplate } from "lucide-react";
+import { Plus, Search, Upload, LayoutTemplate } from "lucide-react";
 
 import {
   activatePlaylist,
@@ -16,7 +16,9 @@ import {
 } from "../api/tvDashboardApi";
 import { DeckImportModal } from "../components/DeckImportModal";
 import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
+import { PlaylistHomeThumb } from "../components/PlaylistHomeThumb";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -340,7 +342,9 @@ export function PlaylistsPage({
 
         {error ? <div className="td-state">{error}</div> : null}
 
-        {loading ? <div className="td-state">Carregando programações…</div> : null}
+        {loading ? (
+          <TvDashboardScreenLoading label="Carregando programações…" variant="embedded" />
+        ) : null}
 
         {!loading && !error && visible.length === 0 ? (
           <div className="td-home__empty">
@@ -372,8 +376,8 @@ export function PlaylistsPage({
                   onClick={() => onOpen(item.id)}
                   aria-label={`Abrir ${item.name}`}
                 >
-                  <span className="td-home__card-thumb" aria-hidden="true">
-                    <MonitorPlay size={28} strokeWidth={1.6} />
+                  <span className="td-home__card-thumb td-home__card-thumb--preview" aria-hidden="true">
+                    <PlaylistHomeThumb playlist={item} />
                   </span>
                   <span className="td-home__card-body">
                     <span className="td-home__card-name">{item.name}</span>

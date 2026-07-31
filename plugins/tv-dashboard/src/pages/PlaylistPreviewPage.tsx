@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { ScreenLoading } from "@delpi/plugin-ui/index";
 import type { InputFilterContributions } from "@delpi/tv-dashboard-presentation";
 
 import { getPreviewPayload, type PresentationPayload } from "../api/tvDashboardApi";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { PresentationPreview } from "../presentation/PresentationPreview";
 import { playlistPath } from "../routing";
 import { readPlaylistShell } from "../utils/editorSessionCache";
@@ -76,13 +76,7 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
       ) : null}
       {!payload && !error ? (
         <div className="td-preview-page__status">
-          {/* Mesmo splash da apresentação pública (hub kiosk → ScreenLoading). */}
-          <ScreenLoading
-            label="Carregando"
-            variant="fullscreen"
-            tone="dark"
-            logoSrc="/logoMinhaDelpi.svg"
-          />
+          <TvDashboardScreenLoading label="Carregando" variant="fullscreen" />
         </div>
       ) : null}
       {payload ? (

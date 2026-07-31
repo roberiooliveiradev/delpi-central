@@ -62,6 +62,16 @@ def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _attach_cover_slides(
+    playlists: list[dict[str, Any]],
+    covers_by_playlist_id: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Anexa `coverSlide` (1ª tela ativa, ou 1ª por sort) para miniatura na home."""
+    for item in playlists:
+        item["coverSlide"] = covers_by_playlist_id.get(str(item["id"]))
+    return playlists
+
+
 def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": str(row["id"]),
@@ -196,7 +206,31 @@ class PlaylistRepository:
                         (user_id, user_id, limit, offset),
                     )
                 rows = cur.fetchall()
-        return [_row_to_playlist(row) for row in rows]
+        playlists = [_row_to_playlist(row) for row in rows]
+        covers = self.list_cover_slides([UUID(item["id"]) for item in playlists])
+        return _attach_cover_slides(playlists, covers)
+
+    def list_cover_slides(self, playlist_ids: list[UUID]) -> dict[str, dict[str, Any]]:
+        """Uma capa por programação: preferir slide ativo, senão o de menor sort_order."""
+        if not playlist_ids:
+            return {}
+        ids = [str(pid) for pid in playlist_ids]
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT DISTINCT ON (playlist_id) *
+                    FROM tv_dashboard.slides
+                    WHERE playlist_id = ANY(%s::uuid[])
+                    ORDER BY
+                      playlist_id,
+                      CASE WHEN is_active THEN 0 ELSE 1 END,
+                      sort_order ASC
+                    """,
+                    (ids,),
+                )
+                rows = cur.fetchall()
+        return {str(row["playlist_id"]): _row_to_slide(row) for row in rows}
 
     def get_share_role(self, playlist_id: UUID, target_user_id: str) -> str | None:
         with get_connection() as conn:

@@ -16,6 +16,7 @@ import { HttpRequestError } from "../api/httpClient";
 import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
 import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
+import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { EditorShortcutsProvider } from "../keyboard";
 import {
@@ -214,7 +215,9 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
     );
   }
 
-  if (loading) return <div className="td-state">Carregando editor…</div>;
+  if (loading) {
+    return <TvDashboardScreenLoading label="Carregando editor…" variant="fullscreen" />;
+  }
   if (error) {
     return (
       <div className="td-home">
