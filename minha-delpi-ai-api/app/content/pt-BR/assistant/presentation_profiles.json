@@ -135,7 +135,8 @@
     "product_pricing": "salePricingDetail",
     "product_last_purchase": "lastPurchaseDetail",
     "product_factory_status": "factoryProductionDetail",
-    "product_by_supplier_part_number": "productBySupplierPartNumber"
+    "product_by_supplier_part_number": "productBySupplierPartNumber",
+    "production_pcp_orders_items": "pcpOrdersItems"
   },
   "entitySetProfileContracts": {
     "playbookOperational": {
@@ -732,6 +733,18 @@
     {
       "contains": "/production/orders/open",
       "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/pcp-orders/summary",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/production/pcp-orders/items",
+      "profile": "paged_list"
+    },
+    {
+      "contains": "/production/pcp-orders/ranking",
+      "profile": "list"
     },
     {
       "contains": "/production/orders/finished",
@@ -2089,6 +2102,9 @@
     "production_losses_records": "/production/losses/records",
     "production_schedule_today": "/production/schedule/today",
     "production_orders_open": "/production/orders/open",
+    "production_pcp_orders_summary": "/production/pcp-orders/summary",
+    "production_pcp_orders_items": "/production/pcp-orders/items",
+    "production_pcp_orders_ranking": "/production/pcp-orders/ranking",
     "production_orders_finished": "/production/orders/finished",
     "production_orders_finished_without_consumption": "/production/orders/finished-without-consumption",
     "production_work_center_order_summary": "/production/work-centers/order-summary",

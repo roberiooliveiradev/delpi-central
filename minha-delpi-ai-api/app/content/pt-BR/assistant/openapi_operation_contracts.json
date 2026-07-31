@@ -371,6 +371,18 @@
     "entity": "production_orders_open",
     "shape": "playbook_report"
   },
+  "get_production_pcp_orders_summary": {
+    "entity": "production_pcp_orders_summary",
+    "shape": "playbook_report"
+  },
+  "get_production_pcp_orders_items": {
+    "entity": "production_pcp_orders_items",
+    "shape": "paged_list"
+  },
+  "get_production_pcp_orders_ranking": {
+    "entity": "production_pcp_orders_ranking",
+    "shape": "list"
+  },
   "get_production_order_by_op": {
     "entity": "production_order_detail",
     "shape": "playbook_report"

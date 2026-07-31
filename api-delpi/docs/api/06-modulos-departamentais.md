@@ -139,8 +139,13 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/unproductive-hours/summary` | Resumo de horas improdutivas (paradas PCP — todos os motivos). |
 | GET | `/production/unproductive-hours/items` | Listagem paginada de apontamentos de parada (+ descrição do motivo). |
 | GET | `/production/unproductive-hours/ranking` | Ranking top N por motivo, recurso, centro de custo, operador, produto ou operação. |
+| GET | `/production/pcp-orders/summary` | Resumo de OPs PCP (abertas, atrasadas, saldos). |
+| GET | `/production/pcp-orders/items` | Listagem paginada de OPs (view `VW_PCP_ORDENS_PRODUCAO`). |
+| GET | `/production/pcp-orders/ranking` | Ranking top N por produto, armazém ou OP. |
 
 Doc: [production-unproductive-hours.md](./production-unproductive-hours.md). View: `VW_BI_RT_HORAS_IMPRODUTIVAS` (`DESCRICAO_MOTIVO`) — não confundir com [`/retrabalhos`](./controle-retrabalhos.md), filtro `MOTIVO=RT`.
+
+Doc OPs PCP: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_ORDENS_PRODUCAO` — não confundir com [`/production/orders/*`](./13-producao-operacional.md) (SC2010).
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 

@@ -71,3 +71,25 @@ export function readNumericField(value: unknown): number | null {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+/** Prefer canônico `otd_status`; fallback legado `status` (lista OTD). */
+export function resolveOtdListStatus(row: {
+  otd_status?: string | null;
+  status?: string | null;
+}): string {
+  return String(row.otd_status || row.status || "").trim();
+}
+
+/** Prefer canônico `days_late`; fallback legado `days_diff`. */
+export function resolveOtdDaysLate(row: {
+  days_late?: number | null;
+  days_diff?: number | null;
+}): number | null {
+  if (row.days_late != null && Number.isFinite(Number(row.days_late))) {
+    return Number(row.days_late);
+  }
+  if (row.days_diff != null && Number.isFinite(Number(row.days_diff))) {
+    return Number(row.days_diff);
+  }
+  return null;
+}

@@ -74,7 +74,11 @@ export type ProductionOtdOrderItem = {
   due_date: string;
   finish_date: string;
   days_diff: number;
+  /** Alias canônico de `days_diff` (api-delpi). */
+  days_late?: number;
   status: ProductionOtdOrderStatus;
+  /** Alias canônico de `status` (api-delpi). */
+  otd_status?: ProductionOtdOrderStatus | "open";
 };
 
 export type ProductionOtdOrdersPage = {

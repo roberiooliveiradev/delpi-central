@@ -83,6 +83,15 @@ describe("enumOptionLabel", () => {
     expect(enumOptionLabel("sort", "cost_desc")).toBe("Custo ↓");
   });
 
+  it("traduz enums PCP de OPs", () => {
+    expect(enumOptionLabel("rank_by", "warehouse")).toBe("Armazém");
+    expect(enumOptionLabel("rank_by", "op")).toBe("OP");
+    expect(enumOptionLabel("metric", "order_qty")).toBe("Qtd. ordem");
+    expect(enumOptionLabel("metric", "balance")).toBe("Saldo");
+    expect(enumOptionLabel("sort", "delivery_desc")).toBe("Entrega ↓");
+    expect(enumOptionLabel("sort", "delay_desc")).toBe("Atraso ↓");
+  });
+
   it("traduz enums que antes apareciam crus no TV", () => {
     expect(enumOptionLabel("department_id", "production")).toBe("Produção");
     expect(enumOptionLabel("audit_status", "evaluation_complete")).toBe("Avaliação concluída");

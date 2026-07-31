@@ -1536,6 +1536,14 @@
         }
       },
       "enumLabels": {
+        "balance": {
+          "en": {
+            "label": "Balance"
+          },
+          "pt-BR": {
+            "label": "Saldo"
+          }
+        },
         "cost": {
           "en": {
             "label": "Cost"
@@ -1544,12 +1552,36 @@
             "label": "Custo"
           }
         },
+        "delay_days": {
+          "en": {
+            "label": "Delay days"
+          },
+          "pt-BR": {
+            "label": "Dias de atraso"
+          }
+        },
         "hours": {
           "en": {
             "label": "Hours"
           },
           "pt-BR": {
             "label": "Horas"
+          }
+        },
+        "order_qty": {
+          "en": {
+            "label": "Order quantity"
+          },
+          "pt-BR": {
+            "label": "Qtd. ordem"
+          }
+        },
+        "reported_qty": {
+          "en": {
+            "label": "Reported quantity"
+          },
+          "pt-BR": {
+            "label": "Qtd. apontada"
           }
         }
       }
@@ -2424,6 +2456,14 @@
             "label": "Centro de custo"
           }
         },
+        "op": {
+          "en": {
+            "label": "Production order"
+          },
+          "pt-BR": {
+            "label": "OP"
+          }
+        },
         "operation": {
           "en": {
             "label": "Operation"
@@ -2462,6 +2502,14 @@
           },
           "pt-BR": {
             "label": "Motivo de parada"
+          }
+        },
+        "warehouse": {
+          "en": {
+            "label": "Warehouse"
+          },
+          "pt-BR": {
+            "label": "Armazém"
           }
         }
       }
@@ -2957,6 +3005,38 @@
             "label": "Data ↓"
           }
         },
+        "delay_asc": {
+          "en": {
+            "label": "Delay ↑"
+          },
+          "pt-BR": {
+            "label": "Atraso ↑"
+          }
+        },
+        "delay_desc": {
+          "en": {
+            "label": "Delay ↓"
+          },
+          "pt-BR": {
+            "label": "Atraso ↓"
+          }
+        },
+        "delivery_asc": {
+          "en": {
+            "label": "Delivery ↑"
+          },
+          "pt-BR": {
+            "label": "Entrega ↑"
+          }
+        },
+        "delivery_desc": {
+          "en": {
+            "label": "Delivery ↓"
+          },
+          "pt-BR": {
+            "label": "Entrega ↓"
+          }
+        },
         "due_date_asc": {
           "en": {
             "label": "Due date ↑"
@@ -2989,6 +3069,38 @@
             "label": "Horas ↓"
           }
         },
+        "issue_asc": {
+          "en": {
+            "label": "Issue ↑"
+          },
+          "pt-BR": {
+            "label": "Emissão ↑"
+          }
+        },
+        "issue_desc": {
+          "en": {
+            "label": "Issue ↓"
+          },
+          "pt-BR": {
+            "label": "Emissão ↓"
+          }
+        },
+        "op_asc": {
+          "en": {
+            "label": "OP ↑"
+          },
+          "pt-BR": {
+            "label": "OP ↑"
+          }
+        },
+        "op_desc": {
+          "en": {
+            "label": "OP ↓"
+          },
+          "pt-BR": {
+            "label": "OP ↓"
+          }
+        },
         "priority_desc": {
           "en": {
             "label": "Priority ↓"
@@ -3011,6 +3123,22 @@
           },
           "pt-BR": {
             "label": "Código ↓"
+          }
+        },
+        "qty_asc": {
+          "en": {
+            "label": "Quantity ↑"
+          },
+          "pt-BR": {
+            "label": "Quantidade ↑"
+          }
+        },
+        "qty_desc": {
+          "en": {
+            "label": "Quantity ↓"
+          },
+          "pt-BR": {
+            "label": "Quantidade ↓"
           }
         },
         "quantity_asc": {
@@ -4034,6 +4162,106 @@
           "pt-BR": {
             "label": "Pendente (T)"
           }
+        }
+      }
+    },
+    "delivery_start": {
+      "locale": {
+        "en": {
+          "label": "Delivery start",
+          "description": "Start of delivery date range (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Início da entrega",
+          "description": "Início do intervalo da data de entrega prevista (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "delivery_end": {
+      "locale": {
+        "en": {
+          "label": "Delivery end",
+          "description": "End of delivery date range (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Fim da entrega",
+          "description": "Fim do intervalo da data de entrega prevista (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "actual_end_start": {
+      "locale": {
+        "en": {
+          "label": "Actual end start",
+          "description": "Start of actual end date range (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Início do fim real",
+          "description": "Início do intervalo da data de fim real (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "actual_end_end": {
+      "locale": {
+        "en": {
+          "label": "Actual end end",
+          "description": "End of actual end date range (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Fim do fim real",
+          "description": "Fim do intervalo da data de fim real (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "op_key": {
+      "locale": {
+        "en": {
+          "label": "OP key",
+          "description": "Production order key (OP_CHAVE)."
+        },
+        "pt-BR": {
+          "label": "Chave da OP",
+          "description": "Chave da ordem de produção (OP_CHAVE)."
+        }
+      }
+    },
+    "mother_only": {
+      "locale": {
+        "en": {
+          "label": "Mother orders only",
+          "description": "When true, only mother production orders."
+        },
+        "pt-BR": {
+          "label": "Somente OP mãe",
+          "description": "Quando verdadeiro, retorna apenas OPs mãe."
+        }
+      }
+    },
+    "open_only": {
+      "locale": {
+        "en": {
+          "label": "Open orders only",
+          "description": "When true, only open production orders."
+        },
+        "pt-BR": {
+          "label": "Somente em aberto",
+          "description": "Quando verdadeiro, retorna apenas OPs em aberto."
+        }
+      }
+    },
+    "delayed_only": {
+      "locale": {
+        "en": {
+          "label": "Delayed orders only",
+          "description": "When true, only delayed production orders."
+        },
+        "pt-BR": {
+          "label": "Somente atrasadas",
+          "description": "Quando verdadeiro, retorna apenas OPs atrasadas."
         }
       }
     }

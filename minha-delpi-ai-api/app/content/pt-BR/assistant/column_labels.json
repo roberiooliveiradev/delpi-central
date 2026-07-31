@@ -826,6 +826,7 @@
     "playbookWorkCenterOrderSummary",
     "playbookOrdersFinished",
     "playbookOrdersOpen",
+    "pcpOrdersItems",
     "playbookScheduleToday",
     "playbookLossesRecords",
     "playbookLossesTopMaterials",
@@ -3209,12 +3210,13 @@
     },
     "playbookOrdersOpen": {
       "detect": {
-        "anyKeys": ["pending_qty", "produced_qty"],
+        "anyKeys": ["pending_qty", "produced_qty", "product_description"],
         "pathContains": ["/production/orders/open"]
       },
       "preferredColumns": [
         ["production_order", "OP"],
         ["product_code", "Produto"],
+        ["product_description", "Descrição"],
         ["description", "Descrição"],
         ["planned_qty", "Qtd. planejada"],
         ["produced_qty", "Qtd. produzida"],
@@ -3223,6 +3225,29 @@
         ["work_center", "Centro de trabalho"],
         ["start_time", "Início"],
         ["operation_start_date", "Início operação"],
+        ["branch", "Filial"]
+      ]
+    },
+    "pcpOrdersItems": {
+      "detect": {
+        "anyKeys": ["pending_qty", "days_late", "is_open", "op_key"],
+        "pathContains": ["/production/pcp-orders/items"]
+      },
+      "preferredColumns": [
+        ["production_order", "OP"],
+        ["op_key", "Chave OP"],
+        ["product_code", "Produto"],
+        ["product_description", "Descrição"],
+        ["description", "Descrição"],
+        ["planned_qty", "Qtd. ordem"],
+        ["produced_qty", "Qtd. apontada"],
+        ["pending_qty", "Saldo"],
+        ["days_late", "Dias atraso"],
+        ["is_open", "Em aberto"],
+        ["is_delayed", "Atrasada"],
+        ["is_mother", "OP mãe"],
+        ["delivery_date", "Entrega"],
+        ["warehouse", "Armazém"],
         ["branch", "Filial"]
       ]
     },

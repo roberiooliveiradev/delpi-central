@@ -1,3 +1,4 @@
+import { resolveOtdDaysLate, resolveOtdListStatus } from "./productionOtdStatus";
 import type { ProductionOtdOrderItem } from "../types/production";
 import { formatDisplayDate } from "./dates";
 import { downloadCsv } from "./csv";
@@ -33,8 +34,8 @@ export function otdOrderToRow(row: ProductionOtdOrderItem): (string | number)[] 
     row.product_description ?? "",
     formatDisplayDate(row.due_date),
     formatDisplayDate(row.finish_date),
-    row.days_diff ?? "",
-    statusLabel(row.status),
+    resolveOtdDaysLate(row) ?? "",
+    statusLabel(resolveOtdListStatus(row)),
   ];
 }
 
