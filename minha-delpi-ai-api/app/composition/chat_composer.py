@@ -242,14 +242,37 @@ def make_chat_presentation_format_refinement_resolver_service():
     return ChatPresentationFormatRefinementResolverService(llm_gateway=make_llm_gateway())
 
 
+def make_external_action_selection_service() -> ExternalActionSelectionService:
+    return ExternalActionSelectionService(
+        make_postgres_external_action_repository(),
+        semantic_ranker=make_external_action_semantic_ranker_service(),
+    )
+
+
+def make_operational_route_suggestion_service():
+    from app.application.services.external_actions.operational_route_suggestion_service import (
+        OperationalRouteSuggestionService,
+    )
+
+    return OperationalRouteSuggestionService(
+        make_postgres_external_action_repository(),
+        semantic_ranker=make_external_action_semantic_ranker_service(),
+    )
+
+
+def make_suggest_operational_routes_use_case():
+    from app.application.use_cases.suggest_operational_routes_use_case import (
+        SuggestOperationalRoutesUseCase,
+    )
+
+    return SuggestOperationalRoutesUseCase(make_operational_route_suggestion_service())
+
+
 def make_chat_tool_context_service() -> ChatToolContextService:
     return ChatToolContextService(
         tool_selection_service=ToolSelectionService(),
         execute_tool_use_case=make_execute_tool_use_case(),
-        external_action_selection_service=ExternalActionSelectionService(
-            make_postgres_external_action_repository(),
-            semantic_ranker=make_external_action_semantic_ranker_service(),
-        ),
+        external_action_selection_service=make_external_action_selection_service(),
         tool_router_service=make_chat_tool_router_service(),
         external_action_repository=make_postgres_external_action_repository(),
         native_tool_calling_service=make_chat_native_tool_calling_service(),

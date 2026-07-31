@@ -1708,6 +1708,8 @@ services:
       TV_OPENAPI_SYNC_TIMEOUT_SECONDS: ${TV_OPENAPI_SYNC_TIMEOUT_SECONDS:-45}
       TV_DATA_ROUTES_PATH: ${TV_DATA_ROUTES_PATH:-/app/data/tv-dashboard/catalog/tv_data_routes.json}
       TV_OPENAPI_GENERATOR_SCRIPT: ${TV_OPENAPI_GENERATOR_SCRIPT:-/app/tools/generate_tv_data_routes_from_openapi.py}
+      MINHA_DELPI_AI_API_URL: ${MINHA_DELPI_AI_API_URL:-http://delpi-minha-delpi-ai-api:8000}
+      MINHA_DELPI_AI_API_TIMEOUT_SECONDS: ${MINHA_DELPI_AI_API_TIMEOUT_SECONDS:-20}
 
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/tv-dashboard/media:/app/data/tv-dashboard/media

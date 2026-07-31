@@ -679,6 +679,24 @@ export async function listDataRoutes() {
   return data.items;
 }
 
+export type TvDataRouteSuggestion = TvDataRouteCatalogItem & {
+  reason?: string;
+  score?: number | null;
+};
+
+export async function suggestDataRoutes(query: string, limit = 5) {
+  return unwrap(
+    httpPost<
+      ApiEnvelope<{
+        query: string;
+        suggestions: TvDataRouteSuggestion[];
+        total: number;
+        degraded?: boolean;
+      }>
+    >(`${API_BASE}/data/routes/suggest`, { query, limit }),
+  );
+}
+
 export async function previewDataBlockV2(body: {
   block: Record<string, unknown>;
   nativeConfig: Record<string, unknown>;

@@ -105,6 +105,9 @@ def test_selection_reasons_keys_exist():
         "kpiProductionOeeDetail",
         "kpiEficienciaFabrilDashboard",
         "semanticRankReason",
+        "routeSuggestionSemantic",
+        "routeSuggestionRegistry",
+        "routeSuggestionEmpty",
     )
 
     for key in keys:

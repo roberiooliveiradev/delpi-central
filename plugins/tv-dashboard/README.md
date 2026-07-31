@@ -131,6 +131,7 @@ GET    /apps/tv-dashboard-api/playlists/{id}/media          # listar assets (bib
 POST   /apps/tv-dashboard-api/playlists/{id}/media          # upload
 GET    /apps/tv-dashboard-api/playlists/{id}/media/{assetId}
 GET    /apps/tv-dashboard-api/data/routes
+POST   /apps/tv-dashboard-api/data/routes/suggest
 GET    /apps/tv-dashboard-api/data/routes/{operationId}
 POST   /apps/tv-dashboard-api/data/preview-block
 POST   /apps/tv-dashboard-api/data/m/compile
@@ -160,7 +161,7 @@ o cálculo das diferenças permanece no backend.
 
 | Aba / painel | Função |
 |---|---|
-| **Inserir → Dados** | Catálogo de rotas GET (`DataRouteCatalogPanel`) → insere `data_source` |
+| **Inserir → Dados** | Catálogo de rotas GET (`DataRouteCatalogPanel`) → NL suggest (chat base) + substring → insere `data_source` |
 | **Inserir → Gráficos / Tabelas** | Insere `chart_view` ou `table_view` |
 | **Elemento → Conexão de dados** | Dropdown **Fonte de dados** (`dataSourceId`) |
 | **Elemento → Elementos do gráfico / KPI / tabela** | Visibilidade de partes; com parte selecionada → inspetor da parte |

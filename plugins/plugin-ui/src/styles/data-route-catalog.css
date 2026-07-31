@@ -656,3 +656,92 @@
 :root[data-theme="dark"] .delpi-ui-data-route-catalog__detail {
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #111827));
 }
+
+.delpi-ui-data-route-catalog__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 28%, var(--delpi-ui-border, #e5e7eb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 6%, var(--delpi-ui-surface, #fff));
+}
+
+.delpi-ui-data-route-catalog__suggestions-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--delpi-ui-text, #111) 78%, transparent);
+}
+
+.delpi-ui-data-route-catalog__suggestions-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, #6b7280);
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 8%, transparent);
+}
+
+.delpi-ui-data-route-catalog__suggestions-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, #6b7280);
+}
+
+.delpi-ui-data-route-catalog__card--suggestion {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 35%, var(--delpi-ui-border, #e5e7eb));
+}
+
+.delpi-ui-data-route-catalog__card--skeleton {
+  pointer-events: none;
+  opacity: 0.72;
+  animation: delpi-ui-data-route-catalog-pulse 1.2s ease-in-out infinite;
+}
+
+.delpi-ui-data-route-catalog__badge {
+  flex: 0 0 auto;
+  font-size: 0.65rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 85%, var(--delpi-ui-text, #111));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.delpi-ui-data-route-catalog__card-reason {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--delpi-ui-text-muted, #6b7280);
+}
+
+@keyframes delpi-ui-data-route-catalog-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+:root[data-theme="dark"] .delpi-ui-data-route-catalog__suggestions {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, var(--delpi-ui-surface, #111827));
+}

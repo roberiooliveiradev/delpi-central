@@ -314,4 +314,41 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.getByText("GET /products/search")).toBeTruthy();
     expect(screen.getByText("2 filtros · 1 obrigatório")).toBeTruthy();
   });
+
+  it("renderiza faixa de sugestões NL com motivo e mantém pick no detalhe", () => {
+    const onSelect = vi.fn();
+    const onQueryChange = vi.fn();
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={onSelect}
+        onQueryChange={onQueryChange}
+        suggestions={[
+          {
+            item: ITEMS[0]!,
+            reason: "Combina com eficiência fabril pedida na frase.",
+          },
+        ]}
+        suggestionsQuery="oee da semana"
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    expect(screen.getByText(/Sugestões para «oee da semana»/)).toBeTruthy();
+    expect(screen.getByText("Combina com eficiência fabril pedida na frase.")).toBeTruthy();
+    expect(screen.getByText("Sugestão")).toBeTruthy();
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "oee da semana" } });
+    expect(onQueryChange).toHaveBeenCalledWith("oee da semana");
+
+    const suggestionCard = Array.from(
+      document.querySelectorAll(".delpi-ui-data-route-catalog__card--suggestion"),
+    ).find((el) => (el.textContent ?? "").includes("OEE geral"));
+    expect(suggestionCard).toBeTruthy();
+    fireEvent.click(suggestionCard!);
+    expect(screen.getByRole("complementary", { name: /Detalhe: OEE geral/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee" }));
+  });
 });

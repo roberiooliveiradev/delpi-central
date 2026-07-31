@@ -227,6 +227,11 @@ def mutate_m_query(request: Request, body: MMutationBody):
     return ok(result.to_dict(), message="Consulta M atualizada.")
 
 
+class SuggestDataRoutesBody(BaseModel):
+    query: str = Field(min_length=1)
+    limit: int = Field(default=5, ge=1, le=20)
+
+
 @router.get("/routes")
 def list_data_routes_v2(request: Request):
     user = resolve_user(request)
@@ -236,6 +241,42 @@ def list_data_routes_v2(request: Request):
         return fail(str(exc), 403)
     items = [_validation.enrich_route_for_api(route) for route in _catalog.list_routes()]
     return ok({"items": items, "total": len(items)})
+
+
+@router.post("/routes/suggest")
+def suggest_data_routes(request: Request, body: SuggestDataRoutesBody):
+    """NL → fontes do catálogo TV (ranking via chat base; intersect allowlist)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    from tv_app.application.services.data.tv_data_route_suggest_service import (
+        TvDataRouteSuggestService,
+    )
+
+    result = TvDataRouteSuggestService(_catalog).suggest(
+        query=body.query,
+        limit=body.limit,
+    )
+    suggestions = [
+        {
+            **_validation.enrich_route_for_api(item),
+            "reason": item.get("reason") or "",
+            "score": item.get("score"),
+        }
+        for item in (result.get("suggestions") or [])
+    ]
+    return ok(
+        {
+            "query": result.get("query") or body.query,
+            "suggestions": suggestions,
+            "total": len(suggestions),
+            "degraded": bool(result.get("degraded")),
+        },
+        message="Sugestões de fontes.",
+    )
 
 
 @router.get("/routes/{operation_id}")

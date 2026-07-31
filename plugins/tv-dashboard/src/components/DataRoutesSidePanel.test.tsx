@@ -6,14 +6,16 @@ import { ComunicadoEditorProvider } from "./comunicadoEditorContext";
 
 vi.mock("../api/tvDashboardApi", () => ({
   listDataRoutes: vi.fn(),
+  suggestDataRoutes: vi.fn(),
   previewDataBlockV2: vi.fn(),
   adminMediaUrl: vi.fn(),
   uploadPlaylistMedia: vi.fn(),
 }));
 
-import { listDataRoutes, previewDataBlockV2 } from "../api/tvDashboardApi";
+import { listDataRoutes, previewDataBlockV2, suggestDataRoutes } from "../api/tvDashboardApi";
 
 const mockedRoutes = vi.mocked(listDataRoutes);
+const mockedSuggest = vi.mocked(suggestDataRoutes);
 const mockedPreview = vi.mocked(previewDataBlockV2);
 
 function renderPanel() {
@@ -39,6 +41,11 @@ describe("DataRoutesSidePanel", () => {
   });
 
   beforeEach(() => {
+    mockedSuggest.mockResolvedValue({
+      query: "",
+      suggestions: [],
+      total: 0,
+    });
     mockedRoutes.mockResolvedValue([
       {
         operationId: "get_oee",

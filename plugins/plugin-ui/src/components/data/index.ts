@@ -223,11 +223,17 @@ export {
   type DataRouteCatalogDensity,
   type DataRouteCatalogItem,
   type DataRouteCatalogPanelProps,
+  type DataRouteCatalogSuggestion,
   type DataRouteDisplayKind,
   type DataRouteParamFieldSummary,
   type DataRoutePreviewPayload,
   type DataRouteTestParams,
 } from "./DataRouteCatalogPanel";
+
+export {
+  DATA_ROUTE_CATALOG_CONTENT,
+  formatDataRouteSuggestionsTitle,
+} from "../../content/dataRouteCatalogContent";
 
 export { DataRouteSamplePreview } from "./DataRouteSamplePreview";
 

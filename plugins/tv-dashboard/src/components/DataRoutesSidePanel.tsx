@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck } from "lucide-react";
 import {
+  DATA_ROUTE_CATALOG_CONTENT,
   DataRouteCatalogPanel,
   FieldLabel,
   NativeTextControl,
@@ -8,6 +9,7 @@ import {
   resolveDataRouteDisplayKinds,
   summarizeRouteParams,
   type DataRouteCatalogItem,
+  type DataRouteCatalogSuggestion,
   type DataRoutePreviewPayload,
 } from "@delpi/plugin-ui/index";
 import {
@@ -19,6 +21,7 @@ import {
 
 import {
   listDataRoutes,
+  suggestDataRoutes,
   type BranchScope,
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
@@ -26,6 +29,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
+import { shouldRequestDataRouteSuggestions } from "../utils/shouldRequestDataRouteSuggestions";
 import type { DataCatalogMode, DataInsertPreferredView } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
@@ -33,6 +37,9 @@ import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 type WizardView = DataInsertPreferredView | "source_only";
+
+const SUGGEST_DEBOUNCE_MS = 350;
+const SUGGEST_LIMIT = 5;
 
 const CATEGORY_ORDER = [
   "production",
@@ -104,6 +111,10 @@ export function DataRoutesSidePanel({
   const [params, setParams] = useState<ComunicadoDataBinding["params"]>({});
   const [step, setStep] = useState<"config" | "wizard">("config");
   const [wizardView, setWizardView] = useState<WizardView>("table");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<DataRouteCatalogSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsQuery, setSuggestionsQuery] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -113,6 +124,60 @@ export function DataRoutesSidePanel({
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    const trimmed = catalogQuery.trim();
+    if (!shouldRequestDataRouteSuggestions(trimmed)) {
+      setSuggestions([]);
+      setSuggestionsQuery("");
+      setSuggestionsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    const handle = window.setTimeout(() => {
+      setSuggestionsLoading(true);
+      void suggestDataRoutes(trimmed, SUGGEST_LIMIT)
+        .then((payload) => {
+          if (cancelled) return;
+          setSuggestionsQuery(payload.query || trimmed);
+          setSuggestions(
+            (payload.suggestions || []).map((route) => ({
+              reason: String(route.reason || "").trim(),
+              item: {
+                id: route.operationId,
+                label: route.label,
+                category: route.category,
+                description: route.description,
+                whenToUse: route.whenToUse,
+                path: route.path,
+                httpMethod: "GET" as const,
+                metaShape: route.metaShape,
+                valueFields: route.valueFields,
+                displayKinds: resolveDataRouteDisplayKinds({
+                  metaShape: route.metaShape,
+                  allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+                }),
+                params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
+              },
+            })),
+          );
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setSuggestions([]);
+          setSuggestionsQuery(trimmed);
+        })
+        .finally(() => {
+          if (!cancelled) setSuggestionsLoading(false);
+        });
+    }, SUGGEST_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [catalogQuery]);
 
   const catalogItems = useMemo(
     () =>
@@ -404,13 +469,17 @@ export function DataRoutesSidePanel({
         onTestRoute={testRoute}
         density={hideHeading ? "comfortable" : "compact"}
         confirmLabel={mode === "replace" ? "Usar esta rota" : "Usar esta fonte"}
-        searchPlaceholder="Buscar fonte ou descrição…"
+        searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
         emptyMessage="Nenhuma fonte com esses filtros."
         loading={loading}
         error={error}
         categoryLabels={CATEGORY_LABELS}
         categoryOrder={CATEGORY_ORDER}
         renderCategoryIcon={(category) => <CategoryIcon category={category} />}
+        suggestions={suggestions}
+        suggestionsLoading={suggestionsLoading}
+        suggestionsQuery={suggestionsQuery}
+        onQueryChange={setCatalogQuery}
       />
     </div>
   );

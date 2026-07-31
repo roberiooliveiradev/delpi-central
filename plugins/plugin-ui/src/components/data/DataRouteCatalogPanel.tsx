@@ -25,6 +25,10 @@ import {
   buildSampleDataRoutePreview,
   type DataRoutePreviewPayload,
 } from "./dataRouteSamplePreview";
+import {
+  DATA_ROUTE_CATALOG_CONTENT,
+  formatDataRouteSuggestionsTitle,
+} from "../../content/dataRouteCatalogContent";
 import { NativeSelectControl } from "../forms/NativeSelectControl";
 import { NativeTextControl } from "../forms/NativeTextControl";
 
@@ -47,6 +51,11 @@ export type DataRouteCatalogItem = {
   whenToUse?: string;
   /** Parâmetros já rotulados para a UI (sem path técnico no card). */
   params?: DataRouteParamFieldSummary[];
+};
+
+export type DataRouteCatalogSuggestion = {
+  item: DataRouteCatalogItem;
+  reason: string;
 };
 
 export type DataRouteCatalogDensity = "compact" | "comfortable";
@@ -80,6 +89,13 @@ export type DataRouteCatalogPanelProps = {
     item: DataRouteCatalogItem,
     params: DataRouteTestParams,
   ) => Promise<DataRoutePreviewPayload>;
+  /** Sugestões NL (host chama API; painel só renderiza). */
+  suggestions?: DataRouteCatalogSuggestion[];
+  suggestionsLoading?: boolean;
+  suggestionsQuery?: string;
+  suggestionsEmptyMessage?: string;
+  /** Host notificado a cada mudança do campo unificado (debounce externo). */
+  onQueryChange?: (query: string) => void;
 };
 
 const DISPLAY_KIND_LABELS: Record<DataRouteDisplayKind, string> = {
@@ -144,10 +160,23 @@ type EnrichedItem = DataRouteCatalogItem & {
   paramHint: string;
 };
 
+function enrichCatalogItem(item: DataRouteCatalogItem): EnrichedItem {
+  const kinds = resolveDataRouteDisplayKinds(item);
+  const params = item.params ?? [];
+  return {
+    ...item,
+    displayKinds: kinds,
+    primaryKind: primaryDataRouteDisplayKind(kinds, item.metaShape),
+    params,
+    audienceDescription: resolveRouteAudienceDescription(item),
+    paramHint: formatParamHintLine(params) ?? "Sem filtros",
+  };
+}
+
 export function DataRouteCatalogPanel({
   items,
   onSelect,
-  searchPlaceholder = "Buscar fonte ou descrição…",
+  searchPlaceholder = DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder,
   emptyMessage = "Nenhuma fonte com esses filtros.",
   loading = false,
   error = null,
@@ -159,6 +188,11 @@ export function DataRouteCatalogPanel({
   density = "comfortable",
   confirmLabel = "Usar esta fonte",
   onTestRoute,
+  suggestions = [],
+  suggestionsLoading = false,
+  suggestionsQuery = "",
+  suggestionsEmptyMessage = DATA_ROUTE_CATALOG_CONTENT.suggestionsEmpty,
+  onQueryChange,
 }: DataRouteCatalogPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
@@ -176,21 +210,23 @@ export function DataRouteCatalogPanel({
   const detailPanelRef = useRef<HTMLElement>(null);
 
   const enriched = useMemo(
-    (): EnrichedItem[] =>
-      items.map((item) => {
-        const kinds = resolveDataRouteDisplayKinds(item);
-        const params = item.params ?? [];
-        return {
-          ...item,
-          displayKinds: kinds,
-          primaryKind: primaryDataRouteDisplayKind(kinds, item.metaShape),
-          params,
-          audienceDescription: resolveRouteAudienceDescription(item),
-          paramHint: formatParamHintLine(params) ?? "Sem filtros",
-        };
-      }),
+    (): EnrichedItem[] => items.map((item) => enrichCatalogItem(item)),
     [items],
   );
+
+  const suggestionRows = useMemo(
+    () =>
+      suggestions.map((entry) => ({
+        reason: entry.reason,
+        item: enrichCatalogItem(entry.item),
+      })),
+    [suggestions],
+  );
+
+  const showSuggestionsBand =
+    suggestionsLoading ||
+    suggestionRows.length > 0 ||
+    Boolean(String(suggestionsQuery || "").trim());
 
   const categoryCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -257,8 +293,18 @@ export function DataRouteCatalogPanel({
 
   const selected = useMemo(() => {
     if (!selectedId) return null;
-    return filtered.find((item) => item.id === selectedId) ?? enriched.find((item) => item.id === selectedId) ?? null;
-  }, [enriched, filtered, selectedId]);
+    return (
+      filtered.find((item) => item.id === selectedId) ??
+      suggestionRows.find((row) => row.item.id === selectedId)?.item ??
+      enriched.find((item) => item.id === selectedId) ??
+      null
+    );
+  }, [enriched, filtered, selectedId, suggestionRows]);
+
+  function updateQuery(next: string) {
+    setQuery(next);
+    onQueryChange?.(next);
+  }
 
   useEffect(() => {
     setLivePreview(null);
@@ -552,7 +598,7 @@ export function DataRouteCatalogPanel({
           className="delpi-ui-data-route-catalog__search"
           placeholder={searchPlaceholder}
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => updateQuery(event.target.value)}
           aria-label={searchPlaceholder}
         />
 
@@ -643,6 +689,7 @@ export function DataRouteCatalogPanel({
                   className="delpi-ui-data-route-catalog__clear"
                   onClick={() => {
                     setQuery("");
+                    onQueryChange?.("");
                     setCategoryFilter("all");
                     setKindFilters([]);
                   }}
@@ -668,6 +715,87 @@ export function DataRouteCatalogPanel({
           .join(" ")}
       >
         <div ref={groupsRef} className="delpi-ui-data-route-catalog__groups">
+          {showSuggestionsBand ? (
+            <section
+              className="delpi-ui-data-route-catalog__suggestions"
+              aria-label={formatDataRouteSuggestionsTitle(suggestionsQuery || query)}
+            >
+              <h3 className="delpi-ui-data-route-catalog__suggestions-title">
+                <span>{formatDataRouteSuggestionsTitle(suggestionsQuery || query)}</span>
+                {!suggestionsLoading && suggestionRows.length > 0 ? (
+                  <span className="delpi-ui-data-route-catalog__suggestions-count">
+                    {suggestionRows.length}
+                  </span>
+                ) : null}
+              </h3>
+              {suggestionsLoading ? (
+                <ul className="delpi-ui-data-route-catalog__list" aria-busy="true">
+                  {[0, 1, 2].map((index) => (
+                    <li key={`suggest-skel-${index}`}>
+                      <div
+                        className="delpi-ui-data-route-catalog__card delpi-ui-data-route-catalog__card--skeleton"
+                        aria-hidden="true"
+                      >
+                        <span className="delpi-ui-data-route-catalog__card-title">
+                          {DATA_ROUTE_CATALOG_CONTENT.suggestionsLoading}
+                        </span>
+                        <span className="delpi-ui-data-route-catalog__card-desc">…</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : suggestionRows.length === 0 ? (
+                <p className="delpi-ui-data-route-catalog__suggestions-empty">{suggestionsEmptyMessage}</p>
+              ) : (
+                <ul className="delpi-ui-data-route-catalog__list">
+                  {suggestionRows.map(({ item, reason }) => {
+                    const active = item.id === selectedId;
+                    return (
+                      <li key={`suggest-${item.id}`}>
+                        <button
+                          type="button"
+                          ref={(el) => {
+                            if (el) cardRefs.current.set(item.id, el);
+                            else cardRefs.current.delete(item.id);
+                          }}
+                          className={[
+                            "delpi-ui-data-route-catalog__card",
+                            "delpi-ui-data-route-catalog__card--suggestion",
+                            active ? "delpi-ui-data-route-catalog__card--active" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                          aria-pressed={active}
+                          onClick={() => selectCard(item)}
+                          onDoubleClick={() => onSelect(item)}
+                        >
+                          <span className="delpi-ui-data-route-catalog__card-head">
+                            <span className="delpi-ui-data-route-catalog__card-title">{item.label}</span>
+                            <span className="delpi-ui-data-route-catalog__badge">
+                              {DATA_ROUTE_CATALOG_CONTENT.suggestionsBadge}
+                            </span>
+                            <span
+                              className="delpi-ui-data-route-catalog__mode"
+                              title="Sugestão de forma — não limita KPI, gráfico ou tabela no palco"
+                            >
+                              {DISPLAY_KIND_LABELS[item.primaryKind]}
+                            </span>
+                          </span>
+                          {reason ? (
+                            <span className="delpi-ui-data-route-catalog__card-reason">{reason}</span>
+                          ) : null}
+                          <span className="delpi-ui-data-route-catalog__card-desc">
+                            {truncateText(item.audienceDescription, descClamp)}
+                          </span>
+                          <span className="delpi-ui-data-route-catalog__card-meta">{item.paramHint}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          ) : null}
           {grouped.map((group) => (
             <section key={group.key} className="delpi-ui-data-route-catalog__group">
               <h3 className="delpi-ui-data-route-catalog__group-title">

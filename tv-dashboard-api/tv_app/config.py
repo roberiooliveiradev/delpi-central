@@ -85,6 +85,14 @@ class Settings:
         default="/app/tools/generate_tv_data_routes_from_openapi.py",
     ) or ""
 
+    MINHA_DELPI_AI_API_URL: str = _get_env(
+        "MINHA_DELPI_AI_API_URL",
+        default="http://delpi-minha-delpi-ai-api:8000",
+    ) or "http://delpi-minha-delpi-ai-api:8000"
+    MINHA_DELPI_AI_API_TIMEOUT_SECONDS: float = float(
+        _get_env("MINHA_DELPI_AI_API_TIMEOUT_SECONDS", default="20") or "20"
+    )
+
 
 settings = Settings()
 
