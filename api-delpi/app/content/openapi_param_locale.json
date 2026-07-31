@@ -1066,6 +1066,18 @@
         }
       }
     },
+    "metric": {
+      "locale": {
+        "en": {
+          "label": "Metric",
+          "description": "Ranking metric: hours or cost (descending)."
+        },
+        "pt-BR": {
+          "label": "Métrica",
+          "description": "Métrica do ranking: hours (horas) ou cost (custo), em ordem decrescente."
+        }
+      }
+    },
     "linked_sort_by": {
       "locale": {
         "en": {
@@ -1732,6 +1744,18 @@
         }
       }
     },
+    "rank_by": {
+      "locale": {
+        "en": {
+          "label": "Rank by",
+          "description": "Ranking dimension: stop_reason, resource, cost_center, operator, product or operation."
+        },
+        "pt-BR": {
+          "label": "Agrupar ranking por",
+          "description": "Dimensão do ranking: stop_reason (motivo), resource, cost_center, operator, product ou operation."
+        }
+      }
+    },
     "raw_material_code": {
       "locale": {
         "en": {
@@ -1802,6 +1826,18 @@
         "pt-BR": {
           "label": "Usuário responsável",
           "description": "Filtro por id do usuário responsável."
+        }
+      }
+    },
+    "resource": {
+      "locale": {
+        "en": {
+          "label": "Resource",
+          "description": "Production resource code (machine/work center resource)."
+        },
+        "pt-BR": {
+          "label": "Recurso",
+          "description": "Código do recurso de produção (máquina/recurso do centro de trabalho)."
         }
       }
     },
@@ -2021,6 +2057,18 @@
         }
       },
       "format": "date"
+    },
+    "stop_reason": {
+      "locale": {
+        "en": {
+          "label": "Stop reason",
+          "description": "PCP stop reason code from the unproductive-hours view (e.g. RT, OT, MT). Empty = all reasons."
+        },
+        "pt-BR": {
+          "label": "Motivo de parada",
+          "description": "Código do motivo de parada na view de horas improdutivas (ex.: RT, OT, MT). Vazio = todos os motivos."
+        }
+      }
     },
     "status": {
       "locale": {

@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 495,
+  "operation_count": 498,
   "operations": [
     {
       "method": "POST",
@@ -26773,6 +26773,820 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Production schedule today."
+    },
+    {
+      "method": "GET",
+      "path": "/production/unproductive-hours/items",
+      "operationId": "get_production_unproductive_hours_items",
+      "summary": "Unproductive hours items",
+      "tags": [
+        "Produção — Horas improdutivas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "stop_reason",
+          "in": "query",
+          "required": false,
+          "description": "Stop reason code (CYN/H6, e.g. RT, OT, MT). Empty = all reasons.",
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "in": "query",
+          "required": false,
+          "description": "Production resource code filter.",
+          "type": "string"
+        },
+        {
+          "name": "cost_center",
+          "in": "query",
+          "required": false,
+          "description": "Cost center code filter.",
+          "type": "string"
+        },
+        {
+          "name": "operator_code",
+          "in": "query",
+          "required": false,
+          "description": "Operator code filter.",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page (max 200).",
+          "type": "integer",
+          "default": 50
+        },
+        {
+          "name": "sort",
+          "in": "query",
+          "required": false,
+          "description": "Sort key for unproductive hours items.",
+          "type": "string",
+          "default": "date_desc",
+          "enum": [
+            "date_desc",
+            "date_asc",
+            "hours_desc",
+            "hours_asc",
+            "cost_desc",
+            "cost_asc"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_unproductive_hours_item",
+        "shape": "paged_list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Unproductive hours items",
+            "description": "Paged PCP stop appointments with stop reason code and description.",
+            "whenToUse": "Use for a table or detailed list of unproductive hours on the TV.",
+            "label": "Unproductive hours items"
+          },
+          "pt-BR": {
+            "summary": "Itens de horas improdutivas",
+            "description": "Lista paginada de apontamentos de parada com código e descrição do motivo.",
+            "whenToUse": "Usar em tabela ou listagem detalhada de horas improdutivas no TV.",
+            "label": "Itens de horas improdutivas"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "cost_center": {
+            "locale": {
+              "en": {
+                "description": "Cost center query parameter.",
+                "label": "Cost center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de custo no Protheus.",
+                "label": "Centro de custo"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "operator_code": {
+            "locale": {
+              "en": {
+                "description": "Operator code query parameter.",
+                "label": "Operator code"
+              },
+              "pt-BR": {
+                "description": "Código(s) do operador (CSV).",
+                "label": "Código do operador"
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "resource": {
+            "locale": {
+              "en": {
+                "description": "Production resource code (machine/work center resource).",
+                "label": "Resource"
+              },
+              "pt-BR": {
+                "description": "Código do recurso de produção (máquina/recurso do centro de trabalho).",
+                "label": "Recurso"
+              }
+            }
+          },
+          "sort": {
+            "locale": {
+              "en": {
+                "description": "Sort query parameter.",
+                "label": "Sort"
+              },
+              "pt-BR": {
+                "description": "Critério de ordenação da listagem.",
+                "label": "Ordenação"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "stop_reason": {
+            "locale": {
+              "en": {
+                "description": "PCP stop reason code from CYN/H6 (e.g. RT, OT, MT). Empty = all reasons.",
+                "label": "Stop reason"
+              },
+              "pt-BR": {
+                "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos.",
+                "label": "Motivo de parada"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar em tabela ou listagem detalhada de horas improdutivas no TV.",
+          "description": "Lista paginada de apontamentos de parada com código e descrição do motivo.",
+          "label": "Itens de horas improdutivas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Paged PCP stop appointments with stop reason code and description."
+    },
+    {
+      "method": "GET",
+      "path": "/production/unproductive-hours/ranking",
+      "operationId": "get_production_unproductive_hours_ranking",
+      "summary": "Unproductive hours ranking",
+      "tags": [
+        "Produção — Horas improdutivas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "rank_by",
+          "in": "query",
+          "required": true,
+          "description": "Ranking dimension: stop_reason, resource, cost_center, operator, product or operation.",
+          "type": "string",
+          "enum": [
+            "stop_reason",
+            "resource",
+            "cost_center",
+            "operator",
+            "product",
+            "operation"
+          ]
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "stop_reason",
+          "in": "query",
+          "required": false,
+          "description": "Stop reason code (CYN/H6, e.g. RT, OT, MT). Empty = all reasons.",
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "in": "query",
+          "required": false,
+          "description": "Production resource code filter.",
+          "type": "string"
+        },
+        {
+          "name": "cost_center",
+          "in": "query",
+          "required": false,
+          "description": "Cost center code filter.",
+          "type": "string"
+        },
+        {
+          "name": "operator_code",
+          "in": "query",
+          "required": false,
+          "description": "Operator code filter.",
+          "type": "string"
+        },
+        {
+          "name": "metric",
+          "in": "query",
+          "required": false,
+          "description": "Ranking metric: hours or cost (descending).",
+          "type": "string",
+          "default": "hours",
+          "enum": [
+            "hours",
+            "cost"
+          ]
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Top N rows (max 50).",
+          "type": "integer",
+          "default": 10
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_unproductive_hours_ranking",
+        "shape": "list",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Unproductive hours ranking",
+            "description": "Top N unproductive hours by stop reason, resource, cost center, operator, product or operation.",
+            "whenToUse": "Use for bar charts or ranking widgets on the production TV board.",
+            "label": "Unproductive hours ranking"
+          },
+          "pt-BR": {
+            "summary": "Ranking de horas improdutivas",
+            "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
+            "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
+            "label": "Ranking de horas improdutivas"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "cost_center": {
+            "locale": {
+              "en": {
+                "description": "Cost center query parameter.",
+                "label": "Cost center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de custo no Protheus.",
+                "label": "Centro de custo"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "metric": {
+            "locale": {
+              "en": {
+                "description": "Ranking metric: hours or cost (descending).",
+                "label": "Metric"
+              },
+              "pt-BR": {
+                "description": "Métrica do ranking: hours (horas) ou cost (custo), em ordem decrescente.",
+                "label": "Métrica"
+              }
+            }
+          },
+          "operator_code": {
+            "locale": {
+              "en": {
+                "description": "Operator code query parameter.",
+                "label": "Operator code"
+              },
+              "pt-BR": {
+                "description": "Código(s) do operador (CSV).",
+                "label": "Código do operador"
+              }
+            }
+          },
+          "rank_by": {
+            "locale": {
+              "en": {
+                "description": "Ranking dimension: stop_reason, resource, cost_center, operator, product or operation.",
+                "label": "Rank by"
+              },
+              "pt-BR": {
+                "description": "Dimensão do ranking: stop_reason (motivo), resource, cost_center, operator, product ou operation.",
+                "label": "Agrupar ranking por"
+              }
+            }
+          },
+          "resource": {
+            "locale": {
+              "en": {
+                "description": "Production resource code (machine/work center resource).",
+                "label": "Resource"
+              },
+              "pt-BR": {
+                "description": "Código do recurso de produção (máquina/recurso do centro de trabalho).",
+                "label": "Recurso"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "stop_reason": {
+            "locale": {
+              "en": {
+                "description": "PCP stop reason code from CYN/H6 (e.g. RT, OT, MT). Empty = all reasons.",
+                "label": "Stop reason"
+              },
+              "pt-BR": {
+                "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos.",
+                "label": "Motivo de parada"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
+          "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
+          "label": "Ranking de horas improdutivas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Top N unproductive hours by stop reason, resource, cost center, operator, product or operation."
+    },
+    {
+      "method": "GET",
+      "path": "/production/unproductive-hours/summary",
+      "operationId": "get_production_unproductive_hours_summary",
+      "summary": "Unproductive hours summary",
+      "tags": [
+        "Produção — Horas improdutivas"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end date (YYYY-MM-DD). Canonical HTTP name; prefer this over legacy aliases.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "date_start",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of start_date. Planned removal 2027-01. Prefer start_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "date_end",
+          "in": "query",
+          "required": false,
+          "description": "Legacy alias of end_date. Planned removal 2027-01. Prefer end_date.",
+          "format": "date",
+          "type": "string",
+          "deprecated": true
+        },
+        {
+          "name": "stop_reason",
+          "in": "query",
+          "required": false,
+          "description": "Stop reason code (CYN/H6, e.g. RT, OT, MT). Empty = all reasons.",
+          "type": "string"
+        },
+        {
+          "name": "resource",
+          "in": "query",
+          "required": false,
+          "description": "Production resource code filter.",
+          "type": "string"
+        },
+        {
+          "name": "cost_center",
+          "in": "query",
+          "required": false,
+          "description": "Cost center code filter.",
+          "type": "string"
+        },
+        {
+          "name": "operator_code",
+          "in": "query",
+          "required": false,
+          "description": "Operator code filter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "production_unproductive_hours_summary",
+        "shape": "playbook_report",
+        "category": "production",
+        "locale": {
+          "en": {
+            "summary": "Unproductive hours summary",
+            "description": "KPIs for PCP stop appointments: hours, cost, and top resource/operator highlights.",
+            "whenToUse": "Use as a KPI card or panel before listing or ranking unproductive hours.",
+            "label": "Unproductive hours summary"
+          },
+          "pt-BR": {
+            "summary": "Resumo de horas improdutivas",
+            "description": "Indicadores de horas e custo de parada (apontamentos PCP), com destaques de recurso e operador.",
+            "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking detalhado.",
+            "label": "Resumo de horas improdutivas"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "cost_center": {
+            "locale": {
+              "en": {
+                "description": "Cost center query parameter.",
+                "label": "Cost center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de custo no Protheus.",
+                "label": "Centro de custo"
+              }
+            }
+          },
+          "date_end": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período consultado (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "date_start": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período consultado (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "operator_code": {
+            "locale": {
+              "en": {
+                "description": "Operator code query parameter.",
+                "label": "Operator code"
+              },
+              "pt-BR": {
+                "description": "Código(s) do operador (CSV).",
+                "label": "Código do operador"
+              }
+            }
+          },
+          "resource": {
+            "locale": {
+              "en": {
+                "description": "Production resource code (machine/work center resource).",
+                "label": "Resource"
+              },
+              "pt-BR": {
+                "description": "Código do recurso de produção (máquina/recurso do centro de trabalho).",
+                "label": "Recurso"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "stop_reason": {
+            "locale": {
+              "en": {
+                "description": "PCP stop reason code from CYN/H6 (e.g. RT, OT, MT). Empty = all reasons.",
+                "label": "Stop reason"
+              },
+              "pt-BR": {
+                "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos.",
+                "label": "Motivo de parada"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking detalhado.",
+          "description": "Indicadores de horas e custo de parada (apontamentos PCP), com destaques de recurso e operador.",
+          "label": "Resumo de horas improdutivas"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "KPIs for PCP stop appointments: hours, cost, and top resource/operator highlights."
     },
     {
       "method": "GET",

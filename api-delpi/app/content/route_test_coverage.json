@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-30",
-  "baselineOperationCount": 495,
-  "operationCount": 495,
-  "coveredCount": 493,
+  "generatedAt": "2026-07-31",
+  "baselineOperationCount": 498,
+  "operationCount": 498,
+  "coveredCount": 496,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -104,8 +104,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 36,
-      "covered": 36,
+      "total": 39,
+      "covered": 39,
       "gap": 0,
       "exempt": 0
     },
@@ -2305,6 +2305,33 @@
       "path": "/production/schedule/today",
       "module": "production",
       "entity": "production_schedule_today",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_unproductive_hours_items",
+      "method": "GET",
+      "path": "/production/unproductive-hours/items",
+      "module": "production",
+      "entity": "production_unproductive_hours_item",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_unproductive_hours_ranking",
+      "method": "GET",
+      "path": "/production/unproductive-hours/ranking",
+      "module": "production",
+      "entity": "production_unproductive_hours_ranking",
+      "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_production_unproductive_hours_summary",
+      "method": "GET",
+      "path": "/production/unproductive-hours/summary",
+      "module": "production",
+      "entity": "production_unproductive_hours_summary",
       "shape": "playbook_report",
       "status": "covered"
     },

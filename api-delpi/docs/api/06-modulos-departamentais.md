@@ -136,6 +136,11 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/on_time_delivery_pct` | OTD produção (%) — OPs mãe (`C2_SEQUEN = '001'`) finalizadas no prazo **ou** em andamento já atrasadas (`C2_DATRF` vazio e `C2_DATPRF` &lt; hoje); período por data prevista. |
 | GET | `/production/otd` | OTD produção — resumo, listagem paginada de OPs mãe (sequência `001`) e filtro `status` (`on_time` / `late`). |
 | GET | `/production/otd/series` | Série temporal de OTD por filial. |
+| GET | `/production/unproductive-hours/summary` | Resumo de horas improdutivas (paradas PCP — todos os motivos). |
+| GET | `/production/unproductive-hours/items` | Listagem paginada de apontamentos de parada (+ descrição do motivo). |
+| GET | `/production/unproductive-hours/ranking` | Ranking top N por motivo, recurso, centro de custo, operador, produto ou operação. |
+
+Doc: [production-unproductive-hours.md](./production-unproductive-hours.md). View: `VW_BI_RT_HORAS_IMPRODUTIVAS` (`DESCRICAO_MOTIVO`) — não confundir com [`/retrabalhos`](./controle-retrabalhos.md), filtro `MOTIVO=RT`.
 
 **Faixa válida de eficiência (OEE e eficiência fabril):** 0–199% — ver [regras-faixa-eficiencia-producao.md](./regras-faixa-eficiencia-producao.md). Changelog jun/2026 (tempos, fórmulas, auto-refresh): [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md).
 

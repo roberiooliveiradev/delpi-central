@@ -39,6 +39,7 @@ from app.interface.http.routes.supplies import stock_balances_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
 from app.interface.http.routes.production import production_operational_router
+from app.interface.http.routes.production import unproductive_hours_router
 from app.interface.http.routes.purchases import purchases_router
 from app.interface.http.routes.engineering import engineering_router
 from app.interface.http.routes.quality import quality_router
@@ -229,6 +230,7 @@ app.include_router(stock_balances_router.router)
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)
 app.include_router(production_operational_router.router)
+app.include_router(unproductive_hours_router.router)
 app.include_router(production_appointments_router.router)
 app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)

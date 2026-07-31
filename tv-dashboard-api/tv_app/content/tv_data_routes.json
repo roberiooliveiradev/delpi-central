@@ -5918,8 +5918,8 @@
         "product_code": "Código do produto",
         "status": "Status"
       },
-      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar.",
-      "openEndedDateRange": true
+      "openEndedDateRange": true,
+      "whenToUse": "Use para a grade de últimas NCs. Deixe as datas vazias para o histórico completo; use presets ou datas fixas para recortar."
     },
     {
       "operationId": "export_lmp_nonconformities",
@@ -6564,6 +6564,21 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldTypes": {
+        "total_investment_in_period": "number",
+        "total_gross_savings_in_period": "number",
+        "total_hours_saved_until_now": "number",
+        "implemented_solutions_count": "number",
+        "solutions_started_in_period_count": "number",
+        "month": "string",
+        "gross_savings_month": "number",
+        "gross_costs_month": "number",
+        "gross_investment_month": "number",
+        "gross_recurring_investment_month": "number",
+        "shared_resource_cost_month": "number",
+        "investment_total_month": "number",
+        "net_savings_month": "number"
+      },
       "valueFieldLabels": {
         "total_investment_in_period": "Investimento total",
         "total_gross_costs_until_now": "Investimento total",
@@ -6581,21 +6596,6 @@
         "shared_resource_cost_month": "Custo recurso compartilhado (mês)",
         "investment_total_month": "Investimento total (mês)",
         "net_savings_month": "Economia líquida (mês)"
-      },
-      "valueFieldTypes": {
-        "total_investment_in_period": "number",
-        "total_gross_savings_in_period": "number",
-        "total_hours_saved_until_now": "number",
-        "implemented_solutions_count": "number",
-        "solutions_started_in_period_count": "number",
-        "month": "string",
-        "gross_savings_month": "number",
-        "gross_costs_month": "number",
-        "gross_investment_month": "number",
-        "gross_recurring_investment_month": "number",
-        "shared_resource_cost_month": "number",
-        "investment_total_month": "number",
-        "net_savings_month": "number"
       },
       "valueFields": [
         "total_investment_in_period",
@@ -6678,11 +6678,24 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
+      "tableFields": "points",
       "valueFieldLabels": {
         "periodo": "Período",
         "economia_bruta": "Economia",
         "investimento": "Investimento"
       },
+      "openEndedDateRange": true,
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6697,19 +6710,6 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "openEndedDateRange": true,
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
-      "tableFields": "points",
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
       ]
     },
     {
@@ -8935,10 +8935,10 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "list_production_appointments",
@@ -10410,9 +10410,24 @@
         "start_date",
         "end_date"
       ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
       "fixedQueryParams": {
         "granularity": "day"
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10427,21 +10442,6 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
       ],
       "seriesField": "points"
     },
@@ -10847,9 +10847,6 @@
         "start_date",
         "end_date"
       ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10857,6 +10854,9 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
       },
       "tvConstraints": {
         "requiresBranchPermission": true
@@ -11063,6 +11063,277 @@
         }
       },
       "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_production_unproductive_hours_items",
+      "httpMethod": "GET",
+      "label": "Itens de horas improdutivas",
+      "category": "production",
+      "path": "/production/unproductive-hours/items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada de apontamentos de parada com código e descrição do motivo.",
+      "whenToUse": "Usar em tabela ou listagem detalhada de horas improdutivas no TV.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "stop_reason": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo de parada",
+          "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos."
+        },
+        "resource": {
+          "type": "string",
+          "optional": true,
+          "label": "Recurso",
+          "description": "Código do recurso de produção (máquina/recurso do centro de trabalho)."
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        },
+        "operator_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do operador",
+          "description": "Código(s) do operador (CSV)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação",
+          "default": "date_desc",
+          "enum": [
+            "date_desc",
+            "date_asc",
+            "hours_desc",
+            "hours_asc",
+            "cost_desc",
+            "cost_asc"
+          ],
+          "description": "Critério de ordenação da listagem."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_production_unproductive_hours_ranking",
+      "httpMethod": "GET",
+      "label": "Ranking de horas improdutivas",
+      "category": "production",
+      "path": "/production/unproductive-hours/ranking",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Top N de horas improdutivas por motivo, recurso, centro de custo, operador, produto ou operação.",
+      "whenToUse": "Usar em gráfico de barras ou widget de ranking no painel de produção.",
+      "paramSchema": {
+        "rank_by": {
+          "type": "string",
+          "optional": false,
+          "label": "Agrupar ranking por",
+          "enum": [
+            "stop_reason",
+            "resource",
+            "cost_center",
+            "operator",
+            "product",
+            "operation"
+          ],
+          "description": "Dimensão do ranking: stop_reason (motivo), resource, cost_center, operator, product ou operation."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "stop_reason": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo de parada",
+          "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos."
+        },
+        "resource": {
+          "type": "string",
+          "optional": true,
+          "label": "Recurso",
+          "description": "Código do recurso de produção (máquina/recurso do centro de trabalho)."
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        },
+        "operator_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do operador",
+          "description": "Código(s) do operador (CSV)."
+        },
+        "metric": {
+          "type": "string",
+          "optional": true,
+          "label": "Métrica",
+          "default": "hours",
+          "enum": [
+            "hours",
+            "cost"
+          ],
+          "description": "Métrica do ranking: hours (horas) ou cost (custo), em ordem decrescente."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
+    },
+    {
+      "operationId": "get_production_unproductive_hours_summary",
+      "httpMethod": "GET",
+      "label": "Resumo de horas improdutivas",
+      "category": "production",
+      "path": "/production/unproductive-hours/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Indicadores de horas e custo de parada (apontamentos PCP), com destaques de recurso e operador.",
+      "whenToUse": "Usar em card KPI ou painel antes da listagem ou ranking detalhado.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "format": "date",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "format": "date",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "stop_reason": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo de parada",
+          "description": "Código do motivo de parada PCP (CYN/H6, ex.: RT, OT, MT). Vazio = todos os motivos."
+        },
+        "resource": {
+          "type": "string",
+          "optional": true,
+          "label": "Recurso",
+          "description": "Código do recurso de produção (máquina/recurso do centro de trabalho)."
+        },
+        "cost_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        },
+        "operator_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do operador",
+          "description": "Código(s) do operador (CSV)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ]
     },
     {
       "operationId": "get_production_work_center_average_planned_time",
@@ -11494,11 +11765,11 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -14527,12 +14798,12 @@
         "average_score": "Nota média 5S",
         "comparable_goal": "Meta"
       },
+      "labelAliases": [
+        "Auditoria 5S — resumo"
+      ],
       "valueFields": [
         "value",
         "average_score"
-      ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
       ]
     },
     {
@@ -15081,14 +15352,14 @@
         "comparable_goal": "Meta financeira",
         "ideas_goal": "Ideias / meta"
       },
+      "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
+        "Kaizens — resumo e listagem (Google Sheets)"
+      ],
       "valueFields": [
         "value",
         "total_savings",
         "total_kaizens"
-      ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (PostgreSQL)",
-        "Kaizens — resumo e listagem (Google Sheets)"
       ]
     },
     {
@@ -15778,6 +16049,9 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
+      "labelAliases": [
+        "Qualidade — PPM externo"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -15786,9 +16060,6 @@
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM externo"
       ]
     },
     {
@@ -15979,6 +16250,10 @@
         "target": "Meta PPM",
         "comparable_goal": "Meta"
       },
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -15987,10 +16262,6 @@
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
       ]
     },
     {
@@ -16432,6 +16703,7 @@
         "start_date",
         "end_date"
       ],
+      "tableFields": "items",
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -16441,7 +16713,6 @@
         "code": "Código",
         "label": "Descrição"
       },
-      "tableFields": "items",
       "valueFields": [
         "value",
         "sharePct",
@@ -18504,6 +18775,7 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "stock_value": "Valor (R$)",
         "quantity": "Quantidade"
@@ -18514,7 +18786,6 @@
         "only_positive": true,
         "sort": "stock_value_desc"
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 50,
         "requiresBranchPermission": true
@@ -18565,12 +18836,12 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "by_warehouse",
       "valueFieldLabels": {
         "product_count": "Qtd. de produtos",
         "total_stock_value": "Valor do estoque (R$)",
         "total_quantity": "Quantidade total"
       },
-      "tableFields": "by_warehouse",
       "tvConstraints": {
         "maxRows": 12,
         "requiresBranchPermission": true

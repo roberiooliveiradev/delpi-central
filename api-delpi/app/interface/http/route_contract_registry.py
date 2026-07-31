@@ -254,6 +254,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_production_cost_pct": RouteContract("production_cost_pct", "scalar"),
     "get_depreciation_pct": RouteContract("depreciation_pct", "scalar"),
     "get_production_oee_series": RouteContract("production_oee_series", "scalar"),
+    "get_production_unproductive_hours_summary": RouteContract(
+        "production_unproductive_hours_summary", "playbook_report"
+    ),
+    "get_production_unproductive_hours_items": RouteContract(
+        "production_unproductive_hours_item", "paged_list"
+    ),
+    "get_production_unproductive_hours_ranking": RouteContract(
+        "production_unproductive_hours_ranking", "list"
+    ),
     "get_production_oee": RouteContract("production_oee_detail", "paged_list"),
     "get_production_oee_appointment_by_id": RouteContract(
         "production_oee_appointment",
