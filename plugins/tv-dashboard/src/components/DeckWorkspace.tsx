@@ -44,6 +44,8 @@ type Props = {
   onDropOnUnsectioned?: () => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
+  /** Editor de template / compositor sem páginas — oculta filmstrip e seções. */
+  hideFilmstrip?: boolean;
 };
 
 export function DeckWorkspace({
@@ -86,9 +88,11 @@ export function DeckWorkspace({
   onDropOnUnsectioned,
   stage,
   rightPanel,
+  hideFilmstrip = false,
 }: Props) {
   return (
-    <div className="td-deck__workspace">
+    <div className={["td-deck__workspace", hideFilmstrip ? "td-deck__workspace--no-filmstrip" : null].filter(Boolean).join(" ")}>
+      {hideFilmstrip ? null : (
       <SlideFilmstrip
         slides={slides}
         sections={sections}
@@ -128,6 +132,7 @@ export function DeckWorkspace({
         onDropOnSection={onDropOnSection}
         onDropOnUnsectioned={onDropOnUnsectioned}
       />
+      )}
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         <div className="td-deck-stage__inner">
           <div className="td-deck-stage__main">{stage}</div>

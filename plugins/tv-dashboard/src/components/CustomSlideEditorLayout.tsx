@@ -14,6 +14,7 @@ import {
   buildFilmstripSlidesWithThumbnailCache,
   serializeComunicadoConfigForThumbnail,
 } from "./slideCardPreview";
+
 type WorkspaceProps = Omit<ComponentProps<typeof DeckWorkspace>, "stage">;
 type ChromeProps = ComponentProps<typeof DeckEditorChrome>;
 
@@ -22,14 +23,19 @@ type Props = {
   workspaceProps: WorkspaceProps;
   chromeProps: ChromeProps;
   adminLabels: Record<string, string>;
+  /**
+   * `template` — mesmo compositor da playlist, sem filmstrip/seções/aba Programação.
+   */
+  variant?: "playlist" | "template";
 };
 
-/** Palco + filmstrip dentro do provider — miniatura usa config ao vivo do editor. */
+/** Palco + (opcional) filmstrip dentro do provider — miniatura usa config ao vivo. */
 export function CustomSlideEditorLayout({
   selectedSlide,
   workspaceProps,
   chromeProps,
   adminLabels,
+  variant = "playlist",
 }: Props) {
   const {
     config,
@@ -39,8 +45,8 @@ export function CustomSlideEditorLayout({
     dataPreviewLoading,
     refreshDataPreview,
   } = useComunicadoEditor();
-  /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
+  const isTemplate = variant === "template";
 
   const liveThumbnailConfig = useMemo(
     () => serializeComunicadoConfigForThumbnail(config, blocks),
@@ -49,17 +55,27 @@ export function CustomSlideEditorLayout({
 
   const slidesForFilmstrip = useMemo(
     () =>
-      buildFilmstripSlidesWithThumbnailCache({
-        slides: workspaceProps.slides,
-        selectedSlideId: selectedSlide.id,
-        liveSlideId: appliedSlideId ?? selectedSlide.id,
-        liveThumbnailConfig,
-        cache: thumbnailCacheRef.current,
-      }),
-    [workspaceProps.slides, selectedSlide.id, appliedSlideId, liveThumbnailConfig],
+      isTemplate
+        ? workspaceProps.slides
+        : buildFilmstripSlidesWithThumbnailCache({
+            slides: workspaceProps.slides,
+            selectedSlideId: selectedSlide.id,
+            liveSlideId: appliedSlideId ?? selectedSlide.id,
+            liveThumbnailConfig,
+            cache: thumbnailCacheRef.current,
+          }),
+    [
+      isTemplate,
+      workspaceProps.slides,
+      selectedSlide.id,
+      appliedSlideId,
+      liveThumbnailConfig,
+    ],
   );
 
-  const slideTabExtra = (
+  const slideTabExtra = isTemplate ? (
+    <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
+  ) : (
     <>
       <ComunicadoSlideTemplatesPanel compact />
       <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
@@ -80,6 +96,7 @@ export function CustomSlideEditorLayout({
 
   const chromeWithSlideExtras = {
     ...chromeProps,
+    variant,
     slideTabExtra,
     slideDeck: chromeProps.slideDeck
       ? { ...chromeProps.slideDeck, playlistChrome }
@@ -94,6 +111,8 @@ export function CustomSlideEditorLayout({
         {...workspaceProps}
         slides={slidesForFilmstrip}
         selectedSlideId={selectedSlide.id}
+        hideFilmstrip={isTemplate}
+        sections={isTemplate ? undefined : workspaceProps.sections}
         rightPanel={
           <div className="td-deck-right-stack">
             <DeckElementSidePanel labels={adminLabels} branchScope={chromeProps.branchScope} />

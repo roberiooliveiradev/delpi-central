@@ -115,6 +115,14 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     expect(tabs.some((tab) => tab.id === "home")).toBe(false);
   });
 
+  it("modo template oculta aba Programação", () => {
+    const tabs = resolveDeckRibbonTabs(true, { hidePlaylistTab: true });
+    expect(tabs.map((tab) => tab.id)).not.toContain("playlist");
+    expect(tabs.map((tab) => tab.id)).toEqual(
+      expect.arrayContaining(["slide", "insert", "layers"]),
+    );
+  });
+
   it("painel lateral: só Camadas sem seleção; Elemento+Camadas com seleção", () => {
     expect(resolveSelectionPanelTabs({ hasSelection: false, showDataTab: false }).map((t) => t.id)).toEqual([
       "layers",

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
 import { ArrowLeft, LayoutTemplate, Search, Upload } from "lucide-react";
 
 import {
@@ -14,6 +15,7 @@ import {
   type SlideTemplate,
   type SlideTemplateStatus,
 } from "../api/tvDashboardApi";
+import { TemplateLibraryContextMenu } from "../components/TemplateLibraryContextMenu";
 import { TemplateThumb } from "../components/TemplateThumb";
 import { HostContainedDialog } from "../components/ui/Modal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
@@ -33,6 +35,7 @@ function statusLabel(status: string) {
   return "Rascunho";
 }
 
+/** Mesmo layout da home (`td-home`), com ContextMenu do plugin-ui. */
 export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<SlideTemplate[]>([]);
@@ -40,6 +43,10 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("");
+  const [contextMenu, setContextMenu] = useState<{
+    template: SlideTemplate;
+    position: FixedPanelPoint;
+  } | null>(null);
   const [importPreview, setImportPreview] = useState<{
     file: File;
     label: string;
@@ -82,7 +89,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   const emptyHint = useMemo(() => {
     if (!canManage) return "Você não tem permissão para gerenciar a biblioteca de templates.";
     if (query.trim() || filter) return "Nenhum template neste filtro.";
-    return "Nenhum template ainda. Importe um .mdd ou crie a partir de um slide.";
+    return "Nenhum template ainda. Importe um .mdd ou salve um slide como template.";
   }, [canManage, filter, query]);
 
   async function onPickImport(file: File | null) {
@@ -186,12 +193,13 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   if (!canManage) {
     return (
       <div className="td-home">
-        <section className="td-home__greeting">
-          <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
-            <ArrowLeft size={16} aria-hidden="true" /> Voltar
+        <section className="td-home__greeting" aria-label="Biblioteca de templates">
+          <button type="button" className="td-home__back" onClick={onBack}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Voltar
           </button>
           <h2 className="td-home__hello">Biblioteca de templates</h2>
-          <p className="td-state">{emptyHint}</p>
+          <p className="td-home__empty">{emptyHint}</p>
         </section>
       </div>
     );
@@ -200,12 +208,11 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
   return (
     <div className="td-home">
       <section className="td-home__greeting" aria-label="Biblioteca de templates">
-        <div className="td-template-lib__header">
-          <button type="button" className="td-btn td-btn--ghost" onClick={onBack}>
-            <ArrowLeft size={16} aria-hidden="true" /> Voltar
-          </button>
-          <h2 className="td-home__hello">Biblioteca de templates</h2>
-        </div>
+        <button type="button" className="td-home__back" onClick={onBack}>
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar
+        </button>
+        <h2 className="td-home__hello">Biblioteca de templates</h2>
         <div className="td-home__create-row">
           <button
             type="button"
@@ -279,88 +286,80 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
         {error ? <div className="td-state">{error}</div> : null}
         {loading ? <div className="td-state">Carregando templates…</div> : null}
 
-        {!loading && items.length === 0 ? (
-          <div className="td-state td-template-lib__empty">
-            <LayoutTemplate size={32} aria-hidden="true" />
+        {!loading && !error && items.length === 0 ? (
+          <div className="td-home__empty">
+            <LayoutTemplate size={28} aria-hidden="true" />
             <p>{emptyHint}</p>
+            <button
+              type="button"
+              className="td-btn td-btn--primary"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload size={16} aria-hidden="true" />
+              Importar MDD
+            </button>
           </div>
         ) : null}
 
-        <ul className="td-template-lib__grid">
-          {items.map((item) => (
-            <li key={item.id} className="td-template-lib__card">
-              <button
-                type="button"
-                className="td-template-lib__thumb-btn"
-                onClick={() => onOpen(item.id)}
+        {!loading && !error && items.length > 0 ? (
+          <ul className="td-home__grid">
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className="td-home__card"
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setContextMenu({
+                    template: item,
+                    position: { x: event.clientX, y: event.clientY },
+                  });
+                }}
               >
-                <TemplateThumb template={item} />
-              </button>
-              <div className="td-template-lib__meta">
-                <strong>{item.label}</strong>
-                <span className="td-template-lib__badge">
-                  {statusLabel(item.status)}
-                  {item.isSystem ? " · Sistema" : ""}
-                </span>
-                {item.description ? <p>{item.description}</p> : null}
-              </div>
-              <div className="td-template-lib__actions">
-                <button type="button" className="td-btn td-btn--ghost" onClick={() => onOpen(item.id)}>
-                  Abrir
-                </button>
-                {item.status !== "published" ? (
-                  <button
-                    type="button"
-                    className="td-btn td-btn--ghost"
-                    onClick={() => void runAction(item, "publish")}
-                  >
-                    Publicar
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="td-btn td-btn--ghost"
-                    onClick={() => void runAction(item, "unpublish")}
-                    disabled={item.isSystem}
-                  >
-                    Despublicar
-                  </button>
-                )}
                 <button
                   type="button"
-                  className="td-btn td-btn--ghost"
-                  onClick={() => void runAction(item, "clone")}
+                  className="td-home__card-main"
+                  onClick={() => onOpen(item.id)}
+                  aria-label={`Abrir ${item.label}`}
                 >
-                  Duplicar
+                  <span className="td-home__card-thumb td-home__card-thumb--preview" aria-hidden="true">
+                    <TemplateThumb template={item} />
+                  </span>
+                  <span className="td-home__card-body">
+                    <span className="td-home__card-name">{item.label}</span>
+                    <span className="td-home__card-meta">
+                      <span
+                        className={`td-badge ${
+                          item.status === "published" ? "td-badge--active" : "td-badge--inactive"
+                        }`}
+                      >
+                        {statusLabel(item.status)}
+                        {item.isSystem ? " · Sistema" : ""}
+                      </span>
+                      {item.description ? <span>{item.description}</span> : null}
+                    </span>
+                  </span>
                 </button>
-                <button
-                  type="button"
-                  className="td-btn td-btn--ghost"
-                  onClick={() => void runAction(item, "export")}
-                >
-                  Exportar
-                </button>
-                <button
-                  type="button"
-                  className="td-btn td-btn--ghost"
-                  onClick={() => void runAction(item, "archive")}
-                  disabled={item.isSystem}
-                >
-                  Arquivar
-                </button>
-                <button
-                  type="button"
-                  className="td-btn td-btn--ghost"
-                  onClick={() => void runAction(item, "delete")}
-                  disabled={item.isSystem}
-                >
-                  Excluir
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </section>
+
+      {contextMenu ? (
+        <TemplateLibraryContextMenu
+          open
+          position={contextMenu.position}
+          template={contextMenu.template}
+          onClose={() => setContextMenu(null)}
+          onOpen={() => onOpen(contextMenu.template.id)}
+          onPublish={() => void runAction(contextMenu.template, "publish")}
+          onUnpublish={() => void runAction(contextMenu.template, "unpublish")}
+          onClone={() => void runAction(contextMenu.template, "clone")}
+          onExport={() => void runAction(contextMenu.template, "export")}
+          onArchive={() => void runAction(contextMenu.template, "archive")}
+          onDelete={() => void runAction(contextMenu.template, "delete")}
+        />
+      ) : null}
 
       <HostContainedDialog
         open={Boolean(importPreview)}
@@ -368,12 +367,12 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
         onClose={() => setImportPreview(null)}
       >
         {importPreview ? (
-          <div className="td-template-import-preview">
+          <div className="td-save-as-template">
             <p>
               Importar <strong>{importPreview.label}</strong> como rascunho na biblioteca?
             </p>
             {importPreview.description ? <p>{importPreview.description}</p> : null}
-            <div className="td-template-import-preview__actions">
+            <div className="td-save-as-template__actions">
               <button
                 type="button"
                 className="td-btn td-btn--ghost"
@@ -384,7 +383,7 @@ export function TemplateLibraryPage({ canManage, onBack, onOpen }: Props) {
               </button>
               <button
                 type="button"
-                className="td-btn"
+                className="td-btn td-btn--primary"
                 onClick={() => void confirmImport()}
                 disabled={importBusy}
               >

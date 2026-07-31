@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import {
+  getBranchScope,
   getSlideTemplate,
+  listNativeScreens,
   publishSlideTemplate,
   updateSlideTemplate,
+  type BranchScope,
+  type NativeScreenCatalogItem,
+  type Playlist,
+  type Slide,
   type SlideTemplate,
 } from "../api/tvDashboardApi";
 import { HttpRequestError } from "../api/httpClient";
-import { ComunicadoComposerField } from "../components/ComunicadoComposerField";
+import { CustomSlideEditorLayout } from "../components/CustomSlideEditorLayout";
+import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext";
+import { EditorShortcutsProvider } from "../keyboard";
 import {
   clearTemplateDraft,
   resolveTemplateConfigWithLocalDraft,
@@ -23,6 +31,7 @@ type Props = {
 };
 
 const AUTOSAVE_MS = 800;
+const TEMPLATE_PLAYLIST_ID = "template-library";
 
 export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   const [template, setTemplate] = useState<SlideTemplate | null>(null);
@@ -30,15 +39,22 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   const [version, setVersion] = useState(1);
   const [status, setStatus] = useState<string>("draft");
   const [label, setLabel] = useState("");
+  const [durationSec, setDurationSec] = useState<number | null>(45);
+  const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
+  const [branchScope, setBranchScope] = useState<BranchScope | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
   const versionRef = useRef(1);
   const configRef = useRef<Record<string, unknown>>({});
+  const labelRef = useRef("");
+  const durationRef = useRef<number | null>(45);
 
   versionRef.current = version;
   configRef.current = config;
+  labelRef.current = label;
+  durationRef.current = durationSec;
 
   const load = useCallback(async () => {
     if (!canManage) {
@@ -49,7 +65,11 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const item = await getSlideTemplate(templateId);
+      const [item, screens, scope] = await Promise.all([
+        getSlideTemplate(templateId),
+        listNativeScreens().catch(() => [] as NativeScreenCatalogItem[]),
+        getBranchScope().catch(() => null),
+      ]);
       const resolved = resolveTemplateConfigWithLocalDraft(
         templateId,
         item.nativeConfig ?? {},
@@ -59,7 +79,10 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
       setLabel(item.label);
       setStatus(item.status);
       setVersion(item.version);
+      setDurationSec(item.durationSec ?? 45);
       setConfig(resolved.nativeConfig);
+      setCatalog(screens);
+      setBranchScope(scope);
       if (resolved.fromDraft) {
         tvDashboardNotice("Rascunho local restaurado após F5.");
       }
@@ -75,17 +98,27 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   }, [load]);
 
   const persist = useCallback(
-    async (nextConfig: Record<string, unknown>, nextLabel?: string) => {
+    async (args?: {
+      nativeConfig?: Record<string, unknown>;
+      label?: string;
+      durationSec?: number | null;
+    }) => {
       setSaving(true);
       try {
+        const nextConfig = args?.nativeConfig ?? configRef.current;
+        const nextLabel = args?.label ?? labelRef.current;
+        const nextDuration =
+          args?.durationSec !== undefined ? args.durationSec : durationRef.current;
         const updated = await updateSlideTemplate(templateId, {
           version: versionRef.current,
           nativeConfig: nextConfig,
-          label: nextLabel ?? label,
+          label: nextLabel,
+          durationSec: nextDuration ?? undefined,
         });
         setVersion(updated.version);
         setStatus(updated.status);
         setTemplate(updated);
+        setDurationSec(updated.durationSec ?? nextDuration);
         writeTemplateDraft(templateId, nextConfig, updated.version);
       } catch (err) {
         if (err instanceof HttpRequestError && err.status === 409) {
@@ -98,7 +131,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
         setSaving(false);
       }
     },
-    [label, load, templateId],
+    [load, templateId],
   );
 
   const onChange = useCallback(
@@ -107,7 +140,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
       writeTemplateDraft(templateId, next, versionRef.current);
       if (timerRef.current) window.clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => {
-        void persist(next);
+        void persist({ nativeConfig: next });
       }, AUTOSAVE_MS);
     },
     [persist, templateId],
@@ -122,7 +155,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   async function handlePublish() {
     if (timerRef.current) {
       window.clearTimeout(timerRef.current);
-      await persist(configRef.current);
+      await persist();
     }
     try {
       const published = await publishSlideTemplate(templateId);
@@ -134,6 +167,37 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
       tvDashboardNotice(err instanceof Error ? err.message : "Erro ao publicar.");
     }
   }
+
+  const selectedSlide: Slide = useMemo(
+    () => ({
+      id: templateId,
+      playlistId: TEMPLATE_PLAYLIST_ID,
+      sortOrder: 0,
+      slideType: "native",
+      title: label || "Template",
+      nativeScreenKey: template?.nativeScreenKey || "custom_message",
+      nativeConfig: config,
+      durationSec,
+      isActive: true,
+    }),
+    [config, durationSec, label, template?.nativeScreenKey, templateId],
+  );
+
+  const syntheticPlaylist: Playlist = useMemo(
+    () => ({
+      id: TEMPLATE_PLAYLIST_ID,
+      publicToken: "",
+      name: label || "Template",
+      viewportProfile: "1080p",
+      transitionStyle: "fade",
+      defaultDurationSec: durationSec ?? 45,
+      globalRefreshSec: 300,
+      isActive: false,
+      viewCount: 0,
+      slides: [selectedSlide],
+    }),
+    [durationSec, label, selectedSlide],
+  );
 
   if (!canManage) {
     return (
@@ -158,6 +222,71 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
     );
   }
 
+  const chromeProps = {
+    playlist: syntheticPlaylist,
+    slide: selectedSlide,
+    catalog,
+    branchScope,
+    isCustomSlide: true,
+    adminLabels: {},
+    variant: "template" as const,
+    slideDeck: {
+      slides: [selectedSlide],
+      selectedSlide,
+      onAdd: () => undefined,
+      onSelect: () => undefined,
+      // Sem duplicar / pausar / excluir — template é uma tela só.
+    },
+    onSavePlaylistSettings: () => undefined,
+    onSaveSlide: (
+      _slide: Slide,
+      payload: {
+        title: string;
+        durationSec: number | null;
+        nativeConfig?: Record<string, unknown>;
+      },
+    ) => {
+      if (payload.title && payload.title !== labelRef.current) {
+        setLabel(payload.title);
+      }
+      if (payload.durationSec !== undefined) {
+        setDurationSec(payload.durationSec);
+      }
+      if (payload.nativeConfig) {
+        setConfig(payload.nativeConfig);
+        writeTemplateDraft(templateId, payload.nativeConfig, versionRef.current);
+      }
+      void persist({
+        label: payload.title || labelRef.current,
+        durationSec: payload.durationSec,
+        nativeConfig: payload.nativeConfig ?? configRef.current,
+      });
+    },
+  };
+
+  const workspaceProps = {
+    slides: [selectedSlide],
+    playlistId: TEMPLATE_PLAYLIST_ID,
+    selectedSlideId: selectedSlide.id,
+    selectedSlideIds: [selectedSlide.id],
+    previewBySlideId: {},
+    dragIndex: null as number | null,
+    inactiveLabel: "Pausada",
+    canPasteSlide: false,
+    viewportProfile: "1080p",
+    onSelect: () => undefined,
+    onDragStart: () => undefined,
+    onDrop: () => undefined,
+    onDragEnd: () => undefined,
+    onAdd: () => undefined,
+    onCopySlide: () => undefined,
+    onPasteSlide: () => undefined,
+    onDuplicateSlide: () => undefined,
+    onRenameSlide: () => undefined,
+    onToggleSlideActive: () => undefined,
+    onRemoveSlide: () => undefined,
+  };
+
   return (
     <div className="td-template-editor">
       <header className="td-template-editor__bar">
@@ -168,7 +297,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
           className="td-template-editor__label"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          onBlur={() => void persist(configRef.current, label)}
+          onBlur={() => void persist({ label })}
           aria-label="Nome do template"
         />
         <span className="td-template-lib__badge">
@@ -180,11 +309,24 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
           Publicar
         </button>
       </header>
-      <ComunicadoComposerField
-        playlistId="template-library"
-        value={config}
-        onChange={onChange}
-      />
+      <EditorShortcutsProvider active>
+        <div className="td-deck td-deck--editor">
+          <ComunicadoEditorProvider
+            playlistId={TEMPLATE_PLAYLIST_ID}
+            slideId={selectedSlide.id}
+            value={config}
+            onChange={onChange}
+          >
+            <CustomSlideEditorLayout
+              variant="template"
+              selectedSlide={selectedSlide}
+              workspaceProps={workspaceProps}
+              chromeProps={chromeProps}
+              adminLabels={{}}
+            />
+          </ComunicadoEditorProvider>
+        </div>
+      </EditorShortcutsProvider>
     </div>
   );
 }

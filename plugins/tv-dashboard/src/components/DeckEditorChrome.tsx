@@ -36,9 +36,9 @@ type SlideDeckProps = {
   selectedSlide: Slide | null;
   onAdd: () => void;
   onSelect: (slideId: string) => void;
-  onDuplicate: (slide: Slide) => void;
-  onToggleActive: (slide: Slide) => void;
-  onRemove: (slide: Slide) => void;
+  onDuplicate?: (slide: Slide) => void;
+  onToggleActive?: (slide: Slide) => void;
+  onRemove?: (slide: Slide) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
   onExportPptx?: () => void;
@@ -67,6 +67,8 @@ type Props = {
       transitionStyle?: string | null;
     },
   ) => void;
+  /** Template: sem aba Programação / multi-página. */
+  variant?: "playlist" | "template";
 };
 
 function isRibbonContentTab(
@@ -120,6 +122,7 @@ export function DeckEditorChrome({
   slideDeck,
   onSavePlaylistSettings,
   onSaveSlide,
+  variant = "playlist",
 }: Props) {
   const editor = useOptionalComunicadoEditor();
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
@@ -135,6 +138,7 @@ export function DeckEditorChrome({
       isTableSelection,
       hasDataBoundSelection,
       showDataTab,
+      hidePlaylistTab: variant === "template",
     }),
     Boolean(isCanvasTableSelection),
   );

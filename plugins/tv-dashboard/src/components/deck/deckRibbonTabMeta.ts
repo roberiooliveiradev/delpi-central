@@ -137,6 +137,8 @@ export type ResolveDeckRibbonTabsOptions = {
   showDataTab?: boolean;
   /** Seleção atual é data-bound (chart/kpi/table/fonte). */
   hasDataBoundSelection?: boolean;
+  /** Editor de template: sem aba Programação (multi-página / seções). */
+  hidePlaylistTab?: boolean;
 };
 
 export function resolveDeckRibbonTabs(
@@ -147,7 +149,9 @@ export function resolveDeckRibbonTabs(
   const isTableSelection = Boolean(options?.isTableSelection);
   const showDataTab = Boolean(options?.showDataTab);
   const hasDataBoundSelection = Boolean(options?.hasDataBoundSelection);
+  const hidePlaylistTab = Boolean(options?.hidePlaylistTab);
   return DECK_RIBBON_TABS.filter((tab) => {
+    if (hidePlaylistTab && tab.id === "playlist") return false;
     if (tab.customOnly && !isCustomSlide) return false;
     if (tab.selectionOnly && !hasSelection) return false;
     if (tab.dataBoundOnly && !hasDataBoundSelection && !showDataTab) return false;

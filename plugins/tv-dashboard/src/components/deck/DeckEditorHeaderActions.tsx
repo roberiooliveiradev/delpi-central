@@ -81,7 +81,6 @@ export function DeckPlaylistIdentity({
  */
 export function DeckHomePlaylistChrome({
   linkActive,
-  onBack: _onBack,
   onPreview,
   onRefreshVisual,
   dataPreviewStale = false,

@@ -8,9 +8,9 @@ import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
 type Props = {
   selectedSlide: Slide | null;
-  onDuplicate: (slide: Slide) => void;
-  onToggleActive: (slide: Slide) => void;
-  onRemove: (slide: Slide) => void;
+  onDuplicate?: (slide: Slide) => void;
+  onToggleActive?: (slide: Slide) => void;
+  onRemove?: (slide: Slide) => void;
   onExportPng?: () => void;
   onExportPdf?: () => void;
   onExportPptx?: () => void;
@@ -33,23 +33,31 @@ export function SlideCurrentRibbon({
 }: Props) {
   if (!selectedSlide) return null;
 
+  const hasDeckActions = Boolean(onDuplicate || onToggleActive || onRemove);
+  const hasExport = Boolean(onExportPng || onExportPdf || onExportPptx);
+  if (!hasDeckActions && !hasExport) return null;
+
   return (
     <DeckRibbonGroup groupId="slide-current" label="Tela atual" hint={H.currentSlide}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-        <DeckRibbonTile
-          icon={selectedSlide.isActive ? Eye : EyeOff}
-          label={selectedSlide.isActive ? "Pausar" : "Ativar"}
-          hint={selectedSlide.isActive ? H.pause : H.activate}
-          keyTip={K.toggleActive}
-          onClick={() => onToggleActive(selectedSlide)}
-        />
-        <DeckRibbonTile
-          icon={Copy}
-          label="Duplicar"
-          hint={H.duplicate}
-          keyTip={K.duplicate}
-          onClick={() => onDuplicate(selectedSlide)}
-        />
+        {onToggleActive ? (
+          <DeckRibbonTile
+            icon={selectedSlide.isActive ? Eye : EyeOff}
+            label={selectedSlide.isActive ? "Pausar" : "Ativar"}
+            hint={selectedSlide.isActive ? H.pause : H.activate}
+            keyTip={K.toggleActive}
+            onClick={() => onToggleActive(selectedSlide)}
+          />
+        ) : null}
+        {onDuplicate ? (
+          <DeckRibbonTile
+            icon={Copy}
+            label="Duplicar"
+            hint={H.duplicate}
+            keyTip={K.duplicate}
+            onClick={() => onDuplicate(selectedSlide)}
+          />
+        ) : null}
         {onExportPng ? (
           <DeckRibbonTile
             icon={Download}
@@ -80,13 +88,15 @@ export function SlideCurrentRibbon({
             onClick={onExportPptx}
           />
         ) : null}
-        <DeckRibbonTile
-          icon={Trash2}
-          label="Excluir"
-          hint={H.delete}
-          keyTip={K.remove}
-          onClick={() => onRemove(selectedSlide)}
-        />
+        {onRemove ? (
+          <DeckRibbonTile
+            icon={Trash2}
+            label="Excluir"
+            hint={H.delete}
+            keyTip={K.remove}
+            onClick={() => onRemove(selectedSlide)}
+          />
+        ) : null}
       </div>
     </DeckRibbonGroup>
   );
