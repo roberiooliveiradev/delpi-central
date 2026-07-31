@@ -441,12 +441,16 @@
 .dashboard-tv-dashboard .td-page-back:hover{
   color: var(--td-accent);
 }
-/* Share: largura legível no shell 1440 (evita gap enorme nome ↔ lixeira). */
+/* Share: coluna centralizada e legível no shell 1440. */
+.dashboard-tv-dashboard .td-page-stack--share{
+  max-width: 48rem;
+  width: 100%;
+  margin-inline: auto;
+}
 .dashboard-tv-dashboard .td-share-stack{
   display: flex;
   flex-direction: column;
   gap: var(--td-section-gap);
-  max-width: 44rem;
   width: 100%;
 }
 .dashboard-tv-dashboard .td-share-toolbar{
@@ -454,7 +458,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 .dashboard-tv-dashboard .td-share-add-row{
   display: flex;
@@ -477,7 +481,7 @@
 }
 .dashboard-tv-dashboard .td-share-suggestions{
   list-style: none;
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -489,16 +493,57 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
+  border: 1px solid var(--td-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
 }
 .dashboard-tv-dashboard .td-share-list__row{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--td-border);
+}
+.dashboard-tv-dashboard .td-share-list__row:last-child{
+  border-bottom: 0;
+}
+.dashboard-tv-dashboard .td-share-list__info{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dashboard-tv-dashboard .td-share-list__name{
+  font-weight: 600;
+  color: var(--td-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .dashboard-tv-dashboard .td-share-list__meta{
   color: var(--td-muted);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-tv-dashboard .td-share-list__empty{
+  padding: 14px 12px;
+  color: var(--td-muted);
+  font-size: 0.9rem;
+}
+.dashboard-tv-dashboard .td-share-list__remove{
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 10px;
 }
 .dashboard-tv-dashboard .td-eyebrow{
   margin: 0;

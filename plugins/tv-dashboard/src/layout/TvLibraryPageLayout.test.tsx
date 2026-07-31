@@ -38,4 +38,14 @@ describe("TvLibraryPageLayout", () => {
     expect(container.querySelector(".td-action-grid")).toBeNull();
     expect(container.querySelector(".td-library-toolbar")).toBeNull();
   });
+
+  it("aceita className no stack", () => {
+    const { container } = render(
+      <TvLibraryPageLayout className="td-page-stack--share" header={<h1>Share</h1>}>
+        <p>Body</p>
+      </TvLibraryPageLayout>,
+    );
+
+    expect(container.querySelector(".td-page-stack.td-page-stack--share")).toBeTruthy();
+  });
 });

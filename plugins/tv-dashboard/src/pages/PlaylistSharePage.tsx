@@ -208,6 +208,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
   if (error || !playlist) {
     return (
       <TvLibraryPageLayout
+        className="td-page-stack--share"
         header={
           <TvPageHeader
             eyebrow="Operações · Displays"
@@ -228,6 +229,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
 
   return (
     <TvLibraryPageLayout
+      className="td-page-stack--share"
       header={
         <TvPageHeader
           eyebrow="Operações · Displays"
@@ -334,20 +336,20 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
               ) : null}
               <ul className="td-share-list">
                 {shareList.length === 0 ? (
-                  <li className="td-share-list__meta">Nenhum colaborador ainda.</li>
+                  <li className="td-share-list__empty">Nenhum colaborador ainda.</li>
                 ) : (
                   shareList.map((share) => (
                     <li key={share.id} className="td-share-list__row">
-                      <span>
-                        <strong>{share.label}</strong>
-                        {share.email && share.email !== share.label ? (
-                          <span className="td-share-list__meta"> · {share.email}</span>
-                        ) : null}
-                        <span className="td-share-list__meta"> · {share.role}</span>
-                      </span>
+                      <div className="td-share-list__info">
+                        <span className="td-share-list__name">{share.label}</span>
+                        <span className="td-share-list__meta">
+                          {share.email && share.email !== share.label ? `${share.email} · ` : null}
+                          {share.role === "viewer" ? "somente leitura" : "editor"}
+                        </span>
+                      </div>
                       <button
                         type="button"
-                        className="td-btn"
+                        className="td-btn td-share-list__remove"
                         onClick={() => void removeShare(share.targetUserId)}
                         aria-label="Remover colaborador"
                       >
