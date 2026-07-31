@@ -1,4 +1,6 @@
-import type { ComunicadoDataBlock } from "./comunicadoTypes";
+import { ConfigurableTable } from "./ConfigurableTable";
+import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
+import type { ComunicadoDataBlock, ComunicadoTablePreset } from "./comunicadoTypes";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import {
   resolveChartType,
@@ -6,7 +8,6 @@ import {
   resolveTableColumns,
 } from "./tvDataPresentation";
 import {
-  formatCellValue,
   TvDataBarChartWidget,
   TvDataKpiWidget,
   TvDataLineChartWidget,
@@ -18,39 +19,16 @@ type Props = {
   loading?: boolean;
 };
 
-function TvDataTableWidget({
-  resolved,
-  columns,
-}: {
-  resolved: ComunicadoDataBlock["resolved"];
-  columns: ReturnType<typeof resolveTableColumns>;
-}) {
-  const rows = resolved?.table?.rows ?? [];
-  if (rows.length === 0) {
-    return <div className="tdp-data-table tdp-data-table--empty">Sem linhas</div>;
-  }
-  const visibleColumns = columns.length > 0 ? columns : resolveTableColumns(resolved, rows);
-  return (
-    <table className="tdp-data-table">
-      <thead>
-        <tr>
-          {visibleColumns.map((column) => (
-            <th key={column.key}>{column.label}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, index) => (
-          <tr key={`row-${index}`}>
-            {visibleColumns.map((column) => (
-              <td key={`${column.key}-${index}`}>{formatCellValue(row[column.key])}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
+/** Default Delpi banded — templates claros / data_table sem receita explícita. */
+const DEFAULT_DATA_TABLE_BANDED = {
+  showBorders: true,
+  zebraStripe: true,
+  headerBg: "#089bdb",
+  headerTextColor: "#ffffff",
+  cellBg: "#ffffff",
+  cellTextColor: "#0f172a",
+  borderColor: "#e2e8f0",
+} as const;
 
 export function TvDataBlockView({ block, interactive = false, loading = false }: Props) {
   const binding = block.dataBinding;
@@ -81,10 +59,22 @@ export function TvDataBlockView({ block, interactive = false, loading = false }:
   if (displayMode === "table") {
     const rows = resolved.table?.rows ?? [];
     const columns = resolveTableColumns(resolved, rows);
+    const preset: ComunicadoTablePreset = block.tablePreset ?? "banded";
+    const tableOptions = resolveTableDisplayOptions(
+      block.tableOptions ?? { ...DEFAULT_DATA_TABLE_BANDED },
+      preset,
+      resolved,
+    );
     return (
       <div className="tdp-data-block tdp-data-block--table">
         <div className="tdp-data-table-wrap">
-          <TvDataTableWidget resolved={resolved} columns={columns} />
+          <ConfigurableTable
+            columns={columns}
+            rows={rows}
+            options={tableOptions}
+            preset={preset}
+            tableParts={block.tableParts}
+          />
         </div>
       </div>
     );

@@ -131,6 +131,14 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 | 4B.4 | Sombras, bordas e raio (`boxShadow`, `borderWidth`, `borderRadius`) |
 | 4B.5 | Formas `star`, `chevron-right` + bloco `icon` (Lucide) |
 | 4B.6 | Crop de imagem (`imageCrop` x/y/w/h % + `comunicadoImageCrop.ts`) |
+| 4B.7 | **Templates `.mdd`** em `tv-dashboard-api/tv_app/content/slide_templates/` — fundo claro; export/import no editor; loader mescla com JSON legado |
+
+**Templates MDD (4B.7) — fluxo:**
+
+1. Pasta versionada: `content/slide_templates/*.mdd` (OEE / Estoque TOP 5).
+2. API: `GET /slide-presets` lista JSON + MDD; `GET …/export`, `POST /slide-templates/export|import`.
+3. Editor (Templates): aplicar → editar no palco → **Exportar MDD** → commit na pasta → rebuild API.
+4. Padrão visual: fundo `#f8fafc`, tipografia `#0f172a`, tabela `banded` Delpi.
 
 **Layout avançado (4D):**
 

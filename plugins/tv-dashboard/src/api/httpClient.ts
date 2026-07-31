@@ -137,6 +137,25 @@ export async function httpGetBlob(url: string): Promise<Blob> {
   return response.blob();
 }
 
+/** POST JSON e espera blob (ex.: export MDD de template). */
+export async function httpPostBlob(url: string, body: unknown): Promise<Blob> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let message: string | null = null;
+    try {
+      message = resolveHttpErrorMessage(await response.json(), response.status);
+    } catch {
+      message = resolveHttpErrorMessage(null, response.status);
+    }
+    throw new HttpRequestError(message, response.status);
+  }
+  return response.blob();
+}
+
 export type HttpPostFormOptions = {
   signal?: AbortSignal;
   onProgress?: (ratio: number) => void;

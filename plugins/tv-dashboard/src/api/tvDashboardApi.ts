@@ -1,4 +1,4 @@
-import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPostForm } from "./httpClient";
+import { API_BASE, httpDelete, httpGet, httpGetBlob, httpPatch, httpPost, httpPostBlob, httpPostForm } from "./httpClient";
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data: T };
 
@@ -123,6 +123,7 @@ export type SlidePreset = {
   description?: string | null;
   slideType?: "native" | "external";
   durationSec?: number | null;
+  source?: "json" | "mdd" | string;
 };
 
 export type SlidePresetDetail = {
@@ -132,6 +133,7 @@ export type SlidePresetDetail = {
   nativeScreenKey?: string;
   nativeConfig?: Record<string, unknown>;
   externalUrl?: string;
+  source?: string;
 };
 
 export type TvDashboardUiContent = {
@@ -709,6 +711,33 @@ export async function listSlidePresets() {
 
 export async function getSlidePreset(presetKey: string) {
   return unwrap(httpGet<ApiEnvelope<SlidePresetDetail>>(`${API_BASE}/slide-presets/${presetKey}`));
+}
+
+export async function exportSlidePresetMdd(presetKey: string): Promise<Blob> {
+  return httpGetBlob(`${API_BASE}/slide-presets/${encodeURIComponent(presetKey)}/export`);
+}
+
+export async function exportSlideAsTemplateMdd(body: {
+  key: string;
+  label: string;
+  description?: string;
+  title?: string;
+  durationSec?: number;
+  nativeScreenKey?: string;
+  nativeConfig: Record<string, unknown>;
+}): Promise<Blob> {
+  return httpPostBlob(`${API_BASE}/slide-templates/export`, body);
+}
+
+export async function importSlideTemplateMdd(file: File): Promise<SlidePresetDetail & { key: string; label: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  return unwrap(
+    httpPostForm<ApiEnvelope<SlidePresetDetail & { key: string; label: string }>>(
+      `${API_BASE}/slide-templates/import`,
+      form,
+    ),
+  );
 }
 
 export async function getUiContent() {

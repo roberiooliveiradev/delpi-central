@@ -45,8 +45,20 @@ Duplicar playlist **dentro da mesma conta** continua sendo atalho rápido (não 
 |------|------|
 | **Exportar MDD** | Home → menu de contexto da programação → «Exportar MDD» |
 | **Importar MDD** | Home → card «Importar MDD» → upload → preview → confirmar |
+| **Templates de slide (`.mdd`)** | Editor → Templates → Exportar / Importar MDD; arquivos em `tv-dashboard-api/tv_app/content/slide_templates/` |
 
-Fluxo de importação: **preview → apply** (token de curta duração). A programação importada nasce **inativa**, com novo `publicToken` e novos UUIDs.
+Fluxo de importação (programação): **preview → apply** (token de curta duração). A programação importada nasce **inativa**, com novo `publicToken` e novos UUIDs.
+
+### Templates de slide (pasta versionada)
+
+| | |
+|--|--|
+| Pasta | `tv-dashboard-api/tv_app/content/slide_templates/` |
+| Manifest | `kind: slide_template` + `template.{key,label,description,…}` |
+| Serviço | `slide_template_mdd_service.py` + loader em `slide_preset_service.py` |
+| API | `GET /slide-presets/{key}/export` · `POST /slide-templates/export` · `POST /slide-templates/import` |
+
+Ciclo de edição: aplicar template no editor → ajustar → Exportar MDD → colocar/substituir o arquivo na pasta → commit.
 
 ---
 

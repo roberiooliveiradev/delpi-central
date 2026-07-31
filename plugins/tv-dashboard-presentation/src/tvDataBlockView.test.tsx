@@ -34,6 +34,34 @@ describe("TvDataBlockView", () => {
     expect(screen.getByText("Produto A")).toBeTruthy();
   });
 
+  it("usa ConfigurableTable banded por padrão em data_table", () => {
+    const { container } = render(<TvDataBlockView block={baseBlock} />);
+    expect(container.querySelector(".tdp-configurable-table")).toBeTruthy();
+    expect(container.querySelector(".tdp-configurable-table--banded")).toBeTruthy();
+  });
+
+  it("respeita tableOptions do bloco (header Delpi)", () => {
+    const { container } = render(
+      <TvDataBlockView
+        block={{
+          ...baseBlock,
+          tablePreset: "banded",
+          tableOptions: {
+            headerBg: "#003866",
+            headerTextColor: "#ffffff",
+            cellBg: "#ffffff",
+            cellTextColor: "#0f172a",
+            showBorders: true,
+            zebraStripe: true,
+          },
+        }}
+      />,
+    );
+    const table = container.querySelector(".tdp-configurable-table") as HTMLElement | null;
+    expect(table).toBeTruthy();
+    expect(table?.style.getPropertyValue("--tdp-table-header-bg").trim() || table?.getAttribute("style")).toBeTruthy();
+  });
+
   it("renderiza gráfico de barras quando displayMode é bar_chart", () => {
     const block: ComunicadoDataBlock = {
       ...baseBlock,

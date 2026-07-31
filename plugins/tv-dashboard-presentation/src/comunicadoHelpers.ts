@@ -889,6 +889,11 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
+    if (block.type === "data_table") {
+      if (block.tablePreset) base.tablePreset = block.tablePreset;
+      if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
+      if (block.tableParts) base.tableParts = { ...block.tableParts };
+    }
   } else if (block.type === "data_source" && "dataBinding" in block) {
     base.dataBinding = {
       operationId: block.dataBinding.operationId,
@@ -1135,6 +1140,22 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       bindingRaw && typeof bindingRaw === "object"
         ? (bindingRaw as ComunicadoDataBinding)
         : { operationId: "" };
+    const tablePreset =
+      type === "data_table" && typeof block.tablePreset === "string"
+        ? (block.tablePreset as ComunicadoTablePreset)
+        : undefined;
+    const tableOptions =
+      type === "data_table" && block.tableOptions && typeof block.tableOptions === "object"
+        ? (block.tableOptions as ComunicadoTableOptions)
+        : undefined;
+    const rawParts =
+      type === "data_table" && block.tableParts && typeof block.tableParts === "object"
+        ? (block.tableParts as ComunicadoTablePartsMap)
+        : undefined;
+    const tableParts =
+      type === "data_table"
+        ? normalizeTablePartsForLoad(rawParts, tableOptions, style)
+        : undefined;
     return attachBlockAnimations(
       {
         id,
@@ -1152,6 +1173,9 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           maxRows: binding.maxRows,
           refreshSec: binding.refreshSec,
         },
+        ...(tablePreset ? { tablePreset } : {}),
+        ...(tableOptions ? { tableOptions } : {}),
+        ...(tableParts ? { tableParts } : {}),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

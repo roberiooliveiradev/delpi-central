@@ -509,6 +509,10 @@ export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
 export type ComunicadoDataBlock = ComunicadoBlockBase & {
   type: ComunicadoDataBlockType;
   dataBinding: ComunicadoDataBinding;
+  /** Estilo de tabela (data_table) — receita ConfigurableTable. */
+  tablePreset?: ComunicadoTablePreset;
+  tableOptions?: ComunicadoTableOptions;
+  tableParts?: ComunicadoTablePartsMap;
   resolved?: ComunicadoDataResolved;
 };
 
