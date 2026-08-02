@@ -5,6 +5,7 @@ export type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 export { resolveAnchoredPanelCoords } from "./anchoredPanelCoords";
 export {
   claimExclusiveAnchoredPanel,
+  isAnchorNestedInExclusiveAnchoredPanel,
   releaseExclusiveAnchoredPanel,
   resetExclusiveAnchoredPanelForTests,
 } from "./exclusiveAnchoredPanel";

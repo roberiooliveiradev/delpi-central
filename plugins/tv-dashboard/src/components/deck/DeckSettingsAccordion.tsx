@@ -1,4 +1,4 @@
-import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, RibbonGroupSurfaceProvider } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
@@ -41,7 +41,9 @@ export function DeckSettingsAccordion({ summary, ariaLabel, icon, children }: Pr
         aria-label={ariaLabel}
         onDismiss={() => setOpen(false)}
       >
-        {children}
+        <RibbonGroupSurfaceProvider value="section-popover">
+          {children}
+        </RibbonGroupSurfaceProvider>
       </AnchoredPanelPortal>
     </div>
   );

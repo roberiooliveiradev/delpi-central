@@ -23,4 +23,10 @@ describe("playlist ribbon layout contract", () => {
     expect(panel).not.toContain("td-deck-playlist-link");
     expect(panel).not.toContain("td-deck-master--compact");
   });
+
+  it("DeckRibbonTilePopover marca surface section-popover para nested (cores)", () => {
+    const source = readFileSync(join(here, "deck/DeckRibbonTilePopover.tsx"), "utf8");
+    expect(source).toContain("RibbonGroupSurfaceProvider");
+    expect(source).toContain('value="section-popover"');
+  });
 });

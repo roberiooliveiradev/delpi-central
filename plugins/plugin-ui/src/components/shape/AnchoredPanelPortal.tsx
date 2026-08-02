@@ -5,6 +5,7 @@ import type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 import { resolveMfePortalScopeClassName } from "./delpiUiPortalTheme";
 import {
   claimExclusiveAnchoredPanel,
+  isAnchorNestedInExclusiveAnchoredPanel,
   releaseExclusiveAnchoredPanel,
 } from "./exclusiveAnchoredPanel";
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
@@ -108,8 +109,18 @@ export function AnchoredPanelPortal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onDismiss]);
 
+  /*
+   * Exclusividade só entre peers (Preench. × Contorno na faixa).
+   * Filho cujo âncora está no painel exclusivo do pai (cores no Master) não
+   * deve claimExclusive — senão fecha o pai ao abrir o segundo popover.
+   */
+  const nestedInExclusiveParent = isAnchorNestedInExclusiveAnchoredPanel(
+    open ? anchorRef.current : null,
+  );
+  const resolvedExclusive = Boolean(exclusive && !nestedInExclusiveParent);
+
   useEffect(() => {
-    if (!open || !exclusive || !onDismissRef.current) return;
+    if (!open || !resolvedExclusive || !onDismissRef.current) return;
     const id = exclusiveId;
     claimExclusiveAnchoredPanel(id, () => {
       onDismissRef.current?.();
@@ -117,7 +128,7 @@ export function AnchoredPanelPortal({
     return () => {
       releaseExclusiveAnchoredPanel(id);
     };
-  }, [open, exclusive, exclusiveId]);
+  }, [open, resolvedExclusive, exclusiveId]);
 
   if (!open || typeof document === "undefined") return null;
 
@@ -142,7 +153,7 @@ export function AnchoredPanelPortal({
       style={style}
       role={role}
       aria-label={ariaLabel}
-      data-delpi-anchored-exclusive={exclusive ? "true" : "false"}
+      data-delpi-anchored-exclusive={resolvedExclusive ? "true" : "false"}
       {...(density ? { "data-delpi-ui-density": density } : {})}
     >
       {children}

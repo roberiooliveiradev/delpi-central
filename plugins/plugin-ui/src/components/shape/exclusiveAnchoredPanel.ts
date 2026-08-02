@@ -1,7 +1,8 @@
 /**
  * Garante um AnchoredPanelPortal “peer” aberto por vez.
  * Abrir um novo fecha o anterior via `dismiss`.
- * Popovers aninhados (não exclusivos) passam `exclusive={false}`.
+ * Popovers aninhados (não exclusivos) passam `exclusive={false}` — ou são
+ * detectados automaticamente quando o âncora vive dentro de outro painel exclusivo.
  */
 
 export type ExclusiveAnchoredDismiss = () => void;
@@ -12,6 +13,14 @@ type ExclusiveEntry = {
 };
 
 let activeExclusive: ExclusiveEntry | null = null;
+
+/** Âncora está dentro de outro AnchoredPanelPortal exclusivo (cor dentro de Master, etc.). */
+export function isAnchorNestedInExclusiveAnchoredPanel(
+  anchor: HTMLElement | null | undefined,
+): boolean {
+  if (!anchor || typeof anchor.closest !== "function") return false;
+  return Boolean(anchor.closest('[data-delpi-anchored-exclusive="true"]'));
+}
 
 export function claimExclusiveAnchoredPanel(
   id: symbol,

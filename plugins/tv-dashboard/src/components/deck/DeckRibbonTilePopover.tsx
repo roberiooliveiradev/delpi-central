@@ -1,4 +1,4 @@
-import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, RibbonGroupSurfaceProvider } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
@@ -67,7 +67,13 @@ export function DeckRibbonTilePopover({
           aria-label={panelLabel}
           onDismiss={close}
         >
-          {typeof children === "function" ? children(close) : children}
+          {/*
+           * Controles aninhados (cor, select) usam exclusive=false via
+           * section-popover — evita fechar o tile ao abrir o segundo popover.
+           */}
+          <RibbonGroupSurfaceProvider value="section-popover">
+            {typeof children === "function" ? children(close) : children}
+          </RibbonGroupSurfaceProvider>
         </AnchoredPanelPortal>
       ) : null}
     </div>

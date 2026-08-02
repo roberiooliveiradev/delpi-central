@@ -111,4 +111,62 @@ describe("AnchoredPanelPortal exclusive", () => {
     expect(screen.getByRole("dialog", { name: "Pai" })).toBeTruthy();
     expect(screen.getByRole("listbox", { name: "Filho" })).toBeTruthy();
   });
+
+  it("não fecha o pai quando o filho abre exclusive=true mas o âncora está no painel pai", () => {
+    function NestedColorLike() {
+      const [parentOpen, setParentOpen] = useState(false);
+      const [childOpen, setChildOpen] = useState(false);
+      const parentAnchor = useRef<HTMLDivElement>(null);
+      const parentPanel = useRef<HTMLDivElement>(null);
+      const childAnchor = useRef<HTMLDivElement>(null);
+      const childPanel = useRef<HTMLDivElement>(null);
+
+      return (
+        <div ref={parentAnchor}>
+          <button type="button" onClick={() => setParentOpen(true)}>
+            Master
+          </button>
+          {parentOpen ? (
+            <AnchoredPanelPortal
+              open={parentOpen}
+              anchorRef={parentAnchor}
+              panelRef={parentPanel}
+              role="dialog"
+              aria-label="Master"
+              onDismiss={() => setParentOpen(false)}
+            >
+              <div ref={childAnchor}>
+                <button type="button" onClick={() => setChildOpen(true)}>
+                  Fundo
+                </button>
+                {childOpen ? (
+                  <AnchoredPanelPortal
+                    open={childOpen}
+                    anchorRef={childAnchor}
+                    panelRef={childPanel}
+                    role="dialog"
+                    aria-label="Cores"
+                    exclusive
+                    onDismiss={() => setChildOpen(false)}
+                  >
+                    <div className="delpi-ui-color-picker">paleta</div>
+                  </AnchoredPanelPortal>
+                ) : null}
+              </div>
+            </AnchoredPanelPortal>
+          ) : null}
+        </div>
+      );
+    }
+
+    render(<NestedColorLike />);
+    fireEvent.click(screen.getByRole("button", { name: "Master" }));
+    fireEvent.click(screen.getByRole("button", { name: "Fundo" }));
+
+    expect(screen.getByRole("dialog", { name: "Master" })).toBeTruthy();
+    expect(screen.getByRole("dialog", { name: "Cores" })).toBeTruthy();
+    expect(
+      screen.getByRole("dialog", { name: "Cores" }).getAttribute("data-delpi-anchored-exclusive"),
+    ).toBe("false");
+  });
 });
