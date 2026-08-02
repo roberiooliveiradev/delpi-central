@@ -147,6 +147,8 @@ export function DataBuilderChatPanel({
     branch: "01",
     periodDays: "",
   });
+  const [sourceFiltersOpen, setSourceFiltersOpen] = useState(false);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -364,6 +366,7 @@ export function DataBuilderChatPanel({
         applySession(next);
         const table = normalizePreview(next.preview);
         setPreviewTable(table);
+        setPreviewExpanded(Boolean(table));
         if (table && !table.columns.length && !table.rowCount) {
           setError(C.previewEmpty);
         }
@@ -373,6 +376,7 @@ export function DataBuilderChatPanel({
       if (result.session) applySession(result.session);
       const table = normalizePreview(result.preview);
       setPreviewTable(table);
+      setPreviewExpanded(Boolean(table));
       if (!result.ok && result.message) setError(result.message);
       else if (table && !table.columns.length && !table.rowCount) setError(C.previewEmpty);
     } catch (err) {
@@ -480,189 +484,273 @@ export function DataBuilderChatPanel({
       )
     : {};
 
+  const draftCount = draft.sources?.length ?? 0;
+  const draftCountLabel = C.draftCount.replace("{count}", String(draftCount));
+
   return (
     <div className="td-data-builder-chat">
-      <div className="td-data-builder-chat__modes" role="tablist" aria-label="Modo de descoberta">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={discoveryMode === "search"}
-          className={[
-            "td-btn td-btn--sm",
-            discoveryMode === "search" ? "td-btn--primary" : "td-btn--ghost",
-          ].join(" ")}
-          onClick={() => setDiscoveryMode("search")}
-        >
-          {C.modeSearch}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={discoveryMode === "ai"}
-          className={[
-            "td-btn td-btn--sm",
-            discoveryMode === "ai" ? "td-btn--primary" : "td-btn--ghost",
-          ].join(" ")}
-          onClick={() => setDiscoveryMode("ai")}
-        >
-          {C.modeAi}
-        </button>
-        <span className="td-data-builder-chat__mode-hint">
+      <header className="td-data-builder-chat__chrome">
+        <div className="td-data-builder-chat__modes" role="tablist" aria-label="Modo de descoberta">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={discoveryMode === "search"}
+            className={[
+              "td-btn td-btn--sm",
+              discoveryMode === "search" ? "td-btn--primary" : "td-btn--ghost",
+            ].join(" ")}
+            onClick={() => setDiscoveryMode("search")}
+          >
+            {C.modeSearch}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={discoveryMode === "ai"}
+            className={[
+              "td-btn td-btn--sm",
+              discoveryMode === "ai" ? "td-btn--primary" : "td-btn--ghost",
+            ].join(" ")}
+            onClick={() => setDiscoveryMode("ai")}
+          >
+            {C.modeAi}
+          </button>
+        </div>
+        <p className="td-data-builder-chat__mode-hint">
           {discoveryMode === "search" ? C.modeSearchHint : C.modeAiHint}
-        </span>
-      </div>
+        </p>
 
-      <section className="td-data-builder-chat__config" aria-label={C.configTitle}>
-        <h3 className="td-data-builder-chat__draft-title">{C.configTitle}</h3>
-        <p className="td-data-builder-chat__draft-meta">{C.configHint}</p>
-        <div className="td-data-builder-chat__config-grid">
-          <BranchField
-            id="td-data-builder-branch"
-            label={C.branchLabel}
-            scope={branchScope}
-            value={sessionDefaults.branch}
-            onChange={(value) =>
-              setSessionDefaults((prev) => ({ ...prev, branch: value || "01" }))
-            }
-          />
-          <DeckField label={C.periodDaysLabel}>
-            <NativeTextControl
-              type="number"
-              min={1}
-              value={sessionDefaults.periodDays}
-              onChange={(event) =>
-                setSessionDefaults((prev) => ({
-                  ...prev,
-                  periodDays: event.target.value,
-                }))
+        <section className="td-data-builder-chat__session" aria-label={C.sessionHint}>
+          <p className="td-data-builder-chat__session-hint">{C.sessionHint}</p>
+          <div className="td-data-builder-chat__session-fields">
+            <BranchField
+              id="td-data-builder-branch"
+              label={C.branchLabel}
+              scope={branchScope}
+              value={sessionDefaults.branch}
+              onChange={(value) =>
+                setSessionDefaults((prev) => ({ ...prev, branch: value || "01" }))
               }
-              placeholder="opcional"
             />
-          </DeckField>
-        </div>
-        {primarySource && primaryRoute ? (
-          <div className="td-data-builder-chat__config-source">
-            <h4 className="td-data-builder-chat__draft-title">{C.configSourceTitle}</h4>
-            <DataParamFields
-              schema={primarySchema}
-              values={primarySource.params || {}}
-              branchScope={branchScope}
-              openEndedDateRange={Boolean(primaryRoute.openEndedDateRange)}
-              onChange={handlePrimaryParamsChange}
-            />
+            <DeckField label={C.periodDaysLabel}>
+              <NativeTextControl
+                type="number"
+                min={1}
+                value={sessionDefaults.periodDays}
+                onChange={(event) =>
+                  setSessionDefaults((prev) => ({
+                    ...prev,
+                    periodDays: event.target.value,
+                  }))
+                }
+                placeholder="opcional"
+              />
+            </DeckField>
           </div>
-        ) : null}
-      </section>
-
-      {discoveryMode === "search" ? (
-        <div className="td-data-builder-chat__catalog">
-          <DataRouteCatalogPanel
-            items={catalogItems}
-            onSelect={(item) => {
-              const route = routes.find((entry) => entry.operationId === item.id);
-              if (route) handleAddRoute(route);
-            }}
-            density="compact"
-            confirmLabel={C.addSuggestion}
-            searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
-            emptyMessage={C.catalogEmpty}
-            loading={routesLoading}
-            error={routesError}
-            categoryLabels={CATEGORY_LABELS}
-            categoryOrder={CATEGORY_ORDER}
-            suggestions={suggestions}
-            suggestionsLoading={suggestionsLoading}
-            suggestionsQuery={suggestionsQuery}
-            suggestionsDegraded={suggestionsDegraded}
-            onQueryChange={setCatalogQuery}
-          />
-          {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
-          {error ? (
-            <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
-              {error}
-            </p>
-          ) : null}
-        </div>
-      ) : (
-        <div ref={listRef} className="td-data-builder-chat__messages" aria-live="polite">
-          {(session?.messages || []).map((message: DataBuilderMessage) => (
-            <div
-              key={message.id}
-              className={[
-                "td-data-builder-chat__bubble",
-                message.role === "user"
-                  ? "td-data-builder-chat__bubble--user"
-                  : "td-data-builder-chat__bubble--assistant",
-              ].join(" ")}
-            >
-              <p className="td-data-builder-chat__text">{message.text}</p>
-              {message.suggestions?.length ? (
-                <ul className="td-data-builder-chat__suggestions">
-                  {message.suggestions.map((card) => (
-                    <li key={`${message.id}-${card.operationId}`}>
-                      <div className="td-data-builder-chat__suggestion-card">
-                        <div>
-                          <strong>{card.label || card.operationId}</strong>
-                          {card.reason ? <small>{card.reason}</small> : null}
-                        </div>
-                        <button
-                          type="button"
-                          className="td-btn td-btn--sm td-btn--primary"
-                          disabled={busy || !card.operationId}
-                          onClick={() => handleAddSuggestion(card)}
-                        >
-                          {C.addSuggestion}
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+          {primarySource && primaryRoute ? (
+            <div className="td-data-builder-chat__session-filters">
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                aria-expanded={sourceFiltersOpen}
+                onClick={() => setSourceFiltersOpen((open) => !open)}
+              >
+                {sourceFiltersOpen ? C.hideFilters : C.adjustFilters}
+              </button>
+              {sourceFiltersOpen ? (
+                <div className="td-data-builder-chat__config-source">
+                  <h4 className="td-data-builder-chat__draft-title">{C.configSourceTitle}</h4>
+                  <DataParamFields
+                    schema={primarySchema}
+                    values={primarySource.params || {}}
+                    branchScope={branchScope}
+                    openEndedDateRange={Boolean(primaryRoute.openEndedDateRange)}
+                    onChange={handlePrimaryParamsChange}
+                  />
+                </div>
               ) : null}
             </div>
-          ))}
-          {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
-          {error ? (
-            <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
-              {error}
-            </p>
           ) : null}
-        </div>
-      )}
+        </section>
+      </header>
 
-      <section className="td-data-builder-chat__draft" aria-label={C.draftTitle}>
-        <h3 className="td-data-builder-chat__draft-title">{C.draftTitle}</h3>
-        {(draft.sources?.length ?? 0) === 0 ? (
+      <div className="td-data-builder-chat__main">
+        {discoveryMode === "search" ? (
+          <div className="td-data-builder-chat__catalog" data-discovery="search">
+            <DataRouteCatalogPanel
+              items={catalogItems}
+              onSelect={(item) => {
+                const route = routes.find((entry) => entry.operationId === item.id);
+                if (route) handleAddRoute(route);
+              }}
+              density="compact"
+              confirmLabel={C.addSuggestion}
+              searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
+              emptyMessage={C.catalogEmpty}
+              loading={routesLoading}
+              error={routesError}
+              categoryLabels={CATEGORY_LABELS}
+              categoryOrder={CATEGORY_ORDER}
+              suggestions={suggestions}
+              suggestionsLoading={suggestionsLoading}
+              suggestionsQuery={suggestionsQuery}
+              suggestionsDegraded={suggestionsDegraded}
+              onQueryChange={setCatalogQuery}
+            />
+            {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
+            {error ? (
+              <p className="td-data-builder-chat__status td-data-builder-chat__status--error" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <div className="td-data-builder-chat__ai" data-discovery="ai">
+            <div ref={listRef} className="td-data-builder-chat__messages" aria-live="polite">
+              {(session?.messages || []).map((message: DataBuilderMessage) => (
+                <div
+                  key={message.id}
+                  className={[
+                    "td-data-builder-chat__bubble",
+                    message.role === "user"
+                      ? "td-data-builder-chat__bubble--user"
+                      : "td-data-builder-chat__bubble--assistant",
+                  ].join(" ")}
+                >
+                  <p className="td-data-builder-chat__text">{message.text}</p>
+                  {message.suggestions?.length ? (
+                    <ul className="td-data-builder-chat__suggestions">
+                      {message.suggestions.map((card) => (
+                        <li key={`${message.id}-${card.operationId}`}>
+                          <div className="td-data-builder-chat__suggestion-card">
+                            <div>
+                              <strong>{card.label || card.operationId}</strong>
+                              {card.reason ? <small>{card.reason}</small> : null}
+                            </div>
+                            <button
+                              type="button"
+                              className="td-btn td-btn--sm td-btn--primary"
+                              disabled={busy || !card.operationId}
+                              onClick={() => handleAddSuggestion(card)}
+                            >
+                              {C.addSuggestion}
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ))}
+              {busy ? <p className="td-data-builder-chat__status">{C.loading}</p> : null}
+              {error ? (
+                <p
+                  className="td-data-builder-chat__status td-data-builder-chat__status--error"
+                  role="alert"
+                >
+                  {error}
+                </p>
+              ) : null}
+            </div>
+            <div className="td-data-builder-chat__composer">
+              <input
+                type="text"
+                className="td-data-builder-chat__input"
+                placeholder={C.placeholderAi}
+                value={input}
+                disabled={!session || busy}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    handleSend();
+                  }
+                }}
+                aria-label={C.placeholderAi}
+              />
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--primary"
+                disabled={!session || busy || !input.trim()}
+                onClick={handleSend}
+              >
+                {C.send}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="td-data-builder-chat__draft-tray" aria-label={C.draftTitle}>
+        <div className="td-data-builder-chat__draft-tray-bar">
+          <div className="td-data-builder-chat__draft-tray-meta">
+            <span className="td-data-builder-chat__draft-title">{C.draftTitle}</span>
+            <span className="td-data-builder-chat__draft-meta">{draftCountLabel}</span>
+          </div>
+          <div className="td-data-builder-chat__actions">
+            {table && previewExpanded ? (
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={() => setPreviewExpanded(false)}
+              >
+                {C.hidePreview}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="td-btn td-btn--sm td-btn--ghost"
+              disabled={!canMaterialize}
+              onClick={() => void handlePreview()}
+            >
+              {C.preview}
+            </button>
+            <button
+              type="button"
+              className="td-btn td-btn--sm td-btn--primary"
+              disabled={!canMaterialize}
+              onClick={() => void handleUseOnSlide()}
+            >
+              {C.useOnSlide}
+            </button>
+          </div>
+        </div>
+
+        {draftCount === 0 ? (
           <p className="td-data-builder-chat__draft-empty">{C.draftEmpty}</p>
         ) : (
-          <ul className="td-data-builder-chat__draft-list">
+          <ul className="td-data-builder-chat__draft-chips">
             {draft.sources.map((source) => (
               <li key={source.localId}>
-                <span>
+                <span className="td-data-builder-chat__draft-chip">
                   {source.label || source.operationId}
                   {source.localId === draft.primaryLocalId ? ` · ${C.primaryMark}` : ""}
+                  <button
+                    type="button"
+                    className="td-data-builder-chat__draft-chip-remove"
+                    disabled={busy}
+                    aria-label={C.removeSource}
+                    onClick={() =>
+                      void runTurn({
+                        action: { type: "remove_source", localId: source.localId },
+                      })
+                    }
+                  >
+                    ×
+                  </button>
                 </span>
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--ghost"
-                  disabled={busy}
-                  onClick={() =>
-                    void runTurn({
-                      action: { type: "remove_source", localId: source.localId },
-                    })
-                  }
-                >
-                  {C.removeSource}
-                </button>
               </li>
             ))}
           </ul>
         )}
+
         {draft.transform?.steps?.length ? (
           <p className="td-data-builder-chat__draft-meta">
             Transform: {draft.transform.steps.map((step) => String(step.op || "?")).join(" → ")}
           </p>
         ) : null}
-        {table ? (
+
+        {table && previewExpanded ? (
           <div className="td-data-builder-chat__preview" aria-label={C.previewTitle}>
             <h4 className="td-data-builder-chat__draft-title">{C.previewTitle}</h4>
             {table.columns.length ? (
@@ -691,54 +779,7 @@ export function DataBuilderChatPanel({
             )}
           </div>
         ) : null}
-      </section>
-
-      {discoveryMode === "ai" ? (
-        <div className="td-data-builder-chat__composer">
-          <input
-            type="text"
-            className="td-data-builder-chat__input"
-            placeholder={C.placeholderAi}
-            value={input}
-            disabled={!session || busy}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                handleSend();
-              }
-            }}
-            aria-label={C.placeholderAi}
-          />
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--primary"
-            disabled={!session || busy || !input.trim()}
-            onClick={handleSend}
-          >
-            {C.send}
-          </button>
-        </div>
-      ) : null}
-
-      <div className="td-data-builder-chat__actions">
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--ghost"
-          disabled={!canMaterialize}
-          onClick={() => void handlePreview()}
-        >
-          {C.preview}
-        </button>
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--primary"
-          disabled={!canMaterialize}
-          onClick={() => void handleUseOnSlide()}
-        >
-          {C.useOnSlide}
-        </button>
-      </div>
+      </footer>
     </div>
   );
 }
