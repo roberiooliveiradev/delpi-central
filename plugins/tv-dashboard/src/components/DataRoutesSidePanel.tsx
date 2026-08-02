@@ -185,22 +185,34 @@ export function DataRoutesSidePanel({
 
   const catalogItems = useMemo(
     () =>
-      routes.map((route) => ({
-        id: route.operationId,
-        label: route.label,
-        category: route.category,
-        description: route.description,
-        whenToUse: route.whenToUse,
-        path: route.path,
-        httpMethod: "GET" as const,
-        metaShape: route.metaShape,
-        valueFields: route.valueFields,
-        displayKinds: resolveDataRouteDisplayKinds({
+      routes.map((route) => {
+        const defaults = buildRouteDefaultParams(route);
+        const params = summarizeRouteParams(route.paramSchema, route.fixedQueryParams).map(
+          (param) => {
+            const fromDefaults = defaults[param.key];
+            if (fromDefaults === undefined || fromDefaults === null || fromDefaults === "") {
+              return param;
+            }
+            return { ...param, default: fromDefaults as string | number | boolean };
+          },
+        );
+        return {
+          id: route.operationId,
+          label: route.label,
+          category: route.category,
+          description: route.description,
+          whenToUse: route.whenToUse,
+          path: route.path,
+          httpMethod: "GET" as const,
           metaShape: route.metaShape,
-          allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
-        }),
-        params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
-      })),
+          valueFields: route.valueFields,
+          displayKinds: resolveDataRouteDisplayKinds({
+            metaShape: route.metaShape,
+            allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+          }),
+          params,
+        };
+      }),
     [routes],
   );
 
@@ -466,9 +478,13 @@ export function DataRoutesSidePanel({
       )}
       <DataRouteCatalogPanel
         items={catalogItems}
-        onSelect={(item) => {
+        onSelect={(item, params) => {
           const route = routes.find((entry) => entry.operationId === item.id);
-          if (route) pickRoute(route);
+          if (!route) return;
+          pickRoute(route);
+          if (params && Object.keys(params).length > 0) {
+            setParams({ ...buildRouteDefaultParams(route), ...params });
+          }
         }}
         onTestRoute={testRoute}
         density={hideHeading ? "comfortable" : "compact"}

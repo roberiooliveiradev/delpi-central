@@ -123,7 +123,33 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.getByLabelText("Prévia KPI")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee", label: "OEE geral" }));
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "get_oee", label: "OEE geral" }),
+      {},
+    );
+  });
+
+  it("Adicionar envia filtros do detalhe e exige obrigatórios", () => {
+    const onSelect = vi.fn();
+
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={onSelect}
+        density="comfortable"
+        confirmLabel="Adicionar"
+        categoryLabels={{ production: "Produção", products: "Produtos", system: "Sistema" }}
+        categoryOrder={["production", "products", "system"]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dashboard departamental (IDD)"));
+    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    // default do schema preenche department_id
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "get_dashboard_department_idd" }),
+      expect.objectContaining({ department_id: "commercial" }),
+    );
   });
 
   it("em densidade compacta mostra Testar rota e Adicionar lado a lado", () => {
@@ -375,7 +401,7 @@ describe("DataRouteCatalogPanel", () => {
     fireEvent.click(suggestionCard!);
     expect(screen.getByRole("complementary", { name: /Detalhe: OEE geral/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
-    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee" }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee" }), {});
   });
 
   it("em frase NL não zera o catálogo por substring e avisa AI degradada", () => {

@@ -11,16 +11,17 @@ const content = readFileSync(
 );
 
 /**
- * Layout do Assistente: session bar + main dominante + draft tray.
- * Search ≠ composer; IA ≠ catálogo; chrome compartilhado.
+ * Layout do Assistente: chrome (modos) + main dominante + draft tray.
+ * Filtros de filial/período só no detalhe Testar/Adicionar (não no topo).
  */
 describe("DataBuilderChatPanel layout contract", () => {
-  it("usa zonas chrome / main / draft-tray", () => {
+  it("usa zonas chrome / main / draft-tray sem barra de sessão no topo", () => {
     expect(source).toContain('className="td-data-builder-chat__chrome"');
     expect(source).toContain('className="td-data-builder-chat__main"');
     expect(source).toContain('className="td-data-builder-chat__draft-tray"');
-    expect(source).toContain('className="td-data-builder-chat__session"');
+    expect(source).not.toContain('className="td-data-builder-chat__session"');
     expect(source).not.toContain('className="td-data-builder-chat__config"');
+    expect(source).toContain("onTestRoute={handleTestCatalogRoute}");
   });
 
   it("composer IA fica dentro da zona main (não abaixo do rascunho)", () => {
@@ -38,10 +39,13 @@ describe("DataBuilderChatPanel layout contract", () => {
     expect(source).toContain("DataRouteCatalogPanel");
   });
 
-  it("microcopy de sessão/bandeja sem card Configuração", () => {
-    expect(content).toContain("sessionHint");
+  it("microcopy sem Filial/Período globais no topo", () => {
     expect(content).toContain("draftCount");
     expect(content).toContain("adjustFilters");
+    expect(content).toContain("modeSearchHint");
+    expect(content).not.toContain("sessionHint");
+    expect(content).not.toContain("branchLabel");
+    expect(content).not.toContain("periodDaysLabel");
     expect(content).not.toContain("configTitle");
     expect(content).not.toContain("configHint");
   });

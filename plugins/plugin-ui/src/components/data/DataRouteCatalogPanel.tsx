@@ -62,7 +62,8 @@ export type DataRouteCatalogDensity = "compact" | "comfortable";
 
 export type DataRouteCatalogPanelProps = {
   items: DataRouteCatalogItem[];
-  onSelect: (item: DataRouteCatalogItem) => void;
+  /** Confirma a fonte; `params` são os filtros editados no detalhe (Testar/Adicionar). */
+  onSelect: (item: DataRouteCatalogItem, params?: DataRouteTestParams) => void;
   searchPlaceholder?: string;
   emptyMessage?: string;
   loading?: boolean;
@@ -417,6 +418,22 @@ export function DataRouteCatalogPanel({
     setSelectedId((prev) => (prev === item.id ? null : item.id));
   }
 
+  function requiredParamsErrorMessage(missing: DataRouteParamFieldSummary[]): string {
+    return missing.length === 1
+      ? `Preencha o filtro obrigatório: ${missing[0]!.label}.`
+      : `Preencha os filtros obrigatórios: ${missing.map((item) => item.label).join(", ")}.`;
+  }
+
+  function handleConfirmSelect() {
+    if (!selected) return;
+    const missing = missingRequiredTestParams(selected.params, testParams);
+    if (missing.length > 0) {
+      setTestError(requiredParamsErrorMessage(missing));
+      return;
+    }
+    onSelect(selected, coerceTestParamValues(selected.params, testParams));
+  }
+
   async function handleTestRoute() {
     if (!selected) return;
     setTesting(true);
@@ -424,11 +441,7 @@ export function DataRouteCatalogPanel({
     try {
       const missing = missingRequiredTestParams(selected.params, testParams);
       if (missing.length > 0) {
-        setTestError(
-          missing.length === 1
-            ? `Preencha o filtro obrigatório: ${missing[0]!.label}.`
-            : `Preencha os filtros obrigatórios: ${missing.map((item) => item.label).join(", ")}.`,
-        );
+        setTestError(requiredParamsErrorMessage(missing));
         setLivePreview(null);
         return;
       }
@@ -601,7 +614,8 @@ export function DataRouteCatalogPanel({
         <button
           type="button"
           className="delpi-ui-data-route-catalog__confirm"
-          onClick={() => onSelect(selected)}
+          onClick={() => handleConfirmSelect()}
+          disabled={testing}
         >
           {confirmLabel}
         </button>

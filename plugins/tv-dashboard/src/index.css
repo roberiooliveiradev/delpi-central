@@ -1400,26 +1400,12 @@
   font-size: 0.75rem;
   color: var(--td-text-muted, #94a3b8);
 }
-.dashboard-tv-dashboard .td-data-builder-chat__session{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.dashboard-tv-dashboard .td-data-builder-chat__session-hint{
-  margin: 0;
-  font-size: 0.72rem;
-  color: var(--td-text-muted, #94a3b8);
-}
-.dashboard-tv-dashboard .td-data-builder-chat__session-fields{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
-}
-.dashboard-tv-dashboard .td-data-builder-chat__session-filters{
+.dashboard-tv-dashboard .td-data-builder-chat__draft-filters{
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-data-builder-chat__config-source{
   width: 100%;
@@ -1429,9 +1415,6 @@
   border-top: 1px solid color-mix(in srgb, var(--td-border, #334155) 60%, transparent);
 }
 @media (max-width: 900px){
-  .dashboard-tv-dashboard .td-data-builder-chat__session-fields{
-    grid-template-columns: 1fr;
-  }
   .dashboard-tv-dashboard .td-data-builder-chat__draft-tray-bar{
     align-items: stretch;
   }

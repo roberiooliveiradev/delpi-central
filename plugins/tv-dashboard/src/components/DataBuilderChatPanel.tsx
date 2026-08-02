@@ -24,19 +24,20 @@ import {
 import { DATA_BUILDER_CHAT_CONTENT as C } from "../content/dataBuilderChatContent";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
+import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import { shouldRequestDataRouteSuggestions } from "../utils/shouldRequestDataRouteSuggestions";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { DataCatalogMode } from "./comunicadoEditorContextCore";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
-import { DeckField } from "./deck/DeckField";
-import { BranchField } from "./BranchField";
 import {
   DATA_ROUTE_CATALOG_CONTENT,
   DataRouteCatalogPanel,
-  NativeTextControl,
   resolveDataRouteDisplayKinds,
   summarizeRouteParams,
+  type DataRouteCatalogItem,
   type DataRouteCatalogSuggestion,
+  type DataRoutePreviewPayload,
+  type DataRouteTestParams,
 } from "@delpi/plugin-ui/index";
 
 type Props = {
@@ -46,11 +47,6 @@ type Props = {
 };
 
 type DiscoveryMode = "search" | "ai";
-
-type SessionDefaults = {
-  branch: string;
-  periodDays: string;
-};
 
 const SUGGEST_DEBOUNCE_MS = 350;
 const SUGGEST_LIMIT = 5;
@@ -143,10 +139,6 @@ export function DataBuilderChatPanel({
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsQuery, setSuggestionsQuery] = useState("");
   const [suggestionsDegraded, setSuggestionsDegraded] = useState(false);
-  const [sessionDefaults, setSessionDefaults] = useState<SessionDefaults>({
-    branch: "01",
-    periodDays: "",
-  });
   const [sourceFiltersOpen, setSourceFiltersOpen] = useState(false);
   const [previewExpanded, setPreviewExpanded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -268,22 +260,34 @@ export function DataBuilderChatPanel({
 
   const catalogItems = useMemo(
     () =>
-      routes.map((route) => ({
-        id: route.operationId,
-        label: route.label,
-        category: route.category,
-        description: route.description,
-        whenToUse: route.whenToUse,
-        path: route.path,
-        httpMethod: "GET" as const,
-        metaShape: route.metaShape,
-        valueFields: route.valueFields,
-        displayKinds: resolveDataRouteDisplayKinds({
+      routes.map((route) => {
+        const defaults = buildRouteDefaultParams(route);
+        const params = summarizeRouteParams(route.paramSchema, route.fixedQueryParams).map(
+          (param) => {
+            const fromDefaults = defaults[param.key];
+            if (fromDefaults === undefined || fromDefaults === null || fromDefaults === "") {
+              return param;
+            }
+            return { ...param, default: fromDefaults as string | number | boolean };
+          },
+        );
+        return {
+          id: route.operationId,
+          label: route.label,
+          category: route.category,
+          description: route.description,
+          whenToUse: route.whenToUse,
+          path: route.path,
+          httpMethod: "GET" as const,
           metaShape: route.metaShape,
-          allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
-        }),
-        params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
-      })),
+          valueFields: route.valueFields,
+          displayKinds: resolveDataRouteDisplayKinds({
+            metaShape: route.metaShape,
+            allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+          }),
+          params,
+        };
+      }),
     [routes],
   );
 
@@ -307,16 +311,6 @@ export function DataBuilderChatPanel({
     }
   }
 
-  function sessionParamsPayload(): Record<string, string | number> {
-    const params: Record<string, string | number> = {};
-    if (sessionDefaults.branch.trim()) params.branch = sessionDefaults.branch.trim();
-    const days = Number(sessionDefaults.periodDays);
-    if (sessionDefaults.periodDays.trim() && Number.isFinite(days) && days > 0) {
-      params.periodDays = days;
-    }
-    return params;
-  }
-
   function handleSend() {
     const text = input.trim();
     if (!text || !session?.id) return;
@@ -335,24 +329,46 @@ export function DataBuilderChatPanel({
 
   function handleAddSuggestion(card: DataBuilderSuggestionCard) {
     if (!card.operationId) return;
+    const route = routes.find((entry) => entry.operationId === card.operationId);
     void runTurn({
       action: {
         type: "add_source",
         operationId: card.operationId,
-        params: sessionParamsPayload(),
+        params: route ? buildRouteDefaultParams(route) : {},
       },
     });
   }
 
-  function handleAddRoute(route: TvDataRouteCatalogItem) {
+  function handleAddRoute(route: TvDataRouteCatalogItem, params?: DataRouteTestParams) {
     if (!route.operationId) return;
     const defaults = buildRouteDefaultParams(route);
     void runTurn({
       action: {
         type: "add_source",
         operationId: route.operationId,
-        params: { ...defaults, ...sessionParamsPayload() },
+        params: { ...defaults, ...(params ?? {}) },
       },
+    });
+  }
+
+  async function handleTestCatalogRoute(
+    item: DataRouteCatalogItem,
+    params: DataRouteTestParams,
+  ): Promise<DataRoutePreviewPayload> {
+    const route = routes.find((entry) => entry.operationId === item.id);
+    if (!route) {
+      throw new Error("Rota não encontrada no catálogo.");
+    }
+    const block = createDataSourceBlock(route.operationId, {
+      defaultParams: { ...buildRouteDefaultParams(route), ...params },
+    });
+    if (!block.dataBinding) {
+      throw new Error("Bloco de fonte sem dataBinding.");
+    }
+    return previewTvDataRoute({
+      route,
+      block: block as typeof block & { dataBinding: NonNullable<typeof block.dataBinding> },
+      config: { version: 1, slides: [] },
     });
   }
 
@@ -519,59 +535,6 @@ export function DataBuilderChatPanel({
         <p className="td-data-builder-chat__mode-hint">
           {discoveryMode === "search" ? C.modeSearchHint : C.modeAiHint}
         </p>
-
-        <section className="td-data-builder-chat__session" aria-label={C.sessionHint}>
-          <p className="td-data-builder-chat__session-hint">{C.sessionHint}</p>
-          <div className="td-data-builder-chat__session-fields">
-            <BranchField
-              id="td-data-builder-branch"
-              label={C.branchLabel}
-              scope={branchScope}
-              value={sessionDefaults.branch}
-              onChange={(value) =>
-                setSessionDefaults((prev) => ({ ...prev, branch: value || "01" }))
-              }
-            />
-            <DeckField label={C.periodDaysLabel}>
-              <NativeTextControl
-                type="number"
-                min={1}
-                value={sessionDefaults.periodDays}
-                onChange={(event) =>
-                  setSessionDefaults((prev) => ({
-                    ...prev,
-                    periodDays: event.target.value,
-                  }))
-                }
-                placeholder="opcional"
-              />
-            </DeckField>
-          </div>
-          {primarySource && primaryRoute ? (
-            <div className="td-data-builder-chat__session-filters">
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-btn--ghost"
-                aria-expanded={sourceFiltersOpen}
-                onClick={() => setSourceFiltersOpen((open) => !open)}
-              >
-                {sourceFiltersOpen ? C.hideFilters : C.adjustFilters}
-              </button>
-              {sourceFiltersOpen ? (
-                <div className="td-data-builder-chat__config-source">
-                  <h4 className="td-data-builder-chat__draft-title">{C.configSourceTitle}</h4>
-                  <DataParamFields
-                    schema={primarySchema}
-                    values={primarySource.params || {}}
-                    branchScope={branchScope}
-                    openEndedDateRange={Boolean(primaryRoute.openEndedDateRange)}
-                    onChange={handlePrimaryParamsChange}
-                  />
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-        </section>
       </header>
 
       <div className="td-data-builder-chat__main">
@@ -579,10 +542,11 @@ export function DataBuilderChatPanel({
           <div className="td-data-builder-chat__catalog" data-discovery="search">
             <DataRouteCatalogPanel
               items={catalogItems}
-              onSelect={(item) => {
+              onSelect={(item, params) => {
                 const route = routes.find((entry) => entry.operationId === item.id);
-                if (route) handleAddRoute(route);
+                if (route) handleAddRoute(route, params);
               }}
+              onTestRoute={handleTestCatalogRoute}
               density="compact"
               confirmLabel={C.addSuggestion}
               searchPlaceholder={DATA_ROUTE_CATALOG_CONTENT.searchPlaceholder}
@@ -719,29 +683,55 @@ export function DataBuilderChatPanel({
         {draftCount === 0 ? (
           <p className="td-data-builder-chat__draft-empty">{C.draftEmpty}</p>
         ) : (
-          <ul className="td-data-builder-chat__draft-chips">
-            {draft.sources.map((source) => (
-              <li key={source.localId}>
-                <span className="td-data-builder-chat__draft-chip">
-                  {source.label || source.operationId}
-                  {source.localId === draft.primaryLocalId ? ` · ${C.primaryMark}` : ""}
-                  <button
-                    type="button"
-                    className="td-data-builder-chat__draft-chip-remove"
-                    disabled={busy}
-                    aria-label={C.removeSource}
-                    onClick={() =>
-                      void runTurn({
-                        action: { type: "remove_source", localId: source.localId },
-                      })
-                    }
-                  >
-                    ×
-                  </button>
-                </span>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="td-data-builder-chat__draft-chips">
+              {draft.sources.map((source) => (
+                <li key={source.localId}>
+                  <span className="td-data-builder-chat__draft-chip">
+                    {source.label || source.operationId}
+                    {source.localId === draft.primaryLocalId ? ` · ${C.primaryMark}` : ""}
+                    <button
+                      type="button"
+                      className="td-data-builder-chat__draft-chip-remove"
+                      disabled={busy}
+                      aria-label={C.removeSource}
+                      onClick={() =>
+                        void runTurn({
+                          action: { type: "remove_source", localId: source.localId },
+                        })
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {primarySource && primaryRoute ? (
+              <div className="td-data-builder-chat__draft-filters">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm td-btn--ghost"
+                  aria-expanded={sourceFiltersOpen}
+                  onClick={() => setSourceFiltersOpen((open) => !open)}
+                >
+                  {sourceFiltersOpen ? C.hideFilters : C.adjustFilters}
+                </button>
+                {sourceFiltersOpen ? (
+                  <div className="td-data-builder-chat__config-source">
+                    <h4 className="td-data-builder-chat__draft-title">{C.configSourceTitle}</h4>
+                    <DataParamFields
+                      schema={primarySchema}
+                      values={primarySource.params || {}}
+                      branchScope={branchScope}
+                      openEndedDateRange={Boolean(primaryRoute.openEndedDateRange)}
+                      onChange={handlePrimaryParamsChange}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </>
         )}
 
         {draft.transform?.steps?.length ? (
