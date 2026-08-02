@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { OpenDataCatalogOptions } from "./comunicadoEditorContextCore";
 
-describe("Trocar rota → catálogo popover", () => {
-  it("openDataCatalog('replace') abre o popover Fontes com modo substituir", () => {
+describe("Trocar rota → catálogo modal", () => {
+  it("openDataCatalog('replace') abre o modal Fontes com modo substituir", () => {
     const setDataCatalogMode = vi.fn();
     const setDataCatalogModalOpen = vi.fn();
     const setDataCatalogAnchor = vi.fn();
