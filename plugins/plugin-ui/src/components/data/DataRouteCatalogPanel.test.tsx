@@ -126,6 +126,32 @@ describe("DataRouteCatalogPanel", () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee", label: "OEE geral" }));
   });
 
+  it("em densidade compacta mostra Testar rota e Adicionar lado a lado", () => {
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        density="compact"
+        confirmLabel="Adicionar"
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("OEE geral"));
+    const detail = screen.getByRole("complementary", { name: /Detalhe: OEE geral/ });
+    const actions = detail.querySelector(".delpi-ui-data-route-catalog__detail-actions");
+    expect(actions).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Testar rota" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Adicionar" })).toBeTruthy();
+    expect(actions?.contains(screen.getByRole("button", { name: "Testar rota" }))).toBe(true);
+    expect(actions?.contains(screen.getByRole("button", { name: "Adicionar" }))).toBe(true);
+    // Largura ampla (ou sem ResizeObserver): detalhe ao lado, não empilhado.
+    expect(
+      document.querySelector(".delpi-ui-data-route-catalog__main--detail-stacked"),
+    ).toBeNull();
+  });
+
   it("fecha o detalhe pelo botão e mostra exemplo tipado por forma", () => {
     render(
       <DataRouteCatalogPanel

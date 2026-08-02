@@ -74,8 +74,9 @@ export type DataRouteCatalogPanelProps = {
   /** Exibe chips de forma (KPI / Série / Tabela). Default true. */
   showDisplayKindFilters?: boolean;
   /**
-   * `comfortable` = lista + detalhe lado a lado (popover).
-   * `compact` = lista + detalhe empilhado (sidebar).
+   * `comfortable` = tipografia/espaçamento amplo (popover).
+   * `compact` = densidade do host/sidebar.
+   * Empilhar detalhe abaixo da lista depende da largura do main (< 720px), não só de `density`.
    */
   density?: DataRouteCatalogDensity;
   /** Rótulo do CTA no detalhe. */
@@ -206,11 +207,25 @@ export function DataRouteCatalogPanel({
   const [testError, setTestError] = useState<string | null>(null);
   const [testParams, setTestParams] = useState<Record<string, string>>({});
   const [detailTop, setDetailTop] = useState(0);
+  /** Empilha detalhe só quando a área do catálogo é estreita (< 720px). */
+  const [stackDetail, setStackDetail] = useState(false);
 
   const cardRefs = useRef(new Map<string, HTMLButtonElement>());
   const mainRef = useRef<HTMLDivElement>(null);
   const groupsRef = useRef<HTMLDivElement>(null);
   const detailPanelRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    const main = mainRef.current;
+    if (!main || typeof ResizeObserver === "undefined") return;
+    const update = () => {
+      setStackDetail(main.clientWidth < 720);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(main);
+    return () => observer.disconnect();
+  }, []);
 
   const enriched = useMemo(
     (): EnrichedItem[] => items.map((item) => enrichCatalogItem(item)),
@@ -347,7 +362,7 @@ export function DataRouteCatalogPanel({
   }, [selected]);
 
   useLayoutEffect(() => {
-    if (density === "compact" || !selectedId) {
+    if (density === "compact" || stackDetail || !selectedId) {
       setDetailTop(0);
       return;
     }
@@ -386,7 +401,7 @@ export function DataRouteCatalogPanel({
       window.removeEventListener("resize", update);
       resizeObserver?.disconnect();
     };
-  }, [density, selectedId, filtered, livePreview, testError, testing]);
+  }, [density, stackDetail, selectedId, filtered, livePreview, testError, testing]);
 
   function toggleKind(kind: DataRouteDisplayKind) {
     setKindFilters((prev) => (prev.includes(kind) ? prev.filter((k) => k !== kind) : [...prev, kind]));
@@ -452,7 +467,7 @@ export function DataRouteCatalogPanel({
   const descClamp = density === "compact" ? 90 : 140;
   const detailOpen = Boolean(selected);
   const detailStyle: CSSProperties | undefined =
-    density !== "compact" && selected ? { marginTop: detailTop } : undefined;
+    density !== "compact" && !stackDetail && selected ? { marginTop: detailTop } : undefined;
 
   const detail = selected ? (
     <aside
@@ -719,7 +734,7 @@ export function DataRouteCatalogPanel({
         className={[
           "delpi-ui-data-route-catalog__main",
           detailOpen ? "delpi-ui-data-route-catalog__main--detail-open" : "",
-          density === "compact" && detailOpen
+          detailOpen && stackDetail
             ? "delpi-ui-data-route-catalog__main--detail-stacked"
             : "",
         ]
