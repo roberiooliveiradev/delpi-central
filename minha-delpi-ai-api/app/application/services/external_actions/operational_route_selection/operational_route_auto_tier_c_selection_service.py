@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Callable
 
+from app.application.services.external_actions.external_action_score_gap_clarification_service import (
+    ExternalActionScoreGapClarificationService,
+)
 from app.domain.services.operational_route_registry_service import (
     OperationalRouteRegistryService,
 )
@@ -43,6 +46,10 @@ class OperationalRouteAutoTierCSelectionService:
 
         if not ranked:
             return None
+
+        clarification = ExternalActionScoreGapClarificationService.maybe_build(ranked)
+        if clarification:
+            return clarification
 
         top = ranked[0]
         operation_id = str(top.get("operationId") or "").strip()

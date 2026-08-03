@@ -7,6 +7,9 @@ from typing import Callable
 from app.application.services.external_actions.external_action_product_route_catalog_service import (
     ExternalActionProductRouteCatalogService,
 )
+from app.application.services.external_actions.external_action_score_gap_clarification_service import (
+    ExternalActionScoreGapClarificationService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -43,6 +46,10 @@ class ExternalActionGenericRouteSelectionService:
 
         if not ranked:
             return None
+
+        clarification = ExternalActionScoreGapClarificationService.maybe_build(ranked)
+        if clarification:
+            return clarification
 
         action = ranked[0]
 

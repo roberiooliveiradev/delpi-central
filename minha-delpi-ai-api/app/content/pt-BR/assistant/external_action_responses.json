@@ -183,6 +183,14 @@
         "pathMatch": "equals"
       }
     ],
+    "scoreGap": {
+      "maxAbsoluteGap": 0.05,
+      "clarificationToolName": "clarify_route_selection"
+    },
+    "routeClarification": {
+      "scoreGapDirectAnswer": "Encontrei mais de uma rota possível e o ranking ficou empatado. Qual você quer?\n\n1. **{labelA}** (`{operationIdA}`)\n2. **{labelB}** (`{operationIdB}`)\n\nResponda indicando a opção 1 ou 2, ou reformule a pergunta.",
+      "catalogMissDirectAnswer": "Não encontrei uma rota autorizada no catálogo para essa consulta. Reformule com mais detalhe (indicador, período, produto ou status) ou use uma sugestão do menu do chat."
+    },
     "suppliesOtdSuppliesDomainTerms": [
       "compra",
       "suprimentos",
@@ -973,6 +981,7 @@
     "paginationRefinementPage": "A mensagem solicita a página {page} da consulta anterior.",
     "depthRefinementDefault": "A mensagem amplia a profundidade da consulta hierárquica já feita nesta conversa.",
     "genericSemanticFallback": "Action OpenAPI autorizada selecionada por similaridade semântica com a pergunta.",
+    "scoreGapClarification": "Empate no ranking de rotas OpenAPI — clarificação ao usuário.",
     "semanticRankReason": "Action selecionada por similaridade semântica (score {score}).",
     "routeSuggestionSemantic": "Combina com a descrição da fonte (similaridade {score}).",
     "routeSuggestionRegistry": "Rota indicada pelas regras operacionais do chat para esta pergunta.",

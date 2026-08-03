@@ -194,12 +194,67 @@ class ChatToolContextSelectionService:
                     for tool_call in planned_external_actions
                 ]
 
+            if planned_external_actions:
+                first_planned = planned_external_actions[0]
+                from app.application.services.external_actions.external_action_score_gap_clarification_service import (
+                    ExternalActionScoreGapClarificationService,
+                )
+
+                if ExternalActionScoreGapClarificationService.is_clarification_tool_call(
+                    first_planned
+                ):
+                    args = first_planned.get("arguments") or {}
+                    return ToolSelectionOutcome(
+                        early_result=host._finalize_tool_context_result(
+                            message=raw_message,
+                            previous_messages=previous_messages,
+                            result={
+                                "context": "",
+                                "toolCalls": [],
+                                "nativeToolCalling": native_meta,
+                                "directAnswer": str(args.get("directAnswer") or ""),
+                                "skipRag": True,
+                                "currentMessage": raw_message,
+                                "routeSelectionClarification": {
+                                    "scoreGap": args.get("scoreGap"),
+                                    "rivalIds": args.get("rivalIds") or [],
+                                    "suggestions": args.get("suggestions") or [],
+                                },
+                            },
+                        ),
+                    )
+
+                selected_tools = [
+                    item
+                    for item in selected_tools
+                    if str(item.get("name") or "") != "execute_external_action"
+                ]
+                selected_tools.extend(planned_external_actions)
+                first = first_planned
+                arguments = first.get("arguments") or {}
+                selected_external_action = first
+                selected_external_action_meta = {
+                    "actionId": arguments.get("actionId") or arguments.get("action_id"),
+                    "reason": first.get("reason"),
+                    "plannedCount": len(planned_external_actions),
+                }
+
+                if drawing_action_required:
+                    selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
+                    selected_external_action_meta["productCode"] = drawing_product_code
+                    selected_external_action_meta[
+                        "productCodeSource"
+                    ] = drawing_product_code_source
+
             if not planned_external_actions and host.external_action_repository:
                 from app.application.services.chat_playbook_product_action_readiness_service import (
                     ChatPlaybookProductActionReadinessService,
                 )
                 from app.application.services.chat_production_operational_action_readiness_service import (
                     ChatProductionOperationalActionReadinessService,
+                )
+                from app.application.services.external_actions.external_action_catalog_miss_clarification_service import (
+                    ExternalActionCatalogMissClarificationService,
                 )
 
                 gap_answer = (
@@ -212,6 +267,12 @@ class ChatToolContextSelectionService:
                         message,
                         allowed_action_ids=allowed_action_ids or [],
                         repository=host.external_action_repository,
+                    )
+                    or ExternalActionCatalogMissClarificationService.resolve_direct_answer(
+                        message,
+                        allowed_action_ids=allowed_action_ids or [],
+                        previous_messages=previous_messages,
+                        workspace_context=getattr(host, "_build_workspace_context", None),
                     )
                 )
 
@@ -230,29 +291,6 @@ class ChatToolContextSelectionService:
                             },
                         ),
                     )
-
-            if planned_external_actions:
-                selected_tools = [
-                    item
-                    for item in selected_tools
-                    if str(item.get("name") or "") != "execute_external_action"
-                ]
-                selected_tools.extend(planned_external_actions)
-                first = planned_external_actions[0]
-                arguments = first.get("arguments") or {}
-                selected_external_action = first
-                selected_external_action_meta = {
-                    "actionId": arguments.get("actionId") or arguments.get("action_id"),
-                    "reason": first.get("reason"),
-                    "plannedCount": len(planned_external_actions),
-                }
-
-                if drawing_action_required:
-                    selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"
-                    selected_external_action_meta["productCode"] = drawing_product_code
-                    selected_external_action_meta[
-                        "productCodeSource"
-                    ] = drawing_product_code_source
 
         if drawing_action_required and not selected_external_action:
             return ToolSelectionOutcome(
