@@ -191,6 +191,43 @@
       "scoreGapDirectAnswer": "Encontrei mais de uma rota possível e o ranking ficou empatado. Qual você quer?\n\n1. **{labelA}** (`{operationIdA}`)\n2. **{labelB}** (`{operationIdB}`)\n\nResponda indicando a opção 1 ou 2, ou reformule a pergunta.",
       "catalogMissDirectAnswer": "Não encontrei uma rota autorizada no catálogo para essa consulta. Reformule com mais detalhe (indicador, período, produto ou status) ou use uma sugestão do menu do chat."
     },
+    "emptyRivalRecommendations": [
+      {
+        "id": "productionOtd",
+        "operationIds": ["get_production_otd"],
+        "pathMarkers": ["/production/otd"],
+        "profileKeys": ["production_otd"],
+        "suggestions": [
+          {
+            "label": "Ampliar status (todas as OPs)",
+            "query": "mostre otd de produção sem filtrar só atraso"
+          },
+          {
+            "label": "Ver ranking de OPs",
+            "query": "resumo de ops em atraso"
+          },
+          {
+            "label": "Ampliar período",
+            "query": "ampliar período da consulta anterior"
+          }
+        ]
+      },
+      {
+        "id": "productionSchedule",
+        "pathMarkers": ["/production/schedule"],
+        "profileKeys": ["production_schedule"],
+        "suggestions": [
+          {
+            "label": "Programação de hoje",
+            "query": "quais produtos estão programados para produzir hoje?"
+          },
+          {
+            "label": "Remover filtros",
+            "query": "repetir a consulta sem filtros"
+          }
+        ]
+      }
+    ],
     "candidateDiscovery": {
       "rules": [
         {

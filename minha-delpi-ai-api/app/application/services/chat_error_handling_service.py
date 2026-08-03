@@ -93,6 +93,24 @@ class ChatErrorHandlingService:
         config = cls.type_config(classification.error_type)
         suggestions = cls.build_recovery_suggestions(classification.error_type)
 
+        from app.application.services.external_actions.external_action_empty_rival_recommendation_service import (
+            ExternalActionEmptyRivalRecommendationService,
+        )
+
+        rival_suggestions = (
+            ExternalActionEmptyRivalRecommendationService.suggestions_for_tool_calls(
+                tool_calls,
+                error_type=classification.error_type,
+            )
+        )
+        if rival_suggestions:
+            seen = {str(item.get("label") or "") for item in suggestions}
+            for item in rival_suggestions:
+                label = str(item.get("label") or "")
+                if label and label not in seen:
+                    suggestions.append(item)
+                    seen.add(label)
+
         metadata["errorHandling"] = cls.build_metadata_payload(
             classification,
             config=config,
@@ -104,6 +122,8 @@ class ChatErrorHandlingService:
 
         if isinstance(payload, dict):
             cls._apply_sql_reasons_from_tools(payload, tool_calls=tool_calls)
+            if rival_suggestions:
+                payload["rivalRecommendations"] = rival_suggestions
 
         enriched_config = dict(config)
 
@@ -126,11 +146,16 @@ class ChatErrorHandlingService:
             ChatErrorAutoRecoveryService,
         )
 
-        auto_recovery = ChatErrorAutoRecoveryService.build_plan(
+        auto_recovery = None
+        if not ExternalActionEmptyRivalRecommendationService.should_skip_auto_retry(
+            tool_calls,
             error_type=classification.error_type,
-            tool_calls=tool_calls,
-            previous_messages=(workspace_context or {}).get("previousMessages"),
-        )
+        ):
+            auto_recovery = ChatErrorAutoRecoveryService.build_plan(
+                error_type=classification.error_type,
+                tool_calls=tool_calls,
+                previous_messages=(workspace_context or {}).get("previousMessages"),
+            )
 
         if auto_recovery:
             metadata["errorAutoRecovery"] = auto_recovery
