@@ -18,12 +18,31 @@ def _has_value(layer: dict[str, Any], key: str) -> bool:
 # Aliases de filial Protheus — vazio/all na camada superior limpa herança 01/02.
 BRANCH_PARAM_KEYS = frozenset({"branch", "filial", "branch_code", "filial_id"})
 
+# Wire HTTP canônico na api-delpi (enum OpenAPI all|01|02). Aliases PT → all.
+BRANCH_SCOPE_WIRE_ALL = "all"
+
 
 def _is_all_branches_scope(value: Any) -> bool:
     """True = consolidado (all / vazio / aliases PT)."""
     if value is None or value == "":
         return True
     return str(value).strip().lower() in {"all", "todas", "todos"}
+
+
+def canonical_branch_wire_value(value: Any) -> str | None:
+    """Normaliza filial para o wire aceito pela api-delpi (all|01|02).
+
+    Playlists legadas ainda podem gravar ``Todas``; o pattern HTTP da api-delpi
+    só aceita ``all`` — devolver None omite o param (equivalente a consolidado).
+    """
+    if value is None:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    if _is_all_branches_scope(raw):
+        return BRANCH_SCOPE_WIRE_ALL
+    return raw
 
 
 def _clear_branch_aliases(target: dict[str, Any]) -> None:
@@ -141,8 +160,9 @@ def merge_data_params(
             # Filial vazia limpa herança; all/Todas grava wire canônico ``all``.
             if key_str in BRANCH_PARAM_KEYS and _is_all_branches_scope(value):
                 _clear_branch_aliases(merged)
-                if value is not None and str(value).strip() != "":
-                    merged[key_str] = "all"
+                wire = canonical_branch_wire_value(value)
+                if wire is not None:
+                    merged[key_str] = wire
                 continue
             if value is None or value == "":
                 continue

@@ -7,6 +7,10 @@ from typing import Any, Mapping
 from delpi_api_client import DelpiApiClient
 from delpi_auth.service_token import internal_service_authorization
 
+from tv_app.application.services.comunicado_data_params_service import (
+    BRANCH_PARAM_KEYS,
+    canonical_branch_wire_value,
+)
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
 )
@@ -60,6 +64,8 @@ def resolve_route_path(
         if raw is None or raw == "":
             field = schema_map.get(name) if isinstance(schema_map.get(name), Mapping) else {}
             raw = field.get("default") if isinstance(field, Mapping) else None
+        if name in BRANCH_PARAM_KEYS:
+            raw = canonical_branch_wire_value(raw)
         if raw is None or raw == "":
             missing.append(name)
             continue
@@ -159,16 +165,22 @@ def _build_query_params(
         elif not omit_date_range:
             query[start_key] = str(start)
             query[end_key] = str(end)
-        branch = merged.get("branch")
+        branch = canonical_branch_wire_value(merged.get("branch"))
         if branch:
-            query["branch"] = str(branch).strip()
+            query["branch"] = branch
         drop_aliases = date_alias_keys(keep=(start_key, end_key))
         for key, value in merged.items():
             if key in {PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY, "branch"} | drop_aliases:
                 continue
             if value is None or value == "":
                 continue
-            query[str(key)] = str(value)
+            key_str = str(key)
+            if key_str in BRANCH_PARAM_KEYS:
+                canon = canonical_branch_wire_value(value)
+                if canon:
+                    query[key_str] = canon
+                continue
+            query[key_str] = str(value)
         always_allow = {start_key, end_key, "branch"} if not omit_date_range else {"branch"}
         return _filter_query_to_route_schema(
             query, schema=schema, fixed=fixed, always_allow=always_allow
@@ -199,9 +211,14 @@ def _build_query_params(
             continue
         if value is None or value == "":
             continue
-        query[str(key)] = str(value)
+        key_str = str(key)
+        if key_str in BRANCH_PARAM_KEYS:
+            canon = canonical_branch_wire_value(value)
+            if canon:
+                query[key_str] = canon
+            continue
+        query[key_str] = str(value)
     return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow=always_allow)
-
 
 def _filter_query_to_route_schema(
     query: dict[str, str],

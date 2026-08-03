@@ -93,6 +93,14 @@ def test_schema_rejects_invalid_enum():
     assert is_value_allowed_by_param_schema("01", SCHEMA_A["branch"]) is True
 
 
+def test_legacy_todas_allowed_when_enum_has_all():
+    field = {"type": "string", "enum": ["all", "01", "02"]}
+    assert is_value_allowed_by_param_schema("Todas", field) is True
+    assert is_value_allowed_by_param_schema("todas", field) is True
+    assert is_value_allowed_by_param_schema("all", field) is True
+    assert is_value_allowed_by_param_schema("03", field) is False
+
+
 def test_merge_filter_layers():
     assert merge_filter_layers({"a": 1}, {"b": 2}, {"a": 3}) == {"a": 3, "b": 2}
 

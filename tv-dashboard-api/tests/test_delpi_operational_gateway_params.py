@@ -409,3 +409,57 @@ def test_filter_query_drops_path_params_marked_in_schema():
     )
     assert filtered == {"branch": "01"}
 
+
+def test_build_query_params_normalizes_legacy_todas_to_all():
+    """Playlists com branch=Todas não podem ir à api-delpi (pattern all|01|02)."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "direct",
+            "paramSchema": {
+                "branch": {"type": "string", "optional": True, "enum": ["all", "01", "02"]},
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+            },
+        },
+        {
+            "branch": "Todas",
+            "start_date": "2026-01-01",
+            "end_date": "2026-08-03",
+        },
+    )
+    assert query["branch"] == "all"
+    assert query["start_date"] == "2026-01-01"
+
+    query_pt = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "branch": {"type": "string", "optional": True},
+                "filial_id": {"type": "string", "optional": True},
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+            },
+        },
+        {
+            "branch": "todas",
+            "filial_id": "Todos",
+            "start_date": "2026-01-01",
+            "end_date": "2026-08-03",
+        },
+    )
+    assert query_pt["branch"] == "all"
+    assert query_pt["filial_id"] == "all"
+
+
+def test_resolve_route_path_normalizes_branch_path_param():
+    from tv_app.infrastructure.gateways.delpi_operational_gateway import resolve_route_path
+
+    assert (
+        resolve_route_path(
+            "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+            {"branch": "Todas", "order_number": "1", "line_item": "2"},
+        )
+        == "/commercial/sales-order-otd/lines/all/1/2"
+    )
+

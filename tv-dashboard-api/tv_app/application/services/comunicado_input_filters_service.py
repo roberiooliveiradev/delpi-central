@@ -56,7 +56,16 @@ def is_value_allowed_by_param_schema(value: Any, field: dict[str, Any] | None) -
         return False
     raw_enum = field.get("enum")
     if isinstance(raw_enum, list) and len(raw_enum) > 0:
-        return any(str(item) == str(value) for item in raw_enum if item is not None)
+        wire = str(value)
+        if any(str(item) == wire for item in raw_enum if item is not None):
+            return True
+        # Legado: Todas/todas ≡ all no enum OpenAPI pós-bilingue.
+        if (
+            wire.strip().lower() in {"all", "todas", "todos"}
+            and any(str(item) == "all" for item in raw_enum if item is not None)
+        ):
+            return True
+        return False
     field_type = str(field.get("type") or "")
     if field_type == "boolean":
         return isinstance(value, bool) or value in ("true", "false", True, False)
