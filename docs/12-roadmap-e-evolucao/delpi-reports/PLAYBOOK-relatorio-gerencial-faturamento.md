@@ -20,7 +20,7 @@ E-mail mensal à Direção com visão gerencial do **faturamento (ROL com IPI)**
 | **Filial 02** | Rio Bananal (ES) |
 | **Consolidado** | Soma das filiais (branch omitido em `get_rol`) |
 | **Top 20 + Demais** | Maiores clientes por ROL no mês; restante agregado em «Demais» |
-| **IGD** | Índice Geral de Desempenho (às vezes chamado “IDG”) — nota consolidada SI |
+| **IGD** | Índice Global DELPI — nota consolidada SI (às vezes chamado “IDG”) |
 | **IDD** | Indicador de Desempenho Departamental (0–10) por departamento SI |
 
 ## Wireframe do e-mail
@@ -29,10 +29,9 @@ E-mail mensal à Direção com visão gerencial do **faturamento (ROL com IPI)**
 2. **Resumo executivo** — 3–4 bullets (consolidado, Δ%, participação SC vs ES)
 3. **Cards KPI** — Consolidado | SC | ES (valor do mês, Δ R$, Δ %)
 4. **Tabela filiais** — mês / anterior / Δ %
-5. **Desempenho — IGD e IDDs** — card IGD (nota, classificação, tendência) + tabela IDDs por departamento
-6. **Evolução consolidada do ano** — gráfico linha (R$ mi), jan → mês do relatório
-7. **Tabela Top 20 clientes** — nome fantasia (`A1_NREDUZ`), ROL mês, share %, ROL ant., Δ % (sem código)
-8. **Rodapé institucional** — brand layout Delpi Reports
+5. **Desempenho — IGD e IDDs** — card Índice Global DELPI + tabela IDDs por departamento
+6. **Tabela Distribuição Faturamento por cliente (Top)** — nome fantasia (`A1_NREDUZ`), ROL mês, share %, ROL ant., Δ % (sem código)
+7. **Rodapé institucional** — brand layout Delpi Reports
 
 Seções futuras (shell): meta ROL SI, WEG vs novos negócios, OTD — fora do MVP.
 
@@ -55,7 +54,6 @@ Ex.: `Relatório Gerencial — Faturamento | jun/2026`
 | ROL consolidado / 01 / 02 | `FinancialRepository.get_rol` |
 | Ranking clientes | `GET /commercial/rol/by-customer` (nome fantasia `A1_NREDUZ`) |
 | MoM | `CommercialRolMomComparisonService` |
-| Evolução anual | `year_evolution` (jan→mês, consolidado) + PNG CID no e-mail |
 | IGD | SI S2S `tv-dashboard-hero` via `DashboardIgdService` (`competence=YYYY-MM`) |
 | IDDs | SI S2S `dashboard-departments-indicators` via `DashboardDepartmentIndicatorsService` |
 

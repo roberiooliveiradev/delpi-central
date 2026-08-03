@@ -160,20 +160,17 @@ def test_provider_collect_and_render() -> None:
     assert "Resumo executivo" in email.html_body
     assert "WEG" in email.html_body
     assert "000001" not in email.html_body
-    assert "Evolução do faturamento" in email.html_body
-    assert "Consolidado no ano" in email.html_body
-    # Valor integral no subtítulo (não abreviação em mi)
-    assert "R$ 68.000.000,00" in email.html_body
-    assert email.html_body.count("Consolidado no ano") == 1
-    assert "cid:rol-year-chart" in email.html_body
-    assert "<svg" not in email.html_body
+    assert "Distribuição Faturamento por cliente (Top)" in email.html_body
+    assert "Evolução no ano" not in email.html_body
+    assert "Evolução do faturamento" not in email.html_body
+    assert "cid:rol-year-chart" not in email.html_body
     assert "Desempenho — IGD e IDDs" in email.html_body
-    assert "IGD — Índice Geral de Desempenho" in email.html_body
+    assert "Índice Global DELPI" in email.html_body
     assert "7,8" in email.html_body
     assert "Comercial" in email.html_body
     assert "Qualidade" in email.html_body
     assert "8,5" in email.html_body
-    assert any(
+    assert not any(
         getattr(att, "content_id", None) == "rol-year-chart"
         for att in email.attachments
     )
@@ -327,6 +324,13 @@ def test_line_chart_png_formats_millions() -> None:
     assert "Consolidado no ano (2026): R$ 23.000.000,00" in html_out
     # Título limpo — consolidado só no subtítulo
     assert "· Consolidado" not in html_out
+    # Valores legíveis na tabela HTML (não só no PNG)
+    assert "Valores mensais (R$ mi)" in html_out
+    assert "Jan/26" in html_out
+    assert "Jun/26" in html_out
+    assert "8,20" in html_out
+    assert "14,80" in html_out
+    assert 'width="760"' in html_out
     assert attachment is not None
     assert attachment.content_id == "rol-year-chart"
     assert attachment.content_type == "image/png"
@@ -334,6 +338,6 @@ def test_line_chart_png_formats_millions() -> None:
     assert _fmt_mi(4.27551795, digits=2) == "4,28"
 
     y_min, y_max, _step = _axis_bounds([3.6, 3.7, 4.0, 4.3, 4.4])
-    assert y_min >= 2.5
-    assert y_max <= 5.5
-    assert (y_max - y_min) < 4.0
+    assert y_min >= 3.0
+    assert y_max <= 5.0
+    assert (y_max - y_min) < 2.5

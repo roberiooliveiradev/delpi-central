@@ -1,4 +1,4 @@
-"""IGD (Índice Geral de Desempenho) via S2S TV hero do Strategic Indicators."""
+"""IGD (Índice Global DELPI) via S2S TV hero do Strategic Indicators."""
 
 from __future__ import annotations
 

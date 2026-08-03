@@ -32,9 +32,6 @@ from app.domain.services.reports.report_email_brand_layout_service import (
     GRAY_900,
     ReportEmailBrandLayoutService,
 )
-from app.domain.services.reports.report_email_consolidated_line_chart_service import (
-    ReportEmailConsolidatedLineChartService,
-)
 from app.domain.services.reports.report_previous_calendar_month_service import (
     DEFAULT_TIMEZONE,
     ReportPreviousCalendarMonthService,
@@ -322,43 +319,21 @@ class ManagementRevenueMonthlyProvider:
         compare_period = dict(dataset.meta.get("comparePeriod") or {})
         branches = list(dataset.meta.get("branches") or [])
         customers = list(dataset.meta.get("customers") or [])
-        year_evolution = list(dataset.meta.get("yearEvolution") or [])
         igd = dataset.meta.get("igd")
         idd_departments = list(dataset.meta.get("iddDepartments") or [])
         label = str(report_period.get("label_pt") or "")
         label_title = str(report_period.get("label_pt_title") or label)
         compare_label = str(compare_period.get("label_pt") or "")
-        year = report_period.get("year")
-        year_total = sum(float(point.get("value") or 0) for point in year_evolution)
-        # Só no subtítulo do card (valor integral com centavos) — sem repetir no título/PNG.
-        year_total_label = (
-            f"Consolidado no ano ({year}): {format_brl(year_total)}"
-            if year_evolution
-            else None
-        )
 
         subject = f"{PROVIDER_DISPLAY_NAME} | {label}" if label else PROVIDER_DISPLAY_NAME
         brand = ReportEmailBrandLayoutService
-        chart_title = (
-            f"Evolução do faturamento (R$ mi) — {year}"
-            if year
-            else "Evolução do faturamento (R$ mi)"
-        )
-        chart_html, chart_attachment = ReportEmailConsolidatedLineChartService.build(
-            title=chart_title,
-            points=year_evolution,
-            series_label="Consolidado",
-            year_total_label=year_total_label,
-        )
         body = (
             self._executive_summary_html(branches, label_title, compare_label)
             + self._kpi_cards_html(branches)
             + self._section_heading("Filiais")
             + self._branches_table_html(branches, label, compare_label)
             + self._performance_section_html(igd, idd_departments)
-            + self._section_heading("Evolução no ano")
-            + chart_html
-            + self._section_heading("Distribuição por cliente (Top)")
+            + self._section_heading("Distribuição Faturamento por cliente (Top)")
             + self._customers_table_html(customers, label, compare_label)
         )
         html_body = brand.wrap(
@@ -369,8 +344,6 @@ class ManagementRevenueMonthlyProvider:
         attachments: list[ReportAttachment] = []
         if self._logo_attachment is not None:
             attachments.append(self._logo_attachment)
-        if chart_attachment is not None:
-            attachments.append(chart_attachment)
         return EmailPayload(
             subject=subject,
             html_body=html_body,
@@ -519,7 +492,7 @@ class ManagementRevenueMonthlyProvider:
             "<tr><td style=\"padding:14px 16px;\">"
             f'<p style="margin:0 0 6px 0;font-size:11px;font-weight:700;'
             f'color:{GRAY_600};text-transform:uppercase;letter-spacing:0.03em;">'
-            "IGD — Índice Geral de Desempenho</p>"
+            "Índice Global DELPI</p>"
             f'<p style="margin:0 0 6px 0;font-size:28px;font-weight:700;'
             f'color:{BLUE_900};">{html.escape(score_txt)}</p>'
             f'<p style="margin:0;font-size:13px;color:{GRAY_900};">'
