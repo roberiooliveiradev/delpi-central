@@ -37,7 +37,7 @@ export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label:
 ];
 
 /** Pares canônicos — ordem = preferência (start_date HTTP primeiro). */
-const DATE_RANGE_KEY_PAIRS: ReadonlyArray<readonly [string, string]> = [
+export const DATE_RANGE_KEY_PAIRS: ReadonlyArray<readonly [string, string]> = [
   ["start_date", "end_date"],
   ["date_start", "date_end"],
   ["date_from", "date_to"],
@@ -59,6 +59,28 @@ export function findDateRangeKeys(schemaKeys: Iterable<string>): DateRangeKeyPai
     }
   }
   return null;
+}
+
+/**
+ * Lê start/end de um patch de UI mesmo quando as chaves usam aliases
+ * (união multi-fonte pode emitir start_date enquanto a rota usa date_start).
+ */
+export function readDateRangeUpdateValues(
+  updates: Record<string, string>,
+): { start: string; end: string; hasStart: boolean; hasEnd: boolean } {
+  for (const [startKey, endKey] of DATE_RANGE_KEY_PAIRS) {
+    const hasStart = Object.prototype.hasOwnProperty.call(updates, startKey);
+    const hasEnd = Object.prototype.hasOwnProperty.call(updates, endKey);
+    if (hasStart || hasEnd) {
+      return {
+        hasStart,
+        hasEnd,
+        start: hasStart ? String(updates[startKey] ?? "") : "",
+        end: hasEnd ? String(updates[endKey] ?? "") : "",
+      };
+    }
+  }
+  return { hasStart: false, hasEnd: false, start: "", end: "" };
 }
 
 export function isDateRangePairKey(key: string, pair: DateRangeKeyPair | null): boolean {

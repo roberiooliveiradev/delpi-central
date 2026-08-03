@@ -15,6 +15,12 @@ import {
   AGGREGATE_EXCLUDED_PARAM_KEYS,
   mergeRouteParamSchemas,
 } from "./collectPlaylistDataParamSchema";
+import {
+  DATE_RANGE_PRESET_PARAM,
+  PERIOD_DAYS_PARAM,
+  findDateRangeKeys,
+  readDateRangeUpdateValues,
+} from "./dateRangePresets";
 
 export type MultiSourceBindingTarget = ComunicadoBlock & {
   dataBinding: ComunicadoDataBinding;
@@ -44,13 +50,19 @@ export function buildMultiSourceParamSchema(
 /**
  * Valores exibidos na multi-seleção: se todas as fontes concordam, mostra o valor;
  * se divergem, string vazia (usuário define um valor comum).
+ * Inclui `dateRangePreset` (sintetizador) quando o schema união tem par de datas.
  */
 export function resolveSharedParamDisplayValues(
   targets: MultiSourceBindingTarget[],
   schema: DataParamSchema,
 ): Record<string, string> {
   const values: Record<string, string> = {};
-  for (const key of Object.keys(schema)) {
+  const keys = new Set(Object.keys(schema));
+  if (findDateRangeKeys(keys)) {
+    keys.add(DATE_RANGE_PRESET_PARAM);
+    keys.add(PERIOD_DAYS_PARAM);
+  }
+  for (const key of keys) {
     if (AGGREGATE_EXCLUDED_PARAM_KEYS.has(key)) continue;
     let shared: string | null = null;
     let diverged = false;
@@ -83,8 +95,40 @@ export function resolveTargetParamSchema(
 }
 
 /**
- * Monta patches atômicos: cada fonte recebe só as chaves do seu schema.
- * Chaves que a fonte não tem são ignoradas (união na UI, aplicação seletiva).
+ * Traduz updates da UI multi-fonte para chaves que a rota aceita.
+ * `dateRangePreset` / `periodDays` não vêm do OpenAPI — aplicam em rotas com par de datas.
+ * Datas limpas pelo sintetizador (aliases da união) são remapeadas ao par da rota.
+ */
+export function mapUpdatesToTargetSchema(
+  schema: DataParamSchema,
+  updates: Record<string, string>,
+): Record<string, string> {
+  const applicable: Record<string, string> = {};
+  const pair = findDateRangeKeys(Object.keys(schema));
+
+  for (const [key, raw] of Object.entries(updates)) {
+    if (schema[key]) applicable[key] = raw;
+  }
+
+  if (!pair) return applicable;
+
+  if (Object.prototype.hasOwnProperty.call(updates, DATE_RANGE_PRESET_PARAM)) {
+    applicable[DATE_RANGE_PRESET_PARAM] = updates[DATE_RANGE_PRESET_PARAM];
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, PERIOD_DAYS_PARAM)) {
+    applicable[PERIOD_DAYS_PARAM] = updates[PERIOD_DAYS_PARAM];
+  }
+
+  const dateUpdate = readDateRangeUpdateValues(updates);
+  if (dateUpdate.hasStart) applicable[pair.startKey] = dateUpdate.start;
+  if (dateUpdate.hasEnd) applicable[pair.endKey] = dateUpdate.end;
+
+  return applicable;
+}
+
+/**
+ * Monta patches atômicos: cada fonte recebe só as chaves que aceita
+ * (schema OpenAPI + sintetizador de período quando há intervalo de datas).
  */
 export function buildMultiSourceParamPatches(
   targets: MultiSourceBindingTarget[],
@@ -94,10 +138,7 @@ export function buildMultiSourceParamPatches(
   const patches: Array<{ blockId: string; patch: Partial<ComunicadoBlock> }> = [];
   for (const target of targets) {
     const schema = resolveTargetParamSchema(routes, target);
-    const applicable: Record<string, string> = {};
-    for (const [key, raw] of Object.entries(updates)) {
-      if (schema[key]) applicable[key] = raw;
-    }
+    const applicable = mapUpdatesToTargetSchema(schema, updates);
     if (Object.keys(applicable).length === 0) continue;
     const nextParams = applyDataParamRawUpdates(target.dataBinding.params, applicable, schema);
     patches.push({

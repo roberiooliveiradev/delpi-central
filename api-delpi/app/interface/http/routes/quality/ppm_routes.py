@@ -137,6 +137,8 @@ def _ppm_summary_response(
             operation_id=f"get_ppm_{ppm_type}_summary",
             fields=kpi_fields(QUALITY_PPM_FIELD_LABELS),
         )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
     except Exception as exc:
         log_error(f"Erro ao buscar resumo de PPM {ppm_type}: {exc}")
         return error_response(

@@ -18,7 +18,10 @@ from tv_app.application.services.series_points_extractor import (
     unwrap_operational_data,
 )
 from tv_app.application.services.tv_date_range_preset_service import (
+    DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
+    START_KEYS,
+    END_KEYS,
     apply_date_range_preset,
     date_alias_keys,
     read_date_range_values,
@@ -79,6 +82,18 @@ def resolve_route_path(
     return resolved
 
 
+def _has_period_intent(params: Mapping[str, Any]) -> bool:
+    """True se já há datas, periodDays ou dateRangePreset nos params."""
+    if params.get(PERIOD_DAYS_KEY) not in (None, ""):
+        return True
+    if str(params.get(DATE_RANGE_PRESET_KEY) or "").strip():
+        return True
+    for key in (*START_KEYS, *END_KEYS):
+        if params.get(key) not in (None, ""):
+            return True
+    return False
+
+
 def _build_query_params(
     route: dict[str, Any],
     params: Mapping[str, Any],
@@ -87,8 +102,15 @@ def _build_query_params(
     schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
     date_range_keys = route.get("dateRangeKeys")
     with_defaults = apply_catalog_param_defaults(params, route)
+    open_ended = bool(route.get("openEndedDateRange"))
+    # Rotas date_range fechadas (ex. PPM): OpenAPI marca datas opcionais, mas a API
+    # exige intervalo. Sem datas na programação/fonte → este mês até hoje.
+    # openEnded continua omitindo (histórico completo).
+    seed_params: Mapping[str, Any] = with_defaults
+    if strategy == "date_range" and not open_ended and not _has_period_intent(with_defaults):
+        seed_params = {**with_defaults, DATE_RANGE_PRESET_KEY: "this_month"}
     merged = apply_date_range_preset(
-        with_defaults,
+        seed_params,
         schema_keys=schema,
         date_range_keys=date_range_keys,
         strategy=strategy,
@@ -112,7 +134,6 @@ def _build_query_params(
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
         has_period_days = merged.get(PERIOD_DAYS_KEY) not in (None, "")
-        open_ended = bool(route.get("openEndedDateRange"))
         # Sem datas e sem periodDays → omite o par (histórico completo na API).
         # periodDays / datas parciais / preset resolvido ainda preenchem o intervalo.
         omit_date_range = not start and not end and not has_period_days
@@ -154,7 +175,7 @@ def _build_query_params(
             query["branch"] = str(branch).strip()
         drop_aliases = date_alias_keys(keep=(start_key, end_key))
         for key, value in merged.items():
-            if key in {PERIOD_DAYS_KEY, "branch"} | drop_aliases:
+            if key in {PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY, "branch"} | drop_aliases:
                 continue
             if value is None or value == "":
                 continue

@@ -233,8 +233,9 @@ def test_date_range_strategy_respects_partial_end_date():
     assert query["start_date"] == "2026-07-04"
 
 
-def test_date_range_omits_dates_when_no_period_without_open_ended_flag():
-    """Sem datas e sem periodDays → omite o par (não depende de openEndedDateRange)."""
+def test_date_range_defaults_this_month_when_no_period_without_open_ended():
+    """Rotas date_range fechadas (PPM): sem datas → este mês até hoje (não omite)."""
+    today = date.today()
     query = _build_query_params(
         {
             "paramStrategy": "date_range",
@@ -247,9 +248,32 @@ def test_date_range_omits_dates_when_no_period_without_open_ended_flag():
         },
         {"branch": "01"},
     )
-    assert "start_date" not in query
-    assert "end_date" not in query
     assert query["branch"] == "01"
+    assert query["start_date"] == date(today.year, today.month, 1).isoformat()
+    assert query["end_date"] == today.isoformat()
+
+
+def test_ppm_external_summary_gets_dates_from_empty_playlist_defaults():
+    """Regressão: programação sem período não pode chamar PPM sem datas (500)."""
+    today = date.today()
+    query = _build_query_params(
+        {
+            "operationId": "get_ppm_external_summary",
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "branch": {"type": "string", "optional": True},
+                "start_date": {"type": "string", "optional": True, "format": "date"},
+                "end_date": {"type": "string", "optional": True, "format": "date"},
+                "product_prefix": {"type": "string", "optional": True},
+            },
+        },
+        {"department": "qualidade", "competence": ""},
+    )
+    assert "department" not in query
+    assert "competence" not in query
+    assert query["start_date"] == date(today.year, today.month, 1).isoformat()
+    assert query["end_date"] == today.isoformat()
 
 
 def test_open_ended_date_range_omits_dates_when_custom_empty():
