@@ -48,8 +48,13 @@ _RUNTIME_OVERLAY_KEYS = frozenset(
         "whenToUse",
         "openEndedDateRange",
         "defaultParams",
+        "exposesSiGoal",
     }
 )
+
+_DEFAULT_SI_GOAL_FIELD_LABELS: dict[str, str] = {
+    "comparable_goal": "Meta",
+}
 
 
 @lru_cache(maxsize=1)
@@ -64,11 +69,17 @@ def _load_catalog() -> dict[str, Any]:
 
 
 @lru_cache(maxsize=1)
-def _load_overlays() -> dict[str, dict[str, Any]]:
+def _load_overlays_document() -> dict[str, Any]:
     if not OVERLAYS_PATH.is_file():
         return {}
     payload = json.loads(OVERLAYS_PATH.read_text(encoding="utf-8"))
-    raw = payload.get("overlays") if isinstance(payload, dict) else None
+    return payload if isinstance(payload, dict) else {}
+
+
+@lru_cache(maxsize=1)
+def _load_overlays() -> dict[str, dict[str, Any]]:
+    payload = _load_overlays_document()
+    raw = payload.get("overlays")
     if not isinstance(raw, dict):
         return {}
     return {
@@ -79,8 +90,24 @@ def _load_overlays() -> dict[str, dict[str, Any]]:
 
 
 @lru_cache(maxsize=1)
+def _si_goal_field_labels() -> dict[str, str]:
+    """Rótulos canônicos de meta SI (comparable_goal → Meta) para o picker."""
+    payload = _load_overlays_document()
+    raw = payload.get("siGoalFieldLabels")
+    if isinstance(raw, dict) and raw:
+        out: dict[str, str] = {}
+        for key, label in raw.items():
+            field = str(key or "").strip()
+            text = str(label or "").strip()
+            if field and text:
+                out[field] = text
+        if out:
+            return out
+    return dict(_DEFAULT_SI_GOAL_FIELD_LABELS)
+
+
+@lru_cache(maxsize=1)
 def _load_operation_id_aliases() -> dict[str, str]:
-    """Mapa legado → canônico (playlists salvas com operationId auto-FastAPI)."""
     if not ALIASES_PATH.is_file():
         return {}
     payload = json.loads(ALIASES_PATH.read_text(encoding="utf-8"))
@@ -88,17 +115,47 @@ def _load_operation_id_aliases() -> dict[str, str]:
     if not isinstance(raw, dict):
         return {}
     return {
-        str(legacy).strip(): str(canonical).strip()
-        for legacy, canonical in raw.items()
-        if str(legacy).strip() and str(canonical).strip()
+        str(key): str(value)
+        for key, value in raw.items()
+        if str(key).strip() and str(value).strip()
     }
 
 
-def resolve_canonical_operation_id(operation_id: str) -> str:
+def resolve_canonical_operation_id(operation_id: str | None) -> str:
     op = str(operation_id or "").strip()
     if not op:
         return ""
     return _load_operation_id_aliases().get(op, op)
+
+
+def _apply_si_goal_picker_fields(route: dict[str, Any], *, overlay: dict[str, Any]) -> dict[str, Any]:
+    """Garante Meta (comparable_goal) no picker de hubs com enriquecimento SI.
+
+    Sem isso, o campo só aparece via discovery quando o preview já trouxe valor —
+    e some do «Campo dinâmico» se a meta estiver vazia ou o resolved falhar.
+    """
+    exposes = bool(overlay.get("exposesSiGoal"))
+    labels = route.get("valueFieldLabels") if isinstance(route.get("valueFieldLabels"), dict) else {}
+    if not exposes and "comparable_goal" not in labels:
+        return route
+
+    merged = dict(route)
+    next_labels = dict(labels)
+    for field, label in _si_goal_field_labels().items():
+        next_labels.setdefault(field, label)
+    merged["valueFieldLabels"] = next_labels
+
+    fields = [
+        str(item).strip()
+        for item in (merged.get("valueFields") or [])
+        if str(item).strip()
+    ]
+    for field in _si_goal_field_labels():
+        if field not in fields:
+            fields.append(field)
+    if fields:
+        merged["valueFields"] = fields
+    return merged
 
 
 def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
@@ -121,6 +178,9 @@ def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
                 merged["defaultParams"] = cleaned
             else:
                 merged.pop("defaultParams", None)
+    merged = _apply_si_goal_picker_fields(merged, overlay=overlay)
+    # Flag só de overlay — não precisa ir ao cliente.
+    merged.pop("exposesSiGoal", None)
     return merged
 
 
@@ -171,5 +231,7 @@ def normalize_data_binding_operation_id(binding: dict[str, Any] | None) -> dict[
 
 def reset_tv_data_route_catalog_cache() -> None:
     _load_catalog.cache_clear()
+    _load_overlays_document.cache_clear()
     _load_overlays.cache_clear()
+    _si_goal_field_labels.cache_clear()
     _load_operation_id_aliases.cache_clear()

@@ -1,6 +1,9 @@
 {
   "version": 1,
   "description": "Overlays TV por operationId — valueFields, tvConstraints, paramStrategy, labels curados e whenToUse (audiência). Mergeados sobre o schema gerado do OpenAPI.",
+  "siGoalFieldLabels": {
+    "comparable_goal": "Meta"
+  },
   "overlayPrefixes": {
     "get_si_indicator_": {
       "valueFields": [
@@ -72,6 +75,7 @@
       }
     },
     "get_ppm_external_summary": {
+      "exposesSiGoal": true,
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -99,6 +103,7 @@
       "whenToUse": "Use no painel rico de qualidade externa (realizado + meta + totais produzidos), não no card SI só de realizado."
     },
     "get_ppm_internal_summary": {
+      "exposesSiGoal": true,
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -395,17 +400,20 @@
       }
     },
     "get_lmps_dashboard_summary": {
+      "exposesSiGoal": true,
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
-        "total_items"
+        "total_items",
+        "comparable_goal"
       ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
+        "total_items": "Total de itens",
+        "comparable_goal": "Meta"
       },
       "allowedDisplayModes": [
         "kpi",
@@ -414,8 +422,8 @@
         "auto"
       ],
       "label": "LMPs — resumo do painel",
-      "description": "KPIs agregados do painel de LMPs (volume, prazo e lead time).",
-      "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais e % no prazo. Depois escolha no visual quais métricas exibir."
+      "description": "KPIs agregados do painel de LMPs (volume, prazo, lead time e meta SI).",
+      "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais, % no prazo e meta. Depois escolha no visual quais métricas exibir."
     },
     "list_lmp_nonconformities": {
       "openEndedDateRange": true,
@@ -550,6 +558,7 @@
       }
     },
     "get_kaizen_summary": {
+      "exposesSiGoal": true,
       "valueFields": [
         "value",
         "total_savings",
@@ -575,6 +584,7 @@
       ]
     },
     "get_audit_5s_summary": {
+      "exposesSiGoal": true,
       "valueFields": [
         "value",
         "average_score"
@@ -596,6 +606,7 @@
       ]
     },
     "get_quality_scrap_cost_pct": {
+      "exposesSiGoal": true,
       "valueFields": [
         "scrap_cost_pct",
         "value"
@@ -616,6 +627,7 @@
       ]
     },
     "get_quality_rework_cost_pct": {
+      "exposesSiGoal": true,
       "valueFields": [
         "rework_cost_pct",
         "value"
@@ -637,6 +649,7 @@
       ]
     },
     "get_refugos_scrap_cost_pct": {
+      "exposesSiGoal": true,
       "valueFields": [
         "scrap_cost_pct",
         "value"
@@ -678,6 +691,7 @@
       ]
     },
     "get_transforma_mais_summary": {
+      "exposesSiGoal": true,
       "valueFields": [
         "total_investment_in_period",
         "total_gross_savings_in_period",

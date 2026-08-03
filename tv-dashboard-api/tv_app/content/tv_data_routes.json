@@ -1270,11 +1270,11 @@
       "tvConstraints": {
         "maxRows": 20
       },
-      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "indicators"
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1345,11 +1345,11 @@
       "tvConstraints": {
         "maxRows": 20
       },
-      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
-      ]
+      ],
+      "tableFields": "items"
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_meta",
@@ -5757,8 +5757,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "KPIs agregados do painel de LMPs (volume, prazo e lead time).",
-      "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais e % no prazo. Depois escolha no visual quais métricas exibir.",
+      "description": "KPIs agregados do painel de LMPs (volume, prazo, lead time e meta SI).",
+      "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais, % no prazo e meta. Depois escolha no visual quais métricas exibir.",
       "paramSchema": {
         "start_date": {
           "type": "string",
@@ -5831,13 +5831,15 @@
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
-        "total_items"
+        "total_items",
+        "comparable_goal"
       ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
+        "total_items": "Total de itens",
+        "comparable_goal": "Meta"
       }
     },
     {
@@ -6722,24 +6724,6 @@
         "start_date",
         "end_date"
       ],
-      "openEndedDateRange": true,
-      "tableFields": "points",
-      "valueFields": [
-        "economia_bruta",
-        "investimento"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "economia_bruta": "number",
-        "investimento": "number",
-        "economia_liquida": "number",
-        "horas_economizadas": "number"
-      },
-      "valueFieldLabels": {
-        "periodo": "Período",
-        "economia_bruta": "Economia",
-        "investimento": "Investimento"
-      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -6754,7 +6738,25 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "openEndedDateRange": true,
+      "valueFields": [
+        "economia_bruta",
+        "investimento"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "economia_bruta": "number",
+        "investimento": "number",
+        "economia_liquida": "number",
+        "horas_economizadas": "number"
+      },
+      "tableFields": "points",
+      "valueFieldLabels": {
+        "periodo": "Período",
+        "economia_bruta": "Economia",
+        "investimento": "Investimento"
+      }
     },
     {
       "operationId": "get_financeiro_despesas_centro_custo_filtros",
@@ -10407,25 +10409,6 @@
         "start_date",
         "end_date"
       ],
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "start_date": "date",
-        "end_date": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -10440,7 +10423,26 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "seriesField": "points",
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "start_date": "date",
+        "end_date": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -10837,13 +10839,10 @@
         "start_date",
         "end_date"
       ],
-      "seriesField": "points",
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10851,6 +10850,9 @@
         "end_date": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
       }
     },
     {
@@ -15059,12 +15061,12 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Auditoria 5S — resumo"
-      ],
       "valueFields": [
         "value",
         "average_score"
+      ],
+      "labelAliases": [
+        "Auditoria 5S — resumo"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -15607,14 +15609,14 @@
         "start_date",
         "end_date"
       ],
-      "labelAliases": [
-        "Kaizens — resumo e listagem (PostgreSQL)",
-        "Kaizens — resumo e listagem (Google Sheets)"
-      ],
       "valueFields": [
         "value",
         "total_savings",
         "total_kaizens"
+      ],
+      "labelAliases": [
+        "Kaizens — resumo e listagem (PostgreSQL)",
+        "Kaizens — resumo e listagem (Google Sheets)"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -16299,13 +16301,13 @@
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "labelAliases": [
-        "Qualidade — PPM externo"
-      ],
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM externo"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -16497,14 +16499,14 @@
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "labelAliases": [
-        "Qualidade — PPM interno",
-        "PPM Interno — realizado"
-      ],
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
+      ],
+      "labelAliases": [
+        "Qualidade — PPM interno",
+        "PPM Interno — realizado"
       ],
       "valueFieldLabels": {
         "value": "Valor",
@@ -16950,7 +16952,6 @@
         "start_date",
         "end_date"
       ],
-      "tableFields": "items",
       "valueFields": [
         "value",
         "sharePct",
@@ -16958,6 +16959,7 @@
         "quantity",
         "occurrenceCount"
       ],
+      "tableFields": "items",
       "valueFieldLabels": {
         "value": "Valor (R$)",
         "sharePct": "Participação (%)",
@@ -19052,11 +19054,11 @@
         "maxRows": 50,
         "requiresBranchPermission": true
       },
-      "tableFields": "items",
       "valueFields": [
         "stock_value",
         "quantity"
       ],
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 50,
@@ -19112,12 +19114,12 @@
         "maxRows": 12,
         "requiresBranchPermission": true
       },
-      "tableFields": "by_warehouse",
       "valueFields": [
         "product_count",
         "total_stock_value",
         "total_quantity"
       ],
+      "tableFields": "by_warehouse",
       "valueFieldLabels": {
         "product_count": "Qtd. de produtos",
         "total_stock_value": "Valor do estoque (R$)",
@@ -19206,12 +19208,12 @@
         "maxRows": 6,
         "requiresBranchPermission": true
       },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tableFields": "top_products"
     },
     {
       "operationId": "get_caller_stats",

@@ -43,7 +43,7 @@ export const FIELD_KEY_LABELS: Record<string, string> = {
   goal_scope_branch: "Filial da meta",
   goal_scope_label: "Escopo da meta",
   goal_scope_hint: "Observação da meta",
-  comparable_goal: "Meta comparável",
+  comparable_goal: "Meta",
   valor_dia: "Valor dia",
   total_quantidade: "Total quantidade",
   total_valor: "Total valor",

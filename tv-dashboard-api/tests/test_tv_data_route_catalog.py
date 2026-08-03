@@ -39,16 +39,14 @@ def test_catalog_resolves_legacy_department_idd_operation_id():
     assert binding["operationId"] == canonical
 
 
-def test_catalog_sales_conversion_rate_has_filters_and_value_fields():
+def test_catalog_lmp_summary_exposes_meta_for_si_goal_picker():
+    """Hubs com enrich SI devem listar Meta no Campo dinâmico (não só via discovery)."""
     catalog = TvDataRouteCatalogService()
-    route = catalog.get_route("get_sales_conversion_rate")
+    route = catalog.get_route("get_lmps_dashboard_summary")
     assert route is not None
-    assert "sales_conversion_rate_pct" in (route.get("valueFields") or [])
-    schema = route.get("paramSchema") or {}
-    assert "periodDays" in schema
-    assert "branch" in schema
-    assert "customer_segment" in schema
-    assert route.get("paramStrategy") == "date_range"
+    assert "comparable_goal" in (route.get("valueFields") or [])
+    labels = route.get("valueFieldLabels") or {}
+    assert labels.get("comparable_goal") == "Meta"
 
 
 def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():
