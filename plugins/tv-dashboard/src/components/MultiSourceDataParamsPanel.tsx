@@ -23,6 +23,7 @@ type Props = {
  * Filtros unificados da multi-seleção de dados (fontes distintas).
  * Schema = união das rotas sem repetir chave; alteração sobrescreve params de
  * cada fonte que aceita o campo (Período sempre grava dateRangePreset).
+ * Camada `filterLayer="multi"`: Limpar filtro distinto de «Valores diferentes».
  */
 export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Props) {
   const { updateBlocksAtomically, blocks } = useComunicadoEditor();
@@ -95,7 +96,7 @@ export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Prop
         divergedKeys={shared.divergedKeys}
         branchScope={branchScope}
         idPrefix="td-multi-source-filter"
-        hydrateDefaultPreset={false}
+        filterLayer="multi"
         onChange={updateParams}
       />
     </DeckPropertySection>

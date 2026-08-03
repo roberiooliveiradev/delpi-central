@@ -50,6 +50,7 @@ export function PlaylistDataFiltersFields({
       branchScope={branchScope}
       idPrefix="td-playlist-filter"
       hydrateDefaultPreset={false}
+      filterLayer="aggregate"
       onChange={(updates) => {
         onChange(applyDataParamRawUpdates(filterValues, updates, schema));
       }}

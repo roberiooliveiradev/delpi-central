@@ -164,9 +164,12 @@ describe("DataParamFields date range UX contract", () => {
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
     expect(source).toMatch(/openEndedDateRange/);
     expect(source).toMatch(/hydrateDefaultPreset/);
+    expect(source).toMatch(/filterLayer/);
     expect(source).toMatch(/resolveFallbackPreset/);
     expect(source).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
     expect(source).toMatch(/filterPeriodRequired/);
+    expect(source).toMatch(/buildFilterSelectOptions/);
+    expect(source).toMatch(/DIVERGED_FILTER_SELECT_VALUE|dataParamFilterUi/);
   });
 
   it("camada agregada usa filterUnsetUsesSource / filterValuesDiffer", () => {
@@ -175,8 +178,9 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/filterUnsetUsesSource/);
     expect(source).toMatch(/filterValuesDiffer/);
     expect(source).toMatch(/divergedKeys/);
-    expect(source).toMatch(/emptyOptionLabel/);
+    expect(source).toMatch(/emptyChoiceLabel/);
     expect(source).toMatch(/aggregateLayer/);
+    expect(source).toMatch(/resolveFilterClearLabel/);
   });
 
   it("expõe Limpar filtro em selects, Período e inputs (dados/tela/programação)", () => {
@@ -185,7 +189,7 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/filterClear/);
     expect(source).toMatch(/ClearableControl/);
     expect(source).toMatch(/td-data-param-clearable/);
-    expect(source).toMatch(/options=\{\[\s*\{\s*value:\s*""\s*,\s*label:\s*periodEmptyLabel/);
-    expect(source).toMatch(/options=\{\[\{ value: ""/);
+    expect(source).toMatch(/buildFilterSelectOptions/);
+    expect(source).toMatch(/canClearFilterValue/);
   });
 });

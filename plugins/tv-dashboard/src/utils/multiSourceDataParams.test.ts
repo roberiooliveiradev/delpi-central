@@ -218,6 +218,53 @@ describe("multiSourceDataParams", () => {
       expect(params).not.toHaveProperty("end_date");
     }
   });
+
+  it("Limpar (value \"\") remove dateRangePreset divergente em todas as fontes", () => {
+    const datedRoutes: TvDataRouteCatalogItem[] = [
+      {
+        operationId: "get_ppm_a",
+        label: "PPM A",
+        category: "quality",
+        paramSchema: {
+          start_date: { type: "string", format: "date" },
+          end_date: { type: "string", format: "date" },
+        },
+      },
+      {
+        operationId: "get_ppm_b",
+        label: "PPM B",
+        category: "quality",
+        paramSchema: {
+          start_date: { type: "string", format: "date" },
+          end_date: { type: "string", format: "date" },
+        },
+      },
+    ];
+    const targets = [
+      source("a", "get_ppm_a", {
+        dateRangePreset: "this_month",
+        start_date: "2026-07-01",
+        end_date: "2026-07-15",
+      }),
+      source("b", "get_ppm_b", { dateRangePreset: "this_week" }),
+    ];
+    const shared = resolveSharedParamDisplayValues(targets, buildMultiSourceParamSchema(datedRoutes, targets));
+    expect(shared.divergedKeys.has("dateRangePreset")).toBe(true);
+
+    const patches = buildMultiSourceParamPatches(targets, datedRoutes, {
+      dateRangePreset: "",
+      start_date: "",
+      end_date: "",
+    });
+    expect(patches).toHaveLength(2);
+    for (const item of patches) {
+      const params = (item.patch as { dataBinding?: { params?: Record<string, unknown> } })
+        .dataBinding?.params;
+      expect(params).not.toHaveProperty("dateRangePreset");
+      expect(params).not.toHaveProperty("start_date");
+      expect(params).not.toHaveProperty("end_date");
+    }
+  });
 });
 
 // type guard smoke for ComunicadoBlock casting in tests

@@ -1,8 +1,14 @@
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import {
+  buildFilterSelectOptions,
+  canClearFilterValue,
+  normalizeFilterSelectChange,
+  resolveFilterSelectValue,
+} from "../utils/dataParamFilterUi";
 import { DeckField } from "./deck/DeckField";
-import { TdNativeSelectField } from "./tdFormFields";
 
 type Props = {
   id: string;
@@ -15,10 +21,13 @@ type Props = {
   /** Enum do paramSchema da rota (OpenAPI) — fallback quando não há branchScope. */
   schemaEnum?: Array<string | number | boolean> | null;
   /**
-   * Rótulo da opção vazia (Limpar filtro / Não definido / Valores diferentes).
-   * Sempre há opção de limpar no select.
+   * Rótulo da opção vazia (Limpar filtro / Não definido).
+   * Sempre há opção de limpar — nunca confundir com «Valores diferentes».
    */
   emptyOptionLabel?: string;
+  /** Multi-seleção: fontes discordam neste campo. */
+  diverged?: boolean;
+  divergedLabel?: string;
 };
 
 /** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. */
@@ -52,25 +61,40 @@ export function BranchField({
   placeholder,
   schemaEnum,
   emptyOptionLabel,
+  diverged = false,
+  divergedLabel,
 }: Props) {
   const branches = resolveBranchFieldOptions(scope, schemaEnum);
-  const clearLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
-  const placeholderOption = emptyOptionLabel ?? clearLabel;
+  const clearLabel = emptyOptionLabel ?? TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
+  const differLabel = divergedLabel ?? TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer;
 
   if (branches.length > 0) {
+    const options = buildFilterSelectOptions(
+      branches.map((branch) => ({
+        value: branch,
+        label: `Filial ${branch}`,
+      })),
+      {
+        clearLabel,
+        diverged,
+        divergedLabel: differLabel,
+      },
+    );
     return (
-      <TdNativeSelectField
-        id={id}
-        label={label}
-        hint={hint}
-        value={value}
-        onChange={onChange}
-        placeholderOption={placeholderOption}
-        options={branches.map((branch) => ({
-          value: branch,
-          label: `Filial ${branch}`,
-        }))}
-      />
+      <DeckField id={id} label={label} hint={hint}>
+        <FormSelectControl
+          id={id}
+          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+          ariaLabel={label}
+          value={resolveFilterSelectValue(value, diverged)}
+          onChange={(next) => {
+            const normalized = normalizeFilterSelectChange(next);
+            if (normalized === null) return;
+            onChange(normalized);
+          }}
+          options={options}
+        />
+      </DeckField>
     );
   }
 
@@ -82,9 +106,9 @@ export function BranchField({
           id={id}
           value={value}
           onChange={onChange}
-          placeholder={placeholder ?? "Ex.: 01"}
+          placeholder={placeholder ?? (diverged ? differLabel : "Ex.: 01")}
         />
-        {hasValue ? (
+        {canClearFilterValue({ diverged, hasStoredValue: hasValue }) ? (
           <button
             type="button"
             className="td-data-param-clearable__btn"

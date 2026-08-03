@@ -17,6 +17,16 @@ import {
   isDateRangePairKey,
   type DateRangePresetId,
 } from "../utils/dateRangePresets";
+import {
+  buildFilterSelectOptions,
+  canClearFilterValue,
+  normalizeFilterSelectChange,
+  resolveFilterClearLabel,
+  resolveFilterLayer,
+  resolveFilterSelectValue,
+  resolveFilterTextPlaceholder,
+  type DataParamFilterLayer,
+} from "../utils/dataParamFilterUi";
 import { BranchField } from "./BranchField";
 import { DeckField } from "./deck/DeckField";
 
@@ -139,8 +149,12 @@ type Props = {
    */
   openEndedDateRange?: boolean;
   /**
-   * Quando false, camada agregada (slide/programação/multi): rótulo vazio =
-   * «Não definido (usa a fonte)». Default true na fonte (rótulo «Limpar filtro»).
+   * Camada canônica dos filtros. `multi` = Limpar + sentinel «Valores diferentes».
+   * `aggregate` = Não definido (usa a fonte). `source` = Limpar filtro.
+   */
+  filterLayer?: DataParamFilterLayer;
+  /**
+   * @deprecated Preferir `filterLayer`. false ⇒ aggregate; true ⇒ source.
    */
   hydrateDefaultPreset?: boolean;
   /**
@@ -193,23 +207,25 @@ export function DataParamFields({
   idPrefix = "td-data-param",
   layout = "pane",
   openEndedDateRange = false,
+  filterLayer: filterLayerProp,
   hydrateDefaultPreset = true,
   onChange,
 }: Props) {
   const entries = Object.entries(schema);
   if (entries.length === 0) return null;
 
-  const aggregateLayer = !hydrateDefaultPreset;
-  const unsetLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource;
-  const clearLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
-  const divergedLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer;
+  const filterLayer = resolveFilterLayer(filterLayerProp, hydrateDefaultPreset);
+  const aggregateLayer = filterLayer === "aggregate";
+  const uiLabels = {
+    clear: TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear,
+    unset: TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource,
+    diverged: TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer,
+  };
+  const clearLabel = resolveFilterClearLabel(filterLayer, uiLabels);
 
-  /** Opção vazia em selects — limpar / não definido / valores diferentes. */
-  function emptyChoiceLabel(key: string, inherited: boolean): string {
-    if (divergedKeys.has(key)) return divergedLabel;
-    if (aggregateLayer) return unsetLabel;
-    if (inherited) return "Herdado do slide";
-    return clearLabel;
+  /** Opção vazia em selects — limpar / não definido (nunca «Valores diferentes»). */
+  function emptyChoiceLabel(inherited: boolean): string {
+    return resolveFilterClearLabel(filterLayer, uiLabels, { inherited });
   }
 
   function emptyTextPlaceholder(
@@ -217,11 +233,21 @@ export function DataParamFields({
     inherited: boolean,
     field: DataParamSchemaField,
   ): string {
-    if (divergedKeys.has(key)) return divergedLabel;
-    if (aggregateLayer) return unsetLabel;
-    if (inherited) return "Herdado do slide";
-    if (field.default !== undefined) return `Padrão: ${field.default}`;
-    return clearLabel;
+    return resolveFilterTextPlaceholder(
+      {
+        diverged: divergedKeys.has(key),
+        aggregateLayer,
+        inherited,
+        fieldDefault: field.default,
+      },
+      uiLabels,
+    );
+  }
+
+  function commitSelectChange(key: string, raw: string, patch: (value: string) => void) {
+    const next = normalizeFilterSelectChange(raw);
+    if (next === null) return;
+    patch(next);
   }
 
   const compact = layout === "ribbon";
@@ -236,13 +262,14 @@ export function DataParamFields({
   const preset = (presetRaw || "") as DateRangePresetId | "";
   const isCustom = !activeDatePair || !preset || preset === "custom";
   const showLastN = Boolean(activeDatePair) && preset === "last_n_days";
-  // Sem preset gravado → opção «Limpar» / «Não definido» (rotas fechadas exigem escolha explícita).
-  const periodSelectValue = presetRaw;
-  const periodEmptyLabel = divergedKeys.has(DATE_RANGE_PRESET_PARAM)
-    ? divergedLabel
-    : aggregateLayer
-      ? unsetLabel
-      : clearLabel;
+  const periodDiverged = divergedKeys.has(DATE_RANGE_PRESET_PARAM);
+  const periodSelectValue = resolveFilterSelectValue(presetRaw, periodDiverged);
+  const periodEmptyLabel = emptyChoiceLabel(false);
+  const periodOptions = buildFilterSelectOptions(DATE_RANGE_PRESET_OPTIONS, {
+    clearLabel: periodEmptyLabel,
+    diverged: periodDiverged,
+    divergedLabel: uiLabels.diverged,
+  });
 
   function patchParam(key: string, value: string) {
     const updates: Record<string, string> = { [key]: value };
@@ -284,7 +311,7 @@ export function DataParamFields({
             hint={
               openEndedDateRange
                 ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePresetOpenEnded
-                : !periodSelectValue
+                : !presetRaw && !periodDiverged
                   ? TV_DASHBOARD_HELP_TOOLTIPS.data.filterPeriodRequired
                   : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset
             }
@@ -295,11 +322,10 @@ export function DataParamFields({
               portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
               ariaLabel="Período relativo"
               value={periodSelectValue}
-              onChange={patchDateRangePreset}
-              options={[
-                { value: "", label: periodEmptyLabel },
-                ...DATE_RANGE_PRESET_OPTIONS,
-              ]}
+              onChange={(value: string) =>
+                commitSelectChange(DATE_RANGE_PRESET_PARAM, value, patchDateRangePreset)
+              }
+              options={periodOptions}
             />
           </DeckField>,
           showLastN ? (
@@ -311,11 +337,13 @@ export function DataParamFields({
             >
               <ClearableControl
                 clearLabel={clearLabel}
-                canClear={
-                  values?.[PERIOD_DAYS_PARAM] !== undefined &&
-                  values?.[PERIOD_DAYS_PARAM] !== null &&
-                  String(values[PERIOD_DAYS_PARAM]) !== ""
-                }
+                canClear={canClearFilterValue({
+                  diverged: divergedKeys.has(PERIOD_DAYS_PARAM),
+                  hasStoredValue:
+                    values?.[PERIOD_DAYS_PARAM] !== undefined &&
+                    values?.[PERIOD_DAYS_PARAM] !== null &&
+                    String(values[PERIOD_DAYS_PARAM]) !== "",
+                })}
                 onClear={() => onChange({ [PERIOD_DAYS_PARAM]: "" })}
               >
                 <NativeTextControl
@@ -357,7 +385,8 @@ export function DataParamFields({
     // Nunca aplicar default OpenAPI na exibição — limpar deve mostrar vazio.
     const displayValue = displayParamValue(current, field, false);
     const dateInputsLocked = isRangeDate && !isCustom;
-    const emptyLabel = emptyChoiceLabel(key, inherited);
+    const emptyLabel = emptyChoiceLabel(inherited);
+    const fieldDiverged = divergedKeys.has(key);
     const hasStoredValue =
       current !== undefined && current !== null && String(current).trim() !== "";
 
@@ -371,14 +400,21 @@ export function DataParamFields({
           scope={branchScope}
           schemaEnum={field.enum}
           value={displayValue}
+          diverged={fieldDiverged}
           onChange={(value) => patchParam(key, value)}
           placeholder={emptyTextPlaceholder(key, inherited, field)}
           emptyOptionLabel={emptyLabel}
+          divergedLabel={uiLabels.diverged}
         />
       );
     }
 
     if (selectOptions) {
+      const options = buildFilterSelectOptions(selectOptions, {
+        clearLabel: emptyLabel,
+        diverged: fieldDiverged,
+        divergedLabel: uiLabels.diverged,
+      });
       return (
         <DeckField key={key} id={fieldId} label={label} hint={hint}>
           <FormSelectControl
@@ -386,9 +422,11 @@ export function DataParamFields({
             className={selectClass}
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             ariaLabel={labelBase}
-            value={displayValue}
-            onChange={(value: string) => patchParam(key, value)}
-            options={[{ value: "", label: emptyLabel }, ...selectOptions]}
+            value={resolveFilterSelectValue(displayValue, fieldDiverged)}
+            onChange={(value: string) =>
+              commitSelectChange(key, value, (next) => patchParam(key, next))
+            }
+            options={options}
           />
         </DeckField>
       );
@@ -411,7 +449,11 @@ export function DataParamFields({
       <DeckField key={key} id={fieldId} label={label} hint={hint}>
         <ClearableControl
           clearLabel={clearLabel}
-          canClear={hasStoredValue && !dateInputsLocked}
+          canClear={canClearFilterValue({
+            diverged: fieldDiverged,
+            hasStoredValue,
+            locked: dateInputsLocked,
+          })}
           onClear={() => patchParam(key, "")}
         >
           <NativeTextControl

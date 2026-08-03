@@ -64,6 +64,7 @@ export function SlideDataFiltersPanel({
         branchScope={branchScope}
         idPrefix="td-slide-filter"
         hydrateDefaultPreset={false}
+        filterLayer="aggregate"
         onChange={updateFilters}
       />
     </DeckPropertySection>

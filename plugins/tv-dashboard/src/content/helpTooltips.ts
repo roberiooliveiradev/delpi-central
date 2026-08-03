@@ -331,7 +331,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
     multiSelectFilters:
-      "Campos em comum das fontes selecionadas (sem repetir). Vazio = «Não definido (usa a fonte)»; se as fontes divergem = «Valores diferentes».",
+      "Campos em comum das fontes selecionadas (sem repetir). «Valores diferentes» = status; use Limpar filtro para zerar em todas, ou escolha um valor para unificar.",
     multiSelectFiltersSummary:
       "{count} fontes na seleção — alterar um filtro aplica nas fontes que aceitam esse parâmetro.",
     multiSelectNoSources:
