@@ -39,17 +39,39 @@ describe("buildRouteDefaultParams", () => {
     expect(params.dateRangePreset).toBeUndefined();
   });
 
-  it("preenche department_id obrigatório do IDD", () => {
+  it("não inventa department_id (usuário escolhe no filtro)", () => {
     const params = buildRouteDefaultParams({
       operationId: "get_dashboard_department_idd",
       label: "IDD",
       category: "system",
       path: "/dashboard/department-idd",
       paramSchema: {
-        department_id: { type: "string", optional: false },
+        department_id: {
+          type: "string",
+          optional: false,
+          enum: ["commercial", "quality"],
+          default: "commercial",
+        },
       },
     });
-    expect(params.department_id).toBe("commercial");
+    expect(params.department_id).toBeUndefined();
+  });
+
+  it("select opcional com default de catálogo não é pré-preenchido", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "list_lmps",
+      label: "LMPs",
+      category: "quality",
+      paramSchema: {
+        status: {
+          type: "string",
+          optional: true,
+          enum: ["Todos", "Pontual"],
+          default: "Todos",
+        },
+      },
+    });
+    expect(params.status).toBeUndefined();
   });
 
   it("SI com competence + datas não grava dateRangePreset no bloco (herança)", () => {

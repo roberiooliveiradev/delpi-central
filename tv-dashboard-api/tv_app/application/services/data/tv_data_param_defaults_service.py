@@ -30,6 +30,23 @@ _BRANCH_DEFAULT_BY_PATH_PREFIX: tuple[tuple[str, str], ...] = (
 # Não mesclar cegamente: forçaria recalcular o intervalo e apagaria data parcial do usuário.
 _CATALOG_PERIOD_KEYS = frozenset({PERIOD_DAYS_KEY, DATE_RANGE_PRESET_KEY})
 
+# Select de identidade/filtro: nunca inventar valor (ex.: department_id → commercial).
+_NO_SCHEMA_DEFAULT_KEYS = frozenset({"department_id"})
+
+
+def should_apply_schema_default(key: str, spec: Mapping[str, Any]) -> bool:
+    """Defaults de catálogo/OpenAPI só quando não sabotam «Limpar filtro» em selects."""
+    default = spec.get("default")
+    if default is None or default == "":
+        return False
+    if key in _NO_SCHEMA_DEFAULT_KEYS or key in _CATALOG_PERIOD_KEYS:
+        return False
+    enum = spec.get("enum")
+    # Select opcional: limpar deve permanecer vazio (não reverter para Todos/comercial/…).
+    if enum and bool(spec.get("optional", True)):
+        return False
+    return True
+
 
 def _branch_default_for_route(route: Mapping[str, Any]) -> str:
     path = str(route.get("path") or "").strip()
@@ -88,9 +105,8 @@ def apply_catalog_param_defaults(
             continue
         if _has_value(merged, key):
             continue
-        default = spec.get("default")
-        if default is not None and default != "":
-            merged[str(key)] = default
+        if should_apply_schema_default(key, spec):
+            merged[str(key)] = spec.get("default")
             continue
         if not spec.get("optional", True) and key in CONVENIENT_REQUIRED_DEFAULTS:
             convenient = _convenient_default(key, route_map)

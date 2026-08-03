@@ -556,6 +556,23 @@ def _clear_period_days_defaults(route: dict[str, Any]) -> None:
             route["paramSchema"] = schema
 
 
+def _clear_identity_filter_defaults(route: dict[str, Any]) -> None:
+    """department_id e afins: usuário escolhe — nunca default commercial no catálogo TV."""
+    schema = route.get("paramSchema")
+    if not isinstance(schema, dict):
+        return
+    changed = False
+    next_schema = dict(schema)
+    for key in ("department_id",):
+        entry = next_schema.get(key)
+        if isinstance(entry, dict) and "default" in entry:
+            cleaned = {k: v for k, v in entry.items() if k != "default"}
+            next_schema[key] = cleaned
+            changed = True
+    if changed:
+        route["paramSchema"] = next_schema
+
+
 
 def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[str, Any]:
     if not overlay:
@@ -575,6 +592,7 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
             merged[key] = value
     # Overlay também não grava periodDays como default (histórico completo sem filtro).
     _clear_period_days_defaults(merged)
+    _clear_identity_filter_defaults(merged)
     return merged
 
 
@@ -652,6 +670,7 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
             patched_existing[key] = entry
         merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
     _clear_period_days_defaults(merged)
+    _clear_identity_filter_defaults(merged)
     return prune_legacy_period_aliases_from_schema(merged)
 
 

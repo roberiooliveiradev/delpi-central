@@ -56,6 +56,58 @@ def test_apply_defaults_fills_required_branch_and_schema_default():
     assert merged["date_start"] == "2026-01-01"
 
 
+def test_apply_defaults_never_reinjects_department_id():
+    """Limpar departamento no IDD não volta para commercial (overlay/schema)."""
+    route = {
+        "paramSchema": {
+            "department_id": {
+                "type": "string",
+                "optional": True,
+                "enum": ["commercial", "quality"],
+                "default": "commercial",
+            }
+        }
+    }
+    assert "department_id" not in apply_catalog_param_defaults({}, route)
+    assert "department_id" not in apply_catalog_param_defaults({"department_id": ""}, route)
+
+
+def test_apply_defaults_skips_optional_enum_select_defaults():
+    route = {
+        "paramSchema": {
+            "status": {
+                "type": "string",
+                "optional": True,
+                "enum": ["Todos", "Pontual"],
+                "default": "Todos",
+            },
+            "granularity": {
+                "type": "string",
+                "optional": False,
+                "enum": ["day", "week"],
+                "default": "day",
+            },
+        }
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert "status" not in merged
+    assert merged["granularity"] == "day"
+
+
+def test_validate_cleared_department_stays_empty():
+    schema = {
+        "department_id": {
+            "type": "string",
+            "optional": True,
+            "enum": ["commercial", "quality"],
+            "default": "commercial",
+            "label": "Departamento",
+        }
+    }
+    assert validate_params_against_schema({}, schema) == {}
+    assert validate_params_against_schema({"department_id": ""}, schema) == {}
+
+
 def test_gateway_applies_defaults_and_drops_unknown_dates_for_branch_only_route():
     query = _build_query_params(
         {

@@ -508,7 +508,6 @@
       ],
       "paramSchema": {
         "department_id": {
-          "default": "commercial",
           "optional": true
         }
       },
@@ -529,7 +528,7 @@
       ],
       "paramSchema": {
         "department_id": {
-          "default": "commercial"
+          "optional": false
         }
       },
       "tvConstraints": {

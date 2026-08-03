@@ -1097,8 +1097,7 @@
             "quality",
             "supplies"
           ],
-          "description": "Identificador do departamento no painel IDD.",
-          "default": "commercial"
+          "description": "Identificador do departamento no painel IDD."
         },
         "competence": {
           "type": "string",
@@ -1173,8 +1172,7 @@
             "quality",
             "supplies"
           ],
-          "description": "Identificador do departamento no painel IDD.",
-          "default": "commercial"
+          "description": "Identificador do departamento no painel IDD."
         },
         "competence": {
           "type": "string",

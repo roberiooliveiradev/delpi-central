@@ -4,6 +4,7 @@ from typing import Any, Mapping
 
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
+    should_apply_schema_default,
 )
 from tv_app.application.services.data.tv_data_presentation_modes_service import (
     validate_block_type_for_binding,
@@ -174,7 +175,7 @@ def validate_params_against_schema(
         raw_value = seeded.get(key) if key in seeded else None
         empty = raw_value is None or raw_value == ""
         if empty:
-            if spec.get("default") is not None:
+            if should_apply_schema_default(key, spec):
                 normalized[key] = spec.get("default")
             elif not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
@@ -185,7 +186,7 @@ def validate_params_against_schema(
             continue
         value = _coerce_param_value(str(spec.get("type") or "string"), raw_value)
         if value is None or value == "":
-            if spec.get("default") is not None:
+            if should_apply_schema_default(key, spec):
                 normalized[key] = spec.get("default")
             elif not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
