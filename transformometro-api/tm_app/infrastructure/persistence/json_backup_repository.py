@@ -928,6 +928,97 @@ class JsonBackupRepository(PluginBaseRepository):
         )
         return {str(row["id"]) for row in rows}
 
+    def fetch_processo_ids_by_codigo(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT codigo_processo, processo_id::text AS id
+            FROM transformometro.processos
+            WHERE codigo_processo IS NOT NULL
+            """
+        )
+        return {str(r["codigo_processo"]): str(r["id"]) for r in rows}
+
+    def fetch_filial_ids_by_codigo(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT codigo_filial, filial_id::text AS id
+            FROM transformometro.filiais
+            WHERE codigo_filial IS NOT NULL
+            """
+        )
+        return {str(r["codigo_filial"]): str(r["id"]) for r in rows}
+
+    def fetch_setor_ids_by_codigo(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT codigo_setor, setor_id::text AS id
+            FROM transformometro.setores
+            WHERE codigo_setor IS NOT NULL
+            """
+        )
+        return {str(r["codigo_setor"]): str(r["id"]) for r in rows}
+
+    def fetch_instancia_ids_by_scope_key(self) -> dict[str, str]:
+        """Chave estável: processo_id + filial (ou ``*`` se todas_filiais_ativas)."""
+        rows = self.fetch_all(
+            """
+            SELECT
+                instancia_id::text AS id,
+                processo_id::text AS processo_id,
+                filial_id::text AS filial_id,
+                todas_filiais_ativas
+            FROM transformometro.processo_instancias
+            """
+        )
+        out: dict[str, str] = {}
+        for row in rows:
+            key = self.instancia_scope_key(
+                str(row["processo_id"]),
+                row.get("filial_id"),
+                bool(row.get("todas_filiais_ativas")),
+            )
+            out[key] = str(row["id"])
+        return out
+
+    @staticmethod
+    def instancia_scope_key(
+        processo_id: str,
+        filial_id: str | None,
+        todas_filiais_ativas: bool,
+    ) -> str:
+        if todas_filiais_ativas:
+            return f"{processo_id}|*"
+        return f"{processo_id}|{filial_id or ''}"
+
+    def fetch_revisao_ids_by_chave(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT chave_unica_processo_revisao AS chave, revisao_id::text AS id
+            FROM transformometro.revisoes
+            WHERE chave_unica_processo_revisao IS NOT NULL
+            """
+        )
+        return {str(r["chave"]): str(r["id"]) for r in rows if r.get("chave")}
+
+    def fetch_recurso_ids_by_codigo(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT codigo_recurso, recurso_compartilhado_id::text AS id
+            FROM transformometro.recursos_compartilhados
+            WHERE codigo_recurso IS NOT NULL
+            """
+        )
+        return {str(r["codigo_recurso"]): str(r["id"]) for r in rows}
+
+    def fetch_medicao_ids_by_revisao(self) -> dict[str, str]:
+        rows = self.fetch_all(
+            """
+            SELECT revisao_id::text AS revisao_id, medicao_id::text AS id
+            FROM transformometro.medicoes
+            """
+        )
+        return {str(r["revisao_id"]): str(r["id"]) for r in rows}
+
     def truncate_cadastral_tables(self) -> None:
         self.execute(
             """

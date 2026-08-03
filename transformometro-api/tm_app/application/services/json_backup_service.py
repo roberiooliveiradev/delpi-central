@@ -783,6 +783,7 @@ class JsonBackupService:
                 self._repo.truncate_cadastral_tables()
                 self._persist_bundle_rows(prepared, writer="insert")
             else:
+                self._align_merge_natural_keys(prepared)
                 self._persist_bundle_rows(prepared, writer="upsert")
 
             sf_rows = [
@@ -815,6 +816,158 @@ class JsonBackupService:
             "legacy_transformed": preview.get("legacy_transformed"),
         }
 
+    def _align_merge_natural_keys(self, prepared: dict[str, Any]) -> None:
+        """Alinha UUIDs do pacote aos IDs já existentes pelas chaves naturais (merge).
+
+        Evita UniqueViolation em ``codigo_processo``, ``codigo_filial``, etc. quando o
+        pacote traz o mesmo cadastro com outro UUID.
+        """
+        filial_map = self._remap_rows_by_natural_key(
+            prepared.get("filiais") or [],
+            pk="filial_id",
+            natural_key="codigo_filial",
+            existing=self._repo.fetch_filial_ids_by_codigo(),
+        )
+        setor_map = self._remap_rows_by_natural_key(
+            prepared.get("setores") or [],
+            pk="setor_id",
+            natural_key="codigo_setor",
+            existing=self._repo.fetch_setor_ids_by_codigo(),
+        )
+        processo_map = self._remap_rows_by_natural_key(
+            prepared.get("processos") or [],
+            pk="processo_id",
+            natural_key="codigo_processo",
+            existing=self._repo.fetch_processo_ids_by_codigo(),
+        )
+        # Não reaplicar o mapa no bundle da própria entidade (evita troca cruzada de PKs).
+        self._apply_id_map(prepared, "filial_id", filial_map, skip_bundles={"filiais"})
+        self._apply_id_map(prepared, "setor_id", setor_map, skip_bundles={"setores"})
+        self._apply_id_map(
+            prepared, "processo_id", processo_map, skip_bundles={"processos"}
+        )
+
+        existing_inst = self._repo.fetch_instancia_ids_by_scope_key()
+        instancia_map: dict[str, str] = {}
+        for row in prepared.get("processo_instancias") or []:
+            if not isinstance(row, dict) or not row.get("instancia_id"):
+                continue
+            incoming = str(row["instancia_id"])
+            key = JsonBackupRepository.instancia_scope_key(
+                str(row.get("processo_id") or ""),
+                str(row["filial_id"]) if row.get("filial_id") else None,
+                bool(row.get("todas_filiais_ativas")),
+            )
+            existing_id = existing_inst.get(key)
+            if existing_id and existing_id != incoming:
+                instancia_map[incoming] = existing_id
+                row["instancia_id"] = existing_id
+        self._apply_id_map(
+            prepared,
+            "instancia_id",
+            instancia_map,
+            skip_bundles={"processo_instancias"},
+        )
+
+        # Recalcula chave única após remap de instância e alinha revisão por chave.
+        for row in prepared.get("revisoes") or []:
+            if not isinstance(row, dict):
+                continue
+            instancia_id = row.get("instancia_id")
+            versao = row.get("versao_revisao")
+            if instancia_id and versao:
+                row["chave_unica_processo_revisao"] = f"{instancia_id}|{versao}"
+            elif row.get("processo_id") and versao and not row.get("chave_unica_processo_revisao"):
+                row["chave_unica_processo_revisao"] = f"{row['processo_id']}|{versao}"
+
+        existing_rev = self._repo.fetch_revisao_ids_by_chave()
+        revisao_map: dict[str, str] = {}
+        for row in prepared.get("revisoes") or []:
+            if not isinstance(row, dict) or not row.get("revisao_id"):
+                continue
+            incoming = str(row["revisao_id"])
+            chave = row.get("chave_unica_processo_revisao")
+            if not chave:
+                continue
+            existing_id = existing_rev.get(str(chave))
+            if existing_id and existing_id != incoming:
+                revisao_map[incoming] = existing_id
+                row["revisao_id"] = existing_id
+        self._apply_id_map(
+            prepared, "revisao_id", revisao_map, skip_bundles={"revisoes"}
+        )
+        self._apply_id_map(prepared, "revisao_referencia_id", revisao_map)
+
+        recurso_map = self._remap_rows_by_natural_key(
+            prepared.get("recursos_compartilhados") or [],
+            pk="recurso_compartilhado_id",
+            natural_key="codigo_recurso",
+            existing=self._repo.fetch_recurso_ids_by_codigo(),
+        )
+        self._apply_id_map(
+            prepared,
+            "recurso_compartilhado_id",
+            recurso_map,
+            skip_bundles={"recursos_compartilhados"},
+        )
+
+        existing_med = self._repo.fetch_medicao_ids_by_revisao()
+        for row in prepared.get("medicoes") or []:
+            if not isinstance(row, dict) or not row.get("medicao_id"):
+                continue
+            rid = row.get("revisao_id")
+            if not rid:
+                continue
+            existing_id = existing_med.get(str(rid))
+            if existing_id and existing_id != str(row["medicao_id"]):
+                row["medicao_id"] = existing_id
+
+    @staticmethod
+    def _remap_rows_by_natural_key(
+        rows: list[Any],
+        *,
+        pk: str,
+        natural_key: str,
+        existing: dict[str, str],
+    ) -> dict[str, str]:
+        id_map: dict[str, str] = {}
+        for row in rows:
+            if not isinstance(row, dict) or not row.get(pk):
+                continue
+            natural = row.get(natural_key)
+            if not natural:
+                continue
+            incoming = str(row[pk])
+            existing_id = existing.get(str(natural))
+            if existing_id and existing_id != incoming:
+                id_map[incoming] = existing_id
+                row[pk] = existing_id
+        return id_map
+
+    @staticmethod
+    def _apply_id_map(
+        prepared: dict[str, Any],
+        field: str,
+        id_map: dict[str, str],
+        *,
+        skip_bundles: set[str] | None = None,
+    ) -> None:
+        if not id_map:
+            return
+        skip = skip_bundles or set()
+        for key, rows in prepared.items():
+            if key in skip or not isinstance(rows, list):
+                continue
+            for row in rows:
+                if not isinstance(row, dict) or field not in row:
+                    continue
+                current = row.get(field)
+                if current is None:
+                    continue
+                mapped = id_map.get(str(current))
+                if mapped:
+                    row[field] = mapped
+
     def _persist_bundle_rows(
         self,
         prepared: dict[str, Any],
@@ -841,7 +994,11 @@ class JsonBackupService:
         *,
         write,
     ) -> None:
-        """Duas passagens: evita FK ``revisao_referencia_id`` por ordem do JSON."""
+        """Duas passagens: evita FK ``revisao_referencia_id`` por ordem do JSON.
+
+        1ª passagem grava todas as revisões sem referência (``write`` = insert ou upsert).
+        2ª passagem aplica a FK com ``upsert`` — insert puro na 2ª vez quebraria a PK.
+        """
         normalized = [self._normalize_row(spec, row) for row in rows]
         known_ids = {
             str(row["revisao_id"])
@@ -859,7 +1016,7 @@ class JsonBackupService:
             if str(ref) not in known_ids:
                 # Pai ausente do pacote: mantém NULL (já gravado na 1ª passagem).
                 continue
-            write(spec, row, auto_commit=False)
+            self._repo.upsert_row(spec, row, auto_commit=False)
 
     def _validate_modern_requirements(self, payload: dict[str, Any]) -> list[str]:
         errors: list[str] = []
@@ -1106,6 +1263,19 @@ class JsonBackupService:
         return out
 
     def _sync_processo_instancias_from_payload(self, payload: dict[str, Any]) -> None:
+        """Legacy: cria instâncias a partir do payload quando o pacote não as trouxe.
+
+        Pacotes modern já persistem ``processo_instancias`` via ENTITY_SPECS; nestes
+        casos o ``create`` aqui só revalida setor×filial e quebra o merge.
+        """
+        modern_rows = [
+            row
+            for row in (payload.get("processo_instancias") or [])
+            if isinstance(row, dict) and row.get("instancia_id")
+        ]
+        if modern_rows:
+            return
+
         inst_repo = ProcessoInstanciaRepository(connection=self._repo._connection)
         links = [
             row

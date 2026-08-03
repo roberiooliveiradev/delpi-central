@@ -419,12 +419,64 @@ def test_ensure_bundle_includes_revisao_referencia_mesmo_deletada():
     assert child_id in ids
 
 
+def test_align_merge_natural_keys_remaps_processo_by_codigo():
+    repo = MagicMock()
+    repo.fetch_filial_ids_by_codigo.return_value = {}
+    repo.fetch_setor_ids_by_codigo.return_value = {}
+    repo.fetch_processo_ids_by_codigo.return_value = {
+        "PROC-0002": "existing-processo-id",
+    }
+    repo.fetch_instancia_ids_by_scope_key.return_value = {}
+    repo.fetch_revisao_ids_by_chave.return_value = {}
+    repo.fetch_recurso_ids_by_codigo.return_value = {}
+    repo.fetch_medicao_ids_by_revisao.return_value = {}
+    svc = JsonBackupService(repo)
+    prepared = {
+        "filiais": [],
+        "setores": [],
+        "processos": [
+            {
+                "processo_id": "incoming-processo-id",
+                "codigo_processo": "PROC-0002",
+                "nome_processo": "X",
+            }
+        ],
+        "processo_instancias": [
+            {
+                "instancia_id": "i1",
+                "processo_id": "incoming-processo-id",
+                "filial_id": "f1",
+                "todas_filiais_ativas": False,
+            }
+        ],
+        "revisoes": [
+            {
+                "revisao_id": "r1",
+                "processo_id": "incoming-processo-id",
+                "instancia_id": "i1",
+                "versao_revisao": "1.0.0",
+            }
+        ],
+    }
+    svc._align_merge_natural_keys(prepared)
+    assert prepared["processos"][0]["processo_id"] == "existing-processo-id"
+    assert prepared["processo_instancias"][0]["processo_id"] == "existing-processo-id"
+    assert prepared["revisoes"][0]["processo_id"] == "existing-processo-id"
+    assert prepared["revisoes"][0]["chave_unica_processo_revisao"] == "i1|1.0.0"
+
+
 def test_persist_revisoes_two_pass_clears_ref_then_restores():
     svc = _mock_service()
     written: list[tuple[str, str | None]] = []
+    upserted: list[tuple[str, str | None]] = []
 
     def write(spec, row, *, auto_commit=False):
         written.append((str(row["revisao_id"]), row.get("revisao_referencia_id")))
+
+    def upsert(spec, row, *, auto_commit=False):
+        upserted.append((str(row["revisao_id"]), row.get("revisao_referencia_id")))
+
+    svc._repo.upsert_row = upsert
 
     parent = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
     child = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
@@ -447,10 +499,8 @@ def test_persist_revisoes_two_pass_clears_ref_then_restores():
     spec = next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes")
     svc._persist_revisoes(spec, rows, write=write)
 
-    assert written[0] == (child, None)
-    assert written[1] == (parent, None)
-    assert written[2] == (child, parent)
-    assert len(written) == 3
+    assert written == [(child, None), (parent, None)]
+    assert upserted == [(child, parent)]
 
 
 def test_preview_merge_counts_insert_and_update():
