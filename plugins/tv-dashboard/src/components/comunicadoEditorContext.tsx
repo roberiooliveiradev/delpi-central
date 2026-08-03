@@ -73,6 +73,8 @@ type ProviderProps = {
   /** Dimensão canônica do slide (720p / 1080p / 4k / portrait). */
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
+  /** Filtros globais da programação (live) — disparam refresh do preview. */
+  playlistDefaults?: Record<string, unknown> | null;
   value: Record<string, unknown>;
   /** Bump a cada mudança remota (WS slide_draft / presentation_updated) — força aceitar `value`. */
   remoteRevision?: number;
@@ -162,6 +164,7 @@ export function ComunicadoEditorProvider({
   globalRefreshSec = 300,
   viewportProfile = "1080p",
   masterConfig,
+  playlistDefaults = null,
   value,
   remoteRevision = 0,
   remoteSelections = [],
@@ -217,6 +220,7 @@ export function ComunicadoEditorProvider({
   } = useComunicadoDataPreview({
     playlistId,
     config,
+    playlistDefaults,
   });
 
   const { scheduleInputFilterRefresh, scheduleInputFilterRefreshById } = useInputFilterDataRefresh({

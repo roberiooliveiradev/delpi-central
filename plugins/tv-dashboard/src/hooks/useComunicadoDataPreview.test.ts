@@ -109,6 +109,65 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.isDataPreviewStale).toBe(false);
   });
 
+  it("mudança de dataFilters ou playlistDefaults dispara refetch com defaults no body", async () => {
+    const { result, rerender } = renderHook(
+      ({
+        config,
+        playlistDefaults,
+      }: {
+        config: ComunicadoConfig;
+        playlistDefaults: Record<string, unknown> | null;
+      }) =>
+        useComunicadoDataPreview({
+          playlistId: "pl-1",
+          config,
+          playlistDefaults,
+        }),
+      {
+        initialProps: {
+          config: configWithDataBlock,
+          playlistDefaults: { branch: "01" } as Record<string, unknown> | null,
+        },
+      },
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(mockedPreview.mock.calls[0]?.[0]?.playlistDefaults).toEqual({ branch: "01" });
+    mockedPreview.mockClear();
+    mockedPreview.mockResolvedValue({
+      block: { resolved: { kpi: { value: 99, label: "OEE" } } },
+    } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+
+    rerender({
+      config: { ...configWithDataBlock, dataFilters: { periodDays: 7 } },
+      playlistDefaults: { branch: "01" },
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(99);
+
+    mockedPreview.mockClear();
+    mockedPreview.mockResolvedValue({
+      block: { resolved: { kpi: { value: 11, label: "OEE" } } },
+    } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+
+    rerender({
+      config: { ...configWithDataBlock, dataFilters: { periodDays: 7 } },
+      playlistDefaults: { branch: "02" },
+    });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(mockedPreview.mock.calls[0]?.[0]?.playlistDefaults).toEqual({ branch: "02" });
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(11);
+  });
+
   it("refreshDataPreview busca de novo com forceRefresh", async () => {
     const { result, rerender } = renderHook(
       ({ config }: { config: ComunicadoConfig }) =>

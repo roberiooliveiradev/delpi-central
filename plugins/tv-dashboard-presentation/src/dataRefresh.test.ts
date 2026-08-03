@@ -245,7 +245,7 @@ describe("resolvePreviewRefreshSourceIds", () => {
     ).toEqual(["src-a"]);
   });
 
-  it("dataFilters (ribbon) mudou → fontes afetadas pelo input", () => {
+  it("dataFilters do slide mudou → todas as fontes fetchable", () => {
     const base: ComunicadoConfig = {
       blocks: [
         {
@@ -266,9 +266,33 @@ describe("resolvePreviewRefreshSourceIds", () => {
         previousFingerprint: prev,
         nextFingerprint: next,
         allFetchableIds: all,
+        // Mesmo com inputs no palco, filtros do slide afetam todas as fontes.
         inputAffectedSourceIds: ["src-a"],
       }),
-    ).toEqual(["src-a"]);
+    ).toEqual(all);
+  });
+
+  it("playlistDefaults mudou → todas as fontes fetchable", () => {
+    const base: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(base, { playlistDefaults: { branch: "01" } });
+    const next = buildDataPreviewFingerprint(base, { playlistDefaults: { branch: "02" } });
+    expect(
+      resolvePreviewRefreshSourceIds({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: all,
+        inputAffectedSourceIds: [],
+      }),
+    ).toEqual(all);
   });
 
   it("dataTransform da fonte entra no fingerprint", () => {

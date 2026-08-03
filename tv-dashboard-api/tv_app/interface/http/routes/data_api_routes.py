@@ -44,6 +44,8 @@ class PreviewDataBlockBody(BaseModel):
     block: dict[str, Any]
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
     playlistId: str | None = None
+    # Estado live do editor (dataDefaults) — prevalece sobre o valor persistido.
+    playlistDefaults: dict[str, Any] | None = None
     forceRefresh: bool = False
     targetStepName: str | None = None
     previewOptions: PreviewOptionsBody = Field(default_factory=PreviewOptionsBody)
@@ -429,7 +431,9 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
 
     # Sentinels do editor de template (ex.: "template-library") não são UUID —
     # preview segue sem dataDefaults da programação (mesmo efeito de omitir playlistId).
+    # Body.playlistDefaults (estado live do editor) prevalece sobre o valor só no banco.
     playlist_defaults: dict[str, Any] | None = None
+    playlist_uuid: UUID | None = None
     if body.playlistId:
         try:
             playlist_uuid = UUID(body.playlistId)
@@ -440,9 +444,14 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
             if is_access_error(guarded):
                 return guarded
             _, access = guarded
-            playlist = access.playlist or {}
-            defaults = playlist.get("dataDefaults")
-            playlist_defaults = defaults if isinstance(defaults, dict) else {}
+            if isinstance(body.playlistDefaults, dict):
+                playlist_defaults = body.playlistDefaults
+            else:
+                playlist = access.playlist or {}
+                defaults = playlist.get("dataDefaults")
+                playlist_defaults = defaults if isinstance(defaults, dict) else {}
+    elif isinstance(body.playlistDefaults, dict):
+        playlist_defaults = body.playlistDefaults
 
     auth = request.headers.get("Authorization")
     try:

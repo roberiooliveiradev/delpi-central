@@ -710,11 +710,19 @@ export function PlaylistEditorPage({
   async function saveSettings(field: string, value: string | number | Record<string, unknown>) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
+    const previousPlaylist = playlist;
+    // dataDefaults: otimista para fingerprint/preview atualizarem sem esperar o PATCH.
+    if (field === "dataDefaults" && value && typeof value === "object") {
+      setPlaylist({ ...playlist, dataDefaults: value as Record<string, unknown> });
+    }
     try {
       const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
-      setPlaylist({ ...updated, slides: playlist.slides });
+      setPlaylist({ ...updated, slides: previousPlaylist.slides });
       await deckHistory.confirmChange();
     } catch (caught) {
+      if (field === "dataDefaults") {
+        setPlaylist(previousPlaylist);
+      }
       deckHistory.cancelChange();
       throw caught;
     }
@@ -1847,6 +1855,7 @@ export function PlaylistEditorPage({
           slideId={selectedSlide.id}
           viewportProfile={playlist.viewportProfile}
           masterConfig={selectedSlideMaster}
+          playlistDefaults={playlist.dataDefaults}
           value={editorComunicadoValue}
           remoteRevision={remoteConfigRevision}
           remoteSelections={currentRemoteSelections}

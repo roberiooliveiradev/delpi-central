@@ -76,8 +76,12 @@ function diffChangedFetchableBlockIds(
 }
 
 /** Chave estável só com filtros e bindings — mudanças de layout não disparam refetch. */
-export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
+export function buildDataPreviewFingerprint(
+  config: ComunicadoConfig,
+  options?: { playlistDefaults?: Record<string, unknown> | null },
+): string {
   const dataFilters = config.dataFilters ?? {};
+  const playlistDefaults = options?.playlistDefaults ?? {};
   const legacyBlocks = (config.blocks ?? [])
     .filter((block): block is ComunicadoDataBlock => isDataBlockType(block.type))
     .map((block) => ({
@@ -162,6 +166,7 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
     .filter(Boolean);
   return JSON.stringify({
     dataFilters,
+    playlistDefaults,
     blocks: [...legacyBlocks, ...sourceBlocks],
     viewLinks,
     inputs: inputBlocks,
@@ -170,6 +175,7 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
 
 type PreviewFingerprintPayload = {
   dataFilters?: unknown;
+  playlistDefaults?: unknown;
   blocks?: unknown;
   viewLinks?: unknown;
   inputs?: unknown;
@@ -207,10 +213,18 @@ export function resolvePreviewRefreshSourceIds(params: {
     JSON.stringify(prev.inputs ?? null) !== JSON.stringify(next.inputs ?? null);
   const dataFiltersChanged =
     JSON.stringify(prev.dataFilters ?? null) !== JSON.stringify(next.dataFilters ?? null);
+  const playlistDefaultsChanged =
+    JSON.stringify(prev.playlistDefaults ?? null) !==
+    JSON.stringify(next.playlistDefaults ?? null);
   const viewLinksChanged =
     JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null);
 
-  if (!blocksChanged && !inputsChanged && !dataFiltersChanged) {
+  if (
+    !blocksChanged &&
+    !inputsChanged &&
+    !dataFiltersChanged &&
+    !playlistDefaultsChanged
+  ) {
     return viewLinksChanged ? [] : allFetchableIds;
   }
 
@@ -218,7 +232,12 @@ export function resolvePreviewRefreshSourceIds(params: {
     return diffChangedFetchableBlockIds(prev.blocks, next.blocks, allFetchableIds);
   }
 
-  if (inputsChanged || dataFiltersChanged) {
+  // Filtros do slide / programação aplicam a todas as fontes fetchable.
+  if (dataFiltersChanged || playlistDefaultsChanged) {
+    return allFetchableIds;
+  }
+
+  if (inputsChanged) {
     return inputAffectedSourceIds.length > 0 ? inputAffectedSourceIds : allFetchableIds;
   }
 

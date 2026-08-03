@@ -34,6 +34,8 @@ export type RefreshDataPreviewOptions = {
 type Options = {
   playlistId: string;
   config: ComunicadoConfig;
+  /** dataDefaults live da programação — entra no fingerprint e no preview. */
+  playlistDefaults?: Record<string, unknown> | null;
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
@@ -58,8 +60,9 @@ function seedFromConfigBlocks(config: ComunicadoConfig): Record<string, Comunica
 function initialResolvedMap(
   playlistId: string,
   config: ComunicadoConfig,
+  playlistDefaults?: Record<string, unknown> | null,
 ): Record<string, ComunicadoDataResolved> {
-  const fingerprint = buildDataPreviewFingerprint(config);
+  const fingerprint = buildDataPreviewFingerprint(config, { playlistDefaults });
   const fromSession = readDataPreviewCache(playlistId, fingerprint);
   const fromBlocks = seedFromConfigBlocks(config);
   return { ...fromSession, ...fromBlocks };
@@ -95,9 +98,9 @@ export function collectPreviewErrorMessages(
  * Botão «Atualizar visual» permanece para refresh manual com bypass de cache.
  * Cada fonte tem timeout; lote anterior é abortado ao iniciar um novo fetch.
  */
-export function useComunicadoDataPreview({ playlistId, config }: Options) {
+export function useComunicadoDataPreview({ playlistId, config, playlistDefaults = null }: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
-    () => initialResolvedMap(playlistId, config),
+    () => initialResolvedMap(playlistId, config, playlistDefaults),
   );
   const [staleSourceIds, setStaleSourceIds] = useState<string[]>([]);
   const [refreshingSourceIds, setRefreshingSourceIds] = useState<string[]>([]);
@@ -113,20 +116,29 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
 
   const configRef = useRef(config);
   configRef.current = config;
+  const playlistDefaultsRef = useRef(playlistDefaults);
+  playlistDefaultsRef.current = playlistDefaults;
 
   const requestIdRef = useRef(0);
   const batchAbortRef = useRef<AbortController | null>(null);
   const resolvedRef = useRef(resolvedByBlockId);
   resolvedRef.current = resolvedByBlockId;
   const playlistIdRef = useRef(playlistId);
-  const fingerprintRef = useRef(buildDataPreviewFingerprint(config));
+  const fingerprintRef = useRef(
+    buildDataPreviewFingerprint(config, { playlistDefaults }),
+  );
   /** Fingerprint da última carga bem-sucedida (ou hidratada do session). */
-  const syncedFingerprintRef = useRef(buildDataPreviewFingerprint(config));
+  const syncedFingerprintRef = useRef(
+    buildDataPreviewFingerprint(config, { playlistDefaults }),
+  );
   const didInitialFetchRef = useRef(false);
   const autoRefreshTimerRef = useRef<number | null>(null);
   const loadingMoreRef = useRef(new Set<string>());
 
-  const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
+  const dataFingerprint = useMemo(
+    () => buildDataPreviewFingerprint(config, { playlistDefaults }),
+    [config, playlistDefaults],
+  );
   fingerprintRef.current = dataFingerprint;
 
   const readDataBlocks = useCallback(
@@ -150,8 +162,10 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   useEffect(() => {
     if (playlistIdRef.current === playlistId) return;
     playlistIdRef.current = playlistId;
-    const seeded = initialResolvedMap(playlistId, configRef.current);
-    const fp = buildDataPreviewFingerprint(configRef.current);
+    const seeded = initialResolvedMap(playlistId, configRef.current, playlistDefaultsRef.current);
+    const fp = buildDataPreviewFingerprint(configRef.current, {
+      playlistDefaults: playlistDefaultsRef.current,
+    });
     setResolvedByBlockId(seeded);
     setStaleSourceIds([]);
     setInitialLoading(false);
@@ -254,6 +268,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
                 block: stripResolved(block),
                 nativeConfig,
                 playlistId: playlistIdRef.current,
+                playlistDefaults: playlistDefaultsRef.current ?? undefined,
                 forceRefresh: Boolean(options.force),
                 signal,
               });
@@ -360,6 +375,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
           block: stripResolved(requestBlock),
           nativeConfig: serializeComunicadoConfig(configRef.current),
           playlistId: playlistIdRef.current,
+          playlistDefaults: playlistDefaultsRef.current ?? undefined,
           forceRefresh: false,
           signal,
         });
