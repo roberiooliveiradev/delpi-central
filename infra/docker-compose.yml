@@ -1695,6 +1695,8 @@ services:
       TZ: ${TZ}
       DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
       DELPI_API_CALLER_APP: tv-dashboard-api
+      # LMP charts/dashboard ~25–40s; default do client (30s) corta e a Cloudflare mostra 502.
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-90}
       API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       STRATEGIC_INDICATORS_API_BASE_URL: ${STRATEGIC_INDICATORS_API_BASE_URL:-http://strategic-indicators-api:8000}
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}

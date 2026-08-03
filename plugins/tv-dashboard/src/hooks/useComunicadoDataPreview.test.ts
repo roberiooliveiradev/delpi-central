@@ -11,6 +11,7 @@ vi.mock("../api/tvDashboardApi", () => ({
 }));
 
 import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import { DATA_PREVIEW_BLOCK_TIMEOUT_MS } from "../utils/dataPreviewFetchGuard";
 
 const mockedPreview = vi.mocked(previewDataBlockV2);
 
@@ -499,7 +500,8 @@ describe("useComunicadoDataPreview", () => {
     );
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(DATA_PREVIEW_BLOCK_TIMEOUT_MS);
+      await Promise.resolve();
       await Promise.resolve();
     });
 

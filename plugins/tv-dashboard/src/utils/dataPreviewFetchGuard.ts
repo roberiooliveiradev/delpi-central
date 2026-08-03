@@ -1,5 +1,5 @@
-/** Timeout padrão do preview-block no editor (acima do gateway 30s + margem). */
-export const DATA_PREVIEW_BLOCK_TIMEOUT_MS = 60_000;
+/** Timeout padrão do preview-block no editor (LMP charts pode passar de 30s). */
+export const DATA_PREVIEW_BLOCK_TIMEOUT_MS = 120_000;
 
 export const DATA_PREVIEW_TIMEOUT_MESSAGE =
   "Tempo esgotado ao carregar esta fonte. Tente Atualizar visual.";
