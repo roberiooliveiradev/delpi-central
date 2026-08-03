@@ -5,6 +5,7 @@ import {
   buildFilterSelectOptions,
   canClearFilterValue,
   normalizeFilterSelectChange,
+  resolveBranchEmptyLabel,
   resolveFilterClearLabel,
   resolveFilterLayer,
   resolveFilterSelectValue,
@@ -15,6 +16,7 @@ const labels = {
   clear: "Limpar filtro",
   unset: "Não definido (usa a fonte)",
   diverged: "Valores diferentes",
+  allBranches: "Todas as filiais",
 };
 
 describe("dataParamFilterUi", () => {
@@ -80,18 +82,24 @@ describe("dataParamFilterUi", () => {
     ).toBe(false);
   });
 
-  it("placeholder de texto usa diverged/unset/clear", () => {
+  it("Filial opcional usa «Todas as filiais» quando consolidado é permitido", () => {
     expect(
-      resolveFilterTextPlaceholder(
-        { diverged: true, aggregateLayer: false, inherited: false },
+      resolveBranchEmptyLabel("source", {
+        allowConsolidated: true,
         labels,
-      ),
-    ).toBe("Valores diferentes");
+      }),
+    ).toBe("Todas as filiais");
     expect(
-      resolveFilterTextPlaceholder(
-        { diverged: false, aggregateLayer: true, inherited: false },
+      resolveBranchEmptyLabel("aggregate", {
+        allowConsolidated: true,
         labels,
-      ),
+      }),
     ).toBe("Não definido (usa a fonte)");
+    expect(
+      resolveBranchEmptyLabel("source", {
+        allowConsolidated: false,
+        labels,
+      }),
+    ).toBe("Limpar filtro");
   });
 });

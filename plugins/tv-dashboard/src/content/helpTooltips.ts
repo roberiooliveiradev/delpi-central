@@ -308,6 +308,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Não definido (usa a fonte)",
     filterClear:
       "Limpar filtro",
+    filterAllBranches:
+      "Todas as filiais",
     filterValuesDiffer:
       "Valores diferentes",
     filterPeriodRequired:
@@ -326,7 +328,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramPeriodDays:
       "Quantos dias para trás entram no cálculo (ex.: 30 = do dia de hoje menos 30 dias).",
     paramBranch:
-      "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+      "Filial 01/02 ou Todas as filiais (consolidado), quando a rota permitir omitir o parâmetro.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",

@@ -214,11 +214,13 @@ def enrich_param_schema_entry(
         _note_param_fallback("default", name)
     elif (
         name != "periodDays"
+        and name not in {"branch", "filial", "branch_code"}
         and not skip_ux_default
         and name in _TV_PARAM_UX_DEFAULTS
         and enriched.get("default") is None
     ):
         # Default só de UX TV — não inventa contrato HTTP.
+        # Filial: omitir = consolidado («Todas as filiais»); sem default «01» em select.
         enriched["default"] = _TV_PARAM_UX_DEFAULTS[name]
         enriched["optional"] = True
     # Overlay TV-only sem flag: alinhado ao MFE (ausente = opcional).
@@ -557,18 +559,26 @@ def _clear_period_days_defaults(route: dict[str, Any]) -> None:
 
 
 def _clear_identity_filter_defaults(route: dict[str, Any]) -> None:
-    """department_id e afins: usuário escolhe — nunca default commercial no catálogo TV."""
+    """Filtros de identidade/select: usuário escolhe — sem default commercial/01 no catálogo TV.
+
+    - department_id: nunca default
+    - branch/filial opcional: omitir = consolidado («Todas as filiais»)
+    """
     schema = route.get("paramSchema")
     if not isinstance(schema, dict):
         return
     changed = False
     next_schema = dict(schema)
-    for key in ("department_id",):
+    for key in ("department_id", "branch", "filial", "branch_code"):
         entry = next_schema.get(key)
-        if isinstance(entry, dict) and "default" in entry:
-            cleaned = {k: v for k, v in entry.items() if k != "default"}
-            next_schema[key] = cleaned
-            changed = True
+        if not isinstance(entry, dict) or "default" not in entry:
+            continue
+        # Filial obrigatória pode manter default técnico; opcional → limpa.
+        if key != "department_id" and entry.get("optional") is False:
+            continue
+        cleaned = {k: v for k, v in entry.items() if k != "default"}
+        next_schema[key] = cleaned
+        changed = True
     if changed:
         route["paramSchema"] = next_schema
 

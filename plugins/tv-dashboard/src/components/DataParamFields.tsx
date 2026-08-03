@@ -21,6 +21,7 @@ import {
   buildFilterSelectOptions,
   canClearFilterValue,
   normalizeFilterSelectChange,
+  resolveBranchEmptyLabel,
   resolveFilterClearLabel,
   resolveFilterLayer,
   resolveFilterSelectValue,
@@ -220,6 +221,7 @@ export function DataParamFields({
     clear: TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear,
     unset: TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource,
     diverged: TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer,
+    allBranches: TV_DASHBOARD_HELP_TOOLTIPS.data.filterAllBranches,
   };
   const clearLabel = resolveFilterClearLabel(filterLayer, uiLabels);
 
@@ -391,6 +393,14 @@ export function DataParamFields({
       current !== undefined && current !== null && String(current).trim() !== "";
 
     if (BRANCH_PARAM_KEYS.has(key)) {
+      const fieldOptional = field.optional !== false;
+      const allowConsolidated =
+        fieldOptional && (branchScope == null || branchScope.allowConsolidated !== false);
+      const branchEmptyLabel = resolveBranchEmptyLabel(filterLayer, {
+        allowConsolidated,
+        inherited,
+        labels: uiLabels,
+      });
       return (
         <BranchField
           key={key}
@@ -402,8 +412,14 @@ export function DataParamFields({
           value={displayValue}
           diverged={fieldDiverged}
           onChange={(value) => patchParam(key, value)}
-          placeholder={emptyTextPlaceholder(key, inherited, field)}
-          emptyOptionLabel={emptyLabel}
+          placeholder={
+            fieldDiverged
+              ? uiLabels.diverged
+              : allowConsolidated
+                ? uiLabels.allBranches
+                : emptyTextPlaceholder(key, inherited, field)
+          }
+          emptyOptionLabel={branchEmptyLabel}
           divergedLabel={uiLabels.diverged}
         />
       );

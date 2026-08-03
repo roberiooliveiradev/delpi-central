@@ -350,8 +350,7 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "enum": ["01", "02"],
-          "default": "01"
+          "enum": ["01", "02"]
         },
         "warehouse": {
           "type": "string",

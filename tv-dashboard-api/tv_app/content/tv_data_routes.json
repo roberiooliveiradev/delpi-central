@@ -146,8 +146,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -339,8 +338,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -398,8 +396,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -443,8 +440,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -492,8 +488,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -600,8 +595,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -639,8 +633,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -747,8 +740,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -799,8 +791,7 @@
           "optional": true,
           "label": "Filial",
           "in": "path",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "order_number": {
           "type": "string",
@@ -866,8 +857,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -989,8 +979,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "customer_segment": {
           "type": "string",
@@ -5409,8 +5398,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -5499,8 +5487,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -5584,8 +5571,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -5655,8 +5641,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -5743,8 +5728,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "listing_type": {
           "type": "string",
@@ -6047,8 +6031,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -6098,8 +6081,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -6155,8 +6137,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "revision": {
           "type": "string",
@@ -6204,8 +6185,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "page": {
           "type": "integer",
@@ -6311,8 +6291,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         }
       },
       "paramStrategy": "direct"
@@ -6345,8 +6324,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -6745,8 +6723,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
@@ -6796,8 +6773,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
@@ -6897,8 +6873,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "supplier_code": {
           "type": "string",
@@ -6961,8 +6936,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
@@ -7019,8 +6993,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
@@ -7082,8 +7055,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "cost_center": {
           "type": "string",
@@ -7442,8 +7414,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -7491,8 +7462,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -7540,8 +7510,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -7586,8 +7555,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -7952,8 +7920,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -8010,8 +7977,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -8055,8 +8021,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -8100,8 +8065,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -8200,8 +8164,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "inspection_id": {
           "type": "string",
@@ -8233,8 +8196,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -8274,8 +8236,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -8301,8 +8262,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -8328,8 +8288,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -8362,8 +8321,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -8390,8 +8348,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "data": {
           "type": "string",
@@ -8439,8 +8396,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -8522,8 +8478,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "ordem_producao": {
           "type": "string",
@@ -8570,8 +8525,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -8605,8 +8559,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -8640,8 +8593,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -8675,8 +8627,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -8710,8 +8661,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -8732,8 +8682,7 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -8916,8 +8865,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -8960,8 +8908,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9051,8 +8998,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9142,8 +9088,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "op": {
           "type": "string",
@@ -9226,8 +9171,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9296,8 +9240,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9354,8 +9297,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9447,8 +9389,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9518,8 +9459,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -9566,8 +9506,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "product_group": {
           "type": "string",
@@ -9623,8 +9562,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -9688,8 +9626,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -9745,8 +9682,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -9782,8 +9718,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9831,8 +9766,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -9894,8 +9828,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "op": {
           "type": "string",
@@ -9964,8 +9897,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "op": {
           "type": "string",
@@ -10047,8 +9979,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -10110,8 +10041,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -10160,8 +10090,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -10225,8 +10154,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -10351,8 +10279,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -10393,8 +10320,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "periodDays": {
           "type": "integer",
@@ -10465,8 +10391,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -10537,8 +10462,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "product_type": {
           "type": "string",
@@ -10598,8 +10522,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -10644,8 +10567,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -10690,8 +10612,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -10729,8 +10650,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -10830,8 +10750,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "periodDays": {
           "type": "integer",
@@ -10883,8 +10802,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -10970,8 +10888,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "delivery_start": {
           "type": "string",
@@ -11082,8 +10999,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "delivery_start": {
           "type": "string",
@@ -11174,8 +11090,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "delivery_start": {
           "type": "string",
@@ -11272,8 +11187,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "work_center": {
           "type": "string",
@@ -11311,8 +11225,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -11367,8 +11280,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -11401,8 +11313,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -11514,8 +11425,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -11602,8 +11512,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -11678,8 +11587,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -11718,8 +11626,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -11806,8 +11713,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -12352,8 +12258,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
@@ -12397,8 +12302,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -12483,8 +12387,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -12590,8 +12493,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",
@@ -12646,8 +12548,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -12714,8 +12615,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -12829,8 +12729,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
@@ -12884,8 +12783,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -12936,8 +12834,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "history_limit": {
           "type": "integer",
@@ -13031,8 +12928,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "history_limit": {
           "type": "integer",
@@ -13165,8 +13061,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "legacy": {
           "type": "boolean",
@@ -13224,8 +13119,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "warehouse": {
           "type": "string",
@@ -13541,8 +13435,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -13625,8 +13518,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
@@ -13736,8 +13628,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
@@ -13840,8 +13731,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "section": {
           "type": "string",
@@ -13927,8 +13817,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "product_code": {
           "type": "string",
@@ -13966,8 +13855,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "overdue_only": {
           "type": "boolean",
@@ -14021,8 +13909,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
@@ -14072,8 +13959,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "nonconformity_scope": {
           "type": "string",
@@ -14441,8 +14327,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -14549,8 +14434,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "active": {
           "type": "boolean",
@@ -14583,8 +14467,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -14773,8 +14656,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -14800,8 +14682,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -14833,8 +14714,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -14861,8 +14741,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -15099,8 +14978,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "date_range",
@@ -15176,8 +15054,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "status": {
           "type": "string",
@@ -15280,8 +15157,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -15336,8 +15212,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -15637,8 +15512,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -15852,8 +15726,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -16018,8 +15891,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16127,8 +15999,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16197,8 +16068,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16273,8 +16143,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16325,8 +16194,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16398,8 +16266,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16474,8 +16341,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16526,8 +16392,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16606,8 +16471,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16662,8 +16526,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16714,8 +16577,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16775,8 +16637,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -16883,8 +16744,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -16945,8 +16805,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "dimension": {
           "type": "string",
@@ -17058,8 +16917,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17148,8 +17006,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17224,8 +17081,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17314,8 +17170,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17512,8 +17367,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "horizonDays": {
           "type": "integer",
@@ -17633,8 +17487,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17714,8 +17567,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17814,8 +17666,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17872,8 +17723,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -17935,8 +17785,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -18016,8 +17865,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -18080,8 +17928,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
         },
         "start_date": {
           "type": "string",
@@ -18193,8 +18040,7 @@
             "ES",
             "SC"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "from": {
           "type": "string",
@@ -18241,8 +18087,7 @@
             "ES",
             "SC"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "limit": {
           "type": "integer",
@@ -18276,8 +18121,7 @@
             "ES",
             "SC"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "mine": {
           "type": "boolean",
@@ -18310,8 +18154,7 @@
             "ES",
             "SC"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "active": {
           "type": "boolean",
@@ -18344,8 +18187,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -18396,8 +18238,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",
@@ -18454,8 +18295,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -18499,8 +18339,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "start_date": {
           "type": "string",
@@ -18558,8 +18397,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -18655,8 +18493,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -18682,8 +18519,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "includeBlocked": {
           "type": "boolean",
@@ -18741,8 +18577,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "includeBlocked": {
           "type": "boolean",
@@ -18776,8 +18611,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "page": {
           "type": "integer",
@@ -18887,8 +18721,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -18922,8 +18755,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         }
       },
       "paramStrategy": "direct"
@@ -18964,8 +18796,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "supplierStore": {
           "type": "string",
@@ -18998,8 +18829,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "includeBlocked": {
           "type": "boolean",
@@ -19070,8 +18900,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "warehouse": {
           "type": "string",
@@ -19161,8 +18990,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "warehouse": {
           "type": "string",
@@ -19218,8 +19046,7 @@
             "01",
             "02"
           ],
-          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-          "default": "01"
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
         },
         "location": {
           "type": "string",

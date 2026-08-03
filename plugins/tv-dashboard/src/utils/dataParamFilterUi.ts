@@ -18,6 +18,8 @@ export type FilterUiLabels = {
   unset: string;
   diverged: string;
   inherited?: string;
+  /** value="" em filial opcional / consolidado permitido. */
+  allBranches?: string;
 };
 
 export function resolveFilterLayer(
@@ -38,6 +40,26 @@ export function resolveFilterClearLabel(
   if (layer === "aggregate") return labels.unset;
   if (options.inherited) return labels.inherited ?? "Herdado do slide";
   return labels.clear;
+}
+
+/**
+ * Opção vazia do select de filial: consolidado = «Todas as filiais»;
+ * camada agregada / herança mantêm os rótulos genéricos.
+ */
+export function resolveBranchEmptyLabel(
+  layer: DataParamFilterLayer,
+  opts: {
+    allowConsolidated: boolean;
+    inherited?: boolean;
+    labels: FilterUiLabels;
+  },
+): string {
+  if (layer === "aggregate") return opts.labels.unset;
+  if (opts.inherited) return opts.labels.inherited ?? "Herdado do slide";
+  if (opts.allowConsolidated) {
+    return opts.labels.allBranches ?? "Todas as filiais";
+  }
+  return opts.labels.clear;
 }
 
 export function resolveFilterSelectValue(stored: string, diverged: boolean): string {

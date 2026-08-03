@@ -191,5 +191,6 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/td-data-param-clearable/);
     expect(source).toMatch(/buildFilterSelectOptions/);
     expect(source).toMatch(/canClearFilterValue/);
+    expect(source).toMatch(/filterAllBranches|resolveBranchEmptyLabel/);
   });
 });
