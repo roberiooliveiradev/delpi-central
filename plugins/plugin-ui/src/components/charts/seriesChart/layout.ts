@@ -24,7 +24,7 @@ export const SERIES_CHART_PLOT_INSET = 14;
  * Com inset 0 (linha/área nas bordas da categoria), sem isso a série no teto
  * cola no clipPath e o stroke/preenchimento parece «cortado».
  */
-export const SERIES_CHART_VALUE_AXIS_GUTTER_PX = 5;
+export const SERIES_CHART_VALUE_AXIS_GUTTER_PX = 8;
 
 /**
  * Escala de categoria no eixo X (padrão de mercado):
@@ -639,12 +639,13 @@ function resolveSideMargins(
 }
 
 export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): SeriesChartLayout {
-  const values =
+  const rawValues =
     input.axisValues && input.axisValues.length > 0
       ? input.axisValues.map((value) => Number(value))
       : input.points.map((point) => Number(point.value));
-  const dataMin = Math.min(...values);
-  const dataMax = Math.max(...values);
+  const values = rawValues.filter((value) => Number.isFinite(value));
+  const dataMin = values.length > 0 ? Math.min(...values) : 0;
+  const dataMax = values.length > 0 ? Math.max(...values) : 1;
   const ticks = resolveSeriesChartTicks(dataMin, dataMax);
   const axisMin = Math.min(ticks[0] ?? dataMin, dataMin);
   const axisMax = Math.max(ticks[ticks.length - 1] ?? dataMax, dataMax);

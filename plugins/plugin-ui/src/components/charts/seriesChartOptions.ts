@@ -574,7 +574,12 @@ export function resolveSeriesChartTicks(min: number, max: number, count = 5): nu
   // Domínio "nice" que sempre cobre [min, max] — evita clipar série no teto do plot
   // (ex.: economia ~875 com ticks até 800 → área plana no topo).
   const niceMin = Math.floor(min / step) * step;
-  const niceMax = Math.ceil(max / step) * step;
+  let niceMax = Math.ceil(max / step) * step;
+  // Pico exatamente no tick nice (ex.: 28 000) colava no clipPath → área «vazando»
+  // / achatada no topo. Reserva sempre um degrau acima do dataMax.
+  if (niceMax <= max) {
+    niceMax = Number((niceMax + step).toFixed(6));
+  }
   const ticks: number[] = [];
   for (let value = niceMin; value <= niceMax + step * 0.001; value += step) {
     ticks.push(Number(value.toFixed(6)));

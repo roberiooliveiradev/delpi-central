@@ -151,10 +151,17 @@ describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
     expect(ticks[ticks.length - 1]!).toBeGreaterThanOrEqual(875);
   });
 
-  it("mantém ticks estáveis quando max já é nice", () => {
+  it("reserva headroom quando max já é tick nice (evita área achatada no topo)", () => {
     const ticks = resolveSeriesChartTicks(0, 800);
     expect(ticks[0]).toBe(0);
-    expect(ticks[ticks.length - 1]).toBe(800);
+    expect(ticks[ticks.length - 1]!).toBeGreaterThan(800);
+  });
+
+  it("Transforma+ ~28k: teto do eixo acima do pico (não cola no clip)", () => {
+    const ticks = resolveSeriesChartTicks(0, 28_000);
+    expect(ticks).toContain(0);
+    expect(ticks).toContain(28_000);
+    expect(ticks[ticks.length - 1]!).toBeGreaterThan(28_000);
   });
 });
 

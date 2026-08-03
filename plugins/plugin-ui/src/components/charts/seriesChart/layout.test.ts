@@ -423,14 +423,30 @@ describe("golden layout fixture OTD", () => {
       viewW: 400,
       viewH: 240,
     });
-    expect(layout.axisMax).toBeGreaterThanOrEqual(890);
+    expect(layout.axisMax).toBeGreaterThan(890);
     // Variação acima de 800 (antigo teto clipado) continua distinguível no plot
     expect(layout.toY(800)).toBeGreaterThan(layout.toY(875));
     expect(layout.toY(875)).toBeGreaterThan(layout.toY(890));
     // Pico no teto não cola na borda do clipPath (stroke/área visíveis)
-    expect(layout.toY(890)).toBeGreaterThanOrEqual(
-      layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX - 0.01,
+    expect(layout.toY(890)).toBeGreaterThan(
+      layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX,
     );
+  });
+
+  it("pico exatamente em tick nice (28k) não cola no clipPath", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "jun", value: 27_500 },
+        { label: "jul", value: 28_000 },
+      ],
+      axisValues: [5_000, 27_500, 28_000, 2_000],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 800,
+      viewH: 280,
+    });
+    expect(layout.axisMax).toBeGreaterThan(28_000);
+    expect(layout.toY(28_000)).toBeGreaterThan(layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX);
   });
 });
 
