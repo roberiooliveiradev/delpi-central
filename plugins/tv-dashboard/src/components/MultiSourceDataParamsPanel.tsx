@@ -37,7 +37,7 @@ export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Prop
     [routes, bindingTargets],
   );
 
-  const values = useMemo(
+  const shared = useMemo(
     () => resolveSharedParamDisplayValues(bindingTargets, schema),
     [bindingTargets, schema],
   );
@@ -87,7 +87,8 @@ export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Prop
       </p>
       <DataParamFields
         schema={schema}
-        values={values}
+        values={shared.values}
+        divergedKeys={shared.divergedKeys}
         branchScope={branchScope}
         idPrefix="td-multi-source-filter"
         hydrateDefaultPreset={false}

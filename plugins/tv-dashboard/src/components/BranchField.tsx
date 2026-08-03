@@ -11,6 +11,11 @@ type Props = {
   placeholder?: string;
   /** Enum do paramSchema da rota (OpenAPI) — fallback quando não há branchScope. */
   schemaEnum?: Array<string | number | boolean> | null;
+  /**
+   * Rótulo da opção vazia no select (ex.: «Não definido (usa a fonte)» em
+   * tela/programação/multi). Sem isto: «Consolidado» quando allowConsolidated.
+   */
+  emptyOptionLabel?: string;
 };
 
 /** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. */
@@ -43,9 +48,16 @@ export function BranchField({
   onChange,
   placeholder,
   schemaEnum,
+  emptyOptionLabel,
 }: Props) {
   const branches = resolveBranchFieldOptions(scope, schemaEnum);
   const allowConsolidated = scope?.allowConsolidated ?? true;
+  const placeholderOption =
+    emptyOptionLabel !== undefined
+      ? emptyOptionLabel
+      : allowConsolidated
+        ? "Consolidado"
+        : undefined;
 
   if (branches.length > 0) {
     return (
@@ -55,7 +67,7 @@ export function BranchField({
         hint={hint}
         value={value}
         onChange={onChange}
-        placeholderOption={allowConsolidated ? "Consolidado" : undefined}
+        placeholderOption={placeholderOption}
         options={branches.map((branch) => ({
           value: branch,
           label: `Filial ${branch}`,

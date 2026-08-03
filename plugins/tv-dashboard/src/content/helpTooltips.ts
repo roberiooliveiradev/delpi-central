@@ -304,6 +304,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
+    filterUnsetUsesSource:
+      "Não definido (usa a fonte)",
+    filterValuesDiffer:
+      "Valores diferentes",
     playlistFiltersEmpty:
       "Adicione fontes de dados nas telas para configurar filtros globais da programação.",
     dateRangePresetOpenEnded:
@@ -323,7 +327,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
     multiSelectFilters:
-      "Campos em comum das fontes selecionadas (sem repetir). Valores diferentes ficam em branco até você definir um valor para todas.",
+      "Campos em comum das fontes selecionadas (sem repetir). Vazio = «Não definido (usa a fonte)»; se as fontes divergem = «Valores diferentes».",
     multiSelectFiltersSummary:
       "{count} fontes na seleção — alterar um filtro aplica nas fontes que aceitam esse parâmetro.",
     multiSelectNoSources:

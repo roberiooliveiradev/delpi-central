@@ -107,9 +107,17 @@ function isDateParam(key: string, field: DataParamSchemaField): boolean {
 function displayParamValue(
   current: string | number | boolean | undefined | null,
   field: DataParamSchemaField,
+  applySchemaDefault: boolean,
 ): string {
   if (current === undefined || current === null || current === "") {
-    if (field.default !== undefined && field.default !== null) return String(field.default);
+    // Camada agregada: vazio = não definido — não preencher com default OpenAPI.
+    if (
+      applySchemaDefault &&
+      field.default !== undefined &&
+      field.default !== null
+    ) {
+      return String(field.default);
+    }
     return "";
   }
   return String(current);
@@ -119,6 +127,8 @@ type Props = {
   schema: DataParamSchema;
   values: Record<string, string | number | boolean | null | undefined> | undefined;
   inheritedKeys?: Set<string>;
+  /** Chaves com valores divergentes entre fontes (multi-seleção). */
+  divergedKeys?: Set<string>;
   branchScope?: BranchScope | null;
   idPrefix?: string;
   /** ribbon = grade multi-coluna; pane = empilhado. */
@@ -129,7 +139,8 @@ type Props = {
    */
   openEndedDateRange?: boolean;
   /**
-   * Quando false, não grava preset padrão no mount (filtros agregados do slide).
+   * Quando false, camada agregada (slide/programação/multi): não hidrata preset
+   * e marca filtros vazios como «Não definido (usa a fonte)».
    * Default true nas fontes individuais.
    */
   hydrateDefaultPreset?: boolean;
@@ -148,6 +159,7 @@ export function DataParamFields({
   schema,
   values,
   inheritedKeys = new Set(),
+  divergedKeys = new Set(),
   branchScope = null,
   idPrefix = "td-data-param",
   layout = "pane",
@@ -157,6 +169,30 @@ export function DataParamFields({
 }: Props) {
   const entries = Object.entries(schema);
   if (entries.length === 0) return null;
+
+  const aggregateLayer = !hydrateDefaultPreset;
+  const unsetLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource;
+  const divergedLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer;
+
+  function emptyChoiceLabel(key: string, inherited: boolean): string {
+    if (divergedKeys.has(key)) return divergedLabel;
+    if (aggregateLayer) return unsetLabel;
+    if (inherited) return "Herdado do slide";
+    return "Opcional";
+  }
+
+  function emptyTextPlaceholder(
+    key: string,
+    inherited: boolean,
+    field: DataParamSchemaField,
+  ): string {
+    if (divergedKeys.has(key)) return divergedLabel;
+    if (aggregateLayer) return unsetLabel;
+    if (inherited) return "Herdado do slide";
+    if (field.default !== undefined) return `Padrão: ${field.default}`;
+    if (field.optional) return "Opcional";
+    return "";
+  }
 
   const compact = layout === "ribbon";
   const selectClass = compact ? "delpi-ui-select--compact" : undefined;
@@ -178,6 +214,9 @@ export function DataParamFields({
     : hydrateDefaultPreset
       ? fallbackPreset
       : "";
+  const periodEmptyLabel = divergedKeys.has(DATE_RANGE_PRESET_PARAM)
+    ? divergedLabel
+    : unsetLabel;
 
   useEffect(() => {
     if (!hydrateDefaultPreset) return;
@@ -242,7 +281,7 @@ export function DataParamFields({
                 hydrateDefaultPreset
                   ? DATE_RANGE_PRESET_OPTIONS
                   : [
-                      { value: "", label: "Não definido (usa a fonte)" },
+                      { value: "", label: periodEmptyLabel },
                       ...DATE_RANGE_PRESET_OPTIONS,
                     ]
               }
@@ -289,8 +328,9 @@ export function DataParamFields({
       : hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
-    const displayValue = displayParamValue(current, field);
+    const displayValue = displayParamValue(current, field, hydrateDefaultPreset);
     const dateInputsLocked = isRangeDate && !isCustom;
+    const emptyLabel = emptyChoiceLabel(key, inherited);
 
     if (BRANCH_PARAM_KEYS.has(key)) {
       return (
@@ -303,18 +343,26 @@ export function DataParamFields({
           schemaEnum={field.enum}
           value={displayValue}
           onChange={(value) => patchParam(key, value)}
-          placeholder={inherited ? "Herdado do slide" : "Ex.: 01"}
+          placeholder={
+            divergedKeys.has(key)
+              ? divergedLabel
+              : aggregateLayer
+                ? unsetLabel
+                : inherited
+                  ? "Herdado do slide"
+                  : "Ex.: 01"
+          }
+          emptyOptionLabel={
+            divergedKeys.has(key) || aggregateLayer ? emptyLabel : undefined
+          }
         />
       );
     }
 
     if (selectOptions) {
-      const emptyLabel = inherited
-        ? "Herdado do slide"
-        : field.optional || field.default !== undefined
-          ? "Opcional"
-          : "Selecione…";
       const showEmpty =
+        aggregateLayer ||
+        divergedKeys.has(key) ||
         field.optional ||
         field.default !== undefined ||
         inherited ||
@@ -361,15 +409,9 @@ export function DataParamFields({
           placeholder={
             dateInputsLocked
               ? "Definido pelo período relativo"
-              : inherited
-                ? "Herdado do slide"
-                : openEndedDatePlaceholder
-                  ? openEndedDatePlaceholder
-                  : field.default !== undefined
-                    ? `Padrão: ${field.default}`
-                    : field.optional
-                      ? "Opcional"
-                      : ""
+              : openEndedDatePlaceholder && !aggregateLayer
+                ? openEndedDatePlaceholder
+                : emptyTextPlaceholder(key, inherited, field)
           }
           value={
             dateInputsLocked

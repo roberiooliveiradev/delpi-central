@@ -56,24 +56,24 @@ describe("multiSourceDataParams", () => {
     expect(schema.page).toBeUndefined();
   });
 
-  it("valores iguais aparecem; divergentes ficam vazios", () => {
+  it("valores iguais aparecem; divergentes ficam vazios e em divergedKeys", () => {
     const schema = buildMultiSourceParamSchema(routes, [
       source("a", "get_refugo", { branch: "01", periodDays: 30 }),
       source("b", "get_retrabalho", { branch: "01", periodDays: 7 }),
     ]);
-    expect(
-      resolveSharedParamDisplayValues(
-        [
-          source("a", "get_refugo", { branch: "01", periodDays: 30 }),
-          source("b", "get_retrabalho", { branch: "01", periodDays: 7 }),
-        ],
-        schema,
-      ),
-    ).toEqual({
+    const shared = resolveSharedParamDisplayValues(
+      [
+        source("a", "get_refugo", { branch: "01", periodDays: 30 }),
+        source("b", "get_retrabalho", { branch: "01", periodDays: 7 }),
+      ],
+      schema,
+    );
+    expect(shared.values).toEqual({
       branch: "01",
       periodDays: "",
       granularity: "",
     });
+    expect([...shared.divergedKeys].sort()).toEqual(["periodDays"]);
   });
 
   it("aplica update só nas fontes que têm a chave no schema", () => {
@@ -193,7 +193,7 @@ describe("multiSourceDataParams", () => {
           source("b", "get_ppm_b", { dateRangePreset: "this_month" }),
         ],
         schema,
-      ).dateRangePreset,
+      ).values.dateRangePreset,
     ).toBe("this_month");
   });
 });

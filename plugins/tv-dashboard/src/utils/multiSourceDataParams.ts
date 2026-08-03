@@ -49,14 +49,15 @@ export function buildMultiSourceParamSchema(
 
 /**
  * Valores exibidos na multi-seleção: se todas as fontes concordam, mostra o valor;
- * se divergem, string vazia (usuário define um valor comum).
+ * se divergem, string vazia + chave em `divergedKeys` (UI: «Valores diferentes»).
  * Inclui `dateRangePreset` (sintetizador) quando o schema união tem par de datas.
  */
 export function resolveSharedParamDisplayValues(
   targets: MultiSourceBindingTarget[],
   schema: DataParamSchema,
-): Record<string, string> {
+): { values: Record<string, string>; divergedKeys: Set<string> } {
   const values: Record<string, string> = {};
+  const divergedKeys = new Set<string>();
   const keys = new Set(Object.keys(schema));
   if (findDateRangeKeys(keys)) {
     keys.add(DATE_RANGE_PRESET_PARAM);
@@ -75,9 +76,10 @@ export function resolveSharedParamDisplayValues(
         break;
       }
     }
+    if (diverged) divergedKeys.add(key);
     values[key] = diverged ? "" : (shared ?? "");
   }
-  return values;
+  return { values, divergedKeys };
 }
 
 /** Schema visível de uma rota (para aplicar só chaves que a fonte aceita). */

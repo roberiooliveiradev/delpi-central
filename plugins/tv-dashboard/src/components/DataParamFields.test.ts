@@ -167,4 +167,14 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/resolveFallbackPreset/);
     expect(source).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
   });
+
+  it("camada agregada usa filterUnsetUsesSource / filterValuesDiffer", () => {
+    const base = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/filterUnsetUsesSource/);
+    expect(source).toMatch(/filterValuesDiffer/);
+    expect(source).toMatch(/divergedKeys/);
+    expect(source).toMatch(/emptyOptionLabel/);
+    expect(source).toMatch(/aggregateLayer/);
+  });
 });
