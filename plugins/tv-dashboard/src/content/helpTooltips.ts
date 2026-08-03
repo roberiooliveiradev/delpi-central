@@ -278,9 +278,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     refreshInterval:
       "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
     dataDefaults:
-      "Parâmetros herdados por todas as telas. O slide e a fonte podem sobrescrever. Presets relativos (esta semana, este mês, últimos N dias…) resolvem de novo a cada atualização na TV.",
+      "Filtros padrão de toda a programação (menor precedência). Tela, fonte e input podem sobrescrever o mesmo campo. Precedência: input > dados > tela > programação.",
     slideDataFilters:
-      "Filtros só desta tela. Não repetem chaves já definidas em Programação → Filtros. Paginação fica na fonte.",
+      "Filtros desta tela. Podem repetir campos da Programação — aqui ganham sobre ela. Fonte e input ainda sobrescrevem. Paginação fica na fonte. Precedência: input > dados > tela > programação.",
     dataBlockRefreshInterval:
       "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview atualiza ao mudar filtros ou a fonte.",
     customSlideType:
@@ -297,7 +297,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertWizard:
       "Escolha o visual inicial (KPI, gráfico, tabela, texto ou forma) criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
-      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; alterações aqui atualizam o palco automaticamente.",
+      "Parâmetros da fonte (camada «dados»). Sobrescrevem tela e programação; input ainda sobrescreve. Use «Testar rota» para validar; alterações atualizam o palco automaticamente.",
     prepareData:
       "Abre o editor de preparação em modal: consultas = rotas api-delpi do slide; etapas transformam a tabela antes do visual.",
     testRoute:
@@ -306,8 +306,6 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
     playlistFiltersEmpty:
       "Adicione fontes de dados nas telas para configurar filtros globais da programação.",
-    slideFiltersCoveredByDefaults:
-      "Todos os filtros desta tela já estão na Programação. Ajuste lá ou sobrescreva na fonte.",
     dateRangePresetOpenEnded:
       "Nesta fonte o padrão é Personalizado: deixe Data início e Data fim vazias para todo o histórico cadastrado. Presets relativos (este mês, este ano…) também estão disponíveis se quiser limitar.",
     dateRangeFixed:

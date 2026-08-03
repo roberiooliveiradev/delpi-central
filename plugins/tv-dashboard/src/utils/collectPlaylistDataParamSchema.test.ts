@@ -124,7 +124,7 @@ describe("collectPlaylistDataParamSchema", () => {
     expect(schema.branch).toBeTruthy();
   });
 
-  it("schema do slide ignora outras telas e omite chaves do dataDefaults", () => {
+  it("schema do slide ignora outras telas e mantém chaves também presentes na programação", () => {
     const nativeConfig = {
       version: 4,
       blocks: [
@@ -135,12 +135,12 @@ describe("collectPlaylistDataParamSchema", () => {
         },
       ],
     };
-    const schema = collectSlideDataParamSchema(nativeConfig, routes, { branch: "01" });
-    expect(Object.keys(schema).sort()).toEqual(["granularity", "top_limit"]);
-    expect(schema.branch).toBeUndefined();
+    const schema = collectSlideDataParamSchema(nativeConfig, routes);
+    expect(Object.keys(schema).sort()).toEqual(["branch", "granularity", "top_limit"]);
+    expect(schema.branch).toBeTruthy();
   });
 
-  it("omitSchemaKeysCoveredByDefaults cobre período e par de datas", () => {
+  it("omitSchemaKeysCoveredByDefaults cobre período e par de datas (helper legado)", () => {
     const schema = {
       dateRangePreset: { type: "string" },
       periodDays: { type: "integer" },

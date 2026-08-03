@@ -77,7 +77,6 @@ export function CustomSlideEditorLayout({
     <SlideDataFiltersPanel
       branchScope={chromeProps.branchScope}
       compact
-      playlistDefaults={chromeProps.playlist.dataDefaults}
     />
   ) : (
     <>
@@ -85,7 +84,6 @@ export function CustomSlideEditorLayout({
       <SlideDataFiltersPanel
         branchScope={chromeProps.branchScope}
         compact
-        playlistDefaults={chromeProps.playlist.dataDefaults}
       />
     </>
   );

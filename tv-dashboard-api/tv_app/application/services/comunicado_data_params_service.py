@@ -97,7 +97,7 @@ def merge_data_params(
     block_params: dict[str, Any] | None,
     input_overrides: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """playlist → slide → bloco → inputs/runtime (mais específico ganha)."""
+    """programação → tela → dados (bloco) → input (maior precedência ganha)."""
     merged: dict[str, Any] = {}
     for layer in (playlist_defaults, slide_filters, block_params, input_overrides):
         if not isinstance(layer, dict):

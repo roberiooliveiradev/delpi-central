@@ -96,9 +96,9 @@ export function mergeRouteParamSchemas(
 }
 
 /**
- * Remove do schema do slide as chaves já definidas em dataDefaults (programação),
- * para não repetir o mesmo campo nas duas camadas da UI.
- * Preset de período também cobre periodDays e o par de datas.
+ * Remove chaves do schema cobertas por um mapa de defaults (uso pontual / legado).
+ * Tela e Programação **não** usam isto na UI — campos podem repetir; a precedência
+ * no merge é input > dados > tela > programação.
  */
 export function omitSchemaKeysCoveredByDefaults(
   schema: DataParamSchema,
@@ -131,13 +131,12 @@ export function collectPlaylistDataParamSchema(
   return mergeRouteParamSchemas(routes, collectPlaylistOperationIds(slides));
 }
 
+/** Schema de filtros da tela = união das fontes do slide (sem omitir Programação). */
 export function collectSlideDataParamSchema(
   nativeConfig: Record<string, unknown> | null | undefined,
   routes: TvDataRouteCatalogItem[],
-  playlistDefaults?: Record<string, unknown> | null,
 ): DataParamSchema {
-  const merged = mergeRouteParamSchemas(routes, collectOperationIdsFromNativeConfig(nativeConfig));
-  return omitSchemaKeysCoveredByDefaults(merged, playlistDefaults);
+  return mergeRouteParamSchemas(routes, collectOperationIdsFromNativeConfig(nativeConfig));
 }
 
 /** Normaliza dataDefaults / dataFilters para o editor de params. */
