@@ -35,6 +35,24 @@ def test_recommends_line_chart_when_table_has_dates():
     assert "line_chart" in views
 
 
+def test_text_view_recommendation_uses_portuguese_label():
+    decision = {
+        "selected": "kpi",
+        "availableViews": ["kpi", "table", "text"],
+        "dataShape": {"rows": 2, "hasNumeric": True},
+    }
+    recommendations = ChatPresentationRecommendationService.build(
+        decision=decision,
+        metadata={"kpiPresentation": {"type": "kpi", "cards": [{"key": "a", "value": 1}]}},
+    )
+    text_recs = [item for item in recommendations if item.get("view") == "text"]
+    assert text_recs
+    assert text_recs[0]["label"] == "Ver em texto"
+    assert "text" not in str(text_recs[0]["label"]).casefold() or "texto" in str(
+        text_recs[0]["label"]
+    ).casefold()
+
+
 def test_prune_for_selected_removes_matching_view():
     decision = {
         "selected": "table",

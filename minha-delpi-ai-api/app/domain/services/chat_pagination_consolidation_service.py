@@ -337,6 +337,11 @@ class ChatPaginationConsolidationService:
             "page": 1,
             "page_size": len(items),
             "total_pages": 1,
+            **(
+                {"summary": dict(root["summary"])}
+                if isinstance(root.get("summary"), dict)
+                else {}
+            ),
         }
 
     @classmethod

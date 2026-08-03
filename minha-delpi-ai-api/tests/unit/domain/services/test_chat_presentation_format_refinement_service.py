@@ -264,6 +264,47 @@ def test_resolve_payload_from_table_presentations_list_role():
     }
 
 
+def test_resolve_payload_forces_refetch_for_playbook_report_shape():
+    """Tabela em cache não tem summary — refine KPI/dashboard precisa reconsultar."""
+    rows = [
+        {"production_order": "09139101001", "status": "late", "days_diff": 5},
+    ]
+    operation = {
+        "actionId": "api_delpi.produ_o.get_production_otd",
+        "path": "/production/otd",
+        "metadata": {
+            "ok": True,
+            "entity": "production_otd_detail",
+            "apiDelpiResponseMeta": {
+                "entity": "production_otd_detail",
+                "shape": "playbook_report",
+            },
+            "tablePresentation": {
+                "type": "table",
+                "title": "OTD",
+                "rows": rows,
+                "columns": [{"key": "production_order", "label": "OP"}],
+            },
+            "paginationConsolidation": {
+                "consolidatedPayload": {
+                    "items": rows,
+                    "total": 1,
+                    "page": 1,
+                    "page_size": 1,
+                    "total_pages": 1,
+                }
+            },
+        },
+    }
+
+    payload = ChatPresentationFormatRefinementService.resolve_payload(
+        [],
+        operation=operation,
+    )
+
+    assert payload is None
+
+
 def test_wrap_payload_for_non_stock_keeps_flat_items():
     operation = {"path": "/products/90260149/analyser"}
     root = {"items": [{"op": "01"}], "total": 1, "page": 1, "page_size": 1, "total_pages": 1}

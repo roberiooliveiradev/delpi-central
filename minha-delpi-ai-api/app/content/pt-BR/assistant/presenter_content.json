@@ -1189,6 +1189,13 @@
       "percent",
       "rate"
     ],
+    "excludeRootKeys": [
+      "page",
+      "page_size",
+      "total_pages",
+      "offset",
+      "limit"
+    ],
     "palette": [
       "#0ea5e9",
       "#10b981",
@@ -1257,7 +1264,9 @@
       "table": "Ver como tabela",
       "dashboard": "Ver painel",
       "tree": "Ver árvore",
-      "kpi": "Ver como KPI"
+      "kpi": "Ver como KPI",
+      "text": "Ver em texto",
+      "canvas": "Colocar na lousa"
     },
     "viewQueries": {
       "line_chart": "mostre o último resultado em gráfico de linha",
@@ -1269,7 +1278,9 @@
       "table": "mostre o último resultado em tabela",
       "dashboard": "mostre o último resultado como painel",
       "tree": "mostre o último resultado em árvore",
-      "kpi": "mostre o último resultado como indicador"
+      "kpi": "mostre o último resultado como indicador",
+      "text": "mostre o último resultado em texto",
+      "canvas": "coloque o resultado acima na lousa"
     },
     "efficiencyHints": [
       "eficiencia",

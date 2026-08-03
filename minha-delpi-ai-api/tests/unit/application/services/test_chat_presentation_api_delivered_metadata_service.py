@@ -164,3 +164,85 @@ def test_api_delivered_metadata_for_production_otd_nested_orders():
     )
     assert "atraso" in fact_text.casefold() or "otd" in fact_text.casefold()
     assert "days_diff" not in fact_text.casefold()
+
+
+def test_api_delivered_otd_kpi_uses_summary_not_pagination():
+    use_case = _use_case()
+    envelope = load_api_delpi_fixture_with_meta("production_otd_late_summary.json")
+    path = "/production/otd"
+    data = envelope["data"]
+
+    meta = ChatPresentationApiDeliveredMetadataService.build(
+        action={"path": path},
+        sanitized_data=data,
+        resolved_path=path,
+        request_parameters={
+            "status": "late",
+            "userMessage": "mostre o último resultado em kpi",
+            "sessionResponseFormat": "kpi",
+        },
+        presenter=use_case.presenter,
+        extract_response_meta=lambda _data: envelope.get("meta"),
+    )
+
+    decision = meta.get("presentationDecision") or {}
+    assert str(decision.get("selected") or "").strip().lower() == "kpi"
+
+    kpi = meta.get("kpiPresentation") or meta.get("presentation")
+    assert isinstance(kpi, dict) and kpi.get("type") == "kpi"
+    card_keys = [str(card.get("key") or "") for card in (kpi.get("cards") or [])]
+    assert card_keys
+    for banned in ("page", "page_size", "total_pages", "total"):
+        assert banned not in card_keys
+    assert any(
+        key in card_keys
+        for key in (
+            "on_time_delivery_pct",
+            "late_ops",
+            "on_time_ops",
+            "late_percentage",
+            "total_ops",
+            "total_ops_finished",
+        )
+    )
+
+
+def test_kpi_skips_pagination_scalars_when_items_present():
+    use_case = _use_case()
+    path = "/production/otd"
+    flat = {
+        "items": [
+            {
+                "production_order": "09139101001",
+                "status": "late",
+                "days_diff": 10,
+                "product_code": "90261629",
+            }
+        ],
+        "total": 50,
+        "page": 1,
+        "page_size": 50,
+        "total_pages": 1,
+    }
+
+    meta = ChatPresentationApiDeliveredMetadataService.build(
+        action={"path": path},
+        sanitized_data=flat,
+        resolved_path=path,
+        request_parameters={
+            "sessionResponseFormat": "kpi",
+            "userMessage": "mostre em kpi",
+        },
+        presenter=use_case.presenter,
+        extract_response_meta=lambda _data: {
+            "operationId": "get_production_otd",
+            "entity": "production_otd_detail",
+            "shape": "playbook_report",
+        },
+    )
+
+    kpi = meta.get("kpiPresentation") or meta.get("presentation")
+    if isinstance(kpi, dict) and kpi.get("type") == "kpi":
+        card_keys = [str(card.get("key") or "") for card in (kpi.get("cards") or [])]
+        for banned in ("page", "page_size", "total_pages", "total"):
+            assert banned not in card_keys

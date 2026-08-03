@@ -110,13 +110,14 @@ class ExternalActionKpiChartBuildService:
                     min_cards=1,
                 )
 
-        cards = presenter.build_generic_kpi_cards(root, path)
+        cards = None
+        summary = root.get("summary")
+
+        if isinstance(summary, dict):
+            cards = presenter.build_generic_kpi_cards(summary, path)
 
         if not cards:
-            summary = root.get("summary")
-
-            if isinstance(summary, dict):
-                cards = presenter.build_generic_kpi_cards(summary, path)
+            cards = presenter.build_generic_kpi_cards(root, path)
 
         if cards:
             return ChatPresentationKpiAssemblyService.build(
@@ -149,11 +150,32 @@ class ExternalActionKpiChartBuildService:
             for token in (cfg.get("percentUnitKeys") or ["pct", "percent", "rate"])
             if str(token).strip()
         ]
+        skip_keys = {
+            str(token).strip().lower()
+            for token in (
+                cfg.get("excludeRootKeys")
+                or [
+                    "page",
+                    "page_size",
+                    "total_pages",
+                    "offset",
+                    "limit",
+                ]
+            )
+            if str(token).strip()
+        }
+        has_items = isinstance(root.get("items"), list) or isinstance(root.get("rows"), list)
+        if has_items:
+            skip_keys.add("total")
+
         cards = []
         idx = 0
 
         for key, val in root.items():
             if not isinstance(val, (int, float)):
+                continue
+
+            if str(key).strip().lower() in skip_keys:
                 continue
 
             field_format = presenter._host._column_labels.resolve_field_format(

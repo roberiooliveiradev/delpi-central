@@ -87,6 +87,11 @@ class ChatPresentationFormatRefinementService:
     ) -> object | None:
         meta = operation.get("metadata") or {}
 
+        # playbook_report / composite_analysis: tabela em cache não carrega summary —
+        # força reconsulta HTTP para KPI/dashboard corretos.
+        if cls._requires_live_envelope_refetch(meta):
+            return None
+
         consolidation = meta.get("paginationConsolidation")
 
         if isinstance(consolidation, dict):
@@ -110,6 +115,21 @@ class ChatPresentationFormatRefinementService:
                 return cls.wrap_payload_for_operation(operation, root)
 
         return None
+
+    @classmethod
+    def _requires_live_envelope_refetch(cls, meta: dict[str, Any]) -> bool:
+        api_meta = meta.get("apiDelpiResponseMeta")
+        shape = ""
+
+        if isinstance(api_meta, dict):
+            shape = str(api_meta.get("shape") or "").strip().lower()
+
+        if not shape:
+            profile = meta.get("presentationProfile")
+            if isinstance(profile, dict):
+                shape = str(profile.get("openapiShape") or profile.get("shape") or "").strip().lower()
+
+        return shape in {"playbook_report", "composite_analysis"}
 
     @classmethod
     def wrap_payload_for_operation(cls, operation: dict[str, Any], root: dict[str, Any]) -> dict[str, Any]:
