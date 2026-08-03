@@ -55,7 +55,7 @@ def build_retrabalho_query_request(
 
 def build_retrabalho_detalhes_request(
     *,
-    filial: str,
+    filial: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     recurso: Optional[str] = None,
@@ -65,6 +65,7 @@ def build_retrabalho_detalhes_request(
     page_size: int = DEFAULT_PAGE_SIZE,
     order_by: Optional[str] = None,
     order_dir: Optional[str] = None,
+    require_filial: bool = True,
 ) -> RetrabalhoDetalhesRequest:
     return RetrabalhoDetalhesRequest.from_query(
         filial=filial,
@@ -77,6 +78,7 @@ def build_retrabalho_detalhes_request(
         page_size=page_size,
         order_by=order_by,
         order_dir=order_dir,
+        require_filial=require_filial,
     )
 
 

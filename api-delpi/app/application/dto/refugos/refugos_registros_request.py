@@ -30,6 +30,7 @@ class RefugosRegistrosRequest:
         recurso: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        require_filial: bool = True,
     ) -> RefugosRegistrosRequest:
         query = RefugosQueryRequest.from_query(
             filial=filial,
@@ -40,6 +41,7 @@ class RefugosRegistrosRequest:
             op=op,
             motivo=motivo,
             recurso=recurso,
+            require_filial=require_filial,
         )
         return cls(
             query=query,

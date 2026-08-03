@@ -57,7 +57,7 @@ def build_refugos_query_request(
 
 def build_refugos_serie_request(
     *,
-    filial: str,
+    filial: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     granularity: Optional[str] = None,
@@ -66,6 +66,7 @@ def build_refugos_serie_request(
     op: Optional[str] = None,
     motivo: Optional[str] = None,
     recurso: Optional[str] = None,
+    require_filial: bool = True,
 ) -> RefugosSerieRequest:
     return RefugosSerieRequest.from_query(
         filial=filial,
@@ -77,12 +78,13 @@ def build_refugos_serie_request(
         op=op,
         motivo=motivo,
         recurso=recurso,
+        require_filial=require_filial,
     )
 
 
 def build_refugos_registros_request(
     *,
-    filial: str,
+    filial: str | None,
     data_inicio: Optional[str] = None,
     data_fim: Optional[str] = None,
     mp: Optional[str] = None,
@@ -92,6 +94,7 @@ def build_refugos_registros_request(
     recurso: Optional[str] = None,
     page: int = DEFAULT_PAGE,
     page_size: int = DEFAULT_PAGE_SIZE,
+    require_filial: bool = True,
 ) -> RefugosRegistrosRequest:
     return RefugosRegistrosRequest.from_query(
         filial=filial,
@@ -104,6 +107,7 @@ def build_refugos_registros_request(
         recurso=recurso,
         page=page,
         page_size=page_size,
+        require_filial=require_filial,
     )
 
 

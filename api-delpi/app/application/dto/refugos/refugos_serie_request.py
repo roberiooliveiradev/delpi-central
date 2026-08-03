@@ -32,11 +32,13 @@ class RefugosSerieRequest:
         op: str | None = None,
         motivo: str | None = None,
         recurso: str | None = None,
+        require_filial: bool = True,
     ) -> RefugosSerieRequest:
         period = RefugosPeriod.resolve(
             filial=filial,
             data_inicio=data_inicio,
             data_fim=data_fim,
+            require_filial=require_filial,
         )
         raw = (granularity or "auto").strip().lower() or "auto"
         if raw not in SERIE_GRANULARITIES:

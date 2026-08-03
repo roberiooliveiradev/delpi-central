@@ -50,8 +50,8 @@ class ListProductionAppointmentWorkCentersUseCase:
             "summary": {
                 "total_records": len(items),
                 "branch": request.branch,
-                "branch_filter_applied": True,
-                "consolidated_across_branches": False,
+                "branch_filter_applied": request.branch is not None,
+                "consolidated_across_branches": request.branch is None,
                 "is_complete": True,
             },
         }
@@ -99,7 +99,7 @@ class ListProductionAppointmentsUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=request.offset + len(items) >= total,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
             "pagination": {
                 "page": request.page,
@@ -154,7 +154,7 @@ class GetProductionAppointmentsSummaryUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=True,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
         }
 
@@ -204,7 +204,7 @@ class GetProductionAppointmentsSeriesUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=True,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
         }
 
@@ -251,7 +251,7 @@ class ListProductionAppointmentsByOpUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=request.offset + len(items) >= total,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
             "pagination": {
                 "page": request.page,
@@ -314,7 +314,7 @@ class ListProductionAppointmentsChildOpsUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=request.offset + len(items) >= total,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
             "pagination": {
                 "page": request.page,
@@ -370,7 +370,7 @@ class GetProductionAppointmentsFinishedOpsSeriesUseCase:
                 period_start=date_start,
                 period_end_exclusive=date_end_exclusive,
                 is_complete=True,
-                consolidated_across_branches=False,
+                consolidated_across_branches=request.branch is None,
             ),
         }
 

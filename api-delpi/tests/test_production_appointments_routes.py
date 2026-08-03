@@ -43,9 +43,26 @@ def test_router_exposes_all_endpoints(pa_client: TestClient) -> None:
     assert "/production/appointments/produced-totals" in paths
 
 
-def test_summary_requires_branch(pa_client: TestClient) -> None:
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_get_production_appointments_summary_use_case"
+)
+def test_summary_allows_consolidated_without_branch(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "summary": {"branch_filter_applied": False, "consolidated_across_branches": True}
+    }
+    mock_builder.return_value = use_case
+
     response = pa_client.get("/production/appointments/summary")
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert _body(response)["success"] is True
+    use_case.execute.assert_called_once()
 
 
 @patch(

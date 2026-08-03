@@ -39,9 +39,28 @@ def test_router_exposes_all_endpoints(refugos_client: TestClient) -> None:
     assert "/refugos/filtros" in paths
 
 
-def test_resumo_requires_filial(refugos_client: TestClient) -> None:
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_resumo_use_case"
+)
+def test_resumo_allows_consolidated_without_filial(
+    mock_builder, _mock_branch, refugos_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "totalValor": 10.5,
+        "valorDia": 1.2,
+        "valorMes": 10.5,
+    }
+    mock_builder.return_value = use_case
+
     response = refugos_client.get("/refugos/resumo")
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert _body(response)["success"] is True
+    use_case.execute.assert_called_once()
 
 
 @patch(

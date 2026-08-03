@@ -5,7 +5,7 @@ from typing import Any, Callable, Optional
 from fastapi import Query
 
 from app.interface.http.query_param_enums import (
-    BRANCH_QUERY_REQUIRED,
+    BRANCH_QUERY_OPTIONAL,
     PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY,
 )
 
@@ -24,7 +24,7 @@ from app.utils.logger import log_error
 
 def build_query_request(
     *,
-    branch: str,
+    branch: str | None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     work_center: Optional[str] = None,
@@ -36,6 +36,7 @@ def build_query_request(
     granularity: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
+    require_branch: bool = True,
 ) -> ProductionAppointmentsQueryRequest:
     return ProductionAppointmentsQueryRequest.from_query(
         branch=branch,
@@ -50,6 +51,7 @@ def build_query_request(
         granularity=granularity,
         page=page,
         page_size=page_size,
+        require_branch=require_branch,
     )
 
 
@@ -83,7 +85,7 @@ def execute_route(
 
 
 def BRANCH_QUERY():
-    return BRANCH_QUERY_REQUIRED()
+    return BRANCH_QUERY_OPTIONAL()
 def WORK_CENTER_QUERY():
     return Query(None, description="Work center filter (e.g. CT-70).")
 def OP_QUERY():

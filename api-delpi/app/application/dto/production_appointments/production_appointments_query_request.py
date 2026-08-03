@@ -20,7 +20,7 @@ from app.domain.services.production.protheus_date_range_service import (
 
 @dataclass(frozen=True, slots=True)
 class ProductionAppointmentsQueryRequest:
-    branch: str
+    branch: str | None
     date_start: str | None = None
     date_end: str | None = None
     work_center: str | None = None
@@ -37,7 +37,7 @@ class ProductionAppointmentsQueryRequest:
     def from_query(
         cls,
         *,
-        branch: str,
+        branch: str | None,
         date_start: str | None = None,
         date_end: str | None = None,
         work_center: str | None = None,
@@ -49,9 +49,13 @@ class ProductionAppointmentsQueryRequest:
         granularity: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
+        require_branch: bool = True,
     ) -> ProductionAppointmentsQueryRequest:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
+        normalized_branch = str(branch or "").strip() or None
+        if normalized_branch is None:
+            if require_branch:
+                raise ValueError("branch é obrigatória.")
+        elif normalized_branch not in VALID_BRANCHES:
             raise ValueError('branch inválida. Use "01" (SC) ou "02" (ES).')
 
         resolved_group = (group_by or "day").strip().lower()

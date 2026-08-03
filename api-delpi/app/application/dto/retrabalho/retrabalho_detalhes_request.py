@@ -37,6 +37,7 @@ class RetrabalhoDetalhesRequest:
         page_size: int = DEFAULT_PAGE_SIZE,
         order_by: str | None = None,
         order_dir: str | None = None,
+        require_filial: bool = True,
     ) -> RetrabalhoDetalhesRequest:
         base = RetrabalhoQueryRequest.from_query(
             filial=filial,
@@ -45,6 +46,7 @@ class RetrabalhoDetalhesRequest:
             recurso=recurso,
             centro_custo=centro_custo,
             codigo_operador=codigo_operador,
+            require_filial=require_filial,
         )
         normalized_sort_by = str(order_by or DEFAULT_SORT_BY).strip().lower() or DEFAULT_SORT_BY
         normalized_sort_dir = str(order_dir or DEFAULT_SORT_DIR).strip().lower() or DEFAULT_SORT_DIR

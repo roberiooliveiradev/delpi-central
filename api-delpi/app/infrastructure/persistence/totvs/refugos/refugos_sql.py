@@ -145,7 +145,7 @@ def build_filtros_mp_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
 ) -> tuple[str, tuple]:
     where, params = build_base_where(
         date_start=date_start,
@@ -171,7 +171,7 @@ def build_filtros_pa_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
 ) -> tuple[str, tuple]:
     where, params = build_base_where(
         date_start=date_start,
@@ -197,7 +197,7 @@ def build_filtros_op_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
 ) -> tuple[str, tuple]:
     where, params = build_base_where(
         date_start=date_start,
@@ -222,7 +222,7 @@ def build_filtros_motivo_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
 ) -> tuple[str, tuple]:
     where, params = build_base_where(
         date_start=date_start,
@@ -331,7 +331,7 @@ def build_serie_query(
     granularity: str,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     mp: str | None = None,
     pa: str | None = None,
     op: str | None = None,
@@ -378,7 +378,7 @@ def build_ranking_query(
     dimension: str,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     limit: int,
     mp: str | None = None,
     pa: str | None = None,
@@ -445,7 +445,7 @@ def build_registros_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     offset: int,
     page_size: int,
     mp: str | None = None,
@@ -495,7 +495,7 @@ def build_registros_count_query(
     *,
     date_start: str,
     date_end_exclusive: str,
-    branch: str,
+    branch: str | None,
     mp: str | None = None,
     pa: str | None = None,
     op: str | None = None,

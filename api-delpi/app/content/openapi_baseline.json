@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 504,
+  "operation_count": 506,
   "operations": [
     {
       "method": "POST",
@@ -2311,6 +2311,223 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Commercial proposal history events."
+    },
+    {
+      "method": "GET",
+      "path": "/commercial/rol/by-customer",
+      "operationId": "get_commercial_rol_by_customer",
+      "summary": "Commercial ROL ranking by customer",
+      "tags": [
+        "Comercial"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "customer_segment",
+          "in": "query",
+          "required": false,
+          "description": "Customer segment: weg or new_business.",
+          "enum": [
+            "weg",
+            "new_business"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "required": false,
+          "description": "Limit query parameter.",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "include_others",
+          "in": "query",
+          "required": false,
+          "description": "When true, aggregates customers outside the top N into an Others row.",
+          "type": "boolean",
+          "default": true
+        }
+      ],
+      "xDelpi": {
+        "entity": "commercial_rol_by_customer",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Commercial ROL ranking by customer",
+            "description": "Top customers by net operating revenue (ROL) for a period, with optional others bucket.",
+            "label": "Commercial ROL by customer"
+          },
+          "pt-BR": {
+            "summary": "Ranking de faturamento (ROL) por cliente",
+            "description": "Lista os maiores clientes por receita operacional líquida no período, com linha Demais opcional.",
+            "label": "Indicador — ROL por cliente"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "customer_segment": {
+            "locale": {
+              "en": {
+                "description": "Filter: weg or new_business. Empty = all segments.",
+                "label": "Segment"
+              },
+              "pt-BR": {
+                "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
+                "label": "Segmento"
+              }
+            },
+            "enumLabels": {
+              "new_business": {
+                "en": {
+                  "label": "New business"
+                },
+                "pt-BR": {
+                  "label": "Novos negócios"
+                }
+              },
+              "weg": {
+                "en": {
+                  "label": "WEG"
+                },
+                "pt-BR": {
+                  "label": "WEG"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "include_others": {
+            "locale": {
+              "en": {
+                "description": "When true, aggregates customers outside the top N into an Others row.",
+                "label": "Include others bucket"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, agrega clientes fora do Top N na linha Demais.",
+                "label": "Incluir Demais"
+              }
+            }
+          },
+          "limit": {
+            "locale": {
+              "en": {
+                "description": "Limit query parameter.",
+                "label": "Limit"
+              },
+              "pt-BR": {
+                "description": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
+                "label": "Limite"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Lista os maiores clientes por receita operacional líquida no período, com linha Demais opcional.",
+          "label": "Indicador — ROL por cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Top customers by net operating revenue (ROL) for a period, with optional others bucket."
     },
     {
       "method": "GET",
@@ -22269,7 +22486,7 @@
       "method": "GET",
       "path": "/financeiro/despesas-centro-custo/lancamentos",
       "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
-      "summary": "Paged list — financial expenses cost center lancamento",
+      "summary": "Cost-center expenses — ledger entries",
       "tags": [
         "Financeiro — Despesas por Centro de Custo"
       ],
@@ -22686,7 +22903,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "financial expenses cost center entries."
+      "description": "Paged ledger of purchase/expense entries by cost center, branch, supplier and period."
     },
     {
       "method": "GET",
@@ -23061,7 +23278,7 @@
       "method": "GET",
       "path": "/financeiro/despesas-centro-custo/resumo",
       "operationId": "get_financeiro_despesas_centro_custo_resumo",
-      "summary": "Financial expenses cost center summary",
+      "summary": "Cost-center expenses — summary KPIs",
       "tags": [
         "Financeiro — Despesas por Centro de Custo"
       ],
@@ -23251,7 +23468,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Financial expenses cost center summary."
+      "description": "Aggregate expense totals and counts by cost center for a period (optional branch/supplier filters)."
     },
     {
       "method": "GET",
@@ -23450,7 +23667,7 @@
       "method": "GET",
       "path": "/financeiro/inadimplencia/clientes",
       "operationId": "get_financeiro_inadimplencia_clientes",
-      "summary": "Paged list — financial inadimplencia cliente",
+      "summary": "Delinquency — customers ranking",
       "tags": [
         "Financeiro — Inadimplência"
       ],
@@ -23772,7 +23989,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Paged list — financial inadimplencia cliente."
+      "description": "Paged ranking of customers by late titles and amounts for a reference period."
     },
     {
       "method": "GET",
@@ -24017,7 +24234,7 @@
       "method": "GET",
       "path": "/financeiro/inadimplencia/resumo",
       "operationId": "get_financeiro_inadimplencia_resumo",
-      "summary": "Financial inadimplencia summary",
+      "summary": "Delinquency — summary KPIs",
       "tags": [
         "Financeiro — Inadimplência"
       ],
@@ -24093,13 +24310,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Financial inadimplencia summary."
+      "description": "On-time vs late title counts, amounts and percentages for a reference period."
     },
     {
       "method": "GET",
       "path": "/financeiro/inadimplencia/titulos",
       "operationId": "get_financeiro_inadimplencia_titulos",
-      "summary": "Paged list — financial inadimplencia titulo",
+      "summary": "Delinquency — titles list",
       "tags": [
         "Financeiro — Inadimplência"
       ],
@@ -24821,7 +25038,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Paged list — financial inadimplencia titulo."
+      "description": "Paged list of receivable titles with delay range, status and amounts for a period."
     },
     {
       "method": "GET",
@@ -27719,7 +27936,7 @@
       "method": "GET",
       "path": "/inspecoes-entrada/historico",
       "operationId": "get_inspecoes_entrada_historico",
-      "summary": "Paged list — incoming inspections history",
+      "summary": "Incoming inspections — history",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28081,13 +28298,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "incoming inspections history."
+      "description": "Paged history of completed incoming inspections by branch and period."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/historico/detalhe",
       "operationId": "get_inspecoes_entrada_historico_detalhe",
-      "summary": "incoming inspections history detail",
+      "summary": "Incoming inspection — history detail",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28194,13 +28411,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "incoming inspections history detail."
+      "description": "Detail of one incoming inspection from history (header, tests, totals)."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/pendentes",
       "operationId": "get_inspecoes_entrada_pendentes",
-      "summary": "Paged list — incoming inspections pending",
+      "summary": "Incoming inspections — pending",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28331,13 +28548,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "incoming inspections pending."
+      "description": "Paged list of pending incoming inspections for a branch."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/pendentes-fornecedor",
       "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
-      "summary": "List — incoming inspections pending fornecedor",
+      "summary": "Incoming inspections — pending by supplier",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28425,13 +28642,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "incoming inspections pending fornecedor."
+      "description": "Pending incoming inspections aggregated by supplier."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/rejeitadas-ensaiador",
       "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
-      "summary": "List — incoming inspections rejected tester",
+      "summary": "Incoming inspections — rejected by tester",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28519,13 +28736,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "incoming inspections rejected tester."
+      "description": "Rejected incoming inspections ranked or listed by tester."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/rejeitadas-produto",
       "operationId": "get_inspecoes_entrada_rejeitadas_produto",
-      "summary": "Inspections incoming rejected product",
+      "summary": "Incoming inspections — rejected by product",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28633,13 +28850,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Inspections incoming rejected product."
+      "description": "Rejected incoming inspections aggregated by product."
     },
     {
       "method": "GET",
       "path": "/inspecoes-entrada/resumo",
       "operationId": "get_inspecoes_entrada_resumo",
-      "summary": "Inspections incoming summary",
+      "summary": "Incoming inspections — summary KPIs",
       "tags": [
         "Inspeções de Entrada"
       ],
@@ -28730,7 +28947,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Inspections incoming summary."
+      "description": "Summary KPIs for incoming inspections (pending, rejected, throughput)."
     },
     {
       "method": "GET",
@@ -28893,7 +29110,7 @@
       "method": "GET",
       "path": "/inspecoes-processo/historico",
       "operationId": "get_inspecoes_processo_historico",
-      "summary": "Inspections processo history",
+      "summary": "In-process inspections — history",
       "tags": [
         "Inspeções de Processo"
       ],
@@ -29198,7 +29415,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Inspections processo history."
+      "description": "Paged history of in-process quality inspections by branch, production order or product."
     },
     {
       "method": "GET",
@@ -29823,7 +30040,7 @@
       "method": "GET",
       "path": "/inspecoes-processo/resumo",
       "operationId": "get_inspecoes_processo_resumo",
-      "summary": "Inspections processo summary",
+      "summary": "In-process inspections — summary KPIs",
       "tags": [
         "Inspeções de Processo"
       ],
@@ -29914,7 +30131,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Inspections processo summary."
+      "description": "Summary KPIs for in-process inspections (orders, tests, approval rates)."
     },
     {
       "method": "POST",
@@ -30997,8 +31214,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -31316,8 +31533,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -31635,8 +31852,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -31934,8 +32151,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -32222,8 +32439,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -32431,8 +32648,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -32847,8 +33064,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -33107,8 +33324,8 @@
         {
           "name": "branch",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "type": "string",
           "enum": [
             "01",
@@ -63738,13 +63955,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -63939,13 +64156,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "dimension",
@@ -64279,7 +64496,7 @@
       "method": "GET",
       "path": "/refugos/registros",
       "operationId": "get_refugos_registros",
-      "summary": "Refugos registros",
+      "summary": "Scrap loss records",
       "tags": [
         "Produção — Acompanhamento de Refugos"
       ],
@@ -64288,13 +64505,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -64575,13 +64792,13 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Refugos registros."
+      "description": "Paged scrap (refugo) rows with material, finished product, reason, quantity and valued cost."
     },
     {
       "method": "GET",
       "path": "/refugos/resumo",
       "operationId": "get_refugos_resumo",
-      "summary": "Refugos summary",
+      "summary": "Scrap losses summary",
       "tags": [
         "Produção — Acompanhamento de Refugos"
       ],
@@ -64590,13 +64807,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -64837,7 +65054,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Refugos summary."
+      "description": "KPIs for scrap losses in the period: quantity, valued cost and occurrence counts."
     },
     {
       "method": "GET",
@@ -65113,13 +65330,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -65802,6 +66019,37 @@
     },
     {
       "method": "GET",
+      "path": "/reports/providers/management_revenue_monthly/preview",
+      "operationId": "preview_report_provider_management_revenue_monthly",
+      "summary": "Preview Management Revenue Monthly",
+      "tags": [
+        "Delpi Reports",
+        "Delpi Reports"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "asOfDate",
+          "in": "query",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "name": "customerLimit",
+          "in": "query",
+          "required": false,
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "report_dataset",
+        "shape": "paged_list",
+        "presentationStrategy": "as_delivered"
+      }
+    },
+    {
+      "method": "GET",
       "path": "/reports/providers/safety_stock_shortage_30d/preview",
       "operationId": "preview_report_provider_safety_stock_shortage_30d",
       "summary": "Preview Safety Stock Shortage 30D",
@@ -66113,13 +66361,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -66395,7 +66643,7 @@
       "method": "GET",
       "path": "/retrabalhos/detalhes",
       "operationId": "get_retrabalhos_detalhes",
-      "summary": "Retrabalhos detalhes",
+      "summary": "Rework appointment details",
       "tags": [
         "Qualidade — Controle de Retrabalhos"
       ],
@@ -66404,13 +66652,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -66746,7 +66994,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retrabalhos detalhes."
+      "description": "Paged rework (parada) appointments with hours, stop cost, resource, operator and reason."
     },
     {
       "method": "GET",
@@ -66761,13 +67009,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -66958,13 +67206,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -67179,13 +67427,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -67461,7 +67709,7 @@
       "method": "GET",
       "path": "/retrabalhos/resumo",
       "operationId": "get_retrabalhos_resumo",
-      "summary": "Retrabalhos summary",
+      "summary": "Rework hours summary",
       "tags": [
         "Qualidade — Controle de Retrabalhos"
       ],
@@ -67470,13 +67718,13 @@
         {
           "name": "filial",
           "in": "query",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
           "enum": [
             "01",
             "02"
-          ]
+          ],
+          "type": "string"
         },
         {
           "name": "start_date",
@@ -67679,7 +67927,7 @@
         },
         "presentationStrategy": "as_delivered"
       },
-      "description": "Retrabalhos summary."
+      "description": "KPIs for rework stop appointments: total hours, cost and highlights by resource or operator."
     },
     {
       "method": "GET",

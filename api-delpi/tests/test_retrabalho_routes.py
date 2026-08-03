@@ -36,9 +36,28 @@ def test_router_exposes_all_endpoints(retrabalho_client: TestClient) -> None:
     assert "/retrabalhos/detalhes" in paths
 
 
-def test_resumo_requires_filial(retrabalho_client: TestClient) -> None:
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_resumo_use_case"
+)
+def test_resumo_allows_consolidated_without_filial(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "totalApontamentos": 10,
+        "totalHoras": 1.5,
+        "totalCusto": 100.0,
+    }
+    mock_builder.return_value = use_case
+
     response = retrabalho_client.get("/retrabalhos/resumo")
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert _body(response)["success"] is True
+    use_case.execute.assert_called_once()
 
 
 @patch(

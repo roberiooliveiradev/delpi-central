@@ -57,7 +57,7 @@ router = APIRouter(
 
 def _guard_and_build(
     *,
-    branch: str,
+    branch: str | None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     work_center: Optional[str] = None,
@@ -88,6 +88,7 @@ def _guard_and_build(
             granularity=granularity,
             page=page,
             page_size=page_size,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao {error_context}: {exc}")
@@ -311,6 +312,7 @@ def finished_ops_series_route(
             product=product,
             mother_op=mother_op,
             granularity=granularity,
+            require_branch=False,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar série de OPs finalizadas: {exc}")
@@ -477,7 +479,7 @@ def produced_totals_route(
             branch=branch,
             products=[product] if product else None,
             product_types=tipos,
-            require_branch=True,
+            require_branch=False,
         )
         use_case = build_get_produced_quantity_use_case()
         result = use_case.get_totals(query)
