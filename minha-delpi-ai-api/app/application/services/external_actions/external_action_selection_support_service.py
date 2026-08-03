@@ -22,17 +22,41 @@ class ExternalActionSelectionSupportService:
         allowed_action_ids: list[str],
         limit: int,
     ) -> list[dict]:
-        allowed = {str(item) for item in allowed_action_ids}
+        from app.domain.services.external_actions.external_action_candidate_discovery_service import (
+            ExternalActionCandidateDiscoveryService,
+        )
 
-        return [
-            action
-            for action in self.repository.find_candidate_actions(
-                message,
-                limit=limit,
-                allowed_action_ids=allowed_action_ids,
-            )
-            if str(action.get("actionId")) in allowed
-        ]
+        allowed = {str(item) for item in allowed_action_ids}
+        by_id: dict[str, dict] = {}
+
+        for action in self.repository.find_candidate_actions(
+            message,
+            limit=limit,
+            allowed_action_ids=allowed_action_ids,
+        ):
+            action_id = str(action.get("actionId") or "")
+            if action_id in allowed:
+                by_id[action_id] = action
+
+        markers = ExternalActionCandidateDiscoveryService.resolve_path_markers(message)
+        list_actions = getattr(self.repository, "list_actions", None)
+        if markers and callable(list_actions):
+            for action in list_actions():
+                action_id = str(action.get("actionId") or "")
+                if action_id not in allowed or action_id in by_id:
+                    continue
+                path = str(action.get("path") or "").lower()
+                operation_id = str(action.get("operationId") or "").lower()
+                if any(
+                    marker.lower() in path or marker.lower() in operation_id
+                    for marker in markers
+                ):
+                    by_id[action_id] = action
+
+        results = list(by_id.values())
+        if markers:
+            return results[: max(limit, 120)]
+        return results[:limit]
 
     def rank_candidates(
         self,

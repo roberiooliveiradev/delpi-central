@@ -244,7 +244,10 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         *,
         allowed_action_ids: list[str] | None = None,
     ) -> list[dict]:
-        normalized = str(query or "").lower()
+        from app.domain.services.external_actions.external_action_candidate_discovery_service import (
+            ExternalActionCandidateDiscoveryService,
+        )
+
         allowed_ids = [str(item).strip() for item in (allowed_action_ids or []) if str(item).strip()]
 
         db_query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
@@ -255,134 +258,22 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         if allowed_ids:
             db_query = db_query.filter(ExternalActionModel.action_id.in_(allowed_ids))
 
-        is_supplies_kpi = any(
-            term in normalized
-            for term in ["giro de estoque", "giro do estoque", "valor de estoque", "valor total de estoque", "idd"]
-        )
-
-        if is_supplies_kpi:
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%supplies%"),
-                    ExternalActionModel.summary.ilike("%supri%"),
-                    ExternalActionModel.operation_id.ilike("%supplies%"),
-                    ExternalActionModel.operation_id.ilike("%inventory%"),
-                )
-            )
-        elif any(
-            term in normalized
-            for term in [
-                "produto",
-                "product",
-                "item",
-                "código",
-                "codigo",
-                "estoque",
-                "stock",
-                "venda",
-                "vendas",
-                "descrição",
-                "descricao",
-                "busque",
-                "buscar",
-                "pesquise",
-                "procure",
-                "traga",
-                "search",
-                "exemplos",
-                "estrutura",
-                "composição",
-                "composicao",
-                "componentes",
-                "bom",
-                "roteiro",
-                "pai do",
-                "pais do",
-                "onde é usado",
-                "onde e usado",
-                "where used",
-                "fornecedor",
-                "compra",
-                "preço",
-                "preco",
-                "quanto custa",
-                "custo",
-                "movimentação",
-                "movimentacao",
-                "inspeção",
-                "inspecao",
-                "nota de entrada",
-                "nota de saída",
-                "notas de entrada",
-                "notas de saída",
-                "diretiva",
-                "diretivas",
-                "directive",
-                "directives",
-            ]
-        ):
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%products%"),
-                    ExternalActionModel.path.ilike("%produto%"),
-                    ExternalActionModel.summary.ilike("%product%"),
-                    ExternalActionModel.summary.ilike("%produto%"),
-                    ExternalActionModel.description.ilike("%product%"),
-                    ExternalActionModel.description.ilike("%produto%"),
-                )
-            )
-        elif any(
-            term in normalized
-            for term in ["lmp", "lmps", "amostra", " ov ", "ordens de venda", "pedidos de venda"]
-        ):
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%lmp%"),
-                    ExternalActionModel.summary.ilike("%lmp%"),
-                    ExternalActionModel.description.ilike("%lmp%"),
-                    ExternalActionModel.path.ilike("%sales%"),
-                    ExternalActionModel.summary.ilike("%venda%"),
-                    ExternalActionModel.operation_id.ilike("%sale_order%"),
-                )
-            )
-        elif any(
-            term in normalized
-            for term in [
-                "cpv", "otd", "giro", "suprimento", "supplies",
-                "valor de estoque", "valor total", "inventory",
-            ]
-        ):
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%supplies%"),
-                    ExternalActionModel.summary.ilike("%supri%"),
-                    ExternalActionModel.operation_id.ilike("%supplies%"),
-                    ExternalActionModel.operation_id.ilike("%inventory%"),
-                )
-            )
-        elif any(
-            term in normalized
-            for term in ["ordens de venda", "pedidos de venda", "listar ov", "vendas do período"]
-        ):
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%/sales%"),
-                    ExternalActionModel.operation_id.ilike("%sale_orders%"),
-                )
-            )
-        elif any(term in normalized for term in ["sql", "data", "dados", "query", "select "]):
-            db_query = db_query.filter(
-                db.or_(
-                    ExternalActionModel.path.ilike("%sql%"),
-                    ExternalActionModel.path.ilike("%data%"),
-                    ExternalActionModel.summary.ilike("%sql%"),
-                    ExternalActionModel.summary.ilike("%data%"),
-                    ExternalActionModel.description.ilike("%sql%"),
-                    ExternalActionModel.description.ilike("%data%"),
-                    ExternalActionModel.operation_id.ilike("%sql%"),
-                    ExternalActionModel.operation_id.ilike("%data%"),
-                )
-            )
+        rule = ExternalActionCandidateDiscoveryService.match_filter_rule(query)
+        if rule:
+            clauses = []
+            for item in rule.get("orIlike") or []:
+                if not isinstance(item, dict):
+                    continue
+                column = str(item.get("column") or "").strip()
+                pattern = str(item.get("pattern") or "").strip()
+                if not column or not pattern:
+                    continue
+                attr = getattr(ExternalActionModel, column, None)
+                if attr is None:
+                    continue
+                clauses.append(attr.ilike(pattern))
+            if clauses:
+                db_query = db_query.filter(db.or_(*clauses))
         elif not allowed_ids:
             return []
 

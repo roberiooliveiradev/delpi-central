@@ -191,6 +191,167 @@
       "scoreGapDirectAnswer": "Encontrei mais de uma rota possível e o ranking ficou empatado. Qual você quer?\n\n1. **{labelA}** (`{operationIdA}`)\n2. **{labelB}** (`{operationIdB}`)\n\nResponda indicando a opção 1 ou 2, ou reformule a pergunta.",
       "catalogMissDirectAnswer": "Não encontrei uma rota autorizada no catálogo para essa consulta. Reformule com mais detalhe (indicador, período, produto ou status) ou use uma sugestão do menu do chat."
     },
+    "candidateDiscovery": {
+      "rules": [
+        {
+          "id": "suppliesKpi",
+          "anyOfTerms": [
+            "giro de estoque",
+            "giro do estoque",
+            "valor de estoque",
+            "valor total de estoque",
+            "idd"
+          ],
+          "orIlike": [
+            {"column": "path", "pattern": "%supplies%"},
+            {"column": "summary", "pattern": "%supri%"},
+            {"column": "operation_id", "pattern": "%supplies%"},
+            {"column": "operation_id", "pattern": "%inventory%"}
+          ]
+        },
+        {
+          "id": "productTerms",
+          "anyOfTerms": [
+            "produto",
+            "product",
+            "item",
+            "código",
+            "codigo",
+            "estoque",
+            "stock",
+            "venda",
+            "vendas",
+            "descrição",
+            "descricao",
+            "busque",
+            "buscar",
+            "pesquise",
+            "procure",
+            "traga",
+            "search",
+            "exemplos",
+            "estrutura",
+            "composição",
+            "composicao",
+            "componentes",
+            "bom",
+            "roteiro",
+            "pai do",
+            "pais do",
+            "onde é usado",
+            "onde e usado",
+            "where used",
+            "fornecedor",
+            "compra",
+            "preço",
+            "preco",
+            "quanto custa",
+            "custo",
+            "movimentação",
+            "movimentacao",
+            "inspeção",
+            "inspecao",
+            "nota de entrada",
+            "nota de saída",
+            "notas de entrada",
+            "notas de saída",
+            "diretiva",
+            "diretivas",
+            "directive",
+            "directives"
+          ],
+          "orIlike": [
+            {"column": "path", "pattern": "%products%"},
+            {"column": "path", "pattern": "%produto%"},
+            {"column": "summary", "pattern": "%product%"},
+            {"column": "summary", "pattern": "%produto%"},
+            {"column": "description", "pattern": "%product%"},
+            {"column": "description", "pattern": "%produto%"}
+          ]
+        },
+        {
+          "id": "lmpSales",
+          "anyOfTerms": [
+            "lmp",
+            "lmps",
+            "amostra",
+            " ov ",
+            "ordens de venda",
+            "pedidos de venda"
+          ],
+          "orIlike": [
+            {"column": "path", "pattern": "%lmp%"},
+            {"column": "summary", "pattern": "%lmp%"},
+            {"column": "description", "pattern": "%lmp%"},
+            {"column": "path", "pattern": "%sales%"},
+            {"column": "summary", "pattern": "%venda%"},
+            {"column": "operation_id", "pattern": "%sale_order%"}
+          ]
+        },
+        {
+          "id": "suppliesKeywords",
+          "anyOfTerms": [
+            "cpv",
+            "otd",
+            "giro",
+            "suprimento",
+            "supplies",
+            "valor de estoque",
+            "valor total",
+            "inventory"
+          ],
+          "orIlike": [
+            {"column": "path", "pattern": "%supplies%"},
+            {"column": "summary", "pattern": "%supri%"},
+            {"column": "operation_id", "pattern": "%supplies%"},
+            {"column": "operation_id", "pattern": "%inventory%"}
+          ]
+        },
+        {
+          "id": "saleOrdersList",
+          "anyOfTerms": [
+            "ordens de venda",
+            "pedidos de venda",
+            "listar ov",
+            "vendas do período"
+          ],
+          "orIlike": [
+            {"column": "path", "pattern": "%/sales%"},
+            {"column": "operation_id", "pattern": "%sale_orders%"}
+          ]
+        },
+        {
+          "id": "sqlOrData",
+          "anyOfTerms": ["sql", "data", "dados", "query", "select "],
+          "orIlike": [
+            {"column": "path", "pattern": "%sql%"},
+            {"column": "path", "pattern": "%data%"},
+            {"column": "summary", "pattern": "%sql%"},
+            {"column": "summary", "pattern": "%data%"},
+            {"column": "description", "pattern": "%sql%"},
+            {"column": "description", "pattern": "%data%"},
+            {"column": "operation_id", "pattern": "%sql%"},
+            {"column": "operation_id", "pattern": "%data%"}
+          ]
+        }
+      ],
+      "markerPools": [
+        {
+          "id": "productionOrdersCatalog",
+          "anyOfTermKeys": [
+            "productionOtdDetailProductionContextTerms",
+            "productionPcpOrdersOpsTerms",
+            "productionOtdDetailTerms"
+          ],
+          "pathMarkersKey": "routeSuggestionPoolPathMarkers.productionOrdersCatalog"
+        },
+        {
+          "id": "productionDomain",
+          "anyOfTermKeys": ["candidatePathPrioritization.productionTerms"],
+          "pathMarkersKey": "routeSuggestionPoolPathMarkers.production"
+        }
+      ]
+    },
     "suppliesOtdSuppliesDomainTerms": [
       "compra",
       "suprimentos",

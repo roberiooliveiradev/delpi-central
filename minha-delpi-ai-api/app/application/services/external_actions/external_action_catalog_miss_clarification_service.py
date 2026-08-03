@@ -33,7 +33,7 @@ class ExternalActionCatalogMissClarificationService:
         if not route.requires_tool:
             return None
 
-        if route.intent in {"assistant_identity", "capabilities", "llm_general", "rag"}:
+        if route.intent in {"identity", "capabilities", "llm_general", "rag"}:
             return None
 
         answer = ExternalActionResponseContentService.get(
