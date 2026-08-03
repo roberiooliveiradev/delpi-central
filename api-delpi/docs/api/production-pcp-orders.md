@@ -1,6 +1,6 @@
-# Ordens de produção PCP (`VW_PCP_ORDENS_PRODUCAO`)
+# Ordens de produção — OPs (`VW_PCP_ORDENS_PRODUCAO`)
 
-Catálogo filtrável de OPs (estilo Power BI), separado do playbook SC2 (`/production/orders/*`) e do KPI OTD.
+Catálogo filtrável de ordens de produção (estilo Power BI), separado do playbook SC2 (`/production/orders/*`) e do KPI OTD.
 
 ## Rotas
 
@@ -32,4 +32,4 @@ Ranking: `rank_by` (`product` \| `warehouse` \| `op`), `metric` (`order_qty` \| 
 
 - `/production/orders/open|finished|…` — playbook por `reference_date` em SC2010 (não substituído).
 - `/production/otd` — KPI prazo/atraso.
-- Esta família — listagem PCP por entrega prevista e flags da view.
+- Esta família — listagem de OPs por entrega prevista e flags da view.

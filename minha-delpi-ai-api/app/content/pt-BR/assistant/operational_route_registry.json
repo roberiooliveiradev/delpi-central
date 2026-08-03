@@ -5154,7 +5154,7 @@
         "tier": "C",
         "entity": "production_pcp_orders_items",
         "tags": [
-          "Produção — Ordens PCP"
+          "Produção — Ordens de produção"
         ]
       }
     },
@@ -5184,7 +5184,7 @@
         "tier": "C",
         "entity": "production_pcp_orders_ranking",
         "tags": [
-          "Produção — Ordens PCP"
+          "Produção — Ordens de produção"
         ]
       }
     },

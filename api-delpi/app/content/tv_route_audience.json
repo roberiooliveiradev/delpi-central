@@ -7599,16 +7599,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "PCP production orders summary",
-          "description": "KPIs for PCP production orders: open, delayed, mother orders, planned/produced/balance quantities and delay days.",
-          "whenToUse": "Use as a KPI card before listing or ranking PCP production orders.",
-          "label": "PCP orders summary"
+          "summary": "Production orders summary",
+          "description": "KPIs for production orders: open, delayed, mother orders, planned/produced/balance quantities and delay days.",
+          "whenToUse": "Use as a KPI card before listing or ranking production orders (OPs).",
+          "label": "Production orders summary"
         },
         "pt-BR": {
-          "summary": "Resumo de OPs PCP",
-          "description": "Indicadores de ordens de produção PCP: abertas, atrasadas, OPs mãe, quantidades e dias de atraso.",
-          "whenToUse": "Usar em card KPI antes da listagem ou ranking de OPs PCP.",
-          "label": "Resumo de OPs PCP"
+          "summary": "Resumo de OPs",
+          "description": "Indicadores de ordens de produção: abertas, atrasadas, OPs mãe, quantidades e dias de atraso.",
+          "whenToUse": "Usar em card KPI antes da listagem ou ranking de OPs.",
+          "label": "Resumo de OPs"
         }
       }
     },
@@ -7616,16 +7616,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "PCP production orders items",
-          "description": "Paged PCP production orders with product, dates, quantities, balance and delay flags.",
+          "summary": "Production orders items",
+          "description": "Paged production orders with product, dates, quantities, balance and delay flags.",
           "whenToUse": "Use for a table of production orders filtered by delivery date and open/mother/delayed flags.",
-          "label": "PCP orders items"
+          "label": "Production orders items"
         },
         "pt-BR": {
-          "summary": "Itens de OPs PCP",
-          "description": "Lista paginada de ordens de produção PCP com produto, datas, quantidades, saldo e flags.",
+          "summary": "Itens de OPs",
+          "description": "Lista paginada de ordens de produção com produto, datas, quantidades, saldo e flags.",
           "whenToUse": "Usar em tabela de OPs filtrada por entrega prevista e flags (aberta/mãe/atrasada).",
-          "label": "Itens de OPs PCP"
+          "label": "Itens de OPs"
         }
       }
     },
@@ -7633,16 +7633,16 @@
       "category": "production",
       "locale": {
         "en": {
-          "summary": "PCP production orders ranking",
-          "description": "Top-N ranking of PCP production orders by product, warehouse or OP key.",
+          "summary": "Production orders ranking",
+          "description": "Top-N ranking of production orders by product, warehouse or OP key.",
           "whenToUse": "Use for ranking cards of order quantity, balance or delay days.",
-          "label": "PCP orders ranking"
+          "label": "Production orders ranking"
         },
         "pt-BR": {
-          "summary": "Ranking de OPs PCP",
-          "description": "Top-N de ordens de produção PCP por produto, armazém ou OP.",
+          "summary": "Ranking de OPs",
+          "description": "Top-N de ordens de produção por produto, armazém ou OP.",
           "whenToUse": "Usar em cards de ranking por quantidade, saldo ou dias de atraso.",
-          "label": "Ranking de OPs PCP"
+          "label": "Ranking de OPs"
         }
       }
     }

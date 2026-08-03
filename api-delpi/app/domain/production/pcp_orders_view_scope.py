@@ -1,4 +1,4 @@
-"""Escopo — ordens de produção PCP (VW_PCP_ORDENS_PRODUCAO)."""
+"""Escopo — ordens de produção (VW_PCP_ORDENS_PRODUCAO)."""
 
 from __future__ import annotations
 

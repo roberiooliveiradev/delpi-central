@@ -1,4 +1,4 @@
-"""Repository — ordens de produção PCP."""
+"""Repository — ordens de produção."""
 
 from __future__ import annotations
 

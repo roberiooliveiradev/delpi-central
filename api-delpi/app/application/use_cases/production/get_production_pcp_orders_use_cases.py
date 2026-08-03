@@ -1,4 +1,4 @@
-"""Use cases — ordens de produção PCP."""
+"""Use cases — ordens de produção."""
 
 from __future__ import annotations
 

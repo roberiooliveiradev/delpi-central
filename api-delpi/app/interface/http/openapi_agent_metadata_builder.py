@@ -58,6 +58,9 @@ _ENTITY_LABELS: dict[str, str] = {
     "overall_equipment_effectiveness": "OEE (eficiência global dos equipamentos)",
     "production_otd": "OTD de produção",
     "production_otd_detail": "OTD de produção — resumo e ordens",
+    "production_pcp_orders_summary": "resumo de ordens de produção (OPs)",
+    "production_pcp_orders_items": "itens de ordens de produção (OPs)",
+    "production_pcp_orders_ranking": "ranking de ordens de produção (OPs)",
     "supplies_safety_stock_detail": (
         "detalhe de estoque de segurança com cobertura de compras, "
         "empenhos e extrato projetado de saldo"

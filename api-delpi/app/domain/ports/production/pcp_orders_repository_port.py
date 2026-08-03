@@ -1,4 +1,4 @@
-"""Port — ordens de produção PCP."""
+"""Port — ordens de produção."""
 
 from __future__ import annotations
 

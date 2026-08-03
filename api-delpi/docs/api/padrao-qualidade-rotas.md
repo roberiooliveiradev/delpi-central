@@ -1,6 +1,6 @@
 # Padrão de qualidade de rotas (api-delpi)
 
-Referência de implementação: família PCP [`/production/pcp-orders`](./production-pcp-orders.md) e helper [`paged_list_envelope_service.py`](../../app/application/services/paged_list_envelope_service.py).
+Referência de implementação: família de OPs [`/production/pcp-orders`](./production-pcp-orders.md) e helper [`paged_list_envelope_service.py`](../../app/application/services/paged_list_envelope_service.py).
 
 **Não** exige o trio `summary` / `items` / `ranking`. O padrão são critérios de qualidade transversais.
 

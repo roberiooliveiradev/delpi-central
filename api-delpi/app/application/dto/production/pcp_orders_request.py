@@ -1,4 +1,4 @@
-"""DTOs — ordens de produção PCP."""
+"""DTOs — ordens de produção."""
 
 from __future__ import annotations
 

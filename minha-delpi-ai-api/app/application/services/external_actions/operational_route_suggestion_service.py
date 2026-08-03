@@ -135,16 +135,16 @@ class OperationalRouteSuggestionService:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         markers: list[str] = []
 
-        pcp_triggers = ExternalActionResponseContentService.list(
+        production_orders_triggers = ExternalActionResponseContentService.list(
             "actionSelection",
             "productionPcpOrdersTriggerTerms",
         )
-        if any(term in normalized for term in pcp_triggers):
+        if any(term in normalized for term in production_orders_triggers):
             markers.extend(
                 ExternalActionResponseContentService.list(
                     "actionSelection",
                     "routeSuggestionPoolPathMarkers",
-                    "pcp",
+                    "productionOrdersCatalog",
                 )
             )
 

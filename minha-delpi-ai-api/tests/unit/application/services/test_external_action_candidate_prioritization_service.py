@@ -41,7 +41,7 @@ def test_production_otd_detail_prioritizes_detail_route():
     assert ordered[0]["actionId"] == "detail"
 
 
-def test_production_pcp_late_ops_prioritizes_pcp_over_commercial():
+def test_production_late_ops_prioritizes_catalog_over_commercial():
     candidates = [
         {
             "actionId": "commercial-rol",
@@ -50,25 +50,25 @@ def test_production_pcp_late_ops_prioritizes_pcp_over_commercial():
             "summary": "Indicador — Meta percentual rol comercial",
         },
         {
-            "actionId": "pcp-items",
+            "actionId": "ops-items",
             "path": "/production/pcp-orders/items",
             "operationId": "get_production_pcp_orders_items",
-            "summary": "Itens de OPs PCP",
+            "summary": "Itens de OPs",
         },
         {
-            "actionId": "pcp-ranking",
+            "actionId": "ops-ranking",
             "path": "/production/pcp-orders/ranking",
             "operationId": "get_production_pcp_orders_ranking",
-            "summary": "Ranking de OPs PCP",
+            "summary": "Ranking de OPs",
         },
     ]
 
     ordered = ExternalActionCandidatePrioritizationService.apply(
-        "ops em atraso pcp",
+        "ops em atraso",
         candidates,
     )
 
-    assert all("pcp" in str(item.get("path") or "").lower() for item in ordered)
+    assert all("pcp-orders" in str(item.get("path") or "").lower() for item in ordered)
     assert ordered[0]["operationId"] == "get_production_pcp_orders_items"
     assert "commercial" not in str(ordered[0].get("path") or "").lower()
 

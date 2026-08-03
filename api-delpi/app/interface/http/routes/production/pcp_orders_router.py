@@ -1,4 +1,4 @@
-"""Rotas — catálogo PCP de ordens de produção."""
+"""Rotas — catálogo de ordens de produção (view VW_PCP_ORDENS_PRODUCAO)."""
 
 from __future__ import annotations
 
@@ -40,7 +40,7 @@ from app.utils.logger import log_error
 
 router = APIRouter(
     prefix="/production/pcp-orders",
-    tags=["Produção — Ordens PCP"],
+    tags=["Produção — Ordens de produção"],
 )
 
 _CODE_PATTERN = r"^.{0,40}$"
@@ -228,11 +228,11 @@ def get_production_pcp_orders_summary(
         return api_delpi_success(
             result,
             operation_id="get_production_pcp_orders_summary",
-            message="Resumo de OPs PCP buscado com sucesso.",
+            message="Resumo de OPs buscado com sucesso.",
             fields=_SUMMARY_FIELDS,
         )
     except Exception as exc:
-        return _handle_errors("buscar resumo de OPs PCP", exc)
+        return _handle_errors("buscar resumo de OPs", exc)
 
 
 @router.get(
@@ -282,11 +282,11 @@ def get_production_pcp_orders_items(
         return api_delpi_success(
             result,
             operation_id="get_production_pcp_orders_items",
-            message="Itens de OPs PCP buscados com sucesso.",
+            message="Itens de OPs buscados com sucesso.",
             fields=_ITEM_FIELDS,
         )
     except Exception as exc:
-        return _handle_errors("buscar itens de OPs PCP", exc)
+        return _handle_errors("buscar itens de OPs", exc)
 
 
 @router.get(
@@ -340,8 +340,8 @@ def get_production_pcp_orders_ranking(
         return api_delpi_success(
             result,
             operation_id="get_production_pcp_orders_ranking",
-            message="Ranking de OPs PCP buscado com sucesso.",
+            message="Ranking de OPs buscado com sucesso.",
             fields=_RANKING_FIELDS,
         )
     except Exception as exc:
-        return _handle_errors("buscar ranking de OPs PCP", exc)
+        return _handle_errors("buscar ranking de OPs", exc)

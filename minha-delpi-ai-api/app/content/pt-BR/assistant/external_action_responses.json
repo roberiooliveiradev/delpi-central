@@ -91,7 +91,7 @@
     ],
     "suppliesOtdPathPrefix": "/supplies/",
     "candidatePathPrioritization": {
-      "productionTerms": ["producao", "produção", "fabril", "manufatura", "pcp", "ops", "op "],
+      "productionTerms": ["producao", "produção", "fabril", "manufatura", "ops", "op "],
       "commercialTerms": ["comercial", "venda", "pedido de venda"]
     },
     "productionOtdDetailTerms": [
@@ -121,24 +121,37 @@
       "fabril",
       "manufatura",
       "op ",
-      "ops",
-      "pcp"
+      "ops"
     ],
     "productionPcpOrdersTriggerTerms": [
-      "pcp"
+      "ops em atraso",
+      "op em atraso",
+      "ops atrasad",
+      "ordens atrasad",
+      "ordens de producao atrasad",
+      "ordens de produção atrasad",
+      "resumo de ops",
+      "resumo das ops",
+      "ops em aberto",
+      "ordens em aberto",
+      "listagem de ops",
+      "listar ops",
+      "ranking de ops"
     ],
     "productionPcpOrdersOpsTerms": [
       "ops",
       "op ",
       "ordens",
       "ordem de producao",
-      "ordem de produção"
+      "ordem de produção",
+      "ordens de producao",
+      "ordens de produção"
     ],
     "productionPcpOrdersLateTerms": [
       "atraso",
       "atrasad",
       "late",
-      "no prazo"
+      "em atraso"
     ],
     "productionPcpOrdersPathMarkers": [
       "/production/pcp-orders",
@@ -152,7 +165,7 @@
     ],
     "routeSuggestionPoolPathMarkers": {
       "production": ["/production/"],
-      "pcp": ["/production/pcp-orders", "/production/otd"]
+      "productionOrdersCatalog": ["/production/pcp-orders", "/production/otd"]
     },
     "productionOeeContextTerms": [
       "oee",

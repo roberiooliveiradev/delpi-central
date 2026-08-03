@@ -10932,7 +10932,7 @@
     {
       "operationId": "get_production_pcp_orders_items",
       "httpMethod": "GET",
-      "label": "Itens de OPs PCP",
+      "label": "Itens de OPs",
       "category": "production",
       "path": "/production/pcp-orders/items",
       "allowedDisplayModes": [
@@ -10940,7 +10940,7 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Lista paginada de ordens de produção PCP com produto, datas, quantidades, saldo e flags.",
+      "description": "Lista paginada de ordens de produção com produto, datas, quantidades, saldo e flags.",
       "whenToUse": "Usar em tabela de OPs filtrada por entrega prevista e flags (aberta/mãe/atrasada).",
       "paramSchema": {
         "page": {
@@ -11045,7 +11045,7 @@
     {
       "operationId": "get_production_pcp_orders_ranking",
       "httpMethod": "GET",
-      "label": "Ranking de OPs PCP",
+      "label": "Ranking de OPs",
       "category": "production",
       "path": "/production/pcp-orders/ranking",
       "allowedDisplayModes": [
@@ -11053,7 +11053,7 @@
         "auto"
       ],
       "metaShape": "list",
-      "description": "Top-N de ordens de produção PCP por produto, armazém ou OP.",
+      "description": "Top-N de ordens de produção por produto, armazém ou OP.",
       "whenToUse": "Usar em cards de ranking por quantidade, saldo ou dias de atraso.",
       "paramSchema": {
         "rank_by": {
@@ -11157,7 +11157,7 @@
     {
       "operationId": "get_production_pcp_orders_summary",
       "httpMethod": "GET",
-      "label": "Resumo de OPs PCP",
+      "label": "Resumo de OPs",
       "category": "production",
       "path": "/production/pcp-orders/summary",
       "allowedDisplayModes": [
@@ -11165,8 +11165,8 @@
         "auto"
       ],
       "metaShape": "playbook_report",
-      "description": "Indicadores de ordens de produção PCP: abertas, atrasadas, OPs mãe, quantidades e dias de atraso.",
-      "whenToUse": "Usar em card KPI antes da listagem ou ranking de OPs PCP.",
+      "description": "Indicadores de ordens de produção: abertas, atrasadas, OPs mãe, quantidades e dias de atraso.",
+      "whenToUse": "Usar em card KPI antes da listagem ou ranking de OPs.",
       "paramSchema": {
         "branch": {
           "type": "string",

@@ -1,4 +1,4 @@
-"""Testes SQL — OPs PCP."""
+"""Testes SQL — ordens de produção (view VW_PCP_ORDENS_PRODUCAO)."""
 
 from __future__ import annotations
 

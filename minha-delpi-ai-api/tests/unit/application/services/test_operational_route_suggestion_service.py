@@ -128,8 +128,8 @@ def test_operational_route_suggestion_service_ranks_by_query():
     assert rows[0]["domain"]
 
 
-def test_suggest_ops_em_atraso_pcp_beats_commercial_path_order():
-    """Sem score semântico, path ASC não pode promover comercial sobre PCP."""
+def test_suggest_ops_em_atraso_beats_commercial_path_order():
+    """Sem score semântico, path ASC não pode promover comercial sobre OPs."""
     repo = _FakeRepo(
         [
             {
@@ -151,7 +151,7 @@ def test_suggest_ops_em_atraso_pcp_beats_commercial_path_order():
                 "operationId": "get_production_pcp_orders_items",
                 "path": "/production/pcp-orders/items",
                 "method": "GET",
-                "summary": "Itens de OPs PCP com dias de atraso",
+                "summary": "Itens de OPs com dias de atraso",
             },
             {
                 "actionId": "p2",
@@ -163,7 +163,7 @@ def test_suggest_ops_em_atraso_pcp_beats_commercial_path_order():
         ]
     )
     service = OperationalRouteSuggestionService(repo, semantic_ranker=None)
-    rows = service.suggest("ops em atraso pcp", limit=4)
+    rows = service.suggest("ops em atraso", limit=4)
     assert rows
     assert rows[0]["operationId"] == "get_production_pcp_orders_items"
     assert all("commercial" not in str(row.get("path") or "").lower() for row in rows)

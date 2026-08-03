@@ -1,4 +1,4 @@
-"""Composition — ordens de produção PCP."""
+"""Composition — ordens de produção."""
 
 from __future__ import annotations
 
