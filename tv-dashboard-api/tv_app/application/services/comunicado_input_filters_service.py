@@ -9,6 +9,10 @@ def _is_empty(value: Any) -> bool:
     return value is None or value == ""
 
 
+# Espelho de comunicado_data_params_service.BRANCH_PARAM_KEYS
+BRANCH_PARAM_KEYS = frozenset({"branch", "filial", "branch_code", "filial_id"})
+
+
 def _z_index(block: dict[str, Any]) -> int:
     style = block.get("style")
     if isinstance(style, dict) and isinstance(style.get("zIndex"), (int, float)):
@@ -95,6 +99,10 @@ def collect_input_filter_contributions(
         require_schema: bool,
     ) -> None:
         if _is_empty(value):
+            # Input Filial vazio = consolidado: marca limpeza para o merge remover
+            # branch herdada da fonte/programação (não omitir a chave).
+            if param_key in BRANCH_PARAM_KEYS:
+                target[param_key] = ""
             return
         if not require_schema:
             target[param_key] = value
@@ -169,7 +177,13 @@ def merge_filter_layers(*layers: dict[str, Any] | None) -> dict[str, Any]:
         if not isinstance(layer, dict):
             continue
         for key, value in layer.items():
+            key_str = str(key)
+            if key_str in BRANCH_PARAM_KEYS and _is_empty(value):
+                for alias in BRANCH_PARAM_KEYS:
+                    merged.pop(alias, None)
+                merged[key_str] = ""
+                continue
             if _is_empty(value):
                 continue
-            merged[str(key)] = value
+            merged[key_str] = value
     return merged

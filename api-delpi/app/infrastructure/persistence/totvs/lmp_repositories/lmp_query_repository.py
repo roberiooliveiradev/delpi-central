@@ -60,9 +60,12 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         qb.eq(field, self.settings.active_delete_flag)
 
     def _resolve_branches(self, requested_branch: str | None = None) -> list[str]:
-        if requested_branch:
-            return [requested_branch]
-        return self.settings.branches
+        """None/vazio/Todas → filiais configuradas (01+02); 01|02 → só aquela."""
+        raw = str(requested_branch or "").strip()
+        # Contrato OpenAPI BRANCH_QUERY_OPTIONAL: Todas = consolidado (sem filtro).
+        if not raw or raw == "Todas":
+            return list(self.settings.branches)
+        return [raw]
 
     def _branch_filter(
         self,

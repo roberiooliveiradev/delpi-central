@@ -97,6 +97,19 @@ def test_merge_filter_layers():
     assert merge_filter_layers({"a": 1}, {"b": 2}, {"a": 3}) == {"a": 3, "b": 2}
 
 
+def test_empty_branch_input_marks_clear_for_merge():
+    blocks = [
+        {
+            "id": "i1",
+            "type": "input",
+            "input": {"paramKey": "branch", "defaultValue": "", "targetScope": "slide"},
+        }
+    ]
+    contrib = collect_input_filter_contributions(blocks)
+    assert contrib["slide"] == {"branch": ""}
+    assert merge_filter_layers({"branch": "01"}, contrib["slide"]) == {"branch": ""}
+
+
 def test_parse_and_allowlist_public_filters():
     parsed = parse_filter_overrides_query(
         '{"slide":{"branch":"01"},"bySourceId":{"src-a":{"periodDays":7}}}',

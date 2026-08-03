@@ -152,6 +152,29 @@ def test_merge_data_params_custom_keeps_competence():
     assert merged["dateRangePreset"] == "custom"
 
 
+def test_merge_data_params_empty_branch_input_clears_inherited():
+    """Input Filial vazio remove branch=01 da fonte (LMP consolidado)."""
+    merged = merge_data_params(
+        playlist_defaults={"branch": "01"},
+        slide_filters=None,
+        block_params={"branch": "01", "dateRangePreset": "this_month"},
+        input_overrides={"branch": ""},
+    )
+    assert "branch" not in merged
+    assert merged["dateRangePreset"] == "this_month"
+
+
+def test_merge_data_params_todas_branch_clears_inherited():
+    """Todas = consolidado — não encaminhar branch à api-delpi."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"branch": "01"},
+        input_overrides={"branch": "Todas"},
+    )
+    assert "branch" not in merged
+
+
 def test_param_inherited_from_slide():
     assert param_inherited_from_slide(
         "branch",

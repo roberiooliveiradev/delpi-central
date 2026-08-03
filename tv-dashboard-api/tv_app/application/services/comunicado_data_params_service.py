@@ -15,6 +15,22 @@ def _has_value(layer: dict[str, Any], key: str) -> bool:
     return value is not None and value != ""
 
 
+# Aliases de filial Protheus — vazio/Todas na camada superior limpa herança.
+BRANCH_PARAM_KEYS = frozenset({"branch", "filial", "branch_code", "filial_id"})
+
+
+def _is_all_branches_scope(value: Any) -> bool:
+    """True = consolidado (não enviar filtro de filial à api-delpi)."""
+    if value is None or value == "":
+        return True
+    return str(value).strip() in {"Todas", "todas", "all", "todos"}
+
+
+def _clear_branch_aliases(target: dict[str, Any]) -> None:
+    for key in BRANCH_PARAM_KEYS:
+        target.pop(key, None)
+
+
 def _layer_has_any_dates(layer: dict[str, Any]) -> bool:
     return any(_has_value(layer, key) for key in (*START_KEYS, *END_KEYS))
 
@@ -121,9 +137,15 @@ def merge_data_params(
             continue
         _apply_period_layer(merged, layer)
         for key, value in layer.items():
+            key_str = str(key)
+            # Filial vazia/Todas na camada superior remove branch herdada (fonte/prog).
+            # Sem isso, input Filial limpo deixa branch=01 da fonte e a TV filtra SC.
+            if key_str in BRANCH_PARAM_KEYS and _is_all_branches_scope(value):
+                _clear_branch_aliases(merged)
+                continue
             if value is None or value == "":
                 continue
-            merged[str(key)] = value
+            merged[key_str] = value
     out = reconcile_merged_params_after_input(merged, input_overrides=input_overrides)
     # Camada inferior pode repor competence depois do pop no preset da camada
     # superior (ex.: fonte com competence + input previous_month).

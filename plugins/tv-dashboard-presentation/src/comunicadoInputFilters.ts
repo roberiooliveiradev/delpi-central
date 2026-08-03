@@ -6,6 +6,9 @@ import type {
 } from "./comunicadoTypes";
 import { isFetchableDataBlockType } from "./comunicadoDataArchitecture";
 
+/** Aliases de filial — vazio marca limpeza no merge (espelho TV API). */
+export const BRANCH_PARAM_KEYS = new Set(["branch", "filial", "branch_code", "filial_id"]);
+
 export type InputParamSchemaField = {
   type?: string;
   label?: string;
@@ -125,8 +128,13 @@ export function collectInputFilterContributions(
     value: string | number | boolean | null | undefined,
     field: InputParamSchemaField | null,
   ) => {
+    if (value === undefined || value === null || value === "") {
+      if (BRANCH_PARAM_KEYS.has(paramKey)) {
+        target[paramKey] = "";
+      }
+      return;
+    }
     if (!isValueAllowedByParamSchema(value, field) && field !== null) return;
-    if (value === undefined || value === null || value === "") return;
     // Sem schema (validação desligada): aceita valor não vazio.
     if (field === null && schemaBySourceId == null && slideSchemas == null) {
       target[paramKey] = value;
@@ -135,6 +143,18 @@ export function collectInputFilterContributions(
     if (field && isValueAllowedByParamSchema(value, field)) {
       target[paramKey] = value;
     }
+  };
+
+  const applyMaybeEmpty = (
+    target: ComunicadoDataFilters,
+    paramKey: string,
+    value: string | number | boolean | null | undefined,
+  ) => {
+    if (value === undefined || value === null || value === "") {
+      if (BRANCH_PARAM_KEYS.has(paramKey)) target[paramKey] = "";
+      return;
+    }
+    target[paramKey] = value;
   };
 
   for (const block of inputs) {
@@ -150,7 +170,7 @@ export function collectInputFilterContributions(
           : null;
       const allowWithoutSchema = !slideSchemas || slideSchemas.length === 0;
       if (allowWithoutSchema) {
-        if (value !== undefined && value !== null && value !== "") slide[paramKey] = value;
+        applyMaybeEmpty(slide, paramKey, value);
       } else {
         applyValue(slide, paramKey, value, field);
       }
@@ -166,9 +186,7 @@ export function collectInputFilterContributions(
       const field = schema ? resolveInputParamSchemaField(paramKey, [schema]) : null;
       const allowWithoutSchema = schemaBySourceId == null;
       if (allowWithoutSchema) {
-        if (value !== undefined && value !== null && value !== "") {
-          bySourceId[sourceId][paramKey] = value;
-        }
+        applyMaybeEmpty(bySourceId[sourceId], paramKey, value);
       } else {
         applyValue(bySourceId[sourceId], paramKey, value, field);
       }
@@ -183,7 +201,7 @@ export function collectInputFilterContributions(
           ? resolveInputParamSchemaField(key, slideSchemas)
           : null;
       if (!slideSchemas || slideSchemas.length === 0) {
-        if (value !== undefined && value !== null && value !== "") slide[key] = value;
+        applyMaybeEmpty(slide, key, value);
       } else {
         applyValue(slide, key, value, field);
       }
@@ -197,9 +215,7 @@ export function collectInputFilterContributions(
         const schema = schemaBySourceId?.[sourceId];
         const field = schema ? resolveInputParamSchemaField(key, [schema]) : null;
         if (schemaBySourceId == null) {
-          if (value !== undefined && value !== null && value !== "") {
-            bySourceId[sourceId][key] = value;
-          }
+          applyMaybeEmpty(bySourceId[sourceId], key, value);
         } else {
           applyValue(bySourceId[sourceId], key, value, field);
         }
@@ -217,7 +233,7 @@ export function listFetchableSourceIds(blocks: ComunicadoBlock[] | undefined | n
     .map((block) => block.id);
 }
 
-/** Merge shallow de filtros (direita ganha). */
+/** Merge shallow de filtros (direita ganha). Filial vazia limpa aliases. */
 export function mergeFilterLayers(
   ...layers: Array<ComunicadoDataFilters | undefined | null>
 ): ComunicadoDataFilters {
@@ -225,6 +241,13 @@ export function mergeFilterLayers(
   for (const layer of layers) {
     if (!layer || typeof layer !== "object") continue;
     for (const [key, value] of Object.entries(layer)) {
+      if (BRANCH_PARAM_KEYS.has(key) && (value === undefined || value === null || value === "")) {
+        for (const alias of BRANCH_PARAM_KEYS) {
+          delete merged[alias];
+        }
+        merged[key] = "";
+        continue;
+      }
       if (value === undefined || value === null || value === "") continue;
       merged[key] = value;
     }

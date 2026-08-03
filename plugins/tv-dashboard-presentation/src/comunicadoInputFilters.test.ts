@@ -53,9 +53,11 @@ describe("comunicadoInputFilters", () => {
     expect(intersectParamSchemaKeys([schemaA, schemaB])).toEqual(["branch"]);
   });
 
-  it("resolveInputParamSchemaField exige chave na interseção", () => {
-    expect(resolveInputParamSchemaField("periodDays", [schemaA, schemaB])).toBeNull();
+  it("resolveInputParamSchemaField usa união (campo em qualquer schema alvo)", () => {
+    expect(resolveInputParamSchemaField("periodDays", [schemaA, schemaB])?.label).toBe("Dias");
+    expect(resolveInputParamSchemaField("limit", [schemaA, schemaB])?.label).toBe("Limite");
     expect(resolveInputParamSchemaField("branch", [schemaA, schemaB])?.label).toBe("Filial");
+    expect(resolveInputParamSchemaField("missing", [schemaA, schemaB])).toBeNull();
   });
 
   it("isValueAllowedByParamSchema respeita enum", () => {
@@ -91,6 +93,13 @@ describe("comunicadoInputFilters", () => {
     const blocks = [inputBlock("i1", { paramKey: "branch", defaultValue: "99" })];
     const contrib = collectInputFilterContributions(blocks, null, null, [schemaA]);
     expect(contrib.slide.branch).toBeUndefined();
+  });
+
+  it("Filial vazia marca limpeza e remove branch herdada no mergeFilterLayers", () => {
+    const blocks = [inputBlock("i1", { paramKey: "branch", defaultValue: "" })];
+    const contrib = collectInputFilterContributions(blocks);
+    expect(contrib.slide).toEqual({ branch: "" });
+    expect(mergeFilterLayers({ branch: "01" }, contrib.slide)).toEqual({ branch: "" });
   });
 
   it("mergeFilterLayers e runtime overrides", () => {
