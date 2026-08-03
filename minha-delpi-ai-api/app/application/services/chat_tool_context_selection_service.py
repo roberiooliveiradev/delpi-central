@@ -238,6 +238,26 @@ class ChatToolContextSelectionService:
                     "reason": first.get("reason"),
                     "plannedCount": len(planned_external_actions),
                 }
+                from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+                    ExternalActionSelectionDiagnosticsService,
+                )
+
+                diagnostics = ExternalActionSelectionDiagnosticsService.from_tool_call(
+                    first
+                )
+                if diagnostics:
+                    selected_external_action_meta["matchSource"] = diagnostics.get(
+                        "matchSource"
+                    )
+                    selected_external_action_meta["rivalIds"] = diagnostics.get(
+                        "rivalIds"
+                    )
+                    selected_external_action_meta["scoreGap"] = diagnostics.get(
+                        "scoreGap"
+                    )
+                    selected_external_action_meta["reasonKey"] = diagnostics.get(
+                        "reasonKey"
+                    )
 
                 if drawing_action_required:
                     selected_external_action_meta["forcedBy"] = "drawing_analysis_pdf"

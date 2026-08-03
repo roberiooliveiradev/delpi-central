@@ -190,7 +190,14 @@ class ExternalActionRegistryDispatchPhaseService:
             selected = handler(state)
 
             if selected:
-                return selected
+                from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+                    ExternalActionSelectionDiagnosticsService,
+                )
+
+                return ExternalActionSelectionDiagnosticsService.annotate(
+                    selected,
+                    match_source=phase,
+                )
 
             if state.abort_remaining:
                 return None

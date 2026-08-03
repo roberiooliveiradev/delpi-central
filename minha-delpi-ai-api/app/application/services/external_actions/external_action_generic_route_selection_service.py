@@ -10,6 +10,9 @@ from app.application.services.external_actions.external_action_product_route_cat
 from app.application.services.external_actions.external_action_score_gap_clarification_service import (
     ExternalActionScoreGapClarificationService,
 )
+from app.application.services.external_actions.external_action_selection_diagnostics_service import (
+    ExternalActionSelectionDiagnosticsService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -49,7 +52,12 @@ class ExternalActionGenericRouteSelectionService:
 
         clarification = ExternalActionScoreGapClarificationService.maybe_build(ranked)
         if clarification:
-            return clarification
+            return ExternalActionSelectionDiagnosticsService.annotate(
+                clarification,
+                match_source="semanticFallback",
+                ranked=ranked,
+                reason_key="scoreGapClarification",
+            )
 
         action = ranked[0]
 
@@ -80,12 +88,17 @@ class ExternalActionGenericRouteSelectionService:
         if parameters:
             arguments["parameters"] = parameters
 
-        return {
-            "name": "execute_external_action",
-            "arguments": arguments,
-            "reason": action.get("selectionReason")
-            or ExternalActionResponseContentService.get(
-                "selectionReasons",
-                "genericSemanticFallback",
-            ),
-        }
+        return ExternalActionSelectionDiagnosticsService.annotate(
+            {
+                "name": "execute_external_action",
+                "arguments": arguments,
+                "reason": action.get("selectionReason")
+                or ExternalActionResponseContentService.get(
+                    "selectionReasons",
+                    "genericSemanticFallback",
+                ),
+            },
+            match_source="semanticFallback",
+            ranked=ranked,
+            reason_key="genericSemanticFallback",
+        )
