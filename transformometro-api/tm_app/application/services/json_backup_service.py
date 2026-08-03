@@ -781,19 +781,9 @@ class JsonBackupService:
         try:
             if mode == "replace":
                 self._repo.truncate_cadastral_tables()
-                for spec in ENTITY_SPECS:
-                    for row in prepared.get(spec.bundle_key, []):
-                        if isinstance(row, dict):
-                            self._repo.insert_row(
-                                spec, self._normalize_row(spec, row), auto_commit=False
-                            )
+                self._persist_bundle_rows(prepared, writer="insert")
             else:
-                for spec in ENTITY_SPECS:
-                    for row in prepared.get(spec.bundle_key, []):
-                        if isinstance(row, dict):
-                            self._repo.upsert_row(
-                                spec, self._normalize_row(spec, row), auto_commit=False
-                            )
+                self._persist_bundle_rows(prepared, writer="upsert")
 
             sf_rows = [
                 row
@@ -824,6 +814,52 @@ class JsonBackupService:
             "detected_format": preview.get("detected_format"),
             "legacy_transformed": preview.get("legacy_transformed"),
         }
+
+    def _persist_bundle_rows(
+        self,
+        prepared: dict[str, Any],
+        *,
+        writer: str,
+    ) -> None:
+        write = self._repo.insert_row if writer == "insert" else self._repo.upsert_row
+        for spec in ENTITY_SPECS:
+            rows = [
+                row
+                for row in (prepared.get(spec.bundle_key) or [])
+                if isinstance(row, dict)
+            ]
+            if spec.bundle_key == "revisoes":
+                self._persist_revisoes(spec, rows, write=write)
+                continue
+            for row in rows:
+                write(spec, self._normalize_row(spec, row), auto_commit=False)
+
+    def _persist_revisoes(
+        self,
+        spec: EntitySpec,
+        rows: list[dict[str, Any]],
+        *,
+        write,
+    ) -> None:
+        """Duas passagens: evita FK ``revisao_referencia_id`` por ordem do JSON."""
+        normalized = [self._normalize_row(spec, row) for row in rows]
+        known_ids = {
+            str(row["revisao_id"])
+            for row in normalized
+            if row.get("revisao_id")
+        }
+        for row in normalized:
+            first = dict(row)
+            first["revisao_referencia_id"] = None
+            write(spec, first, auto_commit=False)
+        for row in normalized:
+            ref = row.get("revisao_referencia_id")
+            if not ref:
+                continue
+            if str(ref) not in known_ids:
+                # Pai ausente do pacote: mantém NULL (já gravado na 1ª passagem).
+                continue
+            write(spec, row, auto_commit=False)
 
     def _validate_modern_requirements(self, payload: dict[str, Any]) -> list[str]:
         errors: list[str] = []

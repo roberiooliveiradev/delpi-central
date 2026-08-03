@@ -849,11 +849,44 @@ class JsonBackupRepository(PluginBaseRepository):
             for row in data.get(key) or []:
                 if isinstance(row, dict) and row.get("revisao_id"):
                     needed_revisoes.add(str(row["revisao_id"]))
+        for row in revisoes:
+            if not isinstance(row, dict):
+                continue
+            ref = row.get("revisao_referencia_id")
+            if ref:
+                needed_revisoes.add(str(ref))
+
+        revisao_spec = next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes")
         missing_revisoes = needed_revisoes - revisao_ids
-        if missing_revisoes:
-            revisoes.extend(self.fetch_rows_by_ids(
-                next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes"),
-                missing_revisoes,
+        while missing_revisoes:
+            fetched = self.fetch_rows_by_ids(revisao_spec, missing_revisoes)
+            if not fetched:
+                break
+            revisoes.extend(fetched)
+            for row in fetched:
+                rid = row.get("revisao_id")
+                if rid:
+                    revisao_ids.add(str(rid))
+            next_needed: set[str] = set()
+            for row in fetched:
+                ref = row.get("revisao_referencia_id")
+                if ref and str(ref) not in revisao_ids:
+                    next_needed.add(str(ref))
+            missing_revisoes = next_needed
+
+        # Pais de revisão (ex.: baseline deletada) podem trazer processo_id ausente no bundle.
+        for row in revisoes:
+            if isinstance(row, dict) and row.get("processo_id"):
+                needed_processos.add(str(row["processo_id"]))
+        missing_processos = needed_processos - {
+            str(row.get("processo_id"))
+            for row in processos
+            if isinstance(row, dict) and row.get("processo_id")
+        }
+        if missing_processos:
+            processos.extend(self.fetch_rows_by_ids(
+                next(s for s in ENTITY_SPECS if s.bundle_key == "processos"),
+                missing_processos,
             ))
 
         setores = list(data.get("setores") or [])

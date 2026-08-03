@@ -369,6 +369,90 @@ def test_ensure_bundle_includes_referenced_deleted_processo():
     assert len(processo_calls) == 1
 
 
+def test_ensure_bundle_includes_revisao_referencia_mesmo_deletada():
+    """Export ativo pode apontar para baseline soft-deleted — o pai precisa ir no pacote."""
+    parent_id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    child_id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    repo = MagicMock()
+
+    def _fetch(spec, ids):
+        if spec.bundle_key == "revisoes":
+            return [
+                {
+                    "revisao_id": parent_id,
+                    "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+                    "versao_revisao": "v0",
+                    "cenario_tipo": "baseline",
+                    "deletado": True,
+                }
+            ]
+        return []
+
+    repo.fetch_rows_by_ids.side_effect = _fetch
+    data = {
+        "setores": [],
+        "processos": [
+            {
+                "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+                "codigo_processo": "P1",
+                "deletado": False,
+            }
+        ],
+        "revisoes": [
+            {
+                "revisao_id": child_id,
+                "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+                "versao_revisao": "v1",
+                "revisao_referencia_id": parent_id,
+                "deletado": False,
+            }
+        ],
+        "medicoes": [],
+        "investimentos": [],
+        "recursos_compartilhados": [],
+        "recurso_custos": [],
+        "revisao_recursos_compartilhados": [],
+    }
+    enriched = JsonBackupRepository.ensure_bundle_parent_rows(repo, data)
+    ids = {str(r["revisao_id"]) for r in enriched["revisoes"]}
+    assert parent_id in ids
+    assert child_id in ids
+
+
+def test_persist_revisoes_two_pass_clears_ref_then_restores():
+    svc = _mock_service()
+    written: list[tuple[str, str | None]] = []
+
+    def write(spec, row, *, auto_commit=False):
+        written.append((str(row["revisao_id"]), row.get("revisao_referencia_id")))
+
+    parent = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    child = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    # Filho antes do pai — ordem que quebraria FK em insert único.
+    rows = [
+        {
+            "revisao_id": child,
+            "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+            "versao_revisao": "v2",
+            "revisao_referencia_id": parent,
+            "deletado": False,
+        },
+        {
+            "revisao_id": parent,
+            "processo_id": "pppppppp-pppp-pppp-pppp-pppppppppppp",
+            "versao_revisao": "v1",
+            "deletado": False,
+        },
+    ]
+    spec = next(s for s in ENTITY_SPECS if s.bundle_key == "revisoes")
+    svc._persist_revisoes(spec, rows, write=write)
+
+    assert written[0] == (child, None)
+    assert written[1] == (parent, None)
+    assert written[2] == (child, parent)
+    assert len(written) == 3
+
+
 def test_preview_merge_counts_insert_and_update():
     bundle = _sample_bundle()
     bundle["recursos_compartilhados"] = [
