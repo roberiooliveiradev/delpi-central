@@ -233,28 +233,47 @@ def test_date_range_strategy_respects_partial_end_date():
     assert query["start_date"] == "2026-07-04"
 
 
-def test_date_range_defaults_this_month_when_no_period_without_open_ended():
-    """Rotas date_range fechadas (PPM): sem datas → este mês até hoje (não omite)."""
-    today = date.today()
-    query = _build_query_params(
-        {
-            "paramStrategy": "date_range",
-            "dateRangeKeys": ["start_date", "end_date"],
-            "paramSchema": {
-                "start_date": {"type": "string"},
-                "end_date": {"type": "string"},
-                "branch": {"type": "string"},
+def test_date_range_closed_without_period_raises_named_filters():
+    """Rotas date_range fechadas: sem período → erro indicando filtros (sem this_month)."""
+    import pytest
+
+    with pytest.raises(ValueError, match="Informe o período nos filtros"):
+        _build_query_params(
+            {
+                "paramStrategy": "date_range",
+                "dateRangeKeys": ["start_date", "end_date"],
+                "paramSchema": {
+                    "start_date": {"type": "string", "label": "Data início"},
+                    "end_date": {"type": "string", "label": "Data fim"},
+                    "branch": {"type": "string"},
+                },
             },
-        },
-        {"branch": "01"},
-    )
-    assert query["branch"] == "01"
-    assert query["start_date"] == date(today.year, today.month, 1).isoformat()
-    assert query["end_date"] == today.isoformat()
+            {"branch": "01"},
+        )
 
 
-def test_ppm_external_summary_gets_dates_from_empty_playlist_defaults():
-    """Regressão: programação sem período não pode chamar PPM sem datas (500)."""
+def test_ppm_external_summary_without_period_raises():
+    """Regressão: programação sem período não inventa datas — pede filtro ao usuário."""
+    import pytest
+
+    with pytest.raises(ValueError, match="Período"):
+        _build_query_params(
+            {
+                "operationId": "get_ppm_external_summary",
+                "paramStrategy": "date_range",
+                "dateRangeKeys": ["start_date", "end_date"],
+                "paramSchema": {
+                    "branch": {"type": "string", "optional": True},
+                    "start_date": {"type": "string", "optional": True, "format": "date", "label": "Data início"},
+                    "end_date": {"type": "string", "optional": True, "format": "date", "label": "Data fim"},
+                    "product_prefix": {"type": "string", "optional": True},
+                },
+            },
+            {"department": "qualidade", "competence": ""},
+        )
+
+
+def test_ppm_external_summary_with_preset_builds_dates():
     today = date.today()
     query = _build_query_params(
         {
@@ -265,13 +284,11 @@ def test_ppm_external_summary_gets_dates_from_empty_playlist_defaults():
                 "branch": {"type": "string", "optional": True},
                 "start_date": {"type": "string", "optional": True, "format": "date"},
                 "end_date": {"type": "string", "optional": True, "format": "date"},
-                "product_prefix": {"type": "string", "optional": True},
             },
         },
-        {"department": "qualidade", "competence": ""},
+        {"dateRangePreset": "this_month", "branch": "01"},
     )
-    assert "department" not in query
-    assert "competence" not in query
+    assert query["branch"] == "01"
     assert query["start_date"] == date(today.year, today.month, 1).isoformat()
     assert query["end_date"] == today.isoformat()
 

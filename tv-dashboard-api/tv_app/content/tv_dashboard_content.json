@@ -12,6 +12,7 @@
     "dataSourceUnavailable": "Fonte de dados indisponível.",
     "dataTransformV2WriteDisabled": "A escrita de dataTransform v2 ainda não está habilitada.",
     "dataParamRequired": "Parâmetro obrigatório: {param}.",
+    "dataDateRangeRequired": "Informe o período nos filtros: {params}.",
     "dataParamUnknown": "Parâmetro não permitido.",
     "dataRouteMethodNotAllowed": "Somente rotas GET são permitidas na TV.",
     "dataRouteMissingPathParams": "Parâmetros de path obrigatórios ausentes: {params}.",
@@ -25,6 +26,11 @@
     "deckPackageInvalid": "Pacote inválido ou corrompido.",
     "deckPackageImported": "Programação importada.",
     "deckPackageImportTokenExpired": "Token de importação inválido ou expirado. Gere um novo preview."
+  },
+  "filterLabels": {
+    "period": "Período",
+    "startDate": "Data início",
+    "endDate": "Data fim"
   },
   "presentation": {
     "nativeErrorAdvanceSec": 10,

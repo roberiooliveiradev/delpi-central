@@ -10,7 +10,7 @@ from tv_app.application.services.data.tv_data_presentation_modes_service import 
     validate_display_mode,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
-from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.tv_dashboard_content_service import filter_label, message
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     INTERNAL_PARAM_KEYS,
@@ -55,6 +55,80 @@ def _required_param_error(key: str, spec: Mapping[str, Any]) -> ValueError:
     )
 
 
+def _has_period_intent(params: Mapping[str, Any]) -> bool:
+    if params.get(PERIOD_DAYS_KEY) not in (None, ""):
+        return True
+    if str(params.get(DATE_RANGE_PRESET_KEY) or "").strip():
+        return True
+    pair = find_date_range_keys(list(params.keys()))
+    if pair:
+        start_key, end_key = pair
+        if params.get(start_key) not in (None, "") or params.get(end_key) not in (None, ""):
+            return True
+    # Aliases soltos (params podem ter só um nome canônico).
+    for key in ("start_date", "end_date", "date_start", "date_end"):
+        if params.get(key) not in (None, ""):
+            return True
+    return False
+
+
+def closed_date_range_missing_filter_labels(
+    route: Mapping[str, Any] | None,
+    *,
+    schema: Mapping[str, Any] | None = None,
+) -> list[str]:
+    """Rótulos dos filtros a indicar quando falta período em rota date_range fechada."""
+    if not isinstance(route, Mapping):
+        return []
+    if str(route.get("paramStrategy") or "").strip() != "date_range":
+        return []
+    if bool(route.get("openEndedDateRange")):
+        return []
+    schema_map = schema if isinstance(schema, Mapping) else route.get("paramSchema")
+    if not isinstance(schema_map, Mapping):
+        schema_map = {}
+    labels = [filter_label("period", "Período")]
+    pair = find_date_range_keys(schema_map) or find_date_range_keys(route.get("dateRangeKeys"))
+    if pair:
+        start_key, end_key = pair
+        start_spec = schema_map.get(start_key) if isinstance(schema_map.get(start_key), Mapping) else {}
+        end_spec = schema_map.get(end_key) if isinstance(schema_map.get(end_key), Mapping) else {}
+        labels.append(
+            _param_display_name(start_key, start_spec)
+            if start_spec
+            else filter_label("startDate", "Data início")
+        )
+        labels.append(
+            _param_display_name(end_key, end_spec)
+            if end_spec
+            else filter_label("endDate", "Data fim")
+        )
+    else:
+        labels.append(filter_label("startDate", "Data início"))
+        labels.append(filter_label("endDate", "Data fim"))
+    return labels
+
+
+def assert_closed_date_range_has_period(
+    route: Mapping[str, Any] | None,
+    params: Mapping[str, Any] | None,
+) -> None:
+    """Rotas date_range fechadas exigem Período ou datas — sem default mágico no gateway."""
+    labels = closed_date_range_missing_filter_labels(route)
+    if not labels:
+        return
+    if _has_period_intent(params or {}):
+        return
+    params_text = ", ".join(labels)
+    raise ValueError(
+        message(
+            "dataDateRangeRequired",
+            f"Informe o período nos filtros: {params_text}.",
+            params=params_text,
+        )
+    )
+
+
 def validate_params_against_schema(
     params: dict[str, Any] | None,
     param_schema: dict[str, Any] | None,
@@ -67,6 +141,7 @@ def validate_params_against_schema(
     `fixedQueryParams` do catálogo satisfaz parâmetros obrigatórios (não pedem valor na UI).
     Valor vazio no bloco usa `default` do schema / convenções / `defaultParams` da rota.
     Par de datas obrigatório é aceito via `dateRangePreset` / `periodDays` (expansão no gateway).
+    Rotas `date_range` fechadas sem período/datas → erro nomeando os filtros.
     """
     schema = param_schema if isinstance(param_schema, dict) else {}
     fixed = fixed_query_params if isinstance(fixed_query_params, dict) else {}
@@ -76,6 +151,8 @@ def validate_params_against_schema(
     for key in (DATE_RANGE_PRESET_KEY, PERIOD_DAYS_KEY):
         if key in raw and raw[key] not in (None, ""):
             seeded[key] = raw[key]
+
+    assert_closed_date_range_has_period(route, seeded)
 
     date_pair = find_date_range_keys(schema)
     has_period_intent = (

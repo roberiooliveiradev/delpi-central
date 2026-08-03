@@ -303,13 +303,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     testRoute:
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
-      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
+      "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
     filterUnsetUsesSource:
       "Não definido (usa a fonte)",
     filterClear:
       "Limpar filtro",
     filterValuesDiffer:
       "Valores diferentes",
+    filterPeriodRequired:
+      "Informe o Período (ou Data início/fim) nesta fonte, na tela ou na programação.",
     playlistFiltersEmpty:
       "Adicione fontes de dados nas telas para configurar filtros globais da programação.",
     dateRangePresetOpenEnded:

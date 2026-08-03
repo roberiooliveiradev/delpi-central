@@ -166,6 +166,7 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/hydrateDefaultPreset/);
     expect(source).toMatch(/resolveFallbackPreset/);
     expect(source).toMatch(/openEndedDateRange \? "custom" : "this_month"/);
+    expect(source).toMatch(/filterPeriodRequired/);
   });
 
   it("camada agregada usa filterUnsetUsesSource / filterValuesDiffer", () => {

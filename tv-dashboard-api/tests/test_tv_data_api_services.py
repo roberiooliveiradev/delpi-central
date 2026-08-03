@@ -2,6 +2,8 @@ import pytest
 
 from tv_app.application.services.data.tv_data_config_validation_service import TvDataConfigValidationService
 from tv_app.application.services.data.tv_data_param_validation_service import (
+    assert_closed_date_range_has_period,
+    closed_date_range_missing_filter_labels,
     validate_data_binding,
     validate_params_against_schema,
 )
@@ -55,6 +57,44 @@ def test_validate_params_allows_internal_date_range_preset():
         {"dateRangePreset": "this_month", "status": "Todos", "periodDays": 15},
         schema,
     ) == {"status": "Todos"}
+
+
+def test_closed_date_range_labels_name_period_and_dates():
+    route = {
+        "paramStrategy": "date_range",
+        "dateRangeKeys": ["start_date", "end_date"],
+        "paramSchema": {
+            "start_date": {"type": "string", "label": "Data início"},
+            "end_date": {"type": "string", "label": "Data fim"},
+        },
+    }
+    labels = closed_date_range_missing_filter_labels(route)
+    assert labels == ["Período", "Data início", "Data fim"]
+
+
+def test_assert_closed_date_range_requires_period():
+    route = {
+        "paramStrategy": "date_range",
+        "dateRangeKeys": ["start_date", "end_date"],
+        "paramSchema": {
+            "start_date": {"type": "string", "label": "Data início"},
+            "end_date": {"type": "string", "label": "Data fim"},
+        },
+    }
+    with pytest.raises(ValueError, match="Informe o período nos filtros"):
+        assert_closed_date_range_has_period(route, {"branch": "01"})
+    assert_closed_date_range_has_period(route, {"dateRangePreset": "this_month"})
+
+
+def test_open_ended_date_range_skips_period_assert():
+    route = {
+        "paramStrategy": "date_range",
+        "openEndedDateRange": True,
+        "dateRangeKeys": ["start_date", "end_date"],
+        "paramSchema": {"start_date": {"type": "string"}, "end_date": {"type": "string"}},
+    }
+    assert closed_date_range_missing_filter_labels(route) == []
+    assert_closed_date_range_has_period(route, {})
 
 
 def test_validate_params_strips_unknown_api_keys():

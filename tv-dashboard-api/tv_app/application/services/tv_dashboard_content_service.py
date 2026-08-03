@@ -30,6 +30,11 @@ def message(key: str, default: str = "", **format_kwargs: Any) -> str:
     return text
 
 
+def filter_label(key: str, default: str = "") -> str:
+    labels = _load_content().get("filterLabels") or {}
+    return str(labels.get(key) or default or key)
+
+
 def tv_dashboard_setting_int(key: str, default: int) -> int:
     try:
         return int(_load_settings().get(key, default))

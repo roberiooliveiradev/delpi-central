@@ -236,7 +236,7 @@ export function DataParamFields({
   const preset = (presetRaw || "") as DateRangePresetId | "";
   const isCustom = !activeDatePair || !preset || preset === "custom";
   const showLastN = Boolean(activeDatePair) && preset === "last_n_days";
-  // Sem preset gravado → opção «Limpar» / «Não definido» (gateway usa this_month nas rotas fechadas).
+  // Sem preset gravado → opção «Limpar» / «Não definido» (rotas fechadas exigem escolha explícita).
   const periodSelectValue = presetRaw;
   const periodEmptyLabel = divergedKeys.has(DATE_RANGE_PRESET_PARAM)
     ? divergedLabel
@@ -284,7 +284,9 @@ export function DataParamFields({
             hint={
               openEndedDateRange
                 ? TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePresetOpenEnded
-                : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset
+                : !periodSelectValue
+                  ? TV_DASHBOARD_HELP_TOOLTIPS.data.filterPeriodRequired
+                  : TV_DASHBOARD_HELP_TOOLTIPS.data.dateRangePreset
             }
           >
             <FormSelectControl

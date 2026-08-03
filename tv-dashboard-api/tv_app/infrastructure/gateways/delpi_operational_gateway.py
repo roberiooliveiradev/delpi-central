@@ -10,6 +10,9 @@ from delpi_auth.service_token import internal_service_authorization
 from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
 )
+from tv_app.application.services.data.tv_data_param_validation_service import (
+    assert_closed_date_range_has_period,
+)
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.series_points_extractor import (
@@ -20,8 +23,6 @@ from tv_app.application.services.series_points_extractor import (
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
     PERIOD_DAYS_KEY,
-    START_KEYS,
-    END_KEYS,
     apply_date_range_preset,
     date_alias_keys,
     read_date_range_values,
@@ -82,18 +83,6 @@ def resolve_route_path(
     return resolved
 
 
-def _has_period_intent(params: Mapping[str, Any]) -> bool:
-    """True se já há datas, periodDays ou dateRangePreset nos params."""
-    if params.get(PERIOD_DAYS_KEY) not in (None, ""):
-        return True
-    if str(params.get(DATE_RANGE_PRESET_KEY) or "").strip():
-        return True
-    for key in (*START_KEYS, *END_KEYS):
-        if params.get(key) not in (None, ""):
-            return True
-    return False
-
-
 def _build_query_params(
     route: dict[str, Any],
     params: Mapping[str, Any],
@@ -103,14 +92,10 @@ def _build_query_params(
     date_range_keys = route.get("dateRangeKeys")
     with_defaults = apply_catalog_param_defaults(params, route)
     open_ended = bool(route.get("openEndedDateRange"))
-    # Rotas date_range fechadas (ex. PPM): OpenAPI marca datas opcionais, mas a API
-    # exige intervalo. Sem datas na programação/fonte → este mês até hoje.
-    # openEnded continua omitindo (histórico completo).
-    seed_params: Mapping[str, Any] = with_defaults
-    if strategy == "date_range" and not open_ended and not _has_period_intent(with_defaults):
-        seed_params = {**with_defaults, DATE_RANGE_PRESET_KEY: "this_month"}
+    # Sem default mágico de período — o usuário escolhe nos filtros (fonte/tela/programação).
+    assert_closed_date_range_has_period(route, with_defaults)
     merged = apply_date_range_preset(
-        seed_params,
+        with_defaults,
         schema_keys=schema,
         date_range_keys=date_range_keys,
         strategy=strategy,
@@ -134,9 +119,12 @@ def _build_query_params(
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
         has_period_days = merged.get(PERIOD_DAYS_KEY) not in (None, "")
-        # Sem datas e sem periodDays → omite o par (histórico completo na API).
+        # Sem datas e sem periodDays → omite o par (histórico completo na API / openEnded).
         # periodDays / datas parciais / preset resolvido ainda preenchem o intervalo.
         omit_date_range = not start and not end and not has_period_days
+        if omit_date_range and not open_ended:
+            # Defesa: assert acima já cobre; reforço se preset expandiu para vazio.
+            assert_closed_date_range_has_period(route, merged)
         if not omit_date_range and (not start or not end):
             if open_ended and not has_period_days:
                 # Rota aberta: envia só a ponta informada (não inventa janela de 7 dias).
