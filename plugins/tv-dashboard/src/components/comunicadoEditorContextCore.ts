@@ -384,6 +384,8 @@ export type ComunicadoEditorContextValue = {
   canUndo: boolean;
   canRedo: boolean;
   playlistId: string;
+  /** dataDefaults live da programação — preview/refresh canônicos. */
+  playlistDefaults: Record<string, unknown> | null;
   /** Master slide da programação (fundo/logo herdados no palco — 4E.3). */
   masterLogo: {
     url?: string;

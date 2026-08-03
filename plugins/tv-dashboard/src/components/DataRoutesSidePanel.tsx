@@ -101,6 +101,7 @@ export function DataRoutesSidePanel({
     replaceSelectedDataRoute,
     globalRefreshSec,
     playlistId,
+    playlistDefaults,
   } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -259,6 +260,7 @@ export function DataRoutesSidePanel({
       block: block as typeof block & { dataBinding: NonNullable<typeof block.dataBinding> },
       config,
       playlistId,
+      playlistDefaults,
       slideFilters,
     });
   }

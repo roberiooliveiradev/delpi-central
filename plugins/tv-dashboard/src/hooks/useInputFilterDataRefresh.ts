@@ -1,33 +1,32 @@
-import { useCallback, useEffect, useRef } from "react";
-import type { ComunicadoBlock, ComunicadoInputBlock } from "@delpi/tv-dashboard-presentation";
+import { useCallback, useRef } from "react";
+import {
+  DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
+  type ComunicadoInputBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 type Options = {
-  blocks: ComunicadoBlock[] | undefined;
-  refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
-  /** Evita badge «Dados desatualizados» enquanto refresh corre. */
   clearStaleForSourceIds?: (blockIds: string[]) => void;
 };
 
 /**
- * Compatibilidade com chamadas explícitas após patch de filtro.
- * O refetch automático é feito por `useComunicadoDataPreview` (fingerprint).
+ * Compatibilidade com chamadas explícitas após patch de filtro de input.
+ * O fluxo canônico de atualização é:
+ *   fingerprint (`buildDataPreviewFingerprint`) → `planDataPreviewRefresh` →
+ *   `useComunicadoDataPreview` → `requestDataPreviewBlock`.
+ * Estas funções existem só para não quebrar call sites do inspetor/palco.
  */
 export function useInputFilterDataRefresh({
   clearStaleForSourceIds,
-}: Pick<Options, "clearStaleForSourceIds">) {
+}: Options) {
   const clearStaleRef = useRef(clearStaleForSourceIds);
   clearStaleRef.current = clearStaleForSourceIds;
 
-  useEffect(() => {
-    return () => undefined;
-  }, []);
-
   const scheduleInputFilterRefresh = useCallback((_block: ComunicadoInputBlock) => {
-    // Fingerprint + useComunicadoDataPreview cobrem filtros e fontes.
+    // no-op: fingerprint + planDataPreviewRefresh cobrem o refresh.
   }, []);
 
   const scheduleInputFilterRefreshById = useCallback((_blockId: string) => {
-    // Fingerprint + useComunicadoDataPreview cobrem filtros e fontes.
+    // no-op: fingerprint + planDataPreviewRefresh cobrem o refresh.
   }, []);
 
   return {
@@ -37,4 +36,5 @@ export function useInputFilterDataRefresh({
   };
 }
 
-export const INPUT_FILTER_REFRESH_DEBOUNCE_MS = 400;
+/** @deprecated Use DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS de @delpi/tv-dashboard-presentation */
+export const INPUT_FILTER_REFRESH_DEBOUNCE_MS = DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS;

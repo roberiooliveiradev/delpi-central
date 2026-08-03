@@ -44,6 +44,7 @@ export function DataQueryWorkbenchModal({
     blocks,
     config,
     playlistId,
+    playlistDefaults,
     updateBlocksAtomically,
     refreshDataPreview,
   } = useComunicadoEditor();
@@ -59,6 +60,7 @@ export function DataQueryWorkbenchModal({
     queries,
     config,
     playlistId,
+    playlistDefaults,
     initialSourceId,
   });
   const [applyError, setApplyError] = useState<string | null>(null);

@@ -81,6 +81,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
     blocks,
     config,
     playlistId,
+    playlistDefaults,
     updateBlock,
     refreshDataPreview,
   } = useComunicadoEditor();
@@ -188,6 +189,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
         block,
         config: configRef.current,
         playlistId,
+        playlistDefaults,
         stepsThrough,
         forceRefresh,
       })
@@ -212,7 +214,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [open, activeId, playlistId, stepsThroughKey, previewEpoch]);
+  }, [open, activeId, playlistId, playlistDefaults, stepsThroughKey, previewEpoch]);
 
   const linkedSeries = useMemo(
     () => linkedChartSeriesForSource(blocks, activeId),

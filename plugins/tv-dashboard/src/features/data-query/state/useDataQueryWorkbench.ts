@@ -100,6 +100,7 @@ type Options = {
   queries: ComunicadoDataSourceBlock[];
   config: ComunicadoConfig;
   playlistId: string;
+  playlistDefaults?: Record<string, unknown> | null;
   initialSourceId?: string | null;
   api?: DataQueryApi;
 };
@@ -109,6 +110,7 @@ export function useDataQueryWorkbench({
   queries,
   config,
   playlistId,
+  playlistDefaults = null,
   initialSourceId = null,
   api = dataQueryApi,
 }: Options) {
@@ -217,6 +219,7 @@ export function useDataQueryWorkbench({
             },
             nativeConfig: nativeConfigWithDrafts(),
             playlistId,
+            playlistDefaults,
             targetStepName,
             forceRefresh,
             includeColumnProfile: profilingRequestedRef.current,
@@ -242,7 +245,7 @@ export function useDataQueryWorkbench({
         });
       }
     },
-    [api, nativeConfigWithDrafts, playlistId, queries],
+    [api, nativeConfigWithDrafts, playlistDefaults, playlistId, queries],
   );
 
   const compileOrConvert = useCallback(

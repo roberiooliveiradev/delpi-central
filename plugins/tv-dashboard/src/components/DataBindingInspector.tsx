@@ -96,6 +96,7 @@ export function DataBindingInspector({
     globalRefreshSec,
     setLastDataDisplayMode,
     playlistId,
+    playlistDefaults,
   } = useComunicadoEditor();
   const [paramsModalOpen, setParamsModalOpen] = useState(false);
   const [refreshCustom, setRefreshCustom] = useState(false);
@@ -203,6 +204,7 @@ export function DataBindingInspector({
         block: target as ComunicadoBlock & { dataBinding: ComunicadoDataBinding },
         config,
         playlistId,
+        playlistDefaults,
         slideFilters,
       });
       if (payload.error) {

@@ -370,9 +370,11 @@ export {
 } from "./comunicadoDataPresentation";
 export {
   buildDataPreviewFingerprint,
+  DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
   DATA_REFRESH_SEC_DEFAULT,
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
+  planDataPreviewRefresh,
   resolveDataBlockRefreshSec,
   resolvePreviewRefreshSourceIds,
   resolveStaleSourceIdsForPreviewChange,

@@ -1,5 +1,7 @@
+import { isComunicadoInputBlock, listFetchableSourceIds, resolveInputRefreshSourceIds } from "./comunicadoInputFilters";
 import { isDataBlockType, isDataSourceBlockType } from "./comunicadoHelpers";
 import type {
+  ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoDataBinding,
   ComunicadoDataBlock,
@@ -9,6 +11,9 @@ import type {
 export const DATA_REFRESH_SEC_MIN = 30;
 export const DATA_REFRESH_SEC_MAX = 3600;
 export const DATA_REFRESH_SEC_DEFAULT = 300;
+
+/** Debounce único do auto-refresh do preview (filtros, fontes, inputs). */
+export const DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS = 400;
 
 /** Intervalo efetivo de um bloco de dados: override do bloco ou padrão da programação. */
 export function resolveDataBlockRefreshSec(
@@ -242,6 +247,32 @@ export function resolvePreviewRefreshSourceIds(params: {
   }
 
   return allFetchableIds;
+}
+
+/**
+ * Plano canônico de refresh do preview: fingerprint → quais fontes refetchar.
+ * Único ponto de decisão (slide/programação/input/binding) — o editor só agenda o fetch.
+ */
+export function planDataPreviewRefresh(params: {
+  previousFingerprint: string | null;
+  nextFingerprint: string;
+  blocks: ComunicadoBlock[] | undefined | null;
+}): string[] {
+  const allFetchableIds = listFetchableSourceIds(params.blocks);
+  if (allFetchableIds.length === 0) return [];
+  const inputAffected = new Set<string>();
+  for (const block of params.blocks ?? []) {
+    if (!isComunicadoInputBlock(block)) continue;
+    for (const id of resolveInputRefreshSourceIds(block, params.blocks)) {
+      inputAffected.add(id);
+    }
+  }
+  return resolvePreviewRefreshSourceIds({
+    previousFingerprint: params.previousFingerprint,
+    nextFingerprint: params.nextFingerprint,
+    allFetchableIds,
+    inputAffectedSourceIds: [...inputAffected],
+  });
 }
 
 /** @deprecated Use resolvePreviewRefreshSourceIds */

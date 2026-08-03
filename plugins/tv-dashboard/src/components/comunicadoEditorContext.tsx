@@ -795,6 +795,7 @@ export function ComunicadoEditorProvider({
     canUndo,
     canRedo,
     playlistId,
+    playlistDefaults: playlistDefaults ?? null,
     masterLogo,
     mediaLibraryOpen: media.mediaLibraryOpen,
     mediaLibraryTarget: media.mediaLibraryTarget,

@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDataPreviewFingerprint,
-  isComunicadoInputBlock,
+  DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS,
   isFetchableDataBlockType,
   mergeComunicadoDataPages,
+  planDataPreviewRefresh,
   resolveComunicadoDataPageState,
   resolveDataBlockErrorText,
-  resolveInputRefreshSourceIds,
-  resolvePreviewRefreshSourceIds,
-  serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataBinding,
   type ComunicadoDataResolved,
 } from "@delpi/tv-dashboard-presentation";
 
-import { previewDataBlockV2 } from "../api/tvDashboardApi";
 import {
   createLinkedTimeoutSignal,
   DATA_PREVIEW_BLOCK_TIMEOUT_MS,
@@ -23,6 +20,11 @@ import {
   resolveDataSourceProgressLabel,
   resolvePreviewAbortMessage,
 } from "../utils/dataPreviewFetchGuard";
+import {
+  requestDataPreviewBlock,
+  serializeNativeConfigForPreview,
+  stripBlockResolvedForPreview,
+} from "../utils/dataPreviewRequest";
 import { readDataPreviewCache, writeDataPreviewCache } from "../utils/editorSessionCache";
 
 export type RefreshDataPreviewOptions = {
@@ -39,13 +41,6 @@ type Options = {
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
-
-const DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS = 400;
-
-function stripResolved(block: FetchableBlock): Record<string, unknown> {
-  const { resolved: _resolved, ...blockPayload } = block;
-  return blockPayload as Record<string, unknown>;
-}
 
 function seedFromConfigBlocks(config: ComunicadoConfig): Record<string, ComunicadoDataResolved> {
   const seeded: Record<string, ComunicadoDataResolved> = {};
@@ -94,9 +89,9 @@ export function collectPreviewErrorMessages(
 }
 
 /**
- * Preview de dados do editor — refetch automático quando filtros ou fontes mudam.
- * Botão «Atualizar visual» permanece para refresh manual com bypass de cache.
- * Cada fonte tem timeout; lote anterior é abortado ao iniciar um novo fetch.
+ * Orquestrador único do preview de dados no editor.
+ * Decisão de *quais* fontes: `planDataPreviewRefresh` (presentation).
+ * Body HTTP: `requestDataPreviewBlock` (sempre com playlistDefaults live).
  */
 export function useComunicadoDataPreview({ playlistId, config, playlistDefaults = null }: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
@@ -241,7 +236,7 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
         pendingLabels: targets.map(resolveDataSourceProgressLabel),
       });
 
-      const nativeConfig = serializeComunicadoConfig(configRef.current);
+      const nativeConfig = serializeNativeConfigForPreview(configRef.current);
       const fetchFingerprint = fingerprintRef.current;
 
       const bumpProgressById = (finishedId: string) => {
@@ -264,11 +259,11 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
               batchAbort.signal,
             );
             try {
-              const response = await previewDataBlockV2({
-                block: stripResolved(block),
+              const response = await requestDataPreviewBlock({
+                block: stripBlockResolvedForPreview(block),
                 nativeConfig,
                 playlistId: playlistIdRef.current,
-                playlistDefaults: playlistDefaultsRef.current ?? undefined,
+                playlistDefaults: playlistDefaultsRef.current,
                 forceRefresh: Boolean(options.force),
                 signal,
               });
@@ -371,11 +366,11 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
       });
       const { signal, cleanup } = createLinkedTimeoutSignal(DATA_PREVIEW_BLOCK_TIMEOUT_MS);
       try {
-        const response = await previewDataBlockV2({
-          block: stripResolved(requestBlock),
-          nativeConfig: serializeComunicadoConfig(configRef.current),
+        const response = await requestDataPreviewBlock({
+          block: stripBlockResolvedForPreview(requestBlock),
+          nativeConfig: serializeNativeConfigForPreview(configRef.current),
           playlistId: playlistIdRef.current,
-          playlistDefaults: playlistDefaultsRef.current ?? undefined,
+          playlistDefaults: playlistDefaultsRef.current,
           forceRefresh: false,
           signal,
         });
@@ -447,19 +442,10 @@ export function useComunicadoDataPreview({ playlistId, config, playlistDefaults 
 
     if (dataFingerprint !== synced) {
       if (hasData || didInitialFetchRef.current) {
-        const allFetchableIds = blocks.map((block) => block.id);
-        const inputAffected = new Set<string>();
-        for (const block of configRef.current.blocks ?? []) {
-          if (!isComunicadoInputBlock(block)) continue;
-          for (const id of resolveInputRefreshSourceIds(block, configRef.current.blocks)) {
-            inputAffected.add(id);
-          }
-        }
-        const sourceIds = resolvePreviewRefreshSourceIds({
+        const sourceIds = planDataPreviewRefresh({
           previousFingerprint: synced,
           nextFingerprint: dataFingerprint,
-          allFetchableIds,
-          inputAffectedSourceIds: [...inputAffected],
+          blocks: configRef.current.blocks,
         });
         scheduleAutoRefresh(sourceIds, blocks);
         return;

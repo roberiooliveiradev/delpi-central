@@ -1,6 +1,5 @@
 import {
   createDataSourceBlock,
-  serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoDataBinding,
@@ -12,10 +11,11 @@ import {
   type DataRoutePreviewPayload,
 } from "@delpi/plugin-ui/index";
 
+import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
-  previewDataBlockV2,
-  type TvDataRouteCatalogItem,
-} from "../api/tvDashboardApi";
+  requestDataPreviewBlock,
+  serializeNativeConfigForPreview,
+} from "./dataPreviewRequest";
 
 export type PreviewTvDataRouteParams = {
   route: TvDataRouteCatalogItem;
@@ -23,6 +23,8 @@ export type PreviewTvDataRouteParams = {
   block: ComunicadoBlock & { dataBinding: ComunicadoDataBinding };
   config: ComunicadoConfig;
   playlistId?: string;
+  /** dataDefaults live da programação. */
+  playlistDefaults?: Record<string, unknown> | null;
   /** Filtros do slide preenchidos só onde o bloco não define o param. */
   slideFilters?: Record<string, unknown>;
 };
@@ -45,7 +47,14 @@ function suggestedPreviewKind(route: TvDataRouteCatalogItem): "kpi" | "series" |
 export async function previewTvDataRoute(
   args: PreviewTvDataRouteParams,
 ): Promise<DataRoutePreviewPayload> {
-  const { route, block, config, playlistId, slideFilters = {} } = args;
+  const {
+    route,
+    block,
+    config,
+    playlistId,
+    playlistDefaults = null,
+    slideFilters = {},
+  } = args;
   const preferred = suggestedPreviewKind(route);
   const binding = block.dataBinding;
   const params: NonNullable<ComunicadoDataBinding["params"]> = {
@@ -76,13 +85,14 @@ export async function previewTvDataRoute(
     }
   }
 
-  const response = await previewDataBlockV2({
+  const response = await requestDataPreviewBlock({
     block: probe as unknown as Record<string, unknown>,
-    nativeConfig: serializeComunicadoConfig({
+    nativeConfig: serializeNativeConfigForPreview({
       ...config,
       blocks: [...(config.blocks ?? []).filter((item) => item.id !== probe.id), probe],
-    }) as Record<string, unknown>,
+    }),
     playlistId,
+    playlistDefaults,
     forceRefresh: true,
   });
 

@@ -1,23 +1,21 @@
 import {
   isDataTransformV1,
   normalizeDataTransform,
-  serializeComunicadoConfig,
   type ComunicadoConfig,
   type ComunicadoDataSourceBlock,
   type DataTransformStep,
 } from "@delpi/tv-dashboard-presentation";
 
-import { previewDataBlockV2 } from "../api/tvDashboardApi";
+import {
+  requestDataPreviewBlock,
+  serializeNativeConfigForPreview,
+  stripBlockResolvedForPreview,
+} from "./dataPreviewRequest";
 
 export type ServerTransformTable = {
   columns: string[];
   rows: Array<Record<string, unknown>>;
 };
-
-function stripResolved(block: ComunicadoDataSourceBlock): Record<string, unknown> {
-  const { resolved: _resolved, ...rest } = block;
-  return rest as Record<string, unknown>;
-}
 
 /**
  * Prévia tabular pós-Query — sempre via tv-dashboard-api (nunca engine no browser).
@@ -27,12 +25,13 @@ export async function previewTransformTableOnServer(options: {
   block: ComunicadoDataSourceBlock;
   config: ComunicadoConfig;
   playlistId: string;
+  playlistDefaults?: Record<string, unknown> | null;
   stepsThrough: DataTransformStep[];
   forceRefresh?: boolean;
 }): Promise<ServerTransformTable> {
   const transform = normalizeDataTransform({ steps: options.stepsThrough });
   const payload: Record<string, unknown> = {
-    ...stripResolved(options.block),
+    ...stripBlockResolvedForPreview(options.block),
   };
   if (isDataTransformV1(transform) && transform.steps.length) {
     payload.dataTransform = transform;
@@ -40,10 +39,11 @@ export async function previewTransformTableOnServer(options: {
     delete payload.dataTransform;
   }
 
-  const response = await previewDataBlockV2({
+  const response = await requestDataPreviewBlock({
     block: payload,
-    nativeConfig: serializeComunicadoConfig(options.config),
+    nativeConfig: serializeNativeConfigForPreview(options.config),
     playlistId: options.playlistId,
+    playlistDefaults: options.playlistDefaults,
     forceRefresh: Boolean(options.forceRefresh),
   });
 

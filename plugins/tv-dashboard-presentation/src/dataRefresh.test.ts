@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildDataPreviewFingerprint,
+  planDataPreviewRefresh,
   resolveDataBlockRefreshSec,
   resolvePreviewRefreshSourceIds,
   resolveStaleSourceIdsForPreviewChange,
@@ -293,6 +294,67 @@ describe("resolvePreviewRefreshSourceIds", () => {
         inputAffectedSourceIds: [],
       }),
     ).toEqual(all);
+  });
+
+  it("planDataPreviewRefresh encapsula inputs + filtros", () => {
+    const withSources: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "src-b",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op2", params: {} },
+        },
+        {
+          id: "inp",
+          type: "input",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          input: {
+            paramKey: "branch",
+            defaultValue: "01",
+            targetScope: "sources",
+            targetSourceIds: ["src-a"],
+          },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(withSources);
+    const next = buildDataPreviewFingerprint({
+      ...withSources,
+      blocks: withSources.blocks!.map((block) =>
+        block.type === "input"
+          ? {
+              ...block,
+              input: { ...block.input, defaultValue: "02" },
+            }
+          : block,
+      ),
+    });
+    expect(
+      planDataPreviewRefresh({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        blocks: withSources.blocks,
+      }),
+    ).toEqual(["src-a"]);
+
+    const afterFilters = buildDataPreviewFingerprint({
+      ...withSources,
+      dataFilters: { branch: "02" },
+    });
+    expect(
+      planDataPreviewRefresh({
+        previousFingerprint: prev,
+        nextFingerprint: afterFilters,
+        blocks: withSources.blocks,
+      }),
+    ).toEqual(["src-a", "src-b"]);
   });
 
   it("dataTransform da fonte entra no fingerprint", () => {

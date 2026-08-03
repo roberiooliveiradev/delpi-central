@@ -1,7 +1,7 @@
 import type { MColumnSchemaDto } from "@delpi/tv-dashboard-presentation";
 
 import { API_BASE, httpGet, httpPost } from "../../../api/httpClient";
-import { resolvePreviewPlaylistId } from "../../../utils/previewPlaylistId";
+import { requestDataPreviewBlock } from "../../../utils/dataPreviewRequest";
 import type {
   DataQueryCapabilities,
   DataQueryCompileResult,
@@ -42,6 +42,7 @@ export interface DataQueryApi {
       block: Record<string, unknown>;
       nativeConfig: Record<string, unknown>;
       playlistId: string;
+      playlistDefaults?: Record<string, unknown> | null;
       targetStepName?: string | null;
       forceRefresh?: boolean;
       includeColumnProfile?: boolean;
@@ -101,26 +102,21 @@ export const dataQueryApi: DataQueryApi = {
     return result.items;
   },
   async preview(input, signal) {
-    const previewPlaylistId = resolvePreviewPlaylistId(input.playlistId);
     return adaptPreviewResult(
-      await unwrap(
-        httpPost<Envelope<unknown>>(
-          `${API_BASE}/data/preview-block`,
-          {
-            block: input.block,
-            nativeConfig: input.nativeConfig,
-            ...(previewPlaylistId ? { playlistId: previewPlaylistId } : {}),
-            forceRefresh: Boolean(input.forceRefresh),
-            targetStepName: input.targetStepName ?? null,
-            previewOptions: {
-              maxRows: 200,
-              includeColumnProfile: Boolean(input.includeColumnProfile),
-              deadlineMs: input.deadlineMs ?? 3000,
-            },
-          },
-          { signal },
-        ),
-      ),
+      await requestDataPreviewBlock({
+        block: input.block,
+        nativeConfig: input.nativeConfig,
+        playlistId: input.playlistId,
+        playlistDefaults: input.playlistDefaults,
+        forceRefresh: Boolean(input.forceRefresh),
+        targetStepName: input.targetStepName ?? null,
+        previewOptions: {
+          maxRows: 200,
+          includeColumnProfile: Boolean(input.includeColumnProfile),
+          deadlineMs: input.deadlineMs ?? 3000,
+        },
+        signal,
+      }),
     );
   },
 };

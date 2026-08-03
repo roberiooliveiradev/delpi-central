@@ -124,7 +124,8 @@ export function DataBuilderChatPanel({
   branchScope = null,
   onInserted,
 }: Props) {
-  const { addDataSourceBlock, replaceSelectedDataRoute } = useComunicadoEditor();
+  const { addDataSourceBlock, replaceSelectedDataRoute, playlistId, playlistDefaults, config } =
+    useComunicadoEditor();
   const [session, setSession] = useState<DataBuilderSession | null>(null);
   const [discoveryMode, setDiscoveryMode] = useState<DiscoveryMode>("search");
   const [input, setInput] = useState("");
@@ -368,7 +369,9 @@ export function DataBuilderChatPanel({
     return previewTvDataRoute({
       route,
       block: block as typeof block & { dataBinding: NonNullable<typeof block.dataBinding> },
-      config: { version: 1, slides: [] },
+      config,
+      playlistId,
+      playlistDefaults,
     });
   }
 
