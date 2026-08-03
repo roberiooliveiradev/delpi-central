@@ -15,6 +15,19 @@ def _has_value(layer: dict[str, Any], key: str) -> bool:
     return value is not None and value != ""
 
 
+def _layer_has_any_dates(layer: dict[str, Any]) -> bool:
+    return any(_has_value(layer, key) for key in (*START_KEYS, *END_KEYS))
+
+
+def _clear_date_keys(target: dict[str, Any]) -> None:
+    for key in (*START_KEYS, *END_KEYS):
+        target.pop(key, None)
+
+
+def _normalize_preset(value: Any) -> str:
+    return str(value or "").strip().lower().replace("-", "_")
+
+
 def input_overrides_period_intent(input_overrides: dict[str, Any] | None) -> bool:
     """True se a camada de input/runtime fixa período (datas ou periodDays)."""
     if not isinstance(input_overrides, dict):
@@ -52,6 +65,31 @@ def reconcile_merged_params_after_input(
     return out
 
 
+def _apply_period_layer(merged: dict[str, Any], layer: dict[str, Any]) -> None:
+    """Aplica intenção de período da camada sem vazar datas stale das camadas inferiores.
+
+    - Preset relativo → descarta datas herdadas (o gateway recalcula).
+    - `custom` sem datas na camada → descarta datas herdadas (evita 0026 + custom do bloco).
+    - `custom` com datas na camada → datas da camada prevalecem no loop normal.
+    """
+    if DATE_RANGE_PRESET_KEY not in layer:
+        return
+    raw = layer.get(DATE_RANGE_PRESET_KEY)
+    if raw is None or raw == "":
+        return
+    preset = _normalize_preset(raw)
+    if not preset:
+        return
+    if preset == "custom":
+        if not _layer_has_any_dates(layer):
+            _clear_date_keys(merged)
+        return
+    # Relativo (this_month, last_7_days, …)
+    _clear_date_keys(merged)
+    if preset != "last_n_days" and not _has_value(layer, PERIOD_DAYS_KEY):
+        merged.pop(PERIOD_DAYS_KEY, None)
+
+
 def merge_data_params(
     *,
     playlist_defaults: dict[str, Any] | None,
@@ -64,6 +102,7 @@ def merge_data_params(
     for layer in (playlist_defaults, slide_filters, block_params, input_overrides):
         if not isinstance(layer, dict):
             continue
+        _apply_period_layer(merged, layer)
         for key, value in layer.items():
             if value is None or value == "":
                 continue

@@ -4,7 +4,6 @@ import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import {
   DATE_RANGE_PRESET_PARAM,
   PERIOD_DAYS_PARAM,
-  defaultDateRangePreset,
   findDateRangeKeys,
 } from "./dateRangePresets";
 
@@ -69,16 +68,12 @@ export function buildRouteDefaultParams(
   }
 
   const pair = findDateRangeKeys(Object.keys(schema));
-  // Rotas open-ended (ex.: série TRANSFORMA+ / listagens): Personalizado sem datas = histórico completo.
+  // Rotas open-ended: Personalizado sem datas = histórico completo.
+  // Demais rotas: NÃO grava dateRangePreset no bloco — herda Programação/slide
+  // (senão this_month/branch default sombreiam dataDefaults e o filtro «não funciona»).
   if (route.openEndedDateRange && pair) {
     defaults[DATE_RANGE_PRESET_PARAM] = "custom";
     delete defaults[PERIOD_DAYS_PARAM];
-  } else {
-    // SI com competence + start_date/end_date também recebe preset (mesmo fluxo das demais).
-    const preset = defaultDateRangePreset(pair);
-    if (preset) {
-      defaults[DATE_RANGE_PRESET_PARAM] = preset;
-    }
   }
   return defaults;
 }

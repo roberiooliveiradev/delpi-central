@@ -95,3 +95,20 @@ def test_custom_keeps_manual_dates():
     )
     assert out["date_start"] == "2026-01-01"
     assert out["date_end"] == "2026-01-31"
+
+
+def test_apply_preset_drops_insane_year_dates():
+    """Ano 0026 no input type=date não pode ir para a api-delpi (400 24 meses)."""
+    out = apply_date_range_preset(
+        {
+            "dateRangePreset": "custom",
+            "start_date": "0026-07-01",
+            "end_date": "2026-07-31",
+        },
+        schema_keys=["start_date", "end_date"],
+        strategy="date_range",
+        today=date(2026, 7, 13),
+    )
+    assert "start_date" not in out
+    assert out["end_date"] == "2026-07-31"
+

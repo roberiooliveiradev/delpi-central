@@ -61,6 +61,40 @@ def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():
     assert merged["periodDays"] == 7
 
 
+def test_merge_data_params_relative_preset_clears_stale_dates():
+    """Slide this_month não herda start_date=0026 da programação."""
+    merged = merge_data_params(
+        playlist_defaults={
+            "dateRangePreset": "custom",
+            "start_date": "0026-07-01",
+            "end_date": "2026-07-31",
+        },
+        slide_filters={"dateRangePreset": "this_month"},
+        block_params=None,
+    )
+    assert merged["dateRangePreset"] == "this_month"
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+
+def test_merge_data_params_block_custom_without_dates_clears_inherited_dates():
+    """Bloco custom vazio não reaproveita datas corruptas (causa do 400 24 meses)."""
+    merged = merge_data_params(
+        playlist_defaults={
+            "dateRangePreset": "custom",
+            "start_date": "0026-07-01",
+            "end_date": "2026-07-31",
+            "branch": "01",
+        },
+        slide_filters={"dateRangePreset": "this_month"},
+        block_params={"dateRangePreset": "custom"},
+    )
+    assert merged["dateRangePreset"] == "custom"
+    assert merged["branch"] == "01"
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+
 def test_merge_data_params_input_overrides_block_and_clears_preset():
     """Filtro interativo vence dateRangePreset/this_month da fonte."""
     merged = merge_data_params(

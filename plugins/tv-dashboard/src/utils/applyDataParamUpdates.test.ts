@@ -22,4 +22,19 @@ describe("applyDataParamRawUpdates", () => {
   it("parseia inteiros do schema", () => {
     expect(parseDataParamRaw("periodDays", "15", { periodDays: { type: "integer" } })).toBe(15);
   });
+
+  it("rejeita data com ano absurdo (ex.: 0026)", () => {
+    expect(
+      parseDataParamRaw("start_date", "0026-07-01", {
+        start_date: { type: "string", format: "date" },
+        end_date: { type: "string", format: "date" },
+      }),
+    ).toBeUndefined();
+    expect(
+      parseDataParamRaw("start_date", "2026-07-01", {
+        start_date: { type: "string", format: "date" },
+        end_date: { type: "string", format: "date" },
+      }),
+    ).toBe("2026-07-01");
+  });
 });

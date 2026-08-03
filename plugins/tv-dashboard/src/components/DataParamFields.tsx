@@ -206,6 +206,14 @@ export function DataParamFields({
       // Preset relativo (até hoje) vence competência — limpa o mês SI.
       updates.competence = "";
     }
+    // Preset relativo / limpar: não reaproveitar datas fixas de outra camada (ex.: 0026).
+    if (activeDatePair && value !== "custom") {
+      updates[activeDatePair.startKey] = "";
+      updates[activeDatePair.endKey] = "";
+      if (value !== "last_n_days") {
+        updates[PERIOD_DAYS_PARAM] = "";
+      }
+    }
     onChange(updates);
   }
 

@@ -167,11 +167,36 @@ def compute_preset_range(
     return None
 
 
+# Anos fora desta faixa (ex.: 0026 digitado no input type=date) estouram o
+# limite de 24 meses da api-delpi quando o gateway completa a ponta faltante.
+_MIN_SANE_YEAR = 1990
+_MAX_SANE_YEAR = 2100
+
+
 def _as_iso(value: Any) -> str | None:
     if value is None or value == "":
         return None
     text = str(value).strip()
-    return text or None
+    if not text:
+        return None
+    try:
+        parsed = date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+    if parsed.year < _MIN_SANE_YEAR or parsed.year > _MAX_SANE_YEAR:
+        return None
+    return parsed.isoformat()
+
+
+def drop_insane_date_values(params: dict[str, Any]) -> dict[str, Any]:
+    """Remove datas com ano absurdo (ex.: 0026) de start/end e aliases."""
+    out = dict(params)
+    for key in (*START_KEYS, *END_KEYS):
+        if key not in out:
+            continue
+        if _as_iso(out.get(key)) is None:
+            out.pop(key, None)
+    return out
 
 
 def apply_date_range_preset(
@@ -193,6 +218,7 @@ def apply_date_range_preset(
             if value is None or value == "":
                 continue
             merged[str(key)] = value
+    merged = drop_insane_date_values(merged)
 
     preset = str(merged.get(DATE_RANGE_PRESET_KEY) or "").strip()
     period_raw = merged.get(PERIOD_DAYS_KEY)
