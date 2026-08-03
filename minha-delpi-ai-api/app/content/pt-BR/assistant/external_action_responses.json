@@ -398,7 +398,8 @@
       "fabril",
       "manufatura",
       "op ",
-      "ops"
+      "ops",
+      "sc2010"
     ],
     "productionPcpOrdersTriggerTerms": [
       "ops em atraso",
@@ -972,10 +973,28 @@
     "productionOeeDetailRoute": {
       "allOf": [
         { "termsFrom": "external_action_responses.actionSelection.productionOeeDetailTerms" },
-        { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" }
+        {
+          "anyOf": [
+            { "termsFrom": "external_action_responses.actionSelection.productionOeeContextTerms" },
+            {
+              "termsFrom": "external_action_responses.actionSelection.productionOtdDetailProductionContextTerms"
+            }
+          ]
+        }
       ],
       "noneOf": [
         { "termsFrom": "external_action_responses.actionSelection.productionOeeFabrilBlockTerms" }
+      ]
+    },
+    "productionPcpOrdersRoute": {
+      "anyOf": [
+        { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersTriggerTerms" },
+        {
+          "allOf": [
+            { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersOpsTerms" },
+            { "termsFrom": "external_action_responses.actionSelection.productionPcpOrdersLateTerms" }
+          ]
+        }
       ]
     },
     "productionOeeAppointmentRoute": {

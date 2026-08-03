@@ -139,6 +139,12 @@
       "ordens programadas hoje",
       "programacao de hoje",
       "programação de hoje",
+      "programacao de producao",
+      "programação de produção",
+      "lista de producao",
+      "lista de produção",
+      "planejamento de producao",
+      "planejamento de produção",
       "na programacao",
       "na programação",
       "esta na programacao",
@@ -369,7 +375,8 @@
     "productionOtdDetailRoute",
     "productionOeeDetailRoute",
     "productionOeeAppointmentRoute",
-    "productionEficienciaFabrilRoute"
+    "productionEficienciaFabrilRoute",
+    "productionPcpOrdersRoute"
   ],
   "pathTokens": {
     "consumption": "/production/consumption/top-items",

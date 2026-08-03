@@ -50,6 +50,31 @@ def test_production_sql_preflight_skips_when_otd_rest_route_matches() -> None:
     select_sql.assert_not_called()
 
 
+def test_production_sql_preflight_skips_when_appointments_rest_route_matches() -> None:
+    policy = next(
+        policy
+        for policy in OperationalRouteRegistryService.fallback_policies()
+        if policy.get("id") == "productionSqlPreflight"
+    )
+    select_sql = MagicMock(
+        return_value={
+            "name": "execute_external_action",
+            "arguments": {"actionId": "sql-action", "body": {"sql": "SELECT 1"}},
+        }
+    )
+
+    selected = ExternalActionSqlFallbackPolicyService.try_policy(
+        policy,
+        message="apontamentos de produção",
+        sql_source="apontamentos de produção",
+        allowed_action_ids=["sql-action"],
+        select_sql=select_sql,
+    )
+
+    assert selected is None
+    select_sql.assert_not_called()
+
+
 def test_production_sql_preflight_skips_when_rest_route_matches() -> None:
     policy = next(
         policy

@@ -39,6 +39,29 @@ def test_matches_rest_route_for_ops_em_atraso() -> None:
     )
 
 
+def test_matches_rest_route_for_production_appointments() -> None:
+    assert (
+        ChatProductionOperationalIntentService.matches_rest_route(
+            "apontamentos de produção"
+        )
+        is True
+    )
+
+
+def test_matches_rest_route_for_sc2010_query() -> None:
+    assert (
+        ChatProductionOperationalIntentService.matches_rest_route("consulta sc2010")
+        is True
+    )
+
+
+def test_matches_rest_route_for_pcp_ops_summary() -> None:
+    assert (
+        ChatProductionOperationalIntentService.matches_rest_route("resumo de ops")
+        is True
+    )
+
+
 def test_resolve_schedule_membership_for_single_pa() -> None:
     kind = ChatProductionOperationalIntentService.resolve(
         "O produto 90260255 está na programação de hoje? Qual OP e quantidade?"
