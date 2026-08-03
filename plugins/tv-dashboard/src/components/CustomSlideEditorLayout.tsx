@@ -74,11 +74,19 @@ export function CustomSlideEditorLayout({
   );
 
   const slideTabExtra = isTemplate ? (
-    <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
+    <SlideDataFiltersPanel
+      branchScope={chromeProps.branchScope}
+      compact
+      playlistDefaults={chromeProps.playlist.dataDefaults}
+    />
   ) : (
     <>
       <ComunicadoSlideTemplatesPanel compact />
-      <SlideDataFiltersPanel branchScope={chromeProps.branchScope} compact />
+      <SlideDataFiltersPanel
+        branchScope={chromeProps.branchScope}
+        compact
+        playlistDefaults={chromeProps.playlist.dataDefaults}
+      />
     </>
   );
 

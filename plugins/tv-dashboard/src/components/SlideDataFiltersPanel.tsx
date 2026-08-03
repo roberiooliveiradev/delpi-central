@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Filter } from "lucide-react";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
 import {
   collectFetchableOperationIds,
   mergeRouteParamSchemas,
+  omitSchemaKeysCoveredByDefaults,
 } from "../utils/collectPlaylistDataParamSchema";
 import { DataParamFields } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -15,9 +17,15 @@ import { DeckSettingsAccordion } from "./deck/DeckSettingsAccordion";
 type Props = {
   branchScope?: BranchScope | null;
   compact?: boolean;
+  /** dataDefaults da programação — chaves já definidas não repetem neste painel. */
+  playlistDefaults?: Record<string, unknown> | null;
 };
 
-export function SlideDataFiltersPanel({ branchScope = null, compact = false }: Props) {
+export function SlideDataFiltersPanel({
+  branchScope = null,
+  compact = false,
+  playlistDefaults = null,
+}: Props) {
   const { config, setDataFilters } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const filters = config.dataFilters ?? {};
@@ -31,32 +39,44 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
     [config.blocks],
   );
 
-  const schema = useMemo(
-    () => mergeRouteParamSchemas(routes, operationIds),
-    [routes, operationIds],
-  );
+  const schema = useMemo(() => {
+    const merged = mergeRouteParamSchemas(routes, operationIds);
+    return omitSchemaKeysCoveredByDefaults(merged, playlistDefaults);
+  }, [routes, operationIds, playlistDefaults]);
 
   function updateFilters(updates: Record<string, string>) {
     const next = applyDataParamRawUpdates(filters, updates, schema);
     setDataFilters(Object.keys(next).length > 0 ? next : undefined);
   }
 
-  if (Object.keys(schema).length === 0) return null;
+  if (operationIds.length === 0) return null;
+
+  const emptyCoveredByDefaults =
+    Object.keys(schema).length === 0 &&
+    Boolean(playlistDefaults && Object.keys(playlistDefaults).length > 0);
+
+  if (Object.keys(schema).length === 0 && !emptyCoveredByDefaults) return null;
 
   const body = (
     <DeckPropertySection
       title="Filtros do slide"
-      hint="Aplicam-se a todos os blocos de dados deste slide."
+      hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.slideDataFilters}
       compact={compact}
     >
-      <DataParamFields
-        schema={schema}
-        values={filters}
-        branchScope={branchScope}
-        idPrefix="td-slide-filter"
-        hydrateDefaultPreset={false}
-        onChange={updateFilters}
-      />
+      {Object.keys(schema).length === 0 ? (
+        <p className="td-deck-playlist-filters__empty">
+          {TV_DASHBOARD_HELP_TOOLTIPS.data.slideFiltersCoveredByDefaults}
+        </p>
+      ) : (
+        <DataParamFields
+          schema={schema}
+          values={filters}
+          branchScope={branchScope}
+          idPrefix="td-slide-filter"
+          hydrateDefaultPreset={false}
+          onChange={updateFilters}
+        />
+      )}
     </DeckPropertySection>
   );
 

@@ -279,6 +279,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
     dataDefaults:
       "Parâmetros herdados por todas as telas. O slide e a fonte podem sobrescrever. Presets relativos (esta semana, este mês, últimos N dias…) resolvem de novo a cada atualização na TV.",
+    slideDataFilters:
+      "Filtros só desta tela. Não repetem chaves já definidas em Programação → Filtros. Paginação fica na fonte.",
     dataBlockRefreshInterval:
       "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview atualiza ao mudar filtros ou a fonte.",
     customSlideType:
@@ -304,6 +306,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
     playlistFiltersEmpty:
       "Adicione fontes de dados nas telas para configurar filtros globais da programação.",
+    slideFiltersCoveredByDefaults:
+      "Todos os filtros desta tela já estão na Programação. Ajuste lá ou sobrescreva na fonte.",
     dateRangePresetOpenEnded:
       "Nesta fonte o padrão é Personalizado: deixe Data início e Data fim vazias para todo o histórico cadastrado. Presets relativos (este mês, este ano…) também estão disponíveis se quiser limitar.",
     dateRangeFixed:
