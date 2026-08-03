@@ -5,8 +5,35 @@ export type SeriesChartCurvePoint = { x: number; y: number };
 const DEFAULT_SEGMENTS_PER_SPAN = 12;
 
 /**
+ * Catmull-Rom pode ultrapassar os âncoras (overshoot). Sem clamp, o path fura o
+ * clipPath → área «cortada» no topo / «vazando» nas laterais (linhas suaves).
+ */
+export function clampSeriesChartCurveToAnchors(
+  densified: ReadonlyArray<SeriesChartCurvePoint>,
+  anchors: ReadonlyArray<SeriesChartCurvePoint>,
+): SeriesChartCurvePoint[] {
+  if (anchors.length === 0) return densified.map((point) => ({ ...point }));
+  let minX = anchors[0]!.x;
+  let maxX = anchors[0]!.x;
+  let minY = anchors[0]!.y;
+  let maxY = anchors[0]!.y;
+  for (let i = 1; i < anchors.length; i += 1) {
+    const point = anchors[i]!;
+    if (point.x < minX) minX = point.x;
+    if (point.x > maxX) maxX = point.x;
+    if (point.y < minY) minY = point.y;
+    if (point.y > maxY) maxY = point.y;
+  }
+  return densified.map((point) => ({
+    x: Math.min(maxX, Math.max(minX, point.x)),
+    y: Math.min(maxY, Math.max(minY, point.y)),
+  }));
+}
+
+/**
  * Densifica âncoras com Catmull-Rom → segmentos retos curtos (aparência suave).
  * Com menos de 3 pontos, devolve os âncoras (sem suavização).
+ * Pontos densificados são clamados à caixa dos âncoras (sem overshoot no clip).
  */
 export function densifySeriesChartCurve(
   anchors: ReadonlyArray<SeriesChartCurvePoint>,
@@ -45,7 +72,7 @@ export function densifySeriesChartCurve(
     }
   }
   points.push({ ...anchors[n - 1]! });
-  return points;
+  return clampSeriesChartCurveToAnchors(points, anchors);
 }
 
 export function seriesChartPointsAttr(points: ReadonlyArray<SeriesChartCurvePoint>): string {

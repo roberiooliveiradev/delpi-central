@@ -21,6 +21,22 @@ describe("seriesChartCurve", () => {
     expect(dense[dense.length - 1]).toEqual(anchors[anchors.length - 1]);
   });
 
+  it("clampa overshoot Catmull-Rom à caixa dos âncoras (evita cortar no clip)", () => {
+    // Pico alto no meio: overshoot iria acima de y=0 (topo SVG) sem clamp.
+    const peak = [
+      { x: 0, y: 40 },
+      { x: 10, y: 0 },
+      { x: 20, y: 40 },
+    ];
+    const dense = densifySeriesChartCurve(peak, 16);
+    const ys = dense.map((point) => point.y);
+    const xs = dense.map((point) => point.x);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(40);
+    expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...xs)).toBeLessThanOrEqual(20);
+  });
+
   it("sem smooth devolve só os âncoras", () => {
     const resolved = resolveSeriesChartStrokePoints(anchors, false);
     expect(resolved).toEqual(anchors);

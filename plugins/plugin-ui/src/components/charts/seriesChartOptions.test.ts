@@ -163,6 +163,11 @@ describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
     expect(ticks).toContain(28_000);
     expect(ticks[ticks.length - 1]!).toBeGreaterThan(28_000);
   });
+
+  it("pico quase no teto nice (27,5k→28k) ainda ganha headroom", () => {
+    const ticks = resolveSeriesChartTicks(0, 27_500);
+    expect(ticks[ticks.length - 1]!).toBeGreaterThan(28_000);
+  });
 });
 
 describe("resolveValueScaleColor — colorir por valor", () => {

@@ -575,9 +575,10 @@ export function resolveSeriesChartTicks(min: number, max: number, count = 5): nu
   // (ex.: economia ~875 com ticks até 800 → área plana no topo).
   const niceMin = Math.floor(min / step) * step;
   let niceMax = Math.ceil(max / step) * step;
-  // Pico exatamente no tick nice (ex.: 28 000) colava no clipPath → área «vazando»
-  // / achatada no topo. Reserva sempre um degrau acima do dataMax.
-  if (niceMax <= max) {
+  // Pico no tick nice OU quase no teto (ex.: 27,5k com eixo 28k): sem folga a
+  // Catmull-Rom / stroke cola no clipPath. Reserva sempre ≥ ~½ degrau acima.
+  const headroomRatio = step > 0 ? (niceMax - max) / step : 0;
+  if (niceMax <= max || headroomRatio < 0.5) {
     niceMax = Number((niceMax + step).toFixed(6));
   }
   const ticks: number[] = [];
