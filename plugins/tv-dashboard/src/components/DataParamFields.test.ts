@@ -159,7 +159,7 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/schemaEnum=\{field\.enum\}/);
   });
 
-  it("respeita openEndedDateRange (custom) e não força this_month no hydrate", () => {
+  it("respeita openEndedDateRange e resolveFallbackPreset (contrato)", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
     expect(source).toMatch(/openEndedDateRange/);
@@ -176,5 +176,15 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/divergedKeys/);
     expect(source).toMatch(/emptyOptionLabel/);
     expect(source).toMatch(/aggregateLayer/);
+  });
+
+  it("expõe Limpar filtro em selects, Período e inputs (dados/tela/programação)", () => {
+    const base = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/filterClear/);
+    expect(source).toMatch(/ClearableControl/);
+    expect(source).toMatch(/td-data-param-clearable/);
+    expect(source).toMatch(/options=\{\[\s*\{\s*value:\s*""\s*,\s*label:\s*periodEmptyLabel/);
+    expect(source).toMatch(/options=\{\[\{ value: ""/);
   });
 });

@@ -1,5 +1,8 @@
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import type { BranchScope } from "../api/tvDashboardApi";
-import { TdNativeSelectField, TdNativeTextField } from "./tdFormFields";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DeckField } from "./deck/DeckField";
+import { TdNativeSelectField } from "./tdFormFields";
 
 type Props = {
   id: string;
@@ -12,8 +15,8 @@ type Props = {
   /** Enum do paramSchema da rota (OpenAPI) — fallback quando não há branchScope. */
   schemaEnum?: Array<string | number | boolean> | null;
   /**
-   * Rótulo da opção vazia no select (ex.: «Não definido (usa a fonte)» em
-   * tela/programação/multi). Sem isto: «Consolidado» quando allowConsolidated.
+   * Rótulo da opção vazia (Limpar filtro / Não definido / Valores diferentes).
+   * Sempre há opção de limpar no select.
    */
   emptyOptionLabel?: string;
 };
@@ -51,13 +54,8 @@ export function BranchField({
   emptyOptionLabel,
 }: Props) {
   const branches = resolveBranchFieldOptions(scope, schemaEnum);
-  const allowConsolidated = scope?.allowConsolidated ?? true;
-  const placeholderOption =
-    emptyOptionLabel !== undefined
-      ? emptyOptionLabel
-      : allowConsolidated
-        ? "Consolidado"
-        : undefined;
+  const clearLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
+  const placeholderOption = emptyOptionLabel ?? clearLabel;
 
   if (branches.length > 0) {
     return (
@@ -76,14 +74,28 @@ export function BranchField({
     );
   }
 
+  const hasValue = String(value ?? "").trim() !== "";
   return (
-    <TdNativeTextField
-      id={id}
-      label={label}
-      hint={hint}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder ?? "Ex.: 01"}
-    />
+    <DeckField id={id} label={label} hint={hint}>
+      <div className="td-data-param-clearable">
+        <NativeTextControl
+          id={id}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder ?? "Ex.: 01"}
+        />
+        {hasValue ? (
+          <button
+            type="button"
+            className="td-data-param-clearable__btn"
+            aria-label={clearLabel}
+            title={clearLabel}
+            onClick={() => onChange("")}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
+    </DeckField>
   );
 }

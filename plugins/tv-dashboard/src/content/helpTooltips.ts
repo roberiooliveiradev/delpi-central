@@ -306,6 +306,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
     filterUnsetUsesSource:
       "Não definido (usa a fonte)",
+    filterClear:
+      "Limpar filtro",
     filterValuesDiffer:
       "Valores diferentes",
     playlistFiltersEmpty:

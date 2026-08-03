@@ -1,5 +1,5 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
-import { useEffect } from "react";
+import type { ReactNode } from "react";
 import type { BranchScope } from "../api/tvDashboardApi";
 import {
   ENUM_OPTION_LABELS,
@@ -110,7 +110,7 @@ function displayParamValue(
   applySchemaDefault: boolean,
 ): string {
   if (current === undefined || current === null || current === "") {
-    // Camada agregada: vazio = não definido — não preencher com default OpenAPI.
+    // Camada agregada / limpar: vazio = sem filtro — não preencher com default OpenAPI.
     if (
       applySchemaDefault &&
       field.default !== undefined &&
@@ -135,13 +135,12 @@ type Props = {
   layout?: "ribbon" | "pane";
   /**
    * Rota com intervalo aberto (ex.: série TRANSFORMA+): Personalizado sem datas =
-   * histórico completo. Não hidratar nem exibir «Este mês» como padrão.
+   * histórico completo.
    */
   openEndedDateRange?: boolean;
   /**
-   * Quando false, camada agregada (slide/programação/multi): não hidrata preset
-   * e marca filtros vazios como «Não definido (usa a fonte)».
-   * Default true nas fontes individuais.
+   * Quando false, camada agregada (slide/programação/multi): rótulo vazio =
+   * «Não definido (usa a fonte)». Default true na fonte (rótulo «Limpar filtro»).
    */
   hydrateDefaultPreset?: boolean;
   /**
@@ -151,8 +150,38 @@ type Props = {
   onChange: (updates: Record<string, string>) => void;
 };
 
-function resolveFallbackPreset(openEndedDateRange: boolean): DateRangePresetId {
+/** @deprecated Preferir rótulos em helpTooltips; mantido para testes de contrato. */
+export function resolveFallbackPreset(openEndedDateRange: boolean): DateRangePresetId {
   return openEndedDateRange ? "custom" : "this_month";
+}
+
+function ClearableControl({
+  clearLabel,
+  canClear,
+  onClear,
+  children,
+}: {
+  clearLabel: string;
+  canClear: boolean;
+  onClear: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="td-data-param-clearable">
+      {children}
+      {canClear ? (
+        <button
+          type="button"
+          className="td-data-param-clearable__btn"
+          aria-label={clearLabel}
+          title={clearLabel}
+          onClick={onClear}
+        >
+          ×
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 export function DataParamFields({
@@ -172,13 +201,15 @@ export function DataParamFields({
 
   const aggregateLayer = !hydrateDefaultPreset;
   const unsetLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource;
+  const clearLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear;
   const divergedLabel = TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer;
 
+  /** Opção vazia em selects — limpar / não definido / valores diferentes. */
   function emptyChoiceLabel(key: string, inherited: boolean): string {
     if (divergedKeys.has(key)) return divergedLabel;
     if (aggregateLayer) return unsetLabel;
     if (inherited) return "Herdado do slide";
-    return "Opcional";
+    return clearLabel;
   }
 
   function emptyTextPlaceholder(
@@ -190,8 +221,7 @@ export function DataParamFields({
     if (aggregateLayer) return unsetLabel;
     if (inherited) return "Herdado do slide";
     if (field.default !== undefined) return `Padrão: ${field.default}`;
-    if (field.optional) return "Opcional";
-    return "";
+    return clearLabel;
   }
 
   const compact = layout === "ribbon";
@@ -202,30 +232,17 @@ export function DataParamFields({
   // semana, ano…) é o mesmo das demais rotas. `competence` permanece opcional para mês fechado.
   const hasCompetence = "competence" in schema;
   const activeDatePair = datePair;
-  const fallbackPreset = resolveFallbackPreset(openEndedDateRange);
   const presetRaw = String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim();
-  const preset = (
-    presetRaw || (activeDatePair && hydrateDefaultPreset ? fallbackPreset : "")
-  ) as DateRangePresetId | "";
+  const preset = (presetRaw || "") as DateRangePresetId | "";
   const isCustom = !activeDatePair || !preset || preset === "custom";
   const showLastN = Boolean(activeDatePair) && preset === "last_n_days";
-  const periodSelectValue = presetRaw
-    ? presetRaw
-    : hydrateDefaultPreset
-      ? fallbackPreset
-      : "";
+  // Sem preset gravado → opção «Limpar» / «Não definido» (gateway usa this_month nas rotas fechadas).
+  const periodSelectValue = presetRaw;
   const periodEmptyLabel = divergedKeys.has(DATE_RANGE_PRESET_PARAM)
     ? divergedLabel
-    : unsetLabel;
-
-  useEffect(() => {
-    if (!hydrateDefaultPreset) return;
-    if (!activeDatePair) return;
-    if (String(values?.[DATE_RANGE_PRESET_PARAM] ?? "").trim()) return;
-    onChange({ [DATE_RANGE_PRESET_PARAM]: fallbackPreset });
-    // Hidrata preset padrão alinhado à rota (custom em open-ended; this_month nas demais).
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- evita loop com onChange/values
-  }, [activeDatePair?.startKey, activeDatePair?.endKey, fallbackPreset, hydrateDefaultPreset]);
+    : aggregateLayer
+      ? unsetLabel
+      : clearLabel;
 
   function patchParam(key: string, value: string) {
     const updates: Record<string, string> = { [key]: value };
@@ -233,7 +250,7 @@ export function DataParamFields({
       // Competência (mês fechado SI) → datas manuais; evita conflito com preset relativo.
       updates[DATE_RANGE_PRESET_PARAM] = "custom";
     }
-    if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset !== "custom") {
+    if (activeDatePair && isDateRangePairKey(key, activeDatePair) && preset && preset !== "custom") {
       updates[DATE_RANGE_PRESET_PARAM] = "custom";
     }
     onChange(updates);
@@ -277,14 +294,10 @@ export function DataParamFields({
               ariaLabel="Período relativo"
               value={periodSelectValue}
               onChange={patchDateRangePreset}
-              options={
-                hydrateDefaultPreset
-                  ? DATE_RANGE_PRESET_OPTIONS
-                  : [
-                      { value: "", label: periodEmptyLabel },
-                      ...DATE_RANGE_PRESET_OPTIONS,
-                    ]
-              }
+              options={[
+                { value: "", label: periodEmptyLabel },
+                ...DATE_RANGE_PRESET_OPTIONS,
+              ]}
             />
           </DeckField>,
           showLastN ? (
@@ -294,20 +307,31 @@ export function DataParamFields({
               label="Últimos N dias"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.lastNDays}
             >
-              <NativeTextControl
-                id={`${idPrefix}-period-days`}
-                type="number"
-                className={nativeClass}
-                min={1}
-                max={366}
-                placeholder="Ex.: 15"
-                value={
-                  values?.[PERIOD_DAYS_PARAM] === undefined || values?.[PERIOD_DAYS_PARAM] === null
-                    ? "7"
-                    : String(values[PERIOD_DAYS_PARAM])
+              <ClearableControl
+                clearLabel={clearLabel}
+                canClear={
+                  values?.[PERIOD_DAYS_PARAM] !== undefined &&
+                  values?.[PERIOD_DAYS_PARAM] !== null &&
+                  String(values[PERIOD_DAYS_PARAM]) !== ""
                 }
-                onChange={(value: string) => onChange({ [PERIOD_DAYS_PARAM]: value })}
-              />
+                onClear={() => onChange({ [PERIOD_DAYS_PARAM]: "" })}
+              >
+                <NativeTextControl
+                  id={`${idPrefix}-period-days`}
+                  type="number"
+                  className={nativeClass}
+                  min={1}
+                  max={366}
+                  placeholder="Ex.: 15"
+                  value={
+                    values?.[PERIOD_DAYS_PARAM] === undefined ||
+                    values?.[PERIOD_DAYS_PARAM] === null
+                      ? ""
+                      : String(values[PERIOD_DAYS_PARAM])
+                  }
+                  onChange={(value: string) => onChange({ [PERIOD_DAYS_PARAM]: value })}
+                />
+              </ClearableControl>
             </DeckField>
           ) : null,
         ];
@@ -328,9 +352,12 @@ export function DataParamFields({
       : hintForParam(key, field);
     const fieldId = `${idPrefix}-${key}`;
     const selectOptions = resolveParamSelectOptions(key, field);
-    const displayValue = displayParamValue(current, field, hydrateDefaultPreset);
+    // Nunca aplicar default OpenAPI na exibição — limpar deve mostrar vazio.
+    const displayValue = displayParamValue(current, field, false);
     const dateInputsLocked = isRangeDate && !isCustom;
     const emptyLabel = emptyChoiceLabel(key, inherited);
+    const hasStoredValue =
+      current !== undefined && current !== null && String(current).trim() !== "";
 
     if (BRANCH_PARAM_KEYS.has(key)) {
       return (
@@ -343,31 +370,13 @@ export function DataParamFields({
           schemaEnum={field.enum}
           value={displayValue}
           onChange={(value) => patchParam(key, value)}
-          placeholder={
-            divergedKeys.has(key)
-              ? divergedLabel
-              : aggregateLayer
-                ? unsetLabel
-                : inherited
-                  ? "Herdado do slide"
-                  : "Ex.: 01"
-          }
-          emptyOptionLabel={
-            divergedKeys.has(key) || aggregateLayer ? emptyLabel : undefined
-          }
+          placeholder={emptyTextPlaceholder(key, inherited, field)}
+          emptyOptionLabel={emptyLabel}
         />
       );
     }
 
     if (selectOptions) {
-      const showEmpty =
-        aggregateLayer ||
-        divergedKeys.has(key) ||
-        field.optional ||
-        field.default !== undefined ||
-        inherited ||
-        !selectOptions.some((option) => option.value === displayValue);
-
       return (
         <DeckField key={key} id={fieldId} label={label} hint={hint}>
           <FormSelectControl
@@ -377,10 +386,7 @@ export function DataParamFields({
             ariaLabel={labelBase}
             value={displayValue}
             onChange={(value: string) => patchParam(key, value)}
-            options={[
-              ...(showEmpty ? [{ value: "", label: emptyLabel }] : []),
-              ...selectOptions,
-            ]}
+            options={[{ value: "", label: emptyLabel }, ...selectOptions]}
           />
         </DeckField>
       );
@@ -401,27 +407,33 @@ export function DataParamFields({
 
     return (
       <DeckField key={key} id={fieldId} label={label} hint={hint}>
-        <NativeTextControl
-          id={fieldId}
-          type={inputType}
-          className={nativeClass}
-          disabled={dateInputsLocked}
-          placeholder={
-            dateInputsLocked
-              ? "Definido pelo período relativo"
-              : openEndedDatePlaceholder && !aggregateLayer
-                ? openEndedDatePlaceholder
-                : emptyTextPlaceholder(key, inherited, field)
-          }
-          value={
-            dateInputsLocked
-              ? ""
-              : current === undefined || current === null
+        <ClearableControl
+          clearLabel={clearLabel}
+          canClear={hasStoredValue && !dateInputsLocked}
+          onClear={() => patchParam(key, "")}
+        >
+          <NativeTextControl
+            id={fieldId}
+            type={inputType}
+            className={nativeClass}
+            disabled={dateInputsLocked}
+            placeholder={
+              dateInputsLocked
+                ? "Definido pelo período relativo"
+                : openEndedDatePlaceholder && !aggregateLayer
+                  ? openEndedDatePlaceholder
+                  : emptyTextPlaceholder(key, inherited, field)
+            }
+            value={
+              dateInputsLocked
                 ? ""
-                : String(current)
-          }
-          onChange={(value: string) => patchParam(key, value)}
-        />
+                : current === undefined || current === null
+                  ? ""
+                  : String(current)
+            }
+            onChange={(value: string) => patchParam(key, value)}
+          />
+        </ClearableControl>
       </DeckField>
     );
   });
