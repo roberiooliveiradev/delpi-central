@@ -91,9 +91,17 @@ class ChatProductQueryIntentResolutionService:
         operational_focus: dict | None = None,
         memory_snapshot: dict | None = None,
     ) -> str | None:
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
         from app.domain.services.chat_product_description_resolution_service import (
             ChatProductDescriptionResolutionService,
         )
+
+        # Format refinement reuses last payload — never inherit productCode from
+        # métricas do turno anterior (ex.: late_ops).
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return intent_service().extract_product_code(message)
 
         drill_code = ChatProductDescriptionResolutionService.extract_code_from_drilldown_message(
             message,

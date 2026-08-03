@@ -73,12 +73,23 @@ class ChatTurnPreparationToolRoutingService:
                 common_chat_operational_answer=None,
             )
 
+        from app.domain.services.chat_presentation_format_refinement_service import (
+            ChatPresentationFormatRefinementService,
+        )
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
         from app.domain.services.chat_sql_operational_intent_service import (
             ChatSqlOperationalIntentService,
         )
+
+        if ChatPresentationFormatRefinementService.looks_like_format_refinement(message):
+            return ChatTurnPreparationOperationalGuards(
+                missing_product_code_answer=None,
+                ambiguous_period_answer=None,
+                missing_date_answer=None,
+                common_chat_operational_answer=None,
+            )
 
         skip_missing_product_prompt = (
             ChatSqlOperationalIntentService.requires_sql_knowledge(message)
