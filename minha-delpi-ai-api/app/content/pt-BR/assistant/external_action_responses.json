@@ -75,6 +75,19 @@
     "showSqlAnswerHint": "Peça alterações em linguagem natural — por exemplo: *filial 01 e 02*, *top 100* ou *acrescente a coluna de armazém*."
   },
   "actionSelection": {
+    "manifestText": {
+      "maxChars": 4000,
+      "maxParameters": 24,
+      "maxEnumValues": 16,
+      "maxFieldNames": 24,
+      "paramsLabel": "params",
+      "enumsLabel": "enums",
+      "returnsLabel": "returns",
+      "entityLabel": "entity",
+      "shapeLabel": "shape",
+      "fieldsLabel": "fields",
+      "whenToUseLabel": "whenToUse"
+    },
     "suppliesOtdSuppliesDomainTerms": [
       "compra",
       "suprimentos",

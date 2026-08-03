@@ -1,6 +1,9 @@
 import logging
 
 from app.domain.ports.embedding_gateway_port import EmbeddingGatewayPort
+from app.domain.services.external_actions.external_action_manifest_text_service import (
+    ExternalActionManifestTextService,
+)
 from app.domain.services.external_actions.external_action_response_content_service import (
     ExternalActionResponseContentService,
 )
@@ -119,18 +122,4 @@ class ExternalActionSemanticRankerService:
         return filtered
 
     def _action_text(self, action: dict) -> str:
-        tags = action.get("tags") or []
-        tag_text = ", ".join(str(item) for item in tags) if isinstance(tags, list) else str(tags)
-
-        return " | ".join(
-            part
-            for part in [
-                str(action.get("method") or "").upper(),
-                str(action.get("path") or ""),
-                str(action.get("summary") or ""),
-                str(action.get("description") or ""),
-                str(action.get("operationId") or ""),
-                tag_text,
-            ]
-            if part
-        )[:4000]
+        return ExternalActionManifestTextService.build(action)

@@ -59,7 +59,12 @@ class ExternalActionRepositoryPort(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def backfill_action_embeddings(self, *, provider_key: str | None = None) -> dict:
+    def backfill_action_embeddings(
+        self,
+        *,
+        provider_key: str | None = None,
+        force: bool = False,
+    ) -> dict:
         raise NotImplementedError
 
     @abstractmethod

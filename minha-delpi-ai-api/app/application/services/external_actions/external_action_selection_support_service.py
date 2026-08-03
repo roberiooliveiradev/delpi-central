@@ -5,6 +5,9 @@ from __future__ import annotations
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
+from app.domain.services.external_actions.external_action_manifest_text_service import (
+    ExternalActionManifestTextService,
+)
 
 
 class ExternalActionSelectionSupportService:
@@ -100,16 +103,9 @@ class ExternalActionSelectionSupportService:
         if not tokens:
             return 0.0
 
-        haystack = " ".join(
-            [
-                str(action.get("path") or ""),
-                str(action.get("summary") or ""),
-                str(action.get("description") or ""),
-                str(action.get("operationId") or ""),
-                " ".join(str(tag) for tag in (action.get("tags") or [])),
-            ]
-        ).lower()
-        haystack = ChatMessageNormalizationService.normalize_for_matching(haystack)
+        haystack = ChatMessageNormalizationService.normalize_for_matching(
+            ExternalActionManifestTextService.build(action).lower()
+        )
 
         hits = 0.0
         for token in tokens:

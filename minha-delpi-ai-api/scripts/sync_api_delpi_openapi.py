@@ -99,6 +99,11 @@ def main() -> int:
         help="Não reindexa embeddings das actions.",
     )
     parser.add_argument(
+        "--force-reindex",
+        action="store_true",
+        help="Com --skip-import: reindexa todas as actions (force=true).",
+    )
+    parser.add_argument(
         "--skip-catalog",
         action="store_true",
         help="Não gera docs/knowledge/_generated/api-delpi-openapi-catalog.md.",
@@ -166,6 +171,7 @@ def main() -> int:
             if not args.skip_reindex:
                 report["reindex"] = repository.backfill_action_embeddings(
                     provider_key=args.provider_key,
+                    force=bool(args.force_reindex),
                 )
                 db.session.commit()
 

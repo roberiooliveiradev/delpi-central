@@ -71,6 +71,17 @@ def test_action_selection_heuristic_terms_exist():
         "actionSelection",
         "qualityKaizenContextTerms",
     )
+    manifest = ExternalActionResponseContentService.get_node(
+        "actionSelection",
+        "manifestText",
+    )
+    assert isinstance(manifest, dict)
+    assert int(manifest.get("maxChars") or 0) >= 1000
+    assert ExternalActionResponseContentService.get(
+        "actionSelection",
+        "manifestText",
+        "paramsLabel",
+    )
 
 
 def test_operational_route_registry_reason_keys_exist() -> None:

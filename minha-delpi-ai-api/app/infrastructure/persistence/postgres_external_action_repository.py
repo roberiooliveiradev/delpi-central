@@ -170,6 +170,10 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
                         "description": action.get("description"),
                         "operationId": action.get("operation_id"),
                         "tags": action.get("tags"),
+                        "parametersSchema": action.get("parameters_schema"),
+                        "responseSchema": action.get("response_schema"),
+                        "delpiMetadata": action.get("delpi_metadata"),
+                        "whenToUse": action.get("when_to_use"),
                     }
                 )
 
@@ -435,6 +439,7 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         provider_key: str | None = None,
         on_progress=None,
         commit_batch_size: int = 0,
+        force: bool = False,
     ) -> dict:
         if not self.embedding_service:
             return {"updated": 0, "skipped": 0, "total": 0}
@@ -442,8 +447,9 @@ class PostgresExternalActionRepository(ExternalActionRepositoryPort):
         query = ExternalActionModel.query.join(ExternalActionProviderModel).filter(
             ExternalActionModel.enabled.is_(True),
             ExternalActionProviderModel.enabled.is_(True),
-            ExternalActionModel.embedding.is_(None),
         )
+        if not force:
+            query = query.filter(ExternalActionModel.embedding.is_(None))
 
         if provider_key:
             query = query.filter(ExternalActionProviderModel.provider_key == provider_key)

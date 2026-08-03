@@ -27,5 +27,8 @@ class ReindexExternalActionEmbeddingsUseCase:
     def __init__(self, repository: ExternalActionRepositoryPort):
         self.repository = repository
 
-    def execute(self, *, provider_key: str | None = None) -> dict:
-        return self.repository.backfill_action_embeddings(provider_key=provider_key)
+    def execute(self, *, provider_key: str | None = None, force: bool = False) -> dict:
+        return self.repository.backfill_action_embeddings(
+            provider_key=provider_key,
+            force=force,
+        )

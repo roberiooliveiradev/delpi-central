@@ -28,6 +28,11 @@ def main() -> int:
         help="Não reindexa embeddings das external actions.",
     )
     parser.add_argument(
+        "--force-reindex",
+        action="store_true",
+        help="Reindexa todas as actions (mesmo com embedding já preenchido).",
+    )
+    parser.add_argument(
         "--provider-key",
         default=None,
         help="Filtra reindex por provider (opcional).",
@@ -50,7 +55,8 @@ def main() -> int:
 
         if not args.skip_reindex:
             report["reindex"] = make_reindex_external_action_embeddings_use_case().execute(
-                provider_key=args.provider_key
+                provider_key=args.provider_key,
+                force=bool(args.force_reindex),
             )
             db.session.commit()
 

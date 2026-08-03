@@ -1735,9 +1735,13 @@ def save_admin_chat_learning_pipeline_settings():
 def reindex_external_action_embeddings():
     payload = request.get_json(silent=True) or {}
     provider_key = payload.get("providerKey") if isinstance(payload, dict) else None
+    force = bool(payload.get("force")) if isinstance(payload, dict) else False
 
     use_case = make_reindex_external_action_embeddings_use_case()
-    result = use_case.execute(provider_key=str(provider_key).strip() if provider_key else None)
+    result = use_case.execute(
+        provider_key=str(provider_key).strip() if provider_key else None,
+        force=force,
+    )
 
     try:
         make_audit_repository().log(
