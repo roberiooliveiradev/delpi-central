@@ -34,6 +34,7 @@ import {
 import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { MultiSourceDataParamsPanel } from "./MultiSourceDataParamsPanel";
 import { resolveSelectedDataContext } from "../utils/selectedDataContext";
 
 export type PanelLayout = "ribbon" | "pane";
@@ -264,16 +265,21 @@ export function SelectedDataSidePanel({
 
   if (context.kind === "mixed") {
     return (
-      <DeckPropertySection pane title="Dados" defaultOpen>
-        <p className="td-deck-inspector__hint">{context.message}</p>
-        <button
-          type="button"
-          className="td-btn td-btn--sm td-btn--ghost"
-          onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
-        >
-          Inserir nova fonte
-        </button>
-      </DeckPropertySection>
+      <>
+        <MultiSourceDataParamsPanel
+          targets={context.bindingTargets}
+          branchScope={branchScope}
+        />
+        <div className="td-deck-inspector__actions" style={{ padding: "8px 12px" }}>
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--ghost"
+            onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
+          >
+            Inserir nova fonte…
+          </button>
+        </div>
+      </>
     );
   }
 

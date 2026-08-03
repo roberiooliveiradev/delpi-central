@@ -17,13 +17,18 @@ export type SelectedDataContext = {
   /** Representante para UI (último selecionado com dados, ou o comum). */
   primary: ComunicadoBlock | null;
   /**
-   * Fonte cujos parâmetros editar:
+   * Fonte cujos parâmetros editar (seleção única / homogênea):
    * - o próprio `data_source` selecionado
    * - a fonte ligada via `dataSourceId` de um visual ou texto/forma
    * - o bloco legado com `dataBinding`
    */
   bindingTarget: ComunicadoBlock | null;
-  /** Mensagem quando kind === mixed. */
+  /**
+   * Fontes únicas resolvidas da seleção (multi-seleção mista → união de filtros).
+   * Ordem estável pela ordem de seleção.
+   */
+  bindingTargets: ComunicadoBlock[];
+  /** Mensagem auxiliar (ribbon / empty). */
   message?: string;
 };
 
@@ -65,6 +70,22 @@ function resolveBindingTarget(
   return null;
 }
 
+function collectBindingTargets(
+  blocks: ComunicadoBlock[],
+  dataBlocks: ComunicadoBlock[],
+): ComunicadoBlock[] {
+  const seen = new Set<string>();
+  const targets: ComunicadoBlock[] = [];
+  for (const block of dataBlocks) {
+    const target = resolveBindingTarget(blocks, block);
+    if (!target || !("dataBinding" in target)) continue;
+    if (seen.has(target.id)) continue;
+    seen.add(target.id);
+    targets.push(target);
+  }
+  return targets;
+}
+
 function isSelectedDataBlock(block: ComunicadoBlock): boolean {
   if (isDataViewBlockType(block.type)) return true;
   if (isFetchableDataBlockType(block.type)) return true;
@@ -85,20 +106,36 @@ export function resolveSelectedDataContext(
     .filter((block): block is ComunicadoBlock => Boolean(block && isSelectedDataBlock(block)));
 
   if (dataBlocks.length === 0) {
-    return { kind: "none", dataBlocks: [], primary: null, bindingTarget: null };
+    return {
+      kind: "none",
+      dataBlocks: [],
+      primary: null,
+      bindingTarget: null,
+      bindingTargets: [],
+    };
   }
 
   const primary = dataBlocks[dataBlocks.length - 1] ?? null;
   if (!primary) {
-    return { kind: "none", dataBlocks: [], primary: null, bindingTarget: null };
+    return {
+      kind: "none",
+      dataBlocks: [],
+      primary: null,
+      bindingTarget: null,
+      bindingTargets: [],
+    };
   }
+
+  const bindingTargets = collectBindingTargets(blocks, dataBlocks);
+  const bindingTarget = resolveBindingTarget(blocks, primary);
 
   if (dataBlocks.length === 1) {
     return {
       kind: "single",
       dataBlocks,
       primary,
-      bindingTarget: resolveBindingTarget(blocks, primary),
+      bindingTarget,
+      bindingTargets,
     };
   }
 
@@ -108,7 +145,8 @@ export function resolveSelectedDataContext(
       kind: "homogeneous",
       dataBlocks,
       primary,
-      bindingTarget: resolveBindingTarget(blocks, primary),
+      bindingTarget,
+      bindingTargets,
     };
   }
 
@@ -116,8 +154,12 @@ export function resolveSelectedDataContext(
     kind: "mixed",
     dataBlocks,
     primary,
-    bindingTarget: null,
-    message: "Seleção mista — escolha um bloco de dados por vez.",
+    bindingTarget: bindingTargets.length === 1 ? bindingTargets[0]! : null,
+    bindingTargets,
+    message:
+      bindingTargets.length > 0
+        ? "Seleção com várias fontes — filtros unificados abaixo."
+        : "Seleção sem fontes ligadas — conecte uma fonte ou escolha um bloco.",
   };
 }
 

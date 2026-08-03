@@ -324,6 +324,14 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
+    multiSelectFilters:
+      "Campos em comum das fontes selecionadas (sem repetir). Valores diferentes ficam em branco até você definir um valor para todas.",
+    multiSelectFiltersSummary:
+      "{count} fontes na seleção — alterar um filtro aplica nas fontes que aceitam esse parâmetro.",
+    multiSelectNoSources:
+      "Nenhuma fonte ligada nesta seleção. Conecte os elementos a uma fonte ou selecione blocos de dados.",
+    multiSelectEmptySchema:
+      "As fontes selecionadas não expõem parâmetros editáveis em comum.",
     canvasTableDataBinding:
       "Cada célula pode ter fonte e campo próprios (ex.: Realizado numa fonte, Meta em outra). Com a célula selecionada, «Fonte desta célula» não altera as demais. Sem override, herda a fonte padrão da Grade.",
     textDataBinding:

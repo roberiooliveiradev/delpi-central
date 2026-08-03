@@ -50,5 +50,30 @@ describe("resolveSelectedDataContext", () => {
     expect(ctx.kind).toBe("single");
     expect(ctx.primary?.id).toBe("txt-u");
     expect(ctx.bindingTarget).toBeNull();
+    expect(ctx.bindingTargets).toEqual([]);
+  });
+
+  it("seleção mista de fontes distintas expõe bindingTargets únicos", () => {
+    const sourceB: ComunicadoBlock = {
+      id: "src-2",
+      type: "data_source",
+      frame: { x: 20, y: 0, w: 10, h: 10 },
+      dataBinding: { operationId: "get_retrabalho", displayMode: "auto", params: {} },
+    };
+    const textB: ComunicadoBlock = {
+      id: "txt-2",
+      type: "text",
+      content: "—",
+      frame: { x: 30, y: 0, w: 20, h: 10 },
+      dataSourceId: "src-2",
+      textProjection: { field: "value", format: "number" },
+    };
+    const ctx = resolveSelectedDataContext(
+      [source, sourceB, textLinked, textB],
+      ["txt-1", "txt-2"],
+    );
+    expect(ctx.kind).toBe("mixed");
+    expect(ctx.bindingTargets.map((block) => block.id)).toEqual(["src-1", "src-2"]);
+    expect(ctx.message).toMatch(/filtros unificados/i);
   });
 });
