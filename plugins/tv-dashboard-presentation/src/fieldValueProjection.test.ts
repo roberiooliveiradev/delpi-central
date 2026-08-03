@@ -76,4 +76,32 @@ describe("fieldValueProjection", () => {
     expect(projected.kind).toBe("scalar");
     expect(projected.scalar).toBe("01/07/26");
   });
+
+  it("indicadores aninhados: Score usa IDD do KPI, não média das notas", () => {
+    const departmentIndicators: ComunicadoDataResolved = {
+      kpi: { value: 3.25, label: "score" },
+      kpiMetrics: [
+        { field: "score", value: 3.25, label: "IDD" },
+        { field: "idd", value: 3.25, label: "IDD" },
+      ],
+      table: {
+        columns: [
+          { key: "name", label: "Indicador" },
+          { key: "score", label: "Score" },
+        ],
+        rows: [
+          { name: "PPM interno", score: 1.23 },
+          { name: "PPM externo", score: 10 },
+          { name: "Kaizen ideias", score: 0 },
+          { name: "Kaizen financeiro", score: 0 },
+          { name: "Auditoria 5S", score: 0 },
+        ],
+      },
+    };
+    expect(extractProjectionFieldValues(departmentIndicators, "score")).toEqual([3.25]);
+    expect(suggestDefaultAggregationForField(departmentIndicators, "score")).toBe("first");
+    const avg = resolveProjectedField(departmentIndicators, "score", "avg");
+    expect(avg.kind).toBe("scalar");
+    expect(avg.scalar).toBe(3.25);
+  });
 });

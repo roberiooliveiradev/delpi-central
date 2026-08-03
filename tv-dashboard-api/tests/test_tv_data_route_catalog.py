@@ -118,6 +118,40 @@ def test_merge_data_params_input_end_date_clears_preset_and_period_days():
     assert "periodDays" not in merged
 
 
+def test_merge_data_params_previous_month_clears_inherited_competence():
+    """Runtime «Mês passado» não pode deixar competence da fonte vencer o preset."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters={"department_id": "quality"},
+        block_params={
+            "department_id": "quality",
+            "competence": "2026-08",
+            "branch": "01",
+        },
+        input_overrides={
+            "dateRangePreset": "previous_month",
+            "branch": "01",
+        },
+    )
+    assert merged["dateRangePreset"] == "previous_month"
+    assert merged["branch"] == "01"
+    assert merged["department_id"] == "quality"
+    assert "competence" not in merged
+    assert "start_date" not in merged
+    assert "end_date" not in merged
+
+
+def test_merge_data_params_custom_keeps_competence():
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"competence": "2026-07", "dateRangePreset": "custom"},
+        input_overrides=None,
+    )
+    assert merged["competence"] == "2026-07"
+    assert merged["dateRangePreset"] == "custom"
+
+
 def test_param_inherited_from_slide():
     assert param_inherited_from_slide(
         "branch",

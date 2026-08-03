@@ -90,10 +90,37 @@ function campoValorLookup(resolved: ProjectionResolvedLike | undefined, field: s
   return undefined;
 }
 
+/** Colunas típicas de série temporal — tabela aninhada (indicadores) não tem essas chaves. */
+const TIME_SERIES_COLUMN_KEYS = new Set([
+  "periodo",
+  "period",
+  "date",
+  "data",
+  "competence",
+  "competencia",
+  "mes",
+  "month",
+  "bucket",
+  "day",
+  "dia",
+]);
+
+export function isTimeSeriesTable(
+  columns: Array<{ key?: string }> | undefined | null,
+): boolean {
+  if (!columns?.length) return false;
+  return columns.some((col) =>
+    TIME_SERIES_COLUMN_KEYS.has(String(col.key || "").trim().toLowerCase()),
+  );
+}
+
 /**
  * Extrai todos os valores do campo para agregação/lista.
- * Série tabular (OEE/OTD…) tem prioridade sobre o escalar KPI (último ponto),
- * exceto dump campo/valor de SI — aí o KPI/lookup por nome do campo manda.
+ * Série tabular (OEE/OTD…) tem prioridade sobre o escalar KPI (último ponto).
+ * Tabela aninhada (ex.: indicadores do departamento) NÃO é série: Score/idd do
+ * KPI departamental vence a coluna score das linhas — senão «Média»/«Lista»
+ * vira média das notas dos indicadores (falso IDD).
+ * Dump campo/valor de SI — KPI/lookup por nome do campo manda.
  */
 export function extractProjectionFieldValues(
   resolved: ProjectionResolvedLike | undefined,
@@ -102,7 +129,14 @@ export function extractProjectionFieldValues(
   if (!resolved || !field.trim()) return [];
   const trimmed = field.trim();
   const rows = resolved.table?.rows ?? [];
-  const dump = isCampoValorDumpTable(resolved.table?.columns);
+  const columns = resolved.table?.columns;
+  const dump = isCampoValorDumpTable(columns);
+  const timeSeries = isTimeSeriesTable(columns);
+
+  const fromKpi = kpiScalarForField(resolved, trimmed);
+  if (!timeSeries && !dump && fromKpi != null && fromKpi !== "") {
+    return [fromKpi];
+  }
 
   if (rows.length > 0 && !dump) {
     const fromRows = columnValuesFromRows(rows, trimmed).filter(
@@ -111,7 +145,6 @@ export function extractProjectionFieldValues(
     if (fromRows.length > 0) return fromRows;
   }
 
-  const fromKpi = kpiScalarForField(resolved, trimmed);
   if (fromKpi != null && fromKpi !== "") return [fromKpi];
 
   if (dump) {

@@ -65,10 +65,26 @@ def reconcile_merged_params_after_input(
     return out
 
 
+def _is_relative_date_range_preset(value: Any) -> bool:
+    preset = _normalize_preset(value)
+    return bool(preset) and preset != "custom"
+
+
+def _strip_competence_for_relative_preset(merged: dict[str, Any]) -> None:
+    """Preset relativo (ex.: previous_month) vence competence SI herdada.
+
+    A UI grava `competence: \"\"` na camada editada, mas o merge ignora vazio e
+    a competence da fonte/tela permanece — o SI então prioriza competence e
+    ignora o mês do preset. Ver regressão TV «Mês passado» + IDD.
+    """
+    if _is_relative_date_range_preset(merged.get(DATE_RANGE_PRESET_KEY)):
+        merged.pop("competence", None)
+
+
 def _apply_period_layer(merged: dict[str, Any], layer: dict[str, Any]) -> None:
     """Aplica intenção de período da camada sem vazar datas stale das camadas inferiores.
 
-    - Preset relativo → descarta datas herdadas (o gateway recalcula).
+    - Preset relativo → descarta datas e competence herdadas (o gateway recalcula).
     - `custom` sem datas na camada → descarta datas herdadas (evita 0026 + custom do bloco).
     - `custom` com datas na camada → datas da camada prevalecem no loop normal.
     """
@@ -84,8 +100,9 @@ def _apply_period_layer(merged: dict[str, Any], layer: dict[str, Any]) -> None:
         if not _layer_has_any_dates(layer):
             _clear_date_keys(merged)
         return
-    # Relativo (this_month, last_7_days, …)
+    # Relativo (this_month, previous_month, last_7_days, …)
     _clear_date_keys(merged)
+    merged.pop("competence", None)
     if preset != "last_n_days" and not _has_value(layer, PERIOD_DAYS_KEY):
         merged.pop(PERIOD_DAYS_KEY, None)
 
@@ -107,7 +124,11 @@ def merge_data_params(
             if value is None or value == "":
                 continue
             merged[str(key)] = value
-    return reconcile_merged_params_after_input(merged, input_overrides=input_overrides)
+    out = reconcile_merged_params_after_input(merged, input_overrides=input_overrides)
+    # Camada inferior pode repor competence depois do pop no preset da camada
+    # superior (ex.: fonte com competence + input previous_month).
+    _strip_competence_for_relative_preset(out)
+    return out
 
 
 def param_inherited_from_slide(
