@@ -15,15 +15,15 @@ def _has_value(layer: dict[str, Any], key: str) -> bool:
     return value is not None and value != ""
 
 
-# Aliases de filial Protheus — vazio/Todas na camada superior limpa herança.
+# Aliases de filial Protheus — vazio/all na camada superior limpa herança 01/02.
 BRANCH_PARAM_KEYS = frozenset({"branch", "filial", "branch_code", "filial_id"})
 
 
 def _is_all_branches_scope(value: Any) -> bool:
-    """True = consolidado (não enviar filtro de filial à api-delpi)."""
+    """True = consolidado (all / vazio / aliases PT)."""
     if value is None or value == "":
         return True
-    return str(value).strip() in {"Todas", "todas", "all", "todos"}
+    return str(value).strip().lower() in {"all", "todas", "todos"}
 
 
 def _clear_branch_aliases(target: dict[str, Any]) -> None:
@@ -138,10 +138,11 @@ def merge_data_params(
         _apply_period_layer(merged, layer)
         for key, value in layer.items():
             key_str = str(key)
-            # Filial vazia/Todas na camada superior remove branch herdada (fonte/prog).
-            # Sem isso, input Filial limpo deixa branch=01 da fonte e a TV filtra SC.
+            # Filial vazia limpa herança; all/Todas grava wire canônico ``all``.
             if key_str in BRANCH_PARAM_KEYS and _is_all_branches_scope(value):
                 _clear_branch_aliases(merged)
+                if value is not None and str(value).strip() != "":
+                    merged[key_str] = "all"
                 continue
             if value is None or value == "":
                 continue

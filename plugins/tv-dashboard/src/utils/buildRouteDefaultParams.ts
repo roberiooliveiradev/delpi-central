@@ -48,7 +48,7 @@ function branchDefaultForRoute(route: TvDataRouteCatalogItem): string {
     const enumValues = Array.isArray(branchSpec?.enum)
       ? branchSpec.enum.map((item) => String(item))
       : [];
-    if (enumValues.includes("Todas")) return "Todas";
+    if (enumValues.includes("all")) return "all";
   }
   return CONVENIENT_REQUIRED_DEFAULTS.branch;
 }

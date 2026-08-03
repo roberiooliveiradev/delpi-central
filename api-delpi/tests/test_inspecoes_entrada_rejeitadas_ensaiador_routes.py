@@ -78,7 +78,7 @@ def inspecoes_entrada_client() -> TestClient:
 )
 def test_inspecoes_entrada_rejeitadas_ensaiador_allows_omit_branch(mock_build, _access, inspecoes_entrada_client: TestClient) -> None:
     mock_result = MagicMock()
-    mock_result.to_dict.return_value = {'branch': 'Todas', 'items': [], 'total_inspectors': 0, 'total_rejected': 0}
+    mock_result.to_dict.return_value = {'branch': 'all', 'items': [], 'total_inspectors': 0, 'total_rejected': 0}
     mock_use_case = MagicMock()
     mock_use_case.execute.return_value = mock_result
     mock_build.return_value = mock_use_case
@@ -87,7 +87,7 @@ def test_inspecoes_entrada_rejeitadas_ensaiador_allows_omit_branch(mock_build, _
     assert response.status_code == 200
     body = response.json()
     assert body.get("success") is True
-    assert body.get("data", {}).get("branch") == "Todas"
+    assert body.get("data", {}).get("branch") == "all"
 
 
 

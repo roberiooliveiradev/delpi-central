@@ -39,7 +39,7 @@ def test_top_intermediates_sql_joins_pa_sg2_and_open_op() -> None:
 
 def test_top_intermediates_sql_todas_has_no_branch_predicate() -> None:
     sql_items, _, params = build_top_intermediates_sql(
-        branch="Todas",
+        branch="all",
         search=None,
         offset=0,
         page_size=10,

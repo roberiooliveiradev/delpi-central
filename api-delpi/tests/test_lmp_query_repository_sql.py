@@ -53,10 +53,11 @@ def test_earliest_ov_date_sql_uses_min_ad1_data() -> None:
 
 
 def test_resolve_branches_todas_and_empty_use_configured_list() -> None:
-    """branch omitido/Todas = 01+02; filial concreta filtra só aquela."""
+    """branch omitido/all = 01+02; filial concreta filtra só aquela."""
     repo = _repository()
     assert repo._resolve_branches(None) == ["01", "02"]
     assert repo._resolve_branches("") == ["01", "02"]
+    assert repo._resolve_branches("all") == ["01", "02"]
     assert repo._resolve_branches("Todas") == ["01", "02"]
     assert repo._resolve_branches("01") == ["01"]
     assert repo._resolve_branches("02") == ["02"]

@@ -35,7 +35,7 @@ type Props = {
   divergedLabel?: string;
 };
 
-/** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. Inclui `Todas` se o enum tiver e consolidado for permitido. */
+/** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. Inclui `all` se o enum tiver e consolidado for permitido. */
 export function resolveBranchFieldOptions(
   scope: BranchScope | null | undefined,
   schemaEnum?: Array<string | number | boolean> | null,
@@ -46,21 +46,21 @@ export function resolveBranchFieldOptions(
   const schemaBranches = Array.isArray(schemaEnum)
     ? schemaEnum.map((item) => String(item).trim()).filter(Boolean)
     : [];
-  const allowTodas =
-    schemaBranches.includes("Todas") &&
+  const allowAll =
+    schemaBranches.includes("all") &&
     (scope == null || scope.allowConsolidated !== false);
 
   const concrete = (() => {
     if (scopeBranches.length > 0 && schemaBranches.length > 0) {
-      const allowed = new Set(schemaBranches.filter((b) => b !== "Todas"));
+      const allowed = new Set(schemaBranches.filter((b) => b !== "all"));
       const intersect = scopeBranches.filter((branch) => allowed.has(branch));
       return intersect.length > 0 ? intersect : scopeBranches;
     }
     if (scopeBranches.length > 0) return scopeBranches;
-    return schemaBranches.filter((b) => b !== "Todas");
+    return schemaBranches.filter((b) => b !== "all");
   })();
 
-  if (allowTodas) return ["Todas", ...concrete.filter((b) => b !== "Todas")];
+  if (allowAll) return ["all", ...concrete.filter((b) => b !== "all")];
   return concrete;
 }
 

@@ -59,7 +59,7 @@ def test_branch_access_error_todas_requires_consolidated() -> None:
         "app.interface.http.routes.supplies.safety_stock_branch_access._GATE.consolidated_view_allowed",
         return_value=False,
     ):
-        response = branch_access_error("Todas")
+        response = branch_access_error("all")
         assert response is not None
         assert response.status_code == 403
 

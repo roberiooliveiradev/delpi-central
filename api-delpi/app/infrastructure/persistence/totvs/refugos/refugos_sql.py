@@ -24,7 +24,7 @@ from app.infrastructure.persistence.totvs.refugos.refugos_query_settings import 
 
 def _branch_predicate(column: str, branch: str | None) -> tuple[str, list]:
     """Todas/None → sem predicado; 01/02 → equality on trimmed column."""
-    clause, params = branch_filter_sql(f"LTRIM(RTRIM({column}))", branch or "Todas")
+    clause, params = branch_filter_sql(f"LTRIM(RTRIM({column}))", branch or "all")
     return clause, params
 
 # Custo do almoxarifado (B2_LOCAL=01) — sem multiplicar linhas por outros locais.

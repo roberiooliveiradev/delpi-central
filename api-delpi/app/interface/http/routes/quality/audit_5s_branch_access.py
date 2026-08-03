@@ -119,7 +119,7 @@ def branch_access_error(
         scope = normalize_branch_scope(branch_code)
     except ValueError:
         return error_response(
-            "branch inválida para Auditoria 5S. Use Todas, 01 ou 02.",
+            "branch inválida para Auditoria 5S. Use all, 01 ou 02.",
             status_code=400,
         )
 

@@ -4,7 +4,7 @@ Consultas operacionais de **inspeção de recebimento** (entrada de materiais), 
 
 **Permissão:** `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` ou `api-delpi.access`
 
-**Validação por filial:** usuários com permissão apenas de uma filial recebem `403` ao consultar a outra (exceto superadmin ou `inspecoes-entrada.view`). `branch=Todas` (ou omitir o parâmetro) exige permissão nas duas filiais (ou `.view` global) e **não aplica filtro SQL de filial**.
+**Validação por filial:** usuários com permissão apenas de uma filial recebem `403` ao consultar a outra (exceto superadmin ou `inspecoes-entrada.view`). `branch=all` (ou omitir o parâmetro) exige permissão nas duas filiais (ou `.view` global) e **não aplica filtro SQL de filial**.
 
 **Formato:** envelope `{ success, message, data, meta }` (Playbook 10).
 
@@ -12,7 +12,7 @@ Parâmetro comum:
 
 | Parâmetro | Descrição |
 |---|---|
-| `branch` | Escopo `Todas` \| `01` \| `02`. Opcional nas listagens/KPI — vazio/`Todas` = sem filtro de filial. Obrigatório `01`\|`02` em `/historico/detalhe`. |
+| `branch` | Escopo `all` \| `01` \| `02`. Opcional nas listagens/KPI — vazio/`all` = sem filtro de filial. Obrigatório `01`\|`02` em `/historico/detalhe`. |
 
 Plugin consumidor: `plugins/inspecoes-entrada` · Doc views: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ESPECIFICACAO-VIEW.md).
 
@@ -34,7 +34,7 @@ Plugin consumidor: `plugins/inspecoes-entrada` · Doc views: [ESPECIFICACAO-VIEW
 
 ## GET `/inspecoes-entrada/resumo`
 
-**Query:** `branch` (opcional — `Todas`/omit = sem filtro de filial)
+**Query:** `branch` (opcional — `all`/omit = sem filtro de filial)
 
 **`meta.operationId`:** `get_inspecoes_entrada_resumo` · **`meta.entity`:** `inspecoes_entrada_resumo`
 
@@ -42,7 +42,7 @@ Plugin consumidor: `plugins/inspecoes-entrada` · Doc views: [ESPECIFICACAO-VIEW
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `branch` | string | Escopo `Todas` \| `01` \| `02` |
+| `branch` | string | Escopo `all` \| `01` \| `02` |
 | `pending_inspections` | int | Aguardando laudo |
 | `inspected` | int | Total inspecionados |
 | `approved_inspections` | int | Aprovados |
@@ -60,7 +60,7 @@ Plugin consumidor: `plugins/inspecoes-entrada` · Doc views: [ESPECIFICACAO-VIEW
 
 | Parâmetro | Default | Descrição |
 |---|---|---|
-| `branch` | — | Opcional (`Todas`/vazio = sem filtro) |
+| `branch` | — | Opcional (`all`/vazio = sem filtro) |
 | `page` | 1 | Página |
 | `page_size` | 50 | Máx. 200 |
 
@@ -98,7 +98,7 @@ Item principal: `invoice_number`, `supplier_name`, `product_code`, `product_desc
 
 | Parâmetro | Default | Descrição |
 |---|---|---|
-| `branch` | — | Opcional (`Todas`/vazio = sem filtro) |
+| `branch` | — | Opcional (`all`/vazio = sem filtro) |
 | `limit` | 50 | Máx. 200 |
 
 **`meta.operationId`:** `get_inspecoes_entrada_rejeitadas_produto`
@@ -113,7 +113,7 @@ Item principal: `invoice_number`, `supplier_name`, `product_code`, `product_desc
 
 | Parâmetro | Descrição |
 |---|---|
-| `branch` | Opcional (`Todas`/vazio = sem filtro) |
+| `branch` | Opcional (`all`/vazio = sem filtro) |
 | `page`, `page_size` | Paginação (máx. 200) |
 | `result` | `APROVADA` ou `REJEITADA` |
 | `date_from`, `date_to` | Filtro `Data_Laudo` (ISO date) |

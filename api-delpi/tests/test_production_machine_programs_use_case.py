@@ -19,10 +19,10 @@ def test_list_top_intermediates_empty_branch_becomes_todas() -> None:
     repo.fetch_top_intermediates.return_value = ([], 0)
     use_case = ListProductionMachineProgramTopIntermediatesUseCase(repo)
     result = use_case.execute(ListMachineProgramTopIntermediatesRequest(branch=""))
-    assert result["summary"]["branch"] == "Todas"
+    assert result["summary"]["branch"] == "all"
     assert result["summary"]["consolidated_across_branches"] is True
     assert result["summary"]["branch_filter_applied"] is False
-    assert repo.fetch_top_intermediates.call_args.kwargs["branch"] == "Todas"
+    assert repo.fetch_top_intermediates.call_args.kwargs["branch"] == "all"
 
 
 def test_list_top_intermediates_default_period_and_paging() -> None:

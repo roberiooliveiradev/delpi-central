@@ -46,10 +46,10 @@ describe("buildRouteDefaultParams", () => {
       category: "quality",
       path: "/inspecoes-entrada/kpi",
       paramSchema: {
-        branch: { type: "string", optional: false, enum: ["Todas", "01", "02"] },
+        branch: { type: "string", optional: false, enum: ["all", "01", "02"] },
       },
     });
-    expect(params.branch).toBe("Todas");
+    expect(params.branch).toBe("all");
   });
   it("não inventa department_id (usuário escolhe no filtro)", () => {
     const params = buildRouteDefaultParams({

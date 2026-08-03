@@ -63,7 +63,7 @@ def test_branch_access_error_consolidated_requires_all_branches() -> None:
         "app.interface.http.branch_access_gate.BranchAccessGate.consolidated_view_allowed",
         return_value=False,
     ):
-        response = branch_access_error("Todas")
+        response = branch_access_error("all")
 
     assert response is not None
     assert response.status_code == 403
@@ -75,4 +75,4 @@ def test_branch_access_error_consolidated_allowed() -> None:
         return_value=True,
     ):
         assert branch_access_error(None) is None
-        assert branch_access_error("Todas") is None
+        assert branch_access_error("all") is None

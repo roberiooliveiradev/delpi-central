@@ -42,7 +42,7 @@ def test_transforma_mais_summary_maps_investment_and_period_kpis() -> None:
 
 
 def test_transforma_mais_summary_todas_omits_filial_upstream() -> None:
-    """branch=Todas no OpenAPI não deve ir como literal ao Transformômetro."""
+    """branch=all no OpenAPI não deve ir como literal ao Transformômetro."""
     client = MagicMock()
     client.get_engineering_summary.return_value = {
         "implemented_solutions_count": 0,
@@ -57,7 +57,7 @@ def test_transforma_mais_summary_todas_omits_filial_upstream() -> None:
     }
     gateway = TransformometroTransformaMaisGateway(client=client)
     gateway.get_summary(
-        ProcessSummaryRequest(filial_id="Todas", start_date=None, end_date=None),
+        ProcessSummaryRequest(filial_id="all", start_date=None, end_date=None),
         authorization=None,
     )
     params = client.get_engineering_summary.call_args.kwargs["params"]

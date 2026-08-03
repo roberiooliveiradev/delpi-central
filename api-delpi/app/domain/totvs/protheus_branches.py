@@ -1,31 +1,47 @@
-"""Filiais Protheus — escopo canônico de consulta (Todas | 01 | 02)."""
+"""Filiais Protheus — escopo canônico de consulta (all | 01 | 02)."""
 
 from __future__ import annotations
 
-BRANCH_SCOPE_TODAS = "Todas"
+# Wire OpenAPI / HTTP (EN). Labels PT-BR em openapi_param_locale.json.
+BRANCH_SCOPE_ALL = "all"
 PROTHEUS_BRANCH_CODES: tuple[str, ...] = ("01", "02")
-BRANCH_SCOPE_VALUES: tuple[str, ...] = (BRANCH_SCOPE_TODAS, *PROTHEUS_BRANCH_CODES)
+BRANCH_SCOPE_VALUES: tuple[str, ...] = (BRANCH_SCOPE_ALL, *PROTHEUS_BRANCH_CODES)
+
+# Alias histórico (PT no wire) — normaliza para ``all``.
+BRANCH_SCOPE_TODAS = BRANCH_SCOPE_ALL
+_BRANCH_SCOPE_ALIASES: dict[str, str] = {
+    "all": BRANCH_SCOPE_ALL,
+    "todas": BRANCH_SCOPE_ALL,
+    "todos": BRANCH_SCOPE_ALL,
+    "Todas": BRANCH_SCOPE_ALL,
+    "Todos": BRANCH_SCOPE_ALL,
+}
 
 # Alias histórico — só códigos de filial (detalhe / chave composta).
 BRANCH_CODE_VALUES = PROTHEUS_BRANCH_CODES
 
 
 def is_all_branches(scope: str) -> bool:
-    return str(scope or "").strip() == BRANCH_SCOPE_TODAS
+    return str(scope or "").strip().lower() in {"", "all", "todas", "todos"}
 
 
 def normalize_branch_scope(raw: str | None) -> str:
-    """Retorna ``Todas`` | ``01`` | ``02``. Vazio/None → Todas."""
+    """Retorna ``all`` | ``01`` | ``02``. Vazio/None/aliases PT → all."""
     normalized = str(raw or "").strip()
     if not normalized:
-        return BRANCH_SCOPE_TODAS
-    if normalized not in BRANCH_SCOPE_VALUES:
-        raise ValueError("branch inválida. Use Todas, 01 ou 02.")
-    return normalized
+        return BRANCH_SCOPE_ALL
+    if normalized in PROTHEUS_BRANCH_CODES:
+        return normalized
+    alias = _BRANCH_SCOPE_ALIASES.get(normalized) or _BRANCH_SCOPE_ALIASES.get(
+        normalized.lower()
+    )
+    if alias:
+        return alias
+    raise ValueError("branch inválida. Use all, 01 ou 02.")
 
 
 def normalize_branch_code(raw: str | None) -> str:
-    """Exige filial concreta 01 ou 02 (sem Todas)."""
+    """Exige filial concreta 01 ou 02 (sem all)."""
     normalized = str(raw or "").strip()
     if normalized not in PROTHEUS_BRANCH_CODES:
         raise ValueError("branch inválida. Use 01 ou 02.")
@@ -33,7 +49,7 @@ def normalize_branch_code(raw: str | None) -> str:
 
 
 def branch_filter_sql(column: str, scope: str) -> tuple[str, list]:
-    """Todas → sem predicado; 01/02 → ``column = ?``.
+    """all → sem predicado; 01/02 → ``column = ?``.
 
     Retorno: (clause, params). Clause vazia = não filtrar por filial.
     """

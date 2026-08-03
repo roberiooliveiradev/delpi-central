@@ -26,7 +26,7 @@ DETALHES_SORT_COLUMNS = {
 
 def _branch_predicate(branch: str | None) -> tuple[str, list[str]]:
     """Todas/None → sem predicado; 01/02 → equality on trimmed FILIAL."""
-    clause, params = branch_filter_sql("LTRIM(RTRIM(FILIAL))", branch or "Todas")
+    clause, params = branch_filter_sql("LTRIM(RTRIM(FILIAL))", branch or "all")
     return clause, list(params)
 
 

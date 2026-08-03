@@ -57,8 +57,8 @@ def _branch_default_for_route(route: Mapping[str, Any]) -> str:
     for key in ("branch", "filial"):
         branch_spec = schema.get(key) if isinstance(schema.get(key), dict) else {}
         enum_values = branch_spec.get("enum") if isinstance(branch_spec, dict) else None
-        if isinstance(enum_values, list) and "Todas" in [str(v) for v in enum_values]:
-            return "Todas"
+        if isinstance(enum_values, list) and "all" in [str(v) for v in enum_values]:
+            return "all"
     return CONVENIENT_REQUIRED_DEFAULTS["branch"]
 
 

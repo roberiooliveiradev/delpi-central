@@ -285,12 +285,12 @@ def BRANCH_QUERY_REQUIRED():
     enum=list(BRANCH_CODE_VALUES),
 )
 def BRANCH_QUERY_OPTIONAL():
-    """Escopo Todas|01|02 — vazio/omitido = Todas (sem filtro de filial)."""
+    """Escopo all|01|02 — vazio/omitido = all (sem filtro de filial)."""
     return Query(
     None,
     description=(
-        "Branch scope: Todas (no branch filter), 01 or 02. "
-        "Empty defaults to Todas when consolidated access is allowed."
+        "Branch scope: all (no branch filter), 01 or 02. "
+        "Empty defaults to all when consolidated access is allowed."
     ),
     pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
     enum=list(BRANCH_SCOPE_VALUES),
@@ -298,10 +298,10 @@ def BRANCH_QUERY_OPTIONAL():
 def BRANCH_SCOPE_QUERY_OPTIONAL():
     return BRANCH_QUERY_OPTIONAL()
 def BRANCH_SCOPE_QUERY_REQUIRED():
-    """Escopo obrigatório incluindo Todas (listagens que exigem o param)."""
+    """Escopo obrigatório incluindo all (listagens que exigem o param)."""
     return Query(
     ...,
-    description="Branch scope: Todas (no branch filter), 01 or 02.",
+    description="Branch scope: all (no branch filter), 01 or 02.",
     pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
     enum=list(BRANCH_SCOPE_VALUES),
 )

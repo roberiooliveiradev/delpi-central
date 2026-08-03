@@ -45,7 +45,7 @@ def test_base_where_consolidated_has_no_branch_predicate() -> None:
     where2, params2 = build_base_where(
         date_start="20260401",
         date_end_exclusive="20260428",
-        branch="Todas",
+        branch="all",
     )
     assert where2 == where
     assert params2 == params

@@ -101,13 +101,13 @@ def test_inspecoes_processo_resumo_allows_omit_branch(
         "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.build_get_inspecoes_processo_resumo_use_case",
     ) as mock_build:
         mock_result = MagicMock()
-        mock_result.to_dict.return_value = {'filial': 'Todas'}
+        mock_result.to_dict.return_value = {'filial': 'all'}
         mock_uc = MagicMock()
         mock_uc.execute.return_value = mock_result
         mock_build.return_value = mock_uc
         response = inspecoes_processo_client.get("/inspecoes-processo/resumo")
     assert response.status_code == 200
-    assert response.json().get("data", {}).get("filial") == "Todas"
+    assert response.json().get("data", {}).get("filial") == "all"
 
 
 

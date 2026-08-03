@@ -167,7 +167,7 @@
         "work_center": "\\bct\\s+(\\S+)",
         "product_group": "\\bgrupo\\s+(\\d{4})\\b"
       },
-      "allBranchesValue": "Todas",
+      "allBranchesValue": "all",
       "bindings": [
         {
           "source": "branch_regex",
@@ -268,7 +268,7 @@
         "all_branches": "\\b(todas as filiais|todas filiais|todas as unidades|consolidado)\\b",
         "department_id": "\\b(comercial|commercial|qualidade|quality|producao|produção|production|financeiro|financial|financerio|suprimentos|supplies|engenharia|engineering|egenharia|engenharria|rh|hr|recursos humanos)\\b"
       },
-      "allBranchesValue": "Todas",
+      "allBranchesValue": "all",
       "departmentIdAliases": {
         "comercial": "commercial",
         "commercial": "commercial",

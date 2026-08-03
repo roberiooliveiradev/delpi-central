@@ -33,7 +33,7 @@ def test_resumo_query_consolidated_has_no_branch_predicate() -> None:
     query2, params2 = build_resumo_query(
         start_date="2025-07-06",
         end_date="2026-07-06",
-        branch="Todas",
+        branch="all",
     )
     assert query2 == query
     assert params2 == params

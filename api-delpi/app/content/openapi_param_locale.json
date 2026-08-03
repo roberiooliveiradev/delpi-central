@@ -109,17 +109,17 @@
       "locale": {
         "en": {
           "label": "Branch",
-          "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when allowed."
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
         },
         "pt-BR": {
           "label": "Filial",
-          "description": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido."
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
         }
       },
       "enumLabels": {
-        "Todas": {
+        "all": {
           "en": {
-            "label": "All branches"
+            "label": "All"
           },
           "pt-BR": {
             "label": "Todas"
@@ -1077,15 +1077,15 @@
       "locale": {
         "en": {
           "label": "Branch",
-          "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed."
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed."
         },
         "pt-BR": {
           "label": "Filial",
-          "description": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido."
+          "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido."
         }
       },
       "enumLabels": {
-        "Todas": {
+        "all": {
           "en": {
             "label": "All"
           },

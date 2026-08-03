@@ -34,7 +34,7 @@ def test_build_date_branch_maps_todas_as_filiais_to_todas():
         "rol de todas as filiais",
     )
 
-    assert parameters["branch"] == "Todas"
+    assert parameters["branch"] == "all"
 
 
 def test_build_date_branch_infers_granularity_for_series():

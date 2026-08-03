@@ -62,7 +62,7 @@ def test_summary_defaults_branch_to_todas(safety_stock_client: TestClient) -> No
         response = safety_stock_client.get("/supplies/safety-stock/summary")
     assert response.status_code == 200
     request = use_case.execute.call_args.args[0]
-    assert request.branch == "Todas"
+    assert request.branch == "all"
 
 
 @patch(
@@ -441,7 +441,7 @@ def test_items_request_rejects_oversized_page() -> None:
 
 def test_query_request_empty_branch_becomes_todas() -> None:
     request = SafetyStockQueryRequest(branch="")
-    assert request.branch == "Todas"
+    assert request.branch == "all"
 
 
 def test_query_request_rejects_invalid_status() -> None:

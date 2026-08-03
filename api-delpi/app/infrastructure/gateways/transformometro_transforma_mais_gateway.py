@@ -14,7 +14,7 @@ from transformometro_client import TransformometroApiClient
 
 
 def _filial_id_for_upstream(raw: str | None) -> str | None:
-    """Todas/vazio → None (consolidado no Transformômetro); 01|02 → código."""
+    """Todas/vazio/all → None (consolidado no Transformômetro); 01|02 → código."""
     if raw is None or str(raw).strip() == "":
         return None
     scope = normalize_branch_scope(raw)

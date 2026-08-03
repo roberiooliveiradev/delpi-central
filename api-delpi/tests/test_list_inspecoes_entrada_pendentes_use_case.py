@@ -130,5 +130,5 @@ def test_list_inspecoes_entrada_pendentes_allows_omit_branch() -> None:
     use_case = ListInspecoesEntradaPendentesUseCase(repository)
     result = use_case.execute(branch=None, page=1, page_size=10)
 
-    repository.count_pendentes_by_branch.assert_called_once_with("Todas")
-    assert result.to_dict()["branch"] == "Todas"
+    repository.count_pendentes_by_branch.assert_called_once_with("all")
+    assert result.to_dict()["branch"] == "all"

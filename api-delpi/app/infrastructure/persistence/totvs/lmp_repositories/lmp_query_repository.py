@@ -60,10 +60,11 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         qb.eq(field, self.settings.active_delete_flag)
 
     def _resolve_branches(self, requested_branch: str | None = None) -> list[str]:
-        """None/vazio/Todas → filiais configuradas (01+02); 01|02 → só aquela."""
+        """None/vazio/all → filiais configuradas (01+02); 01|02 → só aquela."""
+        from app.domain.totvs.protheus_branches import is_all_branches
+
         raw = str(requested_branch or "").strip()
-        # Contrato OpenAPI BRANCH_QUERY_OPTIONAL: Todas = consolidado (sem filtro).
-        if not raw or raw == "Todas":
+        if is_all_branches(raw):
             return list(self.settings.branches)
         return [raw]
 

@@ -24,7 +24,7 @@ def test_gate_todas_requires_consolidated() -> None:
         "app.interface.http.branch_access_gate.BranchAccessGate.consolidated_view_allowed",
         return_value=False,
     ):
-        response = _GATE.branch_access_error("Todas")
+        response = _GATE.branch_access_error("all")
     assert response is not None
     assert response.status_code == 403
 
@@ -34,7 +34,7 @@ def test_gate_todas_allowed_when_consolidated() -> None:
         "app.interface.http.branch_access_gate.BranchAccessGate.consolidated_view_allowed",
         return_value=True,
     ):
-        assert _GATE.branch_access_error("Todas") is None
+        assert _GATE.branch_access_error("all") is None
         assert _GATE.branch_access_error(None) is None
         assert _GATE.branch_access_error("") is None
 

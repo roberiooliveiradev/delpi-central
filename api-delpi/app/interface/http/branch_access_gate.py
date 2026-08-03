@@ -9,7 +9,7 @@ from delpi_auth.request_context import get_current_user
 
 from app.core.responses import error_response
 from app.domain.totvs.protheus_branches import (
-    BRANCH_SCOPE_TODAS,
+    BRANCH_SCOPE_ALL,
     PROTHEUS_BRANCH_CODES,
     is_all_branches,
     normalize_branch_scope,
@@ -54,7 +54,7 @@ class BranchAccessGate:
             scope = normalize_branch_scope(raw)
         except ValueError:
             return error_response(
-                f"branch inválida para {self.resource_label}. Use Todas, 01 ou 02.",
+                f"branch inválida para {self.resource_label}. Use all, 01 ou 02.",
                 status_code=400,
             )
 
@@ -63,7 +63,7 @@ class BranchAccessGate:
                 return None
             return error_response(
                 f"Sem permissão para acessar {self.resource_label} consolidado "
-                f"({BRANCH_SCOPE_TODAS} as filiais).",
+                f"({BRANCH_SCOPE_ALL} branches).",
                 status_code=403,
             )
 

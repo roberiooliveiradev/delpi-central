@@ -89,7 +89,7 @@ class OperationalApiParameterBuilderService:
         )
         branch_match = re.search(str(patterns.get("branch") or r"\bfilial\s+(\d{2})\b"), normalized)
         if all_branches_match:
-            branch = str(spec.get("allBranchesValue") or "Todas")
+            branch = str(spec.get("allBranchesValue") or "all")
         else:
             branch = branch_match.group(1) if branch_match else None
         context = {

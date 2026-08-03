@@ -164,15 +164,23 @@ def test_merge_data_params_empty_branch_input_clears_inherited():
     assert merged["dateRangePreset"] == "this_month"
 
 
-def test_merge_data_params_todas_branch_clears_inherited():
-    """Todas = consolidado — não encaminhar branch à api-delpi."""
+def test_merge_data_params_all_branch_overrides_inherited():
+    """all = consolidado canônico — grava wire `all` e remove herança 01/02."""
     merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"branch": "01"},
+        input_overrides={"branch": "all"},
+    )
+    assert merged["branch"] == "all"
+
+    merged_pt = merge_data_params(
         playlist_defaults=None,
         slide_filters=None,
         block_params={"branch": "01"},
         input_overrides={"branch": "Todas"},
     )
-    assert "branch" not in merged
+    assert merged_pt["branch"] == "all"
 
 
 def test_param_inherited_from_slide():

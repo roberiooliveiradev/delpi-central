@@ -62,12 +62,12 @@ def test_apply_defaults_uses_todas_when_branch_enum_includes_todas():
             "branch": {
                 "type": "string",
                 "optional": False,
-                "enum": ["Todas", "01", "02"],
+                "enum": ["all", "01", "02"],
             },
         },
     }
     merged = apply_catalog_param_defaults({}, route)
-    assert merged["branch"] == "Todas"
+    assert merged["branch"] == "all"
 
 
 def test_apply_defaults_never_reinjects_department_id():
