@@ -149,16 +149,18 @@ describe("multiSourceDataParams", () => {
       end_date: "",
       competence: "",
     });
-    expect(patches.map((item) => item.blockId).sort()).toEqual(["a", "b"]);
+    expect(patches.map((item) => item.blockId).sort()).toEqual(["a", "b", "c"]);
     const byId = Object.fromEntries(patches.map((item) => [item.blockId, item.patch]));
     const aParams = (byId.a?.dataBinding as { params?: Record<string, unknown> }).params;
     const bParams = (byId.b?.dataBinding as { params?: Record<string, unknown> }).params;
+    const cParams = (byId.c?.dataBinding as { params?: Record<string, unknown> }).params;
     expect(aParams).toMatchObject({ branch: "01", dateRangePreset: "this_month" });
     expect(aParams).not.toHaveProperty("start_date");
     expect(aParams).not.toHaveProperty("end_date");
     expect(bParams).toMatchObject({ branch: "01", dateRangePreset: "this_month" });
     expect(bParams).not.toHaveProperty("date_start");
     expect(bParams).not.toHaveProperty("date_end");
+    expect(cParams).toMatchObject({ branch: "01", dateRangePreset: "this_month" });
   });
 
   it("exibe dateRangePreset compartilhado na multi-seleção", () => {
@@ -195,6 +197,26 @@ describe("multiSourceDataParams", () => {
         schema,
       ).values.dateRangePreset,
     ).toBe("this_month");
+  });
+
+  it("aplica dateRangePreset mesmo sem paramSchema da rota (sobrescreve individual)", () => {
+    const targets = [
+      source("a", "get_unknown_route", { branch: "01", dateRangePreset: "this_year" }),
+      source("b", "get_also_unknown", { dateRangePreset: "last_7_days" }),
+    ];
+    const patches = buildMultiSourceParamPatches(targets, [], {
+      dateRangePreset: "today",
+      start_date: "",
+      end_date: "",
+    });
+    expect(patches).toHaveLength(2);
+    for (const item of patches) {
+      const params = (item.patch as { dataBinding?: { params?: Record<string, unknown> } })
+        .dataBinding?.params;
+      expect(params).toMatchObject({ dateRangePreset: "today" });
+      expect(params).not.toHaveProperty("start_date");
+      expect(params).not.toHaveProperty("end_date");
+    }
   });
 });
 

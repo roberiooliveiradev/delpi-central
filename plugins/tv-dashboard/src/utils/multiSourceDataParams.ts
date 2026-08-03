@@ -98,7 +98,8 @@ export function resolveTargetParamSchema(
 
 /**
  * Traduz updates da UI multi-fonte para chaves que a rota aceita.
- * `dateRangePreset` / `periodDays` não vêm do OpenAPI — aplicam em rotas com par de datas.
+ * `dateRangePreset` / `periodDays` **não** vêm do OpenAPI — aplicam em toda fonte
+ * da multi-seleção (hydrate/gateway preservam; rotas sem intervalo ignoram na query).
  * Datas limpas pelo sintetizador (aliases da união) são remapeadas ao par da rota.
  */
 export function mapUpdatesToTargetSchema(
@@ -112,8 +113,7 @@ export function mapUpdatesToTargetSchema(
     if (schema[key]) applicable[key] = raw;
   }
 
-  if (!pair) return applicable;
-
+  // Sintetizador de Período: sempre sobrescreve na fonte (não depende do OpenAPI).
   if (Object.prototype.hasOwnProperty.call(updates, DATE_RANGE_PRESET_PARAM)) {
     applicable[DATE_RANGE_PRESET_PARAM] = updates[DATE_RANGE_PRESET_PARAM];
   }
@@ -122,8 +122,15 @@ export function mapUpdatesToTargetSchema(
   }
 
   const dateUpdate = readDateRangeUpdateValues(updates);
-  if (dateUpdate.hasStart) applicable[pair.startKey] = dateUpdate.start;
-  if (dateUpdate.hasEnd) applicable[pair.endKey] = dateUpdate.end;
+  if (pair) {
+    if (dateUpdate.hasStart) applicable[pair.startKey] = dateUpdate.start;
+    if (dateUpdate.hasEnd) applicable[pair.endKey] = dateUpdate.end;
+  } else if (dateUpdate.hasStart || dateUpdate.hasEnd) {
+    // União UI emitiu start_date/end_date; schema da rota ainda não resolvido —
+    // grava canônico para não deixar datas velhas na fonte.
+    if (dateUpdate.hasStart) applicable.start_date = dateUpdate.start;
+    if (dateUpdate.hasEnd) applicable.end_date = dateUpdate.end;
+  }
 
   return applicable;
 }

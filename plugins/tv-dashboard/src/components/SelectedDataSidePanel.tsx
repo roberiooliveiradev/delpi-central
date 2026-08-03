@@ -110,7 +110,14 @@ export function SelectedDataSidePanel({
       setHydrateHint(null);
       return;
     }
-    updateBlocksAtomically(result.config.blocks ?? []);
+    // Hydrate devolve blocos completos — converter para patches {blockId, patch}.
+    // Passar ComunicadoBlock[] direto em updateBlocksAtomically era no-op (sem blockId).
+    updateBlocksAtomically(
+      (result.config.blocks ?? []).map((block) => ({
+        blockId: block.id,
+        patch: block as Partial<ComunicadoBlock>,
+      })),
+    );
     if (result.config.dataFilters !== config.dataFilters) {
       setDataFilters(result.config.dataFilters);
     }

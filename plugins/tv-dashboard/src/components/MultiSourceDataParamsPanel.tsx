@@ -21,10 +21,11 @@ type Props = {
 
 /**
  * Filtros unificados da multi-seleção de dados (fontes distintas).
- * Schema = união das rotas sem repetir chave; alteração aplica-se a todas as fontes que aceitam o campo.
+ * Schema = união das rotas sem repetir chave; alteração sobrescreve params de
+ * cada fonte que aceita o campo (Período sempre grava dateRangePreset).
  */
 export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Props) {
-  const { updateBlocksAtomically } = useComunicadoEditor();
+  const { updateBlocksAtomically, blocks } = useComunicadoEditor();
   const { routes } = useTvDataRouteLabelCatalog();
 
   const bindingTargets = useMemo(
@@ -63,11 +64,14 @@ export function MultiSourceDataParamsPanel({ targets, branchScope = null }: Prop
   }
 
   function updateParams(updates: Record<string, string>) {
-    const patches = buildMultiSourceParamPatches(
-      bindingTargets as MultiSourceBindingTarget[],
-      routes,
-      updates,
-    );
+    // Blocos vivos do editor — evita patch em cima de snapshot stale da seleção.
+    const freshTargets = bindingTargets.map((target) => {
+      const live = blocks.find((block) => block.id === target.id);
+      return (
+        live && isMultiSourceBindingTarget(live) ? live : target
+      ) as MultiSourceBindingTarget;
+    });
+    const patches = buildMultiSourceParamPatches(freshTargets, routes, updates);
     if (patches.length === 0) return;
     updateBlocksAtomically(patches);
   }
