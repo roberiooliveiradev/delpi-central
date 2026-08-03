@@ -706,6 +706,27 @@ class ExternalActionColumnLabelService:
 
         return columns
 
+    def order_keys_with_preferred_hints(
+        self,
+        present_keys: list[str],
+        *,
+        profile_name: str | None = None,
+    ) -> list[str]:
+        """Ordena chaves com preferredColumns como hints — nunca como allowlist."""
+        ordered: list[str] = []
+        present = [str(key).strip() for key in present_keys if str(key or "").strip()]
+        present_set = set(present)
+
+        for key in self.column_order_hints(profile_name):
+            if key in present_set and key not in ordered:
+                ordered.append(key)
+
+        for key in present:
+            if key not in ordered:
+                ordered.append(key)
+
+        return ordered
+
     def column_order_hints(self, profile_name: str | None) -> list[str]:
         token = str(profile_name or "").strip()
 
@@ -804,15 +825,10 @@ class ExternalActionColumnLabelService:
             resolved_profile = self.detect_table_profile(dict_items[0], path=path)
 
         label_hints_profile = resolved_profile
-        ordered_keys: list[str] = []
-
-        for key in self.column_order_hints(resolved_profile):
-            if key in present and key not in ordered_keys:
-                ordered_keys.append(key)
-
-        for key in discovered:
-            if key not in ordered_keys:
-                ordered_keys.append(key)
+        ordered_keys = self.order_keys_with_preferred_hints(
+            discovered,
+            profile_name=resolved_profile,
+        )
 
         profile_hints = self.column_label_hints(resolved_profile)
         label_map = self.resolve_field_labels(

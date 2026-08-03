@@ -12,18 +12,34 @@
     "orders": {
       "items": [
         {
-          "op": "000001001",
+          "branch": "01",
+          "production_order": "000001001",
+          "order_number": "000001",
+          "order_item": "001",
           "product_code": "90260144",
-          "status": "late",
+          "product_description": "TERMINAL",
+          "due_date": "20260310",
+          "finish_date": "20260314",
           "days_diff": -4,
-          "branch": "01"
+          "status": "late",
+          "description": "Atrasada",
+          "otd_status": "late",
+          "days_late": 4
         },
         {
-          "op": "000002001",
+          "branch": "01",
+          "production_order": "000002001",
+          "order_number": "000002",
+          "order_item": "001",
           "product_code": "90261805",
-          "status": "late",
+          "product_description": "CONECTOR",
+          "due_date": "20260312",
+          "finish_date": "20260314",
           "days_diff": -2,
-          "branch": "01"
+          "status": "late",
+          "description": "Atrasada",
+          "otd_status": "late",
+          "days_late": 2
         }
       ],
       "pagination": {

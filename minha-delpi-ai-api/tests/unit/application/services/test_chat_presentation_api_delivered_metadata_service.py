@@ -129,6 +129,23 @@ def test_api_delivered_metadata_for_production_otd_nested_orders():
     rows = table.get("rows")
     assert isinstance(rows, list) and len(rows) >= 2
 
+    column_keys = [str(col.get("key") or "") for col in (table.get("columns") or [])]
+    for expected in (
+        "production_order",
+        "product_code",
+        "product_description",
+        "due_date",
+        "finish_date",
+        "days_diff",
+        "status",
+        "branch",
+    ):
+        assert expected in column_keys, f"coluna OTD ausente na tabela: {expected}"
+
+    assert rows[0].get("product_description")
+    assert rows[0].get("due_date")
+    assert "days_diff" in rows[0]
+
     data_answer = meta.get("dataAnswer") or {}
     summary = data_answer.get("summary") if isinstance(data_answer.get("summary"), dict) else {}
     facts = data_answer.get("facts") or []

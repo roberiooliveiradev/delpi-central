@@ -158,11 +158,56 @@ class ChatPresentationFieldNormalizationService:
         schema_formats: dict[str, str] | None,
         entity: str | None = None,
     ) -> dict[str, Any]:
+        """preferredColumns = hints de ordem/rótulo; colunas vêm do payload (não allowlist)."""
         rows = presentation.get("rows") or []
         first_row = next((row for row in rows if isinstance(row, dict)), None)
-        columns = presentation.get("columns") or []
+        raw_columns = presentation.get("columns") or []
+
+        existing_label_by_key: dict[str, str] = {}
+        present_keys: list[str] = []
+
+        for column in raw_columns:
+            if not isinstance(column, dict):
+                continue
+
+            key = str(column.get("key") or "").strip()
+
+            if not key or key in present_keys:
+                continue
+
+            present_keys.append(key)
+            configured_label = column.get("label")
+
+            if isinstance(configured_label, str) and configured_label.strip():
+                existing_label_by_key[key] = configured_label.strip()
+
+        discovered_keys: list[str] = []
 
         if first_row:
+            for raw_key in first_row.keys():
+                key = str(raw_key or "").strip()
+
+                if (
+                    not key
+                    or key.startswith("_")
+                    or isinstance(first_row.get(raw_key), (list, dict))
+                ):
+                    continue
+
+                if key not in discovered_keys:
+                    discovered_keys.append(key)
+
+        for key in discovered_keys:
+            if key not in present_keys:
+                present_keys.append(key)
+
+        if not present_keys and first_row:
+            present_keys = discovered_keys[:15]
+
+        preferred_labels: dict[str, str] = {}
+        profile_name: str | None = None
+
+        if first_row and present_keys:
             from app.domain.services.chat_presentation_table_profile_inference_service import (
                 ChatPresentationTableProfileInferenceService,
             )
@@ -173,53 +218,27 @@ class ChatPresentationFieldNormalizationService:
                 sample_row=first_row,
                 column_labels=cls._column_labels,
             )
-            preferred = None
 
             if profile_name:
-                preferred = cls._column_labels.preferred_columns(
-                    profile_name,
-                    first_row,
-                    schema_labels=schema_labels,
-                )
+                preferred_labels = {
+                    key: label.strip()
+                    for key, label in cls._column_labels.preferred_columns(
+                        profile_name,
+                        first_row,
+                        schema_labels=schema_labels,
+                    )
+                    if isinstance(label, str) and label.strip()
+                }
 
-            if preferred:
-                columns = [
-                    cls._column_labels.enrich_column_def(
-                        key,
-                        label=label,
-                        schema_labels=schema_labels,
-                        schema_formats=schema_formats,
-                    )
-                    for key, label in preferred
-                ]
-            elif not columns:
-                columns = [
-                    cls._column_labels.enrich_column_def(
-                        key,
-                        schema_labels=schema_labels,
-                        schema_formats=schema_formats,
-                    )
-                    for key in list(first_row.keys())[:15]
-                    if not isinstance(first_row.get(key), (list, dict))
-                ]
+        ordered_keys = cls._column_labels.order_keys_with_preferred_hints(
+            present_keys,
+            profile_name=profile_name,
+        )
 
         normalized_columns: list[dict[str, str]] = []
 
-        for column in columns:
-            if not isinstance(column, dict):
-                continue
-
-            key = str(column.get("key") or "").strip()
-
-            if not key:
-                continue
-
-            configured_label = column.get("label")
-            label = (
-                str(configured_label).strip()
-                if isinstance(configured_label, str) and configured_label.strip()
-                else None
-            )
+        for key in ordered_keys:
+            label = preferred_labels.get(key) or existing_label_by_key.get(key)
             normalized_columns.append(
                 cls._column_labels.enrich_column_def(
                     key,

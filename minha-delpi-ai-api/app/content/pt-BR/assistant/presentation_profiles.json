@@ -136,7 +136,8 @@
     "product_last_purchase": "lastPurchaseDetail",
     "product_factory_status": "factoryProductionDetail",
     "product_by_supplier_part_number": "productBySupplierPartNumber",
-    "production_pcp_orders_items": "pcpOrdersItems"
+    "production_pcp_orders_items": "pcpOrdersItems",
+    "production_otd_detail": "productionOtdOrders"
   },
   "entitySetProfileContracts": {
     "playbookOperational": {

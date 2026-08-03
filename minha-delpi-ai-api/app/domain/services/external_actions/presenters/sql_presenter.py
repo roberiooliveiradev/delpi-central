@@ -504,25 +504,32 @@ class ExternalActionSqlPresenter:
 
             sample = {str(column): None for column in columns_raw}
             profile_name = self._host._column_labels.detect_table_profile(sample, path=path)
-            preferred = None
-
-            if profile_name:
-                preferred = self._host._column_labels.preferred_columns(
-                    profile_name,
-                    sample,
-                    schema_labels=self._host._active_schema_labels,
+            preferred_labels = {
+                key: label
+                for key, label in (
+                    self._host._column_labels.preferred_columns(
+                        profile_name,
+                        sample,
+                        schema_labels=self._host._active_schema_labels,
+                    )
+                    if profile_name
+                    else []
                 )
-
-            if preferred:
-                columns = [
-                    self._host._enrich_column(key, label)
-                    for key, label in preferred
-                ]
-            else:
-                columns = [
-                    self._host._enrich_column(str(column), self._host._humanize_key(str(column)))
-                    for column in columns_raw[:15]
-                ]
+            }
+            present_keys = [str(column).strip() for column in columns_raw if str(column).strip()]
+            if not preferred_labels and len(present_keys) > 15:
+                present_keys = present_keys[:15]
+            ordered_keys = self._host._column_labels.order_keys_with_preferred_hints(
+                present_keys,
+                profile_name=profile_name,
+            )
+            columns = [
+                self._host._enrich_column(
+                    key,
+                    preferred_labels.get(key) or self._host._humanize_key(key),
+                )
+                for key in ordered_keys
+            ]
 
             return {
                 "type": "table",

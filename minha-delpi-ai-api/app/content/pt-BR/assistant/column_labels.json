@@ -848,6 +848,7 @@
     "costImpactMaterials",
     "factoryRawMaterialStock",
     "factoryProductionOrder",
+    "productionOtdOrders",
     "stock",
     "eficienciaFabril",
     "production",
@@ -1572,12 +1573,84 @@
         ]
       ]
     },
+    "productionOtdOrders": {
+      "detect": {
+        "anyKeys": [
+          "days_diff",
+          "due_date",
+          "otd_status",
+          "days_late"
+        ],
+        "pathContains": [
+          "/production/otd"
+        ]
+      },
+      "preferredColumns": [
+        [
+          "production_order",
+          "OP"
+        ],
+        [
+          "order_number",
+          "Nº OP"
+        ],
+        [
+          "order_item",
+          "Item"
+        ],
+        [
+          "product_code",
+          "Produto"
+        ],
+        [
+          "product_description",
+          "Descrição"
+        ],
+        [
+          "description",
+          "Descrição"
+        ],
+        [
+          "due_date",
+          "Data prevista"
+        ],
+        [
+          "finish_date",
+          "Data finalização"
+        ],
+        [
+          "days_diff",
+          "Dias (previsto × real)"
+        ],
+        [
+          "days_late",
+          "Dias atraso"
+        ],
+        [
+          "status",
+          "Status"
+        ],
+        [
+          "otd_status",
+          "Status OTD"
+        ],
+        [
+          "branch",
+          "Filial"
+        ]
+      ]
+    },
     "production": {
       "detect": {
         "anyKeys": [
           "production_order",
           "scheduled_quantity",
           "produced_quantity"
+        ],
+        "excludeIfAnyKeys": [
+          "days_diff",
+          "due_date",
+          "otd_status"
         ]
       },
       "preferredColumns": [

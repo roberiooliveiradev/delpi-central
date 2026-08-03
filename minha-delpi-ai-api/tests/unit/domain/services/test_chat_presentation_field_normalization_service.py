@@ -4,6 +4,9 @@ from app.application.use_cases.execute_external_action_use_case import (
 from app.domain.services.chat_presentation_field_normalization_service import (
     ChatPresentationFieldNormalizationService,
 )
+from app.domain.services.external_actions.external_action_column_label_service import (
+    ExternalActionColumnLabelService,
+)
 def test_normalize_chart_adds_field_labels_and_formats():
     presentation = {
         "type": "chart",
@@ -60,6 +63,64 @@ def test_normalize_table_applies_purchase_profile():
     assert "ordered_quantity" in column_keys
     assert any(column["label"] == "Qtd. pedida" for column in normalized["columns"])
     assert any(column.get("dataType") == "date" for column in normalized["columns"] if column["key"] == "issue_date")
+
+
+def test_normalize_table_preferred_columns_are_order_hints_not_allowlist():
+    """Causa raiz transversal: preferredColumns não pode truncar colunas do payload."""
+    presentation = {
+        "type": "table",
+        "title": "Produção",
+        "columns": [
+            {"key": "production_order", "label": "OP"},
+            {"key": "product_code", "label": "Produto"},
+            {"key": "branch", "label": "Filial"},
+            {"key": "status", "label": "Status"},
+        ],
+        "rows": [
+            {
+                "branch": "01",
+                "production_order": "000001001",
+                "product_code": "90260144",
+                "product_description": "TERMINAL",
+                "scheduled_quantity": 10,
+                "extra_metric": 42,
+                "status": "open",
+            }
+        ],
+    }
+
+    normalized = ChatPresentationFieldNormalizationService.normalize_presentation(
+        presentation,
+        path="/production/some-route",
+    )
+
+    column_keys = [column["key"] for column in normalized["columns"]]
+    for expected in (
+        "production_order",
+        "product_code",
+        "product_description",
+        "scheduled_quantity",
+        "extra_metric",
+        "status",
+        "branch",
+    ):
+        assert expected in column_keys, f"coluna ausente após normalize: {expected}"
+
+    assert normalized["rows"][0].get("product_description") == "TERMINAL"
+    assert normalized["rows"][0].get("extra_metric") == 42
+    # preferred do perfil production deve vir antes das extras
+    assert column_keys.index("production_order") < column_keys.index("extra_metric")
+
+
+def test_order_keys_with_preferred_hints_never_drops_present_keys():
+    labels = ExternalActionColumnLabelService()
+    ordered = labels.order_keys_with_preferred_hints(
+        ["zeta", "production_order", "alpha", "product_code"],
+        profile_name="production",
+    )
+    assert ordered[:2] == ["production_order", "product_code"]
+    assert "zeta" in ordered and "alpha" in ordered
+    assert len(ordered) == 4
 
 
 def test_presentation_metadata_includes_normalized_chart_labels():
