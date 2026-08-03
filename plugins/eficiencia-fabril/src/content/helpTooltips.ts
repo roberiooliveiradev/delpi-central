@@ -49,7 +49,7 @@ export const EF_HELP_TOOLTIPS = {
     horaFinal: "Horário de término do apontamento.",
     qtdApontada: "Quantidade produzida no apontamento.",
     metaPorHora:
-      "Meta de produção por hora do roteiro/OP (sem setup): QTD_TOTAL_OP ÷ HY_TEMPOM (fallback G2_TEMPAD/1000). Mesma unidade da quantidade apontada — para confrontar com a eficiência.",
+      "Meta de produção por hora do snapshot da OP (SHY.HY_TEMPAD, sem setup): 1 ÷ HY_TEMPAD. Ritmo unitário congelado na OP — não muda com apontamentos parciais (HY_TEMPOM/HY_QUANT). Se SHY não tiver TEMPAD, usa HY_QUANT÷HY_TEMPOM; por fim o cadastro SG2. Mesma unidade da quantidade apontada.",
     filial: "Filial TOTVS do registro.",
     op: "Ordem de produção vinculada ao apontamento.",
     produtoAcabado:

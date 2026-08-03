@@ -16,28 +16,20 @@ _FINISHED_OP_FROM_EF = (
     f"LEFT(RTRIM(EF.OP), 6) + '{FINISHED_PRODUCTION_ORDER_SUFFIX}'"
 )
 
-# Meta/hora = ritmo padrão (sem setup), mesma base da parte variável do previsto:
-# QTD_TOTAL_OP / COALESCE(HY_TEMPOM, G2_TEMPAD/1000)
-# Unidade = mesma de QTD_APONTADA / C2_QUANT (ex.: MI/h).
-_STANDARD_TIME_FACTOR_SQL = """
-COALESCE(
-    SHY.HY_TEMPOM,
-    CASE
-        WHEN SG2.G2_TEMPAD IS NOT NULL AND SG2.G2_TEMPAD > 0
-        THEN SG2.G2_TEMPAD / 1000.0
-        ELSE NULL
-    END
-)
-"""
-
-_META_POR_HORA_SQL = f"""
+# Meta/hora = ritmo unitário do snapshot da OP (SHY), sem setup.
+# HY_TEMPAD = h/unid congelado na OP (estável).
+# HY_TEMPOM = HY_TEMPAD * HY_QUANT e muda com apontamento parcial — NÃO usar
+# QTD_OP/HY_TEMPOM (meta oscila). Fallback: HY_QUANT/HY_TEMPOM; por fim SG2.
+# Ver production_meta_por_hora.py
+_META_POR_HORA_SQL = """
 CASE
-    WHEN NULLIF(TRY_CAST(EF.QTD_TOTAL_OP AS FLOAT), 0) IS NOT NULL
-     AND NULLIF(({_STANDARD_TIME_FACTOR_SQL}), 0) IS NOT NULL
-    THEN ROUND(
-        TRY_CAST(EF.QTD_TOTAL_OP AS FLOAT) / ({_STANDARD_TIME_FACTOR_SQL}),
-        6
-    )
+    WHEN SHY.HY_TEMPAD IS NOT NULL AND SHY.HY_TEMPAD > 0
+    THEN ROUND(1.0 / SHY.HY_TEMPAD, 6)
+    WHEN NULLIF(SHY.HY_TEMPOM, 0) IS NOT NULL
+     AND NULLIF(SHY.HY_QUANT, 0) IS NOT NULL
+    THEN ROUND(SHY.HY_QUANT / SHY.HY_TEMPOM, 6)
+    WHEN SG2.G2_TEMPAD IS NOT NULL AND SG2.G2_TEMPAD > 0
+    THEN ROUND(1.0 / SG2.G2_TEMPAD, 6)
     ELSE NULL
 END
 """
@@ -251,6 +243,8 @@ SHY_RANKED AS (
         RTRIM(LTRIM(SHY.HY_OP)) AS match_op,
         RTRIM(LTRIM(SHY.HY_OPERAC)) AS match_operacao,
         TRY_CAST(REPLACE(LTRIM(RTRIM(SHY.HY_TEMPOM)), ',', '.') AS FLOAT) AS HY_TEMPOM,
+        TRY_CAST(REPLACE(LTRIM(RTRIM(SHY.HY_TEMPAD)), ',', '.') AS FLOAT) AS HY_TEMPAD,
+        TRY_CAST(REPLACE(LTRIM(RTRIM(SHY.HY_QUANT)), ',', '.') AS FLOAT) AS HY_QUANT,
         ROW_NUMBER() OVER (
             PARTITION BY
                 RTRIM(LTRIM(SHY.HY_FILIAL)),
