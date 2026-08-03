@@ -9,7 +9,18 @@ from app.application.dto.transforma_mais.process_summary_response import (
 )
 from app.domain.entities.transforma_mais.process import Process
 from app.domain.ports.transforma_mais.integration_port import TransformaMaisIntegrationPort
+from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
 from transformometro_client import TransformometroApiClient
+
+
+def _filial_id_for_upstream(raw: str | None) -> str | None:
+    """Todas/vazio → None (consolidado no Transformômetro); 01|02 → código."""
+    if raw is None or str(raw).strip() == "":
+        return None
+    scope = normalize_branch_scope(raw)
+    if is_all_branches(scope):
+        return None
+    return scope
 
 
 class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
@@ -26,7 +37,7 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
             params={
                 "id": request.id,
                 "name_process": request.name_process,
-                "filial_id": request.filial_id,
+                "filial_id": _filial_id_for_upstream(request.filial_id),
                 "sector_name": request.sector_name,
                 "status": request.status,
                 "start_date": request.start_date,
@@ -60,7 +71,7 @@ class TransformometroTransformaMaisGateway(TransformaMaisIntegrationPort):
     ) -> ProcessSummaryResponse:
         data = self._client.get_engineering_summary(
             params={
-                "filial_id": request.filial_id,
+                "filial_id": _filial_id_for_upstream(request.filial_id),
                 "start_date": request.start_date,
                 "end_date": request.end_date,
             },

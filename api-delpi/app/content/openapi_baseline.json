@@ -22226,7 +22226,12 @@
           "name": "filial_id",
           "in": "query",
           "required": false,
-          "description": "Branch ID query parameter.",
+          "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed.",
+          "enum": [
+            "Todas",
+            "01",
+            "02"
+          ],
           "type": "string"
         },
         {
@@ -22300,15 +22305,23 @@
           "filial_id": {
             "locale": {
               "en": {
-                "description": "Branch ID query parameter.",
-                "label": "Branch ID"
+                "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed.",
+                "label": "Branch"
               },
               "pt-BR": {
-                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "description": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido.",
                 "label": "Filial"
               }
             },
             "enumLabels": {
+              "Todas": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
               "01": {
                 "en": {
                   "label": "Branch 01"
@@ -22749,7 +22762,12 @@
           "name": "filial_id",
           "in": "query",
           "required": false,
-          "description": "Branch ID query parameter.",
+          "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed.",
+          "enum": [
+            "Todas",
+            "01",
+            "02"
+          ],
           "type": "string"
         },
         {
@@ -22804,15 +22822,23 @@
           "filial_id": {
             "locale": {
               "en": {
-                "description": "Branch ID query parameter.",
-                "label": "Branch ID"
+                "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed.",
+                "label": "Branch"
               },
               "pt-BR": {
-                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "description": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido.",
                 "label": "Filial"
               }
             },
             "enumLabels": {
+              "Todas": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
               "01": {
                 "en": {
                   "label": "Branch 01"
@@ -22959,15 +22985,23 @@
           "filial_id": {
             "locale": {
               "en": {
-                "description": "Branch ID query parameter.",
-                "label": "Branch ID"
+                "description": "Branch scope: Todas (no branch filter), 01 or 02. Empty defaults to Todas when consolidated access is allowed.",
+                "label": "Branch"
               },
               "pt-BR": {
-                "description": "Código da filial (ex.: 01, 02). Deixe vazio para consolidado.",
+                "description": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido.",
                 "label": "Filial"
               }
             },
             "enumLabels": {
+              "Todas": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
               "01": {
                 "en": {
                   "label": "Branch 01"

@@ -533,7 +533,7 @@ def get_lmp_route(
 def list_processes(
     id: str | None = Query(default=None),
     name_process: str | None = Query(default=None),
-    filial_id: str | None = Query(default=None),
+    filial_id: str | None = BRANCH_QUERY_OPTIONAL(),
     sector_name: str | None = Query(default=None),
     status: str | None = LMP_DASHBOARD_STATUS_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
@@ -578,7 +578,7 @@ def list_processes(
 @router.get("/transforma-mais/processes/summary", **TRANSFORMA_MAIS_SUMMARY)
 @require_any_permission(ENGINEERING_LMP_ACCESS)
 def get_process_summary(
-    filial_id: str | None = Query(default=None),
+    filial_id: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
