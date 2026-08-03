@@ -141,7 +141,10 @@ def validate_params_against_schema(
     `fixedQueryParams` do catálogo satisfaz parâmetros obrigatórios (não pedem valor na UI).
     Valor vazio no bloco usa `default` do schema / convenções / `defaultParams` da rota.
     Par de datas obrigatório é aceito via `dateRangePreset` / `periodDays` (expansão no gateway).
-    Rotas `date_range` fechadas sem período/datas → erro nomeando os filtros.
+
+    Período em rotas `date_range` fechadas **não** é exigido aqui: o bloco herda
+    Programação (`dataDefaults`) e tela (`dataFilters`) via `merge_data_params`.
+    O assert vive no boundary pós-merge (`_build_query_params` / enrichment).
     """
     schema = param_schema if isinstance(param_schema, dict) else {}
     fixed = fixed_query_params if isinstance(fixed_query_params, dict) else {}
@@ -151,8 +154,6 @@ def validate_params_against_schema(
     for key in (DATE_RANGE_PRESET_KEY, PERIOD_DAYS_KEY):
         if key in raw and raw[key] not in (None, ""):
             seeded[key] = raw[key]
-
-    assert_closed_date_range_has_period(route, seeded)
 
     date_pair = find_date_range_keys(schema)
     has_period_intent = (

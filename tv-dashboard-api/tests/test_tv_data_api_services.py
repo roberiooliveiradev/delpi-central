@@ -97,6 +97,34 @@ def test_open_ended_date_range_skips_period_assert():
     assert_closed_date_range_has_period(route, {})
 
 
+def test_validate_params_with_closed_route_allows_missing_period_on_binding():
+    """Binding isolado herda Programação/tela — período só no merge pós-camadas."""
+    route = {
+        "paramStrategy": "date_range",
+        "dateRangeKeys": ["start_date", "end_date"],
+        "paramSchema": {
+            "start_date": {"type": "string", "optional": True, "format": "date"},
+            "end_date": {"type": "string", "optional": True, "format": "date"},
+            "branch": {"type": "string", "optional": True},
+        },
+    }
+    assert validate_params_against_schema({"branch": "01"}, route["paramSchema"], route=route) == {
+        "branch": "01"
+    }
+
+
+def test_validate_data_binding_ppm_without_period_on_block():
+    """Save/preview estrutural não exige período no bloco (herança de filtros)."""
+    route = TvDataRouteCatalogService().get_route("get_ppm_external_summary")
+    if not route:
+        pytest.skip("Catálogo PPM indisponível")
+    validate_data_binding(
+        {"operationId": route["operationId"], "params": {}, "displayMode": "kpi"},
+        block_type="data_kpi",
+        route=route,
+    )
+
+
 def test_validate_params_strips_unknown_api_keys():
     """Save alinhado ao fetch: chaves fora do schema são ignoradas (hydrate também remove)."""
     assert validate_params_against_schema(

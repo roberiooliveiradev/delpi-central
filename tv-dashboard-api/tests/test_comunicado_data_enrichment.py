@@ -151,7 +151,7 @@ def test_enrich_dashboard_department_indicators_unwraps_item_wrapper():
             "type": "data_source",
             "dataBinding": {
                 "operationId": "get_dashboard_department_indicators",
-                "params": {"department_id": "commercial"},
+                "params": {"dateRangePreset": "this_month", "department_id": "commercial"},
                 "displayMode": "auto",
             },
         }
@@ -289,7 +289,7 @@ def test_enrich_rejects_branch_outside_static_policy(monkeypatch):
             "type": "data_kpi",
             "dataBinding": {
                 "operationId": "get_overall_equipment_effectiveness_pct",
-                "params": {},
+                "params": {"dateRangePreset": "this_month", },
             },
         }
     ]
@@ -313,7 +313,7 @@ def test_enrich_rejects_branch_for_scoped_user():
             "type": "data_kpi",
             "dataBinding": {
                 "operationId": "get_overall_equipment_effectiveness_pct",
-                "params": {"branch": "02"},
+                "params": {"dateRangePreset": "this_month", "branch": "02"},
             },
         }
     ]
@@ -401,6 +401,7 @@ def test_enrich_table_accepts_bare_list_payload_like_eficiencia_appointments():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "list_eficiencia_fabril_appointments",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "table",
                 },
             }
@@ -445,6 +446,7 @@ def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_branch_rol_target_pct",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             }
@@ -495,6 +497,7 @@ def test_enrich_si_scalar_meta_prefers_value_not_alias_metrics():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_si_indicator_quality_ppm_external_meta",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             }
@@ -559,6 +562,7 @@ def test_enrich_scalar_route_as_line_chart():
             "type": "data_chart",
             "dataBinding": {
                 "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {"dateRangePreset": "this_month"},
                 "displayMode": "line_chart",
             },
         }
@@ -596,6 +600,7 @@ def test_enrich_series_route_as_kpi_uses_last_point():
             "type": "data_kpi",
             "dataBinding": {
                 "operationId": "get_production_oee_series",
+                "params": {"dateRangePreset": "this_month"},
                 "displayMode": "kpi",
             },
         }
@@ -931,6 +936,7 @@ def test_enrich_honors_value_field_override():
             "type": "data_kpi",
             "dataBinding": {
                 "operationId": "get_overall_equipment_effectiveness_pct",
+                "params": {"dateRangePreset": "this_month"},
                 "displayMode": "kpi",
                 "valueField": "oeePct",
             },
@@ -1044,6 +1050,128 @@ def test_enrich_input_overrides_source_date_range_preset():
     assert "dateRangePreset" not in params
 
 
+def test_enrich_inherits_period_from_playlist_defaults():
+    """Período só na programação: merge antes do assert — fetch recebe dateRangePreset."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_ppm_external_summary", "shape": "playbook_report"},
+        "data": {"summary": {"value": 12}},
+        "route": {"label": "PPM externo", "tvConstraints": {}},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    source = {
+        "id": "src-ppm",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_ppm_external_summary",
+            "displayMode": "kpi",
+            "params": {},
+        },
+    }
+    enriched = service.enrich_blocks(
+        [source],
+        cfg={},
+        playlist_defaults={"dateRangePreset": "this_week", "branch": "01"},
+        authorization="Bearer x",
+    )
+    assert not (enriched[0].get("resolved") or {}).get("error")
+    params = gateway.fetch_by_operation_id.call_args.kwargs["params"]
+    assert params.get("dateRangePreset") == "this_week"
+    assert params.get("branch") == "01"
+
+
+def test_enrich_inherits_period_from_slide_filters():
+    """Período só nos filtros do slide: merge aplica antes do fetch."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_ppm_external_summary", "shape": "playbook_report"},
+        "data": {"summary": {"value": 12}},
+        "route": {"label": "PPM externo", "tvConstraints": {}},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    source = {
+        "id": "src-ppm",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_ppm_external_summary",
+            "displayMode": "kpi",
+            "params": {},
+        },
+    }
+    enriched = service.enrich_blocks(
+        [source],
+        cfg={"dataFilters": {"dateRangePreset": "this_week"}},
+        authorization="Bearer x",
+    )
+    assert not (enriched[0].get("resolved") or {}).get("error")
+    params = gateway.fetch_by_operation_id.call_args.kwargs["params"]
+    assert params.get("dateRangePreset") == "this_week"
+
+
+def test_enrich_closed_date_range_without_any_period_reports_filters():
+    """Sem período em nenhuma camada → erro nomeando filtros (não fetch)."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    source = {
+        "id": "src-ppm",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_ppm_external_summary",
+            "displayMode": "kpi",
+            "params": {},
+        },
+    }
+    enriched = service.enrich_blocks([source], cfg={}, authorization="Bearer x")
+    err = str((enriched[0].get("resolved") or {}).get("error") or "")
+    assert "Informe o período nos filtros" in err
+    gateway.fetch_by_operation_id.assert_not_called()
+
+
+def test_preview_block_accepts_period_only_in_playlist_defaults():
+    """Regressão UI: Programação com Período + bloco sem params não 422 antes do merge."""
+    from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
+
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_ppm_external_summary", "shape": "playbook_report"},
+        "data": {"summary": {"value": 3}},
+        "route": {"label": "PPM externo", "tvConstraints": {}},
+    }
+    catalog = TvDataRouteCatalogService()
+    enrichment = ComunicadoDataEnrichmentService(catalog=catalog, gateway=gateway)
+    preview = TvDataPreviewService(catalog=catalog, enrichment=enrichment)
+    block = {
+        "id": "src-ppm",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_ppm_external_summary",
+            "displayMode": "auto",
+            "params": {},
+        },
+    }
+    selected = preview.preview_block(
+        block,
+        native_config={"blocks": [block], "dataFilters": {}},
+        playlist_defaults={"dateRangePreset": "this_week"},
+        authorization="Bearer x",
+    )
+    assert not (selected.get("resolved") or {}).get("error")
+    assert gateway.fetch_by_operation_id.called
+
+
 def test_enrich_preview_applies_input_from_cfg_blocks():
     """POST /data/preview-block envia só a fonte em `blocks`; inputs vêm em nativeConfig.blocks."""
     reset_comunicado_data_block_cache()
@@ -1130,6 +1258,7 @@ def test_enrich_multi_metric_lmp_summary_all_and_selected():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_lmps_dashboard_summary",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             }
@@ -1152,6 +1281,7 @@ def test_enrich_multi_metric_lmp_summary_all_and_selected():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_lmps_dashboard_summary",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                     "selectedValueFields": ["percent_dentro_prazo", "total_items"],
                 },
@@ -1208,6 +1338,7 @@ def test_enrich_kpi_skips_total_records_and_attaches_playbook_table():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_production_consumption_top_items_by_work_center",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             }
@@ -1279,6 +1410,7 @@ def test_decorate_input_resolves_branch_from_slide_schemas():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_production_oee_series",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "chart",
                 },
             },
@@ -1314,6 +1446,7 @@ def test_decorate_input_ignores_empty_source_schemas_and_keeps_param():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_production_oee_series",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "chart",
                 },
             },
@@ -1396,6 +1529,7 @@ def test_enrich_auto_resolves_table_for_text_only_list_shape():
                 "type": "data_metric",
                 "dataBinding": {
                     "operationId": "get_lmp_history_flow",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "auto",
                 },
             }
@@ -1512,6 +1646,7 @@ def test_enrich_links_text_block_to_data_source_resolved():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_branch_rol_target_pct",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             },
@@ -1576,6 +1711,7 @@ def test_enrich_blocks_links_resolved_to_canvas_table():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_branch_rol_target_pct",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             },
@@ -1672,6 +1808,7 @@ def test_enrich_kpi_uses_meta_fields_dict_labels_pt():
                 "type": "data_source",
                 "dataBinding": {
                     "operationId": "get_quality_scrap_cost_pct",
+                "params": {"dateRangePreset": "this_month"},
                     "displayMode": "kpi",
                 },
             }

@@ -11,6 +11,9 @@ from tv_app.application.services.comunicado_input_filters_service import (
     merge_filter_layers,
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
+from tv_app.application.services.data.tv_data_param_validation_service import (
+    assert_closed_date_range_has_period,
+)
 from tv_app.application.services.data.m_query.m_phase7_quality_service import (
     SafeTelemetry,
     profile_table,
@@ -1434,6 +1437,13 @@ class ComunicadoDataEnrichmentService:
             result["resolvedRouteLabel"] = route_label if catalog_like else stored_label or route_label
         try:
             validate_data_route_branch(route, merged_params, user=user)
+        except ValueError as exc:
+            result["resolved"] = {"error": str(exc)}
+            return result
+
+        # Período herdado (programação/tela) só é exigido após merge — não no binding isolado.
+        try:
+            assert_closed_date_range_has_period(route, merged_params)
         except ValueError as exc:
             result["resolved"] = {"error": str(exc)}
             return result
