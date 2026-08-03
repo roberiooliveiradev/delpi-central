@@ -233,7 +233,11 @@ export function InputBindingInspector({ pane = false }: Props) {
           </p>
         ) : null}
 
-        <DeckField id="td-input-scope" label="Alvo">
+        <DeckField
+          id="td-input-scope"
+          label="Alvo"
+          hint="Dados da página = todas as fontes do slide. Dado específico = só as fontes que você marcar."
+        >
           <FormSelectControl
             id="td-input-scope"
             ariaLabel="Alvo do filtro"
@@ -246,8 +250,8 @@ export function InputBindingInspector({ pane = false }: Props) {
               })
             }
             options={[
-              { value: "slide", label: "Todo o slide" },
-              { value: "sources", label: "Fontes selecionadas" },
+              { value: "slide", label: "Dados da página" },
+              { value: "sources", label: "Dado específico" },
             ]}
           />
         </DeckField>
@@ -285,15 +289,24 @@ export function InputBindingInspector({ pane = false }: Props) {
           id="td-input-param"
           label="Parâmetro"
           hint={
-            paramKeys.length === 0
-              ? "Nenhum parâmetro em comum nas fontes alvo (interseção vazia)."
-              : "Somente chaves do paramSchema das rotas alvo. Use «Período relativo» para presets como «Este mês (até hoje)»."
+            fetchable.length === 0
+              ? "Inclua uma fonte de dados no slide para listar parâmetros (período, filial…)."
+              : routes.length === 0
+                ? "Carregando catálogo de rotas…"
+                : paramKeys.length === 0
+                  ? "As fontes alvo não expõem parâmetros filtráveis. Verifique se as fontes têm rota configurada."
+                  : targetScope === "slide"
+                    ? "Dados da página: o valor aplica-se a todas as fontes do slide que aceitam este parâmetro."
+                    : "Dado específico: o valor aplica-se só às fontes marcadas acima."
           }
         >
           <FormSelectControl
             id="td-input-param"
             ariaLabel="Parâmetro da rota"
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+            className="td-input-param-select"
+            searchable={paramKeys.length > 8}
+            disabled={fetchable.length === 0 || (routes.length === 0 && paramKeys.length === 0)}
             value={block.input.paramKey || ""}
             onChange={(value) => applyInputPatch({ paramKey: value, defaultValue: null })}
             options={[

@@ -48,9 +48,19 @@ export function intersectParamSchemaKeys(schemas: InputParamSchema[]): string[] 
   return [...keys].sort();
 }
 
+/** União das chaves (filtro no slide com rotas heterogêneas). */
+export function unionParamSchemaKeys(schemas: InputParamSchema[]): string[] {
+  const keys = new Set<string>();
+  for (const schema of schemas) {
+    for (const key of Object.keys(schema)) keys.add(key);
+  }
+  return [...keys].sort();
+}
+
 /**
- * Campo do schema para paramKey se existir em todos os schemas alvo.
- * Schema resultante usa o primeiro campo encontrado (labels podem divergir).
+ * Campo do schema para paramKey se existir em ao menos um schema alvo.
+ * Preferência: primeiro schema que define o campo (labels podem divergir).
+ * Gateway HTTP já descarta chaves fora do OpenAPI de cada rota.
  */
 export function resolveInputParamSchemaField(
   paramKey: string,
@@ -58,7 +68,6 @@ export function resolveInputParamSchemaField(
 ): InputParamSchemaField | null {
   const key = paramKey.trim();
   if (!key || schemas.length === 0) return null;
-  if (!intersectParamSchemaKeys(schemas).includes(key)) return null;
   for (const schema of schemas) {
     const field = schema[key];
     if (field && typeof field === "object") return field;

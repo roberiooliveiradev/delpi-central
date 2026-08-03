@@ -31,6 +31,7 @@ import {
   CanvasTableDataBindingInspector,
   canShowCanvasTableDataBindingInspector,
 } from "./CanvasTableDataBindingInspector";
+import { InputBindingInspector } from "./InputBindingInspector";
 import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -91,6 +92,7 @@ export function SelectedDataSidePanel({
   const isCanvasTableBound = primary
     ? canShowCanvasTableDataBindingInspector(primary)
     : false;
+  const isInputFilter = primary?.type === "input";
 
   const { routes, labelCatalog } = useTvDataRouteLabelCatalog();
 
@@ -315,6 +317,8 @@ export function SelectedDataSidePanel({
         </p>
       ) : null}
 
+      {isInputFilter ? <InputBindingInspector pane /> : null}
+
       {isView ? (
         <VisualDataViewInspector
           pane
@@ -362,7 +366,7 @@ export function SelectedDataSidePanel({
         <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
-      {!isView && !isTextBound && !isCanvasTableBound && !bindingTarget ? (
+      {!isView && !isTextBound && !isCanvasTableBound && !isInputFilter && !bindingTarget ? (
         <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>

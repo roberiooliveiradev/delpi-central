@@ -23,14 +23,17 @@ export function isTextDataBoundBlockType(type: string): boolean {
 export { isCanvasTableDataBoundBlockType };
 
 /**
- * Bloco que participa do fluxo de dados no editor (fonte, visual, texto/forma, Grade ou legado data_*).
+ * Bloco que participa do fluxo de dados no editor (fonte, visual, texto/forma,
+ * Grade, filtro `input` ou legado data_*).
+ * Inclui `input` para a aba Dados expor alvo/parâmetro (página vs fontes).
  */
 export function isDataBoundEditorBlockType(type: string): boolean {
   return (
     isDataViewBlockType(type) ||
     isFetchableDataBlockType(type) ||
     isTextDataBoundBlockType(type) ||
-    isCanvasTableDataBoundBlockType(type)
+    isCanvasTableDataBoundBlockType(type) ||
+    type === "input"
   );
 }
 

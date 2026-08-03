@@ -1,6 +1,7 @@
 import {
   intersectParamSchemaKeys,
   resolveInputParamSchemaField,
+  unionParamSchemaKeys,
   type ComunicadoDataFilters,
   type ComunicadoInputBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -23,9 +24,15 @@ function mergedSchemaKeys(schemas: DataParamSchema[]): Set<string> {
   return keys;
 }
 
-/** Interseção de chaves + presets de período quando a rota tem par de datas. */
+/**
+ * Chaves oferecidas no picker do filtro.
+ * Prefere interseção (params comuns a todas as fontes); se vazia (rotas
+ * heterogêneas no slide), cai na união — o gateway ignora chaves fora do schema
+ * de cada rota.
+ */
 export function intersectInputParamKeysWithPresets(schemas: DataParamSchema[]): string[] {
-  const keys = new Set(intersectParamSchemaKeys(schemas));
+  const shared = intersectParamSchemaKeys(schemas);
+  const keys = new Set(shared.length > 0 ? shared : unionParamSchemaKeys(schemas));
   const datePair = findDateRangeKeys(mergedSchemaKeys(schemas));
   if (datePair) {
     keys.add(DATE_RANGE_PRESET_PARAM);

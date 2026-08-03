@@ -59,7 +59,7 @@ describe("ComunicadoInputBlockView", () => {
     expect(container.querySelector('[data-scope="sources"]')).toBeTruthy();
   });
 
-  it("badge «Filtro do slide» e input date", () => {
+  it("badge «Dados da página» e input date", () => {
     const { container } = render(
       <ComunicadoInputBlockView
         block={makeBlock({
@@ -72,7 +72,7 @@ describe("ComunicadoInputBlockView", () => {
       />,
     );
 
-    expect(screen.getByText("Filtro do slide")).toBeTruthy();
+    expect(screen.getByText("Dados da página")).toBeTruthy();
     expect(
       container.querySelector("input.delpi-ui-native-control.tdp-comunicado__input-block-control--date[type='date']"),
     ).toBeTruthy();

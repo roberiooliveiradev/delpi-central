@@ -162,7 +162,7 @@ export function ComunicadoInputBlockView({
 
   const scopeBadge =
     scope === "slide"
-      ? "Filtro do slide"
+      ? "Dados da página"
       : `${linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0} fonte${
           (linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0) === 1 ? "" : "s"
         }`;

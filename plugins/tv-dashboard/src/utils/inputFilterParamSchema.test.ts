@@ -26,4 +26,28 @@ describe("inputFilterParamSchema", () => {
     expect(schema.date_start).toBeTruthy();
     expect(schema.date_end).toBeTruthy();
   });
+
+  it("com rotas heterogêneas (interseção vazia) oferta união + preset", () => {
+    const a: DataParamSchema = {
+      branch: { type: "string", label: "Filial" },
+      start_date: { type: "string", format: "date" },
+      end_date: { type: "string", format: "date" },
+    };
+    const b: DataParamSchema = {
+      department_id: { type: "string", label: "Departamento" },
+      start_date: { type: "string", format: "date" },
+      end_date: { type: "string", format: "date" },
+    };
+    // Interseção não vazia (datas) → não cai na união.
+    const keysShared = intersectInputParamKeysWithPresets([a, b]);
+    expect(keysShared).toContain(DATE_RANGE_PRESET_PARAM);
+    expect(keysShared).toContain("start_date");
+    expect(keysShared).not.toContain("branch");
+
+    // Sem chave em comum → união.
+    const c: DataParamSchema = { branch: { type: "string" } };
+    const d: DataParamSchema = { department_id: { type: "string" } };
+    const keysUnion = intersectInputParamKeysWithPresets([c, d]);
+    expect(keysUnion).toEqual(expect.arrayContaining(["branch", "department_id"]));
+  });
 });

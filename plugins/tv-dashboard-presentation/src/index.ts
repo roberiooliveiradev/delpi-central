@@ -385,6 +385,7 @@ export {
   emptyInputFilterContributions,
   hasInputFilterContributions,
   intersectParamSchemaKeys,
+  unionParamSchemaKeys,
   isComunicadoInputBlock,
   isInputBlockType,
   isValueAllowedByParamSchema,

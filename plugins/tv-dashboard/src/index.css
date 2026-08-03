@@ -669,6 +669,11 @@
   gap: 6px;
   margin-bottom: 12px;
 }
+.dashboard-tv-dashboard .td-field > .delpi-ui-select,
+.dashboard-tv-dashboard .td-field .td-input-param-select{
+  width: 100%;
+  min-width: 0;
+}
 .dashboard-tv-dashboard .td-data-param-clearable{
   display: flex;
   align-items: center;

@@ -92,6 +92,8 @@ function isSelectedDataBlock(block: ComunicadoBlock): boolean {
   // Texto/forma/título podem vincular fonte mesmo sem binding ainda (mesmo fluxo do KPI).
   if (isTextDataBoundBlockType(block.type)) return true;
   if (isCanvasTableDataBoundBlockType(block.type)) return true;
+  // Filtro do slide: aba Dados configura alvo (página vs fontes) e parâmetro.
+  if (block.type === "input") return true;
   return false;
 }
 
