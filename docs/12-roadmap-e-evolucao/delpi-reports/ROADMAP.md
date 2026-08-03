@@ -284,16 +284,19 @@ Loop in-process isolado (500 MPs mock, sem SQL): ~5 ms → gargalo é I/O TOTVS,
 
 ### Entregáveis
 
-- [ ] Segundo `ReportProvider` (outro domínio api-delpi — escolher na hora da implementação)
-- [ ] Templates de e-mail versionados (HTML por `provider_key` + locale pt-BR)
+- [x] Segundo `ReportProvider` — `management_revenue_monthly` (Relatório Gerencial — Faturamento)
+- [ ] Templates de e-mail versionados (HTML por `provider_key` + locale pt-BR) — branding via `ReportEmailBrandLayoutService`
 - [ ] Grupos / listas de destinatários reutilizáveis (opcional)
 - [ ] Preferências (opt-out) — se produto exigir
 - [ ] Canal complementar portal (Core `/integrations/notifications`) — **opcional**, não substitui e-mail
 
+Playbook: [PLAYBOOK-relatorio-gerencial-faturamento.md](./PLAYBOOK-relatorio-gerencial-faturamento.md)
+
 ### Critério de pronto — Fase 5
 
-- [ ] Duas definições de providers distintos enviam e-mail pelo mesmo motor
-- [ ] README do plugin atualizado com catálogo de providers
+- [x] Duas definições de providers distintos enviam e-mail pelo mesmo motor
+- [x] README do plugin atualizado com catálogo de providers
+- [x] Agenda `monthly` (dia 1) via `V005`
 
 ---
 

@@ -28,6 +28,28 @@ def build_reports_repository() -> PostgresReportsRepository:
 
 def build_report_provider_registry() -> ReportProviderRegistry:
     """Composition root — providers registrados."""
+    from app.application.services.strategic_indicators.dashboard_department_idd_service import (
+        get_dashboard_department_idd_service,
+    )
+    from app.application.services.strategic_indicators.dashboard_department_indicators_service import (
+        get_dashboard_department_indicators_service,
+    )
+    from app.application.services.strategic_indicators.dashboard_igd_service import (
+        get_dashboard_igd_service,
+    )
+    from app.domain.services.commercial.commercial_rol_mom_comparison_service import (
+        CommercialRolMomComparisonService,
+    )
+    from app.domain.services.reports.providers.management_revenue_monthly_provider import (
+        ManagementRevenueMonthlyProvider,
+    )
+    from app.infrastructure.persistence.totvs.commercial_repositories.commercial_rol_by_customer_repository import (
+        CommercialRolByCustomerRepository,
+    )
+    from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
+        FinancialRepository,
+    )
+
     registry = ReportProviderRegistry()
     aggregation = SafetyStockShortage30dAggregationService(
         SafetyStockQueryRepository()
@@ -35,6 +57,19 @@ def build_report_provider_registry() -> ReportProviderRegistry:
     registry.register(
         SafetyStockShortage30dProvider(
             aggregation,
+            logo_attachment=build_delpi_logo_report_attachment(),
+        )
+    )
+    mom = CommercialRolMomComparisonService(
+        FinancialRepository(),
+        CommercialRolByCustomerRepository(),
+    )
+    registry.register(
+        ManagementRevenueMonthlyProvider(
+            mom,
+            igd_service=get_dashboard_igd_service(),
+            departments_indicators_service=get_dashboard_department_indicators_service(),
+            department_idd_service=get_dashboard_department_idd_service(),
             logo_attachment=build_delpi_logo_report_attachment(),
         )
     )
@@ -63,6 +98,15 @@ def build_preview_safety_stock_shortage_30d_use_case():
         provider,
         repository=build_reports_repository(),
     )
+
+
+def build_preview_management_revenue_monthly_use_case():
+    from app.application.use_cases.reports.preview_report_provider_use_case import (
+        PreviewReportProviderUseCase,
+    )
+
+    provider = build_report_provider_registry().require("management_revenue_monthly")
+    return PreviewReportProviderUseCase(provider)
 
 
 def build_list_report_definitions_use_case():

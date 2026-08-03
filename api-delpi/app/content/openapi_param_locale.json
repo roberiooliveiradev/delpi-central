@@ -1414,6 +1414,18 @@
         }
       }
     },
+    "include_others": {
+      "locale": {
+        "en": {
+          "label": "Include others bucket",
+          "description": "When true, aggregates customers outside the top N into an Others row."
+        },
+        "pt-BR": {
+          "label": "Incluir Demais",
+          "description": "Quando verdadeiro, agrega clientes fora do Top N na linha Demais."
+        }
+      }
+    },
     "incluir_bloqueados": {
       "locale": {
         "en": {

@@ -1,10 +1,12 @@
 # Delpi Reports — schema Postgres
 
 > **Migrations:** `V001__create_reports_core.sql`, `V002__reports_schedule_claim.sql`,
-> `V003__reports_schedule_weekdays.sql`, `V004__shortage_item_notes.sql`  
+> `V003__reports_schedule_weekdays.sql`, `V004__shortage_item_notes.sql`,
+> `V005__reports_schedule_monthly.sql`  
 > **Schema:** `reports` (slug `--plugin reports`)  
 > **ADR:** [ADR-001-fundacao.md](./ADR-001-fundacao.md)  
-> **Acompanhamento:** [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md)
+> **Acompanhamento:** [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md)  
+> **Gerencial:** [PLAYBOOK-relatorio-gerencial-faturamento.md](./PLAYBOOK-relatorio-gerencial-faturamento.md)
 
 Aplicar:
 
@@ -50,7 +52,7 @@ python scripts/run_plugins_migrations.py up --plugin reports
 |--------|------|--------|
 | `id` | UUID PK | |
 | `definition_id` | UUID FK | CASCADE |
-| `schedule_kind` | VARCHAR(20) | `daily` \| `weekly` \| `weekdays` |
+| `schedule_kind` | VARCHAR(20) | `daily` \| `weekly` \| `weekdays` \| `monthly` (V005) |
 | `cron_expression` | VARCHAR(100) | opcional |
 | `timezone` | VARCHAR(64) | default `America/Sao_Paulo` |
 | `next_run_at` | TIMESTAMPTZ | avançado no **claim** (anti-duplicata) |

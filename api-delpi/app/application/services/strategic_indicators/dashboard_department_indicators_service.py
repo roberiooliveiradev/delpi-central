@@ -58,11 +58,8 @@ class DashboardDepartmentIndicatorsService:
             )
         except StrategicIndicatorsApiError as exc:
             log_error(
-                "dashboard_department_indicators_fetch_failed",
-                extra={
-                    "department_id": normalized_id,
-                    "error": str(exc),
-                },
+                f"dashboard_department_indicators_fetch_failed "
+                f"department_id={normalized_id} error={exc}"
             )
             self._cache[cache_key] = (now, None)
             return None
@@ -108,10 +105,7 @@ class DashboardDepartmentIndicatorsService:
                 department_id=normalized_id,
             )
         except StrategicIndicatorsApiError as exc:
-            log_error(
-                "dashboard_departments_indicators_fetch_failed",
-                extra={"error": str(exc)},
-            )
+            log_error(f"dashboard_departments_indicators_fetch_failed error={exc}")
             self._cache[cache_key] = (now, empty)
             return empty
 

@@ -35,6 +35,51 @@ def test_build_cron_daily_and_weekly() -> None:
     assert build_cron_expression(
         schedule_kind="weekdays", hour=8, minute=0
     ) == "0 8 * * 1-5"
+    assert build_cron_expression(
+        schedule_kind="monthly", hour=8, minute=0, day_of_month=1
+    ) == "0 8 1 * *"
+
+
+def test_compute_next_run_monthly_day_one() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    after = datetime(2026, 7, 15, 10, 0, tzinfo=tz)
+    next_at = compute_next_run_at(
+        schedule_kind="monthly",
+        hour=8,
+        minute=0,
+        day_of_month=1,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at == datetime(2026, 8, 1, 8, 0, tzinfo=tz)
+
+
+def test_compute_next_run_monthly_same_day_before_hour() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    after = datetime(2026, 8, 1, 7, 0, tzinfo=tz)
+    next_at = compute_next_run_at(
+        schedule_kind="monthly",
+        hour=8,
+        minute=0,
+        day_of_month=1,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at == datetime(2026, 8, 1, 8, 0, tzinfo=tz)
+
+
+def test_compute_next_run_monthly_after_hour_rolls() -> None:
+    tz = ZoneInfo("America/Sao_Paulo")
+    after = datetime(2026, 8, 1, 9, 0, tzinfo=tz)
+    next_at = compute_next_run_at(
+        schedule_kind="monthly",
+        hour=8,
+        minute=0,
+        day_of_month=1,
+        timezone_name="America/Sao_Paulo",
+        after=after,
+    )
+    assert next_at == datetime(2026, 9, 1, 8, 0, tzinfo=tz)
 
 
 def test_parse_schedule_fields_roundtrip() -> None:
@@ -42,7 +87,12 @@ def test_parse_schedule_fields_roundtrip() -> None:
         schedule_kind="weekly", hour=9, minute=15, weekday=2
     )
     fields = parse_schedule_fields(schedule_kind="weekly", cron_expression=cron)
-    assert fields == {"hour": 9, "minute": 15, "weekday": 2}
+    assert fields == {
+        "hour": 9,
+        "minute": 15,
+        "weekday": 2,
+        "day_of_month": None,
+    }
 
     weekdays_cron = build_cron_expression(
         schedule_kind="weekdays", hour=8, minute=30
@@ -50,7 +100,12 @@ def test_parse_schedule_fields_roundtrip() -> None:
     weekdays_fields = parse_schedule_fields(
         schedule_kind="weekdays", cron_expression=weekdays_cron
     )
-    assert weekdays_fields == {"hour": 8, "minute": 30, "weekday": None}
+    assert weekdays_fields == {
+        "hour": 8,
+        "minute": 30,
+        "weekday": None,
+        "day_of_month": None,
+    }
 
 
 def test_compute_next_run_daily_rolls_forward() -> None:

@@ -16,6 +16,7 @@ App plugin para **cadastrar, agendar e enviar relatórios por e-mail** aos colab
 | [SCHEMA.md](./SCHEMA.md) | Modelo Postgres `reports` |
 | [PLAYBOOK-acompanhamento-observacao-ruptura.md](./PLAYBOOK-acompanhamento-observacao-ruptura.md) | Notas na Observação do e-mail de ruptura (sem ocultar itens) |
 | [PLAYBOOK-testes-acompanhamento-observacao.md](./PLAYBOOK-testes-acompanhamento-observacao.md) | **Como testar** o fluxo (UI, API, e-mail, checklist) |
+| [PLAYBOOK-relatorio-gerencial-faturamento.md](./PLAYBOOK-relatorio-gerencial-faturamento.md) | Relatório Gerencial — faturamento MoM à Direção |
 
 ---
 
