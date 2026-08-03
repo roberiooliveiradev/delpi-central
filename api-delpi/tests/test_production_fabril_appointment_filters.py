@@ -108,6 +108,11 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
     assert "DESCRICAO_OPERACAO" in EF_FABRIL_ITEMS_SELECT
     assert "META_POR_HORA" in EF_FABRIL_ITEMS_SELECT
     assert FABRIL_SH6010_OUTER_APPLY.strip() in EF_FABRIL_ITEMS_FROM
+    # Meta/hora do snapshot SHY: 1/HY_TEMPAD (estável); não QTD/HY_TEMPOM.
+    assert "1.0 / SHY.HY_TEMPAD" in EF_FABRIL_ITEMS_SELECT
+    assert "SHY.HY_QUANT / SHY.HY_TEMPOM" in EF_FABRIL_ITEMS_SELECT
+    assert "1.0 / SG2.G2_TEMPAD" in EF_FABRIL_ITEMS_SELECT
+    assert "QTD_TOTAL_OP AS FLOAT) / SHY.HY_TEMPOM" not in EF_FABRIL_ITEMS_SELECT
 
     sql, _params = build_ef_fabril_items_list_sql(
         where_clause="1=1",
@@ -120,6 +125,9 @@ def test_ef_fabril_items_sql_includes_appointment_id_and_sh6010_apply() -> None:
     assert "PRODUTO_ACABADO" in sql
     assert "DESCRICAO_OPERACAO" in sql
     assert "META_POR_HORA" in sql
+    assert "1.0 / SHY.HY_TEMPAD" in sql
+    assert "HY_TEMPAD" in sql
+    assert "HY_QUANT" in sql
     assert "PA_RANKED" in sql
     assert "SHY_RANKED" in sql
     assert "SG2_RANKED" in sql
