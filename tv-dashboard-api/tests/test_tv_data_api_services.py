@@ -46,6 +46,40 @@ def test_validate_params_required_error_names_the_param():
         validate_params_against_schema({}, schema)
 
 
+def test_validate_params_skips_required_when_enforce_required_false():
+    """Camadas parciais (binding/tela/programação) não exigem obrigatórios."""
+    schema = {
+        "department_id": {
+            "type": "string",
+            "optional": False,
+            "label": "Departamento",
+        }
+    }
+    assert validate_params_against_schema({}, schema, enforce_required=False) == {}
+
+
+def test_validate_data_binding_allows_required_param_only_on_slide_layer():
+    """Binding sem department_id é estruturalmente válido — herança pós-merge."""
+    route = {
+        "operationId": "get_dashboard_department_indicators",
+        "httpMethod": "GET",
+        "allowedDisplayModes": ["kpi", "table", "auto"],
+        "paramSchema": {
+            "department_id": {
+                "type": "string",
+                "optional": False,
+                "label": "Departamento",
+                "enum": ["quality", "commercial"],
+            }
+        },
+    }
+    validate_data_binding(
+        {"operationId": route["operationId"], "params": {}, "displayMode": "kpi"},
+        block_type="data_kpi",
+        route=route,
+    )
+
+
 def test_validate_params_allows_internal_date_range_preset():
     """UI grava dateRangePreset; expand acontece só no gateway HTTP."""
     schema = {

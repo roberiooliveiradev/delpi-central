@@ -46,8 +46,8 @@ class TvDataPreviewService:
             block = {**block, "dataBinding": binding}
         operation_id = str(binding.get("operationId") or "").strip() if isinstance(binding, dict) else ""
         route = self._catalog.get_route(operation_id)
-        # Estrutura do binding (rota, displayMode, schema). Período herdável
-        # (programação/tela) é validado após merge_data_params no enrichment/gateway.
+        # Estrutura do binding (rota, displayMode). Params obrigatórios e período
+        # herdáveis (programação/tela) só após merge_data_params no enrichment/gateway.
         validate_data_binding(binding if isinstance(binding, dict) else None, block_type=block_type, route=route)
         cache_key, _principal_fingerprint = preview_cache_key(
             block=block,

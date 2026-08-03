@@ -12,6 +12,7 @@ from tv_app.application.services.data.tv_data_param_defaults_service import (
 )
 from tv_app.application.services.data.tv_data_param_validation_service import (
     assert_closed_date_range_has_period,
+    assert_merged_route_params,
 )
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
@@ -92,8 +93,8 @@ def _build_query_params(
     date_range_keys = route.get("dateRangeKeys")
     with_defaults = apply_catalog_param_defaults(params, route)
     open_ended = bool(route.get("openEndedDateRange"))
-    # Sem default mágico de período — o usuário escolhe nos filtros (fonte/tela/programação).
-    assert_closed_date_range_has_period(route, with_defaults)
+    # Pós-merge: params obrigatórios + período fechado (não no binding isolado).
+    assert_merged_route_params(route, with_defaults)
     merged = apply_date_range_preset(
         with_defaults,
         schema_keys=schema,

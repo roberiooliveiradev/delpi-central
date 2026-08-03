@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock
 
+import pytest
+
 from tv_app.application.services.comunicado_data_enrichment_service import (
     ComunicadoDataEnrichmentService,
     _apply_incremental_pagination_defaults,
@@ -1172,6 +1174,112 @@ def test_preview_block_accepts_period_only_in_playlist_defaults():
     assert gateway.fetch_by_operation_id.called
 
 
+def test_preview_block_inherits_required_department_from_slide_filters():
+    """Regressão: Departamento só nos Filtros do slide — não falhar no binding isolado."""
+    from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
+
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_dashboard_department_indicators",
+            "shape": "playbook_report",
+        },
+        "data": {"indicators": [{"name": "IDD", "score": 8.5}]},
+        "route": {
+            "label": "Indicadores do departamento",
+            "tableFields": "indicators",
+            "tvConstraints": {},
+        },
+    }
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route("get_dashboard_department_indicators")
+    if not route:
+        pytest.skip("Catálogo department indicators indisponível")
+    enrichment = ComunicadoDataEnrichmentService(catalog=catalog, gateway=gateway)
+    preview = TvDataPreviewService(catalog=catalog, enrichment=enrichment)
+    block = {
+        "id": "src-dept",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_dashboard_department_indicators",
+            "displayMode": "kpi",
+            "params": {},
+        },
+    }
+    selected = preview.preview_block(
+        block,
+        native_config={
+            "blocks": [block],
+            "dataFilters": {"department_id": "quality", "dateRangePreset": "this_month"},
+        },
+        authorization="Bearer x",
+    )
+    assert not (selected.get("resolved") or {}).get("error"), selected.get("resolved")
+    assert gateway.fetch_by_operation_id.call_args.kwargs["params"]["department_id"] == "quality"
+
+
+def test_preview_block_inherits_required_department_from_playlist_defaults():
+    """Regressão: Departamento só na Programação (dataDefaults)."""
+    from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
+
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_dashboard_department_indicators",
+            "shape": "playbook_report",
+        },
+        "data": {"indicators": []},
+        "route": {"label": "Indicadores do departamento", "tvConstraints": {}},
+    }
+    catalog = TvDataRouteCatalogService()
+    if not catalog.get_route("get_dashboard_department_indicators"):
+        pytest.skip("Catálogo department indicators indisponível")
+    enrichment = ComunicadoDataEnrichmentService(catalog=catalog, gateway=gateway)
+    preview = TvDataPreviewService(catalog=catalog, enrichment=enrichment)
+    block = {
+        "id": "src-dept",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_dashboard_department_indicators",
+            "displayMode": "kpi",
+            "params": {},
+        },
+    }
+    selected = preview.preview_block(
+        block,
+        native_config={"blocks": [block], "dataFilters": {}},
+        playlist_defaults={"department_id": "quality", "dateRangePreset": "this_month"},
+        authorization="Bearer x",
+    )
+    assert not (selected.get("resolved") or {}).get("error"), selected.get("resolved")
+    assert gateway.fetch_by_operation_id.call_args.kwargs["params"]["department_id"] == "quality"
+
+
+def test_enrich_missing_required_department_after_merge_reports_error():
+    """Sem department em nenhuma camada → erro canônico pós-merge (não fetch)."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    catalog = TvDataRouteCatalogService()
+    if not catalog.get_route("get_dashboard_department_indicators"):
+        pytest.skip("Catálogo department indicators indisponível")
+    service = ComunicadoDataEnrichmentService(catalog=catalog, gateway=gateway)
+    source = {
+        "id": "src-dept",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_dashboard_department_indicators",
+            "displayMode": "kpi",
+            "params": {"dateRangePreset": "this_month"},
+        },
+    }
+    enriched = service.enrich_blocks([source], cfg={}, authorization="Bearer x")
+    err = str((enriched[0].get("resolved") or {}).get("error") or "")
+    assert "Parâmetro obrigatório: Departamento" in err
+    gateway.fetch_by_operation_id.assert_not_called()
+
+
 def test_enrich_preview_applies_input_from_cfg_blocks():
     """POST /data/preview-block envia só a fonte em `blocks`; inputs vêm em nativeConfig.blocks."""
     reset_comunicado_data_block_cache()
@@ -1529,7 +1637,7 @@ def test_enrich_auto_resolves_table_for_text_only_list_shape():
                 "type": "data_metric",
                 "dataBinding": {
                     "operationId": "get_lmp_history_flow",
-                "params": {"dateRangePreset": "this_month"},
+                    "params": {"dateRangePreset": "this_month", "sale_number": "12345"},
                     "displayMode": "auto",
                 },
             }

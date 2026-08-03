@@ -12,7 +12,7 @@ from tv_app.application.services.comunicado_input_filters_service import (
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_param_validation_service import (
-    assert_closed_date_range_has_period,
+    assert_merged_route_params,
 )
 from tv_app.application.services.data.m_query.m_phase7_quality_service import (
     SafeTelemetry,
@@ -1441,9 +1441,9 @@ class ComunicadoDataEnrichmentService:
             result["resolved"] = {"error": str(exc)}
             return result
 
-        # Período herdado (programação/tela) só é exigido após merge — não no binding isolado.
+        # Params herdados (programação/tela) só são exigidos após merge — não no binding isolado.
         try:
-            assert_closed_date_range_has_period(route, merged_params)
+            assert_merged_route_params(route, merged_params)
         except ValueError as exc:
             result["resolved"] = {"error": str(exc)}
             return result

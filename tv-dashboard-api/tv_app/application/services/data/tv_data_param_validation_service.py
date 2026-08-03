@@ -136,6 +136,7 @@ def validate_params_against_schema(
     *,
     fixed_query_params: dict[str, Any] | None = None,
     route: dict[str, Any] | None = None,
+    enforce_required: bool = True,
 ) -> dict[str, Any]:
     """Valida e normaliza params do bloco/filtro conforme paramSchema do catálogo.
 
@@ -143,9 +144,12 @@ def validate_params_against_schema(
     Valor vazio no bloco usa `default` do schema / convenções / `defaultParams` da rota.
     Par de datas obrigatório é aceito via `dateRangePreset` / `periodDays` (expansão no gateway).
 
-    Período em rotas `date_range` fechadas **não** é exigido aqui: o bloco herda
-    Programação (`dataDefaults`) e tela (`dataFilters`) via `merge_data_params`.
-    O assert vive no boundary pós-merge (`_build_query_params` / enrichment).
+    Params obrigatórios (departamento, filial required, etc.) e período em rotas
+    `date_range` fechadas **não** devem ser exigidos em camadas parciais (binding,
+    `dataFilters`, `dataDefaults`): herdam via `merge_data_params`
+    (programação → tela → fonte → input). Use `enforce_required=False` nesses
+    contextos; o assert completo vive no boundary pós-merge
+    (`assert_merged_route_params` / `_build_query_params` / enrichment).
     """
     schema = param_schema if isinstance(param_schema, dict) else {}
     fixed = fixed_query_params if isinstance(fixed_query_params, dict) else {}
@@ -177,7 +181,7 @@ def validate_params_against_schema(
         if empty:
             if should_apply_schema_default(key, spec):
                 normalized[key] = spec.get("default")
-            elif not _is_param_optional(spec):
+            elif enforce_required and not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
                 if seeded_value not in (None, ""):
                     normalized[key] = _coerce_param_value(str(spec.get("type") or "string"), seeded_value)
@@ -188,7 +192,7 @@ def validate_params_against_schema(
         if value is None or value == "":
             if should_apply_schema_default(key, spec):
                 normalized[key] = spec.get("default")
-            elif not _is_param_optional(spec):
+            elif enforce_required and not _is_param_optional(spec):
                 seeded_value = seeded.get(key)
                 if seeded_value not in (None, ""):
                     normalized[key] = _coerce_param_value(str(spec.get("type") or "string"), seeded_value)
@@ -211,12 +215,44 @@ def validate_params_against_schema(
     return normalized
 
 
+def assert_merged_route_params(
+    route: Mapping[str, Any] | None,
+    params: Mapping[str, Any] | None,
+) -> None:
+    """Boundary pós-`merge_data_params`: obrigatoriedade de schema + período fechado.
+
+    Única fonte de verdade para «falta Departamento / Filial / …» em runtime —
+    não validar isso no binding isolado nem em dataFilters/dataDefaults parciais.
+    """
+    if not isinstance(route, Mapping):
+        return
+    schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), Mapping) else {}
+    fixed = (
+        route.get("fixedQueryParams")
+        if isinstance(route.get("fixedQueryParams"), Mapping)
+        else None
+    )
+    validate_params_against_schema(
+        dict(params) if isinstance(params, Mapping) else {},
+        dict(schema) if isinstance(schema, Mapping) else {},
+        fixed_query_params=dict(fixed) if isinstance(fixed, Mapping) else None,
+        route=dict(route),
+        enforce_required=True,
+    )
+    assert_closed_date_range_has_period(route, params)
+
+
 def validate_data_binding(
     binding: dict[str, Any] | None,
     *,
     block_type: str,
     route: dict[str, Any] | None,
 ) -> None:
+    """Validação estrutural do binding (rota, modo, tipos).
+
+    Não exige query params obrigatórios: programação/tela/fonte/input entram
+    só depois de `merge_data_params` (`assert_merged_route_params`).
+    """
     if not isinstance(binding, dict):
         raise ValueError(message("dataSourceUnavailable", "Fonte de dados indisponível."))
     operation_id = str(binding.get("operationId") or "").strip()
@@ -240,6 +276,7 @@ def validate_data_binding(
         if isinstance(route.get("fixedQueryParams"), dict)
         else None,
         route=route,
+        enforce_required=False,
     )
 
     max_rows = binding.get("maxRows")
@@ -254,6 +291,7 @@ def validate_data_filters(
     *,
     routes: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    """Camada parcial (tela/programação): tipa/normaliza; não exige obrigatórios."""
     if not isinstance(filters, dict) or not filters:
         return {}
     merged_schema: dict[str, Any] = {}
@@ -261,4 +299,8 @@ def validate_data_filters(
         schema = route.get("paramSchema")
         if isinstance(schema, dict):
             merged_schema.update(schema)
-    return validate_params_against_schema(filters, merged_schema or None)
+    return validate_params_against_schema(
+        filters,
+        merged_schema or None,
+        enforce_required=False,
+    )
