@@ -100,6 +100,7 @@ class UpsertReportScheduleUseCase:
         hour: int,
         minute: int,
         weekday: int | None = None,
+        day_of_month: int | None = None,
         enabled: bool = True,
         timezone_name: str = DEFAULT_TIMEZONE,
     ) -> dict[str, Any]:
@@ -110,12 +111,14 @@ class UpsertReportScheduleUseCase:
             hour=hour,
             minute=minute,
             weekday=weekday,
+            day_of_month=day_of_month,
         )
         next_run = compute_next_run_at(
             schedule_kind=schedule_kind,
             hour=hour,
             minute=minute,
             weekday=weekday,
+            day_of_month=day_of_month,
             timezone_name=timezone_name,
         )
         return self._repository.upsert_schedule_for_definition(

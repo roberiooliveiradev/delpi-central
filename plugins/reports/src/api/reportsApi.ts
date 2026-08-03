@@ -4,6 +4,7 @@ import type {
   DirectoryUser,
   ReportDefinition,
   ReportDefinitionsList,
+  ReportProviderInfo,
   ReportRecipient,
   ReportRun,
   ReportSchedule,
@@ -114,6 +115,7 @@ export async function upsertReportSchedule(
     hour: number;
     minute: number;
     weekday?: number | null;
+    dayOfMonth?: number | null;
     enabled: boolean;
   },
 ): Promise<ReportSchedule> {
@@ -193,6 +195,15 @@ export async function deleteShortageItemNote(
   await httpDelete(
     `${REPORTS_API_BASE}/definitions/${encodeURIComponent(definitionId)}/item-notes/${encodeURIComponent(productCode)}`,
   );
+}
+
+export async function listReportProviders(
+  signal?: AbortSignal,
+): Promise<{ items: ReportProviderInfo[]; total: number }> {
+  const response = await httpGet<
+    ApiSuccessResponse<{ items: ReportProviderInfo[]; total: number }>
+  >(`${REPORTS_API_BASE}/providers`, { signal });
+  return unwrapApiDelpiEnvelope(response, "Erro ao listar providers.");
 }
 
 export async function previewShortage30d(

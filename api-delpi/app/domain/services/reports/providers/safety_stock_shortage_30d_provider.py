@@ -64,6 +64,7 @@ class SafetyStockShortage30dProvider:
         return {
             "type": "object",
             "required": ["branch"],
+            "displayName": "Rupturas próximos 30 dias",
             "properties": {
                 "branch": {
                     "type": "string",

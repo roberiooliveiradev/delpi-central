@@ -24,7 +24,8 @@ HEADER_BG = "#f8fbfd"
 _BRAND_COLORS = (BLUE_900, BLUE_700, BLUE_500, BLUE_ACCENT)
 
 _FOOTER_SITE = "www.delpi.com.br"
-_FOOTER_META = "Gerado pelo Minha DELPI — Relatórios"
+_FOOTER_SITE_HREF = "https://www.delpi.com.br"
+_FOOTER_META = "Gerado pelo Minha DELPI - Reports"
 
 
 class ReportEmailBrandLayoutService:
@@ -147,8 +148,11 @@ class ReportEmailBrandLayoutService:
   <tr><td>{bar}</td></tr>
   <tr>
     <td style="background:{BLUE_900};padding:16px 28px;text-align:center;">
-      <p style="margin:0 0 4px 0;font-size:12px;color:#CBD5E1;
-        font-family:Arial,Helvetica,sans-serif;">{html.escape(_FOOTER_SITE)}</p>
+      <p style="margin:0 0 4px 0;font-size:12px;color:#ffffff;
+        font-family:Arial,Helvetica,sans-serif;">
+        <a href="{html.escape(_FOOTER_SITE_HREF)}"
+          style="color:#ffffff;text-decoration:none;">{html.escape(_FOOTER_SITE)}</a>
+      </p>
       <p style="margin:0;font-size:11px;color:#E2E8F0;
         font-family:Arial,Helvetica,sans-serif;">{html.escape(_FOOTER_META)}</p>
     </td>

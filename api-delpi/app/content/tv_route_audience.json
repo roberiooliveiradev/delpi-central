@@ -1116,6 +1116,21 @@
       },
       "category": "commercial"
     },
+    "get_commercial_rol_by_customer": {
+      "locale": {
+        "en": {
+          "summary": "Commercial ROL ranking by customer",
+          "description": "Top customers by net operating revenue (ROL) for a period, with optional others bucket.",
+          "label": "Commercial ROL by customer"
+        },
+        "pt-BR": {
+          "label": "Indicador — ROL por cliente",
+          "summary": "Ranking de faturamento (ROL) por cliente",
+          "description": "Lista os maiores clientes por receita operacional líquida no período, com linha Demais opcional."
+        }
+      },
+      "category": "commercial"
+    },
     "get_console_alerts": {
       "locale": {
         "en": {

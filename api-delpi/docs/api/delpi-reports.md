@@ -26,6 +26,7 @@
 | `GET` | `/runs/{id}` | `get_report_run` | read |
 | `GET` | `/providers` | `list_report_providers` | read |
 | `GET` | `/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` | follow-up read + filial |
+| `GET` | `/providers/management_revenue_monthly/preview` | `preview_report_provider_management_revenue_monthly` | follow-up read |
 | `POST` | `/schedules/process-pending` | `process_pending_report_schedules` | write **ou** service token |
 | `GET` | `/definitions/{id}/item-notes` | `list_report_shortage_item_notes` | follow-up read + filial |
 | `PUT` | `/definitions/{id}/item-notes/{productCode}` | `upsert_report_shortage_item_note` | `reports.notes.manage` **ou** manage + view filial |
@@ -52,9 +53,10 @@
 
 ```json
 {
-  "scheduleKind": "weekdays",
+  "scheduleKind": "monthly",
   "hour": 8,
   "minute": 0,
+  "dayOfMonth": 1,
   "weekday": null,
   "enabled": true,
   "timezone": "America/Sao_Paulo"
@@ -68,6 +70,7 @@
 | `daily` | Todos os dias (inclui sábado e domingo) |
 | `weekdays` | Segunda a sexta (pula fim de semana; **não** considera feriados) |
 | `weekly` | Um dia da semana (`weekday` obrigatório) |
+| `monthly` | Dia do mês (`dayOfMonth` 1–28; default 1) |
 
 `weekday`: 0=segunda … 6=domingo (obrigatório se `weekly`).
 

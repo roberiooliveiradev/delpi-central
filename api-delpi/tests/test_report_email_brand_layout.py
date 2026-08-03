@@ -20,7 +20,9 @@ def test_brand_wrap_includes_logo_cid_strip_and_footer() -> None:
     assert BLUE_900 in html
     assert BLUE_ACCENT in html
     assert "www.delpi.com.br" in html
-    assert "Gerado pelo Minha DELPI — Relatórios" in html
+    assert 'href="https://www.delpi.com.br"' in html
+    assert "color:#ffffff;text-decoration:none;" in html
+    assert "Gerado pelo Minha DELPI - Reports" in html
     assert "Rupturas de estoque" in html
     assert "Filial 01" in html
     assert "<p>miolo</p>" in html

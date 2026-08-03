@@ -30,6 +30,7 @@ from app.composition.reports_composer import (
     build_list_report_runs_use_case,
     build_list_shortage_item_notes_use_case,
     build_preview_safety_stock_shortage_30d_use_case,
+    build_preview_management_revenue_monthly_use_case,
     build_process_due_report_schedules_use_case,
     build_replace_report_recipients_use_case,
     build_run_report_definition_use_case,
@@ -108,6 +109,9 @@ class UpsertScheduleBody(BaseModel):
     hour: int = Field(ge=0, le=23)
     minute: int = Field(ge=0, le=59)
     weekday: int | None = Field(default=None, ge=0, le=6)
+    day_of_month: int | None = Field(
+        default=1, ge=1, le=28, alias="dayOfMonth"
+    )
     enabled: bool = True
     timezone: str = Field(default="America/Sao_Paulo", max_length=64)
 
@@ -117,8 +121,10 @@ class UpsertScheduleBody(BaseModel):
     @classmethod
     def normalize_kind(cls, value: object) -> str:
         text = str(value or "").strip().lower()
-        if text not in {"daily", "weekly", "weekdays"}:
-            raise ValueError("scheduleKind deve ser daily, weekly ou weekdays")
+        if text not in {"daily", "weekly", "weekdays", "monthly"}:
+            raise ValueError(
+                "scheduleKind deve ser daily, weekly, weekdays ou monthly"
+            )
         return text
 
 
@@ -412,6 +418,35 @@ def preview_safety_stock_shortage_30d(
 
 
 @router.get(
+    "/providers/management_revenue_monthly/preview",
+    operation_id="preview_report_provider_management_revenue_monthly",
+)
+@require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
+def preview_management_revenue_monthly(
+    asOfDate: Annotated[str | None, Query()] = None,
+    customerLimit: Annotated[int, Query(ge=1, le=100)] = 20,
+):
+    try:
+        params: dict[str, Any] = {"customerLimit": customerLimit}
+        if asOfDate:
+            params["asOfDate"] = asOfDate
+        data = build_preview_management_revenue_monthly_use_case().execute(params)
+        return api_delpi_success(
+            data,
+            operation_id="preview_report_provider_management_revenue_monthly",
+            message="Preview do Relatório Gerencial gerado com sucesso.",
+        )
+    except ValueError as exc:
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro inesperado no preview Relatório Gerencial: {exc}")
+        return error_response(
+            "Erro interno ao gerar preview do relatório.",
+            status_code=500,
+        )
+
+
+@router.get(
     "/definitions/{definition_id}/recipients",
     operation_id="list_report_recipients",
 )
@@ -501,6 +536,7 @@ def upsert_report_schedule(
             hour=body.hour,
             minute=body.minute,
             weekday=body.weekday,
+            day_of_month=body.day_of_month,
             enabled=body.enabled,
             timezone_name=body.timezone,
         )

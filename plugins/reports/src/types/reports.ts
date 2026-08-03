@@ -25,7 +25,7 @@ export type ReportRecipient = {
 export type ReportSchedule = {
   id: string;
   definitionId: string;
-  scheduleKind: "daily" | "weekly" | "weekdays" | string;
+  scheduleKind: "daily" | "weekly" | "weekdays" | "monthly" | string;
   cronExpression: string | null;
   timezone: string;
   nextRunAt: string | null;
@@ -33,6 +33,12 @@ export type ReportSchedule = {
   hour: number | null;
   minute: number | null;
   weekday: number | null;
+  dayOfMonth?: number | null;
+};
+
+export type ReportProviderInfo = {
+  key: string;
+  paramsSchema: Record<string, unknown>;
 };
 
 export type ReportDelivery = {

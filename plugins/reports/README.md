@@ -29,6 +29,16 @@ Doc: `api-delpi/docs/api/delpi-reports.md`
 
 Provider atual: `safety_stock_shortage_30d`.
 
+## Catálogo de providers
+
+| `providerKey` | Nome | Params principais |
+|---------------|------|-------------------|
+| `safety_stock_shortage_30d` | Rupturas próximos 30 dias | `branch`, `horizonDays` |
+| `management_revenue_monthly` | Relatório Gerencial — Faturamento | `customerLimit`, `asOfDate?` |
+
+Playbook gerencial:  
+[docs/…/PLAYBOOK-relatorio-gerencial-faturamento.md](../../docs/12-roadmap-e-evolucao/delpi-reports/PLAYBOOK-relatorio-gerencial-faturamento.md)
+
 ## Acompanhamentos (Observação)
 
 Na definição, seção **Acompanhamentos**:
@@ -51,6 +61,7 @@ Frequências em `scheduleKind`:
 | `daily` | Diário (todos os dias) | Inclui sábado e domingo |
 | `weekdays` | Dias úteis (seg–sex) | Pula fim de semana (**não** considera feriados) |
 | `weekly` | Semanal | Um dia da semana |
+| `monthly` | Mensal (dia do mês) | Default dia 1 — Relatório Gerencial |
 
 ## Cron
 

@@ -72,14 +72,17 @@ export function DefinitionDetailPage({ definitionId }: Props) {
   const [name, setName] = useState("");
   const [branch, setBranch] = useState("01");
   const [horizonDays, setHorizonDays] = useState(30);
+  const [customerLimit, setCustomerLimit] = useState(20);
+  const [asOfDate, setAsOfDate] = useState("");
   const [active, setActive] = useState(true);
 
   const [scheduleKind, setScheduleKind] = useState<
-    "daily" | "weekly" | "weekdays"
+    "daily" | "weekly" | "weekdays" | "monthly"
   >("daily");
   const [hour, setHour] = useState(8);
   const [minute, setMinute] = useState(0);
   const [weekday, setWeekday] = useState(0);
+  const [dayOfMonth, setDayOfMonth] = useState(1);
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
 
   const reload = useCallback(
@@ -99,6 +102,8 @@ export function DefinitionDetailPage({ definitionId }: Props) {
         setName(definition.name);
         setBranch(String(definition.params.branch ?? "01"));
         setHorizonDays(Number(definition.params.horizonDays ?? 30));
+        setCustomerLimit(Number(definition.params.customerLimit ?? 20));
+        setAsOfDate(String(definition.params.asOfDate ?? ""));
         setActive(definition.active);
         setRecipients(
           recipientsPayload.items.map((r) => ({
@@ -111,11 +116,16 @@ export function DefinitionDetailPage({ definitionId }: Props) {
         if (schedulePayload) {
           const kind = schedulePayload.scheduleKind;
           setScheduleKind(
-            kind === "weekly" || kind === "weekdays" ? kind : "daily",
+            kind === "weekly" ||
+              kind === "weekdays" ||
+              kind === "monthly"
+              ? kind
+              : "daily",
           );
           setHour(schedulePayload.hour ?? 8);
           setMinute(schedulePayload.minute ?? 0);
           setWeekday(schedulePayload.weekday ?? 0);
+          setDayOfMonth(schedulePayload.dayOfMonth ?? 1);
           setScheduleEnabled(schedulePayload.enabled);
         }
         setRuns(runsPayload.items);
@@ -149,7 +159,13 @@ export function DefinitionDetailPage({ definitionId }: Props) {
     try {
       const updated = await updateReportDefinition(definitionId, {
         name: name.trim(),
-        params: { branch, horizonDays },
+        params:
+          item?.providerKey === "management_revenue_monthly"
+            ? {
+                customerLimit,
+                ...(asOfDate.trim() ? { asOfDate: asOfDate.trim() } : {}),
+              }
+            : { branch, horizonDays },
         active,
       });
       setItem(updated);
@@ -190,6 +206,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
         hour,
         minute,
         weekday: scheduleKind === "weekly" ? weekday : null,
+        dayOfMonth: scheduleKind === "monthly" ? dayOfMonth : null,
         enabled: scheduleEnabled,
       });
       setSchedule(saved);
@@ -304,8 +321,16 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                 <div className="rp-meta-chip">
                   <Settings2 size={14} aria-hidden />
                   <span>
-                    <strong>Unidade</strong>
-                    <em>{formatBranchUnitLabel(branch)}</em>
+                    <strong>
+                      {item.providerKey === "management_revenue_monthly"
+                        ? "Top clientes"
+                        : "Unidade"}
+                    </strong>
+                    <em>
+                      {item.providerKey === "management_revenue_monthly"
+                        ? String(customerLimit)
+                        : formatBranchUnitLabel(branch)}
+                    </em>
                   </span>
                 </div>
                 <div className="rp-meta-chip">
@@ -364,7 +389,7 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       Parâmetros
                     </h2>
                     <p className="rp-card__hint">
-                      Nome amigável, unidade e horizonte do relatório.
+                      Nome amigável e parâmetros do provider.
                     </p>
                   </div>
                   <button
@@ -386,28 +411,55 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       maxLength={200}
                     />
                   </label>
-                  <label className="rp-field">
-                    <span>Unidade</span>
-                    <select
-                      value={branch}
-                      onChange={(e) => setBranch(e.target.value)}
-                    >
-                      <option value="01">Jaraguá do Sul/SC</option>
-                      <option value="02">Rio Bananal/ES</option>
-                    </select>
-                  </label>
-                  <label className="rp-field">
-                    <span>Horizonte (dias)</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={horizonDays}
-                      onChange={(e) =>
-                        setHorizonDays(Number(e.target.value) || 30)
-                      }
-                    />
-                  </label>
+                  {item.providerKey === "management_revenue_monthly" ? (
+                    <>
+                      <label className="rp-field">
+                        <span>Top clientes</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={100}
+                          value={customerLimit}
+                          onChange={(e) =>
+                            setCustomerLimit(Number(e.target.value) || 20)
+                          }
+                        />
+                      </label>
+                      <label className="rp-field">
+                        <span>Data referência (opcional)</span>
+                        <input
+                          type="date"
+                          value={asOfDate}
+                          onChange={(e) => setAsOfDate(e.target.value)}
+                        />
+                      </label>
+                    </>
+                  ) : (
+                    <>
+                      <label className="rp-field">
+                        <span>Unidade</span>
+                        <select
+                          value={branch}
+                          onChange={(e) => setBranch(e.target.value)}
+                        >
+                          <option value="01">Jaraguá do Sul/SC</option>
+                          <option value="02">Rio Bananal/ES</option>
+                        </select>
+                      </label>
+                      <label className="rp-field">
+                        <span>Horizonte (dias)</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={365}
+                          value={horizonDays}
+                          onChange={(e) =>
+                            setHorizonDays(Number(e.target.value) || 30)
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
                   <label className="rp-switch">
                     <input
                       type="checkbox"
@@ -447,13 +499,18 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                       value={scheduleKind}
                       onChange={(e) =>
                         setScheduleKind(
-                          e.target.value as "daily" | "weekly" | "weekdays",
+                          e.target.value as
+                            | "daily"
+                            | "weekly"
+                            | "weekdays"
+                            | "monthly",
                         )
                       }
                     >
                       <option value="daily">Diário (todos os dias)</option>
                       <option value="weekdays">Dias úteis (seg–sex)</option>
                       <option value="weekly">Semanal</option>
+                      <option value="monthly">Mensal (dia do mês)</option>
                     </select>
                   </label>
                   {scheduleKind === "weekly" ? (
@@ -469,6 +526,19 @@ export function DefinitionDetailPage({ definitionId }: Props) {
                           </option>
                         ))}
                       </select>
+                    </label>
+                  ) : scheduleKind === "monthly" ? (
+                    <label className="rp-field">
+                      <span>Dia do mês</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={28}
+                        value={dayOfMonth}
+                        onChange={(e) =>
+                          setDayOfMonth(Number(e.target.value) || 1)
+                        }
+                      />
                     </label>
                   ) : (
                     <div className="rp-field rp-field--spacer" aria-hidden />

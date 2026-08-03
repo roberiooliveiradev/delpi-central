@@ -1,3 +1,5 @@
+"""IGD (Índice Geral de Desempenho) via S2S TV hero do Strategic Indicators."""
+
 from __future__ import annotations
 
 import time
@@ -12,32 +14,27 @@ from app.application.services.strategic_indicators.dashboard_goal_dates import (
 from app.utils.logger import log_error
 
 
-class DashboardDepartmentIddService:
+class DashboardIgdService:
+    """Busca o hero consolidado (IGD) para dashboards / reports."""
+
     _CACHE_TTL_SECONDS = 45.0
 
     def __init__(self, client: StrategicIndicatorsApiClient | None = None) -> None:
         self._client = client or StrategicIndicatorsApiClient()
         self._cache: dict[tuple, tuple[float, dict[str, Any] | None]] = {}
 
-    def get_department_idd(
+    def get_igd(
         self,
         *,
-        department_id: str,
+        competence: str | None = None,
         start_date: str | None = None,
         end_date: str | None = None,
         branch: str | None = None,
-        competence: str | None = None,
     ) -> dict[str, Any] | None:
-        normalized_id = (department_id or "").strip()
-        if not normalized_id:
-            return None
-
         normalized_start = normalize_si_period_date(start_date)
         normalized_end = normalize_si_period_date(end_date)
         normalized_branch = normalize_si_branch(branch)
-
         cache_key = (
-            normalized_id,
             competence or "",
             normalized_start or "",
             normalized_end or "",
@@ -49,8 +46,7 @@ class DashboardDepartmentIddService:
             return cached[1]
 
         try:
-            payload = self._client.get_dashboard_department_score(
-                department_id=normalized_id,
+            payload = self._client.get_tv_dashboard_hero(
                 competence=competence,
                 start_date=normalized_start,
                 end_date=normalized_end,
@@ -58,23 +54,32 @@ class DashboardDepartmentIddService:
             )
         except StrategicIndicatorsApiError as exc:
             log_error(
-                f"dashboard_department_idd_fetch_failed "
-                f"department_id={normalized_id} error={exc}"
+                f"dashboard_igd_fetch_failed competence={competence or ''} error={exc}"
             )
             self._cache[cache_key] = (now, None)
             return None
 
-        item = payload.get("item") if isinstance(payload, dict) else None
-        resolved = item if isinstance(item, dict) else None
+        if not isinstance(payload, dict):
+            self._cache[cache_key] = (now, None)
+            return None
+
+        resolved = {
+            "igd": payload.get("igd"),
+            "classification": payload.get("classification"),
+            "trendDirection": payload.get("trendDirection"),
+            "bestDepartment": payload.get("bestDepartment"),
+            "primaryRisk": payload.get("primaryRisk"),
+            "competence": payload.get("competence") or competence,
+        }
         self._cache[cache_key] = (now, resolved)
         return resolved
 
 
-_department_idd_service: DashboardDepartmentIddService | None = None
+_igd_service: DashboardIgdService | None = None
 
 
-def get_dashboard_department_idd_service() -> DashboardDepartmentIddService:
-    global _department_idd_service
-    if _department_idd_service is None:
-        _department_idd_service = DashboardDepartmentIddService()
-    return _department_idd_service
+def get_dashboard_igd_service() -> DashboardIgdService:
+    global _igd_service
+    if _igd_service is None:
+        _igd_service = DashboardIgdService()
+    return _igd_service

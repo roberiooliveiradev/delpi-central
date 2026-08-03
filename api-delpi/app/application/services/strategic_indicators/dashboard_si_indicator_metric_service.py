@@ -74,12 +74,8 @@ class DashboardSiIndicatorMetricService:
                 self._cache[cache_key] = (now, None)
                 return None
             log_error(
-                "dashboard_si_indicator_metric_fetch_failed",
-                extra={
-                    "indicator_id": normalized_id,
-                    "kind": kind,
-                    "error": message,
-                },
+                f"dashboard_si_indicator_metric_fetch_failed "
+                f"indicator_id={normalized_id} kind={kind} error={message}"
             )
             self._cache[cache_key] = (now, None)
             return None

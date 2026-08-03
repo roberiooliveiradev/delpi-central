@@ -605,6 +605,7 @@ class PostgresReportsRepository(PluginBaseRepository):
             "hour": fields.get("hour"),
             "minute": fields.get("minute"),
             "weekday": fields.get("weekday"),
+            "dayOfMonth": fields.get("day_of_month"),
             "createdAt": _iso(row.get("created_at")),
             "updatedAt": _iso(row.get("updated_at")),
         }

@@ -234,6 +234,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
         "commercial_rol_new_business_target", "scalar"
     ),
     "get_commercial_rol_series": RouteContract("commercial_rol_series", "scalar"),
+    "get_commercial_rol_by_customer": RouteContract(
+        "commercial_rol_by_customer", "paged_list"
+    ),
     "list_commercial_proposals": RouteContract("commercial_proposal", "paged_list"),
     "get_commercial_proposal": RouteContract("commercial_proposal", "product_snapshot"),
     "get_commercial_proposal_history_events": RouteContract(
@@ -829,6 +832,10 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_report_runs": RouteContract("report_run", "paged_list"),
     "list_report_providers": RouteContract("report_provider", "paged_list"),
     "preview_report_provider_safety_stock_shortage_30d": RouteContract(
+        "report_dataset",
+        "paged_list",
+    ),
+    "preview_report_provider_management_revenue_monthly": RouteContract(
         "report_dataset",
         "paged_list",
     ),
