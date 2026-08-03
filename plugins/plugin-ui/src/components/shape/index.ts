@@ -74,8 +74,10 @@ export {
   resolvePaintTextColor,
   AUTOMATIC_TEXT_COLOR,
   isAutomaticTextColor,
+  isTransparentCssColor,
   hasIllegibleTextContrast,
   rgbToHex,
+  resolveSelectedSwatchHex,
 } from "./colorUtils";
 export { applyTextEffectStyleToCss } from "./textEffectStyle";
 export type { TextEffectStyleFields } from "./textEffectStyle";

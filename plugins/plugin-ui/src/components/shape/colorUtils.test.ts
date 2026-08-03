@@ -13,6 +13,8 @@ import {
   resolveAutomaticTextColor,
   resolveComplexBlockForeground,
   resolvePaintTextColor,
+  resolveSelectedSwatchHex,
+  isTransparentCssColor,
   hasIllegibleTextContrast,
   rgbToHex,
 } from "./colorUtils";
@@ -36,6 +38,15 @@ describe("shape colorUtils", () => {
 
   it("interpreta transparent como alpha zero", () => {
     expect(cssToColorValue("transparent").alpha).toBe(0);
+  });
+
+  it("resolveSelectedSwatchHex ignora transparent/auto (não vira preto)", () => {
+    expect(resolveSelectedSwatchHex("transparent")).toBeUndefined();
+    expect(resolveSelectedSwatchHex("auto")).toBeUndefined();
+    expect(resolveSelectedSwatchHex("rgba(0,0,0,0)")).toBeUndefined();
+    expect(isTransparentCssColor("transparent")).toBe(true);
+    expect(resolveSelectedSwatchHex("#000000")).toBe("#000000");
+    expect(resolveSelectedSwatchHex("#089bdb")).toBe("#089bdb");
   });
 
   it("gera grade 6×10 do tema", () => {

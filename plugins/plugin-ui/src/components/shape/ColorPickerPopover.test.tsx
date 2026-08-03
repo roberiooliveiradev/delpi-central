@@ -21,6 +21,27 @@ describe("ColorPickerPopover", () => {
     expect(onChange).toHaveBeenCalledWith("transparent");
   });
 
+  it("com value transparent destaca Sem fundo e não o swatch preto", () => {
+    const { container } = render(
+      <ColorPickerPopover variant="fill" value="transparent" onChange={vi.fn()} />,
+    );
+    const view = within(container);
+    const noFill = view.getByRole("button", { name: "Sem fundo" });
+    expect(noFill.getAttribute("aria-pressed")).toBe("true");
+    expect(noFill.className).toContain("delpi-ui-color-picker__action--selected");
+    expect(view.queryAllByRole("button", { pressed: true }).filter((el) => el !== noFill)).toHaveLength(
+      0,
+    );
+  });
+
+  it("com value transparent em outline destaca Sem contorno", () => {
+    const { container } = render(
+      <ColorPickerPopover variant="outline" value="transparent" onChange={vi.fn()} />,
+    );
+    const noOutline = within(container).getByRole("button", { name: "Sem contorno" });
+    expect(noOutline.getAttribute("aria-pressed")).toBe("true");
+  });
+
   it("mostra Automático no variant text e grava sentinel auto", () => {
     const onChange = vi.fn();
     const { container } = render(

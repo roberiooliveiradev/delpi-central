@@ -258,6 +258,30 @@ export function isAutomaticTextColor(color?: string | null): boolean {
 }
 
 /**
+ * Hex da swatch selecionada no grid — ou `undefined` quando não há cor opaca
+ * («transparent»/alpha 0 / «auto»). Evita marcar preto: `cssToColorValue("transparent")`
+ * usa fallback `#000000` só como placeholder de canal RGB.
+ */
+export function resolveSelectedSwatchHex(value?: string | null): string | undefined {
+  if (value == null) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || isAutomaticTextColor(trimmed)) return undefined;
+  if (trimmed.toLowerCase() === "transparent") return undefined;
+  const parsed = cssToColorValue(trimmed);
+  if (parsed.alpha <= 0) return undefined;
+  return normalizeHex(parsed.hex);
+}
+
+/** Sem fundo / sem contorno / rgba com alpha 0. */
+export function isTransparentCssColor(value?: string | null): boolean {
+  if (value == null) return false;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed === AUTOMATIC_TEXT_COLOR) return false;
+  if (trimmed === "transparent") return true;
+  return cssToColorValue(trimmed).alpha <= 0;
+}
+
+/**
  * Cor efetiva para paint: explícita, ou Automático (contraste com o fundo).
  * `unsetIsAutomatic` — quando true, ausência de cor também resolve por contraste.
  */

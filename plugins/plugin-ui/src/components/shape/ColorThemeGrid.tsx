@@ -1,4 +1,4 @@
-import { cssToColorValue, normalizeHex } from "./colorUtils";
+import { cssToColorValue, normalizeHex, resolveSelectedSwatchHex } from "./colorUtils";
 
 type ColorSwatchProps = {
   color: string;
@@ -45,7 +45,7 @@ type ColorThemeGridProps = {
 };
 
 export function ColorThemeGrid({ rows, value, onSelect, ariaLabel }: ColorThemeGridProps) {
-  const normalizedValue = value ? normalizeHex(cssToColorValue(value).hex) : undefined;
+  const normalizedValue = resolveSelectedSwatchHex(value);
 
   return (
     <div className="delpi-ui-color-theme-grid" role="grid" aria-label={ariaLabel}>
@@ -73,7 +73,7 @@ type ColorStandardRowProps = {
 };
 
 export function ColorStandardRow({ colors, value, onSelect, ariaLabel }: ColorStandardRowProps) {
-  const normalizedValue = value ? normalizeHex(cssToColorValue(value).hex) : undefined;
+  const normalizedValue = resolveSelectedSwatchHex(value);
 
   return (
     <div className="delpi-ui-color-standard-row" role="list" aria-label={ariaLabel}>

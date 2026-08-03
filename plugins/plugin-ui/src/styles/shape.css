@@ -108,6 +108,11 @@
   outline: none;
 }
 
+.delpi-ui-color-picker__action--selected {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 45%, transparent);
+}
+
 .delpi-ui-color-picker__action-icon {
   width: 16px;
   height: 16px;

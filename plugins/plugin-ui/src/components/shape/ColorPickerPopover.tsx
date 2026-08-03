@@ -6,7 +6,7 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR } from "./colorUtils";
+import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor } from "./colorUtils";
 import { isEyedropperSupported, pickColorWithEyedropper } from "./pickColorWithEyedropper";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
@@ -87,6 +87,8 @@ export function ColorPickerPopover({
   const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
   const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
   const eyedropperEnabled = Boolean(onEyedropper) || isEyedropperSupported();
+  const noFillSelected = noFillEnabled && isTransparentCssColor(value);
+  const automaticSelected = automaticEnabled && isAutomaticTextColor(value);
   const recent =
     recentColors?.filter(
       (color) => typeof color === "string" && color.trim() && color !== "transparent" && color !== "auto",
@@ -138,7 +140,13 @@ export function ColorPickerPopover({
             <li>
               <button
                 type="button"
-                className="delpi-ui-color-picker__action"
+                className={[
+                  "delpi-ui-color-picker__action",
+                  automaticSelected ? "delpi-ui-color-picker__action--selected" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={automaticSelected}
                 onClick={handleAutomatic}
               >
                 <span
@@ -153,7 +161,17 @@ export function ColorPickerPopover({
           ) : null}
           {noFillEnabled ? (
             <li>
-              <button type="button" className="delpi-ui-color-picker__action" onClick={handleNoFill}>
+              <button
+                type="button"
+                className={[
+                  "delpi-ui-color-picker__action",
+                  noFillSelected ? "delpi-ui-color-picker__action--selected" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-pressed={noFillSelected}
+                onClick={handleNoFill}
+              >
                 <span
                   className="delpi-ui-color-picker__action-icon delpi-ui-color-picker__action-icon--none"
                   aria-hidden="true"
