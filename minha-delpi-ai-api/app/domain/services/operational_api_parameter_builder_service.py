@@ -80,11 +80,21 @@ class OperationalApiParameterBuilderService:
             previous_messages=previous_messages,
         )
         patterns = spec.get("patterns") if isinstance(spec.get("patterns"), dict) else {}
+        all_branches_match = re.search(
+            str(
+                patterns.get("all_branches")
+                or r"\b(todas as filiais|todas filiais|todas as unidades|consolidado)\b"
+            ),
+            normalized,
+        )
         branch_match = re.search(str(patterns.get("branch") or r"\bfilial\s+(\d{2})\b"), normalized)
-        branch = branch_match.group(1) if branch_match else None
+        if all_branches_match:
+            branch = str(spec.get("allBranchesValue") or "Todas")
+        else:
+            branch = branch_match.group(1) if branch_match else None
         context = {
             "branch": branch,
-            "branch_match": branch_match,
+            "branch_match": branch_match if not all_branches_match else None,
             "date_range": date_range,
             "normalized": normalized,
         }

@@ -6,6 +6,11 @@ import re
 
 from fastapi import Query
 
+from app.domain.totvs.protheus_branches import (
+    BRANCH_CODE_VALUES,
+    BRANCH_SCOPE_VALUES,
+)
+
 def _enum_pattern(values: tuple[str, ...]) -> str:
     """Runtime validation — Query(enum=) alone does not enforce in FastAPI."""
     return "^(" + "|".join(re.escape(v) for v in values) + ")$"
@@ -28,7 +33,6 @@ LOSS_TYPE_VALUES = ("refugo", "scrap", "both")
 STOCK_METHOD_VALUES = ("auto", "hybrid", "estimated", "official_closure")
 NONCONFORMITY_TYPE_VALUES = ("internal", "customer", "supplier", "external", "all")
 NONCONFORMITY_SCOPE_VALUES = ("internal", "external")
-BRANCH_CODE_VALUES = ("01", "02")
 SI_DEPARTMENT_ID_VALUES = (
     "commercial",
     "engineering",
@@ -273,6 +277,7 @@ def NONCONFORMITY_SCOPE_QUERY():
     enum=list(NONCONFORMITY_SCOPE_VALUES),
 )
 def BRANCH_QUERY_REQUIRED():
+    """Filial concreta 01|02 — lookups / chave composta (sem Todas)."""
     return Query(
     ...,
     description="Protheus branch code (01 or 02).",
@@ -280,11 +285,25 @@ def BRANCH_QUERY_REQUIRED():
     enum=list(BRANCH_CODE_VALUES),
 )
 def BRANCH_QUERY_OPTIONAL():
+    """Escopo Todas|01|02 — vazio/omitido = Todas (sem filtro de filial)."""
     return Query(
     None,
-    description="Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
-    pattern=_enum_pattern(BRANCH_CODE_VALUES),
-    enum=list(BRANCH_CODE_VALUES),
+    description=(
+        "Branch scope: Todas (no branch filter), 01 or 02. "
+        "Empty defaults to Todas when consolidated access is allowed."
+    ),
+    pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
+    enum=list(BRANCH_SCOPE_VALUES),
+)
+def BRANCH_SCOPE_QUERY_OPTIONAL():
+    return BRANCH_QUERY_OPTIONAL()
+def BRANCH_SCOPE_QUERY_REQUIRED():
+    """Escopo obrigatório incluindo Todas (listagens que exigem o param)."""
+    return Query(
+    ...,
+    description="Branch scope: Todas (no branch filter), 01 or 02.",
+    pattern=_enum_pattern(BRANCH_SCOPE_VALUES),
+    enum=list(BRANCH_SCOPE_VALUES),
 )
 def SI_DEPARTMENT_ID_QUERY_REQUIRED():
     return Query(

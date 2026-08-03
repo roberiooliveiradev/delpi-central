@@ -25,6 +25,11 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     should_annotate_third_party_observation,
     shortage_date_in_horizon,
 )
+from app.domain.totvs.protheus_branches import (
+    PROTHEUS_BRANCH_CODES,
+    is_all_branches,
+    normalize_branch_scope,
+)
 from app.domain.services.supplies.safety_stock_purchase_coverage_service import (
     enrich_open_purchase_orders,
 )
@@ -61,12 +66,63 @@ class SafetyStockShortage30dAggregationService:
         include_without_safety_stock: bool = True,
         as_of_date: date | None = None,
     ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-        branch_code = str(branch or "").strip()
-        if branch_code not in VALID_BRANCHES:
-            raise ValueError("branch deve ser 01 ou 02.")
+        scope = normalize_branch_scope(branch)
         horizon = int(horizon_days)
         if horizon < 1 or horizon > 365:
             raise ValueError("horizonDays deve estar entre 1 e 365.")
+
+        if is_all_branches(scope):
+            all_rows: list[dict[str, Any]] = []
+            metas: list[dict[str, Any]] = []
+            for code in PROTHEUS_BRANCH_CODES:
+                rows, meta = self._collect_rows_for_branch(
+                    branch_code=code,
+                    horizon_days=horizon,
+                    include_blocked=include_blocked,
+                    product_group=product_group,
+                    unit=unit,
+                    search=search,
+                    include_without_safety_stock=include_without_safety_stock,
+                    as_of_date=as_of_date,
+                )
+                all_rows.extend(rows)
+                metas.append(meta)
+            merged_meta = {
+                "branch": scope,
+                "horizon_days": horizon,
+                "as_of_date": (as_of_date or date.today()).isoformat(),
+                "material_count": sum(int(m.get("material_count") or 0) for m in metas),
+                "shortage_count": len(all_rows),
+                "consolidated_across_branches": True,
+            }
+            return all_rows, merged_meta
+
+        return self._collect_rows_for_branch(
+            branch_code=scope,
+            horizon_days=horizon,
+            include_blocked=include_blocked,
+            product_group=product_group,
+            unit=unit,
+            search=search,
+            include_without_safety_stock=include_without_safety_stock,
+            as_of_date=as_of_date,
+        )
+
+    def _collect_rows_for_branch(
+        self,
+        *,
+        branch_code: str,
+        horizon_days: int,
+        include_blocked: bool,
+        product_group: str | None,
+        unit: str | None,
+        search: str | None,
+        include_without_safety_stock: bool,
+        as_of_date: date | None,
+    ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        if branch_code not in VALID_BRANCHES:
+            raise ValueError("branch deve ser 01 ou 02.")
+        horizon = int(horizon_days)
 
         as_of = as_of_date or date.today()
         materials = self._repository.fetch_materials_for_projection_batch(

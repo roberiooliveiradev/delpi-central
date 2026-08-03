@@ -14,6 +14,12 @@ from app.interface.http.routes.quality.audit_5s_branch_access import (
 def test_branch_view_allowed_for_matching_filial_permission() -> None:
     user = SimpleNamespace(is_superadmin=False)
     with patch(
+        "app.interface.http.branch_access_gate.get_current_user",
+        return_value=user,
+    ), patch(
+        "app.interface.http.branch_access_gate.has_permission",
+        side_effect=lambda _user, perm: perm == "auditoria-5s.view.filial-01",
+    ), patch(
         "app.interface.http.routes.quality.audit_5s_branch_access.get_current_user",
         return_value=user,
     ), patch(

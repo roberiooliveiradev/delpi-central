@@ -7,6 +7,7 @@ from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
 from app.domain.ports.retrabalho.retrabalho_repository_port import RetrabalhoRepositoryPort
+from app.domain.totvs.protheus_branches import is_all_branches
 
 
 class GetRetrabalhoReworkCostPctUseCase:
@@ -23,12 +24,13 @@ class GetRetrabalhoReworkCostPctUseCase:
     def execute(self, request: RetrabalhoQueryRequest) -> dict:
         start_iso, end_iso = request.period.iso_range()
         branch = request.period.filial
-        branch_filter_applied = branch is not None
+        branch_filter_applied = not is_all_branches(branch)
         consolidated = not branch_filter_applied
+        repo_branch = None if consolidated else branch
         common = {
             "start_date": start_iso,
             "end_date": end_iso,
-            "branch": branch,
+            "branch": repo_branch,
             "recurso": request.recurso,
             "centro_custo": request.centro_custo,
             "codigo_operador": request.codigo_operador,
@@ -37,7 +39,7 @@ class GetRetrabalhoReworkCostPctUseCase:
         row = self._retrabalho_repository.get_resumo(**common)
         rol_data = self._financial_repository.get_rol(
             GetRolRequest(
-                branch=branch,
+                branch=repo_branch,
                 start_date=start_iso,
                 end_date=end_iso,
             )
@@ -55,7 +57,7 @@ class GetRetrabalhoReworkCostPctUseCase:
         )
 
         return {
-            "branch": branch or "consolidated",
+            "branch": branch,
             "start_date": start_iso,
             "end_date": end_iso,
             "rework_cost": rework_cost,

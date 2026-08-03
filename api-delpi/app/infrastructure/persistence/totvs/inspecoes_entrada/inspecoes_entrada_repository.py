@@ -6,6 +6,10 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_historico_filters i
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
+from app.domain.totvs.protheus_branches import (
+    branch_filter_sql,
+    is_all_branches,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 
 RESUMO_VIEW = "dbo.vw_minha_delpi_inspecoes_entrada_resumo_filial"
@@ -146,12 +150,20 @@ _HISTORICO_ORDER_BY = """
 """
 
 
+def _where_branch(column: str, scope: str) -> tuple[str, list]:
+    """WHERE clause fragment for branch scope (Todas = no filter)."""
+    clause, params = branch_filter_sql(column, scope)
+    if not clause:
+        return "1=1", []
+    return clause, params
+
+
 def _build_historico_where(
     branch: str,
     filters: InspecoesEntradaHistoricoFilters,
 ) -> tuple[str, list]:
-    clauses = ["Filial = ?"]
-    params: list = [branch]
+    branch_clause, params = _where_branch("Filial", branch)
+    clauses = [branch_clause]
 
     if filters.result:
         clauses.append("Resultado_Resumo = ?")
@@ -183,25 +195,58 @@ def _build_historico_where(
 
 class InspecoesEntradaRepository(BaseRepository, InspecoesEntradaRepositoryPort):
     def get_resumo_by_branch(self, branch: str) -> dict | None:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
+            if not is_all_branches(branch):
+                return self.execute_one(
+                    f"""
+                    SELECT {_RESUMO_SELECT}
+                    FROM {RESUMO_VIEW}
+                    WHERE {branch_clause}
+                    """,
+                    tuple(params),
+                )
             return self.execute_one(
                 f"""
-                SELECT {_RESUMO_SELECT}
+                SELECT
+                    SUM(Inspecoes_Pendentes) AS Inspecoes_Pendentes,
+                    SUM(Ja_Inspecionados) AS Ja_Inspecionados,
+                    SUM(Inspecoes_Aprovadas) AS Inspecoes_Aprovadas,
+                    SUM(Inspecoes_Rejeitadas) AS Inspecoes_Rejeitadas,
+                    CASE
+                        WHEN SUM(Ja_Inspecionados) > 0
+                        THEN 100.0 * SUM(Inspecoes_Aprovadas) / SUM(Ja_Inspecionados)
+                        ELSE 0
+                    END AS Taxa_Aprovacao,
+                    SUM(Qtde_Inspecoes_Com_Tempo) AS Qtde_Inspecoes_Com_Tempo,
+                    CASE
+                        WHEN SUM(Qtde_Inspecoes_Com_Tempo) > 0
+                        THEN SUM(Tempo_Medio_Horas * Qtde_Inspecoes_Com_Tempo)
+                             / SUM(Qtde_Inspecoes_Com_Tempo)
+                        ELSE 0
+                    END AS Tempo_Medio_Horas,
+                    CASE
+                        WHEN SUM(Qtde_Inspecoes_Com_Tempo) > 0
+                        THEN SUM(Tempo_Medio_Dias * Qtde_Inspecoes_Com_Tempo)
+                             / SUM(Qtde_Inspecoes_Com_Tempo)
+                        ELSE 0
+                    END AS Tempo_Medio_Dias
                 FROM {RESUMO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 """,
-                (branch,),
+                tuple(params),
             )
 
     def count_pendentes_by_branch(self, branch: str) -> int:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
             row = self.execute_one(
                 f"""
                 SELECT COUNT(*) AS total
                 FROM {PENDENTES_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 """,
-                (branch,),
+                tuple(params),
             )
         return int((row or {}).get("total") or 0)
 
@@ -213,6 +258,8 @@ class InspecoesEntradaRepository(BaseRepository, InspecoesEntradaRepositoryPort)
         page_size: int,
     ) -> list[dict]:
         offset = (max(page, 1) - 1) * page_size
+        branch_clause, params = _where_branch("Filial", branch)
+        query_params = tuple(params + [offset, page_size])
         with self:
             return self.execute_query(
                 f"""
@@ -221,7 +268,7 @@ class InspecoesEntradaRepository(BaseRepository, InspecoesEntradaRepositoryPort)
                 FROM (
                     SELECT {_PENDENTES_SELECT}
                     FROM {PENDENTES_VIEW}
-                    WHERE Filial = ?
+                    WHERE {branch_clause}
                     {_PENDENTES_ORDER_BY}
                     OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
                 ) src
@@ -242,47 +289,80 @@ class InspecoesEntradaRepository(BaseRepository, InspecoesEntradaRepositoryPort)
                         END
                 ) SB1
                 """,
-                (branch, offset, page_size),
+                query_params,
             )
 
     def list_pendentes_fornecedor_by_branch(self, branch: str) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
+            if not is_all_branches(branch):
+                return self.execute_query(
+                    f"""
+                    SELECT {_PENDENTES_FORNECEDOR_SELECT}
+                    FROM {PENDENTES_FORNECEDOR_VIEW}
+                    WHERE {branch_clause}
+                    {_PENDENTES_FORNECEDOR_ORDER_BY}
+                    """,
+                    tuple(params),
+                )
             return self.execute_query(
                 f"""
-                SELECT {_PENDENTES_FORNECEDOR_SELECT}
+                SELECT
+                    Nome_Fornecedor,
+                    SUM(Qtde_Pendentes) AS Qtde_Pendentes
                 FROM {PENDENTES_FORNECEDOR_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
+                GROUP BY Nome_Fornecedor
                 {_PENDENTES_FORNECEDOR_ORDER_BY}
                 """,
-                (branch,),
+                tuple(params),
             )
 
     def list_rejeitadas_ensaiador_by_branch(self, branch: str) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
+            if not is_all_branches(branch):
+                return self.execute_query(
+                    f"""
+                    SELECT {_REJEITADAS_ENSAIADOR_SELECT}
+                    FROM {REJEITADAS_ENSAIADOR_VIEW}
+                    WHERE {branch_clause}
+                    {_REJEITADAS_ENSAIADOR_ORDER_BY}
+                    """,
+                    tuple(params),
+                )
             return self.execute_query(
                 f"""
-                SELECT {_REJEITADAS_ENSAIADOR_SELECT}
+                SELECT
+                    Matricula_Ensaiador,
+                    Nome_Ensaiador,
+                    Login_Ensaiador,
+                    SUM(Qtde_Inspecoes_Rejeitadas) AS Qtde_Inspecoes_Rejeitadas
                 FROM {REJEITADAS_ENSAIADOR_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
+                GROUP BY Matricula_Ensaiador, Nome_Ensaiador, Login_Ensaiador
                 {_REJEITADAS_ENSAIADOR_ORDER_BY}
                 """,
-                (branch,),
+                tuple(params),
             )
 
     def count_rejeitadas_by_branch(self, branch: str) -> int:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
             row = self.execute_one(
                 f"""
                 SELECT COUNT(*) AS total
                 FROM {HISTORICO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                   AND Resultado_Resumo = 'REJEITADA'
                 """,
-                (branch,),
+                tuple(params),
             )
         return int((row or {}).get("total") or 0)
 
     def list_rejeitadas_by_branch(self, branch: str, *, limit: int) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
+        query_params = tuple(params + [limit])
         with self:
             return self.execute_query(
                 f"""
@@ -291,14 +371,14 @@ class InspecoesEntradaRepository(BaseRepository, InspecoesEntradaRepositoryPort)
                 FROM (
                     SELECT {_REJEITADAS_PRODUTO_SELECT}
                     FROM {HISTORICO_VIEW}
-                    WHERE Filial = ?
+                    WHERE {branch_clause}
                       AND Resultado_Resumo = 'REJEITADA'
                     {_REJEITADAS_PRODUTO_ORDER_BY}
                     OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
                 ) src
                 {_SB1_DESCRICAO_APPLY}
                 """,
-                (branch, limit),
+                query_params,
             )
 
     def count_historico_by_branch(

@@ -15,8 +15,8 @@ def _body(response) -> dict:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_historico_detalhe_use_case"
@@ -58,8 +58,8 @@ def test_inspecoes_entrada_historico_detalhe_returns_meta(mock_build, _mock_bran
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_historico_detalhe_use_case"
@@ -123,7 +123,7 @@ def test_inspecoes_entrada_historico_detalhe_rejects_invalid_branch(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_branch_access.branch_view_allowed",
     return_value=False,
 )
 def test_inspecoes_entrada_historico_detalhe_returns_403_without_branch_permission(

@@ -13,7 +13,7 @@ from app.infrastructure.persistence.totvs.production_repositories.production_mac
     build_top_intermediates_sql,
 )
 
-_CACHE_NS = "production-machine-programs-top-intermediates-v5"
+_CACHE_NS = "production-machine-programs-top-intermediates-v6"
 
 
 def _cache_key(
@@ -68,19 +68,21 @@ class ProductionMachineProgramsRepository(
         search_term = (search or "").strip()
         search_like = f"%{search_term}%" if search_term else None
 
-        sql_items, sql_count = build_top_intermediates_sql(
+        sql_items, sql_count, branch_slots = build_top_intermediates_sql(
+            branch=branch,
             search=search_like,
             offset=offset,
             page_size=page_size,
         )
+        sh6_params, fp_params, sg2_params, op_params = branch_slots
 
         base_params: list[Any] = [
-            branch,
+            *sh6_params,
             date_start,
             date_end_exclusive,
-            branch,
-            branch,
-            branch,
+            *fp_params,
+            *sg2_params,
+            *op_params,
         ]
         if search_like:
             base_params.extend([search_like, search_like])

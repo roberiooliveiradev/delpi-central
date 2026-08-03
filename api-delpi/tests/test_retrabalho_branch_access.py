@@ -19,11 +19,11 @@ def test_branch_view_allowed_with_global_view_permission() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[CONTROLE_RETRABALHO_VIEW])
 
     with patch(
-        "app.interface.http.routes.retrabalho.retrabalho_branch_access.get_current_user",
+        "app.interface.http.branch_access_gate.get_current_user",
         return_value=user,
     ):
         with patch(
-            "app.interface.http.routes.retrabalho.retrabalho_branch_access.has_permission",
+            "app.interface.http.branch_access_gate.has_permission",
             side_effect=lambda current_user, perm: perm in user.permissions,
         ):
             assert branch_view_allowed("01") is True
@@ -34,11 +34,11 @@ def test_branch_view_allowed_with_filial_sc_only() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[CONTROLE_RETRABALHO_VIEW_FILIAL_SC])
 
     with patch(
-        "app.interface.http.routes.retrabalho.retrabalho_branch_access.get_current_user",
+        "app.interface.http.branch_access_gate.get_current_user",
         return_value=user,
     ):
         with patch(
-            "app.interface.http.routes.retrabalho.retrabalho_branch_access.has_permission",
+            "app.interface.http.branch_access_gate.has_permission",
             side_effect=lambda current_user, perm: perm in user.permissions,
         ):
             assert branch_view_allowed("01") is True
@@ -47,7 +47,7 @@ def test_branch_view_allowed_with_filial_sc_only() -> None:
 
 def test_branch_access_error_returns_403_for_denied_filial() -> None:
     with patch(
-        "app.interface.http.routes.retrabalho.retrabalho_branch_access.branch_view_allowed",
+        "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
         return_value=False,
     ):
         response = branch_access_error("02")

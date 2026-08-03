@@ -11,8 +11,10 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_rejeitadas_produto_
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
-VALID_BRANCHES = frozenset({"01", "02"})
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 
@@ -59,9 +61,11 @@ def _format_time(value: Any) -> str | None:
     return raw or None
 
 
-def _normalize_item(row: dict, branch: str) -> InspecoesEntradaRejeitadaProdutoItemResponse:
+def _normalize_item(
+    row: dict, scope_branch: str | None
+) -> InspecoesEntradaRejeitadaProdutoItemResponse:
     return InspecoesEntradaRejeitadaProdutoItemResponse(
-        branch=_as_str(row.get("Filial")) or branch,
+        branch=_as_str(row.get("Filial")) or (scope_branch or ""),
         inspection_id=_as_str(row.get("Id_Inspecao")),
         report_date=_format_date(row.get("Data_Laudo")),
         report_time=_format_time(row.get("Hora_Laudo")),
@@ -82,12 +86,10 @@ class ListInspecoesEntradaRejeitadasProdutoUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None,
         limit: int = DEFAULT_LIMIT,
     ) -> InspecoesEntradaRejeitadasProdutoResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_optional_branch(branch)
 
         resolved_limit = min(max(limit, 1), MAX_LIMIT)
         total = self._repository.count_rejeitadas_by_branch(normalized_branch)

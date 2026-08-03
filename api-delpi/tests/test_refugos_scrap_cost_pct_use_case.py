@@ -115,7 +115,7 @@ def test_consolidated_when_filial_omitted() -> None:
     )
     result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(request)
 
-    assert result["branch"] == "consolidated"
+    assert result["branch"] == "Todas"
     assert result["summary"]["branch_filter_applied"] is False
     assert result["summary"]["consolidated_across_branches"] is True
     assert result["scrap_cost_pct"] == 2.5

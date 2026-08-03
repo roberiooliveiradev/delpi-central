@@ -42,11 +42,19 @@ function branchDefaultForRoute(route: TvDataRouteCatalogItem): string {
   for (const [prefix, value] of BRANCH_DEFAULT_BY_PATH_PREFIX) {
     if (path.startsWith(prefix)) return value;
   }
+  const schema = route.paramSchema ?? {};
+  for (const key of ["branch", "filial"] as const) {
+    const branchSpec = schema[key] as { enum?: Array<string | number | boolean> } | undefined;
+    const enumValues = Array.isArray(branchSpec?.enum)
+      ? branchSpec.enum.map((item) => String(item))
+      : [];
+    if (enumValues.includes("Todas")) return "Todas";
+  }
   return CONVENIENT_REQUIRED_DEFAULTS.branch;
 }
 
 function convenientDefault(key: string, route: TvDataRouteCatalogItem): string | undefined {
-  if (key === "branch") return branchDefaultForRoute(route);
+  if (key === "branch" || key === "filial") return branchDefaultForRoute(route);
   return CONVENIENT_REQUIRED_DEFAULTS[key];
 }
 

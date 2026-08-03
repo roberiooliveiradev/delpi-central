@@ -17,8 +17,10 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_pendentes_response 
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
-VALID_BRANCHES = frozenset({"01", "02"})
 VALID_RESULTS = frozenset({"APROVADA", "REJEITADA"})
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
@@ -111,9 +113,11 @@ def _optional_str(value: Any) -> str | None:
     return text or None
 
 
-def _normalize_item(row: dict, branch: str) -> InspecoesEntradaHistoricoItemResponse:
+def _normalize_item(
+    row: dict, scope_branch: str | None
+) -> InspecoesEntradaHistoricoItemResponse:
     return InspecoesEntradaHistoricoItemResponse(
-        branch=_as_str(row.get("Filial")) or branch,
+        branch=_as_str(row.get("Filial")) or (scope_branch or ""),
         inspection_id=_as_str(row.get("Id_Inspecao")),
         received_date=_format_date(row.get("Data_Recebimento")),
         received_time=_format_time(row.get("Hora_Recebimento")),
@@ -155,7 +159,7 @@ class ListInspecoesEntradaHistoricoUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
         result: str | None = None,
@@ -167,9 +171,7 @@ class ListInspecoesEntradaHistoricoUseCase:
         invoice_number: str | None = None,
         lot: str | None = None,
     ) -> InspecoesEntradaHistoricoResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_optional_branch(branch)
 
         normalized_result = _normalize_optional_text(result)
         if normalized_result and normalized_result not in VALID_RESULTS:

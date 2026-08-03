@@ -15,8 +15,8 @@ def _body(response) -> dict:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
@@ -95,11 +95,26 @@ def inspecoes_entrada_client() -> TestClient:
     return TestClient(app)
 
 
-def test_inspecoes_entrada_historico_requires_branch(
-    inspecoes_entrada_client: TestClient,
-) -> None:
-    response = inspecoes_entrada_client.get("/inspecoes-entrada/historico")
-    assert response.status_code == 422
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
+)
+def test_inspecoes_entrada_historico_allows_omit_branch(mock_build, _access, inspecoes_entrada_client: TestClient) -> None:
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {'branch': 'Todas', 'items': [], 'pagination': {'page': 1, 'page_size': 50, 'total': 0, 'total_pages': 1, 'is_complete': True}, 'filters': {}}
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = inspecoes_entrada_client.get('/inspecoes-entrada/historico')
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("success") is True
+    assert body.get("data", {}).get("branch") == "Todas"
+
 
 
 @pytest.mark.parametrize("branch", ["03", "1", "xx"])
@@ -123,8 +138,8 @@ def test_inspecoes_entrada_historico_rejects_page_size_above_max(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
@@ -160,8 +175,8 @@ def test_inspecoes_entrada_historico_returns_422_for_invalid_result(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_list_inspecoes_entrada_historico_use_case"
@@ -199,7 +214,7 @@ def test_inspecoes_entrada_historico_returns_422_for_invalid_date_range(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_branch_access.branch_view_allowed",
     return_value=False,
 )
 def test_inspecoes_entrada_historico_denies_branch_without_permission(

@@ -12,7 +12,7 @@ Parâmetro comum:
 
 | Parâmetro | Descrição |
 |---|---|
-| `branch` | Filial `01` ou `02` (obrigatório em todas as rotas) |
+| `branch` | Filial `Todas` \| `01` \| `02` (opcional nas listagens/KPI; `01`\|`02` obrigatório em `/historico/detalhe`) |
 
 Plugin consumidor: `plugins/inspecoes-processo` · Auditoria: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
 
@@ -39,7 +39,7 @@ Plugin consumidor: `plugins/inspecoes-processo` · Auditoria: [ESPECIFICACAO-AUD
 
 | Parâmetro | Obrigatório | Descrição |
 |---|---|---|
-| `branch` | sim | `01` \| `02` |
+| `branch` | não | `Todas` \| `01` \| `02` |
 | `ordem_producao` | um dos dois | Filtro por OP |
 | `codigo_produto` | um dos dois | Filtro por produto |
 | `page` | não | Página (≥ 1, default 1) |
@@ -60,7 +60,7 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 
 | Parâmetro | Obrigatório | Descrição |
 |---|---|---|
-| `branch` | sim | `01` \| `02` |
+| `branch` | não | `Todas` \| `01` \| `02` |
 | `data` | não | Data de produção `YYYY-MM-DD` (default: hoje) |
 | `page` | não | Página (≥ 1, default 1) |
 | `page_size` | não | 1–100 (default 50) |

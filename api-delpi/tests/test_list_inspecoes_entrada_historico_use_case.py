@@ -163,7 +163,7 @@ def test_list_inspecoes_entrada_historico_clamps_page_size() -> None:
     assert call_kwargs["page_size"] == 200
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_entrada_historico_rejects_invalid_branch(branch: str) -> None:
     repository = MagicMock()
     use_case = ListInspecoesEntradaHistoricoUseCase(repository)

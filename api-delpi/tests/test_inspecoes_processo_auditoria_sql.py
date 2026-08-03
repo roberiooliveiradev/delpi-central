@@ -25,7 +25,9 @@ def test_auditoria_ensaiador_map_sql_uses_por_ensaiador() -> None:
 
 
 def test_build_qpr_for_ops_sql_uses_ensr_and_like_params() -> None:
-    sql = build_qpr_for_ops_sql(3)
+    sql, branch_params = build_qpr_for_ops_sql(3)
+    assert branch_params == ["01"]
     assert "QPR010" in sql
     assert "QPR_ENSR" in sql
     assert sql.count("QPR.QPR_OP LIKE ?") == 3
+    assert "QPR.QPR_FILIAL = ?" in sql

@@ -10,8 +10,9 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_rejeitadas_ensaiado
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
 
 def _as_str(value: Any) -> str:
@@ -31,10 +32,10 @@ def _as_int(value: Any) -> int:
 
 def _normalize_item(
     row: dict,
-    branch: str,
+    scope_branch: str | None,
 ) -> InspecoesEntradaRejeitadaEnsaiadorItemResponse:
     return InspecoesEntradaRejeitadaEnsaiadorItemResponse(
-        branch=_as_str(row.get("Filial")) or branch,
+        branch=_as_str(row.get("Filial")) or (scope_branch or ""),
         inspector_registration=_as_str(row.get("Matricula_Ensaiador")),
         inspector_name=_as_str(row.get("Nome_Ensaiador")),
         inspector_login=_as_str(row.get("Login_Ensaiador")),
@@ -46,10 +47,10 @@ class ListInspecoesEntradaRejeitadasEnsaiadorUseCase:
     def __init__(self, repository: InspecoesEntradaRepositoryPort) -> None:
         self._repository = repository
 
-    def execute(self, *, branch: str) -> InspecoesEntradaRejeitadasEnsaiadorResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+    def execute(
+        self, *, branch: str | None
+    ) -> InspecoesEntradaRejeitadasEnsaiadorResponse:
+        normalized_branch = normalize_optional_branch(branch)
 
         rows = self._repository.list_rejeitadas_ensaiador_by_branch(normalized_branch)
         items = [_normalize_item(row, normalized_branch) for row in rows]

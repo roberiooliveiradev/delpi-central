@@ -9,8 +9,9 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_resumo_response i
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
+    normalize_optional_branch,
+)
 
 
 def _as_int(value: Any) -> int:
@@ -50,10 +51,8 @@ class GetInspecoesProcessoResumoUseCase:
     def __init__(self, repository: InspecoesProcessoRepositoryPort) -> None:
         self._repository = repository
 
-    def execute(self, *, branch: str) -> InspecoesProcessoResumoResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+    def execute(self, *, branch: str | None) -> InspecoesProcessoResumoResponse:
+        normalized_branch = normalize_optional_branch(branch)
 
         row = self._repository.get_resumo_by_branch(normalized_branch)
         if not row:

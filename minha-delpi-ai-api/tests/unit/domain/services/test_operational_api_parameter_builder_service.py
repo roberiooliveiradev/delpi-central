@@ -22,6 +22,21 @@ def test_build_date_branch_extracts_branch_and_dates():
     assert parameters["end_date"] == "31-03-2026"
 
 
+def test_build_date_branch_maps_todas_as_filiais_to_todas():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_date_branch(
+        {
+            "parametersSchema": [
+                {"name": "branch", "in": "query"},
+            ],
+        },
+        "rol de todas as filiais",
+    )
+
+    assert parameters["branch"] == "Todas"
+
+
 def test_build_date_branch_infers_granularity_for_series():
     builder = OperationalApiParameterBuilderService()
 

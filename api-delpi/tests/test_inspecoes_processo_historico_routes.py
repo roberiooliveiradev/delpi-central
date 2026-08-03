@@ -14,7 +14,7 @@ def _body(response) -> dict:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
     return_value=True,
 )
 @patch(
@@ -67,7 +67,7 @@ def test_inspecoes_processo_historico_returns_meta(mock_build, _mock_branch) -> 
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
     return_value=False,
 )
 def test_inspecoes_processo_historico_denies_branch_without_permission(

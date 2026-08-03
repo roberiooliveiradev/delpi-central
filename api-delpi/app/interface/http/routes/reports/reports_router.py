@@ -42,7 +42,7 @@ from app.core.responses import error_response, not_found_response
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginsRepositoryError,
 )
-from app.interface.http.query_param_enums import BRANCH_QUERY_REQUIRED
+from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.reports.reports_branch_access import (
     branch_access_error,
@@ -376,7 +376,7 @@ def list_report_providers():
 )
 @require_any_permission(REPORTS_FOLLOW_UP_READ_PERMISSIONS)
 def preview_safety_stock_shortage_30d(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     horizonDays: Annotated[int, Query(ge=1, le=365)] = 30,
     includeBlocked: Annotated[bool, Query()] = False,
     productGroup: Annotated[str | None, Query()] = None,
@@ -389,10 +389,14 @@ def preview_safety_stock_shortage_30d(
     if branch_error:
         return branch_error
 
+    from app.domain.totvs.protheus_branches import normalize_branch_scope
+
+    branch_scope = normalize_branch_scope(branch)
+
     try:
         data = build_preview_safety_stock_shortage_30d_use_case().execute(
             {
-                "branch": branch,
+                "branch": branch_scope,
                 "horizonDays": horizonDays,
                 "includeBlocked": includeBlocked,
                 "productGroup": productGroup,

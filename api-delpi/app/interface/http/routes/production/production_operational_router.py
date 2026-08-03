@@ -4,7 +4,6 @@ from fastapi import APIRouter, Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
-    BRANCH_QUERY_REQUIRED,
     CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
     LOSS_TYPE_QUERY,
     PRODUCT_TYPE_QUERY,
@@ -162,7 +161,7 @@ def get_consumption_top_items(
 )
 @require_permission(API_DELPI_ACCESS)
 def list_machine_program_top_intermediates(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = START_DATE_QUERY(),
     end_date: Optional[str] = END_DATE_QUERY(),
     date_start: Optional[str] = LEGACY_DATE_START_QUERY(),
@@ -171,6 +170,8 @@ def list_machine_program_top_intermediates(
     page_size: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(default=None),
 ):
+    from app.domain.totvs.protheus_branches import normalize_branch_scope
+
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
         end_date=end_date,
@@ -180,7 +181,7 @@ def list_machine_program_top_intermediates(
     try:
         result = build_list_production_machine_program_top_intermediates_use_case().execute(
             ListMachineProgramTopIntermediatesRequest(
-                branch=branch,
+                branch=normalize_branch_scope(branch),
                 date_start=start_date,
                 date_end=end_date,
                 page=page,

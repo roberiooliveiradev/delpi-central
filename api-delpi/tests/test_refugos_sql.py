@@ -31,15 +31,24 @@ def test_base_where_filters_refugo_branch_and_closed_open_dates() -> None:
     assert params == ["R", "01", "20260401", "20260428", "2"]
 
 
-def test_base_where_consolidated_uses_valid_branch_in_clause() -> None:
+def test_base_where_consolidated_has_no_branch_predicate() -> None:
     where, params = build_base_where(
         date_start="20260401",
         date_end_exclusive="20260428",
         branch=None,
     )
 
-    assert "LTRIM(RTRIM(BC.BC_FILIAL)) IN (?, ?)" in where
-    assert params == ["R", "01", "02", "20260401", "20260428", "2"]
+    assert "BC.BC_FILIAL" not in where
+    assert "IN (" not in where
+    assert params == ["R", "20260401", "20260428", "2"]
+
+    where2, params2 = build_base_where(
+        date_start="20260401",
+        date_end_exclusive="20260428",
+        branch="Todas",
+    )
+    assert where2 == where
+    assert params2 == params
 
 
 def test_resumo_query_uses_nolock_and_almox_cost_join() -> None:

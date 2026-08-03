@@ -16,8 +16,10 @@ from app.application.use_cases.inspecoes_processo.list_inspecoes_processo_histor
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
+    normalize_branch_code,
+)
 
-VALID_BRANCHES = frozenset({"01", "02"})
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 100
 MAX_PAGE_SIZE = 200
@@ -104,9 +106,7 @@ class GetInspecoesProcessoHistoricoDetalheUseCase:
         page: int = DEFAULT_PAGE,
         page_size: int = DEFAULT_PAGE_SIZE,
     ) -> InspecoesProcessoHistoricoDetalheResponse | None:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_branch_code(branch)
 
         normalized_op = _as_str(ordem_producao)
         if not normalized_op:

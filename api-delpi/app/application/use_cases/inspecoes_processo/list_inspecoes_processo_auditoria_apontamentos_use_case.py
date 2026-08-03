@@ -11,8 +11,9 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_auditoria_apontam
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
+    normalize_optional_branch,
+)
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 100
@@ -131,14 +132,12 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None,
         data: str | None = None,
         page: int = DEFAULT_PAGE,
         page_size: int = DEFAULT_PAGE_SIZE,
     ) -> InspecoesProcessoAuditoriaApontamentosResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_optional_branch(branch)
 
         resolved_data = _parse_data(data)
         resolved_page = max(int(page), 1)

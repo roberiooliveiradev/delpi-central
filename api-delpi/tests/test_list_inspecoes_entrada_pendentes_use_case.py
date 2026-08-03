@@ -110,7 +110,7 @@ def test_list_inspecoes_entrada_pendentes_parses_comma_decimal_quantity() -> Non
     assert result.to_dict()["items"][0]["quantity"] == 46093.07
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_entrada_pendentes_rejects_invalid_branch(branch: str) -> None:
     repository = MagicMock()
     use_case = ListInspecoesEntradaPendentesUseCase(repository)
@@ -120,3 +120,15 @@ def test_list_inspecoes_entrada_pendentes_rejects_invalid_branch(branch: str) ->
 
     repository.count_pendentes_by_branch.assert_not_called()
     repository.list_pendentes_by_branch.assert_not_called()
+
+
+def test_list_inspecoes_entrada_pendentes_allows_omit_branch() -> None:
+    repository = MagicMock()
+    repository.count_pendentes_by_branch.return_value = 0
+    repository.list_pendentes_by_branch.return_value = []
+
+    use_case = ListInspecoesEntradaPendentesUseCase(repository)
+    result = use_case.execute(branch=None, page=1, page_size=10)
+
+    repository.count_pendentes_by_branch.assert_called_once_with("Todas")
+    assert result.to_dict()["branch"] == "Todas"

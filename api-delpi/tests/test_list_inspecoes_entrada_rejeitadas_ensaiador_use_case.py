@@ -81,7 +81,7 @@ def test_list_inspecoes_entrada_rejeitadas_ensaiador_returns_empty_when_no_rows(
     assert payload["total_rejected"] == 0
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_entrada_rejeitadas_ensaiador_rejects_invalid_branch(
     branch: str,
 ) -> None:

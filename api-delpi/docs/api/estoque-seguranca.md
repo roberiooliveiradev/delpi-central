@@ -30,7 +30,7 @@ Envelope padrão `{ success, message, data, meta }`. Empresa padrão nesta entre
 | GET | `/consumption-analysis/items` | `get_supplies_safety_stock_consumption_analysis_items` | paged_list |
 | GET | `/consumption-analysis/items/{code}` | `get_supplies_safety_stock_consumption_analysis_item_details` | composite_analysis |
 
-Parâmetro comum: `branch` (`01` SC / `02` ES).
+Parâmetro comum: `branch` (`Todas` \| `01` SC \| `02` ES). `Todas` ou omitido = sem filtro SQL de filial.
 
 ---
 

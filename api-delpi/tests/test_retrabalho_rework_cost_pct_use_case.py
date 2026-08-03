@@ -116,7 +116,7 @@ def test_consolidated_when_filial_omitted() -> None:
         request
     )
 
-    assert result["branch"] == "consolidated"
+    assert result["branch"] == "Todas"
     assert result["summary"]["branch_filter_applied"] is False
     assert result["summary"]["consolidated_across_branches"] is True
     assert result["rework_cost_pct"] == 2.0

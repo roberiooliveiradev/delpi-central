@@ -92,7 +92,7 @@ def test_get_inspecoes_processo_resumo_returns_zeros_when_row_missing() -> None:
     }
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_get_inspecoes_processo_resumo_rejects_invalid_branch(branch: str) -> None:
     repository = MagicMock()
     use_case = GetInspecoesProcessoResumoUseCase(repository)

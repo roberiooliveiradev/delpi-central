@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from app.domain.quality.refugos.refugos_scope import VALID_REFUGOS_BRANCHES
+from app.domain.totvs.protheus_branches import (
+    BRANCH_SCOPE_VALUES,
+    is_all_branches,
+    normalize_branch_scope,
+)
 from app.infrastructure.persistence.google_sheets.utils import Utils
 from app.infrastructure.persistence.totvs.query_builder import QueryBuilder
 from app.infrastructure.persistence.totvs.refugos.refugos_query_settings import (
@@ -19,7 +23,7 @@ def _months_inclusive(start: date, end: date) -> int:
 class RefugosPeriod:
     start_date: date
     end_date: date
-    filial: str | None
+    filial: str
 
     @classmethod
     def resolve(
@@ -30,12 +34,15 @@ class RefugosPeriod:
         data_fim: str | None = None,
         require_filial: bool = True,
     ) -> RefugosPeriod:
-        normalized_filial = str(filial or "").strip() or None
-        if normalized_filial is None:
-            if require_filial:
-                raise ValueError("filial é obrigatória.")
-        elif normalized_filial not in VALID_REFUGOS_BRANCHES:
-            raise ValueError('filial inválida. Use "01" ou "02".')
+        try:
+            normalized_filial = normalize_branch_scope(filial)
+        except ValueError as exc:
+            raise ValueError(
+                f'filial inválida. Use {", ".join(repr(v) for v in BRANCH_SCOPE_VALUES)}.'
+            ) from exc
+
+        if require_filial and is_all_branches(normalized_filial):
+            raise ValueError("filial é obrigatória.")
 
         utils = Utils()
         parsed_start = utils.parse_date(data_inicio) if data_inicio else None
@@ -69,7 +76,7 @@ class RefugosPeriod:
     def iso_range(self) -> tuple[str, str]:
         return self.start_date.isoformat(), self.end_date.isoformat()
 
-    def periodo_dict(self) -> dict[str, str | None]:
+    def periodo_dict(self) -> dict[str, str]:
         start, end = self.iso_range()
         return {"dataInicio": start, "dataFim": end, "filial": self.filial}
 

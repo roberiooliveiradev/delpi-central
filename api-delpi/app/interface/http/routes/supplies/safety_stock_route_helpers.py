@@ -5,7 +5,7 @@ from typing import Callable, Optional
 from fastapi import Query
 
 from app.interface.http.query_param_enums import (
-    BRANCH_QUERY_REQUIRED as BRANCH_QUERY,
+    BRANCH_QUERY_OPTIONAL as BRANCH_QUERY,
     SAFETY_STOCK_STATUS_QUERY,
     SORT_DIR_QUERY_ALIAS_SORT_DIRECTION,
 )
@@ -29,7 +29,7 @@ from app.utils.logger import log_error
 
 def build_safety_stock_query_request(
     *,
-    branch: str,
+    branch: str | None,
     include_blocked: bool = False,
     product_group: Optional[str] = None,
     unit: Optional[str] = None,
@@ -38,7 +38,7 @@ def build_safety_stock_query_request(
     include_without_safety_stock: bool = True,
 ) -> SafetyStockQueryRequest:
     return SafetyStockQueryRequest(
-        branch=branch,
+        branch=branch or "",
         include_blocked=include_blocked,
         product_group=product_group,
         unit=unit,
@@ -50,12 +50,12 @@ def build_safety_stock_query_request(
 
 def build_safety_stock_item_details_request(
     *,
-    branch: str,
+    branch: str | None,
     product_code: str,
     peer_branch: str | None = None,
 ) -> SafetyStockItemDetailsRequest:
     return SafetyStockItemDetailsRequest(
-        branch=branch,
+        branch=branch or "",
         product_code=product_code,
         peer_branch=peer_branch,
     )
@@ -63,13 +63,13 @@ def build_safety_stock_item_details_request(
 
 def build_safety_stock_supplier_price_history_request(
     *,
-    branch: str,
+    branch: str | None,
     product_code: str,
     supplier_code: str,
     supplier_store: str,
 ) -> SafetyStockSupplierPriceHistoryRequest:
     return SafetyStockSupplierPriceHistoryRequest(
-        branch=branch,
+        branch=branch or "",
         product_code=product_code,
         supplier_code=supplier_code,
         supplier_store=supplier_store,
@@ -78,7 +78,7 @@ def build_safety_stock_supplier_price_history_request(
 
 def build_safety_stock_items_request(
     *,
-    branch: str,
+    branch: str | None,
     page: int = DEFAULT_PAGE,
     page_size: int = DEFAULT_PAGE_SIZE,
     include_blocked: bool = False,
@@ -91,7 +91,7 @@ def build_safety_stock_items_request(
     sort_direction: str = "asc",
 ) -> SafetyStockItemsRequest:
     return SafetyStockItemsRequest(
-        branch=branch,
+        branch=branch or "",
         page=page,
         page_size=page_size,
         include_blocked=include_blocked,
@@ -107,7 +107,7 @@ def build_safety_stock_items_request(
 
 def build_consumption_analysis_query_request(
     *,
-    branch: str,
+    branch: str | None,
     include_blocked: bool = False,
     product_group: Optional[str] = None,
     unit: Optional[str] = None,
@@ -115,7 +115,7 @@ def build_consumption_analysis_query_request(
     analysis_status: Optional[str] = None,
 ) -> SafetyStockConsumptionAnalysisQueryRequest:
     return SafetyStockConsumptionAnalysisQueryRequest(
-        branch=branch,
+        branch=branch or "",
         include_blocked=include_blocked,
         product_group=product_group,
         unit=unit,
@@ -126,7 +126,7 @@ def build_consumption_analysis_query_request(
 
 def build_consumption_analysis_items_request(
     *,
-    branch: str,
+    branch: str | None,
     page: int = DEFAULT_PAGE,
     page_size: int = DEFAULT_PAGE_SIZE,
     include_blocked: bool = False,
@@ -138,7 +138,7 @@ def build_consumption_analysis_items_request(
     sort_direction: str = "asc",
 ) -> SafetyStockConsumptionAnalysisItemsRequest:
     return SafetyStockConsumptionAnalysisItemsRequest(
-        branch=branch,
+        branch=branch or "",
         page=page,
         page_size=page_size,
         include_blocked=include_blocked,

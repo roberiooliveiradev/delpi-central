@@ -6,11 +6,27 @@ from app.domain.services.supplies.safety_stock_classification_service import ALL
 from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
     ALLOWED_ANALYSIS_STATUSES,
 )
+from app.domain.totvs.protheus_branches import (
+    BRANCH_SCOPE_VALUES,
+    PROTHEUS_BRANCH_CODES,
+    normalize_branch_scope,
+)
 
-VALID_BRANCHES = frozenset({"01", "02"})
+VALID_BRANCHES = frozenset(PROTHEUS_BRANCH_CODES)
+VALID_BRANCH_SCOPES = frozenset(BRANCH_SCOPE_VALUES)
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
+
+
+def _normalize_branch_scope_field(raw: str | None) -> str:
+    try:
+        return normalize_branch_scope(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"Filial inválida. Utilize {', '.join(BRANCH_SCOPE_VALUES)}."
+        ) from exc
+
 
 ALLOWED_SORT_FIELDS = frozenset(
     {
@@ -55,11 +71,7 @@ class SafetyStockQueryRequest:
     include_without_safety_stock: bool = True
 
     def __post_init__(self) -> None:
-        self.branch = (self.branch or "").strip()
-        if not self.branch:
-            raise ValueError("O parâmetro branch é obrigatório.")
-        if self.branch not in VALID_BRANCHES:
-            raise ValueError("Filial inválida. Utilize 01 ou 02.")
+        self.branch = _normalize_branch_scope_field(self.branch)
 
         if self.status:
             normalized = self.status.strip()
@@ -117,11 +129,7 @@ class SafetyStockItemDetailsRequest:
     peer_branch: str | None = None
 
     def __post_init__(self) -> None:
-        self.branch = (self.branch or "").strip()
-        if not self.branch:
-            raise ValueError("O parâmetro branch é obrigatório.")
-        if self.branch not in VALID_BRANCHES:
-            raise ValueError("Filial inválida. Utilize 01 ou 02.")
+        self.branch = _normalize_branch_scope_field(self.branch)
 
         self.product_code = (self.product_code or "").strip()
         if not self.product_code:
@@ -157,11 +165,7 @@ class SafetyStockSupplierPriceHistoryRequest:
     supplier_store: str
 
     def __post_init__(self) -> None:
-        self.branch = (self.branch or "").strip()
-        if not self.branch:
-            raise ValueError("O parâmetro branch é obrigatório.")
-        if self.branch not in VALID_BRANCHES:
-            raise ValueError("Filial inválida. Utilize 01 ou 02.")
+        self.branch = _normalize_branch_scope_field(self.branch)
 
         self.product_code = (self.product_code or "").strip()
         if not self.product_code:
@@ -186,11 +190,7 @@ class SafetyStockConsumptionAnalysisQueryRequest:
     analysis_status: str | None = None
 
     def __post_init__(self) -> None:
-        self.branch = (self.branch or "").strip()
-        if not self.branch:
-            raise ValueError("O parâmetro branch é obrigatório.")
-        if self.branch not in VALID_BRANCHES:
-            raise ValueError("Filial inválida. Utilize 01 ou 02.")
+        self.branch = _normalize_branch_scope_field(self.branch)
 
         if self.analysis_status:
             normalized = self.analysis_status.strip()

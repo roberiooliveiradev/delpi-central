@@ -7,6 +7,15 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_que
 )
 
 
+def _opened_repo():
+    repo = SafetyStockQueryRepository()
+    repo.connection = object()
+    repo.cursor = object()
+    repo._connect = lambda: None  # type: ignore[method-assign]
+    repo._close = lambda *a, **k: None  # type: ignore[method-assign]
+    return repo
+
+
 def test_map_item_row_includes_warehouse_99_and_blocked_flag() -> None:
     row = {
         "product_code": " 90000001 ",
@@ -40,9 +49,8 @@ def test_map_item_row_includes_warehouse_99_and_blocked_flag() -> None:
 def test_fetch_items_uses_parametrized_query(mock_execute_query: MagicMock) -> None:
     mock_execute_query.return_value = []
 
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_items(
+    repo = _opened_repo()
+    repo.fetch_items(
             branch="01",
             include_blocked=False,
             product_group=None,
@@ -85,9 +93,8 @@ def test_fetch_summary_returns_deficit_by_unit(
         {"unit": "PC", "material_count": 1, "deficit_quantity": 10.0},
     ]
 
-    repo = SafetyStockQueryRepository()
-    with repo:
-        result = repo.fetch_summary(
+    repo = _opened_repo()
+    result = repo.fetch_summary(
             branch="01",
             include_blocked=False,
             product_group=None,
@@ -143,9 +150,8 @@ def test_fetch_open_commitments_binds_branch_and_product(
     mock_execute_query: MagicMock,
 ) -> None:
     mock_execute_query.return_value = []
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_open_commitments(branch="01", product_code="10020113")
+    repo = _opened_repo()
+    repo.fetch_open_commitments(branch="01", product_code="10020113")
 
     sql, params = mock_execute_query.call_args.args
     assert "SD4010" in sql
@@ -206,9 +212,8 @@ def test_fetch_linked_suppliers_binds_branch_and_product(
     mock_execute_query: MagicMock,
 ) -> None:
     mock_execute_query.return_value = []
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_linked_suppliers(branch="01", product_code="10010005")
+    repo = _opened_repo()
+    repo.fetch_linked_suppliers(branch="01", product_code="10010005")
 
     sql, params = mock_execute_query.call_args.args
     assert "SA5010" in sql
@@ -256,9 +261,8 @@ def test_fetch_consumption_analysis_rows_binds_period(
     mock_execute_query: MagicMock,
 ) -> None:
     mock_execute_query.return_value = []
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_consumption_analysis_rows(
+    repo = _opened_repo()
+    repo.fetch_consumption_analysis_rows(
             branch="01",
             period_start="20250718",
             include_blocked=False,
@@ -281,9 +285,8 @@ def test_fetch_open_purchase_orders_for_branch_omits_product_param(
     mock_execute_query: MagicMock,
 ) -> None:
     mock_execute_query.return_value = []
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_open_purchase_orders_for_branch(branch="01")
+    repo = _opened_repo()
+    repo.fetch_open_purchase_orders_for_branch(branch="01")
 
     sql, params = mock_execute_query.call_args.args
     assert "SC7010" in sql
@@ -296,9 +299,8 @@ def test_fetch_open_commitments_for_branch_omits_product_param(
     mock_execute_query: MagicMock,
 ) -> None:
     mock_execute_query.return_value = []
-    repo = SafetyStockQueryRepository()
-    with repo:
-        repo.fetch_open_commitments_for_branch(branch="02")
+    repo = _opened_repo()
+    repo.fetch_open_commitments_for_branch(branch="02")
 
     sql, params = mock_execute_query.call_args.args
     assert "SD4010" in sql
@@ -334,9 +336,8 @@ def test_fetch_materials_for_projection_batch_binds_branch_twice(
             "conversion_type": "M",
         }
     ]
-    repo = SafetyStockQueryRepository()
-    with repo:
-        rows = repo.fetch_materials_for_projection_batch(
+    repo = _opened_repo()
+    rows = repo.fetch_materials_for_projection_batch(
             branch="01",
             include_blocked=False,
             product_group=None,

@@ -86,7 +86,7 @@ def test_list_inspecoes_processo_ranking_ensaio_returns_empty_list() -> None:
     assert result == []
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_processo_ranking_ensaio_rejects_invalid_branch(
     branch: str,
 ) -> None:

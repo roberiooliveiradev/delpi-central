@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
+
 RETRABALHO_HORAS_IMPRODUTIVAS_VIEW = "dbo.VW_BI_RT_HORAS_IMPRODUTIVAS"
 
-VALID_RETRABALHO_BRANCHES = frozenset({"01", "02"})
+VALID_RETRABALHO_BRANCHES = frozenset(PROTHEUS_BRANCH_CODES)
 
 FONTE_CUSTO_SEM_CUSTO = "SEM CUSTO"
 

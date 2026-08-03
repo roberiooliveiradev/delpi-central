@@ -8,12 +8,12 @@ from __future__ import annotations
 from app.domain.services.supplies.safety_stock_stock_projection_service import (
     FINISHED_PRODUCTION_ORDER_SUFFIX,
 )
+from app.domain.totvs.protheus_branches import branch_filter_sql
 
 _FINISHED_OP_EXPR = (
     f"LEFT(RTRIM(A.production_order), 6) + '{FINISHED_PRODUCTION_ORDER_SUFFIX}'"
 )
 
-# CTs de corte que não entram no ranking de programas de máquina.
 EXCLUDED_CUTTING_WORK_CENTERS: tuple[str, ...] = ("CT-02A",)
 
 
@@ -21,20 +21,24 @@ def _excluded_ct_sql_literals() -> str:
     return ", ".join(f"'{code}'" for code in EXCLUDED_CUTTING_WORK_CENTERS)
 
 
+def _and_branch(column: str, scope: str) -> tuple[str, list]:
+    clause, params = branch_filter_sql(column, scope)
+    if not clause:
+        return "", []
+    return f"AND {clause}", list(params)
+
+
 def build_top_intermediates_sql(
     *,
+    branch: str,
     search: str | None,
     offset: int,
     page_size: int,
-) -> tuple[str, str]:
-    """Retorna (sql_items, sql_count).
+) -> tuple[str, str, list]:
+    """Retorna (sql_items, sql_count, base_params_sem_search).
 
-    Params (mesma ordem em items e count):
-      branch, date_start, date_end_exclusive,  -- appointments
-      branch,                                  -- SC2 PA
-      branch,                                  -- SG2 CT
-      branch,                                  -- SC2 OP aberta
-      [search, search]                         -- opcional
+    base_params: branch slots (0–4) + date_start + date_end_exclusive
+    interleaved as they appear in SQL.
     """
     search_filter = ""
     if search:
@@ -49,6 +53,11 @@ def build_top_intermediates_sql(
     ct_exclusion = f"""
           AND COALESCE(SG2.cutting_work_center, '') NOT IN ({excluded_cts})
     """
+
+    sh6_and, sh6_params = _and_branch("SH6.H6_FILIAL", branch)
+    fp_and, fp_params = _and_branch("FP.C2_FILIAL", branch)
+    sg2_and, sg2_params = _and_branch("SG2.G2_FILIAL", branch)
+    op_and, op_params = _and_branch("OP.C2_FILIAL", branch)
 
     ranked_cte = f"""
     WITH appointments AS (
@@ -65,7 +74,7 @@ def build_top_intermediates_sql(
            AND LTRIM(RTRIM(SB1.B1_TIPO)) = 'PI'
         WHERE SH6.D_E_L_E_T_ = ''
           AND SH6.H6_TIPO = 'P'
-          AND SH6.H6_FILIAL = ?
+          {sh6_and}
           AND SH6.H6_DTAPONT >= ?
           AND SH6.H6_DTAPONT < ?
           AND LTRIM(RTRIM(SH6.H6_OP)) <> ''
@@ -81,7 +90,7 @@ def build_top_intermediates_sql(
         FROM appointments A
         LEFT JOIN SC2010 FP WITH (NOLOCK)
             ON FP.D_E_L_E_T_ = ''
-           AND FP.C2_FILIAL = ?
+           {fp_and}
            AND LEN(RTRIM(A.production_order)) >= 6
            AND RTRIM(LTRIM(FP.C2_OP)) = {_FINISHED_OP_EXPR}
     ),
@@ -132,7 +141,7 @@ def build_top_intermediates_sql(
             RTRIM(COALESCE(SG2.G2_CTRAB, '')) AS cutting_work_center
         FROM SG2010 SG2 WITH (NOLOCK)
         WHERE SG2.D_E_L_E_T_ = ''
-          AND SG2.G2_FILIAL = ?
+          {sg2_and}
           AND SG2.G2_PRODUTO = AGG.intermediate_code
           AND RTRIM(LTRIM(SG2.G2_OPERAC)) = '01'
         ORDER BY SG2.G2_CODIGO, SG2.G2_CTRAB
@@ -141,7 +150,7 @@ def build_top_intermediates_sql(
         SELECT TOP 1 1 AS has_open
         FROM SC2010 OP WITH (NOLOCK)
         WHERE OP.D_E_L_E_T_ = ''
-          AND OP.C2_FILIAL = ?
+          {op_and}
           AND RTRIM(LTRIM(OP.C2_PRODUTO)) = AGG.intermediate_code
           AND OP.C2_QUANT > OP.C2_QUJE
           AND RTRIM(COALESCE(OP.C2_DATRF, '')) = ''
@@ -177,4 +186,6 @@ def build_top_intermediates_sql(
     {from_join}
     """
 
-    return sql_items, sql_count
+    # Params appear as: sh6*, date_start, date_end, fp*, sg2*, op*
+    # Dates are filled by the repository between sh6 and the rest.
+    return sql_items, sql_count, [sh6_params, fp_params, sg2_params, op_params]

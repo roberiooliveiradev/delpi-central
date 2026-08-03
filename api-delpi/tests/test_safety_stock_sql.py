@@ -25,7 +25,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
 
 
 def test_stock_agg_cte_contains_required_filters() -> None:
-    sql = stock_agg_cte()
+    sql, _ = stock_agg_cte(branch='01')
     assert "SB2010" in sql
     assert "B2_FILIAL" in sql
     assert f"B2_LOCAL) = '{PRIMARY_WAREHOUSE}'" in sql
@@ -34,7 +34,7 @@ def test_stock_agg_cte_contains_required_filters() -> None:
 
 
 def test_materials_base_cte_contains_mp_and_sbz_join() -> None:
-    sql = materials_base_cte()
+    sql, _ = materials_base_cte(branch="01")
     assert "SB1010" in sql
     assert "SBZ010" in sql
     assert "B1_TIPO = 'MP'" in sql
@@ -47,7 +47,7 @@ def test_materials_base_cte_contains_mp_and_sbz_join() -> None:
 
 
 def test_consumption_agg_cte_uses_sd3_filters() -> None:
-    sql = consumption_agg_cte()
+    sql, _ = consumption_agg_cte(branch='01')
     assert "SD3010" in sql
     assert "D3_LOCAL) = '99'" in sql
     assert "D3_TM) = '999'" in sql
@@ -67,20 +67,20 @@ def test_consumption_analysis_rows_require_estseg_and_movements() -> None:
     assert "safety_stock <> 0" in where_sql
     assert "product_code) = ?" in where_sql
     assert params == ["10020113", "GRP"]
-    sql = consumption_analysis_rows_sql().format(where_sql=where_sql)
+    sql_t, _ = consumption_analysis_rows_sql(branch='01'); sql = sql_t.format(where_sql=where_sql)
     assert "consumption_agg" in sql
     assert "INNER JOIN consumption_agg" in sql
 
 
 def test_consumption_last_date_sql() -> None:
-    sql = consumption_last_date_sql()
-    assert "MAX(RTRIM(SD3.D3_EMISSAO))" in sql
+    sql, _ = consumption_last_date_sql(branch="01")
+    assert "last_consumption_date" in sql
     assert "D3_LOCAL) = '99'" in sql
     assert "D3_TM) = '999'" in sql
 
 
 def test_last_inventory_date_sql() -> None:
-    sql = last_inventory_date_sql()
+    sql, _ = last_inventory_date_sql(branch="01")
     assert "SB7010" in sql
     assert "MAX(RTRIM(SB7.B7_DATA))" in sql
     assert "B7_FILIAL" in sql
@@ -96,13 +96,13 @@ def test_last_inventory_dates_batch_sql() -> None:
 
     sql = last_inventory_dates_batch_sql(placeholders="?, ?")
     assert "SB7010" in sql
-    assert "RTRIM(SB7.B7_COD) IN (?, ?)" in sql
-    assert "GROUP BY RTRIM(SB7.B7_COD)" in sql
+    assert "B7_COD IN (?, ?)" in sql
+    assert "GROUP BY SB7.B7_COD" in sql
     assert "MAX(RTRIM(SB7.B7_DATA))" in sql
 
 
 def test_consumption_monthly_series_sql() -> None:
-    sql = consumption_monthly_series_sql()
+    sql, _ = consumption_monthly_series_sql(branch='01')
     assert "LEFT(RTRIM(SD3.D3_EMISSAO), 6)" in sql
     assert "D3_TM) = '999'" in sql
 
@@ -146,12 +146,12 @@ def test_resolve_order_by_allowlist() -> None:
 
 def test_work_in_process_warehouses_include_99() -> None:
     assert "99" in WORK_IN_PROCESS_WAREHOUSES
-    sql = stock_agg_cte()
+    sql, _ = stock_agg_cte(branch='01')
     assert "warehouse_99_stock" in sql
 
 
 def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
-    sql = open_purchase_orders_sql()
+    sql, _ = open_purchase_orders_sql(branch='01')
     assert "SC7010" in sql
     assert "C7_RESIDUO" in sql
     assert "C7_QUANT > SC7.C7_QUJE" in sql
@@ -227,7 +227,7 @@ def test_open_purchase_order_item_value_partial_balance_and_zero_quantity() -> N
 
 
 def test_open_purchase_orders_sql_branch_only_omits_product_filter() -> None:
-    sql = open_purchase_orders_sql(product_param=None)
+    sql, _ = open_purchase_orders_sql(branch='01', product_param=None)
     assert "SC7010" in sql
     assert "C7_FILIAL) =" in sql
     assert "C7_PRODUTO) =" not in sql
@@ -235,7 +235,8 @@ def test_open_purchase_orders_sql_branch_only_omits_product_filter() -> None:
 
 
 def test_open_purchase_orders_sql_filters_supplier() -> None:
-    sql = open_purchase_orders_sql(
+    sql, _ = open_purchase_orders_sql(
+    branch='01',
         product_param=None,
         supplier_code_param="?",
         supplier_store_param="?",
@@ -247,7 +248,7 @@ def test_open_purchase_orders_sql_filters_supplier() -> None:
 
 
 def test_open_commitments_sql_branch_only_omits_product_filter() -> None:
-    sql = open_commitments_sql(product_param=None)
+    sql, _ = open_commitments_sql(branch='01', product_param=None)
     assert "SD4010" in sql
     assert "D4_FILIAL =" in sql
     assert "D4_COD =" not in sql
@@ -256,7 +257,7 @@ def test_open_commitments_sql_branch_only_omits_product_filter() -> None:
 
 
 def test_materials_for_projection_batch_sql_includes_conversion_and_no_pagination() -> None:
-    sql = materials_for_projection_batch_sql()
+    sql, _ = materials_for_projection_batch_sql(branch='01')
     assert "materials_base" in sql
     assert "available_stock" in sql
     assert "B1_SEGUM" in sql
@@ -268,7 +269,7 @@ def test_materials_for_projection_batch_sql_includes_conversion_and_no_paginatio
 
 
 def test_product_detail_sql_includes_conversion_fields() -> None:
-    sql = product_detail_sql()
+    sql, _ = product_detail_sql(branch='01')
     assert "available_stock" in sql
     assert "B1_SEGUM" in sql
     assert "B1_CONV" in sql
@@ -276,7 +277,7 @@ def test_product_detail_sql_includes_conversion_fields() -> None:
 
 
 def test_open_commitments_sql_filters_open_balance_and_uses_qtdeori() -> None:
-    sql = open_commitments_sql()
+    sql, _ = open_commitments_sql(branch='01')
     assert "SD4010" in sql
     assert "D4_QUANT > 0" in sql
     assert "D_E_L_E_T_ = ''" in sql
@@ -305,7 +306,7 @@ def test_open_commitments_sql_filters_open_balance_and_uses_qtdeori() -> None:
 
 
 def test_linked_suppliers_sql_uses_sa5_sa2_sd1_and_last_purchase_rules() -> None:
-    sql = linked_suppliers_sql()
+    sql, params = linked_suppliers_sql(branch="01")
     assert "SA5010" in sql
     assert "SA2010" in sql
     assert "SD1010" in sql
@@ -328,11 +329,13 @@ def test_linked_suppliers_sql_uses_sa5_sa2_sd1_and_last_purchase_rules() -> None
     assert "R_E_C_N_O_ DESC" in sql
     assert "LEFT JOIN last_purchase" in sql
     assert "WITH (NOLOCK)" in sql
+    # branch rank + filter + sd1 (+ 2 product binds filled by repo)
     assert sql.count("?") == 5
+    assert params == ["01", "01", "01"]
 
 
 def test_linked_suppliers_sql_orders_by_last_purchase_desc_without_purchase_last() -> None:
-    sql = linked_suppliers_sql()
+    sql, _ = linked_suppliers_sql(branch="01")
     order_by_clause = sql.split("ORDER BY", 1)[1]
     assert "CASE WHEN LP.product_code IS NULL THEN 1 ELSE 0 END" in order_by_clause
     assert "LP.last_purchase_date DESC" in order_by_clause
@@ -343,7 +346,7 @@ def test_linked_suppliers_sql_orders_by_last_purchase_desc_without_purchase_last
 
 def test_linked_suppliers_sql_excludes_internal_transfer_suppliers() -> None:
     """Cadastros DELPI de transferência entre filiais não são fornecedores reais."""
-    sql = linked_suppliers_sql()
+    sql, _ = linked_suppliers_sql(branch="01")
     assert "A5_FORNECE) NOT IN" in sql
     for code in INTERNAL_TRANSFER_SUPPLIER_CODES:
         assert f"'{code}'" in sql

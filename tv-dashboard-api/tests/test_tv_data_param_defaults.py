@@ -56,6 +56,20 @@ def test_apply_defaults_fills_required_branch_and_schema_default():
     assert merged["date_start"] == "2026-01-01"
 
 
+def test_apply_defaults_uses_todas_when_branch_enum_includes_todas():
+    route = {
+        "paramSchema": {
+            "branch": {
+                "type": "string",
+                "optional": False,
+                "enum": ["Todas", "01", "02"],
+            },
+        },
+    }
+    merged = apply_catalog_param_defaults({}, route)
+    assert merged["branch"] == "Todas"
+
+
 def test_apply_defaults_never_reinjects_department_id():
     """Limpar departamento no IDD não volta para commercial (overlay/schema)."""
     route = {

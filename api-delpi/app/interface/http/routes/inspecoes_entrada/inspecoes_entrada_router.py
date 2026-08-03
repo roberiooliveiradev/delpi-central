@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from delpi_auth.authz_core import has_permission
 from delpi_auth.authorization import require_any_permission
-from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
-    INSPECOES_ENTRADA_BRANCH_VIEW_PERMS,
     INSPECOES_ENTRADA_READ_PERMISSIONS,
-    INSPECOES_ENTRADA_VIEW,
 )
 from app.composition.inspecoes_entrada_composer import (
     build_get_inspecoes_entrada_historico_detalhe_use_case,
@@ -22,8 +18,6 @@ from app.composition.inspecoes_entrada_composer import (
 )
 from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
-from app.interface.http.route_response_helpers import api_delpi_success
-from app.utils.logger import log_error
 from app.interface.http.period_query_params import (
     END_DATE_QUERY,
     LEGACY_DATE_FROM_QUERY,
@@ -32,43 +26,20 @@ from app.interface.http.period_query_params import (
     resolve_period_dates,
 )
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
     INSPECTION_RESULT_QUERY,
 )
+from app.interface.http.route_response_helpers import api_delpi_success
+from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_branch_access import (
+    branch_access_error,
+)
+from app.utils.logger import log_error
 
 router = APIRouter(
     prefix="/inspecoes-entrada",
     tags=["Inspeções de Entrada"],
 )
-
-
-def _is_superadmin() -> bool:
-    user = get_current_user()
-    return bool(user and getattr(user, "is_superadmin", False))
-
-
-def _branch_view_allowed(branch: str) -> bool:
-    if _is_superadmin():
-        return True
-
-    user = get_current_user()
-    if user is None:
-        return False
-
-    if has_permission(user, INSPECOES_ENTRADA_VIEW):
-        return True
-
-    branch_perm = INSPECOES_ENTRADA_BRANCH_VIEW_PERMS.get(branch)
-    return branch_perm is not None and has_permission(user, branch_perm)
-
-
-def _branch_access_error(branch: str):
-    if _branch_view_allowed(branch):
-        return None
-    return error_response(
-        "Sem permissão para acessar inspeções de entrada desta filial.",
-        status_code=403,
-    )
 
 
 @router.get(
@@ -80,9 +51,9 @@ def _branch_access_error(branch: str):
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_resumo_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -117,11 +88,11 @@ def get_inspecoes_entrada_resumo_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_pendentes_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -160,9 +131,9 @@ def get_inspecoes_entrada_pendentes_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_pendentes_fornecedor_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -199,9 +170,9 @@ def get_inspecoes_entrada_pendentes_fornecedor_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_rejeitadas_ensaiador_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -238,10 +209,10 @@ def get_inspecoes_entrada_rejeitadas_ensaiador_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_rejeitadas_produto_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=50, ge=1, le=200),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -278,7 +249,7 @@ def get_inspecoes_entrada_rejeitadas_produto_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_historico_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
     result: str | None = INSPECTION_RESULT_QUERY(),
@@ -298,7 +269,7 @@ def get_inspecoes_entrada_historico_route(
         date_from=date_from,
         date_to=date_to,
     )
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -348,7 +319,7 @@ def get_inspecoes_entrada_historico_detalhe_route(
     branch: str = BRANCH_QUERY_REQUIRED(),
     inspection_id: str = Query(..., min_length=1),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 

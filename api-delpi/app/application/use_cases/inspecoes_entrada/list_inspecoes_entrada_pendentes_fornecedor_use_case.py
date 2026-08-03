@@ -10,8 +10,9 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_pendentes_fornecedo
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
 
 def _as_str(value: Any) -> str:
@@ -29,9 +30,11 @@ def _as_int(value: Any) -> int:
     return int(float(text))
 
 
-def _normalize_item(row: dict, branch: str) -> InspecoesEntradaPendenteFornecedorItemResponse:
+def _normalize_item(
+    row: dict, scope_branch: str | None
+) -> InspecoesEntradaPendenteFornecedorItemResponse:
     return InspecoesEntradaPendenteFornecedorItemResponse(
-        branch=_as_str(row.get("Filial")) or branch,
+        branch=_as_str(row.get("Filial")) or (scope_branch or ""),
         supplier_name=_as_str(row.get("Nome_Fornecedor")),
         pending_count=_as_int(row.get("Qtde_Pendentes")),
     )
@@ -41,10 +44,10 @@ class ListInspecoesEntradaPendentesFornecedorUseCase:
     def __init__(self, repository: InspecoesEntradaRepositoryPort) -> None:
         self._repository = repository
 
-    def execute(self, *, branch: str) -> InspecoesEntradaPendentesFornecedorResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+    def execute(
+        self, *, branch: str | None
+    ) -> InspecoesEntradaPendentesFornecedorResponse:
+        normalized_branch = normalize_optional_branch(branch)
 
         rows = self._repository.list_pendentes_fornecedor_by_branch(normalized_branch)
         items = [_normalize_item(row, normalized_branch) for row in rows]

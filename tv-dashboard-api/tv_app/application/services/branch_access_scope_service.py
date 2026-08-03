@@ -84,7 +84,7 @@ class BranchAccessScopeService:
 
     def can_use_branch(self, scope: BranchAccessScope, branch: str | None) -> bool:
         code = _normalize_branch(branch)
-        if not code:
+        if not code or code == "Todas":
             return scope.allow_consolidated or scope.is_unrestricted
         static = allowed_branches()
         if static and code not in static:

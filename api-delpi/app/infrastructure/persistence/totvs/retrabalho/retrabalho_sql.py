@@ -4,8 +4,8 @@ from app.domain.quality.retrabalho.retrabalho_view_scope import (
     FONTE_CUSTO_SEM_CUSTO,
     RETRABALHO_HORAS_IMPRODUTIVAS_VIEW,
     RETRABALHO_MOTIVO_CODE,
-    VALID_RETRABALHO_BRANCHES,
 )
+from app.domain.totvs.protheus_branches import branch_filter_sql
 from app.infrastructure.persistence.totvs.retrabalho.retrabalho_query_settings import (
     MAX_FILTROS_ITEMS,
 )
@@ -24,13 +24,10 @@ DETALHES_SORT_COLUMNS = {
 }
 
 
-def _branch_filter_sql(branch: str | None) -> tuple[str, list[str]]:
-    """Equality for one branch; IN (valid branches) when consolidated (None)."""
-    if branch:
-        return "LTRIM(RTRIM(FILIAL)) = ?", [branch]
-    ordered = sorted(VALID_RETRABALHO_BRANCHES)
-    placeholders = ", ".join("?" for _ in ordered)
-    return f"LTRIM(RTRIM(FILIAL)) IN ({placeholders})", list(ordered)
+def _branch_predicate(branch: str | None) -> tuple[str, list[str]]:
+    """Todas/None → sem predicado; 01/02 → equality on trimmed FILIAL."""
+    clause, params = branch_filter_sql("LTRIM(RTRIM(FILIAL))", branch or "Todas")
+    return clause, list(params)
 
 
 def build_base_where(
@@ -42,13 +39,14 @@ def build_base_where(
     centro_custo: str | None = None,
     codigo_operador: str | None = None,
 ) -> tuple[str, tuple]:
-    branch_sql, branch_params = _branch_filter_sql(branch)
+    branch_sql, branch_params = _branch_predicate(branch)
     clauses = [
         "DATA_REFERENCIA >= ?",
         "DATA_REFERENCIA <= ?",
-        branch_sql,
-        "LTRIM(RTRIM(MOTIVO)) = ?",
     ]
+    if branch_sql:
+        clauses.append(branch_sql)
+    clauses.append("LTRIM(RTRIM(MOTIVO)) = ?")
     params: list[str] = [start_date, end_date, *branch_params, RETRABALHO_MOTIVO_CODE]
 
     if recurso:

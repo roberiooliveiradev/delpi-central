@@ -16,6 +16,15 @@ from app.domain.services.supplies.safety_stock_supplier_scope_service import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
     internal_transfer_supplier_codes_sql,
 )
+from app.domain.totvs.protheus_branches import branch_filter_sql
+
+
+def branch_filter_and(column: str, scope: str) -> tuple[str, list]:
+    """Todas → sem predicado; 01/02 → ``AND column = ?``."""
+    clause, params = branch_filter_sql(column, scope)
+    if not clause:
+        return "", []
+    return f"AND {clause}", list(params)
 
 __all__ = [
     "AVAILABLE_BALANCE_WAREHOUSES",
@@ -62,9 +71,10 @@ def _wip_locals_sql() -> str:
     return ", ".join(f"'{code}'" for code in WORK_IN_PROCESS_WAREHOUSES)
 
 
-def stock_agg_cte(*, branch_param: str = "?") -> str:
+def stock_agg_cte(*, branch: str) -> tuple[str, list]:
     wip = _wip_locals_sql()
-    return f"""
+    and_sql, params = branch_filter_and("RTRIM(SB2.B2_FILIAL)", branch)
+    sql = f"""
     stock_agg AS (
         SELECT
             RTRIM(SB2.B2_COD) AS product_code,
@@ -101,14 +111,16 @@ def stock_agg_cte(*, branch_param: str = "?") -> str:
             ) AS work_in_process_available
         FROM SB2010 SB2 WITH (NOLOCK)
         WHERE SB2.D_E_L_E_T_ = ''
-          AND RTRIM(SB2.B2_FILIAL) = {branch_param}
+          {and_sql}
         GROUP BY SB2.B2_COD
     )
     """
+    return sql, params
 
 
-def materials_base_cte(*, branch_param: str = "?") -> str:
-    return f"""
+def materials_base_cte(*, branch: str) -> tuple[str, list]:
+    and_sql, params = branch_filter_and("RTRIM(S.BZ_FILIAL)", branch)
+    sql = f"""
     materials_base AS (
         SELECT
             RTRIM(SB1.B1_COD) AS product_code,
@@ -167,17 +179,23 @@ def materials_base_cte(*, branch_param: str = "?") -> str:
                     END
             END AS deficit_quantity
         FROM SB1010 SB1 WITH (NOLOCK)
-        LEFT JOIN SBZ010 SBZ WITH (NOLOCK)
-            ON SBZ.BZ_COD = SB1.B1_COD
-           AND SBZ.D_E_L_E_T_ = ''
-           AND RTRIM(SBZ.BZ_FILIAL) = {branch_param}
-           AND RTRIM(SBZ.BZ_FILIAL) <> ''
+        OUTER APPLY (
+            SELECT
+                SUM(CAST(ISNULL(S.BZ_ESTSEG, 0) AS FLOAT)) AS BZ_ESTSEG,
+                MAX(CAST(ISNULL(S.BZ_PE, 0) AS FLOAT)) AS BZ_PE
+            FROM SBZ010 S WITH (NOLOCK)
+            WHERE S.BZ_COD = SB1.B1_COD
+              AND S.D_E_L_E_T_ = ''
+              AND RTRIM(S.BZ_FILIAL) <> ''
+              {and_sql}
+        ) SBZ
         LEFT JOIN stock_agg st
             ON st.product_code = RTRIM(SB1.B1_COD)
         WHERE SB1.D_E_L_E_T_ = ''
           AND SB1.B1_TIPO = 'MP'
     )
     """
+    return sql, params
 
 
 def build_where_clauses(
@@ -302,11 +320,11 @@ def compute_open_purchase_order_item_value(
 
 def open_purchase_orders_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str | None = "?",
     supplier_code_param: str | None = None,
     supplier_store_param: str | None = None,
-) -> str:
+) -> tuple[str, list]:
     """Pedidos de compra em aberto (SC7) por filial (+ produto e/ou fornecedor opcionais).
 
     Componentes proporcionais ao saldo:
@@ -323,7 +341,8 @@ def open_purchase_orders_sql(
         supplier_clause += f"\n      AND RTRIM(SC7.C7_FORNECE) = {supplier_code_param}"
     if supplier_store_param is not None:
         supplier_clause += f"\n      AND RTRIM(SC7.C7_LOJA) = {supplier_store_param}"
-    return f"""
+    and_sql, params = branch_filter_and("RTRIM(SC7.C7_FILIAL)", branch)
+    sql = f"""
     SELECT
         RTRIM(SC7.C7_FILIAL) AS branch,
         RTRIM(SC7.C7_NUM) AS order_number,
@@ -408,7 +427,7 @@ def open_purchase_orders_sql(
     WHERE SC7.D_E_L_E_T_ = ''
       AND ISNULL(SC7.C7_RESIDUO, '') <> 'S'
       AND SC7.C7_QUANT > SC7.C7_QUJE
-      AND RTRIM(SC7.C7_FILIAL) = {branch_param}
+      {and_sql}
       {product_clause}
       {supplier_clause}
     ORDER BY
@@ -417,13 +436,14 @@ def open_purchase_orders_sql(
         SC7.C7_NUM ASC,
         SC7.C7_ITEM ASC
     """
+    return sql, params
 
 
 def open_commitments_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str | None = "?",
-) -> str:
+) -> tuple[str, list]:
     """Empenhos em aberto (SD4) por filial (+ produto opcional) — saldo em D4_QUANT.
 
     SD4010 não possui coluna de UM: D4_QUANT já está na unidade primária do
@@ -438,7 +458,8 @@ def open_commitments_sql(
     product_clause = ""
     if product_param is not None:
         product_clause = f"AND SD4.D4_COD = {product_param}"
-    return f"""
+    and_sql, params = branch_filter_and("SD4.D4_FILIAL", branch)
+    sql = f"""
     SELECT
         RTRIM(SD4.D4_FILIAL) AS branch,
         RTRIM(SD4.D4_COD) AS product_code,
@@ -483,7 +504,7 @@ def open_commitments_sql(
        AND RTRIM(LTRIM(FP.C2_OP)) = LEFT(RTRIM(SD4.D4_OP), 6) + '01001'
     WHERE SD4.D_E_L_E_T_ = ''
       AND SD4.D4_QUANT > 0
-      AND SD4.D4_FILIAL = {branch_param}
+      {and_sql}
       {product_clause}
     ORDER BY
         CASE WHEN RTRIM(COALESCE(EMP.C2_DATPRI, '')) = '' THEN 1 ELSE 0 END,
@@ -491,15 +512,18 @@ def open_commitments_sql(
         SD4.D4_OP ASC,
         SD4.D4_TRT ASC
     """
+    return sql, params
 
 
-def materials_for_projection_batch_sql(*, where_sql: str = "") -> str:
+def materials_for_projection_batch_sql(*, branch: str, where_sql: str = "") -> tuple[str, list]:
     """Todas as MPs da filial com saldo + conversão UM (sem paginação)."""
     where_prefix = f"WHERE {where_sql}" if where_sql else ""
-    return f"""
+    stock_sql, stock_params = stock_agg_cte(branch=branch)
+    mat_sql, mat_params = materials_base_cte(branch=branch)
+    sql = f"""
     WITH
-    {stock_agg_cte()}
-    , {materials_base_cte()}
+    {stock_sql}
+    , {mat_sql}
     SELECT
         mb.product_code,
         mb.product_description,
@@ -529,16 +553,13 @@ def materials_for_projection_batch_sql(*, where_sql: str = "") -> str:
     {where_prefix}
     ORDER BY mb.product_code ASC
     """
+    return sql, stock_params + mat_params
 
 
-def last_inbound_party_names_sql(*, placeholders: str) -> str:
-    """Última NF de entrada (beneficiamento) por produto → cliente (SA1).
-
-    Material de terceiro (B1_TPMAT = 2): no Protheus a entrada do cliente fica em
-    ``SD1`` com ``D1_TIPO = 'B'``; ``D1_FORNECE``/``D1_LOJA`` apontam para ``SA1010``.
-    Placeholders: ``D1_FILIAL``, depois ``D1_COD IN (...)``.
-    """
-    return f"""
+def last_inbound_party_names_sql(*, branch: str, placeholders: str) -> tuple[str, list]:
+    """Última NF de entrada (beneficiamento) por produto → cliente (SA1)."""
+    and_sql, params = branch_filter_and("SD1.D1_FILIAL", branch)
+    sql = f"""
     WITH ultima AS (
         SELECT
             RTRIM(SD1.D1_COD) AS product_code,
@@ -564,21 +585,24 @@ def last_inbound_party_names_sql(*, placeholders: str) -> str:
         WHERE SD1.D_E_L_E_T_ = ''
           AND SD1.D1_TIPO = 'B'
           AND SD1.D1_QUANT > 0
-          AND SD1.D1_FILIAL = ?
+          {and_sql}
           AND SD1.D1_COD IN ({placeholders})
     )
     SELECT product_code, party_name
     FROM ultima
     WHERE rn = 1
     """
+    return sql, params
 
 
-def product_detail_sql(*, branch_param: str = "?", product_param: str = "?") -> str:
+def product_detail_sql(*, branch: str, product_param: str = "?") -> tuple[str, list]:
     """Snapshot de uma MP com saldos e campos de conversão de unidade."""
-    return f"""
+    stock_sql, stock_params = stock_agg_cte(branch=branch)
+    mat_sql, mat_params = materials_base_cte(branch=branch)
+    sql = f"""
     WITH
-    {stock_agg_cte(branch_param=branch_param)}
-    , {materials_base_cte(branch_param=branch_param)}
+    {stock_sql}
+    , {mat_sql}
     SELECT
         mb.product_code,
         mb.product_description,
@@ -606,24 +630,43 @@ def product_detail_sql(*, branch_param: str = "?", product_param: str = "?") -> 
        AND SB1.D_E_L_E_T_ = ''
     WHERE mb.product_code = {product_param}
     """
+    return sql, stock_params + mat_params
 
 
 def linked_suppliers_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str = "?",
-) -> str:
-    """Fornecedores amarrados (SA5×SA2) com última compra do produto (SD1).
+) -> tuple[str, list]:
+    """Fornecedores amarrados (SA5×SA2) com última compra do produto (SD1)."""
+    sa5_clause, sa5_params = branch_filter_and("RTRIM(SA5.A5_FILIAL)", branch)
+    if sa5_params:
+        rank_case = """
+                    CASE
+                        WHEN RTRIM(SA5.A5_FILIAL) = ? THEN 0
+                        WHEN RTRIM(ISNULL(SA5.A5_FILIAL, '')) = '' THEN 1
+                        ELSE 2
+                    END"""
+        rank_params = list(sa5_params)
+        sa5_filter = """
+          AND (
+              RTRIM(ISNULL(SA5.A5_FILIAL, '')) = ''
+              OR RTRIM(SA5.A5_FILIAL) = ?
+          )"""
+        sa5_filter_params = list(sa5_params)
+    else:
+        rank_case = """
+                    CASE
+                        WHEN RTRIM(ISNULL(SA5.A5_FILIAL, '')) = '' THEN 1
+                        ELSE 0
+                    END"""
+        rank_params = []
+        sa5_filter = ""
+        sa5_filter_params = []
 
-    Exclui fornecedores internos DELPI (transferência entre filiais) —
-    ver ``safety_stock_supplier_scope_service``. Ordena por última compra
-    (mais recente primeiro); fornecedores sem compra ficam por último.
-
-    Params, na ordem de aparição dos placeholders:
-    branch (SA5 rank), product (SA5), branch (SA5 filtro),
-    product (SD1), branch (SD1).
-    """
-    return f"""
+    sd1_and, sd1_params = branch_filter_and("RTRIM(SD1.D1_FILIAL)", branch)
+    params = rank_params + sa5_filter_params + sd1_params
+    sql = f"""
     WITH linked_sa5 AS (
         SELECT
             RTRIM(SA5.A5_PRODUTO) AS product_code,
@@ -636,21 +679,14 @@ def linked_suppliers_sql(
                     RTRIM(SA5.A5_FORNECE),
                     RTRIM(SA5.A5_LOJA)
                 ORDER BY
-                    CASE
-                        WHEN RTRIM(SA5.A5_FILIAL) = {branch_param} THEN 0
-                        WHEN RTRIM(ISNULL(SA5.A5_FILIAL, '')) = '' THEN 1
-                        ELSE 2
-                    END,
+                    {rank_case},
                     SA5.R_E_C_N_O_ DESC
             ) AS rn
         FROM SA5010 SA5 WITH (NOLOCK)
         WHERE SA5.D_E_L_E_T_ = ''
           AND RTRIM(SA5.A5_PRODUTO) = {product_param}
           AND RTRIM(SA5.A5_FORNECE) NOT IN ({internal_transfer_supplier_codes_sql()})
-          AND (
-              RTRIM(ISNULL(SA5.A5_FILIAL, '')) = ''
-              OR RTRIM(SA5.A5_FILIAL) = {branch_param}
-          )
+          {sa5_filter}
     ),
     suppliers AS (
         SELECT
@@ -709,7 +745,7 @@ def linked_suppliers_sql(
           AND SD1.D1_TIPO = 'N'
           AND SD1.D1_QUANT > 0
           AND RTRIM(SD1.D1_COD) = {product_param}
-          AND RTRIM(SD1.D1_FILIAL) = {branch_param}
+          {sd1_and}
     )
     SELECT
         S.product_code,
@@ -747,15 +783,17 @@ def linked_suppliers_sql(
         S.supplier_code ASC,
         S.supplier_store ASC
     """
+    return sql, params
 
 
 def consumption_agg_cte(
     *,
-    branch_param: str = "?",
+    branch: str,
     start_date_param: str = "?",
-) -> str:
+) -> tuple[str, list]:
     """Agrega baixas SD3 elegíveis (local 99, TM 999, OP preenchida)."""
-    return f"""
+    and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    sql = f"""
     consumption_agg AS (
         SELECT
             RTRIM(SD3.D3_COD) AS product_code,
@@ -765,7 +803,7 @@ def consumption_agg_cte(
             MAX(RTRIM(SD3.D3_EMISSAO)) AS last_movement_date
         FROM SD3010 SD3 WITH (NOLOCK)
         WHERE SD3.D_E_L_E_T_ = ''
-          AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+          {and_sql}
           AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
           AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
           AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
@@ -774,6 +812,7 @@ def consumption_agg_cte(
         HAVING COUNT(*) > 0
     )
     """
+    return sql, params
 
 
 def build_consumption_analysis_where_clauses(
@@ -822,15 +861,20 @@ def build_consumption_analysis_where_clauses(
 
 def consumption_analysis_rows_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     start_date_param: str = "?",
-) -> str:
+) -> tuple[str, list]:
     """Produtos com ESTSEG ≠ 0 e pelo menos uma baixa elegível no período."""
-    return f"""
+    stock_sql, stock_params = stock_agg_cte(branch=branch)
+    mat_sql, mat_params = materials_base_cte(branch=branch)
+    cons_sql, cons_params = consumption_agg_cte(
+        branch=branch, start_date_param=start_date_param
+    )
+    sql = f"""
     WITH
-    {stock_agg_cte(branch_param=branch_param)}
-    , {materials_base_cte(branch_param=branch_param)}
-    , {consumption_agg_cte(branch_param=branch_param, start_date_param=start_date_param)}
+    {stock_sql}
+    , {mat_sql}
+    , {cons_sql}
     , analyzed AS (
         SELECT
             mb.product_code,
@@ -862,46 +906,52 @@ def consumption_analysis_rows_sql(
     WHERE {{where_sql}}
     ORDER BY product_code ASC
     """
+    return sql, stock_params + mat_params + cons_params
 
 
 def consumption_last_date_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str = "?",
-) -> str:
+) -> tuple[str, list]:
     """Última baixa elegível (consumo SD3) de um produto na filial — sem janela de datas."""
-    return f"""
-    SELECT
-        MAX(RTRIM(SD3.D3_EMISSAO)) AS last_consumption_date
+    and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    sql = f"""
+    SELECT TOP 1
+        RTRIM(SD3.D3_EMISSAO) AS last_consumption_date
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
-      AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+      {and_sql}
       AND RTRIM(SD3.D3_COD) = {product_param}
       AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
       AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
       AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+    ORDER BY SD3.D3_EMISSAO DESC, SD3.R_E_C_N_O_ DESC
     """
+    return sql, params
 
 
 def last_inventory_date_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str = "?",
-) -> str:
+) -> tuple[str, list]:
     """Última data de inventário (SB7.B7_DATA) do produto na filial."""
-    return f"""
+    and_sql, params = branch_filter_and("RTRIM(SB7.B7_FILIAL)", branch)
+    sql = f"""
     SELECT
         MAX(RTRIM(SB7.B7_DATA)) AS last_inventory_date
     FROM SB7010 SB7 WITH (NOLOCK)
     WHERE SB7.D_E_L_E_T_ = ''
-      AND RTRIM(SB7.B7_FILIAL) = {branch_param}
+      {and_sql}
       AND RTRIM(SB7.B7_COD) = {product_param}
       AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
     """
+    return sql, params
 
 
 def last_inventory_dates_batch_sql(*, placeholders: str) -> str:
-    """Última data de inventário (SB7) por produto — lote IN (...).
+    """Última data de inventário (SB7) por produto — batch.
 
     Placeholders: ``B7_FILIAL``, depois ``B7_COD IN (...)``.
     """
@@ -911,28 +961,45 @@ def last_inventory_dates_batch_sql(*, placeholders: str) -> str:
         MAX(RTRIM(SB7.B7_DATA)) AS last_inventory_date
     FROM SB7010 SB7 WITH (NOLOCK)
     WHERE SB7.D_E_L_E_T_ = ''
-      AND RTRIM(SB7.B7_FILIAL) = ?
-      AND RTRIM(SB7.B7_COD) IN ({placeholders})
+      AND SB7.B7_FILIAL = ?
+      AND SB7.B7_COD IN ({placeholders})
       AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
-    GROUP BY RTRIM(SB7.B7_COD)
+    GROUP BY SB7.B7_COD
     """
+
+
+def last_inventory_dates_batch_sql_scoped(*, branch: str, placeholders: str) -> tuple[str, list]:
+    and_sql, params = branch_filter_and("SB7.B7_FILIAL", branch)
+    sql = f"""
+    SELECT
+        RTRIM(SB7.B7_COD) AS product_code,
+        MAX(RTRIM(SB7.B7_DATA)) AS last_inventory_date
+    FROM SB7010 SB7 WITH (NOLOCK)
+    WHERE SB7.D_E_L_E_T_ = ''
+      {and_sql}
+      AND SB7.B7_COD IN ({placeholders})
+      AND NULLIF(RTRIM(SB7.B7_DATA), '') IS NOT NULL
+    GROUP BY SB7.B7_COD
+    """
+    return sql, params
 
 
 def consumption_monthly_series_sql(
     *,
-    branch_param: str = "?",
+    branch: str,
     product_param: str = "?",
     start_date_param: str = "?",
-) -> str:
+) -> tuple[str, list]:
     """Série mensal de consumo (baixas elegíveis) para um produto."""
-    return f"""
+    and_sql, params = branch_filter_and("RTRIM(SD3.D3_FILIAL)", branch)
+    sql = f"""
     SELECT
         LEFT(RTRIM(SD3.D3_EMISSAO), 6) AS year_month,
         SUM(CAST(ISNULL(SD3.D3_QUANT, 0) AS FLOAT)) AS consumption_quantity,
         COUNT(*) AS movement_count
     FROM SD3010 SD3 WITH (NOLOCK)
     WHERE SD3.D_E_L_E_T_ = ''
-      AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+      {and_sql}
       AND RTRIM(SD3.D3_COD) = {product_param}
       AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
       AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
@@ -941,3 +1008,4 @@ def consumption_monthly_series_sql(
     GROUP BY LEFT(RTRIM(SD3.D3_EMISSAO), 6)
     ORDER BY year_month ASC
     """
+    return sql, params

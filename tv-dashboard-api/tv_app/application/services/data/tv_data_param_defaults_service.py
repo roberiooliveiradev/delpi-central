@@ -53,11 +53,17 @@ def _branch_default_for_route(route: Mapping[str, Any]) -> str:
     for prefix, value in _BRANCH_DEFAULT_BY_PATH_PREFIX:
         if path.startswith(prefix):
             return value
+    schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
+    for key in ("branch", "filial"):
+        branch_spec = schema.get(key) if isinstance(schema.get(key), dict) else {}
+        enum_values = branch_spec.get("enum") if isinstance(branch_spec, dict) else None
+        if isinstance(enum_values, list) and "Todas" in [str(v) for v in enum_values]:
+            return "Todas"
     return CONVENIENT_REQUIRED_DEFAULTS["branch"]
 
 
 def _convenient_default(key: str, route: Mapping[str, Any]) -> str | None:
-    if key == "branch":
+    if key in {"branch", "filial"}:
         return _branch_default_for_route(route)
     return CONVENIENT_REQUIRED_DEFAULTS.get(key)
 

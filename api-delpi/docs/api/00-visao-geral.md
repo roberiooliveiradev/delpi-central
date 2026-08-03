@@ -135,7 +135,7 @@ Após deploy com mudanças OpenAPI: [12-procedimento-reimport-openapi.md](./12-p
 
 | Parâmetro | Descrição |
 |---|---|
-| `branch` | Filial Protheus (geralmente 2 caracteres, ex.: `01`, `02`). |
+| `branch` | Escopo de filial Protheus: `Todas` (sem filtro SQL), `01` ou `02`. Em lookups por chave composta, só `01`\|`02`. |
 | `start_date` / `end_date` | **Canônico** para período HTTP (YYYY-MM-DD ou formato TOTVS da rota). |
 | `date_start` / `date_end`, `dataInicio` / `dataFim`, … | Aliases **legado** (dual-read); remoção planejada **2027-01**. Preferir o canônico. |
 | `issue_date_*`, `modified_*`, `from`/`to` | Nomes **semânticos** — fora da padronização de período genérico. |

@@ -9,9 +9,11 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicators_query_parts import (
     is_protheus_product_blocked,
 )
+from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     PRIMARY_WAREHOUSE,
     WORK_IN_PROCESS_WAREHOUSES,
+    branch_filter_and,
     build_consumption_analysis_where_clauses,
     build_where_clauses,
     consumption_analysis_rows_sql,
@@ -20,7 +22,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     linked_suppliers_sql,
     last_inbound_party_names_sql,
     last_inventory_date_sql,
-    last_inventory_dates_batch_sql,
+    last_inventory_dates_batch_sql_scoped,
     materials_base_cte,
     materials_for_projection_batch_sql,
     open_commitments_sql,
@@ -32,6 +34,13 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
 
 
 class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort):
+
+  @staticmethod
+  def _cte_params(branch: str) -> tuple[str, str, list]:
+      stock_sql, stock_params = stock_agg_cte(branch=branch)
+      mat_sql, mat_params = materials_base_cte(branch=branch)
+      return stock_sql, mat_sql, stock_params + mat_params
+
   def fetch_filter_options(
       self,
       *,
@@ -42,6 +51,7 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       if not include_blocked:
           blocked_clause = f"AND {self._blocked_sql('SB1')}"
 
+      and_sql, branch_params = branch_filter_and("RTRIM(SBZ.BZ_FILIAL)", branch)
       sql = f"""
       SELECT DISTINCT
           RTRIM(SB1.B1_GRUPO) AS product_group,
@@ -50,8 +60,8 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       LEFT JOIN SBZ010 SBZ WITH (NOLOCK)
           ON SBZ.BZ_COD = SB1.B1_COD
          AND SBZ.D_E_L_E_T_ = ''
-         AND RTRIM(SBZ.BZ_FILIAL) = ?
          AND RTRIM(SBZ.BZ_FILIAL) <> ''
+         {and_sql}
       WHERE SB1.D_E_L_E_T_ = ''
         AND SB1.B1_TIPO = 'MP'
         {blocked_clause}
@@ -59,7 +69,7 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       """
 
       with self as repo:
-          rows = repo.execute_query(sql, [branch])
+          rows = repo.execute_query(sql, branch_params)
 
       groups = sorted({str(r.get("product_group") or "").strip() for r in rows if r.get("product_group")})
       units = sorted({str(r.get("unit") or "").strip() for r in rows if r.get("unit")})
@@ -86,10 +96,11 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       )
       where_prefix = f"WHERE {where_sql}" if where_sql else ""
 
+      stock_sql, mat_sql, cte_params = self._cte_params(branch)
       sql = f"""
       WITH
-      {stock_agg_cte()}
-      , {materials_base_cte()}
+      {stock_sql}
+      , {mat_sql}
       SELECT
           COUNT(*) AS total_materials,
           SUM(CASE WHEN safety_stock > 0 THEN 1 ELSE 0 END) AS with_safety_stock,
@@ -106,8 +117,8 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
 
       deficit_sql = f"""
       WITH
-      {stock_agg_cte()}
-      , {materials_base_cte()}
+      {stock_sql}
+      , {mat_sql}
       SELECT
           RTRIM(unit) AS unit,
           COUNT(*) AS material_count,
@@ -120,8 +131,8 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       """
 
       with self as repo:
-          summary_row = repo.execute_one(sql, [branch, branch] + params) or {}
-          deficit_rows = repo.execute_query(deficit_sql, [branch, branch] + params)
+          summary_row = repo.execute_one(sql, cte_params + params) or {}
+          deficit_rows = repo.execute_query(deficit_sql, cte_params + params)
 
       return {
           "total_materials": int(summary_row.get("total_materials") or 0),
@@ -167,17 +178,18 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       )
       where_prefix = f"WHERE {where_sql}" if where_sql else ""
 
+      stock_sql, mat_sql, cte_params = self._cte_params(branch)
       sql = f"""
       WITH
-      {stock_agg_cte()}
-      , {materials_base_cte()}
+      {stock_sql}
+      , {mat_sql}
       SELECT COUNT(*) AS total
       FROM materials_base
       {where_prefix}
       """
 
       with self as repo:
-          row = repo.execute_one(sql, [branch, branch] + params)
+          row = repo.execute_one(sql, cte_params + params)
       return int((row or {}).get("total") or 0)
 
   def fetch_items(
@@ -206,10 +218,11 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       where_prefix = f"WHERE {where_sql}" if where_sql else ""
       order_by = resolve_order_by(sort_by, sort_direction)
 
+      stock_sql, mat_sql, cte_params = self._cte_params(branch)
       sql = f"""
       WITH
-      {stock_agg_cte()}
-      , {materials_base_cte()}
+      {stock_sql}
+      , {mat_sql}
       SELECT
           product_code,
           product_description,
@@ -233,7 +246,7 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
       """
 
-      query_params = [branch, branch] + params + [offset, page_size]
+      query_params = cte_params + params + [offset, page_size]
 
       with self as repo:
           rows = repo.execute_query(sql, query_params)
@@ -247,9 +260,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> dict[str, Any] | None:
       code = product_code.strip()
-      sql = product_detail_sql()
+      sql, params = product_detail_sql(branch=branch)
       with self as repo:
-          row = repo.execute_one(sql, [branch, branch, code])
+          row = repo.execute_one(sql, params + [code])
       if not row:
           return None
 
@@ -267,9 +280,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> list[dict[str, Any]]:
       code = product_code.strip()
-      sql = open_purchase_orders_sql()
+      sql, params = open_purchase_orders_sql(branch=branch)
       with self as repo:
-          rows = repo.execute_query(sql, [branch, code])
+          rows = repo.execute_query(sql, params + [code])
       return [self._map_open_purchase_order(row) for row in rows]
 
   def fetch_open_commitments(
@@ -279,9 +292,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> list[dict[str, Any]]:
       code = product_code.strip()
-      sql = open_commitments_sql()
+      sql, params = open_commitments_sql(branch=branch)
       with self as repo:
-          rows = repo.execute_query(sql, [branch, code])
+          rows = repo.execute_query(sql, params + [code])
       return [self._map_open_commitment(row) for row in rows]
 
   def fetch_open_purchase_orders_for_branch(
@@ -289,9 +302,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       *,
       branch: str,
   ) -> list[dict[str, Any]]:
-      sql = open_purchase_orders_sql(product_param=None)
+      sql, params = open_purchase_orders_sql(branch=branch, product_param=None)
       with self as repo:
-          rows = repo.execute_query(sql, [branch])
+          rows = repo.execute_query(sql, params)
       return [self._map_open_purchase_order(row) for row in rows]
 
   def fetch_open_commitments_for_branch(
@@ -299,9 +312,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       *,
       branch: str,
   ) -> list[dict[str, Any]]:
-      sql = open_commitments_sql(product_param=None)
+      sql, params = open_commitments_sql(branch=branch, product_param=None)
       with self as repo:
-          rows = repo.execute_query(sql, [branch])
+          rows = repo.execute_query(sql, params)
       return [self._map_open_commitment(row) for row in rows]
 
   def fetch_materials_for_projection_batch(
@@ -323,9 +336,10 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           include_without_safety_stock=include_without_safety_stock,
           table_alias="mb",
       )
-      sql = materials_for_projection_batch_sql(where_sql=where_sql)
-      # stock_agg + materials_base: branch, branch
-      query_params = [branch, branch] + params
+      sql, cte_params = materials_for_projection_batch_sql(
+          branch=branch, where_sql=where_sql
+      )
+      query_params = cte_params + params
       with self as repo:
           rows = repo.execute_query(sql, query_params)
       result: list[dict[str, Any]] = []
@@ -353,15 +367,16 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       ]
       if not cleaned:
           return {}
-      # Evita IN enorme: processa em lotes.
       names: dict[str, str] = {}
       chunk_size = 200
       with self as repo:
           for start in range(0, len(cleaned), chunk_size):
               chunk = cleaned[start : start + chunk_size]
               placeholders = ", ".join("?" for _ in chunk)
-              sql = last_inbound_party_names_sql(placeholders=placeholders)
-              rows = repo.execute_query(sql, [branch, *chunk])
+              sql, branch_params = last_inbound_party_names_sql(
+                  branch=branch, placeholders=placeholders
+              )
+              rows = repo.execute_query(sql, [*branch_params, *chunk])
               for row in rows:
                   code = str(row.get("product_code") or "").strip()
                   party = str(row.get("party_name") or "").strip()
@@ -376,9 +391,13 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> list[dict[str, Any]]:
       code = product_code.strip()
-      sql = linked_suppliers_sql()
-      # Ordem dos placeholders em linked_suppliers_sql.
-      params = [branch, code, branch, code, branch]
+      sql, _branch_params = linked_suppliers_sql(branch=branch)
+
+      if is_all_branches(normalize_branch_scope(branch)):
+          params = [code, code]
+      else:
+          # rank, product(SA5), filter, product(SD1), sd1
+          params = [branch, code, branch, code, branch]
       with self as repo:
           rows = repo.execute_query(sql, params)
       return [self._map_linked_supplier(row) for row in rows]
@@ -401,9 +420,11 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           search=search,
           product_code=product_code,
       )
-      sql = consumption_analysis_rows_sql().format(where_sql=where_sql)
-      # stock_agg, materials_base, consumption_agg: branch, branch, branch, start
-      params = [branch, branch, branch, period_start] + filter_params
+      sql_template, cte_params = consumption_analysis_rows_sql(branch=branch)
+      sql = sql_template.format(where_sql=where_sql)
+      # cte_params = stock + materials + consumption branch params;
+      # start_date is a ? inside consumption_agg after branch params.
+      params = cte_params + [period_start] + filter_params
       with self as repo:
           rows = repo.execute_query(sql, params)
       return [self._map_consumption_analysis_row(row, branch) for row in rows]
@@ -416,9 +437,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       period_start: str,
   ) -> list[dict[str, Any]]:
       code = product_code.strip()
-      sql = consumption_monthly_series_sql()
+      sql, params = consumption_monthly_series_sql(branch=branch)
       with self as repo:
-          rows = repo.execute_query(sql, [branch, code, period_start])
+          rows = repo.execute_query(sql, params + [code, period_start])
       return [self._map_monthly_series_row(row) for row in rows]
 
   def fetch_last_consumption_date(
@@ -428,9 +449,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> str | None:
       code = product_code.strip()
-      sql = consumption_last_date_sql()
+      sql, params = consumption_last_date_sql(branch=branch)
       with self as repo:
-          row = repo.execute_one(sql, [branch, code])
+          row = repo.execute_one(sql, params + [code])
       if not row:
           return None
       return self._format_protheus_date(row.get("last_consumption_date"))
@@ -442,9 +463,9 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       product_code: str,
   ) -> str | None:
       code = product_code.strip()
-      sql = last_inventory_date_sql()
+      sql, params = last_inventory_date_sql(branch=branch)
       with self as repo:
-          row = repo.execute_one(sql, [branch, code])
+          row = repo.execute_one(sql, params + [code])
       if not row:
           return None
       return self._format_protheus_date(row.get("last_inventory_date"))
@@ -469,8 +490,10 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           for start in range(0, len(cleaned), chunk_size):
               chunk = cleaned[start : start + chunk_size]
               placeholders = ", ".join("?" for _ in chunk)
-              sql = last_inventory_dates_batch_sql(placeholders=placeholders)
-              rows = repo.execute_query(sql, [branch, *chunk])
+              sql, branch_params = last_inventory_dates_batch_sql_scoped(
+                  branch=branch, placeholders=placeholders
+              )
+              rows = repo.execute_query(sql, [*branch_params, *chunk])
               for row in rows:
                   code = str(row.get("product_code") or "").strip()
                   formatted = self._format_protheus_date(row.get("last_inventory_date"))

@@ -11,8 +11,10 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_pendentes_response 
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
-VALID_BRANCHES = frozenset({"01", "02"})
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 200
 
@@ -57,9 +59,11 @@ def _format_received_time(value: Any) -> str | None:
     return raw or None
 
 
-def _normalize_item(row: dict, branch: str) -> InspecoesEntradaPendenteItemResponse:
+def _normalize_item(
+    row: dict, scope_branch: str | None
+) -> InspecoesEntradaPendenteItemResponse:
     return InspecoesEntradaPendenteItemResponse(
-        branch=_as_str(row.get("Filial")) or branch,
+        branch=_as_str(row.get("Filial")) or (scope_branch or ""),
         received_date=_format_received_date(row.get("Data_Recebimento")),
         received_time=_format_received_time(row.get("Hora_Recebimento")),
         invoice_number=_as_str(row.get("Nota_Fiscal")),
@@ -82,13 +86,11 @@ class ListInspecoesEntradaPendentesUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None,
         page: int = 1,
         page_size: int = DEFAULT_PAGE_SIZE,
     ) -> InspecoesEntradaPendentesResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_optional_branch(branch)
 
         resolved_page = max(page, 1)
         resolved_page_size = min(max(page_size, 1), MAX_PAGE_SIZE)

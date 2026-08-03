@@ -671,6 +671,10 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 entry["type"] = openapi_entry["type"]
             if openapi_entry.get("enum"):
                 entry["enum"] = list(openapi_entry["enum"])
+            if openapi_entry.get("label"):
+                entry["label"] = openapi_entry["label"]
+            if openapi_entry.get("description"):
+                entry["description"] = openapi_entry["description"]
             if "default" in openapi_entry:
                 entry["default"] = openapi_entry["default"]
             elif openapi_entry.get("optional") is True:

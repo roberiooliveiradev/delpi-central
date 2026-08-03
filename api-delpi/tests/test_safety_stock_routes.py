@@ -48,9 +48,21 @@ def test_router_exposes_all_endpoints(safety_stock_client: TestClient) -> None:
     assert "/supplies/safety-stock/consumption-analysis/items/{code}" in paths
 
 
-def test_summary_requires_branch(safety_stock_client: TestClient) -> None:
-    response = safety_stock_client.get("/supplies/safety-stock/summary")
-    assert response.status_code == 422
+def test_summary_defaults_branch_to_todas(safety_stock_client: TestClient) -> None:
+    """Sem branch → Todas (BRANCH_QUERY_OPTIONAL); gate mockado libera consolidado."""
+    with patch(
+        "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
+        return_value=None,
+    ), patch(
+        "app.interface.http.routes.supplies.safety_stock_router.build_get_safety_stock_summary_use_case"
+    ) as mock_builder:
+        use_case = MagicMock()
+        use_case.execute.return_value = {"total_materials": 0}
+        mock_builder.return_value = use_case
+        response = safety_stock_client.get("/supplies/safety-stock/summary")
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.branch == "Todas"
 
 
 @patch(
@@ -427,9 +439,9 @@ def test_items_request_rejects_oversized_page() -> None:
         SafetyStockItemsRequest(branch="01", page_size=500)
 
 
-def test_query_request_requires_branch() -> None:
-    with pytest.raises(ValueError, match="branch"):
-        SafetyStockQueryRequest(branch="")
+def test_query_request_empty_branch_becomes_todas() -> None:
+    request = SafetyStockQueryRequest(branch="")
+    assert request.branch == "Todas"
 
 
 def test_query_request_rejects_invalid_status() -> None:

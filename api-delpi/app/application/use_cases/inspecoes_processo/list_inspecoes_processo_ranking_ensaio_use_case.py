@@ -9,8 +9,9 @@ from app.application.dto.inspecoes_processo.inspecoes_processo_ranking_ensaio_re
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
+    normalize_optional_branch,
+)
 DEFAULT_LIMIT = 10
 MAX_LIMIT = 50
 
@@ -86,12 +87,10 @@ class ListInspecoesProcessoRankingEnsaioUseCase:
     def execute(
         self,
         *,
-        branch: str,
+        branch: str | None,
         limit: int = DEFAULT_LIMIT,
     ) -> list[InspecoesProcessoRankingEnsaioItemResponse]:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+        normalized_branch = normalize_optional_branch(branch)
 
         resolved_limit = min(max(int(limit), 1), MAX_LIMIT)
         rows = self._repository.list_ranking_ensaio_by_branch(

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from app.domain.totvs.protheus_branches import PROTHEUS_BRANCH_CODES
 from app.domain.totvs.protheus_warehouses import (
     COST_UNIT_WAREHOUSE,
     WAREHOUSE_FABRICA,
 )
 
-VALID_REFUGOS_BRANCHES = frozenset({"01", "02"})
+VALID_REFUGOS_BRANCHES = frozenset(PROTHEUS_BRANCH_CODES)
 
 # BC_TIPO = 'R' → refugo (painel). Scrap ('S') fica fora do escopo do dashboard.
 REFUGOS_LOSS_TYPE = "R"

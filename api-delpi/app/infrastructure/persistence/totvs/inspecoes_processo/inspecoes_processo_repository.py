@@ -3,10 +3,14 @@ from __future__ import annotations
 from app.domain.ports.inspecoes_processo.inspecoes_processo_repository_port import (
     InspecoesProcessoRepositoryPort,
 )
+from app.domain.totvs.protheus_branches import (
+    branch_filter_sql,
+    is_all_branches,
+)
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_auditoria_sql import (
-    AUDITORIA_APONTAMENTOS_BASE_SQL,
-    AUDITORIA_ENSAIADOR_MAP_SQL,
+    build_auditoria_apontamentos_base_sql,
+    build_auditoria_ensaiador_map_sql,
     build_qpr_for_ops_sql,
 )
 
@@ -17,6 +21,14 @@ POR_OPERACAO_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_por_operacao"
 POR_ENSAIADOR_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_por_ensaiador"
 POR_OP_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_por_op"
 HISTORICO_TELA_VIEW = "dbo.vw_minha_delpi_inspecoes_processo_historico_tela"
+
+
+def _where_branch(column: str, scope: str) -> tuple[str, list]:
+    """WHERE clause fragment for branch scope (Todas = no filter)."""
+    clause, params = branch_filter_sql(column, scope)
+    if not clause:
+        return "1=1", []
+    return clause, params
 
 
 def _as_text(value: object) -> str:
@@ -413,8 +425,8 @@ def _build_historico_where(
     data_fim: str | None = None,
 ) -> tuple[str, list]:
     """Filtros SARGable: evita funções na coluna (UPPER/LTRIM/RTRIM) que impedem índice."""
-    clauses = ["Filial = ?"]
-    params: list = [branch]
+    branch_clause, params = _where_branch("Filial", branch)
+    clauses = [branch_clause]
 
     ordem = _normalize_exact_filter(ordem_producao)
     if ordem:
@@ -455,8 +467,8 @@ def _build_historico_list_filters(
     Datas filtradas em Data_Medicao_Date (antes do GROUP BY) — HAVING em
     MAX(Data_Medicao_Date) força scan da filial inteira e estoura timeout.
     """
-    clauses = ["Filial = ?"]
-    params: list = [branch]
+    branch_clause, params = _where_branch("Filial", branch)
+    clauses = [branch_clause]
 
     ordem = _normalize_exact_filter(ordem_producao)
     if ordem:
@@ -520,14 +532,58 @@ def _normalize_op_key(value: object) -> str:
 
 class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPort):
     def get_resumo_by_branch(self, branch: str) -> dict | None:
+        branch_clause, params = _where_branch("Filial", branch)
         with self:
+            if not is_all_branches(branch):
+                return self.execute_one(
+                    f"""
+                    SELECT {_RESUMO_SELECT}
+                    FROM {RESUMO_VIEW}
+                    WHERE {branch_clause}
+                    """,
+                    tuple(params),
+                )
             return self.execute_one(
                 f"""
-                SELECT {_RESUMO_SELECT}
+                SELECT
+                    SUM(Qtde_OPs) AS Qtde_OPs,
+                    SUM(Qtde_Ensaios) AS Qtde_Ensaios,
+                    SUM(Qtde_Ensaios_Aprovados) AS Qtde_Ensaios_Aprovados,
+                    SUM(Qtde_Ensaios_Reprovados) AS Qtde_Ensaios_Reprovados,
+                    SUM(Qtde_Ensaios_Tolerancia) AS Qtde_Ensaios_Tolerancia,
+                    SUM(Qtde_OPs_Aprovadas) AS Qtde_OPs_Aprovadas,
+                    SUM(Qtde_OPs_Reprovadas) AS Qtde_OPs_Reprovadas,
+                    SUM(Qtde_OPs_Tolerancia) AS Qtde_OPs_Tolerancia,
+                    SUM(Qtde_OPs_Nao_Identificadas) AS Qtde_OPs_Nao_Identificadas,
+                    SUM(Qtde_Produtos) AS Qtde_Produtos,
+                    SUM(Qtde_Operacoes) AS Qtde_Operacoes,
+                    SUM(Qtde_Ensaiadores) AS Qtde_Ensaiadores,
+                    MIN(Primeira_Data_Medicao_Date) AS Primeira_Data_Medicao_Date,
+                    MAX(Ultima_Data_Medicao_Date) AS Ultima_Data_Medicao_Date,
+                    CASE
+                        WHEN SUM(Qtde_OPs) > 0
+                        THEN 100.0 * SUM(Qtde_OPs_Aprovadas) / SUM(Qtde_OPs)
+                        ELSE 0
+                    END AS Percentual_OPs_Aprovadas,
+                    CASE
+                        WHEN SUM(Qtde_OPs) > 0
+                        THEN 100.0 * SUM(Qtde_OPs_Reprovadas) / SUM(Qtde_OPs)
+                        ELSE 0
+                    END AS Percentual_OPs_Reprovadas,
+                    CASE
+                        WHEN SUM(Qtde_Ensaios) > 0
+                        THEN 100.0 * SUM(Qtde_Ensaios_Aprovados) / SUM(Qtde_Ensaios)
+                        ELSE 0
+                    END AS Percentual_Ensaios_Aprovados,
+                    CASE
+                        WHEN SUM(Qtde_Ensaios) > 0
+                        THEN 100.0 * SUM(Qtde_Ensaios_Reprovados) / SUM(Qtde_Ensaios)
+                        ELSE 0
+                    END AS Percentual_Ensaios_Reprovados
                 FROM {RESUMO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 """,
-                (branch,),
+                tuple(params),
             )
 
     def list_ranking_ensaio_by_branch(
@@ -536,16 +592,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         *,
         limit: int,
     ) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(limit)
         with self:
             return self.execute_query(
                 f"""
                 SELECT {_RANKING_ENSAIO_SELECT}
                 FROM {RANKING_ENSAIO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 {_RANKING_ENSAIO_ORDER_BY}
                 OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
                 """,
-                (branch, limit),
+                tuple(params),
             )
 
     def list_por_produto_by_branch(
@@ -554,16 +612,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         *,
         limit: int,
     ) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(limit)
         with self:
             return self.execute_query(
                 f"""
                 SELECT {_POR_PRODUTO_SELECT}
                 FROM {POR_PRODUTO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 {_POR_PRODUTO_ORDER_BY}
                 OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
                 """,
-                (branch, limit),
+                tuple(params),
             )
 
     def list_por_operacao_by_branch(
@@ -572,16 +632,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         *,
         limit: int,
     ) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(limit)
         with self:
             return self.execute_query(
                 f"""
                 SELECT {_POR_OPERACAO_SELECT}
                 FROM {POR_OPERACAO_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 {_POR_OPERACAO_ORDER_BY}
                 OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
                 """,
-                (branch, limit),
+                tuple(params),
             )
 
     def list_por_ensaiador_by_branch(
@@ -590,16 +652,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         *,
         limit: int,
     ) -> list[dict]:
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(limit)
         with self:
             return self.execute_query(
                 f"""
                 SELECT {_POR_ENSAIADOR_SELECT}
                 FROM {POR_ENSAIADOR_VIEW}
-                WHERE Filial = ?
+                WHERE {branch_clause}
                 {_POR_ENSAIADOR_ORDER_BY}
                 OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY
                 """,
-                (branch, limit),
+                tuple(params),
             )
 
     def list_historico_by_branch(
@@ -661,12 +725,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             op_predicates = " OR ".join(
                 ["Ordem_Producao LIKE ?" for _ in op_keys]
             )
-            enrich_params: list = [branch, *[f"{op_key}%" for op_key in op_keys]]
+            enrich_branch_clause, branch_params_for_enrich = _where_branch(
+                "Filial", branch
+            )
+            enrich_params: list = [
+                *branch_params_for_enrich,
+                *[f"{op_key}%" for op_key in op_keys],
+            ]
             rows = self.execute_query(
                 f"""
                 SELECT {_HISTORICO_TELA_LIST_SELECT}
                 FROM {HISTORICO_TELA_VIEW} WITH (NOLOCK)
-                WHERE Filial = ?
+                WHERE {enrich_branch_clause}
                   AND ({op_predicates})
                 GROUP BY Filial, Ordem_Producao
                 """,
@@ -697,16 +767,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
     ) -> dict | None:
         # por_op com filtro por OP também estoura timeout; cabeçalho agrega historico_tela.
         ordem = ordem_producao.strip()
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(f"{ordem}%")
         with self:
             return self.execute_one(
                 f"""
                 SELECT {_HISTORICO_TELA_LIST_SELECT}
                 FROM {HISTORICO_TELA_VIEW} WITH (NOLOCK)
-                WHERE Filial = ?
+                WHERE {branch_clause}
                   AND Ordem_Producao LIKE ?
                 GROUP BY Filial, Ordem_Producao
                 """,
-                (branch, f"{ordem}%"),
+                tuple(params),
             )
 
     def list_historico_detalhe_itens_by_op(
@@ -721,16 +793,18 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         safe_offset = max(int(offset), 0)
         safe_fetch = max(int(fetch_next), 1)
         top_n = safe_offset + safe_fetch
+        branch_clause, params = _where_branch("Filial", branch)
+        params.append(f"{ordem}%")
         with self:
             rows = self.execute_query(
                 f"""
                 SELECT TOP ({top_n}) {_HISTORICO_DETALHE_ITEM_SELECT}
                 FROM {HISTORICO_TELA_VIEW} WITH (NOLOCK)
-                WHERE Filial = ?
+                WHERE {branch_clause}
                   AND Ordem_Producao LIKE ?
                 {_HISTORICO_DETALHE_ITEM_ORDER_BY}
                 """,
-                (branch, f"{ordem}%"),
+                tuple(params),
             )
         return rows[safe_offset:]
 
@@ -752,17 +826,22 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
             "Apontamentos_Total": 0,
         }
 
+        base_sql, base_branch_params = build_auditoria_apontamentos_base_sql(branch)
+        ensaiador_sql, ensaiador_branch_params = build_auditoria_ensaiador_map_sql(
+            branch
+        )
+
         with self:
             raw_rows = self.execute_query(
-                AUDITORIA_APONTAMENTOS_BASE_SQL,
-                (branch, data),
+                base_sql,
+                (*base_branch_params, data),
             )
             if not raw_rows:
                 return empty_summary, []
 
             ensaiador_rows = self.execute_query(
-                AUDITORIA_ENSAIADOR_MAP_SQL,
-                (branch,),
+                ensaiador_sql,
+                tuple(ensaiador_branch_params),
             )
 
             ops = sorted(
@@ -778,8 +857,8 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
                 chunk_size = 40
                 for start in range(0, len(ops), chunk_size):
                     chunk = ops[start : start + chunk_size]
-                    sql = build_qpr_for_ops_sql(len(chunk))
-                    params = (branch, *[f"{op}%" for op in chunk])
+                    sql, branch_params = build_qpr_for_ops_sql(len(chunk), branch)
+                    params = (*branch_params, *[f"{op}%" for op in chunk])
                     qpr_rows.extend(self.execute_query(sql, params))
 
         aggregated = _aggregate_auditoria_apontamentos(raw_rows)

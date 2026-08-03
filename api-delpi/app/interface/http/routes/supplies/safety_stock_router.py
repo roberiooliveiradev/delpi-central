@@ -82,7 +82,7 @@ router = APIRouter(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_filters_route(
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
 ):
     branch_error = branch_access_error(branch)
@@ -125,7 +125,7 @@ def get_safety_stock_filters_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_summary_route(
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
     product_group: Optional[str] = PRODUCT_GROUP_QUERY(),
     unit: Optional[str] = UNIT_QUERY(),
@@ -169,7 +169,7 @@ def get_safety_stock_summary_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_items_route(
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
@@ -222,7 +222,7 @@ def get_safety_stock_items_route(
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_item_details_route(
     code: str,
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -279,7 +279,7 @@ def get_safety_stock_item_details_route(
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_item_suppliers_route(
     code: str,
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -326,7 +326,7 @@ def get_safety_stock_item_suppliers_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_summary_route(
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
     product_group: Optional[str] = PRODUCT_GROUP_QUERY(),
     unit: Optional[str] = UNIT_QUERY(),
@@ -368,7 +368,7 @@ def get_safety_stock_consumption_analysis_summary_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_items_route(
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     page: int = PAGE_QUERY(),
     page_size: int = PAGE_SIZE_QUERY(),
     search: Optional[str] = SEARCH_QUERY(),
@@ -419,7 +419,7 @@ def get_safety_stock_consumption_analysis_items_route(
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_item_details_route(
     code: str,
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -478,7 +478,7 @@ def get_safety_stock_consumption_analysis_item_details_route(
 def get_safety_stock_supplier_purchase_price_history_route(
     code: str,
     supplier_code: str,
-    branch: str = BRANCH_QUERY(),
+    branch: str | None = BRANCH_QUERY(),
     supplier_store: str = SUPPLIER_STORE_QUERY(),
 ):
     branch_error = branch_access_error(branch)

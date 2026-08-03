@@ -14,8 +14,8 @@ def _body(response) -> dict:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router._branch_view_allowed",
-    return_value=True,
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
 )
 @patch(
     "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_resumo_use_case"
@@ -63,9 +63,26 @@ def inspecoes_entrada_client() -> TestClient:
     return TestClient(app)
 
 
-def test_inspecoes_entrada_resumo_requires_branch(inspecoes_entrada_client: TestClient) -> None:
-    response = inspecoes_entrada_client.get("/inspecoes-entrada/resumo")
-    assert response.status_code == 422
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_router.build_get_inspecoes_entrada_resumo_use_case"
+)
+def test_inspecoes_entrada_resumo_allows_omit_branch(mock_build, _access, inspecoes_entrada_client: TestClient) -> None:
+    mock_result = MagicMock()
+    mock_result.to_dict.return_value = {'branch': 'Todas', 'pending_inspections': 0}
+    mock_use_case = MagicMock()
+    mock_use_case.execute.return_value = mock_result
+    mock_build.return_value = mock_use_case
+
+    response = inspecoes_entrada_client.get('/inspecoes-entrada/resumo')
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("success") is True
+    assert body.get("data", {}).get("branch") == "Todas"
+
 
 
 @pytest.mark.parametrize("branch", ["03", "1", "xx"])

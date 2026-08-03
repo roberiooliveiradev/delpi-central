@@ -28,6 +28,7 @@ from app.application.services.audit_5s.scoring_service import (
     is_evaluation_complete,
     is_nc_candidate,
 )
+from app.domain.totvs.protheus_branches import is_all_branches, normalize_branch_scope
 from app.application.services.audit_5s.catalog_service import (
     DEFAULT_CATALOG_VERSION,
     fallback_catalog_version,
@@ -66,12 +67,16 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         return fallback_catalog_version(branch_code)
 
     def list_areas(self, branch_code: str, *, active_only: bool = True) -> list[dict[str, Any]]:
+        scope = normalize_branch_scope(branch_code)
         query = """
             SELECT id, branch_code, name, active, created_at
               FROM quality.audit_5s_areas
-             WHERE branch_code = %s
+             WHERE 1=1
         """
-        params: list[Any] = [branch_code]
+        params: list[Any] = []
+        if not is_all_branches(scope):
+            query += " AND branch_code = %s"
+            params.append(scope)
         if active_only:
             query += " AND active = TRUE"
         query += " ORDER BY lower(name)"
@@ -336,6 +341,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         *,
         status: str | None = None,
     ) -> list[dict[str, Any]]:
+        scope = normalize_branch_scope(branch_code)
         query = """
             SELECT a.id,
                    a.branch_code,
@@ -355,9 +361,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                    ) AS auditor_names
               FROM quality.audit_5s_audits a
               JOIN quality.audit_5s_areas ar ON ar.id = a.area_id
-             WHERE a.branch_code = %s
+             WHERE 1=1
         """
-        params: list[Any] = [branch_code]
+        params: list[Any] = []
+        if not is_all_branches(scope):
+            query += " AND a.branch_code = %s"
+            params.append(scope)
         if status:
             query += " AND a.status = %s"
             params.append(status)
@@ -2702,8 +2711,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self,
         request: ListAudit5sNcBoardRequest,
     ) -> tuple[str, list[Any]]:
-        conditions = ["a.branch_code = %s"]
-        params: list[Any] = [request.branch_code]
+        conditions: list[str] = []
+        params: list[Any] = []
+        scope = normalize_branch_scope(request.branch_code)
+        if not is_all_branches(scope):
+            conditions.append("a.branch_code = %s")
+            params.append(scope)
         self._nc_board_append_date_filter(conditions, params, request)
         if request.area_id:
             conditions.append("a.area_id = %s")
@@ -2726,6 +2739,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 ")"
             )
             params.extend([term, term, term, term, term])
+        if not conditions:
+            conditions.append("TRUE")
         return " AND ".join(conditions), params
 
     @staticmethod
@@ -2805,8 +2820,12 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self,
         request: ListAudit5sNcBoardRequest,
     ) -> tuple[str, list[Any]]:
-        conditions = ["a.branch_code = %s"]
-        params: list[Any] = [request.branch_code]
+        conditions: list[str] = []
+        params: list[Any] = []
+        scope = normalize_branch_scope(request.branch_code)
+        if not is_all_branches(scope):
+            conditions.append("a.branch_code = %s")
+            params.append(scope)
         self._nc_board_append_date_filter(conditions, params, request)
         if request.area_id:
             conditions.append("a.area_id = %s")
@@ -2848,6 +2867,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                 ")"
             )
             params.extend([term, term, term, term, term, term])
+        if not conditions:
+            conditions.append("TRUE")
         return " AND ".join(conditions), params
 
     @staticmethod
@@ -2939,11 +2960,14 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         shift: str | None,
         audit_status: str | None,
     ) -> tuple[str, list[Any]]:
+        scope = normalize_branch_scope(branch_code)
         conditions = [
-            "a.branch_code = %s",
             "a.audit_date BETWEEN %s AND %s",
         ]
-        params: list[Any] = [branch_code, date_start, date_end]
+        params: list[Any] = [date_start, date_end]
+        if not is_all_branches(scope):
+            conditions.insert(0, "a.branch_code = %s")
+            params.insert(0, scope)
         if area_id:
             conditions.append("a.area_id = %s")
             params.append(area_id)

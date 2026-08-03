@@ -2,14 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Query
 
-from delpi_auth.authz_core import has_permission
 from delpi_auth.authorization import require_any_permission
-from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
-    INSPECOES_PROCESSO_BRANCH_VIEW_PERMS,
     INSPECOES_PROCESSO_READ_PERMISSIONS,
-    INSPECOES_PROCESSO_VIEW,
 )
 from app.composition.inspecoes_processo_composer import (
     build_get_inspecoes_processo_historico_detalhe_use_case,
@@ -33,43 +29,18 @@ from app.interface.http.period_query_params import (
     resolve_period_dates,
 )
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
     INSPECTION_RESULT_QUERY,
+)
+from app.interface.http.routes.inspecoes_processo.inspecoes_processo_branch_access import (
+    branch_access_error,
 )
 
 router = APIRouter(
     prefix="/inspecoes-processo",
     tags=["Inspeções de Processo"],
 )
-
-
-def _is_superadmin() -> bool:
-    user = get_current_user()
-    return bool(user and getattr(user, "is_superadmin", False))
-
-
-def _branch_view_allowed(branch: str) -> bool:
-    if _is_superadmin():
-        return True
-
-    user = get_current_user()
-    if user is None:
-        return False
-
-    if has_permission(user, INSPECOES_PROCESSO_VIEW):
-        return True
-
-    branch_perm = INSPECOES_PROCESSO_BRANCH_VIEW_PERMS.get(branch)
-    return branch_perm is not None and has_permission(user, branch_perm)
-
-
-def _branch_access_error(branch: str):
-    if _branch_view_allowed(branch):
-        return None
-    return error_response(
-        "Sem permissão para acessar inspeções de processo desta filial.",
-        status_code=403,
-    )
 
 
 @router.get(
@@ -81,9 +52,9 @@ def _branch_access_error(branch: str):
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_resumo_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -118,10 +89,10 @@ def get_inspecoes_processo_resumo_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_ranking_ensaio_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -160,10 +131,10 @@ def get_inspecoes_processo_ranking_ensaio_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_produto_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -202,10 +173,10 @@ def get_inspecoes_processo_por_produto_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_operacao_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -244,10 +215,10 @@ def get_inspecoes_processo_por_operacao_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_ensaiador_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -303,7 +274,7 @@ def get_inspecoes_processo_historico_route(
         data_inicio=data_inicio,
         data_fim=data_fim,
     )
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -361,7 +332,7 @@ def get_inspecoes_processo_historico_detalhe_route(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=200),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 
@@ -415,7 +386,7 @@ def get_inspecoes_processo_historico_detalhe_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_auditoria_apontamentos_route(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     data: str | None = Query(
         default=None,
         description="Data de produção (YYYY-MM-DD). Default: hoje.",
@@ -423,7 +394,7 @@ def get_inspecoes_processo_auditoria_apontamentos_route(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=100),
 ):
-    branch_error = _branch_access_error(branch)
+    branch_error = branch_access_error(branch)
     if branch_error:
         return branch_error
 

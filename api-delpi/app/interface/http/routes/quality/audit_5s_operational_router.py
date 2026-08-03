@@ -328,12 +328,18 @@ def _notify_nc_responsible_if_needed(
 @router.get("/areas", operation_id="list_audit_5s_areas")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_areas(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     active: bool = Query(True),
 ):
+    denied = branch_access_error(branch)
+    if denied is not None:
+        return denied
     try:
+        from app.domain.totvs.protheus_branches import normalize_branch_scope
+
+        scope = normalize_branch_scope(branch)
         repo = build_audit_5s_repository()
-        data = repo.list_areas(branch, active_only=active)
+        data = repo.list_areas(scope, active_only=active)
         return api_delpi_success(data, operation_id="list_audit_5s_areas")
     except Exception as exc:
         log_error(f"Erro ao listar áreas 5S: {exc}")
@@ -456,12 +462,18 @@ def publish_catalog(body: PublishCatalogBody = Body(...)):
 @router.get("/audits", operation_id="list_audit_5s_audits")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audits(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN(),
 ):
+    denied = branch_access_error(branch)
+    if denied is not None:
+        return denied
     try:
+        from app.domain.totvs.protheus_branches import normalize_branch_scope
+
+        scope = normalize_branch_scope(branch)
         repo = build_audit_5s_repository()
-        data = repo.list_audits(branch, status=status)
+        data = repo.list_audits(scope, status=status)
         return api_delpi_success(data, operation_id="list_audit_5s_audits")
     except Exception as exc:
         log_error(f"Erro ao listar auditorias 5S: {exc}")
@@ -1259,7 +1271,7 @@ async def reopen_nc_action(nc_id: str):
 @router.get("/nonconformities", operation_id="list_audit_5s_nonconformities_board")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     date_start: str | None = LEGACY_DATE_START_QUERY(),
@@ -1282,6 +1294,9 @@ def list_audit_5s_nonconformities_board(
     if denied is not None:
         return denied
 
+    from app.domain.totvs.protheus_branches import normalize_branch_scope
+
+    branch = normalize_branch_scope(branch)
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
         end_date=end_date,
@@ -1338,7 +1353,7 @@ def list_audit_5s_nonconformities_board(
 @router.get("/analytics/dashboard", operation_id="get_audit_5s_analytics_dashboard")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit_5s_dashboard(
-    branch: str = BRANCH_QUERY_REQUIRED(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     date_start: str | None = LEGACY_DATE_START_QUERY(),
@@ -1351,6 +1366,13 @@ def get_audit_5s_dashboard(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
+    denied = branch_access_error(branch)
+    if denied is not None:
+        return denied
+
+    from app.domain.totvs.protheus_branches import normalize_branch_scope
+
+    branch = normalize_branch_scope(branch)
     start_date, end_date = resolve_period_dates(
         start_date=start_date,
         end_date=end_date,

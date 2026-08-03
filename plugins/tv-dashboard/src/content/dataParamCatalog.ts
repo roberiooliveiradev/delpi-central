@@ -87,6 +87,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "includeBlocked": "Incluir bloqueados",
   "includeWithoutSafetyStock": "Incluir sem estoque de segurança",
   "include_completed": "Incluir concluídos",
+  "include_others": "Incluir Demais",
   "include_qtd_pi": "Incluir quantidade PI",
   "include_test_products": "Incluir produtos de teste",
   "incluir_bloqueados": "Incluir bloqueados",
@@ -219,7 +220,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "area_id": "Identificador da área (ex.: auditoria 5S).",
   "audit_date": "Data (AAAA-MM-DD).",
   "audit_status": "Status da auditoria no fluxo (aberta, concluída etc.).",
-  "branch": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+  "branch": "Escopo: Todas (sem filtro de filial), 01 ou 02. Vazio equivale a Todas, quando permitido.",
   "branch_code": "Código da filial no Protheus (ex.: 01 ou 02).",
   "branches": "Lista de filiais (CSV). Vazio = todas as filiais permitidas.",
   "catalog_version": "Versão do catálogo a consultar.",
@@ -292,6 +293,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "includeBlocked": "Inclui materiais bloqueados quando verdadeiro.",
   "includeWithoutSafetyStock": "Inclui matérias-primas sem estoque de segurança cadastrado.",
   "include_completed": "Inclui itens já concluídos no resultado.",
+  "include_others": "Quando verdadeiro, agrega clientes fora do Top N na linha Demais.",
   "include_qtd_pi": "Inclui quantidade de produto intermediário (PI) no resultado.",
   "include_test_products": "Inclui produtos de teste no resultado.",
   "incluir_bloqueados": "Inclui registros bloqueados na listagem.",
@@ -419,7 +421,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
 /** Rótulos PT-BR das opções de enum — gerados de openapi_param_locale.json enumLabels. */
 export const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
   audit_status: { "closed": "Encerrada", "closed_without_nc_treatment": "Encerrada sem tratamento de NC", "draft": "Rascunho", "evaluation_complete": "Avaliação concluída", "nc_in_progress": "NC em andamento" },
-  branch: { "01": "Filial 01", "02": "Filial 02", "ES": "ES", "SC": "SC" },
+  branch: { "01": "Filial 01", "02": "Filial 02", "ES": "ES", "SC": "SC", "Todas": "Todas" },
   branch_code: { "01": "Filial 01", "02": "Filial 02" },
   customer_segment: { "new_business": "Novos negócios", "weg": "WEG" },
   department_id: { "commercial": "Comercial", "engineering": "Engenharia", "financial": "Financeiro", "hr": "RH", "production": "Produção", "quality": "Qualidade", "supplies": "Suprimentos" },

@@ -13,8 +13,14 @@ from app.application.security.api_delpi_permissions import (
     REPORTS_VIEW,
 )
 from app.core.responses import error_response
+from app.interface.http.branch_access_gate import BranchAccessGate
 
-_VALID_BRANCHES = ("01", "02")
+_GATE = BranchAccessGate(
+    global_view_perm=REPORTS_VIEW,
+    branch_view_perms=dict(REPORTS_BRANCH_VIEW_PERMS),
+    resource_label="relatórios",
+    extra_global_view_perms=(REPORTS_MANAGE,),
+)
 
 
 def _is_superadmin() -> bool:
@@ -23,19 +29,7 @@ def _is_superadmin() -> bool:
 
 
 def branch_view_allowed(branch: str) -> bool:
-    if _is_superadmin():
-        return True
-
-    user = get_current_user()
-    if user is None:
-        return False
-
-    if has_permission(user, REPORTS_VIEW) or has_permission(user, REPORTS_MANAGE):
-        return True
-
-    # notes.manage sozinho não libera filial — precisa view.filial-* (ou view/manage).
-    branch_perm = REPORTS_BRANCH_VIEW_PERMS.get(branch)
-    return branch_perm is not None and has_permission(user, branch_perm)
+    return _GATE.branch_view_allowed(branch)
 
 
 def branch_manage_allowed(branch: str) -> bool:
@@ -66,13 +60,8 @@ def branch_notes_write_allowed(branch: str) -> bool:
     return branch_view_allowed(branch)
 
 
-def branch_access_error(branch: str):
-    if branch_view_allowed(branch):
-        return None
-    return error_response(
-        "Sem permissão para acessar relatórios desta filial.",
-        status_code=403,
-    )
+def branch_access_error(branch: str | None):
+    return _GATE.branch_access_error(branch)
 
 
 def branch_manage_error(branch: str):

@@ -14,6 +14,10 @@ from app.domain.ports.production.production_machine_programs_repository_port imp
 from app.domain.services.production.protheus_date_range_service import (
     ProtheusDateRangeService,
 )
+from app.domain.totvs.protheus_branches import (
+    is_all_branches,
+    normalize_branch_scope,
+)
 
 _DEFAULT_PAGE_SIZE = 10
 _MAX_PAGE_SIZE = 100
@@ -27,9 +31,7 @@ class ListProductionMachineProgramTopIntermediatesUseCase:
         self._repository = repository
 
     def execute(self, request: ListMachineProgramTopIntermediatesRequest) -> dict:
-        branch = str(request.branch or "").strip()
-        if not branch:
-            raise ValueError("Parâmetro branch (filial) é obrigatório.")
+        branch = normalize_branch_scope(request.branch)
 
         period_start, period_end_exclusive = self._resolve_period(
             date_start=request.date_start,
@@ -69,6 +71,7 @@ class ListProductionMachineProgramTopIntermediatesUseCase:
             items = list(items)[:fetch_size]
 
         total_pages = ceil(total / page_size) if total > 0 else 0
+        consolidated = is_all_branches(branch)
 
         return {
             "items": items,
@@ -78,8 +81,8 @@ class ListProductionMachineProgramTopIntermediatesUseCase:
             "total_pages": total_pages,
             "summary": {
                 "branch": branch,
-                "branch_filter_applied": True,
-                "consolidated_across_branches": False,
+                "branch_filter_applied": not consolidated,
+                "consolidated_across_branches": consolidated,
                 "period_start": period_start,
                 "period_end_exclusive": period_end_exclusive,
                 "top_limit": _TOP_LIMIT,

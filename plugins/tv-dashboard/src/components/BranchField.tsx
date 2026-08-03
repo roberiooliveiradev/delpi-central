@@ -2,6 +2,7 @@ import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { BranchScope } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import { ENUM_OPTION_LABELS } from "../content/dataParamCatalog";
 import {
   buildFilterSelectOptions,
   canClearFilterValue,
@@ -9,6 +10,10 @@ import {
   resolveFilterSelectValue,
 } from "../utils/dataParamFilterUi";
 import { DeckField } from "./deck/DeckField";
+
+function branchOptionLabel(branch: string): string {
+  return ENUM_OPTION_LABELS.branch?.[branch] ?? ENUM_OPTION_LABELS.filial?.[branch] ?? `Filial ${branch}`;
+}
 
 type Props = {
   id: string;
@@ -30,7 +35,7 @@ type Props = {
   divergedLabel?: string;
 };
 
-/** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. */
+/** Opções de filial: RBAC (scope) ∩ enum da API, ou um dos dois. Inclui `Todas` se o enum tiver e consolidado for permitido. */
 export function resolveBranchFieldOptions(
   scope: BranchScope | null | undefined,
   schemaEnum?: Array<string | number | boolean> | null,
@@ -41,14 +46,22 @@ export function resolveBranchFieldOptions(
   const schemaBranches = Array.isArray(schemaEnum)
     ? schemaEnum.map((item) => String(item).trim()).filter(Boolean)
     : [];
+  const allowTodas =
+    schemaBranches.includes("Todas") &&
+    (scope == null || scope.allowConsolidated !== false);
 
-  if (scopeBranches.length > 0 && schemaBranches.length > 0) {
-    const allowed = new Set(schemaBranches);
-    const intersect = scopeBranches.filter((branch) => allowed.has(branch));
-    return intersect.length > 0 ? intersect : scopeBranches;
-  }
-  if (scopeBranches.length > 0) return scopeBranches;
-  return schemaBranches;
+  const concrete = (() => {
+    if (scopeBranches.length > 0 && schemaBranches.length > 0) {
+      const allowed = new Set(schemaBranches.filter((b) => b !== "Todas"));
+      const intersect = scopeBranches.filter((branch) => allowed.has(branch));
+      return intersect.length > 0 ? intersect : scopeBranches;
+    }
+    if (scopeBranches.length > 0) return scopeBranches;
+    return schemaBranches.filter((b) => b !== "Todas");
+  })();
+
+  if (allowTodas) return ["Todas", ...concrete.filter((b) => b !== "Todas")];
+  return concrete;
 }
 
 export function BranchField({
@@ -72,7 +85,7 @@ export function BranchField({
     const options = buildFilterSelectOptions(
       branches.map((branch) => ({
         value: branch,
-        label: `Filial ${branch}`,
+        label: branchOptionLabel(branch),
       })),
       {
         clearLabel,

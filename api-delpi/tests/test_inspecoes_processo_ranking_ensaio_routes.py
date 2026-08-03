@@ -14,7 +14,7 @@ def _body(response) -> dict:
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
     return_value=True,
 )
 @patch(
@@ -70,7 +70,7 @@ def test_inspecoes_processo_ranking_ensaio_returns_meta(
 
 
 @patch(
-    "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router._branch_view_allowed",
+    "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
     return_value=False,
 )
 def test_inspecoes_processo_ranking_ensaio_denies_branch_without_permission(
@@ -97,11 +97,21 @@ def inspecoes_processo_client() -> TestClient:
     return TestClient(app)
 
 
-def test_inspecoes_processo_ranking_ensaio_requires_branch(
+def test_inspecoes_processo_ranking_ensaio_allows_omit_branch(
     inspecoes_processo_client: TestClient,
 ) -> None:
-    response = inspecoes_processo_client.get("/inspecoes-processo/ranking-ensaio")
-    assert response.status_code == 422
+    with patch(
+        "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.branch_access_error",
+        return_value=None,
+    ), patch(
+        "app.interface.http.routes.inspecoes_processo.inspecoes_processo_router.build_list_inspecoes_processo_ranking_ensaio_use_case",
+    ) as mock_build:
+        mock_uc = MagicMock()
+        mock_uc.execute.return_value = []
+        mock_build.return_value = mock_uc
+        response = inspecoes_processo_client.get("/inspecoes-processo/ranking-ensaio")
+    assert response.status_code == 200
+
 
 
 @pytest.mark.parametrize("branch", ["03", "1", "xx"])

@@ -14,7 +14,7 @@ Rota usada pelo submódulo **Programas de máquina** do plugin Manutenção (via
 
 | Param | Obrigatório | Descrição |
 |-------|-------------|-----------|
-| `branch` | sim | Filial TOTVS (`01` / `02`) |
+| `branch` | não | Escopo TOTVS: `Todas` (sem filtro), `01` ou `02` |
 | `date_start` | não | Início do período (YYYY-MM-DD). Default: ~6 meses atrás |
 | `date_end` | não | Fim inclusivo. Default: hoje |
 | `page` | não | Página (default 1) |

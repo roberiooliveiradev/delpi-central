@@ -52,7 +52,7 @@ def test_list_inspecoes_entrada_rejeitadas_produto_clamps_limit() -> None:
     repository.list_rejeitadas_by_branch.assert_called_once_with("01", limit=200)
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_entrada_rejeitadas_produto_rejects_invalid_branch(branch: str) -> None:
     repository = MagicMock()
     use_case = ListInspecoesEntradaRejeitadasProdutoUseCase(repository)

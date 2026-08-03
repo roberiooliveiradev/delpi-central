@@ -31,13 +31,14 @@ def test_scoped_user_consolidated_requires_permission():
     scope = svc.resolve(user)
     assert scope.allow_consolidated is False
     assert svc.can_use_branch(scope, None) is False
+    assert svc.can_use_branch(scope, "Todas") is False
 
     user_consolidated = FakeUser(
         permissions=["tv-dashboard.view.filial-01", "tv-dashboard.view.consolidated"],
     )
     scope2 = svc.resolve(user_consolidated)
     assert svc.can_use_branch(scope2, None) is True
-
+    assert svc.can_use_branch(scope2, "Todas") is True
 
 def test_branch_options_intersects_static_policy(monkeypatch):
     import tv_app.application.services.tv_dashboard_content_service as content_module

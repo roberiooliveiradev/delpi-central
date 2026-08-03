@@ -8,8 +8,9 @@ from app.application.dto.inspecoes_entrada.inspecoes_entrada_resumo_response imp
 from app.domain.ports.inspecoes_entrada.inspecoes_entrada_repository_port import (
     InspecoesEntradaRepositoryPort,
 )
-
-VALID_BRANCHES = frozenset({"01", "02"})
+from app.domain.quality.inspecoes_entrada.inspecoes_entrada_scope import (
+    normalize_optional_branch,
+)
 
 
 def _as_int(value: Any) -> int:
@@ -28,10 +29,8 @@ class GetInspecoesEntradaResumoUseCase:
     def __init__(self, repository: InspecoesEntradaRepositoryPort) -> None:
         self._repository = repository
 
-    def execute(self, *, branch: str) -> InspecoesEntradaResumoResponse:
-        normalized_branch = str(branch or "").strip()
-        if normalized_branch not in VALID_BRANCHES:
-            raise ValueError("branch inválida. Use 01 ou 02.")
+    def execute(self, *, branch: str | None) -> InspecoesEntradaResumoResponse:
+        normalized_branch = normalize_optional_branch(branch)
 
         row = self._repository.get_resumo_by_branch(normalized_branch)
         if not row:

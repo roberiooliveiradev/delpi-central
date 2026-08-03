@@ -7,6 +7,7 @@ from app.domain.ports.financial.financial_query_repository_port import (
     FinancialQueryRepositoryPort,
 )
 from app.domain.ports.refugos.refugos_repository_port import RefugosRepositoryPort
+from app.domain.totvs.protheus_branches import is_all_branches
 
 
 class GetRefugosScrapCostPctUseCase:
@@ -26,13 +27,14 @@ class GetRefugosScrapCostPctUseCase:
         month_start, month_end_exclusive = request.period.month_closed_open()
         start_iso, end_iso = request.period.iso_range()
         branch = request.period.filial
-        branch_filter_applied = branch is not None
+        branch_filter_applied = not is_all_branches(branch)
         consolidated = not branch_filter_applied
+        rol_branch = None if consolidated else branch
 
         row = self._refugos_repository.get_resumo(
             date_start=date_start,
             date_end_exclusive=date_end_exclusive,
-            branch=branch,
+            branch=None if consolidated else branch,
             day_start=day_start,
             day_end_exclusive=day_end_exclusive,
             month_start=month_start,
@@ -42,7 +44,7 @@ class GetRefugosScrapCostPctUseCase:
 
         rol_data = self._financial_repository.get_rol(
             GetRolRequest(
-                branch=branch,
+                branch=rol_branch,
                 start_date=start_iso,
                 end_date=end_iso,
             )
@@ -56,7 +58,7 @@ class GetRefugosScrapCostPctUseCase:
         )
 
         return {
-            "branch": branch or "consolidated",
+            "branch": branch,
             "start_date": start_iso,
             "end_date": end_iso,
             "scrap_cost": scrap_cost,

@@ -69,7 +69,7 @@ def test_list_inspecoes_entrada_pendentes_fornecedor_returns_empty_when_no_rows(
     assert payload["total_pending"] == 0
 
 
-@pytest.mark.parametrize("branch", ["03", "", "1"])
+@pytest.mark.parametrize("branch", ["03", "1"])
 def test_list_inspecoes_entrada_pendentes_fornecedor_rejects_invalid_branch(
     branch: str,
 ) -> None:

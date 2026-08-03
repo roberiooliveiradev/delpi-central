@@ -39,6 +39,18 @@ describe("buildRouteDefaultParams", () => {
     expect(params.dateRangePreset).toBeUndefined();
   });
 
+  it("usa Todas quando o enum de branch inclui Todas", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_inspecoes_entrada_kpi",
+      label: "KPI inspeções",
+      category: "quality",
+      path: "/inspecoes-entrada/kpi",
+      paramSchema: {
+        branch: { type: "string", optional: false, enum: ["Todas", "01", "02"] },
+      },
+    });
+    expect(params.branch).toBe("Todas");
+  });
   it("não inventa department_id (usuário escolhe no filtro)", () => {
     const params = buildRouteDefaultParams({
       operationId: "get_dashboard_department_idd",

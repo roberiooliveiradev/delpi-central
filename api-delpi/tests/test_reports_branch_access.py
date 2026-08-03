@@ -21,18 +21,21 @@ from app.interface.http.routes.reports.reports_branch_access import (
     branch_view_allowed,
 )
 
+_GATE_USER = "app.interface.http.branch_access_gate.get_current_user"
+_GATE_PERM = "app.interface.http.branch_access_gate.has_permission"
+_ROUTE_USER = "app.interface.http.routes.reports.reports_branch_access.get_current_user"
+_ROUTE_PERM = "app.interface.http.routes.reports.reports_branch_access.has_permission"
+
+
+def _perm_side_effect(user):
+    return lambda current_user, perm: perm in user.permissions
+
 
 def test_branch_view_allowed_with_global_view() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[REPORTS_VIEW])
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
+    with patch(_GATE_USER, return_value=user):
+        with patch(_GATE_PERM, side_effect=_perm_side_effect(user)):
             assert branch_view_allowed("01") is True
             assert branch_view_allowed("02") is True
 
@@ -40,21 +43,15 @@ def test_branch_view_allowed_with_global_view() -> None:
 def test_branch_view_allowed_with_filial_sc_only() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[REPORTS_VIEW_FILIAL_SC])
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
+    with patch(_GATE_USER, return_value=user):
+        with patch(_GATE_PERM, side_effect=_perm_side_effect(user)):
             assert branch_view_allowed("01") is True
             assert branch_view_allowed("02") is False
 
 
 def test_branch_access_error_returns_403_for_denied_branch() -> None:
     with patch(
-        "app.interface.http.routes.reports.reports_branch_access.branch_view_allowed",
+        "app.interface.http.branch_access_gate.BranchAccessGate.branch_view_allowed",
         return_value=False,
     ):
         response = branch_access_error("02")
@@ -68,14 +65,8 @@ def test_branch_manage_allowed_with_filial_manage_only() -> None:
         is_superadmin=False, permissions=[REPORTS_MANAGE_FILIAL_SC]
     )
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
+    with patch(_ROUTE_USER, return_value=user):
+        with patch(_ROUTE_PERM, side_effect=_perm_side_effect(user)):
             assert branch_manage_allowed("01") is True
             assert branch_manage_allowed("02") is False
 
@@ -83,14 +74,8 @@ def test_branch_manage_allowed_with_filial_manage_only() -> None:
 def test_branch_manage_allowed_with_global_manage() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[REPORTS_MANAGE])
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
+    with patch(_ROUTE_USER, return_value=user):
+        with patch(_ROUTE_PERM, side_effect=_perm_side_effect(user)):
             assert branch_manage_allowed("01") is True
             assert branch_manage_allowed("02") is True
 
@@ -111,16 +96,12 @@ def test_branch_notes_write_allowed_with_notes_manage_and_filial_view() -> None:
         permissions=[REPORTS_NOTES_MANAGE, REPORTS_VIEW_FILIAL_SC],
     )
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
-            assert branch_notes_write_allowed("01") is True
-            assert branch_notes_write_allowed("02") is False
+    with patch(_ROUTE_USER, return_value=user):
+        with patch(_ROUTE_PERM, side_effect=_perm_side_effect(user)):
+            with patch(_GATE_USER, return_value=user):
+                with patch(_GATE_PERM, side_effect=_perm_side_effect(user)):
+                    assert branch_notes_write_allowed("01") is True
+                    assert branch_notes_write_allowed("02") is False
 
 
 def test_branch_notes_write_denied_with_view_only() -> None:
@@ -129,28 +110,18 @@ def test_branch_notes_write_denied_with_view_only() -> None:
         permissions=[REPORTS_VIEW, REPORTS_VIEW_FILIAL_SC],
     )
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
-            assert branch_notes_write_allowed("01") is False
+    with patch(_ROUTE_USER, return_value=user):
+        with patch(_ROUTE_PERM, side_effect=_perm_side_effect(user)):
+            with patch(_GATE_USER, return_value=user):
+                with patch(_GATE_PERM, side_effect=_perm_side_effect(user)):
+                    assert branch_notes_write_allowed("01") is False
 
 
 def test_branch_notes_write_allowed_with_global_manage() -> None:
     user = SimpleNamespace(is_superadmin=False, permissions=[REPORTS_MANAGE])
 
-    with patch(
-        "app.interface.http.routes.reports.reports_branch_access.get_current_user",
-        return_value=user,
-    ):
-        with patch(
-            "app.interface.http.routes.reports.reports_branch_access.has_permission",
-            side_effect=lambda current_user, perm: perm in user.permissions,
-        ):
+    with patch(_ROUTE_USER, return_value=user):
+        with patch(_ROUTE_PERM, side_effect=_perm_side_effect(user)):
             assert branch_notes_write_allowed("01") is True
             assert branch_notes_write_allowed("02") is True
 
