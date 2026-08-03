@@ -135,10 +135,27 @@ def test_resolve_escopo_unidades_consolidado_usa_filiais_ativas(mock_repo):
     assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 2
 
 
-def test_resolve_escopo_unidades_filial_sempre_um():
-    scope = DashboardViewScopeService().resolve(filial_id="01,02")
+def test_resolve_escopo_unidades_filial_uma_unidade():
+    scope = DashboardViewScopeService().resolve(filial_id="01")
     assert scope.view == DashboardView.FILIAL
     assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 1
+
+
+def test_resolve_escopo_unidades_filial_multiplas_conta_selecionadas():
+    """Soma correta: exclusivos + 1 fatia multi por unidade selecionada (escalável a N)."""
+    scope = DashboardViewScopeService().resolve(filial_id="01,02")
+    assert scope.view == DashboardView.FILIAL
+    assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 2
+
+
+def test_resolve_escopo_unidades_departamento_conta_filiais_selecionadas():
+    scope = DashboardViewScopeService().resolve(
+        view="department",
+        filial_id="01,02",
+        setor_id="engenharia",
+    )
+    assert scope.view == DashboardView.DEPARTMENT
+    assert DashboardViewScopeService.resolve_escopo_unidades(scope) == 2
 
 
 @patch(

@@ -50,7 +50,7 @@ Persistência em `dashboard_calculos`: colunas `beneficio_calculo_categoria`, `g
 - **Investimento** e **horas** seguem a mesma soma por instância.
 - **ROI** consolidado = `Σ economia_líquida / Σ investimento` do recorte.
 - **Processo com 1 instância**: soma de 1 = ele mesmo (retrocompatível).
-- **Filtro por unidade/departamento**: mostra o valor **real da(s) instância(s)** no recorte (sem multiplicador multi-unidade).
+- **Filtro por unidade/departamento**: multi-unidade escala pelo nº de unidades **selecionadas** no filtro; instâncias ligadas a uma só filial entram sem multiplicador extra.
 
 **Implementação (row-level).** Cada linha `(revisão, competência)` carrega `instancias_ativas_mes` como **metadado** (nº de instâncias ativas no mês). A agregação (`calc_rules.prorate_dashboard_row_for_period` / `aggregate_period_from_rows`) **soma** as linhas sem dividir por esse fator.
 
@@ -73,8 +73,9 @@ economia_instância_escalada(mês) =
 | Investimento único / recorrente da revisão | Não (permanece o valor cadastrado na timeline) |
 | Recursos compartilhados | Não — rateio continua via `escopo_recurso` / pool global |
 
-- **Visão consolidada:** `escopo_unidades` = nº de filiais ativas no recorte analítico (ex.: 2 unidades → economia da instância multi-unidade conta **2×**).
-- **Visão filial ou departamento:** multiplicador **1** (uma unidade no recorte).
+- **Visão consolidada:** `escopo_unidades` = nº de filiais ativas no cadastro (ex.: 2 unidades → economia multi-unidade **2×**).
+- **Visão filial ou departamento:** `escopo_unidades` = nº de **unidades selecionadas** no filtro (CSV). Uma unidade → **1×** (fatia daquela unidade); `01,02` → **2×** (fatia SC + fatia ES). Escala para N unidades futuras sem regra especial.
+- A soma correta do recorte multi-unidade é: exclusivos de cada unidade selecionada **+** uma fatia multi por unidade selecionada que a instância engloba — **não** deduplicar a multi para 1× ao marcar várias unidades.
 - **Processo com várias instâncias:** após escalar cada instância, aplica-se a **soma** entre instâncias ativas no mês.
 
 **Implementação:** `DashboardCalculatorService._instance_unit_multiplier`, `_scale_instance_economy_row`; parâmetro `escopo_unidades` em `build_dashboard_rows` / `build_summary`. `DashboardViewScopeService.resolve_escopo_unidades` + `count_active_filiais` propagam o valor em `DashboardLiveService`, `DashboardRecalcService` e Transforma+ (consolidado).

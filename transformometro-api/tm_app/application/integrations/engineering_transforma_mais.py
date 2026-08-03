@@ -69,7 +69,13 @@ class EngineeringTransformaMaisService:
         end_date: str | None,
     ) -> dict[str, Any]:
         raw = load_raw_cached()
-        escopo_unidades = 1 if filial_id else count_active_filiais()
+        if filial_id:
+            n_filiais = len(
+                [token for token in str(filial_id).split(",") if token.strip()]
+            )
+            escopo_unidades = max(1, n_filiais)
+        else:
+            escopo_unidades = count_active_filiais()
         summary = self._calculator.build_summary(
             raw,
             filial_id=filial_id,

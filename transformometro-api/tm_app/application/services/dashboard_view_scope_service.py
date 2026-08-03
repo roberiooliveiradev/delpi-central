@@ -176,10 +176,16 @@ class DashboardViewScopeService:
 
     @staticmethod
     def resolve_escopo_unidades(scope: DashboardScopeFilters) -> int:
-        """Multiplicador de economia para instâncias ``todas_filiais_ativas``."""
-        if scope.view != DashboardView.CONSOLIDATED:
-            return 1
-        return count_active_filiais()
+        """Multiplicador de economia para instâncias ``todas_filiais_ativas``.
+
+        Cada unidade do recorte recebe uma fatia (valor cadastrado × 1).
+        - Consolidado: nº de filiais ativas no cadastro.
+        - Filial / departamento: nº de unidades selecionadas no filtro (CSV).
+          Ex.: ``filial_id=01,02`` → 2 (fatia SC + fatia ES); uma unidade → 1.
+        """
+        if scope.view == DashboardView.CONSOLIDATED:
+            return count_active_filiais()
+        return max(1, len(scope.filial_ids))
 
 
 def _normalize_ref(value: str | None) -> str | None:

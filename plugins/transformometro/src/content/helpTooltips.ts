@@ -80,7 +80,7 @@ export const TM_HELP_TOOLTIPS = {
   },
   dashboard: {
     view:
-      "Alterna o recorte da análise: Consolidado (todas as unidades), por Unidade ou por Departamento (unidade × departamento). No Consolidado, instâncias multi-unidade multiplicam economia bruta, líquida e horas pelo nº de unidades ativas; nas visões Unidade/Departamento o fator é 1.",
+      "Alterna o recorte: Consolidado (todas as unidades ativas), Unidade ou Departamento. Instâncias multi-unidade contam uma fatia de economia (bruta, líquida, horas) por unidade do recorte — no Consolidado, × unidades ativas; na Unidade/Departamento, × unidades selecionadas. Investimento não multiplica.",
     competencia:
       "Escolhe um mês (competência) e preenche o período automaticamente. Ao ajustar as datas para meses diferentes, a competência fica em branco.",
     dateStart: "Início do período analisado (competência mensal). Filtra economias, custos e horas.",
@@ -207,7 +207,7 @@ export const TM_HELP_TOOLTIPS = {
     todasUnidades:
       "Melhoria multi-unidade: uma única timeline válida para todas as unidades ativas (ex.: mesmo processo idêntico em SC e ES).",
     multiplicadorConsolidado:
-      "No dashboard (visão Consolidado), economia bruta, economia líquida e horas desta instância são multiplicadas pelo número de unidades ativas cadastradas. Investimento único, custo recorrente e recursos compartilhados não multiplicam. Na visão por Unidade ou Departamento, o fator é sempre 1.",
+      "Economia bruta, líquida e horas desta instância multi-unidade contam uma fatia por unidade do recorte: no Consolidado, × nº de unidades ativas; na visão Unidade/Departamento, × nº de unidades selecionadas no filtro. Investimento único, custo recorrente e recursos compartilhados não multiplicam.",
     colunaUnidade:
       "Unidade operacional da instância. «Todas as unidades ativas» indica instância multi-unidade — ver balão para o efeito no dashboard consolidado.",
     unidades:
