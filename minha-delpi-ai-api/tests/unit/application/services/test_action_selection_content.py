@@ -82,6 +82,13 @@ def test_action_selection_heuristic_terms_exist():
         "manifestText",
         "paramsLabel",
     )
+    siblings = ExternalActionResponseContentService.object_list(
+        "actionSelection",
+        "siblingDisambiguation",
+    )
+    assert len(siblings) >= 5
+    assert all(str(item.get("id") or "").strip() for item in siblings)
+    assert all(str(item.get("mode") or "").strip() for item in siblings)
 
 
 def test_operational_route_registry_reason_keys_exist() -> None:
