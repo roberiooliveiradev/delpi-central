@@ -1,7 +1,7 @@
 """Gráfico de linha PNG (CID) — evolução consolidada em R$ mi para e-mail.
 
-O PNG é embutido com ~metade da resolução (width=700 em tela ~1400px);
-as fontes abaixo já compensam essa redução.
+Valores mensais ficam em tabela HTML (legível no Outlook). O PNG mostra só a
+tendência (linha + marcadores), com fontes grandes para sobreviver ao downscale.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from app.domain.services.reports.report_email_brand_layout_service import (
     BLUE_900,
     GRAY_200,
     GRAY_600,
+    ReportEmailBrandLayoutService,
 )
 from app.domain.services.reports.report_types import ReportAttachment
 
@@ -30,12 +31,10 @@ _GRAY_LINE = (148, 163, 184)
 _AXIS_TEXT = (30, 41, 59)
 _DARK_TEXT = (15, 23, 42)
 _WHITE = (255, 255, 255)
-_PILL_BG = (255, 255, 255, 245)
-_PILL_BORDER = (1, 56, 102, 80)
 
 
 class ReportEmailConsolidatedLineChartService:
-    """Gera PNG Outlook-safe (anexo CID) no estilo do dashboard comercial."""
+    """Gera PNG Outlook-safe (anexo CID) + tabela de valores mensais."""
 
     @staticmethod
     def build(
@@ -52,7 +51,6 @@ class ReportEmailConsolidatedLineChartService:
             )
             return empty, None
 
-        # Consolidado do ano fica só no subtítulo HTML — nunca no PNG (evita repetição).
         png_bytes = ReportEmailConsolidatedLineChartService._render_png(
             points=points,
             series_label=series_label,
@@ -72,6 +70,9 @@ class ReportEmailConsolidatedLineChartService:
                 f'color:{BLUE_900};font-family:Arial,Helvetica,sans-serif;">'
                 f"{html.escape(year_total_label)}</p>"
             )
+        values_table = ReportEmailConsolidatedLineChartService._values_table_html(
+            points
+        )
         card = (
             '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
             'border="0" style="border-collapse:collapse;margin:0 0 20px 0;'
@@ -81,10 +82,16 @@ class ReportEmailConsolidatedLineChartService:
             f'font-family:Arial,Helvetica,sans-serif;">{safe_title}</p>'
             f"{subtitle}"
             "</td></tr>"
-            '<tr><td style="padding:8px 12px 16px 12px;" align="center">'
+            '<tr><td style="padding:8px 12px 8px 12px;" align="center">'
             f'<img src="cid:{html.escape(CHART_CONTENT_ID)}" '
-            f'alt="{html.escape(series_label)}" width="700" '
-            'style="display:block;width:100%;max-width:700px;height:auto;border:0;" />'
+            f'alt="{html.escape(series_label)}" width="760" '
+            'style="display:block;width:100%;max-width:760px;height:auto;border:0;" />'
+            "</td></tr>"
+            '<tr><td style="padding:4px 16px 16px 16px;">'
+            f'<p style="margin:0 0 8px 0;font-size:12px;font-weight:700;'
+            f'color:{BLUE_900};font-family:Arial,Helvetica,sans-serif;">'
+            "Valores mensais (R$ mi)</p>"
+            f"{values_table}"
             "</td></tr>"
             "</table>"
         )
@@ -107,13 +114,28 @@ class ReportEmailConsolidatedLineChartService:
         return html_body
 
     @staticmethod
+    def _values_table_html(points: Sequence[Mapping[str, Any]]) -> str:
+        rows = [
+            [
+                str(point.get("label") or "—"),
+                _fmt_mi(float(point.get("value") or 0) / 1_000_000.0, digits=2),
+            ]
+            for point in points
+        ]
+        return ReportEmailBrandLayoutService.data_table_html(
+            headers=["Mês", "R$ mi"],
+            rows=rows,
+            column_styles=["text-align:left;", "text-align:right;"],
+        )
+
+    @staticmethod
     def _render_png(
         *,
         points: Sequence[Mapping[str, Any]],
         series_label: str,
     ) -> bytes:
-        width, height = 1400, 920
-        pad_l, pad_r, pad_t, pad_b = 130, 56, 88, 120
+        width, height = 1600, 1000
+        pad_l, pad_r, pad_t, pad_b = 150, 64, 100, 130
         plot_w = width - pad_l - pad_r
         plot_h = height - pad_t - pad_b
 
@@ -135,31 +157,29 @@ class ReportEmailConsolidatedLineChartService:
 
         image = Image.new("RGBA", (width, height), (*_WHITE, 255))
         draw = ImageDraw.Draw(image, "RGBA")
-        # Fontes grandes: o e-mail exibe o PNG em ~50% (700px de 1400).
-        font_axis = _load_font(56)
-        font_value = _load_font(62, bold=True)
-        font_legend = _load_font(48, bold=True)
-        font_unit = _load_font(40)
+        # Fontes grandes: o e-mail exibe ~760px de 1600 (~47%).
+        font_axis = _load_font(80)
+        font_legend = _load_font(64, bold=True)
+        font_unit = _load_font(64, bold=True)
 
-        # Legenda simples (sem badge de consolidado — isso fica só no subtítulo HTML)
-        lx, ly = width - 320, 28
-        draw.ellipse([(lx, ly), (lx + 22, ly + 22)], fill=(*_BLUE, 255))
+        lx, ly = width - 340, 32
+        draw.ellipse([(lx, ly), (lx + 28, ly + 28)], fill=(*_BLUE, 255))
         draw.text(
-            (lx + 32, ly - 8),
+            (lx + 40, ly - 10),
             series_label,
             fill=(*_DARK_TEXT, 255),
             font=font_legend,
         )
         draw.text(
-            (pad_l - 8, 30),
+            (pad_l - 8, 34),
             "R$ mi",
             fill=(*_AXIS_TEXT, 255),
             font=font_unit,
         )
 
         draw.rounded_rectangle(
-            [(pad_l - 10, pad_t - 10), (width - pad_r + 10, height - pad_b + 10)],
-            radius=18,
+            [(pad_l - 12, pad_t - 12), (width - pad_r + 12, height - pad_b + 12)],
+            radius=20,
             fill=(*_PLOT_BG, 255),
         )
 
@@ -171,13 +191,13 @@ class ReportEmailConsolidatedLineChartService:
             draw.line(
                 [(pad_l, y), (width - pad_r, y)],
                 fill=(*_GRAY_LINE, 255),
-                width=3,
+                width=4,
             )
             label = _fmt_mi(tick, digits=2)
             bbox = draw.textbbox((0, 0), label, font=font_axis)
             tw = bbox[2] - bbox[0]
             draw.text(
-                (pad_l - 22 - tw, y - 22),
+                (pad_l - 28 - tw, y - 28),
                 label,
                 fill=(*_AXIS_TEXT, 255),
                 font=font_axis,
@@ -195,45 +215,27 @@ class ReportEmailConsolidatedLineChartService:
             draw.line(
                 [(xs[i - 1], _y(values_mi[i - 1])), (xs[i], _y(values_mi[i]))],
                 fill=(*_BLUE, 255),
-                width=10,
+                width=14,
             )
 
         for i, value in enumerate(values_mi):
             x, y = xs[i], _y(value)
-            r = 17
+            r = 22
             draw.ellipse(
-                [(x - r - 3, y - r - 3), (x + r + 3, y + r + 3)],
+                [(x - r - 4, y - r - 4), (x + r + 4, y + r + 4)],
                 fill=(*_WHITE, 255),
             )
             draw.ellipse(
                 [(x - r, y - r), (x + r, y + r)],
                 fill=(*_BLUE, 255),
                 outline=(*_BLUE_SOFT, 255),
-                width=4,
+                width=5,
             )
-
-            label = _fmt_mi(value, digits=2)
-            bbox = draw.textbbox((0, 0), label, font=font_value)
-            tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
-            place_above = i % 2 == 0
-            if place_above:
-                lx, ly = x - tw / 2, y - th - 42
-            else:
-                lx, ly = x - tw / 2, y + 32
-
-            draw.rounded_rectangle(
-                [(lx - 14, ly - 8), (lx + tw + 14, ly + th + 10)],
-                radius=14,
-                fill=_PILL_BG,
-                outline=_PILL_BORDER,
-                width=3,
-            )
-            draw.text((lx, ly), label, fill=(*_BLUE, 255), font=font_value)
 
             xb = draw.textbbox((0, 0), labels[i], font=font_axis)
             lw = xb[2] - xb[0]
             draw.text(
-                (x - lw / 2, height - 78),
+                (x - lw / 2, height - 90),
                 labels[i],
                 fill=(*_AXIS_TEXT, 255),
                 font=font_axis,
@@ -241,7 +243,8 @@ class ReportEmailConsolidatedLineChartService:
 
         rgb = image.convert("RGB")
         buf = io.BytesIO()
-        rgb.save(buf, format="PNG", optimize=True)
+        # Sem optimize=True — prioriza nitidez no Outlook/Gmail.
+        rgb.save(buf, format="PNG")
         return buf.getvalue()
 
 
@@ -254,7 +257,7 @@ def _axis_bounds(values: Sequence[float]) -> tuple[float, float, float]:
         lo = max(0.0, lo - 1.0)
         hi = lo + 2.0
     span = hi - lo
-    pad = max(span * 0.45, 0.5)
+    pad = max(span * 0.18, 0.25)
     y_min = max(0.0, lo - pad)
     y_max = hi + pad
     raw = (y_max - y_min) / 4.0
