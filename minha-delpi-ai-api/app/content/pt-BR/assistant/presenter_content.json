@@ -18,7 +18,7 @@
     "/lmp": "Lista de LMPs",
     "/oee": "OEE — eficiência dos equipamentos",
     "/otd": "OTD — entrega no prazo",
-    "/production/otd": "OTD produção — ordens no prazo",
+    "/production/otd": "OTD produção — ordens",
     "/production/oee": "OEE produção — apontamentos SH6010",
     "/production/oee/appointments/": "Detalhe do apontamento OEE",
     "/sale-order": "Ordens de venda",

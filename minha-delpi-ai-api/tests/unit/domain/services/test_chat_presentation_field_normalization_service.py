@@ -123,6 +123,63 @@ def test_order_keys_with_preferred_hints_never_drops_present_keys():
     assert len(ordered) == 4
 
 
+def test_drop_redundant_presentation_aliases_keeps_canonical():
+    labels = ExternalActionColumnLabelService()
+    sample = {
+        "product_description": "CHICOTE",
+        "description": "CHICOTE",
+        "status": "late",
+        "otd_status": "late",
+        "days_diff": 5,
+        "days_late": 5,
+        "product_code": "90261629",
+    }
+    ordered = labels.order_keys_with_preferred_hints(
+        list(sample.keys()),
+        profile_name="productionOtdOrders",
+        sample_row=sample,
+    )
+    assert "product_description" in ordered
+    assert "status" in ordered
+    assert "days_diff" in ordered
+    assert "description" not in ordered
+    assert "otd_status" not in ordered
+    assert "days_late" not in ordered
+
+
+def test_normalize_table_drops_mirrored_alias_columns():
+    presentation = {
+        "type": "table",
+        "title": "OTD",
+        "columns": [],
+        "rows": [
+            {
+                "production_order": "09139101001",
+                "product_code": "90261629",
+                "product_description": "CHICOTE",
+                "description": "CHICOTE",
+                "status": "late",
+                "otd_status": "late",
+                "days_diff": 10,
+                "days_late": 10,
+                "branch": "01",
+            }
+        ],
+    }
+    normalized = ChatPresentationFieldNormalizationService.normalize_presentation(
+        presentation,
+        path="/production/otd",
+        entity="production_otd_detail",
+    )
+    keys = [column["key"] for column in normalized["columns"]]
+    assert "product_description" in keys
+    assert "description" not in keys
+    assert "status" in keys
+    assert "otd_status" not in keys
+    assert "days_diff" in keys
+    assert "days_late" not in keys
+
+
 def test_presentation_metadata_includes_normalized_chart_labels():
     use_case = ExecuteExternalActionUseCase(
         repository=None,

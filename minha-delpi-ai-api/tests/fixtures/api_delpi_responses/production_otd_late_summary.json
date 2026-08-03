@@ -22,9 +22,9 @@
           "finish_date": "20260314",
           "days_diff": -4,
           "status": "late",
-          "description": "Atrasada",
+          "description": "TERMINAL",
           "otd_status": "late",
-          "days_late": 4
+          "days_late": -4
         },
         {
           "branch": "01",
@@ -37,9 +37,9 @@
           "finish_date": "20260314",
           "days_diff": -2,
           "status": "late",
-          "description": "Atrasada",
+          "description": "CONECTOR",
           "otd_status": "late",
-          "days_late": 2
+          "days_late": -2
         }
       ],
       "pagination": {

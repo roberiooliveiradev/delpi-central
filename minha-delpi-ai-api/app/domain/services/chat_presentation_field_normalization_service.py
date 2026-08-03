@@ -233,6 +233,7 @@ class ChatPresentationFieldNormalizationService:
         ordered_keys = cls._column_labels.order_keys_with_preferred_hints(
             present_keys,
             profile_name=profile_name,
+            sample_row=first_row if isinstance(first_row, dict) else None,
         )
 
         normalized_columns: list[dict[str, str]] = []

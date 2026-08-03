@@ -711,10 +711,15 @@ class ExternalActionColumnLabelService:
         present_keys: list[str],
         *,
         profile_name: str | None = None,
+        sample_row: dict[str, Any] | None = None,
     ) -> list[str]:
         """Ordena chaves com preferredColumns como hints — nunca como allowlist."""
         ordered: list[str] = []
         present = [str(key).strip() for key in present_keys if str(key or "").strip()]
+        present = self.drop_redundant_presentation_alias_keys(
+            present,
+            sample_row=sample_row,
+        )
         present_set = set(present)
 
         for key in self.column_order_hints(profile_name):
@@ -726,6 +731,35 @@ class ExternalActionColumnLabelService:
                 ordered.append(key)
 
         return ordered
+
+    def drop_redundant_presentation_alias_keys(
+        self,
+        keys: list[str],
+        *,
+        sample_row: dict[str, Any] | None = None,
+    ) -> list[str]:
+        """Remove aliases espelhados quando o canônico já está presente (e valores iguais)."""
+        aliases = (_column_labels_content().get("redundantPresentationAliases") or {})
+        if not isinstance(aliases, dict) or not aliases:
+            return keys
+
+        present = {str(key).strip() for key in keys if str(key or "").strip()}
+        drop: set[str] = set()
+
+        for alias_raw, canonical_raw in aliases.items():
+            alias = str(alias_raw or "").strip()
+            canonical = str(canonical_raw or "").strip()
+            if not alias or not canonical or alias not in present or canonical not in present:
+                continue
+            if isinstance(sample_row, dict) and alias in sample_row and canonical in sample_row:
+                if sample_row.get(alias) != sample_row.get(canonical):
+                    continue
+            drop.add(alias)
+
+        if not drop:
+            return keys
+
+        return [key for key in keys if str(key).strip() not in drop]
 
     def column_order_hints(self, profile_name: str | None) -> list[str]:
         token = str(profile_name or "").strip()
@@ -828,6 +862,7 @@ class ExternalActionColumnLabelService:
         ordered_keys = self.order_keys_with_preferred_hints(
             discovered,
             profile_name=resolved_profile,
+            sample_row=dict_items[0],
         )
 
         profile_hints = self.column_label_hints(resolved_profile)

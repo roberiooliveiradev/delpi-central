@@ -522,6 +522,7 @@ class ExternalActionSqlPresenter:
             ordered_keys = self._host._column_labels.order_keys_with_preferred_hints(
                 present_keys,
                 profile_name=profile_name,
+                sample_row=sample,
             )
             columns = [
                 self._host._enrich_column(

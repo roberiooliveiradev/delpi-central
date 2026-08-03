@@ -800,6 +800,11 @@
     },
     "fixedTableColumnsDeprecated": "Migrado para tableProfiles (jun/2026). Use tableProfiles.preferredColumns como hints de ordem/rotulo; colunas vêm do payload da API."
   },
+  "redundantPresentationAliases": {
+    "description": "product_description",
+    "otd_status": "status",
+    "days_late": "days_diff"
+  },
   "profilePriority": [
     "analyserStructureComponents",
     "analyserGuide",
@@ -1607,10 +1612,6 @@
           "Descrição"
         ],
         [
-          "description",
-          "Descrição"
-        ],
-        [
           "due_date",
           "Data prevista"
         ],
@@ -1623,16 +1624,8 @@
           "Dias (previsto × real)"
         ],
         [
-          "days_late",
-          "Dias atraso"
-        ],
-        [
           "status",
           "Status"
-        ],
-        [
-          "otd_status",
-          "Status OTD"
         ],
         [
           "branch",

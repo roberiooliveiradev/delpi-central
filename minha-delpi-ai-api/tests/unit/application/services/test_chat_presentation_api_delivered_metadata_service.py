@@ -142,6 +142,9 @@ def test_api_delivered_metadata_for_production_otd_nested_orders():
     ):
         assert expected in column_keys, f"coluna OTD ausente na tabela: {expected}"
 
+    for redundant in ("description", "otd_status", "days_late"):
+        assert redundant not in column_keys, f"alias redundante na tabela: {redundant}"
+
     assert rows[0].get("product_description")
     assert rows[0].get("due_date")
     assert "days_diff" in rows[0]

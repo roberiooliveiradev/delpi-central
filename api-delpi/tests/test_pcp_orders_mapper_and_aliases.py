@@ -26,6 +26,36 @@ def test_alias_adds_otd_status_from_status() -> None:
     assert item["days_late"] == 3
 
 
+def test_alias_drop_redundant_keeps_canonical_only() -> None:
+    item = ProductionOrderItemAliasService.enrich_list_item(
+        {
+            "product_description": "CHICOTE",
+            "status": "late",
+            "days_diff": 5,
+        },
+        drop_redundant_aliases=True,
+    )
+    assert item["product_description"] == "CHICOTE"
+    assert "description" not in item
+    assert item["status"] == "late"
+    assert "otd_status" not in item
+    assert item["days_diff"] == 5
+    assert "days_late" not in item
+
+
+def test_alias_drop_redundant_promotes_legacy_then_drops_alias() -> None:
+    item = ProductionOrderItemAliasService.enrich_list_item(
+        {"description": "CHICOTE", "otd_status": "late", "days_late": 2},
+        drop_redundant_aliases=True,
+    )
+    assert item["product_description"] == "CHICOTE"
+    assert "description" not in item
+    assert item["status"] == "late"
+    assert "otd_status" not in item
+    assert item["days_diff"] == 2
+    assert "days_late" not in item
+
+
 def test_pcp_mapper_maps_view_flags() -> None:
     item = PcpOrderItemMapper.map_item(
         {

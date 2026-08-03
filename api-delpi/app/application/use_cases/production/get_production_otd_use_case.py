@@ -57,7 +57,8 @@ class GetProductionOtdUseCase:
 
         if isinstance(orders_payload.get("items"), list):
             orders_payload["items"] = ProductionOrderItemAliasService.enrich_items(
-                orders_payload["items"]
+                orders_payload["items"],
+                drop_redundant_aliases=True,
             )
 
         return {
