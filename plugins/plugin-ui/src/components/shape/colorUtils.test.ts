@@ -15,6 +15,7 @@ import {
   resolvePaintTextColor,
   resolveSelectedSwatchHex,
   isTransparentCssColor,
+  resolveColorTriggerPreviewMode,
   hasIllegibleTextContrast,
   rgbToHex,
 } from "./colorUtils";
@@ -45,8 +46,17 @@ describe("shape colorUtils", () => {
     expect(resolveSelectedSwatchHex("auto")).toBeUndefined();
     expect(resolveSelectedSwatchHex("rgba(0,0,0,0)")).toBeUndefined();
     expect(isTransparentCssColor("transparent")).toBe(true);
+    expect(isTransparentCssColor("none")).toBe(true);
     expect(resolveSelectedSwatchHex("#000000")).toBe("#000000");
     expect(resolveSelectedSwatchHex("#089bdb")).toBe("#089bdb");
+  });
+
+  it("resolveColorTriggerPreviewMode: transparent → none; text auto → auto", () => {
+    expect(resolveColorTriggerPreviewMode("transparent", "fill")).toBe("none");
+    expect(resolveColorTriggerPreviewMode(undefined, "fill")).toBe("none");
+    expect(resolveColorTriggerPreviewMode("#089bdb", "fill")).toBe("color");
+    expect(resolveColorTriggerPreviewMode(undefined, "text")).toBe("auto");
+    expect(resolveColorTriggerPreviewMode("auto", "text")).toBe("auto");
   });
 
   it("gera grade 6×10 do tema", () => {

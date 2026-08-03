@@ -6,7 +6,7 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
 import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
-import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor } from "./colorUtils";
+import { resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, isTransparentCssColor, resolveColorTriggerPreviewMode } from "./colorUtils";
 import { isEyedropperSupported, pickColorWithEyedropper } from "./pickColorWithEyedropper";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
@@ -288,6 +288,7 @@ export function ColorPickerPopoverTrigger({
   onChange,
   onClose,
   className,
+  variant,
   ...popoverProps
 }: ColorPickerPopoverTriggerProps) {
   const [open, setOpen] = useState(false);
@@ -300,7 +301,7 @@ export function ColorPickerPopoverTrigger({
     onClose?.();
   };
 
-  const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
+  const previewMode = resolveColorTriggerPreviewMode(value, variant);
 
   return (
     <div
@@ -316,8 +317,15 @@ export function ColorPickerPopoverTrigger({
         onClick={() => setOpen((prev) => !prev)}
       >
         <span
-          className={["delpi-ui-color-picker-trigger__preview", previewClassName].filter(Boolean).join(" ")}
-          style={{ background: previewColor === "transparent" ? undefined : previewColor }}
+          className={[
+            "delpi-ui-color-picker-trigger__preview",
+            previewMode === "none" ? "delpi-ui-color-picker-trigger__preview--none" : null,
+            previewMode === "auto" ? "delpi-ui-color-picker-trigger__preview--auto" : null,
+            previewClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={previewMode === "color" && value ? { background: value } : undefined}
           aria-hidden="true"
         />
         <span className="delpi-ui-color-picker-trigger__label">{triggerLabel}</span>
@@ -335,6 +343,7 @@ export function ColorPickerPopoverTrigger({
         >
           <ColorPickerPopover
             {...popoverProps}
+            variant={variant}
             className={className}
             value={value}
             onChange={(color) => {
@@ -376,7 +385,7 @@ export function ShapeFillMenu({
   const panelRef = useRef<HTMLDivElement>(null);
   const inSectionPopover = useRibbonSectionPopoverSurface();
 
-  const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
+  const previewMode = resolveColorTriggerPreviewMode(value, "fill");
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -391,8 +400,13 @@ export function ShapeFillMenu({
         <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
           <Droplet size={18} />
           <span
-            className="delpi-ui-shape-menu__trigger-swatch"
-            style={{ background: previewColor === "transparent" ? undefined : previewColor }}
+            className={[
+              "delpi-ui-shape-menu__trigger-swatch",
+              previewMode === "none" ? "delpi-ui-shape-menu__trigger-swatch--none" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={previewMode === "color" && value ? { background: value } : undefined}
           />
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{fillLabel ?? L.fill}</span>

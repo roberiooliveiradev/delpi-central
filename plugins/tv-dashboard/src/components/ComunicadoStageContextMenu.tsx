@@ -73,6 +73,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.contextMenu;
+const R = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const S = {
   cut: shortcutKeysLabel("cut"),
   copy: shortcutKeysLabel("copy"),
@@ -370,6 +371,7 @@ export function ComunicadoStageContextMenu({
           <ContextMenuToolbar aria-label={C.quickFormat}>
             {showShapeFill ? (
               <TvRibbonColorPicker
+                hint={R.shapeFill}
                 label={C.fill}
                 ariaLabel={C.fill}
                 value={fillValue}
@@ -379,6 +381,7 @@ export function ComunicadoStageContextMenu({
               />
             ) : menuSelected.type === "heading" || menuSelected.type === "text" ? (
               <TvRibbonColorPicker
+                hint={R.shapeFill}
                 label={C.fill}
                 value={fillValue}
                 onChange={(color) => updateSelectedStyle({ backgroundColor: color })}
@@ -388,6 +391,7 @@ export function ComunicadoStageContextMenu({
             ) : null}
             {showShapeStroke ? (
               <TvRibbonColorPicker
+                hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
                 onChange={(color) => updateSelectedStyle({ stroke: color })}
@@ -398,6 +402,7 @@ export function ComunicadoStageContextMenu({
               menuSelected.type === "text" ||
               menuSelected.type === "icon" ? (
               <TvRibbonColorPicker
+                hint={R.shapeOutline}
                 label={C.outline}
                 value={outlineValue}
                 onChange={(color) => updateSelectedStyle({ borderColor: color })}

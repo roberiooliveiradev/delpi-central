@@ -267,6 +267,7 @@ export function resolveSelectedSwatchHex(value?: string | null): string | undefi
   const trimmed = value.trim();
   if (!trimmed || isAutomaticTextColor(trimmed)) return undefined;
   if (trimmed.toLowerCase() === "transparent") return undefined;
+  if (trimmed.toLowerCase() === "none") return undefined;
   const parsed = cssToColorValue(trimmed);
   if (parsed.alpha <= 0) return undefined;
   return normalizeHex(parsed.hex);
@@ -277,8 +278,30 @@ export function isTransparentCssColor(value?: string | null): boolean {
   if (value == null) return false;
   const trimmed = value.trim().toLowerCase();
   if (!trimmed || trimmed === AUTOMATIC_TEXT_COLOR) return false;
-  if (trimmed === "transparent") return true;
+  if (trimmed === "transparent" || trimmed === "none") return true;
   return cssToColorValue(trimmed).alpha <= 0;
+}
+
+export type ColorTriggerPreviewMode = "none" | "auto" | "color";
+
+/** Modo visual do swatch do gatilho (ribbon / menu de contexto). */
+export function resolveColorTriggerPreviewMode(
+  value?: string | null,
+  variant?: "default" | "fill" | "outline" | "text",
+): ColorTriggerPreviewMode {
+  if (variant === "text") {
+    if (isAutomaticTextColor(value)) return "auto";
+  } else if (
+    value != null &&
+    String(value).trim().toLowerCase() === AUTOMATIC_TEXT_COLOR
+  ) {
+    return "auto";
+  }
+  if (value == null || !String(value).trim() || isTransparentCssColor(value)) {
+    return "none";
+  }
+  if (cssToColorValue(value).alpha <= 0) return "none";
+  return "color";
 }
 
 /**

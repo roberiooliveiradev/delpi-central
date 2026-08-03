@@ -5,7 +5,7 @@ import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceCont
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { ColorPickerPopover } from "./ColorPickerPopover";
-import { cssToColorValue } from "./colorUtils";
+import { resolveColorTriggerPreviewMode } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 
@@ -52,7 +52,7 @@ export function ShapeOutlineMenu({
     setSubmenu(null);
   };
 
-  const previewColor = color && cssToColorValue(color).alpha > 0 ? color : "transparent";
+  const previewMode = resolveColorTriggerPreviewMode(color, "outline");
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -67,8 +67,18 @@ export function ShapeOutlineMenu({
         <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
           <Minus size={18} strokeWidth={Math.min(4, strokeWidth)} />
           <span
-            className="delpi-ui-shape-menu__trigger-swatch delpi-ui-shape-menu__trigger-swatch--outline"
-            style={{ borderColor: previewColor === "transparent" ? undefined : previewColor }}
+            className={[
+              "delpi-ui-shape-menu__trigger-swatch",
+              "delpi-ui-shape-menu__trigger-swatch--outline",
+              previewMode === "none" ? "delpi-ui-shape-menu__trigger-swatch--none" : null,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={
+              previewMode === "color" && color
+                ? { borderColor: color }
+                : undefined
+            }
           />
         </span>
         <span className="delpi-ui-shape-menu__trigger-label">{outlineLabel ?? L.outline}</span>

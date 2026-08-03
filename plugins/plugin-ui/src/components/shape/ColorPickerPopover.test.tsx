@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
-import { ColorPickerPopover } from "./ColorPickerPopover";
+import { ColorPickerPopover, ColorPickerPopoverTrigger } from "./ColorPickerPopover";
 import * as eyedropper from "./pickColorWithEyedropper";
 
 afterEach(() => {
@@ -32,6 +32,19 @@ describe("ColorPickerPopover", () => {
     expect(view.queryAllByRole("button", { pressed: true }).filter((el) => el !== noFill)).toHaveLength(
       0,
     );
+  });
+
+  it("gatilho com transparent mostra prévia com linha vermelha (sem cor)", () => {
+    const { container } = render(
+      <ColorPickerPopoverTrigger
+        triggerLabel="Cor de preenchimento"
+        variant="fill"
+        value="transparent"
+        onChange={vi.fn()}
+      />,
+    );
+    const preview = container.querySelector(".delpi-ui-color-picker-trigger__preview");
+    expect(preview?.className).toContain("delpi-ui-color-picker-trigger__preview--none");
   });
 
   it("com value transparent em outline destaca Sem contorno", () => {

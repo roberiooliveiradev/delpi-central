@@ -126,7 +126,8 @@
 
 .delpi-ui-color-picker__action-icon--none {
   background:
-    linear-gradient(135deg, transparent 46%, #ef4444 48%, #ef4444 52%, transparent 54%);
+    linear-gradient(135deg, transparent 46%, #ef4444 48%, #ef4444 52%, transparent 54%),
+    var(--delpi-ui-surface, #fff);
 }
 
 .delpi-ui-color-picker__action-icon--auto {
@@ -188,6 +189,18 @@
   height: 14px;
   border: 1px solid var(--delpi-ui-border, #cbd5e1);
   border-radius: 2px;
+  background: var(--delpi-ui-surface, #fff);
+  box-sizing: border-box;
+}
+
+.delpi-ui-color-picker-trigger__preview--none {
+  background:
+    linear-gradient(135deg, transparent 46%, #ef4444 48%, #ef4444 52%, transparent 54%),
+    var(--delpi-ui-surface, #fff);
+}
+
+.delpi-ui-color-picker-trigger__preview--auto {
+  background: linear-gradient(90deg, #ffffff 50%, #111827 50%);
 }
 
 .delpi-ui-color-picker-trigger--ribbon .delpi-ui-color-picker-trigger__preview {
@@ -309,6 +322,17 @@
   height: 0;
   width: 18px;
   bottom: 3px;
+}
+
+.delpi-ui-shape-menu__trigger-swatch--none {
+  background:
+    linear-gradient(135deg, transparent 40%, #ef4444 45%, #ef4444 55%, transparent 60%),
+    var(--delpi-ui-surface, #fff);
+  border: none;
+  height: 4px;
+  width: 20px;
+  bottom: 1px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--delpi-ui-border, #cbd5e1) 70%, transparent);
 }
 
 .delpi-ui-shape-style-strip {

@@ -78,6 +78,7 @@ export {
   hasIllegibleTextContrast,
   rgbToHex,
   resolveSelectedSwatchHex,
+  resolveColorTriggerPreviewMode,
 } from "./colorUtils";
 export { applyTextEffectStyleToCss } from "./textEffectStyle";
 export type { TextEffectStyleFields } from "./textEffectStyle";

@@ -24,4 +24,19 @@ describe("RibbonColorPicker", () => {
     expect(popover?.className).not.toContain("delpi-ui-color-picker-trigger--inline");
     expect(popover?.className).not.toContain("delpi-ui-color-picker-trigger--ribbon");
   });
+
+  it("com transparent o gatilho mostra indicador sem cor (linha vermelha)", () => {
+    const { container } = render(
+      <RibbonColorPicker
+        label="Cor de preenchimento"
+        variant="fill"
+        value="transparent"
+        onChange={() => undefined}
+        className="delpi-ui-color-picker-trigger--inline"
+      />,
+    );
+    expect(
+      container.querySelector(".delpi-ui-color-picker-trigger__preview--none"),
+    ).toBeTruthy();
+  });
 });
