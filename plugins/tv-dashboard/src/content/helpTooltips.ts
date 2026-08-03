@@ -9,6 +9,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     currentSlide: "Ações sobre a tela selecionada no filmstrip ou no palco.",
     playlistChrome:
       "Controles da programação: pré-visualizar, atalhos, colaboradores e link da TV.",
+    playlistFilters:
+      "Filtros padrão da programação (filial, período, etc.): valem para todas as telas e fontes que aceitam o parâmetro, sem repetir a mesma chave.",
     pause: "Desativa a tela na exibição da TV sem removê-la da playlist.",
     activate: "Reativa uma tela pausada para voltar a aparecer na rotação.",
     duplicate: "Cria uma cópia idêntica da tela atual, logo após ela na lista.",
@@ -275,6 +277,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Duração padrão da programação: vale para telas que herdam (sem tempo individual).",
     refreshInterval:
       "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
+    dataDefaults:
+      "Parâmetros herdados por todas as telas. O slide e a fonte podem sobrescrever. Presets relativos (esta semana, este mês, últimos N dias…) resolvem de novo a cada atualização na TV.",
     dataBlockRefreshInterval:
       "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview atualiza ao mudar filtros ou a fonte.",
     customSlideType:
@@ -298,6 +302,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo. Em fontes de histórico completo (ex.: TRANSFORMA+), Personalizado com datas vazias traz todo o período.",
+    playlistFiltersEmpty:
+      "Adicione fontes de dados nas telas para configurar filtros globais da programação.",
     dateRangePresetOpenEnded:
       "Nesta fonte o padrão é Personalizado: deixe Data início e Data fim vazias para todo o histórico cadastrado. Presets relativos (este mês, este ano…) também estão disponíveis se quiser limitar.",
     dateRangeFixed:

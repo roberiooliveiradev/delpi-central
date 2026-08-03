@@ -5,6 +5,7 @@ import {
   Building2,
   Clock,
   Copy,
+  Filter,
   Globe,
   Layers,
   LayoutTemplate,
@@ -38,6 +39,7 @@ import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { DeckRibbonTilePopover } from "./deck/DeckRibbonTilePopover";
+import { PlaylistDataFiltersFields } from "./PlaylistDataFiltersFields";
 import { TdNativeTextField } from "./tdFormFields";
 import { TdRibbonSelect } from "./tdRibbonUi";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -46,6 +48,8 @@ type Props = {
   activeTab: Extract<DeckRibbonTabId, "slide" | "playlist">;
   playlist: Playlist;
   slide: Slide | null;
+  /** Todas as telas — schema dos filtros globais. */
+  slides?: Slide[];
   sections?: PlaylistSection[];
   catalog: NativeScreenCatalogItem[];
   branchScope: BranchScope | null;
@@ -82,6 +86,7 @@ const SLIDE_TRANSITION_OPTIONS = [
 ];
 
 const F = TV_DASHBOARD_HELP_TOOLTIPS.fields;
+const R = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 function patchMaster(
   current: PlaylistMasterConfig | undefined,
@@ -97,6 +102,7 @@ export function DeckSettingsPanel({
   activeTab,
   playlist,
   slide,
+  slides: slidesProp,
   sections = [],
   catalog,
   branchScope,
@@ -104,6 +110,7 @@ export function DeckSettingsPanel({
   onSavePlaylistSettings,
   onSaveSlide,
 }: Props) {
+  const slides = slidesProp ?? playlist.slides ?? [];
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState(playlist.defaultDurationSec);
   const [durationInherit, setDurationInherit] = useState(true);
@@ -515,6 +522,25 @@ export function DeckSettingsPanel({
                 step={10}
                 value={playlist.globalRefreshSec}
                 onChange={(value) => onSavePlaylistSettings("globalRefreshSec", value)}
+              />
+            </DeckRibbonTilePopover>
+          </div>
+        </DeckRibbonGroup>
+
+        <DeckRibbonGroup groupId="playlist-filters" label="Filtros" hint={R.playlistFilters}>
+          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+            <DeckRibbonTilePopover
+              icon={Filter}
+              label="Filtros"
+              hint={F.dataDefaults}
+              panelLabel="Filtros da programação"
+              panelClassName="td-deck-ribbon-tile-popover--wide td-deck-ribbon-tile-popover--filters"
+            >
+              <PlaylistDataFiltersFields
+                slides={slides}
+                values={playlist.dataDefaults}
+                branchScope={branchScope}
+                onChange={(next) => onSavePlaylistSettings("dataDefaults", next)}
               />
             </DeckRibbonTilePopover>
           </div>

@@ -8,6 +8,7 @@ import {
   Clapperboard,
   Database,
   Eye,
+  Filter,
   Grid3x3,
   Image,
   Layers,
@@ -58,6 +59,7 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   /* Programação */
   "playlist-chrome": Clapperboard,
   "playlist-rotation": RotateCw,
+  "playlist-filters": Filter,
   "playlist-link": Link,
   "playlist-master": Layers,
   /* Elemento — tipografia */

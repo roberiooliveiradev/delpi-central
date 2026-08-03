@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Filter } from "lucide-react";
-import type { BranchScope } from "../api/tvDashboardApi";
-import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { applyDataParamRawUpdates } from "../utils/applyDataParamUpdates";
-import { DataParamFields, type DataParamSchema } from "./DataParamFields";
+import {
+  collectFetchableOperationIds,
+  mergeRouteParamSchemas,
+} from "../utils/collectPlaylistDataParamSchema";
+import { DataParamFields } from "./DataParamFields";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { DeckSettingsAccordion } from "./deck/DeckSettingsAccordion";
@@ -22,7 +26,15 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, []);
 
-  const schema = useMemo(() => mergeParamSchemas(routes), [routes]);
+  const operationIds = useMemo(
+    () => collectFetchableOperationIds((config.blocks ?? []) as ComunicadoBlock[]),
+    [config.blocks],
+  );
+
+  const schema = useMemo(
+    () => mergeRouteParamSchemas(routes, operationIds),
+    [routes, operationIds],
+  );
 
   function updateFilters(updates: Record<string, string>) {
     const next = applyDataParamRawUpdates(filters, updates, schema);
@@ -61,14 +73,4 @@ export function SlideDataFiltersPanel({ branchScope = null, compact = false }: P
   }
 
   return body;
-}
-
-function mergeParamSchemas(routes: TvDataRouteCatalogItem[]): DataParamSchema {
-  const merged: DataParamSchema = {};
-  for (const route of routes) {
-    for (const [key, field] of Object.entries(route.paramSchema ?? {})) {
-      if (!merged[key]) merged[key] = field as DataParamSchema[string];
-    }
-  }
-  return merged;
 }

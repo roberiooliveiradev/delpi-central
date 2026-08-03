@@ -1770,6 +1770,7 @@ export function PlaylistEditorPage({
   const chromeProps = {
     playlist,
     slide: selectedSlide,
+    slides,
     sections,
     catalog,
     branchScope,

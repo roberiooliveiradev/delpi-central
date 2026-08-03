@@ -5925,6 +5925,16 @@ body.td-composer--marqueeing *{
   min-width: min(320px, 78vw);
   max-width: min(440px, 90vw);
 }
+.dashboard-tv-dashboard .td-deck-ribbon-tile-popover--filters{
+  min-width: min(360px, 82vw);
+  max-width: min(480px, 92vw);
+}
+.dashboard-tv-dashboard .td-deck-playlist-filters__empty{
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--delpi-ui-muted, var(--td-muted, #9fb0c5));
+}
 .dashboard-tv-dashboard .td-deck-ribbon-tile-popover--timing{
   min-width: min(240px, 72vw);
   max-width: min(300px, 86vw);

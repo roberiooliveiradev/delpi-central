@@ -10,18 +10,26 @@ const here = dirname(fileURLToPath(import.meta.url));
  * inline vazando na band de 112px).
  */
 describe("playlist ribbon layout contract", () => {
-  it("Rotação / Link / Master usam DeckRibbonTilePopover", () => {
+  it("Rotação / Filtros / Link / Master usam DeckRibbonTilePopover", () => {
     const panel = readFileSync(join(here, "DeckSettingsPanel.tsx"), "utf8");
     expect(panel).toContain('groupId="playlist-rotation"');
     expect(panel).toContain('label="Resolução"');
     expect(panel).toContain('label="Duração"');
     expect(panel).toContain('label="Atualizar"');
     expect(panel).toContain("DeckRibbonTilePopover");
+    expect(panel).toContain('groupId="playlist-filters"');
+    expect(panel).toContain("PlaylistDataFiltersFields");
+    expect(panel).toContain('onSavePlaylistSettings("dataDefaults"');
     expect(panel).toContain('groupId="playlist-link"');
     expect(panel).toContain('groupId="playlist-master"');
     expect(panel).not.toContain("td-deck-tabs__grid--playlist-rotation");
     expect(panel).not.toContain("td-deck-playlist-link");
     expect(panel).not.toContain("td-deck-master--compact");
+  });
+
+  it("ícone de colapso playlist-filters registrado", () => {
+    const icons = readFileSync(join(here, "deck/deckRibbonCollapseIcons.ts"), "utf8");
+    expect(icons).toContain('"playlist-filters"');
   });
 
   it("DeckRibbonTilePopover marca surface section-popover para nested (cores)", () => {
