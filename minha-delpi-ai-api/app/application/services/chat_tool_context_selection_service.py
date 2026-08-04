@@ -58,6 +58,11 @@ class ChatToolContextSelectionService:
                 allowed_tool_names=allowed_tool_names,
                 tools_registry=host.execute_tool_use_case.tools,
                 agent_context=agent_context,
+                access_token=(
+                    getattr(host, "_access_token", None)
+                    if isinstance(getattr(host, "_access_token", None), str)
+                    else None
+                ),
             )
             native_meta = native_result.get("meta") or native_meta
             native_selections = list(native_result.get("selections") or [])

@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import Any
+
 from app.domain.ports.internal_tool_port import InternalToolPort
 
 NATIVE_TOOL_PARAMETERS: dict[str, dict] = {
@@ -63,7 +68,10 @@ NATIVE_TOOL_PARAMETERS: dict[str, dict] = {
             },
             "ops": {
                 "type": "array",
-                "description": "Ops TvCopilotPatchV1 (upsert_data_source, set_data_transform, upsert_block, bind_visual, add_slide_from_preset, create_playlist).",
+                "description": (
+                    "Ops TvCopilotPatchV1 do catálogo do BFF TV "
+                    "(GET /data/copilot/capabilities). Não invente op fora do catálogo."
+                ),
                 "items": {"type": "object", "additionalProperties": True},
             },
             "includeFingerprint": {
@@ -83,6 +91,7 @@ class ChatNativeToolSchemaService:
         *,
         allowed_tool_names: list[str] | None,
         tools_registry: dict[str, InternalToolPort],
+        tv_capability_catalog: dict[str, Any] | None = None,
     ) -> list[dict]:
         allowed = {
             str(name).strip()
@@ -97,15 +106,67 @@ class ChatNativeToolSchemaService:
                 continue
 
             tool = tools_registry[name]
+            parameters = deepcopy(NATIVE_TOOL_PARAMETERS[name])
+            description = tool.description
+            if name == "tv_dashboard_copilot":
+                parameters, description = self._enrich_tv_dashboard_schema(
+                    parameters,
+                    description,
+                    tv_capability_catalog,
+                )
             schemas.append(
                 {
                     "type": "function",
                     "function": {
                         "name": tool.name,
-                        "description": tool.description,
-                        "parameters": NATIVE_TOOL_PARAMETERS[name],
+                        "description": description,
+                        "parameters": parameters,
                     },
                 }
             )
 
         return schemas
+
+    @staticmethod
+    def _enrich_tv_dashboard_schema(
+        parameters: dict[str, Any],
+        description: str,
+        catalog: dict[str, Any] | None,
+    ) -> tuple[dict[str, Any], str]:
+        """Injeta ops/whenToUse do catálogo BFF no schema native (AP8 fase 5)."""
+        if not isinstance(catalog, dict):
+            return parameters, description
+
+        capabilities = catalog.get("capabilities")
+        if not isinstance(capabilities, list) or not capabilities:
+            return parameters, description
+
+        op_names: list[str] = []
+        when_lines: list[str] = []
+        for item in capabilities:
+            if not isinstance(item, dict):
+                continue
+            op = str(item.get("op") or "").strip()
+            if op and op not in op_names:
+                op_names.append(op)
+            when = str(item.get("whenToUse") or "").strip()
+            key = str(item.get("key") or op).strip()
+            if when:
+                when_lines.append(f"- {key} ({op}): {when}")
+
+        version = str(catalog.get("catalogVersion") or "").strip()
+        desc_parts = [description.strip()]
+        if version:
+            desc_parts.append(f"Catálogo TV version={version}.")
+        if when_lines:
+            desc_parts.append("Quando usar cada op:\n" + "\n".join(when_lines[:20]))
+
+        ops_prop = (parameters.get("properties") or {}).get("ops")
+        if isinstance(ops_prop, dict) and op_names:
+            ops_prop["description"] = (
+                "Ops TvCopilotPatchV1 permitidas neste catálogo: "
+                + ", ".join(op_names)
+                + "."
+            )
+
+        return parameters, "\n".join(desc_parts)
