@@ -27,9 +27,18 @@ class PedidosVendaAbertosSummary:
 class ListPedidosVendaAbertosResponse:
     items: list[dict]
     summary: PedidosVendaAbertosSummary
+    portfolio_message: str | None = None
+    portfolio_empty: bool = False
+    portfolio_seller_id: str | None = None
 
     def to_dict(self) -> dict:
-        return {
+        payload = {
             "items": self.items,
             "summary": self.summary.to_dict(),
+            "portfolio": {
+                "empty": self.portfolio_empty,
+                "message": self.portfolio_message,
+                "seller_id": self.portfolio_seller_id,
+            },
         }
+        return payload

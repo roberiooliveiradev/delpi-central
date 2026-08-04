@@ -22,6 +22,8 @@ class PolicyEngine:
         allowed = policy(user=user, **context)
 
         if not allowed:
+            if getattr(user, "rbac_unavailable", False):
+                raise Exception("Service Unavailable")
             raise Exception("Forbidden")
 
         return True

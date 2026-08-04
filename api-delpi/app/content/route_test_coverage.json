@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-31",
-  "baselineOperationCount": 504,
-  "operationCount": 504,
-  "coveredCount": 503,
-  "gapCount": 0,
+  "generatedAt": "2026-08-04",
+  "baselineOperationCount": 523,
+  "operationCount": 523,
+  "coveredCount": 521,
+  "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -14,8 +14,8 @@
       "exempt": 0
     },
     "commercial": {
-      "total": 18,
-      "covered": 18,
+      "total": 19,
+      "covered": 19,
       "gap": 0,
       "exempt": 0
     },
@@ -98,8 +98,8 @@
       "exempt": 0
     },
     "pedidos-venda-abertos": {
-      "total": 2,
-      "covered": 2,
+      "total": 19,
+      "covered": 19,
       "gap": 0,
       "exempt": 0
     },
@@ -146,9 +146,9 @@
       "exempt": 0
     },
     "reports": {
-      "total": 18,
+      "total": 19,
       "covered": 18,
-      "gap": 0,
+      "gap": 1,
       "exempt": 0
     },
     "retrabalhos": {
@@ -306,6 +306,15 @@
       "path": "/commercial/proposals/{proposal_number}/history/events",
       "module": "commercial",
       "entity": "commercial_proposal_history",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_commercial_rol_by_customer",
+      "method": "GET",
+      "path": "/commercial/rol/by-customer",
+      "module": "commercial",
+      "entity": "commercial_rol_by_customer",
       "shape": "paged_list",
       "status": "covered"
     },
@@ -1994,12 +2003,165 @@
       "status": "covered"
     },
     {
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_outbound_invoice",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_customer_billing_series",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/billing-series",
+      "module": "pedidos-venda-abertos",
+      "entity": "customers",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "enrich_portfolio_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/enrichment",
+      "module": "pedidos-venda-abertos",
+      "entity": "customers",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "search_active_customers_for_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/search",
+      "module": "pedidos-venda-abertos",
+      "entity": "customers",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_customer_avatar",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_avatar",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_customer_avatar",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_avatar",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upsert_customer_avatar",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "module": "pedidos-venda-abertos",
+      "entity": "customer_avatar",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "list_ops_abertas_pedidos_venda",
       "method": "GET",
       "path": "/pedidos-venda-abertos/ops-abertas",
       "module": "pedidos-venda-abertos",
       "entity": "open_production_order",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_seller_portfolios",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_seller_portfolio",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_my_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/me",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "deactivate_seller_portfolio",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_seller_portfolio",
+      "method": "PATCH",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "remove_seller_customer",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "add_seller_customer",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "replace_seller_customers",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "transfer_seller_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
+      "module": "pedidos-venda-abertos",
+      "entity": "seller_portfolio",
+      "shape": "scalar",
       "status": "covered"
     },
     {
@@ -4197,6 +4359,15 @@
       "entity": "report_provider",
       "shape": "paged_list",
       "status": "covered"
+    },
+    {
+      "operationId": "preview_report_provider_management_revenue_monthly",
+      "method": "GET",
+      "path": "/reports/providers/management_revenue_monthly/preview",
+      "module": "reports",
+      "entity": "report_dataset",
+      "shape": "paged_list",
+      "status": "gap"
     },
     {
       "operationId": "preview_report_provider_safety_stock_shortage_30d",

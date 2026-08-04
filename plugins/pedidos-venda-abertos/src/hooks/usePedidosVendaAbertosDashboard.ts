@@ -21,8 +21,9 @@ import {
 
 export const PAGE_SIZE = 50;
 
-export function usePedidosVendaAbertosDashboard() {
-  const { data, opsData, opsWarning, loading, error, reload } = usePedidosVendaAbertos();
+export function usePedidosVendaAbertosDashboard(sellerId?: string | null) {
+  const { data, opsData, opsWarning, loading, error, reload } =
+    usePedidosVendaAbertos(sellerId);
   const [filters, setFilters] = useState<PedidosVendaAbertosFilters>(DEFAULT_FILTERS);
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);

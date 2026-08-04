@@ -90,6 +90,7 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 
 # --- pedidos de venda em aberto ---
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
+PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 
 # --- financeiro — despesas por centro de custo ---
 FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
@@ -305,6 +306,12 @@ EFICIENCIA_FABRIL_ACCESS = [
 PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
+    PEDIDOS_VENDA_ABERTOS_ADMIN,
+]
+
+PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    PEDIDOS_VENDA_ABERTOS_ADMIN,
 ]
 
 FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS = [

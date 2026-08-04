@@ -104,6 +104,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "DelpiKpiCard"),
   vc("layout", "SimpleKpiCard"),
   vc("layout", "MetricKpiCard"),
+  vc("layout", "InitialsAvatar", {
+    addedAt: "2026-08-04",
+    description:
+      "Avatar chrome: foto ou iniciais com cor determinística (sem HTTP).",
+  }),
   vc("layout", "ChartCard"),
   vc("layout", "ChartToolbar"),
   vc("layout", "ChartGranularityToggle"),

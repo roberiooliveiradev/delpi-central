@@ -503,6 +503,25 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_ops_abertas_pedidos_venda": RouteContract(
         "open_production_order", "composite_analysis"
     ),
+    "list_cliente_notas_fiscais_saida": RouteContract(
+        "customer_outbound_invoice", "playbook_report"
+    ),
+    "get_my_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
+    "list_seller_portfolios": RouteContract("seller_portfolio", "paged_list"),
+    "create_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
+    "get_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
+    "update_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
+    "deactivate_seller_portfolio": RouteContract("seller_portfolio", "scalar"),
+    "replace_seller_customers": RouteContract("seller_portfolio", "scalar"),
+    "add_seller_customer": RouteContract("seller_portfolio", "scalar"),
+    "remove_seller_customer": RouteContract("seller_portfolio", "scalar"),
+    "transfer_seller_customers": RouteContract("seller_portfolio", "scalar"),
+    "search_active_customers_for_portfolio": RouteContract("customers", "paged_list"),
+    "enrich_portfolio_customers": RouteContract("customers", "paged_list"),
+    "list_customer_billing_series": RouteContract("customers", "scalar"),
+    "get_customer_avatar": RouteContract("customer_avatar", "scalar"),
+    "upsert_customer_avatar": RouteContract("customer_avatar", "scalar"),
+    "delete_customer_avatar": RouteContract("customer_avatar", "scalar"),
     "list_propostas_comerciais": RouteContract(
         "commercial_proposal_document", "paged_list"
     ),

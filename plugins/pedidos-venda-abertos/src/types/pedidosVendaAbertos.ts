@@ -38,4 +38,9 @@ export type PedidosVendaAbertosItem = {
 export type PedidosVendaAbertosData = {
   items: PedidosVendaAbertosItem[];
   summary: PedidosVendaAbertosSummary;
+  portfolio?: {
+    empty?: boolean;
+    message?: string | null;
+    seller_id?: string | null;
+  };
 };

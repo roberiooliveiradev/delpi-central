@@ -16,3 +16,14 @@ class CustomerQueryRepositoryPort(ABC):
         page_size: int = 20,
     ) -> Page[CustomerMaster]:
         raise NotImplementedError
+
+    @abstractmethod
+    def search_active_customers(
+        self,
+        *,
+        query: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> Page[CustomerMaster]:
+        """Clientes ativos TOTVS (não excluídos / não bloqueados)."""
+        raise NotImplementedError

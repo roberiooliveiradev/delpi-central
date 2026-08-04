@@ -30,6 +30,7 @@ _ENTITY_LABELS: dict[str, str] = {
     "production_order_detail": "detalhe de ordem de produção por OP",
     "open_sales_order": "pedidos de venda em aberto",
     "open_production_order": "OPs abertas (pedidos de venda)",
+    "customer_outbound_invoice": "notas fiscais de saída por cliente",
     "commercial_proposal_document": "proposta comercial interna (PDF/Totvs)",
     "commercial_proposal": "propostas comerciais",
     "sales_conversion_rate": "taxa de fechamento comercial",

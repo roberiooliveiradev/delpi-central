@@ -248,6 +248,17 @@ export {
   type MetricKpiCardProps,
   type MetricKpiCardTone,
 } from "./MetricKpiCard";
+export {
+  InitialsAvatar,
+  createInitialsAvatar,
+  hueFromKey,
+  initialsAvatarBemClasses,
+  initialsFromName,
+  type DashboardInitialsAvatarProps,
+  type InitialsAvatarClassNames,
+  type InitialsAvatarProps,
+  type InitialsAvatarSize,
+} from "./InitialsAvatar";
 export { FitText } from "./FitText";
 export {
   PageHeader,

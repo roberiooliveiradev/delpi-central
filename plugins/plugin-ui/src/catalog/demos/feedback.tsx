@@ -52,7 +52,7 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
     title: "EmptyState",
     description: "Estado vazio com título e mensagem.",
     docAnchor: "emptystate",
-    propsSummary: ["title", "message", "classNames"],
+    propsSummary: ["title", "message", "classNames", "children", "role"],
     demos: [
       {
         id: "default",
