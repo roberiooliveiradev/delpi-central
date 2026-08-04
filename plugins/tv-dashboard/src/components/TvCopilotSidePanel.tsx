@@ -104,15 +104,22 @@ export function TvCopilotSidePanel({
   const selectedBlocks = editor?.selectedBlocks ?? [];
 
   const workspaceContext = useMemo(() => {
-    const dataSourceOperationIds = (blocks || [])
+    const dataSources = (blocks || [])
       .filter((b) => b.type === "data_source")
       .map((b) => {
         const binding = "dataBinding" in b ? b.dataBinding : null;
-        return binding && typeof binding === "object" && "operationId" in binding
-          ? String((binding as { operationId?: string }).operationId || "")
-          : "";
+        const operationId =
+          binding && typeof binding === "object" && "operationId" in binding
+            ? String((binding as { operationId?: string }).operationId || "")
+            : "";
+        return {
+          id: String(b.id || ""),
+          operationId,
+        };
       })
-      .filter(Boolean);
+      .filter((item) => item.id && item.operationId);
+
+    const dataSourceOperationIds = dataSources.map((item) => item.operationId);
 
     const selectedBlockTypes: string[] = [];
     const seenTypes = new Set<string>();
@@ -131,6 +138,27 @@ export function TvCopilotSidePanel({
           blocks?.find((b) => b.id === focusBlockId)
         : null) ?? null;
 
+    let focusDataSourceId: string | null = null;
+    let focusOperationId: string | null = null;
+    if (focusBlock?.type === "data_source") {
+      focusDataSourceId = String(focusBlock.id || "") || null;
+      const binding = "dataBinding" in focusBlock ? focusBlock.dataBinding : null;
+      if (binding && typeof binding === "object" && "operationId" in binding) {
+        focusOperationId =
+          String((binding as { operationId?: string }).operationId || "") || null;
+      }
+    } else if (focusBlock && "dataSourceId" in focusBlock) {
+      const linked = String((focusBlock as { dataSourceId?: string }).dataSourceId || "");
+      if (linked) {
+        focusDataSourceId = linked;
+        const match = dataSources.find((item) => item.id === linked);
+        focusOperationId = match?.operationId || null;
+      }
+    }
+
+    const operationId = focusOperationId || dataSourceOperationIds[0] || null;
+    const dataSourceId = focusDataSourceId || dataSources[0]?.id || null;
+
     return {
       playlistId,
       slideId,
@@ -138,6 +166,9 @@ export function TvCopilotSidePanel({
       selectedBlockTypes,
       focusBlockId,
       focusBlockType: focusBlock?.type ? String(focusBlock.type) : selectedBlockTypes[0] ?? null,
+      operationId,
+      dataSourceId,
+      presetKey: null,
       nativeConfigSummary: {
         blockCount: blocks?.length ?? 0,
         dataSourceOperationIds,

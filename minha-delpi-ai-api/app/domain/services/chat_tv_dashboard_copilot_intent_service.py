@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Any
 
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.domain.services.chat_message_normalization_service import (
@@ -250,13 +251,54 @@ class ChatTvDashboardCopilotIntentService:
         if not surface and not playlist_id and not slide_id and not selected_normalized:
             return None
 
-        result = {
+        result: dict[str, Any] = {
             "surface": surface or TV_DASHBOARD_SURFACE,
             "playlistId": playlist_id,
             "slideId": slide_id,
         }
         if selected_normalized:
             result["selectedBlockIds"] = selected_normalized
+
+        operation_id = str(
+            host_context.get("operationId") or host_context.get("operation_id") or ""
+        ).strip()
+        if operation_id:
+            result["operationId"] = operation_id
+
+        data_source_id = str(
+            host_context.get("dataSourceId") or host_context.get("data_source_id") or ""
+        ).strip()
+        if data_source_id:
+            result["dataSourceId"] = data_source_id
+
+        preset_key = str(
+            host_context.get("presetKey") or host_context.get("preset_key") or ""
+        ).strip()
+        if preset_key:
+            result["presetKey"] = preset_key
+
+        selected_block_types = host_context.get("selectedBlockTypes")
+        if isinstance(selected_block_types, list):
+            types_normalized = [
+                str(item).strip()
+                for item in selected_block_types
+                if str(item or "").strip()
+            ]
+            if types_normalized:
+                result["selectedBlockTypes"] = types_normalized
+
+        focus_block_id = str(
+            host_context.get("focusBlockId") or host_context.get("focus_block_id") or ""
+        ).strip()
+        if focus_block_id:
+            result["focusBlockId"] = focus_block_id
+
+        focus_block_type = str(
+            host_context.get("focusBlockType") or host_context.get("focus_block_type") or ""
+        ).strip()
+        if focus_block_type:
+            result["focusBlockType"] = focus_block_type
+
         return result
 
     @classmethod

@@ -54,10 +54,26 @@ Cada item (declarativo em `tv_copilot_content.json`):
 | `whenToUse` | Texto prescritivo (injetado no prompt addon da AI) |
 | `contentMarkers` / `excludeMarkers` | Matching NL genérico |
 | `actionTermSet` | `create` \| `mutation` \| `any` |
-| `payloadTemplate` | Template JSON com placeholders (`{{quoted}}`, `{{selectedBlockId}}`) |
+| `payloadTemplate` / `payloadTemplates` | Template(s) JSON com placeholders; composites usam array |
+| `requiresFilledPlaceholders` | Ex.: `["backgroundColor"]` — não emite op se vazio |
+| `isComposite` | Capability que expande em várias ops (ex.: KPI = fonte + view + bind) |
 | `inputSchema` | JSON Schema dos campos da op |
 | `sideEffectHints` | Hints genéricos para o MFE (`refreshFilmstrip`, `replaceNativeConfig`, …) |
 | `requiresSlide` / `requiresPlaylist` | Target mínimo |
+
+### Placeholders do suggest-ops
+
+| Placeholder | Origem |
+|-------------|--------|
+| `quoted` | Texto entre aspas na mensagem |
+| `selectedBlockId` / `slideId` / `playlistId` / … | `hostContext` |
+| `operationId` / `routeLabel` | host → `nlRouteHints` → score no catálogo TV |
+| `backgroundColor` | `colorVocabulary` (PT→hex) ou `#rrggbb` na mensagem |
+| `newDataSourceId` / `newVisualId` | Gerados no BFF para composites |
+
+Fundo canônico: `{ "type": "color", "value": "#…" }` (mesmo shape do enrich / ribbon). Sem cor resolvida → `ops: []` + `suggestNeedColor`.
+
+KPI composto (`add_kpi_from_route`): `upsert_data_source` + `upsert_block` (`kpi_view`) + `bind_visual`.
 
 `catalogVersion` muda quando o JSON de capabilities muda. A AI cacheia por versão — **proibido** materializar o catálogo no repo da AI.
 
@@ -94,7 +110,7 @@ Cada item (declarativo em `tv_copilot_content.json`):
 ## Embed (A1)
 
 - Remote MF: `minha-delpi-chat` → `./EmbeddedChat`
-- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, `selectedBlockIds`, resumo do foco
+- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, `selectedBlockIds`, `operationId`, `dataSourceId`, `presetKey` (quando souber), resumo do foco
 - Preview → draft local via `sideEffectHints` (genérico); confirm → persist
 
 ## Escopo negativo

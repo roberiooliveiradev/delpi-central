@@ -21,6 +21,12 @@ export type TvWorkspaceContext = {
   /** Primeiro bloco em foco. */
   focusBlockId?: string | null;
   focusBlockType?: string | null;
+  /** operationId da fonte em foco / primeira fonte do slide. */
+  operationId?: string | null;
+  /** Id do bloco data_source em foco. */
+  dataSourceId?: string | null;
+  /** Preset do slide, quando o host souber. */
+  presetKey?: string | null;
   /** Resumo do native_config sem resolved — só metadados. */
   nativeConfigSummary?: {
     blockCount?: number;
@@ -110,6 +116,12 @@ export function EmbeddedChat({
         selectedBlockTypes: workspaceContext?.selectedBlockTypes,
         focusBlockId: workspaceContext?.focusBlockId,
         focusBlockType: workspaceContext?.focusBlockType,
+        operationId:
+          workspaceContext?.operationId ||
+          workspaceContext?.nativeConfigSummary?.dataSourceOperationIds?.[0] ||
+          null,
+        dataSourceId: workspaceContext?.dataSourceId,
+        presetKey: workspaceContext?.presetKey,
       }),
     [
       surface,
@@ -119,6 +131,10 @@ export function EmbeddedChat({
       workspaceContext?.selectedBlockTypes,
       workspaceContext?.focusBlockId,
       workspaceContext?.focusBlockType,
+      workspaceContext?.operationId,
+      workspaceContext?.dataSourceId,
+      workspaceContext?.presetKey,
+      workspaceContext?.nativeConfigSummary?.dataSourceOperationIds,
     ],
   );
 

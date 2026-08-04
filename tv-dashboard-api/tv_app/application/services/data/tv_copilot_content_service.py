@@ -86,6 +86,32 @@ class TvCopilotContentService:
         return []
 
     @classmethod
+    def color_vocabulary(cls) -> dict[str, str]:
+        raw = _load().get("colorVocabulary")
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, str] = {}
+        for key, value in raw.items():
+            name = str(key or "").strip().lower()
+            hex_value = str(value or "").strip()
+            if name and hex_value:
+                out[name] = hex_value
+        return out
+
+    @classmethod
+    def nl_route_hints(cls) -> dict[str, str]:
+        raw = _load().get("nlRouteHints")
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, str] = {}
+        for key, value in raw.items():
+            alias = str(key or "").strip().lower()
+            operation_id = str(value or "").strip()
+            if alias and operation_id:
+                out[alias] = operation_id
+        return out
+
+    @classmethod
     def capabilities(cls) -> list[dict[str, Any]]:
         raw = _load().get("capabilities")
         if not isinstance(raw, list):
@@ -104,10 +130,15 @@ class TvCopilotContentService:
         op_key = str(op or "").strip()
         if not op_key:
             return None
+        fallback: dict[str, Any] | None = None
         for item in cls.capabilities():
-            if str(item.get("op") or "").strip() == op_key:
-                return item
-        return None
+            if str(item.get("op") or "").strip() != op_key:
+                continue
+            if bool(item.get("isComposite")):
+                fallback = fallback or item
+                continue
+            return item
+        return fallback
 
     @classmethod
     def allowed_ops(cls) -> frozenset[str]:
@@ -116,8 +147,18 @@ class TvCopilotContentService:
             from_caps = {
                 str(item.get("op") or "").strip()
                 for item in caps
-                if str(item.get("op") or "").strip()
+                if str(item.get("op") or "").strip() and not bool(item.get("isComposite"))
             }
+            for item in caps:
+                templates = item.get("payloadTemplates")
+                if not isinstance(templates, list):
+                    continue
+                for template in templates:
+                    if not isinstance(template, dict):
+                        continue
+                    op_name = str(template.get("op") or "").strip()
+                    if op_name:
+                        from_caps.add(op_name)
             if from_caps:
                 return frozenset(from_caps)
         raw = _load().get("allowedOps") or []

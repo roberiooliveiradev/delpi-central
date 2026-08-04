@@ -33,6 +33,19 @@ describe("buildTvDashboardHostContext", () => {
     expect(ctx.selectedBlockIds).toBeUndefined();
     expect(ctx.focusBlockId).toBeUndefined();
   });
+
+  it("inclui operationId e dataSourceId quando informados", () => {
+    const ctx = buildTvDashboardHostContext({
+      playlistId: "pl-1",
+      slideId: "sl-1",
+      operationId: "get_overall_equipment_effectiveness_pct",
+      dataSourceId: "ds-1",
+      presetKey: "production_oee_overview",
+    });
+    expect(ctx.operationId).toBe("get_overall_equipment_effectiveness_pct");
+    expect(ctx.dataSourceId).toBe("ds-1");
+    expect(ctx.presetKey).toBe("production_oee_overview");
+  });
 });
 
 describe("notifyHostOfTvCopilotToolCalls", () => {

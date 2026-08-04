@@ -1,10 +1,32 @@
 {
-  "catalogVersion": "2026.08.04.2",
+  "catalogVersion": "2026.08.04.3",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
     "removeBlockIds"
   ],
+  "colorVocabulary": {
+    "azul": "#2563eb",
+    "azul escuro": "#1e3a8a",
+    "azul claro": "#93c5fd",
+    "vermelho": "#dc2626",
+    "verde": "#16a34a",
+    "amarelo": "#eab308",
+    "laranja": "#ea580c",
+    "roxo": "#7c3aed",
+    "rosa": "#db2777",
+    "preto": "#0f172a",
+    "branco": "#ffffff",
+    "cinza": "#64748b",
+    "cinza claro": "#e2e8f0",
+    "cinza escuro": "#334155"
+  },
+  "nlRouteHints": {
+    "oee": "get_overall_equipment_effectiveness_pct",
+    "overall equipment effectiveness": "get_overall_equipment_effectiveness_pct",
+    "eficiencia global": "get_overall_equipment_effectiveness_pct",
+    "eficiência global": "get_overall_equipment_effectiveness_pct"
+  },
   "mutationActionTerms": [
     "escreva",
     "escrever",
@@ -80,7 +102,9 @@
     "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
     "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
     "suggestNoMatch": "Nenhuma capability do catálogo corresponde à mensagem.",
-    "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s))."
+    "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
+    "suggestNeedColor": "Indique a cor do fundo (ex.: azul, #2563eb).",
+    "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide."
   },
   "settings": {
     "maxOpsPerPatch": 40,
@@ -110,11 +134,67 @@
   ],
   "capabilities": [
     {
+      "key": "add_kpi_from_route",
+      "op": "upsert_data_source",
+      "isComposite": true,
+      "whenToUse": "Adicionar um KPI no slide a partir de uma rota allowlisted (fonte + kpi_view + bind).",
+      "contentMarkers": [
+        "kpi",
+        "indicador",
+        "adicione um kpi",
+        "adicionar um kpi",
+        "adicionar kpi",
+        "crie um kpi",
+        "criar um kpi"
+      ],
+      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela"],
+      "actionTermSet": "create",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "kpi",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "kpi_view",
+            "frame": { "x": 10, "y": 28, "w": 28, "h": 22 },
+            "style": { "zIndex": 2 }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "operationId"],
+        "properties": {
+          "op": { "const": "upsert_data_source" },
+          "operationId": { "type": "string" },
+          "blockId": { "type": "string" },
+          "params": { "type": "object" },
+          "label": { "type": "string" },
+          "displayMode": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
       "key": "upsert_data_source",
       "op": "upsert_data_source",
       "whenToUse": "Adicionar ou atualizar uma fonte de dados (operationId allowlisted) no slide.",
-      "contentMarkers": ["fonte", "fonte de dados", "dados", "operationid", "ligar api", "kpi", "série"],
-      "excludeMarkers": ["script m", "power query"],
+      "contentMarkers": ["fonte", "fonte de dados", "dados", "operationid", "ligar api", "série", "serie"],
+      "excludeMarkers": ["script m", "power query", "kpi", "indicador"],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_data_source",
@@ -176,7 +256,6 @@
         "texto no slide",
         "título",
         "titulo",
-        "kpi",
         "gráfico",
         "grafico",
         "imagem",
@@ -186,7 +265,15 @@
         "ícone",
         "icone"
       ],
-      "excludeMarkers": ["script m", "power query", "apagar bloco", "apague o bloco", "remover bloco"],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "apagar bloco",
+        "apague o bloco",
+        "remover bloco",
+        "kpi",
+        "indicador"
+      ],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_block",
@@ -268,12 +355,24 @@
       "key": "patch_native_config",
       "op": "patch_native_config",
       "whenToUse": "Alterar fundo, dataFilters, speakerNotes ou groupTransforms do slide (whitelist).",
-      "contentMarkers": ["fundo", "background", "notas", "filtros do slide"],
+      "contentMarkers": [
+        "fundo",
+        "background",
+        "cor do fundo",
+        "cor de fundo",
+        "mude a cor",
+        "mudar a cor",
+        "notas",
+        "filtros do slide"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["backgroundColor"],
       "payloadTemplate": {
         "op": "patch_native_config",
-        "patch": { "background": {} }
+        "patch": {
+          "background": { "type": "color", "value": "{{backgroundColor}}" }
+        }
       },
       "inputSchema": {
         "type": "object",

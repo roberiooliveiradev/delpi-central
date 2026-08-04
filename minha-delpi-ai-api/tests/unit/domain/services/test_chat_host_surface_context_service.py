@@ -38,6 +38,25 @@ def test_matches_create_slide_without_host():
     assert ChatTextTaskIntentService.is_pure_text_task("crie um slide") is False
 
 
+def test_normalize_host_context_preserves_operation_and_data_source_ids():
+    normalized = ChatTvDashboardCopilotIntentService.normalize_host_context(
+        {
+            "surface": "tv-dashboard",
+            "playlistId": "pl-1",
+            "slideId": "sl-1",
+            "operationId": "get_overall_equipment_effectiveness_pct",
+            "dataSourceId": "ds-9",
+            "presetKey": "production_oee_overview",
+            "selectedBlockIds": ["viz-1"],
+        }
+    )
+    assert normalized is not None
+    assert normalized["operationId"] == "get_overall_equipment_effectiveness_pct"
+    assert normalized["dataSourceId"] == "ds-9"
+    assert normalized["presetKey"] == "production_oee_overview"
+    assert normalized["selectedBlockIds"] == ["viz-1"]
+
+
 def test_surface_tv_enables_skill_without_message_keywords():
     host = {"surface": "tv-dashboard", "playlistId": "pl-1"}
     workspace = ChatHostSurfaceContextService.enrich_workspace(

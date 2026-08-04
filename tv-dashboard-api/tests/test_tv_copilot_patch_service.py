@@ -400,13 +400,16 @@ def test_patch_native_config_background(monkeypatch):
             "ops": [
                 {
                     "op": "patch_native_config",
-                    "patch": {"background": {"color": "#112233"}},
+                    "patch": {"background": {"type": "color", "value": "#112233"}},
                 }
             ],
         },
         user={},
     )
-    assert result["nativeConfig"]["background"] == {"color": "#112233"}
+    assert result["nativeConfig"]["background"] == {
+        "type": "color",
+        "value": "#112233",
+    }
     assert "replaceNativeConfig" in result["sideEffectHints"]
 
     with pytest.raises(TvCopilotPatchError):

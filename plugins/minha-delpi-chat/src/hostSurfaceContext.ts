@@ -18,6 +18,12 @@ export type ChatHostContext = {
   focusBlockId?: string | null;
   /** Tipo do primeiro bloco em foco. */
   focusBlockType?: string | null;
+  /** operationId da fonte em foco / primeira fonte do slide. */
+  operationId?: string | null;
+  /** Id do bloco data_source em foco. */
+  dataSourceId?: string | null;
+  /** Preset do slide, quando o host souber. */
+  presetKey?: string | null;
 };
 
 export function buildTvDashboardHostContext(input: {
@@ -28,6 +34,9 @@ export function buildTvDashboardHostContext(input: {
   selectedBlockTypes?: string[] | null;
   focusBlockId?: string | null;
   focusBlockType?: string | null;
+  operationId?: string | null;
+  dataSourceId?: string | null;
+  presetKey?: string | null;
 }): ChatHostContext {
   const selectedBlockIds = normalizeStringList(input.selectedBlockIds);
   const selectedBlockTypes = normalizeStringList(input.selectedBlockTypes);
@@ -39,6 +48,9 @@ export function buildTvDashboardHostContext(input: {
     (input.focusBlockType && String(input.focusBlockType).trim()) ||
     selectedBlockTypes[0] ||
     null;
+  const operationId = (input.operationId && String(input.operationId).trim()) || null;
+  const dataSourceId = (input.dataSourceId && String(input.dataSourceId).trim()) || null;
+  const presetKey = (input.presetKey && String(input.presetKey).trim()) || null;
 
   const ctx: ChatHostContext = {
     surface: input.surface || "tv-dashboard",
@@ -56,6 +68,15 @@ export function buildTvDashboardHostContext(input: {
   }
   if (focusBlockType) {
     ctx.focusBlockType = focusBlockType;
+  }
+  if (operationId) {
+    ctx.operationId = operationId;
+  }
+  if (dataSourceId) {
+    ctx.dataSourceId = dataSourceId;
+  }
+  if (presetKey) {
+    ctx.presetKey = presetKey;
   }
   return ctx;
 }
