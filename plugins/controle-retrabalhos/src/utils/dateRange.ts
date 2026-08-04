@@ -8,6 +8,39 @@ export function formatIsoDate(date: Date): string {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
 
+export function getTodayRange(referenceDate = new Date()): {
+  start_date: string;
+  end_date: string;
+} {
+  const day = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const iso = formatIsoDate(day);
+  return { start_date: iso, end_date: iso };
+}
+
+/** Semana calendário (segunda → hoje), alinhado aos dashboards departamentais. */
+export function getThisWeekRange(referenceDate = new Date()): {
+  start_date: string;
+  end_date: string;
+} {
+  const dataFim = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const day = dataFim.getDay(); // 0=domingo … 6=sábado
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  const dataInicio = new Date(dataFim);
+  dataInicio.setDate(dataInicio.getDate() - daysSinceMonday);
+  return {
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
+  };
+}
+
 export function getDefaultLast12MonthsRange(referenceDate = new Date()): {
   start_date: string;
   end_date: string;
@@ -36,6 +69,23 @@ export function getDefaultLast6MonthsRange(referenceDate = new Date()): {
   );
   const dataInicio = new Date(dataFim.getFullYear(), dataFim.getMonth() - 5, 1);
 
+  return {
+    start_date: formatIsoDate(dataInicio),
+    end_date: formatIsoDate(dataFim),
+  };
+}
+
+export function getDefaultLast30DaysRange(referenceDate = new Date()): {
+  start_date: string;
+  end_date: string;
+} {
+  const dataFim = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const dataInicio = new Date(dataFim);
+  dataInicio.setDate(dataInicio.getDate() - 29);
   return {
     start_date: formatIsoDate(dataInicio),
     end_date: formatIsoDate(dataFim),
@@ -87,6 +137,29 @@ export function validatePeriodRange(start_date: string, end_date: string): strin
   }
 
   return null;
+}
+
+export type QuickRangePreset = "today" | "thisWeek" | "thisMonth" | "30d" | "6m" | "12m";
+
+export function resolveQuickRangePreset(
+  preset: QuickRangePreset,
+  referenceDate = new Date(),
+): { start_date: string; end_date: string } {
+  switch (preset) {
+    case "today":
+      return getTodayRange(referenceDate);
+    case "thisWeek":
+      return getThisWeekRange(referenceDate);
+    case "30d":
+      return getDefaultLast30DaysRange(referenceDate);
+    case "6m":
+      return getDefaultLast6MonthsRange(referenceDate);
+    case "12m":
+      return getDefaultLast12MonthsRange(referenceDate);
+    case "thisMonth":
+    default:
+      return getThisMonthRange(referenceDate);
+  }
 }
 
 export function createDefaultFilterFormState(referenceDate = new Date()) {

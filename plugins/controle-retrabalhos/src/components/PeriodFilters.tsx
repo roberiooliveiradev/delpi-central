@@ -1,24 +1,31 @@
 import type { FilterFormState } from "../types/retrabalho";
-import { validatePeriodRange } from "../utils/dateRange";
+import { type QuickRangePreset, validatePeriodRange } from "../utils/dateRange";
 import { FilterBarShell, FilterInputField } from "./filtersUi";
 
-export type QuickRangePreset = "12m" | "6m" | "thisMonth";
+export type { QuickRangePreset };
 
 type PeriodFiltersProps = {
   filters: FilterFormState;
   validationError: string | null;
   loading?: boolean;
   onChange: (patch: Partial<FilterFormState>) => void;
-  onApply: () => void;
   onQuickRange: (preset: QuickRangePreset) => void;
 };
+
+const QUICK_RANGE_OPTIONS: Array<{ preset: QuickRangePreset; label: string }> = [
+  { preset: "today", label: "Hoje" },
+  { preset: "thisWeek", label: "Esta semana" },
+  { preset: "thisMonth", label: "Este mês" },
+  { preset: "30d", label: "30 dias" },
+  { preset: "6m", label: "6 meses" },
+  { preset: "12m", label: "Últimos 12 meses" },
+];
 
 export function PeriodFilters({
   filters,
   validationError,
   loading = false,
   onChange,
-  onApply,
   onQuickRange,
 }: PeriodFiltersProps) {
   const localError = validatePeriodRange(filters.start_date, filters.end_date);
@@ -47,38 +54,17 @@ export function PeriodFilters({
         </p>
       ) : null}
       <div className="cr-filter-bar__actions cr-filters__actions">
-        <button
-          type="button"
-          className="cr-btn cr-btn--primary"
-          onClick={onApply}
-          disabled={loading || Boolean(localError)}
-        >
-          Aplicar período
-        </button>
-        <button
-          type="button"
-          className="cr-btn cr-btn--secondary"
-          onClick={() => onQuickRange("12m")}
-          disabled={loading}
-        >
-          Últimos 12 meses
-        </button>
-        <button
-          type="button"
-          className="cr-btn cr-btn--secondary"
-          onClick={() => onQuickRange("6m")}
-          disabled={loading}
-        >
-          Últimos 6 meses
-        </button>
-        <button
-          type="button"
-          className="cr-btn cr-btn--secondary"
-          onClick={() => onQuickRange("thisMonth")}
-          disabled={loading}
-        >
-          Este mês
-        </button>
+        {QUICK_RANGE_OPTIONS.map(({ preset, label }) => (
+          <button
+            key={preset}
+            type="button"
+            className="cr-btn cr-btn--secondary"
+            onClick={() => onQuickRange(preset)}
+            disabled={loading}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     </FilterBarShell>
   );

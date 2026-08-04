@@ -3,8 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   createDefaultFilterFormState,
   getDefaultLast12MonthsRange,
+  getDefaultLast30DaysRange,
   getDefaultLast6MonthsRange,
   getThisMonthRange,
+  getThisWeekRange,
+  getTodayRange,
+  resolveQuickRangePreset,
   validatePeriodRange,
 } from "./dateRange";
 
@@ -28,6 +32,39 @@ describe("dateRange", () => {
     const range = getThisMonthRange(ref);
     expect(range.start_date).toBe("2026-07-01");
     expect(range.end_date).toBe("2026-07-06");
+  });
+
+  it("today range is a single day", () => {
+    const ref = new Date(2026, 6, 6);
+    expect(getTodayRange(ref)).toEqual({
+      start_date: "2026-07-06",
+      end_date: "2026-07-06",
+    });
+  });
+
+  it("this week range starts on Monday", () => {
+    // 2026-07-08 = quarta
+    const ref = new Date(2026, 6, 8);
+    const range = getThisWeekRange(ref);
+    expect(range.start_date).toBe("2026-07-06");
+    expect(range.end_date).toBe("2026-07-08");
+  });
+
+  it("last 30 days includes today", () => {
+    const ref = new Date(2026, 6, 30);
+    const range = getDefaultLast30DaysRange(ref);
+    expect(range.start_date).toBe("2026-07-01");
+    expect(range.end_date).toBe("2026-07-30");
+  });
+
+  it("resolveQuickRangePreset covers all presets", () => {
+    const ref = new Date(2026, 6, 6);
+    expect(resolveQuickRangePreset("today", ref)).toEqual(getTodayRange(ref));
+    expect(resolveQuickRangePreset("thisWeek", ref)).toEqual(getThisWeekRange(ref));
+    expect(resolveQuickRangePreset("thisMonth", ref)).toEqual(getThisMonthRange(ref));
+    expect(resolveQuickRangePreset("30d", ref)).toEqual(getDefaultLast30DaysRange(ref));
+    expect(resolveQuickRangePreset("6m", ref)).toEqual(getDefaultLast6MonthsRange(ref));
+    expect(resolveQuickRangePreset("12m", ref)).toEqual(getDefaultLast12MonthsRange(ref));
   });
 
   it("rejects periods longer than 24 months", () => {

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { DetalhesTable } from "../components/DetalhesTable";
 import { EmptyState } from "../components/EmptyState";
@@ -14,14 +14,14 @@ import {
   totvsBranchFromRoute,
   type BranchRouteCode,
 } from "../constants/branches";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useRetrabalhoDashboard } from "../hooks/useRetrabalhoDashboard";
 import { useRetrabalhoDetalhes } from "../hooks/useRetrabalhoDetalhes";
 import type { FilterFormState } from "../types/retrabalho";
 import {
   createDefaultFilterFormState,
   filtersFromFormState,
-  getDefaultLast6MonthsRange,
-  getThisMonthRange,
+  resolveQuickRangePreset,
   validatePeriodRange,
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
@@ -56,46 +56,34 @@ type ContentProps = {
 
 function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) {
   const defaultFilters = useMemo(() => createDefaultFilterFormState(), []);
-  const [draftFilters, setDraftFilters] = useState<FilterFormState>(defaultFilters);
-  const [appliedFilters, setAppliedFilters] = useState(() =>
-    filtersFromFormState(totvsBranch, defaultFilters),
-  );
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterFormState>(defaultFilters);
+  const debouncedFilters = useDebouncedValue(filters, 350);
   const [exportError, setExportError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+
+  const validationError = validatePeriodRange(
+    debouncedFilters.start_date,
+    debouncedFilters.end_date,
+  );
+  const appliedFilters = useMemo(() => {
+    if (validationError) return null;
+    return filtersFromFormState(totvsBranch, debouncedFilters);
+  }, [debouncedFilters, totvsBranch, validationError]);
+
+  const appliedFiltersKey = appliedFilters
+    ? `${appliedFilters.filial}|${appliedFilters.start_date}|${appliedFilters.end_date}`
+    : "";
+
+  useEffect(() => {
+    setPage(1);
+  }, [appliedFiltersKey]);
 
   const dashboard = useRetrabalhoDashboard(appliedFilters);
   const detalhes = useRetrabalhoDetalhes(appliedFilters, page);
 
-  const handleApplyPeriod = () => {
-    const error = validatePeriodRange(draftFilters.start_date, draftFilters.end_date);
-    if (error) {
-      setValidationError(error);
-      return;
-    }
-    setValidationError(null);
-    setExportError(null);
-    setAppliedFilters(filtersFromFormState(totvsBranch, draftFilters));
-    setPage(1);
-  };
-
-  const applyFilterRange = (range: FilterFormState) => {
-    setDraftFilters(range);
-    setValidationError(null);
-    setExportError(null);
-    setAppliedFilters(filtersFromFormState(totvsBranch, range));
-    setPage(1);
-  };
-
   const handleQuickRange = (preset: QuickRangePreset) => {
-    const referenceDate = new Date();
-    const range =
-      preset === "12m"
-        ? createDefaultFilterFormState(referenceDate)
-        : preset === "6m"
-          ? getDefaultLast6MonthsRange(referenceDate)
-          : getThisMonthRange(referenceDate);
-    applyFilterRange(range);
+    setFilters(resolveQuickRangePreset(preset));
+    setExportError(null);
   };
 
   const resumo = dashboard.data.resumo;
@@ -137,11 +125,13 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
       />
 
       <PeriodFilters
-        filters={draftFilters}
+        filters={filters}
         validationError={validationError}
         loading={dashboard.isLoading || detalhes.isLoading}
-        onChange={(patch) => setDraftFilters((current) => ({ ...current, ...patch }))}
-        onApply={handleApplyPeriod}
+        onChange={(patch) => {
+          setFilters((current) => ({ ...current, ...patch }));
+          setExportError(null);
+        }}
         onQuickRange={handleQuickRange}
       />
 
@@ -173,7 +163,7 @@ function ControleRetrabalhosContent({ branchRoute, totvsBranch }: ContentProps) 
 
       {!showInitialLoading && !dashboardError && isEmpty ? <EmptyState /> : null}
 
-      {!showInitialLoading && !dashboardError && !isEmpty ? (
+      {!showInitialLoading && !dashboardError && !isEmpty && appliedFilters ? (
         <>
           <SummaryCards resumo={resumo} loading={dashboard.isLoading} />
 
