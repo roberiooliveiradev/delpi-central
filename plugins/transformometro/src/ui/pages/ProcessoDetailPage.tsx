@@ -77,7 +77,6 @@ import {
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
 import { ProcessoWorkspaceSectionPanel } from "../processos/ProcessoWorkspaceSectionPanel";
-import { valuesEqual } from "@delpi/plugin-ui/index";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
