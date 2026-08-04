@@ -82,4 +82,14 @@ def get_options(request: Request):
         ]
     payload = options_payload(setores, filiais)
     payload["access_scope"] = scope.meta()
+    try:
+        repo = ProcessoRepository()
+        payload["familias_processo"] = repo.list_distinct_tag_values("familia_processo")
+        payload["agrupadores_ferramenta"] = repo.list_distinct_tag_values(
+            "agrupador_ferramenta"
+        )
+    except Exception as exc:
+        logger.warning("processo_tag_options_fallback err=%s", format_api_error(exc))
+        payload.setdefault("familias_processo", [])
+        payload.setdefault("agrupadores_ferramenta", [])
     return ok(payload)

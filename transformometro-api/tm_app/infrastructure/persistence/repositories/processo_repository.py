@@ -231,3 +231,24 @@ class ProcessoRepository(PluginBaseRepository):
             (processo_id,),
         )
         return row is not None
+
+    def list_distinct_tag_values(self, column: str) -> list[str]:
+        """Valores distintos não vazios para catálogo de tags (família / agrupador)."""
+        allowed = {
+            "familia_processo": "familia_processo",
+            "agrupador_ferramenta": "agrupador_ferramenta",
+        }
+        col = allowed.get(column)
+        if col is None:
+            raise ValueError(f"coluna inválida para tags: {column}")
+        rows = self.fetch_all(
+            f"""
+            SELECT DISTINCT TRIM({col}) AS value
+            FROM transformometro.processos
+            WHERE deletado = FALSE
+              AND {col} IS NOT NULL
+              AND TRIM({col}) <> ''
+            ORDER BY 1
+            """
+        )
+        return [str(row["value"]) for row in rows if row.get("value")]

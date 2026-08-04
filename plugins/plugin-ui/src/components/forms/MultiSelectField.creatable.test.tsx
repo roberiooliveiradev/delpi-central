@@ -42,6 +42,7 @@ describe("createDashboardCreatableMultiSelectField", () => {
     expect(screen.getByText("Tags")).toBeTruthy();
     expect(document.querySelector(".pac-field--creatable-multi")).toBeTruthy();
     expect(document.querySelector(".pac-tag-list")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-tag-list")).toBeTruthy();
   });
 
   it("aceita placeholder customizado", () => {
@@ -56,5 +57,30 @@ describe("createDashboardCreatableMultiSelectField", () => {
 
     fireEvent.click(container.querySelector(".pac-multi-select__trigger") as Element);
     expect(screen.getByPlaceholderText("Digite…")).toBeTruthy();
+  });
+
+  it("emite classes canônicas de chip e respeita maxSelected=1", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <CreatableMultiSelectField
+        label="Família"
+        options={[
+          { value: "ia", label: "ia" },
+          { value: "automacao", label: "automacao" },
+        ]}
+        selectedValues={["ia"]}
+        maxSelected={1}
+        onChange={onChange}
+      />,
+    );
+
+    expect(document.querySelector(".delpi-ui-tag-list")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-tag-chip")).toBeTruthy();
+
+    fireEvent.click(container.querySelector(".pac-multi-select__trigger") as Element);
+    const boxes = container.querySelectorAll('.pac-multi-select__option input[type="checkbox"]');
+    expect(boxes.length).toBeGreaterThanOrEqual(2);
+    fireEvent.click(boxes[1] as Element);
+    expect(onChange).toHaveBeenCalledWith(["automacao"]);
   });
 });

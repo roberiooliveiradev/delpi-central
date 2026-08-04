@@ -251,3 +251,50 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Chips de tags (creatable PAC / LMPS / TM) — canônico no kit. */
+.delpi-ui-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.delpi-ui-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 28%,
+      var(--delpi-ui-border, var(--border, #e6e6e6))
+    );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.delpi-ui-tag-chip__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  cursor: pointer;
+}
+
+.delpi-ui-tag-chip__remove:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

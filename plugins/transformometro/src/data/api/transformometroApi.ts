@@ -198,6 +198,8 @@ export type OptionsData = {
   tipo_custo: string[];
   categorias: string[];
   status_aprovacao_revisao: string[];
+  familias_processo?: string[];
+  agrupadores_ferramenta?: string[];
 };
 
 export function fetchOptions(getAccessToken?: () => string | undefined) {

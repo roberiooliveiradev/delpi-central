@@ -59,6 +59,8 @@ export type MultiSelectFieldProps = {
   labels: MultiSelectFieldLabels;
   creatable?: boolean;
   maxCreateLength?: number;
+  /** Limite de itens selecionados (ex.: 1 = escolha única com UX de tags). */
+  maxSelected?: number;
   onCreateOption?: (value: string) => void;
   showSelectedTags?: boolean;
   includeSelectedInOptions?: boolean;
@@ -110,9 +112,9 @@ export function multiSelectCreatablePacClasses(prefix: string): MultiSelectField
       `${prefix}-field ${prefix}-field--creatable-multi`,
       "delpi-ui-filter-box",
     ),
-    tagList: `${prefix}-tag-list`,
-    tagChip: `${prefix}-tag-chip`,
-    tagRemove: `${prefix}-tag-chip__remove`,
+    tagList: delpiUiClass(`${prefix}-tag-list`, "delpi-ui-tag-list"),
+    tagChip: delpiUiClass(`${prefix}-tag-chip`, "delpi-ui-tag-chip"),
+    tagRemove: delpiUiClass(`${prefix}-tag-chip__remove`, "delpi-ui-tag-chip__remove"),
   };
 }
 
@@ -131,6 +133,7 @@ export function MultiSelectField({
   labels,
   creatable = false,
   maxCreateLength = 50,
+  maxSelected,
   onCreateOption,
   showSelectedTags = false,
   includeSelectedInOptions = false,
@@ -203,7 +206,12 @@ export function MultiSelectField({
 
   const handleCreate = () => {
     if (!canCreate) return;
-    const next = [...selectedValues, normalizedQuery];
+    const next =
+      maxSelected === 1
+        ? [normalizedQuery]
+        : maxSelected != null && selectedValues.length >= maxSelected
+          ? [...selectedValues.slice(0, maxSelected - 1), normalizedQuery]
+          : [...selectedValues, normalizedQuery];
     onChange(next);
     onCreateOption?.(normalizedQuery);
     setQuery("");
@@ -247,12 +255,26 @@ export function MultiSelectField({
       onChange(selectedValues.filter((selected) => selected !== value));
       return;
     }
+    if (maxSelected === 1) {
+      onChange([value]);
+      return;
+    }
+    if (maxSelected != null && selectedValues.length >= maxSelected) {
+      onChange([...selectedValues.slice(0, maxSelected - 1), value]);
+      return;
+    }
     onChange([...selectedValues, value]);
   };
 
   const selectVisible = () => {
     const visibleValues = filteredOptions.map((option) => option.value);
-    onChange([...new Set([...selectedValues, ...visibleValues])]);
+    if (maxSelected === 1) {
+      const first = visibleValues[0];
+      onChange(first ? [first] : []);
+      return;
+    }
+    const merged = [...new Set([...selectedValues, ...visibleValues])];
+    onChange(maxSelected != null ? merged.slice(0, maxSelected) : merged);
   };
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");

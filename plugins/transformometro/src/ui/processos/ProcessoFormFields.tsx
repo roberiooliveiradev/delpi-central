@@ -1,6 +1,12 @@
+import { useMemo } from "react";
+
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../components/ui/selectTypes";
 import { TmNativeTextAreaField, TmNativeTextField } from "../../components/ui/tmNativeFormFields";
+import {
+  CreatableMultiSelectField,
+  buildProcessoTagOptions,
+} from "../../components/MultiSelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
@@ -24,6 +30,16 @@ export function ProcessoFormFields({
 }: Props) {
   const set = (patch: Partial<ProcessoFormState>) => onChange({ ...form, ...patch });
   const setoresDisponiveis = filterSetoresByFilial(options.setores, form.filial_id);
+
+  const familiaOptions = useMemo(
+    () => buildProcessoTagOptions(options.familias_processo, form.familia_processo),
+    [options.familias_processo, form.familia_processo],
+  );
+  const agrupadorOptions = useMemo(
+    () =>
+      buildProcessoTagOptions(options.agrupadores_ferramenta, form.agrupador_ferramenta),
+    [options.agrupadores_ferramenta, form.agrupador_ferramenta],
+  );
 
   function handleFilialChange(filialId: string) {
     onChange({
@@ -91,21 +107,29 @@ export function ProcessoFormFields({
         onChange={(status) => set({ status_processo: status })}
         options={mapSelectOptions(options.status_processo)}
       />
-      <TmNativeTextField
+      <CreatableMultiSelectField
         id="tm-proc-familia"
         label="Família (rateio)"
         hint={TM_HELP_TOOLTIPS.processos.familia}
-        value={form.familia_processo}
-        onChange={(familia_processo) => set({ familia_processo })}
-        placeholder="ex.: ia, automação"
+        options={familiaOptions}
+        selectedValues={form.familia_processo.trim() ? [form.familia_processo.trim()] : []}
+        onChange={(values) => set({ familia_processo: values[0] ?? "" })}
+        maxSelected={1}
+        maxCreateLength={64}
+        emptyLabel="Adicionar família…"
       />
-      <TmNativeTextField
+      <CreatableMultiSelectField
         id="tm-proc-ferramenta"
         label="Agrupador ferramenta"
         hint={TM_HELP_TOOLTIPS.processos.agrupadorFerramenta}
-        value={form.agrupador_ferramenta}
-        onChange={(agrupador_ferramenta) => set({ agrupador_ferramenta })}
-        placeholder="ex.: ChatGPT, Power Automate"
+        options={agrupadorOptions}
+        selectedValues={
+          form.agrupador_ferramenta.trim() ? [form.agrupador_ferramenta.trim()] : []
+        }
+        onChange={(values) => set({ agrupador_ferramenta: values[0] ?? "" })}
+        maxSelected={1}
+        maxCreateLength={128}
+        emptyLabel="Adicionar ferramenta…"
       />
       <TmNativeTextField
         id="tm-proc-gestor"
