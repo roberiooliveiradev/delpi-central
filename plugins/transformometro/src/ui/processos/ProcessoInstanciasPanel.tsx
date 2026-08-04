@@ -625,7 +625,7 @@ export function ProcessoInstanciasPanel({
             (id) => id.toLowerCase() === filial.id.toLowerCase()
           );
           return (
-            <NativeCheckboxControl key={filial.id} className="tm-check-option" checked={checked} onChange={() => toggleFilial(filial.id)} label={filial.label} />
+            <NativeCheckboxControl key={filial.id} checked={checked} onChange={() => toggleFilial(filial.id)} label={filial.label} />
           );
         })}
       </div>
@@ -648,7 +648,7 @@ export function ProcessoInstanciasPanel({
           setoresDisponiveis.map((setor) => {
             const { checked, disabled } = setorState(setor.id);
             return (
-              <NativeCheckboxControl key={setor.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
+              <NativeCheckboxControl key={setor.id} checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
             );
           })
         )}
@@ -788,7 +788,7 @@ export function ProcessoInstanciasPanel({
                   {processoTemEscopo ? (
                     <div className={`${DS_FILTER_BOX_CHECKBOX} tm-inst-form__field--full`}>
                       <NativeCheckboxControl
-                        className="ds-check-label"
+                       
                         checked={usarEscopoProcesso}
                         onChange={(next) => {
                             setUsarEscopoProcesso(next);
@@ -805,7 +805,7 @@ export function ProcessoInstanciasPanel({
                     <>
                       <div className={DS_FILTER_BOX_CHECKBOX}>
                         <NativeCheckboxControl
-                          className="ds-check-label"
+                         
                           checked={todasFiliais}
                           onChange={(next) => {
                               setTodasFiliais(next);
@@ -870,7 +870,7 @@ export function ProcessoInstanciasPanel({
                 <>
                   <div className={DS_FILTER_BOX_CHECKBOX}>
                     <NativeCheckboxControl
-                      className="ds-check-label"
+                     
                       checked={todasFiliais}
                       onChange={(next) => {
                           setTodasFiliais(next);

@@ -49,7 +49,6 @@ export function SetorFormFields({ form, options, onChange }: Props) {
           {options.filiais.map((filial) => (
             <NativeCheckboxControl
               key={filial.id}
-              className="tm-inst-setor-option ds-check-label"
               checked={form.filiais.includes(filial.id)}
               onChange={() => toggleFilial(filial.id)}
               label={filial.label}

@@ -253,7 +253,7 @@ export function RevisaoRecursosSection({
                             />
                           </label>
                           <NativeCheckboxControl
-                            className="ds-check-label"
+                           
                             checked={editVinculoForm.ativo}
                             onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
                             label={<span className="tm-field__label">
@@ -406,7 +406,7 @@ export function RevisaoRecursosSection({
             />
           </label>
           <NativeCheckboxControl
-            className="ds-check-label"
+           
             checked={vinculoForm.ativo}
             onChange={(ativo) => setVinculoForm({ ...vinculoForm, ativo })}
             label={<span className="tm-field__label">

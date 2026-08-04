@@ -239,7 +239,7 @@ export function RevisaoVigenciaSection({
             </p>
           ) : null}
           <NativeCheckboxControl
-            className="ds-check-label"
+           
             checked={revisaoVigencia.revisao_ativa}
             disabled={isBaseline || Boolean(revisaoVigencia.data_fim_vigencia)}
             onChange={(revisao_ativa) => onChange({ ...revisaoVigencia, revisao_ativa })}

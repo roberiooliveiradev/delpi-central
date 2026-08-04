@@ -68,7 +68,6 @@ export function ProcessoEscopoFields({
       {showTodasFiliais ? (
         <div className={`${DS_FILTER_BOX_CHECKBOX} tm-inst-form__field--full`}>
           <NativeCheckboxControl
-            className="ds-check-label"
             checked={value.todas_filiais_ativas}
             disabled={disabled}
             onChange={(next) => {
@@ -112,7 +111,7 @@ export function ProcessoEscopoFields({
                 (id) => id.toLowerCase() === filial.id.toLowerCase()
               );
               return (
-                <NativeCheckboxControl key={filial.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleFilial(filial.id)} label={filial.label} />
+                <NativeCheckboxControl key={filial.id} checked={checked} disabled={disabled} onChange={() => toggleFilial(filial.id)} label={filial.label} />
               );
             })}
           </div>
@@ -140,7 +139,7 @@ export function ProcessoEscopoFields({
                 (id) => id.toLowerCase() === setor.id.toLowerCase()
               );
               return (
-                <NativeCheckboxControl key={setor.id} className="tm-check-option" checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
+                <NativeCheckboxControl key={setor.id} checked={checked} disabled={disabled} onChange={() => toggleSetor(setor.id)} label={setor.label} />
               );
             })
           )}

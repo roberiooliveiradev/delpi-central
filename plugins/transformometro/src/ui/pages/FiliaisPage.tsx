@@ -208,7 +208,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
         title="Catálogo de unidades"
         filters={
           <NativeCheckboxControl
-            className="ds-check-label"
+           
             checked={includeInactive}
             onChange={setIncludeInactive}
             label={<span className="tm-field__label">

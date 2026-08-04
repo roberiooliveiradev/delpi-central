@@ -139,7 +139,7 @@ export function InstanciaDecompositionEscopoSection({
       ) : null}
 
       <TmNativeCheckboxControl
-        className="ds-check-label"
+       
         checked={escopo.inherit_all}
         disabled={readOnly}
         onChange={(inherit_all) =>
@@ -157,7 +157,7 @@ export function InstanciaDecompositionEscopoSection({
           {processosChave.map((node) => (
             <li key={node.id}>
               <TmNativeCheckboxControl
-                className="ds-check-label"
+               
                 checked={selected.has(node.id)}
                 disabled={readOnly}
                 onChange={() => toggleNode(node.id)}

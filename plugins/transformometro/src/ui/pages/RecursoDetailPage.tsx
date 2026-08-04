@@ -543,7 +543,7 @@ export function RecursoDetailPage({
                                     />
                                   </label>
                                   <NativeCheckboxControl
-                                    className="ds-check-label"
+                                   
                                     checked={editVinculoForm.ativo}
                                     onChange={(ativo) => setEditVinculoForm({ ...editVinculoForm, ativo })}
                                     label={<span className="tm-field__label">Vínculo ativo <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" /></span>}
