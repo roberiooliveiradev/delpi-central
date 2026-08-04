@@ -96,6 +96,7 @@ export {
   resolveSeriesChartLegendLayout,
   resolveSeriesChartLegendSort,
   resolveSeriesChartTicks,
+  resolveSeriesChartValueDomain,
   resolveSeriesCategoryColor,
   resolveValueScaleColor,
   seriesValueExtent,

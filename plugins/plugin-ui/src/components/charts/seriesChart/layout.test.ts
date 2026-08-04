@@ -448,6 +448,26 @@ describe("golden layout fixture OTD", () => {
     expect(layout.axisMax).toBeGreaterThan(28_000);
     expect(layout.toY(28_000)).toBeGreaterThan(layout.margin.top + SERIES_CHART_VALUE_AXIS_GUTTER_PX);
   });
+
+  it("valores positivos próximos (14 e 16) não colocam o menor no baseline", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "2026-08-03", value: 16 },
+        { label: "2026-08-04", value: 14 },
+      ],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+    });
+    expect(layout.axisMin).toBe(0);
+    const y14 = layout.toY(14);
+    const y16 = layout.toY(16);
+    const y0 = layout.toY(0);
+    expect(y14).toBeGreaterThan(y16);
+    expect(y0 - y14).toBeGreaterThan((y0 - y16) * 0.7);
+    expect(y14).toBeLessThan(y0 - 8);
+  });
 });
 
 describe("buildSeriesChartLayout secondary axis", () => {

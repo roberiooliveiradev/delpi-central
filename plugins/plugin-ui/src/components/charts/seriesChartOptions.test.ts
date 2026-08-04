@@ -11,6 +11,7 @@ import {
   resolveSeriesChartLegendLayout,
   resolveSeriesChartLegendSort,
   resolveSeriesChartTicks,
+  resolveSeriesChartValueDomain,
   resolveValueScaleColor,
   seriesValueExtent,
 } from "./seriesChartOptions";
@@ -167,6 +168,20 @@ describe("resolveSeriesChartTicks — domínio cobre dataMax", () => {
   it("pico quase no teto nice (27,5k→28k) ainda ganha headroom", () => {
     const ticks = resolveSeriesChartTicks(0, 27_500);
     expect(ticks[ticks.length - 1]!).toBeGreaterThan(28_000);
+  });
+});
+
+describe("resolveSeriesChartValueDomain", () => {
+  it("dados ≥ 0 incluem zero (14 e 16 não colam o menor no baseline)", () => {
+    expect(resolveSeriesChartValueDomain(14, 16)).toEqual({ min: 0, max: 16 });
+  });
+
+  it("dados ≤ 0 incluem zero no teto", () => {
+    expect(resolveSeriesChartValueDomain(-16, -14)).toEqual({ min: -16, max: 0 });
+  });
+
+  it("domínio que cruza zero permanece intacto", () => {
+    expect(resolveSeriesChartValueDomain(-5, 10)).toEqual({ min: -5, max: 10 });
   });
 });
 

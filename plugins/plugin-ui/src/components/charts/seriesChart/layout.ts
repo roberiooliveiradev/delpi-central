@@ -2,6 +2,7 @@ import {
   formatSeriesChartCategoryLabel,
   formatSeriesChartValue,
   resolveSeriesChartTicks,
+  resolveSeriesChartValueDomain,
   truncateSeriesChartCategoryLabel,
   type SeriesChartCategoryLabelFormat,
   type SeriesChartCategoryLabelOverflow,
@@ -646,24 +647,26 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const values = rawValues.filter((value) => Number.isFinite(value));
   const dataMin = values.length > 0 ? Math.min(...values) : 0;
   const dataMax = values.length > 0 ? Math.max(...values) : 1;
-  const ticks = resolveSeriesChartTicks(dataMin, dataMax);
-  const axisMin = Math.min(ticks[0] ?? dataMin, dataMin);
-  const axisMax = Math.max(ticks[ticks.length - 1] ?? dataMax, dataMax);
+  const valueDomain = resolveSeriesChartValueDomain(dataMin, dataMax);
+  const ticks = resolveSeriesChartTicks(valueDomain.min, valueDomain.max);
+  const axisMin = Math.min(ticks[0] ?? valueDomain.min, valueDomain.min);
+  const axisMax = Math.max(ticks[ticks.length - 1] ?? valueDomain.max, valueDomain.max);
   const axisRange = Math.max(axisMax - axisMin, 1e-6);
 
   const secondaryValues = (input.secondaryAxisValues ?? [])
     .map((value) => Number(value))
     .filter((value) => Number.isFinite(value));
   const hasSecondaryAxis = secondaryValues.length > 0;
-  const secondaryTicks = hasSecondaryAxis
-    ? resolveSeriesChartTicks(Math.min(...secondaryValues), Math.max(...secondaryValues))
-    : undefined;
   const secondaryDataMin = hasSecondaryAxis ? Math.min(...secondaryValues) : 0;
   const secondaryDataMax = hasSecondaryAxis ? Math.max(...secondaryValues) : 1;
-  const secondaryMin = Math.min(secondaryTicks?.[0] ?? secondaryDataMin, secondaryDataMin);
+  const secondaryDomain = resolveSeriesChartValueDomain(secondaryDataMin, secondaryDataMax);
+  const secondaryTicks = hasSecondaryAxis
+    ? resolveSeriesChartTicks(secondaryDomain.min, secondaryDomain.max)
+    : undefined;
+  const secondaryMin = Math.min(secondaryTicks?.[0] ?? secondaryDomain.min, secondaryDomain.min);
   const secondaryMax = Math.max(
-    secondaryTicks?.[secondaryTicks.length - 1] ?? secondaryDataMax,
-    secondaryDataMax,
+    secondaryTicks?.[secondaryTicks.length - 1] ?? secondaryDomain.max,
+    secondaryDomain.max,
   );
   const secondaryRange = Math.max(secondaryMax - secondaryMin, 1e-6);
 

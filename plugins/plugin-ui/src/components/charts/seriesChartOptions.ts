@@ -662,3 +662,25 @@ export function seriesValueExtent(
   }
   return { min, max };
 }
+
+/**
+ * Domínio do eixo de valor antes dos ticks «nice».
+ * Todos ≥ 0 → inclui 0 (área/barra/contagens: 14 perto de 16 não cola no baseline).
+ * Todos ≤ 0 → inclui 0 simétrico.
+ */
+export function resolveSeriesChartValueDomain(
+  dataMin: number,
+  dataMax: number,
+): { min: number; max: number } {
+  if (!Number.isFinite(dataMin) || !Number.isFinite(dataMax)) {
+    return { min: 0, max: 1 };
+  }
+  let min = Math.min(dataMin, dataMax);
+  let max = Math.max(dataMin, dataMax);
+  if (min >= 0) {
+    min = 0;
+  } else if (max <= 0) {
+    max = 0;
+  }
+  return { min, max };
+}
