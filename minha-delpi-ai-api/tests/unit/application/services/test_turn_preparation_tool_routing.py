@@ -242,6 +242,25 @@ def test_resolve_skip_tool_flags_allows_web_augment_in_common_chat(_web_enabled)
     assert flags.skip_tools_for_inactive_agent is False
 
 
+def test_resolve_skip_tool_flags_allows_tv_surface_in_common_chat():
+    flags = ChatTurnPreparationToolRoutingService.resolve_skip_tool_flags(
+        message="crie um slide",
+        request=MagicMock(attachment_ids=None, access_token=None),
+        history_source=[],
+        workspace_context={
+            "userActivatedAgent": False,
+            "actionsEnabled": False,
+            "skills": {"tvDashboardCopilot": True},
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-1",
+            },
+        },
+    )
+
+    assert flags.skip_tools_for_inactive_agent is False
+
+
 def test_resolve_skip_tool_flags_for_project_sources_content_follow_up():
     inventory = [
         {

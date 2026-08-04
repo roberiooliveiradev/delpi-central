@@ -83,3 +83,135 @@ def test_host_prompt_addon_includes_playlist():
     )
     assert "pl-42" in addon
     assert "tv-dashboard" in addon or "surface" in addon.lower()
+
+
+def test_allows_common_chat_platform_tools_when_skill_or_surface():
+    assert (
+        ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+            {"skills": {"tvDashboardCopilot": True}},
+            message="olá",
+        )
+        is True
+    )
+    assert (
+        ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+            {"tvDashboardHostContext": {"surface": "tv-dashboard"}},
+            message="olá",
+        )
+        is True
+    )
+    assert (
+        ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+            {"skills": {}},
+            message="crie um slide",
+        )
+        is True
+    )
+    assert (
+        ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+            {"skills": {}},
+            message="olá",
+        )
+        is False
+    )
+
+
+def test_build_platform_tool_call_create_slide_merges_playlist():
+    call = ChatHostSurfaceContextService.build_platform_tool_call(
+        "crie um slide",
+        workspace_context={
+            "skills": {"tvDashboardCopilot": True},
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-live",
+            },
+        },
+    )
+    assert call is not None
+    assert call["name"] == "tv_dashboard_copilot"
+    assert call["arguments"]["mode"] == "preview"
+    assert call["arguments"]["ops"][0]["op"] == "add_slide_from_preset"
+    assert call["arguments"]["target"]["playlistId"] == "pl-live"
+
+
+def test_build_platform_tool_call_skips_non_slide_message():
+    assert (
+        ChatHostSurfaceContextService.build_platform_tool_call(
+            "olá",
+            workspace_context={
+                "skills": {"tvDashboardCopilot": True},
+                "tvDashboardHostContext": {"surface": "tv-dashboard"},
+            },
+        )
+        is None
+    )
+
+
+def test_build_platform_tool_call_apply_after_preview_confirmation():
+    previous = [
+        {
+            "role": "assistant",
+            "content": "prévia",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "tv_dashboard_copilot",
+                        "arguments": {
+                            "mode": "preview",
+                            "ops": [
+                                {
+                                    "op": "add_slide_from_preset",
+                                    "presetKey": "preset_comunicado",
+                                }
+                            ],
+                            "target": {"playlistId": "pl-1"},
+                        },
+                        "metadata": {"ok": True, "mode": "preview"},
+                    }
+                ]
+            },
+        }
+    ]
+    call = ChatHostSurfaceContextService.build_platform_tool_call(
+        "pode aplicar",
+        workspace_context={
+            "skills": {"tvDashboardCopilot": True},
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-1",
+            },
+        },
+        previous_messages=previous,
+    )
+    assert call is not None
+    assert call["arguments"]["mode"] == "apply"
+    assert call["arguments"]["ops"][0]["op"] == "add_slide_from_preset"
+    assert call["arguments"]["target"]["playlistId"] == "pl-1"
+
+
+def test_build_apply_from_chat_message_entity():
+    from types import SimpleNamespace
+
+    previous = [
+        SimpleNamespace(
+            role="assistant",
+            content="prévia",
+            metadata={
+                "toolCalls": [
+                    {
+                        "name": "tv_dashboard_copilot",
+                        "arguments": {
+                            "mode": "preview",
+                            "ops": [{"op": "add_slide_from_preset", "presetKey": "preset_comunicado"}],
+                            "target": {"playlistId": "pl-9"},
+                        },
+                        "metadata": {"ok": True, "mode": "preview"},
+                    }
+                ]
+            },
+        )
+    ]
+    call = ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(previous)
+    assert call is not None
+    assert call["arguments"]["mode"] == "apply"
+    assert call["arguments"]["target"]["playlistId"] == "pl-9"

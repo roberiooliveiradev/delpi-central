@@ -232,9 +232,19 @@ class ChatTurnPreparationToolRoutingService:
         if not ChatWorkspaceAgentActivationService.operational_tools_enabled(
             workspace_context
         ):
+            from app.domain.services.chat_host_surface_context_service import (
+                ChatHostSurfaceContextService,
+            )
+
+            # Chat comum bloqueia OpenAPI/agentic; exceções de plataforma:
+            # anexos, web_search e copiloto de surface embutido (TV Dashboard).
             skip_tools_for_inactive_agent = not (
                 request_attachment_ids
                 or ChatWebSearchIntentService.matches(message)
+                or ChatHostSurfaceContextService.allows_common_chat_platform_tools(
+                    workspace,
+                    message=message,
+                )
             )
 
         from app.domain.services.chat_project_sources_intent_service import (
@@ -521,6 +531,8 @@ class ChatTurnPreparationToolRoutingService:
                 previous_messages=history_source,
                 max_external_action_calls=max_external_action_calls,
                 on_stream_activity=on_stream_activity,
+                # Workspace completo (skills + hostContext TV) — não só agent.
+                agent_context=workspace_context,
                 working_memory=workspace_context.get("workingMemory"),
             )
             tool_context = maybe_extend_tool_context(

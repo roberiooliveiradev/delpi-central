@@ -71,6 +71,21 @@ export function EmbeddedChat({
     return () => setChatNavigationHostMode("portal");
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const win = window as unknown as {
+      __DELPI_TV_COPILOT_HOST__?: EmbeddedChatHostCallbacks;
+    };
+    if (hostCallbacks) {
+      win.__DELPI_TV_COPILOT_HOST__ = hostCallbacks;
+    }
+    return () => {
+      if (win.__DELPI_TV_COPILOT_HOST__ === hostCallbacks) {
+        delete win.__DELPI_TV_COPILOT_HOST__;
+      }
+    };
+  }, [hostCallbacks]);
+
   const hostContext = useMemo<ChatHostContext>(
     () =>
       buildTvDashboardHostContext({
@@ -92,12 +107,6 @@ export function EmbeddedChat({
     ].filter(Boolean);
     return parts.join(" · ");
   }, [workspaceContext]);
-
-  // Expõe callbacks no window para o host/instrumentação (MVP A1).
-  if (typeof window !== "undefined" && hostCallbacks) {
-    (window as unknown as { __DELPI_TV_COPILOT_HOST__?: EmbeddedChatHostCallbacks }).__DELPI_TV_COPILOT_HOST__ =
-      hostCallbacks;
-  }
 
   return (
     <div

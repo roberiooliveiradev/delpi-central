@@ -32,6 +32,10 @@ def test_allows_after_confirm():
     )
 
 
+def test_user_confirmed_accepts_pode_aplicar():
+    assert ChatWriteConfirmationService.user_confirmed("pode aplicar") is True
+
+
 def test_read_action_not_blocked():
     assert not ChatWriteConfirmationService.should_block_execution(
         message="qual o estoque do produto 10080001",

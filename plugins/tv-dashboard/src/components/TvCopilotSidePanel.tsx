@@ -116,12 +116,21 @@ export function TvCopilotSidePanel({
         nativeConfig?: Record<string, unknown> | null;
         sideEffects?: Record<string, unknown> | null;
       }) => {
-        if (payload.nativeConfig && editor?.applySlideTemplate) {
-          editor.applySlideTemplate(payload.nativeConfig);
+        const slides = Array.isArray(payload.sideEffects?.slides)
+          ? payload.sideEffects.slides
+          : [];
+        const firstSlide =
+          slides[0] && typeof slides[0] === "object"
+            ? (slides[0] as { nativeConfig?: Record<string, unknown> | null })
+            : null;
+        const nativeConfig = payload.nativeConfig ?? firstSlide?.nativeConfig ?? null;
+
+        if (nativeConfig && editor?.applySlideTemplate) {
+          editor.applySlideTemplate(nativeConfig);
           setStatus(C.previewAppliedLocal);
           return;
         }
-        if (payload.sideEffects?.slides) {
+        if (slides.length > 0) {
           setStatus(C.previewSlideReady);
           return;
         }

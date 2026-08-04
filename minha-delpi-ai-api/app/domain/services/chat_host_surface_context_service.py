@@ -79,6 +79,29 @@ class ChatHostSurfaceContextService:
         )
 
     @classmethod
+    def allows_common_chat_platform_tools(
+        cls,
+        workspace_context: dict | None,
+        *,
+        message: str | None = None,
+    ) -> bool:
+        """Tools internas de surface no chat comum (sem agente OpenAPI).
+
+        Espelha a exceção de ``web_search``: o embed TV declara surface e precisa
+        chamar ``tv_dashboard_copilot`` sem ativar agente operacional.
+        """
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
+        if skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG):
+            return True
+
+        host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
+        if cls.is_tv_dashboard(host if isinstance(host, dict) else None):
+            return True
+
+        return bool(message and ChatTvDashboardCopilotIntentService.matches(message))
+
+    @classmethod
     def build_prompt_addon(cls, workspace_context: dict | None) -> str:
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
         host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
@@ -132,3 +155,41 @@ class ChatHostSurfaceContextService:
             arguments,
             host if isinstance(host, dict) else None,
         )
+
+    @classmethod
+    def build_platform_tool_call(
+        cls,
+        message: str | None,
+        *,
+        workspace_context: dict | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        """Seleção determinística da tool de surface (não depende do LLM)."""
+        if not cls.allows_common_chat_platform_tools(
+            workspace_context,
+            message=message,
+        ):
+            return None
+
+        call = ChatTvDashboardCopilotIntentService.build_create_slide_tool_call(message)
+        if not call:
+            from app.domain.services.chat_write_confirmation_service import (
+                ChatWriteConfirmationService,
+            )
+
+            if ChatWriteConfirmationService.user_confirmed(message):
+                call = ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(
+                    previous_messages
+                )
+
+        if not call:
+            return None
+
+        return {
+            **call,
+            "arguments": cls.merge_tool_arguments(
+                "tv_dashboard_copilot",
+                call.get("arguments") if isinstance(call.get("arguments"), dict) else {},
+                workspace_context,
+            ),
+        }

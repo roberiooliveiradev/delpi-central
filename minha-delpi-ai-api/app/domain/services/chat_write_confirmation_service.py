@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 from app.domain.services.chat_message_normalization_service import (
     ChatMessageNormalizationService,
 )
@@ -13,38 +11,21 @@ from app.domain.services.external_actions.external_action_response_content_servi
 
 _SENSITIVE_SENSITIVITY = frozenset({"write", "destructive", "admin"})
 _SENSITIVE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
-_CONFIRM_MARKERS = (
-    "confirmo",
-    "pode executar",
-    "pode prosseguir",
-    "autorizo",
-    "sim confirmo",
-    "sim, confirmo",
-    "pode enviar",
-    "pode publicar",
-    "pode excluir",
-    "pode deletar",
-    "pode apagar",
-)
-_WRITE_INTENT_MARKERS = (
-    "exclu",
-    "delet",
-    "apag",
-    "remov",
-    "enviar e-mail",
-    "enviar email",
-    "mandar e-mail",
-    "public",
-    "atualiz",
-    "cadastr",
-    "alterar permiss",
-    "gravar",
-    "inserir",
-    "criar registro",
-)
 
 
 class ChatWriteConfirmationService:
+    @classmethod
+    def _confirm_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            ExternalActionResponseContentService.list("security", "confirmMarkers")
+        )
+
+    @classmethod
+    def _write_intent_markers(cls) -> tuple[str, ...]:
+        return tuple(
+            ExternalActionResponseContentService.list("security", "writeIntentMarkers")
+        )
+
     @classmethod
     def action_requires_confirmation(cls, action: dict | None) -> bool:
         if not isinstance(action, dict):
@@ -68,7 +49,7 @@ class ChatWriteConfirmationService:
         if not normalized:
             return False
 
-        return any(marker in normalized for marker in _WRITE_INTENT_MARKERS)
+        return any(marker in normalized for marker in cls._write_intent_markers())
 
     @classmethod
     def user_confirmed(cls, message: str | None) -> bool:
@@ -77,10 +58,10 @@ class ChatWriteConfirmationService:
         if not normalized:
             return False
 
-        if any(marker in normalized for marker in _CONFIRM_MARKERS):
+        if any(marker in normalized for marker in cls._confirm_markers()):
             return True
 
-        return bool(re.search(r"\bconfirm(o|a|ar|ado)\b", normalized))
+        return bool(ExternalActionResponseContentService.confirm_pattern().search(normalized))
 
     @classmethod
     def should_block_execution(

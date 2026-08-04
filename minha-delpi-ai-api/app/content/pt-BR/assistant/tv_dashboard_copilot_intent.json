@@ -76,5 +76,15 @@
     "slideLine": "slideId={slideId}",
     "instruction": "Use estes IDs no target da tool tv_dashboard_copilot. Para «crie um slide» sem tipo, prefira add_slide_from_preset com preset_comunicado em mode=preview; apply só após confirmação."
   },
-  "defaultCreatePresetKey": "preset_comunicado"
+  "defaultCreatePresetKey": "preset_comunicado",
+  "selectionReason": "Pedido de slide/tela no editor TV Dashboard — preview tipado via tv_dashboard_copilot.",
+  "applySelectionReason": "Confirmação do usuário — apply do patch TV Dashboard.",
+  "createSlideMarkers": ["slide", "slides", "tela", "telas"],
+  "directAnswer": {
+    "previewSlide": "Prévia pronta: slide «{title}» (preset `{presetKey}`) na playlist.\n\nPara gravar na programação e atualizar o filmstrip, confirme com **pode aplicar** ou **confirmo**.",
+    "previewGeneric": "Prévia do patch TV gerada ({opsCount} operação(ões)).\n\nPara gravar na programação, confirme com **pode aplicar** ou **confirmo**.",
+    "applyOk": "Slide gravado na programação. O filmstrip deve atualizar em instantes.",
+    "applyFailed": "Não foi possível gravar o patch na programação. Tente de novo ou use o editor.",
+    "blocked": "Para gravar o patch no TV Dashboard, confirme explicitamente (ex.: «pode aplicar» ou «confirmo»)."
+  }
 }

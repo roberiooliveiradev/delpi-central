@@ -67,6 +67,21 @@ class ChatFastPathService:
         if not text:
             return False
 
+        # Confirmação de write / apply TV não pode pular tools.
+        from app.domain.services.chat_write_confirmation_service import (
+            ChatWriteConfirmationService,
+        )
+
+        if ChatWriteConfirmationService.user_confirmed(text):
+            return False
+
+        from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+            ChatTvDashboardCopilotIntentService,
+        )
+
+        if ChatTvDashboardCopilotIntentService.matches(text):
+            return False
+
         if ChatFastPathService.is_small_talk(text):
             return True
 

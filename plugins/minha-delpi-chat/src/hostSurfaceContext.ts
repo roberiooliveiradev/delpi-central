@@ -77,24 +77,43 @@ export function notifyHostOfTvCopilotToolCalls(
         ok,
         persisted: Boolean(data.persisted ?? meta.persisted),
         target:
-          data.target && typeof data.target === "object"
+          (data.target && typeof data.target === "object"
             ? (data.target as { playlistId?: string | null; slideId?: string | null })
-            : undefined,
+            : undefined) ??
+          (meta.target && typeof meta.target === "object"
+            ? (meta.target as { playlistId?: string | null; slideId?: string | null })
+            : undefined),
       });
       continue;
     }
 
+    const sideEffects =
+      (data.sideEffects && typeof data.sideEffects === "object"
+        ? (data.sideEffects as Record<string, unknown>)
+        : null) ??
+      (meta.sideEffects && typeof meta.sideEffects === "object"
+        ? (meta.sideEffects as Record<string, unknown>)
+        : null);
+
+    let nativeConfig =
+      data.nativeConfig && typeof data.nativeConfig === "object"
+        ? (data.nativeConfig as Record<string, unknown>)
+        : null;
+    if (!nativeConfig && sideEffects?.slides && Array.isArray(sideEffects.slides)) {
+      const first = sideEffects.slides[0];
+      if (first && typeof first === "object" && "nativeConfig" in first) {
+        const nc = (first as { nativeConfig?: unknown }).nativeConfig;
+        if (nc && typeof nc === "object") {
+          nativeConfig = nc as Record<string, unknown>;
+        }
+      }
+    }
+
     bridge.onPreviewPatch?.({
-      nativeConfig:
-        data.nativeConfig && typeof data.nativeConfig === "object"
-          ? (data.nativeConfig as Record<string, unknown>)
-          : null,
+      nativeConfig,
       diff: data.diff && typeof data.diff === "object" ? (data.diff as Record<string, unknown>) : null,
       ops: Array.isArray(call.arguments?.ops) ? (call.arguments?.ops as unknown[]) : undefined,
-      sideEffects:
-        data.sideEffects && typeof data.sideEffects === "object"
-          ? (data.sideEffects as Record<string, unknown>)
-          : null,
+      sideEffects,
     });
   }
 }

@@ -61,6 +61,138 @@ class ChatTvDashboardCopilotIntentService:
         return bool(has_marker and has_action)
 
     @classmethod
+    def is_create_slide_request(cls, message: str | None) -> bool:
+        """Pedido de novo slide/tela (não playlist genérica nem bind de fonte)."""
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        if not normalized or len(normalized) < 4:
+            return False
+
+        slide_markers = cls._list("createSlideMarkers") or ("slide", "slides", "tela", "telas")
+        for phrase in cls._normalized_phrases():
+            if phrase and phrase in normalized and any(m in phrase for m in slide_markers):
+                return True
+
+        has_marker = any(marker in normalized for marker in slide_markers if marker)
+        has_action = any(
+            action in normalized for action in cls._list("createActionTerms") if action
+        )
+        return bool(has_marker and has_action)
+
+    @classmethod
+    def build_create_slide_tool_call(cls, message: str | None) -> dict | None:
+        if not cls.is_create_slide_request(message):
+            return None
+
+        preset = cls._text("defaultCreatePresetKey", default="preset_comunicado") or "preset_comunicado"
+        reason = cls._text(
+            "selectionReason",
+            default="Pedido de slide no editor TV Dashboard.",
+        )
+        return {
+            "name": "tv_dashboard_copilot",
+            "arguments": {
+                "mode": "preview",
+                "ops": [{"op": "add_slide_from_preset", "presetKey": preset}],
+            },
+            "reason": reason,
+        }
+
+    @classmethod
+    def build_apply_tool_call_from_history(
+        cls,
+        previous_messages: list | None,
+    ) -> dict | None:
+        """Reusa ops do último preview bem-sucedido de ``tv_dashboard_copilot``."""
+
+        def _role(item: object) -> str:
+            if isinstance(item, dict):
+                return str(item.get("role") or "").lower()
+            return str(getattr(item, "role", "") or "").lower()
+
+        def _metadata(item: object) -> dict:
+            if isinstance(item, dict):
+                meta = item.get("metadata")
+            else:
+                meta = getattr(item, "metadata", None)
+            return meta if isinstance(meta, dict) else {}
+
+        for message in reversed(list(previous_messages or [])):
+            if _role(message) != "assistant":
+                continue
+            tool_calls = _metadata(message).get("toolCalls")
+            if not isinstance(tool_calls, list):
+                continue
+            for call in reversed(tool_calls):
+                if not isinstance(call, dict):
+                    continue
+                if str(call.get("name") or "") != "tv_dashboard_copilot":
+                    continue
+                call_meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+                if call_meta.get("ok") is False or call_meta.get("blocked"):
+                    continue
+                arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
+                mode = str(arguments.get("mode") or call_meta.get("mode") or "preview").lower()
+                if mode == "apply":
+                    continue
+                ops = arguments.get("ops")
+                if not isinstance(ops, list) or not ops:
+                    continue
+                target = arguments.get("target")
+                return {
+                    "name": "tv_dashboard_copilot",
+                    "arguments": {
+                        "mode": "apply",
+                        "ops": list(ops),
+                        "target": dict(target) if isinstance(target, dict) else {},
+                    },
+                    "reason": cls._text(
+                        "applySelectionReason",
+                        default="Confirmação — apply do patch TV Dashboard.",
+                    ),
+                }
+        return None
+
+    @classmethod
+    def format_direct_answer(
+        cls,
+        *,
+        data: dict | None,
+        metadata: dict | None,
+    ) -> str | None:
+        meta = metadata if isinstance(metadata, dict) else {}
+        payload = data if isinstance(data, dict) else {}
+        if not payload and isinstance(meta.get("data"), dict):
+            payload = meta["data"]
+
+        if meta.get("blocked") or meta.get("blockReason") == "confirmation_required":
+            return cls._text("directAnswer", "blocked", default="")
+
+        mode = str(meta.get("mode") or "").lower()
+        ok = meta.get("ok") is not False
+
+        if mode == "apply":
+            key = "applyOk" if ok else "applyFailed"
+            return cls._text("directAnswer", key, default="") or None
+
+        side = payload.get("sideEffects") if isinstance(payload.get("sideEffects"), dict) else {}
+        slides = side.get("slides") if isinstance(side.get("slides"), list) else []
+        first = slides[0] if slides and isinstance(slides[0], dict) else {}
+        title = str(first.get("title") or "").strip() or "Slide"
+        preset = str(first.get("presetKey") or "").strip()
+        if preset:
+            return cls._text(
+                "directAnswer",
+                "previewSlide",
+                default="",
+            ).format(title=title, presetKey=preset) or None
+
+        ops = payload.get("appliedOps") if isinstance(payload.get("appliedOps"), list) else []
+        return cls._text(
+            "directAnswer",
+            "previewGeneric",
+            default="",
+        ).format(opsCount=str(len(ops) or 1)) or None
+    @classmethod
     def is_tv_copilot_turn(
         cls,
         message: str | None,

@@ -8,6 +8,7 @@ PLATFORM_INTERNAL_TOOL_NAMES = frozenset(
         "get_allowed_apps",
         "get_allowed_routes",
         "search_knowledge_base",
+        "tv_dashboard_copilot",
     }
 )
 
@@ -16,6 +17,7 @@ PLATFORM_DIRECT_ANSWER_TOOL_NAMES = frozenset(
         "get_current_user",
         "get_allowed_apps",
         "get_allowed_routes",
+        "tv_dashboard_copilot",
     }
 )
 

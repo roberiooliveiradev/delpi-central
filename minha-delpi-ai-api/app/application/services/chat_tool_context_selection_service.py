@@ -71,6 +71,20 @@ class ChatToolContextSelectionService:
                 previous_messages=previous_messages,
             )
 
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        tv_tool = ChatHostSurfaceContextService.build_platform_tool_call(
+            message,
+            workspace_context=getattr(host, "_build_workspace_context", None),
+            previous_messages=previous_messages,
+        )
+        if tv_tool and not any(
+            str(item.get("name") or "") == "tv_dashboard_copilot" for item in selected_tools
+        ):
+            selected_tools = list(selected_tools) + [tv_tool]
+
         if allowed_tool_names:
             allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}
             selected_tools = [

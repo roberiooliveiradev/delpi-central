@@ -528,23 +528,29 @@ class ChatToolContextService:
 
     @classmethod
     def _resolve_workspace_context(cls, agent_context: dict | None) -> dict | None:
+        """Extrai skills + host ambient do workspace do turno (ou do agent legado)."""
         if not isinstance(agent_context, dict):
             return None
 
+        resolved: dict = {}
+
         skills = agent_context.get("skills")
-
         if isinstance(skills, dict) and skills:
-            return {"skills": skills}
+            resolved["skills"] = dict(skills)
+        else:
+            metadata = agent_context.get("metadata")
+            if isinstance(metadata, dict):
+                runtime_skills = metadata.get("skills")
+                if isinstance(runtime_skills, dict) and runtime_skills:
+                    resolved["skills"] = dict(runtime_skills)
 
-        metadata = agent_context.get("metadata")
+        host = agent_context.get("tvDashboardHostContext") or agent_context.get(
+            "hostContext"
+        )
+        if isinstance(host, dict) and host:
+            resolved["tvDashboardHostContext"] = dict(host)
 
-        if isinstance(metadata, dict):
-            runtime_skills = metadata.get("skills")
-
-            if isinstance(runtime_skills, dict) and runtime_skills:
-                return {"skills": runtime_skills}
-
-        return None
+        return resolved or None
 
 
 
