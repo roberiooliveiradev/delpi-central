@@ -71,15 +71,44 @@ class ChatToolContextSelectionService:
                 previous_messages=previous_messages,
             )
 
-        from app.domain.services.chat_host_surface_context_service import (
-            ChatHostSurfaceContextService,
+        from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
+            ChatTvDashboardPlatformToolSelectionService,
         )
 
-        tv_tool = ChatHostSurfaceContextService.build_platform_tool_call(
+        workspace_context = getattr(host, "_build_workspace_context", None)
+        if not isinstance(workspace_context, dict):
+            workspace_context = None
+        access_token = getattr(host, "_access_token", None)
+        if not isinstance(access_token, str):
+            access_token = None
+
+        tv_selection = ChatTvDashboardPlatformToolSelectionService.select(
             message,
-            workspace_context=getattr(host, "_build_workspace_context", None),
+            workspace_context=workspace_context,
             previous_messages=previous_messages,
+            access_token=access_token,
         )
+        if tv_selection.catalog and isinstance(workspace_context, dict):
+            workspace_context["tvDashboardCatalog"] = tv_selection.catalog
+            host._build_workspace_context = workspace_context
+
+        if tv_selection.catalog_unavailable_answer and not tv_selection.tool_call:
+            return ToolSelectionOutcome(
+                early_result=host._finalize_tool_context_result(
+                    message=raw_message,
+                    previous_messages=previous_messages,
+                    result={
+                        "context": "",
+                        "toolCalls": [],
+                        "nativeToolCalling": native_meta,
+                        "directAnswer": tv_selection.catalog_unavailable_answer,
+                        "skipRag": True,
+                        "currentMessage": raw_message,
+                    },
+                ),
+            )
+
+        tv_tool = tv_selection.tool_call
         if tv_tool and not any(
             str(item.get("name") or "") == "tv_dashboard_copilot" for item in selected_tools
         ):

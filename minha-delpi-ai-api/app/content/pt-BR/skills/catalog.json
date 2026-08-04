@@ -155,7 +155,7 @@
     {
       "key": "tv-dashboard-copilot",
       "label": "Copiloto TV Dashboard",
-      "description": "Aplica patches tipados em programações e slides do TV Dashboard (fontes, dataTransform, KPI/chart/table, presets MDD, playlist). Não gera Power Query M. Preview livre; apply só com confirmação.",
+      "description": "Aplica patches tipados em programações e slides do TV Dashboard via catálogo do BFF. Não gera Power Query M. Preview livre; apply só com confirmação.",
       "policyFile": "tv-dashboard-copilot-skill.md",
       "metadataFlag": "enabled",
       "legacyMetadataFlag": "tvDashboardCopilot",
@@ -165,14 +165,13 @@
         "copiloto tv",
         "tv dashboard",
         "assistente tv",
-        "montar slide tv",
-        "patch slide"
+        "patch tipado tv"
       ],
       "examplePrompts": [
-        "adicione a fonte OEE da filial 01 neste slide",
-        "filtre só a coluna IDD e ligue ao KPI",
-        "crie um slide a partir do preset de OTD",
-        "monte uma programação Turno A com seed de OEE"
+        "crie um slide nesta programação",
+        "escreva um texto neste slide",
+        "apague o bloco selecionado",
+        "pode aplicar"
       ],
       "sortOrder": 40
     }

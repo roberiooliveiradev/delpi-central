@@ -1,5 +1,14 @@
 """Contexto ambient de host + exclusão de text_task no surface TV."""
 
+from app.application.services.chat_tv_dashboard_catalog_service import (
+    ChatTvDashboardCatalogService,
+)
+from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
+    ChatTvDashboardPlatformToolSelectionService,
+)
+from app.domain.ports.tv_dashboard_capability_catalog_port import (
+    TvDashboardCapabilityCatalogPort,
+)
 from app.domain.services.chat_host_surface_context_service import (
     ChatHostSurfaceContextService,
 )
@@ -7,6 +16,21 @@ from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntent
 from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
     ChatTvDashboardCopilotIntentService,
 )
+
+
+class _SuggestSlidePort(TvDashboardCapabilityCatalogPort):
+    def fetch_catalog(self, access_token: str) -> dict | None:
+        return {
+            "catalogVersion": "t",
+            "capabilities": [{"op": "add_slide_from_preset", "whenToUse": "Slide"}],
+        }
+
+    def suggest_ops(self, message, host_context, access_token):
+        return {
+            "catalogVersion": "t",
+            "ops": [{"op": "add_slide_from_preset", "presetKey": "preset_comunicado"}],
+            "reason": "BFF",
+        }
 
 
 def test_matches_create_slide_without_host():
@@ -116,8 +140,8 @@ def test_allows_common_chat_platform_tools_when_skill_or_surface():
     )
 
 
-def test_build_platform_tool_call_create_slide_merges_playlist():
-    call = ChatHostSurfaceContextService.build_platform_tool_call(
+def test_platform_tool_selection_create_slide_merges_playlist():
+    call = ChatTvDashboardPlatformToolSelectionService.select(
         "crie um slide",
         workspace_context={
             "skills": {"tvDashboardCopilot": True},
@@ -126,7 +150,9 @@ def test_build_platform_tool_call_create_slide_merges_playlist():
                 "playlistId": "pl-live",
             },
         },
-    )
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=_SuggestSlidePort()),
+    ).tool_call
     assert call is not None
     assert call["name"] == "tv_dashboard_copilot"
     assert call["arguments"]["mode"] == "preview"
@@ -143,6 +169,18 @@ def test_build_platform_tool_call_skips_non_slide_message():
                 "tvDashboardHostContext": {"surface": "tv-dashboard"},
             },
         )
+        is None
+    )
+    assert (
+        ChatTvDashboardPlatformToolSelectionService.select(
+            "olá",
+            workspace_context={
+                "skills": {"tvDashboardCopilot": True},
+                "tvDashboardHostContext": {"surface": "tv-dashboard"},
+            },
+            access_token="tok",
+            catalog_service=ChatTvDashboardCatalogService(catalog_port=_SuggestSlidePort()),
+        ).tool_call
         is None
     )
 

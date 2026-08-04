@@ -100,6 +100,9 @@ class ChatAdvancedSqlSpecialistActivationService:
         message: str | None,
         workspace_context: dict | None,
     ) -> bool:
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
         from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
             TV_DASHBOARD_COPILOT_SKILL_FLAG,
             ChatTvDashboardCopilotIntentService,
@@ -110,11 +113,17 @@ class ChatAdvancedSqlSpecialistActivationService:
         host_dict = host if isinstance(host, dict) else None
         skills = workspace.get("skills") if isinstance(workspace.get("skills"), dict) else {}
 
+        if ChatHostSurfaceContextService.is_tv_mutation_turn(
+            message,
+            host_dict,
+            workspace_context=workspace,
+        ):
+            return True
         if ChatTvDashboardCopilotIntentService.matches(message):
             return True
-        if ChatTvDashboardCopilotIntentService.is_tv_surface(host_dict):
-            return True
-        return bool(skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG))
+        return bool(skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG)) and bool(
+            ChatTvDashboardCopilotIntentService.has_mutation_verb(message)
+        )
 
     @classmethod
     def _has_explicit_sql_signal(cls, message: str | None) -> bool:

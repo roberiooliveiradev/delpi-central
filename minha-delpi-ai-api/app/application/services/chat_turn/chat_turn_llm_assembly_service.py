@@ -245,7 +245,12 @@ class ChatTurnLlmAssemblyService:
             )
 
             host_surface_prompt = ChatHostSurfaceContextService.build_prompt_addon(
-                workspace_context
+                workspace_context,
+                catalog=(
+                    workspace_context.get("tvDashboardCatalog")
+                    if isinstance(workspace_context, dict)
+                    else None
+                ),
             )
 
             from app.infrastructure.llm.llm_request_context import get_active_config

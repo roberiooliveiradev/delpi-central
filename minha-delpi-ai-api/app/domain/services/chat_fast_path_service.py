@@ -49,6 +49,8 @@ class ChatFastPathService:
         max_chars: int = 30,
         attachment_ids: list[str] | None = None,
         previous_messages: list | None = None,
+        workspace_context: dict | None = None,
+        host_context: dict | None = None,
     ) -> bool:
         if not enabled:
             return False
@@ -75,11 +77,21 @@ class ChatFastPathService:
         if ChatWriteConfirmationService.user_confirmed(text):
             return False
 
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
         from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
             ChatTvDashboardCopilotIntentService,
         )
 
         if ChatTvDashboardCopilotIntentService.matches(text):
+            return False
+
+        if ChatHostSurfaceContextService.is_tv_mutation_turn(
+            text,
+            host_context,
+            workspace_context=workspace_context,
+        ):
             return False
 
         if ChatFastPathService.is_small_talk(text):

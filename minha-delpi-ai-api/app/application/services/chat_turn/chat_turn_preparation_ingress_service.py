@@ -92,10 +92,15 @@ class ChatTurnPreparationIngressService:
         operational_optimize = pre_tool.operational_optimize
         analysis_mode = pre_tool.analysis_mode
         text_task_category = ChatTextTaskIntentService.classify(message)
+        host_context = getattr(request, "host_context", None)
+        if not isinstance(host_context, dict) and isinstance(workspace_context, dict):
+            host_context = workspace_context.get(
+                "tvDashboardHostContext"
+            ) or workspace_context.get("hostContext")
         text_task_pure = ChatTextTaskIntentService.is_pure_text_task(
             message,
             previous_messages=history_source,
-            host_context=getattr(request, "host_context", None),
+            host_context=host_context if isinstance(host_context, dict) else None,
         )
 
         if text_task_pure:

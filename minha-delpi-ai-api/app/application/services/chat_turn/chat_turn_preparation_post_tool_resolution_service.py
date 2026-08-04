@@ -136,6 +136,25 @@ class ChatTurnPreparationPostToolResolutionService:
             or (assistant_identity_question and profile_prep.skip_rag)
         )
 
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        tv_mutation_turn = ChatHostSurfaceContextService.is_tv_mutation_turn(
+            message,
+            workspace_context=workspace_context,
+            has_suggested_ops=bool(
+                isinstance(tool_context, dict)
+                and any(
+                    str(item.get("name") or "") == "tv_dashboard_copilot"
+                    for item in (tool_context.get("toolCalls") or [])
+                    if isinstance(item, dict)
+                )
+            ),
+        )
+        if tv_mutation_turn:
+            skip_rag = True
+
         from app.domain.services.chat_sql_intent_service import ChatSqlIntentService
         from app.domain.services.chat_sql_query_refinement_service import (
             ChatSqlQueryRefinementService,

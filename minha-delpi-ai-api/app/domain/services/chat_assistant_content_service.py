@@ -14,6 +14,15 @@ def invalidate_assistant_content_cache(bundle: str | None = None) -> None:
     if ChatAssistantContentService._port is not None:
         ChatAssistantContentService._port.invalidate_cache(bundle)
 
+    try:
+        from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+            ChatTvDashboardCopilotIntentService,
+        )
+
+        ChatTvDashboardCopilotIntentService._normalized_phrases.cache_clear()
+    except Exception:
+        pass
+
 
 @lru_cache(maxsize=32)
 def _bundle_content(bundle: str) -> dict[str, Any]:

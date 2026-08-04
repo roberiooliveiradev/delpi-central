@@ -64,6 +64,12 @@ class ChatHostSurfaceContextService:
         return ChatTvDashboardCopilotIntentService.is_tv_surface(host_context)
 
     @classmethod
+    def host_from_workspace(cls, workspace_context: dict | None) -> dict | None:
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
+        return host if isinstance(host, dict) else None
+
+    @classmethod
     def enrich_workspace(
         cls,
         workspace_context: dict | None,
@@ -95,20 +101,29 @@ class ChatHostSurfaceContextService:
         if skills.get(TV_DASHBOARD_COPILOT_SKILL_FLAG):
             return True
 
-        host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
-        if cls.is_tv_dashboard(host if isinstance(host, dict) else None):
+        if cls.is_tv_dashboard(cls.host_from_workspace(workspace)):
             return True
 
         return bool(message and ChatTvDashboardCopilotIntentService.matches(message))
 
     @classmethod
-    def build_prompt_addon(cls, workspace_context: dict | None) -> str:
+    def build_prompt_addon(
+        cls,
+        workspace_context: dict | None,
+        *,
+        catalog: dict | None = None,
+    ) -> str:
         workspace = workspace_context if isinstance(workspace_context, dict) else {}
-        host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
+        host = cls.host_from_workspace(workspace)
+        catalog_doc = catalog
+        if catalog_doc is None and isinstance(workspace.get("tvDashboardCatalog"), dict):
+            catalog_doc = workspace.get("tvDashboardCatalog")
         if not host and not (workspace.get("skills") or {}).get(TV_DASHBOARD_COPILOT_SKILL_FLAG):
-            return ""
+            if not catalog_doc:
+                return ""
         return ChatTvDashboardCopilotIntentService.build_host_prompt_section(
-            host if isinstance(host, dict) else None
+            host,
+            catalog=catalog_doc,
         )
 
     @classmethod
@@ -137,7 +152,31 @@ class ChatHostSurfaceContextService:
         if category == "write":
             return True
 
+        if ChatTvDashboardCopilotIntentService.is_tv_mutation_turn(
+            message,
+            host_context,
+        ):
+            return True
+
         return ChatTvDashboardCopilotIntentService.matches(message)
+
+    @classmethod
+    def is_tv_mutation_turn(
+        cls,
+        message: str | None,
+        host_context: dict | None = None,
+        *,
+        has_suggested_ops: bool = False,
+        workspace_context: dict | None = None,
+    ) -> bool:
+        host = host_context
+        if host is None and workspace_context is not None:
+            host = cls.host_from_workspace(workspace_context)
+        return ChatTvDashboardCopilotIntentService.is_tv_mutation_turn(
+            message,
+            host,
+            has_suggested_ops=has_suggested_ops,
+        )
 
     @classmethod
     def merge_tool_arguments(
@@ -149,11 +188,10 @@ class ChatHostSurfaceContextService:
         if tool_name != "tv_dashboard_copilot":
             return dict(arguments or {})
 
-        workspace = workspace_context if isinstance(workspace_context, dict) else {}
-        host = workspace.get("tvDashboardHostContext") or workspace.get("hostContext")
+        host = cls.host_from_workspace(workspace_context)
         return ChatTvDashboardCopilotIntentService.merge_target_into_arguments(
             arguments,
-            host if isinstance(host, dict) else None,
+            host,
         )
 
     @classmethod
@@ -164,24 +202,27 @@ class ChatHostSurfaceContextService:
         workspace_context: dict | None = None,
         previous_messages: list | None = None,
     ) -> dict | None:
-        """Seleção determinística da tool de surface (não depende do LLM)."""
+        """Somente apply por confirmação (histórico). Preview vem do BFF via application.
+
+        Mantido para compatibilidade de testes de apply; seleção completa:
+        ``ChatTvDashboardPlatformToolSelectionService``.
+        """
         if not cls.allows_common_chat_platform_tools(
             workspace_context,
             message=message,
         ):
             return None
 
-        call = ChatTvDashboardCopilotIntentService.build_create_slide_tool_call(message)
-        if not call:
-            from app.domain.services.chat_write_confirmation_service import (
-                ChatWriteConfirmationService,
-            )
+        from app.domain.services.chat_write_confirmation_service import (
+            ChatWriteConfirmationService,
+        )
 
-            if ChatWriteConfirmationService.user_confirmed(message):
-                call = ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(
-                    previous_messages
-                )
+        if not ChatWriteConfirmationService.user_confirmed(message):
+            return None
 
+        call = ChatTvDashboardCopilotIntentService.build_apply_tool_call_from_history(
+            previous_messages
+        )
         if not call:
             return None
 

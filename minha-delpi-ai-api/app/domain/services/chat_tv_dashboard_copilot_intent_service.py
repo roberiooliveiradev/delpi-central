@@ -1,4 +1,4 @@
-"""Intenção do Copiloto TV Dashboard — patches tipados (não redação textual)."""
+"""Intenção do Copiloto TV Dashboard — surface/confirmação (ops vêm do BFF)."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ TV_DASHBOARD_COPILOT_SKILL_FLAG = "tvDashboardCopilot"
 
 
 class ChatTvDashboardCopilotIntentService:
-    """Detecta pedidos de slide/playlist/fonte TV e normaliza hostContext."""
+    """Detecta surface/pedido TV leve; ops tipadas vêm do BFF (suggest-ops)."""
 
     @classmethod
     def _list(cls, *path: str) -> tuple[str, ...]:
@@ -35,6 +35,20 @@ class ChatTvDashboardCopilotIntentService:
         )
 
     @classmethod
+    def selection_reason(cls) -> str:
+        return cls._text(
+            "selectionReason",
+            default="Pedido de mutação no editor TV Dashboard.",
+        )
+
+    @classmethod
+    def catalog_unavailable_message(cls) -> str:
+        return cls._text(
+            "catalogUnavailable",
+            default="Catálogo do TV Dashboard indisponível no momento.",
+        )
+
+    @classmethod
     def is_tv_surface(cls, host_context: dict | None) -> bool:
         if not isinstance(host_context, dict):
             return False
@@ -47,6 +61,7 @@ class ChatTvDashboardCopilotIntentService:
 
     @classmethod
     def matches(cls, message: str | None) -> bool:
+        """Heurística leve de surface (frases/markers) — não lista ops do BFF."""
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         if not normalized or len(normalized) < 4:
             return False
@@ -55,47 +70,53 @@ class ChatTvDashboardCopilotIntentService:
             return True
 
         markers = cls._list("markers")
-        actions = cls._list("createActionTerms")
+        actions = cls._list("mutationActionTerms")
         has_marker = any(marker in normalized for marker in markers if marker)
         has_action = any(action in normalized for action in actions if action)
         return bool(has_marker and has_action)
 
     @classmethod
-    def is_create_slide_request(cls, message: str | None) -> bool:
-        """Pedido de novo slide/tela (não playlist genérica nem bind de fonte)."""
+    def has_mutation_verb(cls, message: str | None) -> bool:
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
-        if not normalized or len(normalized) < 4:
+        if not normalized:
             return False
-
-        slide_markers = cls._list("createSlideMarkers") or ("slide", "slides", "tela", "telas")
-        for phrase in cls._normalized_phrases():
-            if phrase and phrase in normalized and any(m in phrase for m in slide_markers):
-                return True
-
-        has_marker = any(marker in normalized for marker in slide_markers if marker)
-        has_action = any(
-            action in normalized for action in cls._list("createActionTerms") if action
+        return any(
+            term and term in normalized for term in cls._list("mutationActionTerms")
         )
-        return bool(has_marker and has_action)
 
     @classmethod
-    def build_create_slide_tool_call(cls, message: str | None) -> dict | None:
-        if not cls.is_create_slide_request(message):
-            return None
-
-        preset = cls._text("defaultCreatePresetKey", default="preset_comunicado") or "preset_comunicado"
-        reason = cls._text(
-            "selectionReason",
-            default="Pedido de slide no editor TV Dashboard.",
+    def has_selection_focus(cls, host_context: dict | None) -> bool:
+        if not isinstance(host_context, dict):
+            return False
+        if str(host_context.get("slideId") or host_context.get("slide_id") or "").strip():
+            return True
+        selected = host_context.get("selectedBlockIds") or host_context.get(
+            "selectedBlockId"
         )
-        return {
-            "name": "tv_dashboard_copilot",
-            "arguments": {
-                "mode": "preview",
-                "ops": [{"op": "add_slide_from_preset", "presetKey": preset}],
-            },
-            "reason": reason,
-        }
+        if isinstance(selected, list) and any(str(item or "").strip() for item in selected):
+            return True
+        if str(selected or "").strip():
+            return True
+        return False
+
+    @classmethod
+    def is_tv_mutation_turn(
+        cls,
+        message: str | None,
+        host_context: dict | None = None,
+        *,
+        has_suggested_ops: bool = False,
+    ) -> bool:
+        """Surface TV + (match leve OU seleção+verbo OU suggest-ops já resolveu ops)."""
+        if not cls.is_tv_surface(host_context):
+            return False
+        if has_suggested_ops:
+            return True
+        if cls.matches(message):
+            return True
+        if cls.has_selection_focus(host_context) and cls.has_mutation_verb(message):
+            return True
+        return False
 
     @classmethod
     def build_apply_tool_call_from_history(
@@ -192,6 +213,7 @@ class ChatTvDashboardCopilotIntentService:
             "previewGeneric",
             default="",
         ).format(opsCount=str(len(ops) or 1)) or None
+
     @classmethod
     def is_tv_copilot_turn(
         cls,
@@ -215,15 +237,27 @@ class ChatTvDashboardCopilotIntentService:
         slide_id = str(
             host_context.get("slideId") or host_context.get("slide_id") or ""
         ).strip() or None
+        selected_block_ids = host_context.get("selectedBlockIds")
+        selected_normalized: list[str] | None = None
+        if isinstance(selected_block_ids, list):
+            selected_normalized = [
+                str(item).strip() for item in selected_block_ids if str(item or "").strip()
+            ]
+        elif host_context.get("selectedBlockId"):
+            single = str(host_context.get("selectedBlockId") or "").strip()
+            selected_normalized = [single] if single else None
 
-        if not surface and not playlist_id and not slide_id:
+        if not surface and not playlist_id and not slide_id and not selected_normalized:
             return None
 
-        return {
+        result = {
             "surface": surface or TV_DASHBOARD_SURFACE,
             "playlistId": playlist_id,
             "slideId": slide_id,
         }
+        if selected_normalized:
+            result["selectedBlockIds"] = selected_normalized
+        return result
 
     @classmethod
     def should_enable_skill(
@@ -238,43 +272,89 @@ class ChatTvDashboardCopilotIntentService:
         return cls.is_tv_copilot_turn(message, host_context=host_context)
 
     @classmethod
-    def build_host_prompt_section(cls, host_context: dict | None) -> str:
+    def build_host_prompt_section(
+        cls,
+        host_context: dict | None,
+        *,
+        catalog: dict | None = None,
+    ) -> str:
         normalized = cls.normalize_host_context(host_context)
-        if not normalized:
+        if not normalized and not catalog:
             return ""
 
         lines = [cls._text("hostPrompt", "title", default="Contexto do editor TV Dashboard")]
-        surface = normalized.get("surface")
-        playlist_id = normalized.get("playlistId")
-        slide_id = normalized.get("slideId")
+        if normalized:
+            surface = normalized.get("surface")
+            playlist_id = normalized.get("playlistId")
+            slide_id = normalized.get("slideId")
 
-        if surface:
-            lines.append(
-                cls._text("hostPrompt", "surfaceLine", default="surface={surface}").format(
-                    surface=surface
+            if surface:
+                lines.append(
+                    cls._text("hostPrompt", "surfaceLine", default="surface={surface}").format(
+                        surface=surface
+                    )
                 )
-            )
-        if playlist_id:
-            lines.append(
-                cls._text(
-                    "hostPrompt",
-                    "playlistLine",
-                    default="playlistId={playlistId}",
-                ).format(playlistId=playlist_id)
-            )
-        if slide_id:
-            lines.append(
-                cls._text("hostPrompt", "slideLine", default="slideId={slideId}").format(
-                    slideId=slide_id
+            if playlist_id:
+                lines.append(
+                    cls._text(
+                        "hostPrompt",
+                        "playlistLine",
+                        default="playlistId={playlistId}",
+                    ).format(playlistId=playlist_id)
                 )
-            )
+            if slide_id:
+                lines.append(
+                    cls._text("hostPrompt", "slideLine", default="slideId={slideId}").format(
+                        slideId=slide_id
+                    )
+                )
 
         instruction = cls._text("hostPrompt", "instruction", default="")
         if instruction:
             lines.append(instruction)
 
+        summaries = cls.format_catalog_when_to_use(catalog)
+        if summaries:
+            title = cls._text(
+                "hostPrompt",
+                "catalogSectionTitle",
+                default="Capabilities do host (catálogo BFF):",
+            )
+            lines.append(title)
+            lines.append(summaries)
+
         return "\n".join(lines).strip()
 
+    @classmethod
+    def format_catalog_when_to_use(
+        cls,
+        catalog: dict | None,
+        *,
+        max_items: int = 12,
+        max_chars: int = 900,
+    ) -> str:
+        if not isinstance(catalog, dict):
+            return ""
+        capabilities = catalog.get("capabilities")
+        if not isinstance(capabilities, list):
+            return ""
+
+        lines: list[str] = []
+        for item in capabilities:
+            if not isinstance(item, dict):
+                continue
+            when = str(item.get("whenToUse") or "").strip()
+            op = str(item.get("op") or item.get("key") or "").strip()
+            if not when:
+                continue
+            lines.append(f"- `{op}`: {when}" if op else f"- {when}")
+            if len(lines) >= max(1, max_items):
+                break
+
+        text = "\n".join(lines).strip()
+        if len(text) > max_chars:
+            return text[: max(0, max_chars - 1)].rstrip() + "…"
+        return text
     @classmethod
     def merge_target_into_arguments(
         cls,

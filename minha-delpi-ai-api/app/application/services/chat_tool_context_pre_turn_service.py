@@ -80,6 +80,7 @@ class ChatToolContextPreTurnService:
         )
 
         host._build_workspace_context = workspace
+        host._access_token = access_token
 
         from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 
