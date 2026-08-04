@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 506,
+  "operation_count": 523,
   "operations": [
     {
       "method": "POST",
@@ -32099,6 +32099,15 @@
         "Pedidos de Venda em Aberto"
       ],
       "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "query",
+          "required": false,
+          "description": "Filtro de carteira (somente admin/gerente).",
+          "type": "string"
+        }
+      ],
       "xDelpi": {
         "entity": "open_sales_order",
         "shape": "composite_analysis",
@@ -32122,6 +32131,526 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Orders sales abertos."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "summary": "Customer outbound invoices by code and store",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "codigo",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "loja",
+          "in": "path",
+          "required": true,
+          "description": "Loja do cliente (A1_LOJA / D2_LOJA)",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "situation",
+          "in": "query",
+          "required": false,
+          "description": "all | emitted | return (devolução). Canceladas soft-deleted não retornam.",
+          "default": "all",
+          "type": "string"
+        },
+        {
+          "name": "search",
+          "in": "query",
+          "required": false,
+          "description": "Search query parameter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_outbound_invoice",
+        "shape": "playbook_report",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Customer outbound invoices by code and store",
+            "description": "Lists outbound invoices (SD2/SF2) for a customer code and store with period filters and pagination.",
+            "label": "Customer outbound invoices"
+          },
+          "pt-BR": {
+            "summary": "Notas fiscais de saída por código e loja do cliente",
+            "description": "Lista notas fiscais de saída (SD2/SF2) do cliente com período, busca e paginação.",
+            "label": "Notas fiscais de saída do cliente"
+          }
+        },
+        "params": {
+          "codigo": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "search": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca.",
+                "label": "Busca"
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "description": "Lista notas fiscais de saída (SD2/SF2) do cliente com período, busca e paginação.",
+          "label": "Notas fiscais de saída do cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists outbound invoices (SD2/SF2) for a customer code and store with period filters and pagination."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/billing-series",
+      "operationId": "list_customer_billing_series",
+      "summary": "Customer billing monthly series",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "customers",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Customer billing monthly series",
+            "description": "Monthly billed totals for the last N months for selected portfolio customers.",
+            "label": "Billing series"
+          },
+          "pt-BR": {
+            "summary": "Série mensal de faturamento",
+            "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira.",
+            "label": "Série de faturamento"
+          }
+        },
+        "tv": {
+          "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira.",
+          "label": "Série de faturamento"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Monthly billed totals for the last N months for selected portfolio customers."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/enrichment",
+      "operationId": "enrich_portfolio_customers",
+      "summary": "Enrich portfolio customers",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "customers",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Enrich portfolio customers",
+            "description": "Batch city/UF, 12-month billing and avatar flags for portfolio customers.",
+            "label": "Enrich portfolio customers"
+          },
+          "pt-BR": {
+            "summary": "Enriquecer clientes da carteira",
+            "description": "Retorna cidade/UF, faturamento 12 meses, última compra e flag de avatar em lote.",
+            "label": "Enriquecer clientes da carteira"
+          }
+        },
+        "tv": {
+          "description": "Retorna cidade/UF, faturamento 12 meses, última compra e flag de avatar em lote.",
+          "label": "Enriquecer clientes da carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Batch city/UF, 12-month billing and avatar flags for portfolio customers."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/search",
+      "operationId": "search_active_customers_for_portfolio",
+      "summary": "Search active TOTVS customers for portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "q",
+          "in": "query",
+          "required": false,
+          "description": "Search query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 20
+        }
+      ],
+      "xDelpi": {
+        "entity": "customers",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Search active TOTVS customers for portfolio",
+            "description": "Lists active SA1 customers (not blocked/deleted) for seller portfolio binding.",
+            "label": "Active customers for portfolio"
+          },
+          "pt-BR": {
+            "summary": "Buscar clientes ativos TOTVS para carteira",
+            "description": "Lista clientes ativos do SA1 (não bloqueados/excluídos) para amarração na carteira do vendedor.",
+            "label": "Clientes ativos para carteira"
+          }
+        },
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "q": {
+            "locale": {
+              "en": {
+                "description": "Search query parameter.",
+                "label": "Search"
+              },
+              "pt-BR": {
+                "description": "Texto livre de busca (código, nome ou descrição).",
+                "label": "Busca"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Lista clientes ativos do SA1 (não bloqueados/excluídos) para amarração na carteira do vendedor.",
+          "label": "Clientes ativos para carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists active SA1 customers (not blocked/deleted) for seller portfolio binding."
+    },
+    {
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "operationId": "delete_customer_avatar",
+      "summary": "Delete customer avatar",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "codigo",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "loja",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_avatar",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Delete customer avatar",
+            "description": "Removes the customer logo/avatar.",
+            "label": "Delete customer avatar"
+          },
+          "pt-BR": {
+            "summary": "Remover logo do cliente",
+            "description": "Remove a logo/avatar do cliente.",
+            "label": "Remover logo do cliente"
+          }
+        },
+        "params": {
+          "codigo": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Remove a logo/avatar do cliente.",
+          "label": "Remover logo do cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Removes the customer logo/avatar."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "operationId": "get_customer_avatar",
+      "summary": "Get customer avatar",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "codigo",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "loja",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_avatar",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Get customer avatar",
+            "description": "Downloads the customer logo/avatar image.",
+            "label": "Customer avatar"
+          },
+          "pt-BR": {
+            "summary": "Obter avatar do cliente",
+            "description": "Baixa a logo/avatar do cliente.",
+            "label": "Avatar do cliente"
+          }
+        },
+        "params": {
+          "codigo": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Baixa a logo/avatar do cliente.",
+          "label": "Avatar do cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Downloads the customer logo/avatar image."
+    },
+    {
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "operationId": "upsert_customer_avatar",
+      "summary": "Upload customer avatar",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "codigo",
+          "in": "path",
+          "required": true,
+          "description": "Code query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "loja",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "customer_avatar",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Upload customer avatar",
+            "description": "Uploads or replaces the customer logo/avatar.",
+            "label": "Upload customer avatar"
+          },
+          "pt-BR": {
+            "summary": "Enviar logo do cliente",
+            "description": "Envia ou substitui a logo/avatar do cliente.",
+            "label": "Enviar logo do cliente"
+          }
+        },
+        "params": {
+          "codigo": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Envia ou substitui a logo/avatar do cliente.",
+          "label": "Enviar logo do cliente"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Uploads or replaces the customer logo/avatar."
     },
     {
       "method": "GET",
@@ -32155,6 +32684,429 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Production orders open orders sales."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers",
+      "operationId": "list_seller_portfolios",
+      "summary": "List seller portfolios",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "active_only",
+          "in": "query",
+          "required": false,
+          "description": "Se true, lista apenas ativos.",
+          "type": "boolean",
+          "default": false
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "paged_list",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "List seller portfolios",
+            "description": "Lists seller portfolios for managers.",
+            "label": "List seller portfolios"
+          },
+          "pt-BR": {
+            "summary": "Listar carteiras de vendedores",
+            "description": "Lista carteiras de vendedores para gerentes.",
+            "label": "Listar carteiras de vendedores"
+          }
+        },
+        "tv": {
+          "description": "Lista carteiras de vendedores para gerentes.",
+          "label": "Listar carteiras de vendedores"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists seller portfolios for managers."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers",
+      "operationId": "create_seller_portfolio",
+      "summary": "Create seller portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Create seller portfolio",
+            "description": "Creates a seller linked to a Minha DELPI user.",
+            "label": "Create seller portfolio"
+          },
+          "pt-BR": {
+            "summary": "Cadastrar vendedor",
+            "description": "Cadastra vendedor vinculado a um usuário Minha DELPI.",
+            "label": "Cadastrar vendedor"
+          }
+        },
+        "tv": {
+          "description": "Cadastra vendedor vinculado a um usuário Minha DELPI.",
+          "label": "Cadastrar vendedor"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Creates a seller linked to a Minha DELPI user."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/me",
+      "operationId": "get_my_seller_portfolio",
+      "summary": "My seller portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "My seller portfolio",
+            "description": "Returns the seller portfolio for the current user.",
+            "label": "My seller portfolio"
+          },
+          "pt-BR": {
+            "summary": "Carteira do vendedor logado",
+            "description": "Retorna a carteira do usuário autenticado.",
+            "label": "Carteira do vendedor logado"
+          }
+        },
+        "tv": {
+          "description": "Retorna a carteira do usuário autenticado.",
+          "label": "Carteira do vendedor logado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Returns the seller portfolio for the current user."
+    },
+    {
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "operationId": "deactivate_seller_portfolio",
+      "summary": "Deactivate seller portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Deactivate seller portfolio",
+            "description": "Deactivates a seller portfolio.",
+            "label": "Deactivate seller portfolio"
+          },
+          "pt-BR": {
+            "summary": "Desativar vendedor",
+            "description": "Desativa a carteira de um vendedor.",
+            "label": "Desativar vendedor"
+          }
+        },
+        "tv": {
+          "description": "Desativa a carteira de um vendedor.",
+          "label": "Desativar vendedor"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Deactivates a seller portfolio."
+    },
+    {
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "operationId": "get_seller_portfolio",
+      "summary": "Get seller portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Get seller portfolio",
+            "description": "Gets one seller portfolio by id.",
+            "label": "Get seller portfolio"
+          },
+          "pt-BR": {
+            "summary": "Obter carteira do vendedor",
+            "description": "Obtém uma carteira de vendedor pelo id.",
+            "label": "Obter carteira do vendedor"
+          }
+        },
+        "tv": {
+          "description": "Obtém uma carteira de vendedor pelo id.",
+          "label": "Obter carteira do vendedor"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Gets one seller portfolio by id."
+    },
+    {
+      "method": "PATCH",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "operationId": "update_seller_portfolio",
+      "summary": "Update seller portfolio",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Update seller portfolio",
+            "description": "Updates seller display name or active flag.",
+            "label": "Update seller portfolio"
+          },
+          "pt-BR": {
+            "summary": "Atualizar vendedor",
+            "description": "Atualiza nome ou status ativo do vendedor.",
+            "label": "Atualizar vendedor"
+          }
+        },
+        "tv": {
+          "description": "Atualiza nome ou status ativo do vendedor.",
+          "label": "Atualizar vendedor"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Updates seller display name or active flag."
+    },
+    {
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "operationId": "remove_seller_customer",
+      "summary": "Remove seller customer",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "name": "customer_code",
+          "in": "query",
+          "required": true,
+          "description": "Customer code (CLIENTE).",
+          "type": "string"
+        },
+        {
+          "name": "customer_store",
+          "in": "query",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Remove seller customer",
+            "description": "Removes one customer from a seller portfolio.",
+            "label": "Remove seller customer"
+          },
+          "pt-BR": {
+            "summary": "Remover cliente da carteira",
+            "description": "Remove um cliente da carteira do vendedor.",
+            "label": "Remover cliente da carteira"
+          }
+        },
+        "params": {
+          "customer_code": {
+            "locale": {
+              "en": {
+                "description": "Customer code (CLIENTE).",
+                "label": "Customer code"
+              },
+              "pt-BR": {
+                "description": "Código do cliente (CLIENTE).",
+                "label": "Código do cliente"
+              }
+            }
+          }
+        },
+        "tv": {
+          "description": "Remove um cliente da carteira do vendedor.",
+          "label": "Remover cliente da carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Removes one customer from a seller portfolio."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "operationId": "add_seller_customer",
+      "summary": "Add seller customer",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Add seller customer",
+            "description": "Adds one customer to a seller portfolio.",
+            "label": "Add seller customer"
+          },
+          "pt-BR": {
+            "summary": "Adicionar cliente à carteira",
+            "description": "Adiciona um cliente à carteira do vendedor.",
+            "label": "Adicionar cliente à carteira"
+          }
+        },
+        "tv": {
+          "description": "Adiciona um cliente à carteira do vendedor.",
+          "label": "Adicionar cliente à carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Adds one customer to a seller portfolio."
+    },
+    {
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "operationId": "replace_seller_customers",
+      "summary": "Replace seller customers",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Replace seller customers",
+            "description": "Replaces the customer list of a seller.",
+            "label": "Replace seller customers"
+          },
+          "pt-BR": {
+            "summary": "Substituir clientes da carteira",
+            "description": "Substitui a lista de clientes da carteira.",
+            "label": "Substituir clientes da carteira"
+          }
+        },
+        "tv": {
+          "description": "Substitui a lista de clientes da carteira.",
+          "label": "Substituir clientes da carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Replaces the customer list of a seller."
+    },
+    {
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
+      "operationId": "transfer_seller_customers",
+      "summary": "Transfer seller customers",
+      "tags": [
+        "Pedidos de Venda em Aberto"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "seller_id",
+          "in": "path",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "seller_portfolio",
+        "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Transfer seller customers",
+            "description": "Moves selected customers from one seller portfolio to another.",
+            "label": "Transfer portfolio customers"
+          },
+          "pt-BR": {
+            "summary": "Transferir clientes da carteira",
+            "description": "Move clientes selecionados de uma carteira de vendedor para outra.",
+            "label": "Transferir clientes da carteira"
+          }
+        },
+        "tv": {
+          "description": "Move clientes selecionados de uma carteira de vendedor para outra.",
+          "label": "Transferir clientes da carteira"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Moves selected customers from one seller portfolio to another."
     },
     {
       "method": "GET",

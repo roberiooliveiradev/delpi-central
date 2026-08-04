@@ -1,13 +1,14 @@
 {
   "name": "pedidos-venda-abertos",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "ci": "npm run lint && npm run build",
+    "test": "node --experimental-strip-types --test src/app/pluginRoutes.test.mjs src/features/customers/utils/customerAggregation.test.mjs src/features/customers/utils/customerDetail.test.mjs scripts/manifest.validation.test.mjs src/features/customers/billing/customerBilling.test.mjs",
+    "ci": "npm run lint && npm run test && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,6 +16,7 @@
     "lucide-react": "^0.576.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "recharts": "^3.7.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

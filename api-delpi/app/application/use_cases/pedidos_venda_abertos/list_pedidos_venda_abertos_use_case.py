@@ -6,6 +6,9 @@ from app.application.dto.pedidos_venda_abertos.list_pedidos_venda_abertos_respon
     ListPedidosVendaAbertosResponse,
     PedidosVendaAbertosSummary,
 )
+from app.application.use_cases.pedidos_venda_abertos.resolve_portfolio_scope_use_case import (
+    PortfolioScope,
+)
 from app.domain.ports.pedidos_venda_abertos.pedidos_venda_abertos_query_repository_port import (
     PedidosVendaAbertosQueryRepositoryPort,
 )
@@ -64,13 +67,79 @@ def _normalize_summary(row: dict) -> PedidosVendaAbertosSummary:
     )
 
 
+def _recompute_summary(items: list[dict]) -> PedidosVendaAbertosSummary:
+    total_linhas = len(items)
+    valor_total = 0.0
+    saldo_total = 0.0
+    com_estoque = 0
+    parcial = 0
+    sem_estoque = 0
+    for item in items:
+        valor_total += float(item.get("valor_aberto") or 0)
+        saldo_total += float(item.get("saldo") or 0)
+        saldo = float(item.get("saldo") or 0)
+        estoque = float(item.get("no_estoque") or 0)
+        if saldo <= 0:
+            continue
+        if estoque <= 0:
+            sem_estoque += 1
+        elif estoque >= saldo:
+            com_estoque += 1
+        else:
+            parcial += 1
+    return PedidosVendaAbertosSummary(
+        total_linhas=total_linhas,
+        valor_total_aberto=valor_total,
+        saldo_total=saldo_total,
+        itens_com_estoque=com_estoque,
+        itens_estoque_parcial=parcial,
+        itens_sem_estoque=sem_estoque,
+    )
+
+
+def _item_in_portfolio(item: dict, allowed: frozenset[tuple[str, str]]) -> bool:
+    key = (
+        _as_str(item.get("codigo_cadastro")),
+        _as_str(item.get("loja_cadastro")),
+    )
+    return key in allowed
+
+
 class ListPedidosVendaAbertosUseCase:
 
     def __init__(self, repository: PedidosVendaAbertosQueryRepositoryPort):
         self._repository = repository
 
-    def execute(self) -> ListPedidosVendaAbertosResponse:
+    def execute(self, scope: PortfolioScope | None = None) -> ListPedidosVendaAbertosResponse:
+        if scope is not None and scope.empty_portfolio:
+            return ListPedidosVendaAbertosResponse(
+                items=[],
+                summary=PedidosVendaAbertosSummary(),
+                portfolio_message=scope.message,
+                portfolio_empty=True,
+                portfolio_seller_id=scope.seller_id,
+            )
+
         raw_items, raw_summary = self._repository.list_open_orders()
         items = [_normalize_item(row) for row in raw_items]
-        summary = _normalize_summary(raw_summary)
-        return ListPedidosVendaAbertosResponse(items=items, summary=summary)
+
+        if scope is None or scope.unrestricted or scope.allowed_customers is None:
+            summary = _normalize_summary(raw_summary)
+            return ListPedidosVendaAbertosResponse(
+                items=items,
+                summary=summary,
+                portfolio_message=None,
+                portfolio_empty=False,
+                portfolio_seller_id=scope.seller_id if scope else None,
+            )
+
+        filtered = [
+            item for item in items if _item_in_portfolio(item, scope.allowed_customers)
+        ]
+        return ListPedidosVendaAbertosResponse(
+            items=filtered,
+            summary=_recompute_summary(filtered),
+            portfolio_message=scope.message,
+            portfolio_empty=False,
+            portfolio_seller_id=scope.seller_id,
+        )

@@ -6,6 +6,13 @@ from .context_resolver import resolve_user_context
 from .authz_core import has_permission, has_any_permission, has_all_permissions
 
 
+def _deny_missing_permission(user) -> None:
+    """RBAC do core indisponível ≠ falta de permissão (evita 403/500 falso)."""
+    if getattr(user, "rbac_unavailable", False):
+        raise Exception("Service Unavailable")
+    raise Exception("Forbidden")
+
+
 def require_auth():
     def decorator(fn):
         if inspect.iscoroutinefunction(fn):
@@ -50,7 +57,7 @@ def require_permission(permission_code: str):
                     return await fn(*args, **kwargs)
 
                 if not has_permission(user, permission_code):
-                    raise Exception("Forbidden")
+                    _deny_missing_permission(user)
 
                 return await fn(*args, **kwargs)
 
@@ -67,7 +74,7 @@ def require_permission(permission_code: str):
                 return fn(*args, **kwargs)
 
             if not has_permission(user, permission_code):
-                raise Exception("Forbidden")
+                _deny_missing_permission(user)
 
             return fn(*args, **kwargs)
 
@@ -91,7 +98,7 @@ def require_any_permission(permission_codes):
                     return await fn(*args, **kwargs)
 
                 if not has_any_permission(user, permission_codes):
-                    raise Exception("Forbidden")
+                    _deny_missing_permission(user)
 
                 return await fn(*args, **kwargs)
 
@@ -108,7 +115,7 @@ def require_any_permission(permission_codes):
                 return fn(*args, **kwargs)
 
             if not has_any_permission(user, permission_codes):
-                raise Exception("Forbidden")
+                _deny_missing_permission(user)
 
             return fn(*args, **kwargs)
 
@@ -132,7 +139,7 @@ def require_all_permissions(permission_codes):
                     return await fn(*args, **kwargs)
 
                 if not has_all_permissions(user, permission_codes):
-                    raise Exception("Forbidden")
+                    _deny_missing_permission(user)
 
                 return await fn(*args, **kwargs)
 
@@ -149,7 +156,7 @@ def require_all_permissions(permission_codes):
                 return fn(*args, **kwargs)
 
             if not has_all_permissions(user, permission_codes):
-                raise Exception("Forbidden")
+                _deny_missing_permission(user)
 
             return fn(*args, **kwargs)
 
@@ -170,7 +177,7 @@ def require_superadmin():
                     raise Exception("Unauthorized")
 
                 if not getattr(user, "is_superadmin", False):
-                    raise Exception("Forbidden")
+                    _deny_missing_permission(user)
 
                 return await fn(*args, **kwargs)
 
@@ -184,7 +191,7 @@ def require_superadmin():
                 raise Exception("Unauthorized")
 
             if not getattr(user, "is_superadmin", False):
-                raise Exception("Forbidden")
+                _deny_missing_permission(user)
 
             return fn(*args, **kwargs)
 

@@ -1,0 +1,57 @@
+/* Tokens locais do Portal do Vendedor — alinhados à identidade DELPI / Portal. */
+.dashboard-pedidos-venda-abertos {
+  --pva-page-padding: clamp(16px, 2vw, 28px);
+  --pva-gap: 20px;
+  --pva-gap-sm: 12px;
+  --pva-gap-xs: 8px;
+  --pva-radius: 16px;
+  --pva-radius-sm: 10px;
+  --pva-radius-md: 12px;
+  --pva-radius-lg: 20px;
+  --pva-control-radius: 12px;
+  --pva-control-height: 44px;
+  --pva-max-width: 1480px;
+
+  --pva-brand: var(--secundary, #003866);
+  --pva-accent: var(--primary, #089bdb);
+  --pva-accent-strong: color-mix(in srgb, var(--pva-accent) 82%, var(--pva-brand));
+  --pva-text: var(--text, #111111);
+  --pva-muted: var(--text-muted, rgba(17, 17, 17, 0.68));
+  --pva-surface: var(--surface, #ffffff);
+  --pva-surface-elevated: color-mix(in srgb, var(--pva-surface) 92%, #fff);
+  --pva-surface-soft: color-mix(in srgb, var(--pva-brand) 3.5%, var(--pva-surface));
+  --pva-border: var(--border, #e6e6e6);
+  --pva-border-strong: color-mix(in srgb, var(--pva-brand) 14%, var(--pva-border));
+  --pva-danger: var(--danger, #b42318);
+  --pva-success: var(--success, #067647);
+  --pva-warning: #b54708;
+
+  --pva-font-xs: 12px;
+  --pva-font-sm: 13px;
+  --pva-font-md: 14px;
+  --pva-font-lg: 16px;
+  --pva-font-title: clamp(22px, 2.1vw, 30px);
+  --pva-font-kpi: clamp(24px, 2.2vw, 36px);
+  --pva-font-kpi-hero: clamp(28px, 2.6vw, 42px);
+
+  --pva-shadow-sm: 0 1px 2px rgba(1, 56, 102, 0.04), 0 8px 24px rgba(1, 56, 102, 0.05);
+  --pva-shadow-md: 0 2px 4px rgba(1, 56, 102, 0.05), 0 14px 32px rgba(1, 56, 102, 0.07);
+  --pva-table-head-bg: color-mix(in srgb, var(--pva-brand) 4.5%, var(--pva-surface));
+
+  --delpi-ui-accent: var(--pva-accent);
+  --delpi-ui-surface: var(--pva-surface);
+  --delpi-ui-text: var(--pva-text);
+  --delpi-ui-border: var(--pva-border);
+  --delpi-ui-muted: var(--pva-muted);
+  --delpi-ui-text-muted: var(--pva-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-pedidos-venda-abertos *,
+  .dashboard-pedidos-venda-abertos *::before,
+  .dashboard-pedidos-venda-abertos *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

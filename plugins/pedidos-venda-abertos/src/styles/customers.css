@@ -1,0 +1,668 @@
+/* Tela Clientes — resumo, filtros, fila de atenção, tabela */
+.pva-customers-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.pva-customers-page__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 280px);
+  flex: 1 1 360px;
+}
+
+.pva-customers-page__updated {
+  margin: 0;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+}
+
+.pva-customers-page__list-title {
+  margin: 0;
+  font-size: var(--pva-font-lg);
+  font-weight: 750;
+  color: var(--pva-brand);
+}
+
+.pva-customers-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--pva-radius);
+  background: var(--pva-surface);
+  border: 1px solid var(--pva-border);
+  box-shadow: var(--pva-shadow-sm);
+}
+
+.pva-customers-toolbar__search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.pva-search {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  /* Altura segue o input — nunca crescer no eixo principal de um flex column. */
+  flex: 0 1 auto;
+  height: fit-content;
+}
+
+/* Em toolbar horizontal, ocupa o espaço restante na linha. */
+.pva-customers-toolbar__search-row > .pva-search {
+  flex: 1 1 280px;
+  min-width: min(100%, 240px);
+  width: auto;
+}
+
+.pva-search__icon {
+  position: absolute;
+  left: 14px;
+  /* Âncora na altura do controle, não no container (que pode ser flex). */
+  top: calc(var(--pva-control-height) / 2);
+  transform: translateY(-50%);
+  color: var(--pva-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pva-search__input {
+  width: 100%;
+  min-height: var(--pva-control-height);
+  padding: 0 42px 0 42px;
+  border-radius: var(--pva-control-radius);
+  border: 1px solid var(--pva-border-strong);
+  background: var(--pva-surface-soft);
+  color: var(--pva-text);
+  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+}
+
+.pva-search__input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--pva-accent) 55%, var(--pva-border));
+  background: var(--pva-surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pva-accent) 18%, transparent);
+}
+
+.pva-search__clear {
+  position: absolute;
+  right: 8px;
+  top: calc(var(--pva-control-height) / 2);
+  transform: translateY(-50%);
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pva-muted);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.pva-search__clear:hover {
+  background: color-mix(in srgb, var(--pva-brand) 6%, transparent);
+  color: var(--pva-brand);
+}
+
+.pva-filter-segment {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pva-brand) 4%, var(--pva-surface-soft));
+  border: 1px solid var(--pva-border);
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pva-filter-chip {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--pva-muted);
+  font: inherit;
+  font-size: var(--pva-font-sm);
+  font-weight: 650;
+  min-height: 36px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.pva-filter-chip:hover {
+  color: var(--pva-brand);
+}
+
+.pva-filter-chip--active {
+  background: var(--pva-surface);
+  color: var(--pva-brand);
+  box-shadow: var(--pva-shadow-sm);
+}
+
+.pva-filter-chip__count {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* Fila de atenção */
+.pva-attention {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  border-radius: var(--pva-radius);
+  background: var(--pva-surface);
+  border: 1px solid color-mix(in srgb, var(--pva-warning) 22%, var(--pva-border));
+  box-shadow: var(--pva-shadow-sm);
+  border-left: 4px solid var(--pva-warning);
+}
+
+.pva-attention__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.pva-attention__title {
+  margin: 0;
+  font-size: var(--pva-font-lg);
+  font-weight: 750;
+  color: var(--pva-brand);
+}
+
+.pva-attention__hint {
+  margin: 4px 0 0;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+  max-width: 40rem;
+}
+
+.pva-attention__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pva-attention-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  gap: 12px 18px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: var(--pva-radius-md);
+  background: color-mix(in srgb, var(--pva-brand) 2%, var(--pva-surface));
+  border: 1px solid transparent;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+
+.pva-attention-item:hover {
+  border-color: color-mix(in srgb, var(--pva-accent) 22%, var(--pva-border));
+  background: var(--pva-surface);
+}
+
+.pva-attention-item__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pva-attention-item__name {
+  margin: 0;
+  font-size: var(--pva-font-md);
+  font-weight: 700;
+  color: var(--pva-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pva-attention-item__meta {
+  margin: 0;
+  font-size: var(--pva-font-sm);
+  color: var(--pva-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pva-attention-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pva-attention-item__metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  min-width: 0;
+}
+
+.pva-attention-item__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pva-attention-item__metric-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--pva-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pva-attention-item__metric-value {
+  margin: 0;
+  font-size: var(--pva-font-sm);
+  font-weight: 700;
+  color: var(--pva-brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.pva-attention-item__metric-value--danger {
+  color: var(--pva-danger);
+}
+
+.pva-attention-item__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Tabela de clientes — densidade compacta (sobrepõe pad/align do delpi-ui-table) */
+.pva-customers-table-wrap {
+  border-radius: var(--pva-radius-md);
+  background: var(--pva-surface);
+  border: 1px solid var(--pva-border);
+  box-shadow: none;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table.pva-customers-table.delpi-ui-table {
+  width: 100%;
+  min-width: 880px;
+  border-collapse: collapse;
+  font-size: var(--pva-font-sm);
+  line-height: 1.35;
+  --delpi-ui-table-cell-pad-y: 6px;
+  --delpi-ui-table-cell-pad-x: 10px;
+  --delpi-ui-table-numeric-pad-x: 12px;
+}
+
+table.pva-customers-table.delpi-ui-table th,
+table.pva-customers-table.delpi-ui-table td {
+  padding: 6px 10px;
+  vertical-align: middle;
+  border-bottom: 1px solid color-mix(in srgb, var(--pva-border) 70%, transparent);
+  line-height: 1.35;
+}
+
+table.pva-customers-table.delpi-ui-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--pva-muted);
+  background: color-mix(in srgb, var(--pva-brand) 3%, var(--pva-surface));
+  border-bottom: 1px solid var(--pva-border);
+  white-space: nowrap;
+}
+
+table.pva-customers-table.delpi-ui-table thead th.pva-customers-table__th-static,
+table.pva-customers-table.delpi-ui-table thead th.pva-customers-table__th-actions {
+  padding: 7px 10px;
+}
+
+table.pva-customers-table.delpi-ui-table thead th.pva-customers-table__th-with-help {
+  padding: 0 8px 0 0;
+}
+
+.pva-customers-table__th-label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+}
+
+.pva-customers-table__th-label-row .pva-sort-btn {
+  width: auto;
+}
+
+.pva-customers-table__th-label-row .delpi-ui-help-tooltip {
+  flex-shrink: 0;
+}
+
+.pva-customers-table__th-label-row .delpi-ui-help-tooltip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--pva-muted);
+  cursor: help;
+}
+
+.pva-customers-table__th-label-row .delpi-ui-help-tooltip__trigger:hover {
+  color: var(--pva-brand);
+  background: color-mix(in srgb, var(--pva-brand) 6%, transparent);
+}
+
+table.pva-customers-table.delpi-ui-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+table.pva-customers-table.delpi-ui-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--pva-accent) 5%, transparent);
+}
+
+.pva-customers-table__client {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pva-customers-table__client--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.pva-customers-table__client-name {
+  font-weight: 650;
+  font-size: var(--pva-font-sm);
+  color: var(--pva-text);
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.pva-customers-table__client-name:hover,
+.pva-customers-table__client-name:focus,
+.pva-customers-table__client-name:active {
+  color: var(--pva-text);
+  text-decoration: none;
+}
+
+.pva-customers-table__client-name:focus-visible {
+  outline: 2px solid var(--pva-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.pva-customers-table__client-id {
+  color: var(--pva-muted);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.pva-customers-table__client-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pva-customers-table .pva-col-numeric,
+.pva-customers-table td[data-label="Valor em aberto"],
+.pva-customers-table td[data-label="Faturamento 12 meses"],
+.pva-customers-table td[data-label="Pedidos"],
+.pva-customers-table td[data-label="Atrasados"],
+.pva-customers-table td[data-label="Maior atraso"] {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  font-weight: 550;
+}
+
+.pva-customers-table thead th.pva-col-numeric {
+  text-align: right;
+}
+
+.pva-customers-table thead th.pva-col-numeric .pva-sort-btn {
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.pva-billing-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pva-font-sm);
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pva-billing-trend__icon {
+  flex-shrink: 0;
+}
+
+.pva-billing-trend--up {
+  color: var(--pva-success, #067647);
+}
+
+.pva-billing-trend--down {
+  color: var(--pva-danger);
+}
+
+.pva-billing-trend--stable {
+  color: var(--pva-muted);
+}
+
+.pva-billing-trend__pct {
+  font-variant-numeric: tabular-nums;
+}
+
+.pva-customers-table__muted {
+  color: var(--pva-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pva-customers-table__checkup {
+  white-space: nowrap;
+}
+
+.pva-sort-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  padding: 7px 10px;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pva-sort-btn:hover {
+  color: var(--pva-brand);
+}
+
+.pva-customers-table__client-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pva-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: color-mix(in srgb, var(--pva-brand) 4%, var(--pva-surface-soft));
+  color: var(--pva-muted);
+  white-space: nowrap;
+}
+
+.pva-status-pill__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pva-status-pill--ativo {
+  color: #1f7a45;
+  background: color-mix(in srgb, #1f7a45 10%, var(--pva-surface));
+}
+
+.pva-status-pill--atencao {
+  color: #b86a00;
+  background: color-mix(in srgb, #b86a00 10%, var(--pva-surface));
+}
+
+.pva-status-pill--inativo {
+  color: var(--pva-muted);
+}
+
+.pva-customers-table__next-action {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--pva-accent);
+  font: inherit;
+  font-size: var(--pva-font-sm);
+  font-weight: 600;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.pva-customers-table__next-action:hover {
+  text-decoration: underline;
+}
+
+.pva-customers-table__td-actions {
+  width: 40px;
+  text-align: right;
+}
+
+.pva-customers-table__menu {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pva-muted);
+  cursor: pointer;
+}
+
+.pva-customers-table__menu:hover {
+  background: color-mix(in srgb, var(--pva-brand) 6%, transparent);
+  color: var(--pva-brand);
+}
+
+.pva-customers-toolbar__select-wrap {
+  flex: 0 1 220px;
+  min-width: min(100%, 180px);
+}
+
+.pva-customers-toolbar__select {
+  width: 100%;
+  min-height: var(--pva-control-height);
+  padding: 0 12px;
+  border-radius: var(--pva-control-radius);
+  border: 1px solid var(--pva-border-strong);
+  background: var(--pva-surface);
+  color: var(--pva-text);
+  font: inherit;
+}
+
+/* Gráfico faturamento 12m — abaixo dos KPIs */
+.pva-billing-series-chart {
+  margin-top: 4px;
+}
+
+.pva-billing-series-chart .pva-chart-card__actions,
+.pva-billing-series-chart .delpi-ui-chart-card__actions {
+  min-width: min(100%, 280px);
+}
+
+.pva-billing-series-chart__filter {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin-left: auto;
+}
+
+.pva-billing-series-chart__select {
+  min-height: 40px;
+  font-size: var(--pva-font-sm);
+}
+
+.pva-billing-series-chart__empty {
+  margin: 0;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--pva-muted);
+  font-size: var(--pva-font-md);
+}
+
+/* Recharts — mesmo padrão visual do dashboard comercial */
+.dashboard-pedidos-venda-abertos .pva-billing-series-chart .recharts-responsive-container {
+  width: 100% !important;
+  min-height: 320px;
+}
+
+.dashboard-pedidos-venda-abertos .pva-billing-series-chart .recharts-default-tooltip {
+  border-radius: var(--pva-radius-sm);
+  border: 1px solid var(--pva-border) !important;
+  background: var(--pva-surface) !important;
+  box-shadow: var(--pva-shadow-sm);
+  font-size: var(--pva-font-sm);
+}
+
+.dashboard-pedidos-venda-abertos .pva-billing-series-chart .recharts-tooltip-label {
+  color: var(--pva-muted);
+  margin-bottom: 4px;
+}

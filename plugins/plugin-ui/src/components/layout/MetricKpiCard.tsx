@@ -22,7 +22,8 @@ export type MetricKpiCardProps = {
   label?: string;
   titleHint?: string;
   value: string;
-  hint?: string;
+  /** Subtítulo ou slot (ex.: tendência) abaixo do valor. */
+  hint?: ReactNode;
   icon?: ReactNode;
   tone?: MetricKpiCardTone;
   classNames: MetricKpiCardClassNames;
@@ -89,7 +90,13 @@ export function MetricKpiCard({
           <strong className={classNames.value}>
             {fitValue ? <FitText>{value}</FitText> : value}
           </strong>
-          {hint && classNames.hint ? <p className={classNames.hint}>{hint}</p> : null}
+          {hint && classNames.hint ? (
+            typeof hint === "string" ? (
+              <p className={classNames.hint}>{hint}</p>
+            ) : (
+              <div className={classNames.hint}>{hint}</div>
+            )
+          ) : null}
         </div>
         {icon && classNames.icon ? (
           <div className={classNames.icon} aria-hidden="true">

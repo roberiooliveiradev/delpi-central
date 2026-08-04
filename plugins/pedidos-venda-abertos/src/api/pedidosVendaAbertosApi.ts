@@ -7,9 +7,15 @@ export const PEDIDOS_VENDA_ABERTOS_API_BASE = "/apps/api-delpi/pedidos-venda-abe
 
 export async function getPedidosVendaAbertos(
   signal?: AbortSignal,
+  options?: { sellerId?: string | null },
 ): Promise<PedidosVendaAbertosData> {
+  const params = new URLSearchParams();
+  if (options?.sellerId) {
+    params.set("seller_id", options.sellerId);
+  }
+  const qs = params.toString();
   const response = await httpGet<ApiSuccessResponse<PedidosVendaAbertosData>>(
-    `${PEDIDOS_VENDA_ABERTOS_API_BASE}/`,
+    `${PEDIDOS_VENDA_ABERTOS_API_BASE}/${qs ? `?${qs}` : ""}`,
     { signal },
   );
 

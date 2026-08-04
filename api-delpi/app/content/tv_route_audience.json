@@ -4869,6 +4869,21 @@
       },
       "category": "commercial"
     },
+    "list_cliente_notas_fiscais_saida": {
+      "locale": {
+        "en": {
+          "summary": "Customer outbound invoices by code and store",
+          "description": "Lists outbound invoices (SD2/SF2) for a customer code and store with period filters and pagination.",
+          "label": "Customer outbound invoices"
+        },
+        "pt-BR": {
+          "label": "Notas fiscais de saída do cliente",
+          "summary": "Notas fiscais de saída por código e loja do cliente",
+          "description": "Lista notas fiscais de saída (SD2/SF2) do cliente com período, busca e paginação."
+        }
+      },
+      "category": "commercial"
+    },
     "list_pedidos_venda_abertos": {
       "locale": {
         "en": {
@@ -7645,6 +7660,246 @@
           "label": "Ranking de OPs"
         }
       }
+    },
+    "search_active_customers_for_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "Search active TOTVS customers for portfolio",
+          "description": "Lists active SA1 customers (not blocked/deleted) for seller portfolio binding.",
+          "label": "Active customers for portfolio"
+        },
+        "pt-BR": {
+          "label": "Clientes ativos para carteira",
+          "summary": "Buscar clientes ativos TOTVS para carteira",
+          "description": "Lista clientes ativos do SA1 (não bloqueados/excluídos) para amarração na carteira do vendedor."
+        }
+      },
+      "category": "commercial"
+    },
+    "enrich_portfolio_customers": {
+      "locale": {
+        "en": {
+          "summary": "Enrich portfolio customers",
+          "description": "Batch city/UF, 12-month billing and avatar flags for portfolio customers.",
+          "label": "Enrich portfolio customers"
+        },
+        "pt-BR": {
+          "label": "Enriquecer clientes da carteira",
+          "summary": "Enriquecer clientes da carteira",
+          "description": "Retorna cidade/UF, faturamento 12 meses, última compra e flag de avatar em lote."
+        }
+      },
+      "category": "commercial"
+    },
+    "list_customer_billing_series": {
+      "locale": {
+        "en": {
+          "summary": "Customer billing monthly series",
+          "description": "Monthly billed totals for the last N months for selected portfolio customers.",
+          "label": "Billing series"
+        },
+        "pt-BR": {
+          "label": "Série de faturamento",
+          "summary": "Série mensal de faturamento",
+          "description": "Totais faturados por mês nos últimos N meses para clientes selecionados da carteira."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_customer_avatar": {
+      "locale": {
+        "en": {
+          "summary": "Get customer avatar",
+          "description": "Downloads the customer logo/avatar image.",
+          "label": "Customer avatar"
+        },
+        "pt-BR": {
+          "label": "Avatar do cliente",
+          "summary": "Obter avatar do cliente",
+          "description": "Baixa a logo/avatar do cliente."
+        }
+      },
+      "category": "commercial"
+    },
+    "upsert_customer_avatar": {
+      "locale": {
+        "en": {
+          "summary": "Upload customer avatar",
+          "description": "Uploads or replaces the customer logo/avatar.",
+          "label": "Upload customer avatar"
+        },
+        "pt-BR": {
+          "label": "Enviar logo do cliente",
+          "summary": "Enviar logo do cliente",
+          "description": "Envia ou substitui a logo/avatar do cliente."
+        }
+      },
+      "category": "commercial"
+    },
+    "delete_customer_avatar": {
+      "locale": {
+        "en": {
+          "summary": "Delete customer avatar",
+          "description": "Removes the customer logo/avatar.",
+          "label": "Delete customer avatar"
+        },
+        "pt-BR": {
+          "label": "Remover logo do cliente",
+          "summary": "Remover logo do cliente",
+          "description": "Remove a logo/avatar do cliente."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_my_seller_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "My seller portfolio",
+          "description": "Returns the seller portfolio for the current user.",
+          "label": "My seller portfolio"
+        },
+        "pt-BR": {
+          "label": "Carteira do vendedor logado",
+          "summary": "Carteira do vendedor logado",
+          "description": "Retorna a carteira do usuário autenticado."
+        }
+      },
+      "category": "commercial"
+    },
+    "list_seller_portfolios": {
+      "locale": {
+        "en": {
+          "summary": "List seller portfolios",
+          "description": "Lists seller portfolios for managers.",
+          "label": "List seller portfolios"
+        },
+        "pt-BR": {
+          "label": "Listar carteiras de vendedores",
+          "summary": "Listar carteiras de vendedores",
+          "description": "Lista carteiras de vendedores para gerentes."
+        }
+      },
+      "category": "commercial"
+    },
+    "create_seller_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "Create seller portfolio",
+          "description": "Creates a seller linked to a Minha DELPI user.",
+          "label": "Create seller portfolio"
+        },
+        "pt-BR": {
+          "label": "Cadastrar vendedor",
+          "summary": "Cadastrar vendedor",
+          "description": "Cadastra vendedor vinculado a um usuário Minha DELPI."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_seller_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "Get seller portfolio",
+          "description": "Gets one seller portfolio by id.",
+          "label": "Get seller portfolio"
+        },
+        "pt-BR": {
+          "label": "Obter carteira do vendedor",
+          "summary": "Obter carteira do vendedor",
+          "description": "Obtém uma carteira de vendedor pelo id."
+        }
+      },
+      "category": "commercial"
+    },
+    "update_seller_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "Update seller portfolio",
+          "description": "Updates seller display name or active flag.",
+          "label": "Update seller portfolio"
+        },
+        "pt-BR": {
+          "label": "Atualizar vendedor",
+          "summary": "Atualizar vendedor",
+          "description": "Atualiza nome ou status ativo do vendedor."
+        }
+      },
+      "category": "commercial"
+    },
+    "deactivate_seller_portfolio": {
+      "locale": {
+        "en": {
+          "summary": "Deactivate seller portfolio",
+          "description": "Deactivates a seller portfolio.",
+          "label": "Deactivate seller portfolio"
+        },
+        "pt-BR": {
+          "label": "Desativar vendedor",
+          "summary": "Desativar vendedor",
+          "description": "Desativa a carteira de um vendedor."
+        }
+      },
+      "category": "commercial"
+    },
+    "replace_seller_customers": {
+      "locale": {
+        "en": {
+          "summary": "Replace seller customers",
+          "description": "Replaces the customer list of a seller.",
+          "label": "Replace seller customers"
+        },
+        "pt-BR": {
+          "label": "Substituir clientes da carteira",
+          "summary": "Substituir clientes da carteira",
+          "description": "Substitui a lista de clientes da carteira."
+        }
+      },
+      "category": "commercial"
+    },
+    "add_seller_customer": {
+      "locale": {
+        "en": {
+          "summary": "Add seller customer",
+          "description": "Adds one customer to a seller portfolio.",
+          "label": "Add seller customer"
+        },
+        "pt-BR": {
+          "label": "Adicionar cliente à carteira",
+          "summary": "Adicionar cliente à carteira",
+          "description": "Adiciona um cliente à carteira do vendedor."
+        }
+      },
+      "category": "commercial"
+    },
+    "remove_seller_customer": {
+      "locale": {
+        "en": {
+          "summary": "Remove seller customer",
+          "description": "Removes one customer from a seller portfolio.",
+          "label": "Remove seller customer"
+        },
+        "pt-BR": {
+          "label": "Remover cliente da carteira",
+          "summary": "Remover cliente da carteira",
+          "description": "Remove um cliente da carteira do vendedor."
+        }
+      },
+      "category": "commercial"
+    },
+    "transfer_seller_customers": {
+      "locale": {
+        "en": {
+          "summary": "Transfer seller customers",
+          "description": "Moves selected customers from one seller portfolio to another.",
+          "label": "Transfer portfolio customers"
+        },
+        "pt-BR": {
+          "label": "Transferir clientes da carteira",
+          "summary": "Transferir clientes da carteira",
+          "description": "Move clientes selecionados de uma carteira de vendedor para outra."
+        }
+      },
+      "category": "commercial"
     }
   }
 }

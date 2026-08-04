@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type EmptyStateClassNames = {
@@ -11,6 +13,9 @@ export type EmptyStateProps = {
   classNames: EmptyStateClassNames;
   defaultTitle?: string;
   defaultMessage: string;
+  /** Slot opcional (ex.: botão de limpar filtros). */
+  children?: ReactNode;
+  role?: "status" | "alert";
 };
 
 export function emptyStateCardBemClasses(prefix: string): EmptyStateClassNames {
@@ -39,21 +44,25 @@ export function EmptyState({
   classNames,
   defaultTitle,
   defaultMessage,
+  children,
+  role,
 }: EmptyStateProps) {
   const resolvedMessage = message ?? defaultMessage;
 
   if (classNames.withTitle) {
     return (
-      <div className={classNames.root}>
+      <div className={classNames.root} role={role}>
         <h3>{title ?? defaultTitle}</h3>
         <p>{resolvedMessage}</p>
+        {children}
       </div>
     );
   }
 
   return (
-    <div className={classNames.root}>
+    <div className={classNames.root} role={role}>
       <p>{resolvedMessage}</p>
+      {children}
     </div>
   );
 }
@@ -61,6 +70,8 @@ export function EmptyState({
 export type DashboardEmptyStateProps = {
   title?: string;
   message?: string;
+  children?: ReactNode;
+  role?: "status" | "alert";
 };
 
 export function createDashboardEmptyState(config: {

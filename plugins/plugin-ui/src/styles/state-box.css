@@ -45,6 +45,10 @@
   max-width: 62ch;
 }
 
+.delpi-ui-state-box--empty:has(> h3) > :not(h3):not(p) {
+  margin-top: 10px;
+}
+
 /** Com shell card, a borda tracejada cede ao card sólido. */
 .delpi-ui-card.delpi-ui-state-box--empty {
   border-style: solid;

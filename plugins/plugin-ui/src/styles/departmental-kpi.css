@@ -135,6 +135,18 @@
   color: var(--delpi-ui-danger, var(--danger, #b42318));
 }
 
+.delpi-ui-kpi-card--negative .delpi-ui-kpi-value {
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+}
+
+.delpi-ui-kpi-card--positive .delpi-ui-kpi-value {
+  color: var(--delpi-ui-success, var(--success, #12b76a));
+}
+
+.delpi-ui-kpi-card--warning .delpi-ui-kpi-value {
+  color: var(--delpi-ui-warning, var(--warning, #f79009));
+}
+
 .delpi-ui-kpi-context,
 .delpi-ui-kpi-subtitle {
   display: block;

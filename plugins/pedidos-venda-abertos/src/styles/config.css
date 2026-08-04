@@ -1,0 +1,342 @@
+.pva-customers-page__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.pva-seller-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(100%, 220px);
+}
+
+.pva-seller-scope__label {
+  font-size: var(--pva-font-xs);
+  font-weight: 650;
+  color: var(--pva-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pva-seller-scope__select,
+.pva-config-page .pva-input {
+  min-height: var(--pva-control-height);
+  padding: 0 12px;
+  border-radius: var(--pva-control-radius);
+  border: 1px solid var(--pva-border-strong);
+  background: var(--pva-surface);
+  color: var(--pva-text);
+  font: inherit;
+}
+
+.pva-config-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.4fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.pva-config-portfolio-panel {
+  min-width: 0;
+  max-height: min(72vh, 720px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pva-config-portfolio-panel > .pva-section__header,
+.pva-config-portfolio-panel > .pva-config-customer-form {
+  flex: 0 0 auto;
+}
+
+.pva-config-linked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.pva-config-subtitle {
+  margin: 0;
+  font-size: var(--pva-font-sm);
+  font-weight: 700;
+  color: var(--pva-brand);
+}
+
+.pva-config-user-hits,
+.pva-config-seller-list,
+.pva-config-customer-list,
+.pva-config-customer-hits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pva-config-seller-list {
+  max-height: min(52vh, 480px);
+  overflow: auto;
+  margin-top: 4px;
+  padding-right: 2px;
+}
+
+.pva-config-seller {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--pva-radius-md);
+  border: 1px solid var(--pva-border);
+  background: color-mix(in srgb, var(--pva-brand) 2%, var(--pva-surface));
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.pva-config-seller--active {
+  border-color: color-mix(in srgb, var(--pva-accent) 40%, var(--pva-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pva-accent) 28%, transparent);
+}
+
+.pva-config-seller span,
+.pva-config-customer-hits span {
+  color: var(--pva-muted);
+  font-size: var(--pva-font-sm);
+}
+
+.pva-config-customer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+}
+
+.pva-config-customer-form__search {
+  width: 100%;
+}
+
+.pva-config-customer-hits {
+  max-height: 220px;
+  overflow: auto;
+  padding: 4px;
+  border-radius: var(--pva-radius-md);
+  border: 1px solid var(--pva-border);
+  background: color-mix(in srgb, var(--pva-brand) 2%, var(--pva-surface-soft));
+}
+
+.pva-config-customer-list {
+  max-height: min(42vh, 360px);
+  overflow: auto;
+  padding: 6px;
+  border-radius: var(--pva-radius-md);
+  border: 1px solid var(--pva-border);
+  background: color-mix(in srgb, var(--pva-brand) 1.5%, var(--pva-surface));
+  flex: 1 1 auto;
+  gap: 8px;
+}
+
+.pva-config-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.pva-config-transfer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--pva-radius-md);
+  border: 1px solid color-mix(in srgb, var(--pva-accent) 28%, var(--pva-border));
+  background: color-mix(in srgb, var(--pva-accent) 5%, var(--pva-surface));
+}
+
+.pva-config-transfer__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.pva-config-transfer-check {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pva-config-transfer-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--pva-accent);
+  cursor: pointer;
+}
+
+.pva-config-customer-list li {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--pva-radius-sm);
+  border: 1px solid transparent;
+  background: var(--pva-surface);
+}
+
+.pva-config-linked-item {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--pva-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--pva-border) 70%, transparent);
+  background: var(--pva-surface);
+  min-height: 44px;
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.pva-config-linked-item .pva-avatar,
+.pva-config-linked-item .delpi-ui-avatar {
+  flex-shrink: 0;
+}
+
+.pva-config-linked-item__text {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 1px 0;
+}
+
+.pva-config-linked-item__text strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--pva-font-sm);
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--pva-brand);
+}
+
+.pva-config-linked-item__text span {
+  display: block;
+  color: var(--pva-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+
+.pva-config-customer-hits li {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--pva-radius-sm);
+  border: 1px solid transparent;
+  background: var(--pva-surface);
+}
+
+.pva-config-customer-hits li > div,
+.pva-config-customer-list li > div:not(.pva-config-linked__actions) {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pva-config-customer-hits li strong,
+.pva-config-customer-list li strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--pva-font-sm);
+}
+
+.pva-config-customer-hits li .pva-btn,
+.pva-config-customer-list li .pva-btn {
+  flex-shrink: 0;
+}
+
+.pva-config-linked__actions {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.pva-config-icon-btn {
+  appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--pva-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.pva-config-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pva-brand) 6%, transparent);
+  color: var(--pva-brand);
+}
+
+.pva-config-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pva-config-icon-btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pva-danger) 10%, transparent);
+  color: var(--pva-danger);
+}
+
+.pva-config-logo-upload {
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .pva-config-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pva-config-portfolio-panel {
+    max-height: none;
+  }
+
+  .pva-config-customer-hits {
+    max-height: 180px;
+  }
+
+  .pva-config-customer-list {
+    max-height: 280px;
+  }
+}

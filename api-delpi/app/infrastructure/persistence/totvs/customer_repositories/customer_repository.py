@@ -79,3 +79,70 @@ class CustomerRepository(BaseRepository, CustomerQueryRepositoryPort):
             page=paging["page"],
             page_size=paging["page_size"],
         )
+
+    def search_active_customers(
+        self,
+        *,
+        query: str | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> Page[CustomerMaster]:
+        paging = paginate(page, page_size)
+        where_clauses = [
+            "SA1.D_E_L_E_T_ = ''",
+            "SA1.A1_MSBLQL <> '1'",
+        ]
+        where_params: list[str] = []
+        term = (query or "").strip()
+        if term:
+            where_clauses.append(
+                "("
+                "SA1.A1_COD LIKE ? OR "
+                "SA1.A1_NOME COLLATE Latin1_General_CI_AI LIKE ? OR "
+                "SA1.A1_LOJA LIKE ?"
+                ")"
+            )
+            where_params.extend([f"{term}%", f"%{term}%", f"{term}%"])
+
+        where_sql = " AND ".join(where_clauses)
+        count_sql = f"""
+            SELECT COUNT(*) AS total
+              FROM SA1010 SA1 WITH (NOLOCK)
+             WHERE {where_sql}
+        """
+        sql = f"""
+            SELECT
+                SA1.A1_COD AS code,
+                SA1.A1_LOJA AS store,
+                SA1.A1_NOME AS name,
+                SA1.A1_MSBLQL AS blocked
+              FROM SA1010 SA1 WITH (NOLOCK)
+             WHERE {where_sql}
+             ORDER BY SA1.A1_NOME, SA1.A1_COD, SA1.A1_LOJA
+            OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
+        """
+
+        with self as repo:
+            total_row = repo.execute_one(count_sql, tuple(where_params))
+            total = int(total_row["total"]) if total_row else 0
+            rows = repo.execute_query(
+                sql,
+                tuple(where_params + [paging["offset"], paging["page_size"]]),
+            )
+
+        items = [
+            CustomerMaster(
+                code=(row.get("code") or "").strip(),
+                store=(row.get("store") or "").strip(),
+                name=(row.get("name") or "").strip(),
+                blocked=row.get("blocked"),
+            )
+            for row in rows
+        ]
+
+        return Page(
+            items=items,
+            total=total,
+            page=paging["page"],
+            page_size=paging["page_size"],
+        )
