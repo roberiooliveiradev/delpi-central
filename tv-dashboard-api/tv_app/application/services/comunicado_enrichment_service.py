@@ -4,6 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
+from tv_app.application.services.data.slide_data_resolution_service import SlideDataResolutionService
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
 
@@ -15,9 +16,13 @@ class ComunicadoEnrichmentService:
         self,
         media_repo: MediaRepository | None = None,
         data_enrichment: ComunicadoDataEnrichmentService | None = None,
+        resolution: SlideDataResolutionService | None = None,
     ) -> None:
         self._media_repo = media_repo or MediaRepository()
         self._data_enrichment = data_enrichment or ComunicadoDataEnrichmentService()
+        self._resolution = resolution or SlideDataResolutionService(
+            enrichment=self._data_enrichment,
+        )
 
     @staticmethod
     def build_media_url(
@@ -101,7 +106,7 @@ class ComunicadoEnrichmentService:
         subtitle = str(cfg.get("subtitle") or "")
         version = int(cfg.get("version") or 0) or self._detect_version(blocks)
         data_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else None
-        blocks = self._data_enrichment.enrich_blocks(
+        blocks = self._resolution.resolve_blocks(
             blocks,
             cfg=cfg,
             authorization=authorization,

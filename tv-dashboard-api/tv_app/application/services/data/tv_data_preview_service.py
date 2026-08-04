@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
+from tv_app.application.services.data.slide_data_resolution_service import SlideDataResolutionService
 from tv_app.application.services.data.tv_data_param_validation_service import validate_data_binding
 from tv_app.application.services.data.m_query.m_phase7_quality_service import (
     SafeTelemetry,
@@ -22,9 +23,14 @@ class TvDataPreviewService:
         self,
         catalog: TvDataRouteCatalogService | None = None,
         enrichment: ComunicadoDataEnrichmentService | None = None,
+        resolution: SlideDataResolutionService | None = None,
     ) -> None:
         self._catalog = catalog or TvDataRouteCatalogService()
         self._enrichment = enrichment or ComunicadoDataEnrichmentService(catalog=self._catalog)
+        self._resolution = resolution or SlideDataResolutionService(
+            catalog=self._catalog,
+            enrichment=self._enrichment,
+        )
 
     def preview_block(
         self,
@@ -74,7 +80,8 @@ class TvDataPreviewService:
         # Inclui outras fontes do slide para merge (siblingTables) no enrichment.
         target_id = str(block.get("id") or "")
         to_enrich = self._blocks_for_preview(block, native_config)
-        enriched = self._enrichment.enrich_blocks(
+        # Mesma fachada que o payload de apresentação (viewer puro).
+        enriched = self._resolution.resolve_blocks(
             to_enrich,
             cfg=native_config,
             authorization=authorization,

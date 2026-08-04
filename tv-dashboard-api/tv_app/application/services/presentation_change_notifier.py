@@ -13,6 +13,14 @@ def notify_presentation_changed(
     reason: str,
     revision: str | None = None,
 ) -> None:
+    # Save/estrutura mudou — inválida TTL de dados para present/preview não
+    # servirem IDD/KPI stale (viewer puro = mesmos números após flush).
+    from tv_app.application.services.comunicado_data_enrichment_service import (
+        reset_comunicado_data_block_cache,
+    )
+
+    reset_comunicado_data_block_cache()
+
     payload: dict[str, Any] = {
         "type": "presentation_updated",
         "reason": reason,

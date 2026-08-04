@@ -682,6 +682,8 @@ sequenceDiagram
   TV->>API: GET /public/present/{token} (refresh)
 ```
 
+**Contrato ago/2026 — apresentação = viewer puro:** o `public-hub` / `PresentationView` **não** decide agregação nem encoding. Dados vêm de `SlideDataResolutionService` (mesmo caminho do `preview-block` do editor). Projeção KPI/chart no cliente via `applyViewProjection`. Índice do filmstrip «Ordem na TV» = `is_slide_visible_in_presentation`. Save invalida cache de dados (`notify_presentation_changed`). Regra: `.cursor/rules/tv-dashboard-presentation-parity.mdc`.
+
 ---
 
 ## 16. Próximo passo imediato

@@ -23,6 +23,12 @@ import type { PublicPresentationPayload, PublicSlide } from "./api";
 import { refreshPublicPresentation, sendPresentationHeartbeat } from "./api";
 import { ExternalSlideView } from "./ExternalSlideView";
 
+/**
+ * Viewer puro da programação TV.
+ * Sem lógica de agregação/encoding/filtro de dados — só playback + render do
+ * `NativeSlideView` / `RichComunicadoStage` com o payload já enriquecido pela API
+ * (`SlideDataResolutionService`, mesmo caminho do preview do editor).
+ */
 type PresentationViewProps = {
   payload: PublicPresentationPayload;
   token?: string;

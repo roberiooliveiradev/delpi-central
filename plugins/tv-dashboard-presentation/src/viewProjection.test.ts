@@ -226,6 +226,32 @@ describe("applyViewProjection", () => {
     expect(next?.chart?.chartType).toBe("doughnut");
   });
 
+  it("com serverProjectionApplied ainda re-agrega KPI do bloco (não confia no bake)", () => {
+    const bakedWrong: ComunicadoDataResolved = {
+      serverProjectionApplied: true,
+      kpi: { value: 99, label: "bake errado" },
+      kpiMetrics: [{ field: "oee", value: 99, label: "bake errado" }],
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "oee", label: "OEE" },
+        ],
+        rows: [
+          { periodo: "a", oee: 60 },
+          { periodo: "b", oee: 80 },
+          { periodo: "c", oee: 100 },
+        ],
+      },
+    };
+    const next = applyViewProjection(bakedWrong, {
+      kpiProjection: {
+        metrics: [{ field: "oee", aggregation: "avg", label: "OEE médio" }],
+      },
+    });
+    expect(next?.kpiMetrics?.[0]?.value).toBe(80);
+    expect(next?.kpi?.label).toBe("OEE médio");
+  });
+
   it("barra agrupa soma por categoria", () => {
     const next = applyViewProjection(
       {

@@ -26,6 +26,7 @@ import type {
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
 import { useDragEdgeAutoScroll } from "../hooks/useDragEdgeAutoScroll";
 import { groupSlidesBySection } from "../utils/groupSlidesBySection";
+import { buildPresentationOrderIndexBySlideId } from "../utils/presentationSlideOrder";
 import { shouldShowSectionChrome, shouldShowSectionInFilmstrip } from "../utils/sectionChromeVisibility";
 import type { FilmstripSelectionModifiers } from "../utils/filmstripSlideSelection";
 import {
@@ -194,11 +195,18 @@ export function SlideFilmstrip({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [multiMode, onClearMultiSelection, renamingSlideId, selectedIdSet.size]);
 
-  const indexBySlideId = useMemo(() => {
+  /** Índice flat do filmstrip (drag/reorder) — inclui pausados. */
+  const filmstripIndexBySlideId = useMemo(() => {
     const map = new Map<string, number>();
     slides.forEach((slide, index) => map.set(slide.id, index));
     return map;
   }, [slides]);
+
+  /** Índice na sequência da TV (badge) — só slides visíveis no `/present/`. */
+  const tvOrderIndexBySlideId = useMemo(
+    () => buildPresentationOrderIndexBySlideId(slides, sections),
+    [slides, sections],
+  );
 
   const grouped = useMemo(
     () => groupSlidesBySection(slides, sections),
@@ -331,7 +339,10 @@ export function SlideFilmstrip({
   }, [clearLongPressTimer]);
 
   const renderSlideItem = (slide: Slide): ReactNode => {
-    const index = indexBySlideId.get(slide.id) ?? 0;
+    const filmstripIndex = filmstripIndexBySlideId.get(slide.id) ?? 0;
+    const tvIndex = tvOrderIndexBySlideId.get(slide.id);
+    const inPresentation = tvIndex != null;
+    const indexLabel = inPresentation ? String(tvIndex + 1) : "–";
     const isPrimary = slide.id === selectedSlideId;
     const inMulti = selectedIdSet.has(slide.id);
     const renaming = renamingSlideId === slide.id;
@@ -359,7 +370,7 @@ export function SlideFilmstrip({
       isPrimary ? "td-deck-filmstrip__item--selected" : "",
       inMulti && !isPrimary ? "td-deck-filmstrip__item--multi-selected" : "",
       !slide.isActive ? "td-deck-filmstrip__item--inactive" : "",
-      draggingIdSet.has(slide.id) || dragIndex === index
+      draggingIdSet.has(slide.id) || dragIndex === filmstripIndex
         ? "td-deck-filmstrip__item--dragging"
         : "",
     ]
@@ -379,10 +390,10 @@ export function SlideFilmstrip({
             return;
           }
           clearLongPressTimer();
-          onDragStart(index);
+          onDragStart(filmstripIndex);
         }}
         onDragOver={(event) => event.preventDefault()}
-        onDrop={() => onDrop(index)}
+        onDrop={() => onDrop(filmstripIndex)}
         onDragEnd={onDragEnd}
       >
         <div
@@ -403,9 +414,9 @@ export function SlideFilmstrip({
               beginRename(slide);
             }}
             onContextMenu={(event) => handleContextMenu(event, slide)}
-            aria-label={`Tela ${index + 1}: ${slide.title}`}
+            aria-label={inPresentation ? `Tela ${indexLabel} (ordem TV): ${slide.title}` : `Tela fora da TV: ${slide.title}`}
           >
-            <span className="td-deck-filmstrip__index">{index + 1}</span>
+            <span className="td-deck-filmstrip__index" title={inPresentation ? "Ordem na TV" : "Fora da apresentação"}>{indexLabel}</span>
             <SlideCardThumbnail
               slide={slide}
               playlistId={playlistId}
@@ -420,7 +431,7 @@ export function SlideFilmstrip({
               ref={renameInputRef}
               className="td-deck-filmstrip__title-input"
               value={renameDraft}
-              aria-label={`Renomear tela ${index + 1}`}
+              aria-label={`Renomear tela ${slide.title}`}
               onChange={(event) => setRenameDraft(event.target.value)}
               onBlur={() => commitRename(slide)}
               onKeyDown={(event) => onRenameKeyDown(event, slide)}

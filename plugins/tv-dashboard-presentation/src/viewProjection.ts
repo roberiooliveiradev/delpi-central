@@ -638,9 +638,9 @@ function applyChartProjection(
  * Aplica projeção do visual sobre o resolved compartilhado da fonte.
  * Sem projeção, preserva `applyMetricSelectionToResolved` (legado).
  *
- * Encoding de gráfico (groupBy / chartType) é sempre canônico no cliente via
- * `chartDataPolicy` + `applyChartProjection` quando há `table.rows` — mesmo com
- * `serverProjectionApplied`. O bake do enrichment pode ser rowwise/legado e não
+ * Encoding de gráfico (groupBy / chartType) e KPI é sempre canônico no cliente via
+ * `chartDataPolicy` / `resolveKpiMetricsWithProjection` quando há projeção no bloco —
+ * mesmo com `serverProjectionApplied`. O bake do enrichment pode ser rowwise/legado e não
  * substitui o visual do editor (ver `tv-dashboard-presentation-parity.mdc`).
  */
 export function applyViewProjection(
@@ -656,24 +656,9 @@ export function applyViewProjection(
 
   let next = { ...resolved };
 
-  // Enrichment já agregou KPIs — só filtra métricas visíveis (não re-agrega).
-  if (resolved.serverProjectionApplied) {
-    if (selection.kpiProjection?.metrics?.length) {
-      const visible = new Set(
-        selection.kpiProjection.metrics
-          .filter((metric) => metric.visible !== false)
-          .map((metric) => metric.field),
-      );
-      const metrics = (resolved.kpiMetrics ?? []).filter((metric) => visible.has(metric.field));
-      if (metrics.length > 0) {
-        next = {
-          ...next,
-          kpiMetrics: metrics,
-          kpi: { value: metrics[0]?.value, label: metrics[0]?.label },
-        };
-      }
-    }
-  } else if (selection.kpiProjection?.metrics?.length) {
+  // KPI: sempre reaplicar encoding do bloco (como chart). Não confiar no bake
+  // `serverProjectionApplied` — present e editor usam o mesmo caminho cliente.
+  if (selection.kpiProjection?.metrics?.length) {
     const metrics = resolveKpiMetricsWithProjection(next, selection.kpiProjection, fallback);
     const primary = metrics[0];
     next = {

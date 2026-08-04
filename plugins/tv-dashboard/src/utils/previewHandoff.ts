@@ -1,5 +1,7 @@
 /**
  * Handoff editor → prévia: flush autosave + limpa cache antes de abrir apresentação.
+ * Garante que `dataDefaults` / native_config persistidos alimentem o mesmo
+ * `SlideDataResolutionService` que a TV usa (viewer puro; sem defaults só no live).
  * Anti-padrão: navegar para prévia sem flush (payload do servidor fica stale).
  */
 
