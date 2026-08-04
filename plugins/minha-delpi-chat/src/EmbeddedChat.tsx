@@ -4,6 +4,10 @@ import { useEffect, useMemo } from "react";
 import { ChatPage } from "./ui/pages/ChatPage";
 import { setChatNavigationHostMode } from "./navigation/chatNavigation";
 import { parseChatRoute } from "./navigation/chatRoutes";
+import {
+  buildTvDashboardHostContext,
+  type ChatHostContext,
+} from "./hostSurfaceContext";
 
 export type TvWorkspaceContext = {
   playlistId?: string | null;
@@ -22,6 +26,7 @@ export type EmbeddedChatHostCallbacks = {
     nativeConfig?: Record<string, unknown> | null;
     diff?: Record<string, unknown> | null;
     ops?: unknown[];
+    sideEffects?: Record<string, unknown> | null;
   }) => void;
   onApplyPatchResult?: (payload: {
     ok: boolean;
@@ -45,6 +50,9 @@ export type EmbeddedChatProps = {
 /**
  * Remote parcial MF para hosts (TV Dashboard): chat sem shell admin completo.
  * Inteligência continua na minha-delpi-ai-api; host só injeta contexto e callbacks.
+ *
+ * Contexto ambient: surface + playlist/slide vão em todo send/stream via hostContext —
+ * o usuário não precisa lembrar o chat de que está no TV Dashboard.
  */
 export function EmbeddedChat({
   getAccessToken,
@@ -62,6 +70,16 @@ export function EmbeddedChat({
     setChatNavigationHostMode("embedded");
     return () => setChatNavigationHostMode("portal");
   }, []);
+
+  const hostContext = useMemo<ChatHostContext>(
+    () =>
+      buildTvDashboardHostContext({
+        surface,
+        playlistId: workspaceContext?.playlistId,
+        slideId: workspaceContext?.slideId,
+      }),
+    [surface, workspaceContext?.playlistId, workspaceContext?.slideId],
+  );
 
   const contextBanner = useMemo(() => {
     if (!workspaceContext?.playlistId && !workspaceContext?.slideId) return null;
@@ -108,6 +126,7 @@ export function EmbeddedChat({
           pathname={pathname}
           initialRoute={route}
           variant="embedded"
+          hostContext={hostContext}
         />
       </div>
     </div>

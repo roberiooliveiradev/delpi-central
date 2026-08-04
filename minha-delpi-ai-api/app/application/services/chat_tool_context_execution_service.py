@@ -207,9 +207,19 @@ class ChatToolContextExecutionService:
                     continue
 
             if tool_name == "tv_dashboard_copilot":
+                from app.domain.services.chat_host_surface_context_service import (
+                    ChatHostSurfaceContextService,
+                )
                 from app.domain.services.chat_write_confirmation_service import (
                     ChatWriteConfirmationService,
                 )
+
+                arguments = ChatHostSurfaceContextService.merge_tool_arguments(
+                    tool_name,
+                    selected_tool.get("arguments") or {},
+                    workspace_context,
+                )
+                selected_tool = {**selected_tool, "arguments": arguments}
 
                 mode = str(arguments.get("mode") or "preview").strip().lower()
                 synthetic_action = {

@@ -1,0 +1,85 @@
+"""Contexto ambient de host + exclusão de text_task no surface TV."""
+
+from app.domain.services.chat_host_surface_context_service import (
+    ChatHostSurfaceContextService,
+)
+from app.domain.services.chat_text_task_intent_service import ChatTextTaskIntentService
+from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+    ChatTvDashboardCopilotIntentService,
+)
+
+
+def test_matches_create_slide_without_host():
+    assert ChatTvDashboardCopilotIntentService.matches("crie um slide") is True
+    assert ChatTextTaskIntentService.is_pure_text_task("crie um slide") is False
+
+
+def test_surface_tv_enables_skill_without_message_keywords():
+    host = {"surface": "tv-dashboard", "playlistId": "pl-1"}
+    workspace = ChatHostSurfaceContextService.enrich_workspace(
+        {"skills": {}},
+        message="olá",
+        host_context=host,
+    )
+    assert workspace["skills"]["tvDashboardCopilot"] is True
+    assert workspace["tvDashboardHostContext"]["playlistId"] == "pl-1"
+
+
+def test_surface_tv_write_imperative_is_not_pure_text_task():
+    host = {"surface": "tv-dashboard", "playlistId": "pl-1"}
+    assert (
+        ChatTextTaskIntentService.is_pure_text_task(
+            "crie um slide",
+            host_context=host,
+        )
+        is False
+    )
+    assert (
+        ChatTextTaskIntentService.is_pure_text_task(
+            "monte algo simples",
+            host_context=host,
+        )
+        is False
+    )
+
+
+def test_surface_tv_keeps_email_as_text_task():
+    host = {"surface": "tv-dashboard", "playlistId": "pl-1"}
+    assert (
+        ChatTextTaskIntentService.is_pure_text_task(
+            "escreva um e-mail cobrando o fornecedor",
+            host_context=host,
+        )
+        is True
+    )
+
+
+def test_merge_tool_target_from_host():
+    workspace = {
+        "tvDashboardHostContext": {
+            "surface": "tv-dashboard",
+            "playlistId": "pl-99",
+            "slideId": "sl-1",
+        }
+    }
+    args = ChatHostSurfaceContextService.merge_tool_arguments(
+        "tv_dashboard_copilot",
+        {"mode": "preview", "ops": [{"op": "add_slide_from_preset", "presetKey": "preset_comunicado"}]},
+        workspace,
+    )
+    assert args["target"]["playlistId"] == "pl-99"
+    assert args["target"]["slideId"] == "sl-1"
+
+
+def test_host_prompt_addon_includes_playlist():
+    addon = ChatHostSurfaceContextService.build_prompt_addon(
+        {
+            "skills": {"tvDashboardCopilot": True},
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-42",
+            },
+        }
+    )
+    assert "pl-42" in addon
+    assert "tv-dashboard" in addon or "surface" in addon.lower()

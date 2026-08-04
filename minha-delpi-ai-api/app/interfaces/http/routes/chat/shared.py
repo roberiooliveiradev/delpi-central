@@ -312,7 +312,20 @@ def _build_send_chat_message_request(
         response_format=_parse_response_format(payload),
         admin_debug=_can_use_admin_debug(),
         typing_correction=_parse_typing_correction(payload),
+        host_context=_parse_host_context(payload),
     )
+
+
+def _parse_host_context(payload: dict) -> dict | None:
+    raw = payload.get("hostContext") or payload.get("host_context")
+    if not isinstance(raw, dict):
+        return None
+
+    from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+        ChatTvDashboardCopilotIntentService,
+    )
+
+    return ChatTvDashboardCopilotIntentService.normalize_host_context(raw)
 
 
 def _parse_typing_correction(payload: dict) -> dict | None:

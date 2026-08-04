@@ -188,6 +188,17 @@ class PromptPolicyService:
                 self._load_policy("quality-action-plans-delpi-readonly-skill.md")
             )
 
+        if resolved_skills.get("tvDashboardCopilot"):
+            from app.domain.skills.chat_skill_registry import (
+                ChatSkillRegistry,
+                TV_DASHBOARD_COPILOT_SKILL_KEY,
+            )
+
+            tv_policy = ChatSkillRegistry.get_policy_content(TV_DASHBOARD_COPILOT_SKILL_KEY)
+            sections.append(
+                tv_policy or self._load_policy("tv-dashboard-copilot-skill.md")
+            )
+
         return [
             section.strip()
             for section in sections

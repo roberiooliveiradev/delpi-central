@@ -10,6 +10,7 @@ import type {
   ChatStreamActivityEntry,
   ChatToolCall,
   ChatTypingCorrectionMetadata,
+  SendChatMessagePayload,
   SendChatMessageResponse,
 } from "../../data/api/chatTypes";
 import { createChatStreamSessionRegistry } from "../chatStreamSessionRegistry";
@@ -31,6 +32,7 @@ type StreamMessageParams = {
   responseMode?: ChatResponseModeId;
   responseFormat?: ChatPresentationFormatId;
   typingCorrection?: ChatTypingCorrectionMetadata;
+  hostContext?: SendChatMessagePayload["hostContext"];
   onStatus?: (message: string) => void;
   onActivity?: (entry: ChatStreamActivityEntry) => void;
   onSources?: (sources: ChatSource[]) => void;
@@ -192,6 +194,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       responseMode,
       responseFormat,
       typingCorrection,
+      hostContext,
       onStatus,
       onActivity,
       onSources,
@@ -223,6 +226,7 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
               responseFormat:
                 responseFormat && responseFormat !== "auto" ? responseFormat : undefined,
               typingCorrection,
+              hostContext: hostContext ?? undefined,
             },
             streamCallbacks,
             {

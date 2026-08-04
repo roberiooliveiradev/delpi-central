@@ -95,6 +95,7 @@ class ChatTurnPreparationIngressService:
         text_task_pure = ChatTextTaskIntentService.is_pure_text_task(
             message,
             previous_messages=history_source,
+            host_context=getattr(request, "host_context", None),
         )
 
         if text_task_pure:

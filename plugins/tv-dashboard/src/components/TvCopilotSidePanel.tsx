@@ -114,19 +114,38 @@ export function TvCopilotSidePanel({
     () => ({
       onPreviewPatch: (payload: {
         nativeConfig?: Record<string, unknown> | null;
+        sideEffects?: Record<string, unknown> | null;
       }) => {
         if (payload.nativeConfig && editor?.applySlideTemplate) {
           editor.applySlideTemplate(payload.nativeConfig);
           setStatus(C.previewAppliedLocal);
           return;
         }
+        if (payload.sideEffects?.slides) {
+          setStatus(C.previewSlideReady);
+          return;
+        }
         setStatus(C.previewNeedsCustomSlide);
       },
-      onApplyPatchResult: (payload: { ok: boolean; persisted?: boolean }) => {
+      onApplyPatchResult: (payload: {
+        ok: boolean;
+        persisted?: boolean;
+        target?: { playlistId?: string | null; slideId?: string | null };
+      }) => {
         setStatus(payload.ok ? C.applyOk : C.applyFailed);
+        if (payload.ok && typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("delpi:tv-copilot:playlist-mutated", {
+              detail: {
+                playlistId: payload.target?.playlistId ?? playlistId,
+                slideId: payload.target?.slideId ?? slideId,
+              },
+            }),
+          );
+        }
       },
     }),
-    [editor],
+    [editor, playlistId, slideId],
   );
 
   const mountProps = useMemo(

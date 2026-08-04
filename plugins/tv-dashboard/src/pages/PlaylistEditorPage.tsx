@@ -620,6 +620,18 @@ export function PlaylistEditorPage({
     onSelectionUpdate: handleRemoteSelection,
   });
 
+  useEffect(() => {
+    const onCopilotMutated = (event: Event) => {
+      const detail = (event as CustomEvent<{ playlistId?: string | null }>).detail;
+      if (detail?.playlistId && detail.playlistId !== playlistId) return;
+      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
+    };
+    window.addEventListener("delpi:tv-copilot:playlist-mutated", onCopilotMutated);
+    return () => {
+      window.removeEventListener("delpi:tv-copilot:playlist-mutated", onCopilotMutated);
+    };
+  }, [playlistId, reloadPlaylistFromServer, deckHistory]);
+
   const sendSelectionUpdate = useCallback(
     (slideId: string, selectedIds: string[]) => {
       const clientId = editorPresence?.clientId;

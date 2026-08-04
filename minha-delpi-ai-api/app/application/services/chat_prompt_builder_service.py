@@ -135,6 +135,7 @@ class ChatPromptBuilderService:
         skills: dict | None = None,
         response_mode: str | None = None,
         tool_calls: list | None = None,
+        host_surface_prompt: str | None = None,
     ) -> list[dict]:
         base_prompt = self.prompt_policy_service.build_contextual_prompt(
             rag_context=rag_context,
@@ -159,6 +160,8 @@ class ChatPromptBuilderService:
             response_mode=response_mode,
             tool_calls=tool_calls,
         )
+        if host_surface_prompt and str(host_surface_prompt).strip():
+            base_prompt = f"{base_prompt}\n\n{str(host_surface_prompt).strip()}"
 
         if text_task_mode:
             from app.application.services.chat_text_task_composer_service import (

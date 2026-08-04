@@ -240,6 +240,7 @@ class ChatTextTaskIntentService:
         message: str | None,
         *,
         previous_messages: list | None = None,
+        host_context: dict | None = None,
     ) -> bool:
         from app.domain.services.chat_production_operational_intent_service import (
             ChatProductionOperationalIntentService,
@@ -299,6 +300,19 @@ class ChatTextTaskIntentService:
                 return False
 
         if ChatSqlIntentService.is_sql_conversation_turn(message):
+            return False
+
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        # Surface ambient (ex.: embed TV): host já declara o app — não tratar «crie…»
+        # como redação pura. Ver ChatHostSurfaceContextService.
+        if ChatHostSurfaceContextService.suppresses_pure_text_task(
+            message,
+            host_context=host_context,
+            category=category,
+        ):
             return False
 
         if cls._is_linguistic_only_turn(normalized, category):

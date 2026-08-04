@@ -240,6 +240,14 @@ class ChatTurnLlmAssemblyService:
                     else drawing_policy_addon
                 )
 
+            from app.domain.services.chat_host_surface_context_service import (
+                ChatHostSurfaceContextService,
+            )
+
+            host_surface_prompt = ChatHostSurfaceContextService.build_prompt_addon(
+                workspace_context
+            )
+
             from app.infrastructure.llm.llm_request_context import get_active_config
 
             llm_messages = prompt_builder_service.build_messages(
@@ -283,6 +291,7 @@ class ChatTurnLlmAssemblyService:
                 skills=workspace_context.get("skills"),
                 response_mode=get_active_config().response_mode,
                 tool_calls=tool_calls,
+                host_surface_prompt=host_surface_prompt,
             )
 
         admin_debug_payload = ChatAdminDebugService.build_for_turn(

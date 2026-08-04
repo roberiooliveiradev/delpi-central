@@ -187,6 +187,8 @@ type ChatPageProps = {
    * sem sidebar/admin do shell completo.
    */
   variant?: "full" | "embedded";
+  /** Contexto ambient do host (surface TV + playlist/slide). */
+  hostContext?: import("../../hostSurfaceContext").ChatHostContext | null;
 };
 
 
@@ -196,6 +198,7 @@ export function ChatPage({
   initialRoute,
   onOpenAdmin,
   variant = "full",
+  hostContext = null,
 }: ChatPageProps) {
   const isEmbedded = variant === "embedded";
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -407,6 +410,7 @@ export function ChatPage({
     agentIds: overlayAgentIds,
     getResponseMode,
     getPresentationFormat,
+    getHostContext: () => hostContext,
     onSessionActivated: (sessionId) => {
       /* Embarcado: não alterar URL do host (evita AppHost ir para /apps/minha-chat/…). */
       if (isEmbedded) return;

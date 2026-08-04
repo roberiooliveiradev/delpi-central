@@ -84,6 +84,7 @@ Wrappers especializados (mantêm API estável):
 | `column_labels.json` | Colunas de tabelas, perfil KV do produto, tabelas fixas do presenter | `ExternalActionColumnLabelService`, `ExternalActionResultPresenter` |
 | `personality_playbook.json` | Tom, feedback, **`drawingFollowUpChips`** / **`drawingFollowUpQueries`** (incl. «Reextrair BOM do PDF», 15.8.5) | `ChatPersonalityContentService`, `ChatDrawingFollowUpService` |
 | `sql_intent_vocabulary.json` | Marcadores SQL (intenção, refinamento, produção, analisador) — seção **`shared`** para termos reutilizados | `ChatSqlIntentVocabularyService` → vários `ChatSql*` |
+| `tv_dashboard_copilot_intent.json` | Frases/marcadores do Copiloto TV + texto de host ambient (`hostPrompt`) | `ChatTvDashboardCopilotIntentService`, `ChatHostSurfaceContextService` |
 | `analysis_intent_vocabulary.json` | Marcadores de análise/comparação | `ChatAnalysisIntentVocabularyService` |
 | `text_context_vocabulary.json` | Resolução de contexto textual (produto, filial, datas) | `ChatTextContextVocabularyService` |
 | `term_extraction_vocabulary.json` | Stopwords e marcadores de pergunta de definição | `ChatTermExtractionVocabularyService` |

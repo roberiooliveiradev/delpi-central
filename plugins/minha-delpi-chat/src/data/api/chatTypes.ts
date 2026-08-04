@@ -857,6 +857,12 @@ export type SendChatMessagePayload = {
   /** Preferência de apresentação do turno (table, text, tree, chart, canvas). */
   responseFormat?: ChatPresentationFormatId;
   typingCorrection?: ChatTypingCorrectionMetadata;
+  /** Contexto ambient do host embutido (surface + bindings). */
+  hostContext?: {
+    surface: string;
+    playlistId?: string | null;
+    slideId?: string | null;
+  } | null;
 };
 
 export type ChatTypingSuggestionChange = {
