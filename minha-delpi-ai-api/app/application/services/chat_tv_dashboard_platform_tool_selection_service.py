@@ -94,11 +94,25 @@ class ChatTvDashboardPlatformToolSelectionService:
             access_token=access_token,
         )
         if not isinstance(suggestion, dict):
-            return TvPlatformToolSelectionResult(catalog=catalog)
+            # BFF indisponível no suggest — mesma política do catálogo: resposta direta.
+            answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
+            return TvPlatformToolSelectionResult(
+                catalog=catalog,
+                catalog_unavailable_answer=answer or None,
+            )
 
         ops = suggestion.get("ops")
         if not isinstance(ops, list) or not ops:
-            return TvPlatformToolSelectionResult(catalog=catalog)
+            # Match incompleto / clarificação: reason do BFF vira directAnswer (sem LLM inventar UI).
+            bff_reason = str(suggestion.get("reason") or "").strip()
+            answer = (
+                bff_reason
+                or ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
+            )
+            return TvPlatformToolSelectionResult(
+                catalog=catalog,
+                catalog_unavailable_answer=answer or None,
+            )
 
         reason = str(
             suggestion.get("reason")

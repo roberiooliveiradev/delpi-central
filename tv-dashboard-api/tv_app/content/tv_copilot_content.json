@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.08.04.3",
+  "catalogVersion": "2026.08.04.5",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -101,10 +101,36 @@
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
     "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
     "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
-    "suggestNoMatch": "Nenhuma capability do catálogo corresponde à mensagem.",
+    "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «mude o fundo para azul».",
     "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
     "suggestNeedColor": "Indique a cor do fundo (ex.: azul, #2563eb).",
-    "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide."
+    "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide.",
+    "suggestNeedSelection": "Selecione o bloco no editor (ou informe o alvo) e repita o pedido.",
+    "suggestNeedPreset": "Informe o presetKey do catálogo de slides (ex.: production_oee_overview).",
+    "suggestNeedSection": "Informe ou selecione a seção alvo.",
+    "suggestNeedDataSource": "Selecione a fonte de dados no slide ou informe o dataSourceId.",
+    "suggestNeedQuotedTitle": "Informe o novo nome entre aspas (ex.: renomeie o slide \"Manhã\").",
+    "suggestNeedReorder": "Para reordenar, descreva a ordem desejada ou use o filmstrip; o Copiloto precisa dos ids dos slides.",
+    "suggestIncompleteGeneric": "Entendi o tipo de pedido, mas faltam dados para montar a operação. Reformule com mais detalhe (texto, cor, indicador, seleção)."
+  },
+  "placeholderClarifications": {
+    "backgroundColor": "suggestNeedColor",
+    "operationId": "suggestNeedOperationId",
+    "selectedBlockId": "suggestNeedSelection",
+    "presetKey": "suggestNeedPreset",
+    "sectionId": "suggestNeedSection",
+    "dataSourceId": "suggestNeedDataSource",
+    "quoted": "suggestNeedQuotedTitle"
+  },
+  "opFieldClarifications": {
+    "delete_block.blockId": "suggestNeedSelection",
+    "add_slide_from_preset.presetKey": "suggestNeedPreset",
+    "upsert_data_source.operationId": "suggestNeedOperationId",
+    "bind_visual.visualId": "suggestNeedSelection",
+    "bind_visual.dataSourceId": "suggestNeedDataSource",
+    "reorder_slides.items": "suggestNeedReorder",
+    "patch_native_config.background": "suggestNeedColor",
+    "update_slide.title": "suggestNeedQuotedTitle"
   },
   "settings": {
     "maxOpsPerPatch": 40,
@@ -113,7 +139,8 @@
     "telemetryWindow": 500,
     "defaultSlideTitle": "Slide personalizado",
     "defaultPlaylistName": "Nova programação",
-    "defaultSectionName": "Nova seção"
+    "defaultSectionName": "Nova seção",
+    "defaultTextBlockContent": ""
   },
   "allowedOps": [
     "upsert_data_source",
@@ -147,8 +174,9 @@
         "crie um kpi",
         "criar um kpi"
       ],
-      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela"],
+      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela", "chart", "table"],
       "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplates": [
         {
           "op": "upsert_data_source",
@@ -196,6 +224,8 @@
       "contentMarkers": ["fonte", "fonte de dados", "dados", "operationid", "ligar api", "série", "serie"],
       "excludeMarkers": ["script m", "power query", "kpi", "indicador"],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["operationId"],
+      "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplate": {
         "op": "upsert_data_source",
         "operationId": "{{operationId}}",
@@ -252,18 +282,19 @@
       "contentMarkers": [
         "escreva um texto",
         "escrever um texto",
+        "adicione um texto",
+        "adicionar um texto",
+        "adicionar texto",
+        "adicione texto",
+        "inserir texto",
+        "insira um texto",
+        "caixa de texto",
         "bloco de texto",
         "texto no slide",
+        "criar texto",
+        "crie um texto",
         "título",
-        "titulo",
-        "gráfico",
-        "grafico",
-        "imagem",
-        "mídia",
-        "midia",
-        "forma",
-        "ícone",
-        "icone"
+        "titulo"
       ],
       "excludeMarkers": [
         "script m",
@@ -272,15 +303,89 @@
         "apague o bloco",
         "remover bloco",
         "kpi",
-        "indicador"
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table"
       ],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_block",
         "block": {
-          "id": "{{selectedBlockId}}",
+          "id": "{{newTextBlockId}}",
           "type": "text",
-          "content": "{{quoted}}"
+          "content": "{{textContent}}"
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "block"],
+        "properties": {
+          "op": { "const": "upsert_block" },
+          "block": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "add_chart_view",
+      "op": "upsert_block",
+      "whenToUse": "Criar um bloco de gráfico (chart_view) no slide.",
+      "contentMarkers": [
+        "gráfico",
+        "grafico",
+        "chart",
+        "adicione um gráfico",
+        "adicionar gráfico",
+        "crie um gráfico"
+      ],
+      "excludeMarkers": ["kpi", "indicador", "tabela", "texto"],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": {
+          "id": "{{newVisualId}}",
+          "type": "chart_view",
+          "frame": { "x": 10, "y": 28, "w": 80, "h": 45 },
+          "style": { "zIndex": 2 }
+        }
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "block"],
+        "properties": {
+          "op": { "const": "upsert_block" },
+          "block": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "add_table_view",
+      "op": "upsert_block",
+      "whenToUse": "Criar um bloco de tabela (table_view) no slide.",
+      "contentMarkers": [
+        "tabela",
+        "table",
+        "adicione uma tabela",
+        "adicionar tabela",
+        "crie uma tabela"
+      ],
+      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "texto"],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": {
+          "id": "{{newVisualId}}",
+          "type": "table_view",
+          "frame": { "x": 5, "y": 28, "w": 90, "h": 45 },
+          "style": { "zIndex": 2 }
         }
       },
       "inputSchema": {
@@ -304,12 +409,17 @@
         "apagar o bloco",
         "apagar bloco",
         "remover bloco",
+        "remova o bloco",
+        "remova o elemento",
+        "remover elemento",
         "excluir bloco",
         "excluir elemento",
         "delete block"
       ],
       "excludeMarkers": ["apagar slide", "apague o slide", "excluir tela"],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["selectedBlockId"],
+      "clarificationMessageKey": "suggestNeedSelection",
       "payloadTemplate": {
         "op": "delete_block",
         "blockId": "{{selectedBlockId}}"
@@ -330,9 +440,11 @@
       "key": "bind_visual",
       "op": "bind_visual",
       "whenToUse": "Ligar um visual (KPI/gráfico/tabela) a uma fonte data_source; preenche projections mínimas se ausentes.",
-      "contentMarkers": ["ligar", "vincular", "bind", "fonte do kpi"],
-      "excludeMarkers": [],
+      "contentMarkers": ["ligar", "vincular", "bind", "fonte do kpi", "ligue o", "vincule"],
+      "excludeMarkers": ["adicione um kpi", "adicionar kpi", "crie um kpi"],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["selectedBlockId", "dataSourceId"],
+      "clarificationMessageKey": "suggestNeedDataSource",
       "payloadTemplate": {
         "op": "bind_visual",
         "visualId": "{{selectedBlockId}}",
@@ -400,6 +512,8 @@
       ],
       "excludeMarkers": ["slide em branco", "tela vazia", "blank"],
       "actionTermSet": "create",
+      "requiresFilledPlaceholders": ["presetKey"],
+      "clarificationMessageKey": "suggestNeedPreset",
       "payloadTemplate": {
         "op": "add_slide_from_preset",
         "presetKey": "{{presetKey}}"
@@ -455,12 +569,22 @@
       "key": "update_slide",
       "op": "update_slide",
       "whenToUse": "Renomear, alterar duração ou ativar/pausar o slide alvo.",
-      "contentMarkers": ["renomear", "duração", "pausar", "ativar slide"],
+      "contentMarkers": [
+        "renomear",
+        "renomeie",
+        "renomeie o slide",
+        "renomear o slide",
+        "duração",
+        "pausar",
+        "ativar slide"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["quoted"],
+      "clarificationMessageKey": "suggestNeedQuotedTitle",
       "payloadTemplate": {
         "op": "update_slide",
-        "title": "{{title}}"
+        "title": "{{quoted}}"
       },
       "inputSchema": {
         "type": "object",
@@ -480,12 +604,20 @@
       "key": "reorder_slides",
       "op": "reorder_slides",
       "whenToUse": "Reordenar slides da programação (filmstrip).",
-      "contentMarkers": ["reordenar", "mover slide", "ordem"],
+      "contentMarkers": [
+        "reordenar",
+        "reordene",
+        "reordenar slides",
+        "reordene os slides",
+        "mover slide",
+        "ordem dos slides"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
+      "clarificationMessageKey": "suggestNeedReorder",
       "payloadTemplate": {
         "op": "reorder_slides",
-        "items": [{ "id": "{{slideId}}", "sortOrder": 0 }]
+        "items": []
       },
       "inputSchema": {
         "type": "object",
@@ -613,8 +745,11 @@
         "nova programacao",
         "criar playlist",
         "crie uma playlist",
+        "crie uma programação",
+        "crie uma programacao",
         "criar programação",
-        "criar programacao"
+        "criar programacao",
+        "nova playlist"
       ],
       "excludeMarkers": ["crie um slide", "criar slide", "slide em branco"],
       "actionTermSet": "create",

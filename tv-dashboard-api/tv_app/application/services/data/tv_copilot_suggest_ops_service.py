@@ -77,13 +77,19 @@ class TvCopilotSuggestOpsService:
 
         ops: list[dict[str, Any]] = []
         matched_keys: list[str] = []
-        skipped_need_color = False
-        skipped_need_operation = False
+        clarification_keys: list[str] = []
+
+        def note_clarification(message_key: str | None) -> None:
+            key = str(message_key or "").strip()
+            if key and key not in clarification_keys:
+                clarification_keys.append(key)
 
         for _score, cap in top:
             key = str(cap.get("key") or cap.get("op") or "").strip()
             if key:
                 matched_keys.append(key)
+
+            cap_clarify = str(cap.get("clarificationMessageKey") or "").strip()
 
             required = cap.get("requiresFilledPlaceholders")
             if isinstance(required, list):
@@ -93,12 +99,17 @@ class TvCopilotSuggestOpsService:
                     if not str(placeholders.get(str(name)) or "").strip()
                 ]
                 if missing:
-                    if "backgroundColor" in missing:
-                        skipped_need_color = True
+                    mapped = cls._clarification_for_placeholders(missing)
+                    note_clarification(mapped or cap_clarify)
                     continue
 
             if bool(cap.get("isComposite")) and not placeholders.get("operationId"):
-                skipped_need_operation = True
+                note_clarification(
+                    cap_clarify
+                    or TvCopilotContentService.placeholder_clarifications().get(
+                        "operationId"
+                    )
+                )
                 continue
 
             templates = cls._templates_for_capability(cap)
@@ -106,25 +117,27 @@ class TvCopilotSuggestOpsService:
                 filled = cls._fill_template(template, placeholders)
                 if not isinstance(filled, dict) or not filled:
                     continue
-                if cls._is_op_incomplete(filled):
-                    if filled.get("op") == "patch_native_config":
-                        skipped_need_color = True
-                    if filled.get("op") == "upsert_data_source":
-                        skipped_need_operation = True
+                incomplete_field = cls._incomplete_op_field(filled)
+                if incomplete_field:
+                    mapped = TvCopilotContentService.op_field_clarifications().get(
+                        incomplete_field
+                    )
+                    note_clarification(mapped or cap_clarify)
                     continue
                 ops.append(filled)
 
         if not ops:
-            if skipped_need_color:
-                reason = TvCopilotContentService.message("suggestNeedColor")
-            elif skipped_need_operation:
-                reason = TvCopilotContentService.message("suggestNeedOperationId")
+            if clarification_keys:
+                reason = TvCopilotContentService.message(clarification_keys[0])
+            elif matched_keys:
+                reason = TvCopilotContentService.message("suggestIncompleteGeneric")
             else:
                 reason = TvCopilotContentService.message("suggestNoMatch")
             return {
                 "catalogVersion": catalog_version,
                 "ops": [],
                 "matchedCapabilityKeys": matched_keys,
+                "clarificationKey": clarification_keys[0] if clarification_keys else None,
                 "reason": reason,
             }
 
@@ -132,10 +145,20 @@ class TvCopilotSuggestOpsService:
             "catalogVersion": catalog_version,
             "ops": ops,
             "matchedCapabilityKeys": matched_keys,
+            "clarificationKey": None,
             "reason": TvCopilotContentService.message(
                 "suggestOk", count=len(ops)
             ),
         }
+
+    @classmethod
+    def _clarification_for_placeholders(cls, missing: list[str]) -> str | None:
+        mapping = TvCopilotContentService.placeholder_clarifications()
+        for name in missing:
+            key = mapping.get(str(name).strip())
+            if key:
+                return key
+        return None
 
     @classmethod
     def _templates_for_capability(cls, cap: dict[str, Any]) -> list[dict[str, Any]]:
@@ -341,8 +364,14 @@ class TvCopilotSuggestOpsService:
             prefer_kpi=prefer_kpi,
         )
         background_color = cls._extract_background_color(message, normalized)
+        # Caixa vazia quando não há aspas — não inventar «Novo texto».
+        default_text = TvCopilotContentService.setting_str(
+            "defaultTextBlockContent", ""
+        )
+        text_content = quoted if quoted else default_text
         return {
             "quoted": quoted,
+            "textContent": text_content,
             "selectedBlockId": cls._first_selected_block_id(host),
             "slideId": str(host.get("slideId") or "").strip(),
             "playlistId": str(host.get("playlistId") or "").strip(),
@@ -354,6 +383,7 @@ class TvCopilotSuggestOpsService:
             "backgroundColor": background_color,
             "newDataSourceId": cls._new_id("ds"),
             "newVisualId": cls._new_id("viz"),
+            "newTextBlockId": cls._new_id("txt"),
             "title": quoted or default_title,
             "name": quoted or default_playlist,
             "sectionName": quoted or default_section,
@@ -407,41 +437,59 @@ class TvCopilotSuggestOpsService:
         return marker_score + action_bonus
 
     @classmethod
-    def _is_op_incomplete(cls, op: dict[str, Any]) -> bool:
+    def _incomplete_op_field(cls, op: dict[str, Any]) -> str | None:
+        """Retorna chave `op.campo` incompleta, ou None se a op está pronta.
+
+        Texto vazio em bloco `text` é permitido (caixa em branco no slide).
+        """
         name = str(op.get("op") or "").strip()
         if name == "patch_native_config":
             patch = op.get("patch")
             if not isinstance(patch, dict) or not patch:
-                return True
+                return "patch_native_config.patch"
             if "background" in patch:
                 background = patch.get("background")
                 if not isinstance(background, dict):
-                    return True
+                    return "patch_native_config.background"
                 if not str(background.get("value") or "").strip():
-                    return True
+                    return "patch_native_config.background"
                 if not str(background.get("type") or "").strip():
-                    return True
-            return False
+                    return "patch_native_config.background"
+            return None
         if name == "upsert_data_source":
-            return not str(op.get("operationId") or "").strip()
+            if not str(op.get("operationId") or "").strip():
+                return "upsert_data_source.operationId"
+            return None
         if name == "bind_visual":
-            return not (
-                str(op.get("visualId") or "").strip()
-                and str(op.get("dataSourceId") or "").strip()
-            )
+            if not str(op.get("visualId") or "").strip():
+                return "bind_visual.visualId"
+            if not str(op.get("dataSourceId") or "").strip():
+                return "bind_visual.dataSourceId"
+            return None
         if name == "delete_block":
-            return not str(op.get("blockId") or "").strip()
+            if not str(op.get("blockId") or "").strip():
+                return "delete_block.blockId"
+            return None
         if name == "add_slide_from_preset":
-            return not str(op.get("presetKey") or "").strip()
+            if not str(op.get("presetKey") or "").strip():
+                return "add_slide_from_preset.presetKey"
+            return None
+        if name == "update_slide":
+            if "title" in op and not str(op.get("title") or "").strip():
+                return "update_slide.title"
+            return None
+        if name == "reorder_slides":
+            items = op.get("items")
+            if not isinstance(items, list) or not items:
+                return "reorder_slides.items"
+            return None
         if name == "upsert_block":
             block = op.get("block")
             if not isinstance(block, dict) or not block:
-                return True
-            block_type = str(block.get("type") or "").strip()
-            if block_type == "text" and not str(block.get("content") or "").strip():
-                return True
-            return False
-        return False
+                return "upsert_block.block"
+            # content vazio em text é ok — placeholder no editor.
+            return None
+        return None
 
     @classmethod
     def _fill_string(cls, value: str, placeholders: dict[str, str]) -> str:

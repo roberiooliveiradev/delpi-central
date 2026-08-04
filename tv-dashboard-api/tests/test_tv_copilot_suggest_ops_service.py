@@ -14,6 +14,20 @@ def setup_function() -> None:
     clear_tv_copilot_content_cache()
 
 
+def test_suggest_adicione_texto_sem_aspas_cria_bloco_vazio():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione um texto no slide",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"]
+    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
+    block = upsert.get("block") or {}
+    assert block.get("type") == "text"
+    assert block.get("content") == ""
+    assert str(block.get("id") or "").startswith("txt_")
+    assert "upsert_block" in result["matchedCapabilityKeys"]
+
+
 def test_suggest_escreva_texto_upsert_block_with_quoted_content():
     result = TvCopilotSuggestOpsService.suggest(
         message='escreva um texto no slide atual "ola sou uma ia"',
@@ -51,6 +65,17 @@ def test_suggest_apague_bloco_with_selection():
     assert "delete_block" in result["matchedCapabilityKeys"]
 
 
+def test_suggest_apague_bloco_sem_selecao_clarifica():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="apague o bloco",
+        host_context={"slideId": "s1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == []
+    assert "delete_block" in result["matchedCapabilityKeys"]
+    assert result.get("clarificationKey") == "suggestNeedSelection"
+    assert "selecione" in str(result.get("reason") or "").lower()
+
+
 def test_suggest_empty_message_returns_no_ops():
     result = TvCopilotSuggestOpsService.suggest(message="   ", host_context={})
     assert result["ops"] == []
@@ -78,7 +103,48 @@ def test_suggest_fundo_sem_cor_nao_emite_background_vazio():
     )
     assert result["ops"] == []
     assert "patch_native_config" in result["matchedCapabilityKeys"]
+    assert result.get("clarificationKey") == "suggestNeedColor"
     assert "cor" in str(result.get("reason") or "").lower()
+
+
+def test_suggest_kpi_sem_rota_clarifica_operation_id():
+    from unittest.mock import MagicMock, patch
+
+    empty_catalog = MagicMock()
+    empty_catalog.get_route.return_value = None
+    empty_catalog.list_routes.return_value = []
+    with patch(
+        "tv_app.application.services.data.tv_copilot_suggest_ops_service.TvDataRouteCatalogService",
+        return_value=empty_catalog,
+    ):
+        result = TvCopilotSuggestOpsService.suggest(
+            message="adicione um KPI",
+            host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+        )
+    assert result["ops"] == []
+    assert "add_kpi_from_route" in result["matchedCapabilityKeys"]
+    assert result.get("clarificationKey") == "suggestNeedOperationId"
+
+
+def test_suggest_reordenar_sem_items_clarifica():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="reordene os slides",
+        host_context={"playlistId": "pl-1", "slideId": "s1"},
+    )
+    assert result["ops"] == []
+    assert "reorder_slides" in result["matchedCapabilityKeys"]
+    assert result.get("clarificationKey") == "suggestNeedReorder"
+
+
+def test_suggest_add_chart_view():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione um gráfico",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"]
+    upsert = next(op for op in result["ops"] if op.get("op") == "upsert_block")
+    assert (upsert.get("block") or {}).get("type") == "chart_view"
+    assert "add_chart_view" in result["matchedCapabilityKeys"]
 
 
 def test_suggest_kpi_oee_composite_fonte_view_bind():

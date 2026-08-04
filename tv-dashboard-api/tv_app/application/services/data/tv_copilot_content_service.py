@@ -86,6 +86,28 @@ class TvCopilotContentService:
         return []
 
     @classmethod
+    def placeholder_clarifications(cls) -> dict[str, str]:
+        raw = _load().get("placeholderClarifications")
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
+    def op_field_clarifications(cls) -> dict[str, str]:
+        raw = _load().get("opFieldClarifications")
+        if not isinstance(raw, dict):
+            return {}
+        return {
+            str(key).strip(): str(value).strip()
+            for key, value in raw.items()
+            if str(key).strip() and str(value).strip()
+        }
+
+    @classmethod
     def color_vocabulary(cls) -> dict[str, str]:
         raw = _load().get("colorVocabulary")
         if not isinstance(raw, dict):

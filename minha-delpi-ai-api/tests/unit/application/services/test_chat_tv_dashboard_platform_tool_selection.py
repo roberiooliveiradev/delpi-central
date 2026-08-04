@@ -111,6 +111,48 @@ def test_catalog_failure_returns_no_tool_and_unavailable_answer():
     )
 
 
+def test_empty_suggest_ops_returns_bff_reason_as_direct_answer():
+    """Match incompleto no BFF → directAnswer com reason; sem tool / sem LLM inventar UI."""
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.1", "capabilities": []},
+        suggestion={
+            "catalogVersion": "test.1",
+            "ops": [],
+            "matchedCapabilityKeys": ["patch_native_config"],
+            "clarificationKey": "suggestNeedColor",
+            "reason": "Indique a cor do fundo (ex.: azul, #2563eb).",
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "mude a cor do fundo do slide",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.has_suggested_ops is False
+    assert result.catalog_unavailable_answer == (
+        "Indique a cor do fundo (ex.: azul, #2563eb)."
+    )
+    assert result.catalog is not None
+
+
+def test_suggest_failure_returns_unavailable_answer():
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.1", "capabilities": []},
+        fail_suggest=True,
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "crie um slide",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.catalog_unavailable_answer
+    assert result.catalog is not None
+
+
 def test_fake_capability_only_in_bff_flows_to_tool():
     """AP: op nova só no BFF — AI não precisa conhecer o nome no matching."""
     port = _FakeCatalogPort(

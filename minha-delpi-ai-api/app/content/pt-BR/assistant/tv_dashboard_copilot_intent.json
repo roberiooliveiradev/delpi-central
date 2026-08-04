@@ -49,7 +49,19 @@
     "atualize",
     "atualizar",
     "insira",
-    "inserir"
+    "inserir",
+    "mude",
+    "mudar",
+    "renomeie",
+    "renomear",
+    "reordene",
+    "reordenar",
+    "ligue",
+    "ligar",
+    "vincule",
+    "vincular",
+    "exclua",
+    "excluir"
   ],
   "hostPrompt": {
     "title": "Contexto do editor TV Dashboard (host)",
