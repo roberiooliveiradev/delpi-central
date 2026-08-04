@@ -409,6 +409,11 @@ export type ComunicadoEditorContextValue = {
   /** Insere bloco de texto e vincula campo dinâmico quando há fonte no slide. */
   insertTextDataFieldBlock: () => void;
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
+  /**
+   * Substitui o native_config do draft preservando ids dos blocos
+   * (preview/apply do Copiloto — hint `replaceNativeConfig`).
+   */
+  replaceSlideNativeConfig: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
   rotateSelected: (deltaDeg: number) => void;

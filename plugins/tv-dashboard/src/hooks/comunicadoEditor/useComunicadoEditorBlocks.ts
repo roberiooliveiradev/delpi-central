@@ -1221,6 +1221,33 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef, selectBlocksByIds],
   );
 
+  /** Draft do Copiloto: aplica nativeConfig do BFF sem remintar ids. */
+  const replaceSlideNativeConfig = useCallback(
+    (nativeConfig: Record<string, unknown>) => {
+      const parsed = parseComunicadoConfig(nativeConfig);
+      const nextBlocks = parsed.blocks ?? [];
+      const prevSelected = getActionSelectedIds();
+      commitWithHistory({
+        ...configRef.current,
+        version: Math.max(parsed.version ?? configRef.current.version ?? 4, 4),
+        headline: parsed.headline ?? configRef.current.headline,
+        subtitle: parsed.subtitle ?? configRef.current.subtitle,
+        background: parsed.background ?? configRef.current.background,
+        dataFilters: parsed.dataFilters ?? configRef.current.dataFilters,
+        groupTransforms: parsed.groupTransforms ?? configRef.current.groupTransforms,
+        speakerNotes:
+          parsed.speakerNotes !== undefined
+            ? parsed.speakerNotes
+            : configRef.current.speakerNotes,
+        customFonts: parsed.customFonts ?? configRef.current.customFonts,
+        blocks: nextBlocks,
+      });
+      const keep = prevSelected.filter((id) => nextBlocks.some((b) => b.id === id));
+      selectBlocksByIds(keep);
+    },
+    [commitWithHistory, configRef, getActionSelectedIds, selectBlocksByIds],
+  );
+
   const applySlideTheme = useCallback(
     (theme: ComunicadoSlideTheme) => {
       commitWithHistory(applyComunicadoSlideTheme(configRef.current, theme));
@@ -1493,6 +1520,7 @@ export function useComunicadoEditorBlocks({
     reorderBlockLayer,
     nudgeSelected,
     applySlideTemplate,
+    replaceSlideNativeConfig,
     applySlideTheme,
     alignSelected,
     rotateSelected,

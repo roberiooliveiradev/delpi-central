@@ -7,6 +7,8 @@ import { parseChatRoute } from "./navigation/chatRoutes";
 import {
   buildTvDashboardHostContext,
   type ChatHostContext,
+  type TvCopilotPreviewPatchPayload,
+  type TvCopilotSideEffectHint,
 } from "./hostSurfaceContext";
 import { buildEmbeddedSessionScopeKey } from "./embeddedSessionPersistence";
 
@@ -14,6 +16,11 @@ export type TvWorkspaceContext = {
   playlistId?: string | null;
   slideId?: string | null;
   selectedBlockIds?: string[];
+  /** Tipos dos blocos selecionados (resumo do foco). */
+  selectedBlockTypes?: string[];
+  /** Primeiro bloco em foco. */
+  focusBlockId?: string | null;
+  focusBlockType?: string | null;
   /** Resumo do native_config sem resolved — só metadados. */
   nativeConfigSummary?: {
     blockCount?: number;
@@ -23,16 +30,13 @@ export type TvWorkspaceContext = {
 
 export type EmbeddedChatHostCallbacks = {
   /** Preview do patch aplicado ao draft local do editor (sem persistir). */
-  onPreviewPatch?: (payload: {
-    nativeConfig?: Record<string, unknown> | null;
-    diff?: Record<string, unknown> | null;
-    ops?: unknown[];
-    sideEffects?: Record<string, unknown> | null;
-  }) => void;
+  onPreviewPatch?: (payload: TvCopilotPreviewPatchPayload) => void;
   onApplyPatchResult?: (payload: {
     ok: boolean;
     persisted?: boolean;
     target?: { playlistId?: string | null; slideId?: string | null };
+    sideEffectHints?: TvCopilotSideEffectHint[] | null;
+    sideEffects?: Record<string, unknown> | null;
   }) => void;
 };
 
@@ -52,7 +56,7 @@ export type EmbeddedChatProps = {
  * Remote parcial MF para hosts (TV Dashboard): chat sem shell admin completo.
  * Inteligência continua na minha-delpi-ai-api; host só injeta contexto e callbacks.
  *
- * Contexto ambient: surface + playlist/slide vão em todo send/stream via hostContext —
+ * Contexto ambient: surface + playlist/slide + seleção vão em todo send/stream via hostContext —
  * o usuário não precisa lembrar o chat de que está no TV Dashboard.
  */
 export function EmbeddedChat({
@@ -102,20 +106,52 @@ export function EmbeddedChat({
         surface,
         playlistId: workspaceContext?.playlistId,
         slideId: workspaceContext?.slideId,
+        selectedBlockIds: workspaceContext?.selectedBlockIds,
+        selectedBlockTypes: workspaceContext?.selectedBlockTypes,
+        focusBlockId: workspaceContext?.focusBlockId,
+        focusBlockType: workspaceContext?.focusBlockType,
       }),
-    [surface, workspaceContext?.playlistId, workspaceContext?.slideId],
+    [
+      surface,
+      workspaceContext?.playlistId,
+      workspaceContext?.slideId,
+      workspaceContext?.selectedBlockIds,
+      workspaceContext?.selectedBlockTypes,
+      workspaceContext?.focusBlockId,
+      workspaceContext?.focusBlockType,
+    ],
   );
 
   const contextBanner = useMemo(() => {
-    if (!workspaceContext?.playlistId && !workspaceContext?.slideId) return null;
+    if (
+      !workspaceContext?.playlistId &&
+      !workspaceContext?.slideId &&
+      !(workspaceContext?.selectedBlockIds && workspaceContext.selectedBlockIds.length > 0)
+    ) {
+      return null;
+    }
     const playlistShort = workspaceContext.playlistId
       ? `playlist ${String(workspaceContext.playlistId).slice(0, 8)}…`
       : null;
     const slideShort = workspaceContext.slideId
       ? `slide ${String(workspaceContext.slideId).slice(0, 8)}…`
       : null;
-    return [playlistShort, slideShort].filter(Boolean).join(" · ");
-  }, [workspaceContext?.playlistId, workspaceContext?.slideId]);
+    const selectionCount = workspaceContext.selectedBlockIds?.length ?? 0;
+    const focusType = workspaceContext.focusBlockType || workspaceContext.selectedBlockTypes?.[0];
+    const selectionShort =
+      selectionCount > 0
+        ? focusType
+          ? `${selectionCount} bloco(s) · ${focusType}`
+          : `${selectionCount} bloco(s)`
+        : null;
+    return [playlistShort, slideShort, selectionShort].filter(Boolean).join(" · ");
+  }, [
+    workspaceContext?.playlistId,
+    workspaceContext?.slideId,
+    workspaceContext?.selectedBlockIds,
+    workspaceContext?.selectedBlockTypes,
+    workspaceContext?.focusBlockType,
+  ]);
 
   return (
     <div
@@ -125,6 +161,11 @@ export function EmbeddedChat({
       data-agent-id={agentId || undefined}
       data-playlist-id={workspaceContext?.playlistId || undefined}
       data-slide-id={workspaceContext?.slideId || undefined}
+      data-selected-block-count={
+        workspaceContext?.selectedBlockIds?.length
+          ? String(workspaceContext.selectedBlockIds.length)
+          : undefined
+      }
       data-embedded-scope={embeddedScopeKey}
     >
       {contextBanner ? (

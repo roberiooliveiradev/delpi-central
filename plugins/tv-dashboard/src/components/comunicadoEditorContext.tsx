@@ -810,6 +810,7 @@ export function ComunicadoEditorProvider({
     bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,
     insertTextDataFieldBlock: blockActions.insertTextDataFieldBlock,
     applySlideTemplate: blockActions.applySlideTemplate,
+    replaceSlideNativeConfig: blockActions.replaceSlideNativeConfig,
     applySlideTheme: blockActions.applySlideTheme,
     alignSelected: blockActions.alignSelected,
     rotateSelected: blockActions.rotateSelected,

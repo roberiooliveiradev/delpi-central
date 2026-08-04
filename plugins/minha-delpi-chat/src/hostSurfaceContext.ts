@@ -10,31 +10,91 @@ export type ChatHostContext = {
   surface: ChatHostSurface;
   playlistId?: string | null;
   slideId?: string | null;
+  /** Blocos selecionados no editor do host (foco operacional). */
+  selectedBlockIds?: string[];
+  /** Tipos dos blocos selecionados (resumo opcional do foco). */
+  selectedBlockTypes?: string[];
+  /** Primeiro bloco em foco (id). */
+  focusBlockId?: string | null;
+  /** Tipo do primeiro bloco em foco. */
+  focusBlockType?: string | null;
 };
 
 export function buildTvDashboardHostContext(input: {
   playlistId?: string | null;
   slideId?: string | null;
   surface?: ChatHostSurface;
+  selectedBlockIds?: string[] | null;
+  selectedBlockTypes?: string[] | null;
+  focusBlockId?: string | null;
+  focusBlockType?: string | null;
 }): ChatHostContext {
-  return {
+  const selectedBlockIds = normalizeStringList(input.selectedBlockIds);
+  const selectedBlockTypes = normalizeStringList(input.selectedBlockTypes);
+  const focusBlockId =
+    (input.focusBlockId && String(input.focusBlockId).trim()) ||
+    selectedBlockIds[0] ||
+    null;
+  const focusBlockType =
+    (input.focusBlockType && String(input.focusBlockType).trim()) ||
+    selectedBlockTypes[0] ||
+    null;
+
+  const ctx: ChatHostContext = {
     surface: input.surface || "tv-dashboard",
     playlistId: input.playlistId ?? null,
     slideId: input.slideId ?? null,
   };
+  if (selectedBlockIds.length > 0) {
+    ctx.selectedBlockIds = selectedBlockIds;
+  }
+  if (selectedBlockTypes.length > 0) {
+    ctx.selectedBlockTypes = selectedBlockTypes;
+  }
+  if (focusBlockId) {
+    ctx.focusBlockId = focusBlockId;
+  }
+  if (focusBlockType) {
+    ctx.focusBlockType = focusBlockType;
+  }
+  return ctx;
 }
 
+function normalizeStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    const text = String(item ?? "").trim();
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    out.push(text);
+  }
+  return out;
+}
+
+export type TvCopilotSideEffectHint =
+  | "replaceNativeConfig"
+  | "refreshFilmstrip"
+  | "removeBlockIds"
+  | string;
+
+export type TvCopilotPreviewPatchPayload = {
+  nativeConfig?: Record<string, unknown> | null;
+  diff?: Record<string, unknown> | null;
+  ops?: unknown[];
+  sideEffects?: Record<string, unknown> | null;
+  sideEffectHints?: TvCopilotSideEffectHint[] | null;
+};
+
 type TvCopilotHostBridge = {
-  onPreviewPatch?: (payload: {
-    nativeConfig?: Record<string, unknown> | null;
-    diff?: Record<string, unknown> | null;
-    ops?: unknown[];
-    sideEffects?: Record<string, unknown> | null;
-  }) => void;
+  onPreviewPatch?: (payload: TvCopilotPreviewPatchPayload) => void;
   onApplyPatchResult?: (payload: {
     ok: boolean;
     persisted?: boolean;
     target?: { playlistId?: string | null; slideId?: string | null };
+    sideEffectHints?: TvCopilotSideEffectHint[] | null;
+    sideEffects?: Record<string, unknown> | null;
   }) => void;
 };
 
@@ -46,8 +106,32 @@ function readHostBridge(): TvCopilotHostBridge | null {
   );
 }
 
+function readObjectField(
+  primary: Record<string, unknown>,
+  fallback: Record<string, unknown>,
+  key: string,
+): Record<string, unknown> | null {
+  const fromPrimary = primary[key];
+  if (fromPrimary && typeof fromPrimary === "object" && !Array.isArray(fromPrimary)) {
+    return fromPrimary as Record<string, unknown>;
+  }
+  const fromFallback = fallback[key];
+  if (fromFallback && typeof fromFallback === "object" && !Array.isArray(fromFallback)) {
+    return fromFallback as Record<string, unknown>;
+  }
+  return null;
+}
+
+function readHints(
+  primary: Record<string, unknown>,
+  fallback: Record<string, unknown>,
+): TvCopilotSideEffectHint[] {
+  return normalizeStringList(primary.sideEffectHints ?? fallback.sideEffectHints);
+}
+
 /**
  * Repassa resultado da tool tv_dashboard_copilot ao host TV (preview local / apply).
+ * Inclui `sideEffectHints` do BFF para apply genérico no MFE (sem if por op).
  */
 export function notifyHostOfTvCopilotToolCalls(
   toolCalls: Array<{
@@ -72,6 +156,9 @@ export function notifyHostOfTvCopilotToolCalls(
     ).toLowerCase();
     const ok = meta.ok !== false && meta.blocked !== true;
 
+    const sideEffects = readObjectField(data, meta, "sideEffects");
+    const sideEffectHints = readHints(data, meta);
+
     if (mode === "apply") {
       bridge.onApplyPatchResult?.({
         ok,
@@ -83,17 +170,11 @@ export function notifyHostOfTvCopilotToolCalls(
           (meta.target && typeof meta.target === "object"
             ? (meta.target as { playlistId?: string | null; slideId?: string | null })
             : undefined),
+        sideEffectHints,
+        sideEffects,
       });
       continue;
     }
-
-    const sideEffects =
-      (data.sideEffects && typeof data.sideEffects === "object"
-        ? (data.sideEffects as Record<string, unknown>)
-        : null) ??
-      (meta.sideEffects && typeof meta.sideEffects === "object"
-        ? (meta.sideEffects as Record<string, unknown>)
-        : null);
 
     let nativeConfig =
       data.nativeConfig && typeof data.nativeConfig === "object"
@@ -114,6 +195,7 @@ export function notifyHostOfTvCopilotToolCalls(
       diff: data.diff && typeof data.diff === "object" ? (data.diff as Record<string, unknown>) : null,
       ops: Array.isArray(call.arguments?.ops) ? (call.arguments?.ops as unknown[]) : undefined,
       sideEffects,
+      sideEffectHints,
     });
   }
 }

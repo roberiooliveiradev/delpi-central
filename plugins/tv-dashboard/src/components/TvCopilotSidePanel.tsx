@@ -3,6 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { BranchScope } from "../api/tvDashboardApi";
 import { getAccessToken as getTvAccessToken } from "../api/httpClient";
 import { TV_COPILOT_CONTENT as C } from "../content/tvCopilotContent";
+import { applyTvCopilotPreviewSideEffects } from "../utils/tvCopilotSideEffects";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -64,6 +65,18 @@ async function loadEmbeddedChatModule(): Promise<EmbeddedMountApi> {
   return api;
 }
 
+function notifyFilmstripReload(detail: {
+  playlistId?: string | null;
+  slideId?: string | null;
+}) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("delpi:tv-copilot:playlist-mutated", {
+      detail,
+    }),
+  );
+}
+
 /**
  * Host do remote `./EmbeddedChat` (minha-delpi-chat) via remoteEntry em runtime.
  * Não declara o chat como remote no vite.config do TV (evita regressão MF no plugin-ui).
@@ -88,6 +101,7 @@ export function TvCopilotSidePanel({
   const slideId = slideIdProp ?? editor?.appliedSlideId ?? null;
   const blocks = editor?.blocks;
   const selectedIds = editor?.selectedIds ?? [];
+  const selectedBlocks = editor?.selectedBlocks ?? [];
 
   const workspaceContext = useMemo(() => {
     const dataSourceOperationIds = (blocks || [])
@@ -99,38 +113,72 @@ export function TvCopilotSidePanel({
           : "";
       })
       .filter(Boolean);
+
+    const selectedBlockTypes: string[] = [];
+    const seenTypes = new Set<string>();
+    for (const id of selectedIds) {
+      const block = selectedBlocks.find((b) => b.id === id) ?? blocks?.find((b) => b.id === id);
+      const type = block?.type ? String(block.type) : "";
+      if (!type || seenTypes.has(type)) continue;
+      seenTypes.add(type);
+      selectedBlockTypes.push(type);
+    }
+
+    const focusBlockId = selectedIds[selectedIds.length - 1] ?? null;
+    const focusBlock =
+      (focusBlockId
+        ? selectedBlocks.find((b) => b.id === focusBlockId) ??
+          blocks?.find((b) => b.id === focusBlockId)
+        : null) ?? null;
+
     return {
       playlistId,
       slideId,
       selectedBlockIds: selectedIds,
+      selectedBlockTypes,
+      focusBlockId,
+      focusBlockType: focusBlock?.type ? String(focusBlock.type) : selectedBlockTypes[0] ?? null,
       nativeConfigSummary: {
         blockCount: blocks?.length ?? 0,
         dataSourceOperationIds,
       },
     };
-  }, [playlistId, slideId, blocks, selectedIds]);
+  }, [playlistId, slideId, blocks, selectedIds, selectedBlocks]);
 
   const hostCallbacks = useMemo(
     () => ({
       onPreviewPatch: (payload: {
         nativeConfig?: Record<string, unknown> | null;
         sideEffects?: Record<string, unknown> | null;
+        sideEffectHints?: string[] | null;
       }) => {
-        const slides = Array.isArray(payload.sideEffects?.slides)
-          ? payload.sideEffects.slides
-          : [];
-        const firstSlide =
-          slides[0] && typeof slides[0] === "object"
-            ? (slides[0] as { nativeConfig?: Record<string, unknown> | null })
-            : null;
-        const nativeConfig = payload.nativeConfig ?? firstSlide?.nativeConfig ?? null;
+        const result = applyTvCopilotPreviewSideEffects(payload, {
+          replaceNativeConfig: (nativeConfig) => {
+            if (editor?.replaceSlideNativeConfig) {
+              editor.replaceSlideNativeConfig(nativeConfig);
+              return true;
+            }
+            if (editor?.applySlideTemplate) {
+              editor.applySlideTemplate(nativeConfig);
+              return true;
+            }
+            return false;
+          },
+          removeBlockIds: (ids) => {
+            if (!editor?.selectBlocksByIds || !editor?.removeSelected) return false;
+            editor.selectBlocksByIds(ids);
+            editor.removeSelected();
+            return true;
+          },
+          // Preview não persiste — não recarrega filmstrip do servidor.
+          refreshFilmstrip: () => false,
+        });
 
-        if (nativeConfig && editor?.applySlideTemplate) {
-          editor.applySlideTemplate(nativeConfig);
+        if (result.appliedReplace || result.appliedRemove) {
           setStatus(C.previewAppliedLocal);
           return;
         }
-        if (slides.length > 0) {
+        if (result.wantsRefreshFilmstrip) {
           setStatus(C.previewSlideReady);
           return;
         }
@@ -140,17 +188,23 @@ export function TvCopilotSidePanel({
         ok: boolean;
         persisted?: boolean;
         target?: { playlistId?: string | null; slideId?: string | null };
+        sideEffectHints?: string[] | null;
+        sideEffects?: Record<string, unknown> | null;
       }) => {
         setStatus(payload.ok ? C.applyOk : C.applyFailed);
-        if (payload.ok && typeof window !== "undefined") {
-          window.dispatchEvent(
-            new CustomEvent("delpi:tv-copilot:playlist-mutated", {
-              detail: {
-                playlistId: payload.target?.playlistId ?? playlistId,
-                slideId: payload.target?.slideId ?? slideId,
-              },
-            }),
-          );
+        if (!payload.ok) return;
+
+        const hints = Array.isArray(payload.sideEffectHints) ? payload.sideEffectHints : [];
+        const shouldRefresh =
+          hints.length === 0 ||
+          hints.includes("refreshFilmstrip") ||
+          Boolean(payload.persisted);
+
+        if (shouldRefresh) {
+          notifyFilmstripReload({
+            playlistId: payload.target?.playlistId ?? playlistId,
+            slideId: payload.target?.slideId ?? slideId,
+          });
         }
       },
     }),
@@ -230,6 +284,14 @@ export function TvCopilotSidePanel({
             </li>
             <li>
               slideId: <code>{slideId || "—"}</code>
+            </li>
+            <li>
+              seleção:{" "}
+              <code>
+                {(workspaceContext.selectedBlockIds || []).length > 0
+                  ? workspaceContext.selectedBlockIds.join(", ")
+                  : "—"}
+              </code>
             </li>
           </ul>
         </div>
