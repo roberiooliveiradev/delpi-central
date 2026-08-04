@@ -35,6 +35,11 @@ import {
   resolvePreferredOperationalAgent,
 } from "../../state/chatAgentActivation";
 import {
+  clearEmbeddedSessionId,
+  readEmbeddedSessionId,
+  writeEmbeddedSessionId,
+} from "../../embeddedSessionPersistence";
+import {
   buildComposerTurnPayload,
   formatComposerPlaceholderParts,
   MAX_COMPOSER_AGENTS,
@@ -189,6 +194,8 @@ type ChatPageProps = {
   variant?: "full" | "embedded";
   /** Contexto ambient do host (surface TV + playlist/slide). */
   hostContext?: import("../../hostSurfaceContext").ChatHostContext | null;
+  /** Escopo de persistência local (surface:playlist) — só embedded. */
+  embeddedScopeKey?: string | null;
 };
 
 
@@ -199,6 +206,7 @@ export function ChatPage({
   onOpenAdmin,
   variant = "full",
   hostContext = null,
+  embeddedScopeKey = null,
 }: ChatPageProps) {
   const isEmbedded = variant === "embedded";
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
@@ -413,7 +421,12 @@ export function ChatPage({
     getHostContext: () => hostContext,
     onSessionActivated: (sessionId) => {
       /* Embarcado: não alterar URL do host (evita AppHost ir para /apps/minha-chat/…). */
-      if (isEmbedded) return;
+      if (isEmbedded) {
+        if (embeddedScopeKey) {
+          writeEmbeddedSessionId(embeddedScopeKey, sessionId);
+        }
+        return;
+      }
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
@@ -1514,6 +1527,43 @@ export function ChatPage({
     return () => setChatNavigationHostMode("portal");
   }, [isEmbedded]);
 
+  const embeddedRestoreAttemptedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    embeddedRestoreAttemptedRef.current = null;
+  }, [embeddedScopeKey]);
+
+  useEffect(() => {
+    if (!isEmbedded || !embeddedScopeKey) return;
+    if (isLoadingSessions) return;
+
+    if (activeSession?.id) {
+      writeEmbeddedSessionId(embeddedScopeKey, activeSession.id);
+      return;
+    }
+
+    if (embeddedRestoreAttemptedRef.current === embeddedScopeKey) return;
+    embeddedRestoreAttemptedRef.current = embeddedScopeKey;
+
+    const storedId = readEmbeddedSessionId(embeddedScopeKey);
+    if (!storedId) return;
+
+    const session = sessions.find((item) => item.id === storedId);
+    if (!session) {
+      clearEmbeddedSessionId(embeddedScopeKey);
+      return;
+    }
+
+    selectSession(session);
+  }, [
+    activeSession?.id,
+    embeddedScopeKey,
+    isEmbedded,
+    isLoadingSessions,
+    selectSession,
+    sessions,
+  ]);
+
   const navigateToChatSurface = useCallback(
     (href: string, options?: { replace?: boolean }) => {
       navigateChatSurface(href, {
@@ -1544,10 +1594,11 @@ export function ChatPage({
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
-    if (isDesktop) {
+    /* No embed o painel é estreito: sidebar fica em drawer mesmo em viewport desktop. */
+    if (isDesktop && !isEmbedded) {
       setIsMobileSidebarOpen(false);
     }
-  }, [isDesktop]);
+  }, [isDesktop, isEmbedded]);
 
   useEffect(() => {
     if (!isMobileSidebarOpen) {
@@ -1755,6 +1806,13 @@ export function ChatPage({
   }
 
   function handleStartGeneralSession() {
+    if (isEmbedded) {
+      if (embeddedScopeKey) {
+        clearEmbeddedSessionId(embeddedScopeKey);
+      }
+      void handleStartSession();
+      return;
+    }
     navigateToChatSurface(buildChatHref({ kind: "home" }));
   }
 
@@ -1768,7 +1826,13 @@ export function ChatPage({
     clearComposerOverlayContext();
     setCurrentView("chat");
     selectSession(session);
-    navigateChatHref(buildChatSessionHrefForSession(session));
+    if (isEmbedded) {
+      if (embeddedScopeKey) {
+        writeEmbeddedSessionId(embeddedScopeKey, session.id);
+      }
+    } else {
+      navigateChatHref(buildChatSessionHrefForSession(session));
+    }
     closeMobileSidebar();
   }
 
@@ -2411,7 +2475,6 @@ export function ChatPage({
         </div>
       ) : null}
       <section className={shellClassName}>
-        {isEmbedded ? null : (
         <ChatSidebar
           sessions={sessions}
           archivedSessions={archivedSessions}
@@ -2462,7 +2525,7 @@ export function ChatPage({
 
             navigateToChatSurface(buildChatAgentHref(agentId));
           }}
-          isCollapsed={isDesktop && isSidebarCollapsed}
+          isCollapsed={!isEmbedded && isDesktop && isSidebarCollapsed}
           isMobileOpen={isMobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
@@ -2470,7 +2533,6 @@ export function ChatPage({
           onOpenAgentsDirectory={openAgentsDirectory}
           onOpenProjectsDirectory={openProjectsDirectory}
         />
-        )}
 
         <ChatAnimatedPanel
           panelKey={currentView}
@@ -2563,7 +2625,7 @@ export function ChatPage({
         ) : (
         <section className="mdc-chat-main" aria-label="Minha DELPI Chat">
           <ChatContextTopbar
-            onOpenSidebar={isDesktop ? undefined : openMobileSidebar}
+            onOpenSidebar={isEmbedded || !isDesktop ? openMobileSidebar : undefined}
             mode={chatTopbarPresentation.topbarMode}
             title={chatTopbarPresentation.label}
             subtitle={chatTopbarPresentation.subtitle}
@@ -2583,7 +2645,7 @@ export function ChatPage({
                 : undefined
             }
             onOpenAdmin={openAdmin}
-            onOpenHelp={() => setHelpPanelOpen(true)}
+            onOpenHelp={isEmbedded ? undefined : () => setHelpPanelOpen(true)}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;
@@ -2631,7 +2693,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={openAgentsDirectory}
+            onManageAgents={isEmbedded ? undefined : openAgentsDirectory}
             onClearAgent={() => {
               setActiveAgentPageId(null);
               clearComposerOverlayContext();

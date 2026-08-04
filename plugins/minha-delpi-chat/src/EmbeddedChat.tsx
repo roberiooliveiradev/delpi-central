@@ -8,6 +8,7 @@ import {
   buildTvDashboardHostContext,
   type ChatHostContext,
 } from "./hostSurfaceContext";
+import { buildEmbeddedSessionScopeKey } from "./embeddedSessionPersistence";
 
 export type TvWorkspaceContext = {
   playlistId?: string | null;
@@ -66,6 +67,15 @@ export function EmbeddedChat({
 }: EmbeddedChatProps) {
   const route = useMemo(() => parseChatRoute(pathname), [pathname]);
 
+  const embeddedScopeKey = useMemo(
+    () =>
+      buildEmbeddedSessionScopeKey({
+        surface,
+        playlistId: workspaceContext?.playlistId,
+      }),
+    [surface, workspaceContext?.playlistId],
+  );
+
   useEffect(() => {
     setChatNavigationHostMode("embedded");
     return () => setChatNavigationHostMode("portal");
@@ -98,15 +108,14 @@ export function EmbeddedChat({
 
   const contextBanner = useMemo(() => {
     if (!workspaceContext?.playlistId && !workspaceContext?.slideId) return null;
-    const parts = [
-      workspaceContext.playlistId ? `playlist=${workspaceContext.playlistId}` : null,
-      workspaceContext.slideId ? `slide=${workspaceContext.slideId}` : null,
-      workspaceContext.selectedBlockIds?.length
-        ? `blocos=${workspaceContext.selectedBlockIds.length}`
-        : null,
-    ].filter(Boolean);
-    return parts.join(" · ");
-  }, [workspaceContext]);
+    const playlistShort = workspaceContext.playlistId
+      ? `playlist ${String(workspaceContext.playlistId).slice(0, 8)}…`
+      : null;
+    const slideShort = workspaceContext.slideId
+      ? `slide ${String(workspaceContext.slideId).slice(0, 8)}…`
+      : null;
+    return [playlistShort, slideShort].filter(Boolean).join(" · ");
+  }, [workspaceContext?.playlistId, workspaceContext?.slideId]);
 
   return (
     <div
@@ -116,17 +125,11 @@ export function EmbeddedChat({
       data-agent-id={agentId || undefined}
       data-playlist-id={workspaceContext?.playlistId || undefined}
       data-slide-id={workspaceContext?.slideId || undefined}
+      data-embedded-scope={embeddedScopeKey}
     >
       {contextBanner ? (
         <div className="mdc-embedded-chat__context" role="status">
           Contexto TV: {contextBanner}
-          {workspaceContext?.nativeConfigSummary?.dataSourceOperationIds?.length ? (
-            <span className="mdc-embedded-chat__context-ops">
-              {" "}
-              · fontes:{" "}
-              {workspaceContext.nativeConfigSummary.dataSourceOperationIds.slice(0, 4).join(", ")}
-            </span>
-          ) : null}
         </div>
       ) : null}
       <div className="mdc-embedded-chat__body">
@@ -136,6 +139,7 @@ export function EmbeddedChat({
           initialRoute={route}
           variant="embedded"
           hostContext={hostContext}
+          embeddedScopeKey={embeddedScopeKey}
         />
       </div>
     </div>
