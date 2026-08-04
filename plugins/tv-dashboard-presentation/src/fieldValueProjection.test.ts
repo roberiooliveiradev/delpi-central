@@ -104,4 +104,29 @@ describe("fieldValueProjection", () => {
     expect(avg.kind).toBe("scalar");
     expect(avg.scalar).toBe(3.25);
   });
+
+  it("indicadores aninhados: list também é KPI único (não 10\\n0,84…)", () => {
+    const departmentIndicators: ComunicadoDataResolved = {
+      kpi: { value: 6.57, label: "IDD" },
+      kpiMetrics: [
+        { field: "idd", value: 6.57, label: "IDD" },
+      ],
+      table: {
+        columns: [
+          { key: "name", label: "Indicador" },
+          { key: "score", label: "Score" },
+        ],
+        rows: [
+          { name: "PPM externo", score: 10 },
+          { name: "Refugo", score: 0.84 },
+          { name: "Retrabalho", score: 0.22 },
+        ],
+      },
+    };
+    // Binding `score` com métrica só em `idd` — alias departamental.
+    expect(extractProjectionFieldValues(departmentIndicators, "score")).toEqual([6.57]);
+    const listed = resolveProjectedField(departmentIndicators, "score", "list");
+    expect(listed.kind).toBe("list");
+    expect(listed.values).toEqual([6.57]);
+  });
 });

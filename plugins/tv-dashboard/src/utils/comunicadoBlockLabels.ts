@@ -1,4 +1,10 @@
-import { isDataBlockType, isDataSourceBlockType, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  isDataBlockType,
+  isDataSourceBlockType,
+  resolveVisualBoxDisplayText,
+  textBlockHasDataBinding,
+  type ComunicadoBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 const TYPE_LABELS: Record<string, string> = {
   heading: "Título",
@@ -23,13 +29,20 @@ export function comunicadoBlockTypeLabel(type: string): string {
   return TYPE_LABELS[type] ?? type;
 }
 
-export function comunicadoBlockSummary(block: ComunicadoBlock): string {
-  if (block.type === "heading" || block.type === "text") {
-    const text = block.content.trim();
-    return text || comunicadoBlockTypeLabel(block.type);
+function visualBoxSummaryLabel(block: Extract<ComunicadoBlock, { type: "heading" | "text" | "shape" }>): string {
+  if (textBlockHasDataBinding(block)) {
+    const display = resolveVisualBoxDisplayText(block, block.resolved);
+    const live = display.content?.trim();
+    if (live) return live;
   }
-  if (block.type === "shape") {
-    return block.content?.trim() || comunicadoBlockTypeLabel(block.type);
+  const staticText =
+    block.type === "shape" ? block.content?.trim() ?? "" : block.content.trim();
+  return staticText || comunicadoBlockTypeLabel(block.type);
+}
+
+export function comunicadoBlockSummary(block: ComunicadoBlock): string {
+  if (block.type === "heading" || block.type === "text" || block.type === "shape") {
+    return visualBoxSummaryLabel(block);
   }
   if (isDataBlockType(block.type) && "dataBinding" in block) {
     return block.dataBinding.label ?? block.dataBinding.operationId;

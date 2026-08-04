@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { ComunicadoTextSurface, resolveTextSurfaceDisplay } from "./ComunicadoTextSurface";
 import { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
-import type { ComunicadoShapeBlock } from "./comunicadoTypes";
+import type { ComunicadoShapeBlock, ComunicadoTextBlock } from "./comunicadoTypes";
+import { resolveTextDisplayValue } from "./textViewProjection";
 
 /** Fixture do bug «Meta 1.400 PPM» — negrito só em «Meta», sem data binding. */
 function metaPpmShape(): ComunicadoShapeBlock {
@@ -52,5 +53,44 @@ describe("ComunicadoTextSurface — formatação parcial em forma", () => {
       (el) => el.textContent === "Meta" && (el as HTMLElement).style.fontWeight === "bold",
     );
     expect(boldSpan).toBeTruthy();
+  });
+
+  it("binding sem rich runs: pinta valor projetado, não content estático", () => {
+    const block: ComunicadoTextBlock = {
+      id: "idd-chip",
+      type: "text",
+      frame: { x: 2, y: 4, w: 18, h: 8 },
+      content: "IDD 0,74",
+      dataSourceId: "src-quality",
+      textProjection: {
+        field: "score",
+        aggregation: "list",
+        format: "number",
+        decimalPlaces: 2,
+        prefix: "IDD ",
+      },
+      resolved: {
+        kpi: { value: 6.57, label: "IDD" },
+        kpiMetrics: [{ field: "idd", value: 6.57, label: "IDD" }],
+        table: {
+          columns: [
+            { key: "name", label: "Indicador" },
+            { key: "score", label: "Score" },
+          ],
+          rows: [
+            { name: "PPM externo", score: 10 },
+            { name: "Refugo", score: 0.84 },
+            { name: "Retrabalho", score: 0.22 },
+          ],
+        },
+      },
+      style: { fontSize: 28, color: "#fff" },
+    };
+    const projected = resolveTextDisplayValue(block.resolved, block.textProjection);
+    expect(projected.text).toBe("IDD 6,57");
+    const { container } = render(<ComunicadoTextSurface block={block} />);
+    expect(container.textContent).toBe("IDD 6,57");
+    expect(container.textContent).not.toContain("0,74");
+    expect(container.textContent).not.toContain("0,84");
   });
 });

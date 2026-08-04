@@ -31,12 +31,14 @@
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 0.8s ease;
+  visibility: hidden;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
   pointer-events: none;
 }
 
 .tdp-slide--active {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
   z-index: 1;
 }
@@ -260,12 +262,14 @@
 .tdp-slide--slide {
   transform: translateX(100%);
   opacity: 0;
-  transition: transform 0.7s ease, opacity 0.7s ease;
+  visibility: hidden;
+  transition: transform 0.7s ease, opacity 0.7s ease, visibility 0.7s ease;
 }
 
 .tdp-slide--slide.tdp-slide--active {
   transform: translateX(0);
   opacity: 1;
+  visibility: visible;
 }
 
 .tdp-slide--none.tdp-slide--active {

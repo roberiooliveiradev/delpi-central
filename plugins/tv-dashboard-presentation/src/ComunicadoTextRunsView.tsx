@@ -4,6 +4,7 @@ import { splitContentRunsIntoLines } from "./comunicadoContentList";
 import {
   contentRunStyleToCss,
   hasRichTextRuns,
+  plainTextFromContentRuns,
 } from "./comunicadoContentRuns";
 import { groupContentRunsForDisplay } from "./comunicadoContentList";
 import {
@@ -109,9 +110,14 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
   const WrapperTag = hasLists || hasNamedStyles ? "div" : Tag;
 
   if (!showRuns) {
+    // Com binding: pintar runs já resolvidos (nunca `content` estático stale).
+    // Sem binding: `content` / runs estáticos — paridade DeckContentRunsView.
+    const text = textBlockHasDataBinding(block)
+      ? plainTextFromContentRuns(runs)
+      : block.content;
     return (
       <Tag className={className} style={baseStyle}>
-        {block.content}
+        {text}
       </Tag>
     );
   }

@@ -68,13 +68,46 @@ export function isCampoValorDumpTable(
   return keys.size === 2 && keys.has("campo") && keys.has("valor");
 }
 
+/**
+ * Campos escalares do IDD departamental (SI): binding pode pedir `score` enquanto
+ * o enrich só expõe `idd` (ou o contrário). Sem alias, a lista das linhas de
+ * indicadores vaza na TV (`10\\n0,84\\n0,22` em vez de `IDD 6,57`).
+ */
+const DEPARTMENTAL_IDD_FIELD_ALIASES: Record<string, string[]> = {
+  score: ["idd"],
+  idd: ["score"],
+};
+
+function metricValueByField(
+  resolved: ProjectionResolvedLike,
+  field: string,
+): unknown {
+  for (const metric of resolved.kpiMetrics ?? []) {
+    if (metric.field === field) return metric.value;
+  }
+  return undefined;
+}
+
 function kpiScalarForField(resolved: ProjectionResolvedLike | undefined, field: string): unknown {
   if (!resolved || !field.trim()) return undefined;
   const trimmed = field.trim();
-  for (const metric of resolved.kpiMetrics ?? []) {
-    if (metric.field === trimmed) return metric.value;
+  const direct = metricValueByField(resolved, trimmed);
+  if (direct != null && direct !== "") return direct;
+
+  for (const alias of DEPARTMENTAL_IDD_FIELD_ALIASES[trimmed] ?? []) {
+    const aliased = metricValueByField(resolved, alias);
+    if (aliased != null && aliased !== "") return aliased;
   }
+
   if (resolved.kpi && (trimmed === "value" || trimmed === resolved.kpi.label)) {
+    return resolved.kpi.value;
+  }
+  // Score/IDD: KPI primário do departamento mesmo sem match de label/field.
+  if (
+    (trimmed === "score" || trimmed === "idd") &&
+    resolved.kpi?.value != null &&
+    resolved.kpi.value !== ""
+  ) {
     return resolved.kpi.value;
   }
   return undefined;
