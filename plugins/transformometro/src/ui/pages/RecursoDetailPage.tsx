@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import { RecursoReadView } from "../../components/recurso/RecursoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
 import { CollaborativePresenceBanner } from "../../components/collaboration/CollaborativePresenceBanner";
@@ -205,6 +206,7 @@ export function RecursoDetailPage({
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar recurso");
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -236,6 +238,21 @@ export function RecursoDetailPage({
     setForm(formBaseline);
     sectionEdit.cancelEdit("recurso");
   }
+
+  useUnsavedChangesGuard({
+    id: `recurso:${recursoId}:identificacao`,
+    editing: isCreate || sectionEdit.isEditing("recurso"),
+    dirty: !valuesEqual(form, formBaseline),
+    onSave: handleSaveRecurso,
+    onDiscard: cancelRecursoEdit,
+  });
+  useUnsavedChangesGuard({
+    id: `recurso:${recursoId}:custos`,
+    editing: sectionEdit.isEditing("custos"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("custos"),
+  });
 
   function startEditVinculo(vinculo: VinculoRecurso) {
     setEditingVinculoId(vinculo.vinculo_id);

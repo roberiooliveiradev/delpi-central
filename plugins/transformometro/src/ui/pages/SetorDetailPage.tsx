@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import { SetorReadView } from "../../components/setor/SetorReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -166,6 +167,7 @@ export function SetorDetailPage({
       sectionEdit.stopEdit("setor");
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Erro ao salvar departamento");
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -198,6 +200,14 @@ export function SetorDetailPage({
     setForm(formBaseline);
     sectionEdit.cancelEdit("setor");
   }
+
+  useUnsavedChangesGuard({
+    id: `setor:${setorId}`,
+    editing: isCreate || sectionEdit.isEditing("setor"),
+    dirty: !valuesEqual(form, formBaseline),
+    onSave: handleSave,
+    onDiscard: cancelEdit,
+  });
 
   const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !setor);
   const loadingProgress = useLoadingProgress(loading && !isCreate && !setor, fetchProgress);

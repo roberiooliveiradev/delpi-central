@@ -10,10 +10,12 @@ export type ConfirmModalProps = {
   message: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  secondaryLabel?: string;
   confirmBusy?: boolean;
   variant?: "default" | "danger";
   onConfirm: () => void;
   onCancel: () => void;
+  onSecondary?: () => void;
 };
 
 export function ConfirmModal({
@@ -22,10 +24,12 @@ export function ConfirmModal({
   message,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
+  secondaryLabel,
   confirmBusy = false,
   variant = "default",
   onConfirm,
   onCancel,
+  onSecondary,
 }: ConfirmModalProps) {
   return (
     <Modal open={open} title={title} onClose={onCancel} className="ds-modal--confirm">
@@ -33,10 +37,12 @@ export function ConfirmModal({
         message={message}
         confirmLabel={confirmLabel}
         cancelLabel={cancelLabel}
+        secondaryLabel={secondaryLabel}
         confirmBusy={confirmBusy}
         variant={variant}
         onConfirm={onConfirm}
         onCancel={onCancel}
+        onSecondary={onSecondary}
         classNames={confirmModalTransformometroClasses()}
       />
     </Modal>

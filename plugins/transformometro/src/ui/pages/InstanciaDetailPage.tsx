@@ -6,6 +6,7 @@ import { DataTableSection } from "../../components/DataTableSection";
 import { InstanciaReadView } from "../../components/instancia/InstanciaReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -182,6 +183,31 @@ export function InstanciaDetailPage({
     getAccessToken,
     enabled: !embedded || embeddedActive,
     onResync: () => void load(),
+  });
+
+  useUnsavedChangesGuard({
+    id: `instancia:${instanciaId}:dados`,
+    editing: sectionEdit.isEditing("instancia"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("instancia"),
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `instancia:${instanciaId}:decomposicao_escopo`,
+    editing: sectionEdit.isEditing("decomposicao_escopo"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("decomposicao_escopo"),
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `instancia:${instanciaId}:contexto`,
+    editing: sectionEdit.isEditing("instancia_contexto"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("instancia_contexto"),
+    enabled: !embedded || embeddedActive,
   });
 
   useTransformometroEntityWatch({

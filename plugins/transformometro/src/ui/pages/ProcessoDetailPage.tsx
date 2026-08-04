@@ -8,6 +8,7 @@ import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { ProcessoReadView } from "../../components/processo/ProcessoReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
@@ -22,6 +23,7 @@ import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import {
   buildProcessoDiagramaEditPath,
   buildInstanciaPath,
@@ -235,10 +237,49 @@ export function ProcessoDetailPage({
       await loadTimeline();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
+      throw err;
     } finally {
       setSavingProcesso(false);
     }
   }
+
+  const cancelProcessoEdit = useCallback(() => {
+    if (processoFormBaseline) {
+      setProcessoForm(processoFormBaseline);
+    }
+    sectionEdit.cancelEdit("processo");
+    setProcessoForm(null);
+    setProcessoFormBaseline(null);
+  }, [processoFormBaseline, sectionEdit]);
+
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:dados`,
+    editing: sectionEdit.isEditing("processo"),
+    dirty: Boolean(
+      processoForm &&
+        processoFormBaseline &&
+        !valuesEqual(processoForm, processoFormBaseline),
+    ),
+    onSave: handleSaveProcesso,
+    onDiscard: cancelProcessoEdit,
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:decomposicao`,
+    editing: sectionEdit.isEditing("decomposicao"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("decomposicao"),
+    enabled: !embedded || embeddedActive,
+  });
+  useUnsavedChangesGuard({
+    id: `processo:${processoId}:arquivos`,
+    editing: sectionEdit.isEditing("arquivos"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("arquivos"),
+    enabled: !embedded || embeddedActive,
+  });
 
   async function handleDuplicateProcesso() {
     if (!processo) return;
@@ -401,14 +442,7 @@ export function ProcessoDetailPage({
             description="Informações mestre do processo. Melhorias e revisões ficam nos níveis abaixo."
             isEditing={sectionEdit.isEditing("processo")}
             onEdit={() => void handleStartEditProcesso()}
-            onCancel={() => {
-              if (processoFormBaseline) {
-                setProcessoForm(processoFormBaseline);
-              }
-              sectionEdit.cancelEdit("processo");
-              setProcessoForm(null);
-              setProcessoFormBaseline(null);
-            }}
+            onCancel={cancelProcessoEdit}
             onSave={() => void handleSaveProcesso()}
             saving={savingProcesso}
             dirty={

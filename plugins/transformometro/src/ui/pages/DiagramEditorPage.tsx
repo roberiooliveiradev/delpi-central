@@ -11,6 +11,7 @@ import { RevisaoDiagramSection } from "../../components/diagram/sections/Revisao
 import { StatusAlerts } from "../../components/StatusAlerts";
 import type { CollaborationEntityType } from "../../data/api/transformometroCollaborationApi";
 import { useCollaborativeSectionEdit } from "../../hooks/useCollaborativeSectionEdit";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import {
   buildInstanciaSectionHref,
   buildProcessoSectionHref,
@@ -131,6 +132,14 @@ export function DiagramEditorPage({
     sectionEdit.cancelEdit(config.sectionKey);
     onNavigate(detailHref);
   }
+
+  useUnsavedChangesGuard({
+    id: `diagram:${kind}:${entityId}`,
+    editing: lockReady && !lockFailed && sectionEdit.isEditing(config.sectionKey),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit(config.sectionKey),
+  });
 
   const chromeLeading = {
     onBack: goBack,

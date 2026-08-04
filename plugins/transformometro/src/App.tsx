@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 
 import { PageTransition } from "./components/PageTransition";
 import { ConfirmDialogProvider } from "./components/ui/ConfirmDialogProvider";
+import {
+  UnsavedChangesGuardProvider,
+  useGuardedNavigate,
+} from "./components/ui/UnsavedChangesGuard";
 import { FloatingNoticeProvider } from "./components/ui/FloatingNoticeProvider";
 import { DashboardPage } from "./ui/pages/DashboardPage";
 import {
@@ -30,14 +34,14 @@ export type AppProps = {
   pathname?: string;
 };
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+function AppRoutes({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   const pathname = useTransformometroRouterPath(pathnameFromHost);
   const route = parseTransformometroPath(pathname);
   const transitionKey = buildTransformometroTransitionKey(pathname);
 
   useDelpiPortalBridge(pathname);
 
-  const onNavigate = navigateTransformometro;
+  const onNavigate = useGuardedNavigate(navigateTransformometro);
 
   let page: ReactNode;
 
@@ -62,7 +66,14 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   } else if (route.view === "ataNew" || route.view === "ataEdit") {
     page = <AtaEditorPage getAccessToken={getAccessToken} ataId={route.ataId} onNavigate={onNavigate} />;
   } else if (route.view === "ata" && route.ataId) {
-    page = <AtaDetailPage getAccessToken={getAccessToken} ataId={route.ataId} pathname={pathname} onNavigate={onNavigate} />;
+    page = (
+      <AtaDetailPage
+        getAccessToken={getAccessToken}
+        ataId={route.ataId}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
   } else if (route.view === "ataSign" && route.ataId) {
     page = <AtaSignPage getAccessToken={getAccessToken} ataId={route.ataId} onNavigate={onNavigate} />;
   } else if (route.view === "atasPending") {
@@ -137,7 +148,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
           onNavigate(
             opts?.setupInstancia
               ? `${buildProcessoPath(id)}#nova-instancia`
-              : buildProcessoPath(id)
+              : buildProcessoPath(id),
           )
         }
       />
@@ -148,11 +159,17 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
     );
   }
 
+  return <PageTransition transitionKey={transitionKey}>{page}</PageTransition>;
+}
+
+export default function App(props: AppProps) {
   return (
     <ConfirmDialogProvider>
-      <FloatingNoticeProvider>
-        <PageTransition transitionKey={transitionKey}>{page}</PageTransition>
-      </FloatingNoticeProvider>
+      <UnsavedChangesGuardProvider>
+        <FloatingNoticeProvider>
+          <AppRoutes {...props} />
+        </FloatingNoticeProvider>
+      </UnsavedChangesGuardProvider>
     </ConfirmDialogProvider>
   );
 }

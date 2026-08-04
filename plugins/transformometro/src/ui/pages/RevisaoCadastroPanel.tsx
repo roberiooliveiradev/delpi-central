@@ -3,6 +3,7 @@ import type { AppProps } from "../../App";
 import { valuesEqual } from "@delpi/plugin-ui/index";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -242,7 +243,14 @@ export function RevisaoCadastroPanel({
     },
   });
 
-  async function saveVigencia() {
+  const reloadCadastroAndPropagate = useCallback(async () => {
+    await load();
+    setCadastroEpoch((epoch) => epoch + 1);
+    // Invalida árvore, comparativo e matriz da melhoria (painéis keep-alive).
+    onRevisaoUpdated();
+  }, [load, onRevisaoUpdated]);
+
+  const saveVigencia = useCallback(async () => {
     setSavingVigencia(true);
     onError(null);
     try {
@@ -261,7 +269,7 @@ export function RevisaoCadastroPanel({
           variant: "danger",
         });
         if (!ok) {
-          return;
+          throw new Error("Alteração de vigência cancelada.");
         }
         confirmVigenciaChange = true;
       }
@@ -277,20 +285,29 @@ export function RevisaoCadastroPanel({
       sectionEdit.stopEdit("vigencia");
       onRevisaoUpdated();
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao salvar vigência da revisão");
+      const message = err instanceof Error ? err.message : "Erro ao salvar vigência da revisão";
+      if (message !== "Alteração de vigência cancelada.") {
+        onError(message);
+      }
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setSavingVigencia(false);
     }
-  }
+  }, [
+    confirm,
+    getAccessToken,
+    medicao.medicao_id,
+    onError,
+    onRevisaoUpdated,
+    revisao.processo_id,
+    revisao.revisao_id,
+    revisaoVigencia,
+    revisaoVigenciaBaseline.data_fim_vigencia,
+    revisaoVigenciaBaseline.data_inicio_vigencia,
+    sectionEdit,
+  ]);
 
-  const reloadCadastroAndPropagate = useCallback(async () => {
-    await load();
-    setCadastroEpoch((epoch) => epoch + 1);
-    // Invalida árvore, comparativo e matriz da melhoria (painéis keep-alive).
-    onRevisaoUpdated();
-  }, [load, onRevisaoUpdated]);
-
-  async function saveMedicao() {
+  const saveMedicao = useCallback(async () => {
     setSavingMedicao(true);
     onError(null);
     try {
@@ -301,21 +318,75 @@ export function RevisaoCadastroPanel({
       sectionEdit.stopEdit("medicao");
       await reloadCadastroAndPropagate();
     } catch (err) {
-      onError(err instanceof Error ? err.message : "Erro ao salvar medição");
+      const message = err instanceof Error ? err.message : "Erro ao salvar medição";
+      onError(message);
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setSavingMedicao(false);
     }
-  }
+  }, [getAccessToken, medicao, onError, reloadCadastroAndPropagate, sectionEdit]);
 
-  function cancelVigencia() {
+  const cancelVigencia = useCallback(() => {
     setRevisaoVigencia(revisaoVigenciaBaseline);
     sectionEdit.cancelEdit("vigencia");
-  }
+  }, [revisaoVigenciaBaseline, sectionEdit]);
 
-  function cancelMedicao() {
+  const cancelMedicao = useCallback(() => {
     setMedicao(medicaoSnapshot.current);
     sectionEdit.cancelEdit("medicao");
-  }
+  }, [sectionEdit]);
+
+  const vigenciaDirty = !valuesEqual(revisaoVigencia, revisaoVigenciaBaseline);
+  const medicaoDirty = !valuesEqual(medicao, medicaoSnapshot.current);
+
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:vigencia`,
+    editing: sectionEdit.isEditing("vigencia"),
+    dirty: vigenciaDirty,
+    onSave: saveVigencia,
+    onDiscard: cancelVigencia,
+    enabled: collaborationActive,
+  });
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:medicao`,
+    editing: sectionEdit.isEditing("medicao"),
+    dirty: medicaoDirty,
+    onSave: saveMedicao,
+    onDiscard: cancelMedicao,
+    enabled: collaborationActive,
+  });
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:decomposicao_revisao`,
+    editing: sectionEdit.isEditing("decomposicao_revisao"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("decomposicao_revisao"),
+    enabled: collaborationActive,
+  });
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:investimentos`,
+    editing: sectionEdit.isEditing("investimentos"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("investimentos"),
+    enabled: collaborationActive,
+  });
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:recursos`,
+    editing: sectionEdit.isEditing("recursos"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("recursos"),
+    enabled: collaborationActive,
+  });
+  useUnsavedChangesGuard({
+    id: `revisao:${revisao.revisao_id}:evidencias`,
+    editing: sectionEdit.isEditing("evidencias"),
+    dirty: false,
+    onSave: async () => undefined,
+    onDiscard: () => sectionEdit.cancelEdit("evidencias"),
+    enabled: collaborationActive,
+  });
 
   async function handleActivate() {
     onError(null);
@@ -423,7 +494,7 @@ export function RevisaoCadastroPanel({
         onCancel={cancelVigencia}
         onSave={() => void saveVigencia()}
         saving={savingVigencia}
-        dirty={!valuesEqual(revisaoVigencia, revisaoVigenciaBaseline)}
+        dirty={vigenciaDirty}
         readContent={
           <RevisaoVigenciaSection
             embeddedInCard
@@ -542,7 +613,7 @@ export function RevisaoCadastroPanel({
         onCancel={cancelMedicao}
         onSave={() => void saveMedicao()}
         saving={savingMedicao}
-        dirty={!valuesEqual(medicao, medicaoSnapshot.current)}
+        dirty={medicaoDirty}
         readContent={
           <RevisaoMedicaoSection
             embeddedInCard

@@ -5,6 +5,7 @@ import type { AppProps } from "../../App";
 import { FilialReadView } from "../../components/filial/FilialReadView";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useUnsavedChangesGuard } from "../../components/ui/UnsavedChangesGuard";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import {
   useLoadingProgress,
@@ -144,6 +145,7 @@ export function FilialDetailPage({
       sectionEdit.stopEdit("filial");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -176,6 +178,14 @@ export function FilialDetailPage({
     setForm(formBaseline);
     sectionEdit.cancelEdit("filial");
   }
+
+  useUnsavedChangesGuard({
+    id: `filial:${filialId}`,
+    editing: isCreate || sectionEdit.isEditing("filial"),
+    dirty: !valuesEqual(form, formBaseline),
+    onSave: handleSave,
+    onDiscard: cancelEdit,
+  });
 
   const fetchProgress = useTrackedSingleFetchProgress(loading && !isCreate && !filial);
   const loadingProgress = useLoadingProgress(loading && !isCreate && !filial, fetchProgress);

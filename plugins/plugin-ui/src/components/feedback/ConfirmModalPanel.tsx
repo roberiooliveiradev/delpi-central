@@ -13,12 +13,15 @@ export type ConfirmModalClassNames = {
   cancelButton: string;
   confirmButton: string;
   confirmButtonDanger: string;
+  secondaryButton?: string;
 };
 
 export type ConfirmModalPanelProps = {
   message: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
+  /** Terceira ação (ex.: «Salvar alterações» no fluxo de saída com dirty). */
+  secondaryLabel?: string;
   confirmBusy?: boolean;
   confirmBusyLabel?: string;
   variant?: "default" | "danger";
@@ -26,6 +29,7 @@ export type ConfirmModalPanelProps = {
   showCancel?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  onSecondary?: () => void;
   classNames: ConfirmModalClassNames;
 };
 
@@ -53,6 +57,7 @@ export function confirmModalBemClasses(
     cancelButton: delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
     confirmButton: delpiUiClass(`${prefix}-primary-btn`, "delpi-ui-primary-btn"),
     confirmButtonDanger: delpiUiClass(`${prefix}-danger-btn`, "delpi-ui-danger-btn"),
+    secondaryButton: delpiUiClass(`${prefix}-primary-btn`, "delpi-ui-primary-btn"),
   };
 }
 
@@ -71,6 +76,7 @@ export function confirmModalTransformometroClasses(): ConfirmModalClassNames {
     cancelButton: "ds-ghost-btn",
     confirmButton: "ds-primary-btn",
     confirmButtonDanger: "ds-danger-btn",
+    secondaryButton: "ds-primary-btn",
   };
 }
 
@@ -82,16 +88,19 @@ export function ConfirmModalPanel({
   message,
   confirmLabel = "Confirmar",
   cancelLabel = "Cancelar",
+  secondaryLabel,
   confirmBusy = false,
   confirmBusyLabel = "Aguarde…",
   variant = "default",
   showCancel = true,
   onConfirm,
   onCancel,
+  onSecondary,
   classNames,
 }: ConfirmModalPanelProps) {
   const confirmButtonClass =
     variant === "danger" ? classNames.confirmButtonDanger : classNames.confirmButton;
+  const secondaryButtonClass = classNames.secondaryButton ?? classNames.confirmButton;
   const Icon = variant === "danger" ? AlertTriangle : CircleHelp;
   const rootClass = [classNames.root, variant === "danger" ? classNames.rootDanger : ""]
     .filter(Boolean)
@@ -113,9 +122,19 @@ export function ConfirmModalPanel({
             className={classNames.cancelButton}
             disabled={confirmBusy}
             onClick={onCancel}
-            autoFocus={variant === "danger"}
+            autoFocus={variant === "danger" && !secondaryLabel}
           >
             {cancelLabel}
+          </button>
+        ) : null}
+        {secondaryLabel && onSecondary ? (
+          <button
+            type="button"
+            className={secondaryButtonClass}
+            disabled={confirmBusy}
+            onClick={onSecondary}
+          >
+            {confirmBusy ? confirmBusyLabel : secondaryLabel}
           </button>
         ) : null}
         <button
@@ -123,9 +142,9 @@ export function ConfirmModalPanel({
           className={confirmButtonClass}
           disabled={confirmBusy}
           onClick={onConfirm}
-          autoFocus={variant !== "danger" || !showCancel}
+          autoFocus={variant !== "danger" || !showCancel || Boolean(secondaryLabel)}
         >
-          {confirmBusy ? confirmBusyLabel : confirmLabel}
+          {confirmBusy && !secondaryLabel ? confirmBusyLabel : confirmLabel}
         </button>
       </div>
     </div>

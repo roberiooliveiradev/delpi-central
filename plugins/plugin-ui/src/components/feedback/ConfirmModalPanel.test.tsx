@@ -47,4 +47,27 @@ describe("ConfirmModalPanel", () => {
     expect(container.querySelector(".pac-confirm-modal--danger")).toBeTruthy();
     expect(container.querySelector(".pac-confirm-modal__icon--danger")).toBeTruthy();
   });
+
+  it("renderiza ação secundária quando informada", () => {
+    const onSecondary = vi.fn();
+    const classNames = confirmModalPacClasses();
+
+    render(
+      <ConfirmModalPanel
+        message="Há alterações não salvas."
+        confirmLabel="Sair sem salvar"
+        secondaryLabel="Salvar alterações"
+        cancelLabel="Continuar editando"
+        variant="danger"
+        classNames={classNames}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        onSecondary={onSecondary}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Salvar alterações" })).toBeTruthy();
+    screen.getByRole("button", { name: "Salvar alterações" }).click();
+    expect(onSecondary).toHaveBeenCalledTimes(1);
+  });
 });

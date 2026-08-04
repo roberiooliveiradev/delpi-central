@@ -62,7 +62,9 @@ export {
 } from "./EmptyState";
 export {
   useConfirmDialogController,
+  unsavedChangesDialogOptions,
   type ConfirmDialogOptions,
+  type ConfirmDialogChoice,
   type PendingConfirmDialog,
 } from "./useConfirmDialog";
 export {
