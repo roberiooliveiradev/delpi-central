@@ -190,3 +190,129 @@ def test_suggest_operation_id_from_host_context():
     )
     source = next(op for op in result["ops"] if op.get("op") == "upsert_data_source")
     assert source.get("operationId") == "get_overall_equipment_effectiveness_pct"
+
+
+def test_suggest_create_modelo_de_dados_oee():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione um modelo de dados de OEE",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["ops"]
+    assert "create_data_source" in result["matchedCapabilityKeys"]
+    source = next(op for op in result["ops"] if op.get("op") == "upsert_data_source")
+    assert source.get("operationId") == "get_overall_equipment_effectiveness_pct"
+    assert str(source.get("blockId") or "").startswith("ds_")
+    assert not any(op.get("op") == "bind_visual" for op in result["ops"])
+
+
+def test_suggest_chart_from_route_oee_composite():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione um gráfico de OEE",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    ops = result["ops"]
+    assert len(ops) == 3
+    assert "add_chart_from_route" in result["matchedCapabilityKeys"]
+    source = next(op for op in ops if op.get("op") == "upsert_data_source")
+    visual = next(op for op in ops if op.get("op") == "upsert_block")
+    assert source.get("operationId") == "get_overall_equipment_effectiveness_pct"
+    assert (visual.get("block") or {}).get("type") == "chart_view"
+
+
+def test_suggest_update_filial_on_selected_source():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="mude a filial para 02",
+        host_context={
+            "slideId": "slide-1",
+            "playlistId": "pl-1",
+            "dataSourceId": "ds-keep",
+            "selectedDataSourceId": "ds-keep",
+            "operationId": "get_overall_equipment_effectiveness_pct",
+            "dataSources": [
+                {
+                    "id": "ds-keep",
+                    "operationId": "get_overall_equipment_effectiveness_pct",
+                    "label": "OEE",
+                }
+            ],
+        },
+    )
+    assert result["ops"]
+    assert "update_data_source" in result["matchedCapabilityKeys"]
+    source = next(op for op in result["ops"] if op.get("op") == "upsert_data_source")
+    assert source.get("blockId") == "ds-keep"
+    assert (source.get("params") or {}).get("branch") == "02"
+
+
+def test_suggest_bind_visual_with_selection_and_source_list():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="ligue à fonte de OEE",
+        host_context={
+            "slideId": "slide-1",
+            "playlistId": "pl-1",
+            "selectedVisualId": "viz-1",
+            "focusBlockType": "chart_view",
+            "dataSources": [
+                {
+                    "id": "ds-oee",
+                    "operationId": "get_overall_equipment_effectiveness_pct",
+                    "label": "OEE",
+                }
+            ],
+        },
+    )
+    assert result["ops"]
+    bind = next(op for op in result["ops"] if op.get("op") == "bind_visual")
+    assert bind.get("visualId") == "viz-1"
+    assert bind.get("dataSourceId") == "ds-oee"
+
+
+def test_suggest_transform_top_10():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="manter top 10 na fonte",
+        host_context={
+            "slideId": "slide-1",
+            "playlistId": "pl-1",
+            "dataSourceId": "ds-1",
+            "selectedDataSourceId": "ds-1",
+            "operationId": "get_supplies_stock_value",
+            "dataSources": [
+                {
+                    "id": "ds-1",
+                    "operationId": "get_supplies_stock_value",
+                    "label": "Estoque",
+                }
+            ],
+        },
+    )
+    assert result["ops"]
+    transform = next(op for op in result["ops"] if op.get("op") == "set_data_transform")
+    assert transform.get("blockId") == "ds-1"
+    steps = transform.get("steps") or []
+    assert steps and steps[0].get("op") == "keepRows"
+    assert steps[0].get("count") == 10
+
+
+def test_suggest_field_labels_rename():
+    result = TvCopilotSuggestOpsService.suggest(
+        message='renomeie o campo "value" para "OEE"',
+        host_context={
+            "slideId": "slide-1",
+            "playlistId": "pl-1",
+            "dataSourceId": "ds-1",
+            "selectedDataSourceId": "ds-1",
+            "operationId": "get_overall_equipment_effectiveness_pct",
+            "dataSources": [
+                {
+                    "id": "ds-1",
+                    "operationId": "get_overall_equipment_effectiveness_pct",
+                    "label": "OEE",
+                }
+            ],
+        },
+    )
+    assert result["ops"]
+    source = next(op for op in result["ops"] if op.get("op") == "upsert_data_source")
+    assert source.get("blockId") == "ds-1"
+    assert (source.get("fieldLabels") or {}).get("value") == "OEE"
+

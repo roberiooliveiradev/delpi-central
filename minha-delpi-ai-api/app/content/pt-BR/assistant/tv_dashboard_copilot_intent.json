@@ -27,7 +27,14 @@
     "programacao",
     "preset",
     "tela",
-    "telas"
+    "telas",
+    "fonte",
+    "modelo",
+    "kpi",
+    "gráfico",
+    "grafico",
+    "tabela",
+    "filial"
   ],
   "mutationActionTerms": [
     "crie",
@@ -61,7 +68,9 @@
     "vincule",
     "vincular",
     "exclua",
-    "excluir"
+    "excluir",
+    "troque",
+    "trocar"
   ],
   "hostPrompt": {
     "title": "Contexto do editor TV Dashboard (host)",

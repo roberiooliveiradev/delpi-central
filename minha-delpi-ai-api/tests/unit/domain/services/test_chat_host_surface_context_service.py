@@ -46,15 +46,27 @@ def test_normalize_host_context_preserves_operation_and_data_source_ids():
             "slideId": "sl-1",
             "operationId": "get_overall_equipment_effectiveness_pct",
             "dataSourceId": "ds-9",
+            "selectedDataSourceId": "ds-9",
+            "selectedVisualId": "viz-1",
             "presetKey": "production_oee_overview",
             "selectedBlockIds": ["viz-1"],
+            "dataSources": [
+                {
+                    "id": "ds-9",
+                    "operationId": "get_overall_equipment_effectiveness_pct",
+                    "label": "OEE",
+                }
+            ],
         }
     )
     assert normalized is not None
     assert normalized["operationId"] == "get_overall_equipment_effectiveness_pct"
     assert normalized["dataSourceId"] == "ds-9"
+    assert normalized["selectedDataSourceId"] == "ds-9"
+    assert normalized["selectedVisualId"] == "viz-1"
     assert normalized["presetKey"] == "production_oee_overview"
     assert normalized["selectedBlockIds"] == ["viz-1"]
+    assert normalized["dataSources"][0]["label"] == "OEE"
 
 
 def test_surface_tv_enables_skill_without_message_keywords():

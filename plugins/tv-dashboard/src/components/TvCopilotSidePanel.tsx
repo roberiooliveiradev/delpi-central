@@ -112,9 +112,14 @@ export function TvCopilotSidePanel({
           binding && typeof binding === "object" && "operationId" in binding
             ? String((binding as { operationId?: string }).operationId || "")
             : "";
+        const label =
+          binding && typeof binding === "object" && "label" in binding
+            ? String((binding as { label?: string }).label || "")
+            : "";
         return {
           id: String(b.id || ""),
           operationId,
+          label: label || operationId,
         };
       })
       .filter((item) => item.id && item.operationId);
@@ -138,14 +143,32 @@ export function TvCopilotSidePanel({
           blocks?.find((b) => b.id === focusBlockId)
         : null) ?? null;
 
+    const focusBlockType = focusBlock?.type ? String(focusBlock.type) : selectedBlockTypes[0] ?? null;
+    const isDataView =
+      focusBlockType === "kpi_view" ||
+      focusBlockType === "chart_view" ||
+      focusBlockType === "table_view";
+
     let focusDataSourceId: string | null = null;
     let focusOperationId: string | null = null;
+    let selectedDataSourceId: string | null = null;
+    let selectedVisualId: string | null = null;
+
     if (focusBlock?.type === "data_source") {
       focusDataSourceId = String(focusBlock.id || "") || null;
+      selectedDataSourceId = focusDataSourceId;
       const binding = "dataBinding" in focusBlock ? focusBlock.dataBinding : null;
       if (binding && typeof binding === "object" && "operationId" in binding) {
         focusOperationId =
           String((binding as { operationId?: string }).operationId || "") || null;
+      }
+    } else if (focusBlock && isDataView) {
+      selectedVisualId = String(focusBlock.id || "") || null;
+      const linked = String((focusBlock as { dataSourceId?: string }).dataSourceId || "");
+      if (linked) {
+        focusDataSourceId = linked;
+        const match = dataSources.find((item) => item.id === linked);
+        focusOperationId = match?.operationId || null;
       }
     } else if (focusBlock && "dataSourceId" in focusBlock) {
       const linked = String((focusBlock as { dataSourceId?: string }).dataSourceId || "");
@@ -165,9 +188,12 @@ export function TvCopilotSidePanel({
       selectedBlockIds: selectedIds,
       selectedBlockTypes,
       focusBlockId,
-      focusBlockType: focusBlock?.type ? String(focusBlock.type) : selectedBlockTypes[0] ?? null,
+      focusBlockType,
       operationId,
       dataSourceId,
+      selectedDataSourceId,
+      selectedVisualId,
+      dataSources,
       presetKey: null,
       nativeConfigSummary: {
         blockCount: blocks?.length ?? 0,
@@ -187,6 +213,23 @@ export function TvCopilotSidePanel({
           replaceNativeConfig: (nativeConfig) => {
             if (editor?.replaceSlideNativeConfig) {
               editor.replaceSlideNativeConfig(nativeConfig);
+              // Seleciona visual ligado ou fonte criada (paridade preferredView).
+              const blocks = Array.isArray(nativeConfig.blocks)
+                ? (nativeConfig.blocks as Array<Record<string, unknown>>)
+                : [];
+              const views = blocks.filter((b) => {
+                const t = String(b.type || "");
+                return (
+                  (t === "kpi_view" || t === "chart_view" || t === "table_view") &&
+                  String(b.dataSourceId || "").trim()
+                );
+              });
+              const sources = blocks.filter((b) => String(b.type || "") === "data_source");
+              const pick = views[views.length - 1] || sources[sources.length - 1];
+              const pickId = pick ? String(pick.id || "").trim() : "";
+              if (pickId && editor.selectBlocksByIds) {
+                editor.selectBlocksByIds([pickId]);
+              }
               return true;
             }
             if (editor?.applySlideTemplate) {

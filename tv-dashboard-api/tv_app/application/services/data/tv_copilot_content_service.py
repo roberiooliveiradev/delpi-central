@@ -134,6 +134,18 @@ class TvCopilotContentService:
         return out
 
     @classmethod
+    def param_hints(cls) -> dict[str, Any]:
+        raw = _load().get("paramHints")
+        return raw if isinstance(raw, dict) else {}
+
+    @classmethod
+    def transform_step_hints(cls) -> list[dict[str, Any]]:
+        raw = _load().get("transformStepHints")
+        if not isinstance(raw, list):
+            return []
+        return [item for item in raw if isinstance(item, dict)]
+
+    @classmethod
     def capabilities(cls) -> list[dict[str, Any]]:
         raw = _load().get("capabilities")
         if not isinstance(raw, list):

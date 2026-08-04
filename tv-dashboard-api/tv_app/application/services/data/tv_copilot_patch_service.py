@@ -602,6 +602,12 @@ class TvCopilotPatchService:
             existing.pop("resolved", None)
             if isinstance(op.get("dataTransform"), dict):
                 existing["dataTransform"] = op["dataTransform"]
+            if isinstance(op.get("fieldLabels"), dict):
+                existing["fieldLabels"] = {
+                    str(k): str(v)
+                    for k, v in op["fieldLabels"].items()
+                    if str(k).strip() and str(v).strip()
+                }
             return
         block: dict[str, Any] = {
             "id": block_id,
@@ -612,6 +618,12 @@ class TvCopilotPatchService:
         }
         if isinstance(op.get("dataTransform"), dict):
             block["dataTransform"] = op["dataTransform"]
+        if isinstance(op.get("fieldLabels"), dict):
+            block["fieldLabels"] = {
+                str(k): str(v)
+                for k, v in op["fieldLabels"].items()
+                if str(k).strip() and str(v).strip()
+            }
         blocks.append(block)
         cfg["blocks"] = blocks
 

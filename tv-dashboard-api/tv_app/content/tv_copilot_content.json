@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.08.04.5",
+  "catalogVersion": "2026.08.04.6",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -25,8 +25,46 @@
     "oee": "get_overall_equipment_effectiveness_pct",
     "overall equipment effectiveness": "get_overall_equipment_effectiveness_pct",
     "eficiencia global": "get_overall_equipment_effectiveness_pct",
-    "eficiência global": "get_overall_equipment_effectiveness_pct"
+    "eficiência global": "get_overall_equipment_effectiveness_pct",
+    "otd": "get_on_time_delivery_pct",
+    "on time delivery": "get_on_time_delivery_pct",
+    "entrega no prazo": "get_on_time_delivery_pct",
+    "ppm externo": "get_ppm_external_summary",
+    "ppm interno": "get_ppm_internal_summary",
+    "ppm": "get_ppm_external_summary",
+    "estoque": "get_supplies_stock_value",
+    "valor de estoque": "get_supplies_stock_value",
+    "taxa de fechamento": "get_sales_conversion_rate",
+    "fechamento": "get_sales_conversion_rate"
   },
+  "paramHints": {
+    "branch": {
+      "paramKey": "branch",
+      "patterns": [
+        {"markers": ["filial 01", "filial sc", "branch 01", "filial para 01", "para 01"], "value": "01"},
+        {"markers": ["filial 02", "filial es", "branch 02", "filial para 02", "para 02"], "value": "02"},
+        {"markers": ["filial consolidado", "todas as filiais", "consolidado"], "value": ""}
+      ]
+    }
+  },
+  "transformStepHints": [
+    {
+      "markers": ["top 10", "primeiras 10", "manter 10", "keep 10"],
+      "step": { "op": "keepRows", "count": 10, "from": "top" }
+    },
+    {
+      "markers": ["top 5", "primeiras 5", "manter 5", "keep 5"],
+      "step": { "op": "keepRows", "count": 5, "from": "top" }
+    },
+    {
+      "markers": ["top 20", "primeiras 20", "manter 20"],
+      "step": { "op": "keepRows", "count": 20, "from": "top" }
+    },
+    {
+      "markers": ["últimas 10", "ultimas 10", "bottom 10"],
+      "step": { "op": "keepRows", "count": 10, "from": "bottom" }
+    }
+  ],
   "mutationActionTerms": [
     "escreva",
     "escrever",
@@ -57,7 +95,11 @@
     "insira",
     "inserir",
     "adicione",
-    "adicionar"
+    "adicionar",
+    "mude",
+    "mudar",
+    "troque",
+    "trocar"
   ],
   "createActionTerms": [
     "crie",
@@ -101,7 +143,7 @@
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
     "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
     "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
-    "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «mude o fundo para azul».",
+    "suggestNoMatch": "Não identifiquei uma operação do catálogo do Copiloto para esse pedido. Exemplos: «adicione um texto», «crie um slide», «adicione um KPI de OEE», «adicione um modelo de dados de OEE».",
     "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
     "suggestNeedColor": "Indique a cor do fundo (ex.: azul, #2563eb).",
     "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide.",
@@ -111,26 +153,36 @@
     "suggestNeedDataSource": "Selecione a fonte de dados no slide ou informe o dataSourceId.",
     "suggestNeedQuotedTitle": "Informe o novo nome entre aspas (ex.: renomeie o slide \"Manhã\").",
     "suggestNeedReorder": "Para reordenar, descreva a ordem desejada ou use o filmstrip; o Copiloto precisa dos ids dos slides.",
+    "suggestNeedTransformSteps": "Descreva um transform tipado suportado (ex.: «manter top 10») — o Copiloto não gera M/SQL livre.",
+    "suggestNeedBranchParam": "Informe a filial (ex.: filial 01, filial 02 ou consolidado).",
+    "suggestNeedFieldLabels": "Informe o campo e o novo rótulo (ex.: renomeie o campo \"value\" para \"OEE\").",
     "suggestIncompleteGeneric": "Entendi o tipo de pedido, mas faltam dados para montar a operação. Reformule com mais detalhe (texto, cor, indicador, seleção)."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
     "operationId": "suggestNeedOperationId",
     "selectedBlockId": "suggestNeedSelection",
+    "selectedVisualId": "suggestNeedSelection",
     "presetKey": "suggestNeedPreset",
     "sectionId": "suggestNeedSection",
     "dataSourceId": "suggestNeedDataSource",
-    "quoted": "suggestNeedQuotedTitle"
+    "quoted": "suggestNeedQuotedTitle",
+    "transformStepsJson": "suggestNeedTransformSteps",
+    "branchParam": "suggestNeedBranchParam",
+    "fieldLabelsJson": "suggestNeedFieldLabels"
   },
   "opFieldClarifications": {
     "delete_block.blockId": "suggestNeedSelection",
     "add_slide_from_preset.presetKey": "suggestNeedPreset",
     "upsert_data_source.operationId": "suggestNeedOperationId",
+    "upsert_data_source.blockId": "suggestNeedDataSource",
     "bind_visual.visualId": "suggestNeedSelection",
     "bind_visual.dataSourceId": "suggestNeedDataSource",
     "reorder_slides.items": "suggestNeedReorder",
     "patch_native_config.background": "suggestNeedColor",
-    "update_slide.title": "suggestNeedQuotedTitle"
+    "update_slide.title": "suggestNeedQuotedTitle",
+    "set_data_transform.steps": "suggestNeedTransformSteps",
+    "set_data_transform.blockId": "suggestNeedDataSource"
   },
   "settings": {
     "maxOpsPerPatch": 40,
@@ -174,7 +226,7 @@
         "crie um kpi",
         "criar um kpi"
       ],
-      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela", "chart", "table"],
+      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela", "chart", "table", "modelo de dados", "fonte de dados"],
       "actionTermSet": "create",
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplates": [
@@ -218,32 +270,155 @@
       "requiresPlaylist": true
     },
     {
-      "key": "upsert_data_source",
+      "key": "add_chart_from_route",
       "op": "upsert_data_source",
-      "whenToUse": "Adicionar ou atualizar uma fonte de dados (operationId allowlisted) no slide.",
-      "contentMarkers": ["fonte", "fonte de dados", "dados", "operationid", "ligar api", "série", "serie"],
-      "excludeMarkers": ["script m", "power query", "kpi", "indicador"],
-      "actionTermSet": "mutation",
+      "isComposite": true,
+      "whenToUse": "Adicionar um gráfico no slide a partir de uma rota allowlisted (fonte + chart_view + bind).",
+      "contentMarkers": [
+        "gráfico de",
+        "grafico de",
+        "chart de",
+        "adicione um gráfico de",
+        "adicionar gráfico de",
+        "crie um gráfico de",
+        "gráfico do",
+        "grafico do"
+      ],
+      "excludeMarkers": ["kpi", "indicador", "tabela", "table", "modelo de dados", "fonte de dados", "script m"],
+      "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "chart",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "chart_view",
+            "frame": { "x": 10, "y": 28, "w": 80, "h": 45 },
+            "style": { "zIndex": 2 }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ],
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "add_table_from_route",
+      "op": "upsert_data_source",
+      "isComposite": true,
+      "whenToUse": "Adicionar uma tabela no slide a partir de uma rota allowlisted (fonte + table_view + bind).",
+      "contentMarkers": [
+        "tabela de",
+        "table de",
+        "adicione uma tabela de",
+        "adicionar tabela de",
+        "crie uma tabela de",
+        "tabela do"
+      ],
+      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "chart", "modelo de dados", "fonte de dados", "script m"],
+      "actionTermSet": "create",
+      "clarificationMessageKey": "suggestNeedOperationId",
+      "payloadTemplates": [
+        {
+          "op": "upsert_data_source",
+          "operationId": "{{operationId}}",
+          "params": {},
+          "blockId": "{{newDataSourceId}}",
+          "displayMode": "table",
+          "label": "{{routeLabel}}"
+        },
+        {
+          "op": "upsert_block",
+          "block": {
+            "id": "{{newVisualId}}",
+            "type": "table_view",
+            "frame": { "x": 5, "y": 28, "w": 90, "h": 45 },
+            "style": { "zIndex": 2 }
+          }
+        },
+        {
+          "op": "bind_visual",
+          "visualId": "{{newVisualId}}",
+          "dataSourceId": "{{newDataSourceId}}"
+        }
+      ],
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "create_data_source",
+      "op": "upsert_data_source",
+      "whenToUse": "Criar um modelo/fonte de dados (data_source) no slide a partir de uma rota allowlisted, sem visual.",
+      "contentMarkers": [
+        "modelo de dados",
+        "fonte de dados",
+        "adicione a fonte",
+        "adicionar fonte",
+        "crie uma fonte",
+        "criar fonte",
+        "adicione um modelo",
+        "criar modelo de dados",
+        "crie um modelo de dados"
+      ],
+      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "tabela", "chart", "table", "script m", "ligar", "vincular"],
+      "actionTermSet": "create",
       "requiresFilledPlaceholders": ["operationId"],
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplate": {
         "op": "upsert_data_source",
         "operationId": "{{operationId}}",
         "params": {},
-        "blockId": "{{selectedBlockId}}"
+        "blockId": "{{newDataSourceId}}",
+        "label": "{{routeLabel}}"
       },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "operationId"],
-        "properties": {
-          "op": { "const": "upsert_data_source" },
-          "operationId": { "type": "string" },
-          "blockId": { "type": "string" },
-          "params": { "type": "object" },
-          "label": { "type": "string" },
-          "displayMode": { "type": "string" },
-          "dataTransform": { "type": "object" }
-        }
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "update_data_source",
+      "op": "upsert_data_source",
+      "whenToUse": "Atualizar a fonte/modelo de dados selecionado (rota, params ou rótulos).",
+      "contentMarkers": [
+        "troque a fonte",
+        "trocar a fonte",
+        "mude a fonte",
+        "mudar a fonte",
+        "atualize a fonte",
+        "atualizar a fonte",
+        "mude a filial",
+        "mudar a filial",
+        "filial 01",
+        "filial 02",
+        "renomeie o campo",
+        "renomear o campo",
+        "renomeie campo",
+        "field label"
+      ],
+      "excludeMarkers": ["adicione um kpi", "adicione um gráfico", "adicione uma tabela", "crie um slide"],
+      "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["dataSourceId", "operationId"],
+      "clarificationMessageKey": "suggestNeedDataSource",
+      "payloadTemplate": {
+        "op": "upsert_data_source",
+        "operationId": "{{operationId}}",
+        "params": {},
+        "blockId": "{{dataSourceId}}",
+        "label": "{{routeLabel}}"
       },
       "sideEffectHints": ["replaceNativeConfig"],
       "requiresSlide": true,
@@ -252,24 +427,27 @@
     {
       "key": "set_data_transform",
       "op": "set_data_transform",
-      "whenToUse": "Definir ou substituir o transform tipado de uma fonte de dados.",
-      "contentMarkers": ["transform", "filtrar", "passos", "steps"],
-      "excludeMarkers": [],
+      "whenToUse": "Definir ou substituir o transform tipado de uma fonte de dados (steps allowlisted).",
+      "contentMarkers": [
+        "transform",
+        "filtrar",
+        "passos",
+        "steps",
+        "top 10",
+        "top 5",
+        "top 20",
+        "manter top",
+        "primeiras 10",
+        "primeiras 5"
+      ],
+      "excludeMarkers": ["script m", "power query", "sql"],
       "actionTermSet": "mutation",
+      "requiresFilledPlaceholders": ["dataSourceId", "transformStepsJson"],
+      "clarificationMessageKey": "suggestNeedTransformSteps",
       "payloadTemplate": {
         "op": "set_data_transform",
-        "blockId": "{{selectedBlockId}}",
+        "blockId": "{{dataSourceId}}",
         "steps": []
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op"],
-        "properties": {
-          "op": { "const": "set_data_transform" },
-          "blockId": { "type": "string" },
-          "steps": { "type": "array" },
-          "dataTransform": { "type": "object" }
-        }
       },
       "sideEffectHints": ["replaceNativeConfig"],
       "requiresSlide": true,
@@ -343,7 +521,7 @@
         "adicionar gráfico",
         "crie um gráfico"
       ],
-      "excludeMarkers": ["kpi", "indicador", "tabela", "texto"],
+      "excludeMarkers": ["kpi", "indicador", "tabela", "texto", "modelo de dados", "fonte de dados", "gráfico de", "grafico de"],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "upsert_block",
@@ -377,7 +555,7 @@
         "adicionar tabela",
         "crie uma tabela"
       ],
-      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "texto"],
+      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "texto", "modelo de dados", "fonte de dados", "tabela de"],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "upsert_block",
@@ -440,14 +618,25 @@
       "key": "bind_visual",
       "op": "bind_visual",
       "whenToUse": "Ligar um visual (KPI/gráfico/tabela) a uma fonte data_source; preenche projections mínimas se ausentes.",
-      "contentMarkers": ["ligar", "vincular", "bind", "fonte do kpi", "ligue o", "vincule"],
-      "excludeMarkers": ["adicione um kpi", "adicionar kpi", "crie um kpi"],
+      "contentMarkers": [
+        "ligar",
+        "vincular",
+        "bind",
+        "fonte do kpi",
+        "ligue o",
+        "vincule",
+        "ligue à fonte",
+        "ligue a fonte",
+        "use esta fonte",
+        "usar esta fonte"
+      ],
+      "excludeMarkers": ["adicione um kpi", "adicionar kpi", "crie um kpi", "modelo de dados"],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["selectedBlockId", "dataSourceId"],
+      "requiresFilledPlaceholders": ["selectedVisualId", "dataSourceId"],
       "clarificationMessageKey": "suggestNeedDataSource",
       "payloadTemplate": {
         "op": "bind_visual",
-        "visualId": "{{selectedBlockId}}",
+        "visualId": "{{selectedVisualId}}",
         "dataSourceId": "{{dataSourceId}}"
       },
       "inputSchema": {

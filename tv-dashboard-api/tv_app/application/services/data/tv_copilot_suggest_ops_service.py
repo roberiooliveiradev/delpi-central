@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import re
 import uuid
 from typing import Any
@@ -117,6 +118,7 @@ class TvCopilotSuggestOpsService:
                 filled = cls._fill_template(template, placeholders)
                 if not isinstance(filled, dict) or not filled:
                     continue
+                filled = cls._enrich_filled_op(filled, placeholders)
                 incomplete_field = cls._incomplete_op_field(filled)
                 if incomplete_field:
                     mapped = TvCopilotContentService.op_field_clarifications().get(
@@ -124,6 +126,14 @@ class TvCopilotSuggestOpsService:
                     )
                     note_clarification(mapped or cap_clarify)
                     continue
+                # Pedido de filial sem valor resolvido → clarifica (não inventa).
+                if key == "update_data_source" and "filial" in normalized:
+                    params = filled.get("params")
+                    if not (
+                        isinstance(params, dict) and "branch" in params
+                    ):
+                        note_clarification("suggestNeedBranchParam")
+                        continue
                 ops.append(filled)
 
         if not ops:
@@ -247,6 +257,140 @@ class TvCopilotSuggestOpsService:
         return f"{prefix}_{uuid.uuid4().hex[:10]}"
 
     @classmethod
+    def _host_data_sources(cls, host: dict[str, Any]) -> list[dict[str, str]]:
+        raw = host.get("dataSources")
+        out: list[dict[str, str]] = []
+        if isinstance(raw, list):
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                sid = str(item.get("id") or "").strip()
+                op_id = str(item.get("operationId") or item.get("operation_id") or "").strip()
+                if not sid or not op_id:
+                    continue
+                label = str(item.get("label") or "").strip() or op_id
+                out.append({"id": sid, "operationId": op_id, "label": label})
+        return out
+
+    @classmethod
+    def _resolve_data_source_id(
+        cls,
+        *,
+        host: dict[str, Any],
+        normalized: str,
+        operation_id: str,
+    ) -> str:
+        selected = str(
+            host.get("selectedDataSourceId") or host.get("dataSourceId") or ""
+        ).strip()
+        if selected:
+            return selected
+
+        sources = cls._host_data_sources(host)
+        if not sources:
+            return ""
+
+        if operation_id:
+            for item in sources:
+                if item["operationId"] == operation_id:
+                    return item["id"]
+
+        for item in sources:
+            label = item["label"].lower()
+            op_id = item["operationId"].lower()
+            if label and label in normalized:
+                return item["id"]
+            # match short alias tokens from operation id
+            short = op_id.replace("get_", "").replace("_", " ")
+            if short and short in normalized:
+                return item["id"]
+
+        if len(sources) == 1:
+            return sources[0]["id"]
+        return ""
+
+    @classmethod
+    def _resolve_selected_visual_id(cls, host: dict[str, Any]) -> str:
+        visual = str(host.get("selectedVisualId") or "").strip()
+        if visual:
+            return visual
+        focus_type = str(host.get("focusBlockType") or "").strip()
+        if focus_type in {"kpi_view", "chart_view", "table_view"}:
+            return str(host.get("focusBlockId") or "").strip() or cls._first_selected_block_id(
+                host
+            )
+        return ""
+
+    @classmethod
+    def _extract_params(cls, normalized: str) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        hints = TvCopilotContentService.param_hints()
+        for _name, spec in hints.items():
+            if not isinstance(spec, dict):
+                continue
+            param_key = str(spec.get("paramKey") or "").strip()
+            if not param_key:
+                continue
+            patterns = spec.get("patterns")
+            if not isinstance(patterns, list):
+                continue
+            for pattern in sorted(
+                patterns,
+                key=lambda item: -len(str((item or {}).get("markers") or "")),
+            ):
+                if not isinstance(pattern, dict):
+                    continue
+                markers = pattern.get("markers")
+                if not isinstance(markers, list):
+                    continue
+                for marker in sorted(
+                    (str(m).strip().lower() for m in markers if str(m).strip()),
+                    key=len,
+                    reverse=True,
+                ):
+                    if marker in normalized:
+                        params[param_key] = pattern.get("value", "")
+                        break
+                if param_key in params:
+                    break
+        return params
+
+    @classmethod
+    def _extract_transform_steps(cls, normalized: str) -> list[dict[str, Any]]:
+        steps: list[dict[str, Any]] = []
+        for hint in TvCopilotContentService.transform_step_hints():
+            markers = hint.get("markers")
+            step = hint.get("step")
+            if not isinstance(markers, list) or not isinstance(step, dict):
+                continue
+            for marker in sorted(
+                (str(m).strip().lower() for m in markers if str(m).strip()),
+                key=len,
+                reverse=True,
+            ):
+                if marker in normalized:
+                    steps.append(copy.deepcopy(step))
+                    break
+        return steps
+
+    @classmethod
+    def _extract_field_labels(cls, message: str, quoted: str) -> dict[str, str]:
+        """Ex.: renomeie o campo \"value\" para \"OEE\" — usa aspas na mensagem."""
+        raw = str(message or "")
+        matches = list(_QUOTED_RE.finditer(raw))
+        if len(matches) < 2:
+            return {}
+        values: list[str] = []
+        for match in matches[:2]:
+            for group in match.groups():
+                if group is not None and str(group).strip():
+                    values.append(str(group).strip())
+                    break
+        if len(values) < 2:
+            return {}
+        return {values[0]: values[1]}
+
+    @classmethod
     def _resolve_operation_id(
         cls,
         *,
@@ -254,14 +398,7 @@ class TvCopilotSuggestOpsService:
         host: dict[str, Any],
         prefer_kpi: bool,
     ) -> tuple[str, str]:
-        from_host = str(host.get("operationId") or "").strip()
-        if from_host:
-            route = TvDataRouteCatalogService().get_route(from_host)
-            label = ""
-            if isinstance(route, dict):
-                label = str(route.get("label") or from_host).strip()
-            return from_host, label or from_host
-
+        # 1) alias explícito na mensagem  2) foco do host  3) score no catálogo
         hints = TvCopilotContentService.nl_route_hints()
         for alias, operation_id in sorted(hints.items(), key=lambda item: -len(item[0])):
             if alias and alias in normalized:
@@ -273,6 +410,14 @@ class TvCopilotSuggestOpsService:
                     continue
                 label = str(route.get("label") or op_id).strip()
                 return op_id, label
+
+        from_host = str(host.get("operationId") or "").strip()
+        if from_host:
+            route = TvDataRouteCatalogService().get_route(from_host)
+            label = ""
+            if isinstance(route, dict):
+                label = str(route.get("label") or from_host).strip()
+            return from_host, label or from_host
 
         best_id = ""
         best_label = ""
@@ -364,23 +509,40 @@ class TvCopilotSuggestOpsService:
             prefer_kpi=prefer_kpi,
         )
         background_color = cls._extract_background_color(message, normalized)
-        # Caixa vazia quando não há aspas — não inventar «Novo texto».
         default_text = TvCopilotContentService.setting_str(
             "defaultTextBlockContent", ""
         )
         text_content = quoted if quoted else default_text
+        data_source_id = cls._resolve_data_source_id(
+            host=host,
+            normalized=normalized,
+            operation_id=operation_id,
+        )
+        selected_visual_id = cls._resolve_selected_visual_id(host)
+        params = cls._extract_params(normalized)
+        transform_steps = cls._extract_transform_steps(normalized)
+        field_labels = cls._extract_field_labels(message, quoted)
         return {
             "quoted": quoted,
             "textContent": text_content,
             "selectedBlockId": cls._first_selected_block_id(host),
+            "selectedVisualId": selected_visual_id,
             "slideId": str(host.get("slideId") or "").strip(),
             "playlistId": str(host.get("playlistId") or "").strip(),
             "sectionId": str(host.get("sectionId") or "").strip(),
-            "dataSourceId": str(host.get("dataSourceId") or "").strip(),
+            "dataSourceId": data_source_id,
             "operationId": operation_id,
             "routeLabel": route_label,
             "presetKey": str(host.get("presetKey") or "").strip(),
             "backgroundColor": background_color,
+            "paramsJson": json.dumps(params, ensure_ascii=False) if params else "",
+            "transformStepsJson": (
+                json.dumps(transform_steps, ensure_ascii=False) if transform_steps else ""
+            ),
+            "fieldLabelsJson": (
+                json.dumps(field_labels, ensure_ascii=False) if field_labels else ""
+            ),
+            "branchParam": str(params.get("branch", "")) if "branch" in params else "",
             "newDataSourceId": cls._new_id("ds"),
             "newVisualId": cls._new_id("viz"),
             "newTextBlockId": cls._new_id("txt"),
@@ -388,6 +550,46 @@ class TvCopilotSuggestOpsService:
             "name": quoted or default_playlist,
             "sectionName": quoted or default_section,
         }
+
+    @classmethod
+    def _enrich_filled_op(
+        cls,
+        op: dict[str, Any],
+        placeholders: dict[str, str],
+    ) -> dict[str, Any]:
+        name = str(op.get("op") or "").strip()
+        if name == "upsert_data_source":
+            params_raw = str(placeholders.get("paramsJson") or "").strip()
+            if params_raw:
+                try:
+                    parsed = json.loads(params_raw)
+                except json.JSONDecodeError:
+                    parsed = None
+                if isinstance(parsed, dict) and parsed:
+                    base = op.get("params") if isinstance(op.get("params"), dict) else {}
+                    op["params"] = {**base, **parsed}
+            labels_raw = str(placeholders.get("fieldLabelsJson") or "").strip()
+            if labels_raw:
+                try:
+                    labels = json.loads(labels_raw)
+                except json.JSONDecodeError:
+                    labels = None
+                if isinstance(labels, dict) and labels:
+                    op["fieldLabels"] = {
+                        str(k): str(v)
+                        for k, v in labels.items()
+                        if str(k).strip() and str(v).strip()
+                    }
+        elif name == "set_data_transform":
+            steps_raw = str(placeholders.get("transformStepsJson") or "").strip()
+            if steps_raw:
+                try:
+                    steps = json.loads(steps_raw)
+                except json.JSONDecodeError:
+                    steps = None
+                if isinstance(steps, list):
+                    op["steps"] = steps
+        return op
 
     @classmethod
     def _action_terms_for_capability(cls, cap: dict[str, Any]) -> list[str]:
@@ -459,6 +661,15 @@ class TvCopilotSuggestOpsService:
         if name == "upsert_data_source":
             if not str(op.get("operationId") or "").strip():
                 return "upsert_data_source.operationId"
+            if not str(op.get("blockId") or "").strip():
+                return "upsert_data_source.blockId"
+            return None
+        if name == "set_data_transform":
+            if not str(op.get("blockId") or "").strip():
+                return "set_data_transform.blockId"
+            steps = op.get("steps")
+            if not isinstance(steps, list) or not steps:
+                return "set_data_transform.steps"
             return None
         if name == "bind_visual":
             if not str(op.get("visualId") or "").strip():
@@ -487,7 +698,6 @@ class TvCopilotSuggestOpsService:
             block = op.get("block")
             if not isinstance(block, dict) or not block:
                 return "upsert_block.block"
-            # content vazio em text é ok — placeholder no editor.
             return None
         return None
 

@@ -299,6 +299,39 @@ class ChatTvDashboardCopilotIntentService:
         if focus_block_type:
             result["focusBlockType"] = focus_block_type
 
+        selected_data_source_id = str(
+            host_context.get("selectedDataSourceId")
+            or host_context.get("selected_data_source_id")
+            or ""
+        ).strip()
+        if selected_data_source_id:
+            result["selectedDataSourceId"] = selected_data_source_id
+
+        selected_visual_id = str(
+            host_context.get("selectedVisualId")
+            or host_context.get("selected_visual_id")
+            or ""
+        ).strip()
+        if selected_visual_id:
+            result["selectedVisualId"] = selected_visual_id
+
+        raw_sources = host_context.get("dataSources")
+        if isinstance(raw_sources, list):
+            sources_out: list[dict[str, str]] = []
+            for item in raw_sources:
+                if not isinstance(item, dict):
+                    continue
+                sid = str(item.get("id") or "").strip()
+                op_id = str(item.get("operationId") or item.get("operation_id") or "").strip()
+                if not sid or not op_id:
+                    continue
+                label = str(item.get("label") or "").strip() or op_id
+                sources_out.append(
+                    {"id": sid, "operationId": op_id, "label": label}
+                )
+            if sources_out:
+                result["dataSources"] = sources_out
+
         return result
 
     @classmethod

@@ -67,13 +67,25 @@ Cada item (declarativo em `tv_copilot_content.json`):
 |-------------|--------|
 | `quoted` | Texto entre aspas na mensagem |
 | `selectedBlockId` / `slideId` / `playlistId` / … | `hostContext` |
-| `operationId` / `routeLabel` | host → `nlRouteHints` → score no catálogo TV |
+| `operationId` / `routeLabel` | `nlRouteHints` / score no catálogo → fallback host |
+| `dataSourceId` / `selectedVisualId` | host (`selectedDataSourceId`, lista `dataSources`, foco) |
 | `backgroundColor` | `colorVocabulary` (PT→hex) ou `#rrggbb` na mensagem |
-| `newDataSourceId` / `newVisualId` | Gerados no BFF para composites |
+| `paramsJson` / `branch` | `paramHints` (ex.: filial 01/02) — sem inventar |
+| `transformStepsJson` | `transformStepHints` (ex.: top 10) — tipado; sem M/SQL |
+| `fieldLabelsJson` | duas aspas na mensagem (campo → rótulo) |
+| `newDataSourceId` / `newVisualId` | Gerados no BFF para create/composites |
 
 Fundo canônico: `{ "type": "color", "value": "#…" }` (mesmo shape do enrich / ribbon). Sem cor resolvida → `ops: []` + `suggestNeedColor`.
 
-KPI composto (`add_kpi_from_route`): `upsert_data_source` + `upsert_block` (`kpi_view`) + `bind_visual`.
+Composites rota → visual + bind:
+
+| Capability | Ops |
+|------------|-----|
+| `add_kpi_from_route` | fonte + `kpi_view` + `bind_visual` |
+| `add_chart_from_route` | fonte + `chart_view` + `bind_visual` |
+| `add_table_from_route` | fonte + `table_view` + `bind_visual` |
+| `create_data_source` | só `data_source` (`newDataSourceId`) |
+| `update_data_source` | `upsert_data_source` no `dataSourceId` do host |
 
 `catalogVersion` muda quando o JSON de capabilities muda. A AI cacheia por versão — **proibido** materializar o catálogo no repo da AI.
 
@@ -90,8 +102,10 @@ KPI composto (`add_kpi_from_route`): `upsert_data_source` + `upsert_block` (`kpi
 | Seções CRUD / mover slide | sim | `upsert_section`, `delete_section`, `move_slide_to_section` |
 | Texto / título / forma / ícone / grade / KPI / chart / table / input | sim | `upsert_block` (+ templates / suggest-ops) |
 | Remover bloco | sim | `delete_block` |
-| Fonte + transform tipado | sim | `upsert_data_source`, `set_data_transform` |
-| Bind visual (+ projections default) | sim | `bind_visual` |
+| Fonte / modelo de dados | sim | `create_data_source`, `update_data_source` |
+| Fonte + KPI/chart/table (composite) | sim | `add_*_from_route` |
+| Transform tipado (subset) | sim | `set_data_transform` + `transformStepHints` |
+| Bind visual (+ projections no MFE) | sim | `bind_visual`; sync via `useSyncViewDataLinks` |
 | Fundo / dataFilters / speakerNotes | sim | `patch_native_config` (whitelist) |
 | Mídia via `assetId` | sim | `upsert_block` com `assetId` (sem `url` solto / M) |
 | Zoom / snap / régua / Exibir | **Fora** | Preferência de sessão UI |
@@ -110,8 +124,8 @@ KPI composto (`add_kpi_from_route`): `upsert_data_source` + `upsert_block` (`kpi
 ## Embed (A1)
 
 - Remote MF: `minha-delpi-chat` → `./EmbeddedChat`
-- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, `selectedBlockIds`, `operationId`, `dataSourceId`, `presetKey` (quando souber), resumo do foco
-- Preview → draft local via `sideEffectHints` (genérico); confirm → persist
+- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, `selectedBlockIds`, `operationId`, `dataSourceId`, `selectedDataSourceId`, `selectedVisualId`, `dataSources[]` (`id`/`operationId`/`label`), `presetKey`, resumo do foco
+- Preview → draft local via `sideEffectHints` (genérico) + seleção do visual/fonte criado; confirm → persist
 
 ## Escopo negativo
 
