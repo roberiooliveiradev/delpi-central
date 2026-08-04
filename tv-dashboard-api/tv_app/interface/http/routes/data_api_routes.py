@@ -526,6 +526,21 @@ def _copilot_actor(user: Any) -> str | None:
     return PlaylistAccessService.actor_id(user)
 
 
+@router.get("/copilot/capabilities")
+def copilot_capabilities(request: Request):
+    """Catálogo versionado de ops tipadas (fonte de verdade para a AI / host)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_copilot_content_service import (
+        TvCopilotContentService,
+    )
+
+    return ok(TvCopilotContentService.capability_catalog_document())
+
+
 @router.post("/copilot/preview-patch")
 def copilot_preview_patch(request: Request, body: CopilotPatchBody):
     """Dry-run do patch tipado (sem persistir; opcional fingerprint via SlideDataResolution)."""

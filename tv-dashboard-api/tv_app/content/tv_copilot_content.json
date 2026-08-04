@@ -1,18 +1,35 @@
 {
+  "catalogVersion": "2026.08.04.1",
+  "sideEffectHintCatalog": [
+    "refreshFilmstrip",
+    "replaceNativeConfig",
+    "removeBlockIds"
+  ],
   "messages": {
     "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
     "unknownOp": "Operação não suportada: {op}.",
     "missingTarget": "Informe playlistId e slideId no target (exceto create_playlist).",
+    "missingPlaylist": "Informe playlistId no target.",
+    "missingSlide": "Informe slideId no target.",
     "slideNotFound": "Slide não encontrado na programação.",
     "playlistNotFound": "Programação não encontrada.",
+    "sectionNotFound": "Seção não encontrada na programação.",
+    "sectionProtected": "A seção principal não pode ser excluída.",
     "operationNotInCatalog": "operationId «{operationId}» não está no catálogo TV allowlisted.",
     "previewOk": "Prévia do patch gerada ({ops} operação(ões)).",
     "applyOk": "Patch aplicado ({ops} operação(ões)).",
     "noOps": "Nenhuma operação no patch.",
     "blockNotFound": "Bloco «{blockId}» não encontrado no slide.",
+    "blockIdRequired": "delete_block exige blockId.",
     "bindNeedIds": "bind_visual exige visualId e dataSourceId.",
     "presetRequired": "add_slide_from_preset exige presetKey.",
     "playlistNameRequired": "create_playlist exige name.",
+    "patchRequired": "patch_native_config exige um objeto patch.",
+    "patchKeysInvalid": "patch_native_config só aceita: background, dataFilters, speakerNotes, groupTransforms.",
+    "reorderItemsRequired": "reorder_slides exige items com id e sortOrder.",
+    "sectionNameRequired": "upsert_section exige name.",
+    "sectionIdRequired": "delete_section exige sectionId.",
+    "opMissingField": "Operação «{op}» exige o campo «{field}».",
     "createPlaylistOk": "Programação «{name}» criada.",
     "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
@@ -27,8 +44,388 @@
     "upsert_data_source",
     "set_data_transform",
     "upsert_block",
+    "delete_block",
     "bind_visual",
+    "patch_native_config",
     "add_slide_from_preset",
+    "add_blank_slide",
+    "update_slide",
+    "reorder_slides",
+    "delete_slide",
+    "upsert_section",
+    "delete_section",
+    "move_slide_to_section",
     "create_playlist"
+  ],
+  "capabilities": [
+    {
+      "key": "upsert_data_source",
+      "op": "upsert_data_source",
+      "whenToUse": "Adicionar ou atualizar uma fonte de dados (operationId allowlisted) no slide.",
+      "contentMarkers": ["fonte", "dados", "operationId", "ligar api"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "upsert_data_source",
+        "operationId": "{{operationId}}",
+        "params": {},
+        "blockId": "{{selectedBlockId}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "operationId"],
+        "properties": {
+          "op": { "const": "upsert_data_source" },
+          "operationId": { "type": "string" },
+          "blockId": { "type": "string" },
+          "params": { "type": "object" },
+          "label": { "type": "string" },
+          "displayMode": { "type": "string" },
+          "dataTransform": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "set_data_transform",
+      "op": "set_data_transform",
+      "whenToUse": "Definir ou substituir o transform tipado de uma fonte de dados.",
+      "contentMarkers": ["transform", "filtrar", "passos", "steps"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "set_data_transform",
+        "blockId": "{{selectedBlockId}}",
+        "steps": []
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {
+          "op": { "const": "set_data_transform" },
+          "blockId": { "type": "string" },
+          "steps": { "type": "array" },
+          "dataTransform": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "upsert_block",
+      "op": "upsert_block",
+      "whenToUse": "Criar ou atualizar um bloco visual (texto, título, forma, ícone, mídia com assetId, KPI, gráfico, tabela, filtro).",
+      "contentMarkers": ["bloco", "texto", "título", "kpi", "gráfico", "imagem", "mídia"],
+      "excludeMarkers": ["script m", "power query"],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "upsert_block",
+        "block": { "id": "{{selectedBlockId}}", "type": "text" }
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "block"],
+        "properties": {
+          "op": { "const": "upsert_block" },
+          "block": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "delete_block",
+      "op": "delete_block",
+      "whenToUse": "Remover um bloco do slide pelo blockId (ou seleção do host).",
+      "contentMarkers": ["apagar bloco", "remover bloco", "excluir elemento"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "delete_block",
+        "blockId": "{{selectedBlockId}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "blockId"],
+        "properties": {
+          "op": { "const": "delete_block" },
+          "blockId": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig", "removeBlockIds"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "bind_visual",
+      "op": "bind_visual",
+      "whenToUse": "Ligar um visual (KPI/gráfico/tabela) a uma fonte data_source; preenche projections mínimas se ausentes.",
+      "contentMarkers": ["ligar", "vincular", "bind", "fonte do kpi"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "bind_visual",
+        "visualId": "{{selectedBlockId}}",
+        "dataSourceId": "{{dataSourceId}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "visualId", "dataSourceId"],
+        "properties": {
+          "op": { "const": "bind_visual" },
+          "visualId": { "type": "string" },
+          "dataSourceId": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "patch_native_config",
+      "op": "patch_native_config",
+      "whenToUse": "Alterar fundo, dataFilters, speakerNotes ou groupTransforms do slide (whitelist).",
+      "contentMarkers": ["fundo", "background", "notas", "filtros do slide"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "patch_native_config",
+        "patch": { "background": {} }
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "patch"],
+        "properties": {
+          "op": { "const": "patch_native_config" },
+          "patch": { "type": "object" }
+        }
+      },
+      "sideEffectHints": ["replaceNativeConfig"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "add_slide_from_preset",
+      "op": "add_slide_from_preset",
+      "whenToUse": "Adicionar um slide a partir de um preset do catálogo TV.",
+      "contentMarkers": ["preset", "importar tela", "catálogo de slides"],
+      "excludeMarkers": [],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "add_slide_from_preset",
+        "presetKey": "{{presetKey}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "presetKey"],
+        "properties": {
+          "op": { "const": "add_slide_from_preset" },
+          "presetKey": { "type": "string" },
+          "branch": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "add_blank_slide",
+      "op": "add_blank_slide",
+      "whenToUse": "Criar um slide personalizado em branco (custom_message).",
+      "contentMarkers": ["novo slide", "slide em branco", "tela vazia", "blank"],
+      "excludeMarkers": [],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "add_blank_slide",
+        "title": "Slide personalizado"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {
+          "op": { "const": "add_blank_slide" },
+          "title": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "update_slide",
+      "op": "update_slide",
+      "whenToUse": "Renomear, alterar duração ou ativar/pausar o slide alvo.",
+      "contentMarkers": ["renomear", "duração", "pausar", "ativar slide"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "update_slide",
+        "title": "{{title}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {
+          "op": { "const": "update_slide" },
+          "title": { "type": "string" },
+          "durationSec": { "type": "number" },
+          "isActive": { "type": "boolean" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "reorder_slides",
+      "op": "reorder_slides",
+      "whenToUse": "Reordenar slides da programação (filmstrip).",
+      "contentMarkers": ["reordenar", "mover slide", "ordem"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "reorder_slides",
+        "items": [{ "id": "{{slideId}}", "sortOrder": 0 }]
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "items"],
+        "properties": {
+          "op": { "const": "reorder_slides" },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "sortOrder"],
+              "properties": {
+                "id": { "type": "string" },
+                "sortOrder": { "type": "integer" }
+              }
+            }
+          }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "delete_slide",
+      "op": "delete_slide",
+      "whenToUse": "Excluir o slide indicado em target.slideId.",
+      "contentMarkers": ["apagar slide", "excluir tela", "remover slide"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": { "op": "delete_slide" },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op"],
+        "properties": {
+          "op": { "const": "delete_slide" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "upsert_section",
+      "op": "upsert_section",
+      "whenToUse": "Criar ou renomear uma seção da programação.",
+      "contentMarkers": ["seção", "grupo de slides", "nova seção"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "upsert_section",
+        "name": "{{name}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "name"],
+        "properties": {
+          "op": { "const": "upsert_section" },
+          "name": { "type": "string" },
+          "sectionId": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "delete_section",
+      "op": "delete_section",
+      "whenToUse": "Excluir uma seção (não a principal).",
+      "contentMarkers": ["apagar seção", "excluir seção"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "delete_section",
+        "sectionId": "{{sectionId}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "sectionId"],
+        "properties": {
+          "op": { "const": "delete_section" },
+          "sectionId": { "type": "string" }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "move_slide_to_section",
+      "op": "move_slide_to_section",
+      "whenToUse": "Mover o slide alvo para outra seção (sectionId no op; null remove da seção).",
+      "contentMarkers": ["mover para seção", "trocar seção"],
+      "excludeMarkers": [],
+      "actionTermSet": "mutation",
+      "payloadTemplate": {
+        "op": "move_slide_to_section",
+        "sectionId": "{{sectionId}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "sectionId"],
+        "properties": {
+          "op": { "const": "move_slide_to_section" },
+          "sectionId": { "type": ["string", "null"] }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": true,
+      "requiresPlaylist": true
+    },
+    {
+      "key": "create_playlist",
+      "op": "create_playlist",
+      "whenToUse": "Criar uma nova programação; opcionalmente semear presets.",
+      "contentMarkers": ["nova programação", "criar playlist"],
+      "excludeMarkers": [],
+      "actionTermSet": "create",
+      "payloadTemplate": {
+        "op": "create_playlist",
+        "name": "{{name}}"
+      },
+      "inputSchema": {
+        "type": "object",
+        "required": ["op", "name"],
+        "properties": {
+          "op": { "const": "create_playlist" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "seedPresetKeys": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "sideEffectHints": ["refreshFilmstrip"],
+      "requiresSlide": false,
+      "requiresPlaylist": false
+    }
   ]
 }
