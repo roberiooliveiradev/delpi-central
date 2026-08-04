@@ -12,6 +12,7 @@ Visão técnica macro da Minha DELPI: camadas, fluxos e organização do monorep
 |---|---|
 | [arquitetura-geral.md](./arquitetura-geral.md) | Camadas, gateway, AI API, bancos |
 | [estrutura-de-repositorio.md](./estrutura-de-repositorio.md) | Pastas do monorepo |
+| [PLAYBOOK-reorganizar-apis-pasta-apis.md](../12-roadmap-e-evolucao/PLAYBOOK-reorganizar-apis-pasta-apis.md) | Melhoria futura: pasta `apis/` (exceto core e api-delpi) |
 | [fluxo-de-requisicao.md](./fluxo-de-requisicao.md) | HTTP, login, `/me`, plugins |
 | [clean-architecture.md](./clean-architecture.md) | Core API e API DELPI |
 | [event-driven-e-socket.md](./event-driven-e-socket.md) | Eventos, Socket.IO |

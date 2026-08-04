@@ -14,6 +14,7 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [pendencias-tecnicas.md](./pendencias-tecnicas.md) | Lista de pendências |
 | [decisoes-tecnicas.md](./decisoes-tecnicas.md) | ADRs resumidas |
 | [roadmap.md](./roadmap.md) | Fases de evolução |
+| [PLAYBOOK-reorganizar-apis-pasta-apis.md](./PLAYBOOK-reorganizar-apis-pasta-apis.md) | Melhoria futura: mover APIs de domínio para `apis/` (exceto `core-api` e `api-delpi`) |
 
 ### Minha DELPI Chat
 

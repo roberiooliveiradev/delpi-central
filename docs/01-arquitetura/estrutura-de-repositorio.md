@@ -30,13 +30,15 @@ Estrutura de alto nível:
 delpi-central/          # monorepo (nome legado do repositório)
   api-delpi/
   core-api/
-  minha-delpi-ai-api/
+  minha-delpi-ai-api/     # e outras *-api na raiz (exceto core/api-delpi) — ver nota abaixo
   gateway/
   infra/
   plugins/
   portal/
   docs/
 ```
+
+> **Melhoria futura (não implementada):** agrupar APIs de domínio em `apis/`, mantendo `core-api` e `api-delpi` na raiz. Playbook com inventário e checklist de retomada: [PLAYBOOK-reorganizar-apis-pasta-apis.md](../12-roadmap-e-evolucao/PLAYBOOK-reorganizar-apis-pasta-apis.md).
 
 Responsabilidade por pasta:
 

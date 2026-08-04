@@ -411,7 +411,40 @@ Motivo:
 
 ---
 
-## 18. Priorização sugerida
+## 18. Monorepo — pasta `apis/` (melhoria futura)
+
+Tipo:
+
+```text
+Estrutura / Paths
+```
+
+Estado:
+
+```text
+Planejado; NÃO implementado (ago/2026).
+Playbook com inventário e checklist de retomada publicado.
+```
+
+Pendência:
+
+```text
+Mover 8 APIs de domínio para apis/, mantendo core-api e api-delpi na raiz.
+Antes de executar: revalidar inventário (grep) e atualizar o playbook.
+```
+
+Motivo:
+
+- raiz do monorepo poluída com várias `*-api` ao lado de `plugins/`;
+- migração é mecânica (Compose, Dockerfiles, `parents[N]`, CI) e o inventário envelhece.
+
+Playbook:
+
+- [PLAYBOOK-reorganizar-apis-pasta-apis.md](./PLAYBOOK-reorganizar-apis-pasta-apis.md)
+
+---
+
+## 19. Priorização sugerida
 
 Prioridade alta:
 
@@ -428,12 +461,14 @@ Prioridade média:
 2. Automação / export reproduzível Keycloak.
 3. Auditoria final.
 4. Testes automatizados por camada.
+5. Reorganização `apis/` (playbook § 2 — só após revalidar inventário).
 
 ---
 
-## 19. Documentos relacionados
+## 20. Documentos relacionados
 
 - [status-atual.md](./status-atual.md)
 - [decisoes-tecnicas.md](./decisoes-tecnicas.md)
 - [roadmap.md](./roadmap.md)
+- [PLAYBOOK-reorganizar-apis-pasta-apis.md](./PLAYBOOK-reorganizar-apis-pasta-apis.md)
 - [../../api-delpi/docs/api/README.md](../../api-delpi/docs/api/README.md)
