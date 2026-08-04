@@ -12,7 +12,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 |---------|----------------------|
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
-| layout | PageHeader, EditorChrome, KpiCard, RibbonGroupsRow, RibbonGroup, ChartCard… |
+| layout | PageHeader, EditorChrome, KpiCard, MetricKpiCard, InitialsAvatar, RibbonGroupsRow, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell, ScreenLoading, InlineLoadingProgress… |
 | forms | SelectField, DateField, MultiSelectField… |
 | **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
@@ -317,11 +317,27 @@ CSS: `screen-loading.css` — `.delpi-ui-screen-loading*`. Consumidor piloto: `p
 
 ### `StatusBadge`
 
-Pill semântico de status (`neutral` | `info` | `success` | `warning` | `danger`). Estilos no plugin via BEM `{prefix}-status-badge--*`.
+Pill semântico de status (`neutral` | `info` | `success` | `warning` | `danger`). Estilos canônicos em `.delpi-ui-status-badge*`; dual-class via BEM `{prefix}-status-badge--*`.
 
 Helpers: `statusBadgeBemClasses(prefix)`, `createDashboardStatusBadge({ prefix })`.
 
-Consumidor piloto: `strategic-indicators` (`StatusBadge.tsx`).
+Consumidores: `strategic-indicators`, `estoque-seguranca`, `pedidos-venda-abertos`, etc.
+
+### `InitialsAvatar`
+
+Avatar chrome (foto ou iniciais) sem HTTP. Cor de fundo determinística por `colorKey` / `name`. Tamanhos: `sm` | `md` | `lg`.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `name` | `string` | Fonte das iniciais |
+| `colorKey` | `string?` | Chave estável para hue (ex.: `codigo\|loja`) |
+| `src` | `string \| null?` | URL da imagem; sem src → iniciais |
+| `size` | `"sm" \| "md" \| "lg"?` | Default `md` |
+| `classNames` | `InitialsAvatarClassNames` | Dual-class BEM |
+
+Helpers: `initialsAvatarBemClasses(prefix)`, `createInitialsAvatar(prefix)`, `initialsFromName`, `hueFromKey`.
+
+CSS: `initials-avatar.css` — `.delpi-ui-avatar*`. Consumidor piloto: `pedidos-venda-abertos` (`CustomerAvatar` resolve blob e passa `src`).
 
 ---
 

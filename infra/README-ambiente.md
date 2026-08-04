@@ -416,6 +416,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | Variável | Default no container | Host (volume) |
 |----------|----------------------|---------------|
 | `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
+| `PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR` | `/app/data/pedidos-venda-abertos/avatars` | `${DELPI_DATA_HOST_DIR}/pedidos-venda-abertos/avatars` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
 | `GUIAS_PROCEDIMENTOS_UPLOAD_DIR` | `/app/data/guias-procedimentos` | `${DELPI_DATA_HOST_DIR}/guias-procedimentos` |
 | `AUDIT_5S_RESPONSE_UPLOAD_DIR` | `/app/data/audit-5s-responses` | `${DELPI_DATA_HOST_DIR}/audit-5s-responses` |

@@ -13,7 +13,9 @@ type UsePedidosVendaAbertosResult = {
   reload: () => void;
 };
 
-export function usePedidosVendaAbertos(): UsePedidosVendaAbertosResult {
+export function usePedidosVendaAbertos(
+  sellerId?: string | null,
+): UsePedidosVendaAbertosResult {
   const [data, setData] = useState<PedidosVendaAbertosData | null>(null);
   const [opsData, setOpsData] = useState<OpsAbertasData | null>(null);
   const [opsWarning, setOpsWarning] = useState<string | null>(null);
@@ -34,7 +36,9 @@ export function usePedidosVendaAbertos(): UsePedidosVendaAbertosResult {
         setError(null);
         setOpsWarning(null);
 
-        const pedidosPromise = getPedidosVendaAbertos(controller.signal);
+        const pedidosPromise = getPedidosVendaAbertos(controller.signal, {
+          sellerId: sellerId || null,
+        });
         const opsPromise = getOpsAbertas(controller.signal).catch((opsError) => {
           if (controller.signal.aborted) {
             throw opsError;
@@ -66,7 +70,7 @@ export function usePedidosVendaAbertos(): UsePedidosVendaAbertosResult {
 
     void run();
     return () => controller.abort();
-  }, [reloadKey]);
+  }, [reloadKey, sellerId]);
 
   return { data, opsData, opsWarning, loading, error, reload };
 }

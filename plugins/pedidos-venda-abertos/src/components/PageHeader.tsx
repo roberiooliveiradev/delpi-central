@@ -25,7 +25,7 @@ export function PageHeader({ loading, onRefresh, totalLoaded }: PageHeaderProps)
       classNames={pageHeaderTitleRowBemClasses("pva")}
       labels={LABELS}
       icon={<ClipboardList size={28} strokeWidth={1.75} />}
-      title="Pedidos de Venda em Aberto"
+      title="Pedidos em aberto"
       subtitle={subtitle}
       onRefresh={onRefresh}
       refreshing={loading}

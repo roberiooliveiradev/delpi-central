@@ -180,7 +180,7 @@ Após extração:
 | `controle-retrabalhos` | ✅ | — | ✅ | ✅ | ✅ | ✅ | Empty/Loading F3 + Kpi/Chart/LoadingActivity + FilterBarShell + PageHeader + CompactPagination |
 | `financeiro-centro-custo` | ✅ | — | ✅ | ✅ | ✅ | — | ChartCard/KpiCard + FilterBarShell + CompactPagination + PageHeader F2/F3 |
 | `auditoria-5s` | — | — | ✅ | ✅ | ✅ | — | ChartCard + AnalyticsKpi + FilterBarShell F2 |
-| `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2 |
+| `pedidos-venda-abertos` | — | ✅ | ✅ | — | ✅ | — | PageHeader F3 + Pagination/KpiCard/MultiSelect/FilterBarShell F2; **MetricKpiCard + EmptyState + StatusBadge + HostContainedModal + InitialsAvatar + BackLink** (ago/2026) |
 | `inspecoes-entrada` | ✅ | — | ✅ | — | ✅ | — | PageHeader + Pagination + KpiCard + FilterBarShell F2/F3 |
 | `quality-action-plans` | — | ✅ | ✅ | ✅ | ✅ | — | FiltersRow + forms F3 (TextField, TableHeaderCell, FilterCheckbox) |
 | `kaizometro` | — | ✅ | FiltersRow + FilterSelectField + createKaizenKpiCard + SectionCard + forms F2/F3 |
@@ -284,7 +284,7 @@ Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugi
 
 | Plugin | F1 help | F2/F3 componentes | MF |
 |--------|---------|-------------------|-----|
-| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell, **TableColumnVisibilityMenu** / **useTableColumnVisibility** | ✅ |
+| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell, **TableColumnVisibilityMenu** / **useTableColumnVisibility**, MetricKpiCard, EmptyState, StatusBadge, HostContainedModal, InitialsAvatar, BackLink | ✅ |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell | ✅ |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid | ✅ |
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard, **StatusBadge**, **SectionBlock**, **FilterSelectField** / **SiSelectControl** | ✅ |

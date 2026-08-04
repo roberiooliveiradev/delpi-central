@@ -24,7 +24,7 @@ from ..service_token import request_has_valid_internal_service_token
 logger = logging.getLogger(__name__)
 
 CORE_API_URL = os.getenv("DELPI_AUTH_CORE_API_URL") or os.getenv("CORE_API_URL") or "http://core-api:8000"
-RBAC_TIMEOUT_SECONDS = float(os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS", "2.5"))
+RBAC_TIMEOUT_SECONDS = float(os.getenv("DELPI_AUTH_RBAC_TIMEOUT_SECONDS", "5.0"))
 RBAC_CACHE_TTL_SECONDS = int(os.getenv("DELPI_AUTH_RBAC_CACHE_TTL_SECONDS", "60"))
 RBAC_STALE_TTL_SECONDS = int(os.getenv("DELPI_AUTH_RBAC_STALE_TTL_SECONDS", "900"))
 
@@ -153,6 +153,21 @@ async def load_user_rbac(token: str):
                 _RBAC_LOCKS.pop(key, None)
 
 
+def map_authz_exception(exc: BaseException) -> JSONResponse | None:
+    """Traduz exceções canônicas de authz em HTTP (em vez de 500 genérico)."""
+    message = str(exc)
+    if message == "Forbidden":
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+    if message == "Unauthorized":
+        return JSONResponse(status_code=401, content={"detail": "Unauthorized"})
+    if message == "Service Unavailable":
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Authorization service unavailable"},
+        )
+    return None
+
+
 async def jwt_middleware(request: Request, call_next):
     clear_current_user()
     clear_request_authorization()
@@ -170,6 +185,7 @@ async def jwt_middleware(request: Request, call_next):
             groups=[],
             permissions=[],
             is_superadmin=True,
+            rbac_unavailable=False,
             access_token=None,
         )
         request.state.user = service_user
@@ -180,6 +196,9 @@ async def jwt_middleware(request: Request, call_next):
         try:
             return await call_next(request)
         except Exception as e:
+            mapped = map_authz_exception(e)
+            if mapped is not None:
+                return mapped
             logger.exception("unhandled_error_service_request path=%s", path)
             return JSONResponse(status_code=500, content={"detail": "Internal server error"})
         finally:
@@ -223,6 +242,7 @@ async def jwt_middleware(request: Request, call_next):
             groups=rbac.get("groups", []),
             permissions=rbac.get("permissions", []),
             is_superadmin=rbac.get("is_superadmin", False),
+            rbac_unavailable=bool(rbac.get("rbac_unavailable")),
             access_token=token,
         )
 
@@ -237,6 +257,9 @@ async def jwt_middleware(request: Request, call_next):
     try:
         return await call_next(request)
     except Exception as e:
+        mapped = map_authz_exception(e)
+        if mapped is not None:
+            return mapped
         logger.exception("unhandled_error_authenticated_request path=%s", path)
         return JSONResponse(status_code=500, content={"detail": "Internal server error"})
     finally:

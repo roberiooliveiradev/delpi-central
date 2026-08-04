@@ -112,6 +112,10 @@ class Settings:
         "PAC_EVIDENCE_UPLOAD_DIR",
         default="/app/data/pac-evidences",
     )
+    PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: str = _get_env(
+        "PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR",
+        default="/app/data/pedidos-venda-abertos/avatars",
+    )
     KAIZEN_EVIDENCE_UPLOAD_DIR: str = _get_env(
         "KAIZEN_EVIDENCE_UPLOAD_DIR",
         default="/app/data/kaizen-evidences",

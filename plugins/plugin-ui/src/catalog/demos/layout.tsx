@@ -33,6 +33,8 @@ import {
   kpiCardBemClasses,
   MetricKpiCard,
   metricKpiCardBemClasses,
+  InitialsAvatar,
+  initialsAvatarBemClasses,
   NavigationCard,
   navigationCardBemClasses,
   PageHeader,
@@ -63,6 +65,7 @@ const filtersCn = filtersRowBemClasses(PUC_PREFIX);
 const sectionCn = sectionCardKaizenBemClasses(PUC_PREFIX);
 const simpleKpiCn = simpleKpiCardBemClasses(PUC_PREFIX, "kpi-card", { withBody: true, withSubtitle: true });
 const metricKpiCn = metricKpiCardBemClasses(PUC_PREFIX);
+const avatarCn = initialsAvatarBemClasses(PUC_PREFIX);
 const detailCn = detailCardProductionBemClasses(PUC_PREFIX);
 const detailGridCn = detailFieldGridBemClasses(PUC_PREFIX);
 const formGridCn = formGridBemClasses(PUC_PREFIX);
@@ -506,6 +509,27 @@ export const layoutCatalogEntries: CatalogEntryDraft[] = [
             icon={<Activity size={22} />}
             classNames={metricKpiCn}
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.InitialsAvatar",
+    family: "layout",
+    exportName: "InitialsAvatar",
+    title: "InitialsAvatar",
+    description: "Avatar chrome: foto ou iniciais com cor determinística.",
+    propsSummary: ["name", "colorKey", "src", "size", "classNames"],
+    demos: [
+      {
+        id: "initials",
+        label: "Iniciais",
+        render: () => (
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="sm" classNames={avatarCn} />
+            <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="md" classNames={avatarCn} />
+            <InitialsAvatar name="Acme Indústria" colorKey="01|01" size="lg" classNames={avatarCn} />
+          </div>
         ),
       },
     ],

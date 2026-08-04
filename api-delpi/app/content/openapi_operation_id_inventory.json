@@ -2532,6 +2532,125 @@
       "method": "GET",
       "tag": "Dashboard",
       "stable": true
+    },
+    {
+      "operationId": "list_cliente_notas_fiscais_saida",
+      "method": "get",
+      "path": "/pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "search_active_customers_for_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/search",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "enrich_portfolio_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/enrichment",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_customer_billing_series",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/customers/billing-series",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_customer_avatar",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_customer_avatar",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "delete_customer_avatar",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/customers/{codigo}/{loja}/avatar",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_my_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/me",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_seller_portfolios",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "create_seller_portfolio",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_seller_portfolio",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "update_seller_portfolio",
+      "method": "PATCH",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "deactivate_seller_portfolio",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "replace_seller_customers",
+      "method": "PUT",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "add_seller_customer",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "transfer_seller_customers",
+      "method": "POST",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers/transfer",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "remove_seller_customer",
+      "method": "DELETE",
+      "path": "/pedidos-venda-abertos/sellers/{seller_id}/customers",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
     }
   ]
 }

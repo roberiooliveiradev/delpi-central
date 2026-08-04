@@ -58,3 +58,4 @@ def test_list_pedidos_venda_abertos_normalizes_items_and_summary() -> None:
     assert payload["items"][0]["codigo_cliente"] == "PN-903"
     assert payload["items"][0]["codigo_cadastro"] == "10047758"
     assert payload["items"][0]["loja_cadastro"] == "11"
+    assert payload["portfolio"]["empty"] is False
