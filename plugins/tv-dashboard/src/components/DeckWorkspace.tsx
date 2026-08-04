@@ -44,6 +44,8 @@ type Props = {
   onDropOnUnsectioned?: () => void;
   stage: ReactNode;
   rightPanel?: ReactNode;
+  /** Sidebar do Copiloto IA (coluna à direita do palco). */
+  copilotPanel?: ReactNode;
   /** Editor de template / compositor sem páginas — oculta filmstrip e seções. */
   hideFilmstrip?: boolean;
 };
@@ -88,10 +90,18 @@ export function DeckWorkspace({
   onDropOnUnsectioned,
   stage,
   rightPanel,
+  copilotPanel,
   hideFilmstrip = false,
 }: Props) {
   return (
-    <div className={["td-deck__workspace", hideFilmstrip ? "td-deck__workspace--no-filmstrip" : null].filter(Boolean).join(" ")}>
+    <div
+      className={[
+        "td-deck__workspace",
+        hideFilmstrip ? "td-deck__workspace--no-filmstrip" : null,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {hideFilmstrip ? null : (
       <SlideFilmstrip
         slides={slides}
@@ -141,6 +151,11 @@ export function DeckWorkspace({
           ) : null}
         </div>
       </main>
+      {copilotPanel !== undefined ? (
+        <div className="td-deck-copilot-slot" aria-label="Copiloto IA">
+          {copilotPanel}
+        </div>
+      ) : null}
     </div>
   );
 }

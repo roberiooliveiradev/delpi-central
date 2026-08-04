@@ -11,6 +11,7 @@ def test_catalog_lists_sql_skill():
     assert any(item["skillKey"] == "company-knowledge" for item in catalog)
     assert any(item["skillKey"] == "technical-description-delpi" for item in catalog)
     assert any(item["skillKey"] == "quality-action-plans-delpi" for item in catalog)
+    assert any(item["skillKey"] == "tv-dashboard-copilot" for item in catalog)
 
 
 def test_common_chat_uses_default_technical_description():

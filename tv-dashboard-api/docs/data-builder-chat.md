@@ -4,12 +4,24 @@
 
 Substituir o catálogo «Fontes de dados» por um **chat de rascunho**: o usuário descreve o dado, adiciona fontes allowlistadas, ajusta filtros/colunas/joins e, ao confirmar, materializa blocos `data_source` (+ `dataTransform`) consumíveis pelos visuais existentes (KPI/gráfico/tabela).
 
-Não embute o stream do Minha Delpi Chat no editor. Inteligência de rotas/params fica no chat base via S2S; allowlist, draft, preview e persistência no slide ficam no TV BFF/MFE.
+## Embed do Minha Delpi Chat — quando é permitido
 
-## Fluxo
+| Fase | Superfície | Regra |
+|------|------------|-------|
+| **A0** | Chat portal + skill `tv-dashboard-copilot` | Sem remote MF; tool chama BFF `/data/copilot/*` |
+| **A1+** | Remote `./EmbeddedChat` na aba «Copiloto IA» | Permitido **somente** como host de UI; inteligência na `minha-delpi-ai-api`; mutação só via `TvCopilotPatchV1` |
+| **Rascunho** | `DataBuilderChatPanel` (aba Rascunho) | Continua; S2S suggest; **não** reimplementa pipeline LLM |
+
+**O que permanece no BFF:** allowlist de rotas, draft/session, materialize, `preview-patch` / `apply-patch`, `SlideDataResolutionService`, persistência + `notify_presentation_changed`.
+
+**Proibido:** MFE → LLM direto; entregar `renderPlan` do chat como modelo do slide; gravar `resolved`.
+
+Doc do copiloto: [tv-copilot.md](./tv-copilot.md).
+
+## Fluxo (rascunho)
 
 ```text
-MFE (DataBuilderChatPanel)
+MFE (DataBuilderChatPanel — aba Rascunho)
   → POST /data/builder/sessions
   → POST /data/builder/sessions/{id}/turn   (mensagem NL ou action)
       → S2S suggest routes / suggest-params (minha-delpi-ai-api)
@@ -17,6 +29,18 @@ MFE (DataBuilderChatPanel)
   → POST .../preview                       (opcional, sob demanda)
   → POST .../materialize
   → createDataSourceBlock / addDataSourceBlock no slide
+
+Opcional → POST .../to-copilot-ops → ops TvCopilotPatch (mesma fachada)
+```
+
+## Fluxo (copiloto)
+
+```text
+Chat portal / EmbeddedChat
+  → tool tv_dashboard_copilot (preview|apply)
+  → POST /data/copilot/preview-patch | apply-patch
+  → SlideDataResolution (preview) | persist + notify + cache reset (apply)
+  → Present (viewer puro)
 ```
 
 ## Contrato do rascunho
@@ -49,6 +73,9 @@ No materialize, a fonte âncora leva o `dataTransform` (inclui `merge` com `sour
 | `POST` | `/builder/sessions/{id}/turn` | `TV_WRITE` |
 | `POST` | `/builder/sessions/{id}/preview` | `TV_WRITE` |
 | `POST` | `/builder/sessions/{id}/materialize` | `TV_WRITE` |
+| `POST` | `/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` |
+| `POST` | `/copilot/preview-patch` | `TV_WRITE` |
+| `POST` | `/copilot/apply-patch` | `TV_WRITE` |
 
 Body do turn: `{ "message"?: string, "action"?: { "type": "add_source"|"remove_source"|"set_params"|"set_columns"|"propose_join"|"mark_ready"|"suggest_sources", … } }`.
 
@@ -63,8 +90,9 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 
 ## Conteúdo
 
-- TV: `tv_app/content/data_builder_content.json` (+ `TvDataBuilderContentService`)
-- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`
+- TV: `tv_app/content/data_builder_content.json`, `tv_copilot_content.json`
+- MFE: `plugins/tv-dashboard/src/content/dataBuilderChatContent.ts`, `tvCopilotContent.ts`
+- Chat: skill `tv-dashboard-copilot` + `assistant`/`skills` catalog
 
 ## Anti-padrões
 
@@ -73,13 +101,13 @@ Auth: `API_DELPI_INTERNAL_SERVICE_TOKEN` nos dois serviços (mesmo valor). Ver t
 - Entregar `renderPlan` do chat como modelo do slide
 - Join só no visual — join no `dataTransform` da âncora
 - Auto-preview a cada tecla (só sob demanda)
+- Segundo pipeline de enrich no copiloto
 
 
 ## Modos de descoberta (MFE)
 
 | Modo | Comportamento |
 |------|----------------|
-| **Pesquisa** | Busca local no catálogo TV por label/path/`operationId` (sem IA). |
-| **Assistente IA** | Mensagem NL → `turn` → suggest S2S. |
-
-«mostre uma prévia» (ou botão **Prévia**) dispara preview do rascunho; a tabela usa `resolved.preview` / `resolved.table` / `resolved.query`.
+| Pesquisa | Catálogo local (sem IA) |
+| Assistente IA (rascunho) | Turn NL no builder + S2S |
+| Copiloto IA | EmbeddedChat / skill + TvCopilotPatch |

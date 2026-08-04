@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CHAT_BASE_PATH } from "./chatRoutes";
-import { navigateChatHref, navigateChatSurface } from "./chatNavigation";
+import {
+  navigateChatHref,
+  navigateChatSurface,
+  setChatNavigationHostMode,
+} from "./chatNavigation";
 
 class PopStateEventStub extends Event {
   constructor(type: string) {
@@ -51,6 +55,7 @@ function installBrowserNavigationStub(initialPath = "/") {
 
 describe("navigateChatSurface", () => {
   afterEach(() => {
+    setChatNavigationHostMode("portal");
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -82,10 +87,32 @@ describe("navigateChatSurface", () => {
     expect(dispatchEvent).toHaveBeenCalled();
     expect(onApplyRoute).not.toHaveBeenCalled();
   });
+
+  it("em modo embedded aplica rota sem mutar history do host", () => {
+    installBrowserNavigationStub("/apps/tv-dashboard/playlists/abc");
+    setChatNavigationHostMode("embedded");
+
+    const onApplyRoute = vi.fn();
+    const pushState = vi.spyOn(window.history, "pushState");
+    const replaceState = vi.spyOn(window.history, "replaceState");
+    const dispatchEvent = vi.spyOn(window, "dispatchEvent");
+
+    navigateChatSurface(`${CHAT_BASE_PATH}/conversas/session-1`, { onApplyRoute });
+
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).not.toHaveBeenCalled();
+    expect(dispatchEvent).not.toHaveBeenCalled();
+    expect(onApplyRoute).toHaveBeenCalledWith({
+      kind: "session",
+      sessionId: "session-1",
+    });
+    expect(window.location.pathname).toBe("/apps/tv-dashboard/playlists/abc");
+  });
 });
 
 describe("navigateChatHref", () => {
   afterEach(() => {
+    setChatNavigationHostMode("portal");
     vi.unstubAllGlobals();
   });
 
@@ -93,5 +120,18 @@ describe("navigateChatHref", () => {
     installBrowserNavigationStub(CHAT_BASE_PATH);
 
     expect(navigateChatHref(CHAT_BASE_PATH)).toBe(false);
+  });
+
+  it("em modo embedded nunca altera a URL do host", () => {
+    installBrowserNavigationStub("/apps/tv-dashboard/playlists/abc");
+    setChatNavigationHostMode("embedded");
+
+    const pushState = vi.spyOn(window.history, "pushState");
+    const dispatchEvent = vi.spyOn(window, "dispatchEvent");
+
+    expect(navigateChatHref(`${CHAT_BASE_PATH}/conversas/session-1`)).toBe(false);
+    expect(pushState).not.toHaveBeenCalled();
+    expect(dispatchEvent).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe("/apps/tv-dashboard/playlists/abc");
   });
 });

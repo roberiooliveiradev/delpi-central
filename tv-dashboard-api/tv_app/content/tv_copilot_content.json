@@ -1,0 +1,34 @@
+{
+  "messages": {
+    "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
+    "unknownOp": "Operação não suportada: {op}.",
+    "missingTarget": "Informe playlistId e slideId no target (exceto create_playlist).",
+    "slideNotFound": "Slide não encontrado na programação.",
+    "playlistNotFound": "Programação não encontrada.",
+    "operationNotInCatalog": "operationId «{operationId}» não está no catálogo TV allowlisted.",
+    "previewOk": "Prévia do patch gerada ({ops} operação(ões)).",
+    "applyOk": "Patch aplicado ({ops} operação(ões)).",
+    "noOps": "Nenhuma operação no patch.",
+    "blockNotFound": "Bloco «{blockId}» não encontrado no slide.",
+    "bindNeedIds": "bind_visual exige visualId e dataSourceId.",
+    "presetRequired": "add_slide_from_preset exige presetKey.",
+    "playlistNameRequired": "create_playlist exige name.",
+    "createPlaylistOk": "Programação «{name}» criada.",
+    "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
+    "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
+    "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas."
+  },
+  "settings": {
+    "maxOpsPerPatch": 40,
+    "fingerprintMaxBlocks": 12,
+    "telemetryWindow": 500
+  },
+  "allowedOps": [
+    "upsert_data_source",
+    "set_data_transform",
+    "upsert_block",
+    "bind_visual",
+    "add_slide_from_preset",
+    "create_playlist"
+  ]
+}

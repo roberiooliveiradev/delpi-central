@@ -308,6 +308,26 @@ def data_builder_materialize(request: Request, session_id: str):
     return ok(result, message="Modelo pronto para o slide.")
 
 
+@router.post("/builder/sessions/{session_id}/to-copilot-ops")
+def data_builder_to_copilot_ops(request: Request, session_id: str):
+    """Fachada A0: rascunho do builder → ops TvCopilotPatch (mesmo materialize, sem segundo pipeline)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_copilot_builder_facade import (
+        materialize_session_to_copilot_ops,
+    )
+
+    result = materialize_session_to_copilot_ops(session_id, catalog=_catalog)
+    if result.get("message") == "session_not_found":
+        return fail("Sessão do assistente não encontrada ou expirada.", 404)
+    if not result.get("ok"):
+        return fail(str(result.get("message") or "Rascunho vazio."), 400, data=result)
+    return ok(result, message="Ops do copiloto geradas a partir do rascunho.")
+
+
 @router.post("/builder/sessions/{session_id}/preview")
 def data_builder_preview(request: Request, session_id: str):
     """Força prévia tabular do rascunho (sob demanda)."""
@@ -490,3 +510,111 @@ def validate_data_config(request: Request, body: ValidateDataConfigBody):
     cfg = _validation.sanitize(body.nativeConfig)
     result = _validation.validate(cfg, user=user)
     return ok(result)
+
+
+class CopilotPatchBody(BaseModel):
+    """Envelope TvCopilotPatchV1."""
+
+    target: dict[str, Any] = Field(default_factory=dict)
+    ops: list[dict[str, Any]] = Field(default_factory=list)
+    includeFingerprint: bool = True
+
+
+def _copilot_actor(user: Any) -> str | None:
+    from tv_app.application.services.playlist_access_service import PlaylistAccessService
+
+    return PlaylistAccessService.actor_id(user)
+
+
+@router.post("/copilot/preview-patch")
+def copilot_preview_patch(request: Request, body: CopilotPatchBody):
+    """Dry-run do patch tipado (sem persistir; opcional fingerprint via SlideDataResolution)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    playlist_id = str((body.target or {}).get("playlistId") or "").strip()
+    if playlist_id:
+        try:
+            guarded = require_playlist_access(request, UUID(playlist_id), need="edit")
+        except ValueError:
+            return fail("playlistId inválido.", 422)
+        if is_access_error(guarded):
+            return guarded
+
+    from tv_app.application.services.data.tv_copilot_patch_service import (
+        TvCopilotPatchError,
+        TvCopilotPatchService,
+    )
+
+    try:
+        result = TvCopilotPatchService(catalog=_catalog).preview(
+            {"target": body.target, "ops": body.ops},
+            user=user,
+            authorization=request.headers.get("Authorization"),
+            include_fingerprint=bool(body.includeFingerprint),
+        )
+    except TvCopilotPatchError as exc:
+        return fail(str(exc), 422)
+    return ok(result, message=str(result.get("message") or "Prévia gerada."))
+
+
+@router.post("/copilot/apply-patch")
+def copilot_apply_patch(request: Request, body: CopilotPatchBody):
+    """Aplica patch tipado: persiste native_config / playlist + notify (cache + WS)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+
+    actor = _copilot_actor(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
+
+    playlist_id = str((body.target or {}).get("playlistId") or "").strip()
+    ops = body.ops or []
+    creating_playlist = any(
+        isinstance(op, dict) and str(op.get("op") or "") == "create_playlist" for op in ops
+    )
+    if playlist_id:
+        try:
+            guarded = require_playlist_access(request, UUID(playlist_id), need="edit")
+        except ValueError:
+            return fail("playlistId inválido.", 422)
+        if is_access_error(guarded):
+            return guarded
+    elif not creating_playlist:
+        return fail("Informe playlistId no target.", 422)
+
+    from tv_app.application.services.data.tv_copilot_patch_service import (
+        TvCopilotPatchError,
+        TvCopilotPatchService,
+    )
+
+    try:
+        result = TvCopilotPatchService(catalog=_catalog).apply(
+            {"target": body.target, "ops": body.ops},
+            user=user,
+            authorization=request.headers.get("Authorization"),
+            actor_user_id=actor,
+        )
+    except TvCopilotPatchError as exc:
+        return fail(str(exc), 422)
+    return ok(result, message=str(result.get("message") or "Patch aplicado."))
+
+
+@router.get("/copilot/telemetry")
+def copilot_telemetry(request: Request):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_MANAGE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_copilot_telemetry import (
+        copilot_telemetry_snapshot,
+    )
+
+    return ok(copilot_telemetry_snapshot())

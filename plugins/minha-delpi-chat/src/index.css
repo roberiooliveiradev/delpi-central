@@ -266,3 +266,105 @@
   color: var(--mdc-text-muted);
   font-size: 0.95rem;
 }
+
+.mdc-embedded-chat{
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+  background:var(--mdc-surface, #0f1419);
+  color:var(--mdc-text, #e8eef5);
+  box-sizing:border-box;
+}
+.mdc-embedded-chat *,
+.mdc-embedded-chat *::before,
+.mdc-embedded-chat *::after{
+  box-sizing:border-box;
+}
+.mdc-embedded-chat__context{
+  flex:0 0 auto;
+  padding:0.4rem 0.65rem;
+  font-size:0.75rem;
+  line-height:1.35;
+  border-bottom:1px solid color-mix(in srgb, var(--mdc-primary, #3b82f6) 28%, transparent);
+  color:var(--mdc-text-muted, #9aa7b5);
+  overflow-wrap:anywhere;
+}
+.mdc-embedded-chat__body{
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  width:100%;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.mdc-embedded-chat .minha-delpi-chat{
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  width:100%;
+  max-width:100%;
+  overflow:hidden;
+}
+/* Sidebar do chat completo não cabe no painel — coluna única. */
+.mdc-embedded-chat .mdc-chat-shell,
+.mdc-embedded-chat .mdc-chat-shell--sidebar-collapsed{
+  grid-template-columns:minmax(0, 1fr) !important;
+  width:100%;
+  max-width:100%;
+}
+.mdc-embedded-chat .mdc-chat-sidebar,
+.mdc-embedded-chat .mdc-chat-sidebar-backdrop,
+.mdc-embedded-chat .mdc-chat-mobile-nav,
+.mdc-embedded-chat [data-chat-admin-entry]{
+  display:none !important;
+}
+.mdc-embedded-chat .mdc-chat-view-host{
+  grid-column:1 !important;
+  grid-row:1;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+}
+.mdc-embedded-chat .mdc-chat-main,
+.mdc-embedded-chat .mdc-chat-empty-composer,
+.mdc-embedded-chat .mdc-chat-empty-composer__column,
+.mdc-embedded-chat .mdc-chat-conversation,
+.mdc-embedded-chat .mdc-chat-landing{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+}
+.mdc-embedded-chat .mdc-chat-landing{
+  padding:0.5rem 0.35rem;
+}
+.mdc-embedded-chat .mdc-chat-landing__title{
+  font-size:clamp(1.05rem, 4.2vw, 1.35rem);
+}
+.mdc-embedded-chat .mdc-chat-landing__prompts{
+  grid-template-columns:1fr;
+  gap:0.5rem;
+}
+.mdc-embedded-chat .mdc-chat-landing__prompt{
+  min-height:0;
+  padding:0.6rem 0.7rem;
+  font-size:0.82rem;
+}
+.mdc-embedded-chat .mdc-chat-inline-error{
+  margin-inline:0.35rem;
+  max-width:100%;
+}
+.mdc-embedded-chat .mdc-chat-input,
+.mdc-embedded-chat .mdc-chat-composer-footer{
+  max-width:100%;
+  min-width:0;
+}
+.mdc-embedded-chat .mdc-chat-context-topbar{
+  padding-inline:0.5rem;
+}
+
+

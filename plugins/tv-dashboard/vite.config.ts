@@ -22,6 +22,9 @@ export default defineConfig(({ mode }) => {
           federation({
             name: "tv-dashboard",
             filename: "remoteEntry.js",
+            // Somente plugin-ui como remote de build. EmbeddedChat do chat
+            // carrega em runtime (script remoteEntry) — declarar outro remote
+            // aqui quebrou exports do plugin-ui («sie is not a function»).
             remotes: pluginUiRemote(),
             exposes: {
               "./App": "./src/bootstrap.tsx",

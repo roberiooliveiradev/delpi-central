@@ -18,6 +18,7 @@ import { ComunicadoEditorProvider } from "../components/comunicadoEditorContext"
 import { PlaylistRenameDialog } from "../components/PlaylistRenameDialog";
 import { TvDashboardScreenLoading } from "../components/TvDashboardScreenLoading";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { TvCopilotDockProvider } from "../context/tvCopilotDockContext";
 import { EditorShortcutsProvider } from "../keyboard";
 import {
   clearTemplateDraft,
@@ -338,6 +339,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
   return (
     <>
       <EditorShortcutsProvider active>
+        <TvCopilotDockProvider>
         <div className="td-deck td-deck--editor td-template-editor">
           <ComunicadoEditorProvider
             playlistId={TEMPLATE_PLAYLIST_ID}
@@ -354,6 +356,7 @@ export function TemplateEditorPage({ templateId, canManage, onBack }: Props) {
             />
           </ComunicadoEditorProvider>
         </div>
+        </TvCopilotDockProvider>
       </EditorShortcutsProvider>
       <PlaylistRenameDialog
         open={renameOpen}

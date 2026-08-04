@@ -1194,6 +1194,62 @@
   overflow: hidden;
   padding: 0;
 }
+.dashboard-tv-dashboard .td-data-catalog-tabs{
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem 0;
+  flex: 0 0 auto;
+}
+.dashboard-tv-dashboard .td-data-catalog-tabs__btn{
+  border: 1px solid color-mix(in srgb, var(--delpi-border, #334) 80%, transparent);
+  background: transparent;
+  color: inherit;
+  border-radius: 6px 6px 0 0;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.dashboard-tv-dashboard .td-data-catalog-tabs__btn--active{
+  background: color-mix(in srgb, var(--delpi-accent, #3b82f6) 18%, transparent);
+  border-bottom-color: transparent;
+  font-weight: 600;
+}
+.dashboard-tv-dashboard .td-data-catalog-tabs__hint{
+  margin: 0;
+  padding: 0.35rem 0.75rem 0.5rem;
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel{
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  height: 100%;
+  padding: 0.5rem 0.75rem 0.75rem;
+  box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel__header h3{
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel__hint,
+.dashboard-tv-dashboard .td-tv-copilot-panel__status{
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel__mount{
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 1px solid color-mix(in srgb, var(--delpi-border, #334) 70%, transparent);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel__fallback{
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
 .dashboard-tv-dashboard .td-data-builder-chat{
   display: flex;
   flex-direction: column;
@@ -6217,9 +6273,77 @@ body.td-composer--marqueeing *{
   align-items: stretch;
   overflow: hidden;
 }
+.dashboard-tv-dashboard .td-deck__workspace:has(> .td-deck-copilot-slot:not(:empty)){
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
 .dashboard-tv-dashboard .td-deck__workspace--no-filmstrip{
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
+}
+.dashboard-tv-dashboard .td-deck__workspace--no-filmstrip:has(> .td-deck-copilot-slot:not(:empty)){
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.dashboard-tv-dashboard .td-deck-copilot-slot{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-deck-copilot-slot:empty{
+  display: none;
+}
+.dashboard-tv-dashboard .td-deck-copilot-slot:has(.td-deck-side-panel--open){
+  width: var(--td-copilot-panel-width, 420px);
+  min-width: min(320px, 100%);
+  max-width: min(640px, 46vw);
+  border-left: 1px solid var(--td-border);
+}
+.dashboard-tv-dashboard .td-deck-copilot-slot:has(.td-deck-side-panel--collapsed){
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  border-left: 1px solid var(--td-border);
+}
+.dashboard-tv-dashboard .td-tv-copilot-dock{
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+.dashboard-tv-dashboard .td-tv-copilot-dock__body{
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel--embedded{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  padding: 0.25rem 0.35rem 0.4rem;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel--embedded .td-tv-copilot-panel__hint,
+.dashboard-tv-dashboard .td-tv-copilot-panel--embedded .td-tv-copilot-panel__status{
+  flex: 0 0 auto;
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.dashboard-tv-dashboard .td-tv-copilot-panel--embedded .td-tv-copilot-panel__mount{
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 .dashboard-tv-dashboard .td-deck-filmstrip-shell{
   position: relative;

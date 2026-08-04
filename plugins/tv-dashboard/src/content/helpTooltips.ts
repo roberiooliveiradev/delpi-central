@@ -189,6 +189,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Configurações da tela atual: título exibido no filmstrip, tempo na rotação e filtros operacionais (quando aplicável).",
     playlist:
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
+    copilot:
+      "Sidebar do Copiloto IA: chat para montar e alterar a programação com patches tipados.",
     data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
     layers:
       "Painel de Seleção: ordem de aparição na TV, pilha visual e visibilidade dos elementos.",
@@ -211,6 +213,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   ribbonTabs: {
     home: "Lista de programações (hub): criar, abrir e filtrar. No editor, use Programação e Tela.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
+    copilot:
+      "Abre a sidebar do Copiloto IA (chat Minha Delpi). Crie telas, fontes e layouts por conversa; pode recolher ou fechar o painel.",
     format: "Formate o elemento nas abas contextuais Elemento, Dados e Camadas.",
     element:
       "Mesmos controles do painel lateral Elemento: tipografia, preenchimento, contorno, posição e organização.",

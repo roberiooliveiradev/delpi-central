@@ -151,6 +151,7 @@ import {
 import {
   navigateChatHref,
   navigateChatSurface,
+  setChatNavigationHostMode,
 } from "../../navigation/chatNavigation";
 import {
   getChatSidebarViewForRoute,
@@ -181,6 +182,11 @@ type ChatPageProps = {
   pathname?: string;
   initialRoute?: ChatRoute;
   onOpenAdmin?: (agentId?: string) => void;
+  /**
+   * `embedded` — host estreito (ex.: sidebar TV Copiloto): layout coluna única,
+   * sem sidebar/admin do shell completo.
+   */
+  variant?: "full" | "embedded";
 };
 
 
@@ -189,7 +195,9 @@ export function ChatPage({
   pathname,
   initialRoute,
   onOpenAdmin,
+  variant = "full",
 }: ChatPageProps) {
+  const isEmbedded = variant === "embedded";
   const { confirm, dialog: confirmDialog } = useConfirmDialog();
   const { prompt, dialog: promptDialog } = usePromptDialog();
   const { alert: showAlert, dialog: alertDialog } = useAlertDialog();
@@ -237,6 +245,13 @@ export function ChatPage({
   const [currentView, setCurrentView] = useState<ChatSidebarView>(() =>
     initialRoute ? getChatSidebarViewForRoute(initialRoute) : "chat",
   );
+
+  useEffect(() => {
+    if (isEmbedded && currentView !== "chat") {
+      setCurrentView("chat");
+    }
+  }, [isEmbedded, currentView]);
+
   const chatRoute = useMemo(() => parseChatRoute(pathname), [pathname]);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
@@ -393,6 +408,8 @@ export function ChatPage({
     getResponseMode,
     getPresentationFormat,
     onSessionActivated: (sessionId) => {
+      /* Embarcado: não alterar URL do host (evita AppHost ir para /apps/minha-chat/…). */
+      if (isEmbedded) return;
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
     },
     onOpenCanvas: openCanvasPanel,
@@ -1487,6 +1504,12 @@ export function ChatPage({
     ],
   );
 
+  useEffect(() => {
+    if (!isEmbedded) return;
+    setChatNavigationHostMode("embedded");
+    return () => setChatNavigationHostMode("portal");
+  }, [isEmbedded]);
+
   const navigateToChatSurface = useCallback(
     (href: string, options?: { replace?: boolean }) => {
       navigateChatSurface(href, {
@@ -2320,14 +2343,15 @@ export function ChatPage({
 
   const shellClassName = [
     "mdc-chat-shell",
-    isDesktop && isSidebarCollapsed ? "mdc-chat-shell--sidebar-collapsed" : "",
+    isEmbedded || (isDesktop && isSidebarCollapsed) ? "mdc-chat-shell--sidebar-collapsed" : "",
+    isEmbedded ? "mdc-chat-shell--embedded" : "",
     isLandscape ? "mdc-chat-shell--landscape" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   const openAdmin =
-    canOpenAdmin && onOpenAdmin
+    !isEmbedded && canOpenAdmin && onOpenAdmin
       ? (agentId?: string) => {
           const normalizedAgentId = normalizeAgentRouteId(agentId);
 
@@ -2342,9 +2366,10 @@ export function ChatPage({
 
   const rootClassName = [
     "minha-delpi-chat",
+    isEmbedded ? "minha-delpi-chat--embedded" : "",
     isDraggingFile ? "minha-delpi-chat--dragging" : "",
     isMobileSidebarOpen ? "minha-delpi-chat--mobile-nav-open" : "",
-    isNarrow ? "minha-delpi-chat--narrow" : "",
+    isNarrow || isEmbedded ? "minha-delpi-chat--narrow" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -2382,6 +2407,7 @@ export function ChatPage({
         </div>
       ) : null}
       <section className={shellClassName}>
+        {isEmbedded ? null : (
         <ChatSidebar
           sessions={sessions}
           archivedSessions={archivedSessions}
@@ -2440,6 +2466,7 @@ export function ChatPage({
           onOpenAgentsDirectory={openAgentsDirectory}
           onOpenProjectsDirectory={openProjectsDirectory}
         />
+        )}
 
         <ChatAnimatedPanel
           panelKey={currentView}

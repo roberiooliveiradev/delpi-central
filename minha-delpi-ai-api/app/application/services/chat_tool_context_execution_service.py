@@ -206,6 +206,48 @@ class ChatToolContextExecutionService:
 
                     continue
 
+            if tool_name == "tv_dashboard_copilot":
+                from app.domain.services.chat_write_confirmation_service import (
+                    ChatWriteConfirmationService,
+                )
+
+                mode = str(arguments.get("mode") or "preview").strip().lower()
+                synthetic_action = {
+                    "sensitivity": "write" if mode == "apply" else "read",
+                    "method": "POST",
+                    "path": f"/data/copilot/{mode}-patch",
+                    "name": "tv_dashboard_copilot",
+                }
+                if ChatWriteConfirmationService.should_block_execution(
+                    message=raw_message,
+                    action=synthetic_action,
+                ):
+                    prompt = ChatWriteConfirmationService.confirmation_prompt(
+                        synthetic_action
+                    )
+                    direct_answer = direct_answer or prompt
+                    skip_rag = True
+                    blocked_metadata = {
+                        "ok": False,
+                        "blocked": True,
+                        "blockReason": "confirmation_required",
+                        "path": synthetic_action["path"],
+                        "sensitivity": "write",
+                        "mode": mode,
+                    }
+                    blocked_metadata["responsePreview"] = host._build_response_preview(
+                        blocked_metadata
+                    )
+                    safe_tool_calls.append(
+                        {
+                            "name": tool_name,
+                            "arguments": arguments,
+                            "reason": selected_tool.get("reason"),
+                            "metadata": blocked_metadata,
+                        }
+                    )
+                    continue
+
             try:
                 result = host.execute_tool_use_case.execute(
                     ExecuteToolRequest(

@@ -19,6 +19,7 @@ export default defineConfig({
       remotes: pluginUiRemote(),
       exposes: {
         "./App": "./src/bootstrap.tsx",
+        "./EmbeddedChat": "./src/embeddedBootstrap.tsx",
       },
       shared: { ...FEDERATION_SHARED_REACT },
     }),

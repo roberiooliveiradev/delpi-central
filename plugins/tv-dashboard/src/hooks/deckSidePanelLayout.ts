@@ -1,6 +1,6 @@
 /** Layout persistente de barras laterais do deck (filmstrip / inspetor). */
 
-export type DeckSidePanelSide = "filmstrip" | "inspector";
+export type DeckSidePanelSide = "filmstrip" | "inspector" | "copilot";
 
 type PanelLimits = {
   storageWidthKey: string;
@@ -28,7 +28,36 @@ const PANEL_LIMITS: Record<DeckSidePanelSide, PanelLimits> = {
     maxWidth: 560,
     collapsedWidth: 36,
   },
+  copilot: {
+    storageWidthKey: "td-deck-copilot-width",
+    storageCollapsedKey: "td-deck-copilot-collapsed",
+    defaultWidth: 420,
+    minWidth: 320,
+    maxWidth: 640,
+    collapsedWidth: 36,
+  },
 };
+
+const COPILOT_VISIBLE_KEY = "td-deck-copilot-visible";
+
+/** Sidebar do Copiloto fechada (sem rail) vs. aberta (expandida ou colapsada). */
+export function readCopilotDockVisible(): boolean {
+  if (!canUseStorage()) return false;
+  try {
+    return window.localStorage.getItem(COPILOT_VISIBLE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function writeCopilotDockVisible(visible: boolean): void {
+  if (!canUseStorage()) return;
+  try {
+    window.localStorage.setItem(COPILOT_VISIBLE_KEY, visible ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+}
 
 function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";

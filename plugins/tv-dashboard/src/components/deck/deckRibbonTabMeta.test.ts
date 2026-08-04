@@ -105,14 +105,23 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     ]);
   });
 
-  it("sempre inclui Programação, Inserir e Camadas em slide custom", () => {
+  it("sempre inclui Programação, Copiloto, Inserir e Camadas em slide custom", () => {
     const tabs = resolveDeckRibbonTabs(true);
     expect(tabs.map((tab) => tab.id)).toEqual(
-      expect.arrayContaining(["playlist", "slide", "insert", "layers"]),
+      expect.arrayContaining(["playlist", "copilot", "slide", "insert", "layers"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
+    expect(tabs.find((tab) => tab.id === "copilot")?.label).toBe("Copiloto");
     expect(tabs.some((tab) => tab.id === "element")).toBe(false);
     expect(tabs.some((tab) => tab.id === "home")).toBe(false);
+  });
+
+  it("Copiloto permanece visível sem slide custom", () => {
+    const tabs = resolveDeckRibbonTabs(false);
+    expect(tabs.map((tab) => tab.id)).toEqual(
+      expect.arrayContaining(["playlist", "copilot", "slide"]),
+    );
+    expect(tabs.some((tab) => tab.id === "insert")).toBe(false);
   });
 
   it("modo template oculta aba Programação", () => {

@@ -44,6 +44,36 @@ NATIVE_TOOL_PARAMETERS: dict[str, dict] = {
         "required": ["query"],
         "additionalProperties": False,
     },
+    "tv_dashboard_copilot": {
+        "type": "object",
+        "properties": {
+            "mode": {
+                "type": "string",
+                "description": "preview (dry-run) ou apply (persiste; exige confirmação).",
+                "enum": ["preview", "apply"],
+            },
+            "target": {
+                "type": "object",
+                "description": "playlistId e slideId do editor TV.",
+                "properties": {
+                    "playlistId": {"type": "string"},
+                    "slideId": {"type": "string"},
+                },
+                "additionalProperties": True,
+            },
+            "ops": {
+                "type": "array",
+                "description": "Ops TvCopilotPatchV1 (upsert_data_source, set_data_transform, upsert_block, bind_visual, add_slide_from_preset, create_playlist).",
+                "items": {"type": "object", "additionalProperties": True},
+            },
+            "includeFingerprint": {
+                "type": "boolean",
+                "description": "Só em preview: incluir fingerprint via SlideDataResolution.",
+            },
+        },
+        "required": ["mode", "ops"],
+        "additionalProperties": False,
+    },
 }
 
 

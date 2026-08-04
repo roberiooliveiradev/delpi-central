@@ -7,10 +7,12 @@ import {
   Paintbrush,
   Plus,
   Settings2,
+  Sparkles,
   Table2,
 } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TV_COPILOT_CONTENT } from "../../content/tvCopilotContent";
 import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 
 export type DeckRibbonTabId =
@@ -22,7 +24,8 @@ export type DeckRibbonTabId =
   | "layers"
   | "view"
   | "slide"
-  | "playlist";
+  | "playlist"
+  | "copilot";
 
 export type DeckRibbonTabMeta = {
   id: DeckRibbonTabId;
@@ -76,6 +79,12 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
     label: "Programação",
     hint: PANEL.playlist,
     icon: Settings2,
+  },
+  {
+    id: "copilot",
+    label: TV_COPILOT_CONTENT.tabLabel,
+    hint: T.copilot ?? "Abre a sidebar do Copiloto IA para criar e editar telas por chat.",
+    icon: Sparkles,
   },
   {
     id: "element",
