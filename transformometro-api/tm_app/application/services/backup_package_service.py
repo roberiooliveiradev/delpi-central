@@ -422,16 +422,27 @@ class TransformometroBackupPackageService:
         return restored
 
     def _clear_evidence_storage(self) -> None:
-        base = self._storage.base_dir
-        if base.exists():
-            shutil.rmtree(base)
-        base.mkdir(parents=True, exist_ok=True)
+        _clear_storage_dir_contents(self._storage.base_dir)
 
     def _clear_processo_arquivo_storage(self) -> None:
-        base = self._processo_arquivo_storage.base_dir
-        if base.exists():
-            shutil.rmtree(base)
-        base.mkdir(parents=True, exist_ok=True)
+        _clear_storage_dir_contents(self._processo_arquivo_storage.base_dir)
+
+
+def _clear_storage_dir_contents(base) -> None:
+    """Apaga o conteúdo do diretório sem remover a raiz.
+
+    Em Docker a raiz costuma ser volume montado: ``shutil.rmtree(base)``
+    gera ``[Errno 16] Device or resource busy``.
+    """
+    from pathlib import Path
+
+    root = Path(base)
+    root.mkdir(parents=True, exist_ok=True)
+    for child in root.iterdir():
+        if child.is_dir() and not child.is_symlink():
+            shutil.rmtree(child)
+        else:
+            child.unlink(missing_ok=True)
 
 
 def _dedupe(items: list[str]) -> list[str]:

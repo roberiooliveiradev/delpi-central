@@ -274,3 +274,28 @@ def test_apply_package_restores_files_on_replace():
     for path in (tmp_ev, tmp_arq):
         if path.exists():
             shutil.rmtree(path)
+
+
+def test_clear_storage_dir_contents_keeps_root():
+    """Volume Docker: não pode rmtree na raiz montada (Errno 16 busy)."""
+    import shutil
+    from pathlib import Path
+
+    from tm_app.application.services.backup_package_service import (
+        _clear_storage_dir_contents,
+    )
+
+    root = Path("/tmp/tm-backup-clear-root-test")
+    if root.exists():
+        shutil.rmtree(root)
+    root.mkdir(parents=True)
+    (root / "keep-root-marker").write_text("x", encoding="utf-8")
+    nested = root / "rev-1"
+    nested.mkdir()
+    (nested / "file.bin").write_bytes(b"1")
+
+    _clear_storage_dir_contents(root)
+
+    assert root.exists()
+    assert list(root.iterdir()) == []
+    shutil.rmtree(root)
