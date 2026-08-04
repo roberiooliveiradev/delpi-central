@@ -42,8 +42,48 @@ class TvCopilotContentService:
             return default
 
     @classmethod
+    def setting_str(cls, key: str, default: str = "") -> str:
+        settings = _load().get("settings") or {}
+        value = settings.get(key, default)
+        if value is None:
+            return default
+        return str(value)
+
+    @classmethod
     def catalog_version(cls) -> str:
         return str(_load().get("catalogVersion") or "").strip()
+
+    @classmethod
+    def mutation_action_terms(cls) -> list[str]:
+        raw = _load().get("mutationActionTerms")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
+    def create_action_terms(cls) -> list[str]:
+        raw = _load().get("createActionTerms")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
+    def action_terms_for_set(cls, term_set: str) -> list[str]:
+        key = str(term_set or "").strip().lower()
+        if key == "create":
+            return cls.create_action_terms()
+        if key == "mutation":
+            return cls.mutation_action_terms()
+        if key == "any":
+            seen: set[str] = set()
+            out: list[str] = []
+            for term in [*cls.mutation_action_terms(), *cls.create_action_terms()]:
+                if term in seen:
+                    continue
+                seen.add(term)
+                out.append(term)
+            return out
+        return []
 
     @classmethod
     def capabilities(cls) -> list[dict[str, Any]]:

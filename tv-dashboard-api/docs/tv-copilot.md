@@ -107,6 +107,14 @@ Cada item (declarativo em `tv_copilot_content.json`):
 
 ## Relação com Data Builder
 
-Materialize → `to-copilot-ops` usa o **mesmo** catálogo. Turn NL legado do Builder: **deprecated** — preferir Copilot + suggest-ops / skill.
+**Cutover (AP5):** o caminho canônico de mutação tipada é o **mesmo catálogo** do Copilot.
+
+| Caminho | Status | Uso |
+|---------|--------|-----|
+| `POST /data/copilot/suggest-ops` | **canônico** | NL + `hostContext` → `ops[]` (BFF determinístico) |
+| `POST /data/builder/sessions/{id}/to-copilot-ops` | **canônico** | Rascunho materializado → mesmas ops do catálogo |
+| `POST /data/builder/sessions/{id}/turn` (NL) | **deprecated** | Não é o caminho de mutação tipada; não evoluir novos encodings aqui |
+
+Materialize → `to-copilot-ops` usa o **mesmo** catálogo. Turn NL legado do Builder: **deprecated** — preferir Copilot + `suggest-ops` / skill.
 
 Ver também: [data-builder-chat.md](./data-builder-chat.md), regra `.cursor/rules/tv-dashboard-presentation-parity.mdc`.

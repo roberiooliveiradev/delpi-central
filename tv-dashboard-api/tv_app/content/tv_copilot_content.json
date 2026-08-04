@@ -1,9 +1,53 @@
 {
-  "catalogVersion": "2026.08.04.1",
+  "catalogVersion": "2026.08.04.2",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
     "removeBlockIds"
+  ],
+  "mutationActionTerms": [
+    "escreva",
+    "escrever",
+    "apague",
+    "apagar",
+    "remova",
+    "remover",
+    "exclua",
+    "excluir",
+    "altere",
+    "alterar",
+    "atualize",
+    "atualizar",
+    "ligue",
+    "ligar",
+    "vincule",
+    "vincular",
+    "defina",
+    "definir",
+    "renomeie",
+    "renomear",
+    "mova",
+    "mover",
+    "reordene",
+    "reordenar",
+    "coloque",
+    "colocar",
+    "insira",
+    "inserir",
+    "adicione",
+    "adicionar"
+  ],
+  "createActionTerms": [
+    "crie",
+    "criar",
+    "adicione",
+    "adicionar",
+    "novo",
+    "nova",
+    "gere",
+    "gerar",
+    "insira",
+    "inserir"
   ],
   "messages": {
     "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
@@ -33,12 +77,19 @@
     "createPlaylistOk": "Programação «{name}» criada.",
     "addSlideOk": "Slide adicionado a partir do preset «{presetKey}».",
     "fingerprintSkipped": "Fingerprint de resolução omitido (sem blocos data_source ou falha na resolução).",
-    "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas."
+    "mForbidden": "O copiloto não gera nem aceita script M livre — use ops tipadas.",
+    "suggestEmptyMessage": "Mensagem vazia — nenhuma op sugerida.",
+    "suggestNoMatch": "Nenhuma capability do catálogo corresponde à mensagem.",
+    "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s))."
   },
   "settings": {
     "maxOpsPerPatch": 40,
+    "maxSuggestOps": 5,
     "fingerprintMaxBlocks": 12,
-    "telemetryWindow": 500
+    "telemetryWindow": 500,
+    "defaultSlideTitle": "Slide personalizado",
+    "defaultPlaylistName": "Nova programação",
+    "defaultSectionName": "Nova seção"
   },
   "allowedOps": [
     "upsert_data_source",
@@ -62,8 +113,8 @@
       "key": "upsert_data_source",
       "op": "upsert_data_source",
       "whenToUse": "Adicionar ou atualizar uma fonte de dados (operationId allowlisted) no slide.",
-      "contentMarkers": ["fonte", "dados", "operationId", "ligar api"],
-      "excludeMarkers": [],
+      "contentMarkers": ["fonte", "fonte de dados", "dados", "operationid", "ligar api", "kpi", "série"],
+      "excludeMarkers": ["script m", "power query"],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_data_source",
@@ -118,12 +169,32 @@
       "key": "upsert_block",
       "op": "upsert_block",
       "whenToUse": "Criar ou atualizar um bloco visual (texto, título, forma, ícone, mídia com assetId, KPI, gráfico, tabela, filtro).",
-      "contentMarkers": ["bloco", "texto", "título", "kpi", "gráfico", "imagem", "mídia"],
-      "excludeMarkers": ["script m", "power query"],
+      "contentMarkers": [
+        "escreva um texto",
+        "escrever um texto",
+        "bloco de texto",
+        "texto no slide",
+        "título",
+        "titulo",
+        "kpi",
+        "gráfico",
+        "grafico",
+        "imagem",
+        "mídia",
+        "midia",
+        "forma",
+        "ícone",
+        "icone"
+      ],
+      "excludeMarkers": ["script m", "power query", "apagar bloco", "apague o bloco", "remover bloco"],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_block",
-        "block": { "id": "{{selectedBlockId}}", "type": "text" }
+        "block": {
+          "id": "{{selectedBlockId}}",
+          "type": "text",
+          "content": "{{quoted}}"
+        }
       },
       "inputSchema": {
         "type": "object",
@@ -141,8 +212,16 @@
       "key": "delete_block",
       "op": "delete_block",
       "whenToUse": "Remover um bloco do slide pelo blockId (ou seleção do host).",
-      "contentMarkers": ["apagar bloco", "remover bloco", "excluir elemento"],
-      "excludeMarkers": [],
+      "contentMarkers": [
+        "apague o bloco",
+        "apagar o bloco",
+        "apagar bloco",
+        "remover bloco",
+        "excluir bloco",
+        "excluir elemento",
+        "delete block"
+      ],
+      "excludeMarkers": ["apagar slide", "apague o slide", "excluir tela"],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "delete_block",
@@ -212,8 +291,15 @@
       "key": "add_slide_from_preset",
       "op": "add_slide_from_preset",
       "whenToUse": "Adicionar um slide a partir de um preset do catálogo TV.",
-      "contentMarkers": ["preset", "importar tela", "catálogo de slides"],
-      "excludeMarkers": [],
+      "contentMarkers": [
+        "preset",
+        "importar tela",
+        "catálogo de slides",
+        "catalogo de slides",
+        "slide do catálogo",
+        "a partir do preset"
+      ],
+      "excludeMarkers": ["slide em branco", "tela vazia", "blank"],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "add_slide_from_preset",
@@ -236,12 +322,23 @@
       "key": "add_blank_slide",
       "op": "add_blank_slide",
       "whenToUse": "Criar um slide personalizado em branco (custom_message).",
-      "contentMarkers": ["novo slide", "slide em branco", "tela vazia", "blank"],
-      "excludeMarkers": [],
+      "contentMarkers": [
+        "crie um slide",
+        "criar um slide",
+        "criar slide",
+        "adicione um slide",
+        "adicionar slide",
+        "novo slide",
+        "slide em branco",
+        "tela vazia",
+        "blank",
+        "slide personalizado"
+      ],
+      "excludeMarkers": ["preset", "programação", "playlist"],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "add_blank_slide",
-        "title": "Slide personalizado"
+        "title": "{{title}}"
       },
       "inputSchema": {
         "type": "object",
@@ -317,8 +414,14 @@
       "key": "delete_slide",
       "op": "delete_slide",
       "whenToUse": "Excluir o slide indicado em target.slideId.",
-      "contentMarkers": ["apagar slide", "excluir tela", "remover slide"],
-      "excludeMarkers": [],
+      "contentMarkers": [
+        "apagar slide",
+        "apague o slide",
+        "excluir slide",
+        "excluir tela",
+        "remover slide"
+      ],
+      "excludeMarkers": ["apagar bloco", "apague o bloco", "remover bloco"],
       "actionTermSet": "mutation",
       "payloadTemplate": { "op": "delete_slide" },
       "inputSchema": {
@@ -406,8 +509,15 @@
       "key": "create_playlist",
       "op": "create_playlist",
       "whenToUse": "Criar uma nova programação; opcionalmente semear presets.",
-      "contentMarkers": ["nova programação", "criar playlist"],
-      "excludeMarkers": [],
+      "contentMarkers": [
+        "nova programação",
+        "nova programacao",
+        "criar playlist",
+        "crie uma playlist",
+        "criar programação",
+        "criar programacao"
+      ],
+      "excludeMarkers": ["crie um slide", "criar slide", "slide em branco"],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "create_playlist",

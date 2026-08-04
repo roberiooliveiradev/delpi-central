@@ -270,6 +270,8 @@ def get_data_builder_session(request: Request, session_id: str):
 
 @router.post("/builder/sessions/{session_id}/turn")
 def data_builder_turn(request: Request, session_id: str, body: BuilderTurnBody):
+    """Deprecated: turno NL do Builder. Preferir Copilot + POST /data/copilot/suggest-ops;
+    materialize tipado via POST .../to-copilot-ops (mesmo catálogo)."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_WRITE)
@@ -520,6 +522,11 @@ class CopilotPatchBody(BaseModel):
     includeFingerprint: bool = True
 
 
+class SuggestOpsBody(BaseModel):
+    message: str = ""
+    hostContext: dict[str, Any] = Field(default_factory=dict)
+
+
 def _copilot_actor(user: Any) -> str | None:
     from tv_app.application.services.playlist_access_service import PlaylistAccessService
 
@@ -539,6 +546,25 @@ def copilot_capabilities(request: Request):
     )
 
     return ok(TvCopilotContentService.capability_catalog_document())
+
+
+@router.post("/copilot/suggest-ops")
+def copilot_suggest_ops(request: Request, body: SuggestOpsBody):
+    """NL + hostContext → ops tipadas (determinístico no BFF; sem LLM)."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_WRITE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
+        TvCopilotSuggestOpsService,
+    )
+
+    result = TvCopilotSuggestOpsService.suggest(
+        message=body.message,
+        host_context=body.hostContext,
+    )
+    return ok(result, message=str(result.get("reason") or "Sugestão gerada."))
 
 
 @router.post("/copilot/preview-patch")
