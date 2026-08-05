@@ -12,17 +12,18 @@ from app.infrastructure.gateways.tv_dashboard_api_gateway import TvDashboardApiG
 
 class TvDashboardCopilotTool(InternalToolPort):
     name = "tv_dashboard_copilot"
-    description = str(
-        ChatAssistantContentService.get(
-            "tv_dashboard_copilot_intent",
-            "toolDescription",
-        )
-        or ""
-    )
     required_permission = CHAT_TOOLS_USE_PERMISSION
 
     def __init__(self, gateway: TvDashboardApiGateway | None = None) -> None:
         self.gateway = gateway or TvDashboardApiGateway()
+
+    @property
+    def description(self) -> str:
+        # Resolvido sob demanda: o import da tool acontece antes do wiring dos ports.
+        return ChatAssistantContentService.get(
+            "tv_dashboard_copilot_intent",
+            "toolDescription",
+        )
 
     def execute(self, arguments: dict, access_token: str) -> ToolResult:
         mode = str(arguments.get("mode") or "preview").strip().lower()

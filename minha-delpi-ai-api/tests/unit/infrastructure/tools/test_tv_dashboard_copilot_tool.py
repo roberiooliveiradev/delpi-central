@@ -69,5 +69,7 @@ def test_tv_copilot_tool_apply():
 
 
 def test_tv_copilot_tool_description_uses_direct_policy():
-    assert "direct" in TvDashboardCopilotTool.description
-    assert "confirmationPolicy" in TvDashboardCopilotTool.description
+    description = TvDashboardCopilotTool(gateway=_FakeGateway()).description
+
+    assert "direct" in description
+    assert "confirmationPolicy" in description
