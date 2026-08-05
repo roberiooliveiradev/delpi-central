@@ -261,7 +261,7 @@ class MeetingMinuteRepository(PluginBaseRepository):
         if not row: raise LookupError("Ata não encontrada.")
         return row
 
-    def register_signature(self, *, minute_id: str, version_id: str, signer_id: str, unit_code: str, user_id: str, display_name_confirmed: str, content_hash: str, image_path: str, terms_accepted: bool, client_ip: str | None, user_agent: str | None, session_id: str | None, idempotency_key: str | None, actor_user_id: str) -> dict[str, Any]:
+    def register_signature(self, *, minute_id: str, version_id: str, signer_id: str, unit_code: str, user_id: str | None, display_name_confirmed: str, content_hash: str, image_path: str, terms_accepted: bool, client_ip: str | None, user_agent: str | None, session_id: str | None, idempotency_key: str | None, actor_user_id: str) -> dict[str, Any]:
         conn=self._connection
         try:
             with conn.cursor() as cur:

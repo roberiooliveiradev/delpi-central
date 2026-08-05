@@ -80,11 +80,31 @@ class FakeRepo:
             "required_count": 1,
         }
 
+    def invalidate_open_invites(self, *, signer_id: str) -> int:
+        return 0
+
+    def create_invite(self, **kwargs):
+        return {"id": "inv1", "consumed_at": None, **kwargs}
+
+    def get_invite_by_token_hash(self, _token_hash):
+        return None
+
+    def consume_invite(self, invite_id):
+        return {"id": invite_id, "consumed_at": "now"}
+
+    def get_signer(self, signer_id):
+        return next((s for s in self.signers if s["id"] == signer_id), None)
+
 
 def test_create_send_sign_happy_path_and_invalid_finalize():
     repo = FakeRepo()
     service = MeetingMinutesService(repo)
-    service.notifications = SimpleNamespace(send=lambda **_: True)
+    service.notifications = SimpleNamespace(
+        notify_sign_pending=lambda **_: True,
+        notify_minute_signed=lambda **_: True,
+        notify_minute_refused=lambda **_: True,
+    )
+    service.sign_pending_mail = SimpleNamespace(notify_signers=lambda **_: 1)
     service.signature_storage = SimpleNamespace(save_png=lambda **_: "/tmp/signature.png")
     user = SimpleNamespace(id="u1", is_superadmin=True, permissions=[])
     created = service.create(
