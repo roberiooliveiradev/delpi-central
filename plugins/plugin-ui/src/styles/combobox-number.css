@@ -96,7 +96,13 @@
   border-radius: 0;
   background: transparent;
   color: var(--delpi-ui-combobox-muted);
+  line-height: 0;
   cursor: pointer;
+}
+
+.delpi-ui-combobox-number__toggle svg {
+  display: block;
+  flex-shrink: 0;
 }
 
 .delpi-ui-combobox-number__toggle:hover:not(:disabled) {

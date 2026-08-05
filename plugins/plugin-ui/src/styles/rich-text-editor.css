@@ -41,6 +41,8 @@
 .delpi-ui-rich-text-ribbon__size {
   width: auto;
   flex-shrink: 0;
+  /* Paridade com botões de ícone da toolbar (30px). */
+  --delpi-ui-stepper-height: 30px;
 }
 
 .delpi-ui-rich-text-ribbon__dropdown {

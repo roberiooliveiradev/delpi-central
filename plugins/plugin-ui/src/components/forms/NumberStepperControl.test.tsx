@@ -91,4 +91,24 @@ describe("NumberStepperControl", () => {
       /\.delpi-ui-number-stepper \.delpi-ui-combobox-number__toggle \{[\s\S]*?width:\s*22px/,
     );
   });
+
+  it("CSS centraliza ícones − / chevron / + (sem stretch no wrapper)", () => {
+    const css = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../../styles/number-stepper.css"),
+      "utf8",
+    );
+    // Regressão: `> * { align-items: stretch }` esticava SVG Lucide e desalinhava ícones.
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper > \* \{[\s\S]*?align-items:\s*center/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper__step \{[\s\S]*?line-height:\s*0/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper__step svg \{[\s\S]*?display:\s*block/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-number-stepper \.delpi-ui-combobox-number__toggle svg \{[\s\S]*?display:\s*block/,
+    );
+  });
 });
