@@ -1,7 +1,7 @@
 // portal/src/ui/admin/manifest/ManifestRoutesTable.tsx
 
 import { type ReactNode } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import { GripVertical, Image as ImageIcon } from "lucide-react";
 import {
   Button,
   FormField,
@@ -10,7 +10,8 @@ import {
   Switch,
 } from "../../../ui-kit";
 import type { ManifestPermission, ManifestRoute } from "./manifestTypes";
-import { normalizeRouteOrders } from "./manifestUtils";
+import { moveRoute, normalizeRouteOrders } from "./manifestUtils";
+import { useCardReorder } from "./useCardReorder";
 
 type Props = {
   routes: ManifestRoute[];
@@ -33,6 +34,13 @@ export function ManifestRoutesTable({
   onCreatePermFromRoute,
   renderIcon,
 }: Props) {
+  const { getCardProps, getHandleProps } = useCardReorder({
+    count: routes.length,
+    disabled,
+    itemLabel: "rota",
+    onMove: (from, to) => onChange(moveRoute(routes, from, to)),
+  });
+
   const updateAt = (idx: number, patch: Partial<ManifestRoute>) => {
     onChange(routes.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
@@ -85,7 +93,8 @@ export function ManifestRoutesTable({
     <div className="manifest-cards">
       <div className="manifest-cards__toolbar">
         <span className="hint">
-          <code>permission</code> referencia <code>permissions[].code</code>
+          <code>permission</code> referencia <code>permissions[].code</code> ·
+          arraste pela alça para reordenar
         </span>
         <Button variant="primary" size="sm" onClick={add} disabled={disabled}>
           Adicionar rota
@@ -94,8 +103,12 @@ export function ManifestRoutesTable({
 
       <ul className="manifest-cards__list">
         {routes.map((r, idx) => (
-          <li key={`r-${idx}`} className="manifest-card">
+          <li key={`r-${idx}`} {...getCardProps(idx, "manifest-card")}>
             <div className="manifest-card__head">
+              <button className="manifest-card__handle" {...getHandleProps(idx)}>
+                <GripVertical size={16} aria-hidden />
+              </button>
+
               <FormField
                 label="Ord"
                 htmlFor={`route-order-${idx}`}
@@ -115,6 +128,12 @@ export function ManifestRoutesTable({
                     })
                   }
                   onBlur={commitOrder}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
                 />
               </FormField>
 

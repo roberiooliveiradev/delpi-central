@@ -258,6 +258,51 @@
   border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
 }
 
+.manifest-editor-page .manifest-card--dragging {
+  opacity: 0.45;
+}
+
+.manifest-editor-page .manifest-card--drop-target {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.manifest-editor-page .manifest-card__handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 26px;
+  height: 32px;
+  align-self: flex-end;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, var(--muted));
+  cursor: grab;
+  touch-action: none;
+}
+
+.manifest-editor-page .manifest-card__handle:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.manifest-editor-page .manifest-card__handle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.manifest-editor-page .manifest-card__handle:active:not(:disabled) {
+  cursor: grabbing;
+}
+
+.manifest-editor-page .manifest-card__handle:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
 .manifest-editor-page .manifest-card__head {
   display: flex;
   align-items: flex-end;

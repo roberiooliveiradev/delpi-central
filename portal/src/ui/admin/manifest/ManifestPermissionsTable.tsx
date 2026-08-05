@@ -1,7 +1,9 @@
 // portal/src/ui/admin/manifest/ManifestPermissionsTable.tsx
 
+import { GripVertical } from "lucide-react";
 import { Button, FormField, Input, Textarea } from "../../../ui-kit";
 import type { ManifestPermission } from "./manifestTypes";
+import { useCardReorder } from "./useCardReorder";
 
 type Props = {
   permissions: ManifestPermission[];
@@ -21,6 +23,18 @@ export function ManifestPermissionsTable({
   onGrantToRole,
 }: Props) {
   const prefix = moduleId ? `${moduleId}.` : "";
+
+  const { getCardProps, getHandleProps } = useCardReorder({
+    count: permissions.length,
+    disabled,
+    itemLabel: "permissão",
+    onMove: (from, to) => {
+      const next = [...permissions];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      onChange(next);
+    },
+  });
 
   const updateAt = (idx: number, patch: Partial<ManifestPermission>) => {
     const next = permissions.map((p, i) => (i === idx ? { ...p, ...patch } : p));
@@ -75,8 +89,15 @@ export function ManifestPermissionsTable({
             ? p.code.slice(p.code.indexOf(".") + 1)
             : p.code.replace(/^\./, "");
           return (
-            <li key={idx} className="manifest-card">
+            <li key={idx} {...getCardProps(idx, "manifest-card")}>
               <div className="manifest-card__head">
+                <button
+                  className="manifest-card__handle"
+                  {...getHandleProps(idx)}
+                >
+                  <GripVertical size={16} aria-hidden />
+                </button>
+
                 <FormField
                   label="Código"
                   htmlFor={`perm-code-${idx}`}

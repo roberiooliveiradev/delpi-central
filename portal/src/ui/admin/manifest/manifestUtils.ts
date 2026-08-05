@@ -134,15 +134,17 @@ export function normalizeManifest(input: any): ManifestSchema {
       description: p?.description ?? null,
       module: String(p?.module || ""),
     })),
-    routes: routes.map((r: any, idx: number) => ({
-      path: String(r?.path || ""),
-      label: r?.label ?? null,
-      permission: r?.permission ?? null,
-      icon: r?.icon ?? null,
-      entry: r?.entry ?? null,
-      order: r?.order ?? idx + 1,
-      showInMenu: r?.showInMenu ?? r?.show_in_menu ?? true,
-    })),
+    routes: sortRoutesByOrder(
+      routes.map((r: any, idx: number) => ({
+        path: String(r?.path || ""),
+        label: r?.label ?? null,
+        permission: r?.permission ?? null,
+        icon: r?.icon ?? null,
+        entry: r?.entry ?? null,
+        order: r?.order ?? idx + 1,
+        showInMenu: r?.showInMenu ?? r?.show_in_menu ?? true,
+      })),
+    ),
     backend: input?.backend,
     lifecycle: input?.lifecycle,
     security: input?.security,
@@ -391,6 +393,17 @@ export function diffManifest(a: any, b: any): ManifestDiff {
  * posicional, então buracos e saltos só confundem quem edita.
  */
 export function normalizeRouteOrders(routes: ManifestRoute[]): ManifestRoute[] {
+  return sortRoutesByOrder(routes).map((route, index) => ({
+    ...route,
+    order: index + 1,
+  }));
+}
+
+/**
+ * Ordena pelo valor de `order` sem reescrevê-lo — usado ao carregar o manifesto,
+ * onde renumerar marcaria o formulário como alterado sem o usuário tocar em nada.
+ */
+export function sortRoutesByOrder(routes: ManifestRoute[]): ManifestRoute[] {
   return routes
     .map((route, index) => {
       const value = Number(route.order);
@@ -401,5 +414,31 @@ export function normalizeRouteOrders(routes: ManifestRoute[]): ManifestRoute[] {
       };
     })
     .sort((a, b) => a.sortKey - b.sortKey || a.index - b.index)
-    .map(({ route }, index) => ({ ...route, order: index + 1 }));
+    .map(({ route }) => route);
+}
+
+/**
+ * Move uma rota para outra posição (arrastar/soltar e atalhos de teclado) e
+ * reescreve `order` a partir da posição final.
+ */
+export function moveRoute(
+  routes: ManifestRoute[],
+  from: number,
+  to: number,
+): ManifestRoute[] {
+  if (
+    from === to ||
+    from < 0 ||
+    to < 0 ||
+    from >= routes.length ||
+    to >= routes.length
+  ) {
+    return routes;
+  }
+
+  const next = [...routes];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+
+  return next.map((route, index) => ({ ...route, order: index + 1 }));
 }
