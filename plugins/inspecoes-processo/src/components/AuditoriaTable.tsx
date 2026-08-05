@@ -7,15 +7,18 @@ type AuditoriaTableProps = {
 
 function statusLabel(item: InspecoesProcessoAuditoriaApontamentoItem): string {
   if (item.operador_inspecionou) return "Inspecionou";
-  if (item.tem_inspecao_na_op_operacao) {
-    return "Não (outra pessoa)";
+  if (item.tem_inspecao_na_op_operacao || item.tem_inspecao_amarrada) {
+    return "Não inspecionou";
   }
-  return "Não inspecionou";
+  return "Não possui inspeção cadastrada";
 }
 
 function statusClass(item: InspecoesProcessoAuditoriaApontamentoItem): string {
   if (item.operador_inspecionou) return "ip-status-pill ip-status-pill--ok";
-  return "ip-status-pill ip-status-pill--pendente";
+  if (item.tem_inspecao_na_op_operacao || item.tem_inspecao_amarrada) {
+    return "ip-status-pill ip-status-pill--pendente";
+  }
+  return "ip-status-pill ip-status-pill--sem-cadastro";
 }
 
 export function AuditoriaTable({ items }: AuditoriaTableProps) {

@@ -11,6 +11,8 @@ from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.inspecoes_processo.inspecoes_processo_auditoria_sql import (
     build_auditoria_apontamentos_base_sql,
     build_auditoria_ensaiador_map_sql,
+    build_inspecao_cadastrada_for_product_revisions_sql,
+    build_qpk_for_ops_sql,
     build_qpr_for_ops_sql,
 )
 
@@ -113,12 +115,96 @@ def _index_qpr_rows(rows: list[dict]) -> dict[tuple[str, str], set[str]]:
     return indexed
 
 
+def _index_qpk_rows(rows: list[dict]) -> dict[str, dict[str, str]]:
+    """OP → produto/revisão do cabeçalho QPK (inspeção amarrada à OP)."""
+    indexed: dict[str, dict[str, str]] = {}
+    for row in rows:
+        op = _as_text(row.get("Ordem_Producao"))
+        product = _as_text(row.get("Codigo_Produto"))
+        if not op or not product:
+            continue
+        indexed[op] = {
+            "product": product,
+            "revision": _as_text(row.get("Revisao")),
+        }
+    return indexed
+
+
+def _index_inspecao_cadastrada_rows(
+    rows: list[dict],
+) -> set[tuple[str, str, str]]:
+    """Triplas (produto, revisão, operação) com QP7/QP8; operação '' = qualquer."""
+    indexed: set[tuple[str, str, str]] = set()
+    for row in rows:
+        product = _as_text(row.get("Codigo_Produto"))
+        revision = _as_text(row.get("Revisao"))
+        if not product:
+            continue
+        indexed.add((product, revision, _as_text(row.get("Operacao"))))
+    return indexed
+
+
+def _tem_inspecao_cadastrada(
+    specs_by_product_rev_oper: set[tuple[str, str, str]],
+    *,
+    product: str,
+    revision: str,
+    operacao: str,
+) -> bool:
+    if not product:
+        return False
+    return (product, revision, operacao) in specs_by_product_rev_oper or (
+        product,
+        revision,
+        "",
+    ) in specs_by_product_rev_oper
+
+
+def _is_auditoria_pendente(row: dict) -> bool:
+    """Pendente = operador não inspecionou e havia inspeção exigível (cadastro ou QPR)."""
+    if row.get("Operador_Inspecionou"):
+        return False
+    return bool(
+        row.get("Tem_Inspecao_Amarrada") or row.get("Tem_Inspecao_Na_Op_Operacao")
+    )
+
+
+def _auditoria_status_key(row: dict) -> str:
+    if row.get("Operador_Inspecionou"):
+        return "inspecionou"
+    if _is_auditoria_pendente(row):
+        return "nao_inspecionou"
+    return "sem_cadastro"
+
+
+def _filter_auditoria_by_status(
+    rows: list[dict],
+    status: str | None,
+) -> list[dict]:
+    normalized = str(status or "all").strip().lower()
+    if not normalized or normalized == "all":
+        return rows
+    return [row for row in rows if _auditoria_status_key(row) == normalized]
+
+
+def _auditoria_sort_bucket(row: dict) -> int:
+    if row.get("Operador_Inspecionou"):
+        return 2
+    if _is_auditoria_pendente(row):
+        return 0
+    return 1
+
+
 def _mark_auditoria_rows(
     rows: list[dict],
     *,
     ensaiador_by_matricula: dict[str, dict[str, str]],
     qpr_by_op_oper: dict[tuple[str, str], set[str]],
+    qpk_by_op: dict[str, dict[str, str]] | None = None,
+    specs_by_product_rev_oper: set[tuple[str, str, str]] | None = None,
 ) -> list[dict]:
+    specs = specs_by_product_rev_oper or set()
+    qpk_map = qpk_by_op or {}
     marked: list[dict] = []
     for row in rows:
         op = _as_text(row.get("Ordem_Producao"))
@@ -127,6 +213,19 @@ def _mark_auditoria_rows(
         nome = _as_text(row.get("Nome_Operador")).upper()
         matriculas = qpr_by_op_oper.get((op, operacao), set())
         tem_inspecao = 1 if matriculas else 0
+        qpk = qpk_map.get(op)
+        tem_cadastro = 0
+        if qpk is not None:
+            tem_cadastro = (
+                1
+                if _tem_inspecao_cadastrada(
+                    specs,
+                    product=qpk["product"],
+                    revision=qpk["revision"],
+                    operacao=operacao,
+                )
+                else 0
+            )
         operador_inspecionou = 0
         for matricula in matriculas:
             identity = ensaiador_by_matricula.get(matricula)
@@ -144,14 +243,15 @@ def _mark_auditoria_rows(
                 "Operador_Inspecionou": operador_inspecionou,
                 "Tem_Inspecao_Na_Op_Operacao": tem_inspecao,
                 "Tem_Inspecao_Executada": operador_inspecionou,
-                "Tem_Inspecao_Amarrada": 0,
+                "Tem_Inspecao_Amarrada": tem_cadastro,
             }
         )
     return marked
 
 
 def _summarize_auditoria_rows(rows: list[dict]) -> dict:
-    pendentes = [row for row in rows if not row.get("Operador_Inspecionou")]
+    pendentes = [row for row in rows if _is_auditoria_pendente(row)]
+    com_inspecao = [row for row in rows if row.get("Operador_Inspecionou")]
     operadores = {
         _as_text(row.get("Cod_Operador"))
         for row in pendentes
@@ -165,7 +265,7 @@ def _summarize_auditoria_rows(rows: list[dict]) -> dict:
         "Operadores_Pendentes": len(operadores),
         "Apontamentos_Pendentes": len(pendentes),
         "Ops_Operacoes_Pendentes": len(ops_ops),
-        "Apontamentos_Com_Inspecao": len(rows) - len(pendentes),
+        "Apontamentos_Com_Inspecao": len(com_inspecao),
         "Apontamentos_Total": len(rows),
     }
 
@@ -815,6 +915,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
         data: str,
         offset: int,
         fetch_next: int,
+        status: str | None = None,
     ) -> tuple[dict, list[dict]]:
         safe_offset = max(int(offset), 0)
         safe_fetch = max(int(fetch_next), 1)
@@ -852,6 +953,7 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
                 }
             )
             qpr_rows: list[dict] = []
+            qpk_rows: list[dict] = []
             if ops:
                 # Lotear para não estourar limite de parâmetros do ODBC.
                 chunk_size = 40
@@ -860,24 +962,56 @@ class InspecoesProcessoRepository(BaseRepository, InspecoesProcessoRepositoryPor
                     sql, branch_params = build_qpr_for_ops_sql(len(chunk), branch)
                     params = (*branch_params, *[f"{op}%" for op in chunk])
                     qpr_rows.extend(self.execute_query(sql, params))
+                    qpk_sql, qpk_branch_params = build_qpk_for_ops_sql(
+                        len(chunk), branch
+                    )
+                    qpk_params = (*qpk_branch_params, *[f"{op}%" for op in chunk])
+                    qpk_rows.extend(self.execute_query(qpk_sql, qpk_params))
+
+            qpk_by_op = _index_qpk_rows(qpk_rows)
+            revision_pairs = sorted(
+                {
+                    (meta["product"], meta["revision"])
+                    for meta in qpk_by_op.values()
+                    if meta.get("product")
+                }
+            )
+            spec_rows: list[dict] = []
+            if revision_pairs:
+                chunk_size = 20
+                for start in range(0, len(revision_pairs), chunk_size):
+                    chunk = revision_pairs[start : start + chunk_size]
+                    sql = build_inspecao_cadastrada_for_product_revisions_sql(
+                        len(chunk)
+                    )
+                    params: list[str] = []
+                    for product, revision in chunk:
+                        params.extend([product, revision])
+                    # QP7 e QP8 usam o mesmo conjunto de pares.
+                    params = params + params
+                    spec_rows.extend(self.execute_query(sql, tuple(params)))
 
         aggregated = _aggregate_auditoria_apontamentos(raw_rows)
         ensaiador_by_matricula = _index_ensaiador_map(ensaiador_rows)
         qpr_by_op_oper = _index_qpr_rows(qpr_rows)
+        specs_by_product_rev_oper = _index_inspecao_cadastrada_rows(spec_rows)
         marked = _mark_auditoria_rows(
             aggregated,
             ensaiador_by_matricula=ensaiador_by_matricula,
             qpr_by_op_oper=qpr_by_op_oper,
+            qpk_by_op=qpk_by_op,
+            specs_by_product_rev_oper=specs_by_product_rev_oper,
         )
         summary = _summarize_auditoria_rows(marked)
-        marked.sort(
+        filtered = _filter_auditoria_by_status(marked, status)
+        filtered.sort(
             key=lambda row: (
-                0 if not row.get("Operador_Inspecionou") else 1,
+                _auditoria_sort_bucket(row),
                 str(row.get("Nome_Operador") or ""),
                 str(row.get("Cod_Operador") or ""),
                 str(row.get("Ordem_Producao") or ""),
                 str(row.get("Operacao") or ""),
             )
         )
-        page = marked[safe_offset : safe_offset + safe_fetch]
+        page = filtered[safe_offset : safe_offset + safe_fetch]
         return summary, page

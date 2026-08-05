@@ -92,6 +92,67 @@ WHERE QPR.D_E_L_E_T_ = ''
     return sql, branch_params
 
 
+def build_qpk_for_ops_sql(op_count: int, branch: str = "01") -> tuple[str, list]:
+    """Params: branch params (0–1) + one LIKE param per OP.
+
+    Cabeçalho de inspeção da OP (QPK): produto e revisão efetivamente amarrados.
+    """
+    if op_count < 1:
+        raise ValueError("op_count must be >= 1")
+    branch_pred, branch_params = _branch_pred("QPK.QPK_FILIAL", branch)
+    likes = " OR ".join(["QPK.QPK_OP LIKE ?" for _ in range(op_count)])
+    sql = f"""
+SELECT
+    RTRIM(QPK.QPK_OP) AS Ordem_Producao,
+    RTRIM(QPK.QPK_PRODUT) AS Codigo_Produto,
+    RTRIM(ISNULL(QPK.QPK_REVI, '')) AS Revisao
+FROM dbo.QPK010 QPK WITH (NOLOCK)
+WHERE QPK.D_E_L_E_T_ = ''
+  AND {branch_pred}
+  AND ({likes})
+"""
+    return sql, branch_params
+
+
+def build_inspecao_cadastrada_for_product_revisions_sql(pair_count: int) -> str:
+    """Params: (produto, revisão) × pair_count — especificação QP7/QP8 da revisão da OP.
+
+    Não usa MAX(QP6_REVI): a OP carrega a revisão em QPK_REVI. Operação vazia no
+    cadastro vale para qualquer operação daquela revisão.
+    """
+    if pair_count < 1:
+        raise ValueError("pair_count must be >= 1")
+    pair_pred = " OR ".join(
+        [
+            "(RTRIM(QP7.QP7_PRODUT) = ? AND QP7.QP7_REVI = ?)"
+            for _ in range(pair_count)
+        ]
+    )
+    pair_pred_qp8 = " OR ".join(
+        [
+            "(RTRIM(QP8.QP8_PRODUT) = ? AND QP8.QP8_REVI = ?)"
+            for _ in range(pair_count)
+        ]
+    )
+    return f"""
+SELECT DISTINCT
+    RTRIM(QP7.QP7_PRODUT) AS Codigo_Produto,
+    RTRIM(ISNULL(QP7.QP7_REVI, '')) AS Revisao,
+    RTRIM(ISNULL(QP7.QP7_OPERAC, '')) AS Operacao
+FROM dbo.QP7010 QP7 WITH (NOLOCK)
+WHERE QP7.D_E_L_E_T_ = ''
+  AND ({pair_pred})
+UNION
+SELECT DISTINCT
+    RTRIM(QP8.QP8_PRODUT) AS Codigo_Produto,
+    RTRIM(ISNULL(QP8.QP8_REVI, '')) AS Revisao,
+    RTRIM(ISNULL(QP8.QP8_OPERAC, '')) AS Operacao
+FROM dbo.QP8010 QP8 WITH (NOLOCK)
+WHERE QP8.D_E_L_E_T_ = ''
+  AND ({pair_pred_qp8})
+"""
+
+
 # Compat: templates emblemáticos para testes de sanidade (branch = 01).
 _AUDITORIA_BASE_01, _ = build_auditoria_apontamentos_base_sql("01")
 _AUDITORIA_ENSAIADOR_01, _ = build_auditoria_ensaiador_map_sql("01")

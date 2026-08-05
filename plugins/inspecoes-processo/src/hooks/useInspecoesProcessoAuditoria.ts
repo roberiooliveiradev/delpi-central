@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { getAuditoriaApontamentos } from "../api/inspecoesProcessoApi";
+import {
+  AUDITORIA_DEFAULT_STATUS,
+  type AuditoriaInspecaoStatus,
+} from "../constants/auditoriaStatus";
 import type {
   InspecoesProcessoAuditoriaApontamentoItem,
   InspecoesProcessoAuditoriaApontamentosSummary,
@@ -35,6 +39,8 @@ function clampPageSize(value: number): number {
 type UseInspecoesProcessoAuditoriaResult = {
   data: string;
   setData: (value: string) => void;
+  status: AuditoriaInspecaoStatus;
+  setStatus: (value: AuditoriaInspecaoStatus) => void;
   page: number;
   pageSize: number;
   setPage: (page: number) => void;
@@ -53,6 +59,9 @@ export function useInspecoesProcessoAuditoria(
   refreshToken = 0,
 ): UseInspecoesProcessoAuditoriaResult {
   const [data, setDataState] = useState(todayIso);
+  const [status, setStatusState] = useState<AuditoriaInspecaoStatus>(
+    AUDITORIA_DEFAULT_STATUS,
+  );
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(AUDITORIA_DEFAULT_PAGE_SIZE);
   const [reloadKey, setReloadKey] = useState(0);
@@ -67,6 +76,11 @@ export function useInspecoesProcessoAuditoria(
 
   const setData = useCallback((value: string) => {
     setDataState(value);
+    setPageState(1);
+  }, []);
+
+  const setStatus = useCallback((value: AuditoriaInspecaoStatus) => {
+    setStatusState(value);
     setPageState(1);
   }, []);
 
@@ -87,6 +101,7 @@ export function useInspecoesProcessoAuditoria(
   if (branch !== trackedBranch) {
     setTrackedBranch(branch);
     setDataState(todayIso());
+    setStatusState(AUDITORIA_DEFAULT_STATUS);
     setPageState(1);
     setItems([]);
     setSummary(EMPTY_SUMMARY);
@@ -105,6 +120,7 @@ export function useInspecoesProcessoAuditoria(
         const response = await getAuditoriaApontamentos({
           branch,
           data,
+          inspecao_status: status,
           page,
           page_size: clampPageSize(pageSize),
           signal: controller.signal,
@@ -140,11 +156,13 @@ export function useInspecoesProcessoAuditoria(
       cancelled = true;
       controller.abort();
     };
-  }, [branch, data, page, pageSize, reloadKey, refreshToken]);
+  }, [branch, data, status, page, pageSize, reloadKey, refreshToken]);
 
   return {
     data,
     setData,
+    status,
+    setStatus,
     page,
     pageSize,
     setPage,

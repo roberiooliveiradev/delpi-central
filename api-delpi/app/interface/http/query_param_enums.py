@@ -631,3 +631,23 @@ def PAC_PLAN_STATUS_QUERY():
     pattern=_enum_pattern(PAC_PLAN_STATUS_VALUES),
     enum=list(PAC_PLAN_STATUS_VALUES),
 )
+
+
+INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES = (
+    "all",
+    "nao_inspecionou",
+    "inspecionou",
+    "sem_cadastro",
+)
+
+
+def INSPECOES_PROCESSO_AUDITORIA_STATUS_QUERY():
+    return Query(
+        "all",
+        description=(
+            "Inspection audit status filter: all, nao_inspecionou, "
+            "inspecionou or sem_cadastro."
+        ),
+        pattern=_enum_pattern(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
+        enum=list(INSPECOES_PROCESSO_AUDITORIA_STATUS_VALUES),
+    )

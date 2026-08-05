@@ -37,11 +37,12 @@ Abas (query):
 
 ### Auditoria
 
-Lista **todos** os apontamentos produtivos do dia e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador).
+Lista apontamentos produtivos do dia e confronta se o **mesmo operador** inspecionou a mesma OP+operação no QIP (`QPR_ENSR` → login via ranking por ensaiador). Também distingue OP/operação **sem inspeção amarrada** (QPK + QP7/QP8 na revisão `QPK_REVI`).
 
 - Filtro de data (default: hoje)
-- KPIs: total no dia, pendentes, operadores pendentes, OK
-- Status: inspecionou / pendente (outra pessoa) / pendente (sem inspeção)
+- Filtro de status (default UI: **Não inspecionou**; opções: Todos / Não inspecionou / Inspecionou / Sem cadastro)
+- KPIs: total no dia, pendentes (só quando havia inspeção exigível), operadores pendentes, OK — sempre do dia completo
+- Status: inspecionou / não inspecionou / não possui inspeção cadastrada
 
 Regra detalhada: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
 

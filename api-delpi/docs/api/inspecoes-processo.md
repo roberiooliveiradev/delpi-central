@@ -62,34 +62,35 @@ Sem OP nem produto a API rejeita a busca (evita full scan no TOTVS). A UI exibe 
 |---|---|---|
 | `branch` | não | `all` \| `01` \| `02` |
 | `data` | não | Data de produção `YYYY-MM-DD` (default: hoje) |
+| `inspecao_status` | não | `all` \| `nao_inspecionou` \| `inspecionou` \| `sem_cadastro` (default API: `all`; UI inicia em `nao_inspecionou`) |
 | `page` | não | Página (≥ 1, default 1) |
 | `page_size` | não | 1–100 (default 50) |
 
 **`meta.operationId`:** `get_inspecoes_processo_auditoria_apontamentos`  
 **`meta.entity`:** `inspecoes_processo_auditoria_apontamentos`
 
-**Regra:** lista apontamentos do dia (`vw_Apontamentos_Eficiencia`) e confronta se o **mesmo operador** lançou ensaio em `QPR010` para a mesma OP+operação (matrícula `QPR_ENSR` → login via view por ensaiador).
+**Regra:** lista apontamentos do dia (`vw_Apontamentos_Eficiencia`) e confronta se o **mesmo operador** lançou ensaio em `QPR010` para a mesma OP+operação (matrícula `QPR_ENSR` → login via view por ensaiador). Também verifica se a OP tem inspeção amarrada (`QPK010`) com especificação QP7/QP8 **na revisão `QPK_REVI`** para aquela operação — sem isso, o status é «sem inspeção cadastrada» e a linha **não** entra em `apontamentos_pendentes`.
 
 **Campos `data`:**
 
 | Campo | Descrição |
 |---|---|
 | `summary.apontamentos_total` | Linhas agregadas no dia (operador + OP + operação) |
-| `summary.operadores_pendentes` | Operadores distintos sem inspeção própria |
-| `summary.apontamentos_pendentes` | Linhas em que o mesmo operador não inspecionou |
+| `summary.operadores_pendentes` | Operadores distintos com pendência real (havia inspeção exigível) |
+| `summary.apontamentos_pendentes` | Linhas em que o mesmo operador não inspecionou **e** havia cadastro/QPR |
 | `summary.ops_operacoes_pendentes` | Pares OP+operação com pelo menos uma pendência |
 | `summary.apontamentos_com_inspecao` | Linhas em que o mesmo operador inspecionou |
-| `items[]` | Apontamentos do dia (pendências primeiro) |
+| `items[]` | Apontamentos do dia (filtrados por `inspecao_status`; pendências primeiro quando `all`) |
 | `data` | Data efetiva da consulta |
 | `page` / `page_size` / `has_next` | Paginação |
 
-Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`.
+Campos principais de cada item: `cod_operador`, `login_operador`, `nome_operador`, `op`, `produto`, `operacao`, `centro_trabalho`, `hora_inicio`, `hora_final`, `qtd_apontamentos`, `operador_inspecionou`, `tem_inspecao_na_op_operacao`, `tem_inspecao_amarrada` (especificação QP7/QP8 cadastrada).
 
 ### Exemplo
 
 ```bash
 curl -s -H "Authorization: Bearer $TOKEN" \
      -H "X-Delpi-Caller-App: inspecoes-processo" \
-     "http://localhost/apps/api-delpi/inspecoes-processo/auditoria-apontamentos?branch=01&data=2026-07-13" \
+     "http://localhost/apps/api-delpi/inspecoes-processo/auditoria-apontamentos?branch=01&data=2026-07-13&inspecao_status=nao_inspecionou" \
   | jq '.meta.operationId, .data.summary, .data.items[0]'
 ```
