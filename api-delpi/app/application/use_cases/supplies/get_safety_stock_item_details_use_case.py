@@ -12,6 +12,7 @@ from app.domain.services.supplies.safety_stock_consumption_analysis_service impo
 from app.domain.services.supplies.safety_stock_purchase_coverage_service import (
     build_purchase_coverage,
     enrich_open_purchase_orders,
+    enrich_open_purchase_requests,
 )
 from app.domain.services.supplies.safety_stock_stock_projection_service import (
     build_collection_block,
@@ -51,6 +52,15 @@ class GetSafetyStockItemDetailsUseCase:
             deficit_quantity=float(detail.get("deficit_quantity") or 0),
             enriched_orders=enriched_orders,
             coverage_totals=coverage_totals,
+        )
+
+        purchase_requests = self._repository.fetch_open_purchase_requests(
+            branch=request.branch,
+            product_code=request.product_code,
+        )
+        enriched_requests = enrich_open_purchase_requests(
+            requests=purchase_requests,
+            **unit_kwargs,
         )
 
         commitments = self._repository.fetch_open_commitments(
@@ -176,6 +186,7 @@ class GetSafetyStockItemDetailsUseCase:
             "peer_branch_stock": peer_branch_stock,
             "purchase_coverage": coverage,
             "open_purchase_orders": build_collection_block(enriched_orders),
+            "open_purchase_requests": build_collection_block(enriched_requests),
             "open_commitments": build_collection_block(
                 enriched_commitments,
                 summary=open_commitments_summary,

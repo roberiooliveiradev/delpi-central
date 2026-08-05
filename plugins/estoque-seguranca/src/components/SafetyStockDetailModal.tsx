@@ -40,6 +40,7 @@ import {
 } from "./SafetyStockLinkedSuppliersSection";
 import { SafetyStockSupplierPriceHistoryPanel } from "./SafetyStockSupplierPriceHistoryPanel";
 import { ProductConsumptionChartsSection } from "./ProductConsumptionChartsSection";
+import { SafetyStockOpenPurchaseRequestsToggle } from "./SafetyStockOpenPurchaseRequestsToggle";
 import { SectionError } from "./SectionError";
 
 const Modal = createModalShell({
@@ -147,6 +148,7 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
   const projection = data?.stock_projection;
   const projectionSummary = projection?.summary;
   const ledger = projection?.items ?? [];
+  const openRequests = data?.open_purchase_requests?.items ?? [];
   const linkedSuppliers = suppliersData?.items ?? [];
   const selectedSupplierKey = selectedSupplier ? supplierRowKey(selectedSupplier) : null;
 
@@ -390,6 +392,7 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
                 emptyMessage="Nenhum movimento projetado."
               />
             )}
+            <SafetyStockOpenPurchaseRequestsToggle requests={openRequests} />
           </section>
 
           <SafetyStockLinkedSuppliersSection

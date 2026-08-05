@@ -45,6 +45,7 @@ __all__ = [
     "materials_base_cte",
     "open_commitments_sql",
     "open_purchase_orders_sql",
+    "open_purchase_requests_sql",
     "compute_open_purchase_order_item_value",
     "compute_open_purchase_order_item_components",
     "materials_for_projection_batch_sql",
@@ -435,6 +436,68 @@ def open_purchase_orders_sql(
         SC7.C7_DATPRF ASC,
         SC7.C7_NUM ASC,
         SC7.C7_ITEM ASC
+    """
+    return sql, params
+
+
+def open_purchase_requests_sql(
+    *,
+    branch: str,
+    product_param: str | None = "?",
+) -> tuple[str, list]:
+    """Solicitações de compra em aberto (SC1) por filial (+ produto opcional).
+
+    Saldo aberto: ``C1_QUANT > C1_QUJE`` e residual diferente de ``S``.
+    Informativo no detalhe — **não** entra na projeção (evita doble-conta com SC7).
+    """
+    product_clause = ""
+    if product_param is not None:
+        product_clause = f"AND RTRIM(SC1.C1_PRODUTO) = {product_param}"
+    and_sql, params = branch_filter_and("RTRIM(SC1.C1_FILIAL)", branch)
+    sql = f"""
+    SELECT
+        RTRIM(SC1.C1_FILIAL) AS branch,
+        RTRIM(SC1.C1_NUM) AS request_number,
+        RTRIM(SC1.C1_ITEM) AS request_item,
+        RTRIM(SC1.C1_PRODUTO) AS product_code,
+        RTRIM(COALESCE(SB1.B1_DESC, SC1.C1_DESCRI, '')) AS product_description,
+        RTRIM(ISNULL(SC1.C1_LOCAL, '')) AS warehouse,
+        RTRIM(ISNULL(SC1.C1_UM, '')) AS unit,
+        CAST(ISNULL(SC1.C1_QUANT, 0) AS FLOAT) AS requested_quantity,
+        CAST(ISNULL(SC1.C1_QUJE, 0) AS FLOAT) AS ordered_quantity,
+        CAST(
+            CASE
+                WHEN SC1.C1_QUANT > SC1.C1_QUJE
+                THEN SC1.C1_QUANT - SC1.C1_QUJE
+                ELSE 0
+            END AS FLOAT
+        ) AS open_quantity,
+        RTRIM(SC1.C1_EMISSAO) AS issue_date,
+        RTRIM(SC1.C1_DATPRF) AS required_date,
+        RTRIM(ISNULL(SC1.C1_FORNECE, '')) AS supplier_code,
+        RTRIM(ISNULL(SC1.C1_LOJA, '')) AS supplier_store,
+        RTRIM(COALESCE(SA2.A2_NREDUZ, SA2.A2_NOME, '')) AS supplier_name,
+        RTRIM(ISNULL(SC1.C1_PEDIDO, '')) AS purchase_order_number,
+        CAST(ISNULL(SC1.C1_PRECO, 0) AS FLOAT) AS unit_price,
+        CAST(ISNULL(SC1.C1_TOTAL, 0) AS FLOAT) AS total_value
+    FROM SC1010 SC1 WITH (NOLOCK)
+    LEFT JOIN SB1010 SB1 WITH (NOLOCK)
+        ON SB1.B1_COD = SC1.C1_PRODUTO
+       AND SB1.D_E_L_E_T_ = ''
+    LEFT JOIN SA2010 SA2 WITH (NOLOCK)
+        ON SA2.A2_COD = SC1.C1_FORNECE
+       AND SA2.A2_LOJA = SC1.C1_LOJA
+       AND SA2.D_E_L_E_T_ = ''
+    WHERE SC1.D_E_L_E_T_ = ''
+      AND ISNULL(SC1.C1_RESIDUO, '') <> 'S'
+      AND SC1.C1_QUANT > SC1.C1_QUJE
+      {and_sql}
+      {product_clause}
+    ORDER BY
+        CASE WHEN RTRIM(SC1.C1_DATPRF) = '' THEN 1 ELSE 0 END,
+        SC1.C1_DATPRF ASC,
+        SC1.C1_NUM ASC,
+        SC1.C1_ITEM ASC
     """
     return sql, params
 

@@ -27,6 +27,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     materials_for_projection_batch_sql,
     open_commitments_sql,
     open_purchase_orders_sql,
+    open_purchase_requests_sql,
     product_detail_sql,
     resolve_order_by,
     stock_agg_cte,
@@ -285,6 +286,18 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           rows = repo.execute_query(sql, params + [code])
       return [self._map_open_purchase_order(row) for row in rows]
 
+  def fetch_open_purchase_requests(
+      self,
+      *,
+      branch: str,
+      product_code: str,
+  ) -> list[dict[str, Any]]:
+      code = product_code.strip()
+      sql, params = open_purchase_requests_sql(branch=branch)
+      with self as repo:
+          rows = repo.execute_query(sql, params + [code])
+      return [self._map_open_purchase_request(row) for row in rows]
+
   def fetch_open_commitments(
       self,
       *,
@@ -538,6 +551,29 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           "open_freight_value": float(row.get("open_freight_value") or 0),
           "open_discount_value": float(row.get("open_discount_value") or 0),
           "open_value": float(row.get("open_value") or 0),
+      }
+
+  @classmethod
+  def _map_open_purchase_request(cls, row: dict[str, Any]) -> dict[str, Any]:
+      return {
+          "branch": str(row.get("branch") or "").strip(),
+          "request_number": str(row.get("request_number") or "").strip(),
+          "request_item": str(row.get("request_item") or "").strip(),
+          "product_code": str(row.get("product_code") or "").strip(),
+          "product_description": str(row.get("product_description") or "").strip(),
+          "warehouse": str(row.get("warehouse") or "").strip(),
+          "unit": str(row.get("unit") or "").strip(),
+          "requested_quantity": float(row.get("requested_quantity") or 0),
+          "ordered_quantity": float(row.get("ordered_quantity") or 0),
+          "open_quantity": float(row.get("open_quantity") or 0),
+          "issue_date": cls._format_protheus_date(row.get("issue_date")),
+          "required_date": cls._format_protheus_date(row.get("required_date")),
+          "supplier_code": str(row.get("supplier_code") or "").strip(),
+          "supplier_store": str(row.get("supplier_store") or "").strip(),
+          "supplier_name": str(row.get("supplier_name") or "").strip(),
+          "purchase_order_number": str(row.get("purchase_order_number") or "").strip(),
+          "unit_price": float(row.get("unit_price") or 0),
+          "total_value": float(row.get("total_value") or 0),
       }
 
   @classmethod

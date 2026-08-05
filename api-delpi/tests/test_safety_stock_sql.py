@@ -150,6 +150,21 @@ def test_work_in_process_warehouses_include_99() -> None:
     assert "warehouse_99_stock" in sql
 
 
+def test_open_purchase_requests_sql_filters_residue_and_open_balance() -> None:
+    from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
+        open_purchase_requests_sql,
+    )
+
+    sql, params = open_purchase_requests_sql(branch="01")
+    assert "SC1010" in sql
+    assert "C1_RESIDUO" in sql
+    assert "C1_QUANT > SC1.C1_QUJE" in sql
+    assert "C1_PRODUTO) =" in sql
+    assert "request_number" in sql
+    assert "purchase_order_number" in sql
+    assert params == ["01"]
+
+
 def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
     sql, _ = open_purchase_orders_sql(branch='01')
     assert "SC7010" in sql

@@ -140,6 +140,34 @@ const detailsPayload = {
     ],
     total: 1,
   },
+  open_purchase_requests: {
+    items: [
+      {
+        branch: "01",
+        request_number: "SC100",
+        request_item: "01",
+        product_code: "10010005",
+        product_description: "PARAFUSO TESTE",
+        warehouse: "01",
+        unit: "PC",
+        requested_quantity: 15,
+        ordered_quantity: 0,
+        open_quantity: 15,
+        open_quantity_primary_unit: 15,
+        issue_date: "2026-07-05",
+        required_date: "2026-08-01",
+        supplier_code: "F1",
+        supplier_store: "01",
+        supplier_name: "Fornecedor Teste",
+        purchase_order_number: "",
+        unit_price: 1,
+        total_value: 15,
+        unit_compatible: true,
+        unit_conversion_reason: null,
+      },
+    ],
+    total: 1,
+  },
   open_commitments: {
     items: [
       {
@@ -467,6 +495,17 @@ describe("SafetyStockPage", () => {
       expect(screen.getByText("OP150")).toBeTruthy();
       expect(screen.queryByText("Empenhos em aberto (SD4)")).toBeNull();
       expect(screen.queryByText("Pedidos de compra em aberto")).toBeNull();
+      expect(screen.queryByRole("button", { name: /Ver pedidos de compra/ })).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Ver solicitações de compra (1)" }),
+      ).toBeTruthy();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Ver solicitações de compra (1)" }),
+      );
+      expect(
+        screen.getByRole("region", { name: "Solicitações de compra em aberto" }),
+      ).toBeTruthy();
+      expect(screen.getByText("SC100/01")).toBeTruthy();
       expect(screen.queryByLabelText("Filtrar extrato por armazém")).toBeNull();
       expect(screen.queryByText(/Extrato consolidado dos armazéns/)).toBeNull();
       expect(document.querySelector(".ess-detail__flow--positive")).toBeTruthy();

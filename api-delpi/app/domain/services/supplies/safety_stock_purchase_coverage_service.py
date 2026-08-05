@@ -125,6 +125,42 @@ def enrich_open_purchase_orders(
     }
 
 
+def enrich_open_purchase_requests(
+    *,
+    requests: list[dict[str, Any]],
+    primary_unit: str | None,
+    secondary_unit: str | None,
+    conversion_factor: float | int | str | None,
+    conversion_type: str | None,
+) -> list[dict[str, Any]]:
+    """Normaliza solicitações SC1 para exibição (não entra na cobertura/projeção)."""
+    enriched: list[dict[str, Any]] = []
+    for raw in requests:
+        unit = str(raw.get("unit") or "").strip()
+        open_qty = float(raw.get("open_quantity") or 0)
+        conversion = convert_quantity_to_primary_unit(
+            quantity=open_qty,
+            source_unit=unit,
+            primary_unit=primary_unit,
+            secondary_unit=secondary_unit,
+            conversion_factor=conversion_factor,
+            conversion_type=conversion_type,
+        )
+        enriched.append(
+            {
+                **raw,
+                "unit": unit,
+                "open_quantity": open_qty,
+                "open_quantity_primary_unit": (
+                    conversion.quantity if conversion.compatible else None
+                ),
+                "unit_compatible": conversion.compatible,
+                "unit_conversion_reason": conversion.reason,
+            }
+        )
+    return enriched
+
+
 def build_purchase_coverage(
     *,
     deficit_quantity: float,

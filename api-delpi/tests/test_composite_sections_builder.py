@@ -34,11 +34,13 @@ def test_build_composite_sections_labels_safety_stock_blocks() -> None:
     sections = build_composite_sections(
         {
             "open_purchase_orders": {"items": [], "total": 0},
+            "open_purchase_requests": {"items": [{"request_number": "SC1"}], "total": 1},
             "open_commitments": {"items": [{"op": "1"}], "total": 1},
             "stock_projection": {"items": [{"seq": 1}, {"seq": 2}], "total": 2},
         },
         section_keys=(
             "open_purchase_orders",
+            "open_purchase_requests",
             "open_commitments",
             "stock_projection",
         ),
@@ -46,7 +48,9 @@ def test_build_composite_sections_labels_safety_stock_blocks() -> None:
 
     assert [section["label"] for section in sections] == [
         "Pedidos de compra em aberto",
+        "Solicitações de compra em aberto",
         "Empenhos em aberto",
         "Extrato projetado de saldo",
     ]
-    assert sections[2]["itemCount"] == 2
+    assert sections[1]["itemCount"] == 1
+    assert sections[3]["itemCount"] == 2

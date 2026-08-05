@@ -698,6 +698,24 @@
   margin: 0 0 10px;
 }
 
+.dashboard-estoque-seguranca .ess-detail__purchase-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dashboard-estoque-seguranca .ess-detail__purchase-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dashboard-estoque-seguranca .ess-detail__purchase-panel {
+  width: 100%;
+}
+
 .dashboard-estoque-seguranca .ess-calc-card {
   margin-top: 12px;
   padding: 14px 16px;
