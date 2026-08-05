@@ -12,18 +12,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("/node_modules/lucide-react/dist/esm/icons/")) {
-            const fileName = id.split("/").pop() ?? "";
-            const first = fileName.charAt(0).toLowerCase();
-
-            if (first >= "a" && first <= "f") return "lucide-icons-a-f";
-            if (first >= "g" && first <= "m") return "lucide-icons-g-m";
-            if (first >= "n" && first <= "s") return "lucide-icons-n-s";
-            return "lucide-icons-t-z";
-          }
-
+          // O barrel do lucide e os módulos de ícone se referenciam
+          // mutuamente: separá-los cria um ciclo entre chunks que quebra a
+          // inicialização do app.
           if (id.includes("/node_modules/lucide-react/")) {
-            return "lucide-core";
+            return "lucide";
           }
 
           if (
