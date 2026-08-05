@@ -28,7 +28,7 @@ from app.interface.http.period_query_params import (
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
-    INSPECTION_RESULT_QUERY,
+    INSPECOES_ENTRADA_HISTORICO_RESULT_QUERY,
 )
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.inspecoes_entrada.inspecoes_entrada_branch_access import (
@@ -252,7 +252,7 @@ def get_inspecoes_entrada_historico_route(
     branch: str | None = BRANCH_QUERY_OPTIONAL(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
-    result: str | None = INSPECTION_RESULT_QUERY(),
+    result: str | None = INSPECOES_ENTRADA_HISTORICO_RESULT_QUERY(),
     start_date: str | None = START_DATE_QUERY(),
     end_date: str | None = END_DATE_QUERY(),
     date_from: str | None = LEGACY_DATE_FROM_QUERY(),

@@ -73,6 +73,7 @@ SCHEDULING_RECURRENCE_VALUES = ("weekly", "monthly")
 GRANULARITY_DAY_WEEK_MONTH_VALUES = ("day", "week", "month")
 GRANULARITY_DAY_MONTH_AUTO_VALUES = ("day", "month", "auto")
 INSPECTION_RESULT_VALUES = ("A", "R", "T")
+INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES = ("APROVADA", "REJEITADA")
 KAIZEN_STATUS_VALUES = (
     "recebido",
     "aprovado",
@@ -443,6 +444,15 @@ def INSPECTION_RESULT_QUERY():
     pattern=_enum_pattern(INSPECTION_RESULT_VALUES),
     enum=list(INSPECTION_RESULT_VALUES),
 )
+
+
+def INSPECOES_ENTRADA_HISTORICO_RESULT_QUERY():
+    return Query(
+        None,
+        description="Inbound inspection history result: APROVADA or REJEITADA.",
+        pattern=_enum_pattern(INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES),
+        enum=list(INSPECOES_ENTRADA_HISTORICO_RESULT_VALUES),
+    )
 def KAIZEN_STATUS_QUERY():
     return Query(
     None,

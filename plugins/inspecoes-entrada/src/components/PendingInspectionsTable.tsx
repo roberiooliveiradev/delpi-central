@@ -1,9 +1,7 @@
-import { dataTableBemClasses } from "@delpi/plugin-ui/index";
 import { IE_STATE_BOX_COMPACT } from "../ui/stateChrome";
 import type { InspecoesEntradaPendente } from "../types/inspecoesEntradaDashboard";
 import { formatDatePt, formatNumber, formatText } from "../utils/format";
-
-const IE_TABLE = dataTableBemClasses("ie");
+import { IE_TABLE } from "./dataTableUi";
 
 type PendingInspectionsTableProps = {
   items: InspecoesEntradaPendente[];
@@ -55,8 +53,8 @@ export function PendingInspectionsTable({
         {total.toLocaleString("pt-BR")} {total === 1 ? "pendência" : "pendências"} aguardando inspeção
       </p>
 
-      <div className={`${IE_TABLE.wrap} ie-table-wrap--pending-scroll`}>
-        <table className="ie-table ie-table--compact">
+      <div className={IE_TABLE.wrapEmbedded}>
+        <table className={IE_TABLE.compactTable}>
           <thead>
             <tr>
               <th>Recebimento</th>
