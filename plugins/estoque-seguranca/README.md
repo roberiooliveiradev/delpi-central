@@ -11,7 +11,7 @@ API: [api-delpi/docs/api/estoque-seguranca.md](../../api-delpi/docs/api/estoque-
 | Camada | Responsabilidade |
 |--------|------------------|
 | **MFE** `estoque-seguranca` | Monitoramento + análise de consumo |
-| **api-delpi** `/supplies/safety-stock/*` | SB1/SBZ/SB2 + SC7 + SD4 + SD3 + SA5/SA2/SD1 |
+| **api-delpi** `/supplies/safety-stock/*` | SB1/SBZ/SB2 + SC7 + SC1 + SD4 + SD3 + SA5/SA2/SD1 |
 | **plugin-ui** | Modal, DataTable, KPI e gráficos |
 
 ```text
@@ -30,7 +30,7 @@ Gateway → /apps/api-delpi/supplies/safety-stock/*
 
 - Filtros por filial, grupo, unidade, situação e busca
 - KPIs e déficit por unidade
-- Modal com projeção SC7/SD4, extrato e fornecedores
+- Modal com projeção SC7/SD4, extrato, botão de solicitações de compra em aberto (SC1) e fornecedores
 
 ### Análise de consumo (`/apps/estoque-seguranca/analise-consumo`)
 
@@ -72,6 +72,7 @@ Base: **`/apps/api-delpi/supplies/safety-stock`**
 - Déficit físico: só saldo 01+98+99 × ESTSEG
 - Empenho: `D4_QUANT` (saldo atual aberto); data no extrato = `C2_DATPRI` da OP do empenho (`D4_OP`)
 - Extrato: saldo inicial hoje → saídas SD4 → entradas SC7, acumulado por data
+- Solicitações SC1 abertas (`C1_QUANT > C1_QUJE`): botão no extrato; **não** entram na projeção
 - Fornecedores: amarração SA5; última compra por `D1_DTDIGIT`
 
 ### Semântica da análise de consumo

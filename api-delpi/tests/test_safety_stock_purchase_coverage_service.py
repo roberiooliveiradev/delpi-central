@@ -7,6 +7,7 @@ from app.domain.services.supplies.safety_stock_purchase_coverage_service import 
     build_purchase_coverage,
     classify_purchase_coverage,
     enrich_open_purchase_orders,
+    enrich_open_purchase_requests,
     remaining_to_buy,
 )
 
@@ -74,3 +75,28 @@ def test_enrich_orders_filters_eligible_warehouses_and_units() -> None:
     assert coverage["status"] == COVERAGE_PARTIAL
     assert coverage["remaining_to_buy"] == 60.0
     assert coverage["next_expected_delivery_date"] == "2026-08-01"
+
+
+def test_enrich_purchase_requests_converts_compatible_units() -> None:
+    enriched = enrich_open_purchase_requests(
+        requests=[
+            {
+                "request_number": "SC1",
+                "unit": "PC",
+                "open_quantity": 8,
+            },
+            {
+                "request_number": "SC2",
+                "unit": "KG",
+                "open_quantity": 3,
+            },
+        ],
+        primary_unit="PC",
+        secondary_unit="CX",
+        conversion_factor=12,
+        conversion_type="M",
+    )
+    assert enriched[0]["open_quantity_primary_unit"] == 8.0
+    assert enriched[0]["unit_compatible"] is True
+    assert enriched[1]["unit_compatible"] is False
+    assert enriched[1]["open_quantity_primary_unit"] is None

@@ -136,11 +136,15 @@ AND SA5010.A5_LOJA = SD1010.D1_LOJA
 | `C1_FORNECE` | `supplier_code` | Fornecedor sugerido |
 | `C1_LOJA` | `supplier_store` | Loja |
 | `C1_QUANT` | `quantity` | Quantidade solicitada |
+| `C1_QUJE` | `ordered_quantity` | Quantidade já convertida em PC |
+| `C1_RESIDUO` | — | Residual (`S` = elimina da lista de abertas) |
 | `C1_PRECO` | `unit_price` | Preço na SC (pode ser 0) |
 | `C1_TOTAL` | `total_value` | Total |
 | `C1_PEDIDO` | `purchase_order` | PC gerado (`SC7010.C7_NUM`) |
 
-> **Validado** jun/2026. `C1_VLDESC` **não existe** no ambiente.
+Saldo em aberto (estoque de segurança / extrato): `D_E_L_E_T_ = ''`, `C1_RESIDUO <> 'S'`, `C1_QUANT > C1_QUJE`.
+
+> **Validado** jun/2026. `C1_VLDESC` **não existe** no ambiente. `C1_QUJE` / residual validados ago/2026 no detalhe ESS.
 
 ---
 
