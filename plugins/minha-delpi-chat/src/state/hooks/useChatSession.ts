@@ -1970,6 +1970,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
           context: activeSession.context ?? "geral",
           attachmentIds: attachmentIds?.filter(Boolean),
           responseMode: getResponseModeRef.current?.() ?? "normal",
+          responseFormat: getPresentationFormatRef.current?.() ?? "auto",
+          hostContext: options.getHostContext?.() ?? undefined,
           ...buildStreamCallbacks(activeSession, null, { refreshOnUserPersisted: true }),
         });
 
@@ -2016,6 +2018,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       loadMessages,
       markSessionPending,
       messages,
+      options.getHostContext,
       resendMessage,
       resetStreamingUi,
       sendMessage,

@@ -260,7 +260,9 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content,
       context,
       responseMode,
+      responseFormat,
       attachmentIds,
+      hostContext,
       onStatus,
       onActivity,
       onSources,
@@ -277,7 +279,9 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
       content: string;
       context?: string;
       responseMode?: ChatResponseModeId;
+      responseFormat?: ChatPresentationFormatId;
       attachmentIds?: string[];
+      hostContext?: SendChatMessagePayload["hostContext"];
       onStatus?: (message: string) => void;
       onActivity?: (entry: ChatStreamActivityEntry) => void;
       onSources?: (sources: ChatSource[]) => void;
@@ -297,7 +301,9 @@ export function useChatStreaming(options: UseChatStreamingOptions = {}) {
             signal,
             context,
             responseMode,
+            responseFormat,
             attachmentIds,
+            hostContext: hostContext ?? undefined,
           }),
         {
           onStatus,

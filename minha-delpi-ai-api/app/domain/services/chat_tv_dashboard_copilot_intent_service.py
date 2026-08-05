@@ -50,6 +50,16 @@ class ChatTvDashboardCopilotIntentService:
         )
 
     @classmethod
+    def copilot_path_failed_message(cls) -> str:
+        return cls._text(
+            "copilotPathFailed",
+            default=(
+                "Falhei ao preparar a alteração no TV Dashboard e nada foi alterado "
+                "na programação."
+            ),
+        )
+
+    @classmethod
     def is_tv_surface(cls, host_context: dict | None) -> bool:
         if not isinstance(host_context, dict):
             return False

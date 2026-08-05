@@ -84,6 +84,7 @@
   "applySelectionReason": "Confirmação do usuário — apply de exclusão destrutiva no TV Dashboard.",
   "toolDescription": "Copiloto do TV Dashboard para patches tipados em dados, slides e programação. Nunca gera Power Query M. Respeita confirmationPolicy do planner BFF: direct aplica no turno; confirm usa preview antes de exclusão destrutiva.",
   "catalogUnavailable": "Catálogo do TV Dashboard indisponível no momento. Não consigo aplicar patches tipados sem o BFF — tente de novo em instantes.",
+  "copilotPathFailed": "Falhei ao preparar a alteração no TV Dashboard: o copiloto do editor não respondeu neste turno. Nada foi alterado na programação — tente de novo em instantes.",
   "directAnswer": {
     "previewSlide": "Prévia pronta: slide «{title}» (preset `{presetKey}`) na playlist.\n\nPara gravar na programação e atualizar o filmstrip, confirme com **pode aplicar** ou **confirmo**.",
     "previewGeneric": "Prévia do patch TV gerada ({opsCount} operação(ões)).\n\nPara gravar na programação, confirme com **pode aplicar** ou **confirmo**.",

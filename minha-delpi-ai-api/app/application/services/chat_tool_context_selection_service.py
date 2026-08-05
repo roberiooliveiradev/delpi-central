@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
@@ -9,11 +10,19 @@ from app.application.services.chat_tool_context_content_service import (
     ChatToolContextContentService,
 )
 from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
+from app.domain.services.chat_host_surface_context_service import (
+    ChatHostSurfaceContextService,
+)
 from app.domain.services.chat_product_query_intent_service import ChatProductQueryIntent
+from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+    ChatTvDashboardCopilotIntentService,
+)
 from app.infrastructure.config.settings import Settings
 
 if TYPE_CHECKING:
     from app.application.services.chat_tool_context_service import ChatToolContextService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -78,6 +87,7 @@ class ChatToolContextSelectionService:
 
         from app.application.services.chat_tv_dashboard_platform_tool_selection_service import (
             ChatTvDashboardPlatformToolSelectionService,
+            TvPlatformToolSelectionResult,
         )
 
         workspace_context = getattr(host, "_build_workspace_context", None)
@@ -87,12 +97,38 @@ class ChatToolContextSelectionService:
         if not isinstance(access_token, str):
             access_token = None
 
-        tv_selection = ChatTvDashboardPlatformToolSelectionService.select(
-            message,
-            workspace_context=workspace_context,
-            previous_messages=previous_messages,
-            access_token=access_token,
-        )
+        try:
+            tv_selection = ChatTvDashboardPlatformToolSelectionService.select(
+                message,
+                workspace_context=workspace_context,
+                previous_messages=previous_messages,
+                access_token=access_token,
+            )
+        except Exception:
+            # Na superfície TV o usuário pediu uma mutação: cair no LLM produz
+            # slide fictício em markdown. Responder o motivo factual.
+            logger.exception("Falha no caminho do copiloto TV Dashboard")
+            tv_selection = TvPlatformToolSelectionResult()
+
+            if ChatHostSurfaceContextService.is_tv_dashboard(
+                ChatHostSurfaceContextService.host_from_workspace(workspace_context)
+            ):
+                return ToolSelectionOutcome(
+                    early_result=host._finalize_tool_context_result(
+                        message=raw_message,
+                        previous_messages=previous_messages,
+                        result={
+                            "context": "",
+                            "toolCalls": [],
+                            "nativeToolCalling": native_meta,
+                            "directAnswer": (
+                                ChatTvDashboardCopilotIntentService.copilot_path_failed_message()
+                            ),
+                            "skipRag": True,
+                            "currentMessage": raw_message,
+                        },
+                    ),
+                )
         if tv_selection.catalog and isinstance(workspace_context, dict):
             workspace_context["tvDashboardCatalog"] = tv_selection.catalog
             host._build_workspace_context = workspace_context

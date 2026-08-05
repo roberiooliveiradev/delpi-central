@@ -13,9 +13,18 @@ from app.application.services.chat_tool_context_format_service import (
     ChatToolContextFormatService,
 )
 from app.domain.entities.tool_result import ToolResult
+from app.domain.services.chat_host_surface_context_service import (
+    ChatHostSurfaceContextService,
+)
 from app.domain.services.chat_platform_internal_tools_service import (
     PLATFORM_INTERNAL_TOOL_NAMES,
     ChatPlatformInternalToolsService,
+)
+from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+    ChatTvDashboardCopilotIntentService,
+)
+from app.domain.services.chat_write_confirmation_service import (
+    ChatWriteConfirmationService,
 )
 from app.infrastructure.config.settings import Settings
 
@@ -151,13 +160,6 @@ class ChatToolContextExecutionService:
                 and action_id
                 and host.external_action_repository
             ):
-                from app.domain.services.chat_write_confirmation_service import (
-                    ChatWriteConfirmationService,
-                )
-                from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
-                    ChatTvDashboardCopilotIntentService,
-                )
-
                 action_bundle = host.external_action_repository.get_action_for_execution(
                     action_id
                 )
@@ -210,13 +212,6 @@ class ChatToolContextExecutionService:
                     continue
 
             if tool_name == "tv_dashboard_copilot":
-                from app.domain.services.chat_host_surface_context_service import (
-                    ChatHostSurfaceContextService,
-                )
-                from app.domain.services.chat_write_confirmation_service import (
-                    ChatWriteConfirmationService,
-                )
-
                 arguments = ChatHostSurfaceContextService.merge_tool_arguments(
                     tool_name,
                     selected_tool.get("arguments") or {},
