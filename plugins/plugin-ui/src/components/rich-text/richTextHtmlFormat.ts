@@ -61,6 +61,37 @@ export function prettyPrintRichTextHtml(html: string): string {
   }
 }
 
+/**
+ * Envolve texto solto de nível raiz em `<p>` para o contentEditable aplicar
+ * negrito/alinhamento com confiabilidade (execCommand exige bloco).
+ */
+export function wrapOrphanRichTextNodes(html: string): string {
+  const raw = (html || "").trim();
+  if (!raw) return "<p></p>";
+  try {
+    const doc = new DOMParser().parseFromString(
+      `<div id="__rt_root">${raw}</div>`,
+      "text/html",
+    );
+    const root = doc.getElementById("__rt_root");
+    if (!root) return raw;
+    for (const node of Array.from(root.childNodes)) {
+      if (node.nodeType !== Node.TEXT_NODE) continue;
+      const text = node.textContent ?? "";
+      if (!text.trim()) {
+        root.removeChild(node);
+        continue;
+      }
+      const p = doc.createElement("p");
+      p.textContent = text;
+      root.replaceChild(p, node);
+    }
+    return root.innerHTML.trim() || "<p></p>";
+  } catch {
+    return raw;
+  }
+}
+
 /** Remove tags perigosas no cliente (defesa em profundidade; servidor permanece canônico). */
 export function stripDangerousRichTextTags(html: string): string {
   const raw = html || "";
@@ -68,10 +99,11 @@ export function stripDangerousRichTextTags(html: string): string {
   try {
     const doc = new DOMParser().parseFromString(raw, "text/html");
     doc.querySelectorAll([...DANGEROUS_TAGS].join(",")).forEach((el) => el.remove());
-    return doc.body.innerHTML || "<p></p>";
+    return wrapOrphanRichTextNodes(doc.body.innerHTML || "<p></p>");
   } catch {
-    return raw
+    const stripped = raw
       .replace(/<(script|style|iframe|object|embed|form)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
       .replace(/<(script|style|iframe|object|embed|form)\b[^>]*\/?>/gi, "");
+    return wrapOrphanRichTextNodes(stripped);
   }
 }

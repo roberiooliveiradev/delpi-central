@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyRichTextFontSize,
+  isRichTextRangeInEditor,
   normalizeRichTextLinkUrl,
+  restoreRichTextSelection,
   unwrapRichTextLink,
 } from "./richTextCommands";
 import { clampRichTextFontSize } from "./richTextConfig";
@@ -163,5 +165,59 @@ describe("unwrapRichTextLink", () => {
 
     expect(wrapper.querySelector("a")).toBeNull();
     expect(wrapper.innerHTML).toBe("antes meio <b>forte</b> depois");
+  });
+});
+
+describe("restoreRichTextSelection", () => {
+  it("detecta Range fora do editor vivo", () => {
+    const editor = document.createElement("div");
+    editor.innerHTML = "<p>vivo</p>";
+    document.body.appendChild(editor);
+
+    const detached = document.createElement("div");
+    detached.innerHTML = "<p>morto</p>";
+    const deadText = detached.querySelector("p")!.firstChild as Text;
+    const deadRange = document.createRange();
+    deadRange.selectNodeContents(deadText);
+
+    expect(isRichTextRangeInEditor(editor, deadRange)).toBe(false);
+
+    const liveText = editor.querySelector("p")!.firstChild as Text;
+    const liveRange = document.createRange();
+    liveRange.setStart(liveText, 0);
+    liveRange.setEnd(liveText, 4);
+    expect(isRichTextRangeInEditor(editor, liveRange)).toBe(true);
+
+    document.body.removeChild(editor);
+  });
+
+  it("com Range morto preserva a seleção viva atual", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>abcdef</p>";
+    document.body.appendChild(editor);
+
+    const liveText = editor.querySelector("p")!.firstChild as Text;
+    const liveRange = document.createRange();
+    liveRange.setStart(liveText, 1);
+    liveRange.setEnd(liveText, 4);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(liveRange);
+
+    const detached = document.createElement("div");
+    detached.innerHTML = "<p>x</p>";
+    const deadRange = document.createRange();
+    deadRange.selectNodeContents(detached.querySelector("p")!.firstChild as Text);
+
+    restoreRichTextSelection(editor, deadRange);
+
+    expect(selection.rangeCount).toBe(1);
+    const restored = selection.getRangeAt(0);
+    expect(restored.startOffset).toBe(1);
+    expect(restored.endOffset).toBe(4);
+    expect(editor.contains(restored.commonAncestorContainer)).toBe(true);
+
+    document.body.removeChild(editor);
   });
 });

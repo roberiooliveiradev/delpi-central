@@ -14,20 +14,57 @@ export function getRichTextSelectionRange(editor: HTMLElement | null): Range | n
   return range.cloneRange();
 }
 
-/** Restaura seleção salva antes de comandos da toolbar (que roubam o foco). */
+/** True se o Range ainda aponta para nós vivos dentro do editor. */
+export function isRichTextRangeInEditor(
+  editor: HTMLElement | null,
+  range: Range | null,
+): boolean {
+  if (!editor || !range) return false;
+  try {
+    return editor.contains(range.commonAncestorContainer);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Restaura seleção salva antes de comandos da toolbar (que roubam o foco).
+ * Se o Range salvo estiver morto (ex.: após remount do contentEditable),
+ * preserva a seleção viva atual — não chama só `focus()` sem seleção.
+ */
 export function restoreRichTextSelection(editor: HTMLElement | null, range: Range | null) {
-  if (!editor || !range) {
+  if (!editor) return;
+  const selection = window.getSelection();
+  if (!selection) {
     focusEditor(editor);
     return;
   }
+
+  const liveBeforeFocus =
+    selection.rangeCount > 0 &&
+    editor.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0).cloneRange()
+      : null;
+
+  if (isRichTextRangeInEditor(editor, range)) {
+    focusEditor(editor);
+    try {
+      selection.removeAllRanges();
+      selection.addRange(range as Range);
+      return;
+    } catch {
+      /* fall through — tenta seleção viva */
+    }
+  }
+
   focusEditor(editor);
-  const selection = window.getSelection();
-  if (!selection) return;
-  try {
-    selection.removeAllRanges();
-    selection.addRange(range);
-  } catch {
-    /* range pode ter ficado inválido após mutação do DOM */
+  if (liveBeforeFocus && isRichTextRangeInEditor(editor, liveBeforeFocus)) {
+    try {
+      selection.removeAllRanges();
+      selection.addRange(liveBeforeFocus);
+    } catch {
+      /* seleção pode ter invalidado no focus */
+    }
   }
 }
 

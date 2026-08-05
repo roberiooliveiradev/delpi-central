@@ -226,56 +226,62 @@ export function RichTextEditor({
           minHeight={minHeight}
           disabled={disabled}
         />
-      ) : (
-        <div
-          ref={ref}
-          className="delpi-ui-rich-text__editor"
-          style={{ minHeight }}
-          contentEditable
-          role="textbox"
-          aria-multiline="true"
-          aria-label={ariaLabel}
-          suppressContentEditableWarning
-          onFocus={() => {
-            focusedRef.current = true;
-          }}
-          onBlur={() => {
-            focusedRef.current = false;
-            setActiveLink(null);
-            emitChange();
-          }}
-          onInput={emitChange}
-          onMouseUp={syncActiveLink}
-          onKeyUp={syncActiveLink}
-          onBeforeInput={(event) => {
-            const inputType = event.nativeEvent.inputType;
-            if (
-              inputType !== "deleteContentBackward" &&
-              inputType !== "deleteContentForward"
-            ) {
-              return;
-            }
-            const editorEl = ref.current;
-            if (!editorEl) return;
-            const direction =
-              inputType === "deleteContentBackward" ? "backward" : "forward";
-            if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
-              event.preventDefault();
-              emitChange();
-              syncActiveLink();
-            }
-          }}
-          onPaste={(event) => {
-            const html = event.clipboardData?.getData("text/html");
-            if (!html || !/<table[\s>]/i.test(html)) return;
-            const normalized = normalizeRichTextPastedHtml(html);
-            if (!normalized) return;
+      ) : null}
+      {/*
+        Mantém o contentEditable montado (só esconde no modo fonte) para não
+        invalidar Ranges da toolbar — remount quebrava negrito/alinhamento.
+      */}
+      <div
+        ref={ref}
+        className="delpi-ui-rich-text__editor"
+        style={{ minHeight, display: sourceMode ? "none" : undefined }}
+        contentEditable={!sourceMode}
+        role="textbox"
+        aria-multiline="true"
+        aria-label={ariaLabel}
+        aria-hidden={sourceMode || undefined}
+        suppressContentEditableWarning
+        onFocus={() => {
+          focusedRef.current = true;
+        }}
+        onBlur={() => {
+          focusedRef.current = false;
+          setActiveLink(null);
+          emitChange();
+        }}
+        onInput={emitChange}
+        onMouseUp={syncActiveLink}
+        onKeyUp={syncActiveLink}
+        onBeforeInput={(event) => {
+          if (sourceMode) return;
+          const inputType = event.nativeEvent.inputType;
+          if (
+            inputType !== "deleteContentBackward" &&
+            inputType !== "deleteContentForward"
+          ) {
+            return;
+          }
+          const editorEl = ref.current;
+          if (!editorEl) return;
+          const direction =
+            inputType === "deleteContentBackward" ? "backward" : "forward";
+          if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
             event.preventDefault();
-            execRichTextCommand("insertHTML", normalized);
             emitChange();
-          }}
-        />
-      )}
+            syncActiveLink();
+          }
+        }}
+        onPaste={(event) => {
+          if (sourceMode) return;
+          const html = event.clipboardData?.getData("text/html");
+          if (!html || !/<table[\s>]/i.test(html)) return;
+          const normalized = normalizeRichTextPastedHtml(html);
+          if (!normalized) return;
+          event.preventDefault();
+          execRichTextCommand("insertHTML", normalized);
+          emitChange();
+        }}
+      />
 
       {!sourceMode && activeLink ? (
         <div

@@ -251,6 +251,43 @@
   }
 }
 
+/* Garante contraste visual de ênfase (hosts podem herdar font-weight neutro). */
+.delpi-ui-rich-text__editor b,
+.delpi-ui-rich-text__editor strong,
+.delpi-ui-rich-text--preview b,
+.delpi-ui-rich-text--preview strong,
+.delpi-ui-document-rich-content b,
+.delpi-ui-document-rich-content strong {
+  font-weight: 700;
+}
+
+.delpi-ui-rich-text__editor i,
+.delpi-ui-rich-text__editor em,
+.delpi-ui-rich-text--preview i,
+.delpi-ui-rich-text--preview em,
+.delpi-ui-document-rich-content i,
+.delpi-ui-document-rich-content em {
+  font-style: italic;
+}
+
+.delpi-ui-rich-text__editor u,
+.delpi-ui-rich-text--preview u,
+.delpi-ui-document-rich-content u {
+  text-decoration: underline;
+}
+
+.delpi-ui-rich-text__editor s,
+.delpi-ui-rich-text__editor strike,
+.delpi-ui-rich-text__editor del,
+.delpi-ui-rich-text--preview s,
+.delpi-ui-rich-text--preview strike,
+.delpi-ui-rich-text--preview del,
+.delpi-ui-document-rich-content s,
+.delpi-ui-document-rich-content strike,
+.delpi-ui-document-rich-content del {
+  text-decoration: line-through;
+}
+
 .delpi-ui-rich-text__editor h2 {
   margin: 0.5em 0;
   font-size: 1.25rem;

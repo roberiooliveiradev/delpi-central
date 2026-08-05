@@ -139,11 +139,18 @@ export function RichTextToolbar({
   }, [editorRef]);
 
   useEffect(() => {
+    if (sourceMode) {
+      savedRangeRef.current = null;
+      return;
+    }
+
     const editor = editorRef.current;
     if (!editor) return;
 
     const persistSelection = () => {
-      const range = getRichTextSelectionRange(editor);
+      const live = editorRef.current;
+      if (!live) return;
+      const range = getRichTextSelectionRange(live);
       if (range) savedRangeRef.current = range;
     };
 
@@ -162,7 +169,7 @@ export function RichTextToolbar({
       editor.removeEventListener("mouseup", handleSelection);
       editor.removeEventListener("focus", handleSelection);
     };
-  }, [editorRef, refreshFormatState]);
+  }, [editorRef, refreshFormatState, sourceMode]);
 
   void formatTick;
 

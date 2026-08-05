@@ -64,4 +64,23 @@ describe("RichTextEditor", () => {
     expect(last).toContain("Editado");
     expect(last.toLowerCase()).not.toContain("<script");
   });
+
+  it("mantém o contentEditable montado ao alternar fonte (preserva formatação)", () => {
+    const { container } = render(
+      <RichTextEditor value="<p>Olá</p>" onChange={() => undefined} />,
+    );
+    const editor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    expect(editor).toBeTruthy();
+    expect(editor.style.display).not.toBe("none");
+
+    fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceHtml));
+    const sameEditor = container.querySelector(".delpi-ui-rich-text__editor") as HTMLElement;
+    expect(sameEditor).toBe(editor);
+    expect(sameEditor.style.display).toBe("none");
+    expect(sameEditor.getAttribute("contenteditable")).toBe("false");
+
+    fireEvent.click(toolbarButton(RICH_TEXT_LABELS.sourceVisual));
+    expect(editor.style.display).not.toBe("none");
+    expect(editor.getAttribute("contenteditable")).toBe("true");
+  });
 });

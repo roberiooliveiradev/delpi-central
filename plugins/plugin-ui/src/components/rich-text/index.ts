@@ -7,7 +7,11 @@ export {
   RICH_TEXT_FONT_SIZE_DEFAULT,
   RICH_TEXT_FONT_SIZE_PRESETS,
 } from "./richTextConfig";
-export { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
+export {
+  prettyPrintRichTextHtml,
+  stripDangerousRichTextTags,
+  wrapOrphanRichTextNodes,
+} from "./richTextHtmlFormat";
 export {
   applyRichTextHtmlAutoClose,
   applyRichTextSourceSuggestion,
