@@ -14,6 +14,7 @@ import {
 } from "../StatsEnrichment";
 import { PanelNav, StatsPageIntro, type StatsPageProps } from "../StatsShared";
 import { STATS_CHART_COLORS } from "../statsTheme";
+import { Button } from "../../../../ui-kit";
 
 import type { StatsChartsData } from "../useAdminStats";
 
@@ -150,14 +151,14 @@ export function StatsUsersPage({
             Acompanhe quem está explorando, quem concluiu e o ranking semanal de
             desafios na aba dedicada.
           </p>
-          <button
-            type="button"
+          <Button
+            size="sm"
             className="admin-stats__panel-link"
             onClick={() => onNavigateStatsSubPage("tour")}
           >
             Abrir acompanhamento
             <ArrowRight size={14} aria-hidden="true" />
-          </button>
+          </Button>
         </section>
       ) : null}
     </div>

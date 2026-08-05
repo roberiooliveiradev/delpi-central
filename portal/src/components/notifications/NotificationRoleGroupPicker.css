@@ -50,15 +50,6 @@
   border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
 }
 
-.notification-rg-picker__checkbox {
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  accent-color: var(--primary);
-  cursor: pointer;
-}
-
 .notification-rg-picker__label-text {
   flex: 1;
   min-width: 0;
@@ -145,23 +136,7 @@
 }
 
 .notification-rg-picker__user-remove {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   flex-shrink: 0;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface);
-  font-size: 12px;
-  font-weight: 600;
-  color: #b45309;
-  cursor: pointer;
-}
-
-.notification-rg-picker__user-remove:hover:not(:disabled) {
-  border-color: color-mix(in srgb, #b45309 45%, var(--border));
-  background: color-mix(in srgb, #b45309 8%, var(--surface));
 }
 
 .notification-rg-picker__excluded {
@@ -205,28 +180,8 @@
   color: var(--text-muted);
 }
 
-.notification-rg-picker__excluded-list button {
-  border: none;
-  background: transparent;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.notification-rg-picker__excluded-list button:hover:not(:disabled) {
-  text-decoration: underline;
-}
-
-.notification-rg-picker__empty,
-.notification-rg-picker__loading {
+.notification-rg-picker__empty {
   margin: 0;
   font-size: 12px;
   color: var(--text-muted);
-}
-
-.notification-rg-picker__error {
-  margin: 0;
-  font-size: 13px;
-  color: #b91c1c;
 }

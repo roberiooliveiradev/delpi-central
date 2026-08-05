@@ -1,0 +1,64 @@
+/* portal/src/ui-kit/tabs/Tabs.css */
+
+.portal-ui-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  /* `overflow-x: auto` promove `overflow-y` a `auto`: sem isto qualquer
+     transbordo vertical de 1px cria barra de rolagem no cabeçalho. */
+  overflow-y: hidden;
+  /* A barra global tem 10px e cobriria o sublinhado da aba ativa. */
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.portal-ui-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.portal-ui-tabs__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 0;
+}
+
+/* Sublinhado por `inset box-shadow`: desenha dentro da caixa, então a aba não
+   transborda o cabeçalho nem exige margem negativa. */
+.portal-ui-tabs__tab:hover:not(:disabled) {
+  color: var(--text);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.portal-ui-tabs__tab--active,
+.portal-ui-tabs__tab--active:hover:not(:disabled) {
+  color: var(--primary);
+  box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+.portal-ui-tabs__tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.portal-ui-tabs__label {
+  display: inline-flex;
+}
+
+.portal-ui-tabs__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}

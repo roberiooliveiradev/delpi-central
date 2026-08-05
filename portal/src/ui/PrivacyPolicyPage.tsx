@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi, type PrivacyInfo } from "../data/coreApi";
+import { Button } from "../ui-kit";
 
 import "./PrivacyPolicyPage.css";
 
@@ -58,14 +59,15 @@ export const PrivacyPolicyPage = () => {
         animate="show"
         variants={fadeUp}
       >
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           className="privacy-policy-page__back"
           onClick={() => navigate(-1)}
-          type="button"
+          icon={<ChevronLeft size={18} />}
         >
-          <ChevronLeft size={18} />
           Voltar
-        </button>
+        </Button>
 
         <div className="privacy-policy-page__title-row">
           <FileText size={28} />

@@ -1,11 +1,12 @@
 // src/components/AppGroupedPermissionPicker.tsx
 
-import { Package } from "lucide-react";
+import { Package, Plus, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
 import type { AdminPermission } from "../data/adminApi";
 import { resolveIcon } from "../utils/iconResolver";
 import type { AppInfoByModule } from "../ui/admin/tabs/RolesTab";
+import { Button, SearchInput } from "../ui-kit";
 import "./RelationshipPicker.css";
 import "./AppGroupedPermissionPicker.css";
 
@@ -316,16 +317,10 @@ export function AppGroupedPermissionPicker({
           {renderMeta(permission)}
         </div>
 
-        <button
-          type="button"
-          className={[
-            "relationship-action",
-            isAvailable
-              ? "relationship-action-add"
-              : "relationship-action-remove",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+        <Button
+          size="sm"
+          variant={isAvailable ? "secondary" : "danger-soft"}
+          className="relationship-action"
           disabled={disabled}
           onClick={() =>
             isAvailable ? addOne(permission.id) : removeOne(permission.id)
@@ -335,10 +330,10 @@ export function AppGroupedPermissionPicker({
               ? `Adicionar ${permission.code}`
               : `Remover ${permission.code}`
           }
+          icon={isAvailable ? <Plus size={14} /> : <X size={14} />}
         >
-          <span>{isAvailable ? "Adicionar" : "Remover"}</span>
-          <strong aria-hidden="true">{isAvailable ? "→" : "×"}</strong>
-        </button>
+          {isAvailable ? "Adicionar" : "Remover"}
+        </Button>
       </article>
     );
   };
@@ -415,19 +410,14 @@ export function AppGroupedPermissionPicker({
             </span>
           </button>
 
-          <button
-            type="button"
-            className={[
-              "relationship-mini-button",
-              !isAvailable ? "relationship-mini-danger" : "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
+          <Button
+            size="sm"
+            variant={isAvailable ? "ghost" : "danger-soft"}
             disabled={disabled || group.permissions.length === 0}
             onClick={bulkAction}
           >
             {isAvailable ? "Adicionar todas" : "Remover todas"}
-          </button>
+          </Button>
         </div>
 
         {expanded && (
@@ -477,21 +467,22 @@ export function AppGroupedPermissionPicker({
               </span>
             </div>
 
-            <button
-              type="button"
-              className="relationship-mini-button"
+            <Button
+              size="sm"
+              variant="ghost"
               disabled={disabled || availablePermissions.length === 0}
               onClick={addAllFiltered}
             >
               Adicionar filtrados
-            </button>
+            </Button>
           </div>
 
           <div className="relationship-searchbar">
-            <span aria-hidden="true">⌕</span>
-            <input
+            <SearchInput
+              size="sm"
               value={availableSearch}
               onChange={(event) => setAvailableSearch(event.target.value)}
+              onClear={() => setAvailableSearch("")}
               placeholder={searchPlaceholder}
               disabled={disabled}
               aria-label={availableTitle}
@@ -523,21 +514,23 @@ export function AppGroupedPermissionPicker({
               </span>
             </div>
 
-            <button
-              type="button"
-              className="relationship-mini-button relationship-mini-danger"
+            <Button
+              size="sm"
+              variant="ghost"
+              className="relationship-mini-danger"
               disabled={disabled || linkedPermissions.length === 0}
               onClick={removeAllFiltered}
             >
               Remover filtrados
-            </button>
+            </Button>
           </div>
 
           <div className="relationship-searchbar">
-            <span aria-hidden="true">⌕</span>
-            <input
+            <SearchInput
+              size="sm"
               value={selectedSearch}
               onChange={(event) => setSelectedSearch(event.target.value)}
+              onClear={() => setSelectedSearch("")}
               placeholder={searchPlaceholder}
               disabled={disabled}
               aria-label={selectedTitle}

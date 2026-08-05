@@ -1,7 +1,6 @@
 // src/ui/MyProfile.tsx
 
 import { useContext, useMemo, useState } from "react";
-import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -14,6 +13,7 @@ import { AppLauncherCard } from "../components/AppLauncherCard";
 import { LauncherPinnedGrid } from "../components/LauncherPinnedGrid";
 import { PortalTourAchievementsPanel } from "../tour/PortalTourAchievementsPanel";
 import { ProfileRbacCardGrid } from "./profile/ProfileRbacCardGrid";
+import { SearchInput } from "../ui-kit";
 
 import {
   Grid,
@@ -445,11 +445,12 @@ export const MyProfile = () => {
           />
 
           <div className="apps-search">
-            <Search size={16} />
-            <input
+            <SearchInput
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onClear={() => setQuery("")}
               placeholder="Pesquisar aplicativos..."
+              aria-label="Pesquisar aplicativos"
             />
           </div>
 

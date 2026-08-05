@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { useMemo, useState } from "react";
+import { Plus, X } from "lucide-react";
+import { Button, SearchInput } from "../ui-kit";
 import "./RelationshipPicker.css";
 
 export type RelationshipPickerMeta = {
@@ -224,16 +226,10 @@ export function RelationshipPicker<T>({
           {renderMeta(item)}
         </div>
 
-        <button
-          type="button"
-          className={[
-            "relationship-action",
-            isAvailable
-              ? "relationship-action-add"
-              : "relationship-action-remove",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+        <Button
+          size="sm"
+          variant={isAvailable ? "secondary" : "danger-soft"}
+          className="relationship-action"
           disabled={disabled}
           onClick={() => (isAvailable ? addOne(id) : removeOne(id))}
           aria-label={
@@ -241,10 +237,10 @@ export function RelationshipPicker<T>({
               ? `Adicionar ${getTitle(item)}`
               : `Remover ${getTitle(item)}`
           }
+          icon={isAvailable ? <Plus size={14} /> : <X size={14} />}
         >
-          <span>{isAvailable ? "Adicionar" : "Remover"}</span>
-          <strong aria-hidden="true">{isAvailable ? "→" : "×"}</strong>
-        </button>
+          {isAvailable ? "Adicionar" : "Remover"}
+        </Button>
       </article>
     );
   };
@@ -279,21 +275,22 @@ export function RelationshipPicker<T>({
               <span>{availableItems.length} itens encontrados</span>
             </div>
 
-            <button
-              type="button"
-              className="relationship-mini-button"
+            <Button
+              size="sm"
+              variant="ghost"
               disabled={disabled || availableItems.length === 0}
               onClick={addAllFiltered}
             >
               Adicionar filtrados
-            </button>
+            </Button>
           </div>
 
           <div className="relationship-searchbar">
-            <span aria-hidden="true">⌕</span>
-            <input
+            <SearchInput
+              size="sm"
               value={availableSearch}
               onChange={(event) => setAvailableSearch(event.target.value)}
+              onClear={() => setAvailableSearch("")}
               placeholder={searchPlaceholder}
               disabled={disabled}
               aria-label={availableTitle}
@@ -320,21 +317,23 @@ export function RelationshipPicker<T>({
               <span>{linkedItems.length} itens encontrados</span>
             </div>
 
-            <button
-              type="button"
-              className="relationship-mini-button relationship-mini-danger"
+            <Button
+              size="sm"
+              variant="ghost"
+              className="relationship-mini-danger"
               disabled={disabled || linkedItems.length === 0}
               onClick={removeAllFiltered}
             >
               Remover filtrados
-            </button>
+            </Button>
           </div>
 
           <div className="relationship-searchbar">
-            <span aria-hidden="true">⌕</span>
-            <input
+            <SearchInput
+              size="sm"
               value={selectedSearch}
               onChange={(event) => setSelectedSearch(event.target.value)}
+              onClear={() => setSelectedSearch("")}
               placeholder={searchPlaceholder}
               disabled={disabled}
               aria-label={selectedTitle}

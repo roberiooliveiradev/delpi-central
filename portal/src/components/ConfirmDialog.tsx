@@ -1,4 +1,5 @@
 import { Modal } from "./Modal";
+import { Button } from "../ui-kit";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
 
@@ -38,18 +39,24 @@ export const ConfirmDialog = ({
       footer={
         <>
           {showCancel ? (
-            <button type="button" onClick={onCancel} disabled={loading}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onCancel}
+              disabled={loading}
+            >
               {cancelText}
-            </button>
+            </Button>
           ) : null}
-          <button
+          <Button
             type="button"
-            className={danger ? "btn-danger" : ""}
+            variant={danger ? "danger" : "primary"}
             onClick={onConfirm}
             disabled={loading}
+            loading={loading}
           >
             {loading ? "Processando..." : confirmText}
-          </button>
+          </Button>
         </>
       }
     >

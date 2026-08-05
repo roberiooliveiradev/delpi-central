@@ -4,6 +4,7 @@ import { ArrowRight, RefreshCw } from "lucide-react";
 import type { AdminTab } from "../AdminPage";
 import type { AdminStatistics } from "../../../data/adminApi";
 import type { StatsSubPage } from "./statsTheme";
+import { Button } from "../../../ui-kit";
 
 export function formatGeneratedAt(value: string) {
   const date = new Date(value);
@@ -48,14 +49,14 @@ export function PanelNav({
   if (!onNavigateTab) return null;
 
   return (
-    <button
-      type="button"
+    <Button
+      size="sm"
       className="admin-stats__panel-link"
       onClick={() => onNavigateTab(tab)}
     >
       {label}
       <ArrowRight size={14} aria-hidden="true" />
-    </button>
+    </Button>
   );
 }
 
@@ -99,15 +100,17 @@ export function StatsRefreshBar({
           </span>
         ) : null}
       </div>
-      <button
-        type="button"
+      <Button
+        size="sm"
         className="admin-stats__refresh"
         onClick={onRefresh}
         disabled={loading}
+        icon={
+          <RefreshCw size={16} className={loading ? "admin-stats__spin" : ""} />
+        }
       >
-        <RefreshCw size={16} className={loading ? "admin-stats__spin" : ""} />
         {loading ? "Atualizando…" : "Atualizar dados"}
-      </button>
+      </Button>
     </div>
   );
 }

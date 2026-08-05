@@ -143,8 +143,9 @@
   font-weight: 600;
 }
 
-.role-edit-body .portal-form-label input,
-.role-edit-body .portal-form-label textarea {
+/* @deprecated Controles crus — o ui-kit (.portal-ui-control) tem estilo próprio. */
+.role-edit-body .portal-form-label input:where(:not(.portal-ui-control)),
+.role-edit-body .portal-form-label textarea:where(:not(.portal-ui-control)) {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -153,14 +154,18 @@
   transition: all 0.15s ease;
 }
 
-.role-edit-body .portal-form-label input:focus,
-.role-edit-body .portal-form-label textarea:focus {
+.role-edit-body .portal-form-label input:where(:not(.portal-ui-control)):focus,
+.role-edit-body .portal-form-label textarea:where(:not(.portal-ui-control)):focus {
   border-color: var(--primary);
   box-shadow: var(--focus-ring);
 }
 
-.role-edit-body textarea {
+.role-edit-body textarea:where(:not(.portal-ui-control)) {
   resize: vertical;
+  min-height: 80px;
+}
+
+.role-edit-body textarea.portal-ui-control {
   min-height: 80px;
 }
 

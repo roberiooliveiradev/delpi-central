@@ -1,0 +1,95 @@
+/* portal/src/ui-kit/overlay/AnchoredPanel.css
+   Painel flutuante + listbox canônicos (Select, MultiSelect). */
+
+.portal-ui-panel {
+  position: fixed;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: portal-ui-panel-in 0.12s ease-out;
+}
+
+@keyframes portal-ui-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-ui-panel {
+    animation: none;
+  }
+}
+
+.portal-ui-listbox {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+}
+
+.portal-ui-listbox__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.portal-ui-listbox__option--active {
+  background: var(--surface-2);
+}
+
+.portal-ui-listbox__option--selected {
+  color: var(--primary);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-listbox__option--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.portal-ui-listbox__check {
+  display: inline-flex;
+  width: 14px;
+  flex: 0 0 14px;
+  color: var(--primary);
+}
+
+.portal-ui-listbox__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.portal-ui-listbox__empty {
+  padding: 10px 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+}

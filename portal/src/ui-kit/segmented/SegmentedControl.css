@@ -1,0 +1,39 @@
+/* portal/src/ui-kit/segmented/SegmentedControl.css */
+
+.portal-ui-segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.portal-ui-segmented__option {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.portal-ui-segmented__option:hover:not(:disabled):not(.portal-ui-segmented__option--active) {
+  color: var(--text);
+  background: transparent;
+  box-shadow: none;
+}
+
+.portal-ui-segmented__option--active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.portal-ui-segmented__option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

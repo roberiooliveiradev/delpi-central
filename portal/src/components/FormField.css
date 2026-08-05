@@ -56,30 +56,11 @@
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 999px;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 
-  background: rgba(180, 35, 24, 0.12);
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
-  border: 1px solid rgba(180, 35, 24, 0.25);
-
-  cursor: help;
-}
-
-/* Tooltip simples e elegante */
-.form-required-badge:hover::after {
-  content: "Campo obrigatório";
-  position: absolute;
-  margin-top: 0px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  box-shadow: var(--shadow);
-  z-index: 20;
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
 }
 
 /* Estado inválido acessível */
@@ -88,7 +69,8 @@
 .form-field textarea[aria-invalid="true"],
 .portal-form-label input[aria-invalid="true"],
 .portal-form-label select[aria-invalid="true"],
-.portal-form-label textarea[aria-invalid="true"] {
+.portal-form-label textarea[aria-invalid="true"],
+.portal-ui-field .portal-ui-control[aria-invalid="true"] {
   border-color: var(--danger);
-  background: rgba(180, 35, 24, 0.06);
+  background: color-mix(in srgb, var(--danger) 6%, var(--control-bg));
 }

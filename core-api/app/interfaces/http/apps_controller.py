@@ -15,6 +15,8 @@ from app.application.use_cases.rollback_plugin_version_use_case import RollbackP
 from app.application.use_cases.unregister_plugin_use_case import UnregisterPluginUseCase
 from app.application.use_cases.get_plugin_manifest_use_case import GetPluginManifestUseCase
 from app.application.use_cases.list_plugin_versions_use_case import ListPluginVersionsUseCase
+from app.application.use_cases.get_plugin_version_use_case import GetPluginVersionUseCase
+from app.application.use_cases.get_plugin_access_use_case import GetPluginAccessUseCase
 
 from app.application.use_cases.set_plugin_active_use_case import SetPluginActiveUseCase
 from app.application.use_cases.bulk_set_plugins_active_use_case import BulkSetPluginsActiveUseCase
@@ -276,6 +278,40 @@ def list_versions(plugin_id: str):
         return jsonify({"errors": result.errors}), 404
 
     return jsonify(result.versions), 200
+
+
+# ==========================================================
+# GET VERSION (manifest snapshot)
+# ==========================================================
+
+@admin_apps_bp.get("/<plugin_id>/versions/<version>")
+@require_permission("apps.manage")
+def get_version(plugin_id: str, version: str):
+    with SqlAlchemyUnitOfWork() as uow:
+        uc = GetPluginVersionUseCase(uow)
+        result = uc.execute(plugin_id, version)
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 404
+
+    return jsonify(result.version), 200
+
+
+# ==========================================================
+# PLUGIN ACCESS (RBAC who has access)
+# ==========================================================
+
+@admin_apps_bp.get("/<plugin_id>/access")
+@require_all_permissions(["rbac.manage", "users.view"])
+def get_plugin_access(plugin_id: str):
+    with SqlAlchemyUnitOfWork() as uow:
+        uc = GetPluginAccessUseCase(uow)
+        result = uc.execute(plugin_id)
+
+    if not result.success:
+        return jsonify({"errors": result.errors}), 404
+
+    return jsonify(result.data), 200
 
 
 # ==========================================================

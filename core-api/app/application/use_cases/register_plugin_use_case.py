@@ -8,6 +8,7 @@ import json
 from app.application.unit_of_work import UnitOfWork
 from app.application.validators.manifest_validator import ManifestValidator
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.plugin_permission_sync_service import PluginPermissionSyncService
 
 
 @dataclass(frozen=True)
@@ -73,8 +74,8 @@ class RegisterPluginUseCase:
                 False,
                 [{
                     "code": "validation_error",
-                    "message": "basePath is required",
-                    "path": "$.basePath",
+                    "message": "basePath é obrigatório",
+                    "path": "basePath",
                 }],
             )
 
@@ -111,12 +112,13 @@ class RegisterPluginUseCase:
                 "checksum": checksum,
             })
 
-            # create permissions first
-            self._uow.plugin_permissions.bulk_create(
-                manifest.get("permissions", [])
+            # permissions first (module always = plugin_id), then routes
+            desired = PluginPermissionSyncService.normalize_desired(
+                plugin_id,
+                manifest.get("permissions"),
             )
+            self._uow.plugin_permissions.sync_module(plugin_id, desired)
 
-            # then routes
             self._uow.plugin_routes.bulk_create([
                 _route_row(plugin_id, route)
                 for route in (manifest.get("routes") or [])
@@ -133,8 +135,8 @@ class RegisterPluginUseCase:
                     success=False,
                     errors=[{
                         "code": "plugin.version_already_exists",
-                        "message": "This version is already registered",
-                        "path": "$.version",
+                        "message": "Esta versão já está registrada",
+                        "path": "version",
                     }],
                 )
 
@@ -154,20 +156,14 @@ class RegisterPluginUseCase:
                 "checksum": checksum,
             })
 
-            # DELETE ordem correta
+            # Rotas dependem de permission_id: apagar rotas, sync perms (UUID estável), recriar rotas
             self._uow.plugin_routes.delete_by_app(plugin_id)
-            self._uow.plugin_permissions.delete_by_module(plugin_id)
 
-            # CREATE ordem correta
-            self._uow.plugin_permissions.bulk_create([
-                {
-                    "code": p.get("code"),
-                    "name": p.get("name"),
-                    "description": p.get("description"),
-                    "module": plugin_id,
-                }
-                for p in (manifest.get("permissions") or [])
-            ])
+            desired = PluginPermissionSyncService.normalize_desired(
+                plugin_id,
+                manifest.get("permissions"),
+            )
+            self._uow.plugin_permissions.sync_module(plugin_id, desired)
 
             self._uow.plugin_routes.bulk_create([
                 _route_row(plugin_id, r)

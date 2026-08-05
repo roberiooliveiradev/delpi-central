@@ -26,6 +26,7 @@ import {
   HomePanelHeader,
   HomeSummaryCard,
 } from "./home/HomePagePrimitives";
+import { Button } from "../ui-kit";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -293,13 +294,14 @@ export const HomePage = () => {
           ) : (
             <>
               {unreadCount > 0 ? (
-                <button
-                  type="button"
+                <Button
+                  size="sm"
+                  variant="ghost"
                   className="home-notif-mark-all"
                   onClick={() => void markAllNotificationsRead()}
                 >
                   Marcar todas como lidas
-                </button>
+                </Button>
               ) : null}
 
               <div className="home-notif-list">

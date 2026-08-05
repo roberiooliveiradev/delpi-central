@@ -1,0 +1,49 @@
+/* portal/src/ui-kit/breadcrumb/Breadcrumb.css */
+
+.portal-ui-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.portal-ui-breadcrumb__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.portal-ui-breadcrumb__sep {
+  color: var(--text-muted);
+  opacity: 0.6;
+  user-select: none;
+}
+
+.portal-ui-breadcrumb__link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 0;
+}
+
+.portal-ui-breadcrumb__link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+  background: transparent;
+  box-shadow: none;
+}
+
+.portal-ui-breadcrumb__current {
+  color: var(--text);
+  font-weight: 600;
+}

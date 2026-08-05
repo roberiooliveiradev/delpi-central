@@ -10,6 +10,7 @@ import type {
   NotificationTemplateDefinition,
   NotificationType,
 } from "../../data/coreApi";
+import { Button, FormField, Input, Select } from "../../ui-kit";
 import { NotificationCard } from "./NotificationCard";
 import { CustomTemplateModal } from "./CustomTemplateModal";
 import {
@@ -136,13 +137,16 @@ export function AdminNotificationTemplateSection({
     <div className="admin-template-section admin-template-section--split">
       <div className="admin-template-section__main">
       <div className="admin-template-section__toolbar">
-        <label className="admin-notifications__field admin-template-section__select">
-          <span>Template</span>
-          <select
+        <FormField
+          label="Template"
+          htmlFor="admin-template-select"
+          className="admin-template-section__select"
+        >
+          <Select
+            id="admin-template-select"
             value={templateId}
             disabled={loading}
-            onChange={(event) => {
-              const nextId = event.target.value;
+            onChange={(nextId) => {
               onTemplateIdChange(nextId);
               const next = templates.find((item) => item.id === nextId);
               if (next) {
@@ -153,34 +157,33 @@ export function AdminNotificationTemplateSection({
                 onTemplateVarsChange(initialVars);
               }
             }}
-          >
-            {templates.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.isSystem ? "🔒 " : ""}
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            options={templates.map((item) => ({
+              value: item.id,
+              label: `${item.isSystem ? "🔒 " : ""}${item.label}`,
+            }))}
+          />
+        </FormField>
 
-        <button
+        <Button
           type="button"
-          className="admin-template-section__btn"
+          variant="secondary"
+          size="sm"
+          icon={<Plus size={16} />}
           onClick={() => setShowCreateModal(true)}
         >
-          <Plus size={16} />
           Novo template
-        </button>
+        </Button>
 
         {!isSystem && selectedTemplate ? (
-          <button
+          <Button
             type="button"
-            className="admin-template-section__btn admin-template-section__btn--danger"
+            variant="danger-soft"
+            size="sm"
+            icon={<Trash2 size={16} />}
             onClick={() => void handleDeleteTemplate()}
           >
-            <Trash2 size={16} />
             Excluir
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -216,12 +219,14 @@ export function AdminNotificationTemplateSection({
       ) : null}
 
       {editableFields.map((field) => (
-        <label key={field.key} className="admin-notifications__field">
-          <span>
-            {field.label}
-            {field.required ? " *" : ""}
-          </span>
-          <input
+        <FormField
+          key={field.key}
+          label={field.label}
+          required={field.required}
+          htmlFor={`admin-template-field-${field.key}`}
+        >
+          <Input
+            id={`admin-template-field-${field.key}`}
             value={templateVars[field.key] ?? ""}
             onChange={(event) =>
               onTemplateVarsChange({ ...templateVars, [field.key]: event.target.value })
@@ -229,7 +234,7 @@ export function AdminNotificationTemplateSection({
             placeholder={field.placeholder}
             required={field.required}
           />
-        </label>
+        </FormField>
       ))}
 
       {!isSystem && selectedTemplate?.recipientAutoVars?.includes("userName") ? (

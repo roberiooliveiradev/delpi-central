@@ -85,16 +85,17 @@
    COLUMNS
 ========================================= */
 
+/* Altura vem do contêiner (página com chrome), não de um palpite sobre a
+   viewport: as colunas esticam e cada lista rola por dentro. */
 .relationship-columns {
-  flex: 1 1 auto;
-  min-height: 0;
+  /* base 0: a altura vem do espaço livre, não do conteúdo — sem isso as listas
+     empurrariam a página em vez de rolar por dentro. */
+  flex: 1 1 0;
+  min-height: clamp(280px, 40vh, 460px);
 
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
-
-  height: clamp(360px, 48vh, 520px);
-  max-height: calc(100dvh - 390px);
 }
 
 .relationship-column {
@@ -138,56 +139,19 @@
   gap: 12px;
 }
 
-.relationship-column-header strong {
+.relationship-column-header > div > strong {
   display: block;
   color: var(--text);
   font-size: 14px;
   font-weight: 800;
 }
 
-.relationship-column-header span {
+.relationship-column-header > div > span {
   display: block;
   margin-top: 2px;
   color: var(--text-muted);
   font-size: 12px;
 }
-
-.relationship-mini-button {
-  flex: 0 0 auto;
-
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-
-  border-radius: 999px;
-  padding: 7px 11px;
-
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.relationship-mini-button:hover:not(:disabled) {
-  border-color: var(--primary);
-  background: var(--surface-3);
-  color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 10%, transparent);
-}
-
-.relationship-mini-danger:hover:not(:disabled) {
-  border-color: var(--danger);
-  background: var(--surface-3);
-  color: var(--danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 10%, transparent);
-}
-
 
 /* =========================================
    SEARCH
@@ -195,79 +159,7 @@
 
 .relationship-searchbar {
   flex: 0 0 auto;
-
   width: 100%;
-  min-height: 46px;
-
-  display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
-  align-items: center;
-  column-gap: 10px;
-
-  border: 1px solid var(--control-border);
-  background: var(--surface);
-  color: var(--text-muted);
-
-  border-radius: 16px;
-  padding: 0 14px;
-
-  box-sizing: border-box;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.relationship-searchbar:focus-within {
-  border-color: var(--primary);
-  box-shadow: var(--focus-2);
-  background: var(--surface);
-}
-
-.relationship-searchbar span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 22px;
-  height: 22px;
-
-  color: var(--primary);
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 800;
-}
-
-.relationship-searchbar input {
-  width: 100%;
-  min-width: 0;
-  height: 100%;
-
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-
-  background: transparent !important;
-  color: var(--text);
-
-  font-size: 13px;
-  font: inherit;
-
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-.relationship-searchbar input:focus,
-.relationship-searchbar input:focus-visible,
-.relationship-searchbar input:active {
-  border: 0 !important;
-  outline: 0 !important;
-  box-shadow: none !important;
-}
-
-.relationship-searchbar input::placeholder {
-  color: var(--control-placeholder);
 }
 
 
@@ -458,57 +350,6 @@
 
 .relationship-action {
   align-self: flex-start;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-
-  border-radius: 999px;
-  padding: 7px 10px;
-
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-
-  cursor: pointer;
-
-  transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.relationship-action strong {
-  font-size: 13px;
-  line-height: 1;
-}
-
-.relationship-action-add {
-  border: 1px solid color-mix(in srgb, var(--primary) 38%, var(--border));
-  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
-  color: var(--primary);
-}
-
-.relationship-action-add:hover:not(:disabled) {
-  border-color: var(--primary);
-  background: var(--primary);
-  color: #fff;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
-}
-
-.relationship-action-remove {
-  border: 1px solid color-mix(in srgb, var(--danger) 34%, var(--border));
-  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
-  color: var(--danger);
-}
-
-.relationship-action-remove:hover:not(:disabled) {
-  border-color: var(--danger);
-  background: var(--danger);
-  color: #fff;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 
@@ -601,10 +442,11 @@
     justify-content: flex-start;
   }
 
+  /* Empilhado: cada coluna rola sozinha e a página acomoda as duas. */
   .relationship-columns {
     grid-template-columns: 1fr;
-    height: auto;
-    max-height: none;
+    flex: 0 0 auto;
+    min-height: 0;
   }
 
   .relationship-column {
@@ -617,11 +459,21 @@
 }
 
 @media (max-width: 640px) {
+  .relationship-column {
+    padding: 10px;
+    border-radius: 14px;
+  }
+
+  .relationship-picker-header {
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+
   .relationship-column-header {
     flex-direction: column;
   }
 
-  .relationship-mini-button {
+  .relationship-column-header .portal-ui-btn {
     width: 100%;
   }
 

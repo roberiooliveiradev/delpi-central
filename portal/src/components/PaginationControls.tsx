@@ -1,5 +1,8 @@
 // src/components/PaginationControls.tsx
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "../ui-kit";
+
 type Props = {
   page: number;
   totalPages: number;
@@ -14,18 +17,31 @@ export const PaginationControls = ({
   onPrev,
 }: Props) => {
   return (
-    <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
-      <button onClick={onPrev} disabled={page <= 1}>
-        ◀ Anterior
-      </button>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        marginTop: 15,
+      }}
+    >
+      <Button
+        size="sm"
+        onClick={onPrev}
+        disabled={page <= 1}
+        icon={<ChevronLeft size={16} />}
+      >
+        Anterior
+      </Button>
 
-      <span>
+      <span style={{ fontSize: 13, color: "var(--text-muted)" }}>
         Página {page} de {totalPages}
       </span>
 
-      <button onClick={onNext} disabled={page >= totalPages}>
-        Próxima ▶
-      </button>
+      <Button size="sm" onClick={onNext} disabled={page >= totalPages}>
+        Próxima
+        <ChevronRight size={16} />
+      </Button>
     </div>
   );
 };

@@ -6,7 +6,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Inbox,
   Settings2,
   Star,
   Trash2,
@@ -29,15 +28,25 @@ import {
   getNotificationCategoryLabel,
 } from "../utils/notificationCatalog";
 
+import {
+  Alert,
+  Button,
+  FormField,
+  SegmentedControl,
+  Select,
+  Spinner,
+  Tabs,
+} from "../ui-kit";
+
 import "./NotificationsPage.css";
 
 const PAGE_SIZE = 12;
 
 type PageSection = "inbox" | "preferences";
 
-const SECTION_TABS: { value: PageSection; label: string; icon: typeof Inbox }[] = [
-  { value: "inbox", label: "Histórico", icon: Inbox },
-  { value: "preferences", label: "Preferências", icon: Settings2 },
+const SECTION_TABS: { value: PageSection; label: string }[] = [
+  { value: "inbox", label: "Histórico" },
+  { value: "preferences", label: "Preferências" },
 ];
 
 const STATUS_TABS: { value: NotificationHistoryStatus; label: string }[] = [
@@ -247,114 +256,87 @@ export function NotificationsPage() {
         </div>
       </div>
 
-      <nav
+      <Tabs
         className="notifications-page__sections"
-        role="tablist"
         aria-label="Seções da página"
-      >
-        {SECTION_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = section === tab.value;
-
-          return (
-            <button
-              key={tab.value}
-              type="button"
-              role="tab"
-              id={`notifications-section-${tab.value}`}
-              aria-selected={isActive}
-              aria-controls={`notifications-panel-${tab.value}`}
-              className={
-                isActive
-                  ? "notifications-page__section notifications-page__section--active"
-                  : "notifications-page__section"
-              }
-              onClick={() => setSection(tab.value)}
-            >
-              <Icon size={16} aria-hidden="true" />
-              {tab.label}
-            </button>
-          );
-        })}
-      </nav>
+        value={section}
+        onChange={(id) => setSection(id as PageSection)}
+        items={SECTION_TABS.map((tab) => ({
+          id: tab.value,
+          label: tab.label,
+          icon:
+            tab.value === "inbox" ? (
+              <Bell size={16} />
+            ) : (
+              <Settings2 size={16} />
+            ),
+        }))}
+      />
 
       {section === "inbox" ? (
         <div
           id="notifications-panel-inbox"
           role="tabpanel"
-          aria-labelledby="notifications-section-inbox"
+          aria-labelledby="portal-ui-tab-inbox"
           className="notifications-page__panel"
         >
           <div className="notifications-page__controls" data-tour="notifications-filters">
             <div className="notifications-page__controls-row">
-              <div
+              <SegmentedControl
                 className="notifications-page__status-tabs"
-                role="tablist"
                 aria-label="Status das notificações"
-              >
-                {STATUS_TABS.map((tab) => (
-                  <button
-                    key={tab.value}
-                    type="button"
-                    role="tab"
-                    aria-selected={status === tab.value}
-                    className={
-                      status === tab.value
-                        ? "notifications-page__status-tab notifications-page__status-tab--active"
-                        : "notifications-page__status-tab"
-                    }
-                    onClick={() => setStatus(tab.value)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+                value={status}
+                onChange={setStatus}
+                options={STATUS_TABS.map((tab) => ({
+                  value: tab.value,
+                  label: tab.label,
+                }))}
+              />
 
               {status !== "read" && unreadOnPage > 0 ? (
-                <button
+                <Button
                   type="button"
-                  className="notifications-page__mark-all"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => void handleMarkAllRead()}
                 >
                   Marcar todas como lidas
-                </button>
+                </Button>
               ) : null}
             </div>
 
             <div className="notifications-page__controls-divider" aria-hidden="true" />
 
             <div className="notifications-page__filters">
-              <label className="notifications-page__filter-label">
-                <span className="notifications-page__filter-text">Categoria</span>
-                <select
-                  className="notifications-page__select"
+              <FormField
+                label="Categoria"
+                htmlFor="notifications-page-category"
+                className="notifications-page__filter-label"
+              >
+                <Select
+                  id="notifications-page-category"
                   value={category}
-                  onChange={(event) =>
-                    setCategory(event.target.value as NotificationCategory | "")
+                  onChange={(value) =>
+                    setCategory(value as NotificationCategory | "")
                   }
                   aria-label="Filtrar por categoria"
-                >
-                  {categoryOptions.map((option) => (
-                    <option key={option.value || "all"} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  options={categoryOptions.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
+                />
+              </FormField>
 
-              <button
+              <Button
                 type="button"
-                className={
-                  importantOnly
-                    ? "notifications-page__important-toggle notifications-page__important-toggle--active"
-                    : "notifications-page__important-toggle"
-                }
-                aria-pressed={importantOnly}
+                variant="secondary"
+                size="sm"
+                pressed={importantOnly}
+                icon={<Star size={14} />}
                 onClick={() => setImportantOnly((current) => !current)}
               >
-                <Star size={14} aria-hidden="true" />
                 Importantes
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -370,14 +352,15 @@ export function NotificationsPage() {
             </p>
 
             {!loading && items.length > 0 ? (
-              <button
+              <Button
                 type="button"
-                className="notifications-page__select-page"
+                variant="ghost"
+                size="sm"
                 onClick={toggleSelectAllOnPage}
                 disabled={bulkBusy}
               >
                 {allOnPageSelected ? "Desmarcar página" : "Selecionar página"}
-              </button>
+              </Button>
             ) : null}
           </div>
 
@@ -391,46 +374,49 @@ export function NotificationsPage() {
 
               <div className="notifications-page__bulk-actions">
                 {selectedUnreadCount > 0 ? (
-                  <button
+                  <Button
                     type="button"
-                    className="notifications-page__bulk-btn"
+                    variant="secondary"
+                    size="sm"
                     disabled={bulkBusy}
+                    icon={<Check size={16} />}
                     onClick={() => void handleBulkMarkRead()}
                   >
-                    <Check size={16} aria-hidden="true" />
                     Marcar como lidas
-                  </button>
+                  </Button>
                 ) : null}
 
-                <button
+                <Button
                   type="button"
-                  className="notifications-page__bulk-btn notifications-page__bulk-btn--danger"
+                  variant="danger-soft"
+                  size="sm"
                   disabled={bulkBusy}
+                  icon={<Trash2 size={16} />}
                   onClick={() => void handleBulkDelete()}
                 >
-                  <Trash2 size={16} aria-hidden="true" />
                   Excluir
-                </button>
+                </Button>
 
-                <button
+                <Button
                   type="button"
-                  className="notifications-page__bulk-btn notifications-page__bulk-btn--ghost"
+                  variant="ghost"
+                  size="sm"
                   disabled={bulkBusy}
                   onClick={clearSelection}
                   aria-label="Limpar seleção"
+                  icon={<X size={16} />}
                 >
-                  <X size={16} aria-hidden="true" />
                   Limpar
-                </button>
+                </Button>
               </div>
             </div>
           ) : null}
 
-          {error ? <p className="notifications-page__error">{error}</p> : null}
+          {error ? <Alert tone="danger">{error}</Alert> : null}
 
           <div className="notifications-page__feed">
             {loading ? (
-              <p className="notifications-page__loading">Carregando notificações…</p>
+              <Spinner label="Carregando notificações…" />
             ) : items.length === 0 ? (
               <div className="notifications-page__empty">
                 <Bell size={32} aria-hidden="true" strokeWidth={1.5} />
@@ -460,25 +446,27 @@ export function NotificationsPage() {
 
           {totalPages > 1 ? (
             <footer className="notifications-page__pagination">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((current) => Math.max(1, current - 1))}
                 aria-label="Página anterior"
-              >
-                <ChevronLeft size={18} />
-              </button>
+                icon={<ChevronLeft size={18} />}
+              />
               <span>
                 Página {page} de {totalPages} · {total} no total
               </span>
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
                 aria-label="Próxima página"
-              >
-                <ChevronRight size={18} />
-              </button>
+                icon={<ChevronRight size={18} />}
+              />
             </footer>
           ) : null}
         </div>
@@ -486,7 +474,7 @@ export function NotificationsPage() {
         <div
           id="notifications-panel-preferences"
           role="tabpanel"
-          aria-labelledby="notifications-section-preferences"
+          aria-labelledby="portal-ui-tab-preferences"
           className="notifications-page__panel notifications-page__panel--preferences"
         >
           <div data-tour="notifications-preferences">

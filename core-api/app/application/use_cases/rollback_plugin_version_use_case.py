@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 
 from app.application.unit_of_work import UnitOfWork
 from app.domain.events.admin_events import AdminChangedEvent
+from app.domain.services.plugin_permission_sync_service import PluginPermissionSyncService
 
 
 @dataclass(frozen=True)
@@ -33,7 +34,7 @@ class RollbackPluginVersionUseCase:
                 success=False,
                 errors=[{
                     "code": "plugin.not_found",
-                    "message": "Plugin not found",
+                    "message": "Plugin não encontrado",
                     "path": "_global"
                 }],
             )
@@ -44,7 +45,7 @@ class RollbackPluginVersionUseCase:
                 success=False,
                 errors=[{
                     "code": "plugin.version_not_found",
-                    "message": "Target version not found in history",
+                    "message": "Versão alvo não encontrada no histórico",
                     "path": "version"
                 }],
             )
@@ -72,20 +73,14 @@ class RollbackPluginVersionUseCase:
 
         self._uow.plugin_manifests.save(plugin_id, manifest, str(checksum or ""))
 
-        # DELETE ordem correta
+        # Rotas dependem de permission_id: apagar rotas, sync perms (UUID estável), recriar rotas
         self._uow.plugin_routes.delete_by_app(plugin_id)
-        self._uow.plugin_permissions.delete_by_module(plugin_id)
 
-        # CREATE ordem correta
-        self._uow.plugin_permissions.bulk_create([
-            {
-                "code": p.get("code"),
-                "name": p.get("name"),
-                "description": p.get("description"),
-                "module": plugin_id,
-            }
-            for p in (manifest.get("permissions") or [])
-        ])
+        desired = PluginPermissionSyncService.normalize_desired(
+            plugin_id,
+            manifest.get("permissions"),
+        )
+        self._uow.plugin_permissions.sync_module(plugin_id, desired)
 
         self._uow.plugin_routes.bulk_create([
             {

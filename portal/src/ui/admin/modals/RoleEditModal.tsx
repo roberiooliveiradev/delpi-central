@@ -10,6 +10,14 @@ import { Modal } from "../../../components/Modal";
 import { AppGroupedPermissionPicker } from "../../../components/AppGroupedPermissionPicker";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import type { AppInfoByModule } from "../tabs/RolesTab";
+import {
+  Alert,
+  Button,
+  FormField,
+  Input,
+  Tabs,
+  Textarea,
+} from "../../../ui-kit";
 import "./RoleEditModal.css";
 
 type RoleModalTab = "details" | "users" | "permissions";
@@ -70,70 +78,58 @@ export const RoleEditModal = ({
       size="xl"
       footer={
         <>
-          <button onClick={onClose} disabled={saving}>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancelar
-          </button>
-          <button onClick={onSave} disabled={saving || !role.name?.trim()}>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onSave}
+            loading={saving}
+            disabled={!role.name?.trim()}
+          >
             Salvar
-          </button>
+          </Button>
         </>
       }
     >
       <div className="role-edit-body">
-        <div className="tabs">
-          <button
-            type="button"
-            className={activeTab === "details" ? "active" : ""}
-            onClick={() => setActiveTab("details")}
-          >
-            Dados
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "users" ? "active" : ""}
-            onClick={() => setActiveTab("users")}
-          >
-            Usuários diretos
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "permissions" ? "active" : ""}
-            onClick={() => setActiveTab("permissions")}
-          >
-            Permissões
-          </button>
-        </div>
+        <Tabs
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as RoleModalTab)}
+          items={[
+            { id: "details", label: "Dados" },
+            { id: "users", label: "Usuários diretos" },
+            { id: "permissions", label: "Permissões" },
+          ]}
+        />
 
         {activeTab === "details" && (
           <>
-            <label className="portal-form-label">
-              Nome
-              <input
+            <FormField label="Nome" htmlFor="role-edit-name" required>
+              <Input
+                id="role-edit-name"
                 value={role.name}
-                onChange={(event) =>
-                  onChangeRole({ name: event.target.value })
-                }
+                onChange={(event) => onChangeRole({ name: event.target.value })}
                 disabled={saving}
               />
-            </label>
+            </FormField>
 
-            <label className="portal-form-label">
-              Descrição
-              <textarea
+            <FormField label="Descrição" htmlFor="role-edit-description">
+              <Textarea
+                id="role-edit-description"
                 value={role.description || ""}
                 onChange={(event) =>
                   onChangeRole({ description: event.target.value })
                 }
                 disabled={saving}
+                rows={3}
               />
-            </label>
+            </FormField>
 
-            <div className="alert">
+            <Alert tone="info">
               Usuários diretos recebem este papel pela relação usuário ↔ papel.
               Usuários também podem receber permissões indiretamente por grupos.
-            </div>
+            </Alert>
           </>
         )}
 

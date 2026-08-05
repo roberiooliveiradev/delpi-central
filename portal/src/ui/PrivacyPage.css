@@ -147,26 +147,6 @@
   color: var(--text-muted);
 }
 
-.privacy-page__toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.25rem;
-  color: var(--text-muted);
-  transition: color 0.15s;
-  display: flex;
-  align-items: center;
-}
-
-.privacy-page__toggle--on {
-  color: var(--success, #22c55e);
-}
-
-.privacy-page__toggle:disabled {
-  opacity: 0.5;
-  cursor: wait;
-}
-
 .privacy-page__empty {
   font-size: 0.85rem;
   color: var(--text-muted);

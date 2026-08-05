@@ -1,0 +1,94 @@
+/* src/ui/admin/rbac/RbacEditPage.css */
+
+.rbac-edit-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Estados de carregamento/erro renderizam sem o chrome, que já traz o padding. */
+.rbac-edit-page:not(.portal-ui-page) {
+  padding: 10px 16px 24px;
+}
+
+.rbac-edit-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rbac-edit-breadcrumb {
+  margin: 0 0 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.rbac-edit-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.rbac-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rbac-edit-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 16px;
+}
+
+/* Abas de vínculo (usuários, papéis, permissões) ocupam a altura restante: as
+   duas colunas rolam internamente em vez de deixar a página com espaço morto. */
+.rbac-edit-card:has(.relationship-picker) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-rbac-info-item--field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.user-rbac-info-item--field input[type="date"] {
+  width: 100%;
+  border: 1px solid var(--control-border);
+  background: var(--control-bg);
+  color: var(--control-text);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.user-rbac-info-item--field small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .rbac-edit-page {
+    gap: 12px;
+  }
+
+  .rbac-edit-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  /* No celular as colunas do seletor ficam empilhadas: esticar o cartão só
+     comprimiria as duas listas. */
+  .rbac-edit-card:has(.relationship-picker) {
+    flex: 0 0 auto;
+  }
+}

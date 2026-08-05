@@ -1,7 +1,13 @@
 // src/ui/admin/tabs/PermissionsTab.tsx
 
 import { useContext, useEffect, useMemo, useState } from "react";
-import { Package } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Package,
+} from "lucide-react";
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
@@ -12,6 +18,7 @@ import type {
 } from "../../../data/adminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { resolveIcon } from "../../../utils/iconResolver";
+import { Button, SearchInput } from "../../../ui-kit";
 import "./PermissionsTab.css";
 
 type AppInfoByModule = Record<
@@ -351,31 +358,33 @@ export const PermissionsTab = () => {
       </div>
 
       <div className="permissions-toolbar">
-        <label className="permissions-search">
-          <span aria-hidden="true">⌕</span>
-          <input
+        <div className="permissions-search">
+          <SearchInput
             value={search}
             onChange={(event) => setSearch(event.target.value)}
+            onClear={() => setSearch("")}
             placeholder="Buscar por código, nome, descrição, app ou módulo..."
           />
-        </label>
+        </div>
 
         <div className="permissions-toolbar-actions">
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={expandCurrentPage}
             disabled={paginatedModules.length === 0}
+            icon={<ChevronsUpDown size={14} />}
           >
             Expandir página
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            size="sm"
             onClick={collapseCurrentPage}
             disabled={expandedModules.length === 0}
+            icon={<ChevronsDownUp size={14} />}
           >
             Recolher página
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -489,14 +498,16 @@ export const PermissionsTab = () => {
                             </div>
 
                             <div className="permission-card-actions">
-                              <button
-                                type="button"
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                pressed={usageExpanded}
                                 onClick={() =>
                                   togglePermissionUsage(permission.id)
                                 }
                               >
                                 {usageExpanded ? "Ocultar uso" : "Ver uso"}
-                              </button>
+                              </Button>
                             </div>
 
                             {usageExpanded && (
@@ -591,26 +602,28 @@ export const PermissionsTab = () => {
 
           {totalPages > 1 && (
             <div className="permissions-pagination">
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={goToPreviousPage}
                 disabled={safePage <= 1}
+                icon={<ChevronLeft size={16} />}
               >
                 Anterior
-              </button>
+              </Button>
 
               <span>
                 Página <strong>{safePage}</strong> de{" "}
                 <strong>{totalPages}</strong>
               </span>
 
-              <button
-                type="button"
+              <Button
+                size="sm"
                 onClick={goToNextPage}
                 disabled={safePage >= totalPages}
               >
                 Próxima
-              </button>
+                <ChevronRight size={16} />
+              </Button>
             </div>
           )}
         </>

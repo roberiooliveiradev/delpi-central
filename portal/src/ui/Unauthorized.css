@@ -97,46 +97,8 @@
   width: 100%;
 }
 
-.unauthorized-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.unauthorized-actions .portal-ui-btn {
   min-width: 148px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease,
-    background 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.unauthorized-btn--primary {
-  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--primary);
-}
-
-.unauthorized-btn--primary:hover {
-  background: color-mix(in srgb, var(--primary) 22%, transparent);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
-}
-
-.unauthorized-btn--secondary {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.unauthorized-btn--secondary:hover {
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
-  color: var(--primary);
-  background: var(--surface-3);
 }
 
 @media (max-width: 520px) {
@@ -152,7 +114,7 @@
     font-size: 20px;
   }
 
-  .unauthorized-btn {
+  .unauthorized-actions .portal-ui-btn {
     width: 100%;
     min-width: 0;
   }

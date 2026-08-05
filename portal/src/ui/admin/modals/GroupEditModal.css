@@ -15,8 +15,9 @@
   font-weight: 700;
 }
 
-.group-edit-body .portal-form-label input,
-.group-edit-body .portal-form-label textarea {
+/* @deprecated Controles crus — o ui-kit (.portal-ui-control) tem estilo próprio. */
+.group-edit-body .portal-form-label input:where(:not(.portal-ui-control)),
+.group-edit-body .portal-form-label textarea:where(:not(.portal-ui-control)) {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -26,19 +27,23 @@
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.group-edit-body input::placeholder,
-.group-edit-body textarea::placeholder {
+.group-edit-body input:where(:not(.portal-ui-control))::placeholder,
+.group-edit-body textarea:where(:not(.portal-ui-control))::placeholder {
   color: var(--control-placeholder);
 }
 
-.group-edit-body input:focus,
-.group-edit-body textarea:focus {
+.group-edit-body input:where(:not(.portal-ui-control)):focus,
+.group-edit-body textarea:where(:not(.portal-ui-control)):focus {
   border-color: color-mix(in srgb, var(--primary) 55%, var(--control-border));
   box-shadow: var(--focus-ring);
 }
 
-.group-edit-body textarea {
+.group-edit-body textarea:where(:not(.portal-ui-control)) {
   resize: vertical;
+  min-height: 92px;
+}
+
+.group-edit-body textarea.portal-ui-control {
   min-height: 92px;
 }
 

@@ -8,6 +8,7 @@ import { AdminEntityList } from "../admin/AdminEntityList";
 import { Modal } from "../Modal";
 import { usePaginatedResource } from "../../hooks/usePaginatedResource";
 import { parseRecipientsBulk } from "./notificationRecipients";
+import { Alert, Button, FormField, Select, Textarea } from "../../ui-kit";
 
 import "./NotificationRecipientPicker.css";
 
@@ -398,33 +399,33 @@ export function NotificationRecipientPicker({
           </div>
         </div>
         <div className="notification-recipients__picker-actions">
-          <button
+          <Button
             type="button"
-            className="notification-recipients__open-modal"
+            variant="secondary"
+            icon={<Users size={16} />}
             onClick={openModal}
             disabled={disabled}
           >
-            <Users size={16} aria-hidden="true" />
             Selecionar usuários
-          </button>
+          </Button>
           {totalRecipients > 0 ? (
-            <button
+            <Button
               type="button"
-              className="notification-recipients__clear"
+              variant="ghost"
               onClick={clearSelection}
               disabled={disabled}
             >
               Limpar todos
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>
 
       <div className="notification-recipients__quick">
-        <label className="notification-recipients__quick-label">
-          <span>Adicionar por e-mail ou ID (rápido)</span>
+        <FormField label="Adicionar por e-mail ou ID (rápido)" htmlFor="notification-recipients-quick">
           <div className="notification-recipients__quick-row">
-            <textarea
+            <Textarea
+              id="notification-recipients-quick"
               value={quickInput}
               onChange={(event) => {
                 setQuickInput(event.target.value);
@@ -441,23 +442,23 @@ export function NotificationRecipientPicker({
               }
               disabled={disabled}
             />
-            <button
+            <Button
               type="button"
-              className="notification-recipients__quick-add"
+              variant="secondary"
+              icon={<Plus size={16} />}
               onClick={handleQuickAdd}
               disabled={disabled || !quickInput.trim()}
             >
-              <Plus size={16} aria-hidden="true" />
               Adicionar
-            </button>
+            </Button>
           </div>
-        </label>
+        </FormField>
         <p className="notification-recipients__hint">
           Separe vários itens por vírgula ou quebra de linha. E-mails de usuários cadastrados viram
           seleção por ID automaticamente.
         </p>
-        {quickSuccess ? <p className="notification-recipients__success">{quickSuccess}</p> : null}
-        {quickError ? <p className="notification-recipients__error">{quickError}</p> : null}
+        {quickSuccess ? <Alert tone="success">{quickSuccess}</Alert> : null}
+        {quickError ? <Alert tone="danger">{quickError}</Alert> : null}
       </div>
 
       {totalRecipients > 0 ? (
@@ -474,14 +475,15 @@ export function NotificationRecipientPicker({
                   {label?.name ?? "Usuário"}
                   <small>{label?.email ?? userId}</small>
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   aria-label="Remover destinatário"
                   onClick={() => removeUserId(userId)}
                   disabled={disabled}
-                >
-                  <X size={14} />
-                </button>
+                  icon={<X size={14} />}
+                />
               </span>
             );
           })}
@@ -492,38 +494,41 @@ export function NotificationRecipientPicker({
                 E-mail
                 <small>{emailLabels[email] ?? email}</small>
               </span>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 aria-label="Remover e-mail"
                 onClick={() => removeEmail(email)}
                 disabled={disabled}
-              >
-                <X size={14} />
-              </button>
+                icon={<X size={14} />}
+              />
             </span>
           ))}
 
           {selectedUserIds.length > 0 && onPreviewUserIdChange ? (
-            <label className="notification-recipients__preview-select">
-              <span>Pré-visualizar como</span>
-              <select
+            <FormField
+              label="Pré-visualizar como"
+              htmlFor="notification-recipients-preview"
+              className="notification-recipients__preview-select"
+            >
+              <Select
+                id="notification-recipients-preview"
                 value={previewUserId ?? ""}
                 disabled={disabled}
-                onChange={(event) =>
-                  onPreviewUserIdChange(event.target.value ? event.target.value : null)
-                }
-              >
-                <option value="">Eu (remetente)</option>
-                {selectedUserIds.map((userId) => {
-                  const label = recipientLabels[userId];
-                  return (
-                    <option key={userId} value={userId}>
-                      {label?.name ?? "Usuário"} — {label?.email ?? userId}
-                    </option>
-                  );
-                })}
-              </select>
-            </label>
+                onChange={(value) => onPreviewUserIdChange(value ? value : null)}
+                options={[
+                  { value: "", label: "Eu (remetente)" },
+                  ...selectedUserIds.map((userId) => {
+                    const label = recipientLabels[userId];
+                    return {
+                      value: userId,
+                      label: `${label?.name ?? "Usuário"} — ${label?.email ?? userId}`,
+                    };
+                  }),
+                ]}
+              />
+            </FormField>
           ) : null}
         </div>
       ) : null}
@@ -543,16 +548,12 @@ export function NotificationRecipientPicker({
                   : `${draftUserIds.length} usuários marcados`}
             </span>
             <div className="notification-recipients__modal-footer-actions">
-              <button type="button" className="notification-recipients__modal-btn" onClick={closeModal}>
+              <Button type="button" variant="secondary" onClick={closeModal}>
                 Cancelar
-              </button>
-              <button
-                type="button"
-                className="notification-recipients__modal-btn notification-recipients__modal-btn--primary"
-                onClick={confirmModal}
-              >
+              </Button>
+              <Button type="button" variant="primary" onClick={confirmModal}>
                 Confirmar seleção
-              </button>
+              </Button>
             </div>
           </div>
         }

@@ -16,6 +16,7 @@ import {
 } from "../portalTourAdminLabels";
 import { usePortalTourAdminMonitoring } from "../usePortalTourAdminMonitoring";
 import { STATS_AUTO_REFRESH_MS } from "../statsTheme";
+import { Button } from "../../../../ui-kit";
 
 const PERIOD_OPTIONS = [
   { days: 7, label: "7 dias" },
@@ -71,15 +72,20 @@ export function StatsTourPage() {
               Atualização automática a cada {STATS_AUTO_REFRESH_MS / 1000}s
             </span>
           </div>
-          <button
-            type="button"
+          <Button
+            size="sm"
             className="admin-stats__refresh"
             onClick={() => void reload()}
             disabled={loading}
+            icon={
+              <RefreshCw
+                size={16}
+                className={loading ? "admin-stats__spin" : ""}
+              />
+            }
           >
-            <RefreshCw size={16} className={loading ? "admin-stats__spin" : ""} />
             {loading ? "Atualizando…" : "Atualizar"}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -149,18 +155,16 @@ export function StatsTourPage() {
             aria-label="Período do ranking"
           >
             {PERIOD_OPTIONS.map((option) => (
-              <button
+              <Button
                 key={option.days}
-                type="button"
+                size="sm"
                 role="tab"
                 aria-selected={periodDays === option.days}
-                className={`admin-stats-tour-period__btn${
-                  periodDays === option.days ? " is-active" : ""
-                }`}
+                pressed={periodDays === option.days}
                 onClick={() => setPeriodDays(option.days)}
               >
                 {option.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -225,18 +229,16 @@ export function StatsTourPage() {
             aria-label="Filtrar por status"
           >
             {PORTAL_TOUR_STATUS_FILTERS.map((filter) => (
-              <button
+              <Button
                 key={filter}
-                type="button"
+                size="sm"
                 role="tab"
                 aria-selected={statusFilter === filter}
-                className={`admin-stats-tour-filters__btn${
-                  statusFilter === filter ? " is-active" : ""
-                }`}
+                pressed={statusFilter === filter}
                 onClick={() => setStatusFilter(filter)}
               >
                 {PORTAL_TOUR_STATUS_LABELS[filter]}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -308,25 +310,23 @@ export function StatsTourPage() {
                   className="admin-stats-tour-pagination"
                   aria-label="Paginação de exploradores"
                 >
-                  <button
-                    type="button"
-                    className="admin-stats-tour-pagination__btn"
+                  <Button
+                    size="sm"
                     disabled={!canGoPrev || loading}
                     onClick={() => setPage((current) => Math.max(0, current - 1))}
                   >
                     Anterior
-                  </button>
+                  </Button>
                   <span className="admin-stats-tour-pagination__info">
                     Página {page + 1} de {totalPages} · {listData.total} registros
                   </span>
-                  <button
-                    type="button"
-                    className="admin-stats-tour-pagination__btn"
+                  <Button
+                    size="sm"
                     disabled={!canGoNext || loading}
                     onClick={() => setPage((current) => current + 1)}
                   >
                     Próxima
-                  </button>
+                  </Button>
                 </nav>
               ) : null}
             </>

@@ -55,54 +55,15 @@
   font-size: 15px;
 }
 
-.launcher-close {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  opacity: 0.6;
-  transition: 0.2s ease;
-}
-
-.launcher-close:hover {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
 /* SEARCH */
 
 .launcher-searchbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid var(--control-border);
-  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
-  transition: box-shadow 0.2s ease;
 }
 
-.launcher-searchbar:focus-within {
-  box-shadow: var(--focus-2);
-}
-
-.launcher-searchbar input {
+.launcher-searchbar .portal-ui-search {
   width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--text);
-  font-size: 14px;
-}
-
-/* REMOVE OUTILINE DO INPUT */
-
-.launcher-searchbar input:focus,
-.launcher-searchbar input:focus-visible,
-.launcher-searchbar input:active {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
 }
 
 /* SECTIONS */
@@ -200,25 +161,6 @@
   font-weight: 600;
   color: var(--text);
   word-break: break-word;
-}
-
-.launcher-empty-clear {
-  margin-top: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
-  color: var(--primary);
-}
-
-.launcher-empty-clear:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
-  border-color: var(--primary);
-  color: var(--primary);
-  transform: none;
-  box-shadow: none;
 }
 
 .launcher-hint {

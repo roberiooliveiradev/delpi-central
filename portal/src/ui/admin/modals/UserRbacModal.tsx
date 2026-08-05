@@ -9,6 +9,7 @@ import type {
 import { AdminApi } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
+import { Alert, Button, Input, Switch, Tabs } from "../../../ui-kit";
 import "./UserRbacModal.css";
 
 type UserRbacTab = "summary" | "roles" | "groups";
@@ -130,42 +131,26 @@ export const UserRbacModal = ({
       size="xl"
       footer={
         <>
-          <button onClick={onClose} disabled={loading}>
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
             Cancelar
-          </button>
+          </Button>
 
-          <button onClick={save} disabled={loading}>
+          <Button variant="primary" onClick={save} loading={loading}>
             Salvar
-          </button>
+          </Button>
         </>
       }
     >
       <div className="user-rbac-body">
-        <div className="tabs">
-          <button
-            type="button"
-            className={activeTab === "summary" ? "active" : ""}
-            onClick={() => setActiveTab("summary")}
-          >
-            Resumo
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "roles" ? "active" : ""}
-            onClick={() => setActiveTab("roles")}
-          >
-            Papéis diretos
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "groups" ? "active" : ""}
-            onClick={() => setActiveTab("groups")}
-          >
-            Grupos
-          </button>
-        </div>
+        <Tabs
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as UserRbacTab)}
+          items={[
+            { id: "summary", label: "Resumo" },
+            { id: "roles", label: "Papéis diretos" },
+            { id: "groups", label: "Grupos" },
+          ]}
+        />
 
         {activeTab === "summary" && (
           <div className="user-rbac-summary">
@@ -205,10 +190,15 @@ export const UserRbacModal = ({
                     <strong>{userStatusLabel}</strong>
                   </div>
 
-                  <label className="user-rbac-info-item user-rbac-info-item--field">
+                  <label
+                    className="user-rbac-info-item user-rbac-info-item--field"
+                    htmlFor="user-rbac-birth-date"
+                  >
                     <span>Data de nascimento</span>
-                    <input
+                    <Input
+                      id="user-rbac-birth-date"
                       type="date"
+                      size="sm"
                       value={birthDate}
                       onChange={(event) => setBirthDate(event.target.value)}
                       disabled={loading}
@@ -269,24 +259,20 @@ export const UserRbacModal = ({
                 </div>
               </div>
 
-              <label className="user-rbac-switch">
-                <input
-                  type="checkbox"
-                  checked={isSuperadmin}
-                  onChange={(event) => setIsSuperadmin(event.target.checked)}
-                  disabled={loading}
-                />
-                <span className="user-rbac-switch-control" />
-                <span className="user-rbac-switch-label">
-                  {isSuperadmin ? "Ativado" : "Desativado"}
-                </span>
-              </label>
+              <Switch
+                className="user-rbac-switch"
+                checked={isSuperadmin}
+                onChange={(event) => setIsSuperadmin(event.target.checked)}
+                disabled={loading}
+                label={isSuperadmin ? "Ativado" : "Desativado"}
+                aria-label="Privilégio de superadmin"
+              />
             </section>
 
-            <div className="user-rbac-alert">
+            <Alert tone="info">
               Papéis diretos são concedidos diretamente ao usuário. Grupos podem
               conceder papéis adicionais de forma indireta.
-            </div>
+            </Alert>
           </div>
         )}
 

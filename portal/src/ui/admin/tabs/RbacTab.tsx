@@ -1,6 +1,7 @@
 // src/ui/admin/tabs/RbacTab.tsx
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Circle, ShieldCheck, UserRound } from "lucide-react";
 
 import { AuthContext } from "../../../state/AuthContext";
@@ -17,7 +18,7 @@ import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
-import { UserRbacModal } from "../modals/UserRbacModal";
+import { Button, Select } from "../../../ui-kit";
 
 type UserSortField = "name" | "email";
 
@@ -72,6 +73,7 @@ const formatBrazilDateTime = (value?: string | null) => {
 
 export const RbacTab = () => {
   const { getAccessToken } = useContext(AuthContext);
+  const navigate = useNavigate();
   const showAlert = useAppAlert();
 
   const [search, setSearch] = useState("");
@@ -84,7 +86,6 @@ export const RbacTab = () => {
   });
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [editing, setEditing] = useState<AdminUser | null>(null);
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [anonymizing, setAnonymizing] = useState<AdminUser | null>(null);
   const [onlineByUserId, setOnlineByUserId] = useState<
@@ -365,83 +366,71 @@ export const RbacTab = () => {
               <span className="admin-entity-filters__label">Filtrar:</span>
               {presenceEnabled ? (
                 <>
-                  <button
-                    type="button"
-                    className={filters.online === "true" ? "active" : ""}
+                  <Button
+                    size="sm"
+                    pressed={filters.online === "true"}
                     onClick={() => toggleOnlineFilter("true")}
                   >
                     Online
-                  </button>
-                  <button
-                    type="button"
-                    className={filters.online === "false" ? "active" : ""}
+                  </Button>
+                  <Button
+                    size="sm"
+                    pressed={filters.online === "false"}
                     onClick={() => toggleOnlineFilter("false")}
                   >
                     Offline
-                  </button>
+                  </Button>
                 </>
               ) : null}
-              <button
-                type="button"
-                className={filters.isSuperadmin === true ? "active" : ""}
+              <Button
+                size="sm"
+                pressed={filters.isSuperadmin === true}
                 onClick={() => toggleSuperadminFilter(true)}
               >
                 Superadmin
-              </button>
-              <button
-                type="button"
-                className={filters.isSuperadmin === false ? "active" : ""}
+              </Button>
+              <Button
+                size="sm"
+                pressed={filters.isSuperadmin === false}
                 onClick={() => toggleSuperadminFilter(false)}
               >
                 Não superadmin
-              </button>
+              </Button>
               {hasActiveFilters ? (
-                <button type="button" onClick={clearFilters}>
+                <Button size="sm" variant="ghost" onClick={clearFilters}>
                   Limpar filtros
-                </button>
+                </Button>
               ) : null}
             </div>
             <div className="admin-entity-filters__group">
               <label className="admin-entity-filters__label" htmlFor="user-filter-role">
                 Papel
               </label>
-              <select
+              <Select
                 id="user-filter-role"
+                size="sm"
                 value={filters.roleId ?? ""}
-                onChange={(event) =>
-                  applyFilters({
-                    roleId: event.target.value || undefined,
-                  })
-                }
-              >
-                <option value="">Todos os papéis</option>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.id}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => applyFilters({ roleId: next || undefined })}
+                options={[
+                  { value: "", label: "Todos os papéis" },
+                  ...roles.map((role) => ({ value: role.id, label: role.name })),
+                ]}
+              />
             </div>
             <div className="admin-entity-filters__group">
               <label className="admin-entity-filters__label" htmlFor="user-filter-group">
                 Grupo
               </label>
-              <select
+              <Select
                 id="user-filter-group"
+                size="sm"
                 value={filters.groupId ?? ""}
-                onChange={(event) =>
-                  applyFilters({
-                    groupId: event.target.value || undefined,
-                  })
-                }
-              >
-                <option value="">Todos os grupos</option>
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => applyFilters({ groupId: next || undefined })}
+                options={[
+                  { value: "", label: "Todos os grupos" },
+                  ...groups.map((group) => ({ value: group.id, label: group.name })),
+                ]}
+              />
             </div>
           </>
         }
@@ -533,7 +522,7 @@ export const RbacTab = () => {
         renderActions={(user) => [
           {
             label: "Editar RBAC",
-            onClick: () => setEditing(user),
+            onClick: () => navigate(`/admin/users/${user.id}`),
           },
           {
             label: "Anonimizar (LGPD)",
@@ -561,14 +550,6 @@ export const RbacTab = () => {
         danger
         onCancel={() => setAnonymizing(null)}
         onConfirm={handleAnonymize}
-      />
-
-      <UserRbacModal
-        open={!!editing}
-        user={editing}
-        api={api}
-        onClose={() => setEditing(null)}
-        onSaved={() => usersResource.refetch()}
       />
     </>
   );

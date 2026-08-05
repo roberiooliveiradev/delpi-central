@@ -1,6 +1,7 @@
 // src/ui/admin/modals/IconPickerModal.tsx
 import { useMemo, useState } from "react";
 import { Modal } from "../../../components/Modal";
+import { Button, SearchInput } from "../../../ui-kit";
 import "./IconPickerModal.css"
 import * as LucideIcons from "lucide-react";
 
@@ -104,18 +105,21 @@ export const IconPickerModal = ({ open, value, onClose, onPick }: Props) => {
       size="lg"
       footer={
         <>
-          <button className="btn-secondary" onClick={() => onPick(null)}>
+          <Button variant="danger-soft" onClick={() => onPick(null)}>
             Remover ícone
-          </button>
-          <button onClick={onClose}>Fechar</button>
+          </Button>
+          <Button variant="primary" onClick={onClose}>
+            Fechar
+          </Button>
         </>
       }
     >
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        <input
+        <SearchInput
           placeholder="Buscar ícone (ex: book, user, bell...)"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          onClear={() => setQ("")}
         />
 
         <div className="row between" style={{ marginTop: 4 }}>

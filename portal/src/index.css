@@ -45,7 +45,10 @@ textarea {
   font: inherit;
 }
 
-button {
+/* Base para botões ainda não migrados. `:where()` mantém a especificidade de um
+   seletor de elemento: sem ele, esta regra passaria a vencer classes de página
+   como `.collapse-btn` e quebraria sidebar, launcher e cards. */
+button:where(:not(.portal-ui-btn)) {
   color: var(--control-text);
   background: var(--control-bg);
   border: 1px solid var(--control-border);
@@ -60,7 +63,7 @@ button {
     transform 0.2s ease;
 }
 
-button:hover:not(:disabled) {
+button:where(:not(.portal-ui-btn)):hover:not(:disabled) {
   border-color: var(--primary);
   color: var(--primary);
   background: var(--surface-2);
@@ -257,6 +260,11 @@ textarea {
   --control-placeholder: rgba(255, 255, 255, 0.55);
   --focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
 
+  /* No escuro a superfície é quase preta: o controle precisa de um degrau
+     acima dela para o campo ser percebido sem depender só da borda. */
+  --control-bg: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+  --control-border: rgba(255, 255, 255, 0.22);
+
   --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
   --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
 
@@ -315,6 +323,9 @@ textarea {
 
     --control-placeholder: rgba(255, 255, 255, 0.55);
     --focus: 0 0 0 3px rgba(139, 147, 255, 0.3);
+
+    --control-bg: color-mix(in srgb, var(--surface-2) 62%, var(--surface));
+    --control-border: rgba(255, 255, 255, 0.22);
 
     --alert-success-border: color-mix(in srgb, var(--success) 45%, transparent);
     --alert-success-bg: color-mix(in srgb, var(--success) 15%, transparent);
@@ -426,6 +437,14 @@ body:has(.app-shell) {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Páginas com chrome (manifesto, papéis, grupos, usuários): o rodapé fixo e os
+   painéis dependem de altura real, senão param na altura do conteúdo.
+   `flex-shrink: 0` é essencial — encolhendo, o corpo ficaria menor que o
+   conteúdo e o rodapé sticky apareceria no meio da página. */
+.content > .portal-ui-page {
+  flex: 1 0 auto;
 }
 
 /* HOSTS DE APP */
@@ -762,35 +781,6 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
   flex-shrink: 0;
 }
 
-.app-host-google-button {
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition:
-    background 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    color 0.2s ease;
-  white-space: nowrap;
-}
-
-.app-host-google-button:hover {
-  background: var(--surface-3);
-  box-shadow: var(--focus-2);
-  transform: translateY(-1px);
-}
-
-.app-host-google-close-button {
-  color: var(--text-muted);
-}
-
-.app-host-google-close-button:hover {
-  color: var(--danger);
-}
-
 .app-host-google-floating-button {
   position: absolute;
   top: 12px;
@@ -941,7 +931,7 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
     flex-wrap: wrap;
   }
 
-  .app-host-google-button {
+  .app-host-google-bar .portal-ui-btn {
     flex: 1 1 auto;
   }
 }
@@ -1076,69 +1066,26 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
   padding: 10px 16px;
 }
 
-/* NAVBAR BASE */
+/* NAVBAR BASE — mesmo cabeçalho sticky do editor de manifesto (PageChrome):
+   faixa em `--surface` com abas sublinhadas do kit, sem cartão arredondado. */
 .admin-navbar {
   position: sticky;
   top: 0;
   z-index: 10;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 8px;
+  margin: -10px -16px 0;
+  padding: 8px 16px 0;
+  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--text) 40%, transparent);
 }
 
-/* DESKTOP TABS */
-.admin-navbar-inner {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.admin-nav-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  border-radius: 10px;
-  padding: 10px 16px;
-
-  border: 1px solid transparent;
-  background: transparent;
-
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.admin-nav-item:hover {
-  background: rgba(0, 153, 220, 0.08);
-  color: var(--primary);
-}
-
-.admin-nav-item.active {
-  background: var(--primary);
-  color: white;
-  box-shadow: 0 6px 18px rgba(0, 153, 220, 0.3);
-}
-
-/* TABLET MODE */
-@media (max-width: 1024px) {
-  .admin-navbar-inner {
-    overflow-x: auto;
-  }
-}
-
-/* MOBILE COMPACT */
-@media (max-width: 768px) {
-  .admin-nav-item span {
-    font-size: 13px;
-  }
-
-  .admin-nav-item {
+@media (max-width: 720px) {
+  .admin-page {
     padding: 8px 12px;
+  }
+
+  .admin-navbar {
+    margin: -8px -12px 0;
+    padding: 6px 12px 0;
   }
 }
 
@@ -1148,8 +1095,13 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
 }
 
 @media (max-width: 520px) {
-  .admin-navbar-inner {
+  .admin-navbar-tabs {
     display: none;
+  }
+
+  .admin-navbar {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
   }
 
   .admin-mobile-select {
@@ -1164,12 +1116,22 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
     align-items: center;
     gap: 8px;
 
-    padding: 10px 14px;
+    min-height: 40px;
+    padding: 0 14px;
     border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    border: 1px solid var(--control-border);
+    background: var(--control-bg);
+    color: var(--text);
     cursor: pointer;
+    font: inherit;
+    font-size: 13px;
     font-weight: 600;
+  }
+
+  .admin-mobile-trigger:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-2);
   }
 
   .admin-mobile-menu {
@@ -1195,6 +1157,10 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
     padding: 10px 14px;
     border: none;
     background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
     text-align: left;
   }
@@ -1497,23 +1463,10 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
 
 /* Notifications list (home — mesmo card da sidebar) */
 .home-notif-mark-all {
-  display: block;
   width: 100%;
+  justify-content: flex-start;
   margin-bottom: 10px;
-  padding: 8px 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
   color: var(--primary);
-  font-size: 13px;
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.home-notif-mark-all:hover {
-  background: var(--surface-2);
 }
 
 .home-notif-list {
@@ -1577,9 +1530,22 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
   }
 }
 
+@media (max-width: 640px) {
+  .home-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .home-header-right {
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 520px) {
   .home-wrap {
-    padding: 18px 16px;
+    padding: 18px 14px;
+    gap: 14px;
   }
 
   .home-title {
@@ -1588,6 +1554,30 @@ body.portal-has-embedded-app .app-host-embedded__frame > .app-host-iframe {
 
   .home-app-grid {
     grid-template-columns: 1fr;
+  }
+
+  .home-panel {
+    padding: 14px 12px;
+    border-radius: 14px;
+  }
+
+  .home-panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .home-summary-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .home-summary-value {
+    font-size: 20px;
+  }
+
+  .home-action,
+  .home-app-tile {
+    padding: 10px;
   }
 }
 

@@ -8,9 +8,7 @@ import {
   History,
   Pencil,
   RefreshCw,
-  Search,
   Trash2,
-  X,
 } from "lucide-react";
 
 import type {
@@ -30,6 +28,16 @@ import {
 import { NotificationDispatchDetailModal } from "./NotificationDispatchDetailModal";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import { buildNotificationCategoryOptions } from "../../utils/notificationCatalog";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  FormField,
+  SearchInput,
+  SegmentedControl,
+  Select,
+  Spinner,
+} from "../../ui-kit";
 
 import "./NotificationDispatchHistory.css";
 
@@ -271,116 +279,94 @@ export function NotificationDispatchHistory({
           </p>
         </div>
         <div className="notification-dispatch-history__actions">
-          <button
+          <Button
             type="button"
-            className="notification-dispatch-history__btn"
+            variant="secondary"
+            icon={<RefreshCw size={16} />}
             onClick={() => void load()}
             disabled={loading}
           >
-            <RefreshCw size={16} aria-hidden="true" />
             Atualizar
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="notification-dispatch-history__btn notification-dispatch-history__btn--primary"
+            variant="primary"
+            loading={processing}
             onClick={() => void handleProcessPending()}
             disabled={processing}
           >
             {processing ? "Processando…" : "Processar agendados"}
-          </button>
+          </Button>
         </div>
       </header>
 
       <div className="notification-dispatch-history__controls">
-        <div
+        <SegmentedControl
           className="notification-dispatch-history__status-tabs"
-          role="tablist"
           aria-label="Status do envio"
-        >
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.value || "all"}
-              type="button"
-              role="tab"
-              aria-selected={statusFilter === tab.value}
-              className={
-                statusFilter === tab.value
-                  ? "notification-dispatch-history__status-tab notification-dispatch-history__status-tab--active"
-                  : "notification-dispatch-history__status-tab"
-              }
-              onClick={() => setStatusFilter(tab.value)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_TABS.map((tab) => ({
+            value: tab.value,
+            label: tab.label,
+          }))}
+        />
 
         <div className="notification-dispatch-history__filters">
-          <label className="notification-dispatch-history__filter-label">
-            <span>Categoria</span>
-            <select
+          <FormField
+            label="Categoria"
+            htmlFor="dispatch-history-category"
+            className="notification-dispatch-history__filter-label"
+          >
+            <Select
+              id="dispatch-history-category"
               value={categoryFilter}
-              onChange={(event) =>
-                setCategoryFilter(event.target.value as NotificationCategory | "")
+              onChange={(value) =>
+                setCategoryFilter(value as NotificationCategory | "")
               }
               aria-label="Filtrar por categoria"
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.value || "all"} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={categoryOptions.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
+          </FormField>
 
-          <label className="notification-dispatch-history__filter-label">
-            <span>Exibição</span>
-            <select
+          <FormField
+            label="Exibição"
+            htmlFor="dispatch-history-revoked"
+            className="notification-dispatch-history__filter-label"
+          >
+            <Select
+              id="dispatch-history-revoked"
               value={revokedFilter}
-              onChange={(event) =>
-                setRevokedFilter(event.target.value as NotificationDispatchRevokedFilter)
+              onChange={(value) =>
+                setRevokedFilter(value as NotificationDispatchRevokedFilter)
               }
               aria-label="Filtrar por remoção"
-            >
-              {REVOKED_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              options={REVOKED_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.label,
+              }))}
+            />
+          </FormField>
 
           <div className="notification-dispatch-history__search">
-            <Search size={16} aria-hidden="true" />
-            <input
-              type="search"
+            <SearchInput
               value={searchInput}
               placeholder="Buscar por título ou template…"
               aria-label="Buscar envios"
               onChange={(event) => setSearchInput(event.target.value)}
+              onClear={clearSearch}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   applySearch();
                 }
               }}
             />
-            {searchInput ? (
-              <button
-                type="button"
-                className="notification-dispatch-history__search-clear"
-                aria-label="Limpar busca"
-                onClick={clearSearch}
-              >
-                <X size={14} />
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="notification-dispatch-history__search-btn"
-              onClick={applySearch}
-            >
+            <Button type="button" variant="secondary" onClick={applySearch}>
               Buscar
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -391,14 +377,15 @@ export function NotificationDispatchHistory({
           {searchTerm ? ` · busca: “${searchTerm}”` : null}
         </p>
         {!loading && deletableOnPage.length > 0 ? (
-          <button
+          <Button
             type="button"
-            className="notification-dispatch-history__select-page"
+            variant="ghost"
+            size="sm"
             onClick={toggleSelectAllDeletableOnPage}
             disabled={bulkBusy}
           >
             {allDeletableOnPageSelected ? "Desmarcar página" : "Selecionar excluíveis"}
-          </button>
+          </Button>
         ) : null}
       </div>
 
@@ -408,23 +395,26 @@ export function NotificationDispatchHistory({
             {selectedCount === 1 ? "1 selecionado" : `${selectedCount} selecionados`}
           </span>
           <div className="notification-dispatch-history__bulk-actions">
-            <button
+            <Button
               type="button"
-              className="notification-dispatch-history__bulk-btn notification-dispatch-history__bulk-btn--danger"
+              variant="danger-soft"
+              size="sm"
               disabled={bulkBusy}
+              loading={bulkBusy}
+              icon={<Trash2 size={14} />}
               onClick={() => void handleBulkDelete()}
             >
-              <Trash2 size={14} aria-hidden="true" />
               {bulkBusy ? "Excluindo…" : "Excluir selecionados"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className="notification-dispatch-history__bulk-btn notification-dispatch-history__bulk-btn--ghost"
+              variant="ghost"
+              size="sm"
               disabled={bulkBusy}
               onClick={clearSelection}
             >
               Limpar seleção
-            </button>
+            </Button>
           </div>
         </div>
       ) : null}
@@ -436,10 +426,10 @@ export function NotificationDispatchHistory({
         </p>
       ) : null}
 
-      {error ? <p className="notification-dispatch-history__error">{error}</p> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
 
       {loading ? (
-        <p className="notification-dispatch-history__loading">Carregando…</p>
+        <Spinner label="Carregando…" />
       ) : items.length === 0 ? (
         <div className="notification-dispatch-history__empty">Nenhum envio encontrado.</div>
       ) : (
@@ -465,8 +455,7 @@ export function NotificationDispatchHistory({
                   <tr key={item.id} className={selected ? "notification-dispatch-history__row--selected" : undefined}>
                     <td className="notification-dispatch-history__col-check">
                       {deletable ? (
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={selected}
                           disabled={bulkBusy || deletingId === item.id}
                           aria-label={`Selecionar envio ${item.title || item.id}`}
@@ -512,35 +501,39 @@ export function NotificationDispatchHistory({
                     <td>{item.presentation}</td>
                     <td>
                       <div className="notification-dispatch-history__row-actions">
-                        <button
+                        <Button
                           type="button"
-                          className="notification-dispatch-history__edit"
+                          variant="ghost"
+                          size="sm"
+                          icon={<Eye size={14} />}
                           onClick={() => setDetailDispatchId(item.id)}
                         >
-                          <Eye size={14} aria-hidden="true" />
                           Detalhes
-                        </button>
+                        </Button>
                         {onEditDispatch &&
                         isEditableScheduledDispatch(item.status, item.scheduledAt) ? (
-                          <button
+                          <Button
                             type="button"
-                            className="notification-dispatch-history__edit"
+                            variant="ghost"
+                            size="sm"
+                            icon={<Pencil size={14} />}
                             onClick={() => onEditDispatch(item.id)}
                           >
-                            <Pencil size={14} aria-hidden="true" />
                             Editar
-                          </button>
+                          </Button>
                         ) : null}
                         {deletable ? (
-                          <button
+                          <Button
                             type="button"
-                            className="notification-dispatch-history__edit notification-dispatch-history__edit--danger"
+                            variant="danger-soft"
+                            size="sm"
                             disabled={deletingId === item.id || bulkBusy}
+                            loading={deletingId === item.id}
+                            icon={<Trash2 size={14} />}
                             onClick={() => void handleDeleteDispatch(item)}
                           >
-                            <Trash2 size={14} aria-hidden="true" />
                             {deletingId === item.id ? "Excluindo…" : "Excluir"}
-                          </button>
+                          </Button>
                         ) : item.revokedAt ? (
                           <span className="notification-dispatch-history__muted">Removido</span>
                         ) : null}
@@ -556,25 +549,27 @@ export function NotificationDispatchHistory({
 
       {totalPages > 1 ? (
         <footer className="notification-dispatch-history__pagination">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             disabled={page <= 1 || loading}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
             aria-label="Página anterior"
-          >
-            <ChevronLeft size={18} />
-          </button>
+            icon={<ChevronLeft size={18} />}
+          />
           <span>
             Página {page} de {totalPages}
           </span>
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             aria-label="Próxima página"
-          >
-            <ChevronRight size={18} />
-          </button>
+            icon={<ChevronRight size={18} />}
+          />
         </footer>
       ) : null}
 

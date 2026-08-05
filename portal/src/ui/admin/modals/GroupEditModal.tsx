@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
 import { Modal } from "../../../components/Modal";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
+import {
+  Alert,
+  Button,
+  FormField,
+  Input,
+  Tabs,
+  Textarea,
+} from "../../../ui-kit";
 import "./GroupEditModal.css";
 
 type GroupModalTab = "details" | "users" | "roles";
@@ -62,71 +70,61 @@ export const GroupEditModal = ({
       size="xl"
       footer={
         <>
-          <button onClick={onClose} disabled={saving}>
+          <Button variant="secondary" onClick={onClose} disabled={saving}>
             Cancelar
-          </button>
-          <button onClick={onSave} disabled={saving || !group.name?.trim()}>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={onSave}
+            loading={saving}
+            disabled={!group.name?.trim()}
+          >
             Salvar
-          </button>
+          </Button>
         </>
       }
     >
       <div className="group-edit-body">
-        <div className="tabs">
-          <button
-            type="button"
-            className={activeTab === "details" ? "active" : ""}
-            onClick={() => setActiveTab("details")}
-          >
-            Dados
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "users" ? "active" : ""}
-            onClick={() => setActiveTab("users")}
-          >
-            Usuários
-          </button>
-
-          <button
-            type="button"
-            className={activeTab === "roles" ? "active" : ""}
-            onClick={() => setActiveTab("roles")}
-          >
-            Papéis
-          </button>
-        </div>
+        <Tabs
+          value={activeTab}
+          onChange={(id) => setActiveTab(id as GroupModalTab)}
+          items={[
+            { id: "details", label: "Dados" },
+            { id: "users", label: "Usuários" },
+            { id: "roles", label: "Papéis" },
+          ]}
+        />
 
         {activeTab === "details" && (
           <>
-            <label className="portal-form-label">
-              Nome
-              <input
+            <FormField label="Nome" htmlFor="group-edit-name" required>
+              <Input
+                id="group-edit-name"
                 value={group.name}
                 onChange={(event) =>
                   onChangeGroup({ name: event.target.value })
                 }
                 disabled={saving}
               />
-            </label>
+            </FormField>
 
-            <label className="portal-form-label">
-              Descrição
-              <textarea
+            <FormField label="Descrição" htmlFor="group-edit-description">
+              <Textarea
+                id="group-edit-description"
                 value={group.description || ""}
                 onChange={(event) =>
                   onChangeGroup({ description: event.target.value })
                 }
                 disabled={saving}
+                rows={3}
               />
-            </label>
+            </FormField>
 
-            <div className="alert">
+            <Alert tone="info">
               Use as abas <strong>Usuários</strong> e <strong>Papéis</strong> para
               controlar quem pertence ao grupo e quais papéis são herdados por
               esses usuários.
-            </div>
+            </Alert>
           </>
         )}
 

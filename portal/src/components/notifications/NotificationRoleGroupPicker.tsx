@@ -3,6 +3,7 @@ import { UserRound, X } from "lucide-react";
 
 import type { AdminApi, AdminGroup, AdminRole } from "../../data/adminApi";
 import type { CoreApi } from "../../data/coreApi";
+import { Alert, Button, Checkbox, Spinner } from "../../ui-kit";
 
 import "./NotificationRoleGroupPicker.css";
 
@@ -165,7 +166,7 @@ export function NotificationRoleGroupPicker({
     .filter((user): user is ResolvedRecipient => Boolean(user));
 
   if (loadingCatalog) {
-    return <p className="notification-rg-picker__loading">Carregando papéis e grupos…</p>;
+    return <Spinner label="Carregando papéis e grupos…" />;
   }
 
   return (
@@ -182,16 +183,13 @@ export function NotificationRoleGroupPicker({
             <ul className="notification-rg-picker__list">
               {roles.map((role) => (
                 <li key={role.id}>
-                  <label className="notification-rg-picker__item">
-                    <input
-                      type="checkbox"
-                      className="notification-rg-picker__checkbox"
-                      disabled={disabled}
-                      checked={selectedRoleIds.includes(role.id)}
-                      onChange={() => toggleRole(role.id)}
-                    />
-                    <span className="notification-rg-picker__label-text">{role.name}</span>
-                  </label>
+                  <Checkbox
+                    className="notification-rg-picker__item"
+                    disabled={disabled}
+                    checked={selectedRoleIds.includes(role.id)}
+                    onChange={() => toggleRole(role.id)}
+                    label={<span className="notification-rg-picker__label-text">{role.name}</span>}
+                  />
                 </li>
               ))}
             </ul>
@@ -207,16 +205,13 @@ export function NotificationRoleGroupPicker({
             <ul className="notification-rg-picker__list">
               {groups.map((group) => (
                 <li key={group.id}>
-                  <label className="notification-rg-picker__item">
-                    <input
-                      type="checkbox"
-                      className="notification-rg-picker__checkbox"
-                      disabled={disabled}
-                      checked={selectedGroupIds.includes(group.id)}
-                      onChange={() => toggleGroup(group.id)}
-                    />
-                    <span className="notification-rg-picker__label-text">{group.name}</span>
-                  </label>
+                  <Checkbox
+                    className="notification-rg-picker__item"
+                    disabled={disabled}
+                    checked={selectedGroupIds.includes(group.id)}
+                    onChange={() => toggleGroup(group.id)}
+                    label={<span className="notification-rg-picker__label-text">{group.name}</span>}
+                  />
                 </li>
               ))}
             </ul>
@@ -242,11 +237,11 @@ export function NotificationRoleGroupPicker({
           </p>
 
           {resolveError ? (
-            <p className="notification-rg-picker__error">{resolveError}</p>
+            <Alert tone="danger">{resolveError}</Alert>
           ) : null}
 
           {loadingUsers ? (
-            <p className="notification-rg-picker__loading">Carregando destinatários…</p>
+            <Spinner label="Carregando destinatários…" />
           ) : resolvedUsers.length === 0 ? (
             <p className="notification-rg-picker__empty">
               Nenhum usuário ativo encontrado para os papéis/grupos selecionados.
@@ -262,16 +257,18 @@ export function NotificationRoleGroupPicker({
                     <strong>{user.name || "Usuário"}</strong>
                     <small>{user.email}</small>
                   </span>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     className="notification-rg-picker__user-remove"
                     disabled={disabled}
                     onClick={() => excludeUser(user)}
                     aria-label={`Remover ${user.name || user.email} do envio`}
+                    icon={<X size={14} />}
                   >
-                    <X size={14} />
                     Remover
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -289,13 +286,15 @@ export function NotificationRoleGroupPicker({
                       {user.name || "Usuário"}
                       <small>{user.email}</small>
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      variant="link"
+                      size="sm"
                       disabled={disabled}
                       onClick={() => restoreUser(user.id)}
                     >
                       Incluir novamente
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>

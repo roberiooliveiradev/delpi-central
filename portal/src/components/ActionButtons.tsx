@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { Button } from "../ui-kit";
 
 type Props = {
   onEdit?: () => void;
@@ -13,29 +14,28 @@ export const ActionButtons = ({ onEdit, onDelete, disabled }: Props) => {
   }
 
   return (
-    <div className="dt-actions">
+    <div className="dt-actions" style={{ display: "inline-flex", gap: 6 }}>
       {onEdit && (
-        <button
-          type="button"
-          className="dt-action-btn"
+        <Button
+          size="sm"
           onClick={onEdit}
           disabled={disabled}
           title="Editar"
-        >
-          <Pencil size={16} />
-        </button>
+          aria-label="Editar"
+          icon={<Pencil size={16} />}
+        />
       )}
 
       {onDelete && (
-        <button
-          type="button"
-          className="dt-action-btn danger"
+        <Button
+          size="sm"
+          variant="danger-soft"
           onClick={onDelete}
           disabled={disabled}
           title="Excluir"
-        >
-          <Trash2 size={16} />
-        </button>
+          aria-label="Excluir"
+          icon={<Trash2 size={16} />}
+        />
       )}
     </div>
   );

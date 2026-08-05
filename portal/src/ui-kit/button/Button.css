@@ -1,0 +1,198 @@
+/* portal/src/ui-kit/button/Button.css */
+
+.portal-ui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.portal-ui-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Alturas espelham .portal-ui-control (sm 32 / md 36) para alinhar em linha
+   com Input, Select e SearchInput. */
+.portal-ui-btn--sm {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.portal-ui-btn--md {
+  min-height: 36px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.portal-ui-btn--lg {
+  min-height: 40px;
+  padding: 8px 18px;
+  font-size: 14px;
+}
+
+.portal-ui-btn--primary {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.portal-ui-btn--primary:hover:not(:disabled) {
+  filter: brightness(0.95);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* Mesmo fundo dos controles: no tema escuro `--surface` se confunde com a
+   página e o botão some. */
+.portal-ui-btn--secondary {
+  background: var(--control-bg);
+  color: var(--text);
+  border-color: var(--control-border);
+}
+
+.portal-ui-btn--secondary:hover:not(:disabled) {
+  background: var(--surface-2);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-btn--danger {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
+.portal-ui-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.95);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);
+}
+
+/* Destrutivo discreto: usado em linhas de tabela, onde vários botões sólidos
+   vermelhos competiriam com o conteúdo. */
+.portal-ui-btn--danger-soft {
+  background: color-mix(in srgb, var(--danger) 10%, var(--control-bg));
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, var(--control-border));
+}
+
+.portal-ui-btn--danger-soft:hover:not(:disabled) {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
+.portal-ui-btn--ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: transparent;
+}
+
+.portal-ui-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--primary);
+}
+
+.portal-ui-btn--link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  min-height: 0;
+  padding: 0;
+  font-weight: 500;
+  border-radius: 0;
+  text-decoration: none;
+}
+
+.portal-ui-btn--link:hover:not(:disabled) {
+  color: var(--primary);
+  text-decoration: underline;
+  box-shadow: none;
+  filter: none;
+}
+
+/* Alternância ligada (filtro/ordenação ativos): tint em vez de sólido, para
+   não competir com a ação primária da tela. */
+.portal-ui-btn--pressed:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 14%, var(--control-bg));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.portal-ui-btn--pressed:not(:disabled):hover {
+  background: color-mix(in srgb, var(--primary) 22%, var(--control-bg));
+  color: var(--primary);
+}
+
+/* Dupla classe: CSS legado do portal tem regras como `.algum-header span
+   { display: block }` que venceriam uma classe só e quebrariam o botão. */
+.portal-ui-btn .portal-ui-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Botão só com ícone: quadrado, mesma altura dos demais. */
+.portal-ui-btn--icon-only.portal-ui-btn--sm {
+  width: 32px;
+  padding: 0;
+}
+
+.portal-ui-btn--icon-only.portal-ui-btn--md {
+  width: 36px;
+  padding: 0;
+}
+
+.portal-ui-btn--icon-only.portal-ui-btn--lg {
+  width: 40px;
+  padding: 0;
+}
+
+/* `children` pode trazer ícone + texto (ex.: ações do AdminEntityList).
+   Sem inline-flex o `svg { display: block }` global quebra a linha. */
+.portal-ui-btn .portal-ui-btn__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.portal-ui-btn svg {
+  flex: 0 0 auto;
+}
+
+.portal-ui-btn .portal-ui-btn__spinner {
+  display: inline-flex;
+  animation: portal-ui-spin 1s linear infinite;
+}
+
+@keyframes portal-ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.portal-ui-btn--loading .portal-ui-btn__label {
+  opacity: 0.85;
+}

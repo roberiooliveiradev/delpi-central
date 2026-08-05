@@ -268,6 +268,64 @@ export type PluginVersion = {
   created_at: string | null;
 };
 
+export type PluginVersionDetail = PluginVersion & {
+  manifest: Record<string, unknown>;
+};
+
+export type PluginAccessPath =
+  | {
+      type: "role";
+      roleId: string;
+      roleName: string;
+      codes: string[];
+    }
+  | {
+      type: "group_role";
+      groupId: string;
+      groupName: string;
+      roleId: string;
+      roleName: string;
+      codes: string[];
+    };
+
+export type PluginAccessUser = {
+  id: string;
+  name: string;
+  email: string;
+  isSuperadmin: boolean;
+  paths: PluginAccessPath[];
+  permissionCodes: string[];
+};
+
+export type PluginAccessSnapshot = {
+  pluginId: string;
+  permissions: Array<{
+    id: string;
+    code: string;
+    name: string;
+    description?: string | null;
+  }>;
+  roles: Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    permissionCodes: string[];
+  }>;
+  groups: Array<{
+    id: string;
+    name: string;
+    description?: string | null;
+    viaRoles: Array<{ id: string; name: string }>;
+  }>;
+  users: PluginAccessUser[];
+  summary: {
+    permissionCount: number;
+    roleCount: number;
+    groupCount: number;
+    userCount: number;
+  };
+};
+
 export type RegisterPluginResponse = {
   status: "registered";
   appId: string;
@@ -354,6 +412,18 @@ export class AdminApi {
   listPluginVersions(appId: string) {
     return this.client.get<PluginVersion[]>(
       `/core-api/admin/apps/${appId}/versions`
+    );
+  }
+
+  getPluginVersion(appId: string, version: string) {
+    return this.client.get<PluginVersionDetail>(
+      `/core-api/admin/apps/${appId}/versions/${encodeURIComponent(version)}`
+    );
+  }
+
+  getPluginAccess(appId: string) {
+    return this.client.get<PluginAccessSnapshot>(
+      `/core-api/admin/apps/${appId}/access`
     );
   }
 

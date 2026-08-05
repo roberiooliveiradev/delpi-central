@@ -8,6 +8,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { Button, Checkbox } from "../../ui-kit";
+
 import type { NotificationItem } from "../../data/coreApi";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
 import {
@@ -181,16 +183,12 @@ export function NotificationCard({
         ].join(" ")}
       >
         {selectionEnabled ? (
-          <label className="notification-card__select">
-            <input
-              type="checkbox"
-              className="notification-card__select-input"
-              checked={selected}
-              onChange={(event) => onSelectedChange?.(event.target.checked)}
-              aria-label={`Selecionar notificação ${notification.title || notification.category}`}
-            />
-            <span className="notification-card__select-box" aria-hidden="true" />
-          </label>
+          <Checkbox
+            className="notification-card__select"
+            checked={selected}
+            onChange={(event) => onSelectedChange?.(event.target.checked)}
+            aria-label={`Selecionar notificação ${notification.title || notification.category}`}
+          />
         ) : null}
 
         <div className="notification-card__icon" aria-hidden="true">
@@ -219,8 +217,11 @@ export function NotificationCard({
 
             <div className="notification-card__actions">
               {onToggleImportant ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  pressed={isImportant}
                   className={
                     isImportant
                       ? "notification-card__icon-btn notification-card__icon-btn--active"
@@ -229,35 +230,36 @@ export function NotificationCard({
                   onClick={() => onToggleImportant(notification.id, !isImportant)}
                   aria-label={isImportant ? "Remover dos importantes" : "Marcar como importante"}
                   title={isImportant ? "Remover dos importantes" : "Marcar como importante"}
-                >
-                  <Star size={16} aria-hidden="true" />
-                </button>
+                  icon={<Star size={16} />}
+                />
               ) : null}
 
               {!notification.read ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   className="notification-card__icon-btn"
                   onClick={handleMarkReadOnly}
                   aria-label="Marcar como lida"
                   title="Marcar como lida"
-                >
-                  <Check size={16} aria-hidden="true" />
-                </button>
+                  icon={<Check size={16} />}
+                />
               ) : (
                 <span className="notification-card__read-badge">Lida</span>
               )}
 
               {onDelete ? (
-                <button
+                <Button
                   type="button"
+                  variant="danger-soft"
+                  size="sm"
                   className="notification-card__icon-btn notification-card__icon-btn--danger"
                   onClick={() => onDelete(notification.id)}
                   aria-label="Excluir notificação"
                   title="Excluir"
-                >
-                  <Trash2 size={16} aria-hidden="true" />
-                </button>
+                  icon={<Trash2 size={16} />}
+                />
               ) : null}
             </div>
           </header>
@@ -270,9 +272,9 @@ export function NotificationCard({
 
           {notification.action ? (
             <footer className="notification-card__footer">
-              <button type="button" className="notification-card__cta" onClick={handleAction}>
+              <Button type="button" variant="primary" size="sm" className="notification-card__cta" onClick={handleAction}>
                 {notification.action.label}
-              </button>
+              </Button>
             </footer>
           ) : null}
         </div>
@@ -317,8 +319,11 @@ export function NotificationCard({
           {hasQuickActions ? (
             <div className="notification-card__actions notification-card__actions--compact">
               {onToggleImportant ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
+                  pressed={isImportant}
                   className={
                     isImportant
                       ? "notification-card__icon-btn notification-card__icon-btn--compact notification-card__icon-btn--active"
@@ -327,33 +332,34 @@ export function NotificationCard({
                   onClick={() => onToggleImportant(notification.id, !isImportant)}
                   aria-label={isImportant ? "Remover dos importantes" : "Marcar como importante"}
                   title={isImportant ? "Remover dos importantes" : "Marcar como importante"}
-                >
-                  <Star size={14} aria-hidden="true" />
-                </button>
+                  icon={<Star size={14} />}
+                />
               ) : null}
 
               {!notification.read ? (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   className="notification-card__icon-btn notification-card__icon-btn--compact"
                   onClick={handleMarkReadOnly}
                   aria-label="Marcar como lida"
                   title="Marcar como lida"
-                >
-                  <Check size={14} aria-hidden="true" />
-                </button>
+                  icon={<Check size={14} />}
+                />
               ) : null}
 
               {onDelete ? (
-                <button
+                <Button
                   type="button"
+                  variant="danger-soft"
+                  size="sm"
                   className="notification-card__icon-btn notification-card__icon-btn--compact notification-card__icon-btn--danger"
                   onClick={() => onDelete(notification.id)}
                   aria-label="Excluir notificação"
                   title="Excluir"
-                >
-                  <Trash2 size={14} aria-hidden="true" />
-                </button>
+                  icon={<Trash2 size={14} />}
+                />
               ) : null}
             </div>
           ) : null}
@@ -366,17 +372,19 @@ export function NotificationCard({
         {content}
 
         {notification.action ? (
-          <button type="button" className="notification-card__cta" onClick={handleAction}>
+          <Button type="button" variant="primary" size="sm" className="notification-card__cta" onClick={handleAction}>
             {notification.action.label}
-          </button>
+          </Button>
         ) : !hasQuickActions ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             className="notification-card__cta notification-card__cta--ghost"
             onClick={handleMarkReadOnly}
           >
             Marcar como lida
-          </button>
+          </Button>
         ) : null}
       </div>
     </article>

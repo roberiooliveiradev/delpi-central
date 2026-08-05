@@ -1,0 +1,181 @@
+/* portal/src/ui/admin/manifest/ManifestEditorPage.css
+   Regras específicas da página — chrome/tabs/botões/alerts vêm do ui-kit. */
+
+.manifest-editor-page__app-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+
+.manifest-hidden-input {
+  display: none;
+}
+
+.manifest-editor-panel,
+.manifest-json-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  /* Painel da aba ocupa a altura restante da página, com o rodapé colado no fim. */
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.manifest-editor-page .hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.manifest-icon-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.manifest-icon-field__preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.manifest-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-json-textarea {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 320px;
+  resize: vertical;
+}
+
+.manifest-editor-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+
+.manifest-editor-status__error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.manifest-editor-status__ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--success);
+  font-weight: 600;
+}
+
+.manifest-editor-page__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Painel de acesso */
+
+.manifest-editor-page .manifest-access {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.manifest-editor-page .manifest-access-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-access-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.manifest-editor-page .manifest-path-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.manifest-editor-page .manifest-perm-accordion {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  margin-bottom: 6px;
+}
+
+.manifest-editor-page .manifest-perm-accordion > summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.manifest-editor-page .manifest-perm-accordion ul {
+  margin: 8px 0 0;
+  padding-left: 16px;
+}
+
+@media (max-width: 860px) {
+  .manifest-editor-page__footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Sem esticar no celular: a página inteira rola, em vez de espremer a tabela
+     num painel de poucas dezenas de pixels. */
+  .manifest-editor-panel,
+  .manifest-json-editor {
+    flex: 0 0 auto;
+    padding: 12px;
+  }
+
+  .manifest-editor-page .manifest-json-textarea {
+    min-height: 240px;
+  }
+
+  .manifest-editor-toolbar__actions {
+    width: 100%;
+  }
+}

@@ -1,0 +1,74 @@
+/* portal/src/ui-kit/form/Switch.css */
+
+.portal-ui-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  user-select: none;
+}
+
+/* Linha de switches (flags booleanas lado a lado). */
+.portal-ui-switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.portal-ui-switch--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portal-ui-switch__input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.portal-ui-switch__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--control-border);
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.portal-ui-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.portal-ui-switch__input:checked + .portal-ui-switch__track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* Thumb sobre superfície primária: contraste fixo, como o texto de Button primary. */
+.portal-ui-switch__input:checked + .portal-ui-switch__track .portal-ui-switch__thumb {
+  transform: translateX(16px);
+  background: #ffffff;
+}
+
+.portal-ui-switch__input:focus-visible + .portal-ui-switch__track {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}

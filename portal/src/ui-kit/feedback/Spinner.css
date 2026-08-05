@@ -1,0 +1,26 @@
+/* portal/src/ui-kit/feedback/Spinner.css */
+
+.portal-ui-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.portal-ui-spinner__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  animation: portal-ui-spin 1s linear infinite;
+  color: var(--primary);
+}
+
+.portal-ui-spinner__label {
+  margin: 0;
+}
+
+@keyframes portal-ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

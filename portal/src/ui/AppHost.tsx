@@ -30,6 +30,7 @@ import {
   resolveRouteAlternateUrl,
 } from "./appHostEntry";
 import { ensurePortalFederationShareScope } from "../utils/federationShareScope";
+import { Button } from "../ui-kit";
 
 function normalize(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
@@ -659,39 +660,27 @@ export const AppHost = () => {
             </div>
 
             <div className="app-host-google-actions">
-              <button
-                type="button"
-                className="app-host-google-button"
-                onClick={googleLogin.openGoogleLogin}
-              >
+              <Button size="sm" onClick={googleLogin.openGoogleLogin}>
                 Entrar no Google
-              </button>
+              </Button>
 
-              <button
-                type="button"
-                className="app-host-google-button"
-                onClick={reloadIframe}
-              >
+              <Button size="sm" onClick={reloadIframe}>
                 Recarregar app
-              </button>
+              </Button>
 
-              <button
-                type="button"
-                className="app-host-google-button"
-                onClick={openAppInNewTab}
-              >
+              <Button size="sm" onClick={openAppInNewTab}>
                 Abrir em nova aba
-              </button>
+              </Button>
 
-              <button
-                type="button"
-                className="app-host-google-button app-host-google-close-button"
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={googleLogin.closeBar}
                 aria-label="Fechar barra de opções do Google"
                 title="Fechar"
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           </div>
         ) : null}

@@ -3,10 +3,8 @@
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
-import {
-  Search,
-  SearchX,
-} from "lucide-react";
+import { SearchX, X } from "lucide-react";
+import { Button, SearchInput } from "../ui-kit";
 import "./AppLauncher.css";
 import { AppLauncherCard } from "./AppLauncherCard";
 import { LauncherPinnedGrid } from "./LauncherPinnedGrid";
@@ -251,20 +249,24 @@ export const AppLauncher = ({
         
         <div className="launcher-header">
           <span>Aplicativos</span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             className="launcher-close"
             onClick={onClose}
             aria-label="Fechar"
-          >
-            ✕
-          </button>
+            icon={<X size={16} />}
+          />
         </div>
         <div className="launcher-searchbar" data-tour="launcher-search">
-          <Search size={18} />
-          <input
+          <SearchInput
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onClear={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
             placeholder="Pesquisar aplicativos disponíveis"
             aria-label="Pesquisar aplicativos"
           />
@@ -341,16 +343,15 @@ export const AppLauncher = ({
                       <span className="launcher-empty-query">“{query.trim()}”</span>.
                       Tente outro termo ou verifique a ortografia.
                     </p>
-                    <button
-                      type="button"
-                      className="launcher-empty-clear"
+                    <Button
+                      size="sm"
                       onClick={() => {
                         setQuery("");
                         inputRef.current?.focus();
                       }}
                     >
                       Limpar busca
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                 <div className="launcher-pinned-grid">

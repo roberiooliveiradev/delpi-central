@@ -43,6 +43,43 @@
 .modal-lg { width: 75dvw; }
 .modal-xl { width: 90dvw; }
 
+/* No celular as larguras em `dvw` viram tiras estreitas (40dvw = 150px em 375px):
+   todo modal ocupa a tela e ancora no topo. */
+@media (max-width: 720px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 12px 8px;
+  }
+
+  .modal,
+  .modal-sm,
+  .modal-md,
+  .modal-lg,
+  .modal-xl {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 16px;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-title {
+    font-size: 17px;
+  }
+
+  .modal-body {
+    padding: 14px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+}
+
 /* HEADER */
 
 .modal-header {
@@ -74,25 +111,7 @@
 }
 
 .modal-close {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.modal-close:hover {
-  background: var(--surface-2);
-  box-shadow: var(--focus-ring);
+  flex: 0 0 auto;
 }
 
 
@@ -128,10 +147,13 @@
 
 
 /* =========================
-   Buttons
+   Buttons (LEGADO — preferir <Button> de portal/src/ui-kit)
+   Aliases mantidos para call sites ainda não migrados.
 ========================= */
 
-button {
+/* Regra global herdada: vale para botões crus em qualquer tela, por isso o kit
+   fica de fora — senão ela redefine padding e raio de `.portal-ui-btn`. */
+button:where(:not(.portal-ui-btn)) {
   border-radius: 12px;
   padding: 10px 14px;
   font-weight: 600;
@@ -141,7 +163,7 @@ button {
 
 button.danger {
   background: var(--danger);
-  color: #fff;
+  color: #ffffff;
   border: none;
 }
 
@@ -149,9 +171,10 @@ button.danger:hover {
   filter: brightness(0.95);
 }
 
+/** @deprecated Use <Button variant="primary" /> */
 .btn-primary {
   background: var(--primary);
-  color: #fff;
+  color: #ffffff;
   border: none;
 }
 
@@ -159,6 +182,7 @@ button.danger:hover {
   filter: brightness(0.95);
 }
 
+/** @deprecated Use <Button variant="secondary" /> */
 .btn-secondary {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -169,9 +193,20 @@ button.danger:hover {
   background: var(--surface-2);
 }
 
+/** @deprecated Use <Button variant="danger" /> */
+.btn-danger {
+  background: var(--danger);
+  color: #ffffff;
+  border: none;
+}
+
+.btn-danger:hover {
+  filter: brightness(0.95);
+}
+
 
 /* =========================
-   Tabs
+   Tabs (LEGADO — preferir <Tabs> de portal/src/ui-kit)
 ========================= */
 
 .tabs {
@@ -183,7 +218,7 @@ button.danger:hover {
   flex-wrap: wrap;
 }
 
-.tabs button {
+.tabs button:where(:not(.portal-ui-tabs__tab)) {
   border: 1px solid var(--border);
   background: var(--surface);
   padding: 8px 12px;
@@ -194,7 +229,7 @@ button.danger:hover {
 
 .tabs button.active {
   background: var(--primary);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--primary);
 }
 
@@ -293,9 +328,12 @@ button.danger:hover {
    Controls (somente dentro do modal — nunca elemento global)
 ========================= */
 
-.modal input,
-.modal select,
-.modal textarea {
+/* @deprecated Controles crus dentro de modais.
+   Controles do ui-kit (.portal-ui-control) são excluídos para não perder
+   altura/raio/focus ring próprios. */
+.modal input:where(:not(.portal-ui-control)),
+.modal select:where(:not(.portal-ui-control)),
+.modal textarea:where(:not(.portal-ui-control)) {
   border: 1px solid var(--control-border);
   background: var(--control-bg);
   color: var(--control-text);
@@ -305,19 +343,19 @@ button.danger:hover {
   transition: all 0.15s ease;
 }
 
-.modal input::placeholder,
-.modal textarea::placeholder {
+.modal input:where(:not(.portal-ui-control))::placeholder,
+.modal textarea:where(:not(.portal-ui-control))::placeholder {
   color: var(--control-placeholder);
 }
 
-.modal input:focus,
-.modal select:focus,
-.modal textarea:focus {
+.modal input:where(:not(.portal-ui-control)):focus,
+.modal select:where(:not(.portal-ui-control)):focus,
+.modal textarea:where(:not(.portal-ui-control)):focus {
   box-shadow: var(--focus-ring);
   border-color: var(--primary);
 }
 
-.modal textarea {
+.modal textarea:where(:not(.portal-ui-control)) {
   resize: vertical;
 }
 

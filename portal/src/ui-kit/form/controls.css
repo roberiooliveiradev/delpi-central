@@ -1,0 +1,127 @@
+/* portal/src/ui-kit/form/controls.css
+   Base compartilhada de Input / Textarea / Select / SearchInput / MultiSelect. */
+
+.portal-ui-control {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: var(--control-text);
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.portal-ui-control::placeholder {
+  color: var(--control-placeholder);
+}
+
+.portal-ui-control:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.portal-ui-control[aria-invalid="true"] {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, var(--control-bg));
+}
+
+.portal-ui-control--md {
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 13px;
+}
+
+.portal-ui-control--sm {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+/* Campos de data: largura própria (o conteúdo tem tamanho fixo). */
+.portal-ui-control--date {
+  width: 148px;
+  color-scheme: light dark;
+}
+
+.portal-ui-control--mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+/* Affix wrapper (prefix / suffix) */
+
+.portal-ui-control-wrap {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border: 1px solid var(--control-border);
+  border-radius: 8px;
+  background: var(--control-bg);
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.portal-ui-control-wrap:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.portal-ui-control-wrap--invalid {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, var(--control-bg));
+}
+
+.portal-ui-control-wrap .portal-ui-control {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.portal-ui-control-wrap .portal-ui-control:focus {
+  box-shadow: none;
+}
+
+.portal-ui-control-wrap__affix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+}
+
+.portal-ui-control-wrap__affix--suffix {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+/* Textarea */
+
+textarea.portal-ui-control {
+  min-height: auto;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+textarea.portal-ui-control--sm {
+  padding: 6px 8px;
+}
+
+textarea.portal-ui-control--md {
+  padding: 8px 10px;
+}

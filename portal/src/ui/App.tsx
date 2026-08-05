@@ -10,6 +10,11 @@ import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
 import { AdminPage } from "./admin/AdminPage";
+import { ManifestEditorPage } from "./admin/manifest/ManifestEditorPage";
+import { PluginVersionsPage } from "./admin/versions/PluginVersionsPage";
+import { RoleEditPage } from "./admin/rbac/RoleEditPage";
+import { GroupEditPage } from "./admin/rbac/GroupEditPage";
+import { UserEditPage } from "./admin/rbac/UserEditPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
@@ -161,6 +166,75 @@ function AppShell() {
               element={
                 <ProtectedRoute permission="rbac.manage">
                   <AdminPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/apps/manifest/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <ManifestEditorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/apps/:appId/manifest"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <ManifestEditorPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/apps/:appId/versions"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <PluginVersionsPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/roles/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <RoleEditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles/:roleId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <RoleEditPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/groups/new"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <GroupEditPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/groups/:groupId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <GroupEditPage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/admin/users/:userId"
+              element={
+                <ProtectedRoute permission="rbac.manage">
+                  <UserEditPage />
                 </ProtectedRoute>
               }
             />

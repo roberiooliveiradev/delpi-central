@@ -4,13 +4,11 @@ import {
   Shield,
   Download,
   Eye,
-  ToggleLeft,
-  ToggleRight,
   Mail,
   FileText,
   CheckCircle,
-  Loader2,
   AlertTriangle,
+  X,
 } from "lucide-react";
 
 import { AuthContext } from "../state/AuthContext";
@@ -20,6 +18,7 @@ import {
   type ConsentItem,
   type PrivacyInfo,
 } from "../data/coreApi";
+import { Button, Spinner, Switch } from "../ui-kit";
 
 import "./PrivacyPage.css";
 
@@ -128,7 +127,7 @@ export const PrivacyPage = () => {
   if (loading) {
     return (
       <div className="privacy-page privacy-page--loading">
-        <Loader2 className="spin" size={28} />
+        <Spinner size={28} />
         <span>Carregando...</span>
       </div>
     );
@@ -158,7 +157,13 @@ export const PrivacyPage = () => {
         >
           <AlertTriangle size={16} />
           <span>{error}</span>
-          <button onClick={() => setError(null)}>&times;</button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setError(null)}
+            aria-label="Fechar aviso"
+            icon={<X size={16} />}
+          />
         </motion.div>
       )}
 
@@ -194,20 +199,15 @@ export const PrivacyPage = () => {
                       {granted ? "Ativo" : "Inativo"}
                     </span>
                   </div>
-                  <button
-                    className={`privacy-page__toggle ${granted ? "privacy-page__toggle--on" : ""}`}
-                    onClick={() => handleToggle(key, granted)}
-                    disabled={isToggling}
-                    aria-label={`${granted ? "Revogar" : "Conceder"} ${label}`}
-                  >
-                    {isToggling ? (
-                      <Loader2 className="spin" size={18} />
-                    ) : granted ? (
-                      <ToggleRight size={28} />
-                    ) : (
-                      <ToggleLeft size={28} />
-                    )}
-                  </button>
+                  {isToggling ? (
+                    <Spinner size={18} label={`Atualizando ${label}`} />
+                  ) : (
+                    <Switch
+                      checked={granted}
+                      onChange={() => handleToggle(key, granted)}
+                      aria-label={`${granted ? "Revogar" : "Conceder"} ${label}`}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -236,28 +236,18 @@ export const PrivacyPage = () => {
             conforme seu direito de portabilidade (LGPD Art. 18, V).
           </p>
 
-          <button
-            className="privacy-page__btn privacy-page__btn--primary"
+          <Button
+            variant="primary"
             onClick={handleExport}
-            disabled={exporting}
+            loading={exporting}
+            icon={exportDone ? <CheckCircle size={16} /> : <Download size={16} />}
           >
-            {exporting ? (
-              <>
-                <Loader2 className="spin" size={16} />
-                Exportando...
-              </>
-            ) : exportDone ? (
-              <>
-                <CheckCircle size={16} />
-                Download concluído
-              </>
-            ) : (
-              <>
-                <Download size={16} />
-                Baixar meus dados (JSON)
-              </>
-            )}
-          </button>
+            {exporting
+              ? "Exportando..."
+              : exportDone
+                ? "Download concluído"
+                : "Baixar meus dados (JSON)"}
+          </Button>
         </motion.section>
 
         {/* DPO & POLICY */}

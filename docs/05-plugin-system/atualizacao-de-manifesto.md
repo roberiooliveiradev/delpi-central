@@ -21,6 +21,8 @@ Regra central:
 
 > Atualização de manifesto é usada apenas para mudanças não estruturais. Mudanças estruturais exigem nova versão via `POST /admin/apps/register`.
 
+No Portal Admin, a página `/admin/apps/:id/manifest` detecta o delta e escolhe **Salvar** (PUT cosmético) ou **Publicar nova versão** (POST register + SemVer). A aba **Acesso** lista usuários com caminho papel/grupo; papéis/grupos/usuários editam em páginas dedicadas (`/admin/roles/…`, etc.), mantendo as abas de listagem.
+
 ---
 
 ## 2. Endpoint

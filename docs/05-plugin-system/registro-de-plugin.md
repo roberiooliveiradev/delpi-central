@@ -501,22 +501,24 @@ Isso indica qual versão está ativa na plataforma.
 
 ---
 
-## 19. Substituição de rotas e permissões
+## 19. Sync de rotas e permissões (por `code`)
 
-Em nova versão, a Core API remove permissões e rotas antigas antes de recriar.
+Em nova versão, a Core API **não** faz wipe+recreate cego de permissões (isso destruía UUIDs e, via CASCADE, apagava `role_permissions` / `user_permissions` mesmo com os mesmos codes).
 
-Ordem:
+Ordem atual:
 
 ```text
 1. delete app_routes by app_id
-2. delete permissions by module
-3. create permissions from manifest
-4. create app_routes from manifest
+2. sync permissions by module+code
+   - code permanece → UPDATE name/description (mesmo UUID; grants intactos)
+   - code novo → INSERT
+   - code removido → DELETE (CASCADE só desses grants)
+3. create app_routes from manifest (resolve permission_id pelo code)
 ```
 
-Essa ordem evita rotas apontando para permissões inexistentes.
+Essa ordem evita rotas apontando para permissões inexistentes e **preserva grants** quando o `code` permanece no manifesto.
 
-A remoção de permissões usa:
+O sync força:
 
 ```text
 module = plugin_id

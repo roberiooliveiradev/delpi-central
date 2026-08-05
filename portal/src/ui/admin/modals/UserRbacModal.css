@@ -254,86 +254,14 @@
    SWITCH
 ========================= */
 
+/* Switch do ui-kit dentro do card de superadmin. */
 .user-rbac-switch {
   flex: 0 0 auto;
-
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
 
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface-2);
   padding: 8px 12px;
-
-  cursor: pointer;
-  user-select: none;
-}
-
-.user-rbac-switch input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.user-rbac-switch-control {
-  width: 40px;
-  height: 22px;
-  border-radius: 999px;
-
-  position: relative;
-  background: var(--border-2);
-  transition: background 0.2s ease;
-}
-
-.user-rbac-switch-control::after {
-  content: "";
-  position: absolute;
-  top: 3px;
-  left: 3px;
-
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-
-  background: var(--surface);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-
-  transition: transform 0.2s ease;
-}
-
-.user-rbac-switch input:checked + .user-rbac-switch-control {
-  background: var(--primary);
-}
-
-.user-rbac-switch input:checked + .user-rbac-switch-control::after {
-  transform: translateX(18px);
-}
-
-.user-rbac-switch input:disabled + .user-rbac-switch-control {
-  opacity: 0.55;
-}
-
-.user-rbac-switch-label {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-
-/* =========================
-   ALERT
-========================= */
-
-.user-rbac-alert {
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--surface-2);
-  color: var(--text-muted);
-  padding: 12px 14px;
-  font-size: 13px;
-  line-height: 1.4;
 }
 
 
@@ -492,6 +420,7 @@
   .user-rbac-switch {
     width: 100%;
     justify-content: space-between;
+    border-radius: 14px;
   }
 
   .rbac-grid {

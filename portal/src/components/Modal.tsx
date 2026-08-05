@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import "./Modal.css";
 import "./FormField.css";
 import { X } from "lucide-react";
+import { Button } from "../ui-kit";
 
 type ModalSize = "sm" | "md" | "lg" | "xl";
 
@@ -31,9 +32,14 @@ export const Modal = ({
       <div className={`modal modal-${size}`}>
         <div className="modal-header">
           <div className="modal-title">{title ?? "Modal"}</div>
-          <button className="modal-close" onClick={onClose} aria-label="Fechar">
-            <X size={18} />
-          </button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="modal-close"
+            onClick={onClose}
+            aria-label="Fechar"
+            icon={<X size={18} />}
+          />
         </div>
 
         <div className="modal-body">{children}</div>

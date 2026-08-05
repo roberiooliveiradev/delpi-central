@@ -6,6 +6,7 @@ import { ApiClient } from "../../data/apiClient";
 import { CoreApi, type NotificationCategory, type NotificationCatalogCategoryItem } from "../../data/coreApi";
 import { getNotificationCategoryLabel } from "../../utils/notificationCatalog";
 import { useNotificationCatalog } from "../../state/NotificationCatalogContext";
+import { Alert, Button, Checkbox, Spinner } from "../../ui-kit";
 
 import "./NotificationPreferencesPanel.css";
 
@@ -136,8 +137,8 @@ export function NotificationPreferencesPanel({
         críticos).
       </p>
 
-      {loading ? <p className="notification-preferences__loading">Carregando…</p> : null}
-      {error ? <p className="notification-preferences__error">{error}</p> : null}
+      {loading ? <Spinner label="Carregando…" /> : null}
+      {error ? <Alert tone="danger">{error}</Alert> : null}
 
       {!loading ? (
         <ul className="notification-preferences__list">
@@ -145,21 +146,21 @@ export function NotificationPreferencesPanel({
             const isMuted = mutedCategories.includes(category);
             return (
               <li key={category}>
-                <label className="notification-preferences__item">
-                  <input
-                    type="checkbox"
-                    checked={isMuted}
-                    onChange={() => toggleCategory(category)}
-                  />
-                  <span>
-                    <span className="notification-preferences__label">
-                      {getNotificationCategoryLabel(category, catalogForLabels)}
+                <Checkbox
+                  className="notification-preferences__item"
+                  checked={isMuted}
+                  onChange={() => toggleCategory(category)}
+                  label={
+                    <span>
+                      <span className="notification-preferences__label">
+                        {getNotificationCategoryLabel(category, catalogForLabels)}
+                      </span>
+                      <span className="notification-preferences__hint">
+                        {isMuted ? "Silenciada — não receberá novos envios" : "Recebendo"}
+                      </span>
                     </span>
-                    <span className="notification-preferences__hint">
-                      {isMuted ? "Silenciada — não receberá novos envios" : "Recebendo"}
-                    </span>
-                  </span>
-                </label>
+                  }
+                />
               </li>
             );
           })}
@@ -168,14 +169,15 @@ export function NotificationPreferencesPanel({
 
       <footer className="notification-preferences__footer">
         {saved ? <span className="notification-preferences__saved">Preferências salvas.</span> : null}
-        <button
+        <Button
           type="button"
-          className="notification-preferences__save"
+          variant="primary"
           disabled={loading || saving}
+          loading={saving}
           onClick={() => void handleSave()}
         >
           {saving ? "Salvando…" : "Salvar preferências"}
-        </button>
+        </Button>
       </footer>
     </section>
   );
