@@ -82,22 +82,17 @@ class ChatTvDashboardPlatformToolSelectionService:
                     ),
                 )
 
-        # Só consulta o BFF em turno de mutação / pedido TV — não em small talk no surface.
-        needs_bff = ChatHostSurfaceContextService.is_tv_mutation_turn(
-            message,
-            host_dict,
-            workspace_context=workspace,
-        ) or ChatTvDashboardCopilotIntentService.matches(message)
-        if not needs_bff:
-            return TvPlatformToolSelectionResult()
-
+        # Quem decide se a frase é comando de editor é o planner do BFF, dono do
+        # catálogo. O vocabulário local só sobra para o caso degradado (BFF fora),
+        # onde não há planner para consultar.
         catalog_client = catalog_service or ChatTvDashboardCatalogService()
         catalog = catalog_client.get_catalog(access_token)
         if catalog is None:
-            # AP1: sem fallback de ops — mensagem genérica do intent JSON.
-            answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
-            return TvPlatformToolSelectionResult(
-                direct_answer=answer or None,
+            return cls._unavailable_result(
+                message,
+                host_dict,
+                workspace,
+                catalog=None,
             )
 
         suggestion = catalog_client.suggest_ops(
@@ -106,17 +101,34 @@ class ChatTvDashboardPlatformToolSelectionService:
             access_token=access_token,
         )
         if not isinstance(suggestion, dict):
-            # BFF indisponível no suggest — mesma política do catálogo: resposta direta.
-            answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
-            return TvPlatformToolSelectionResult(
+            return cls._unavailable_result(
+                message,
+                host_dict,
+                workspace,
                 catalog=catalog,
-                direct_answer=answer or None,
             )
 
+        status = str(suggestion.get("status") or "").strip().lower()
         ops = suggestion.get("ops")
-        if not isinstance(ops, list) or not ops:
-            # Match incompleto / clarificação: reason do BFF vira directAnswer (sem LLM inventar UI).
+        ops = list(ops) if isinstance(ops, list) else []
+
+        if status == "not_command":
+            # Pergunta / conversa na superfície TV: pipeline normal do chat.
+            return TvPlatformToolSelectionResult(catalog=catalog)
+
+        if not ops:
             bff_reason = str(suggestion.get("reason") or "").strip()
+
+            if not status and not cls._looks_like_local_tv_command(
+                message,
+                host_dict,
+                workspace,
+            ):
+                # Catálogo antigo sem status: não sequestrar small talk.
+                return TvPlatformToolSelectionResult(catalog=catalog)
+
+            # Clarificação / não suportado: reason do catálogo vira resposta
+            # direta, sem deixar o LLM inventar UI.
             answer = (
                 bff_reason
                 or ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
@@ -158,4 +170,39 @@ class ChatTvDashboardPlatformToolSelectionService:
             tool_call=merged,
             catalog=catalog,
             has_suggested_ops=True,
+        )
+
+    @classmethod
+    def _looks_like_local_tv_command(
+        cls,
+        message: str | None,
+        host_dict: dict | None,
+        workspace: dict,
+    ) -> bool:
+        return bool(
+            ChatHostSurfaceContextService.is_tv_mutation_turn(
+                message,
+                host_dict,
+                workspace_context=workspace,
+            )
+            or ChatTvDashboardCopilotIntentService.matches(message)
+        )
+
+    @classmethod
+    def _unavailable_result(
+        cls,
+        message: str | None,
+        host_dict: dict | None,
+        workspace: dict,
+        *,
+        catalog: dict[str, Any] | None,
+    ) -> TvPlatformToolSelectionResult:
+        """BFF fora do ar: só assume o turno se a frase parecer comando de editor."""
+        if not cls._looks_like_local_tv_command(message, host_dict, workspace):
+            return TvPlatformToolSelectionResult(catalog=catalog)
+
+        answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
+        return TvPlatformToolSelectionResult(
+            catalog=catalog,
+            direct_answer=answer or None,
         )

@@ -157,9 +157,18 @@ class ChatIntentRouterClassifyService:
                 reason="document_question_with_files",
             )
 
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        # Sem o host aqui, «escreva um texto no slide» no editor TV virava tarefa
+        # textual e o turno nunca chegava à tool do copiloto.
+        host_context = ChatHostSurfaceContextService.host_from_workspace(workspace_context)
+
         if text_task_pure or ChatTextTaskIntentService.is_pure_text_task(
             normalized,
             previous_messages=history,
+            host_context=host_context,
         ):
             sub = text_task_category or ChatTextTaskIntentService.classify(normalized)
             intent = "email_task" if sub == "email" else "text_task"

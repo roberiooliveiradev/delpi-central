@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.data.tv_copilot_command_recognition_service import (
+    TvCopilotCommandRecognitionService,
+)
 from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
 )
@@ -18,7 +21,8 @@ class TvCopilotCommandPlannerService:
     Status:
     - ``ready`` — ops tipadas válidas; ``confirmationPolicy`` diz se aplica direto
     - ``clarification`` — faltam dados/contexto; ``reason`` é a mensagem ao usuário
-    - ``unsupported`` — nenhuma capability casou
+    - ``unsupported`` — fala com o editor, mas nenhuma capability cobre o pedido
+    - ``not_command`` — não é pedido para o editor (pergunta, conversa, dado)
     - ``error`` — mensagem vazia / envelope inválido
     """
 
@@ -61,12 +65,22 @@ class TvCopilotCommandPlannerService:
                     reason=reason,
                     clarification_key=clarification_key,
                 )
+            if TvCopilotCommandRecognitionService.is_editor_command(message):
+                return cls._result(
+                    status="unsupported",
+                    catalog_version=catalog_version,
+                    matched=matched,
+                    reason=reason,
+                    clarification_key=clarification_key,
+                )
+
+            # Nem tudo na superfície TV é comando de editor: pergunta e conversa
+            # seguem o pipeline normal do chat, sem mensagem de capacidades.
             return cls._result(
-                status="unsupported",
+                status="not_command",
                 catalog_version=catalog_version,
                 matched=matched,
-                reason=reason,
-                clarification_key=clarification_key,
+                reason="",
             )
 
         policy = TvCopilotContentService.aggregate_ops_policy(ops)

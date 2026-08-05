@@ -211,6 +211,85 @@ def test_empty_suggest_ops_returns_bff_reason_as_direct_answer():
     assert result.catalog is not None
 
 
+def test_planner_not_command_leaves_turn_for_normal_pipeline():
+    """Pergunta na superfície TV: o planner diz que não é comando de editor."""
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.nc", "capabilities": []},
+        suggestion={
+            "status": "not_command",
+            "catalogVersion": "test.nc",
+            "ops": [],
+            "reason": "",
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "quem é você",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer is None
+    assert result.catalog is not None
+
+
+def test_planner_unsupported_answers_catalog_capabilities():
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.uns", "capabilities": []},
+        suggestion={
+            "status": "unsupported",
+            "catalogVersion": "test.uns",
+            "ops": [],
+            "reason": "Não identifiquei uma operação do catálogo. Exemplos: «crie um slide».",
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "exporte o slide para powerpoint",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer
+    assert "crie um slide" in result.direct_answer
+
+
+def test_typo_reaches_bff_because_ai_does_not_gate_by_local_vocabulary():
+    """«crie um sldie» não casa no vocabulário local — o planner decide."""
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.typo", "capabilities": []},
+        suggestion={
+            "status": "ready",
+            "catalogVersion": "test.typo",
+            "ops": [{"op": "add_blank_slide", "title": "Slide personalizado"}],
+            "confirmationPolicy": "direct",
+            "risk": "additive",
+            "reason": "Plano pronto.",
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "crie um sldie",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert port.suggest_calls == 1
+    assert result.tool_call is not None
+    assert result.tool_call["arguments"]["mode"] == "apply"
+
+
+def test_bff_offline_does_not_hijack_small_talk():
+    port = _FakeCatalogPort(fail_catalog=True)
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "obrigado",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer is None
+
+
 def test_suggest_failure_returns_unavailable_answer():
     port = _FakeCatalogPort(
         catalog={"catalogVersion": "test.1", "capabilities": []},

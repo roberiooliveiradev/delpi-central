@@ -88,6 +88,46 @@ class TvCopilotContentService:
         return []
 
     @classmethod
+    def _recognition(cls) -> dict[str, Any]:
+        raw = _load().get("recognition")
+        return raw if isinstance(raw, dict) else {}
+
+    @classmethod
+    def recognition_float(cls, key: str, default: float) -> float:
+        try:
+            return float(cls._recognition().get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def recognition_int(cls, key: str, default: int) -> int:
+        try:
+            return int(cls._recognition().get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
+    def editor_nouns(cls) -> list[str]:
+        raw = cls._recognition().get("editorNouns")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
+    def recognition_extra_action_terms(cls) -> list[str]:
+        raw = cls._recognition().get("extraActionTerms")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
+    def recognition_action_term_sets(cls) -> list[str]:
+        raw = cls._recognition().get("actionTermSets")
+        if not isinstance(raw, list) or not raw:
+            return ["any"]
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
     def placeholder_clarifications(cls) -> dict[str, str]:
         raw = _load().get("placeholderClarifications")
         if not isinstance(raw, dict):

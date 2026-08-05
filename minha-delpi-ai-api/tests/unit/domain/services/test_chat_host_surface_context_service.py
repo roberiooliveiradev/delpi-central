@@ -26,9 +26,21 @@ class _SuggestSlidePort(TvDashboardCapabilityCatalogPort):
         }
 
     def suggest_ops(self, message, host_context, access_token):
+        # Espelha o planner do BFF: quem decide se a frase é comando do editor é
+        # o dono do catálogo, não o vocabulário local da IA.
+        if "slide" not in str(message or "").lower():
+            return {
+                "catalogVersion": "t",
+                "status": "not_command",
+                "ops": [],
+                "reason": "",
+            }
         return {
             "catalogVersion": "t",
+            "status": "ready",
             "ops": [{"op": "add_slide_from_preset", "presetKey": "preset_comunicado"}],
+            "confirmationPolicy": "confirm",
+            "risk": "mutation",
             "reason": "BFF",
         }
 

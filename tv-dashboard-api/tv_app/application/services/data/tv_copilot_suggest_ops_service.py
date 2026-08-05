@@ -8,6 +8,9 @@ import re
 import uuid
 from typing import Any
 
+from tv_app.application.services.data.tv_copilot_command_recognition_service import (
+    TvCopilotCommandRecognitionService,
+)
 from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
 )
@@ -616,10 +619,7 @@ class TvCopilotSuggestOpsService:
 
     @classmethod
     def _marker_hit(cls, needle: str, haystack: str) -> bool:
-        token = str(needle or "").strip().lower()
-        if not token:
-            return False
-        return token in haystack
+        return TvCopilotCommandRecognitionService.marker_hit(needle, haystack)
 
     @classmethod
     def _score_capability(cls, cap: dict[str, Any], normalized: str) -> float:
