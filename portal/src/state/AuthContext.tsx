@@ -61,6 +61,38 @@ const DEFAULT_FRONT_CHANNEL_LOGOUT_URLS = [
 const FRONT_CHANNEL_LOGOUT_TIMEOUT_MS = 900;
 
 /**
+ * Um 401 recorrente não pode virar redirect infinito para o Keycloak: quando o
+ * login já foi tentado há pouco, cai para o estado deslogado e mostra a tela de
+ * entrada em vez de recarregar a página de novo.
+ */
+const LOGIN_REDIRECT_GUARD_KEY = "delpi-portal-login-redirect";
+const LOGIN_REDIRECT_GUARD_MS = 30000;
+
+function canRedirectToLogin(): boolean {
+  try {
+    const last = Number(window.sessionStorage.getItem(LOGIN_REDIRECT_GUARD_KEY));
+
+    if (Number.isFinite(last) && last > 0 && Date.now() - last < LOGIN_REDIRECT_GUARD_MS) {
+      return false;
+    }
+
+    window.sessionStorage.setItem(LOGIN_REDIRECT_GUARD_KEY, String(Date.now()));
+  } catch {
+    // sessionStorage indisponível: mantém o comportamento padrão de redirecionar.
+  }
+
+  return true;
+}
+
+function clearLoginRedirectGuard(): void {
+  try {
+    window.sessionStorage.removeItem(LOGIN_REDIRECT_GUARD_KEY);
+  } catch {
+    // noop
+  }
+}
+
+/**
  * Permite evoluir o logout global sem alterar código a cada novo app.
  *
  * Exemplo:
@@ -228,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     stopTokenRefresh();
 
-    if (bootstrapPhaseRef.current) {
+    if (bootstrapPhaseRef.current || !canRedirectToLogin()) {
       clearSessionState();
       unauthorizedHandledRef.current = false;
       return;
@@ -548,6 +580,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             await loadCoreData();
             startTokenRefresh();
+            clearLoginRedirectGuard();
           } catch {
             clearSessionState();
           }

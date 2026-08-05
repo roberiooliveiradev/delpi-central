@@ -21,6 +21,9 @@ const keycloak = new Keycloak({
 // 🔒 Controle interno para evitar init duplicado
 let initPromise: Promise<boolean> | null = null;
 
+/** Backstop: falha de SSO nunca pode deixar o portal preso no loader. */
+const INIT_TIMEOUT_MS = 20000;
+
 /** Remove fragmento OAuth da URL após redirect do Keycloak (evita reprocessamento no refresh). */
 export function stripOAuthHash(): void {
   const { hash, pathname, search } = window.location;
@@ -38,17 +41,28 @@ export function stripOAuthHash(): void {
 
 export const initKeycloak = () => {
   if (!initPromise) {
-    initPromise = keycloak
+    const init = keycloak
       .init({
         onLoad: "check-sso",
         pkceMethod: "S256",
-        // Iframe de SSO quebra fácil em localhost (cookies/third-party) e gera loop de login.
-        checkLoginIframe: import.meta.env.PROD,
+        /**
+         * O iframe de status limpa o token local (`clearToken`) a cada resposta
+         * diferente de "unchanged" e, sem silent check-sso, a recuperação vira
+         * redirect de página inteira — o que gerava recarregamento em loop.
+         */
+        checkLoginIframe: false,
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
       })
       .then((authenticated) => {
         stripOAuthHash();
         return authenticated;
       });
+
+    const timeout = new Promise<boolean>((resolve) => {
+      window.setTimeout(() => resolve(keycloak.authenticated ?? false), INIT_TIMEOUT_MS);
+    });
+
+    initPromise = Promise.race([init, timeout]);
   }
 
   return initPromise;
