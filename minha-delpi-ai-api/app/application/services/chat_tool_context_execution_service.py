@@ -154,6 +154,9 @@ class ChatToolContextExecutionService:
                 from app.domain.services.chat_write_confirmation_service import (
                     ChatWriteConfirmationService,
                 )
+                from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+                    ChatTvDashboardCopilotIntentService,
+                )
 
                 action_bundle = host.external_action_repository.get_action_for_execution(
                     action_id
@@ -222,8 +225,13 @@ class ChatToolContextExecutionService:
                 selected_tool = {**selected_tool, "arguments": arguments}
 
                 mode = str(arguments.get("mode") or "preview").strip().lower()
+                requires_confirmation = (
+                    ChatTvDashboardCopilotIntentService.requires_confirmation(
+                        arguments
+                    )
+                )
                 synthetic_action = {
-                    "sensitivity": "write" if mode == "apply" else "read",
+                    "sensitivity": "write" if requires_confirmation else "read",
                     "method": "POST",
                     "path": f"/data/copilot/{mode}-patch",
                     "name": "tv_dashboard_copilot",

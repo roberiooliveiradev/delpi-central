@@ -31,6 +31,20 @@ _KPI_INTENT_MARKERS = frozenset(
 class TvCopilotSuggestOpsService:
     @classmethod
     def suggest(cls, *, message: str, host_context: dict | None) -> dict[str, Any]:
+        """Fachada pública: sempre devolve um plano validado pelo contrato."""
+        from tv_app.application.services.data.tv_copilot_command_planner_service import (
+            TvCopilotCommandPlannerService,
+        )
+
+        plan = TvCopilotCommandPlannerService.plan(
+            message=message,
+            host_context=host_context,
+        )
+        return TvCopilotCommandPlannerService.to_suggest_payload(plan)
+
+    @classmethod
+    def materialize(cls, *, message: str, host_context: dict | None) -> dict[str, Any]:
+        """Materializa capability → ops; o planner valida target e política."""
         catalog_version = TvCopilotContentService.catalog_version()
         normalized = cls._normalize(message)
         if not normalized:

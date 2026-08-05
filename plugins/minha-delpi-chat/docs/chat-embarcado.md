@@ -39,9 +39,14 @@ o rail colapsável (chevron) é do portal em desktop e não existe no embed.
 
 ## Contexto do host
 
-`workspaceContext` (playlist, slide, blocos selecionados, data sources) chega como
-`hostContext` e vai ao pipeline da API. Comandos de TV Dashboard são resolvidos pelo
-BFF (`suggest-ops` → `preview-patch` / `apply-patch`); o restante do chat segue igual.
+`workspaceContext` (playlist, slide, blocos, visual/fonte selecionada, `dataSources`
+e `hasLocalDraft`) chega integralmente como `hostContext` ao pipeline da API.
+
+O contexto TV muda apenas o **destino das ações**: comandos do editor são planejados
+pelo BFF; perguntas, anexos, agentes, projetos e demais recursos continuam no pipeline
+base. Criações/alterações inequívocas usam apply direto; exclusões destrutivas exigem
+confirmação. Contexto ausente ou draft local pendente produz clarificação específica,
+sem tool inválida nem fallback LLM.
 
 ## Contrato coberto por teste
 

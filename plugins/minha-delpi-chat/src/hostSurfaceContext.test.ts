@@ -46,6 +46,35 @@ describe("buildTvDashboardHostContext", () => {
     expect(ctx.dataSourceId).toBe("ds-1");
     expect(ctx.presetKey).toBe("production_oee_overview");
   });
+
+  it("preserva fontes, seleção visual e conflito de draft do host", () => {
+    const ctx = buildTvDashboardHostContext({
+      playlistId: "pl-1",
+      slideId: "sl-1",
+      selectedDataSourceId: "ds-1",
+      selectedVisualId: "viz-1",
+      dataSources: [
+        {
+          id: "ds-1",
+          operationId: "get_overall_equipment_effectiveness_pct",
+          label: "OEE",
+        },
+        { id: "", operationId: "invalid", label: "inválida" },
+      ],
+      hasLocalDraft: true,
+    });
+
+    expect(ctx.selectedDataSourceId).toBe("ds-1");
+    expect(ctx.selectedVisualId).toBe("viz-1");
+    expect(ctx.dataSources).toEqual([
+      {
+        id: "ds-1",
+        operationId: "get_overall_equipment_effectiveness_pct",
+        label: "OEE",
+      },
+    ]);
+    expect(ctx.hasLocalDraft).toBe(true);
+  });
 });
 
 describe("notifyHostOfTvCopilotToolCalls", () => {

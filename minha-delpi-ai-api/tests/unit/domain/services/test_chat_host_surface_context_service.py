@@ -50,6 +50,7 @@ def test_normalize_host_context_preserves_operation_and_data_source_ids():
             "selectedVisualId": "viz-1",
             "presetKey": "production_oee_overview",
             "selectedBlockIds": ["viz-1"],
+            "hasLocalDraft": True,
             "dataSources": [
                 {
                     "id": "ds-9",
@@ -67,6 +68,7 @@ def test_normalize_host_context_preserves_operation_and_data_source_ids():
     assert normalized["presetKey"] == "production_oee_overview"
     assert normalized["selectedBlockIds"] == ["viz-1"]
     assert normalized["dataSources"][0]["label"] == "OEE"
+    assert normalized["hasLocalDraft"] is True
 
 
 def test_surface_tv_enables_skill_without_message_keywords():

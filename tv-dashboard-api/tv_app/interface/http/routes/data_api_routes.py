@@ -556,14 +556,15 @@ def copilot_suggest_ops(request: Request, body: SuggestOpsBody):
         assert_permission(user, TV_WRITE)
     except PermissionError as exc:
         return fail(str(exc), 403)
-    from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
-        TvCopilotSuggestOpsService,
+    from tv_app.application.services.data.tv_copilot_command_planner_service import (
+        TvCopilotCommandPlannerService,
     )
 
-    result = TvCopilotSuggestOpsService.suggest(
+    plan = TvCopilotCommandPlannerService.plan(
         message=body.message,
         host_context=body.hostContext,
     )
+    result = TvCopilotCommandPlannerService.to_suggest_payload(plan)
     return ok(result, message=str(result.get("reason") or "Sugestão gerada."))
 
 

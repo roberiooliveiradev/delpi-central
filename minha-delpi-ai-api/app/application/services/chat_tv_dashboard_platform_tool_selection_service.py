@@ -130,11 +130,19 @@ class ChatTvDashboardPlatformToolSelectionService:
             suggestion.get("reason")
             or ChatTvDashboardCopilotIntentService.selection_reason()
         ).strip()
+        confirmation_policy = str(
+            suggestion.get("confirmationPolicy") or ""
+        ).strip().lower()
+        risk = str(suggestion.get("risk") or "").strip().lower()
+        # Catálogos anteriores não declaravam política: mantém preview seguro.
+        mode = "apply" if confirmation_policy == "direct" else "preview"
         call = {
             "name": "tv_dashboard_copilot",
             "arguments": {
-                "mode": "preview",
+                "mode": mode,
                 "ops": list(ops),
+                "confirmationPolicy": confirmation_policy or "confirm",
+                "risk": risk or "mutation",
             },
             "reason": reason,
         }

@@ -57,7 +57,11 @@ def test_suggest_crie_um_slide_add_blank_or_preset():
 def test_suggest_apague_bloco_with_selection():
     result = TvCopilotSuggestOpsService.suggest(
         message="apague o bloco",
-        host_context={"selectedBlockIds": ["blk-42"], "slideId": "s1"},
+        host_context={
+            "selectedBlockIds": ["blk-42"],
+            "slideId": "s1",
+            "playlistId": "pl-1",
+        },
     )
     assert result["ops"]
     delete = next(op for op in result["ops"] if op.get("op") == "delete_block")
@@ -203,6 +207,64 @@ def test_suggest_create_modelo_de_dados_oee():
     assert source.get("operationId") == "get_overall_equipment_effectiveness_pct"
     assert str(source.get("blockId") or "").startswith("ds_")
     assert not any(op.get("op") == "bind_visual" for op in result["ops"])
+
+
+def test_suggest_modelo_oee_sem_slide_clarifica_antes_do_patch():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione o modelo de dados oee",
+        host_context={"playlistId": "pl-1"},
+    )
+
+    assert result["status"] == "clarification"
+    assert result["ops"] == []
+    assert result["clarificationKey"] == "suggestNeedSlideOrCreate"
+    assert result["requiresSlide"] is True
+    assert "slide" in str(result["reason"]).lower()
+
+
+def test_suggest_criar_slide_sem_slide_aberto_executa_direto():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="crie um slide",
+        host_context={"playlistId": "pl-1"},
+    )
+
+    assert result["status"] == "ready"
+    assert result["confirmationPolicy"] == "direct"
+    assert result["risk"] == "additive"
+    assert result["requiresSlide"] is False
+    assert any(op.get("op") == "add_blank_slide" for op in result["ops"])
+
+
+def test_suggest_excluir_bloco_exige_confirmacao():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="apague o bloco",
+        host_context={
+            "playlistId": "pl-1",
+            "slideId": "slide-1",
+            "selectedBlockIds": ["block-1"],
+        },
+    )
+
+    assert result["status"] == "ready"
+    assert result["confirmationPolicy"] == "confirm"
+    assert result["risk"] == "destructive"
+    assert result["ops"] == [{"op": "delete_block", "blockId": "block-1"}]
+
+
+def test_suggest_mutacao_com_draft_local_nao_emite_ops():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione o modelo de dados oee",
+        host_context={
+            "playlistId": "pl-1",
+            "slideId": "slide-1",
+            "hasLocalDraft": True,
+        },
+    )
+
+    assert result["status"] == "clarification"
+    assert result["clarificationKey"] == "suggestLocalDraftConflict"
+    assert result["ops"] == []
+    assert "locais" in str(result["reason"]).lower()
 
 
 def test_suggest_chart_from_route_oee_composite():

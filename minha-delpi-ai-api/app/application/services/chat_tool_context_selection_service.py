@@ -114,10 +114,12 @@ class ChatToolContextSelectionService:
             )
 
         tv_tool = tv_selection.tool_call
-        if tv_tool and not any(
-            str(item.get("name") or "") == "tv_dashboard_copilot" for item in selected_tools
-        ):
-            selected_tools = list(selected_tools) + [tv_tool]
+        if tv_tool:
+            # A superfície reivindicou o turno: não misturar action OpenAPI/SQL
+            # selecionada pelas keywords do dado (ex.: OEE) com a mutação do host.
+            selected_tools = [tv_tool]
+            actions_enabled = False
+            native_selections = []
 
         if allowed_tool_names:
             allowed = {str(item).strip() for item in allowed_tool_names if str(item).strip()}

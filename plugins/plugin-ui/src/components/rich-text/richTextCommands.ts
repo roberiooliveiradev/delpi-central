@@ -118,6 +118,10 @@ function isRichTextBlockElement(node: Node | null): node is HTMLElement {
   return node instanceof HTMLElement && RICH_TEXT_BLOCK_TAGS.has(node.tagName.toLowerCase());
 }
 
+function isRichTextBlockHtmlElement(el: HTMLElement): boolean {
+  return RICH_TEXT_BLOCK_TAGS.has(el.tagName.toLowerCase());
+}
+
 function findClosestRichTextBlock(
   node: Node | null,
   editor: HTMLElement,
@@ -164,7 +168,7 @@ function propagateRichTextFontSizeToAncestors(
   while (el && el !== editor) {
     el.style.fontSize = sizeCss;
     if (el.tagName === "FONT") el.removeAttribute("size");
-    if (isRichTextBlockElement(el)) break;
+    if (isRichTextBlockHtmlElement(el)) break;
     el = el.parentElement;
   }
 }

@@ -10,6 +10,8 @@ from pathlib import Path
 
 CONTENT_PATH = Path(__file__).resolve().parents[3] / "content" / "tv_copilot_content.json"
 
+_RISK_RANK = {"additive": 1, "mutation": 2, "destructive": 3}
+
 
 @lru_cache(maxsize=1)
 def _load() -> dict[str, Any]:
@@ -153,6 +155,70 @@ class TvCopilotContentService:
         return [item for item in raw if isinstance(item, dict)]
 
     @classmethod
+    def operations(cls) -> dict[str, dict[str, Any]]:
+        raw = _load().get("operations")
+        if not isinstance(raw, dict):
+            return {}
+        out: dict[str, dict[str, Any]] = {}
+        for key, value in raw.items():
+            op_name = str(key or "").strip()
+            if not op_name or not isinstance(value, dict):
+                continue
+            out[op_name] = value
+        return out
+
+    @classmethod
+    def operation_spec(cls, op: str) -> dict[str, Any] | None:
+        op_key = str(op or "").strip()
+        if not op_key:
+            return None
+        return cls.operations().get(op_key)
+
+    @classmethod
+    def aggregate_ops_policy(cls, ops: list[dict[str, Any]]) -> dict[str, Any]:
+        """Agrega risco/confirmação/target mínimo de uma lista de ops tipadas."""
+        requires_playlist = False
+        requires_slide = False
+        risk = "additive"
+        confirmation = "direct"
+        hints: list[str] = []
+        seen_hints: set[str] = set()
+        op_names: list[str] = []
+
+        for raw in ops:
+            if not isinstance(raw, dict):
+                continue
+            name = str(raw.get("op") or "").strip()
+            if not name:
+                continue
+            op_names.append(name)
+            spec = cls.operation_spec(name) or {}
+            if bool(spec.get("requiresPlaylist")):
+                requires_playlist = True
+            if bool(spec.get("requiresSlide")):
+                requires_slide = True
+            risk_value = str(spec.get("risk") or "mutation").strip().lower()
+            if _RISK_RANK.get(risk_value, 2) > _RISK_RANK.get(risk, 1):
+                risk = risk_value
+            policy = str(spec.get("confirmationPolicy") or "direct").strip().lower()
+            if policy == "confirm":
+                confirmation = "confirm"
+            for hint in spec.get("sideEffectHints") or []:
+                token = str(hint or "").strip()
+                if token and token not in seen_hints:
+                    seen_hints.add(token)
+                    hints.append(token)
+
+        return {
+            "requiresPlaylist": requires_playlist,
+            "requiresSlide": requires_slide,
+            "risk": risk,
+            "confirmationPolicy": confirmation,
+            "sideEffectHints": hints,
+            "opNames": op_names,
+        }
+
+    @classmethod
     def side_effect_hint_catalog(cls) -> list[str]:
         raw = _load().get("sideEffectHintCatalog")
         if not isinstance(raw, list):
@@ -176,6 +242,9 @@ class TvCopilotContentService:
 
     @classmethod
     def allowed_ops(cls) -> frozenset[str]:
+        from_ops = set(cls.operations().keys())
+        if from_ops:
+            return frozenset(from_ops)
         caps = cls.capabilities()
         if caps:
             from_caps = {
@@ -203,36 +272,22 @@ class TvCopilotContentService:
         return {
             "catalogVersion": cls.catalog_version(),
             "capabilities": cls.capabilities(),
+            "operations": cls.operations(),
             "allowedOps": sorted(cls.allowed_ops()),
             "sideEffectHintCatalog": cls.side_effect_hint_catalog(),
         }
 
     @classmethod
     def side_effect_hints_for_op(cls, op: str) -> list[str]:
+        spec = cls.operation_spec(op)
+        if isinstance(spec, dict):
+            raw = spec.get("sideEffectHints")
+            if isinstance(raw, list) and raw:
+                return [str(item).strip() for item in raw if str(item).strip()]
         cap = cls.capability_by_op(op)
         if not cap:
-            return list(_FALLBACK_HINTS.get(op, ()))
+            return []
         raw = cap.get("sideEffectHints")
         if isinstance(raw, list) and raw:
             return [str(item).strip() for item in raw if str(item).strip()]
-        return list(_FALLBACK_HINTS.get(op, ()))
-
-
-# Mapa de fallback se capability não declarar hints.
-_FALLBACK_HINTS: dict[str, tuple[str, ...]] = {
-    "upsert_data_source": ("replaceNativeConfig",),
-    "set_data_transform": ("replaceNativeConfig",),
-    "upsert_block": ("replaceNativeConfig",),
-    "delete_block": ("replaceNativeConfig", "removeBlockIds"),
-    "bind_visual": ("replaceNativeConfig",),
-    "patch_native_config": ("replaceNativeConfig",),
-    "add_slide_from_preset": ("refreshFilmstrip",),
-    "add_blank_slide": ("refreshFilmstrip",),
-    "update_slide": ("refreshFilmstrip",),
-    "reorder_slides": ("refreshFilmstrip",),
-    "delete_slide": ("refreshFilmstrip",),
-    "upsert_section": ("refreshFilmstrip",),
-    "delete_section": ("refreshFilmstrip",),
-    "move_slide_to_section": ("refreshFilmstrip",),
-    "create_playlist": ("refreshFilmstrip",),
-}
+        return []

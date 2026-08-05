@@ -25,6 +25,10 @@ export type TvWorkspaceContext = {
   operationId?: string | null;
   /** Id do bloco data_source em foco. */
   dataSourceId?: string | null;
+  selectedDataSourceId?: string | null;
+  selectedVisualId?: string | null;
+  dataSources?: Array<{ id: string; operationId: string; label: string }>;
+  hasLocalDraft?: boolean;
   /** Preset do slide, quando o host souber. */
   presetKey?: string | null;
   /** Resumo do native_config sem resolved — só metadados. */
@@ -121,6 +125,10 @@ export function EmbeddedChat({
           workspaceContext?.nativeConfigSummary?.dataSourceOperationIds?.[0] ||
           null,
         dataSourceId: workspaceContext?.dataSourceId,
+        selectedDataSourceId: workspaceContext?.selectedDataSourceId,
+        selectedVisualId: workspaceContext?.selectedVisualId,
+        dataSources: workspaceContext?.dataSources,
+        hasLocalDraft: workspaceContext?.hasLocalDraft,
         presetKey: workspaceContext?.presetKey,
       }),
     [
@@ -133,6 +141,10 @@ export function EmbeddedChat({
       workspaceContext?.focusBlockType,
       workspaceContext?.operationId,
       workspaceContext?.dataSourceId,
+      workspaceContext?.selectedDataSourceId,
+      workspaceContext?.selectedVisualId,
+      workspaceContext?.dataSources,
+      workspaceContext?.hasLocalDraft,
       workspaceContext?.presetKey,
       workspaceContext?.nativeConfigSummary?.dataSourceOperationIds,
     ],

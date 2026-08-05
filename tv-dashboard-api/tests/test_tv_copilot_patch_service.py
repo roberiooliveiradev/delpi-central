@@ -244,6 +244,33 @@ def test_capability_catalog_document_has_version_and_capabilities():
     assert "add_blank_slide" in TvCopilotContentService.allowed_ops()
 
 
+def test_patch_target_validation_uses_operation_contract(monkeypatch):
+    svc = _service(monkeypatch=monkeypatch)
+
+    with pytest.raises(TvCopilotPatchError, match="playlistId"):
+        svc.preview(
+            {
+                "target": {},
+                "ops": [{"op": "add_blank_slide", "title": "Novo"}],
+            },
+            user={},
+        )
+
+    with pytest.raises(TvCopilotPatchError, match="slideId"):
+        svc.preview(
+            {
+                "target": {"playlistId": PLAYLIST_ID},
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {"id": "txt-1", "type": "text", "content": "Olá"},
+                    }
+                ],
+            },
+            user={},
+        )
+
+
 def test_preview_upsert_data_source_and_bind_without_persist(monkeypatch):
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)

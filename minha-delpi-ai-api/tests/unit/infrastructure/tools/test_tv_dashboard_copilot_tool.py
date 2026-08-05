@@ -66,3 +66,8 @@ def test_tv_copilot_tool_apply():
     assert result.metadata["mode"] == "apply"
     assert result.metadata["sensitivity"] == "write"
     assert result.data.get("persisted") is True
+
+
+def test_tv_copilot_tool_description_uses_direct_policy():
+    assert "direct" in TvDashboardCopilotTool.description
+    assert "confirmationPolicy" in TvDashboardCopilotTool.description

@@ -177,18 +177,32 @@ class ChatTvDashboardCopilotIntentService:
             return None
 
         target = arguments.get("target")
+        confirmation_policy = str(
+            arguments.get("confirmationPolicy") or "confirm"
+        ).strip().lower()
+        if confirmation_policy != "confirm":
+            return None
         return {
             "name": "tv_dashboard_copilot",
             "arguments": {
                 "mode": "apply",
                 "ops": list(ops),
                 "target": dict(target) if isinstance(target, dict) else {},
+                "confirmationPolicy": "confirm",
+                "risk": str(arguments.get("risk") or "destructive"),
             },
             "reason": cls._text(
                 "applySelectionReason",
                 default="Confirmação — apply do patch TV Dashboard.",
             ),
         }
+
+    @classmethod
+    def requires_confirmation(cls, arguments: dict | None) -> bool:
+        args = arguments if isinstance(arguments, dict) else {}
+        mode = str(args.get("mode") or "preview").strip().lower()
+        policy = str(args.get("confirmationPolicy") or "confirm").strip().lower()
+        return mode == "apply" and policy != "direct"
 
     @classmethod
     def no_pending_preview_message(cls) -> str:
@@ -215,12 +229,33 @@ class ChatTvDashboardCopilotIntentService:
 
         mode = str(meta.get("mode") or "").lower()
         ok = meta.get("ok") is not False
+        nested_data = payload.get("data")
+        nested_message = (
+            str(nested_data.get("message") or "").strip()
+            if isinstance(nested_data, dict)
+            else ""
+        )
+        factual_message = str(payload.get("message") or nested_message).strip()
 
         if mode == "apply":
-            key = "applyOk" if ok else "applyFailed"
+            if not ok:
+                return (
+                    factual_message
+                    or cls._text("directAnswer", "applyFailed", default="")
+                    or None
+                )
+            side = (
+                payload.get("sideEffects")
+                if isinstance(payload.get("sideEffects"), dict)
+                else {}
+            )
+            slides = side.get("slides") if isinstance(side.get("slides"), list) else []
+            key = "applySlideOk" if slides else "applyOk"
             return cls._text("directAnswer", key, default="") or None
 
         if not ok:
+            if factual_message:
+                return factual_message
             # Preview que falhou não pode anunciar «prévia gerada»: o usuário
             # confirmaria um patch inexistente.
             return cls._text("directAnswer", "previewFailed", default="") or None
@@ -360,6 +395,12 @@ class ChatTvDashboardCopilotIntentService:
                 )
             if sources_out:
                 result["dataSources"] = sources_out
+
+        if bool(
+            host_context.get("hasLocalDraft")
+            or host_context.get("localDraftDirty")
+        ):
+            result["hasLocalDraft"] = True
 
         return result
 

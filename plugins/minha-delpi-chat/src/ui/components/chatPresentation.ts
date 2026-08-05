@@ -35,14 +35,10 @@ import {
   getAvailableFormatsFromToolCalls,
   getDownloadArtifactsFromToolCalls,
   getPathFromToolCalls,
-  getPreferredFormatFromToolCalls,
-  getPresentationDecisionFromToolCalls,
   getPresentationRenderHintsFromToolCalls,
   getTextPresentationTitleFromToolCalls,
   hasRenderPlanContract,
   isExplicitTextSessionMode,
-  mapPresentationDecisionToViewFormat,
-  type ViewFormat,
 } from "./presentation/presentationMetadataReaders";
 
 export type { ViewFormat, PresentationRenderHints, PresentationRenderPlan } from "./presentation/presentationMetadataReaders";

@@ -36,12 +36,28 @@ Patches tipados no modelo de slide/playlist via chat base (`tv_dashboard_copilot
 
 | Método | Path | Permissão | Notas |
 |--------|------|-----------|-------|
-| `GET` | `/data/copilot/capabilities` | `TV_WRITE` | `{ catalogVersion, capabilities[] }` — fonte de verdade para a AI |
-| `POST` | `/data/copilot/suggest-ops` | `TV_WRITE` | NL + hostContext → `ops[]` (payloads ricos no BFF) |
+| `GET` | `/data/copilot/capabilities` | `TV_WRITE` | `{ catalogVersion, operations, capabilities[] }` — contrato executável |
+| `POST` | `/data/copilot/suggest-ops` | `TV_WRITE` | NL + hostContext → plano discriminado + `ops[]` |
 | `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run + diff + `sideEffectHints`; valida schema; **não** persiste |
 | `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | Persiste + `notify_presentation_changed` |
 | `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores |
 | `POST` | `/data/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | Materialize → mesmas ops do catálogo |
+
+### `operations`: contrato executável
+
+Cada op tem uma única spec em `operations`: `requiresPlaylist`, `requiresSlide`,
+`inputSchema`, `risk`, `confirmationPolicy` e `sideEffectHints`. O planner e o
+patch service consomem a mesma spec; capability nova não pode repetir esses campos.
+
+- `direct`: criação/alteração inequívoca é aplicada no mesmo turno.
+- `confirm`: somente `delete_block`, `delete_slide` e `delete_section`.
+- `add_blank_slide` requer playlist, mas não slide aberto.
+- mutações de canvas requerem playlist + slide; sem contexto, o planner devolve
+  `status=clarification` e zero ops.
+
+O `suggest-ops` retorna `status: ready | clarification | unsupported | error`,
+`confirmationPolicy`, `risk`, requisitos agregados e os hints. Uma composição
+herda a política mais restritiva entre suas ops.
 
 ### Shape de `capabilities[]`
 
@@ -57,9 +73,8 @@ Cada item (declarativo em `tv_copilot_content.json`):
 | `payloadTemplate` / `payloadTemplates` | Template(s) JSON com placeholders; composites usam array |
 | `requiresFilledPlaceholders` | Ex.: `["backgroundColor"]` — não emite op se vazio |
 | `isComposite` | Capability que expande em várias ops (ex.: KPI = fonte + view + bind) |
-| `inputSchema` | JSON Schema dos campos da op |
-| `sideEffectHints` | Hints genéricos para o MFE (`refreshFilmstrip`, `replaceNativeConfig`, …) |
-| `requiresSlide` / `requiresPlaylist` | Target mínimo |
+
+Schema, target, risco e efeitos pertencem a `operations`, não às capabilities.
 
 ### Placeholders do suggest-ops
 
@@ -117,15 +132,17 @@ Composites rota → visual + bind:
 ## Chat base (consumer)
 
 - Skill genérica: `tv-dashboard-copilot` (sem listar ops no markdown)
-- Tool: `tv_dashboard_copilot` (`mode=preview|apply`) — ops vindas do catálogo / suggest-ops
-- Apply exige confirmação explícita (`ChatWriteConfirmationService`)
+- Tool: `tv_dashboard_copilot` (`mode=preview|apply`) — ops e política vindas do planner
+- `direct` usa `apply` no mesmo turno; exclusão `confirm` usa preview e aguarda confirmação
 - Env: `TV_DASHBOARD_API_BASE_URL`
 
 ## Embed (A1)
 
 - Remote MF: `minha-delpi-chat` → `./EmbeddedChat`
-- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, `selectedBlockIds`, `operationId`, `dataSourceId`, `selectedDataSourceId`, `selectedVisualId`, `dataSources[]` (`id`/`operationId`/`label`), `presetKey`, resumo do foco
-- Preview → draft local via `sideEffectHints` (genérico) + seleção do visual/fonte criado; confirm → persist
+- Host envia `hostContext`: `surface`, `playlistId`, `slideId`, seleção, fontes,
+  `hasLocalDraft`, `presetKey` e resumo do foco.
+- Draft local pendente bloqueia mutação remota com clarificação; nunca sobrescreve o editor.
+- Apply direto persiste e recarrega filmstrip; preview fica reservado à exclusão pendente.
 
 ## Escopo negativo
 

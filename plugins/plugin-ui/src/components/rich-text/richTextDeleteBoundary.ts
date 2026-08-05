@@ -154,7 +154,7 @@ function pruneEmptyInline(editor: HTMLElement) {
   editor.querySelectorAll("b,strong,i,em,u,s,strike,del,span").forEach((el) => {
     if (!(el instanceof HTMLElement) || !editor.contains(el)) return;
     if (el.classList.length > 0) return;
-    if ([...el.attributes].some((attr) => attr.name !== "style")) return;
+    if (Array.from(el.attributes).some((attr) => attr.name !== "style")) return;
     if (el.querySelector("img, br, table, a")) return;
     const text = (el.textContent ?? "").replace(/\u200B/g, "");
     if (text.length > 0) return;

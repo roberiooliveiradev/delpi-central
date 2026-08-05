@@ -6,15 +6,18 @@ from app.application.security.chat_permissions import CHAT_TOOLS_USE_PERMISSION
 from app.domain.entities.tool_result import ToolResult
 from app.domain.exceptions.tool_exceptions import InvalidToolInputError
 from app.domain.ports.internal_tool_port import InternalToolPort
+from app.domain.services.chat_assistant_content_service import ChatAssistantContentService
 from app.infrastructure.gateways.tv_dashboard_api_gateway import TvDashboardApiGateway
 
 
 class TvDashboardCopilotTool(InternalToolPort):
     name = "tv_dashboard_copilot"
-    description = (
-        "Copiloto do TV Dashboard: preview ou apply de patches tipados (TvCopilotPatchV1) "
-        "em dados/slides/playlist. Nunca gera Power Query M. "
-        "mode=preview para dry-run; mode=apply só após confirmação explícita do usuário."
+    description = str(
+        ChatAssistantContentService.get(
+            "tv_dashboard_copilot_intent",
+            "toolDescription",
+        )
+        or ""
     )
     required_permission = CHAT_TOOLS_USE_PERMISSION
 

@@ -22,6 +22,11 @@ export type ChatHostContext = {
   operationId?: string | null;
   /** Id do bloco data_source em foco. */
   dataSourceId?: string | null;
+  selectedDataSourceId?: string | null;
+  selectedVisualId?: string | null;
+  dataSources?: Array<{ id: string; operationId: string; label: string }>;
+  /** Há draft local ainda não sincronizado com o BFF. */
+  hasLocalDraft?: boolean;
   /** Preset do slide, quando o host souber. */
   presetKey?: string | null;
 };
@@ -36,6 +41,10 @@ export function buildTvDashboardHostContext(input: {
   focusBlockType?: string | null;
   operationId?: string | null;
   dataSourceId?: string | null;
+  selectedDataSourceId?: string | null;
+  selectedVisualId?: string | null;
+  dataSources?: Array<{ id?: string; operationId?: string; label?: string }> | null;
+  hasLocalDraft?: boolean;
   presetKey?: string | null;
 }): ChatHostContext {
   const selectedBlockIds = normalizeStringList(input.selectedBlockIds);
@@ -50,6 +59,10 @@ export function buildTvDashboardHostContext(input: {
     null;
   const operationId = (input.operationId && String(input.operationId).trim()) || null;
   const dataSourceId = (input.dataSourceId && String(input.dataSourceId).trim()) || null;
+  const selectedDataSourceId =
+    (input.selectedDataSourceId && String(input.selectedDataSourceId).trim()) || null;
+  const selectedVisualId =
+    (input.selectedVisualId && String(input.selectedVisualId).trim()) || null;
   const presetKey = (input.presetKey && String(input.presetKey).trim()) || null;
 
   const ctx: ChatHostContext = {
@@ -75,10 +88,35 @@ export function buildTvDashboardHostContext(input: {
   if (dataSourceId) {
     ctx.dataSourceId = dataSourceId;
   }
+  if (selectedDataSourceId) {
+    ctx.selectedDataSourceId = selectedDataSourceId;
+  }
+  if (selectedVisualId) {
+    ctx.selectedVisualId = selectedVisualId;
+  }
+  const dataSources = normalizeDataSources(input.dataSources);
+  if (dataSources.length > 0) {
+    ctx.dataSources = dataSources;
+  }
+  if (input.hasLocalDraft) {
+    ctx.hasLocalDraft = true;
+  }
   if (presetKey) {
     ctx.presetKey = presetKey;
   }
   return ctx;
+}
+
+function normalizeDataSources(
+  value: Array<{ id?: string; operationId?: string; label?: string }> | null | undefined,
+): Array<{ id: string; operationId: string; label: string }> {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const id = String(item?.id ?? "").trim();
+    const operationId = String(item?.operationId ?? "").trim();
+    if (!id || !operationId) return [];
+    return [{ id, operationId, label: String(item?.label ?? "").trim() || operationId }];
+  });
 }
 
 function normalizeStringList(value: unknown): string[] {

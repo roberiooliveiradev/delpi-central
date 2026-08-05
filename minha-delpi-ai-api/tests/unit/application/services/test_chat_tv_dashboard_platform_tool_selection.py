@@ -99,6 +99,77 @@ def test_suggest_ops_builds_tool_without_ai_knowing_op_name():
     assert port.suggest_calls == 1
 
 
+def test_safe_plan_applies_directly_without_confirmation():
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.direct", "capabilities": []},
+        suggestion={
+            "status": "ready",
+            "catalogVersion": "test.direct",
+            "ops": [{"op": "add_blank_slide", "title": "Produção"}],
+            "confirmationPolicy": "direct",
+            "risk": "additive",
+            "reason": "Plano pronto — execução direta.",
+        },
+    )
+
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "crie um slide",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+
+    assert result.tool_call is not None
+    assert result.tool_call["arguments"]["mode"] == "apply"
+    assert result.tool_call["arguments"]["confirmationPolicy"] == "direct"
+    assert result.tool_call["arguments"]["risk"] == "additive"
+
+
+def test_destructive_plan_previews_and_waits_for_confirmation():
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.confirm", "capabilities": []},
+        suggestion={
+            "status": "ready",
+            "catalogVersion": "test.confirm",
+            "ops": [{"op": "delete_block", "blockId": "blk-1"}],
+            "confirmationPolicy": "confirm",
+            "risk": "destructive",
+            "reason": "Exclusão exige confirmação.",
+        },
+    )
+
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "apague o bloco",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+
+    assert result.tool_call is not None
+    assert result.tool_call["arguments"]["mode"] == "preview"
+    assert result.tool_call["arguments"]["confirmationPolicy"] == "confirm"
+    assert result.tool_call["arguments"]["risk"] == "destructive"
+
+
+def test_confirmation_guard_uses_bff_policy_not_all_apply_calls():
+    assert (
+        ChatTvDashboardCopilotIntentService.requires_confirmation(
+            {"mode": "apply", "confirmationPolicy": "direct"}
+        )
+        is False
+    )
+    assert (
+        ChatTvDashboardCopilotIntentService.requires_confirmation(
+            {"mode": "apply", "confirmationPolicy": "confirm"}
+        )
+        is True
+    )
+    assert (
+        ChatTvDashboardCopilotIntentService.requires_confirmation({"mode": "apply"})
+        is True
+    )
+
+
 def test_catalog_failure_returns_no_tool_and_unavailable_answer():
     port = _FakeCatalogPort(fail_catalog=True)
     result = ChatTvDashboardPlatformToolSelectionService.select(
@@ -299,6 +370,14 @@ def test_failed_preview_direct_answer_reports_failure():
     assert answer
     assert "prévia" in answer.lower()
     assert "confirmo" not in answer.lower()
+
+
+def test_failed_apply_preserves_factual_bff_reason():
+    answer = ChatTvDashboardCopilotIntentService.format_direct_answer(
+        data={"message": "O slide foi alterado por outro editor."},
+        metadata={"ok": False, "mode": "apply", "httpStatus": 409},
+    )
+    assert answer == "O slide foi alterado por outro editor."
 
 
 def test_is_tv_mutation_turn_and_anti_hijack():

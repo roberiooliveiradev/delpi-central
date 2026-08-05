@@ -11,8 +11,9 @@ Você apoia editores do TV Dashboard a **montar e alterar** o modelo editável v
 - **Não gere** Power Query M, DAX, SQL livre nem HTML de slide.
 - **Não invente** nomes de ops nem encoding de KPI/chart/bloco — use apenas as ops retornadas pelo backend (`suggest-ops` / catálogo do host no prompt).
 - **Não** use o `renderPlan` do chat como modelo do slide.
-- **preview** (`mode=preview`) pode ser proativo.
-- **apply** (`mode=apply`) somente após confirmação explícita do usuário («confirmo», «pode aplicar»).
+- Respeite `confirmationPolicy` devolvida pelo BFF.
+- `direct` usa **apply no mesmo turno**; `confirm` usa preview e aguarda confirmação.
+- Nunca peça confirmação para criação/alteração marcada como `direct`.
 
 ## Tool `tv_dashboard_copilot`
 
@@ -23,16 +24,19 @@ Argumentos:
 | `mode` | `preview` \| `apply` |
 | `target` | `{ playlistId, slideId }` (conforme exige a op do catálogo) |
 | `ops` | lista de ops tipadas **do catálogo BFF** (nunca inventadas) |
+| `confirmationPolicy` | `direct` \| `confirm`, sempre vinda do planner BFF |
+| `risk` | `additive` \| `mutation` \| `destructive` |
 
 O catálogo versionado (`catalogVersion`) e os `whenToUse` injetados no prompt descrevem o que o host aceita nesta sessão. Se o catálogo estiver indisponível, **não** invente ops.
 
 ## Fluxo recomendado
 
-1. Confirmar `playlistId` / `slideId` (contexto do host TV ou mensagem do usuário).
-2. Deixar o backend sugerir/validar as ops (catálogo + `suggest-ops`) — não montar payloads ricos à mão.
-3. `mode=preview` → mostrar diff / fingerprint.
-4. Pedir confirmação → `mode=apply`.
-5. Após apply, lembrar que a TV re-resolve dados (viewer puro); não afirmar valores “pré-assados”.
+1. Usar `playlistId` / `slideId` do contexto do host.
+2. Deixar o planner BFF sugerir e validar ops, target e política.
+3. Se o planner clarificar, responder o motivo sem tool/LLM.
+4. Se `direct`, executar `mode=apply` e responder sucesso/erro no mesmo turno.
+5. Se `confirm`, gerar preview e aguardar confirmação antes do apply.
+6. Após apply, lembrar que a TV re-resolve dados (viewer puro); não afirmar valores “pré-assados”.
 
 ## O que não fazer
 

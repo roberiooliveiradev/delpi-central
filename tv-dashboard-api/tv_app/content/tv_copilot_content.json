@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026.08.04.6",
+  "catalogVersion": "2026.08.05.1",
   "sideEffectHintCatalog": [
     "refreshFilmstrip",
     "replaceNativeConfig",
@@ -41,28 +41,87 @@
     "branch": {
       "paramKey": "branch",
       "patterns": [
-        {"markers": ["filial 01", "filial sc", "branch 01", "filial para 01", "para 01"], "value": "01"},
-        {"markers": ["filial 02", "filial es", "branch 02", "filial para 02", "para 02"], "value": "02"},
-        {"markers": ["filial consolidado", "todas as filiais", "consolidado"], "value": ""}
+        {
+          "markers": [
+            "filial 01",
+            "filial sc",
+            "branch 01",
+            "filial para 01",
+            "para 01"
+          ],
+          "value": "01"
+        },
+        {
+          "markers": [
+            "filial 02",
+            "filial es",
+            "branch 02",
+            "filial para 02",
+            "para 02"
+          ],
+          "value": "02"
+        },
+        {
+          "markers": [
+            "filial consolidado",
+            "todas as filiais",
+            "consolidado"
+          ],
+          "value": ""
+        }
       ]
     }
   },
   "transformStepHints": [
     {
-      "markers": ["top 10", "primeiras 10", "manter 10", "keep 10"],
-      "step": { "op": "keepRows", "count": 10, "from": "top" }
+      "markers": [
+        "top 10",
+        "primeiras 10",
+        "manter 10",
+        "keep 10"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 10,
+        "from": "top"
+      }
     },
     {
-      "markers": ["top 5", "primeiras 5", "manter 5", "keep 5"],
-      "step": { "op": "keepRows", "count": 5, "from": "top" }
+      "markers": [
+        "top 5",
+        "primeiras 5",
+        "manter 5",
+        "keep 5"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 5,
+        "from": "top"
+      }
     },
     {
-      "markers": ["top 20", "primeiras 20", "manter 20"],
-      "step": { "op": "keepRows", "count": 20, "from": "top" }
+      "markers": [
+        "top 20",
+        "primeiras 20",
+        "manter 20"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 20,
+        "from": "top"
+      }
     },
     {
-      "markers": ["últimas 10", "ultimas 10", "bottom 10"],
-      "step": { "op": "keepRows", "count": 10, "from": "bottom" }
+      "markers": [
+        "últimas 10",
+        "ultimas 10",
+        "bottom 10"
+      ],
+      "step": {
+        "op": "keepRows",
+        "count": 10,
+        "from": "bottom"
+      }
     }
   ],
   "mutationActionTerms": [
@@ -156,7 +215,15 @@
     "suggestNeedTransformSteps": "Descreva um transform tipado suportado (ex.: «manter top 10») — o Copiloto não gera M/SQL livre.",
     "suggestNeedBranchParam": "Informe a filial (ex.: filial 01, filial 02 ou consolidado).",
     "suggestNeedFieldLabels": "Informe o campo e o novo rótulo (ex.: renomeie o campo \"value\" para \"OEE\").",
-    "suggestIncompleteGeneric": "Entendi o tipo de pedido, mas faltam dados para montar a operação. Reformule com mais detalhe (texto, cor, indicador, seleção)."
+    "suggestIncompleteGeneric": "Entendi o tipo de pedido, mas faltam dados para montar a operação. Reformule com mais detalhe (texto, cor, indicador, seleção).",
+    "suggestNeedSlide": "Abra ou crie um slide na programação e repita o pedido. Sem slide aberto não consigo alterar o canvas.",
+    "suggestNeedPlaylist": "Abra uma programação no editor e repita o pedido.",
+    "suggestNeedSlideOrCreate": "Não há slide aberto. Crie um slide («crie um slide») ou selecione um na coluna à esquerda e repita.",
+    "suggestLocalDraftConflict": "Há alterações locais não sincronizadas neste slide. Salve ou descarte o rascunho no editor antes de aplicar o patch do Copiloto.",
+    "planReadyDirect": "Plano pronto ({count} op(s)) — execução direta.",
+    "planReadyConfirm": "Plano pronto ({count} op(s)) — exclusão destrutiva exige confirmação.",
+    "applyDirectOk": "Alteração aplicada na programação ({ops} operação(ões)).",
+    "applyConfirmRequired": "Esta ação remove dados da programação. Confirme com «pode aplicar» ou «confirmo»."
   },
   "placeholderClarifications": {
     "backgroundColor": "suggestNeedColor",
@@ -169,7 +236,9 @@
     "quoted": "suggestNeedQuotedTitle",
     "transformStepsJson": "suggestNeedTransformSteps",
     "branchParam": "suggestNeedBranchParam",
-    "fieldLabelsJson": "suggestNeedFieldLabels"
+    "fieldLabelsJson": "suggestNeedFieldLabels",
+    "slideId": "suggestNeedSlideOrCreate",
+    "playlistId": "suggestNeedPlaylist"
   },
   "opFieldClarifications": {
     "delete_block.blockId": "suggestNeedSelection",
@@ -194,23 +263,410 @@
     "defaultSectionName": "Nova seção",
     "defaultTextBlockContent": ""
   },
-  "allowedOps": [
-    "upsert_data_source",
-    "set_data_transform",
-    "upsert_block",
-    "delete_block",
-    "bind_visual",
-    "patch_native_config",
-    "add_slide_from_preset",
-    "add_blank_slide",
-    "update_slide",
-    "reorder_slides",
-    "delete_slide",
-    "upsert_section",
-    "delete_section",
-    "move_slide_to_section",
-    "create_playlist"
-  ],
+  "operations": {
+    "upsert_data_source": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "operationId"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_data_source"
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          },
+          "label": {
+            "type": "string"
+          },
+          "displayMode": {
+            "type": "string"
+          },
+          "fieldLabels": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "set_data_transform": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId",
+          "steps"
+        ],
+        "properties": {
+          "op": {
+            "const": "set_data_transform"
+          },
+          "blockId": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "upsert_block": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "block"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_block"
+          },
+          "block": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "delete_block": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "replaceNativeConfig",
+        "removeBlockIds"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "blockId"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_block"
+          },
+          "blockId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bind_visual": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "visualId",
+          "dataSourceId"
+        ],
+        "properties": {
+          "op": {
+            "const": "bind_visual"
+          },
+          "visualId": {
+            "type": "string"
+          },
+          "dataSourceId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "patch_native_config": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "replaceNativeConfig"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "patch"
+        ],
+        "properties": {
+          "op": {
+            "const": "patch_native_config"
+          },
+          "patch": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "add_slide_from_preset": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "presetKey"
+        ],
+        "properties": {
+          "op": {
+            "const": "add_slide_from_preset"
+          },
+          "presetKey": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "add_blank_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "add_blank_slide"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "update_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "update_slide"
+          },
+          "title": {
+            "type": "string"
+          },
+          "durationSec": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "reorder_slides": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "items"
+        ],
+        "properties": {
+          "op": {
+            "const": "reorder_slides"
+          },
+          "items": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "delete_slide": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_slide"
+          }
+        }
+      }
+    },
+    "upsert_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "name"
+        ],
+        "properties": {
+          "op": {
+            "const": "upsert_section"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sectionId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "delete_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": false,
+      "risk": "destructive",
+      "confirmationPolicy": "confirm",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "sectionId"
+        ],
+        "properties": {
+          "op": {
+            "const": "delete_section"
+          },
+          "sectionId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "move_slide_to_section": {
+      "requiresPlaylist": true,
+      "requiresSlide": true,
+      "risk": "mutation",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "sectionId"
+        ],
+        "properties": {
+          "op": {
+            "const": "move_slide_to_section"
+          },
+          "sectionId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "create_playlist": {
+      "requiresPlaylist": false,
+      "requiresSlide": false,
+      "risk": "additive",
+      "confirmationPolicy": "direct",
+      "sideEffectHints": [
+        "refreshFilmstrip"
+      ],
+      "inputSchema": {
+        "type": "object",
+        "required": [
+          "op",
+          "name"
+        ],
+        "properties": {
+          "op": {
+            "const": "create_playlist"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "seedPresetKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
   "capabilities": [
     {
       "key": "add_kpi_from_route",
@@ -226,7 +682,17 @@
         "crie um kpi",
         "criar um kpi"
       ],
-      "excludeMarkers": ["script m", "power query", "gráfico", "grafico", "tabela", "chart", "table", "modelo de dados", "fonte de dados"],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table",
+        "modelo de dados",
+        "fonte de dados"
+      ],
       "actionTermSet": "create",
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplates": [
@@ -243,8 +709,15 @@
           "block": {
             "id": "{{newVisualId}}",
             "type": "kpi_view",
-            "frame": { "x": 10, "y": 28, "w": 28, "h": 22 },
-            "style": { "zIndex": 2 }
+            "frame": {
+              "x": 10,
+              "y": 28,
+              "w": 28,
+              "h": 22
+            },
+            "style": {
+              "zIndex": 2
+            }
           }
         },
         {
@@ -252,22 +725,7 @@
           "visualId": "{{newVisualId}}",
           "dataSourceId": "{{newDataSourceId}}"
         }
-      ],
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "operationId"],
-        "properties": {
-          "op": { "const": "upsert_data_source" },
-          "operationId": { "type": "string" },
-          "blockId": { "type": "string" },
-          "params": { "type": "object" },
-          "label": { "type": "string" },
-          "displayMode": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      ]
     },
     {
       "key": "add_chart_from_route",
@@ -284,7 +742,15 @@
         "gráfico do",
         "grafico do"
       ],
-      "excludeMarkers": ["kpi", "indicador", "tabela", "table", "modelo de dados", "fonte de dados", "script m"],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "tabela",
+        "table",
+        "modelo de dados",
+        "fonte de dados",
+        "script m"
+      ],
       "actionTermSet": "create",
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplates": [
@@ -301,8 +767,15 @@
           "block": {
             "id": "{{newVisualId}}",
             "type": "chart_view",
-            "frame": { "x": 10, "y": 28, "w": 80, "h": 45 },
-            "style": { "zIndex": 2 }
+            "frame": {
+              "x": 10,
+              "y": 28,
+              "w": 80,
+              "h": 45
+            },
+            "style": {
+              "zIndex": 2
+            }
           }
         },
         {
@@ -310,10 +783,7 @@
           "visualId": "{{newVisualId}}",
           "dataSourceId": "{{newDataSourceId}}"
         }
-      ],
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      ]
     },
     {
       "key": "add_table_from_route",
@@ -328,7 +798,16 @@
         "crie uma tabela de",
         "tabela do"
       ],
-      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "chart", "modelo de dados", "fonte de dados", "script m"],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "chart",
+        "modelo de dados",
+        "fonte de dados",
+        "script m"
+      ],
       "actionTermSet": "create",
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplates": [
@@ -345,8 +824,15 @@
           "block": {
             "id": "{{newVisualId}}",
             "type": "table_view",
-            "frame": { "x": 5, "y": 28, "w": 90, "h": 45 },
-            "style": { "zIndex": 2 }
+            "frame": {
+              "x": 5,
+              "y": 28,
+              "w": 90,
+              "h": 45
+            },
+            "style": {
+              "zIndex": 2
+            }
           }
         },
         {
@@ -354,10 +840,7 @@
           "visualId": "{{newVisualId}}",
           "dataSourceId": "{{newDataSourceId}}"
         }
-      ],
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      ]
     },
     {
       "key": "create_data_source",
@@ -374,9 +857,22 @@
         "criar modelo de dados",
         "crie um modelo de dados"
       ],
-      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "tabela", "chart", "table", "script m", "ligar", "vincular"],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "chart",
+        "table",
+        "script m",
+        "ligar",
+        "vincular"
+      ],
       "actionTermSet": "create",
-      "requiresFilledPlaceholders": ["operationId"],
+      "requiresFilledPlaceholders": [
+        "operationId"
+      ],
       "clarificationMessageKey": "suggestNeedOperationId",
       "payloadTemplate": {
         "op": "upsert_data_source",
@@ -384,10 +880,7 @@
         "params": {},
         "blockId": "{{newDataSourceId}}",
         "label": "{{routeLabel}}"
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "update_data_source",
@@ -409,9 +902,17 @@
         "renomeie campo",
         "field label"
       ],
-      "excludeMarkers": ["adicione um kpi", "adicione um gráfico", "adicione uma tabela", "crie um slide"],
+      "excludeMarkers": [
+        "adicione um kpi",
+        "adicione um gráfico",
+        "adicione uma tabela",
+        "crie um slide"
+      ],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["dataSourceId", "operationId"],
+      "requiresFilledPlaceholders": [
+        "dataSourceId",
+        "operationId"
+      ],
       "clarificationMessageKey": "suggestNeedDataSource",
       "payloadTemplate": {
         "op": "upsert_data_source",
@@ -419,10 +920,7 @@
         "params": {},
         "blockId": "{{dataSourceId}}",
         "label": "{{routeLabel}}"
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "set_data_transform",
@@ -440,18 +938,22 @@
         "primeiras 10",
         "primeiras 5"
       ],
-      "excludeMarkers": ["script m", "power query", "sql"],
+      "excludeMarkers": [
+        "script m",
+        "power query",
+        "sql"
+      ],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["dataSourceId", "transformStepsJson"],
+      "requiresFilledPlaceholders": [
+        "dataSourceId",
+        "transformStepsJson"
+      ],
       "clarificationMessageKey": "suggestNeedTransformSteps",
       "payloadTemplate": {
         "op": "set_data_transform",
         "blockId": "{{dataSourceId}}",
         "steps": []
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "upsert_block",
@@ -496,18 +998,7 @@
           "type": "text",
           "content": "{{textContent}}"
         }
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "block"],
-        "properties": {
-          "op": { "const": "upsert_block" },
-          "block": { "type": "object" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "add_chart_view",
@@ -521,28 +1012,33 @@
         "adicionar gráfico",
         "crie um gráfico"
       ],
-      "excludeMarkers": ["kpi", "indicador", "tabela", "texto", "modelo de dados", "fonte de dados", "gráfico de", "grafico de"],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "tabela",
+        "texto",
+        "modelo de dados",
+        "fonte de dados",
+        "gráfico de",
+        "grafico de"
+      ],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "upsert_block",
         "block": {
           "id": "{{newVisualId}}",
           "type": "chart_view",
-          "frame": { "x": 10, "y": 28, "w": 80, "h": 45 },
-          "style": { "zIndex": 2 }
+          "frame": {
+            "x": 10,
+            "y": 28,
+            "w": 80,
+            "h": 45
+          },
+          "style": {
+            "zIndex": 2
+          }
         }
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "block"],
-        "properties": {
-          "op": { "const": "upsert_block" },
-          "block": { "type": "object" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "add_table_view",
@@ -555,28 +1051,33 @@
         "adicionar tabela",
         "crie uma tabela"
       ],
-      "excludeMarkers": ["kpi", "indicador", "gráfico", "grafico", "texto", "modelo de dados", "fonte de dados", "tabela de"],
+      "excludeMarkers": [
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "texto",
+        "modelo de dados",
+        "fonte de dados",
+        "tabela de"
+      ],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "upsert_block",
         "block": {
           "id": "{{newVisualId}}",
           "type": "table_view",
-          "frame": { "x": 5, "y": 28, "w": 90, "h": 45 },
-          "style": { "zIndex": 2 }
+          "frame": {
+            "x": 5,
+            "y": 28,
+            "w": 90,
+            "h": 45
+          },
+          "style": {
+            "zIndex": 2
+          }
         }
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "block"],
-        "properties": {
-          "op": { "const": "upsert_block" },
-          "block": { "type": "object" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "delete_block",
@@ -594,25 +1095,20 @@
         "excluir elemento",
         "delete block"
       ],
-      "excludeMarkers": ["apagar slide", "apague o slide", "excluir tela"],
+      "excludeMarkers": [
+        "apagar slide",
+        "apague o slide",
+        "excluir tela"
+      ],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["selectedBlockId"],
+      "requiresFilledPlaceholders": [
+        "selectedBlockId"
+      ],
       "clarificationMessageKey": "suggestNeedSelection",
       "payloadTemplate": {
         "op": "delete_block",
         "blockId": "{{selectedBlockId}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "blockId"],
-        "properties": {
-          "op": { "const": "delete_block" },
-          "blockId": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig", "removeBlockIds"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "bind_visual",
@@ -630,27 +1126,23 @@
         "use esta fonte",
         "usar esta fonte"
       ],
-      "excludeMarkers": ["adicione um kpi", "adicionar kpi", "crie um kpi", "modelo de dados"],
+      "excludeMarkers": [
+        "adicione um kpi",
+        "adicionar kpi",
+        "crie um kpi",
+        "modelo de dados"
+      ],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["selectedVisualId", "dataSourceId"],
+      "requiresFilledPlaceholders": [
+        "selectedVisualId",
+        "dataSourceId"
+      ],
       "clarificationMessageKey": "suggestNeedDataSource",
       "payloadTemplate": {
         "op": "bind_visual",
         "visualId": "{{selectedVisualId}}",
         "dataSourceId": "{{dataSourceId}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "visualId", "dataSourceId"],
-        "properties": {
-          "op": { "const": "bind_visual" },
-          "visualId": { "type": "string" },
-          "dataSourceId": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "patch_native_config",
@@ -668,24 +1160,18 @@
       ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["backgroundColor"],
+      "requiresFilledPlaceholders": [
+        "backgroundColor"
+      ],
       "payloadTemplate": {
         "op": "patch_native_config",
         "patch": {
-          "background": { "type": "color", "value": "{{backgroundColor}}" }
+          "background": {
+            "type": "color",
+            "value": "{{backgroundColor}}"
+          }
         }
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "patch"],
-        "properties": {
-          "op": { "const": "patch_native_config" },
-          "patch": { "type": "object" }
-        }
-      },
-      "sideEffectHints": ["replaceNativeConfig"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "add_slide_from_preset",
@@ -699,26 +1185,20 @@
         "slide do catálogo",
         "a partir do preset"
       ],
-      "excludeMarkers": ["slide em branco", "tela vazia", "blank"],
+      "excludeMarkers": [
+        "slide em branco",
+        "tela vazia",
+        "blank"
+      ],
       "actionTermSet": "create",
-      "requiresFilledPlaceholders": ["presetKey"],
+      "requiresFilledPlaceholders": [
+        "presetKey"
+      ],
       "clarificationMessageKey": "suggestNeedPreset",
       "payloadTemplate": {
         "op": "add_slide_from_preset",
         "presetKey": "{{presetKey}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "presetKey"],
-        "properties": {
-          "op": { "const": "add_slide_from_preset" },
-          "presetKey": { "type": "string" },
-          "branch": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "add_blank_slide",
@@ -736,23 +1216,16 @@
         "blank",
         "slide personalizado"
       ],
-      "excludeMarkers": ["preset", "programação", "playlist"],
+      "excludeMarkers": [
+        "preset",
+        "programação",
+        "playlist"
+      ],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "add_blank_slide",
         "title": "{{title}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op"],
-        "properties": {
-          "op": { "const": "add_blank_slide" },
-          "title": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "update_slide",
@@ -769,25 +1242,14 @@
       ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
-      "requiresFilledPlaceholders": ["quoted"],
+      "requiresFilledPlaceholders": [
+        "quoted"
+      ],
       "clarificationMessageKey": "suggestNeedQuotedTitle",
       "payloadTemplate": {
         "op": "update_slide",
         "title": "{{quoted}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op"],
-        "properties": {
-          "op": { "const": "update_slide" },
-          "title": { "type": "string" },
-          "durationSec": { "type": "number" },
-          "isActive": { "type": "boolean" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "reorder_slides",
@@ -807,28 +1269,7 @@
       "payloadTemplate": {
         "op": "reorder_slides",
         "items": []
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "items"],
-        "properties": {
-          "op": { "const": "reorder_slides" },
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["id", "sortOrder"],
-              "properties": {
-                "id": { "type": "string" },
-                "sortOrder": { "type": "integer" }
-              }
-            }
-          }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "delete_slide",
@@ -841,89 +1282,61 @@
         "excluir tela",
         "remover slide"
       ],
-      "excludeMarkers": ["apagar bloco", "apague o bloco", "remover bloco"],
+      "excludeMarkers": [
+        "apagar bloco",
+        "apague o bloco",
+        "remover bloco"
+      ],
       "actionTermSet": "mutation",
-      "payloadTemplate": { "op": "delete_slide" },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op"],
-        "properties": {
-          "op": { "const": "delete_slide" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      "payloadTemplate": {
+        "op": "delete_slide"
+      }
     },
     {
       "key": "upsert_section",
       "op": "upsert_section",
       "whenToUse": "Criar ou renomear uma seção da programação.",
-      "contentMarkers": ["seção", "grupo de slides", "nova seção"],
+      "contentMarkers": [
+        "seção",
+        "grupo de slides",
+        "nova seção"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "upsert_section",
         "name": "{{name}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "name"],
-        "properties": {
-          "op": { "const": "upsert_section" },
-          "name": { "type": "string" },
-          "sectionId": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "delete_section",
       "op": "delete_section",
       "whenToUse": "Excluir uma seção (não a principal).",
-      "contentMarkers": ["apagar seção", "excluir seção"],
+      "contentMarkers": [
+        "apagar seção",
+        "excluir seção"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "delete_section",
         "sectionId": "{{sectionId}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "sectionId"],
-        "properties": {
-          "op": { "const": "delete_section" },
-          "sectionId": { "type": "string" }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "move_slide_to_section",
       "op": "move_slide_to_section",
       "whenToUse": "Mover o slide alvo para outra seção (sectionId no op; null remove da seção).",
-      "contentMarkers": ["mover para seção", "trocar seção"],
+      "contentMarkers": [
+        "mover para seção",
+        "trocar seção"
+      ],
       "excludeMarkers": [],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "move_slide_to_section",
         "sectionId": "{{sectionId}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "sectionId"],
-        "properties": {
-          "op": { "const": "move_slide_to_section" },
-          "sectionId": { "type": ["string", "null"] }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": true,
-      "requiresPlaylist": true
+      }
     },
     {
       "key": "create_playlist",
@@ -940,25 +1353,16 @@
         "criar programacao",
         "nova playlist"
       ],
-      "excludeMarkers": ["crie um slide", "criar slide", "slide em branco"],
+      "excludeMarkers": [
+        "crie um slide",
+        "criar slide",
+        "slide em branco"
+      ],
       "actionTermSet": "create",
       "payloadTemplate": {
         "op": "create_playlist",
         "name": "{{name}}"
-      },
-      "inputSchema": {
-        "type": "object",
-        "required": ["op", "name"],
-        "properties": {
-          "op": { "const": "create_playlist" },
-          "name": { "type": "string" },
-          "description": { "type": "string" },
-          "seedPresetKeys": { "type": "array", "items": { "type": "string" } }
-        }
-      },
-      "sideEffectHints": ["refreshFilmstrip"],
-      "requiresSlide": false,
-      "requiresPlaylist": false
+      }
     }
   ]
 }

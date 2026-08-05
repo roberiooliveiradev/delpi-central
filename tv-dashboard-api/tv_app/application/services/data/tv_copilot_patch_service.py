@@ -41,17 +41,6 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     SlideNotFoundError,
 )
 
-_NATIVE_CONFIG_OPS = frozenset(
-    {
-        "upsert_data_source",
-        "set_data_transform",
-        "upsert_block",
-        "delete_block",
-        "bind_visual",
-        "patch_native_config",
-    }
-)
-
 _PATCH_NATIVE_KEYS = frozenset(
     {"background", "dataFilters", "speakerNotes", "groupTransforms"}
 )
@@ -142,10 +131,11 @@ def _field_present(op: dict[str, Any], field: str) -> bool:
 
 
 def _validate_op_required_fields(op_name: str, raw_op: dict[str, Any]) -> None:
-    cap = TvCopilotContentService.capability_by_op(op_name)
-    if not cap:
-        return
-    schema = cap.get("inputSchema")
+    spec = TvCopilotContentService.operation_spec(op_name)
+    schema = spec.get("inputSchema") if isinstance(spec, dict) else None
+    if not isinstance(schema, dict):
+        cap = TvCopilotContentService.capability_by_op(op_name)
+        schema = cap.get("inputSchema") if isinstance(cap, dict) else None
     if not isinstance(schema, dict):
         return
     required = schema.get("required")
@@ -159,6 +149,23 @@ def _validate_op_required_fields(op_name: str, raw_op: dict[str, Any]) -> None:
             raise TvCopilotPatchError(
                 TvCopilotContentService.message("opMissingField", op=op_name, field=key)
             )
+
+
+def _validate_target_for_ops(
+    ops: list[Any],
+    *,
+    playlist_id: str | None,
+    slide_id: str | None,
+) -> None:
+    """Valida target mínimo via ``operations`` do catálogo (fonte única)."""
+    typed = [op for op in ops if isinstance(op, dict)]
+    policy = TvCopilotContentService.aggregate_ops_policy(typed)
+    if policy["requiresPlaylist"] and not playlist_id:
+        raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
+    if policy["requiresSlide"] and not slide_id:
+        if policy["requiresPlaylist"] and not playlist_id:
+            raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
+        raise TvCopilotPatchError(TvCopilotContentService.message("missingSlide"))
 
 
 def _collect_side_effect_hints(applied: list[str]) -> list[str]:
@@ -290,19 +297,28 @@ class TvCopilotPatchService:
 
         playlist_id = str(target.get("playlistId") or "").strip() or None
         slide_id = str(target.get("slideId") or "").strip() or None
+        _validate_target_for_ops(
+            ops,
+            playlist_id=playlist_id,
+            slide_id=slide_id,
+        )
         native_config: dict[str, Any] | None = None
         playlist_defaults: dict[str, Any] | None = None
         before_blocks: list[dict[str, Any]] = []
 
+        _validate_target_for_ops(ops, playlist_id=playlist_id, slide_id=slide_id)
+
         needs_native = any(
-            isinstance(op, dict) and str(op.get("op") or "").strip() in _NATIVE_CONFIG_OPS
+            isinstance(op, dict)
+            and "replaceNativeConfig"
+            in TvCopilotContentService.side_effect_hints_for_op(
+                str(op.get("op") or "").strip()
+            )
             for op in ops
         )
 
         if needs_native:
-            if not playlist_id or not slide_id:
-                raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
-            slide = self._load_slide(playlist_id, slide_id)
+            slide = self._load_slide(playlist_id or "", slide_id or "")
             native_config = copy.deepcopy(slide.get("nativeConfig") or {})
             if not isinstance(native_config, dict):
                 native_config = {}
@@ -344,8 +360,6 @@ class TvCopilotPatchService:
                 continue
 
             if op_name == "add_slide_from_preset":
-                if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_slide_from_preset(
                     playlist_id,
                     raw_op,
@@ -364,8 +378,6 @@ class TvCopilotPatchService:
                 continue
 
             if op_name == "add_blank_slide":
-                if not playlist_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingPlaylist"))
                 created_slide = self._op_add_blank_slide(
                     playlist_id,
                     raw_op,
@@ -380,8 +392,6 @@ class TvCopilotPatchService:
                 continue
 
             if op_name == "update_slide":
-                if not playlist_id or not slide_id:
-                    raise TvCopilotPatchError(TvCopilotContentService.message("missingTarget"))
                 updated = self._op_update_slide(
                     playlist_id,
                     slide_id,

@@ -121,6 +121,35 @@ def test_resolve_executed_from_pipeline_stages():
     assert "stage:small_talk" in route.flags
 
 
+def test_resolve_executed_tv_copilot_claims_oee_turn():
+    route = ChatIntentRouterService.resolve_executed(
+        message="adicione o modelo de dados oee",
+        pipeline_stages=["ingress", "tools", "post_tool", "skip_rag"],
+        workspace_context={
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-1",
+                "slideId": "sl-1",
+            }
+        },
+        tool_calls=[
+            {
+                "name": "tv_dashboard_copilot",
+                "arguments": {"mode": "apply"},
+                "metadata": {"ok": True},
+            }
+        ],
+        skip_rag=True,
+        direct_answer="Alteração aplicada.",
+    )
+
+    assert route.intent == "platform_action"
+    assert route.sub_intent == "tv_dashboard_copilot"
+    assert route.decision == "platform_action"
+    assert route.reason == "platform_tool_executed"
+    assert "platform_tool_executed" in route.flags
+
+
 def test_resolve_executed_drawing_analysis_beats_tools():
     route = ChatIntentRouterService.resolve_executed(
         message="analise o desenho 90260140",

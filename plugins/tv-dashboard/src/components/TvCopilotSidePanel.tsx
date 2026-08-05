@@ -3,6 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import type { BranchScope } from "../api/tvDashboardApi";
 import { getAccessToken as getTvAccessToken } from "../api/httpClient";
 import { TV_COPILOT_CONTENT as C } from "../content/tvCopilotContent";
+import { hasLocalComunicadoEdits } from "../utils/comunicadoSlideDraftPreferences";
 import { applyTvCopilotPreviewSideEffects } from "../utils/tvCopilotSideEffects";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -181,6 +182,14 @@ export function TvCopilotSidePanel({
 
     const operationId = focusOperationId || dataSourceOperationIds[0] || null;
     const dataSourceId = focusDataSourceId || dataSources[0]?.id || null;
+    const hasLocalDraft = Boolean(
+      playlistId &&
+        slideId &&
+        hasLocalComunicadoEdits({
+          playlistId,
+          slideId,
+        }),
+    );
 
     return {
       playlistId,
@@ -194,6 +203,7 @@ export function TvCopilotSidePanel({
       selectedDataSourceId,
       selectedVisualId,
       dataSources,
+      hasLocalDraft,
       presetKey: null,
       nativeConfigSummary: {
         blockCount: blocks?.length ?? 0,

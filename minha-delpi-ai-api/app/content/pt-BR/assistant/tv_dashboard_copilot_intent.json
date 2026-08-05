@@ -77,19 +77,21 @@
     "surfaceLine": "surface={surface}",
     "playlistLine": "playlistId={playlistId}",
     "slideLine": "slideId={slideId}",
-    "instruction": "Use estes IDs no target da tool tv_dashboard_copilot. As ops vêm do catálogo/suggest-ops do BFF — não invente encoding. mode=preview primeiro; apply só após confirmação.",
+    "instruction": "Use estes IDs no target da tool tv_dashboard_copilot. As ops e a confirmationPolicy vêm do catálogo/suggest-ops do BFF — não invente encoding. Ações direct usam apply no mesmo turno; exclusões confirm usam preview e aguardam confirmação.",
     "catalogSectionTitle": "Capabilities do host (catálogo BFF):"
   },
-  "selectionReason": "Pedido de mutação no editor TV Dashboard — preview tipado via tv_dashboard_copilot (ops do BFF).",
-  "applySelectionReason": "Confirmação do usuário — apply do patch TV Dashboard.",
+  "selectionReason": "Pedido de mutação no editor TV Dashboard — plano tipado via tv_dashboard_copilot (ops e política do BFF).",
+  "applySelectionReason": "Confirmação do usuário — apply de exclusão destrutiva no TV Dashboard.",
+  "toolDescription": "Copiloto do TV Dashboard para patches tipados em dados, slides e programação. Nunca gera Power Query M. Respeita confirmationPolicy do planner BFF: direct aplica no turno; confirm usa preview antes de exclusão destrutiva.",
   "catalogUnavailable": "Catálogo do TV Dashboard indisponível no momento. Não consigo aplicar patches tipados sem o BFF — tente de novo em instantes.",
   "directAnswer": {
     "previewSlide": "Prévia pronta: slide «{title}» (preset `{presetKey}`) na playlist.\n\nPara gravar na programação e atualizar o filmstrip, confirme com **pode aplicar** ou **confirmo**.",
     "previewGeneric": "Prévia do patch TV gerada ({opsCount} operação(ões)).\n\nPara gravar na programação, confirme com **pode aplicar** ou **confirmo**.",
     "previewFailed": "Não consegui gerar a prévia do patch: o serviço do TV Dashboard não respondeu. Nada foi alterado na programação — tente de novo em instantes.",
     "noPendingPreview": "Não há prévia pendente para gravar. Peça de novo a alteração e confirme quando a prévia aparecer.",
-    "applyOk": "Slide gravado na programação. O filmstrip deve atualizar em instantes.",
-    "applyFailed": "Não foi possível gravar o patch na programação. Tente de novo ou use o editor.",
-    "blocked": "Para gravar o patch no TV Dashboard, confirme explicitamente (ex.: «pode aplicar» ou «confirmo»)."
+    "applyOk": "Alteração aplicada na programação. O editor deve atualizar em instantes.",
+    "applySlideOk": "Slide criado e gravado na programação. O filmstrip deve atualizar em instantes.",
+    "applyFailed": "Não foi possível aplicar a alteração na programação.",
+    "blocked": "Esta ação remove dados da programação. Confirme explicitamente (ex.: «pode aplicar» ou «confirmo»)."
   }
 }

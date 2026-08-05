@@ -55,3 +55,59 @@ def test_copilot_capabilities_forbidden_without_user():
 
     assert response.status_code == 403
     assert response.json()["success"] is False
+
+
+def test_copilot_suggest_ops_returns_direct_plan_for_create_slide():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/suggest-ops",
+            json={
+                "message": "crie um slide",
+                "hostContext": {"playlistId": "pl-1"},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "ready"
+    assert data["confirmationPolicy"] == "direct"
+    assert data["ops"][0]["op"] == "add_blank_slide"
+
+
+def test_copilot_suggest_ops_clarifies_missing_slide_without_invalid_ops():
+    user = SimpleNamespace(is_superadmin=True, permissions=[])
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/suggest-ops",
+            json={
+                "message": "adicione o modelo de dados oee",
+                "hostContext": {"playlistId": "pl-1"},
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["status"] == "clarification"
+    assert data["clarificationKey"] == "suggestNeedSlideOrCreate"
+    assert data["ops"] == []
