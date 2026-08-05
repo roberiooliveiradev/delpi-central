@@ -61,10 +61,81 @@ function placeCaretInNode(selection: Selection, node: Node, offset: number) {
   selection.addRange(next);
 }
 
+const RICH_TEXT_BLOCK_TAGS = new Set([
+  "p",
+  "div",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "li",
+  "td",
+  "th",
+  "blockquote",
+  "pre",
+]);
+
+function isRichTextBlockElement(node: Node | null): node is HTMLElement {
+  return node instanceof HTMLElement && RICH_TEXT_BLOCK_TAGS.has(node.tagName.toLowerCase());
+}
+
+function findClosestRichTextBlock(
+  node: Node | null,
+  editor: HTMLElement,
+): HTMLElement | null {
+  let current: Node | null = node;
+  while (current && current !== editor) {
+    if (isRichTextBlockElement(current) && editor.contains(current)) {
+      return current;
+    }
+    current = current.parentNode;
+  }
+  return null;
+}
+
 /**
- * Aplica tamanho em px via `<span style="font-size">`.
+ * Grava font-size inline em todos os elementos do subtree.
+ * Necessário para vencer estilos de filhos (HTML do Word) e regras CSS (ex.: h2).
+ */
+function stampRichTextFontSize(root: Node, sizeCss: string) {
+  if (root instanceof HTMLElement) {
+    root.style.fontSize = sizeCss;
+    if (root.tagName === "FONT") root.removeAttribute("size");
+  }
+  if (!(root instanceof Element) && !(root instanceof DocumentFragment)) return;
+  root.querySelectorAll("*").forEach((el) => {
+    if (!(el instanceof HTMLElement)) return;
+    el.style.fontSize = sizeCss;
+    if (el.tagName === "FONT") el.removeAttribute("size");
+  });
+}
+
+function fragmentHasBlockChild(fragment: DocumentFragment): boolean {
+  return Array.from(fragment.childNodes).some((child) => isRichTextBlockElement(child));
+}
+
+/** Alinha font-size dos ancestrais inline até o bloco (HTML do Word com spans aninhados). */
+function propagateRichTextFontSizeToAncestors(
+  from: Node | null,
+  editor: HTMLElement,
+  sizeCss: string,
+) {
+  let el: HTMLElement | null =
+    from instanceof HTMLElement ? from : from?.parentElement ?? null;
+  while (el && el !== editor) {
+    el.style.fontSize = sizeCss;
+    if (el.tagName === "FONT") el.removeAttribute("size");
+    if (isRichTextBlockElement(el)) break;
+    el = el.parentElement;
+  }
+}
+
+/**
+ * Aplica tamanho em px via style inline em toda a seleção.
  * Não usa `execCommand("fontSize")` (escala legada 1–7).
- * Com seleção colapsada, insere marcador ZWSP para o próximo digitar.
+ * Com caret colapsado, aplica no bloco contendo o cursor (p/h2/li/…).
  */
 export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: number) {
   if (!editor) return;
@@ -88,17 +159,9 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
   const sizeCss = `${Math.round(fontSizePx)}px`;
 
   if (range.collapsed) {
-    const container =
-      range.startContainer instanceof Element
-        ? range.startContainer
-        : range.startContainer.parentElement;
-    if (
-      container instanceof HTMLElement &&
-      container.tagName === "SPAN" &&
-      container.style.fontSize &&
-      editor.contains(container)
-    ) {
-      container.style.fontSize = sizeCss;
+    const block = findClosestRichTextBlock(range.startContainer, editor);
+    if (block) {
+      stampRichTextFontSize(block, sizeCss);
       return;
     }
 
@@ -111,14 +174,30 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
     return;
   }
 
+  const fragment = range.extractContents();
+  stampRichTextFontSize(fragment, sizeCss);
+
+  if (fragmentHasBlockChild(fragment)) {
+    // Evita <span><p>…</p></span> (HTML inválido); o stamp já venceu CSS/filhos.
+    const first = fragment.firstChild;
+    const last = fragment.lastChild;
+    range.insertNode(fragment);
+    if (first && last) {
+      selection.removeAllRanges();
+      const next = document.createRange();
+      next.setStartBefore(first);
+      next.setEndAfter(last);
+      selection.addRange(next);
+      propagateRichTextFontSizeToAncestors(first, editor, sizeCss);
+    }
+    return;
+  }
+
   const span = document.createElement("span");
   span.style.fontSize = sizeCss;
-  try {
-    range.surroundContents(span);
-  } catch {
-    span.appendChild(range.extractContents());
-    range.insertNode(span);
-  }
+  span.appendChild(fragment);
+  range.insertNode(span);
+  propagateRichTextFontSizeToAncestors(span, editor, sizeCss);
   selection.removeAllRanges();
   const next = document.createRange();
   next.selectNodeContents(span);

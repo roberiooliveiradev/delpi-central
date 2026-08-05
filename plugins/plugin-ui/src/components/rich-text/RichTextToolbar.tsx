@@ -183,6 +183,8 @@ export function RichTextToolbar({
     const next = clampRichTextFontSize(nextRaw);
     setFontSize(next);
     withEditor((editor) => applyRichTextFontSize(editor, next));
+    // Reafirma após refreshFormatState: HTML colado pode mentir no computed style.
+    setFontSize(next);
   }
 
   return (

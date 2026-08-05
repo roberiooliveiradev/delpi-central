@@ -44,25 +44,73 @@ describe("applyRichTextFontSize", () => {
     document.body.removeChild(editor);
   });
 
-  it("com caret colapsado cria span marcador para o próximo digitar", () => {
+  it("vence font-size aninhado de HTML colado (Word)", () => {
     const editor = document.createElement("div");
     editor.contentEditable = "true";
-    editor.innerHTML = "<p>x</p>";
+    editor.innerHTML =
+      '<p><span style="font-size:11pt">texto colado</span></p>';
+    document.body.appendChild(editor);
+
+    const text = editor.querySelector("span")!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, 0);
+    range.setEnd(text, text.textContent!.length);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    applyRichTextFontSize(editor, 24);
+
+    const inner = editor.querySelector("span");
+    expect(inner?.style.fontSize).toBe("24px");
+    expect(editor.innerHTML).toContain("24px");
+    expect(editor.innerHTML).not.toContain("11pt");
+
+    document.body.removeChild(editor);
+  });
+
+  it("com caret colapsado aplica no bloco (p/h2), não só no próximo digitar", () => {
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.innerHTML = "<p>parágrafo</p>";
     document.body.appendChild(editor);
 
     const text = editor.querySelector("p")!.firstChild as Text;
     const range = document.createRange();
-    range.setStart(text, 1);
+    range.setStart(text, 3);
     range.collapse(true);
     const selection = window.getSelection()!;
     selection.removeAllRanges();
     selection.addRange(range);
 
-    applyRichTextFontSize(editor, 18);
+    applyRichTextFontSize(editor, 20);
 
-    const span = editor.querySelector("span");
-    expect(span?.style.fontSize).toBe("18px");
-    expect(span?.textContent).toBe("\u200B");
+    const paragraph = editor.querySelector("p");
+    expect(paragraph?.style.fontSize).toBe("20px");
+
+    document.body.removeChild(editor);
+  });
+
+  it("aplica font-size inline em heading (vence CSS do editor)", () => {
+    const editor = document.createElement("div");
+    editor.className = "delpi-ui-rich-text__editor";
+    editor.contentEditable = "true";
+    editor.innerHTML = "<h2>Título da ata</h2>";
+    document.body.appendChild(editor);
+
+    const heading = editor.querySelector("h2")!;
+    const text = heading.firstChild as Text;
+    const range = document.createRange();
+    range.selectNodeContents(heading);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    applyRichTextFontSize(editor, 28);
+
+    expect(heading.style.fontSize).toBe("28px");
+    // seleção de bloco inteiro não deve criar span wrapper inválido
+    expect(editor.querySelector("span > h2")).toBeNull();
 
     document.body.removeChild(editor);
   });
