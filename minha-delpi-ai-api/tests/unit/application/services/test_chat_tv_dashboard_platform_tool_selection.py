@@ -15,6 +15,9 @@ from app.domain.services.chat_fast_path_service import ChatFastPathService
 from app.domain.services.chat_host_surface_context_service import (
     ChatHostSurfaceContextService,
 )
+from app.domain.services.chat_tv_dashboard_copilot_intent_service import (
+    ChatTvDashboardCopilotIntentService,
+)
 from app.domain.services.chat_advanced_sql_specialist_service import (
     ChatAdvancedSqlSpecialistService,
 )
@@ -105,9 +108,9 @@ def test_catalog_failure_returns_no_tool_and_unavailable_answer():
         catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
     )
     assert result.tool_call is None
-    assert result.catalog_unavailable_answer
-    assert "catálogo" in result.catalog_unavailable_answer.lower() or "catalogo" in (
-        result.catalog_unavailable_answer.lower()
+    assert result.direct_answer
+    assert "catálogo" in result.direct_answer.lower() or "catalogo" in (
+        result.direct_answer.lower()
     )
 
 
@@ -131,7 +134,7 @@ def test_empty_suggest_ops_returns_bff_reason_as_direct_answer():
     )
     assert result.tool_call is None
     assert result.has_suggested_ops is False
-    assert result.catalog_unavailable_answer == (
+    assert result.direct_answer == (
         "Indique a cor do fundo (ex.: azul, #2563eb)."
     )
     assert result.catalog is not None
@@ -149,7 +152,7 @@ def test_suggest_failure_returns_unavailable_answer():
         catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
     )
     assert result.tool_call is None
-    assert result.catalog_unavailable_answer
+    assert result.direct_answer
     assert result.catalog is not None
 
 
@@ -209,6 +212,93 @@ def test_apply_confirmation_from_history_skips_suggest():
     assert result.tool_call["arguments"]["mode"] == "apply"
     assert result.tool_call["arguments"]["ops"][0]["op"] == "add_blank_slide"
     assert port.fetch_calls == 0
+
+
+def _tv_history(call_metadata: dict, *, arguments: dict | None = None) -> list[dict]:
+    return [
+        {
+            "role": "assistant",
+            "content": "prévia",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "tv_dashboard_copilot",
+                        "arguments": arguments
+                        if arguments is not None
+                        else {
+                            "mode": "preview",
+                            "ops": [{"op": "add_blank_slide", "title": "X"}],
+                            "target": {"playlistId": "pl-1"},
+                        },
+                        "metadata": call_metadata,
+                    }
+                ]
+            },
+        }
+    ]
+
+
+def test_confirmation_after_failed_preview_answers_no_pending_patch():
+    """Preview que falhou no BFF não vira apply nem cai no LLM."""
+    port = _FakeCatalogPort(fail_catalog=True)
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "confirmo",
+        workspace_context=_TV_WORKSPACE,
+        previous_messages=_tv_history({"ok": False, "mode": "preview"}),
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer == (
+        ChatTvDashboardCopilotIntentService.no_pending_preview_message()
+    )
+    assert port.fetch_calls == 0
+
+
+def test_confirmation_after_apply_does_not_reapply_older_preview():
+    port = _FakeCatalogPort(fail_catalog=True)
+    previous = _tv_history({"ok": True, "mode": "preview"}) + _tv_history(
+        {"ok": True, "mode": "apply"},
+        arguments={
+            "mode": "apply",
+            "ops": [{"op": "add_blank_slide", "title": "X"}],
+            "target": {"playlistId": "pl-1"},
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "confirmo",
+        workspace_context=_TV_WORKSPACE,
+        previous_messages=previous,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer == (
+        ChatTvDashboardCopilotIntentService.no_pending_preview_message()
+    )
+
+
+def test_confirmation_without_tv_history_does_not_hijack_turn():
+    port = _FakeCatalogPort(fail_catalog=True)
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "confirmo",
+        workspace_context=_TV_WORKSPACE,
+        previous_messages=[],
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.direct_answer is None
+
+
+def test_failed_preview_direct_answer_reports_failure():
+    answer = ChatTvDashboardCopilotIntentService.format_direct_answer(
+        data={},
+        metadata={"ok": False, "mode": "preview", "httpStatus": 502},
+    )
+    assert answer
+    assert "prévia" in answer.lower()
+    assert "confirmo" not in answer.lower()
 
 
 def test_is_tv_mutation_turn_and_anti_hijack():

@@ -22,7 +22,7 @@ from app.domain.services.chat_write_confirmation_service import (
 @dataclass(frozen=True)
 class TvPlatformToolSelectionResult:
     tool_call: dict[str, Any] | None = None
-    catalog_unavailable_answer: str | None = None
+    direct_answer: str | None = None
     catalog: dict[str, Any] | None = None
     has_suggested_ops: bool = False
 
@@ -70,6 +70,18 @@ class ChatTvDashboardPlatformToolSelectionService:
                     has_suggested_ops=True,
                 )
 
+            if ChatTvDashboardCopilotIntentService.last_tool_call_in_history(
+                previous_messages
+            ):
+                # Houve prévia no histórico, mas ela falhou / já foi aplicada:
+                # responder de forma determinística em vez de deixar o LLM inventar.
+                return TvPlatformToolSelectionResult(
+                    direct_answer=(
+                        ChatTvDashboardCopilotIntentService.no_pending_preview_message()
+                        or None
+                    ),
+                )
+
         # Só consulta o BFF em turno de mutação / pedido TV — não em small talk no surface.
         needs_bff = ChatHostSurfaceContextService.is_tv_mutation_turn(
             message,
@@ -85,7 +97,7 @@ class ChatTvDashboardPlatformToolSelectionService:
             # AP1: sem fallback de ops — mensagem genérica do intent JSON.
             answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
             return TvPlatformToolSelectionResult(
-                catalog_unavailable_answer=answer or None,
+                direct_answer=answer or None,
             )
 
         suggestion = catalog_client.suggest_ops(
@@ -98,7 +110,7 @@ class ChatTvDashboardPlatformToolSelectionService:
             answer = ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
             return TvPlatformToolSelectionResult(
                 catalog=catalog,
-                catalog_unavailable_answer=answer or None,
+                direct_answer=answer or None,
             )
 
         ops = suggestion.get("ops")
@@ -111,7 +123,7 @@ class ChatTvDashboardPlatformToolSelectionService:
             )
             return TvPlatformToolSelectionResult(
                 catalog=catalog,
-                catalog_unavailable_answer=answer or None,
+                direct_answer=answer or None,
             )
 
         reason = str(

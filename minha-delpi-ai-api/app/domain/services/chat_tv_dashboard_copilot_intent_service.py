@@ -120,11 +120,8 @@ class ChatTvDashboardCopilotIntentService:
         return False
 
     @classmethod
-    def build_apply_tool_call_from_history(
-        cls,
-        previous_messages: list | None,
-    ) -> dict | None:
-        """Reusa ops do último preview bem-sucedido de ``tv_dashboard_copilot``."""
+    def last_tool_call_in_history(cls, previous_messages: list | None) -> dict | None:
+        """Último ``tv_dashboard_copilot`` do histórico, em qualquer estado."""
 
         def _role(item: object) -> str:
             if isinstance(item, dict):
@@ -147,32 +144,59 @@ class ChatTvDashboardCopilotIntentService:
             for call in reversed(tool_calls):
                 if not isinstance(call, dict):
                     continue
-                if str(call.get("name") or "") != "tv_dashboard_copilot":
-                    continue
-                call_meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
-                if call_meta.get("ok") is False or call_meta.get("blocked"):
-                    continue
-                arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
-                mode = str(arguments.get("mode") or call_meta.get("mode") or "preview").lower()
-                if mode == "apply":
-                    continue
-                ops = arguments.get("ops")
-                if not isinstance(ops, list) or not ops:
-                    continue
-                target = arguments.get("target")
-                return {
-                    "name": "tv_dashboard_copilot",
-                    "arguments": {
-                        "mode": "apply",
-                        "ops": list(ops),
-                        "target": dict(target) if isinstance(target, dict) else {},
-                    },
-                    "reason": cls._text(
-                        "applySelectionReason",
-                        default="Confirmação — apply do patch TV Dashboard.",
-                    ),
-                }
+                if str(call.get("name") or "") == "tv_dashboard_copilot":
+                    return call
         return None
+
+    @classmethod
+    def build_apply_tool_call_from_history(
+        cls,
+        previous_messages: list | None,
+    ) -> dict | None:
+        """Reusa ops do **último** preview bem-sucedido de ``tv_dashboard_copilot``.
+
+        A confirmação vale para a prévia mais recente. Preview que falhou, foi
+        bloqueado ou já virou apply não é reaproveitado — o chamador responde
+        que não há prévia pendente em vez de gravar um patch antigo.
+        """
+        call = cls.last_tool_call_in_history(previous_messages)
+        if not isinstance(call, dict):
+            return None
+
+        call_meta = call.get("metadata") if isinstance(call.get("metadata"), dict) else {}
+        if call_meta.get("ok") is False or call_meta.get("blocked"):
+            return None
+
+        arguments = call.get("arguments") if isinstance(call.get("arguments"), dict) else {}
+        mode = str(arguments.get("mode") or call_meta.get("mode") or "preview").lower()
+        if mode == "apply":
+            return None
+
+        ops = arguments.get("ops")
+        if not isinstance(ops, list) or not ops:
+            return None
+
+        target = arguments.get("target")
+        return {
+            "name": "tv_dashboard_copilot",
+            "arguments": {
+                "mode": "apply",
+                "ops": list(ops),
+                "target": dict(target) if isinstance(target, dict) else {},
+            },
+            "reason": cls._text(
+                "applySelectionReason",
+                default="Confirmação — apply do patch TV Dashboard.",
+            ),
+        }
+
+    @classmethod
+    def no_pending_preview_message(cls) -> str:
+        return cls._text(
+            "directAnswer",
+            "noPendingPreview",
+            default="Não há prévia pendente para gravar no TV Dashboard.",
+        )
 
     @classmethod
     def format_direct_answer(
@@ -195,6 +219,11 @@ class ChatTvDashboardCopilotIntentService:
         if mode == "apply":
             key = "applyOk" if ok else "applyFailed"
             return cls._text("directAnswer", key, default="") or None
+
+        if not ok:
+            # Preview que falhou não pode anunciar «prévia gerada»: o usuário
+            # confirmaria um patch inexistente.
+            return cls._text("directAnswer", "previewFailed", default="") or None
 
         side = payload.get("sideEffects") if isinstance(payload.get("sideEffects"), dict) else {}
         slides = side.get("slides") if isinstance(side.get("slides"), list) else []

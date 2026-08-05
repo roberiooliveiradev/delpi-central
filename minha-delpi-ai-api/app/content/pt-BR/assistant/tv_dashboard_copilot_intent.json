@@ -86,6 +86,8 @@
   "directAnswer": {
     "previewSlide": "Prévia pronta: slide «{title}» (preset `{presetKey}`) na playlist.\n\nPara gravar na programação e atualizar o filmstrip, confirme com **pode aplicar** ou **confirmo**.",
     "previewGeneric": "Prévia do patch TV gerada ({opsCount} operação(ões)).\n\nPara gravar na programação, confirme com **pode aplicar** ou **confirmo**.",
+    "previewFailed": "Não consegui gerar a prévia do patch: o serviço do TV Dashboard não respondeu. Nada foi alterado na programação — tente de novo em instantes.",
+    "noPendingPreview": "Não há prévia pendente para gravar. Peça de novo a alteração e confirme quando a prévia aparecer.",
     "applyOk": "Slide gravado na programação. O filmstrip deve atualizar em instantes.",
     "applyFailed": "Não foi possível gravar o patch na programação. Tente de novo ou use o editor.",
     "blocked": "Para gravar o patch no TV Dashboard, confirme explicitamente (ex.: «pode aplicar» ou «confirmo»)."

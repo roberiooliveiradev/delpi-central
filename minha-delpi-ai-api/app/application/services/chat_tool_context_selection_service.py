@@ -97,7 +97,7 @@ class ChatToolContextSelectionService:
             workspace_context["tvDashboardCatalog"] = tv_selection.catalog
             host._build_workspace_context = workspace_context
 
-        if tv_selection.catalog_unavailable_answer and not tv_selection.tool_call:
+        if tv_selection.direct_answer and not tv_selection.tool_call:
             return ToolSelectionOutcome(
                 early_result=host._finalize_tool_context_result(
                     message=raw_message,
@@ -106,7 +106,7 @@ class ChatToolContextSelectionService:
                         "context": "",
                         "toolCalls": [],
                         "nativeToolCalling": native_meta,
-                        "directAnswer": tv_selection.catalog_unavailable_answer,
+                        "directAnswer": tv_selection.direct_answer,
                         "skipRag": True,
                         "currentMessage": raw_message,
                     },
