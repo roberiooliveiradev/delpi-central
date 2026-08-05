@@ -10,6 +10,7 @@ import {
   normalizeRichTextLinkUrl,
   unwrapRichTextLink,
 } from "./richTextCommands";
+import { tryDeleteRichTextAtEmphasisBoundary } from "./richTextDeleteBoundary";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import { normalizeRichTextPastedHtml } from "./richTextTable";
 
@@ -172,6 +173,24 @@ export function RichTextEditor({
         onInput={emitChange}
         onMouseUp={syncActiveLink}
         onKeyUp={syncActiveLink}
+        onBeforeInput={(event) => {
+          const inputType = event.nativeEvent.inputType;
+          if (
+            inputType !== "deleteContentBackward" &&
+            inputType !== "deleteContentForward"
+          ) {
+            return;
+          }
+          const editorEl = ref.current;
+          if (!editorEl) return;
+          const direction =
+            inputType === "deleteContentBackward" ? "backward" : "forward";
+          if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
+            event.preventDefault();
+            emitChange();
+            syncActiveLink();
+          }
+        }}
         onPaste={(event) => {
           const html = event.clipboardData?.getData("text/html");
           if (!html || !/<table[\s>]/i.test(html)) return;
