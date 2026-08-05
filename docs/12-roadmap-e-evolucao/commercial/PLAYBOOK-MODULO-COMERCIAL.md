@@ -71,6 +71,8 @@ Fonte: síntese da reunião Comercial (jul/2026) + Demandas de TI.
 
 **Prioridade acordada (reunião):** começar pela **visão gerencial**, mapeando o que já existe e centralizando inicialmente **carteira, projeções e indicadores principais** (F0 → evolução cockpit + F2/F2b), sem esperar CRM completo (F5+).
 
+**P0 bloqueadas até ficha KPI aprovada** (ver [KPI-FICHAS.md](./KPI-FICHAS.md)): dor **#2** (ticket/amostras no cockpit), **#4** (carteira consolidada × PCP), **#7** (ativo/novo/recuperado). Scaffold F1–F2b **não** aguarda essas fichas.
+
 **Atualização:** esta matriz deve ser revisada ao fechar cada gate de fase (F0, F2b, F7, GAV).
 
 ---

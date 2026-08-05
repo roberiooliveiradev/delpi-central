@@ -128,6 +128,7 @@ FASE_MFE=(
   inspecoes-entrada
   inspecoes-processo
   pedidos-venda-abertos
+  commercial
   propostas-comerciais
   financeiro-centro-custo
   financeiro-inadimplencia
@@ -153,6 +154,7 @@ FASE_API=(
   strategic-indicators-api
   transformometro-api
   maintenance-api
+  commercial-api
   cipa-api
   comite-etica-conduta-api
   customer-experience-api

@@ -1,0 +1,127 @@
+import logging
+import os
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
+
+from delpi_auth.credential_guard import check_credentials
+from commercial_app.config import settings
+from commercial_app.core.responses import fail
+from commercial_app.interface.http.routes.customer_routes import router as customer_router
+from commercial_app.interface.http.routes.seller_portfolio_routes import (
+    router as seller_portfolio_router,
+)
+from commercial_app.middleware.auth_middleware import jwt_middleware
+from commercial_app.startup.run_migrations_on_startup import run_migrations_on_startup
+
+logging.basicConfig(
+    level=getattr(logging, str(settings.LOG_LEVEL).upper(), logging.INFO),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+
+
+def build_allowed_origins() -> list[str]:
+    origins: set[str] = set()
+
+    if settings.PUBLIC_BASE_URL:
+        origins.add(settings.PUBLIC_BASE_URL.rstrip("/"))
+
+    if settings.VITE_KC_URL:
+        if "/auth" in settings.VITE_KC_URL:
+            origins.add(settings.VITE_KC_URL.split("/auth")[0].rstrip("/"))
+        else:
+            origins.add(settings.VITE_KC_URL.rstrip("/"))
+
+    api_env = os.getenv("API_DELPI_ENV", "development")
+    if api_env != "production":
+        origins.add("http://localhost")
+    return sorted(origins)
+
+
+ALLOWED_ORIGINS = build_allowed_origins()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    check_credentials()
+    run_migrations_on_startup()
+    yield
+
+
+app = FastAPI(
+    title="Commercial API",
+    description="API do módulo Comercial — carteiras, avatars e extensões futuras.",
+    version="0.1.0",
+    root_path=settings.COMMERCIAL_API_ROOT_PATH,
+    lifespan=lifespan,
+)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_request: Request, exc: RequestValidationError):
+    details = exc.errors()
+    first = details[0] if details else {}
+    loc = ".".join(str(part) for part in first.get("loc", []))
+    msg = first.get("msg", "Dados inválidos.")
+    message = f"{loc}: {msg}" if loc else msg
+    return fail(message, 422)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_request: Request, exc: Exception):
+    logging.getLogger(__name__).exception("unhandled_exception")
+    return fail("Erro interno do servidor.", 500)
+
+
+app.middleware("http")(jwt_middleware)
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS if ALLOWED_ORIGINS else ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/health", tags=["Health"], operation_id="get_commercial_health")
+def health():
+    return {"status": "online", "service": "commercial-api"}
+
+
+@app.get("/ready", tags=["Health"], operation_id="get_commercial_ready")
+def ready():
+    db_ready = False
+    db_hint = None
+    try:
+        from commercial_app.infrastructure.persistence.plugins.plugin_base_repository import (
+            PluginBaseRepository,
+        )
+
+        row = PluginBaseRepository().fetch_one(
+            """
+            SELECT to_regclass('commercial.schema_migrations')::text AS migrations_table
+            """
+        )
+        db_ready = bool(row and row.get("migrations_table"))
+        if not db_ready:
+            db_hint = (
+                "Tabela commercial.schema_migrations não encontrada. "
+                "Execute migrations ou habilite COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP."
+            )
+    except Exception as exc:
+        db_hint = str(exc)
+
+    return {
+        "status": "ready" if db_ready else "degraded",
+        "service": "commercial-api",
+        "db_ready": db_ready,
+        "db_hint": db_hint,
+    }
+
+
+app.include_router(seller_portfolio_router)
+app.include_router(customer_router)

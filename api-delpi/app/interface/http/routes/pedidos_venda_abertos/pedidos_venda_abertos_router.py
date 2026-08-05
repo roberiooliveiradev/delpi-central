@@ -56,6 +56,11 @@ router = APIRouter(
     tags=["Pedidos de Venda em Aberto"],
 )
 
+# Rotas /sellers* e /customers/*/avatar (CRUD Delpi) estão **deprecated** para novos
+# consumidores — canônico: commercial-api (/apps/commercial-api/seller-portfolios*,
+# /customers/*/avatar). Mantidas read/write até cutover F2c (COMMERCIAL_PORTFOLIO_SOURCE).
+# Reads TOTVS (listagens, search, enrichment, billing) permanecem nesta api-delpi.
+
 
 class SellerCustomerBody(BaseModel):
     customer_code: str = Field(..., min_length=1)

@@ -697,6 +697,22 @@ services:
     networks:
       - delpi-network
 
+  commercial:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: commercial/Dockerfile
+      target: production
+
+    container_name: delpi-commercial
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   propostas-comerciais:
     <<: *plugin-ui-federated
     build:
@@ -1460,6 +1476,60 @@ services:
     depends_on:
       - keycloak
       - postgres-plugins
+
+    networks:
+      - delpi-network
+
+  commercial-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: commercial-api/Dockerfile
+
+    container_name: delpi-commercial-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      COMMERCIAL_API_ROOT_PATH: /apps/commercial-api
+      COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: ${COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP:-true}
+      COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-legacy}
+      COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
+
+      DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
+      DELPI_API_TIMEOUT: ${DELPI_API_TIMEOUT:-30}
+      DELPI_API_CALLER_APP: commercial-api
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+    volumes:
+      - ../commercial-api:/app
+      - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-avatars:/app/data/commercial-avatars
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - api-delpi
 
     networks:
       - delpi-network

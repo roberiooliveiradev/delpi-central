@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "commercial",
+  "name": "Portal Comercial",
+  "description": "Portal comercial para carteira de clientes, pedidos em aberto e gestão de vendedores.",
+  "icon": "briefcase",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/commercial",
+  "entry": "/apps/commercial/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "commercial.accounts.view",
+      "name": "Acessar Portal Comercial",
+      "description": "Permite acessar o Portal Comercial com a própria carteira de clientes (alias legado: pedidos-venda-abertos.access).",
+      "module": "commercial"
+    },
+    {
+      "code": "commercial.seller-portfolios.manage",
+      "name": "Administrar carteiras comerciais",
+      "description": "Permite configurar vendedores/carteiras e transferir clientes (alias legado: pedidos-venda-abertos.admin).",
+      "module": "commercial"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/commercial",
+      "label": "Portal Comercial",
+      "permission": "commercial.accounts.view",
+      "icon": "briefcase",
+      "order": 13,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/commercial/open-orders",
+      "label": "Pedidos em aberto",
+      "permission": "commercial.accounts.view",
+      "icon": "clipboard-list",
+      "order": 14,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/customers",
+      "label": "Minha carteira",
+      "permission": "commercial.accounts.view",
+      "icon": "clipboard-list",
+      "order": 15,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/commercial/seller-portfolios",
+      "label": "Carteiras de vendedores",
+      "permission": "commercial.seller-portfolios.manage",
+      "icon": "settings",
+      "order": 16,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

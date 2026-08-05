@@ -20,6 +20,11 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até par
 | **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Contrato vivo api-delpi × commercial-api; migração do estado Delpi de carteira (GET+CRUD) |
 | **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline factual — rotas, plugins, gaps |
 | **[adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)** | ADR — API própria e migração sellers/avatar |
+| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — fórmulas e owners |
+| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Plano executável F0–F2b (status) |
+| **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade Portal do Vendedor (F2b) |
+
+> **Implementação:** F0–F2b entregues em código (`commercial-api/`, `plugins/commercial/`). Homologação Comercial ainda aberta no checklist.
 
 ## Escala (obrigatório no desenho)
 
