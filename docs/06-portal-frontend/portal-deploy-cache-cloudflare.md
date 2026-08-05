@@ -60,19 +60,20 @@ Cadeia que gerou o problema:
 
 ### 3.4 Plugin Vite `portal/vite/cacheBustEntryPlugin.ts` (`ac5814af6`)
 
-Substitui o `<script type="module" src="/assets/index-HASH.js">` por **import dinâmico** com query string:
+Substitui o `<script type="module" src="/assets/index-HASH.js">` por **import dinâmico** com recuperação:
 
 ```javascript
-// Sem _recover na URL (deploy normal):
-import("/assets/index-HASH.js?v=TIMESTAMP_BUILD")
+// Carga normal:
+import("/assets/index-HASH.js")
 
-// Com ?_recover=… (segunda tentativa após falha):
-import("/assets/index-HASH.js?cb=TIMESTAMP")
+// Com ?_recover=… (segunda tentativa após falha): revalida no CDN antes de importar
+fetch("/assets/index-HASH.js", { cache: "reload" })
+  .then(() => import("/assets/index-HASH.js"))
 ```
 
-Cada **build** gera `?v=` novo → URL distinta no Cloudflare → contorna entrada cacheada envenenada **sem depender só de purge manual**.
+Recuperação automática: se o `import()` falhar, redireciona uma vez com `?_recover=` no query string da página; na volta, o `fetch` com `cache: "reload"` força revalidação no Cloudflare e derruba a entrada envenenada. Após sucesso, o parâmetro sai da URL e a trava em `sessionStorage` é liberada.
 
-Recuperação automática: se o `import()` falhar, redireciona uma vez com `?_recover=` no query string da página.
+> **Nunca** importar o entry com query string (`?v=`, `?cb=`). Os chunks lazy fazem `import` estático da URL **sem** query; uma URL diferente faz o browser avaliar o entry duas vezes e duplicar todo o grafo de módulos — dois React contexts, dois clientes Keycloak. Sintoma (jul/2026, `/admin`): `useConfirmDialog/useAppAlert must be used within ConfirmDialogProvider`, `401 unauthorized` nas chamadas admin e `removeChild` no React. A proteção contra cache envenenado vem do nome de arquivo com hash + `cache: "reload"` na recuperação.
 
 Registrado em `portal/vite.config.ts`.
 
@@ -84,7 +85,7 @@ Registrado em `portal/vite.config.ts`.
 |---------|--------|
 | `portal/nginx.conf` | Política de cache e 404 em `/assets/` |
 | `portal/index.html` | Template Vite (meta no-cache) |
-| `portal/vite/cacheBustEntryPlugin.ts` | import() com `?v=` / `?cb=` |
+| `portal/vite/cacheBustEntryPlugin.ts` | import() do entry + recuperação com `cache: "reload"` |
 | `portal/vite.config.ts` | Registra o plugin no build prod |
 | `gateway/nginx.conf` | Locations `/assets/` e `CDN-Cache-Control` no shell |
 | `infra/README-ambiente.md` | Checklist pós-deploy portal |
@@ -118,7 +119,7 @@ Depois: hard refresh (Ctrl+Shift+R) ou aba anônima.
 ### curl (substitua HASH pelo valor do HTML atual)
 
 ```bash
-# HTML do login — deve referenciar import com ?v=
+# HTML do login — o import deve apontar para o entry SEM query string
 curl -s https://minhadelpi.com.br/login | grep -E 'import|/assets/'
 
 # Chunk JS (sem query — origem)
