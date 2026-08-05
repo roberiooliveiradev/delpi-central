@@ -105,6 +105,45 @@
   margin-top: 1mm;
 }
 
+/*
+ * Tabelas no modo leitura/apresentação.
+ * Estilos visuais canônicos ficam em rich-text-editor.css (mesmo seletor
+ * `.delpi-ui-document-rich-content table`); aqui só reforçamos display de
+ * tabela para o papel A4 não herdar resets que colapsem células em texto.
+ */
+.delpi-ui-document-rich-content table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 3mm 0;
+  table-layout: fixed;
+}
+
+.delpi-ui-document-rich-content thead,
+.delpi-ui-document-rich-content tbody,
+.delpi-ui-document-rich-content tfoot {
+  display: table-row-group;
+}
+
+.delpi-ui-document-rich-content tr {
+  display: table-row;
+}
+
+.delpi-ui-document-rich-content th,
+.delpi-ui-document-rich-content td {
+  display: table-cell;
+  padding: 1.5mm 2mm;
+  border: 1px solid #c5cdd6;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.delpi-ui-document-rich-content th {
+  font-weight: 600;
+  background: #e8f4fb;
+  text-align: left;
+}
+
 .delpi-ui-document-header {
   display: grid;
   grid-template-columns: 24mm minmax(0, 1fr);

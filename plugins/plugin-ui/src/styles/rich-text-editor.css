@@ -163,22 +163,28 @@
   text-underline-offset: 2px;
 }
 
-/* Tabelas WYSIWYG — grade / minimal / banded */
+/* Tabelas WYSIWYG — editor, preview e leitura/apresentação (DocumentReader). */
 .delpi-ui-rich-text__editor table.delpi-ui-rich-text-table,
 .delpi-ui-rich-text--preview table.delpi-ui-rich-text-table,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table,
 .delpi-ui-rich-text__editor table,
-.delpi-ui-rich-text--preview table {
+.delpi-ui-rich-text--preview table,
+.delpi-ui-document-rich-content table {
   width: 100%;
   border-collapse: collapse;
   margin: 0.75em 0;
   table-layout: fixed;
   font-size: inherit;
+  display: table;
 }
 
 .delpi-ui-rich-text__editor table th,
 .delpi-ui-rich-text__editor table td,
 .delpi-ui-rich-text--preview table th,
-.delpi-ui-rich-text--preview table td {
+.delpi-ui-rich-text--preview table td,
+.delpi-ui-document-rich-content table th,
+.delpi-ui-document-rich-content table td {
+  display: table-cell;
   padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, var(--delpi-ui-text, #111));
   vertical-align: top;
@@ -186,7 +192,8 @@
 }
 
 .delpi-ui-rich-text__editor table th,
-.delpi-ui-rich-text--preview table th {
+.delpi-ui-rich-text--preview table th,
+.delpi-ui-document-rich-content table th {
   font-weight: 600;
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #fff));
   text-align: left;
@@ -195,18 +202,37 @@
 .delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal th,
 .delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal td,
 .delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal th,
-.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal td {
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal td,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal td {
   border-color: color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 70%, transparent);
 }
 
 .delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--minimal th,
-.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal th {
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--minimal th,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--minimal th {
   background: transparent;
 }
 
 .delpi-ui-rich-text__editor table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td,
-.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td {
+.delpi-ui-rich-text--preview table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td,
+.delpi-ui-document-rich-content table.delpi-ui-rich-text-table--banded tbody tr:nth-child(even) td {
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 6%, var(--delpi-ui-surface, #fff));
+}
+
+.delpi-ui-rich-text__editor table thead,
+.delpi-ui-rich-text--preview table thead,
+.delpi-ui-document-rich-content table thead,
+.delpi-ui-rich-text__editor table tbody,
+.delpi-ui-rich-text--preview table tbody,
+.delpi-ui-document-rich-content table tbody {
+  display: table-row-group;
+}
+
+.delpi-ui-rich-text__editor table tr,
+.delpi-ui-rich-text--preview table tr,
+.delpi-ui-document-rich-content table tr {
+  display: table-row;
 }
 
 /* Badge flutuante do link ativo (URL clicável + editar + remover) */

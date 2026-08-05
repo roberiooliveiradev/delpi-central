@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, Header, Query, Request, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
 
+from tm_app.application.services.html_sanitizer import TmAtaHtmlSanitizer
 from tm_app.application.services.meeting_minutes_service import MeetingMinutesService
 from tm_app.core.responses import fail, ok
 from tm_app.infrastructure.llm.kimi_llm_gateway import AtaGenerationError, KimiLlmGateway
@@ -149,13 +150,16 @@ def generate_from_transcript(request: Request, body: GenerateFromTranscriptReque
     try:
         service._assert(request.state.user, "manage", body.unit_code)
         sections = kimi_gateway.generate_from_transcript(body.transcript_html)
+        sanitized = {
+            key: TmAtaHtmlSanitizer.sanitize(value) for key, value in sections.items()
+        }
         return ok(
             {
                 "unitCode": body.unit_code,
                 "meetingDate": body.meeting_date,
                 "title": body.title,
                 "source": body.source,
-                **sections,
+                **sanitized,
             }
         )
     except Exception as exc:

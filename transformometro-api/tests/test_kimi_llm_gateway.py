@@ -139,6 +139,29 @@ def test_html_is_stripped_to_plain_text():
     assert post.call_args.kwargs["json"]["max_tokens"] == 4096
 
 
+def test_table_cells_are_separated_in_plain_text():
+    """Evita 'GrupoInformações' ao enviar grades do editor/DOCX para a IA."""
+    sections = _ok_sections()
+    envelope = {
+        "choices": [{"message": {"content": json.dumps(sections, ensure_ascii=False)}}],
+    }
+    gateway = KimiLlmGateway(api_key="k", base_url="https://example.test/v1")
+    html = (
+        "<table><tr><th>Grupo</th><th>Informações</th></tr>"
+        "<tr><td>Resultado</td><td>ROL</td></tr></table>"
+    )
+    with patch(
+        "tm_app.infrastructure.llm.kimi_llm_gateway.requests.post",
+        return_value=_mock_response(payload=envelope),
+    ) as post:
+        gateway.generate_from_transcript(html)
+
+    user_content = post.call_args.kwargs["json"]["messages"][1]["content"]
+    assert "GrupoInformações" not in user_content.replace(" ", "")
+    assert "Grupo" in user_content and "Informações" in user_content
+    assert "|" in user_content
+
+
 def test_malformed_model_json_raises():
     envelope = {"choices": [{"message": {"content": "não é json {"}}]}
     gateway = KimiLlmGateway(api_key="k", base_url="https://example.test/v1")

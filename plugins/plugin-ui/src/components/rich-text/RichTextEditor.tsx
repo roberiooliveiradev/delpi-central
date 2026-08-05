@@ -59,13 +59,18 @@ export function RichTextEditor({
     [className],
   );
 
+  const resolvedHtml = useMemo(() => {
+    const raw = value || "<p></p>";
+    if (!/<table[\s>]/i.test(raw)) return raw;
+    return normalizeRichTextPastedHtml(raw) || raw;
+  }, [value]);
+
   useEffect(() => {
     if (mode !== "edit" || disabled || !ref.current || focusedRef.current) return;
-    const next = value || "<p></p>";
-    if (ref.current.innerHTML !== next) {
-      ref.current.innerHTML = next;
+    if (ref.current.innerHTML !== resolvedHtml) {
+      ref.current.innerHTML = resolvedHtml;
     }
-  }, [mode, disabled, value]);
+  }, [mode, disabled, resolvedHtml]);
 
   /** Badge segue o link sob o cursor/seleção (posição relativa ao root). */
   const syncActiveLink = useCallback(() => {
@@ -139,7 +144,7 @@ export function RichTextEditor({
       <div
         className={`${rootClass} delpi-ui-rich-text--preview`}
         style={{ minHeight }}
-        dangerouslySetInnerHTML={{ __html: value || "<p></p>" }}
+        dangerouslySetInnerHTML={{ __html: resolvedHtml }}
       />
     );
   }

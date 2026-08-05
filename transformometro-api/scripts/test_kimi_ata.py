@@ -108,7 +108,8 @@ Regras obrigatórias:
    - pending_html
    - observations_html
 3. Use HTML simples adequado a um editor rich-text: <p>, <ul>, <ol>, <li>, <strong>, <em>, <br>.
-   Não use scripts, estilos inline complexos, tabelas nem imagens.
+   e, quando a transcrição trouxer grades/listagens tabulares, <table>/<tr>/<th>/<td>
+   (sem scripts, sem <style> global e sem imagens).
 4. agenda_html: pauta / assuntos tratados.
 5. body_html: narrativa do andamento da reunião (discussão).
 6. decisions_html: decisões tomadas.

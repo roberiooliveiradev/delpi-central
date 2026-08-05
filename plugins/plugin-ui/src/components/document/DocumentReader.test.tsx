@@ -1,4 +1,8 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -51,5 +55,18 @@ describe("DocumentReader", () => {
 
     window.dispatchEvent(new Event("afterprint"));
     expect(document.body.classList.contains("delpi-ui-document-printing")).toBe(false);
+  });
+
+  it("CSS de leitura mantém tabelas como grade (não colapsa em texto)", () => {
+    const css = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../../styles/document-reader.css"),
+      "utf8",
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-document-rich-content table \{[\s\S]*?display:\s*table/,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-document-rich-content th,\s*\n\.delpi-ui-document-rich-content td \{[\s\S]*?display:\s*table-cell/,
+    );
   });
 });
