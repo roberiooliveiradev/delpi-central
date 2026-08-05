@@ -19,7 +19,6 @@ import {
   Textarea,
 } from "../../../ui-kit";
 
-import "../modals/GroupEditModal.css";
 import "./RbacEditPage.css";
 
 type GroupPageTab = "details" | "users" | "roles";

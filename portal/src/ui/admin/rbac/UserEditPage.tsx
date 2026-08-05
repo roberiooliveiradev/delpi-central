@@ -18,7 +18,6 @@ import {
   Switch,
 } from "../../../ui-kit";
 
-import "../modals/UserRbacModal.css";
 import "./RbacEditPage.css";
 
 type UserPageTab = "summary" | "roles" | "groups";

@@ -1,5 +1,14 @@
 // src/ui/App.tsx
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "../state/AuthContext";
 import { Sidebar } from "../layout/Sidebar";
@@ -9,12 +18,6 @@ import { Unauthorized } from "./Unauthorized";
 import { motion } from "framer-motion";
 import { Loader } from "./Loader";
 import { HomePage } from "./HomePage";
-import { AdminPage } from "./admin/AdminPage";
-import { ManifestEditorPage } from "./admin/manifest/ManifestEditorPage";
-import { PluginVersionsPage } from "./admin/versions/PluginVersionsPage";
-import { RoleEditPage } from "./admin/rbac/RoleEditPage";
-import { GroupEditPage } from "./admin/rbac/GroupEditPage";
-import { UserEditPage } from "./admin/rbac/UserEditPage";
 import { AppHost } from "./AppHost";
 import { LoginPage } from "./LoginPage";
 import { ConsentModal } from "./ConsentModal";
@@ -31,6 +34,37 @@ import { PrivacyPolicyPage } from "./PrivacyPolicyPage";
 import { ConfirmDialogProvider } from "../components/ConfirmDialogProvider";
 import { ApiClient } from "../data/apiClient";
 import { CoreApi } from "../data/coreApi";
+
+const AdminPage = lazy(() =>
+  import("./admin/AdminPage").then((module) => ({
+    default: module.AdminPage,
+  })),
+);
+const ManifestEditorPage = lazy(() =>
+  import("./admin/manifest/ManifestEditorPage").then((module) => ({
+    default: module.ManifestEditorPage,
+  })),
+);
+const PluginVersionsPage = lazy(() =>
+  import("./admin/versions/PluginVersionsPage").then((module) => ({
+    default: module.PluginVersionsPage,
+  })),
+);
+const RoleEditPage = lazy(() =>
+  import("./admin/rbac/RoleEditPage").then((module) => ({
+    default: module.RoleEditPage,
+  })),
+);
+const GroupEditPage = lazy(() =>
+  import("./admin/rbac/GroupEditPage").then((module) => ({
+    default: module.GroupEditPage,
+  })),
+);
+const UserEditPage = lazy(() =>
+  import("./admin/rbac/UserEditPage").then((module) => ({
+    default: module.UserEditPage,
+  })),
+);
 
 
 
@@ -144,7 +178,8 @@ function AppShell() {
 
       <div className="main-area">
         <div className="content">
-          <Routes>
+          <Suspense fallback={<Loader />}>
+            <Routes>
             <Route path="/delpi/products" element={<ProductsPage />} />
             <Route path="/delpi/health" element={<DelpiHealthPage />} />
             <Route path="/" element={<HomePage />} />
@@ -279,7 +314,8 @@ function AppShell() {
 
             {/* fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </div>
       </div>
 

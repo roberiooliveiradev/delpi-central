@@ -26,7 +26,6 @@ import {
 } from "../../../ui-kit";
 import type { AppInfoByModule } from "../tabs/RolesTab";
 
-import "../modals/RoleEditModal.css";
 import "./RbacEditPage.css";
 
 type RolePageTab = "details" | "users" | "permissions";
