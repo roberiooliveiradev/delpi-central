@@ -4,6 +4,7 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  CodeXml,
   Heading2,
   Indent,
   Italic,
@@ -60,6 +61,9 @@ import { insertRichTextTable } from "./richTextTable";
 type Props = {
   editorRef: RefObject<HTMLDivElement | null>;
   disabled?: boolean;
+  /** Modo fonte HTML — desabilita formatação WYSIWYG. */
+  sourceMode?: boolean;
+  onToggleSource?: () => void;
   onFormatted: () => void;
   /** Abre o diálogo de link do editor (ModalShell) — sem prompt do navegador. */
   onRequestLink: () => void;
@@ -110,6 +114,8 @@ function RibbonSep() {
 export function RichTextToolbar({
   editorRef,
   disabled = false,
+  sourceMode = false,
+  onToggleSource,
   onFormatted,
   onRequestLink,
   portalScopeClassName,
@@ -123,6 +129,7 @@ export function RichTextToolbar({
   const savedRangeRef = useRef<Range | null>(null);
   const tableAnchorRef = useRef<HTMLDivElement>(null);
   const tablePanelRef = useRef<HTMLDivElement>(null);
+  const formatDisabled = disabled || sourceMode;
 
   const refreshFormatState = useCallback(() => {
     setFormatTick((value) => value + 1);
@@ -168,7 +175,7 @@ export function RichTextToolbar({
   const alignActive = queryRichTextAlign();
 
   function withEditor(action: (editor: HTMLElement) => void) {
-    if (disabled) return;
+    if (formatDisabled) return;
     const editor = editorRef.current;
     if (!editor) return;
     restoreRichTextSelection(editor, savedRangeRef.current);
@@ -200,7 +207,7 @@ export function RichTextToolbar({
             value: font.value,
             label: font.label,
           }))}
-          disabled={disabled}
+          disabled={formatDisabled}
           className="delpi-ui-select--compact delpi-ui-rich-text-ribbon__font-select"
           ariaLabel={RICH_TEXT_LABELS.fontFamily}
           portalScopeClassName={portalScopeClassName}
@@ -214,7 +221,7 @@ export function RichTextToolbar({
           min={RICH_TEXT_FONT_SIZE_MIN}
           max={RICH_TEXT_FONT_SIZE_MAX}
           clamp={clampRichTextFontSize}
-          disabled={disabled}
+          disabled={formatDisabled}
           square={false}
           compact
           className="delpi-ui-rich-text-ribbon__size"
@@ -233,7 +240,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.bold}
           ariaLabel={RICH_TEXT_LABELS.bold}
           active={boldActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "bold"))}
         >
           <Bold size={15} aria-hidden="true" />
@@ -242,7 +249,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.italic}
           ariaLabel={RICH_TEXT_LABELS.italic}
           active={italicActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "italic"))}
         >
           <Italic size={15} aria-hidden="true" />
@@ -251,7 +258,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.underline}
           ariaLabel={RICH_TEXT_LABELS.underline}
           active={underlineActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "underline"))}
         >
           <Underline size={15} aria-hidden="true" />
@@ -260,37 +267,53 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.strikethrough}
           ariaLabel={RICH_TEXT_LABELS.strikethrough}
           active={strikeActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "strikeThrough"))}
         >
           <Strikethrough size={15} aria-hidden="true" />
         </RichTextIconButton>
-        <RibbonColorPicker
-          label={RICH_TEXT_LABELS.textColor}
-          ariaLabel={RICH_TEXT_LABELS.textColor}
-          variant="text"
-          value={textColor}
-          className="delpi-ui-color-picker-trigger--inline"
-          onChange={(color) => {
-            setTextColor(color);
-            withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
-          }}
-        />
-        <RibbonColorPicker
-          label={RICH_TEXT_LABELS.highlightColor}
-          ariaLabel={RICH_TEXT_LABELS.highlightColor}
-          variant="fill"
-          value={highlightColor}
-          className="delpi-ui-color-picker-trigger--inline"
-          onChange={(color) => {
-            setHighlightColor(color);
-            withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
-          }}
-        />
+        <span
+          className={
+            formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
+          }
+          aria-disabled={formatDisabled || undefined}
+        >
+          <RibbonColorPicker
+            label={RICH_TEXT_LABELS.textColor}
+            ariaLabel={RICH_TEXT_LABELS.textColor}
+            variant="text"
+            value={textColor}
+            className="delpi-ui-color-picker-trigger--inline"
+            onChange={(color) => {
+              if (formatDisabled) return;
+              setTextColor(color);
+              withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
+            }}
+          />
+        </span>
+        <span
+          className={
+            formatDisabled ? "delpi-ui-rich-text-ribbon__color--disabled" : undefined
+          }
+          aria-disabled={formatDisabled || undefined}
+        >
+          <RibbonColorPicker
+            label={RICH_TEXT_LABELS.highlightColor}
+            ariaLabel={RICH_TEXT_LABELS.highlightColor}
+            variant="fill"
+            value={highlightColor}
+            className="delpi-ui-color-picker-trigger--inline"
+            onChange={(color) => {
+              if (formatDisabled) return;
+              setHighlightColor(color);
+              withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
+            }}
+          />
+        </span>
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.clearFormatting}
           ariaLabel={RICH_TEXT_LABELS.clearFormatting}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "removeFormat"))}
         >
           <RemoveFormatting size={15} aria-hidden="true" />
@@ -298,7 +321,7 @@ export function RichTextToolbar({
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.heading}
           ariaLabel={RICH_TEXT_LABELS.heading}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "formatBlock", "h2"))}
         >
           <Heading2 size={15} aria-hidden="true" />
@@ -324,7 +347,7 @@ export function RichTextToolbar({
             hint={label}
             ariaLabel={label}
             active={alignActive === align}
-            disabled={disabled}
+            disabled={formatDisabled}
             onClick={() =>
               withEditor((editor) => applyRichTextAlign(editor, align as RichTextAlign))
             }
@@ -337,7 +360,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.bulletList}
           ariaLabel={RICH_TEXT_LABELS.bulletList}
           active={bulletActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() =>
             withEditor((editor) => runRichTextCommand(editor, "insertUnorderedList"))
           }
@@ -348,7 +371,7 @@ export function RichTextToolbar({
           hint={RICH_TEXT_LABELS.orderedList}
           ariaLabel={RICH_TEXT_LABELS.orderedList}
           active={orderedActive}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() =>
             withEditor((editor) => runRichTextCommand(editor, "insertOrderedList"))
           }
@@ -358,7 +381,7 @@ export function RichTextToolbar({
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.outdent}
           ariaLabel={RICH_TEXT_LABELS.outdent}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "outdent"))}
         >
           <Outdent size={15} aria-hidden="true" />
@@ -366,7 +389,7 @@ export function RichTextToolbar({
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.indent}
           ariaLabel={RICH_TEXT_LABELS.indent}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "indent"))}
         >
           <Indent size={15} aria-hidden="true" />
@@ -382,7 +405,7 @@ export function RichTextToolbar({
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.link}
           ariaLabel={RICH_TEXT_LABELS.link}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={onRequestLink}
         >
           <Link size={15} aria-hidden="true" />
@@ -392,13 +415,13 @@ export function RichTextToolbar({
             hint={RICH_TEXT_LABELS.table}
             ariaLabel={RICH_TEXT_LABELS.table}
             active={tableMenuOpen}
-            disabled={disabled}
+            disabled={formatDisabled}
             onClick={() => setTableMenuOpen((open) => !open)}
           >
             <Table2 size={15} aria-hidden="true" />
           </RichTextIconButton>
           <AnchoredPanelPortal
-            open={tableMenuOpen}
+            open={tableMenuOpen && !sourceMode}
             anchorRef={tableAnchorRef}
             panelRef={tablePanelRef}
             variant="bare"
@@ -421,9 +444,18 @@ export function RichTextToolbar({
         </div>
         <RibbonSep />
         <RichTextIconButton
+          hint={sourceMode ? RICH_TEXT_LABELS.sourceVisual : RICH_TEXT_LABELS.sourceHtml}
+          ariaLabel={sourceMode ? RICH_TEXT_LABELS.sourceVisual : RICH_TEXT_LABELS.sourceHtml}
+          active={sourceMode}
+          disabled={disabled || !onToggleSource}
+          onClick={() => onToggleSource?.()}
+        >
+          <CodeXml size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
           hint={RICH_TEXT_LABELS.undo}
           ariaLabel={RICH_TEXT_LABELS.undo}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "undo"))}
         >
           <Undo2 size={15} aria-hidden="true" />
@@ -431,7 +463,7 @@ export function RichTextToolbar({
         <RichTextIconButton
           hint={RICH_TEXT_LABELS.redo}
           ariaLabel={RICH_TEXT_LABELS.redo}
-          disabled={disabled}
+          disabled={formatDisabled}
           onClick={() => withEditor((editor) => runRichTextCommand(editor, "redo"))}
         >
           <Redo2 size={15} aria-hidden="true" />

@@ -77,6 +77,11 @@
   color: var(--delpi-ui-text, #111);
 }
 
+.delpi-ui-rich-text-ribbon__color--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .delpi-ui-rich-text-ribbon__icon-btn.is-active {
   border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 40%, transparent);
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, transparent);
@@ -130,6 +135,54 @@
 .delpi-ui-rich-text__editor:focus {
   outline: 2px solid var(--delpi-ui-accent, #089bdb);
   outline-offset: -2px;
+}
+
+.delpi-ui-rich-text__source-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.delpi-ui-rich-text__source-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--delpi-ui-text, #111) 58%, transparent));
+}
+
+.delpi-ui-rich-text__source {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 160px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 8px;
+  resize: vertical;
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-text, #111) 8%);
+  color: var(--delpi-ui-text, #111);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
+  font-size: 12.5px;
+  line-height: 1.5;
+  tab-size: 2;
+}
+
+.delpi-ui-rich-text__source:focus {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 0;
+}
+
+.delpi-ui-rich-text__source:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+@media (prefers-color-scheme: dark) {
+  .delpi-ui-rich-text__source {
+    background: color-mix(in srgb, var(--delpi-ui-surface, #111) 88%, #fff 12%);
+  }
 }
 
 .delpi-ui-rich-text__editor h2 {

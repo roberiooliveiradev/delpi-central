@@ -2,6 +2,7 @@ import { ExternalLink, Pencil, Unlink } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { RichTextLinkDialog } from "./RichTextLinkDialog";
+import { RichTextSourceEditor } from "./RichTextSourceEditor";
 import { RichTextToolbar } from "./RichTextToolbar";
 import {
   applyRichTextLinkAtRange,
@@ -11,6 +12,7 @@ import {
   unwrapRichTextLink,
 } from "./richTextCommands";
 import { tryDeleteRichTextAtEmphasisBoundary } from "./richTextDeleteBoundary";
+import { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
 import { normalizeRichTextPastedHtml } from "./richTextTable";
 
@@ -39,6 +41,8 @@ type ActiveLinkState = {
   left: number;
 };
 
+const SOURCE_CHANGE_DEBOUNCE_MS = 150;
+
 export function RichTextEditor({
   value,
   onChange,
@@ -52,6 +56,9 @@ export function RichTextEditor({
   const rootRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const focusedRef = useRef(false);
+  const sourceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [sourceMode, setSourceMode] = useState(false);
+  const [sourceDraft, setSourceDraft] = useState("");
   const [linkDialog, setLinkDialog] = useState<LinkDialogState | null>(null);
   const [activeLink, setActiveLink] = useState<ActiveLinkState | null>(null);
   const rootClass = useMemo(
@@ -66,11 +73,19 @@ export function RichTextEditor({
   }, [value]);
 
   useEffect(() => {
-    if (mode !== "edit" || disabled || !ref.current || focusedRef.current) return;
+    if (mode !== "edit" || disabled || sourceMode || !ref.current || focusedRef.current) {
+      return;
+    }
     if (ref.current.innerHTML !== resolvedHtml) {
       ref.current.innerHTML = resolvedHtml;
     }
-  }, [mode, disabled, resolvedHtml]);
+  }, [mode, disabled, sourceMode, resolvedHtml]);
+
+  useEffect(() => {
+    return () => {
+      if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
+    };
+  }, []);
 
   /** Badge segue o link sob o cursor/seleção (posição relativa ao root). */
   const syncActiveLink = useCallback(() => {
@@ -99,7 +114,51 @@ export function RichTextEditor({
     onChange(ref.current?.innerHTML || "");
   }, [onChange]);
 
+  const flushSourceDraft = useCallback(
+    (draft: string) => {
+      const cleaned = stripDangerousRichTextTags(draft);
+      onChange(cleaned);
+      return cleaned;
+    },
+    [onChange],
+  );
+
+  function handleSourceDraftChange(next: string) {
+    setSourceDraft(next);
+    if (sourceDebounceRef.current) clearTimeout(sourceDebounceRef.current);
+    sourceDebounceRef.current = setTimeout(() => {
+      flushSourceDraft(next);
+    }, SOURCE_CHANGE_DEBOUNCE_MS);
+  }
+
+  function handleToggleSource() {
+    if (disabled) return;
+    if (sourceDebounceRef.current) {
+      clearTimeout(sourceDebounceRef.current);
+      sourceDebounceRef.current = null;
+    }
+
+    if (!sourceMode) {
+      const current = ref.current?.innerHTML || value || "<p></p>";
+      focusedRef.current = false;
+      setActiveLink(null);
+      setLinkDialog(null);
+      setSourceDraft(prettyPrintRichTextHtml(current));
+      setSourceMode(true);
+      return;
+    }
+
+    const cleaned = flushSourceDraft(sourceDraft);
+    setSourceMode(false);
+    requestAnimationFrame(() => {
+      if (ref.current) {
+        ref.current.innerHTML = cleaned;
+      }
+    });
+  }
+
   function handleRequestLink() {
+    if (sourceMode) return;
     const editorEl = ref.current;
     if (!editorEl) return;
     const anchor = findRichTextLinkAtSelection(editorEl);
@@ -154,60 +213,71 @@ export function RichTextEditor({
       <RichTextToolbar
         editorRef={ref}
         disabled={disabled}
+        sourceMode={sourceMode}
+        onToggleSource={handleToggleSource}
         portalScopeClassName={portalScopeClassName}
         onFormatted={emitChange}
         onRequestLink={handleRequestLink}
       />
-      <div
-        ref={ref}
-        className="delpi-ui-rich-text__editor"
-        style={{ minHeight }}
-        contentEditable
-        role="textbox"
-        aria-multiline="true"
-        aria-label={ariaLabel}
-        suppressContentEditableWarning
-        onFocus={() => {
-          focusedRef.current = true;
-        }}
-        onBlur={() => {
-          focusedRef.current = false;
-          setActiveLink(null);
-          emitChange();
-        }}
-        onInput={emitChange}
-        onMouseUp={syncActiveLink}
-        onKeyUp={syncActiveLink}
-        onBeforeInput={(event) => {
-          const inputType = event.nativeEvent.inputType;
-          if (
-            inputType !== "deleteContentBackward" &&
-            inputType !== "deleteContentForward"
-          ) {
-            return;
-          }
-          const editorEl = ref.current;
-          if (!editorEl) return;
-          const direction =
-            inputType === "deleteContentBackward" ? "backward" : "forward";
-          if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
-            event.preventDefault();
+      {sourceMode ? (
+        <RichTextSourceEditor
+          value={sourceDraft}
+          onChange={handleSourceDraftChange}
+          minHeight={minHeight}
+          disabled={disabled}
+        />
+      ) : (
+        <div
+          ref={ref}
+          className="delpi-ui-rich-text__editor"
+          style={{ minHeight }}
+          contentEditable
+          role="textbox"
+          aria-multiline="true"
+          aria-label={ariaLabel}
+          suppressContentEditableWarning
+          onFocus={() => {
+            focusedRef.current = true;
+          }}
+          onBlur={() => {
+            focusedRef.current = false;
+            setActiveLink(null);
             emitChange();
-            syncActiveLink();
-          }
-        }}
-        onPaste={(event) => {
-          const html = event.clipboardData?.getData("text/html");
-          if (!html || !/<table[\s>]/i.test(html)) return;
-          const normalized = normalizeRichTextPastedHtml(html);
-          if (!normalized) return;
-          event.preventDefault();
-          execRichTextCommand("insertHTML", normalized);
-          emitChange();
-        }}
-      />
+          }}
+          onInput={emitChange}
+          onMouseUp={syncActiveLink}
+          onKeyUp={syncActiveLink}
+          onBeforeInput={(event) => {
+            const inputType = event.nativeEvent.inputType;
+            if (
+              inputType !== "deleteContentBackward" &&
+              inputType !== "deleteContentForward"
+            ) {
+              return;
+            }
+            const editorEl = ref.current;
+            if (!editorEl) return;
+            const direction =
+              inputType === "deleteContentBackward" ? "backward" : "forward";
+            if (tryDeleteRichTextAtEmphasisBoundary(editorEl, direction)) {
+              event.preventDefault();
+              emitChange();
+              syncActiveLink();
+            }
+          }}
+          onPaste={(event) => {
+            const html = event.clipboardData?.getData("text/html");
+            if (!html || !/<table[\s>]/i.test(html)) return;
+            const normalized = normalizeRichTextPastedHtml(html);
+            if (!normalized) return;
+            event.preventDefault();
+            execRichTextCommand("insertHTML", normalized);
+            emitChange();
+          }}
+        />
+      )}
 
-      {activeLink ? (
+      {!sourceMode && activeLink ? (
         <div
           className="delpi-ui-rich-text__link-badge"
           style={{ top: activeLink.top, left: activeLink.left }}
@@ -245,7 +315,7 @@ export function RichTextEditor({
       ) : null}
 
       <RichTextLinkDialog
-        open={linkDialog !== null}
+        open={linkDialog !== null && !sourceMode}
         editing={linkDialog?.mode === "edit"}
         initialUrl={
           linkDialog?.mode === "edit"

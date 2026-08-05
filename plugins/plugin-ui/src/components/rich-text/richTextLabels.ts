@@ -37,4 +37,9 @@ export const RICH_TEXT_LABELS = {
   linkOpen: "Abrir link em nova aba",
   linkEditAction: "Editar link",
   linkRemove: "Remover link",
+  sourceHtml: "Editar HTML",
+  sourceVisual: "Voltar ao visual",
+  sourceEditor: "Fonte HTML do texto",
+  sourceHint:
+    "Só tags e estilos permitidos são preservados ao salvar (sem script/CSS global).",
 } as const;
