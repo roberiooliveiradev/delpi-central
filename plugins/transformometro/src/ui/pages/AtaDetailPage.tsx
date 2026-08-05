@@ -238,6 +238,8 @@ export function AtaDetailPage({ getAccessToken, ataId, pathname, onNavigate }: P
               {editable ? (
                 <p className="tm-atas-view__hint ds-muted">
                   Rascunho editável. Revise o conteúdo e envie para assinatura quando estiver pronto.
+                  No envio, signatários Delpi recebem notificação no portal e todos com e-mail recebem
+                  o link público de assinatura.
                 </p>
               ) : null}
 

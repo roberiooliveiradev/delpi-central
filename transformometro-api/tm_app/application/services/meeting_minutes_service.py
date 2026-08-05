@@ -111,17 +111,28 @@ class MeetingMinutesService:
             return
         signers = payload.get("signers")
         if signers is None:
-            signers = [
-                {
-                    "user_id": item["user_id"],
-                    "display_name": item["display_name"],
-                    "sign_order": index + 1,
-                }
-                for index, item in enumerate(payload.get("participants") or [])
-                if item.get("must_sign") and item.get("user_id") and item.get("display_name")
-            ]
-        if any(not item.get("user_id") or not item.get("display_name") for item in signers):
-            raise ValueError("Cada signatário precisa de user_id e display_name.")
+            signers = []
+            for index, item in enumerate(payload.get("participants") or []):
+                if not item.get("must_sign") or not item.get("display_name"):
+                    continue
+                user_id = item.get("user_id")
+                invite_email = str(item.get("invite_email") or "").strip() or None
+                if not user_id and not invite_email:
+                    continue
+                signers.append(
+                    {
+                        "user_id": user_id,
+                        "invite_email": invite_email,
+                        "display_name": item["display_name"],
+                        "sign_order": index + 1,
+                    }
+                )
+        if any(
+            not item.get("display_name")
+            or (not item.get("user_id") and not str(item.get("invite_email") or "").strip())
+            for item in signers
+        ):
+            raise ValueError("Cada signatário precisa de display_name e user_id ou invite_email.")
         self.repo.replace_signers(
             minute_id=minute_id,
             version_id=str(minute["current_version_id"]),

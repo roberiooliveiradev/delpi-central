@@ -54,13 +54,22 @@ type ParticipantDraft = {
   role_in_meeting: string;
   must_sign: boolean;
   is_external: boolean;
+  invite_email?: string;
 };
 
 type EditorMode = "fill" | "import";
 type PostSaveState = { id: string } | null;
 
 function isSigner(item: ParticipantDraft): boolean {
-  return !item.is_external && Boolean(item.user_id) && item.must_sign;
+  if (!item.must_sign || !item.display_name.trim()) return false;
+  if (item.is_external) {
+    return Boolean(item.invite_email?.trim() && item.invite_email.includes("@"));
+  }
+  return Boolean(item.user_id);
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
@@ -76,6 +85,8 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
   const [contentHtml, setContentHtml] = useState("<p></p>");
   const [participants, setParticipants] = useState<ParticipantDraft[]>([]);
   const [externalName, setExternalName] = useState("");
+  const [externalEmail, setExternalEmail] = useState("");
+  const [externalMustSign, setExternalMustSign] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -108,13 +119,25 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
         setLocation(String(m.location ?? ""));
         setContentHtml(mergeAtaContentHtml(v as Parameters<typeof mergeAtaContentHtml>[0]));
         setParticipants(
-          detail.participants.map((item) => ({
-            user_id: item.user_id ? String(item.user_id) : undefined,
-            display_name: String(item.display_name ?? ""),
-            role_in_meeting: String(item.role_in_meeting ?? "participant"),
-            must_sign: Boolean(item.must_sign),
-            is_external: Boolean(item.is_external),
-          })),
+          detail.participants.map((item) => {
+            const name = String(item.display_name ?? "");
+            const userId = item.user_id ? String(item.user_id) : undefined;
+            const matchingSigner = detail.signers.find((signer) => {
+              if (userId && String(signer.user_id ?? "") === userId) return true;
+              if (!userId && String(signer.display_name ?? "") === name) return true;
+              return false;
+            });
+            return {
+              user_id: userId,
+              display_name: name,
+              role_in_meeting: String(item.role_in_meeting ?? "participant"),
+              must_sign: Boolean(item.must_sign),
+              is_external: Boolean(item.is_external),
+              invite_email: matchingSigner?.invite_email
+                ? String(matchingSigner.invite_email)
+                : undefined,
+            };
+          }),
         );
         setCurrentId(String(detail.minute.id));
       })
@@ -172,16 +195,24 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
 
   function addExternal() {
     if (!externalName.trim()) return;
+    if (externalMustSign && !isValidEmail(externalEmail)) {
+      setError("Informe um e-mail válido para o convidado que precisa assinar.");
+      return;
+    }
     setParticipants((prev) => [
       ...prev,
       {
         display_name: externalName.trim(),
         role_in_meeting: "guest",
-        must_sign: false,
+        must_sign: externalMustSign,
         is_external: true,
+        invite_email: externalMustSign ? externalEmail.trim() : undefined,
       },
     ]);
     setExternalName("");
+    setExternalEmail("");
+    setExternalMustSign(true);
+    setError(null);
   }
 
   async function onDocxSelected(file: File | null) {
@@ -246,7 +277,9 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
     }
     const signers = participants.filter(isSigner);
     if (!signers.length) {
-      setError("Selecione ao menos um signatário no diretório do Minha Delpi.");
+      setError(
+        "Inclua ao menos um signatário (usuário Delpi ou convidado externo com e-mail).",
+      );
       return null;
     }
     setSaving(true);
@@ -263,7 +296,8 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
         ...splitAtaContentForSave(contentHtml),
         participants,
         signers: signers.map((item, index) => ({
-          user_id: item.user_id,
+          user_id: item.user_id || null,
+          invite_email: item.invite_email || null,
           display_name: item.display_name,
           sign_order: index + 1,
         })),
@@ -290,6 +324,9 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
     setSending(true);
     try {
       await sendAta(id, getAccessToken);
+      setNotice(
+        "Ata enviada. Signatários com conta Delpi recebem notificação no portal; todos com e-mail recebem o link de assinatura.",
+      );
       onNavigate(buildAtaPath(id));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Erro ao enviar para assinatura.");
@@ -589,34 +626,61 @@ export function AtaEditorPage({ getAccessToken, ataId, onNavigate }: Props) {
             <h3>
               <UserPlus size={16} aria-hidden /> Convidado externo
             </h3>
-            <p className="ds-muted">Aparece na ata, mas não assina digitalmente.</p>
+            <p className="ds-muted">
+              Com e-mail e “Assina” marcado, recebe magic link por e-mail (sem precisar do módulo
+              Transformômetro). Sem assinar, só aparece na presença da ata.
+            </p>
             <div className="tm-ata-editor__external-row">
               <NativeTextControl
                 value={externalName}
                 onChange={setExternalName}
                 placeholder="Nome completo"
               />
-              <ActionButton disabled={!externalName.trim()} onClick={addExternal}>
+              <NativeTextControl
+                value={externalEmail}
+                onChange={setExternalEmail}
+                placeholder="E-mail"
+              />
+              <NativeCheckboxControl
+                checked={externalMustSign}
+                onChange={setExternalMustSign}
+                label="Assina"
+              />
+              <ActionButton
+                disabled={!externalName.trim() || (externalMustSign && !externalEmail.trim())}
+                onClick={addExternal}
+              >
                 Adicionar
               </ActionButton>
             </div>
             {externalPeople.length > 0 ? (
               <ul className="tm-ata-editor__people tm-ata-editor__people--external">
                 {externalPeople.map((item, index) => (
-                  <li key={`${item.display_name}-${index}`} className="tm-ata-editor__person">
+                  <li key={`ext-${index}-${item.display_name}`} className="tm-ata-editor__person">
                     <div className="tm-ata-editor__person-main">
                       <strong>{item.display_name}</strong>
-                      <span className="ds-muted">Convidado</span>
+                      <span className="ds-muted">
+                        {item.must_sign
+                          ? `Assina · ${item.invite_email || "sem e-mail"}`
+                          : "Só presença"}
+                      </span>
                     </div>
                     <ActionButton
                       variant="link"
-                      onClick={() =>
+                      onClick={() => {
+                        let seen = 0;
                         setParticipants((prev) =>
-                          prev.filter(
-                            (row) => !(row.is_external && row.display_name === item.display_name),
-                          ),
-                        )
-                      }
+                          prev.filter((row) => {
+                            if (!row.is_external) return true;
+                            if (seen === index) {
+                              seen += 1;
+                              return false;
+                            }
+                            seen += 1;
+                            return true;
+                          }),
+                        );
+                      }}
                     >
                       Remover
                     </ActionButton>
