@@ -31,7 +31,7 @@ export async function listSellerPortfolios(
   if (options?.activeOnly) params.set("active_only", "true");
   const qs = params.toString();
   const response = await httpGet<ApiSuccessResponse<{ items: SellerPortfolio[] }>>(
-    `${commercialApiUrl("/seller-portfolios")}${qs ? `?${qs}` : ""}`,
+    `${commercialApiUrl("/seller-portfolios")}/${qs ? `?${qs}` : ""}`,
     { signal: options?.signal },
   );
   const data = unwrapEnvelope(response, "Erro ao listar carteiras.");
@@ -44,7 +44,7 @@ export async function createSellerPortfolio(input: {
   customers?: SellerCustomerInput[];
 }): Promise<SellerPortfolio> {
   const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
-    commercialApiUrl("/seller-portfolios"),
+    commercialApiUrl("/seller-portfolios/"),
     input,
   );
   return unwrapEnvelope(response, "Erro ao cadastrar vendedor.");
