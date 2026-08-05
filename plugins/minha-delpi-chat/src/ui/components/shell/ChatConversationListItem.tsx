@@ -2,7 +2,10 @@ import { Loader2 } from "lucide-react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 
 import type { ChatSession } from "../../../data/api/chatTypes";
-import { handleChatNavClick } from "../../../navigation/chatNavigation";
+import {
+  handleChatNavClick,
+  shouldOpenChatLinkInNewTab,
+} from "../../../navigation/chatNavigation";
 import { formatSessionDate } from "./chatSidebarUtils";
 
 import "./ChatConversationListItem.css";
@@ -17,6 +20,10 @@ type ChatConversationListItemProps = {
   trailing?: ReactNode;
   isProcessing?: boolean;
   href?: string;
+  /**
+   * Seleção da conversa. Quando informado, o clique esquerdo chama este handler
+   * em vez de depender da URL — o embed (TV Dashboard) não navega o host.
+   */
   onClick?: () => void;
   /**
    * Botão direito: abre opções sem selecionar/navegar a conversa.
@@ -94,8 +101,17 @@ export function ChatConversationListItem({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
         onClick={(event) => {
+          if (onClick) {
+            if (shouldOpenChatLinkInNewTab(event)) {
+              return;
+            }
+
+            event.preventDefault();
+            onClick();
+            return;
+          }
+
           handleChatNavClick(event, href);
-          onClick?.();
         }}
         onContextMenu={handleContextMenu}
         aria-busy={isProcessing || undefined}

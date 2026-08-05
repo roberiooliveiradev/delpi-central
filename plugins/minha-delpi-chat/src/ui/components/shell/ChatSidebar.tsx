@@ -45,6 +45,8 @@ type ChatSidebarProps = {
   isLoadingProjects?: boolean;
   canManageAgents?: boolean;
   isCollapsed?: boolean;
+  /** Layout gaveta (mobile ou embarcado): sem rail colapsável, só fechar. */
+  isDrawer?: boolean;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
   onToggleCollapsed?: () => void;
@@ -84,6 +86,7 @@ export function ChatSidebar({
   isLoadingProjects,
   canManageAgents = false,
   isCollapsed,
+  isDrawer = false,
   isMobileOpen = false,
   onCloseMobile,
   onToggleCollapsed,
@@ -331,6 +334,7 @@ export function ChatSidebar({
     <aside className={sidebarClassName} aria-label="Conversas">
       <div className="mdc-chat-sidebar__top">
         <ChatSidebarBrand
+          isDrawer={isDrawer}
           onToggleCollapsed={onToggleCollapsed}
           onCloseMobile={onCloseMobile}
         />

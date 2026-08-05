@@ -48,4 +48,55 @@ describe("mdc-embedded-chat layout contract", () => {
     expect(page).toMatch(/variant\?\: \"full\" \| \"embedded\"/);
     expect(page).toMatch(/mdc-chat-shell--embedded/);
   });
+
+  it("troca de conversa não depende da URL do host", () => {
+    const list = readFileSync(
+      join(here, "ui/components/shell/ChatSidebarSessionList.tsx"),
+      "utf8",
+    );
+    const projects = readFileSync(
+      join(here, "ui/components/shell/ChatSidebarProjectsSection.tsx"),
+      "utf8",
+    );
+    const item = readFileSync(
+      join(here, "ui/components/shell/ChatConversationListItem.tsx"),
+      "utf8",
+    );
+
+    expect(list).toMatch(/onClick=\{\(\) => onSelectSession\(session\)\}/);
+    expect(list).not.toMatch(/onSelectSession: _onSelectSession/);
+    expect(projects).toMatch(/onSelectSession\(session\)/);
+    expect(projects).not.toMatch(/onSelectSession: _onSelectSession/);
+    // Clique esquerdo com handler explícito não cai no fluxo só-URL.
+    expect(item).toMatch(/if \(onClick\) \{[\s\S]*?event\.preventDefault\(\);/);
+    expect(item).toMatch(/shouldOpenChatLinkInNewTab/);
+  });
+
+  it("embed usa rota interna e não degrada telas do chat", () => {
+    expect(page).toMatch(/const activePathname = isEmbedded \? embeddedPathname : pathname/);
+    expect(page).toMatch(/parseChatRoute\(activePathname\)/);
+    expect(page).toMatch(/pathname: activePathname/);
+    // Agentes/projetos/ajuda deixam de ser bloqueados no embed.
+    expect(page).not.toMatch(/isEmbedded && currentView !== "chat"/);
+    expect(page).not.toMatch(/onOpenHelp=\{isEmbedded \? undefined/);
+    expect(page).not.toMatch(/onManageAgents=\{isEmbedded \? undefined/);
+  });
+
+  it("sidebar em gaveta expõe fechar em vez do rail colapsável", () => {
+    const brand = readFileSync(
+      join(here, "ui/components/shell/ChatSidebarBrand.tsx"),
+      "utf8",
+    );
+    const brandCss = readFileSync(
+      join(here, "ui/components/shell/ChatSidebarBrand.css"),
+      "utf8",
+    );
+
+    expect(page).toMatch(/isDrawer=\{isEmbedded \|\| !isDesktop\}/);
+    expect(brand).toMatch(/isDrawer\?: boolean/);
+    expect(brand).toMatch(/\{!isDrawer \? \(/);
+    expect(brandCss).toMatch(
+      /\.mdc-chat-sidebar__brand--drawer \.mdc-chat-sidebar__close-mobile/,
+    );
+  });
 });

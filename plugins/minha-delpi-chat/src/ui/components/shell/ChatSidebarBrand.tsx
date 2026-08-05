@@ -1,16 +1,29 @@
 import { ChevronLeft, X } from "lucide-react";
 
 type ChatSidebarBrandProps = {
+  /**
+   * Sidebar em modo gaveta (mobile ou chat embarcado): a única ação possível é
+   * fechar. O rail colapsado não existe nesse layout.
+   */
+  isDrawer?: boolean;
   onToggleCollapsed?: () => void;
   onCloseMobile?: () => void;
 };
 
 export function ChatSidebarBrand({
+  isDrawer = false,
   onToggleCollapsed,
   onCloseMobile,
 }: ChatSidebarBrandProps) {
+  const className = [
+    "mdc-chat-sidebar__brand",
+    isDrawer ? "mdc-chat-sidebar__brand--drawer" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="mdc-chat-sidebar__brand">
+    <div className={className}>
       <div>
         <strong>Minha DELPI</strong>
         <small>Chat corporativo</small>
@@ -28,15 +41,17 @@ export function ChatSidebarBrand({
             <X size={18} aria-hidden="true" />
           </button>
         ) : null}
-        <button
-          type="button"
-          className="mdc-chat-sidebar__collapse-button"
-          onClick={onToggleCollapsed}
-          aria-label="Recolher barra lateral"
-          title="Recolher"
-        >
-          <ChevronLeft size={18} aria-hidden="true" />
-        </button>
+        {!isDrawer ? (
+          <button
+            type="button"
+            className="mdc-chat-sidebar__collapse-button"
+            onClick={onToggleCollapsed}
+            aria-label="Recolher barra lateral"
+            title="Recolher"
+          >
+            <ChevronLeft size={18} aria-hidden="true" />
+          </button>
+        ) : null}
       </div>
     </div>
   );

@@ -257,13 +257,20 @@ export function ChatPage({
     initialRoute ? getChatSidebarViewForRoute(initialRoute) : "chat",
   );
 
-  useEffect(() => {
-    if (isEmbedded && currentView !== "chat") {
-      setCurrentView("chat");
-    }
-  }, [isEmbedded, currentView]);
+  /**
+   * O embed não tem URL própria (o host mantém a dele). A rota interna dá ao
+   * chat embarcado as mesmas telas do portal — agentes, projetos, configurações.
+   */
+  const [embeddedPathname, setEmbeddedPathname] = useState(pathname);
+  const hostPathnameRef = useRef(pathname);
 
-  const chatRoute = useMemo(() => parseChatRoute(pathname), [pathname]);
+  if (hostPathnameRef.current !== pathname) {
+    hostPathnameRef.current = pathname;
+    setEmbeddedPathname(pathname);
+  }
+
+  const activePathname = isEmbedded ? embeddedPathname : pathname;
+  const chatRoute = useMemo(() => parseChatRoute(activePathname), [activePathname]);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [composerAttachments, setComposerAttachments] = useState<ChatInputAttachment[]>([]);
   const [projectSources, setProjectSources] = useState<Record<string, import("../../data/api/chatTypes").ChatWorkspaceSource[]>>({});
@@ -425,6 +432,7 @@ export function ChatPage({
         if (embeddedScopeKey) {
           writeEmbeddedSessionId(embeddedScopeKey, sessionId);
         }
+        setEmbeddedPathname(buildChatSessionHref(sessionId));
         return;
       }
       navigateChatHref(buildChatSessionHref(sessionId), { replace: true });
@@ -1566,16 +1574,20 @@ export function ChatPage({
 
   const navigateToChatSurface = useCallback(
     (href: string, options?: { replace?: boolean }) => {
+      if (isEmbedded) {
+        setEmbeddedPathname(href);
+      }
+
       navigateChatSurface(href, {
         replace: options?.replace,
         onApplyRoute: applyChatRoute,
       });
     },
-    [applyChatRoute],
+    [applyChatRoute, isEmbedded],
   );
 
   useChatRouteSync({
-    pathname,
+    pathname: activePathname,
     sessions,
     workspaceReady: !isLoadingAgents && !isLoadingProjects,
     workspaceRevision: agents.length + projects.length,
@@ -1630,19 +1642,19 @@ export function ChatPage({
   }, [currentView, canManageAgents, hasLoadedManageAgentsPermission]);
 
   function openProjectConfig(projectId: string) {
-    navigateChatHref(buildChatProjectConfigHref(projectId));
+    navigateToChatSurface(buildChatProjectConfigHref(projectId));
   }
 
   function closeProjectConfig(projectId: string) {
-    navigateChatHref(buildChatProjectHref(projectId));
+    navigateToChatSurface(buildChatProjectHref(projectId));
   }
 
   function openAgentSkills(agentId: string) {
-    navigateChatHref(buildChatAgentSkillsHref(agentId));
+    navigateToChatSurface(buildChatAgentSkillsHref(agentId));
   }
 
   function openAgentActions(agentId: string, providerKey?: string | null) {
-    navigateChatHref(buildChatAgentActionsHref(agentId, providerKey));
+    navigateToChatSurface(buildChatAgentActionsHref(agentId, providerKey));
   }
 
   function openAdminForAgent(agentId: string) {
@@ -1650,23 +1662,23 @@ export function ChatPage({
   }
 
   function openAgentConfig(agentId: string) {
-    navigateChatHref(buildChatAgentConfigHref(agentId));
+    navigateToChatSurface(buildChatAgentConfigHref(agentId));
   }
 
   function closeAgentConfig() {
-    navigateChatHref(buildChatHref({ kind: "agents" }));
+    navigateToChatSurface(buildChatHref({ kind: "agents" }));
   }
 
   function openAgentsDirectory() {
     clearWorkspaceError();
     setCurrentView("agents");
-    navigateChatHref(buildChatHref({ kind: "agents" }));
+    navigateToChatSurface(buildChatHref({ kind: "agents" }));
   }
 
   function openProjectsDirectory() {
     clearWorkspaceError();
     setCurrentView("projects");
-    navigateChatHref(buildChatHref({ kind: "projects" }));
+    navigateToChatSurface(buildChatHref({ kind: "projects" }));
   }
 
 
@@ -1810,6 +1822,7 @@ export function ChatPage({
       if (embeddedScopeKey) {
         clearEmbeddedSessionId(embeddedScopeKey);
       }
+      setEmbeddedPathname(buildChatHref({ kind: "home" }));
       void handleStartSession();
       return;
     }
@@ -1830,6 +1843,7 @@ export function ChatPage({
       if (embeddedScopeKey) {
         writeEmbeddedSessionId(embeddedScopeKey, session.id);
       }
+      setEmbeddedPathname(buildChatSessionHrefForSession(session));
     } else {
       navigateChatHref(buildChatSessionHrefForSession(session));
     }
@@ -2526,6 +2540,7 @@ export function ChatPage({
             navigateToChatSurface(buildChatAgentHref(agentId));
           }}
           isCollapsed={!isEmbedded && isDesktop && isSidebarCollapsed}
+          isDrawer={isEmbedded || !isDesktop}
           isMobileOpen={isMobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
           onToggleCollapsed={() => setIsSidebarCollapsed((current) => !current)}
@@ -2617,7 +2632,7 @@ export function ChatPage({
               onOpenAgentSkills={openAgentSkills}
               onOpenAgentActions={openAgentActions}
               agentSubRoute={agentSubRoute}
-              agentSubRouteKey={pathname}
+              agentSubRouteKey={activePathname}
               onOpenRagAdmin={openAdmin}
               getAccessToken={getAccessToken}
             />
@@ -2645,7 +2660,7 @@ export function ChatPage({
                 : undefined
             }
             onOpenAdmin={openAdmin}
-            onOpenHelp={isEmbedded ? undefined : () => setHelpPanelOpen(true)}
+            onOpenHelp={() => setHelpPanelOpen(true)}
             onRenameProject={async () => {
               if (!selectedProject) {
                 return;
@@ -2693,7 +2708,7 @@ export function ChatPage({
                 await handleStartSession();
               }
             }}
-            onManageAgents={isEmbedded ? undefined : openAgentsDirectory}
+            onManageAgents={openAgentsDirectory}
             onClearAgent={() => {
               setActiveAgentPageId(null);
               clearComposerOverlayContext();
@@ -2772,7 +2787,7 @@ export function ChatPage({
                   requestKey: Date.now(),
                 });
                 setCurrentView("agents");
-                navigateChatHref(buildChatAgentConfigHref(activeAgentPage.id));
+                navigateToChatSurface(buildChatAgentConfigHref(activeAgentPage.id));
               }}
               conversationKey={activeSession?.id ?? null}
               streamingStatus={streamingStatus}

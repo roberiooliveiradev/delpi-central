@@ -84,6 +84,11 @@
   display: none;
 }
 
+/* Gaveta (mobile ou chat embarcado): fechar é a única ação — sem rail. */
+.mdc-chat-sidebar__brand--drawer .mdc-chat-sidebar__close-mobile {
+  display: inline-grid;
+}
+
 @media (max-width: 1023px) {
   .mdc-chat-sidebar__close-mobile {
     display: inline-grid;
