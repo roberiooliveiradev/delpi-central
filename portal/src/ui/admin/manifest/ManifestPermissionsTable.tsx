@@ -1,6 +1,6 @@
 // portal/src/ui/admin/manifest/ManifestPermissionsTable.tsx
 
-import { Button, DenseTable, Input } from "../../../ui-kit";
+import { Button, FormField, Input, Textarea } from "../../../ui-kit";
 import type { ManifestPermission } from "./manifestTypes";
 
 type Props = {
@@ -59,68 +59,47 @@ export function ManifestPermissionsTable({
   };
 
   return (
-    <DenseTable
-      toolbar={
-        <>
-          <span className="hint">
-            Módulo fixo: <code>{moduleId || "(defina o ID)"}</code>
-          </span>
-          <Button variant="primary" size="sm" onClick={add} disabled={disabled}>
-            Adicionar permissão
-          </Button>
-        </>
-      }
-      wrapTable
-    >
-      <thead>
-        <tr>
-          <th>Código</th>
-          <th>Nome</th>
-          <th>Descrição</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
+    <div className="manifest-cards">
+      <div className="manifest-cards__toolbar">
+        <span className="hint">
+          Módulo fixo: <code>{moduleId || "(defina o ID)"}</code>
+        </span>
+        <Button variant="primary" size="sm" onClick={add} disabled={disabled}>
+          Adicionar permissão
+        </Button>
+      </div>
+
+      <ul className="manifest-cards__list">
         {permissions.map((p, idx) => {
           const suffix = p.code.includes(".")
             ? p.code.slice(p.code.indexOf(".") + 1)
             : p.code.replace(/^\./, "");
           return (
-            <tr key={idx}>
-              <td>
-                <Input
-                  size="sm"
-                  mono
-                  prefix={prefix || "."}
-                  value={suffix}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    updateAt(idx, {
-                      code: `${prefix}${e.target.value.replace(/^\./, "")}`,
-                      module: moduleId || p.module,
-                    })
-                  }
-                  placeholder="access"
-                />
-              </td>
-              <td>
-                <Input
-                  size="sm"
-                  value={p.name ?? ""}
-                  disabled={disabled}
-                  onChange={(e) => updateAt(idx, { name: e.target.value })}
-                />
-              </td>
-              <td>
-                <Input
-                  size="sm"
-                  value={p.description ?? ""}
-                  disabled={disabled}
-                  onChange={(e) => updateAt(idx, { description: e.target.value })}
-                />
-              </td>
-              <td>
-                <div className="portal-ui-dense__actions">
+            <li key={idx} className="manifest-card">
+              <div className="manifest-card__head">
+                <FormField
+                  label="Código"
+                  htmlFor={`perm-code-${idx}`}
+                  className="manifest-card__code"
+                >
+                  <Input
+                    id={`perm-code-${idx}`}
+                    size="sm"
+                    mono
+                    prefix={prefix || "."}
+                    value={suffix}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      updateAt(idx, {
+                        code: `${prefix}${e.target.value.replace(/^\./, "")}`,
+                        module: moduleId || p.module,
+                      })
+                    }
+                    placeholder="access"
+                  />
+                </FormField>
+
+                <div className="manifest-card__actions">
                   {onWhoUses && (
                     <Button
                       variant="secondary"
@@ -156,18 +135,39 @@ export function ManifestPermissionsTable({
                     Remover
                   </Button>
                 </div>
-              </td>
-            </tr>
+              </div>
+
+              <div className="manifest-card__grid manifest-card__grid--full">
+                <FormField label="Nome" htmlFor={`perm-name-${idx}`}>
+                  <Input
+                    id={`perm-name-${idx}`}
+                    value={p.name ?? ""}
+                    disabled={disabled}
+                    onChange={(e) => updateAt(idx, { name: e.target.value })}
+                    placeholder="Ex.: Acessar módulo"
+                  />
+                </FormField>
+
+                <FormField label="Descrição" htmlFor={`perm-desc-${idx}`}>
+                  <Textarea
+                    id={`perm-desc-${idx}`}
+                    rows={2}
+                    autoGrow
+                    value={p.description ?? ""}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      updateAt(idx, { description: e.target.value })
+                    }
+                    placeholder="O que esta permissão libera para o usuário"
+                  />
+                </FormField>
+              </div>
+            </li>
           );
         })}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colSpan={4}>
-            <span className="hint">{permissions.length} permissões</span>
-          </td>
-        </tr>
-      </tfoot>
-    </DenseTable>
+      </ul>
+
+      <span className="hint">{permissions.length} permissões</span>
+    </div>
   );
 }

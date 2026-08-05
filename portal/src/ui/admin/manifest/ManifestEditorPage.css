@@ -217,6 +217,113 @@
   gap: 8px;
 }
 
+/* Cards de permissões e rotas: mais espaço vertical para os campos de texto
+   (nome, descrição, label) do que a tabela densa permitia. */
+
+.manifest-editor-page .manifest-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-cards__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-cards__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.manifest-editor-page .manifest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.manifest-editor-page .manifest-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.manifest-editor-page .manifest-card__head {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-card__code {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-card__order {
+  flex: 0 0 72px;
+}
+
+.manifest-editor-page .manifest-card__path {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.manifest-editor-page .manifest-card__head-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.manifest-editor-page .manifest-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.manifest-editor-page .manifest-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.manifest-editor-page .manifest-card__grid--full {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.manifest-editor-page .manifest-card__field--wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .manifest-editor-page .manifest-cards__toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manifest-editor-page .manifest-card__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manifest-editor-page .manifest-card__actions {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
 .manifest-editor-page .manifest-perm-accordion {
   border: 1px solid var(--border);
   border-radius: 10px;

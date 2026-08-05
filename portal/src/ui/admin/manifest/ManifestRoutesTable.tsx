@@ -1,10 +1,9 @@
 // portal/src/ui/admin/manifest/ManifestRoutesTable.tsx
 
-import { Fragment, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
+import { type ReactNode } from "react";
+import { Image as ImageIcon } from "lucide-react";
 import {
   Button,
-  DenseTable,
   FormField,
   Input,
   Select,
@@ -34,14 +33,11 @@ export function ManifestRoutesTable({
   onCreatePermFromRoute,
   renderIcon,
 }: Props) {
-  const [expanded, setExpanded] = useState<number | null>(null);
-
   const updateAt = (idx: number, patch: Partial<ManifestRoute>) => {
     onChange(routes.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
   };
 
   const removeAt = (idx: number) => {
-    setExpanded(null);
     onChange(normalizeRouteOrders(routes.filter((_, i) => i !== idx)));
   };
 
@@ -76,7 +72,7 @@ export function ManifestRoutesTable({
     onChange(normalizeRouteOrders(next));
   };
 
-  /** A ordem digitada só reposiciona a rota ao sair do campo, senão a linha
+  /** A ordem digitada só reposiciona a rota ao sair do campo, senão o card
    *  saltaria de lugar a cada tecla. */
   const commitOrder = () => onChange(normalizeRouteOrders(routes));
 
@@ -86,56 +82,49 @@ export function ManifestRoutesTable({
   ];
 
   return (
-    <DenseTable
-      toolbar={
-        <>
-          <span className="hint">
-            <code>permission</code> referencia <code>permissions[].code</code>
-          </span>
-          <Button variant="primary" size="sm" onClick={add} disabled={disabled}>
-            Adicionar rota
-          </Button>
-        </>
-      }
-      wrapTable
-    >
-      <thead>
-        <tr>
-          <th>Ord</th>
-          <th>Path</th>
-          <th>Label</th>
-          <th>Permissão</th>
-          <th>Ícone</th>
-          <th>Menu</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
+    <div className="manifest-cards">
+      <div className="manifest-cards__toolbar">
+        <span className="hint">
+          <code>permission</code> referencia <code>permissions[].code</code>
+        </span>
+        <Button variant="primary" size="sm" onClick={add} disabled={disabled}>
+          Adicionar rota
+        </Button>
+      </div>
+
+      <ul className="manifest-cards__list">
         {routes.map((r, idx) => (
-          <Fragment key={`r-${idx}`}>
-            <tr
-              className={
-                expanded === idx ? "portal-ui-dense__row--expanded" : undefined
-              }
-            >
-              <td style={{ width: 72 }}>
+          <li key={`r-${idx}`} className="manifest-card">
+            <div className="manifest-card__head">
+              <FormField
+                label="Ord"
+                htmlFor={`route-order-${idx}`}
+                className="manifest-card__order"
+              >
                 <Input
+                  id={`route-order-${idx}`}
                   type="number"
                   min={1}
                   size="sm"
                   value={r.order ?? ""}
                   disabled={disabled}
-                  aria-label="Ordem da rota"
                   onChange={(e) =>
                     updateAt(idx, {
-                      order: e.target.value === "" ? null : Number(e.target.value),
+                      order:
+                        e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
                   onBlur={commitOrder}
                 />
-              </td>
-              <td>
+              </FormField>
+
+              <FormField
+                label="Path"
+                htmlFor={`route-path-${idx}`}
+                className="manifest-card__path"
+              >
                 <Input
+                  id={`route-path-${idx}`}
                   size="sm"
                   mono
                   value={r.path}
@@ -143,131 +132,109 @@ export function ManifestRoutesTable({
                   onChange={(e) => updateAt(idx, { path: e.target.value })}
                   placeholder="ex: /apps/crm"
                 />
-              </td>
-              <td>
-                <Input
-                  size="sm"
-                  value={r.label ?? ""}
-                  disabled={disabled}
-                  onChange={(e) => updateAt(idx, { label: e.target.value })}
-                />
-              </td>
-              <td>
-                <Select
-                  size="sm"
-                  value={r.permission ?? ""}
-                  disabled={disabled}
-                  options={permOptions}
-                  aria-label="Permissão da rota"
-                  onChange={(next) =>
-                    updateAt(idx, { permission: next || null })
-                  }
-                />
-              </td>
-              <td>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={disabled}
-                  onClick={() => onPickIcon(idx)}
-                  title={r.icon ? `Ícone: ${r.icon}` : "Selecionar ícone"}
-                  aria-label={
-                    r.icon ? `Ícone ${r.icon}` : "Selecionar ícone da rota"
-                  }
-                  icon={renderIcon?.(r.icon) || <ImageIcon size={16} />}
-                />
-              </td>
-              <td>
-                <Switch
-                  checked={r.showInMenu !== false}
-                  disabled={disabled}
-                  onChange={(e) =>
-                    updateAt(idx, { showInMenu: e.target.checked })
-                  }
-                  aria-label="Exibir no menu"
-                />
-              </td>
-              <td>
-                <div className="portal-ui-dense__actions">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    aria-expanded={expanded === idx}
-                    aria-label={
-                      expanded === idx ? "Ocultar detalhes" : "Mais detalhes"
-                    }
-                    title={expanded === idx ? "Ocultar detalhes" : "Mais detalhes"}
-                    onClick={() => setExpanded(expanded === idx ? null : idx)}
-                    icon={
-                      expanded === idx ? (
-                        <ChevronUp size={14} />
-                      ) : (
-                        <ChevronDown size={14} />
-                      )
-                    }
-                  />
-                  {onCreatePermFromRoute && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={disabled}
-                      onClick={() => onCreatePermFromRoute(r)}
-                    >
-                      Criar perm.
-                    </Button>
-                  )}
+              </FormField>
+
+              <div className="manifest-card__head-controls">
+                <FormField label="Ícone">
                   <Button
                     variant="secondary"
                     size="sm"
                     disabled={disabled}
-                    onClick={() => duplicate(idx)}
-                  >
-                    Duplicar
-                  </Button>
+                    onClick={() => onPickIcon(idx)}
+                    title={r.icon ? `Ícone: ${r.icon}` : "Selecionar ícone"}
+                    aria-label={
+                      r.icon ? `Ícone ${r.icon}` : "Selecionar ícone da rota"
+                    }
+                    icon={renderIcon?.(r.icon) || <ImageIcon size={16} />}
+                  />
+                </FormField>
+
+                <FormField label="Menu" htmlFor={`route-menu-${idx}`}>
+                  <Switch
+                    id={`route-menu-${idx}`}
+                    checked={r.showInMenu !== false}
+                    disabled={disabled}
+                    onChange={(e) =>
+                      updateAt(idx, { showInMenu: e.target.checked })
+                    }
+                    aria-label="Exibir no menu"
+                  />
+                </FormField>
+              </div>
+
+              <div className="manifest-card__actions">
+                {onCreatePermFromRoute && (
                   <Button
-                    variant="danger-soft"
+                    variant="secondary"
                     size="sm"
                     disabled={disabled}
-                    onClick={() => removeAt(idx)}
+                    onClick={() => onCreatePermFromRoute(r)}
                   >
-                    Remover
+                    Criar perm.
                   </Button>
-                </div>
-              </td>
-            </tr>
-            {expanded === idx && (
-              <tr className="portal-ui-dense__detail">
-                <td colSpan={7}>
-                  <div className="portal-ui-dense__detail-inner">
-                    <FormField
-                      label="Entry da rota (opcional)"
-                      htmlFor={`route-entry-${idx}`}
-                    >
-                      <Input
-                        id={`route-entry-${idx}`}
-                        size="sm"
-                        mono
-                        value={r.entry ?? ""}
-                        disabled={disabled}
-                        onChange={(e) =>
-                          updateAt(idx, { entry: e.target.value || null })
-                        }
-                      />
-                    </FormField>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </Fragment>
+                )}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={disabled}
+                  onClick={() => duplicate(idx)}
+                >
+                  Duplicar
+                </Button>
+                <Button
+                  variant="danger-soft"
+                  size="sm"
+                  disabled={disabled}
+                  onClick={() => removeAt(idx)}
+                >
+                  Remover
+                </Button>
+              </div>
+            </div>
+
+            <div className="manifest-card__grid">
+              <FormField
+                label="Label"
+                htmlFor={`route-label-${idx}`}
+                className="manifest-card__field--wide"
+              >
+                <Input
+                  id={`route-label-${idx}`}
+                  value={r.label ?? ""}
+                  disabled={disabled}
+                  onChange={(e) => updateAt(idx, { label: e.target.value })}
+                  placeholder="Nome exibido no menu"
+                />
+              </FormField>
+
+              <FormField label="Permissão" htmlFor={`route-perm-${idx}`}>
+                <Select
+                  value={r.permission ?? ""}
+                  disabled={disabled}
+                  options={permOptions}
+                  aria-label="Permissão da rota"
+                  onChange={(next) => updateAt(idx, { permission: next || null })}
+                />
+              </FormField>
+
+              <FormField label="Entry (opcional)" htmlFor={`route-entry-${idx}`}>
+                <Input
+                  id={`route-entry-${idx}`}
+                  mono
+                  value={r.entry ?? ""}
+                  disabled={disabled}
+                  onChange={(e) =>
+                    updateAt(idx, { entry: e.target.value || null })
+                  }
+                  placeholder="ex: ./RemoteApp"
+                />
+              </FormField>
+            </div>
+          </li>
         ))}
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colSpan={7}>
-            <span className="hint">{routes.length} rotas</span>
-          </td>
-        </tr>
-      </tfoot>
-    </DenseTable>
+      </ul>
+
+      <span className="hint">{routes.length} rotas</span>
+    </div>
   );
 }
