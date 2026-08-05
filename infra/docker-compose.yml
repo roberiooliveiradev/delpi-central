@@ -998,6 +998,22 @@ services:
     networks:
       - delpi-network
 
+  planejamento-orcamentario:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: planejamento-orcamentario/Dockerfile
+
+    container_name: delpi-planejamento-orcamentario
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     depends_on:
       - plugin-ui
@@ -1220,6 +1236,7 @@ services:
 
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
+      PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR: ${PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR:-/app/data/planejamento-orcamentario}
       PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR: ${PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR:-/app/data/pedidos-venda-abertos/avatars}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
       GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
@@ -1274,6 +1291,7 @@ services:
     volumes:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/planejamento-orcamentario:/app/data/planejamento-orcamentario
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pedidos-venda-abertos/avatars:/app/data/pedidos-venda-abertos/avatars
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/kaizen-evidences:/app/data/kaizen-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/guias-procedimentos:/app/data/guias-procedimentos
@@ -1786,6 +1804,7 @@ services:
       - production-appointments
       - canal-denuncia
       - reports
+      - planejamento-orcamentario
       - dashboard-supplies
       - dashboard-financial
       - financeiro-centro-custo

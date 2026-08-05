@@ -962,6 +962,244 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "refresh_lancamento_notas_fiscais_reconciliation": RouteContract(
         "invoice_posting_reconciliation_refresh", "scalar"
     ),
+    # Planejamento orçamentário
+    "get_planejamento_orcamentario_context": RouteContract(
+        "budget_planning_context", "scalar"
+    ),
+    "get_planejamento_orcamentario_guidance_current": RouteContract(
+        "budget_guidance", "scalar"
+    ),
+    "acknowledge_planejamento_orcamentario_guidance": RouteContract(
+        "budget_guidance_acknowledgement", "scalar"
+    ),
+    "list_planejamento_orcamentario_guidance_documents": RouteContract(
+        "budget_support_document", "paged_list"
+    ),
+    "download_planejamento_orcamentario_document": RouteContract(
+        "budget_support_document", "scalar"
+    ),
+    "list_planejamento_orcamentario_admin_exercises": RouteContract(
+        "budget_exercise", "paged_list"
+    ),
+    "create_planejamento_orcamentario_admin_exercise": RouteContract(
+        "budget_exercise", "scalar"
+    ),
+    "get_planejamento_orcamentario_admin_exercise": RouteContract(
+        "budget_exercise", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_exercise": RouteContract(
+        "budget_exercise", "scalar"
+    ),
+    "transition_planejamento_orcamentario_admin_exercise": RouteContract(
+        "budget_exercise", "scalar"
+    ),
+    "get_planejamento_orcamentario_admin_guidance": RouteContract(
+        "budget_guidance", "scalar"
+    ),
+    "create_planejamento_orcamentario_admin_guidance_draft": RouteContract(
+        "budget_guidance", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_guidance": RouteContract(
+        "budget_guidance", "scalar"
+    ),
+    "publish_planejamento_orcamentario_admin_guidance": RouteContract(
+        "budget_guidance", "scalar"
+    ),
+    "list_planejamento_orcamentario_admin_documents": RouteContract(
+        "budget_support_document", "paged_list"
+    ),
+    "upload_planejamento_orcamentario_admin_document": RouteContract(
+        "budget_support_document", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_document": RouteContract(
+        "budget_support_document", "scalar"
+    ),
+    "archive_planejamento_orcamentario_admin_document": RouteContract(
+        "budget_support_document", "scalar"
+    ),
+    "list_planejamento_orcamentario_admin_scopes": RouteContract(
+        "budget_user_org_scope", "paged_list"
+    ),
+    "create_planejamento_orcamentario_admin_scope": RouteContract(
+        "budget_user_org_scope", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_scope": RouteContract(
+        "budget_user_org_scope", "scalar"
+    ),
+    "deactivate_planejamento_orcamentario_admin_scope": RouteContract(
+        "budget_user_org_scope", "scalar"
+    ),
+    "upsert_planejamento_orcamentario_admin_cost_center": RouteContract(
+        "budget_org_cost_center", "scalar"
+    ),
+    "list_planejamento_orcamentario_admin_budget_responsibilities": RouteContract(
+        "budget_responsibility", "paged_list"
+    ),
+    "create_planejamento_orcamentario_admin_budget_responsibility": RouteContract(
+        "budget_responsibility", "scalar"
+    ),
+    "get_planejamento_orcamentario_admin_budget_responsibility": RouteContract(
+        "budget_responsibility", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_budget_responsibility": RouteContract(
+        "budget_responsibility", "scalar"
+    ),
+    "deactivate_planejamento_orcamentario_admin_budget_responsibility": RouteContract(
+        "budget_responsibility", "scalar"
+    ),
+    "reactivate_planejamento_orcamentario_admin_budget_responsibility": RouteContract(
+        "budget_responsibility", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_my_responsibilities": RouteContract(
+        "budget_responsibility", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_categories": RouteContract(
+        "capex_category", "paged_list"
+    ),
+    "list_planejamento_orcamentario_admin_capex_categories": RouteContract(
+        "capex_category", "paged_list"
+    ),
+    "create_planejamento_orcamentario_admin_capex_category": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "update_planejamento_orcamentario_admin_capex_category": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "deactivate_planejamento_orcamentario_admin_capex_category": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "reactivate_planejamento_orcamentario_admin_capex_category": RouteContract(
+        "capex_category", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_investments": RouteContract(
+        "capex_investment", "paged_list"
+    ),
+    "create_planejamento_orcamentario_capex_investment": RouteContract(
+        "capex_investment", "scalar"
+    ),
+    "get_planejamento_orcamentario_capex_investment": RouteContract(
+        "capex_investment", "scalar"
+    ),
+    "update_planejamento_orcamentario_capex_investment": RouteContract(
+        "capex_investment", "scalar"
+    ),
+    "archive_planejamento_orcamentario_capex_investment": RouteContract(
+        "capex_investment", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_investment_attachments": RouteContract(
+        "capex_investment_attachment", "paged_list"
+    ),
+    "upload_planejamento_orcamentario_capex_investment_attachment": RouteContract(
+        "capex_investment_attachment", "scalar"
+    ),
+    "download_planejamento_orcamentario_capex_attachment": RouteContract(
+        "capex_investment_attachment", "scalar"
+    ),
+    "archive_planejamento_orcamentario_capex_attachment": RouteContract(
+        "capex_investment_attachment", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_plans": RouteContract(
+        "capex_plan", "paged_list"
+    ),
+    "resolve_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "get_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "submit_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_plan_history": RouteContract(
+        "capex_plan_history", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_review_queue": RouteContract(
+        "capex_plan", "paged_list"
+    ),
+    "get_planejamento_orcamentario_capex_review": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "request_changes_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "reject_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "approve_planejamento_orcamentario_capex_plan": RouteContract(
+        "capex_plan", "scalar"
+    ),
+    "get_planejamento_orcamentario_capex_consolidation_summary": RouteContract(
+        "capex_consolidation", "scalar"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_unit": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_area": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_cost_center": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_category": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_priority": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_origin": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_month": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_by_plan_status": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "list_planejamento_orcamentario_capex_consolidation_details": RouteContract(
+        "capex_consolidation", "paged_list"
+    ),
+    "export_planejamento_orcamentario_capex_consolidation_xlsx": RouteContract(
+        "capex_consolidation", "document_export"
+    ),
+    "resolve_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "list_planejamento_orcamentario_personnel_plans": RouteContract(
+        "personnel_plan", "paged_list"
+    ),
+    "get_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "create_planejamento_orcamentario_personnel_plan_line": RouteContract(
+        "personnel_plan_line", "scalar"
+    ),
+    "update_planejamento_orcamentario_personnel_plan_line": RouteContract(
+        "personnel_plan_line", "scalar"
+    ),
+    "archive_planejamento_orcamentario_personnel_plan_line": RouteContract(
+        "personnel_plan_line", "scalar"
+    ),
+    "submit_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "list_planejamento_orcamentario_personnel_plan_history": RouteContract(
+        "personnel_plan_history", "paged_list"
+    ),
+    "list_planejamento_orcamentario_personnel_review_queue": RouteContract(
+        "personnel_plan", "paged_list"
+    ),
+    "get_planejamento_orcamentario_personnel_review": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "request_changes_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "reject_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
+    "approve_planejamento_orcamentario_personnel_plan": RouteContract(
+        "personnel_plan", "scalar"
+    ),
 }
 
 

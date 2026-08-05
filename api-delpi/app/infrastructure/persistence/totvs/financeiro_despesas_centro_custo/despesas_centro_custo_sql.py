@@ -264,6 +264,24 @@ ORDER BY codigo, descricao
     return query, params
 
 
+def build_centros_custo_catalog_by_branch_query(*, branch: str) -> tuple[str, tuple]:
+    """Catálogo somente leitura de CCs por filial (sem filtro de período).
+
+    Reutiliza a mesma view do plugin financeiro-centro-custo; não duplica fonte.
+    """
+    query = f"""
+SELECT DISTINCT
+    LTRIM(RTRIM(filial)) AS filial,
+    LTRIM(RTRIM(centro_custo_codigo)) AS codigo,
+    LTRIM(RTRIM(centro_custo_descricao)) AS descricao
+FROM {DESPESAS_CENTRO_CUSTO_VIEW} WITH (NOLOCK)
+WHERE LTRIM(RTRIM(filial)) = ?
+  AND LTRIM(RTRIM(centro_custo_codigo)) <> ''
+ORDER BY codigo, descricao
+""".strip()
+    return query, (branch,)
+
+
 def build_fornecedores_query(
     *,
     start_date: str,

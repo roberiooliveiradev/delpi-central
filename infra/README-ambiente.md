@@ -416,6 +416,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | Variável | Default no container | Host (volume) |
 |----------|----------------------|---------------|
 | `PAC_EVIDENCE_UPLOAD_DIR` | `/app/data/pac-evidences` | `${DELPI_DATA_HOST_DIR}/pac-evidences` |
+| `PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR` | `/app/data/planejamento-orcamentario` | `${DELPI_DATA_HOST_DIR}/planejamento-orcamentario` |
 | `PEDIDOS_VENDA_ABERTOS_AVATAR_UPLOAD_DIR` | `/app/data/pedidos-venda-abertos/avatars` | `${DELPI_DATA_HOST_DIR}/pedidos-venda-abertos/avatars` |
 | `KAIZEN_EVIDENCE_UPLOAD_DIR` | `/app/data/kaizen-evidences` | `${DELPI_DATA_HOST_DIR}/kaizen-evidences` |
 | `GUIAS_PROCEDIMENTOS_UPLOAD_DIR` | `/app/data/guias-procedimentos` | `${DELPI_DATA_HOST_DIR}/guias-procedimentos` |
@@ -432,7 +433,7 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/planejamento-orcamentario /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

@@ -1,0 +1,176 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "planejamento-orcamentario",
+  "name": "Planejamento Orçamentário",
+  "description": "Elaboração, orientações institucionais e administração do ciclo orçamentário",
+  "icon": "chart-pie-icon",
+  "version": "0.2.5",
+  "type": "microfrontend",
+  "basePath": "/apps/planejamento-orcamentario",
+  "entry": "/apps/planejamento-orcamentario/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "planejamento-orcamentario.access",
+      "name": "Acessar Planejamento Orçamentário",
+      "description": "Consultar exercício vigente, orientações e módulos liberados após leitura",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.guidance.view",
+      "name": "Visualizar orientações orçamentárias",
+      "description": "Ler carta orientadora, premissas, cronograma e documentos do exercício",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.guidance.manage",
+      "name": "Gerenciar orientações orçamentárias",
+      "description": "Editar rascunho e publicar nova versão das orientações institucionais",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.scopes.manage",
+      "name": "Gerenciar escopos de usuários",
+      "description": "Vincular usuários a unidades, áreas e centros de custo autorizados",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.admin",
+      "name": "Administrar Planejamento Orçamentário",
+      "description": "Criar exercícios, configurar prazos e operar funções administrativas do ciclo",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.capex.submit",
+      "name": "Submeter planejamento CAPEX",
+      "description": "Submeter o conjunto de investimentos CAPEX do centro de custo para aprovação",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.capex.approve",
+      "name": "Aprovar planejamento CAPEX",
+      "description": "Aprovar, solicitar ajustes ou reprovar planejamentos CAPEX submetidos",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.capex.consolidation.view",
+      "name": "Consolidação gerencial CAPEX",
+      "description": "Consultar indicadores e agrupamentos consolidados de investimentos CAPEX em todos os escopos autorizados",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.capex.export",
+      "name": "Exportar consolidação CAPEX",
+      "description": "Gerar e baixar planilha Excel da consolidação gerencial CAPEX",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.personnel.view",
+      "name": "Consultar Orçamento de Pessoal",
+      "description": "Consultar planos e linhas de headcount do Orçamento de Pessoal nos centros autorizados",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.personnel.edit",
+      "name": "Editar Orçamento de Pessoal",
+      "description": "Resolver planos e editar linhas de headcount com cargo digitado livremente no Orçamento de Pessoal",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.personnel.submit",
+      "name": "Submeter Orçamento de Pessoal",
+      "description": "Submeter o plano de headcount do centro de custo para aprovação",
+      "module": "planejamento-orcamentario"
+    },
+    {
+      "code": "planejamento-orcamentario.personnel.approve",
+      "name": "Aprovar Orçamento de Pessoal",
+      "description": "Aprovar, solicitar ajustes ou reprovar planejamentos de Pessoal submetidos",
+      "module": "planejamento-orcamentario"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/planejamento-orcamentario",
+      "label": "Planejamento Orçamentário",
+      "permission": "planejamento-orcamentario.access",
+      "icon": "chart-pie-icon",
+      "order": 30,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/orientacoes",
+      "label": "Orientações orçamentárias",
+      "permission": "planejamento-orcamentario.guidance.view",
+      "icon": "book-open-icon",
+      "order": 31,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/capex/aprovacoes",
+      "label": "Aprovações CAPEX",
+      "permission": "planejamento-orcamentario.capex.approve",
+      "icon": "clipboard-check-icon",
+      "order": 32,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/capex/consolidacao",
+      "label": "Consolidação de Investimentos",
+      "permission": "planejamento-orcamentario.capex.consolidation.view",
+      "icon": "chart-bar-icon",
+      "order": 33,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/pessoal",
+      "label": "Orçamento de Pessoal",
+      "permission": "planejamento-orcamentario.personnel.view",
+      "icon": "users-icon",
+      "order": 34,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/pessoal/aprovacoes",
+      "label": "Aprovações de Pessoal",
+      "permission": "planejamento-orcamentario.personnel.approve",
+      "icon": "clipboard-check-icon",
+      "order": 35,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/admin",
+      "label": "Administração orçamentária",
+      "permission": "planejamento-orcamentario.admin",
+      "icon": "settings-icon",
+      "order": 36,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/admin/exercicios",
+      "label": "Exercícios orçamentários",
+      "permission": "planejamento-orcamentario.admin",
+      "icon": "calendar-icon",
+      "order": 37,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/admin/centros-de-custo",
+      "label": "Centros de custo",
+      "permission": "planejamento-orcamentario.scopes.manage",
+      "icon": "building-office-icon",
+      "order": 38,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/planejamento-orcamentario/admin/escopos",
+      "label": "Escopos de usuários",
+      "permission": "planejamento-orcamentario.scopes.manage",
+      "icon": "users-icon",
+      "order": 39,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}
