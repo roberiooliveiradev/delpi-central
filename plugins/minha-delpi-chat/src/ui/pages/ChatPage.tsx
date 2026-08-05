@@ -37,6 +37,7 @@ import {
 import {
   clearEmbeddedSessionId,
   readEmbeddedSessionId,
+  resolveEmbeddedSessionRestore,
   writeEmbeddedSessionId,
 } from "../../embeddedSessionPersistence";
 import {
@@ -1543,26 +1544,29 @@ export function ChatPage({
 
   useEffect(() => {
     if (!isEmbedded || !embeddedScopeKey) return;
-    if (isLoadingSessions) return;
+    if (embeddedRestoreAttemptedRef.current === embeddedScopeKey) return;
 
-    if (activeSession?.id) {
-      writeEmbeddedSessionId(embeddedScopeKey, activeSession.id);
+    const decision = resolveEmbeddedSessionRestore({
+      storedId: readEmbeddedSessionId(embeddedScopeKey),
+      sessionIds: sessions.map((item) => item.id),
+      isLoadingSessions,
+      activeSessionId: activeSession?.id ?? null,
+    });
+
+    if (decision.action === "persist") {
+      writeEmbeddedSessionId(embeddedScopeKey, decision.sessionId);
       return;
     }
+    if (decision.action === "wait") return;
 
-    if (embeddedRestoreAttemptedRef.current === embeddedScopeKey) return;
     embeddedRestoreAttemptedRef.current = embeddedScopeKey;
-
-    const storedId = readEmbeddedSessionId(embeddedScopeKey);
-    if (!storedId) return;
-
-    const session = sessions.find((item) => item.id === storedId);
-    if (!session) {
+    if (decision.action === "discard") {
       clearEmbeddedSessionId(embeddedScopeKey);
       return;
     }
 
-    selectSession(session);
+    const session = sessions.find((item) => item.id === decision.sessionId);
+    if (session) selectSession(session);
   }, [
     activeSession?.id,
     embeddedScopeKey,

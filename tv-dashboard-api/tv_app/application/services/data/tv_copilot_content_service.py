@@ -56,6 +56,13 @@ class TvCopilotContentService:
         return str(_load().get("catalogVersion") or "").strip()
 
     @classmethod
+    def block_defaults(cls, block_type: str) -> dict[str, Any]:
+        """frame/style padrão do bloco — espelha o editor para o bloco aparecer no slide."""
+        defaults = _load().get("blockDefaults") or {}
+        entry = defaults.get(str(block_type or "").strip()) or defaults.get("default") or {}
+        return entry if isinstance(entry, dict) else {}
+
+    @classmethod
     def mutation_action_terms(cls) -> list[str]:
         raw = _load().get("mutationActionTerms")
         if not isinstance(raw, list):

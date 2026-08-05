@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from uuid import UUID
@@ -25,6 +26,8 @@ from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_MANAGE, TV_READ, TV_WRITE, assert_permission
 from tv_app.interface.http.auth_http import resolve_user
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/data", tags=["TV Dados"])
 _catalog = TvDataRouteCatalogService()
@@ -533,6 +536,26 @@ def _copilot_actor(user: Any) -> str | None:
     return PlaylistAccessService.actor_id(user)
 
 
+def _copilot_unexpected_failure(kind: str, ops: list[dict[str, Any]] | None):
+    """Falha não prevista no patch: log com as ops + motivo factual ao chamador.
+
+    Sem isso o copiloto da IA recebia 500 com «Internal server error» e o usuário
+    via só «não foi possível aplicar», sem saber qual operação quebrou.
+    """
+    from tv_app.application.services.data.tv_copilot_content_service import (
+        TvCopilotContentService,
+    )
+
+    op_names = [
+        str(op.get("op") or "?") for op in (ops or []) if isinstance(op, dict)
+    ] or ["?"]
+    logger.exception("copilot_patch_unexpected_error kind=%s ops=%s", kind, op_names)
+    return fail(
+        TvCopilotContentService.message("patchUnexpectedError", ops=", ".join(op_names)),
+        500,
+    )
+
+
 @router.get("/copilot/capabilities")
 def copilot_capabilities(request: Request):
     """Catálogo versionado de ops tipadas (fonte de verdade para a AI / host)."""
@@ -600,6 +623,8 @@ def copilot_preview_patch(request: Request, body: CopilotPatchBody):
         )
     except TvCopilotPatchError as exc:
         return fail(str(exc), 422)
+    except Exception:
+        return _copilot_unexpected_failure("preview", body.ops)
     return ok(result, message=str(result.get("message") or "Prévia gerada."))
 
 
@@ -645,6 +670,8 @@ def copilot_apply_patch(request: Request, body: CopilotPatchBody):
         )
     except TvCopilotPatchError as exc:
         return fail(str(exc), 422)
+    except Exception:
+        return _copilot_unexpected_failure("apply", body.ops)
     return ok(result, message=str(result.get("message") or "Patch aplicado."))
 
 

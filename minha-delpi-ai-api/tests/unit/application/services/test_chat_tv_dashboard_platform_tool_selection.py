@@ -459,6 +459,25 @@ def test_failed_apply_preserves_factual_bff_reason():
     assert answer == "O slide foi alterado por outro editor."
 
 
+def test_failed_apply_shows_technical_detail_when_bff_has_no_message():
+    """500 com «detail» precisa aparecer: «não foi possível» sozinho não é diagnóstico."""
+    answer = ChatTvDashboardCopilotIntentService.format_direct_answer(
+        data={"detail": "Internal server error"},
+        metadata={"ok": False, "mode": "apply", "httpStatus": 500},
+    )
+    assert answer
+    assert "Internal server error" in answer
+
+
+def test_failed_apply_falls_back_to_http_status_without_any_reason():
+    answer = ChatTvDashboardCopilotIntentService.format_direct_answer(
+        data={},
+        metadata={"ok": False, "mode": "apply", "httpStatus": 503},
+    )
+    assert answer
+    assert "503" in answer
+
+
 def test_is_tv_mutation_turn_and_anti_hijack():
     host = {"surface": "tv-dashboard", "playlistId": "pl-1", "slideId": "sl-1"}
     assert (

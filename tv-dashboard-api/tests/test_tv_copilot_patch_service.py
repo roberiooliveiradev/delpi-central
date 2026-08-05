@@ -87,7 +87,7 @@ class _FakeRepo:
             raise SlideNotFoundError(key)
         return dict(self.slides[key])
 
-    def get(self, playlist_id):
+    def get_by_id(self, playlist_id):
         return {"id": str(playlist_id), "dataDefaults": {"branch": "01"}}
 
     def update_slide(self, playlist_id, slide_id, payload, *, actor_user_id, reason):
@@ -528,3 +528,117 @@ def test_reorder_and_delete_slide(monkeypatch):
     )
     assert SLIDE_ID in repo.deleted_slides
     assert deleted["sideEffects"]["deletedSlides"][0]["deleted"] is True
+
+
+def test_fake_repo_mirrors_real_playlist_repository_api():
+    """O fake não pode inventar método: era assim que `_repo.get` virou 500 em prod."""
+    from tv_app.infrastructure.persistence.repositories.playlist_repository import (
+        PlaylistRepository,
+    )
+
+    fake_methods = {
+        name
+        for name in dir(_FakeRepo)
+        if not name.startswith("_") and callable(getattr(_FakeRepo, name))
+    }
+    missing = sorted(name for name in fake_methods if not hasattr(PlaylistRepository, name))
+    assert missing == []
+
+
+def test_apply_upsert_block_de_texto_persiste_com_frame_padrao(monkeypatch):
+    repo = _FakeRepo()
+    svc = _service(repo, monkeypatch)
+    monkeypatch.setattr(
+        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
+        lambda **kwargs: None,
+    )
+
+    result = svc.apply(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {"id": "txt-1", "type": "text", "content": "Olá mundo!"},
+                }
+            ],
+        },
+        user={"sub": "u1"},
+        actor_user_id="u1",
+    )
+
+    assert result["persisted"] is True
+    saved = repo.updated[-1]["payload"]["nativeConfig"]["blocks"]
+    block = next(b for b in saved if b["id"] == "txt-1")
+    assert block["content"] == "Olá mundo!"
+    # Sem frame o bloco não aparece no editor nem no viewer.
+    assert set(block["frame"]) == {"x", "y", "w", "h"}
+    assert block["frame"]["w"] > 0 and block["frame"]["h"] > 0
+    assert block["style"]["fontSize"]
+
+
+def test_apply_upsert_block_existente_preserva_geometria(monkeypatch):
+    repo = _FakeRepo()
+    repo.slides[SLIDE_ID]["nativeConfig"]["blocks"].append(
+        {
+            "id": "txt-1",
+            "type": "text",
+            "content": "Antes",
+            "frame": {"x": 12, "y": 40, "w": 30, "h": 8},
+            "style": {"fontSize": 44},
+        }
+    )
+    svc = _service(repo, monkeypatch)
+    monkeypatch.setattr(
+        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
+        lambda **kwargs: None,
+    )
+
+    svc.apply(
+        {
+            "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+            "ops": [
+                {
+                    "op": "upsert_block",
+                    "block": {"id": "txt-1", "type": "text", "content": "Depois"},
+                }
+            ],
+        },
+        user={"sub": "u1"},
+        actor_user_id="u1",
+    )
+
+    saved = repo.updated[-1]["payload"]["nativeConfig"]["blocks"]
+    block = next(b for b in saved if b["id"] == "txt-1")
+    assert block["content"] == "Depois"
+    assert block["frame"] == {"x": 12, "y": 40, "w": 30, "h": 8}
+    assert block["style"]["fontSize"] == 44
+
+
+def test_apply_traduz_erro_de_validacao_em_erro_de_patch(monkeypatch):
+    repo = _FakeRepo()
+    svc = _service(repo, monkeypatch)
+
+    def _reject(cfg, user=None, catalog=None):
+        raise ValueError("Rota de dados não permitida para o seu perfil.")
+
+    monkeypatch.setattr(
+        "tv_app.application.services.data.tv_copilot_patch_service.validate_comunicado_native_config",
+        _reject,
+    )
+
+    with pytest.raises(TvCopilotPatchError, match="não permitida"):
+        svc.apply(
+            {
+                "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {"id": "txt-1", "type": "text", "content": "Olá"},
+                    }
+                ],
+            },
+            user={"sub": "u1"},
+            actor_user_id="u1",
+        )
+    assert repo.updated == []

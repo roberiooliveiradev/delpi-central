@@ -93,6 +93,7 @@
     "applyOk": "Alteração aplicada na programação. O editor deve atualizar em instantes.",
     "applySlideOk": "Slide criado e gravado na programação. O filmstrip deve atualizar em instantes.",
     "applyFailed": "Não foi possível aplicar a alteração na programação.",
+    "applyFailedWithReason": "Não foi possível aplicar a alteração na programação. Motivo do TV Dashboard: {reason}",
     "blocked": "Esta ação remove dados da programação. Confirme explicitamente (ex.: «pode aplicar» ou «confirmo»)."
   }
 }

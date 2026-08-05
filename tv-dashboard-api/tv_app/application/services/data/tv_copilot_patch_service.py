@@ -75,6 +75,24 @@ def _find_block(blocks: list[dict[str, Any]], block_id: str) -> dict[str, Any] |
     return None
 
 
+def _with_block_defaults(block: dict[str, Any]) -> dict[str, Any]:
+    """Bloco novo do copiloto ganha frame/style do catálogo.
+
+    O editor e o viewer leem ``block.frame.w``: sem geometria o bloco existe no
+    native_config mas não aparece no slide — o usuário lê isso como «não criou».
+    """
+    defaults = TvCopilotContentService.block_defaults(str(block.get("type") or ""))
+    out = dict(block)
+    frame = defaults.get("frame")
+    if not isinstance(out.get("frame"), dict) and isinstance(frame, dict):
+        out["frame"] = dict(frame)
+    style = defaults.get("style")
+    if isinstance(style, dict):
+        current = out.get("style") if isinstance(out.get("style"), dict) else {}
+        out["style"] = {**style, **current}
+    return out
+
+
 def _fingerprint_from_blocks(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Assinatura estável de campos críticos (sem payloads enormes)."""
     out: list[dict[str, Any]] = []
@@ -325,15 +343,7 @@ class TvCopilotPatchService:
             if "version" not in native_config:
                 native_config["version"] = 5
             before_blocks = copy.deepcopy(_blocks_of(native_config))
-            try:
-                pl = self._repo.get(UUID(playlist_id))
-                playlist_defaults = (
-                    dict(pl.get("dataDefaults") or {})
-                    if isinstance(pl.get("dataDefaults"), dict)
-                    else None
-                )
-            except (PlaylistNotFoundError, ValueError):
-                playlist_defaults = None
+            playlist_defaults = self._playlist_defaults(playlist_id)
 
         for raw_op in ops:
             if not isinstance(raw_op, dict):
@@ -518,7 +528,12 @@ class TvCopilotPatchService:
             cleaned = sanitize_and_hydrate_comunicado_config(
                 native_config, catalog=self._catalog
             )
-            validate_comunicado_native_config(cleaned, user=user, catalog=self._catalog)
+            # Validação de dados/RBAC devolve ValueError; virar erro de patch para o
+            # usuário ver o motivo (422) em vez de 500 opaco.
+            try:
+                validate_comunicado_native_config(cleaned, user=user, catalog=self._catalog)
+            except ValueError as exc:
+                raise TvCopilotPatchError(str(exc)) from exc
             after_blocks = _blocks_of(cleaned)
             result["nativeConfig"] = cleaned
             result["diff"] = _diff_blocks(before_blocks, after_blocks)
@@ -542,6 +557,19 @@ class TvCopilotPatchService:
             result["persisted"] = True
 
         return result
+
+    def _playlist_defaults(self, playlist_id: str | None) -> dict[str, Any] | None:
+        """dataDefaults da programação — contexto opcional, nunca quebra o patch."""
+        if not playlist_id:
+            return None
+        try:
+            playlist = self._repo.get_by_id(UUID(str(playlist_id)))
+        except (PlaylistNotFoundError, ValueError):
+            return None
+        if not isinstance(playlist, dict):
+            return None
+        defaults = playlist.get("dataDefaults")
+        return dict(defaults) if isinstance(defaults, dict) else None
 
     def _load_slide(self, playlist_id: str, slide_id: str) -> dict[str, Any]:
         try:
@@ -619,13 +647,13 @@ class TvCopilotPatchService:
                     if str(k).strip() and str(v).strip()
                 }
             return
-        block: dict[str, Any] = {
-            "id": block_id,
-            "type": "data_source",
-            "frame": {"x": 8, "y": 30, "w": 18, "h": 18},
-            "style": {"zIndex": 1},
-            "dataBinding": binding,
-        }
+        block: dict[str, Any] = _with_block_defaults(
+            {
+                "id": block_id,
+                "type": "data_source",
+                "dataBinding": binding,
+            }
+        )
         if isinstance(op.get("dataTransform"), dict):
             block["dataTransform"] = op["dataTransform"]
         if isinstance(op.get("fieldLabels"), dict):
@@ -678,10 +706,12 @@ class TvCopilotPatchService:
         blocks = _blocks_of(cfg)
         existing = _find_block(blocks, block_id)
         if existing is not None:
+            # Patch parcial: alterar conteúdo não pode zerar geometria/estilo já ajustados.
+            merged = {**existing, **cleaned}
             existing.clear()
-            existing.update(cleaned)
+            existing.update(merged)
         else:
-            blocks.append(cleaned)
+            blocks.append(_with_block_defaults(cleaned))
         cfg["blocks"] = blocks
 
     def _op_delete_block(self, cfg: dict[str, Any], op: dict[str, Any]) -> str | None:

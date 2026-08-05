@@ -139,3 +139,48 @@ def test_copilot_suggest_ops_clarifies_missing_slide_without_invalid_ops():
     assert data["status"] == "clarification"
     assert data["clarificationKey"] == "suggestNeedSlideOrCreate"
     assert data["ops"] == []
+
+
+def test_copilot_apply_patch_unexpected_error_returns_reason_not_opaque_500():
+    """Falha não prevista no apply devolve motivo do catálogo, não «Internal server error»."""
+    user = SimpleNamespace(is_superadmin=True, permissions=[], id="u1", email="u@d")
+    client = TestClient(app)
+    with (
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.resolve_user",
+            return_value=user,
+        ),
+        patch(
+            "tv_app.middleware.auth_middleware._base_jwt_middleware",
+            side_effect=_bypass_auth_middleware,
+        ),
+        patch(
+            "tv_app.application.services.data.tv_copilot_patch_service.TvCopilotPatchService.apply",
+            side_effect=AttributeError("boom"),
+        ),
+        patch(
+            "tv_app.interface.http.routes.data_api_routes.require_playlist_access",
+            return_value=(user, SimpleNamespace(can_edit=True, can_manage=True)),
+        ),
+    ):
+        response = client.post(
+            "/data/copilot/apply-patch",
+            json={
+                "target": {
+                    "playlistId": "8b43ae88-4c66-4eca-8965-1cbb3fb923d9",
+                    "slideId": "c8ff6fd6-49de-4f52-ac2f-3cb8a65b5c5e",
+                },
+                "ops": [
+                    {
+                        "op": "upsert_block",
+                        "block": {"id": "txt-1", "type": "text", "content": "Olá"},
+                    }
+                ],
+            },
+        )
+
+    assert response.status_code == 500
+    body = response.json()
+    assert body["success"] is False
+    assert "upsert_block" in body["message"]
+    assert "Internal server error" not in body["message"]

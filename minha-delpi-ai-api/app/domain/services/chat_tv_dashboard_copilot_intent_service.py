@@ -223,6 +223,19 @@ class ChatTvDashboardCopilotIntentService:
         )
 
     @classmethod
+    def _apply_failure_message(cls, payload: dict, metadata: dict) -> str | None:
+        """Falha sem mensagem amigável: mostrar o motivo técnico em vez de só «não deu»."""
+        reason = str(payload.get("detail") or "").strip()
+        if not reason:
+            status = metadata.get("httpStatus")
+            reason = f"HTTP {status}" if status else ""
+        if reason:
+            template = cls._text("directAnswer", "applyFailedWithReason", default="")
+            if template:
+                return template.format(reason=reason)
+        return cls._text("directAnswer", "applyFailed", default="") or None
+
+    @classmethod
     def format_direct_answer(
         cls,
         *,
@@ -249,11 +262,7 @@ class ChatTvDashboardCopilotIntentService:
 
         if mode == "apply":
             if not ok:
-                return (
-                    factual_message
-                    or cls._text("directAnswer", "applyFailed", default="")
-                    or None
-                )
+                return factual_message or cls._apply_failure_message(payload, meta)
             side = (
                 payload.get("sideEffects")
                 if isinstance(payload.get("sideEffects"), dict)
