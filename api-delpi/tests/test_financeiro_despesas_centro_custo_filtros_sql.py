@@ -1,5 +1,6 @@
 from app.infrastructure.persistence.totvs.financeiro_despesas_centro_custo.despesas_centro_custo_sql import (
     MAX_FORNECEDORES_FILTROS,
+    build_centros_custo_catalog_by_branch_query,
     build_centros_custo_query,
     build_filiais_query,
     build_fornecedores_query,
@@ -51,6 +52,16 @@ def test_build_centros_custo_query_selects_explicit_columns() -> None:
     assert "centro_custo_codigo" in query
     assert "centro_custo_descricao" in query
     assert "SELECT *" not in query
+
+
+def test_build_centros_custo_catalog_by_branch_query_is_read_only_catalog() -> None:
+    query, params = build_centros_custo_catalog_by_branch_query(branch="01")
+
+    assert "dbo.vw_fin_despesas_centro_custo WITH (NOLOCK)" in query
+    assert "LTRIM(RTRIM(filial)) = ?" in query
+    assert "data_emissao" not in query
+    assert "SELECT *" not in query
+    assert params == ("01",)
 
 
 def test_build_fornecedores_query_limits_distinct_rows() -> None:

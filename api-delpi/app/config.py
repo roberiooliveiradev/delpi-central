@@ -124,6 +124,10 @@ class Settings:
         "GUIAS_PROCEDIMENTOS_UPLOAD_DIR",
         default="/app/data/guias-procedimentos",
     )
+    PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR: str = _get_env(
+        "PLANEJAMENTO_ORCAMENTARIO_UPLOAD_DIR",
+        default="/app/data/planejamento-orcamentario",
+    )
     QUALITY_LABELS_QR_DIR: str = _get_env(
         "QUALITY_LABELS_QR_DIR",
         default="/app/data/quality-labels/qr",

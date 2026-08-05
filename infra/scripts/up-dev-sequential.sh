@@ -140,6 +140,7 @@ FASE_MFE=(
   central-agendamento
   canal-denuncia
   reports
+  planejamento-orcamentario
   cipa
   comite-etica-conduta
   quality-labels

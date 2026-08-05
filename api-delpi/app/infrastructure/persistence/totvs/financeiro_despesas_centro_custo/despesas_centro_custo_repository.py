@@ -5,6 +5,7 @@ from app.domain.ports.financeiro_despesas_centro_custo.despesas_centro_custo_rep
 )
 from app.infrastructure.persistence.totvs.base_repository import BaseRepository
 from app.infrastructure.persistence.totvs.financeiro_despesas_centro_custo.despesas_centro_custo_sql import (
+    build_centros_custo_catalog_by_branch_query,
     build_centros_custo_query,
     build_filiais_query,
     build_fornecedores_query,
@@ -24,6 +25,27 @@ def _clean(value: object) -> str:
 
 
 class DespesasCentroCustoRepository(BaseRepository, DespesasCentroCustoRepositoryPort):
+    def list_centros_custo_by_branch(self, *, branch: str) -> list[dict]:
+        """Lista deduplicada de centros de custo ERP para uma filial (somente leitura)."""
+        query, params = build_centros_custo_catalog_by_branch_query(branch=branch)
+        with self:
+            rows = self.execute_query(query, params)
+        seen: set[str] = set()
+        items: list[dict] = []
+        for row in rows:
+            code = _clean(row.get("codigo"))
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            items.append(
+                {
+                    "branch": _clean(row.get("filial")) or branch,
+                    "code": code,
+                    "description": _clean(row.get("descricao")),
+                }
+            )
+        return items
+
     def get_filtros(
         self,
         *,

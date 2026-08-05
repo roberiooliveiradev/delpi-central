@@ -1,0 +1,25 @@
+# MFE — @delpi/plugin-ui via Module Federation (remote delpi-plugin-ui).
+# Doc: plugins/plugin-ui/docs/module-federation.md
+
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY planejamento-orcamentario/package*.json ./planejamento-orcamentario/
+RUN --mount=type=cache,target=/root/.npm \
+    cd planejamento-orcamentario && npm install
+
+COPY planejamento-orcamentario ./planejamento-orcamentario
+COPY vite ./vite
+
+WORKDIR /app/planejamento-orcamentario
+# tsc roda no CI/local; Docker só bundla (MF externaliza @delpi/plugin-ui).
+RUN npx vite build
+
+FROM nginx:alpine AS production
+
+COPY --from=builder /app/planejamento-orcamentario/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
