@@ -1,11 +1,12 @@
 # Atas Transforma+ — MFE (`plugins/transformometro`)
 
-Atualizado: **jul/2026**
+Atualizado: **ago/2026**
 
 Implementação de UI do módulo de atas no plugin Transformômetro.
 
 - Produto / fluxo: [ATAS-TRANSFORMA-MAIS.md](../../../docs/12-roadmap-e-evolucao/transformometro-app/ATAS-TRANSFORMA-MAIS.md)
 - API + Kimi: [transformometro-api/docs/atas-kimi.md](../../../transformometro-api/docs/atas-kimi.md)
+- Magic link: [public-hub](../../public-hub/README.md) → `/p/transformometro/sign/{token}`
 
 ---
 
@@ -22,8 +23,16 @@ Definidas em `src/constants/routes.ts` e registradas no manifesto / router do ap
 | `/apps/transformometro/atas/pending` | `AtasPendingPage` |
 | `/apps/transformometro/minha-assinatura` | `MinhaAssinaturaPage` |
 
+Assinatura **sem** login no módulo: `/p/transformometro/sign/{token}` (public-hub).
+
 Nav: item **Atas** em `TransformometroNav`.
 
+### Signatários
+
+- Usuários Minha Delpi (`UserDirectoryPicker`) com flag **Assina**
+- Convidados externos: nome + e-mail + **Assina** → `invite_email` na API; recebem magic link no e-mail Graph
+
+No envio para assinatura: notificação portal (se `user_id`) + e-mail com link público.
 ---
 
 ## Estrutura de código

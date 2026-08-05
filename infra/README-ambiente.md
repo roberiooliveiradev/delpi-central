@@ -468,6 +468,25 @@ Assinaturas PNG e PDF final das atas (metadado em `transformometro.tm_meeting_*`
 | `TM_ATA_SIGNATURE_UPLOAD_DIR` | `/app/data/transformometro/atas/signatures` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/signatures` |
 | `TM_ATA_PDF_UPLOAD_DIR` | `/app/data/transformometro/atas/pdfs` | `${DELPI_DATA_HOST_DIR}/transformometro/atas/pdfs` |
 
+### Notificações portal + e-mail Graph + magic link
+
+No `send-for-signature`:
+
+1. Emite convite (token hasheado, TTL `TM_ATA_SIGN_INVITE_TTL_DAYS`, default 14)
+2. Notifica no portal Core (`userIds` + `action.portal_route`) se o signatário tem `user_id`
+3. Envia e-mail Graph com CTA `{PUBLIC_BASE_URL}/p/transformometro/sign/{token}` (public-hub)
+
+| Variável | Default | Notas |
+|----------|---------|-------|
+| `TM_PORTAL_NOTIFICATIONS_ENABLED` | `true` | Sino do portal |
+| `TM_MAIL_ENABLED` | `true` | Desligar só o canal e-mail |
+| `TM_ATA_SIGN_INVITE_TTL_DAYS` | `14` | Validade do magic link |
+| `PUBLIC_BASE_URL` | vazio | Base absoluta dos links do e-mail |
+| `GRAPH_REPORTS_*` | — | Mesmas credenciais do Delpi Reports / CEC |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | — | S2S Core (notificações + directory) |
+
+Página pública: `/p/transformometro/sign/{token}` (plugin `public-hub`). API sem JWT: `/apps/transformometro-api/public/atas/sign-invites/{token}`.
+
 ### Kimi / OpenRouter (geração de ata)
 
 Opcional no boot; **obrigatório** para `POST /transformometro/atas/generate-from-transcript` (botão «Gerar ata com IA» no MFE).
