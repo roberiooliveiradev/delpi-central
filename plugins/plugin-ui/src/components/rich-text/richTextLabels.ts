@@ -41,5 +41,9 @@ export const RICH_TEXT_LABELS = {
   sourceVisual: "Voltar ao visual",
   sourceEditor: "Fonte HTML do texto",
   sourceHint:
-    "Só tags e estilos permitidos são preservados ao salvar (sem script/CSS global).",
+    "Digite < para tags e edite style=\"…\" para CSS. Só o allowlist é preservado ao salvar (sem script/CSS global).",
+  sourceSuggestList: "Sugestões de HTML e CSS",
+  sourceSuggestTag: "tag HTML",
+  sourceSuggestCss: "propriedade CSS",
+  sourceSuggestCssValue: "valor CSS",
 } as const;

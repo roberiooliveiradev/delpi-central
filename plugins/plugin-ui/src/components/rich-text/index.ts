@@ -9,6 +9,15 @@ export {
 } from "./richTextConfig";
 export { prettyPrintRichTextHtml, stripDangerousRichTextTags } from "./richTextHtmlFormat";
 export {
+  applyRichTextHtmlAutoClose,
+  applyRichTextSourceSuggestion,
+  listRichTextCssPropertySuggestions,
+  listRichTextHtmlTagSuggestions,
+  resolveRichTextSourceSuggestions,
+  RICH_TEXT_CSS_SUGGEST_PROPERTIES,
+  RICH_TEXT_HTML_SUGGEST_TAGS,
+} from "./richTextHtmlAssist";
+export {
   buildRichTextTableHtml,
   insertRichTextTable,
   normalizeRichTextPastedHtml,
