@@ -1,7 +1,8 @@
-"""TvCopilotPatchV1 — preview/apply de ops tipadas no modelo de slide/playlist.
+"""TvCopilotPatchV1 — redutor tipado → plano HTTP CRUD.
 
-Não grava `resolved`. Não gera M. Preview usa SlideDataResolutionService.
-Apply persiste + notify_presentation_changed (cache + WS).
+O BFF valida e materializa o efeito em memória (dry-run). A persistência
+acontece somente quando a AI executa as rotas CRUD ``/playlists/**`` com o
+JWT do usuário — o mesmo caminho do editor. Não grava ``resolved`` nem gera M.
 """
 
 from __future__ import annotations
@@ -21,6 +22,9 @@ from tv_app.application.services.data.slide_data_resolution_service import (
 )
 from tv_app.application.services.data.tv_copilot_content_service import (
     TvCopilotContentService,
+)
+from tv_app.application.services.data.tv_copilot_http_command_planner_service import (
+    TvCopilotHttpCommandPlannerService,
 )
 from tv_app.application.services.data.tv_copilot_telemetry import record_copilot_event
 from tv_app.application.services.presentation_change_notifier import (
@@ -221,6 +225,7 @@ class TvCopilotPatchService:
     ) -> dict[str, Any]:
         started = time.perf_counter()
         try:
+            # Sempre dry-run: o redutor não persiste; httpCommands são a saída.
             result = self._run(envelope, user=user, persist=False, authorization=authorization)
             if include_fingerprint and result.get("nativeConfig"):
                 result["fingerprint"] = self._resolve_fingerprint(
@@ -257,14 +262,20 @@ class TvCopilotPatchService:
         authorization: str | None = None,
         actor_user_id: str,
     ) -> dict[str, Any]:
+        """Plano de apply via CRUD — não persiste no BFF.
+
+        Mantido por compatibilidade de rota; a AI deve executar ``httpCommands``
+        nas rotas ``/playlists/**``. ``actor_user_id`` é ignorado (a identidade
+        vem do JWT nas rotas CRUD).
+        """
+        del actor_user_id  # identidade = JWT nas rotas CRUD
         started = time.perf_counter()
         try:
             result = self._run(
                 envelope,
                 user=user,
-                persist=True,
+                persist=False,
                 authorization=authorization,
-                actor_user_id=actor_user_id,
             )
             record_copilot_event(
                 kind="apply",
@@ -273,9 +284,11 @@ class TvCopilotPatchService:
                 elapsed_ms=(time.perf_counter() - started) * 1000,
             )
             result["message"] = TvCopilotContentService.message(
-                "applyOk",
-                ops=len(result.get("appliedOps") or []),
+                "planReady",
+                ops=len(result.get("httpCommands") or []),
             )
+            result["persisted"] = False
+            result["executionMode"] = "crud_http"
             return result
         except TvCopilotPatchError as exc:
             record_copilot_event(
@@ -295,6 +308,10 @@ class TvCopilotPatchService:
         authorization: str | None = None,
         actor_user_id: str | None = None,
     ) -> dict[str, Any]:
+        # Redutor puro: nunca persiste. Persistência = rotas CRUD via httpCommands.
+        persist = False
+        actor_user_id = None
+
         if not isinstance(envelope, dict):
             raise TvCopilotPatchError(TvCopilotContentService.message("invalidEnvelope"))
 
@@ -522,6 +539,7 @@ class TvCopilotPatchService:
             "sideEffectHints": hints,
             "playlistDefaults": playlist_defaults,
             "persisted": False,
+            "executionMode": "crud_http",
         }
 
         if native_config is not None:
@@ -538,25 +556,33 @@ class TvCopilotPatchService:
             result["nativeConfig"] = cleaned
             result["diff"] = _diff_blocks(before_blocks, after_blocks)
 
-            if persist and playlist_id and slide_id and actor_user_id:
-                self._repo.update_slide(
-                    UUID(playlist_id),
-                    UUID(slide_id),
-                    {"nativeConfig": cleaned},
-                    actor_user_id=actor_user_id,
-                    reason="copilot_patch_applied",
-                )
-                notify_presentation_changed(
-                    playlist_id=playlist_id,
-                    reason="copilot_patch_applied",
-                )
-                result["persisted"] = True
-            elif playlist_mutated and persist:
-                result["persisted"] = True
-        elif playlist_mutated and persist:
-            result["persisted"] = True
+        base_revision = self._playlist_revision(playlist_id)
+        result["baseRevision"] = base_revision
+        try:
+            result["httpCommands"] = TvCopilotHttpCommandPlannerService.build(
+                ops=ops,
+                target=result["target"],
+                native_config=result.get("nativeConfig"),
+                base_revision=base_revision,
+            )
+        except ValueError as exc:
+            raise TvCopilotPatchError(str(exc)) from exc
 
         return result
+
+    def _playlist_revision(self, playlist_id: str | None) -> int | None:
+        if not playlist_id or playlist_id.startswith("{"):
+            return None
+        try:
+            playlist = self._repo.get_by_id(UUID(str(playlist_id)))
+        except (PlaylistNotFoundError, ValueError):
+            return None
+        if not isinstance(playlist, dict):
+            return None
+        try:
+            return int(playlist.get("revision") or 0)
+        except (TypeError, ValueError):
+            return None
 
     def _playlist_defaults(self, playlist_id: str | None) -> dict[str, Any] | None:
         """dataDefaults da programação — contexto opcional, nunca quebra o patch."""

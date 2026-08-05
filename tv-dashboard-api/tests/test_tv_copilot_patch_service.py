@@ -88,7 +88,14 @@ class _FakeRepo:
         return dict(self.slides[key])
 
     def get_by_id(self, playlist_id):
-        return {"id": str(playlist_id), "dataDefaults": {"branch": "01"}}
+        return {
+            "id": str(playlist_id),
+            "dataDefaults": {"branch": "01"},
+            "revision": 7,
+        }
+
+    def get_revision(self, playlist_id):
+        return 7
 
     def update_slide(self, playlist_id, slide_id, payload, *, actor_user_id, reason):
         self.updated.append(
@@ -304,17 +311,15 @@ def test_preview_upsert_data_source_and_bind_without_persist(monkeypatch):
     assert repo.updated == []
 
 
-def test_apply_persists_and_strips_resolved(monkeypatch):
+def test_apply_plans_crud_http_without_persisting(monkeypatch):
+    """Apply do BFF só planeja — persistência = rotas /playlists/** na AI."""
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)
     notified: list[dict[str, Any]] = []
 
-    def _notify(**kwargs):
-        notified.append(kwargs)
-
     monkeypatch.setattr(
         "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
-        _notify,
+        lambda **kwargs: notified.append(kwargs),
     )
 
     repo.slides[SLIDE_ID]["nativeConfig"]["blocks"][0]["resolved"] = {"idd": 1}
@@ -333,11 +338,18 @@ def test_apply_persists_and_strips_resolved(monkeypatch):
         user={"sub": "u1"},
         actor_user_id="u1",
     )
-    assert result["persisted"] is True
-    assert repo.updated
-    saved = repo.updated[0]["payload"]["nativeConfig"]
-    assert all("resolved" not in b for b in saved["blocks"])
-    assert notified and notified[0]["reason"] == "copilot_patch_applied"
+    assert result["persisted"] is False
+    assert result["executionMode"] == "crud_http"
+    assert result["baseRevision"] == 7
+    assert repo.updated == []
+    assert notified == []
+    cmds = result["httpCommands"]
+    assert len(cmds) == 1
+    assert cmds[0]["method"] == "PATCH"
+    assert cmds[0]["path"] == f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}"
+    assert "nativeConfig" in cmds[0]["body"]
+    assert all("resolved" not in b for b in cmds[0]["body"]["nativeConfig"]["blocks"])
+    assert cmds[0]["expectedRevision"] == 7
 
 
 def test_rejects_unknown_op_and_unknown_operation_id(monkeypatch):
@@ -449,14 +461,9 @@ def test_patch_native_config_background(monkeypatch):
         )
 
 
-def test_add_blank_slide_and_update_slide(monkeypatch):
+def test_add_blank_slide_and_update_slide_emit_http_commands(monkeypatch):
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)
-    notified: list[dict[str, Any]] = []
-    monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
-        lambda **kwargs: notified.append(kwargs),
-    )
 
     blank_preview = svc.preview(
         {
@@ -468,6 +475,8 @@ def test_add_blank_slide_and_update_slide(monkeypatch):
     assert blank_preview["sideEffects"]["slides"][0]["preview"] is True
     assert blank_preview["sideEffects"]["slides"][0]["nativeScreenKey"] == "custom_message"
     assert repo.added_slides == []
+    assert blank_preview["httpCommands"][0]["method"] == "POST"
+    assert blank_preview["httpCommands"][0]["path"] == f"/playlists/{PLAYLIST_ID}/slides"
 
     blank_apply = svc.apply(
         {
@@ -477,10 +486,11 @@ def test_add_blank_slide_and_update_slide(monkeypatch):
         user={},
         actor_user_id="u1",
     )
-    assert blank_apply["persisted"] is True
-    assert repo.added_slides
-    assert repo.added_slides[0]["title"] == "Em branco"
+    assert blank_apply["persisted"] is False
+    assert blank_apply["executionMode"] == "crud_http"
+    assert repo.added_slides == []
     assert "refreshFilmstrip" in blank_apply["sideEffectHints"]
+    assert blank_apply["httpCommands"][0]["body"]["title"] == "Em branco"
 
     updated = svc.apply(
         {
@@ -490,18 +500,19 @@ def test_add_blank_slide_and_update_slide(monkeypatch):
         user={},
         actor_user_id="u1",
     )
-    assert updated["persisted"] is True
-    assert repo.slides[SLIDE_ID]["title"] == "Novo título"
-    assert repo.slides[SLIDE_ID]["isActive"] is False
+    assert updated["persisted"] is False
+    assert repo.updated == []
+    # Estado do repo não muda — só o plano.
+    assert repo.slides[SLIDE_ID]["title"] == "Slide A"
+    cmd = updated["httpCommands"][0]
+    assert cmd["method"] == "PATCH"
+    assert cmd["body"]["title"] == "Novo título"
+    assert cmd["body"]["isActive"] is False
 
 
-def test_reorder_and_delete_slide(monkeypatch):
+def test_reorder_and_delete_slide_emit_http_commands(monkeypatch):
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)
-    monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
-        lambda **kwargs: None,
-    )
     reorder = svc.apply(
         {
             "target": {"playlistId": PLAYLIST_ID},
@@ -515,8 +526,9 @@ def test_reorder_and_delete_slide(monkeypatch):
         user={},
         actor_user_id="u1",
     )
-    assert repo.reordered
+    assert repo.reordered == []
     assert reorder["sideEffects"]["reorder"]["items"][0]["sortOrder"] == 2
+    assert reorder["httpCommands"][0]["path"] == f"/playlists/{PLAYLIST_ID}/slides/reorder"
 
     deleted = svc.apply(
         {
@@ -526,8 +538,12 @@ def test_reorder_and_delete_slide(monkeypatch):
         user={},
         actor_user_id="u1",
     )
-    assert SLIDE_ID in repo.deleted_slides
+    assert repo.deleted_slides == []
     assert deleted["sideEffects"]["deletedSlides"][0]["deleted"] is True
+    assert deleted["httpCommands"][0]["method"] == "DELETE"
+    assert deleted["httpCommands"][0]["path"] == (
+        f"/playlists/{PLAYLIST_ID}/slides/{SLIDE_ID}"
+    )
 
 
 def test_fake_repo_mirrors_real_playlist_repository_api():
@@ -545,13 +561,9 @@ def test_fake_repo_mirrors_real_playlist_repository_api():
     assert missing == []
 
 
-def test_apply_upsert_block_de_texto_persiste_com_frame_padrao(monkeypatch):
+def test_apply_upsert_block_de_texto_planeja_patch_com_frame_padrao(monkeypatch):
     repo = _FakeRepo()
     svc = _service(repo, monkeypatch)
-    monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
-        lambda **kwargs: None,
-    )
 
     result = svc.apply(
         {
@@ -567,17 +579,20 @@ def test_apply_upsert_block_de_texto_persiste_com_frame_padrao(monkeypatch):
         actor_user_id="u1",
     )
 
-    assert result["persisted"] is True
-    saved = repo.updated[-1]["payload"]["nativeConfig"]["blocks"]
-    block = next(b for b in saved if b["id"] == "txt-1")
+    assert result["persisted"] is False
+    assert repo.updated == []
+    block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-1")
     assert block["content"] == "Olá mundo!"
     # Sem frame o bloco não aparece no editor nem no viewer.
     assert set(block["frame"]) == {"x", "y", "w", "h"}
     assert block["frame"]["w"] > 0 and block["frame"]["h"] > 0
     assert block["style"]["fontSize"]
+    # Várias ops de canvas coalescem num único PATCH nativeConfig.
+    assert len(result["httpCommands"]) == 1
+    assert result["httpCommands"][0]["op"] == "native_config_batch"
 
 
-def test_apply_upsert_block_existente_preserva_geometria(monkeypatch):
+def test_apply_upsert_block_existente_preserva_geometria_no_plano(monkeypatch):
     repo = _FakeRepo()
     repo.slides[SLIDE_ID]["nativeConfig"]["blocks"].append(
         {
@@ -589,12 +604,8 @@ def test_apply_upsert_block_existente_preserva_geometria(monkeypatch):
         }
     )
     svc = _service(repo, monkeypatch)
-    monkeypatch.setattr(
-        "tv_app.application.services.data.tv_copilot_patch_service.notify_presentation_changed",
-        lambda **kwargs: None,
-    )
 
-    svc.apply(
+    result = svc.apply(
         {
             "target": {"playlistId": PLAYLIST_ID, "slideId": SLIDE_ID},
             "ops": [
@@ -608,8 +619,8 @@ def test_apply_upsert_block_existente_preserva_geometria(monkeypatch):
         actor_user_id="u1",
     )
 
-    saved = repo.updated[-1]["payload"]["nativeConfig"]["blocks"]
-    block = next(b for b in saved if b["id"] == "txt-1")
+    assert repo.updated == []
+    block = next(b for b in result["nativeConfig"]["blocks"] if b["id"] == "txt-1")
     assert block["content"] == "Depois"
     assert block["frame"] == {"x": 12, "y": 40, "w": 30, "h": 8}
     assert block["style"]["fontSize"] == 44

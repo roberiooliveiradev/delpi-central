@@ -1,4 +1,4 @@
-"""Cliente HTTP do BFF TV Dashboard (copiloto → preview/apply patch)."""
+"""Cliente HTTP do BFF TV Dashboard (copiloto → preview + CRUD /playlists)."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ from typing import Any
 import requests
 
 from app.infrastructure.config.settings import Settings
+
+_CRUD_ALLOWED_METHODS = frozenset({"GET", "POST", "PATCH", "DELETE"})
 
 
 class TvDashboardApiGateway:
@@ -58,6 +60,7 @@ class TvDashboardApiGateway:
         *,
         access_token: str,
     ) -> dict[str, Any]:
+        """Legado: dry-run no BFF. Persistência via ``execute_crud_command``."""
         return self._post(
             "/data/copilot/apply-patch",
             {
@@ -66,6 +69,61 @@ class TvDashboardApiGateway:
             },
             access_token=access_token,
         )
+
+    def execute_crud_command(
+        self,
+        command: dict[str, Any],
+        *,
+        access_token: str,
+        expected_revision: int | None = None,
+    ) -> dict[str, Any]:
+        """Executa um comando CRUD allowlisted em ``/playlists/**`` com o JWT do usuário."""
+        if not isinstance(command, dict):
+            raise ValueError("CRUD command must be an object")
+
+        method = str(command.get("method") or "").strip().upper()
+        if method not in _CRUD_ALLOWED_METHODS:
+            raise ValueError(f"HTTP method not allowlisted: {method or '?'}")
+
+        path = self._validate_crud_path(command.get("path"))
+        headers = {
+            **self._auth_headers(access_token),
+            "Accept": "application/json",
+        }
+        if expected_revision is not None and bool(command.get("requiresIfMatch")):
+            headers["If-Match"] = f'"{int(expected_revision)}"'
+
+        url = f"{self.base_url}{path}"
+        request_kwargs: dict[str, Any] = {
+            "headers": headers,
+            "timeout": self.timeout,
+        }
+        body = command.get("body")
+        if method in {"POST", "PATCH"} and body is not None:
+            headers["Content-Type"] = "application/json"
+            request_kwargs["json"] = body
+
+        response = requests.request(method, url, **request_kwargs)
+        return self._normalize_crud_response(response)
+
+    @staticmethod
+    def _validate_crud_path(path: Any) -> str:
+        path_s = str(path or "").strip()
+        if not path_s:
+            raise ValueError("CRUD path is required")
+        lowered = path_s.lower()
+        if (
+            "://" in path_s
+            or path_s.startswith("//")
+            or lowered.startswith("http:")
+            or lowered.startswith("https:")
+        ):
+            raise ValueError(f"CRUD path must be relative (no URL/host): {path_s}")
+        if ".." in path_s:
+            raise ValueError(f"CRUD path traversal rejected: {path_s}")
+        if not path_s.startswith("/playlists"):
+            raise ValueError(f"CRUD path outside /playlists: {path_s}")
+        return path_s
 
     def _auth_headers(self, access_token: str) -> dict[str, str]:
         bearer = (
@@ -107,3 +165,34 @@ class TvDashboardApiGateway:
         payload.setdefault("_httpStatus", response.status_code)
         payload.setdefault("_ok", response.ok)
         return payload
+
+    @classmethod
+    def _normalize_crud_response(cls, response: requests.Response) -> dict[str, Any]:
+        payload = cls._normalize_response(response)
+        revision = cls._extract_playlist_revision(payload, response)
+        if revision is not None:
+            payload["playlistRevision"] = revision
+        return payload
+
+    @staticmethod
+    def _extract_playlist_revision(
+        payload: dict[str, Any],
+        response: requests.Response,
+    ) -> int | None:
+        candidates: list[Any] = [payload.get("playlistRevision")]
+        data = payload.get("data")
+        if isinstance(data, dict):
+            candidates.append(data.get("playlistRevision"))
+        header = response.headers.get("X-Playlist-Revision") or response.headers.get(
+            "x-playlist-revision"
+        )
+        if header is not None:
+            candidates.append(header)
+        for raw in candidates:
+            if raw is None or raw == "":
+                continue
+            try:
+                return int(raw)
+            except (TypeError, ValueError):
+                continue
+        return None

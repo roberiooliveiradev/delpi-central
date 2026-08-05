@@ -442,6 +442,22 @@ class PlaylistRepository:
                 row = cur.fetchone()
         return _row_to_playlist(row) if row else None
 
+    def get_revision(self, playlist_id: UUID) -> int:
+        """Revisão inteira da programação (OCC / If-Match)."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT revision FROM tv_dashboard.playlists WHERE id = %s",
+                    (str(playlist_id),),
+                )
+                row = cur.fetchone()
+        if not row:
+            raise PlaylistNotFoundError()
+        try:
+            return int(row.get("revision") or 0)
+        except (TypeError, ValueError, AttributeError):
+            return 0
+
     def try_claim_owner(self, playlist_id: UUID, user_id: str) -> dict[str, Any] | None:
         """Atribui dono só se ainda estiver órfã (owner e created_by vazios)."""
         actor = (user_id or "").strip()

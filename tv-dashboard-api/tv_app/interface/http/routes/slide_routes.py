@@ -27,6 +27,12 @@ from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     SlideNotFoundError,
 )
 from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
+from tv_app.interface.http.playlist_revision_http import (
+    assert_playlist_revision_or_conflict,
+    parse_if_match_revision,
+    revision_response_headers,
+    with_revision,
+)
 
 router = APIRouter(prefix="/playlists/{playlist_id}/slides", tags=["Slides"])
 _repo = PlaylistRepository()
@@ -136,6 +142,14 @@ def _actor_id(user: Any) -> str | None:
     return _access.actor_id(user)
 
 
+def _ok_with_revision(data: Any, *, playlist_id: UUID, message: str, status_code: int = 200):
+    revision = _repo.get_revision(playlist_id)
+    response = ok(with_revision(data, revision), message=message, status_code=status_code)
+    for key, value in revision_response_headers(revision).items():
+        response.headers[key] = value
+    return response
+
+
 @router.post("")
 def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
     guarded = require_playlist_access(request, playlist_id, need="edit")
@@ -145,6 +159,11 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
     native_config = body.nativeConfig
     try:
         if body.slideType == "native" and native_config is not None:
@@ -163,6 +182,7 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             "externalUrl": body.externalUrl,
             "externalSandbox": body.externalSandbox,
             "transitionStyle": body.transitionStyle,
+            "sectionId": body.sectionId,
         },
         actor_user_id=actor,
         reason="slide_created",
@@ -170,8 +190,11 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="slide_created",
+        slide_id=str(slide.get("id") or ""),
     )
-    return ok(slide, message="Tela adicionada.", status_code=201)
+    return _ok_with_revision(
+        slide, playlist_id=playlist_id, message="Tela adicionada.", status_code=201
+    )
 
 
 @router.post("/from-preset")
@@ -183,6 +206,11 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
     try:
         preset_payload = resolve_preset_slide(body.presetKey)
     except SlidePresetNotFoundError:
@@ -207,8 +235,11 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="slide_imported",
+        slide_id=str(slide.get("id") or ""),
     )
-    return ok(slide, message="Tela importada do catálogo.", status_code=201)
+    return _ok_with_revision(
+        slide, playlist_id=playlist_id, message="Tela importada do catálogo.", status_code=201
+    )
 
 
 @router.post("/reorder")
@@ -220,6 +251,11 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
     slides = _repo.reorder_slides(
         playlist_id,
         [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
@@ -230,7 +266,9 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
         playlist_id=str(playlist_id),
         reason="slides_reordered",
     )
-    return ok({"slides": slides}, message="Ordem atualizada.")
+    return _ok_with_revision(
+        {"slides": slides}, playlist_id=playlist_id, message="Ordem atualizada."
+    )
 
 
 @router.patch("/{slide_id}")
@@ -242,6 +280,11 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
     payload = body.model_dump(exclude_unset=True)
     try:
         if payload.get("nativeConfig") is not None:
@@ -261,8 +304,9 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="slide_updated",
+        slide_id=str(slide_id),
     )
-    return ok(slide, message="Tela atualizada.")
+    return _ok_with_revision(slide, playlist_id=playlist_id, message="Tela atualizada.")
 
 
 @router.post("/{slide_id}/preview-data-block")
@@ -310,6 +354,11 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     actor = _actor_id(user)
     if not actor:
         return fail("Usuário não identificado.", 401)
+    conflict = assert_playlist_revision_or_conflict(
+        _repo, playlist_id, expected=parse_if_match_revision(request)
+    )
+    if not isinstance(conflict, int):
+        return conflict
     try:
         _repo.delete_slide(
             playlist_id,
@@ -322,8 +371,9 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="slide_deleted",
+        slide_id=str(slide_id),
     )
-    return ok(message="Tela removida.")
+    return _ok_with_revision(None, playlist_id=playlist_id, message="Tela removida.")
 
 
 @router.post("/{slide_id}/duplicate")

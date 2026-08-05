@@ -466,13 +466,15 @@ export function PlaylistEditorPage({
     }
   }, [playlistId, slides.length]);
 
-  const reloadPlaylistFromServer = useCallback(async () => {
+  const reloadPlaylistFromServer = useCallback(async (opts?: { focusSlideId?: string | null }) => {
     try {
       const pl = await getPlaylist(playlistId);
       const pending = pendingComunicadoSaveRef.current;
       const activeId = selectedSlideIdRef.current;
+      // liveComunicadoConfigRef espelha o slide aberto — só sobrepõe o remoto
+      // quando há save pendente de verdade (senão o WS do copiloto nunca entra).
       const live =
-        activeId && liveComunicadoConfigRef.current
+        pending && activeId && liveComunicadoConfigRef.current
           ? { slideId: activeId, nativeConfig: liveComunicadoConfigRef.current }
           : null;
       const merged = applyServerPlaylistPreservingLocalEdits({
@@ -484,7 +486,6 @@ export function PlaylistEditorPage({
         live,
       });
       setPlaylist((current) => (current ? { ...merged } : merged));
-      // Com dirty local, não forçar o editor a aceitar o payload remoto (perderia fontes novas).
       const dirty = hasLocalComunicadoEdits({
         playlistId,
         slideId: activeId,
@@ -492,12 +493,25 @@ export function PlaylistEditorPage({
       });
       if (!dirty) {
         setRemoteConfigRevision((revision) => revision + 1);
+        if (activeId && liveComunicadoConfigRef.current) {
+          const remoteSlide = (merged.slides ?? []).find((s) => s.id === activeId);
+          if (remoteSlide?.nativeScreenKey === "custom_message" && remoteSlide.nativeConfig) {
+            liveComunicadoConfigRef.current = remoteSlide.nativeConfig;
+          }
+        }
+      }
+      const focusId = opts?.focusSlideId?.trim();
+      if (focusId) {
+        const created = (merged.slides ?? []).find((s) => s.id === focusId);
+        if (created) {
+          selectSlide(created.id, created);
+        }
       }
       await refreshPreviewThumbnails();
     } catch {
       // mantém estado local se a sincronização falhar
     }
-  }, [playlistId, refreshPreviewThumbnails]);
+  }, [playlistId, refreshPreviewThumbnails, selectSlide]);
 
   const applyRemoteSlideDraft = useCallback(
     (slideId: string, nativeConfig: Record<string, unknown>, clientId: string) => {
@@ -611,26 +625,17 @@ export function PlaylistEditorPage({
     presence: editorPresence,
     enabled: editorActive,
     onPresenceUpdate: handlePresenceUpdate,
-    onSync: () => {
-      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
+    onSync: (event) => {
+      // Sync canônico (WS presentation_updated) — inclui mutações do copiloto via CRUD.
+      void reloadPlaylistFromServer({ focusSlideId: event?.slideId ?? null }).then(() =>
+        deckHistory.handleRemoteUpdate(),
+      );
     },
     onSlideDraft: (event) => {
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
     },
     onSelectionUpdate: handleRemoteSelection,
   });
-
-  useEffect(() => {
-    const onCopilotMutated = (event: Event) => {
-      const detail = (event as CustomEvent<{ playlistId?: string | null }>).detail;
-      if (detail?.playlistId && detail.playlistId !== playlistId) return;
-      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
-    };
-    window.addEventListener("delpi:tv-copilot:playlist-mutated", onCopilotMutated);
-    return () => {
-      window.removeEventListener("delpi:tv-copilot:playlist-mutated", onCopilotMutated);
-    };
-  }, [playlistId, reloadPlaylistFromServer, deckHistory]);
 
   const sendSelectionUpdate = useCallback(
     (slideId: string, selectedIds: string[]) => {

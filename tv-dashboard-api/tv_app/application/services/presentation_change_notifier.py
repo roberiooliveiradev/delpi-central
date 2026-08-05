@@ -12,6 +12,8 @@ def notify_presentation_changed(
     playlist_id: str,
     reason: str,
     revision: str | None = None,
+    slide_id: str | None = None,
+    playlist_revision: int | None = None,
 ) -> None:
     # Save/estrutura mudou — inválida TTL de dados para present/preview não
     # servirem IDD/KPI stale (viewer puro = mesmos números após flush).
@@ -26,6 +28,10 @@ def notify_presentation_changed(
         "reason": reason,
         "playlistId": str(playlist_id),
     }
+    if slide_id:
+        payload["slideId"] = str(slide_id)
+    if playlist_revision is not None:
+        payload["playlistRevision"] = int(playlist_revision)
     resolved_revision = revision
     if not resolved_revision:
         try:

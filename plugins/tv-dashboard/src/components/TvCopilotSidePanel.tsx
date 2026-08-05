@@ -4,6 +4,7 @@ import type { BranchScope } from "../api/tvDashboardApi";
 import { getAccessToken as getTvAccessToken } from "../api/httpClient";
 import { TV_COPILOT_CONTENT as C } from "../content/tvCopilotContent";
 import { hasLocalComunicadoEdits } from "../utils/comunicadoSlideDraftPreferences";
+import { flushRegisteredEditorAutosave } from "../utils/previewHandoff";
 import { applyTvCopilotPreviewSideEffects } from "../utils/tvCopilotSideEffects";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -66,21 +67,10 @@ async function loadEmbeddedChatModule(): Promise<EmbeddedMountApi> {
   return api;
 }
 
-function notifyFilmstripReload(detail: {
-  playlistId?: string | null;
-  slideId?: string | null;
-}) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(
-    new CustomEvent("delpi:tv-copilot:playlist-mutated", {
-      detail,
-    }),
-  );
-}
-
 /**
  * Host do remote `./EmbeddedChat` (minha-delpi-chat) via remoteEntry em runtime.
  * Não declara o chat como remote no vite.config do TV (evita regressão MF no plugin-ui).
+ * Mutações persistidas atualizam o editor pelo WS `presentation_updated`.
  */
 export function TvCopilotSidePanel({
   playlistId: playlistIdProp,
@@ -275,24 +265,12 @@ export function TvCopilotSidePanel({
         sideEffectHints?: string[] | null;
         sideEffects?: Record<string, unknown> | null;
       }) => {
+        // Recibo apenas: o CRUD canônico publica `presentation_updated`.
         setStatus(payload.ok ? C.applyOk : C.applyFailed);
-        if (!payload.ok) return;
-
-        const hints = Array.isArray(payload.sideEffectHints) ? payload.sideEffectHints : [];
-        const shouldRefresh =
-          hints.length === 0 ||
-          hints.includes("refreshFilmstrip") ||
-          Boolean(payload.persisted);
-
-        if (shouldRefresh) {
-          notifyFilmstripReload({
-            playlistId: payload.target?.playlistId ?? playlistId,
-            slideId: payload.target?.slideId ?? slideId,
-          });
-        }
       },
+      flushBeforeMutation: () => flushRegisteredEditorAutosave(),
     }),
-    [editor, playlistId, slideId],
+    [editor],
   );
 
   const mountProps = useMemo(

@@ -97,6 +97,8 @@ type UseChatSessionOptions = {
   getPresentationFormat?: () => ChatPresentationFormatId;
   /** Contexto ambient do host embutido (surface + playlist/slide). */
   getHostContext?: () => ChatHostContext | null | undefined;
+  /** Persiste drafts do host antes de o turno poder planejar uma mutação. */
+  beforeHostMutation?: () => Promise<void>;
 };
 
 function isPersistedChatMessageId(messageId: string): boolean {
@@ -1624,6 +1626,8 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
       return;
     }
 
+    await options.beforeHostMutation?.();
+
     setLastSentUserText(message);
     const optimisticId = `optimistic-${Date.now()}`;
     let sessionForMessage = params.session ?? activeSession;
@@ -1867,6 +1871,7 @@ export function useChatSession(options: UseChatSessionOptions = {}) {
     markSessionPending,
     options.agentId,
     options.agentIds,
+    options.beforeHostMutation,
     options.chatMode,
     options.getAccessToken,
     options.getHostContext,

@@ -195,6 +195,8 @@ type ChatPageProps = {
   variant?: "full" | "embedded";
   /** Contexto ambient do host (surface TV + playlist/slide). */
   hostContext?: import("../../hostSurfaceContext").ChatHostContext | null;
+  /** Flush de drafts do host antes de enviar um turno que pode mutá-lo. */
+  beforeHostMutation?: () => Promise<void>;
   /** Escopo de persistência local (surface:playlist) — só embedded. */
   embeddedScopeKey?: string | null;
 };
@@ -207,6 +209,7 @@ export function ChatPage({
   onOpenAdmin,
   variant = "full",
   hostContext = null,
+  beforeHostMutation,
   embeddedScopeKey = null,
 }: ChatPageProps) {
   const isEmbedded = variant === "embedded";
@@ -427,6 +430,7 @@ export function ChatPage({
     getResponseMode,
     getPresentationFormat,
     getHostContext: () => hostContext,
+    beforeHostMutation,
     onSessionActivated: (sessionId) => {
       /* Embarcado: não alterar URL do host (evita AppHost ir para /apps/minha-chat/…). */
       if (isEmbedded) {

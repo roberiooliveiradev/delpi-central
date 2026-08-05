@@ -39,6 +39,8 @@ export type TvWorkspaceContext = {
 };
 
 export type EmbeddedChatHostCallbacks = {
+  /** Persiste drafts do host antes de o chat planejar/executar uma mutação. */
+  flushBeforeMutation?: () => Promise<void>;
   /** Preview do patch aplicado ao draft local do editor (sem persistir). */
   onPreviewPatch?: (payload: TvCopilotPreviewPatchPayload) => void;
   onApplyPatchResult?: (payload: {
@@ -208,6 +210,7 @@ export function EmbeddedChat({
           initialRoute={route}
           variant="embedded"
           hostContext={hostContext}
+          beforeHostMutation={hostCallbacks?.flushBeforeMutation}
           embeddedScopeKey={embeddedScopeKey}
         />
       </div>

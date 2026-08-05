@@ -38,8 +38,8 @@ Patches tipados no modelo de slide/playlist via chat base (`tv_dashboard_copilot
 |--------|------|-----------|-------|
 | `GET` | `/data/copilot/capabilities` | `TV_WRITE` | `{ catalogVersion, operations, capabilities[] }` — contrato executável |
 | `POST` | `/data/copilot/suggest-ops` | `TV_WRITE` | NL + hostContext → plano discriminado + `ops[]` |
-| `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run + diff + `sideEffectHints`; valida schema; **não** persiste |
-| `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | Persiste + `notify_presentation_changed` |
+| `POST` | `/data/copilot/preview-patch` | `TV_WRITE` | Dry-run + diff + `httpCommands` + `baseRevision`; **não** persiste |
+| `POST` | `/data/copilot/apply-patch` | `TV_WRITE` | **Depreciado como writer:** mesmo plano do preview (`persisted: false`, `executionMode: crud_http`). Persistência = CRUD `/playlists/**` |
 | `GET` | `/data/copilot/telemetry` | `TV_MANAGE` | Contadores |
 | `POST` | `/data/builder/sessions/{id}/to-copilot-ops` | `TV_WRITE` | Materialize → mesmas ops do catálogo |
 
@@ -132,7 +132,11 @@ Composites rota → visual + bind:
 ## Chat base (consumer)
 
 - Skill genérica: `tv-dashboard-copilot` (sem listar ops no markdown)
-- Tool: `tv_dashboard_copilot` (`mode=preview|apply`) — ops e política vindas do planner
+- Tool: `tv_dashboard_copilot` (`mode=preview|apply`)
+  - `preview` / `apply` pedem plano fresco ao BFF (`preview-patch`)
+  - **Apply não grava no BFF:** a AI executa `httpCommands` nas rotas CRUD
+    `/playlists/**` com o JWT do usuário, `If-Match` / revisão encadeada e allowlist
+  - Mutação bem-sucedida publica `presentation_updated` (mesmo WS do editor)
 - `direct` usa `apply` no mesmo turno; exclusão `confirm` usa preview e aguarda confirmação
 - Env: `TV_DASHBOARD_API_BASE_URL`
 
@@ -141,8 +145,22 @@ Composites rota → visual + bind:
 - Remote MF: `minha-delpi-chat` → `./EmbeddedChat`
 - Host envia `hostContext`: `surface`, `playlistId`, `slideId`, seleção, fontes,
   `hasLocalDraft`, `presetKey` e resumo do foco.
+- Antes de enviar o turno: `flushBeforeMutation` persiste drafts locais do editor.
 - Draft local pendente bloqueia mutação remota com clarificação; nunca sobrescreve o editor.
-- Apply direto persiste e recarrega filmstrip; preview fica reservado à exclusão pendente.
+- Após CRUD: o editor sincroniza só pelo WS `presentation_updated` (sem evento paralelo
+  `delpi:tv-copilot:playlist-mutated`). Preview continua local (`replaceNativeConfig`).
+
+## Persistência canônica (CRUD HTTP)
+
+```text
+Chat → AI → preview-patch (dry-run + httpCommands)
+         → execute_crud_command (JWT + If-Match) → /playlists/**
+         → notify_presentation_changed → editor WS
+```
+
+- BFF (`TvCopilotPatchService`): redutor + `TvCopilotHttpCommandPlannerService` — **nunca** `update_slide` no apply.
+- OCC: header `If-Match` / corpo `currentRevision` em 409; resposta `X-Playlist-Revision`.
+- Ops de canvas (`upsert_block`, `delete_block`, …) coalescem em **um** `PATCH` `nativeConfig`.
 
 ## Escopo negativo
 
