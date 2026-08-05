@@ -4,6 +4,7 @@ import { qualityLabelsPages } from "../apps/quality-labels/pages";
 import { tvDashboardPages } from "../apps/tv-dashboard/pages";
 import { kaizenPages } from "../apps/kaizen/pages";
 import { cipaPages } from "../apps/cipa/pages";
+import { transformometroPages } from "../apps/transformometro/pages";
 
 /**
  * Registro de páginas públicas por app. Para adicionar um novo app público,
@@ -15,4 +16,5 @@ export const publicRegistry: PublicRegistry = {
   "tv-dashboard": tvDashboardPages,
   kaizen: kaizenPages,
   cipa: cipaPages,
+  transformometro: transformometroPages,
 };
