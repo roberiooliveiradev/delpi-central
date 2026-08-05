@@ -57,6 +57,9 @@ app = FastAPI(
     version="0.1.0",
     root_path=settings.COMMERCIAL_API_ROOT_PATH,
     lifespan=lifespan,
+    # Evita 307 slash-redirect com Location http:// atrás de TLS termination
+    # (Mixed Content no browser). Clientes devem usar o path exato da rota.
+    redirect_slashes=False,
 )
 
 

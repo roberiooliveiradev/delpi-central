@@ -33,8 +33,10 @@ export async function listSellerPortfolios(
   const params = new URLSearchParams();
   if (options?.activeOnly) params.set("active_only", "true");
   const qs = params.toString();
+  // Sem barra final: commercial-api registra GET "" (sem slash). Com "/" o FastAPI
+  // faz 307 e o Location em http atrás do proxy HTTPS → Mixed Content.
   const response = await httpGet<ApiSuccessResponse<{ items: SellerPortfolio[] }>>(
-    `${commercialApiUrl("/seller-portfolios")}/${qs ? `?${qs}` : ""}`,
+    `${commercialApiUrl("/seller-portfolios")}${qs ? `?${qs}` : ""}`,
     { signal: options?.signal },
   );
   const data = unwrapEnvelope(response, "Erro ao listar carteiras.");
@@ -47,7 +49,7 @@ export async function createSellerPortfolio(input: {
   customers?: SellerCustomerInput[];
 }): Promise<SellerPortfolio> {
   const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
-    commercialApiUrl("/seller-portfolios/"),
+    commercialApiUrl("/seller-portfolios"),
     input,
   );
   return unwrapEnvelope(response, "Erro ao cadastrar vendedor.");
