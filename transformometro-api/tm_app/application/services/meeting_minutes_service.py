@@ -200,7 +200,12 @@ class MeetingMinutesService:
     def set_signers(self,user: Any,minute_id: str,signers:list[dict[str,Any]]) -> dict[str,Any]:
         minute=self._load(user,"manage",minute_id)
         if not MinuteStatusTransitionService.can_edit_content(minute["status"]): raise ValueError("Signatários só podem ser alterados em rascunho/revisão.")
-        if any(not s.get("user_id") or not s.get("display_name") for s in signers): raise ValueError("Cada signatário precisa de user_id e display_name.")
+        if any(
+            not s.get("display_name")
+            or (not s.get("user_id") and not str(s.get("invite_email") or "").strip())
+            for s in signers
+        ):
+            raise ValueError("Cada signatário precisa de display_name e user_id ou invite_email.")
         return {"signers":self.repo.replace_signers(minute_id=minute_id,version_id=str(minute["current_version_id"]),unit_code=str(minute["unit_code"]),signers=signers,actor_user_id=self._user_id(user))}
 
     def send_for_signature(self,user: Any,minute_id: str) -> dict[str,Any]:
@@ -214,15 +219,12 @@ class MeetingMinutesService:
             user_id = str(signer.get("user_id") or "").strip()
             if not user_id:
                 continue
-            try:
-                self.notifications.notify_sign_pending(
-                    user_id=user_id,
-                    minute_id=str(updated["id"]),
-                    minute_number=str(updated["minute_number"]),
-                    title=str(updated.get("title") or ""),
-                )
-            except Exception:
-                pass
+            self.notifications.notify_sign_pending(
+                user_id=user_id,
+                minute_id=str(updated["id"]),
+                minute_number=str(updated["minute_number"]),
+                title=str(updated.get("title") or ""),
+            )
         return {"minute":updated,"signers":signers}
 
     def sign_context(self,user: Any,minute_id: str) -> dict[str,Any]:

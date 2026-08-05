@@ -163,12 +163,79 @@ class MeetingMinuteRepository(PluginBaseRepository):
                 cur.execute(f"DELETE FROM {_S}.tm_meeting_minute_signers WHERE minute_id=%s::uuid AND version_id=%s::uuid",(minute_id,version_id))
                 rows=[]
                 for index,item in enumerate(signers):
+                    user_id = item.get("user_id")
+                    user_id = str(user_id).strip() if user_id else None
+                    invite_email = str(item.get("invite_email") or "").strip() or None
                     cur.execute(f"""INSERT INTO {_S}.tm_meeting_minute_signers
-                    (minute_id,version_id,unit_code,user_id,display_name,sign_order,status)
-                    VALUES (%s::uuid,%s::uuid,%s,%s::uuid,%s,%s,'pending') RETURNING *""",(minute_id,version_id,unit_code,item["user_id"],item["display_name"],item.get("sign_order",index+1)))
+                    (minute_id,version_id,unit_code,user_id,invite_email,display_name,sign_order,status)
+                    VALUES (%s::uuid,%s::uuid,%s,%s::uuid,%s,%s,%s,'pending') RETURNING *""",(
+                        minute_id,version_id,unit_code,user_id,invite_email,item["display_name"],item.get("sign_order",index+1),
+                    ))
                     rows.append(dict(cur.fetchone()))
             conn.commit(); return rows
         except Exception: conn.rollback(); raise
+
+    def invalidate_open_invites(self, *, signer_id: str) -> int:
+        conn = self._connection
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+                    SET consumed_at=NOW()
+                    WHERE signer_id=%s::uuid AND consumed_at IS NULL""",
+                    (signer_id,),
+                )
+                count = cur.rowcount
+            conn.commit()
+            return int(count or 0)
+        except Exception:
+            conn.rollback()
+            raise
+
+    def create_invite(
+        self,
+        *,
+        signer_id: str,
+        minute_id: str,
+        unit_code: str,
+        token_hash: str,
+        expires_at: Any,
+    ) -> dict[str, Any]:
+        row = self.execute_returning_one(
+            f"""INSERT INTO {_S}.tm_meeting_minute_sign_invites
+            (signer_id,minute_id,unit_code,token_hash,expires_at)
+            VALUES (%s::uuid,%s::uuid,%s,%s,%s) RETURNING *""",
+            (signer_id, minute_id, unit_code, token_hash, expires_at),
+        )
+        if not row:
+            raise RuntimeError("Falha ao criar convite de assinatura.")
+        return row
+
+    def get_invite_by_token_hash(self, token_hash: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            f"SELECT * FROM {_S}.tm_meeting_minute_sign_invites WHERE token_hash=%s",
+            (token_hash,),
+        )
+
+    def consume_invite(self, invite_id: str) -> dict[str, Any] | None:
+        return self.execute_returning_one(
+            f"""UPDATE {_S}.tm_meeting_minute_sign_invites
+            SET consumed_at=COALESCE(consumed_at,NOW())
+            WHERE id=%s::uuid RETURNING *""",
+            (invite_id,),
+        )
+
+    def get_signer(self, signer_id: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            f"SELECT * FROM {_S}.tm_meeting_minute_signers WHERE id=%s::uuid",
+            (signer_id,),
+        )
+
+    def get_minute(self, minute_id: str) -> dict[str, Any] | None:
+        return self.fetch_one(
+            f"SELECT * FROM {_S}.tm_meeting_minutes WHERE id=%s::uuid AND deleted_at IS NULL",
+            (minute_id,),
+        )
 
     def list_signers(self, minute_id: str) -> list[dict[str, Any]]:
         return self.fetch_all(f"""SELECT s.* FROM {_S}.tm_meeting_minute_signers s JOIN {_S}.tm_meeting_minutes m ON m.id=s.minute_id
@@ -203,9 +270,10 @@ class MeetingMinuteRepository(PluginBaseRepository):
                     if existing:=cur.fetchone(): return {"signature":dict(existing),"duplicate":True}
                 cur.execute(f"SELECT * FROM {_S}.tm_meeting_minute_signers WHERE id=%s::uuid FOR UPDATE",(signer_id,)); signer=cur.fetchone()
                 if not signer or signer["status"] in {"signed","invalidated","cancelled","refused"}: raise ValueError("Signatário não está elegível para assinar.")
+                uid = str(user_id).strip() if user_id else None
                 cur.execute(f"""INSERT INTO {_S}.tm_meeting_minute_signatures
                  (minute_id,version_id,signer_id,unit_code,user_id,display_name_confirmed,content_hash,image_path,terms_accepted,client_ip,user_agent,session_id,idempotency_key)
-                 VALUES (%s::uuid,%s::uuid,%s::uuid,%s,%s::uuid,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *""",(minute_id,version_id,signer_id,unit_code,user_id,display_name_confirmed,content_hash,image_path,terms_accepted,client_ip,user_agent,session_id,idempotency_key))
+                 VALUES (%s::uuid,%s::uuid,%s::uuid,%s,%s::uuid,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING *""",(minute_id,version_id,signer_id,unit_code,uid,display_name_confirmed,content_hash,image_path,terms_accepted,client_ip,user_agent,session_id,idempotency_key))
                 signature=dict(cur.fetchone())
                 cur.execute(f"UPDATE {_S}.tm_meeting_minute_signers SET status='signed',signed_at=NOW(),updated_at=NOW() WHERE id=%s::uuid",(signer_id,))
                 cur.execute(f"""SELECT COUNT(*) FILTER (WHERE status='signed') AS signed_count,COUNT(*) AS required_count
