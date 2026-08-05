@@ -5,11 +5,13 @@ import { RichTextLinkDialog } from "./RichTextLinkDialog";
 import { RichTextToolbar } from "./RichTextToolbar";
 import {
   applyRichTextLinkAtRange,
+  execRichTextCommand,
   findRichTextLinkAtSelection,
   normalizeRichTextLinkUrl,
   unwrapRichTextLink,
 } from "./richTextCommands";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
+import { normalizeRichTextPastedHtml } from "./richTextTable";
 
 export type RichTextEditorMode = "edit" | "preview";
 
@@ -170,6 +172,15 @@ export function RichTextEditor({
         onInput={emitChange}
         onMouseUp={syncActiveLink}
         onKeyUp={syncActiveLink}
+        onPaste={(event) => {
+          const html = event.clipboardData?.getData("text/html");
+          if (!html || !/<table[\s>]/i.test(html)) return;
+          const normalized = normalizeRichTextPastedHtml(html);
+          if (!normalized) return;
+          event.preventDefault();
+          execRichTextCommand("insertHTML", normalized);
+          emitChange();
+        }}
       />
 
       {activeLink ? (

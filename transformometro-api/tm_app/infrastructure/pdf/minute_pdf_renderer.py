@@ -51,11 +51,32 @@ def html_to_reportlab_chunks(raw: str | None) -> list[str]:
         return []
     cleaned = bleach.clean(
         text,
-        tags=["p", "br", "b", "strong", "i", "em", "u", "ul", "ol", "li"],
+        tags=[
+            "p",
+            "br",
+            "b",
+            "strong",
+            "i",
+            "em",
+            "u",
+            "ul",
+            "ol",
+            "li",
+            "table",
+            "thead",
+            "tbody",
+            "tr",
+            "th",
+            "td",
+        ],
         strip=True,
     )
     # Void <br> → XHTML <br/>
     cleaned = re.sub(r"<\s*br\s*/?\s*>", "<br/>", cleaned, flags=re.IGNORECASE)
+    # Tabelas → linhas com células separadas (Paragraph simples não parseia <table>)
+    cleaned = re.sub(r"</tr\s*>", "\n", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"</t[dh]\s*>", " | ", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"</?(?:table|thead|tbody|tr|th|td)\b[^>]*>", "", cleaned, flags=re.IGNORECASE)
     # Listas → linhas com marcador (Paragraph simples não parseia <ul>/<li>)
     cleaned = re.sub(r"</?(?:ul|ol)\s*>", "\n", cleaned, flags=re.IGNORECASE)
     cleaned = re.sub(r"<li\b[^>]*>", "• ", cleaned, flags=re.IGNORECASE)

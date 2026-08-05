@@ -4,6 +4,33 @@ function focusEditor(editor: HTMLElement | null) {
   editor?.focus();
 }
 
+/** Seleção atual contida no editor (clone), ou null. */
+export function getRichTextSelectionRange(editor: HTMLElement | null): Range | null {
+  if (!editor) return null;
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return null;
+  return range.cloneRange();
+}
+
+/** Restaura seleção salva antes de comandos da toolbar (que roubam o foco). */
+export function restoreRichTextSelection(editor: HTMLElement | null, range: Range | null) {
+  if (!editor || !range) {
+    focusEditor(editor);
+    return;
+  }
+  focusEditor(editor);
+  const selection = window.getSelection();
+  if (!selection) return;
+  try {
+    selection.removeAllRanges();
+    selection.addRange(range);
+  } catch {
+    /* range pode ter ficado inválido após mutação do DOM */
+  }
+}
+
 export function execRichTextCommand(command: string, value?: string) {
   try {
     document.execCommand(command, false, value);
@@ -26,20 +53,66 @@ export function applyRichTextFontFamily(editor: HTMLElement | null, fontFamily: 
   execRichTextCommand("fontName", fontFamily);
 }
 
+function placeCaretInNode(selection: Selection, node: Node, offset: number) {
+  const next = document.createRange();
+  next.setStart(node, offset);
+  next.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(next);
+}
+
+/**
+ * Aplica tamanho em px via `<span style="font-size">`.
+ * Não usa `execCommand("fontSize")` (escala legada 1–7).
+ * Com seleção colapsada, insere marcador ZWSP para o próximo digitar.
+ */
 export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: number) {
+  if (!editor) return;
   focusEditor(editor);
   const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) {
-    execRichTextCommand("fontSize", "3");
-    return;
+  if (!selection) return;
+
+  let range =
+    selection.rangeCount > 0 && editor.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0)
+      : null;
+
+  if (!range) {
+    range = document.createRange();
+    range.selectNodeContents(editor);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
   }
-  const range = selection.getRangeAt(0);
+
+  const sizeCss = `${Math.round(fontSizePx)}px`;
+
   if (range.collapsed) {
-    execRichTextCommand("fontSize", "3");
+    const container =
+      range.startContainer instanceof Element
+        ? range.startContainer
+        : range.startContainer.parentElement;
+    if (
+      container instanceof HTMLElement &&
+      container.tagName === "SPAN" &&
+      container.style.fontSize &&
+      editor.contains(container)
+    ) {
+      container.style.fontSize = sizeCss;
+      return;
+    }
+
+    const span = document.createElement("span");
+    span.style.fontSize = sizeCss;
+    const marker = document.createTextNode("\u200B");
+    span.appendChild(marker);
+    range.insertNode(span);
+    placeCaretInNode(selection, marker, 1);
     return;
   }
+
   const span = document.createElement("span");
-  span.style.fontSize = `${fontSizePx}px`;
+  span.style.fontSize = sizeCss;
   try {
     range.surroundContents(span);
   } catch {
@@ -49,8 +122,26 @@ export function applyRichTextFontSize(editor: HTMLElement | null, fontSizePx: nu
   selection.removeAllRanges();
   const next = document.createRange();
   next.selectNodeContents(span);
-  next.collapse(false);
   selection.addRange(next);
+}
+
+/** Tamanho computado (px) no ponto da seleção / editor. */
+export function queryRichTextFontSize(editor: HTMLElement | null): number | null {
+  if (!editor) return null;
+  const selection = window.getSelection();
+  let el: Element | null = null;
+  if (
+    selection &&
+    selection.rangeCount > 0 &&
+    selection.anchorNode &&
+    editor.contains(selection.anchorNode)
+  ) {
+    const node = selection.anchorNode;
+    el = node instanceof Element ? node : node.parentElement;
+  }
+  if (!el) el = editor;
+  const px = Number.parseFloat(window.getComputedStyle(el).fontSize);
+  return Number.isFinite(px) ? Math.round(px) : null;
 }
 
 export function applyRichTextAlign(editor: HTMLElement | null, align: RichTextAlign) {

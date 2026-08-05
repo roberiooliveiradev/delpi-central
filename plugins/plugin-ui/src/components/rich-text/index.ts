@@ -7,6 +7,11 @@ export {
   RICH_TEXT_FONT_SIZE_PRESETS,
 } from "./richTextConfig";
 export {
+  buildRichTextTableHtml,
+  insertRichTextTable,
+  normalizeRichTextPastedHtml,
+} from "./richTextTable";
+export {
   DeckContentRunsView,
   plainTextFromDeckContentRuns,
   shouldPersistDeckContentRuns,

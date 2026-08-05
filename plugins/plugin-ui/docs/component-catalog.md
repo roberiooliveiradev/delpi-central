@@ -1039,9 +1039,9 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | Export | Uso |
 |--------|-----|
 | `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
-| `RichTextEditor` | WYSIWYG com ribbon Fonte/Parágrafo (paridade tv-dashboard) + preview; link via `RichTextLinkDialog` (ModalShell) + badge flutuante clicável/editável |
+| `RichTextEditor` | WYSIWYG com toolbar linear (fonte/tamanho stepper, formatação, listas, link, tabela) + preview; paste de tabelas normalizado; link via `RichTextLinkDialog` |
 | `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
-| `RichTextToolbar` | Faixa de formatação reutilizável (fonte, parágrafo, cores, listas) |
+| `RichTextToolbar` | Faixa de formatação reutilizável (tipografia, parágrafo, inserção de tabela via `TableInsertCatalogPanel`) |
 | `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista; `showEmail={false}` para listar só o nome; `maxSelected={1}` para single-select |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

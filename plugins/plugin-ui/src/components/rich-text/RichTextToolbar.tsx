@@ -14,21 +14,34 @@ import {
   Redo2,
   RemoveFormatting,
   Strikethrough,
+  Table2,
   Underline,
   Undo2,
 } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
-import { ComboboxNumberControl } from "../forms/ComboboxNumberControl";
+import { TableInsertCatalogPanel } from "../charts/TableInsertCatalogPanel";
 import { FormSelectControl } from "../forms/FormSelectControl";
+import { NumberStepperControl } from "../forms/NumberStepperControl";
 import { HintAction } from "../help/HintAction";
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { RibbonColorPicker } from "../shape/RibbonColorPicker";
 import {
   applyRichTextAlign,
   applyRichTextFontFamily,
   applyRichTextFontSize,
+  getRichTextSelectionRange,
   queryRichTextAlign,
   queryRichTextCommandState,
+  queryRichTextFontSize,
+  restoreRichTextSelection,
   runRichTextCommand,
   type RichTextAlign,
 } from "./richTextCommands";
@@ -36,9 +49,13 @@ import {
   clampRichTextFontSize,
   RICH_TEXT_FONT_FAMILIES,
   RICH_TEXT_FONT_SIZE_DEFAULT,
+  RICH_TEXT_FONT_SIZE_MAX,
+  RICH_TEXT_FONT_SIZE_MIN,
   RICH_TEXT_FONT_SIZE_PRESETS,
+  RICH_TEXT_FONT_SIZE_STEP,
 } from "./richTextConfig";
 import { RICH_TEXT_LABELS } from "./richTextLabels";
+import { insertRichTextTable } from "./richTextTable";
 
 type Props = {
   editorRef: RefObject<HTMLDivElement | null>;
@@ -86,6 +103,10 @@ function RichTextIconButton({
   );
 }
 
+function RibbonSep() {
+  return <span className="delpi-ui-rich-text-ribbon__sep" aria-hidden="true" />;
+}
+
 export function RichTextToolbar({
   editorRef,
   disabled = false,
@@ -98,26 +119,44 @@ export function RichTextToolbar({
   const [textColor, setTextColor] = useState("#111111");
   const [highlightColor, setHighlightColor] = useState("#fef08a");
   const [formatTick, setFormatTick] = useState(0);
+  const [tableMenuOpen, setTableMenuOpen] = useState(false);
+  const savedRangeRef = useRef<Range | null>(null);
+  const tableAnchorRef = useRef<HTMLDivElement>(null);
+  const tablePanelRef = useRef<HTMLDivElement>(null);
 
   const refreshFormatState = useCallback(() => {
     setFormatTick((value) => value + 1);
-  }, []);
+    const editor = editorRef.current;
+    const size = queryRichTextFontSize(editor);
+    if (size != null) setFontSize(clampRichTextFontSize(size));
+  }, [editorRef]);
 
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
-    const handleSelection = () => refreshFormatState();
+
+    const persistSelection = () => {
+      const range = getRichTextSelectionRange(editor);
+      if (range) savedRangeRef.current = range;
+    };
+
+    const handleSelection = () => {
+      persistSelection();
+      refreshFormatState();
+    };
+
+    document.addEventListener("selectionchange", persistSelection);
     editor.addEventListener("keyup", handleSelection);
     editor.addEventListener("mouseup", handleSelection);
     editor.addEventListener("focus", handleSelection);
     return () => {
+      document.removeEventListener("selectionchange", persistSelection);
       editor.removeEventListener("keyup", handleSelection);
       editor.removeEventListener("mouseup", handleSelection);
       editor.removeEventListener("focus", handleSelection);
     };
   }, [editorRef, refreshFormatState]);
 
-  const editor = editorRef.current;
   void formatTick;
 
   const boldActive = queryRichTextCommandState("bold");
@@ -128,220 +167,273 @@ export function RichTextToolbar({
   const orderedActive = queryRichTextCommandState("insertOrderedList");
   const alignActive = queryRichTextAlign();
 
-  function run(action: () => void) {
+  function withEditor(action: (editor: HTMLElement) => void) {
     if (disabled) return;
-    action();
+    const editor = editorRef.current;
+    if (!editor) return;
+    restoreRichTextSelection(editor, savedRangeRef.current);
+    action(editor);
+    const next = getRichTextSelectionRange(editor);
+    if (next) savedRangeRef.current = next;
     onFormatted();
     refreshFormatState();
   }
 
+  function applyFontSize(nextRaw: number) {
+    const next = clampRichTextFontSize(nextRaw);
+    setFontSize(next);
+    withEditor((editor) => applyRichTextFontSize(editor, next));
+  }
+
   return (
     <div className="delpi-ui-rich-text-ribbon" role="toolbar" aria-label={RICH_TEXT_LABELS.toolbar}>
-      <section className="delpi-ui-rich-text-ribbon__group" aria-label={RICH_TEXT_LABELS.fontSection}>
-        <span className="delpi-ui-rich-text-ribbon__legend">{RICH_TEXT_LABELS.fontSection}</span>
-        <div className="delpi-ui-rich-text-ribbon__rows">
-          <div className="delpi-ui-rich-text-ribbon__row">
-            <FormSelectControl
-              value={fontFamily}
-              onChange={(value) => {
-                setFontFamily(value);
-                run(() => applyRichTextFontFamily(editor, value));
-              }}
-              options={RICH_TEXT_FONT_FAMILIES.map((font) => ({
-                value: font.value,
-                label: font.label,
-              }))}
-              disabled={disabled}
-              className="delpi-ui-select--compact delpi-ui-rich-text-ribbon__font-select"
-              ariaLabel={RICH_TEXT_LABELS.fontFamily}
-              portalScopeClassName={portalScopeClassName}
-            />
-            <ComboboxNumberControl
-              value={fontSize}
-              onChange={(value) => {
-                const next = clampRichTextFontSize(value);
-                setFontSize(next);
-                run(() => applyRichTextFontSize(editor, next));
-              }}
-              options={RICH_TEXT_FONT_SIZE_PRESETS}
-              min={10}
-              max={72}
-              clamp={clampRichTextFontSize}
-              disabled={disabled}
-              square
-              compact
-              className="delpi-ui-rich-text-ribbon__size"
-              aria-label={RICH_TEXT_LABELS.fontSize}
-              portalScopeClassName={portalScopeClassName}
-            />
-          </div>
-          <div className="delpi-ui-rich-text-ribbon__row delpi-ui-rich-text-ribbon__row--icons">
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.bold}
-              ariaLabel={RICH_TEXT_LABELS.bold}
-              active={boldActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "bold"))}
-            >
-              <Bold size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.italic}
-              ariaLabel={RICH_TEXT_LABELS.italic}
-              active={italicActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "italic"))}
-            >
-              <Italic size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.underline}
-              ariaLabel={RICH_TEXT_LABELS.underline}
-              active={underlineActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "underline"))}
-            >
-              <Underline size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.strikethrough}
-              ariaLabel={RICH_TEXT_LABELS.strikethrough}
-              active={strikeActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "strikeThrough"))}
-            >
-              <Strikethrough size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RibbonColorPicker
-              label={RICH_TEXT_LABELS.textColor}
-              ariaLabel={RICH_TEXT_LABELS.textColor}
-              variant="text"
-              value={textColor}
-              className="delpi-ui-color-picker-trigger--inline"
-              onChange={(color) => {
-                setTextColor(color);
-                run(() => runRichTextCommand(editor, "foreColor", color));
-              }}
-            />
-            <RibbonColorPicker
-              label={RICH_TEXT_LABELS.highlightColor}
-              ariaLabel={RICH_TEXT_LABELS.highlightColor}
-              variant="fill"
-              value={highlightColor}
-              className="delpi-ui-color-picker-trigger--inline"
-              onChange={(color) => {
-                setHighlightColor(color);
-                run(() => runRichTextCommand(editor, "hiliteColor", color));
-              }}
-            />
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.clearFormatting}
-              ariaLabel={RICH_TEXT_LABELS.clearFormatting}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "removeFormat"))}
-            >
-              <RemoveFormatting size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.heading}
-              ariaLabel={RICH_TEXT_LABELS.heading}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "formatBlock", "h2"))}
-            >
-              <Heading2 size={15} aria-hidden="true" />
-            </RichTextIconButton>
-          </div>
-        </div>
+      <section className="delpi-ui-rich-text-ribbon__cluster" aria-label={RICH_TEXT_LABELS.fontSection}>
+        <FormSelectControl
+          value={fontFamily}
+          onChange={(value) => {
+            setFontFamily(value);
+            withEditor((editor) => applyRichTextFontFamily(editor, value));
+          }}
+          options={RICH_TEXT_FONT_FAMILIES.map((font) => ({
+            value: font.value,
+            label: font.label,
+          }))}
+          disabled={disabled}
+          className="delpi-ui-select--compact delpi-ui-rich-text-ribbon__font-select"
+          ariaLabel={RICH_TEXT_LABELS.fontFamily}
+          portalScopeClassName={portalScopeClassName}
+        />
+        <NumberStepperControl
+          value={fontSize}
+          onChange={applyFontSize}
+          onStepDown={() => applyFontSize(fontSize - RICH_TEXT_FONT_SIZE_STEP)}
+          onStepUp={() => applyFontSize(fontSize + RICH_TEXT_FONT_SIZE_STEP)}
+          options={RICH_TEXT_FONT_SIZE_PRESETS}
+          min={RICH_TEXT_FONT_SIZE_MIN}
+          max={RICH_TEXT_FONT_SIZE_MAX}
+          clamp={clampRichTextFontSize}
+          disabled={disabled}
+          square={false}
+          compact
+          className="delpi-ui-rich-text-ribbon__size"
+          aria-label={RICH_TEXT_LABELS.fontSize}
+          groupAriaLabel={RICH_TEXT_LABELS.fontSize}
+          stepDownAriaLabel={RICH_TEXT_LABELS.fontSizeDecrease}
+          stepUpAriaLabel={RICH_TEXT_LABELS.fontSizeIncrease}
+          portalScopeClassName={portalScopeClassName}
+        />
       </section>
 
+      <RibbonSep />
+
+      <section className="delpi-ui-rich-text-ribbon__cluster" aria-label={RICH_TEXT_LABELS.fontSection}>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.bold}
+          ariaLabel={RICH_TEXT_LABELS.bold}
+          active={boldActive}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "bold"))}
+        >
+          <Bold size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.italic}
+          ariaLabel={RICH_TEXT_LABELS.italic}
+          active={italicActive}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "italic"))}
+        >
+          <Italic size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.underline}
+          ariaLabel={RICH_TEXT_LABELS.underline}
+          active={underlineActive}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "underline"))}
+        >
+          <Underline size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.strikethrough}
+          ariaLabel={RICH_TEXT_LABELS.strikethrough}
+          active={strikeActive}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "strikeThrough"))}
+        >
+          <Strikethrough size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RibbonColorPicker
+          label={RICH_TEXT_LABELS.textColor}
+          ariaLabel={RICH_TEXT_LABELS.textColor}
+          variant="text"
+          value={textColor}
+          className="delpi-ui-color-picker-trigger--inline"
+          onChange={(color) => {
+            setTextColor(color);
+            withEditor((editor) => runRichTextCommand(editor, "foreColor", color));
+          }}
+        />
+        <RibbonColorPicker
+          label={RICH_TEXT_LABELS.highlightColor}
+          ariaLabel={RICH_TEXT_LABELS.highlightColor}
+          variant="fill"
+          value={highlightColor}
+          className="delpi-ui-color-picker-trigger--inline"
+          onChange={(color) => {
+            setHighlightColor(color);
+            withEditor((editor) => runRichTextCommand(editor, "hiliteColor", color));
+          }}
+        />
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.clearFormatting}
+          ariaLabel={RICH_TEXT_LABELS.clearFormatting}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "removeFormat"))}
+        >
+          <RemoveFormatting size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.heading}
+          ariaLabel={RICH_TEXT_LABELS.heading}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "formatBlock", "h2"))}
+        >
+          <Heading2 size={15} aria-hidden="true" />
+        </RichTextIconButton>
+      </section>
+
+      <RibbonSep />
+
       <section
-        className="delpi-ui-rich-text-ribbon__group"
+        className="delpi-ui-rich-text-ribbon__cluster"
         aria-label={RICH_TEXT_LABELS.paragraphSection}
       >
-        <span className="delpi-ui-rich-text-ribbon__legend">{RICH_TEXT_LABELS.paragraphSection}</span>
-        <div className="delpi-ui-rich-text-ribbon__rows">
-          <div className="delpi-ui-rich-text-ribbon__row delpi-ui-rich-text-ribbon__row--icons">
-            {(
-              [
-                { align: "left" as const, icon: AlignLeft, label: RICH_TEXT_LABELS.alignLeft },
-                { align: "center" as const, icon: AlignCenter, label: RICH_TEXT_LABELS.alignCenter },
-                { align: "right" as const, icon: AlignRight, label: RICH_TEXT_LABELS.alignRight },
-                { align: "justify" as const, icon: AlignJustify, label: RICH_TEXT_LABELS.alignJustify },
-              ] as const
-            ).map(({ align, icon: Icon, label }) => (
-              <RichTextIconButton
-                key={align}
-                hint={label}
-                ariaLabel={label}
-                active={alignActive === align}
-                disabled={disabled}
-                onClick={() => run(() => applyRichTextAlign(editor, align as RichTextAlign))}
-              >
-                <Icon size={15} aria-hidden="true" />
-              </RichTextIconButton>
-            ))}
-            <span className="delpi-ui-rich-text-ribbon__sep" aria-hidden="true" />
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.bulletList}
-              ariaLabel={RICH_TEXT_LABELS.bulletList}
-              active={bulletActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "insertUnorderedList"))}
-            >
-              <List size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.orderedList}
-              ariaLabel={RICH_TEXT_LABELS.orderedList}
-              active={orderedActive}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "insertOrderedList"))}
-            >
-              <ListOrdered size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.outdent}
-              ariaLabel={RICH_TEXT_LABELS.outdent}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "outdent"))}
-            >
-              <Outdent size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.indent}
-              ariaLabel={RICH_TEXT_LABELS.indent}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "indent"))}
-            >
-              <Indent size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.link}
-              ariaLabel={RICH_TEXT_LABELS.link}
-              disabled={disabled}
-              onClick={onRequestLink}
-            >
-              <Link size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <span className="delpi-ui-rich-text-ribbon__sep" aria-hidden="true" />
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.undo}
-              ariaLabel={RICH_TEXT_LABELS.undo}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "undo"))}
-            >
-              <Undo2 size={15} aria-hidden="true" />
-            </RichTextIconButton>
-            <RichTextIconButton
-              hint={RICH_TEXT_LABELS.redo}
-              ariaLabel={RICH_TEXT_LABELS.redo}
-              disabled={disabled}
-              onClick={() => run(() => runRichTextCommand(editor, "redo"))}
-            >
-              <Redo2 size={15} aria-hidden="true" />
-            </RichTextIconButton>
-          </div>
+        {(
+          [
+            { align: "left" as const, icon: AlignLeft, label: RICH_TEXT_LABELS.alignLeft },
+            { align: "center" as const, icon: AlignCenter, label: RICH_TEXT_LABELS.alignCenter },
+            { align: "right" as const, icon: AlignRight, label: RICH_TEXT_LABELS.alignRight },
+            { align: "justify" as const, icon: AlignJustify, label: RICH_TEXT_LABELS.alignJustify },
+          ] as const
+        ).map(({ align, icon: Icon, label }) => (
+          <RichTextIconButton
+            key={align}
+            hint={label}
+            ariaLabel={label}
+            active={alignActive === align}
+            disabled={disabled}
+            onClick={() =>
+              withEditor((editor) => applyRichTextAlign(editor, align as RichTextAlign))
+            }
+          >
+            <Icon size={15} aria-hidden="true" />
+          </RichTextIconButton>
+        ))}
+        <RibbonSep />
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.bulletList}
+          ariaLabel={RICH_TEXT_LABELS.bulletList}
+          active={bulletActive}
+          disabled={disabled}
+          onClick={() =>
+            withEditor((editor) => runRichTextCommand(editor, "insertUnorderedList"))
+          }
+        >
+          <List size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.orderedList}
+          ariaLabel={RICH_TEXT_LABELS.orderedList}
+          active={orderedActive}
+          disabled={disabled}
+          onClick={() =>
+            withEditor((editor) => runRichTextCommand(editor, "insertOrderedList"))
+          }
+        >
+          <ListOrdered size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.outdent}
+          ariaLabel={RICH_TEXT_LABELS.outdent}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "outdent"))}
+        >
+          <Outdent size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.indent}
+          ariaLabel={RICH_TEXT_LABELS.indent}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "indent"))}
+        >
+          <Indent size={15} aria-hidden="true" />
+        </RichTextIconButton>
+      </section>
+
+      <RibbonSep />
+
+      <section
+        className="delpi-ui-rich-text-ribbon__cluster"
+        aria-label={RICH_TEXT_LABELS.insertSection}
+      >
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.link}
+          ariaLabel={RICH_TEXT_LABELS.link}
+          disabled={disabled}
+          onClick={onRequestLink}
+        >
+          <Link size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <div ref={tableAnchorRef} className="delpi-ui-rich-text-ribbon__dropdown">
+          <RichTextIconButton
+            hint={RICH_TEXT_LABELS.table}
+            ariaLabel={RICH_TEXT_LABELS.table}
+            active={tableMenuOpen}
+            disabled={disabled}
+            onClick={() => setTableMenuOpen((open) => !open)}
+          >
+            <Table2 size={15} aria-hidden="true" />
+          </RichTextIconButton>
+          <AnchoredPanelPortal
+            open={tableMenuOpen}
+            anchorRef={tableAnchorRef}
+            panelRef={tablePanelRef}
+            variant="bare"
+            preferredPlacement="bottom"
+            density="compact"
+            role="dialog"
+            aria-label={RICH_TEXT_LABELS.tableCatalog}
+            portalScopeClassName={portalScopeClassName}
+            onDismiss={() => setTableMenuOpen(false)}
+            className="delpi-ui-rich-text-ribbon__table-portal"
+          >
+            <TableInsertCatalogPanel
+              title={RICH_TEXT_LABELS.table}
+              onSelect={(selection) => {
+                setTableMenuOpen(false);
+                withEditor((editor) => insertRichTextTable(editor, selection));
+              }}
+            />
+          </AnchoredPanelPortal>
         </div>
+        <RibbonSep />
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.undo}
+          ariaLabel={RICH_TEXT_LABELS.undo}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "undo"))}
+        >
+          <Undo2 size={15} aria-hidden="true" />
+        </RichTextIconButton>
+        <RichTextIconButton
+          hint={RICH_TEXT_LABELS.redo}
+          ariaLabel={RICH_TEXT_LABELS.redo}
+          disabled={disabled}
+          onClick={() => withEditor((editor) => runRichTextCommand(editor, "redo"))}
+        >
+          <Redo2 size={15} aria-hidden="true" />
+        </RichTextIconButton>
       </section>
     </div>
   );

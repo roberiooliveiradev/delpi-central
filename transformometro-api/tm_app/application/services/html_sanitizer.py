@@ -1,8 +1,8 @@
 """Sanitização HTML allowlist para conteúdo de atas Transforma+.
 
 Preserva a formatação de rich text (negrito, itálico, sublinhado, tachado,
-cor, realce, tamanho e família de fonte, alinhamento, listas e links) sem
-depender de `tinycss2`/`bleach[css]`: os estilos inline são filtrados por um
+cor, realce, tamanho e família de fonte, alinhamento, listas, links e tabelas)
+sem depender de `tinycss2`/`bleach[css]`: os estilos inline são filtrados por um
 allowlist próprio e transportados por um atributo `data-dsty` (base64) através
 do bleach, sendo restaurados como `style` logo em seguida.
 """
@@ -43,6 +43,16 @@ ALLOWED_HTML_TAGS: list[str] = [
     "div",
     "span",
     "font",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "th",
+    "td",
+    "caption",
+    "colgroup",
+    "col",
 ]
 
 ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {
@@ -51,6 +61,11 @@ ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {
     "font": ["color", "face", "size", "data-dsty"],
     "ol": ["start", "type", "class", "data-dsty"],
     "li": ["value", "class", "data-dsty"],
+    "table": ["class", "data-dsty"],
+    "th": ["colspan", "rowspan", "scope", "class", "data-dsty"],
+    "td": ["colspan", "rowspan", "class", "data-dsty"],
+    "col": ["span", "class", "data-dsty"],
+    "colgroup": ["span", "class", "data-dsty"],
 }
 
 ALLOWED_HTML_PROTOCOLS: list[str] = ["http", "https", "mailto"]
@@ -68,6 +83,11 @@ _ALLOWED_CSS_PROPERTIES: dict[str, re.Pattern[str]] = {
     "font-style": re.compile(r"^(normal|italic|oblique)$", re.IGNORECASE),
     "text-decoration": re.compile(r"^[a-zA-Z\s\-]+$"),
     "text-decoration-line": re.compile(r"^[a-zA-Z\s\-]+$"),
+    "border-collapse": re.compile(r"^(collapse|separate)$", re.IGNORECASE),
+    "border": re.compile(r"^[\w\s.#%,()]+$"),
+    "width": re.compile(r"^\d{1,3}(\.\d+)?(px|pt|em|rem|%)$", re.IGNORECASE),
+    "padding": re.compile(r"^[\d\s.pxemrem%]+$", re.IGNORECASE),
+    "vertical-align": re.compile(r"^(top|middle|bottom|baseline)$", re.IGNORECASE),
 }
 _DANGEROUS_TOKENS = ("url(", "expression", "javascript:", "/*", "*/", "<", ">", "{", "}", "@")
 
