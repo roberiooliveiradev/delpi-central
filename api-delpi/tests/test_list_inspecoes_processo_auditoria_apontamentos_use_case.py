@@ -40,7 +40,7 @@ def test_list_auditoria_apontamentos_normalizes_rows() -> None:
                 "Qtde_Apontamentos": 2,
                 "Operador_Inspecionou": 0,
                 "Tem_Inspecao_Na_Op_Operacao": 1,
-                "Tem_Inspecao_Amarrada": 0,
+                "Tem_Inspecao_Amarrada": 1,
                 "Tem_Inspecao_Executada": 0,
             }
         ],
@@ -56,7 +56,43 @@ def test_list_auditoria_apontamentos_normalizes_rows() -> None:
     assert item.login_operador == "CARLA.JESUS"
     assert item.operador_inspecionou is False
     assert item.tem_inspecao_na_op_operacao is True
+    assert item.tem_inspecao_amarrada is True
     assert item.tem_inspecao_executada is False
+    repository.list_auditoria_apontamentos_page.assert_called_once_with(
+        "02",
+        data="2026-07-13",
+        offset=0,
+        fetch_next=51,
+        status="all",
+    )
+
+
+def test_list_auditoria_apontamentos_passes_status_filter() -> None:
+    repository = MagicMock()
+    repository.list_auditoria_apontamentos_page.return_value = ({}, [])
+
+    use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(repository)
+    use_case.execute(
+        branch="01",
+        data="2026-07-13",
+        page=1,
+        page_size=50,
+        status="nao_inspecionou",
+    )
+
+    repository.list_auditoria_apontamentos_page.assert_called_once_with(
+        "01",
+        data="2026-07-13",
+        offset=0,
+        fetch_next=51,
+        status="nao_inspecionou",
+    )
+
+
+def test_list_auditoria_apontamentos_rejects_invalid_status() -> None:
+    use_case = ListInspecoesProcessoAuditoriaApontamentosUseCase(MagicMock())
+    with pytest.raises(ValueError, match="status inválido"):
+        use_case.execute(branch="01", status="pendente")
 
 
 def test_list_auditoria_apontamentos_defaults_data_to_today() -> None:

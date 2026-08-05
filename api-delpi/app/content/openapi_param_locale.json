@@ -4293,5 +4293,51 @@
         }
       }
     }
+  },
+  "inspecao_status": {
+    "locale": {
+      "en": {
+        "label": "Inspection status",
+        "description": "Filter production appointments by inspection status in process audit."
+      },
+      "pt-BR": {
+        "label": "Status da inspeção",
+        "description": "Filtra apontamentos pelo status de inspeção na auditoria de processo."
+      }
+    },
+    "enumLabels": {
+      "all": {
+        "en": {
+          "label": "All"
+        },
+        "pt-BR": {
+          "label": "Todos"
+        }
+      },
+      "nao_inspecionou": {
+        "en": {
+          "label": "Did not inspect"
+        },
+        "pt-BR": {
+          "label": "Não inspecionou"
+        }
+      },
+      "inspecionou": {
+        "en": {
+          "label": "Inspected"
+        },
+        "pt-BR": {
+          "label": "Inspecionou"
+        }
+      },
+      "sem_cadastro": {
+        "en": {
+          "label": "No inspection registered"
+        },
+        "pt-BR": {
+          "label": "Não possui inspeção cadastrada"
+        }
+      }
+    }
   }
 }

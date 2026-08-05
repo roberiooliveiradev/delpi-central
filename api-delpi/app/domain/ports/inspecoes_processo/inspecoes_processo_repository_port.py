@@ -70,4 +70,5 @@ class InspecoesProcessoRepositoryPort(Protocol):
         data: str,
         offset: int,
         fetch_next: int,
+        status: str | None = None,
     ) -> tuple[dict, list[dict]]: ...

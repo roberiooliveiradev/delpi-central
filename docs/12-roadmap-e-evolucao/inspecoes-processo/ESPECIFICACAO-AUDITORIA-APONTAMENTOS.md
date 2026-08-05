@@ -30,13 +30,15 @@ QPR_ENSR
 
 ### Status na UI
 
-| Situação | Label |
-|---|---|
-| Login/nome do apontamento = ensaiador do QPR na mesma OP+operação | Operador inspecionou |
-| Há QPR na OP+operação, mas de outra pessoa | Pendente (outra pessoa inspecionou) |
-| Não há QPR na OP+operação | Pendente (sem inspeção) |
+| Situação | Label | Cor | Conta pendência? |
+|---|---|---|---|
+| Login/nome do apontamento = ensaiador do QPR na mesma OP+operação | Inspecionou | verde | não |
+| Há inspeção exigível (QPK+QP7/QP8 na revisão da OP, ou QPR de outra pessoa) e o operador não lançou | Não inspecionou | vermelho | sim |
+| Sem inspeção amarrada na OP+operação (sem QPK/revisão com essa operação e sem QPR) | Não possui inspeção cadastrada | cinza | não |
 
-A tabela lista **todos** os apontamentos do dia (pendências primeiro).
+A tabela pode filtrar por status via query `inspecao_status` (`all` | `nao_inspecionou` | `inspecionou` | `sem_cadastro`). Na UI o padrão inicial é **Não inspecionou**. Os KPIs do summary continuam do dia inteiro; só a lista/página é filtrada. Sem filtro (`all`), a ordenação é: pendências reais primeiro; depois sem cadastro; depois ok.
+
+Campo de contrato: `tem_inspecao_amarrada` = a OP tem cabeçalho QPK **e** a revisão amarrada (`QPK_REVI`) possui ensaio QP7/QP8 para aquela operação (não usar `MAX(QP6_REVI)` do produto — a OP pode estar em revisão antiga sem a operação apontada).
 
 ## Fontes TOTVS
 
@@ -44,6 +46,8 @@ A tabela lista **todos** os apontamentos do dia (pendências primeiro).
 |---|---|
 | `dbo.vw_Apontamentos_Eficiencia` | Apontamentos do dia |
 | `dbo.QPR010` | Ensaios executados (`QPR_OP`, `QPR_OPERAC`, `QPR_ENSR`) |
+| `dbo.QPK010` | Cabeçalho de inspeção da OP (`QPK_REVI`, `QPK_PRODUT`) |
+| `dbo.QP7010` / `QP8010` | Especificação do produto **na revisão do QPK** (por operação) |
 | `dbo.vw_minha_delpi_inspecoes_processo_por_ensaiador` | Mapa matrícula → login/nome |
 
 ## Escopo de apontamentos

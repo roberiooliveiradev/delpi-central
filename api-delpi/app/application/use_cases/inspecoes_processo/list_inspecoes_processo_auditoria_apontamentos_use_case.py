@@ -17,6 +17,9 @@ from app.domain.quality.inspecoes_processo.inspecoes_processo_scope import (
 DEFAULT_PAGE = 1
 DEFAULT_PAGE_SIZE = 50
 MAX_PAGE_SIZE = 100
+ALLOWED_STATUS = frozenset(
+    {"all", "nao_inspecionou", "inspecionou", "sem_cadastro"}
+)
 
 
 def _as_int(value: Any) -> int:
@@ -83,6 +86,17 @@ def _parse_data(value: str | None) -> str:
         raise ValueError("data inválida. Use YYYY-MM-DD.") from exc
 
 
+def _parse_status(value: str | None) -> str:
+    if value is None or not str(value).strip():
+        return "all"
+    normalized = str(value).strip().lower()
+    if normalized not in ALLOWED_STATUS:
+        raise ValueError(
+            "status inválido. Use all, nao_inspecionou, inspecionou ou sem_cadastro."
+        )
+    return normalized
+
+
 def _normalize_item(
     row: dict,
     branch: str,
@@ -136,10 +150,12 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
         data: str | None = None,
         page: int = DEFAULT_PAGE,
         page_size: int = DEFAULT_PAGE_SIZE,
+        status: str | None = None,
     ) -> InspecoesProcessoAuditoriaApontamentosResponse:
         normalized_branch = normalize_optional_branch(branch)
 
         resolved_data = _parse_data(data)
+        resolved_status = _parse_status(status)
         resolved_page = max(int(page), 1)
         resolved_page_size = min(max(int(page_size), 1), MAX_PAGE_SIZE)
         offset = (resolved_page - 1) * resolved_page_size
@@ -150,6 +166,7 @@ class ListInspecoesProcessoAuditoriaApontamentosUseCase:
             data=resolved_data,
             offset=offset,
             fetch_next=fetch_next,
+            status=resolved_status,
         )
 
         has_next = len(rows) > resolved_page_size

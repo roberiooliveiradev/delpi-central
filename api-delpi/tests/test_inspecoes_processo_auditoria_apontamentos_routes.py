@@ -59,6 +59,7 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
     response = get_inspecoes_processo_auditoria_apontamentos_route(
         branch="01",
         data="2026-07-13",
+        inspecao_status="nao_inspecionou",
         page=1,
         page_size=50,
     )
@@ -75,6 +76,7 @@ def test_inspecoes_processo_auditoria_apontamentos_returns_meta(
         data="2026-07-13",
         page=1,
         page_size=50,
+        status="nao_inspecionou",
     )
 
 
@@ -141,5 +143,14 @@ def test_inspecoes_processo_auditoria_apontamentos_rejects_page_size_above_max(
 ) -> None:
     response = inspecoes_processo_client.get(
         "/inspecoes-processo/auditoria-apontamentos?branch=01&page_size=101"
+    )
+    assert response.status_code == 422
+
+
+def test_inspecoes_processo_auditoria_apontamentos_rejects_invalid_inspecao_status(
+    inspecoes_processo_client: TestClient,
+) -> None:
+    response = inspecoes_processo_client.get(
+        "/inspecoes-processo/auditoria-apontamentos?branch=01&inspecao_status=pendente"
     )
     assert response.status_code == 422
