@@ -2,7 +2,6 @@
 
 import {
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -24,9 +23,8 @@ import {
   Wand2,
 } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient, HttpError } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
+import { HttpError } from "../../../data/apiClient";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { resolveIcon } from "../../../utils/iconResolver";
 import {
   Alert,
@@ -178,12 +176,7 @@ export function ManifestEditorPage() {
   const { appId } = useParams<{ appId: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { getAccessToken } = useContext(AuthContext);
-
-  const api = useMemo(
-    () => new AdminApi(new ApiClient("", getAccessToken)),
-    [getAccessToken]
-  );
+  const api = useAdminApi();
 
   const isEdit = Boolean(appId);
   const focusCode = searchParams.get("focusCode");

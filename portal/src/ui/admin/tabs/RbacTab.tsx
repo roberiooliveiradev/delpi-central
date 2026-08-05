@@ -1,12 +1,9 @@
 // src/ui/admin/tabs/RbacTab.tsx
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Circle, ShieldCheck, UserRound } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type {
   AdminGroup,
   AdminRole,
@@ -14,6 +11,7 @@ import type {
   OnlineUserPresence,
 } from "../../../data/adminApi";
 
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
@@ -72,7 +70,6 @@ const formatBrazilDateTime = (value?: string | null) => {
 };
 
 export const RbacTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const showAlert = useAppAlert();
 
@@ -97,9 +94,7 @@ export const RbacTab = () => {
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [groups, setGroups] = useState<AdminGroup[]>([]);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const loadOnlineUsers = useCallback(async () => {
     try {

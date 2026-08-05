@@ -1,12 +1,10 @@
 // src/ui/admin/rbac/GroupEditPage.tsx
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import {
@@ -45,15 +43,10 @@ const normalizeIds = (items: unknown[]): string[] => {
 export const GroupEditPage = () => {
   const { groupId } = useParams<{ groupId: string }>();
   const navigate = useNavigate();
-  const { getAccessToken } = useContext(AuthContext);
   const showAlert = useAppAlert();
+  const api = useAdminApi();
 
   const isNew = !groupId || groupId === "new";
-
-  const api = useMemo(
-    () => new AdminApi(new ApiClient("", getAccessToken)),
-    [getAccessToken]
-  );
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

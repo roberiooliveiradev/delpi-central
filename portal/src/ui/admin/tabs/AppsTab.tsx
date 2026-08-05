@@ -1,6 +1,6 @@
 // src/ui/admin/tabs/AppsTab.tsx
 
-import { useContext, useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Code2,
@@ -13,11 +13,10 @@ import {
   UserRound,
 } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient, HttpError } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
+import { HttpError } from "../../../data/apiClient";
 import type { AdminApp } from "../../../data/adminApi";
 
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
@@ -136,7 +135,6 @@ const hasActiveDateFilters = (filters: AppDateFilters) =>
   );
 
 export const AppsTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const showAlert = useAppAlert();
 
@@ -156,9 +154,7 @@ export const AppsTab = () => {
   const [dateFilters, setDateFilters] =
     useState<AppDateFilters>(EMPTY_DATE_FILTERS);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const appsResource = usePaginatedResource<AdminApp>(
     ({ page, pageSize }) =>

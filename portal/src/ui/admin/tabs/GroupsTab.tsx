@@ -1,14 +1,12 @@
 // src/ui/admin/tabs/GroupsTab.tsx
 
-import { useContext, useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type { AdminGroup } from "../../../data/adminApi";
 
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
@@ -25,7 +23,6 @@ const getGroupInitials = (group: AdminGroup) => {
 };
 
 export const GroupsTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
@@ -41,9 +38,7 @@ export const GroupsTab = () => {
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const groupsResource = usePaginatedResource<AdminGroup>(
     ({ page, pageSize }) =>

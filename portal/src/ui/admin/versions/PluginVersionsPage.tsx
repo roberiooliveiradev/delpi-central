@@ -1,12 +1,10 @@
 // src/ui/admin/versions/PluginVersionsPage.tsx
 
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type { PluginVersion, PluginVersionDetail } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import {
@@ -68,13 +66,8 @@ const DiffSection = ({
 export const PluginVersionsPage = () => {
   const { appId = "" } = useParams<{ appId: string }>();
   const navigate = useNavigate();
-  const { getAccessToken } = useContext(AuthContext);
   const showAlert = useAppAlert();
-
-  const api = useMemo(
-    () => new AdminApi(new ApiClient("", getAccessToken)),
-    [getAccessToken]
-  );
+  const api = useAdminApi();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

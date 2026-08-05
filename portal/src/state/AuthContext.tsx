@@ -185,6 +185,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setCoreLoaded(false);
 
     tokenRef.current = undefined;
+    // Mantém Keycloak e o portal alinhados: senão o polling admin pode
+    // disparar request sem Bearer enquanto o adapter ainda tem sessão.
+    try {
+      keycloak.clearToken();
+    } catch {
+      // noop
+    }
 
     setUser(undefined);
     setApps([]);
@@ -280,15 +287,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     refreshPromiseRef.current = (async () => {
       try {
-        const currentToken = tokenRef.current;
-        const refreshed = await keycloak.updateToken(60);
+        await keycloak.updateToken(60);
         const nextToken = keycloak.token;
 
-        if (nextToken && nextToken !== currentToken) {
+        // Re-sincroniza sempre: cobre tokenRef vazio com sessão Keycloak viva.
+        if (nextToken) {
           tokenRef.current = nextToken;
         }
 
-        return refreshed || !!nextToken;
+        return Boolean(tokenRef.current);
       } catch {
         return false;
       } finally {

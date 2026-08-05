@@ -96,6 +96,24 @@ export class ApiClient {
     options: RequestInit = {},
     hasRetried = false
   ): Promise<T> {
+    if (!hasRetried && !this.getToken() && this.refreshTokenFn) {
+      try {
+        const refreshed = await this.refreshTokenFn();
+        if (!refreshed) {
+          if (this.onUnauthorized) {
+            await this.onUnauthorized();
+          }
+          throw new HttpError(401, "Unauthorized");
+        }
+      } catch (err) {
+        if (err instanceof HttpError) throw err;
+        if (this.onUnauthorized) {
+          await this.onUnauthorized();
+        }
+        throw new HttpError(401, "Unauthorized");
+      }
+    }
+
     const response = await this.doFetch(endpoint, options);
 
     if (response.status === 401) {

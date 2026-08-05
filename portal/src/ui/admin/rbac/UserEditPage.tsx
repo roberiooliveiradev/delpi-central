@@ -1,12 +1,10 @@
 // src/ui/admin/rbac/UserEditPage.tsx
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type { AdminGroup, AdminRole, AdminUser } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
 import {
@@ -44,13 +42,8 @@ const normalizeIds = (items: unknown[]): string[] => {
 export const UserEditPage = () => {
   const { userId = "" } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { getAccessToken } = useContext(AuthContext);
   const showAlert = useAppAlert();
-
-  const api = useMemo(
-    () => new AdminApi(new ApiClient("", getAccessToken)),
-    [getAccessToken]
-  );
+  const api = useAdminApi();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -1,6 +1,6 @@
 // src/ui/admin/tabs/PermissionsTab.tsx
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,14 +8,12 @@ import {
   ChevronsUpDown,
   Package,
 } from "lucide-react";
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type {
   AdminApp,
   AdminPermission,
   AdminPermissionUsage,
 } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { resolveIcon } from "../../../utils/iconResolver";
 import { Button, SearchInput } from "../../../ui-kit";
@@ -81,8 +79,6 @@ const buildAppInfoByModule = (apps: AdminApp[]): AppInfoByModule => {
 };
 
 export const PermissionsTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
-
   const [search, setSearch] = useState("");
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
   const [appInfoByModule, setAppInfoByModule] = useState<AppInfoByModule>({});
@@ -93,9 +89,7 @@ export const PermissionsTab = () => {
     Record<string, PermissionUsageState>
   >({});
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const permsResource = usePaginatedResource<AdminPermission>(
     ({ page, pageSize }) =>

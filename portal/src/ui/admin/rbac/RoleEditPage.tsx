@@ -1,17 +1,15 @@
 // src/ui/admin/rbac/RoleEditPage.tsx
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type {
   AdminApp,
   AdminPermission,
   AdminRole,
   AdminUser,
 } from "../../../data/adminApi";
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { AppGroupedPermissionPicker } from "../../../components/AppGroupedPermissionPicker";
 import { RelationshipPicker } from "../../../components/RelationshipPicker";
 import { useAppAlert } from "../../../components/ConfirmDialogProvider";
@@ -95,15 +93,10 @@ export const RoleEditPage = () => {
   const { roleId } = useParams<{ roleId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { getAccessToken } = useContext(AuthContext);
   const showAlert = useAppAlert();
+  const api = useAdminApi();
 
   const isNew = !roleId || roleId === "new";
-
-  const api = useMemo(
-    () => new AdminApi(new ApiClient("", getAccessToken)),
-    [getAccessToken]
-  );
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

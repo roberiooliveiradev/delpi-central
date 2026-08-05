@@ -1,14 +1,12 @@
 // src/ui/admin/tabs/RolesTab.tsx
 
-import { useContext, useMemo, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit, KeyRound, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 
-import { AuthContext } from "../../../state/AuthContext";
-import { ApiClient } from "../../../data/apiClient";
-import { AdminApi } from "../../../data/adminApi";
 import type { AdminRole } from "../../../data/adminApi";
 
+import { useAdminApi } from "../../../hooks/useAdminApi";
 import { usePaginatedResource } from "../../../hooks/usePaginatedResource";
 import { ConfirmDialog } from "../../../components/ConfirmDialog";
 import { AdminEntityList } from "../../../components/admin/AdminEntityList";
@@ -33,7 +31,6 @@ const getRoleInitials = (role: AdminRole) => {
 };
 
 export const RolesTab = () => {
-  const { getAccessToken } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
@@ -49,9 +46,7 @@ export const RolesTab = () => {
   const [confirmBulk, setConfirmBulk] = useState(false);
   const [deleteOneId, setDeleteOneId] = useState<string | null>(null);
 
-  const api = useMemo(() => {
-    return new AdminApi(new ApiClient("", getAccessToken));
-  }, [getAccessToken]);
+  const api = useAdminApi();
 
   const rolesResource = usePaginatedResource<AdminRole>(
     ({ page, pageSize }) =>
