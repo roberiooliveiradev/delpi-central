@@ -210,7 +210,19 @@ class MeetingMinutesService:
         signers=self.repo.list_signers(minute_id)
         if not signers: raise ValueError("Configure ao menos um signatário antes de enviar.")
         updated=self.repo.set_status(minute_id=minute_id,status="awaiting_signatures",actor_user_id=self._user_id(user),action="send_for_signature")
-        for signer in signers: self.notifications.send(user_id=str(signer["user_id"]),title="Assinatura de ata Transforma+ pendente",message=f"A ata {updated['minute_number']} aguarda sua assinatura.",portal_route=f"/apps/transformometro/atas/{updated['id']}/sign")
+        for signer in signers:
+            user_id = str(signer.get("user_id") or "").strip()
+            if not user_id:
+                continue
+            try:
+                self.notifications.notify_sign_pending(
+                    user_id=user_id,
+                    minute_id=str(updated["id"]),
+                    minute_number=str(updated["minute_number"]),
+                    title=str(updated.get("title") or ""),
+                )
+            except Exception:
+                pass
         return {"minute":updated,"signers":signers}
 
     def sign_context(self,user: Any,minute_id: str) -> dict[str,Any]:
