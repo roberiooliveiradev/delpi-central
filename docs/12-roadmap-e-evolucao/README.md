@@ -70,16 +70,23 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 
 | Arquivo | Conteúdo |
 |---|---|
-| [commercial/README.md](./commercial/README.md) | Índice do **Portal Comercial** (`commercial`) |
+| [commercial/README.md](./commercial/README.md) | Índice do **Portal Comercial** (`commercial`) — F0–F2b em `main` |
 | [commercial/PLAYBOOK-MODULO-COMERCIAL.md](./commercial/PLAYBOOK-MODULO-COMERCIAL.md) | **Playbook mestre** — matriz dores × cobertura (§ 1.2), paridade, fases, gates `.cursor` |
+| [commercial/IMPLEMENTATION-PLAN.md](./commercial/IMPLEMENTATION-PLAN.md) | Status executável F0–F2c |
+| [commercial/HOMOLOGACAO-PARIDADE-PEDIDOS.md](./commercial/HOMOLOGACAO-PARIDADE-PEDIDOS.md) | Checklist de paridade (assinatura Comercial/QA) |
+| [commercial/F2C-CUTOVER-RUNBOOK.md](./commercial/F2C-CUTOVER-RUNBOOK.md) | Cutover F2c — ocultar PVA + redirects |
+| [commercial/KPI-FICHAS.md](./commercial/KPI-FICHAS.md) | Fichas KPI (F0) |
 | [commercial/API-ROUTES.md](./commercial/API-ROUTES.md) | Catálogo de rotas commercial-api + api-delpi |
 | [commercial/DATA-MODEL.md](./commercial/DATA-MODEL.md) | Estrutura física das tabelas Postgres do Portal Comercial |
 | [commercial/WIREFRAMES.md](./commercial/WIREFRAMES.md) | Wireframes das páginas do Portal Comercial |
 | [commercial/PLAYBOOK-01-fronteiras-api-delpi.md](./commercial/PLAYBOOK-01-fronteiras-api-delpi.md) | Fronteiras api-delpi × commercial-api + migração CRUD carteira |
 | [commercial/INVENTARIO-ATIVOS.md](./commercial/INVENTARIO-ATIVOS.md) | Baseline de rotas, plugins e gaps |
 | [commercial/adr/ADR-001-commercial-api.md](./commercial/adr/ADR-001-commercial-api.md) | ADR — API própria e migração do CRUD |
+| [commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md](./commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md) | ADR — depreciação do Portal do Vendedor |
 
 ### Pedidos de Venda em Aberto
+
+> **Legado até F2c** — entrada canônica de paridade: [Portal Comercial](./commercial/README.md).
 
 | Arquivo | Conteúdo |
 |---|---|

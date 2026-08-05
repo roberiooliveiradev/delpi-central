@@ -1,84 +1,87 @@
 # Portal Comercial — documentação
 
-> **Status:** playbook oficial (ago/2026) — documentação; implementação por fases  
+> **Status:** playbook oficial + implementação F0–F2b harden em `main` (ago/2026)  
 > **Nome ao usuário:** **Portal Comercial**  
-> **Id técnico:** `commercial`  
-> **Produto:** hub de decisão e execução comercial da Minha DELPI (várias funcionalidades)
+> **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
+> **API:** `commercial-api` · gateway `/apps/commercial-api/`
 
-O **Portal Comercial** é a nova aplicação do domínio comercial: concentra jornadas (carteira, pedidos, CRM, etc.) com API própria (`commercial-api`) e reads TOTVS via api-delpi.
+O **Portal Comercial** concentra jornadas de carteira, pedidos em aberto e admin de vendedores. Reads TOTVS ficam na **api-delpi**; estado Delpi (carteira/avatar) na **commercial-api**.
 
-O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até paridade completa** no Portal Comercial; só então é **depreciado**. `dashboard-commercial` e `propostas-comerciais` seguem coexistindo / compostos.
+O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até homologação § 2.1.1**; depreciação = **F2c** ([runbook](./F2C-CUTOVER-RUNBOOK.md)). `dashboard-commercial` e `propostas-comerciais` coexistem.
 
 ## Documentos
 
 | Documento | Conteúdo |
 |-----------|----------|
-| **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — Portal Comercial, **§ 1.2 matriz dores × cobertura**, fases, gates `.cursor` |
-| **[API-ROUTES.md](./API-ROUTES.md)** | Mapeamento de **todas** as rotas commercial-api + api-delpi |
-| **[DATA-MODEL.md](./DATA-MODEL.md)** | Estrutura física de **todas** as tabelas Postgres (`commercial`) |
-| **[WIREFRAMES.md](./WIREFRAMES.md)** | Wireframes das páginas (shell, paridade F2b, Meu dia, CRM) |
-| **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Contrato vivo api-delpi × commercial-api; migração do estado Delpi de carteira (GET+CRUD) |
-| **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline factual — rotas, plugins, gaps |
-| **[adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)** | ADR — API própria e migração sellers/avatar |
-| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — fórmulas e owners |
-| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Plano executável F0–F2b (status) |
-| **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade Portal do Vendedor (F2b) |
-| **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Runbook para ocultar PVA + redirects (após homologação) |
-| **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR depreciação Portal do Vendedor |
+| **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
+| **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2c |
+| **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
+| **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Ocultar PVA + redirects (após homologação) |
+| **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) |
+| **[API-ROUTES.md](./API-ROUTES.md)** | Catálogo commercial-api + api-delpi |
+| **[DATA-MODEL.md](./DATA-MODEL.md)** | Tabelas Postgres schema `commercial` |
+| **[WIREFRAMES.md](./WIREFRAMES.md)** | Wireframes WF-01–10 |
+| **[PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)** | Fronteira api-delpi × commercial-api |
+| **[INVENTARIO-ATIVOS.md](./INVENTARIO-ATIVOS.md)** | Baseline de rotas, plugins e gaps |
+| **[adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)** | ADR — API própria e migração carteira |
+| **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR — depreciação Portal do Vendedor |
 
-> **Implementação:** F0–F2b harden + artefatos de cutover/F2c entregues. Homologação Comercial e flip de menu ainda abertos.
+## Estado da implementação (ago/2026)
 
-## Escala (obrigatório no desenho)
+| Entrega | Estado |
+|---------|--------|
+| `commercial-api/` (health, JWT, portfolios, avatars, proxy search/enrich) | **Entregue** |
+| `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
+| Compose + gateway + volume `commercial-avatars` | **Entregue** |
+| `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
+| Homologação Comercial § 2.1.1 | **Pendente** |
+| F2c (ocultar PVA + redirects em prod) | Artefatos prontos — **flip após homologação** |
 
-Ver playbook **[§ 14](./PLAYBOOK-MODULO-COMERCIAL.md#14-escalabilidade-resiliência-e-performance)**: API dedicada stateless, paginação server-side, sem SQL TOTVS na commercial-api, features modulares no MFE, outbox, degradação parcial, orçamentos de latência.
+## Pacotes e URLs
 
-## Decisão de fronteira (resumo)
+| Pacote | Papel | URL |
+|--------|--------|-----|
+| `commercial-api/` | Backend carteira/avatar | `/apps/commercial-api` |
+| `plugins/commercial/` | MFE Portal Comercial | `/apps/commercial` |
+
+Registrar manifesto: `TOKEN=… ./plugins/commercial/scripts/register-manifest.sh`  
+README do plugin: [`plugins/commercial/README.md`](../../../plugins/commercial/README.md)
+
+## Fronteira (resumo)
 
 ```text
-MFEs analíticos (dashboard, propostas) + reads TOTVS de pedidos
+MFEs analíticos + reads TOTVS de pedidos
   → api-delpi → TOTVS
 
-Portal Comercial (carteira Delpi, CRM, admin vendedores)
-  → commercial-api → Postgres
-  → commercial-api → api-delpi → TOTVS
+Portal Comercial (carteira Delpi, admin, avatars)
+  → commercial-api → Postgres (+ volume avatars)
+  → commercial-api → api-delpi (search / enrichment)
 ```
 
-- Nomes técnicos: **English** · ao usuário: **Portal Comercial** (pt-BR)
-- UI: `plugins/commercial` + `@delpi/plugin-ui`
-- Depreciação de `pedidos-venda-abertos`: **somente** após checklist § 2.1.1 do playbook
+**HTTPS:** clients usam paths relativos; `commercial-api` com `redirect_slashes=False` (evita Mixed Content atrás do TLS). Pedidos TOTVS na api-delpi usam barra final em `pedidos-venda-abertos/`.
 
 ## Ativos existentes
 
 | Plugin | Papel | Destino |
 |--------|--------|---------|
-| `dashboard-commercial` | Cockpit KPIs / OTD / propostas OV | Permanece (compor) |
-| `pedidos-venda-abertos` | Portal do Vendedor | **Depreciar após paridade** no Portal Comercial |
-| `propostas-comerciais` | Propostas ativas + PDF | Permanece (compor) |
+| `commercial` | **Portal Comercial** (entrada canônica da paridade) | Ativo |
+| `dashboard-commercial` | Cockpit KPIs / OTD / propostas OV | Permanece |
+| `pedidos-venda-abertos` | Portal do Vendedor | Depreciar em F2c |
+| `propostas-comerciais` | Propostas ativas + PDF | Permanece |
 
-## Pacotes alvo
+## Fases
 
-| Pacote | Papel |
-|--------|--------|
-| `commercial-api/` | Backend dedicado |
-| `plugins/commercial/` | App **Portal Comercial** (telas de paridade + expansão) |
+| Fase | Entrega | Status |
+|------|---------|--------|
+| F0–F2 | Docs, API, migrations, dual-read | Concluído |
+| F2b | Paridade UX | Concluído (harden) — homologação aberta |
+| F2c | Depreciar PVA | Runbook/ADR prontos |
+| F3–F4 | Runtime módulo + composição | Fora do escopo atual |
+| F5–F7 | CRM / forecast / amostras | Fora do escopo atual |
 
-## Fases (ordem)
+## Referências
 
-| Fase | Entrega |
-|------|---------|
-| F0 | Fichas KPI + ownership |
-| F1 | Scaffold commercial-api |
-| F2 | Migrar rotas Delpi de carteira/avatar (GET + CRUD) |
-| **F2b** | **Paridade UX** Portal do Vendedor → Portal Comercial |
-| **F2c** | Depreciar `pedidos-venda-abertos` |
-| F3–F4 | Runtime módulo + composição dashboard/propostas |
-| F5–F7 | Worklist, pipeline/forecast, amostras/confirmação |
-
-## Referências de plataforma
-
-- [Plugin × módulo](../../05-plugin-system/plugin-vs-module.md)
-- [Roadmap runtime 1.1.0](../../05-plugin-system/roadmap-implementacao-plugin-modulo.md)
 - [Checklist novo MFE](../../05-plugin-system/novo-plugin-mfe-checklist.md)
-- Fronteira irmã: [maintenance PLAYBOOK-01](../maintenance/PLAYBOOK-01-fronteiras-api-delpi.md)
-- Pedidos (legado até F2c): [pedidos-venda-abertos](../pedidos-venda-abertos/README.md)
-- Propostas: [propostas-comerciais](../propostas-comerciais/README.md)
+- [Registrar plugin](../../10-guias-operacionais/registrar-plugin.md)
+- [Infra ambiente](../../../infra/README-ambiente.md) (volume avatars)
+- Legado PVA: [pedidos-venda-abertos](../pedidos-venda-abertos/README.md)

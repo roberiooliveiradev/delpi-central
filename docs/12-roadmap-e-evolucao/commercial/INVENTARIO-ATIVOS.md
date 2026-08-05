@@ -5,9 +5,9 @@
 > **Playbook mestre:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)
 
-Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação, orientar a migração do estado Delpi para `commercial-api` e a **paridade** que libera a depreciação de `pedidos-venda-abertos`.
+Este documento lista o que **já existe** no monorepo para o domínio Comercial e o que ainda é lacuna. Serve para evitar reimplementação e acompanhar a **paridade** que libera a depreciação de `pedidos-venda-abertos`.
 
-**Destino de produto:** as funcionalidades do Portal do Vendedor (`pedidos-venda-abertos`) serão reimplementadas no **Portal Comercial**; o plugin antigo só é depreciado após o gate § 2.1.1 do playbook.
+**Destino de produto:** o **Portal Comercial** (`commercial` + `commercial-api`) já cobre a paridade F2b; o plugin antigo só é depreciado após o gate § 2.1.1 (F2c).
 
 ---
 
@@ -15,24 +15,27 @@ Este documento lista o que **já existe** no monorepo para o domínio Comercial 
 
 | Plugin `id` | Nome ao usuário | `basePath` | Papel | Consome |
 |---|---|---|---|---|
+| `commercial` | **Portal Comercial** | `/apps/commercial` | Entrada canônica de paridade (pedidos, carteira, admin) | commercial-api + api-delpi |
 | `dashboard-commercial` | Dashboard Comercial | `/apps/dashboard-commercial` | Cockpit KPIs (ROL, conversão, OTD, novos negócios, propostas OV) | api-delpi `/commercial/*` |
-| `pedidos-venda-abertos` | Portal do Vendedor | `/apps/pedidos-venda-abertos` | Legado até paridade; depois **depreciado** | api-delpi + (F2) commercial-api |
+| `pedidos-venda-abertos` | Portal do Vendedor | `/apps/pedidos-venda-abertos` | Legado até F2c; depois **depreciado** | api-delpi (+ carteira legado até cutover) |
 | `propostas-comerciais` | Propostas Comerciais | `/apps/propostas-comerciais` | Listagem, detalhe e PDF de propostas ativas | api-delpi `/propostas-comerciais/*` |
 
-**Não existem ainda:** `commercial` (**Portal Comercial**), `commercial-api`.
+**Existem:** `plugins/commercial/`, `commercial-api/` (F0–F2b harden em `main`).
 
-**Depreciação planejada (após paridade):** `pedidos-venda-abertos` — ver playbook § 2.1.1 / fases F2b–F2c.
+**Depreciação planejada (após homologação § 2.1.1):** `pedidos-venda-abertos` — [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md).
 
 ### Telas observadas
 
 | Plugin | Páginas / rotas principais |
 |---|---|
+| `commercial` | Home, open-orders, customers, customer detail, seller-portfolios |
 | `dashboard-commercial` | Dashboard, detalhe proposta OV, OTD painel, OTD linha |
 | `pedidos-venda-abertos` | Pedidos, clientes (carteira), detalhe cliente, config vendedores |
 | `propostas-comerciais` | Lista, detalhe, export PDF |
 
 Docs locais:
 
+- `plugins/commercial/README.md`
 - `plugins/dashboard-commercial/docs/`
 - `docs/12-roadmap-e-evolucao/pedidos-venda-abertos/`
 - `docs/12-roadmap-e-evolucao/propostas-comerciais/`
@@ -83,7 +86,7 @@ Migrations Postgres (hoje na api-delpi):
 | Critério | Destino |
 |---|---|
 | Lê view/SQL Protheus (pedido, NF, cliente TOTVS, enrichment) | **permanece** na api-delpi |
-| Lê ou escreve estado **Delpi** (Postgres plugins / arquivo de avatar) | **migra** para `commercial-api` (F2) — leitura **e** escrita |
+| Lê ou escreve estado **Delpi** (Postgres plugins / arquivo de avatar) | **já em** `commercial-api` (F2 cutover) — leitura **e** escrita; rotas api-delpi deprecated |
 
 Não há exceção para “só GET”: se a fonte canônica não é TOTVS, a rota sai da api-delpi.
 
@@ -98,9 +101,9 @@ Não há exceção para “só GET”: se a fonte canônica não é TOTVS, a rot
 | `list_customer_billing_series` | `POST /pedidos-venda-abertos/customers/billing-series` |
 | `list_cliente_notas_fiscais_saida` | `GET /pedidos-venda-abertos/clientes/{codigo}/{loja}/notas-fiscais` |
 
-### 3.2 Estado Delpi (Postgres / avatar) — **migrar inteiro → commercial-api**
+### 3.2 Estado Delpi (Postgres / avatar) — **canônico em commercial-api**
 
-Inclui **CRUD e leituras** cujo dado canônico é Delpi (não TOTVS):
+Inclui **CRUD e leituras** cujo dado canônico é Delpi (não TOTVS). Na api-delpi ficam **deprecated** até F2c:
 
 | operationId | Method + path | Observação |
 |---|---|---|
@@ -118,9 +121,9 @@ Inclui **CRUD e leituras** cujo dado canônico é Delpi (não TOTVS):
 | `upsert_customer_avatar` | `PUT .../customers/{codigo}/{loja}/avatar` | Volume persistente |
 | `delete_customer_avatar` | `DELETE .../customers/{codigo}/{loja}/avatar` | |
 
-Após F2 cutover: MFE chama commercial-api para **todas** as rotas da tabela acima; enriquecimento de cliente (search/enrichment/billing) continua na api-delpi via gateway quando a commercial-api precisar compor resposta.
+Após F2 cutover: MFE **Portal Comercial** chama `commercial-api` (`/apps/commercial-api/seller-portfolios*`, avatars) para **todas** as rotas da tabela acima. Search/enrichment TOTVS: proxy na commercial-api → api-delpi; billing-series e NF: MFE chama api-delpi direto.
 
-Permissões atuais: `pedidos-venda-abertos.access`, `pedidos-venda-abertos.admin` (mapear/espelhar na commercial-api na migração).
+Permissões: `commercial.accounts.view` / `commercial.seller-portfolios.manage` (aliases: `pedidos-venda-abertos.access` / `.admin`). Rotas api-delpi `/sellers*` e avatars Delpi: **deprecated** (código pode permanecer até F2c).
 
 ---
 
@@ -153,12 +156,13 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 
 ---
 
-## 6. Persistência Delpi hoje
+## 6. Persistência Delpi
 
-| Dado | Onde | Migração alvo |
+| Dado | Onde (atual) | Notas |
 |---|---|---|
-| Seller portfolio + customers | Postgres plugins schema via api-delpi | `commercial-api` (F2) |
-| Customer avatars (binário + meta) | Disco + Postgres (api-delpi) | `commercial-api` + volume Compose (`persistent-upload-storage`) |
+| Seller portfolio + customers | Schema Postgres `commercial` via **commercial-api** (default `COMMERCIAL_PORTFOLIO_SOURCE=commercial`) | Backfill a partir de `pedidos_venda_abertos.*`; dual-read `legacy` só transição |
+| Customer avatars | Volume `commercial-avatars` + `commercial.customer_avatars` | `redirect_slashes=False` na API; ver Mixed Content HTTPS |
+| Schema legado `pedidos_venda_abertos` | Ainda no Postgres plugins | Fonte do backfill; CRUD canônico pós-cutover = commercial-api |
 | Pedido / proposta / cliente cadastro | TOTVS via api-delpi | Permanecem |
 | Oportunidade, tarefa, forecast, amostra | — | `commercial-api` (F5+) |
 
@@ -181,7 +185,8 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 |---|---|---|
 | Meu dia / worklist | **novo** | Sem fila central |
 | Prospects | **novo** | Sem domínio próprio |
-| Conta 360 | **parcial** | Check-up no Portal do Vendedor; sem timeline unificada |
+| Conta 360 | **parcial** | Check-up no Portal Comercial (+ PVA legado); sem timeline unificada |
+| Administração (carteiras) | **parcial** | CRUD na **commercial-api**; PVA legado até F2c |
 | Oportunidades / pipeline | **novo** | — |
 | Ofertas / propostas | **parcial** | Dois conceitos OV × proposta ativa; sem SLA de etapas |
 | Forecast | **novo** | Metas via SI; forecast declarado ausente |
@@ -190,16 +195,15 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 | Visitas | **parcial** | `customer-experience` existe; integração Comercial indefinida |
 | Análises / cockpit | **existente** | `dashboard-commercial` + `/commercial` |
 | Gestão à Vista | **parcial** | `tv-dashboard` disponível; painéis Comercial a definir |
-| Administração (carteiras) | **parcial** | CRUD na api-delpi → migrar |
 
 ---
 
 ## 9. Riscos de sobreposição
 
 1. **Duas “propostas”:** `/commercial/proposals` (OV dashboard) vs `/propostas-comerciais` (documento ativo). Documentar no UX e no dicionário.
-2. **Carteira hoje na api-delpi:** migrar estado Delpi para commercial-api (F2) e UI para Portal Comercial (F2b) antes de depreciar o plugin legado.
+2. **Carteira:** canônica em commercial-api; não dual-write com schema legado após cutover.
 3. **Shell sem runtime de módulo:** não inventar `RouteDelegate` local; plugins continuam independentes até F3–F4.
-4. **Docs desalinhadas:** referência rápida api-delpi pode omitir rotas (ex.: `get_commercial_rol_by_customer`) — inventário deste arquivo prevalece até sync.
+4. **HTTPS / Mixed Content:** nunca depender de redirect slash do FastAPI atrás de TLS — paths relativos + `redirect_slashes=False` na commercial-api.
 
 ---
 
@@ -207,10 +211,13 @@ Doc SI: `strategic-indicators-api/docs/COMMERCIAL_INDICATORS.md`.
 
 | Área | Path |
 |---|---|
-| Commercial router | `api-delpi/app/interface/http/routes/commercial/` |
-| Pedidos router | `api-delpi/app/interface/http/routes/pedidos_venda_abertos/` |
+| Portal Comercial MFE | `plugins/commercial/` |
+| commercial-api | `commercial-api/commercial_app/` |
+| Commercial router (KPIs) | `api-delpi/app/interface/http/routes/commercial/` |
+| Pedidos router (TOTVS + legado) | `api-delpi/app/interface/http/routes/pedidos_venda_abertos/` |
 | Propostas controller | `api-delpi/app/interface/http/propostas_comerciais_controller.py` |
 | Use cases commercial | `api-delpi/app/application/use_cases/commercial/` |
 | TOTVS commercial repos | `api-delpi/app/infrastructure/persistence/totvs/commercial_repositories/` |
-| Postgres carteira | `api-delpi/app/infrastructure/persistence/plugins/repositories/pedidos_venda_abertos/` |
+| Postgres carteira (legado) | `api-delpi/.../pedidos_venda_abertos/` |
 | Compose / volumes | `infra/docker-compose*.yml`, `infra/README-ambiente.md` |
+| F2c redirects snippet | `gateway/snippets/commercial-f2c-redirects.conf` |

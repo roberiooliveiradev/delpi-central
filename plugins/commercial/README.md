@@ -17,7 +17,9 @@ Microfrontend federado do domínio comercial — paridade F2b com o Portal do Ve
 | Base | Uso |
 |------|-----|
 | `/apps/commercial-api` | Carteiras, avatars, enrichment (`X-Delpi-Caller-App: commercial`) |
-| `/apps/api-delpi/pedidos-venda-abertos` | Pedidos em aberto (read TOTVS) |
+| `/apps/api-delpi/pedidos-venda-abertos/` | Pedidos em aberto (read TOTVS) — **barra final** (evita Mixed Content atrás de HTTPS) |
+
+Clients usam paths **relativos** ao gateway. A `commercial-api` roda com `redirect_slashes=False` (list/create de `seller-portfolios` **sem** barra final).
 
 ## RBAC
 
