@@ -66,6 +66,19 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [central-agendamento/README.md](./central-agendamento/README.md) | Índice do módulo |
 | [central-agendamento/ROADMAP.md](./central-agendamento/ROADMAP.md) | Fases de entrega e checklist de produção |
 
+### Módulo Comercial
+
+| Arquivo | Conteúdo |
+|---|---|
+| [commercial/README.md](./commercial/README.md) | Índice do **Portal Comercial** (`commercial`) |
+| [commercial/PLAYBOOK-MODULO-COMERCIAL.md](./commercial/PLAYBOOK-MODULO-COMERCIAL.md) | **Playbook mestre** — matriz dores × cobertura (§ 1.2), paridade, fases, gates `.cursor` |
+| [commercial/API-ROUTES.md](./commercial/API-ROUTES.md) | Catálogo de rotas commercial-api + api-delpi |
+| [commercial/DATA-MODEL.md](./commercial/DATA-MODEL.md) | Estrutura física das tabelas Postgres do Portal Comercial |
+| [commercial/WIREFRAMES.md](./commercial/WIREFRAMES.md) | Wireframes das páginas do Portal Comercial |
+| [commercial/PLAYBOOK-01-fronteiras-api-delpi.md](./commercial/PLAYBOOK-01-fronteiras-api-delpi.md) | Fronteiras api-delpi × commercial-api + migração CRUD carteira |
+| [commercial/INVENTARIO-ATIVOS.md](./commercial/INVENTARIO-ATIVOS.md) | Baseline de rotas, plugins e gaps |
+| [commercial/adr/ADR-001-commercial-api.md](./commercial/adr/ADR-001-commercial-api.md) | ADR — API própria e migração do CRUD |
+
 ### Pedidos de Venda em Aberto
 
 | Arquivo | Conteúdo |
