@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import * as LucideIcons from "lucide-react";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -28,6 +27,7 @@ import {
 import { AuthContext } from "../../../state/AuthContext";
 import { ApiClient, HttpError } from "../../../data/apiClient";
 import { AdminApi } from "../../../data/adminApi";
+import { resolveIcon } from "../../../utils/iconResolver";
 import {
   Alert,
   Button,
@@ -120,22 +120,10 @@ const TYPE_LABELS: Record<ManifestType, string> = {
    Utilitários puros
 ========================= */
 
-function kebabToPascal(kebab: string) {
-  return kebab
-    .split("-")
-    .filter(Boolean)
-    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-    .join("");
-}
-
 function renderLucideIcon(kebab?: string | null, size = 18) {
-  if (!kebab) return null;
-  const pascal = kebab.includes("-") ? kebabToPascal(kebab) : kebab;
-  const Icon = (LucideIcons as any)[pascal] as
-    | React.ComponentType<any>
-    | undefined;
+  const Icon = resolveIcon(kebab);
   if (!Icon) return null;
-  return <Icon size={size} strokeWidth={1.8} />;
+  return <Icon size={size} />;
 }
 
 function tabForErrorPath(path: string): ManifestEditorTab {

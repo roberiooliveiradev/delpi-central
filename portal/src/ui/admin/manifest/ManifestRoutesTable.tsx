@@ -1,7 +1,7 @@
 // portal/src/ui/admin/manifest/ManifestRoutesTable.tsx
 
 import { Fragment, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
 import {
   Button,
   DenseTable,
@@ -170,10 +170,12 @@ export function ManifestRoutesTable({
                   size="sm"
                   disabled={disabled}
                   onClick={() => onPickIcon(idx)}
-                  title={r.icon || "Selecionar ícone"}
-                >
-                  {renderIcon?.(r.icon) || r.icon || "Ícone"}
-                </Button>
+                  title={r.icon ? `Ícone: ${r.icon}` : "Selecionar ícone"}
+                  aria-label={
+                    r.icon ? `Ícone ${r.icon}` : "Selecionar ícone da rota"
+                  }
+                  icon={renderIcon?.(r.icon) || <ImageIcon size={16} />}
+                />
               </td>
               <td>
                 <Switch

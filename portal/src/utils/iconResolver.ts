@@ -16,32 +16,54 @@ function toPascalCaseFromKebab(kebab: string): string {
     .join("");
 }
 
-export function resolveIcon(iconName?: string | null): IconComponent | null {
+/**
+ * Nome do export lucide correspondente ao valor gravado no manifesto
+ * (`award`, `line-chart`, `lucide-line-chart`, `LineChart`, `line-chart-icon`).
+ */
+export function resolveIconExportName(iconName?: string | null): string | null {
   if (!iconName) return null;
 
-  const normalized = iconName.trim().toLowerCase();
-  if (!normalized) return null;
+  const raw = iconName.trim();
+  if (raw && (LucideIcons as any)[raw]) return raw;
 
-  if (iconCache[normalized] !== undefined) {
-    return iconCache[normalized];
-  }
+  const normalized = raw.toLowerCase();
+  if (!normalized) return null;
 
   const withoutIconSuffix = normalized.endsWith("-icon")
     ? normalized.slice(0, -"-icon".length)
     : normalized;
 
-  const pascal = withoutIconSuffix.includes("-")
-    ? toPascalCaseFromKebab(withoutIconSuffix)
+  // Manifestos gravam tanto `line-chart` quanto `lucide-line-chart`.
+  const bare = withoutIconSuffix.startsWith("lucide-")
+    ? withoutIconSuffix.slice("lucide-".length)
     : withoutIconSuffix;
 
-  const Component =
-    (LucideIcons as any)[pascal] ||
-    (LucideIcons as any)[
-      pascal.charAt(0).toUpperCase() + pascal.slice(1)
-    ] ||
-    null;
+  const pascal = toPascalCaseFromKebab(bare);
+  return (LucideIcons as any)[pascal] ? pascal : null;
+}
 
-  iconCache[normalized] = Component;
+export function resolveIcon(iconName?: string | null): IconComponent | null {
+  if (!iconName) return null;
+
+  const key = iconName.trim();
+  if (!key) return null;
+
+  if (iconCache[key] !== undefined) {
+    return iconCache[key];
+  }
+
+  const exportName = resolveIconExportName(key);
+  const Component = exportName ? (LucideIcons as any)[exportName] : null;
+
+  iconCache[key] = Component;
 
   return Component;
+}
+
+/** `LineChart` → `line-chart` (formato gravado no manifesto). */
+export function iconExportNameToKebab(name: string): string {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
+    .replace(/_/g, "-")
+    .toLowerCase();
 }

@@ -126,14 +126,95 @@
   font-weight: 700;
 }
 
-.manifest-editor-page .manifest-path-list {
-  margin: 0;
-  padding-left: 16px;
+.manifest-editor-page .manifest-access-user {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 12px;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/* Árvore do caminho de acesso: grupo → papel → codes. */
+
+.manifest-editor-page .manifest-access-tree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manifest-editor-page .manifest-access-tree--nested {
+  margin: 4px 0 2px 7px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.manifest-editor-page .manifest-access-tree__item {
+  position: relative;
+}
+
+/* Conector horizontal até o nó filho. */
+.manifest-editor-page
+  .manifest-access-tree--nested
+  > .manifest-access-tree__item::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  top: 12px;
+  width: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.manifest-editor-page .manifest-access-node {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 24px;
+}
+
+.manifest-editor-page .manifest-access-node__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--text-muted);
+}
+
+.manifest-editor-page .manifest-access-node__link {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.manifest-editor-page .manifest-access-node__link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.manifest-editor-page .manifest-access-codes {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.manifest-editor-page .manifest-access-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 600;
+}
+
+.manifest-editor-page .manifest-access-summary {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .manifest-editor-page .manifest-perm-accordion {

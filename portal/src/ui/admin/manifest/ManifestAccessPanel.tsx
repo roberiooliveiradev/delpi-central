@@ -2,9 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { AdminApi, PluginAccessSnapshot } from "../../../data/adminApi";
+import { Shield, UsersRound } from "lucide-react";
+import type {
+  AdminApi,
+  PluginAccessSnapshot,
+  PluginAccessUser,
+} from "../../../data/adminApi";
 import {
   Alert,
+  Badge,
   Button,
   DenseTable,
   SearchInput,
@@ -18,6 +24,192 @@ type Props = {
   filterCode?: string | null;
   permissionCodes: string[];
 };
+
+type AccessLeaf = {
+  key: string;
+  roleId: string;
+  roleName: string;
+  codes: string[];
+};
+
+type AccessBranch =
+  | { kind: "role"; key: string; leaf: AccessLeaf }
+  | {
+      kind: "group";
+      key: string;
+      groupId: string;
+      groupName: string;
+      roles: AccessLeaf[];
+    };
+
+/** Papéis herdados do mesmo grupo viram filhos dele, em vez de repetir o nome
+ *  do grupo em cada linha do caminho. */
+function buildAccessTree(user: PluginAccessUser): AccessBranch[] {
+  const groups = new Map<string, Extract<AccessBranch, { kind: "group" }>>();
+  const branches: AccessBranch[] = [];
+
+  user.paths.forEach((path, index) => {
+    const leaf: AccessLeaf = {
+      key: `${path.roleId}-${index}`,
+      roleId: path.roleId,
+      roleName: path.roleName,
+      codes: path.codes,
+    };
+
+    if (path.type === "role") {
+      branches.push({ kind: "role", key: leaf.key, leaf });
+      return;
+    }
+
+    const existing = groups.get(path.groupId);
+    if (existing) {
+      existing.roles.push(leaf);
+      return;
+    }
+
+    const branch: Extract<AccessBranch, { kind: "group" }> = {
+      kind: "group",
+      key: `g-${path.groupId}`,
+      groupId: path.groupId,
+      groupName: path.groupName,
+      roles: [leaf],
+    };
+    groups.set(path.groupId, branch);
+    branches.push(branch);
+  });
+
+  return branches;
+}
+
+/** O prefixo do módulo se repete em todo code e só rouba espaço da coluna. */
+function shortCode(code: string, appId: string) {
+  const prefix = `${appId}.`;
+  return code.startsWith(prefix) ? code.slice(prefix.length) : code;
+}
+
+function CodeBadges({
+  codes,
+  appId,
+  highlight,
+}: {
+  codes: string[];
+  appId: string;
+  highlight: string;
+}) {
+  return (
+    <div className="manifest-access-codes">
+      {codes.map((code) => (
+        <Badge
+          key={code}
+          tone={highlight === code ? "primary" : "default"}
+          className="manifest-access-code"
+          title={code}
+        >
+          {shortCode(code, appId)}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function RoleLeaf({
+  leaf,
+  appId,
+  highlight,
+  onOpen,
+}: {
+  leaf: AccessLeaf;
+  appId: string;
+  highlight: string;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="manifest-access-node">
+      <span className="manifest-access-node__label">
+        <Shield size={13} aria-hidden="true" />
+        <button
+          type="button"
+          className="manifest-access-node__link"
+          onClick={onOpen}
+          title="Abrir papel"
+        >
+          {leaf.roleName}
+        </button>
+      </span>
+      <CodeBadges codes={leaf.codes} appId={appId} highlight={highlight} />
+    </div>
+  );
+}
+
+function AccessTree({
+  user,
+  appId,
+  highlight,
+  onOpenRole,
+  onOpenGroup,
+}: {
+  user: PluginAccessUser;
+  appId: string;
+  highlight: string;
+  onOpenRole: (roleId: string) => void;
+  onOpenGroup: (groupId: string) => void;
+}) {
+  const branches = buildAccessTree(user);
+
+  if (branches.length === 0) {
+    return <span className="hint">Sem caminho de acesso.</span>;
+  }
+
+  return (
+    <ul className="manifest-access-tree">
+      {branches.map((branch) =>
+        branch.kind === "role" ? (
+          <li key={branch.key} className="manifest-access-tree__item">
+            <RoleLeaf
+              leaf={branch.leaf}
+              appId={appId}
+              highlight={highlight}
+              onOpen={() => onOpenRole(branch.leaf.roleId)}
+            />
+          </li>
+        ) : (
+          <li key={branch.key} className="manifest-access-tree__item">
+            <div className="manifest-access-node">
+              <span className="manifest-access-node__label">
+                <UsersRound size={13} aria-hidden="true" />
+                <button
+                  type="button"
+                  className="manifest-access-node__link"
+                  onClick={() => onOpenGroup(branch.groupId)}
+                  title="Abrir grupo"
+                >
+                  {branch.groupName}
+                </button>
+              </span>
+              <Badge tone="info">
+                {branch.roles.length}{" "}
+                {branch.roles.length === 1 ? "papel" : "papéis"}
+              </Badge>
+            </div>
+
+            <ul className="manifest-access-tree manifest-access-tree--nested">
+              {branch.roles.map((leaf) => (
+                <li key={leaf.key} className="manifest-access-tree__item">
+                  <RoleLeaf
+                    leaf={leaf}
+                    appId={appId}
+                    highlight={highlight}
+                    onOpen={() => onOpenRole(leaf.roleId)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </li>
+        ),
+      )}
+    </ul>
+  );
+}
 
 export function ManifestAccessPanel({
   appId,
@@ -167,36 +359,45 @@ export function ManifestAccessPanel({
           </tr>
         </thead>
         <tbody>
-          {users.map((u) => (
-            <tr key={u.id}>
-              <td>
-                <strong>{u.name}</strong>
-                <div className="hint">{u.email}</div>
-                {u.isSuperadmin && <span className="hint">superadmin</span>}
-              </td>
-              <td>
-                <ul className="manifest-path-list">
-                  {u.paths.map((p, i) => (
-                    <li key={i}>
-                      {p.type === "role" ? (
-                        <>
-                          Papel «{p.roleName}» → {p.codes.join(", ")}
-                        </>
-                      ) : (
-                        <>
-                          Grupo «{p.groupName}» → Papel «{p.roleName}» →{" "}
-                          {p.codes.join(", ")}
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </td>
-              <td>
-                {u.permissionCodes.length}/{data.permissions.length}
-              </td>
-              <td>
-                <div className="portal-ui-dense__actions">
+          {users.map((u) => {
+            const total = data.permissions.length;
+            const granted = u.permissionCodes.length;
+
+            return (
+              <tr key={u.id}>
+                <td>
+                  <div className="manifest-access-user">
+                    <strong>{u.name}</strong>
+                    <span className="hint">{u.email}</span>
+                    {u.isSuperadmin && <Badge tone="warning">Superadmin</Badge>}
+                  </div>
+                </td>
+                <td>
+                  <AccessTree
+                    user={u}
+                    appId={appId}
+                    highlight={codeFilter}
+                    onOpenRole={(roleId) => navigate(`/admin/roles/${roleId}`)}
+                    onOpenGroup={(groupId) =>
+                      navigate(`/admin/groups/${groupId}`)
+                    }
+                  />
+                </td>
+                <td>
+                  <Badge
+                    tone={
+                      granted === 0
+                        ? "default"
+                        : granted === total
+                          ? "success"
+                          : "warning"
+                    }
+                    title={u.permissionCodes.join(", ")}
+                  >
+                    {granted}/{total}
+                  </Badge>
+                </td>
+                <td>
                   <Button
                     variant="secondary"
                     size="sm"
@@ -204,35 +405,10 @@ export function ManifestAccessPanel({
                   >
                     Abrir usuário
                   </Button>
-                  {u.paths[0]?.type === "role" && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        navigate(`/admin/roles/${u.paths[0].roleId}`)
-                      }
-                    >
-                      Abrir papel
-                    </Button>
-                  )}
-                  {u.paths.some((p) => p.type === "group_role") && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        const g = u.paths.find((p) => p.type === "group_role");
-                        if (g && g.type === "group_role") {
-                          navigate(`/admin/groups/${g.groupId}`);
-                        }
-                      }}
-                    >
-                      Abrir grupo
-                    </Button>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </DenseTable>
 
@@ -244,23 +420,47 @@ export function ManifestAccessPanel({
         const userCount = data.users.filter((u) =>
           u.permissionCodes.includes(p.code),
         ).length;
+
         return (
           <details key={p.code} className="manifest-perm-accordion">
             <summary>
-              {p.code} — {roles.length} papéis · {userCount} users
+              <span className="manifest-access-summary">
+                <code>{p.code}</code>
+                <Badge tone={roles.length ? "primary" : "default"}>
+                  {roles.length} {roles.length === 1 ? "papel" : "papéis"}
+                </Badge>
+                <Badge tone={userCount ? "success" : "warning"}>
+                  {userCount} {userCount === 1 ? "usuário" : "usuários"}
+                </Badge>
+              </span>
             </summary>
-            <ul>
-              {roles.map((r) => (
-                <li key={r.id}>
-                  <Button
-                    variant="link"
-                    onClick={() => navigate(`/admin/roles/${r.id}`)}
-                  >
-                    {r.name}
-                  </Button>
-                </li>
-              ))}
-            </ul>
+
+            {roles.length > 0 ? (
+              <ul className="manifest-access-tree manifest-access-tree--nested">
+                {roles.map((r) => (
+                  <li key={r.id} className="manifest-access-tree__item">
+                    <div className="manifest-access-node">
+                      <span className="manifest-access-node__label">
+                        <Shield size={13} aria-hidden="true" />
+                        <button
+                          type="button"
+                          className="manifest-access-node__link"
+                          onClick={() => navigate(`/admin/roles/${r.id}`)}
+                          title="Abrir papel"
+                        >
+                          {r.name}
+                        </button>
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="hint">
+                Nenhum papel concede este code — ninguém acessa a rota
+                protegida por ele.
+              </p>
+            )}
           </details>
         );
       })}
