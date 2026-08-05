@@ -261,6 +261,34 @@ def test_resolve_skip_tool_flags_allows_tv_surface_in_common_chat():
     assert flags.skip_tools_for_inactive_agent is False
 
 
+def test_tv_surface_mutation_bypasses_operational_parameter_guards():
+    guards = ChatTurnPreparationToolRoutingService.resolve_operational_guards(
+        message="adicione um modelo de dados de OEE",
+        history_source=[],
+        conversation_context="",
+        working_memory_snapshot={},
+        workspace_context={
+            "userActivatedAgent": False,
+            "actionsEnabled": False,
+            "skills": {"tvDashboardCopilot": True},
+            "tvDashboardHostContext": {
+                "surface": "tv-dashboard",
+                "playlistId": "pl-1",
+                "slideId": "sl-1",
+            },
+        },
+        canvas_action=None,
+        pre_capability_answer=None,
+        analysis_mode=False,
+        text_task_pure=False,
+    )
+
+    assert guards.missing_product_code_answer is None
+    assert guards.ambiguous_period_answer is None
+    assert guards.missing_date_answer is None
+    assert guards.common_chat_operational_answer is None
+
+
 def test_resolve_skip_tool_flags_for_project_sources_content_follow_up():
     inventory = [
         {

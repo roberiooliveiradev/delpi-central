@@ -65,6 +65,29 @@ class ChatTurnPreparationToolRoutingService:
         analysis_mode: bool,
         text_task_pure: bool,
     ) -> ChatTurnPreparationOperationalGuards:
+        from app.domain.services.chat_host_surface_context_service import (
+            ChatHostSurfaceContextService,
+        )
+
+        workspace = workspace_context if isinstance(workspace_context, dict) else {}
+        host_context = (
+            workspace.get("tvDashboardHostContext")
+            or workspace.get("hostContext")
+        )
+        if ChatHostSurfaceContextService.is_tv_mutation_turn(
+            message,
+            host_context if isinstance(host_context, dict) else None,
+            workspace_context=workspace,
+        ):
+            # O surface TV é dono da mutação. Não deixar heurísticas operacionais
+            # (ex.: OEE/KPI → missing_params) bloquearem o suggest-ops do BFF.
+            return ChatTurnPreparationOperationalGuards(
+                missing_product_code_answer=None,
+                ambiguous_period_answer=None,
+                missing_date_answer=None,
+                common_chat_operational_answer=None,
+            )
+
         if canvas_action or pre_capability_answer or analysis_mode or text_task_pure:
             return ChatTurnPreparationOperationalGuards(
                 missing_product_code_answer=None,
