@@ -2631,11 +2631,11 @@
       "locale": {
         "en": {
           "label": "Result",
-          "description": "Result query parameter."
+          "description": "Inspection result filter. Inbound history uses APROVADA/REJEITADA; process inspection uses A/R/T."
         },
         "pt-BR": {
           "label": "Resultado",
-          "description": "Resultado da inspeção ou avaliação."
+          "description": "Filtro de resultado da inspeção. Histórico de entrada: APROVADA/REJEITADA; inspeção de processo: A/R/T."
         }
       },
       "enumLabels": {
@@ -2661,6 +2661,22 @@
           },
           "pt-BR": {
             "label": "Pendente (T)"
+          }
+        },
+        "APROVADA": {
+          "en": {
+            "label": "Approved"
+          },
+          "pt-BR": {
+            "label": "Aprovada"
+          }
+        },
+        "REJEITADA": {
+          "en": {
+            "label": "Rejected"
+          },
+          "pt-BR": {
+            "label": "Rejeitada"
           }
         }
       }
@@ -4292,50 +4308,50 @@
           "description": "Quando verdadeiro, retorna apenas OPs atrasadas."
         }
       }
-    }
-  },
-  "inspecao_status": {
-    "locale": {
-      "en": {
-        "label": "Inspection status",
-        "description": "Filter production appointments by inspection status in process audit."
-      },
-      "pt-BR": {
-        "label": "Status da inspeção",
-        "description": "Filtra apontamentos pelo status de inspeção na auditoria de processo."
-      }
     },
-    "enumLabels": {
-      "all": {
+    "inspecao_status": {
+      "locale": {
         "en": {
-          "label": "All"
+          "label": "Inspection status",
+          "description": "Filter production appointments by inspection status in process audit."
         },
         "pt-BR": {
-          "label": "Todos"
+          "label": "Status da inspeção",
+          "description": "Filtra apontamentos pelo status de inspeção na auditoria de processo."
         }
       },
-      "nao_inspecionou": {
-        "en": {
-          "label": "Did not inspect"
+      "enumLabels": {
+        "all": {
+          "en": {
+            "label": "All"
+          },
+          "pt-BR": {
+            "label": "Todos"
+          }
         },
-        "pt-BR": {
-          "label": "Não inspecionou"
-        }
-      },
-      "inspecionou": {
-        "en": {
-          "label": "Inspected"
+        "nao_inspecionou": {
+          "en": {
+            "label": "Did not inspect"
+          },
+          "pt-BR": {
+            "label": "Não inspecionou"
+          }
         },
-        "pt-BR": {
-          "label": "Inspecionou"
-        }
-      },
-      "sem_cadastro": {
-        "en": {
-          "label": "No inspection registered"
+        "inspecionou": {
+          "en": {
+            "label": "Inspected"
+          },
+          "pt-BR": {
+            "label": "Inspecionou"
+          }
         },
-        "pt-BR": {
-          "label": "Não possui inspeção cadastrada"
+        "sem_cadastro": {
+          "en": {
+            "label": "No inspection registered"
+          },
+          "pt-BR": {
+            "label": "Não possui inspeção cadastrada"
+          }
         }
       }
     }

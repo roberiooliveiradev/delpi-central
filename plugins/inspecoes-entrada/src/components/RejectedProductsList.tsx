@@ -60,7 +60,10 @@ export function RejectedProductsList({
 
       <ul className="ie-rejected-list">
         {items.map((item) => (
-          <li key={item.inspection_id} className="ie-rejected-list__item">
+          <li
+            key={`${item.inspection_id}|${item.invoice_number}|${item.product_code}|${item.lot}|${item.report_date}|${item.report_time}`}
+            className="ie-rejected-list__item"
+          >
             <div className="ie-rejected-list__main">
               <p className="ie-rejected-list__product">{formatProductLabel(item)}</p>
               <p className="ie-rejected-list__supplier">{formatText(item.supplier_name)}</p>
