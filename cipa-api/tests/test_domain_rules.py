@@ -112,6 +112,17 @@ def test_html_sanitizer_preserves_tables():
     assert "<td>A</td>" in cleaned
 
 
+def test_html_sanitizer_broken_style_does_not_swallow_table():
+    cleaned = CipaHtmlSanitizer.sanitize(
+        '<p style="color:red><b>Antes</b></p>'
+        "<table><tbody><tr><th>Grupo</th><th>Info</th></tr>"
+        "<tr><td>A</td><td>B</td></tr></tbody></table>"
+    )
+    assert "<table" in cleaned
+    assert "<th>Grupo</th>" in cleaned
+    assert "GrupoInfo" not in cleaned.replace(" ", "").replace("\n", "")
+
+
 def test_permission_codes():
     assert perms.unit_permission_code("01") == "cipa.unit.filial-01"
     assert perms.action_permission_code("create") == "cipa.manage"
