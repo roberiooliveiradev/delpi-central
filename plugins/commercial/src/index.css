@@ -101,8 +101,9 @@
 
 .dashboard-commercial .cm-customer-header {
   display: flex;
-  gap: 16px;
-  align-items: center;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .dashboard-commercial .cm-customer-header img {
@@ -111,6 +112,93 @@
   border-radius: 14px;
   object-fit: cover;
   border: 1px solid var(--cm-border);
+}
+
+.dashboard-commercial .cm-customer-avatar-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.dashboard-commercial .cm-avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+}
+
+.dashboard-commercial .cm-avatar-file-input {
+  position: absolute;
+  inset: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dashboard-commercial .cm-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.dashboard-commercial .cm-ops-abertas-list,
+.dashboard-commercial .cm-billing-series-list,
+.dashboard-commercial .cm-customer-chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard-commercial .cm-ops-abertas-list li,
+.dashboard-commercial .cm-billing-series-list li,
+.dashboard-commercial .cm-customer-chip-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--cm-border);
+  background: var(--cm-surface);
+  font-size: 13px;
+  color: var(--cm-text);
+}
+
+.dashboard-commercial .cm-ops-abertas-list li {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.dashboard-commercial .cm-ops-abertas-list li span {
+  color: var(--cm-text-muted);
+  font-size: 12px;
+}
+
+.dashboard-commercial .cm-manage-customers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cm-grid-gap);
+  margin-top: 16px;
+}
+
+.dashboard-commercial .cm-manage-customers-grid h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--cm-text-muted);
+}
+
+.dashboard-commercial .cm-hint-text {
+  font-size: 12px;
+  color: var(--cm-text-muted);
+  margin: 4px 0;
 }
 
 @media (max-width: 768px) {

@@ -1,12 +1,22 @@
 import {
+  createDashboardDetailFieldGrid,
+  createDashboardFiltersKit,
   createDashboardLoadingActivityCard,
+  createDashboardMultiSelectField,
+  createDashboardSelectField,
+  createDashboardTextAreaField,
+  createDashboardTextField,
+  createInitialsAvatar,
   dataTableBemClasses,
   emptyStateCardBemClasses,
   navigationCardBemClasses,
   pageHeaderBrandBemClasses,
   sectionCardPacBemClasses,
+  selectFieldPacClasses,
   stateBannerBemClasses,
   statusBadgeBemClasses,
+  textAreaFieldBemClasses,
+  textFieldBemClasses,
 } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "cm";
@@ -40,4 +50,57 @@ const loadingLabels = {
 export const CommercialLoadingCard = createDashboardLoadingActivityCard({
   prefix: UI_PREFIX,
   labels: loadingLabels,
+});
+
+const { field: cmSelectFieldClasses, control: cmSelectControlClasses } =
+  selectFieldPacClasses(UI_PREFIX);
+
+export const CommercialSelectField = createDashboardSelectField({
+  field: cmSelectFieldClasses,
+  control: cmSelectControlClasses,
+  labels: {
+    placeholder: "Selecione…",
+    emptyLabel: "Todos",
+    control: {
+      searchPlaceholder: "Buscar…",
+      emptyOptions: "Nenhuma opção encontrada.",
+      searchAriaLabel: (label?: string) => (label ? `Buscar em ${label}` : "Buscar opções"),
+    },
+  },
+});
+
+export const CommercialMultiSelectField = createDashboardMultiSelectField({
+  prefix: UI_PREFIX,
+  labels: {
+    emptyLabel: "Nenhum selecionado",
+    searchPlaceholder: "Buscar…",
+    selectVisible: "Selecionar visíveis",
+    clear: "Limpar",
+    emptyOptions: "Nenhuma opção encontrada.",
+    multipleSelected: (count: number) => `${count} selecionado(s)`,
+  },
+});
+
+export const CommercialTextField = createDashboardTextField({
+  classNames: textFieldBemClasses(UI_PREFIX),
+});
+
+export const CommercialTextAreaField = createDashboardTextAreaField({
+  classNames: textAreaFieldBemClasses(UI_PREFIX),
+});
+
+export const CommercialDetailFieldGrid = createDashboardDetailFieldGrid({
+  prefix: UI_PREFIX,
+  labels: {
+    fieldHelpAriaLabel: (label: string) => `Ajuda: ${label}`,
+  },
+});
+
+export const CommercialAvatar = createInitialsAvatar(UI_PREFIX);
+
+export const cmFiltersKit = createDashboardFiltersKit({
+  prefix: UI_PREFIX,
+  labels: {
+    filtersAriaLabel: "Filtros",
+  },
 });

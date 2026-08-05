@@ -1,5 +1,5 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
-import type { OpenOrdersData } from "../types/openOrders";
+import type { OpenOrdersData, OpsAbertasData } from "../types/openOrders";
 import { apiDelpiUrl, httpGet } from "./httpClient";
 
 const OPEN_ORDERS_PATH = "/pedidos-venda-abertos";
@@ -21,6 +21,14 @@ export async function getOpenOrders(
   );
 
   return unwrapEnvelope(response, "Erro ao carregar pedidos em aberto.");
+}
+
+export async function getOpsAbertas(signal?: AbortSignal): Promise<OpsAbertasData> {
+  const response = await httpGet<ApiSuccessResponse<OpsAbertasData>>(
+    apiDelpiUrl(`${OPEN_ORDERS_PATH}/ops-abertas`),
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao carregar OPs abertas.");
 }
 
 export function resolveOrderStatus(item: OpenOrdersData["items"][number]): string {

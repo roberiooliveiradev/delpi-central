@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { getMySellerPortfolio } from "../api/commercialPortfolioApi";
+import { getMySellerPortfolio, listSellerPortfolios } from "../api/commercialPortfolioApi";
 import type { SellerPortfolio } from "../types/portfolio";
 
 type PortfolioScopeValue = {
@@ -16,6 +16,9 @@ type PortfolioScopeValue = {
   error: string | null;
   isAdmin: boolean;
   myPortfolio: SellerPortfolio | null;
+  sellers: SellerPortfolio[];
+  sellerIdFilter: string | null;
+  setSellerIdFilter: (sellerId: string | null) => void;
   reload: () => void;
 };
 
@@ -26,10 +29,16 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [myPortfolio, setMyPortfolio] = useState<SellerPortfolio | null>(null);
+  const [sellers, setSellers] = useState<SellerPortfolio[]>([]);
+  const [sellerIdFilter, setSellerIdFilterState] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
 
   const reload = useCallback(() => {
     setReloadToken((value) => value + 1);
+  }, []);
+
+  const setSellerIdFilter = useCallback((sellerId: string | null) => {
+    setSellerIdFilterState(sellerId && sellerId.trim() ? sellerId : null);
   }, []);
 
   useEffect(() => {
@@ -38,14 +47,28 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     getMySellerPortfolio(controller.signal)
-      .then((response) => {
-        setIsAdmin(Boolean(response.is_admin));
+      .then(async (response) => {
+        const admin = Boolean(response.is_admin);
+        setIsAdmin(admin);
         setMyPortfolio(response.portfolio);
+
+        if (admin) {
+          const portfolios = await listSellerPortfolios({
+            activeOnly: true,
+            signal: controller.signal,
+          });
+          setSellers(portfolios);
+        } else {
+          setSellers([]);
+          setSellerIdFilterState(null);
+        }
       })
       .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar carteira.");
         setIsAdmin(false);
         setMyPortfolio(null);
+        setSellers([]);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -60,9 +83,12 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       error,
       isAdmin,
       myPortfolio,
+      sellers,
+      sellerIdFilter,
+      setSellerIdFilter,
       reload,
     }),
-    [loading, error, isAdmin, myPortfolio, reload],
+    [loading, error, isAdmin, myPortfolio, sellers, sellerIdFilter, setSellerIdFilter, reload],
   );
 
   return (

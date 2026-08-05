@@ -23,8 +23,10 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até par
 | **[KPI-FICHAS.md](./KPI-FICHAS.md)** | Fichas KPI (F0) — fórmulas e owners |
 | **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Plano executável F0–F2b (status) |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade Portal do Vendedor (F2b) |
+| **[F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md)** | Runbook para ocultar PVA + redirects (após homologação) |
+| **[adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md)** | ADR depreciação Portal do Vendedor |
 
-> **Implementação:** F0–F2b entregues em código (`commercial-api/`, `plugins/commercial/`). Homologação Comercial ainda aberta no checklist.
+> **Implementação:** F0–F2b harden + artefatos de cutover/F2c entregues. Homologação Comercial e flip de menu ainda abertos.
 
 ## Escala (obrigatório no desenho)
 

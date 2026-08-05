@@ -115,12 +115,36 @@ export function httpPost<T>(url: string, body?: JsonBody, options?: RequestOptio
   return httpJson<T>("POST", url, body, options);
 }
 
+export function httpPut<T>(url: string, body?: JsonBody, options?: RequestOptions) {
+  return httpJson<T>("PUT", url, body, options);
+}
+
 export function httpPatch<T>(url: string, body?: JsonBody, options?: RequestOptions) {
   return httpJson<T>("PATCH", url, body, options);
 }
 
 export function httpDelete<T>(url: string, options?: RequestOptions) {
   return httpJson<T>("DELETE", url, undefined, options);
+}
+
+/** PUT multipart (não define Content-Type — o browser preenche o boundary). */
+export async function httpPutFormData<T>(
+  url: string,
+  formData: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: buildHeaders(false),
+    body: formData,
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.json() as Promise<T>;
 }
 
 export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {

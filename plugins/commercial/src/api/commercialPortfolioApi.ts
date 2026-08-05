@@ -1,6 +1,7 @@
 import { unwrapEnvelope, type ApiSuccessResponse } from "../types/api";
 import type {
   CustomerEnrichmentItem,
+  DirectoryUser,
   SellerCustomerInput,
   SellerPortfolio,
   SellerPortfolioMeResponse,
@@ -14,6 +15,8 @@ import {
   httpGetBlob,
   httpPatch,
   httpPost,
+  httpPut,
+  httpPutFormData,
 } from "./httpClient";
 
 export async function getMySellerPortfolio(signal?: AbortSignal): Promise<SellerPortfolioMeResponse> {
@@ -50,20 +53,75 @@ export async function createSellerPortfolio(input: {
   return unwrapEnvelope(response, "Erro ao cadastrar vendedor.");
 }
 
-export async function transferSellerCustomers(
-  sourceSellerId: string,
-  input: {
-    target_seller_id: string;
-    customers: SellerCustomerInput[];
-  },
-): Promise<TransferSellerCustomersResult> {
+export async function transferSellerCustomers(input: {
+  source_portfolio_id: string;
+  target_portfolio_id: string;
+  customers: SellerCustomerInput[];
+  reason_note: string;
+}): Promise<TransferSellerCustomersResult> {
   const response = await httpPost<ApiSuccessResponse<TransferSellerCustomersResult>>(
-    commercialApiUrl(
-      `/seller-portfolios/${encodeURIComponent(sourceSellerId)}/customers/transfer`,
-    ),
+    commercialApiUrl("/seller-portfolios/transfer"),
     input,
   );
   return unwrapEnvelope(response, "Erro ao transferir clientes.");
+}
+
+export async function addSellerCustomer(
+  portfolioId: string,
+  customer: SellerCustomerInput,
+): Promise<SellerPortfolio> {
+  const response = await httpPost<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/customers`),
+    customer,
+  );
+  return unwrapEnvelope(response, "Erro ao adicionar cliente à carteira.");
+}
+
+export async function removeSellerCustomer(
+  portfolioId: string,
+  customerCode: string,
+  customerStore: string,
+): Promise<SellerPortfolio> {
+  const response = await httpDelete<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(
+      `/seller-portfolios/${encodeURIComponent(portfolioId)}/customers/${encodeURIComponent(
+        customerCode,
+      )}/${encodeURIComponent(customerStore)}`,
+    ),
+  );
+  return unwrapEnvelope(response, "Erro ao remover cliente da carteira.");
+}
+
+export async function replaceSellerCustomers(
+  portfolioId: string,
+  customers: SellerCustomerInput[],
+): Promise<SellerPortfolio> {
+  const response = await httpPut<ApiSuccessResponse<SellerPortfolio>>(
+    commercialApiUrl(`/seller-portfolios/${encodeURIComponent(portfolioId)}/customers`),
+    { customers },
+  );
+  return unwrapEnvelope(response, "Erro ao atualizar clientes da carteira.");
+}
+
+export async function searchDirectoryUsers(
+  query: string,
+  limit = 10,
+  signal?: AbortSignal,
+): Promise<DirectoryUser[]> {
+  const normalized = query.trim();
+  if (normalized.length < 2) return [];
+
+  const params = new URLSearchParams({
+    q: normalized,
+    limit: String(limit),
+    include_self: "true",
+  });
+
+  const payload = await httpGet<{ items?: DirectoryUser[] }>(
+    `/core-api/me/directory/users?${params.toString()}`,
+    { signal },
+  );
+  return payload.items ?? [];
 }
 
 export async function searchActiveCustomers(
@@ -133,6 +191,23 @@ export async function fetchCustomerAvatarObjectUrl(
   } catch {
     return null;
   }
+}
+
+export async function upsertCustomerAvatar(code: string, store: string, file: File): Promise<void> {
+  const form = new FormData();
+  form.append("file", file);
+  const response = await httpPutFormData<ApiSuccessResponse<Record<string, unknown>>>(
+    customerAvatarUrl(code, store),
+    form,
+  );
+  unwrapEnvelope(response, "Erro ao salvar logo do cliente.");
+}
+
+export async function deleteCustomerAvatar(code: string, store: string): Promise<void> {
+  const response = await httpDelete<ApiSuccessResponse<{ deleted?: boolean }>>(
+    customerAvatarUrl(code, store),
+  );
+  unwrapEnvelope(response, "Erro ao remover logo do cliente.");
 }
 
 export async function deactivateSellerPortfolio(sellerId: string): Promise<SellerPortfolio> {

@@ -26,6 +26,23 @@ Microfrontend federado do domínio comercial — paridade F2b com o Portal do Ve
 | `commercial.accounts.view` | Acesso geral (alias cutover: `pedidos-venda-abertos.access`) |
 | `commercial.seller-portfolios.manage` | Admin carteiras (alias: `pedidos-venda-abertos.admin`) |
 
+Registrar no Core:
+
+```bash
+TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-manifest.sh
+```
+
+## Cutover de carteira
+
+Default Compose: `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (após backfill).
+
+```bash
+docker exec -it delpi-commercial-api python scripts/backfill_from_pedidos_venda_abertos.py
+./commercial-api/scripts/reconcile_portfolio_counts.sh
+```
+
+Não há dual-write com o schema legado. F2c (ocultar PVA): [F2C-CUTOVER-RUNBOOK.md](../../docs/12-roadmap-e-evolucao/commercial/F2C-CUTOVER-RUNBOOK.md).
+
 ## Dev
 
 ```bash
@@ -42,7 +59,7 @@ Smoke federado: `curl -I http://localhost/apps/commercial/assets/remoteEntry.js`
 ```
 src/
   api/           — httpClient + clients commercial-api / api-delpi
-  app/           — rotas, shell, navegação
-  features/      — páginas por jornada
+  app/           — rotas, shell, navegação, portfolio scope
+  features/      — home, open-orders, customers, seller-portfolios
   shared/        — formatadores
 ```

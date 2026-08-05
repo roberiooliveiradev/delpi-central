@@ -47,3 +47,9 @@ export type TransferSellerCustomersResult = {
   target: SellerPortfolio;
   transferred_count: number;
 };
+
+export type DirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+};

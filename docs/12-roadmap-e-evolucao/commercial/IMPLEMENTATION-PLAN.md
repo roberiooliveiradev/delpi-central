@@ -1,46 +1,44 @@
-# Portal Comercial — plano de implementação inicial (status)
+# Portal Comercial — plano de implementação (status)
 
-> Espelho executável de F0→F2b. Playbook: [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 11.
+> Playbook: [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 11.
 
 | Fase | Objetivo | Status |
 |------|----------|--------|
-| **F0** | Fichas KPI + este plano | `concluído` |
+| **F0** | Fichas KPI | `concluído` |
 | **F1** | Scaffold `commercial-api` | `concluído` |
-| **F2** | Portfolios + avatars + cutover | `concluído` |
-| **F2b** | MFE Portal Comercial (paridade) | `concluído` (homologação Comercial pendente) |
+| **F2** | Portfolios + avatars | `concluído` |
+| **F2b** | MFE paridade (scaffold) | `concluído` |
+| **F2b harden** | UX real + clients + scope | `concluído` (homologação Comercial pendente) |
+| **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops: rodar backfill/reconcile) |
+| **F2c** | Depreciar PVA | `artefatos prontos` — flip de menu após ✅ homologação |
 
-Fora do escopo inicial: F2c, F3–F4, F5+.
+## Cutover de dados (ops)
 
-## Checklist de gates
+Não há dual-write. Após a flag, CRUD canônico = só `commercial-api`. Rotas api-delpi `/sellers*` permanecem até F2c (deprecated).
 
-- [x] F0: [KPI-FICHAS.md](./KPI-FICHAS.md) publicado
-- [x] F1: `/apps/commercial-api/health` + compose/gateway
-- [x] F2: migrations M1 + backfill + dual-read `COMMERCIAL_PORTFOLIO_SOURCE` + audit transfer
-- [ ] F2b: [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 100% pelo Comercial
+```bash
+# 1) Migrations (startup da commercial-api ou runner)
+# 2) Backfill (preserva UUIDs + copia avatars)
+docker exec -it delpi-commercial-api \
+  python scripts/backfill_from_pedidos_venda_abertos.py
 
-## Cutover carteira (ops)
+# 3) Reconciliar contagens
+./commercial-api/scripts/reconcile_portfolio_counts.sh
 
-1. Rodar migrations: `COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP=true`
-2. Backfill: `python scripts/backfill_from_pedidos_venda_abertos.py` (no container)
-3. Conferir contagens sellers/customers/avatars
-4. `COMMERCIAL_PORTFOLIO_SOURCE=commercial`
-5. Rotas CRUD em api-delpi `/sellers*` marcadas deprecated (código permanece até F2c)
+# 4) Garantir env COMMERCIAL_PORTFOLIO_SOURCE=commercial e recriar API
+./infra/scripts/up-dev-sequential.sh --build commercial-api
+# prod: ./infra/scripts/up-prod-sequential.sh --build commercial-api
+```
 
-## Artefatos
+## F2c
 
-| Pacote | Path |
-|--------|------|
-| API | `commercial-api/` |
-| MFE | `plugins/commercial/` |
-| Homologação | [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) |
+Ver [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) e [adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
-## Ordem de PRs (referência)
+## Checklist gates
 
-1. Docs F0  
-2. Scaffold API  
-3. Migrations + backfill  
-4. Rotas portfolio/avatar  
-5. Cutover flag  
-6. Plugin scaffold  
-7. Telas paridade  
-8. Homologação  
+- [x] F0 KPI-FICHAS
+- [x] F1 health + compose
+- [x] F2 migrations + dual-read + transfer audit
+- [x] F2b harden (filtros, ops, billing/NF, admin, avatar write)
+- [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
+- [ ] F2c flip menu + redirects em produção
