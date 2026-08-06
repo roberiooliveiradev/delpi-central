@@ -1,7 +1,9 @@
 # Compose dev — perfis:
-#   (padrão)  postgres, keycloak, core-api, portal, gateway, postgres-plugins, api-delpi
-#   chat      ollama, minha-delpi-ai-api, minha-delpi-chat, searxng, languagetool
-#   plugins   microfrontends e APIs de plugin (dashboards, MFEs, etc.)
+#   (padrão)  postgres, keycloak, core-api, portal, gateway, postgres-plugins, api-delpi,
+#             plugin-ui, tv-dashboard, tv-dashboard-api, public-hub
+#   chat      minha-delpi-ai-api, minha-delpi-chat (sem Ollama — pesado demais no WSL)
+#   plugins   demais microfrontends e APIs de plugin
+#   optional-heavy  ollama, searxng, languagetool (só sob demanda)
 #
 # ⚠ NÃO misture com docker-compose.yml (prod) no mesmo comando — isso sobe ~40+ containers
 #   e estoura RAM em máquinas dev (~8 GB). Use SOMENTE este arquivo no local.
@@ -10,7 +12,8 @@
 #   docker compose -f infra/docker-compose.dev.yml up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile chat up -d
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
-#   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + override de RAM
+#   docker compose -f infra/docker-compose.dev.yml --profile optional-heavy up -d ollama
+#   ./infra/scripts/up-minimal-dev.sh   # atalho stack essencial + TV + override de RAM
 #   ./infra/scripts/build-plugins-shared-base.sh   # imagem build tv-dashboard-presentation (bundled)
 #   docker compose -f infra/docker-compose.dev.yml --profile plugins up -d plugin-ui controle-retrabalhos
 
@@ -177,7 +180,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     profiles:
-      - chat
+      - optional-heavy
     container_name: delpi-ollama
     restart: unless-stopped
 
@@ -430,10 +433,10 @@ services:
         condition: service_started
       postgres-plugins:
         condition: service_healthy
-      ollama:
-        condition: service_started
+      # Ollama/SearXNG são optional-heavy — chat sobe sem eles (LLM externo via .env).
       searxng:
         condition: service_started
+        required: false
     networks:
       - delpi-network
 
@@ -667,7 +670,9 @@ services:
       - delpi-network
 
   tv-dashboard:
-    <<: *plugin-ui-federated
+    # Stack TV no padrão local (sem --profile plugins).
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: tv-dashboard/Dockerfile
@@ -826,7 +831,9 @@ services:
       - delpi-network
 
   public-hub:
-    <<: *plugin-ui-federated
+    # Apresentação pública do TV Dashboard — padrão local com o MFE admin.
+    depends_on:
+      - plugin-ui
     build:
       context: ../plugins
       dockerfile: public-hub/Dockerfile
@@ -858,7 +865,7 @@ services:
       - delpi-network
 
   plugin-ui:
-    <<: *plugin-profile
+    # Remote MF no padrão local (TV Dashboard e demais MFEs federados).
     build:
       context: ../plugins
       dockerfile: plugin-ui/Dockerfile
@@ -1719,7 +1726,7 @@ services:
       - delpi-network
 
   tv-dashboard-api:
-    <<: *plugin-profile
+    # API do TV no padrão local (SI é opcional — URL via env).
     build:
       context: ..
       dockerfile: tv-dashboard-api/Dockerfile
@@ -1776,7 +1783,6 @@ services:
       - keycloak
       - postgres-plugins
       - api-delpi
-      - strategic-indicators-api
       - core-api
 
     networks:

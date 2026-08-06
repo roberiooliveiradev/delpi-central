@@ -6,9 +6,9 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 
 | Arquivo | Uso |
 |---------|-----|
-| `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial** (8 serviços); profiles `chat` e `plugins` |
+| `docker-compose.dev.yml` | Desenvolvimento local: **padrão = stack essencial + TV Dashboard**; profiles `chat`, `plugins`, `optional-heavy` |
 | `docker-compose.yml` | Produção: Gunicorn, imagens `*.prod`, logging limitado |
-| `docker-compose.minimal.yml` | Override dev — desliga LanguageTool/SearXNG e limita RAM do chat |
+| `docker-compose.minimal.yml` | Override dev — desliga Ollama/LanguageTool/SearXNG e limita RAM do chat |
 | `docker-compose.prod.cpu.yml` | Override prod — hosts com ~8 GB RAM (LanguageTool/SearXNG em profile `optional-heavy`) |
 | `docker-compose.vision.yml` | **Override legado** — equivalente a `Dockerfile.dev` (desde jun/2026 visão já vem no dev) |
 | `docker-compose.prod.vision.yml` | **Override legado** prod — redundante; compose base já inclui visão |
@@ -16,23 +16,26 @@ Este diretório (`infra/`) concentra os compose e as variáveis compartilhadas p
 | `.env.prod.example` | Modelo para servidor / CI de deploy |
 
 ```bash
-# Desenvolvimento — stack essencial (portal + api-delpi, ~8 containers)
+# Desenvolvimento — stack essencial + TV (portal + api-delpi + plugin-ui + tv-dashboard*)
 cp infra/.env.dev.example infra/.env
 docker compose -f infra/docker-compose.dev.yml up -d
 
-# Chat (ollama + minha-delpi-ai-api + MFE chat)
+# Chat (minha-delpi-ai-api + MFE chat — sem Ollama)
 docker compose -f infra/docker-compose.dev.yml --profile chat up -d
+
+# Ollama / LanguageTool / SearXNG (pesados — só sob demanda)
+docker compose -f infra/docker-compose.dev.yml --profile optional-heavy up -d ollama
 
 # Um plugin/MFE específico (ex.: controle-retrabalhos)
 docker compose -f infra/docker-compose.dev.yml --profile plugins up -d controle-retrabalhos
 
-# Atalho stack mínimo (equivalente ao up -d padrão)
+# Atalho stack mínimo (essencial + TV)
 ./infra/scripts/up-minimal-dev.sh
 
 # Chat + rebuild explícito com extras de visão (opcional — dev já inclui EasyOCR/Docling)
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh dev
 
-# Chat + RAM reduzida (dev WSL ~8 GB)
+# Chat + RAM reduzida (dev WSL ~8 GB; sem Ollama)
 docker compose -f infra/docker-compose.dev.yml -f infra/docker-compose.minimal.yml \
   --profile chat --env-file infra/.env up -d
 
@@ -77,8 +80,8 @@ cp infra/.env.dev.example infra/.env
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build '*-production'
 
-# Serviços pesados (LanguageTool + SearXNG — profile chat)
-./infra/scripts/up-dev-sequential.sh --heavy --build languagetool searxng
+# Serviços pesados (Ollama + LanguageTool + SearXNG — profile optional-heavy)
+./infra/scripts/up-dev-sequential.sh --heavy --build ollama languagetool searxng
 
 # Simular comandos sem executar
 ./infra/scripts/up-dev-sequential.sh --dry-run --build --fase mfe dashboard-commercial

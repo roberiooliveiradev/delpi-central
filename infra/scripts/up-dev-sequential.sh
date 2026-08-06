@@ -29,6 +29,7 @@ cd "$COMPOSE_DIR"
 COMPOSE_BASE=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --env-file .env)
 COMPOSE_PLUGINS=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile plugins --env-file .env)
 COMPOSE_CHAT=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile chat --env-file .env)
+COMPOSE_HEAVY=(docker compose -f docker-compose.dev.yml -f docker-compose.minimal.yml --profile optional-heavy --env-file .env)
 
 export COMPOSE_PARALLEL_LIMIT=1
 export DOCKER_BUILDKIT=1
@@ -49,21 +50,21 @@ usage() {
   sed -n '2,15p' "$0"
   echo ""
   echo "Fases:"
-  echo "  core   — postgres, keycloak, core-api, api-delpi, portal, gateway"
+  echo "  core   — postgres, keycloak, core-api, api-delpi, portal, plugin-ui, TV, gateway"
   echo "  remote — plugin-ui (Module Federation — antes dos MFEs)"
   echo "  mfe    — microfrontends federados (profile plugins)"
   echo "  api    — APIs de plugin (profile plugins)"
-  echo "  chat   — ollama + minha-delpi-ai-api + minha-delpi-chat"
-  echo "  heavy  — searxng + languagetool (profile chat; ~2,5 GB RAM extra)"
+  echo "  chat   — minha-delpi-ai-api + minha-delpi-chat (sem Ollama)"
+  echo "  heavy  — ollama + searxng + languagetool (profile optional-heavy)"
   echo "  gpu    — indisponível em dev (vllm só em produção)"
-  echo "  tudo   — core → remote → mfe → api → chat (padrão)"
+  echo "  tudo   — core → remote → mfe → api → chat (padrão; sem ollama)"
   echo ""
   echo "Opções:"
   echo "  --build       Rebuild da imagem de cada serviço (compose build isolado; sem bake em cascata)"
   echo "  --no-cache    Passa --no-cache ao docker compose build (evita layer CACHED stale no MFE)"
   echo "  --pull        git pull em $REPO_ROOT antes de subir"
   echo "  --cpu         No-op em dev (já usa docker-compose.minimal.yml por padrão)"
-  echo "  --heavy       Inclui fase heavy (ou serviços searxng/languagetool)"
+  echo "  --heavy       Inclui fase heavy (ollama/searxng/languagetool)"
   echo "  --gpu         Indisponível em dev — use up-prod-sequential.sh para vllm"
   echo "  --fase FASE   Limita a uma fase (opcional se passar SERVICO)"
   echo "  --list        Lista ordem e sai"
@@ -100,6 +101,10 @@ FASE_CORE=(
   core-api
   api-delpi
   portal
+  plugin-ui
+  tv-dashboard-api
+  tv-dashboard
+  public-hub
   gateway
 )
 
@@ -145,8 +150,6 @@ FASE_MFE=(
   cipa
   comite-etica-conduta
   quality-labels
-  tv-dashboard
-  public-hub
   api-delpi-console
 )
 
@@ -158,16 +161,15 @@ FASE_API=(
   cipa-api
   comite-etica-conduta-api
   customer-experience-api
-  tv-dashboard-api
 )
 
 FASE_CHAT=(
-  ollama
   minha-delpi-ai-api
   minha-delpi-chat
 )
 
 FASE_HEAVY=(
+  ollama
   searxng
   languagetool
 )
@@ -175,7 +177,6 @@ FASE_HEAVY=(
 FASE_GPU=(vllm)
 
 PLUGIN_PROFILE_SERVICES=(
-  "${FASE_REMOTE[@]}"
   "${FASE_MFE[@]}"
   "${FASE_API[@]}"
 )
@@ -194,7 +195,15 @@ is_plugin_profile_service() {
 is_chat_profile_service() {
   local svc="$1"
   case "$svc" in
-    ollama|minha-delpi-ai-api|minha-delpi-chat|searxng|languagetool) return 0 ;;
+    minha-delpi-ai-api|minha-delpi-chat) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+is_heavy_profile_service() {
+  local svc="$1"
+  case "$svc" in
+    ollama|searxng|languagetool) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -203,6 +212,8 @@ compose_for() {
   local svc="$1"
   if is_plugin_profile_service "$svc"; then
     echo plugins
+  elif is_heavy_profile_service "$svc"; then
+    echo heavy
   elif is_chat_profile_service "$svc"; then
     echo chat
   else
@@ -355,6 +366,7 @@ run_compose_up() {
   case "$profile" in
     plugins) cmd=("${COMPOSE_PLUGINS[@]}") ;;
     chat) cmd=("${COMPOSE_CHAT[@]}") ;;
+    heavy) cmd=("${COMPOSE_HEAVY[@]}") ;;
     *) cmd=("${COMPOSE_BASE[@]}") ;;
   esac
 
