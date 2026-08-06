@@ -150,8 +150,8 @@ type Props = {
    */
   openEndedDateRange?: boolean;
   /**
-   * Camada canônica dos filtros. `multi` = Limpar + sentinel «Valores diferentes».
-   * `aggregate` = Não definido (usa a fonte). `source` = Limpar filtro.
+   * Camada canônica dos filtros. `multi` = Não definido aqui + sentinel «Valores diferentes».
+   * `aggregate` / `source` = Não definido aqui (opção vazia padronizada).
    */
   filterLayer?: DataParamFilterLayer;
   /**
@@ -219,7 +219,7 @@ export function DataParamFields({
   const aggregateLayer = filterLayer === "aggregate";
   const uiLabels = {
     clear: TV_DASHBOARD_HELP_TOOLTIPS.data.filterClear,
-    unset: TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetUsesSource,
+    unset: TV_DASHBOARD_HELP_TOOLTIPS.data.filterUnsetHere,
     diverged: TV_DASHBOARD_HELP_TOOLTIPS.data.filterValuesDiffer,
     allBranches: TV_DASHBOARD_HELP_TOOLTIPS.data.filterAllBranches,
   };
@@ -415,9 +415,7 @@ export function DataParamFields({
           placeholder={
             fieldDiverged
               ? uiLabels.diverged
-              : allowConsolidated
-                ? uiLabels.allBranches
-                : emptyTextPlaceholder(key, inherited, field)
+              : emptyTextPlaceholder(key, inherited, field)
           }
           emptyOptionLabel={branchEmptyLabel}
           divergedLabel={uiLabels.diverged}

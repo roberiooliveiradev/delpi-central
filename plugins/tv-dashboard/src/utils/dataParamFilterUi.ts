@@ -1,9 +1,10 @@
 /**
- * Apresentação canônica dos filtros de params (fonte / tela / programação / multi).
+ * Apresentação canônica dos filtros de params (fonte / tela / programação / multi / input).
  *
- * - «Limpar» / «Não definido» = ação value "" (sempre disponível).
- * - «Valores diferentes» = estado de exibição na multi (sentinel), nunca a opção de limpar.
- * Assim, com divergência o usuário ainda consegue escolher Limpar e unificar as fontes.
+ * - Opção vazia value "" = «Não definido aqui» em select e placeholder de text
+ *   (todas as camadas: source, multi, aggregate) — nunca «(usa a fonte)».
+ * - «Valores diferentes» = só status visual na multi (sentinel), nunca a opção de limpar.
+ * - Filial consolidada = domínio `all` («Todas as filiais»), não a opção vazia.
  */
 
 export const DIVERGED_FILTER_SELECT_VALUE = "__td_filter_diverged__";
@@ -14,11 +15,13 @@ export type DataParamFilterLayer = "source" | "aggregate" | "multi";
 export type FilterSelectOption = { value: string; label: string };
 
 export type FilterUiLabels = {
+  /** Aria/title do botão × (ação). */
   clear: string;
+  /** Opção/placeholder value="" — padronizado «Não definido aqui». */
   unset: string;
   diverged: string;
   inherited?: string;
-  /** value="" em filial opcional / consolidado permitido. */
+  /** Rótulo do domínio `all` (consolidado), não da opção vazia. */
   allBranches?: string;
 };
 
@@ -31,20 +34,24 @@ export function resolveFilterLayer(
   return hydrateDefaultPreset === false ? "aggregate" : "source";
 }
 
-/** Rótulo da opção value="" — limpar ou «não definido» na camada agregada. Nunca «Valores diferentes». */
+/**
+ * Rótulo da opção value="" / placeholder de text.
+ * Camadas source, multi e aggregate: «Não definido aqui».
+ * Herança do slide: rótulo de herança. Nunca «Valores diferentes».
+ */
 export function resolveFilterClearLabel(
   layer: DataParamFilterLayer,
   labels: FilterUiLabels,
   options: { inherited?: boolean } = {},
 ): string {
-  if (layer === "aggregate") return labels.unset;
+  void layer;
   if (options.inherited) return labels.inherited ?? "Herdado do slide";
-  return labels.clear;
+  return labels.unset;
 }
 
 /**
- * Opção vazia do select de filial: consolidado = «Todas as filiais»;
- * camada agregada / herança mantêm os rótulos genéricos.
+ * Opção vazia do select de filial: sempre «Não definido aqui» (ou herança).
+ * Consolidado permanece como valor de domínio `all` (rótulo allBranches).
  */
 export function resolveBranchEmptyLabel(
   layer: DataParamFilterLayer,
@@ -54,12 +61,10 @@ export function resolveBranchEmptyLabel(
     labels: FilterUiLabels;
   },
 ): string {
-  if (layer === "aggregate") return opts.labels.unset;
-  if (opts.inherited) return opts.labels.inherited ?? "Herdado do slide";
-  if (opts.allowConsolidated) {
-    return opts.labels.allBranches ?? "Todas as filiais";
-  }
-  return opts.labels.clear;
+  void opts.allowConsolidated;
+  return resolveFilterClearLabel(layer, opts.labels, {
+    inherited: opts.inherited,
+  });
 }
 
 export function resolveFilterSelectValue(stored: string, diverged: boolean): string {
@@ -67,7 +72,7 @@ export function resolveFilterSelectValue(stored: string, diverged: boolean): str
 }
 
 /**
- * Opções do select: status divergente (se houver) + Limpar/Não definido + domínio.
+ * Opções do select: status divergente (se houver) + Não definido aqui + domínio.
  * Sentinel de divergência não é gravável — só estado visual.
  */
 export function buildFilterSelectOptions(
@@ -112,8 +117,11 @@ export function resolveFilterTextPlaceholder(
   labels: FilterUiLabels,
 ): string {
   if (opts.diverged) return labels.diverged;
-  if (opts.aggregateLayer) return labels.unset;
   if (opts.inherited) return labels.inherited ?? "Herdado do slide";
-  if (opts.fieldDefault !== undefined) return `Padrão: ${opts.fieldDefault}`;
-  return labels.clear;
+  // source / multi / aggregate: mesmo placeholder padronizado.
+  void opts.aggregateLayer;
+  if (opts.fieldDefault !== undefined && opts.fieldDefault !== null && opts.fieldDefault !== "") {
+    return `Padrão: ${opts.fieldDefault}`;
+  }
+  return labels.unset;
 }

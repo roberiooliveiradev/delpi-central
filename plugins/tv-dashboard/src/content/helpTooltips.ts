@@ -308,8 +308,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para Data início/fim. Em rotas com intervalo fechado (ex. PPM), o período é obrigatório — sem default automático.",
+    filterUnsetHere:
+      "Não definido aqui",
+    /** @deprecated Preferir `filterUnsetHere` — mantido como alias de migração. */
     filterUnsetUsesSource:
-      "Não definido (usa a fonte)",
+      "Não definido aqui",
     filterClear:
       "Limpar filtro",
     filterAllBranches:
@@ -332,12 +335,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramPeriodDays:
       "Quantos dias para trás entram no cálculo (ex.: 30 = do dia de hoje menos 30 dias).",
     paramBranch:
-      "Filial 01/02 ou Todas as filiais (consolidado), quando a rota permitir omitir o parâmetro.",
+      "Filial 01/02 ou Todas as filiais (consolidado), quando a rota permitir omitir o parâmetro. «Não definido aqui» = sem filtro nesta camada.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     fieldLabels:
       "Registro de rótulos amigáveis por campo da fonte. A chave da API permanece; tabelas, gráficos, KPI e texto ligados herdam o nome.",
     multiSelectFilters:
-      "Campos em comum das fontes selecionadas (sem repetir). «Valores diferentes» = status; use Limpar filtro para zerar em todas, ou escolha um valor para unificar.",
+      "Campos em comum das fontes selecionadas (sem repetir). «Valores diferentes» = status; use «Não definido aqui» para zerar em todas, ou escolha um valor para unificar.",
     multiSelectFiltersSummary:
       "{count} fontes na seleção — alterar um filtro aplica nas fontes que aceitam esse parâmetro.",
     multiSelectNoSources:

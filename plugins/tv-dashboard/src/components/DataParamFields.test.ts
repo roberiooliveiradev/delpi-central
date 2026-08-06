@@ -172,10 +172,10 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/DIVERGED_FILTER_SELECT_VALUE|dataParamFilterUi/);
   });
 
-  it("camada agregada usa filterUnsetUsesSource / filterValuesDiffer", () => {
+  it("camada agregada usa filterUnsetHere / filterValuesDiffer", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
-    expect(source).toMatch(/filterUnsetUsesSource/);
+    expect(source).toMatch(/filterUnsetHere/);
     expect(source).toMatch(/filterValuesDiffer/);
     expect(source).toMatch(/divergedKeys/);
     expect(source).toMatch(/emptyChoiceLabel/);
@@ -183,9 +183,10 @@ describe("DataParamFields date range UX contract", () => {
     expect(source).toMatch(/resolveFilterClearLabel/);
   });
 
-  it("expõe Limpar filtro em selects, Período e inputs (dados/tela/programação)", () => {
+  it("expõe Não definido aqui em selects, Período e inputs (dados/tela/programação)", () => {
     const base = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(base, "./DataParamFields.tsx"), "utf8");
+    expect(source).toMatch(/filterUnsetHere/);
     expect(source).toMatch(/filterClear/);
     expect(source).toMatch(/ClearableControl/);
     expect(source).toMatch(/td-data-param-clearable/);

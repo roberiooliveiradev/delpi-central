@@ -14,7 +14,7 @@ import {
 
 const labels = {
   clear: "Limpar filtro",
-  unset: "Não definido (usa a fonte)",
+  unset: "Não definido aqui",
   diverged: "Valores diferentes",
   allBranches: "Todas as filiais",
 };
@@ -26,31 +26,29 @@ describe("dataParamFilterUi", () => {
     expect(resolveFilterLayer(undefined, true)).toBe("source");
   });
 
-  it("clear label nunca é «Valores diferentes»", () => {
-    expect(resolveFilterClearLabel("multi", labels)).toBe("Limpar filtro");
-    expect(resolveFilterClearLabel("source", labels)).toBe("Limpar filtro");
-    expect(resolveFilterClearLabel("aggregate", labels)).toBe(
-      "Não definido (usa a fonte)",
-    );
+  it("opção vazia padronizada «Não definido aqui» em todas as camadas", () => {
+    expect(resolveFilterClearLabel("multi", labels)).toBe("Não definido aqui");
+    expect(resolveFilterClearLabel("source", labels)).toBe("Não definido aqui");
+    expect(resolveFilterClearLabel("aggregate", labels)).toBe("Não definido aqui");
     expect(resolveFilterClearLabel("source", labels, { inherited: true })).toBe(
       "Herdado do slide",
     );
   });
 
-  it("divergência usa sentinel para o select poder escolher Limpar", () => {
+  it("divergência usa sentinel para o select poder escolher Não definido", () => {
     expect(resolveFilterSelectValue("this_week", true)).toBe(DIVERGED_FILTER_SELECT_VALUE);
     expect(resolveFilterSelectValue("this_week", false)).toBe("this_week");
     expect(resolveFilterSelectValue("", true)).toBe(DIVERGED_FILTER_SELECT_VALUE);
   });
 
-  it("opções: status divergente + Limpar + domínio", () => {
+  it("opções: status divergente + Não definido + domínio", () => {
     const options = buildFilterSelectOptions(
       [
         { value: "01", label: "Filial 01" },
         { value: "02", label: "Filial 02" },
       ],
       {
-        clearLabel: "Limpar filtro",
+        clearLabel: "Não definido aqui",
         diverged: true,
         divergedLabel: "Valores diferentes",
       },
@@ -61,7 +59,7 @@ describe("dataParamFilterUi", () => {
       "01",
       "02",
     ]);
-    expect(options.find((item) => item.value === "")?.label).toBe("Limpar filtro");
+    expect(options.find((item) => item.value === "")?.label).toBe("Não definido aqui");
     expect(options.find((item) => item.value === DIVERGED_FILTER_SELECT_VALUE)?.label).toBe(
       "Valores diferentes",
     );
@@ -82,24 +80,46 @@ describe("dataParamFilterUi", () => {
     ).toBe(false);
   });
 
-  it("Filial opcional usa «Todas as filiais» quando consolidado é permitido", () => {
+  it("Filial: opção vazia é «Não definido aqui» (consolidado fica em all)", () => {
     expect(
       resolveBranchEmptyLabel("source", {
         allowConsolidated: true,
         labels,
       }),
-    ).toBe("Todas as filiais");
+    ).toBe("Não definido aqui");
     expect(
       resolveBranchEmptyLabel("aggregate", {
         allowConsolidated: true,
         labels,
       }),
-    ).toBe("Não definido (usa a fonte)");
+    ).toBe("Não definido aqui");
     expect(
-      resolveBranchEmptyLabel("source", {
+      resolveBranchEmptyLabel("multi", {
         allowConsolidated: false,
         labels,
       }),
-    ).toBe("Limpar filtro");
+    ).toBe("Não definido aqui");
+    expect(
+      resolveBranchEmptyLabel("source", {
+        allowConsolidated: true,
+        inherited: true,
+        labels,
+      }),
+    ).toBe("Herdado do slide");
+  });
+
+  it("placeholder de text usa «Não definido aqui» em source e aggregate", () => {
+    expect(
+      resolveFilterTextPlaceholder(
+        { diverged: false, aggregateLayer: false, inherited: false },
+        labels,
+      ),
+    ).toBe("Não definido aqui");
+    expect(
+      resolveFilterTextPlaceholder(
+        { diverged: false, aggregateLayer: true, inherited: false },
+        labels,
+      ),
+    ).toBe("Não definido aqui");
   });
 });
