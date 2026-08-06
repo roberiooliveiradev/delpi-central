@@ -21,7 +21,11 @@ def _extract_request(args: tuple, kwargs: dict) -> Request | None:
 
 
 def require_any_permission(*permission_codes: str) -> Callable:
-    """Exige ao menos uma permissão (ou role equivalente) do JWT/RBAC."""
+    """Exige ao menos uma permissão (ou role equivalente) do JWT/RBAC.
+
+    A rota deve declarar `request: Request` (FastAPI) — sem isso o decorator
+    não encontra o usuário e responde 401.
+    """
 
     def decorator(fn: Callable) -> Callable:
         if inspect.iscoroutinefunction(fn):
@@ -29,7 +33,12 @@ def require_any_permission(*permission_codes: str) -> Callable:
             @wraps(fn)
             async def async_wrapper(*args, **kwargs):
                 request = _extract_request(args, kwargs)
-                user = getattr(request.state, "user", None) if request else None
+                if request is None:
+                    return fail(
+                        "Não autenticado (request ausente na rota).",
+                        401,
+                    )
+                user = getattr(request.state, "user", None)
                 if user is None:
                     return fail("Não autenticado.", 401)
                 if not has_any_permission(user, permission_codes):
@@ -41,7 +50,12 @@ def require_any_permission(*permission_codes: str) -> Callable:
         @wraps(fn)
         def sync_wrapper(*args, **kwargs):
             request = _extract_request(args, kwargs)
-            user = getattr(request.state, "user", None) if request else None
+            if request is None:
+                return fail(
+                    "Não autenticado (request ausente na rota).",
+                    401,
+                )
+            user = getattr(request.state, "user", None)
             if user is None:
                 return fail("Não autenticado.", 401)
             if not has_any_permission(user, permission_codes):

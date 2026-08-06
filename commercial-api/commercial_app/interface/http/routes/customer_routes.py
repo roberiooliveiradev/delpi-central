@@ -26,8 +26,9 @@ router = APIRouter(prefix="/customers", tags=["Customers"])
 
 
 @router.get("/search", operation_id="search_active_customers_for_portfolio")
-@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
 def search_active_customers(
+    _request: Request,
     q: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
@@ -45,8 +46,8 @@ def search_active_customers(
 
 
 @router.post("/enrichment", operation_id="enrich_portfolio_customers")
-@require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
-def enrich_portfolio_customers(body: EnrichmentBody = Body(...)):
+@require_any_permission(*COMMERCIAL_READ_PERMISSIONS, *COMMERCIAL_MANAGE_PERMISSIONS)
+def enrich_portfolio_customers(_request: Request, body: EnrichmentBody = Body(...)):
     try:
         customers = parse_customer_assignments(
             [item.model_dump() for item in body.customers]
@@ -77,6 +78,7 @@ def enrich_portfolio_customers(body: EnrichmentBody = Body(...)):
 )
 @require_any_permission(*COMMERCIAL_READ_PERMISSIONS)
 def get_customer_avatar(
+    _request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):
@@ -151,6 +153,7 @@ async def upsert_customer_avatar(
 )
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def delete_customer_avatar(
+    _request: Request,
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),
 ):

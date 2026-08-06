@@ -116,14 +116,15 @@ export const CM_HELP = {
     list: "Carteiras cadastradas (usuário Minha Delpi + nome de exibição).",
     filter: "Filtre a lista por status: todas, só ativas ou só inativas.",
     create: "Cria carteira vinculada a um usuário do diretório. O nome aparece no seletor de escopo.",
-    displayName: "Nome amigável exibido no Portal Comercial (não precisa ser o login).",
+    displayName:
+      "Nome amigável no portal. Se vazio ao criar, usa o nome do usuário Minha Delpi.",
     directoryUser:
       "Usuário Minha Delpi que será o dono da carteira (busca por nome ou e-mail).",
     edit: "Altera o nome de exibição da carteira selecionada.",
     customers:
       "Clientes (código+loja) vinculados a esta carteira. Use busca TOTVS para incluir.",
     colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
-    colUserId: "Identificador do usuário Minha Delpi dono da carteira.",
+    colUserId: "Nome e e-mail do usuário Minha Delpi dono da carteira.",
     colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
     colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
     colActions: "Editar nome, gerenciar clientes ou ativar/desativar a carteira.",

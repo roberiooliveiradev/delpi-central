@@ -157,7 +157,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
       });
 
     const worklistPromise = showWorklist
-      ? getMyWorklist(controller.signal)
+      ? getMyWorklist({ signal: controller.signal })
           .then((wl) => {
             setWorklistOpen(wl.counts?.open ?? 0);
             setWorklistOverdue(wl.counts?.overdue ?? 0);
@@ -226,7 +226,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               const kpis = kpisFromOpenOrders(data);
               return {
                 id: seller.id,
-                name: seller.display_name || seller.user_id,
+                name: seller.display_name.trim() || "Usuário",
                 customers: seller.customer_count ?? seller.customers?.length ?? 0,
                 lines: kpis.totalLinhas,
                 openValue: kpis.valorAberto,
@@ -240,7 +240,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
             if (result.status === "fulfilled") return result.value;
             return {
               id: seller.id,
-              name: seller.display_name || seller.user_id,
+              name: seller.display_name.trim() || "Usuário",
               customers: seller.customer_count ?? seller.customers?.length ?? 0,
               lines: 0,
               openValue: 0,

@@ -185,7 +185,7 @@ export function SelectControl({
 
         <ul id={listId} className={classNames.list} role="listbox">
           {allowEmpty ? (
-            <li>
+            <li key="__empty">
               <button
                 type="button"
                 className={!value ? classNames.optionActive : classNames.option}
@@ -199,10 +199,12 @@ export function SelectControl({
             </li>
           ) : null}
           {filteredOptions.length === 0 ? (
-            <li className={classNames.empty}>{labels.emptyOptions}</li>
+            <li key="__no-options" className={classNames.empty}>
+              {labels.emptyOptions}
+            </li>
           ) : (
             filteredOptions.map((option) => (
-              <li key={option.value}>
+              <li key={option.value || `__opt-${option.label}`}>
                 <button
                   type="button"
                   className={

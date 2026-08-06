@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, X } from "lucide-react";
 import {
   ActionButton,
   DataTable,
@@ -23,6 +23,7 @@ import {
   updateSellerPortfolio,
 } from "../../api/commercialPortfolioApi";
 import { useCommercialFloatingNotice, FORM_VALIDATION_AUTO_DISMISS_MS } from "../../app/CommercialFloatingNoticeProvider";
+import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
   CommercialLoadingCard,
@@ -90,6 +91,12 @@ export function SellerPortfoliosPage() {
   const [portfolios, setPortfolios] = useState<SellerPortfolio[]>([]);
   const [filter, setFilter] = useState<PortfolioFilter>("all");
 
+  const directoryUserIds = useMemo(
+    () => portfolios.map((item) => item.user_id),
+    [portfolios],
+  );
+  const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
+
   const [createUser, setCreateUser] = useState<DirectoryUserOption[]>([]);
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -103,8 +110,10 @@ export function SellerPortfoliosPage() {
 
   const [manageDataPortfolioId, setManageDataPortfolioId] = useState("");
   const [customerQuery, setCustomerQuery] = useState("");
+  const [linkedFilter, setLinkedFilter] = useState("");
   const [customerHits, setCustomerHits] = useState<TotvsCustomerHit[]>([]);
   const [searchingCustomers, setSearchingCustomers] = useState(false);
+  const [customerSearchError, setCustomerSearchError] = useState<string | null>(null);
   const [busyCustomerKey, setBusyCustomerKey] = useState<string | null>(null);
 
   const [transferSourceId, setTransferSourceId] = useState("");
@@ -133,17 +142,34 @@ export function SellerPortfoliosPage() {
     const normalized = customerQuery.trim();
     if (normalized.length < 2) {
       setCustomerHits([]);
+      setCustomerSearchError(null);
+      setSearchingCustomers(false);
       return;
     }
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       setSearchingCustomers(true);
+      setCustomerSearchError(null);
       searchActiveCustomers(normalized, { signal: controller.signal })
         .then((result) => {
-          if (!controller.signal.aborted) setCustomerHits(result.items);
+          if (!controller.signal.aborted) {
+            setCustomerHits(result.items);
+            setCustomerSearchError(null);
+          }
         })
-        .catch(() => {
-          if (!controller.signal.aborted) setCustomerHits([]);
+        .catch((err: unknown) => {
+          if (controller.signal.aborted) return;
+          setCustomerHits([]);
+          const message =
+            err instanceof Error && err.message.trim()
+              ? err.message
+              : "Não foi possível buscar clientes no TOTVS.";
+          setCustomerSearchError(message);
+          notifyError(message, {
+            title: "Busca de clientes",
+            id: "cm-customer-search-error",
+            autoDismissMs: FORM_VALIDATION_AUTO_DISMISS_MS,
+          });
         })
         .finally(() => {
           if (!controller.signal.aborted) setSearchingCustomers(false);
@@ -153,6 +179,7 @@ export function SellerPortfoliosPage() {
       controller.abort();
       window.clearTimeout(timeoutId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- notifyError estável o bastante; evita refetch por identidade
   }, [customerQuery]);
 
   const stats = useMemo(() => {
@@ -178,16 +205,19 @@ export function SellerPortfoliosPage() {
 
   async function handleCreate() {
     const user = createUser[0];
-    const missing: string[] = [];
-    if (!user) missing.push("Usuário (Minha Delpi)");
-    if (!createDisplayName.trim()) missing.push("Nome de exibição");
-    if (!notifyMissingRequired(missing)) return;
+    if (!notifyMissingRequired(user ? [] : ["Usuário (Minha Delpi)"])) return;
+
+    const displayName =
+      createDisplayName.trim() ||
+      user.name.trim() ||
+      user.email.trim() ||
+      "Usuário";
 
     setCreating(true);
     try {
       await createSellerPortfolio({
-        user_id: user!.id,
-        display_name: createDisplayName.trim(),
+        user_id: user.id,
+        display_name: displayName,
       });
       setCreateUser([]);
       setCreateDisplayName("");
@@ -250,6 +280,21 @@ export function SellerPortfoliosPage() {
   }
 
   const manageDataPortfolio = portfolios.find((item) => item.id === manageDataPortfolioId) ?? null;
+
+  const linkedCustomers = useMemo(() => {
+    const rows = manageDataPortfolio?.customers ?? [];
+    const q = linkedFilter.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((customer) => {
+      const hay = `${customer.customer_code} ${customer.customer_store} ${customer.customer_name ?? ""}`
+        .trim()
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [linkedFilter, manageDataPortfolio]);
+
+  const customerQueryTrimmed = customerQuery.trim();
+  const customerSearchReady = customerQueryTrimmed.length >= 2;
 
   async function handleAddCustomer(hit: TotvsCustomerHit) {
     if (!manageDataPortfolio) {
@@ -373,7 +418,7 @@ export function SellerPortfoliosPage() {
         key: "user_id",
         header: "Usuário",
         headerHint: CM_HELP.sellerPortfolios.colUserId,
-        render: (row) => row.user_id,
+        render: (row) => directoryLabelFor(row.user_id, row.display_name),
       },
       {
         key: "customer_count",
@@ -425,7 +470,7 @@ export function SellerPortfoliosPage() {
         ),
       },
     ],
-    [confirmingDeactivateId],
+    [confirmingDeactivateId, directoryLabelFor],
   );
 
   return (
@@ -562,7 +607,15 @@ export function SellerPortfoliosPage() {
             <div className="cm-portfolios-form__user">
               <UserDirectoryPicker
                 value={createUser}
-                onChange={setCreateUser}
+                onChange={(users) => {
+                  setCreateUser(users);
+                  const next = users[0];
+                  if (next && !createDisplayName.trim()) {
+                    const fallback = next.name.trim() || next.email.trim();
+                    if (fallback) setCreateDisplayName(fallback);
+                  }
+                  if (users.length === 0) setCreateDisplayName("");
+                }}
                 searchUsers={searchDirectoryUsers}
                 maxSelected={1}
                 labels={{
@@ -572,14 +625,15 @@ export function SellerPortfoliosPage() {
                 }}
               />
             </div>
-            <CommercialTextField
-              label="Nome de exibição"
-              hint={CM_HELP.sellerPortfolios.displayName}
-              value={createDisplayName}
-              onChange={setCreateDisplayName}
-              placeholder="Ex.: João Silva"
-              required
-            />
+            <div className="cm-portfolios-form__display-name">
+              <CommercialTextField
+                label="Nome de exibição"
+                hint={CM_HELP.sellerPortfolios.displayName}
+                value={createDisplayName}
+                onChange={setCreateDisplayName}
+                placeholder="Ex.: João Silva (padrão = nome do usuário)"
+              />
+            </div>
             <div className="cm-portfolios-form__actions">
               <ActionButton variant="primary" onClick={handleCreate} disabled={creating}>
                 <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -622,24 +676,37 @@ export function SellerPortfoliosPage() {
       <div id="cm-manage-customers">
       <SectionCard
         title="Gerenciar clientes"
-        subtitle="Busque clientes ativos no TOTVS e vincule ou remova da carteira selecionada."
+        subtitle="Escolha a carteira, busque no TOTVS e vincule — ou remova quem já está na lista."
         hint={CM_HELP.sellerPortfolios.customers}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        <div className="cm-portfolios-form">
-          <div className="cm-portfolios-form__user">
-            <CommercialSelectField
-              label="Carteira"
-              hint={CM_HELP.sellerPortfolios.managePortfolio}
-              value={manageDataPortfolioId}
-              onChange={setManageDataPortfolioId}
-              options={portfolioOptions}
-              allowEmpty
-              emptyLabel="Selecione uma carteira"
-              searchable
+        <div className="cm-manage-customers-toolbar">
+          <CommercialSelectField
+            label="Carteira"
+            hint={CM_HELP.sellerPortfolios.managePortfolio}
+            value={manageDataPortfolioId}
+            onChange={(value) => {
+              setManageDataPortfolioId(value);
+              setCustomerQuery("");
+              setCustomerHits([]);
+              setCustomerSearchError(null);
+              setLinkedFilter("");
+            }}
+            options={portfolioOptions}
+            allowEmpty
+            emptyLabel="Selecione uma carteira"
+            searchable
+          />
+          {manageDataPortfolio ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label={`${manageDataPortfolio.customers.length} vinculado${
+                manageDataPortfolio.customers.length === 1 ? "" : "s"
+              }`}
+              variant={manageDataPortfolio.customers.length > 0 ? "info" : "neutral"}
             />
-          </div>
+          ) : null}
         </div>
 
         <CommercialViewTransition
@@ -654,77 +721,187 @@ export function SellerPortfoliosPage() {
             />
           ) : (
             <div className="cm-manage-customers-grid">
-              <div>
-                <h4>Clientes vinculados ({manageDataPortfolio.customers.length})</h4>
-                {manageDataPortfolio.customers.length === 0 ? (
-                  <EmptyState
-                    classNames={cmEmptyCompactClassNames}
-                    defaultTitle="Nenhum cliente vinculado"
-                    defaultMessage="Use a busca ao lado para adicionar clientes."
+              <section
+                className="cm-manage-panel cm-manage-panel--search"
+                aria-label="Buscar e adicionar clientes"
+              >
+                <header className="cm-manage-panel__header">
+                  <CommercialTitleWithHelp
+                    title="Buscar e adicionar"
+                    hint={CM_HELP.sellerPortfolios.searchCustomers}
                   />
-                ) : (
-                  <ul className="cm-customer-chip-list">
-                    {manageDataPortfolio.customers.map((customer) => {
-                      const key = customerKey(customer.customer_code, customer.customer_store);
-                      return (
-                        <li key={key}>
-                          <span>
-                            {customer.customer_code}/{customer.customer_store} ·{" "}
-                            {customer.customer_name?.trim() || "—"}
-                          </span>
-                          <ActionButton
-                            variant="ghost"
-                            disabled={busyCustomerKey === key}
-                            onClick={() =>
-                              handleRemoveCustomer(customer.customer_code, customer.customer_store)
-                            }
-                            aria-label={`Remover ${customer.customer_name ?? customer.customer_code}`}
-                          >
-                            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-                          </ActionButton>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
+                  <p className="cm-manage-panel__subtitle">
+                    Clientes ativos no TOTVS · mínimo 2 caracteres
+                  </p>
+                </header>
 
-              <div>
-                <h4>Buscar clientes ativos (TOTVS)</h4>
-                <CommercialTextField
-                  label="Buscar"
-                  hint={CM_HELP.sellerPortfolios.searchCustomers}
-                  value={customerQuery}
-                  onChange={setCustomerQuery}
-                  placeholder="Código ou nome do cliente"
-                />
-                {searchingCustomers ? <p className="cm-hint-text">Buscando…</p> : null}
-                {customerHits.length > 0 ? (
-                  <ul className="cm-customer-chip-list">
-                    {customerHits.map((hit) => {
-                      const key = customerKey(hit.code, hit.store);
-                      const alreadyLinked = manageDataPortfolio.customers.some(
-                        (customer) =>
-                          customerKey(customer.customer_code, customer.customer_store) === key,
-                      );
-                      return (
-                        <li key={key}>
-                          <span>
-                            {hit.code}/{hit.store} · {hit.name}
-                          </span>
-                          <ActionButton
-                            variant="ghost"
-                            disabled={alreadyLinked || busyCustomerKey === key}
-                            onClick={() => handleAddCustomer(hit)}
-                          >
-                            {alreadyLinked ? "Já vinculado" : "Adicionar"}
-                          </ActionButton>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                <div className="cm-manage-search">
+                  <div className="cm-manage-search__field">
+                    <CommercialTextField
+                      label="Buscar no TOTVS"
+                      hint={CM_HELP.sellerPortfolios.searchCustomers}
+                      value={customerQuery}
+                      onChange={setCustomerQuery}
+                      placeholder="Código ou nome do cliente"
+                    />
+                  </div>
+                  {customerQuery ? (
+                    <ActionButton
+                      variant="ghost"
+                      onClick={() => {
+                        setCustomerQuery("");
+                        setCustomerHits([]);
+                        setCustomerSearchError(null);
+                      }}
+                      aria-label="Limpar busca"
+                    >
+                      <X size={16} strokeWidth={1.75} aria-hidden="true" />
+                      Limpar
+                    </ActionButton>
+                  ) : null}
+                </div>
+
+                <div className="cm-manage-panel__body" aria-live="polite">
+                  {!customerSearchReady ? (
+                    <EmptyState
+                      classNames={cmEmptyCompactClassNames}
+                      defaultTitle="Digite para buscar"
+                      defaultMessage="Informe código ou nome (ao menos 2 caracteres) para listar clientes ativos."
+                    >
+                      <span className="cm-manage-search-hint" aria-hidden="true">
+                        <Search size={18} strokeWidth={1.75} />
+                      </span>
+                    </EmptyState>
+                  ) : searchingCustomers ? (
+                    <CommercialLoadingCard title="Buscando no TOTVS…" variant="panel" />
+                  ) : customerSearchError ? (
+                    <EmptyState
+                      classNames={cmEmptyCompactClassNames}
+                      defaultTitle="Falha na busca"
+                      defaultMessage={customerSearchError}
+                      role="alert"
+                    />
+                  ) : customerHits.length === 0 ? (
+                    <EmptyState
+                      classNames={cmEmptyCompactClassNames}
+                      defaultTitle="Nenhum cliente encontrado"
+                      defaultMessage={`Nada para “${customerQueryTrimmed}”. Tente outro código ou nome.`}
+                    />
+                  ) : (
+                    <ul className="cm-customer-chip-list cm-customer-chip-list--manage">
+                      {customerHits.map((hit, index) => {
+                        const key = customerKey(hit.code, hit.store) || `hit-${index}`;
+                        const alreadyLinked = manageDataPortfolio.customers.some(
+                          (customer) =>
+                            customerKey(customer.customer_code, customer.customer_store) === key,
+                        );
+                        return (
+                          <li key={key}>
+                            <div className="cm-customer-chip-list__meta">
+                              <strong>
+                                {hit.code}/{hit.store}
+                              </strong>
+                              <span>{hit.name}</span>
+                            </div>
+                            {alreadyLinked ? (
+                              <StatusBadge
+                                classNames={cmStatusBadgeClassNames}
+                                label="Já vinculado"
+                                variant="success"
+                              />
+                            ) : (
+                              <ActionButton
+                                variant="primary"
+                                disabled={busyCustomerKey === key}
+                                onClick={() => handleAddCustomer(hit)}
+                              >
+                                <Plus size={14} strokeWidth={1.75} aria-hidden="true" />
+                                {busyCustomerKey === key ? "Adicionando…" : "Adicionar"}
+                              </ActionButton>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </section>
+
+              <section
+                className="cm-manage-panel cm-manage-panel--linked"
+                aria-label="Clientes vinculados"
+              >
+                <header className="cm-manage-panel__header">
+                  <CommercialTitleWithHelp
+                    title={`Na carteira (${manageDataPortfolio.customers.length})`}
+                    hint={CM_HELP.sellerPortfolios.customers}
+                  />
+                  <p className="cm-manage-panel__subtitle">
+                    {manageDataPortfolio.display_name}
+                  </p>
+                </header>
+
+                {manageDataPortfolio.customers.length > 5 ? (
+                  <div className="cm-manage-search">
+                    <div className="cm-manage-search__field">
+                      <CommercialTextField
+                        label="Filtrar vinculados"
+                        value={linkedFilter}
+                        onChange={setLinkedFilter}
+                        placeholder="Filtrar por código ou nome"
+                      />
+                    </div>
+                  </div>
                 ) : null}
-              </div>
+
+                <div className="cm-manage-panel__body">
+                  {manageDataPortfolio.customers.length === 0 ? (
+                    <EmptyState
+                      classNames={cmEmptyCompactClassNames}
+                      defaultTitle="Carteira vazia"
+                      defaultMessage="Use a busca ao lado para vincular o primeiro cliente."
+                    />
+                  ) : linkedCustomers.length === 0 ? (
+                    <EmptyState
+                      classNames={cmEmptyCompactClassNames}
+                      defaultTitle="Nenhum no filtro"
+                      defaultMessage="Ajuste o filtro ou limpe o texto."
+                    />
+                  ) : (
+                    <ul className="cm-customer-chip-list cm-customer-chip-list--manage">
+                      {linkedCustomers.map((customer, index) => {
+                        const key =
+                          customerKey(customer.customer_code, customer.customer_store) ||
+                          `linked-${index}`;
+                        return (
+                          <li key={key}>
+                            <div className="cm-customer-chip-list__meta">
+                              <strong>
+                                {customer.customer_code}/{customer.customer_store}
+                              </strong>
+                              <span>{customer.customer_name?.trim() || "—"}</span>
+                            </div>
+                            <ActionButton
+                              variant="ghost"
+                              disabled={busyCustomerKey === key}
+                              onClick={() =>
+                                handleRemoveCustomer(
+                                  customer.customer_code,
+                                  customer.customer_store,
+                                )
+                              }
+                              aria-label={`Remover ${customer.customer_name ?? customer.customer_code}`}
+                            >
+                              <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+                              Remover
+                            </ActionButton>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </section>
             </div>
           )}
         </CommercialViewTransition>

@@ -126,6 +126,22 @@ export async function searchDirectoryUsers(
   return payload.items ?? [];
 }
 
+/** Resolve nome/e-mail por ids (POST /me/directory/users/lookup). */
+export async function lookupDirectoryUsers(
+  userIds: readonly string[],
+  signal?: AbortSignal,
+): Promise<DirectoryUser[]> {
+  const ids = [...new Set(userIds.map((id) => id.trim()).filter(Boolean))];
+  if (ids.length === 0) return [];
+
+  const payload = await httpPost<{ items?: DirectoryUser[] }>(
+    "/core-api/me/directory/users/lookup",
+    { ids },
+    { signal },
+  );
+  return payload.items ?? [];
+}
+
 export async function searchActiveCustomers(
   query: string,
   options?: { page?: number; pageSize?: number; signal?: AbortSignal },

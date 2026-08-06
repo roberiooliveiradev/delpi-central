@@ -35,9 +35,13 @@ export function TitleWithHelp({
 
   return (
     <span className={rootClass}>
-      <span>{title}</span>
+      <span key="title">{title}</span>
       {hint ? (
-        <HelpTooltip content={hint} ariaLabel={labels.titleHelpAriaLabel(title)} />
+        <HelpTooltip
+          key="help"
+          content={hint}
+          ariaLabel={labels.titleHelpAriaLabel(title)}
+        />
       ) : null}
     </span>
   );

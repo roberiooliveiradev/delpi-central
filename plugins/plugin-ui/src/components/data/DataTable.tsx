@@ -265,10 +265,15 @@ function renderColumnHeader<T>(
 ) {
   return (
     <span className={classNames.headerLabel}>
-      {column.headerPrefix}
-      <span className={classNames.headerText}>{column.header}</span>
+      {column.headerPrefix ? (
+        <span key="prefix">{column.headerPrefix}</span>
+      ) : null}
+      <span key="text" className={classNames.headerText}>
+        {column.header}
+      </span>
       {column.headerHint ? (
         <HelpTooltip
+          key="help"
           content={column.headerHint}
           ariaLabel={labels.headerHelpAriaLabel(column.header)}
           className={classNames.headerHelp}

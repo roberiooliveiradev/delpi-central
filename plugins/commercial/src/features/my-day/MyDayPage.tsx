@@ -19,6 +19,7 @@ import {
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
+import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
@@ -225,21 +226,35 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     [sellers],
   );
 
+  const directoryUserIds = useMemo(() => {
+    const ids = activeSellers.map((seller) => seller.user_id);
+    if (data) {
+      for (const task of [...data.overdue, ...data.today, ...data.later]) {
+        if (task.assignee_user_id) ids.push(task.assignee_user_id);
+      }
+    }
+    return ids;
+  }, [activeSellers, data]);
+  const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
+
   const sellerNameByUserId = useMemo(() => {
     const map = new Map<string, string>();
     for (const seller of activeSellers) {
-      map.set(seller.user_id, seller.display_name.trim() || seller.user_id);
+      map.set(
+        seller.user_id,
+        directoryLabelFor(seller.user_id, seller.display_name),
+      );
     }
     return map;
-  }, [activeSellers]);
+  }, [activeSellers, directoryLabelFor]);
 
   const sellerOptions = useMemo(
     () =>
       activeSellers.map((seller) => ({
         value: seller.user_id,
-        label: seller.display_name.trim() || seller.user_id,
+        label: directoryLabelFor(seller.user_id, seller.display_name),
       })),
-    [activeSellers],
+    [activeSellers, directoryLabelFor],
   );
 
   const customerOptions = useMemo(() => {
@@ -661,7 +676,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   const assigneeLabel =
                     workScope === "team"
                       ? sellerNameByUserId.get(task.assignee_user_id) ??
-                        task.assignee_user_id
+                        directoryLabelFor(task.assignee_user_id)
                       : null;
                   return (
                   <CommercialWorklistItem

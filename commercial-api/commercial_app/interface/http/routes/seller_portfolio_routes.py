@@ -165,6 +165,7 @@ def get_seller_portfolio(
 @router.patch("/{portfolio_id}", operation_id="update_seller_portfolio")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def update_seller_portfolio(
+    _request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: UpdatePortfolioBody = Body(...),
 ):
@@ -194,7 +195,10 @@ def update_seller_portfolio(
 
 @router.delete("/{portfolio_id}", operation_id="deactivate_seller_portfolio")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
-def deactivate_seller_portfolio(portfolio_id: str = Path(..., min_length=1)):
+def deactivate_seller_portfolio(
+    _request: Request,
+    portfolio_id: str = Path(..., min_length=1),
+):
     try:
         portfolio = _use_case().deactivate_portfolio(portfolio_id)
         return ok(
@@ -216,6 +220,7 @@ def deactivate_seller_portfolio(portfolio_id: str = Path(..., min_length=1)):
 @router.put("/{portfolio_id}/customers", operation_id="replace_seller_customers")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def replace_seller_customers(
+    _request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: ReplaceCustomersBody = Body(...),
 ):
@@ -248,6 +253,7 @@ def replace_seller_customers(
 @router.post("/{portfolio_id}/customers", operation_id="add_seller_customer")
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def add_seller_customer(
+    _request: Request,
     portfolio_id: str = Path(..., min_length=1),
     body: AddCustomerBody = Body(...),
 ):
@@ -284,6 +290,7 @@ def add_seller_customer(
 )
 @require_any_permission(*COMMERCIAL_MANAGE_PERMISSIONS)
 def remove_seller_customer(
+    _request: Request,
     portfolio_id: str = Path(..., min_length=1),
     customer_code: str = Path(..., min_length=1),
     customer_store: str = Path(..., min_length=1),

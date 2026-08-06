@@ -73,9 +73,10 @@ export function SectionCard({
         <div>
           <h2 className={classNames.title}>
             <span className={classNames.titleWithHelp}>
-              <span>{title}</span>
+              <span key="title">{title}</span>
               {hint ? (
                 <HelpTooltip
+                  key="help"
                   content={hint}
                   ariaLabel={labels.titleHelpAriaLabel(title)}
                 />

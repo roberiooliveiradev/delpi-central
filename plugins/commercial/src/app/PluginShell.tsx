@@ -84,7 +84,7 @@ export function PluginShell({
       return;
     }
     const controller = new AbortController();
-    void getMyWorklist(controller.signal)
+    void getMyWorklist({ signal: controller.signal })
       .then((wl) => {
         setMyDayBadge((wl.counts.overdue ?? 0) + (wl.counts.today ?? 0));
       })
