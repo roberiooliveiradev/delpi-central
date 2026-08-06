@@ -99,6 +99,13 @@ export type SeriesChartOptions = {
   showDataTable?: boolean;
   showGrid?: boolean;
   showVerticalGrid?: boolean;
+  /**
+   * Linha de meta (referência horizontal/vertical no plot).
+   * Só pinta com `goalLineValue` numérico finito.
+   */
+  showGoalLine?: boolean;
+  /** Valor constante da linha de meta no eixo de valores. */
+  goalLineValue?: number | null;
   showMarkers?: boolean;
   /**
    * Linha/área com curva suave (Catmull-Rom). Default false = segmentos retos.
@@ -202,6 +209,8 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showDataTable: false,
   showGrid: true,
   showVerticalGrid: false,
+  showGoalLine: false,
+  goalLineValue: null,
   showMarkers: true,
   smoothLines: false,
   valueFormat: "auto",

@@ -14,6 +14,7 @@ describe("chartElementCatalog", () => {
     expect(labels).toContain("Eixos");
     expect(labels).toContain("Tabela de dados");
     expect(labels).toContain("Legenda");
+    expect(labels).toContain("Linha de meta");
   });
 
   it("marcadores só em gráfico de linhas", () => {

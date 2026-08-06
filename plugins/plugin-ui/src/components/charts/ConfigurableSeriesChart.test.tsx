@@ -215,6 +215,26 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
+  it("pinta linha de meta quando showGoalLine e valor estão definidos", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "Jan", value: 80 },
+          { label: "Fev", value: 90 },
+        ]}
+        options={{
+          showTitle: false,
+          showLegend: false,
+          legendPosition: "hidden",
+          showGoalLine: true,
+          goalLineValue: 85,
+        }}
+      />,
+    );
+    expect(container.querySelector(".delpi-ui-series-chart__goal-line")).toBeTruthy();
+  });
+
   it("pizza: legenda lista categorias e rótulos de dados nas fatias", () => {
     const { container } = render(
       <ConfigurableSeriesChart

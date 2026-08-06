@@ -72,6 +72,7 @@ export function chartPartVisualPrimitive(
     case "marker":
       return chartType === "pie" || chartType === "funnel" ? "area" : "point";
     case "grid":
+    case "goalLine":
     case "axes":
     case "axis":
       return "line";
@@ -112,6 +113,7 @@ export type ChartPartRef =
   | { kind: "axis"; axis: "x" | "y" }
   | { kind: "axisTitle"; axis: "x" | "y" }
   | { kind: "grid" }
+  | { kind: "goalLine" }
   | { kind: "dataTable" };
 
 /** Subconjunto de estilo herdável de forma/texto — sem reinventar no chart. */
@@ -230,6 +232,8 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
       return "legend";
     case "grid":
       return "grid";
+    case "goalLine":
+      return "goalLine";
     case "dataTable":
       return "dataTable";
     case "series":
@@ -261,6 +265,7 @@ export function parseChartPartRef(raw: string | null | undefined): ChartPartRef 
   if (value === "title") return { kind: "title" };
   if (value === "legend") return { kind: "legend" };
   if (value === "grid") return { kind: "grid" };
+  if (value === "goalLine") return { kind: "goalLine" };
   if (value === "dataTable") return { kind: "dataTable" };
   if (value === "dataLabels") return { kind: "dataLabels" };
   if (value === "axes") return { kind: "axes" };
@@ -344,6 +349,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
   grid: { movable: false, editable: false, deletable: true, resizable: false },
+  goalLine: { movable: false, editable: false, deletable: true, resizable: false },
   dataTable: { movable: false, editable: false, deletable: true, resizable: false },
 };
 
@@ -705,6 +711,9 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "grid" })] = {
     visible: config.showGrid !== false || Boolean(config.showVerticalGrid),
   };
+  parts[serializeChartPartRef({ kind: "goalLine" })] = {
+    visible: Boolean(config.showGoalLine),
+  };
   parts[serializeChartPartRef({ kind: "dataTable" })] = {
     visible: Boolean(config.showDataTable),
   };
@@ -822,6 +831,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
   const axisTitleX = getChartPartState(parts, { kind: "axisTitle", axis: "x" });
   const axisTitleY = getChartPartState(parts, { kind: "axisTitle", axis: "y" });
   const grid = getChartPartState(parts, { kind: "grid" });
+  const goalLine = getChartPartState(parts, { kind: "goalLine" });
   const dataTable = getChartPartState(parts, { kind: "dataTable" });
 
   const patch: Partial<SeriesChartOptions> = {};
@@ -874,6 +884,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
     patch.showGrid = false;
     patch.showVerticalGrid = false;
   }
+  if (goalLine?.visible !== undefined) patch.showGoalLine = goalLine.visible;
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
   const anyMarkerHidden = Object.keys(parts).some((key) => {

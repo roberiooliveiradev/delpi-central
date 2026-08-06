@@ -119,6 +119,12 @@
   stroke-dasharray: 2 3;
 }
 
+.delpi-ui-series-chart__goal-line {
+  stroke: var(--delpi-ui-series-chart-goal, #c2410c);
+  stroke-width: 1.75;
+  stroke-dasharray: 6 4;
+}
+
 .delpi-ui-series-chart__tick {
   fill: var(--delpi-ui-series-chart-muted, #64748b);
   font-size: var(--delpi-ui-series-chart-tick-font-size, 14px);

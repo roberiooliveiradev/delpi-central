@@ -588,6 +588,34 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         </>
       ) : null}
 
+      {selectedChartPart.kind === "goalLine" ? (
+        <DeckField id="td-chart-part-goal-value" label="Valor da meta">
+          <NativeTextControl
+            id="td-chart-part-goal-value"
+            type="number"
+            step="any"
+            value={
+              options.goalLineValue == null || Number.isNaN(Number(options.goalLineValue))
+                ? ""
+                : String(options.goalLineValue)
+            }
+            onChange={(value) => {
+              const trimmed = value.trim();
+              if (!trimmed) {
+                persistOptions({ ...options, showGoalLine: true, goalLineValue: null });
+                return;
+              }
+              const parsed = Number(trimmed);
+              persistOptions({
+                ...options,
+                showGoalLine: true,
+                goalLineValue: Number.isFinite(parsed) ? parsed : null,
+              });
+            }}
+          />
+        </DeckField>
+      ) : null}
+
       {selectedChartPart.kind === "series" && primitive && chartPrimitiveSupportsStroke(primitive) ? (
         <>
           <DeckField id="td-chart-part-series-stroke" label="Cor do traço (linha)">

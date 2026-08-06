@@ -13,6 +13,7 @@ export type SeriesChartClassNames = {
   axisLine: string;
   gridLine: string;
   gridLineVertical: string;
+  goalLine: string;
   tick: string;
   tickX: string;
   tickXRotated: string;
@@ -63,6 +64,7 @@ export function seriesChartBemClasses(prefix = "delpi-ui-series-chart"): SeriesC
     axisLine: `${prefix}__axis-line`,
     gridLine: `${prefix}__grid-line`,
     gridLineVertical: `${prefix}__grid-line--vertical`,
+    goalLine: `${prefix}__goal-line`,
     tick: `${prefix}__tick`,
     tickX: `${prefix}__tick--x`,
     tickXRotated: `${prefix}__tick--x-rotated`,
