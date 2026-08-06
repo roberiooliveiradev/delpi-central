@@ -274,6 +274,15 @@ export {
   type PageHeaderProps,
 } from "./PageHeader";
 export {
+  UnderlineNav,
+  createDashboardUnderlineNav,
+  underlineNavBemClasses,
+  type DashboardUnderlineNavProps,
+  type UnderlineNavClassNames,
+  type UnderlineNavItem,
+  type UnderlineNavProps,
+} from "./UnderlineNav";
+export {
   FormGrid,
   createDashboardFormGrid,
   formGridBemClasses,

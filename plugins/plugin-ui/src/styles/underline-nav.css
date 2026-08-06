@@ -1,0 +1,103 @@
+/**
+ * UnderlineNav — secondary section nav (Primer / SAP pattern).
+ */
+
+.delpi-ui-underline-nav {
+  min-width: 0;
+  width: 100%;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+}
+
+.delpi-ui-underline-nav__scroller {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  margin: 0;
+  padding: 0;
+}
+
+.delpi-ui-underline-nav__item {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 14px 12px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.delpi-ui-underline-nav__item:hover {
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-underline-nav__item:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.delpi-ui-underline-nav__item--active {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font-weight: 700;
+  border-bottom-color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-ui-underline-nav__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.delpi-ui-underline-nav__label {
+  display: inline-block;
+}
+
+.delpi-ui-underline-nav__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 18%, transparent);
+  color: var(--delpi-ui-accent, #089bdb);
+}
+
+:root[data-theme="dark"] .delpi-ui-underline-nav,
+.theme-dark .delpi-ui-underline-nav {
+  border-bottom-color: color-mix(in srgb, #fff 14%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-underline-nav__item,
+.theme-dark .delpi-ui-underline-nav__item {
+  color: color-mix(in srgb, #fff 68%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-underline-nav__item:hover,
+.theme-dark .delpi-ui-underline-nav__item:hover,
+:root[data-theme="dark"] .delpi-ui-underline-nav__item--active,
+.theme-dark .delpi-ui-underline-nav__item--active {
+  color: #fff;
+}

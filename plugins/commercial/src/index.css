@@ -68,6 +68,20 @@
   gap: var(--cm-section-gap);
 }
 
+.dashboard-commercial .cm-shell-chrome {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-shell-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
 .dashboard-commercial .cm-nav-row {
   display: flex;
   flex-wrap: wrap;

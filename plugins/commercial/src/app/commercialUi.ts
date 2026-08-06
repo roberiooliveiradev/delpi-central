@@ -12,6 +12,7 @@ import {
   createDashboardWorklistItem,
   createInitialsAvatar,
   createTimeline,
+  createDashboardUnderlineNav,
   dataTableBemClasses,
   emptyStateCardBemClasses,
   navigationCardBemClasses,
@@ -27,6 +28,7 @@ import {
   scopeChipBarBemClasses,
   worklistItemBemClasses,
   timelineBemClasses,
+  underlineNavBemClasses,
 } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "cm";
@@ -77,6 +79,8 @@ export const CommercialAlertQueue = createDashboardAlertQueue({ prefix: UI_PREFI
 export const CommercialScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
 export const CommercialWorklistItem = createDashboardWorklistItem({ prefix: UI_PREFIX });
 export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
+export const CommercialUnderlineNav = createDashboardUnderlineNav({ prefix: UI_PREFIX });
+export const cmUnderlineNavClassNames = underlineNavBemClasses(UI_PREFIX);
 
 const { field: cmSelectFieldClasses, control: cmSelectControlClasses } =
   selectFieldPacClasses(UI_PREFIX);

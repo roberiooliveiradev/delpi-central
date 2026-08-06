@@ -66,6 +66,11 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     updatedAt: "2026-07-16",
     changeNote: "Dual-class delpi-ui-page-header + slot nav",
   }),
+  vc("layout", "UnderlineNav", {
+    addedAt: "2026-08-06",
+    description:
+      "Nav secundária underline (áreas do plugin); aria-current, badge count, scroll mobile.",
+  }),
   vc("layout", "NavigationCard", {
     addedAt: "2026-07-16",
     description: "Card clicável de navegação/atalho (unidades, submódulos).",

@@ -1,17 +1,22 @@
-import type { ReactNode } from "react";
-import { BriefcaseBusiness, CalendarCheck, ClipboardList, Settings, Users } from "lucide-react";
-import { ActionButton, HelpTooltip, PageHeader } from "@delpi/plugin-ui/index";
-
-import { CM_HELP } from "../content/helpTooltips";
+import { useEffect, useState, type ReactNode } from "react";
 import {
-  isPluginNavActive,
-  type PluginView,
-} from "./pluginRoutes";
+  BriefcaseBusiness,
+  CalendarCheck,
+  ClipboardList,
+  Settings,
+  Users,
+} from "lucide-react";
+import { HelpTooltip, PageHeader } from "@delpi/plugin-ui/index";
+
+import { getMyWorklist } from "../api/worklistApi";
+import { CM_HELP } from "../content/helpTooltips";
+import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
 import {
   cmPageHeaderClassNames,
   CommercialScopeChipBar,
   CommercialTitleWithHelp,
+  CommercialUnderlineNav,
 } from "./commercialUi";
 
 type PluginShellProps = {
@@ -34,6 +39,12 @@ const NAV_HELP: Partial<Record<NavId, string>> = {
   seller_portfolios: CM_HELP.shell.navAdmin,
 };
 
+function resolveActiveNavId(view: PluginView): NavId {
+  if (view === "customer_detail") return "customers";
+  if (view === "not_found") return "home";
+  return view;
+}
+
 export function PluginShell({
   view,
   basePath,
@@ -43,60 +54,84 @@ export function PluginShell({
   scopeLabel,
   children,
 }: PluginShellProps) {
-  const items: Array<{ id: NavId; label: string }> = [
+  const [myDayBadge, setMyDayBadge] = useState(0);
+
+  useEffect(() => {
+    if (!showWorklist) {
+      setMyDayBadge(0);
+      return;
+    }
+    const controller = new AbortController();
+    void getMyWorklist(controller.signal)
+      .then((wl) => {
+        setMyDayBadge((wl.counts.overdue ?? 0) + (wl.counts.today ?? 0));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setMyDayBadge(0);
+      });
+    return () => controller.abort();
+  }, [showWorklist, view]);
+
+  const items: Array<{
+    id: NavId;
+    label: string;
+    count?: number;
+  }> = [
     { id: "home", label: "Início" },
-    ...(showWorklist ? [{ id: "my_day" as const, label: "Meu dia" }] : []),
+    ...(showWorklist
+      ? [{ id: "my_day" as const, label: "Meu dia", count: myDayBadge || undefined }]
+      : []),
     { id: "open_orders", label: "Pedidos em aberto" },
     { id: "customers", label: "Minha carteira" },
     ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),
   ];
 
+  const activeId = resolveActiveNavId(view);
+
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
       <div className="cm-page-stack">
-        <PageHeader
-          layout="brand"
-          classNames={cmPageHeaderClassNames}
-          labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
-          title={
-            <CommercialTitleWithHelp title="Portal Comercial" hint={CM_HELP.shell.portal} />
-          }
-          subtitle="Carteira, pedidos, Meu dia e gestão comercial."
-          icon={<BriefcaseBusiness size={28} strokeWidth={1.75} aria-hidden="true" />}
-        />
+        <div className="cm-shell-chrome">
+          <PageHeader
+            layout="brand"
+            classNames={cmPageHeaderClassNames}
+            labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
+            title={
+              <CommercialTitleWithHelp title="Portal Comercial" hint={CM_HELP.shell.portal} />
+            }
+            subtitle="Carteira, pedidos, Meu dia e gestão."
+            icon={<BriefcaseBusiness size={26} strokeWidth={1.75} aria-hidden="true" />}
+            actions={
+              scopeLabel ? (
+                <div className="cm-shell-scope">
+                  <CommercialScopeChipBar
+                    label="Escopo"
+                    chips={[{ id: "scope", label: scopeLabel, active: true }]}
+                  />
+                  <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
+                </div>
+              ) : null
+            }
+          />
 
-        {scopeLabel ? (
-          <div className="cm-nav-row" style={{ alignItems: "center", gap: 8 }}>
-            <CommercialScopeChipBar
-              label="Escopo"
-              chips={[{ id: "scope", label: scopeLabel, active: true }]}
-            />
-            <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
-          </div>
-        ) : null}
-
-        <nav className="cm-nav-row" aria-label="Áreas do Portal Comercial">
-          {items.map((item) => {
-            const active = isPluginNavActive(view, item.id);
-            return (
-              <ActionButton
-                key={item.id}
-                variant={active ? "primary" : "ghost"}
-                aria-label={
-                  NAV_HELP[item.id] ? `${item.label}. ${NAV_HELP[item.id]}` : item.label
-                }
-                onClick={() =>
-                  navigatePluginView(item.id, {
-                    basePath,
-                    search: search || undefined,
-                  })
-                }
-              >
-                {item.label}
-              </ActionButton>
-            );
-          })}
-        </nav>
+          <CommercialUnderlineNav
+            aria-label="Áreas do Portal Comercial"
+            activeId={activeId}
+            items={items.map((item) => ({
+              id: item.id,
+              label: item.label,
+              count: item.count,
+              title: NAV_HELP[item.id]
+                ? `${item.label}. ${NAV_HELP[item.id]}`
+                : item.label,
+              onSelect: () =>
+                navigatePluginView(item.id, {
+                  basePath,
+                  search: search || undefined,
+                }),
+            }))}
+          />
+        </div>
 
         {children}
       </div>
