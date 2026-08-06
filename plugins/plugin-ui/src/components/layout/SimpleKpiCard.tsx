@@ -260,14 +260,21 @@ export function SimpleKpiCard({
 
   if (interactive) {
     return (
-      <button
-        type="button"
+      <article
+        role="button"
+        tabIndex={0}
         className={articleClass}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onClick();
+          }
+        }}
         aria-label={ariaLabel ?? `Abrir detalhes: ${title}`}
       >
         {body}
-      </button>
+      </article>
     );
   }
 

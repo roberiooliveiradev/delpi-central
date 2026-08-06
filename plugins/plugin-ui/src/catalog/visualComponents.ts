@@ -122,7 +122,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("layout", "KpiCard"),
   vc("layout", "DelpiKpiCard"),
-  vc("layout", "SimpleKpiCard"),
+  vc("layout", "SimpleKpiCard", {
+    updatedAt: "2026-08-06",
+    changeNote: "Card interativo usa article+role=button para coexistir com HelpTooltip.",
+  }),
   vc("layout", "MetricKpiCard"),
   vc("layout", "InitialsAvatar", {
     addedAt: "2026-08-04",
