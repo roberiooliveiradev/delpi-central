@@ -74,7 +74,17 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("layout", "TopBar", {
     addedAt: "2026-08-06",
     description:
-      "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions.",
+      "Faixa sticky de navegação (padrão admin-navbar): compõe UnderlineNav + slot actions; flush por padrão.",
+  }),
+  vc("layout", "PageHero", {
+    addedAt: "2026-08-06",
+    description:
+      "Card hero de overview/saudação (linguagem SI): eyebrow, título, descrição, highlights.",
+  }),
+  vc("layout", "ViewTransition", {
+    addedAt: "2026-08-06",
+    description:
+      "Fade + slide curto na troca de tela/painel; respeita prefers-reduced-motion.",
   }),
   vc("layout", "NavigationCard", {
     addedAt: "2026-07-16",

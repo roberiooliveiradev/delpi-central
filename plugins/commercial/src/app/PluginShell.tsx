@@ -7,14 +7,20 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import { HelpTooltip, StatusBadge } from "@delpi/plugin-ui/index";
 
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
-import { CommercialScopeChipBar, CommercialTopBar } from "./commercialUi";
+import {
+  CommercialPageHero,
+  CommercialScopeChipBar,
+  CommercialTopBar,
+  CommercialViewTransition,
+  cmStatusBadgeClassNames,
+} from "./commercialUi";
 
 type PluginShellProps = {
   view: PluginView;
@@ -114,20 +120,71 @@ export function PluginShell({
   const activeId = resolveActiveNavId(view);
   const showGreeting = view === "home";
   const greeting = greetingForNow();
-  const greetingLine = userFirstName
-    ? `${greeting}, ${userFirstName}. Bem vindo ao Portal Comercial!`
-    : `${greeting}. Bem vindo ao Portal Comercial!`;
+  const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
+  const heroHighlights =
+    showWorklist || myDayBadge > 0
+      ? [
+          {
+            id: "my-day",
+            label: "Meu dia",
+            value: myDayBadge > 0 ? `${myDayBadge} na fila` : "Em dia",
+          },
+          {
+            id: "scope",
+            label: "Escopo",
+            value: scopeLabel ?? "Carteira própria",
+          },
+          {
+            id: "focus",
+            label: "Foco",
+            value: "Carteira e follow-ups",
+          },
+        ]
+      : [
+          {
+            id: "scope",
+            label: "Escopo",
+            value: scopeLabel ?? "Carteira própria",
+          },
+          {
+            id: "focus",
+            label: "Foco",
+            value: "Pedidos e carteira",
+          },
+          {
+            id: "next",
+            label: "Próximo passo",
+            value: "Abrir pedidos ou Conta",
+          },
+        ];
 
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
       <div className="cm-page-stack">
         {showGreeting ? (
-          <header className="cm-shell-greeting" aria-label="Saudação">
-            <h1 className="cm-shell-greeting__title">
-              {greetingLine}
-              <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
-            </h1>
-          </header>
+          <CommercialViewTransition transitionKey="home-hero" tone="page">
+            <CommercialPageHero
+              aria-label="Saudação"
+              eyebrow="Portal Comercial"
+              title={
+                <>
+                  {heroTitle}
+                  <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
+                </>
+              }
+              description="Bem vindo ao Portal Comercial! Use o Início para alertas e números da carteira; Meu dia para follow-ups priorizados."
+              badge={
+                scopeLabel ? (
+                  <StatusBadge
+                    classNames={cmStatusBadgeClassNames}
+                    label={scopeLabel}
+                    variant="info"
+                  />
+                ) : undefined
+              }
+              highlights={heroHighlights}
+            />
+          </CommercialViewTransition>
         ) : null}
 
         <CommercialTopBar
@@ -160,7 +217,9 @@ export function PluginShell({
           }
         />
 
-        {children}
+        <CommercialViewTransition transitionKey={view} tone="page">
+          {children}
+        </CommercialViewTransition>
       </div>
     </div>
   );

@@ -21,11 +21,11 @@ Analytics pesado (ROL/OTD/BI) permanece em deep link para `dashboard-commercial`
 ## Navegação (Wave G+)
 
 ```text
-Shell: saudação (Início) → TopBar (plugin-ui) sticky + UnderlineNav
+Shell: PageHero (saudação SI) → TopBar flush + UnderlineNav
 Início → Meu dia → Pedidos em aberto → Minha carteira → Conta → Carteiras (admin)
 ```
 
-Hero de saudação (“Bom dia, Nome. Bem vindo ao Portal Comercial!”) fica **acima** da `TopBar` do kit (`createDashboardTopBar` — padrão admin-navbar).
+Hero de saudação no estilo Strategic Indicators (`PageHero` do kit: eyebrow, título azul, descrição, highlights) fica **acima** da `TopBar` flush (`createDashboardTopBar` — sem banda de `--surface`).
 
 - Badge Meu dia = `overdue + today` (padrão Pipedrive).
 - Escopo (carteira/vendedor) via `ScopeChipBar` no chrome.
@@ -53,6 +53,9 @@ Hero de saudação (“Bom dia, Nome. Bem vindo ao Portal Comercial!”) fica **
 
 | Componente | Uso |
 |------------|-----|
+| `PageHero` | Hero Início (linguagem SI / IGD) |
+| `TopBar` | Faixa sticky flush + UnderlineNav |
+| `ViewTransition` | Fade/slide na troca de telas |
 | `UnderlineNav` | Nav de áreas do plugin (Wave G+) |
 | `AlertQueue` | Home “Precisa de atenção” |
 | `ScopeChipBar` | Chrome escopo carteira/vendedor |

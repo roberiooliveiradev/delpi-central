@@ -31,4 +31,17 @@ describe("TopBar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Pedidos" }));
     expect(onSelect).toHaveBeenCalled();
   });
+
+  it("aplica modifier surface sob demanda", () => {
+    const { container } = render(
+      <TopBar
+        classNames={topBarBemClasses("cm")}
+        navClassNames={underlineNavBemClasses("cm")}
+        activeId="home"
+        surface
+        items={[{ id: "home", label: "Início", onSelect: vi.fn() }]}
+      />,
+    );
+    expect(container.firstElementChild?.className).toContain("delpi-ui-topbar--surface");
+  });
 });

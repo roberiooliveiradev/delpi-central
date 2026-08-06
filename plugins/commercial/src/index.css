@@ -76,22 +76,12 @@
   min-width: 0;
 }
 
-/* Saudação acima da TopBar (só Início) */
-.dashboard-commercial .cm-shell-greeting {
-  min-width: 0;
-  padding: 2px 0 0;
-}
-
-.dashboard-commercial .cm-shell-greeting__title {
-  margin: 0;
-  display: flex;
+/* Hero (PageHero kit) acima da TopBar — só Início */
+.dashboard-commercial .cm-page-hero .cm-page-hero__title {
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: clamp(1.2rem, 2vw, 1.5rem);
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--text, var(--pva-text, #111));
+  gap: 10px;
 }
 
 .dashboard-commercial .cm-home-summary {

@@ -25,6 +25,8 @@ export type TopBarProps = {
   /** Extensão lateral alinhada ao padding da página (padrão admin). */
   bleed?: boolean;
   sticky?: boolean;
+  /** Fundo surface (banda). Default false = flush com a página. */
+  surface?: boolean;
   className?: string;
   "aria-label"?: string;
 };
@@ -46,6 +48,7 @@ export function TopBar({
   actions,
   bleed = true,
   sticky = true,
+  surface = false,
   className,
   "aria-label": ariaLabel = "Navegação",
 }: TopBarProps) {
@@ -53,6 +56,7 @@ export function TopBar({
     classNames.root,
     bleed ? withBemModifier(classNames.root, "bleed") : null,
     sticky ? withBemModifier(classNames.root, "sticky") : null,
+    surface ? withBemModifier(classNames.root, "surface") : null,
     className,
   ]
     .filter(Boolean)

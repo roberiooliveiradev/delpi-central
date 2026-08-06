@@ -9,7 +9,9 @@ import {
   createDashboardTextAreaField,
   createDashboardTextField,
   createDashboardTitleWithHelp,
+  createDashboardPageHero,
   createDashboardTopBar,
+  createDashboardViewTransition,
   createDashboardWorklistItem,
   createInitialsAvatar,
   createTimeline,
@@ -47,6 +49,10 @@ export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
 export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const CommercialTopBar = createDashboardTopBar({ prefix: UI_PREFIX });
+export const CommercialPageHero = createDashboardPageHero({ prefix: UI_PREFIX });
+export const CommercialViewTransition = createDashboardViewTransition({
+  prefix: UI_PREFIX,
+});
 export const CommercialUnderlineNav = createDashboardUnderlineNav({ prefix: UI_PREFIX });
 export const cmUnderlineNavClassNames = underlineNavBemClasses(UI_PREFIX);
 

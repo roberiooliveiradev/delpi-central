@@ -291,6 +291,24 @@ export {
   type TopBarProps,
 } from "./TopBar";
 export {
+  PageHero,
+  createDashboardPageHero,
+  pageHeroBemClasses,
+  type DashboardPageHeroProps,
+  type PageHeroClassNames,
+  type PageHeroHighlight,
+  type PageHeroProps,
+} from "./PageHero";
+export {
+  ViewTransition,
+  createDashboardViewTransition,
+  viewTransitionBemClasses,
+  type DashboardViewTransitionProps,
+  type ViewTransitionClassNames,
+  type ViewTransitionProps,
+  type ViewTransitionTone,
+} from "./ViewTransition";
+export {
   FormGrid,
   createDashboardFormGrid,
   formGridBemClasses,

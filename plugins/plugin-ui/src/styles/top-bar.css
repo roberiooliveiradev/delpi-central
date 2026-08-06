@@ -1,23 +1,33 @@
 /**
- * TopBar — faixa sticky de navegação (padrão admin-navbar do portal).
- * Compõe UnderlineNav; abas com ícone + label + underline ativo em --primary.
+ * TopBar — faixa sticky de navegação (padrão admin-navbar).
+ * Flush por padrão: fundo transparente (sem faixa de cor diferente da página).
  */
 
 .delpi-ui-topbar {
   min-width: 0;
-  background: var(--delpi-ui-surface, var(--surface, var(--card, #fff)));
-  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 40%, transparent);
+  background: transparent;
+  box-shadow: none;
+  transition: background 220ms ease, box-shadow 220ms ease, backdrop-filter 220ms ease;
 }
 
 .delpi-ui-topbar--sticky {
   position: sticky;
   top: 0;
   z-index: 10;
+  /* flush com a página — sem banda de cor distinta */
+  background: transparent;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .delpi-ui-topbar--bleed {
   margin-inline: calc(-1 * var(--delpi-ui-page-padding, 16px));
   padding-inline: var(--delpi-ui-page-padding, 16px);
+}
+
+.delpi-ui-topbar--surface {
+  background: var(--delpi-ui-surface, var(--surface, var(--card, #fff)));
+  box-shadow: 0 6px 16px -14px color-mix(in srgb, var(--delpi-ui-text, var(--text, #111)) 40%, transparent);
 }
 
 .delpi-ui-topbar__row {
@@ -45,9 +55,12 @@
   gap: 8px;
   flex: 0 0 auto;
   padding-bottom: 6px;
+  transition: opacity 180ms ease;
 }
 
-:root[data-theme="dark"] .delpi-ui-topbar,
-.theme-dark .delpi-ui-topbar {
-  background: var(--delpi-ui-surface, var(--surface, var(--card, #161b22)));
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-topbar,
+  .delpi-ui-topbar__actions {
+    transition: none;
+  }
 }
