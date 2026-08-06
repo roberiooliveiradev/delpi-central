@@ -9,6 +9,7 @@ export type WorklistItemClassNames = {
   body: string;
   title: string;
   meta: string;
+  detail: string;
   actions: string;
   action: string;
 };
@@ -16,6 +17,8 @@ export type WorklistItemClassNames = {
 export type WorklistItemProps = {
   title: ReactNode;
   meta?: ReactNode;
+  /** Nota / observação (padrão CRM: notes visíveis na fila). */
+  detail?: ReactNode;
   tone?: WorklistItemTone;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
@@ -33,6 +36,7 @@ export function worklistItemBemClasses(prefix: string): WorklistItemClassNames {
     body: delpiUiClass(`${prefix}-worklist-item__body`, "delpi-ui-worklist-item__body"),
     title: delpiUiClass(`${prefix}-worklist-item__title`, "delpi-ui-worklist-item__title"),
     meta: delpiUiClass(`${prefix}-worklist-item__meta`, "delpi-ui-worklist-item__meta"),
+    detail: delpiUiClass(`${prefix}-worklist-item__detail`, "delpi-ui-worklist-item__detail"),
     actions: delpiUiClass(`${prefix}-worklist-item__actions`, "delpi-ui-worklist-item__actions"),
     action: delpiUiClass(`${prefix}-worklist-item__action`, "delpi-ui-worklist-item__action"),
   };
@@ -41,6 +45,7 @@ export function worklistItemBemClasses(prefix: string): WorklistItemClassNames {
 export function WorklistItem({
   title,
   meta,
+  detail,
   tone = "neutral",
   primaryActionLabel,
   onPrimaryAction,
@@ -65,6 +70,7 @@ export function WorklistItem({
       <div className={classNames.body}>
         <div className={classNames.title}>{title}</div>
         {meta ? <div className={classNames.meta}>{meta}</div> : null}
+        {detail ? <div className={classNames.detail}>{detail}</div> : null}
       </div>
       {hasActions ? (
         <div className={classNames.actions}>

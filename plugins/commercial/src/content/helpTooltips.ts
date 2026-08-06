@@ -31,17 +31,20 @@ export const CM_HELP = {
   },
   myDay: {
     worklist:
-      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Hero com contagens vivas; cada tarefa tem prazo, prioridade e, de preferência, cliente vinculado.",
+      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Filtre por tipo; notas aparecem na linha (HubSpot/Pipedrive).",
     bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
     bucketLater: "Tarefas com prazo futuro.",
+    typeFilter: "Filtra a fila pelo tipo de atividade (padrão Pipedrive/HubSpot).",
     newTask:
-      "Cria follow-up atribuído a você. Prazo padrão = hoje (fim do dia). Vincule um cliente da carteira quando possível.",
+      "Cria follow-up atribuído a você. Prazo padrão = hoje (fim do dia). Inclua observação e cliente quando possível.",
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
-    taskType: "Ligar, follow-up ou to-do — padrão HubSpot Activities.",
+    taskType: "Follow-up, ligar, e-mail, visita ou to-do — alinhado a HubSpot/Pipedrive.",
     taskCustomer: "Cliente da sua carteira — abre atalho Abrir conta na linha da tarefa.",
+    taskDescription:
+      "Observação interna (notes). Aparece na fila e no histórico da conta — não é e-mail ao cliente.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
   },
   openOrders: {

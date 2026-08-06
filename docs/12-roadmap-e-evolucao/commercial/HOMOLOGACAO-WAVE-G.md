@@ -62,7 +62,8 @@ curl -sS http://localhost/apps/commercial-api/health
 | Gap | Severidade | Nota |
 |-----|------------|------|
 | F2c / SavedViewChips / purge CSS espelho | Baixa | Fora desta wave |
-| Observação (`description`) na UI do Meu dia | Alta (P0) | API/DB já têm; ver [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
+| Observação (`description`) na UI do Meu dia | — | **Feito** P0 (ago/2026) |
+| Filtro por tipo + tipos e-mail/visita | — | **Feito** P0 |
 | Responsável / reassign multi-user | Média (P1) | Spec `reassign_task`; MVP = sempre self |
 | Anexos em tarefa | Média (P2) | Spec attachments + volume Compose |
 | Reminder / checklist / recorrência | Baixa (P3) | Paridade CRM |

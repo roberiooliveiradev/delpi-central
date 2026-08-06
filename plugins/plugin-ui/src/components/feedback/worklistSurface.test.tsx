@@ -47,10 +47,14 @@ describe("Wave G worklist surface", () => {
       <WorklistItem
         classNames={wlCn}
         title="Follow-up"
+        meta="Hoje · Alta · Ligar"
+        detail="Confirmar NF e prazo de entrega"
         primaryActionLabel="Concluir"
         onPrimaryAction={() => undefined}
       />,
     );
     expect(screen.getByRole("button", { name: "Concluir" })).toBeTruthy();
+    expect(screen.getByText("Confirmar NF e prazo de entrega")).toBeTruthy();
+    expect(wlCn.detail).toContain("delpi-ui-worklist-item__detail");
   });
 });

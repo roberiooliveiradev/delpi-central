@@ -1,6 +1,6 @@
 # Portal Comercial — UX polish e evolução de tarefas (ago/2026)
 
-> **Status:** UX Home + Meu dia + Carteiras **entregues** · backlog de tarefas CRM documentado (não implementado além do MVP Wave G+)  
+> **Status:** UX Home + Meu dia + Carteiras **entregues** · **Tasks P0 (Observação + filtro tipo) entregue** · P1–P3 backlog  
 > **Relacionados:** [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) · [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · [DATA-MODEL.md](./DATA-MODEL.md) § 4.1 · [API-ROUTES.md](./API-ROUTES.md) § 3.6 / attachments
 
 Documento canônico das **melhorias de UI** pós–Wave G+ e do **roadmap de tarefas/follow-ups** alinhado ao mercado (HubSpot / Pipedrive / Salesforce).
@@ -40,8 +40,10 @@ Ordem canônica: **Atenção → Seus números → Gestão/Equipe (admin) → An
 | Só SectionCard + pills ActionButton + help por chip | `PageHero` com contagens vivas + badge |
 | Empty alto | Compacto + CTA **Criar follow-up** (scroll/foco no form) |
 | Buckets com HelpTooltip em cada botão | `ScopeChipBar` (ajuda na seção) |
-| Form em grid genérico | Grid 2 colunas; título full-width; foco visual em deep link |
-| Troca de fila sem transição | `ViewTransition` por bucket |
+| Form em grid genérico | Grid 2 colunas; título + observação full-width |
+| Sem notes na fila | `WorklistItem.detail` com trecho da observação |
+| Só 3 tipos | Follow-up / Ligar / E-mail / Visita / To-do + filtro por tipo |
+| Troca de fila sem transição | `ViewTransition` por bucket/tipo |
 
 ### 1.4 Carteiras (`SellerPortfoliosPage`)
 
@@ -70,7 +72,9 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | Buckets atrasadas / hoje / depois | Sim | worklist | |
 | **Responsável** | Sempre **você** | `assignee_user_id` = caller na create | Sem picker |
 | **Reatribuir** | Não | Spec `POST /tasks/{id}/reassign` | Não implementado no código Wave G |
-| **Observação / description** | Não no form | Coluna + body `description` no create | **API pronta; UI não expõe** |
+| **Observação / description** | Sim (form + fila) | Coluna + create + activity body | **P0 entregue** |
+| Filtro por tipo | Sim | Client-side na worklist | Padrão Pipedrive/HubSpot |
+| Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
 | **Anexo** | Não | Spec `/attachments` | Fora da wave; storage persistente obrigatório |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |
 | Lembrete / recorrência | Não | — | Mercado sim |
@@ -84,12 +88,14 @@ Referência de mercado usada na análise: HubSpot Tasks (Assigned to, Notes, ass
 
 Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 
-### P0 — Observação (rápido)
+### P0 — Observação + fila CRM (entregue ago/2026)
 
-- Campo **Observação** (`description`) no form Nova tarefa (`CommercialTextAreaField`).
-- Exibir trecho/resumo na `WorklistItem` / meta da fila.
-- Teste API já cobre create com description se aplicável; regressão MFE mínima.
-- **Não** exige migration nova.
+- Campo **Observação** (`description`) no form Nova tarefa.
+- Trecho da nota na `WorklistItem` (`detail`).
+- Tipos alinhados ao mercado: Follow-up / Ligar / E-mail / Visita / To-do.
+- Filtro por tipo na fila (padrão Pipedrive/HubSpot).
+- Create grava nota no histórico de atividade da conta.
+- Teste: `test_create_task_persists_description_in_worklist_and_activity`.
 
 ### P1 — Responsável / equipe
 
@@ -110,7 +116,7 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 | Item | Referência mercado | Nota Delpi |
 |------|-------------------|------------|
 | Reminder (e-mail/push antes do due) | HubSpot | Depende de outbox/notificação |
-| Checklist / subtarefas | HubSpot / Asana-like | `task_dependencies` |
+| Checklist / subtarefas | HubSpot (pedido frequente) | `task_dependencies` |
 | Recorrência | HubSpot | Nova regra + job |
 | Meeting: local, guests, busy/free | Pipedrive | Só se calendário entrar no escopo |
 | Auto-tasks (pedido atrasado → follow-up) | HubSpot workflows | “Start tasks” já no backlog Wave G |

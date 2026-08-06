@@ -100,9 +100,10 @@ class ManageWorklistUseCase:
             raise ValueError("Título da tarefa é obrigatório.")
         task_type = (data.task_type or "follow_up").strip() or "follow_up"
         priority = (data.priority or "normal").strip() or "normal"
+        description = (data.description or "").strip() or None
         task = self._tasks.create(
             title=title,
-            description=(data.description or None),
+            description=description,
             task_type=task_type,
             priority=priority,
             due_at=data.due_at,
@@ -122,7 +123,7 @@ class ManageWorklistUseCase:
         self._activities.create(
             activity_type="system",
             subject=f"Tarefa criada: {task.title}",
-            body=None,
+            body=description,
             occurred_at=None,
             actor_user_id=user_id,
             customer_code=task.customer_code,

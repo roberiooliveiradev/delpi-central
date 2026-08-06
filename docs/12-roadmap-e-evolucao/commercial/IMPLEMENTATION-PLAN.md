@@ -11,7 +11,8 @@
 | **F2b harden** | UX real + clients + scope | `concluído` (ago/2026 — port PVA completo) |
 | Wave G | Shell/IA, Home, Meu dia, worklist, timeline Conta 360 | **concluído Wave G+** (P0+P1; sem F2c) |
 | **UX polish** | PageHero/TopBar; Home + Meu dia + Carteiras anti-redundância | **concluído** (ago/2026) — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
-| **Tasks P0–P2** | Observação UI · responsável/reassign · anexos | **backlog** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3 |
+| **Tasks P0** | Observação UI + nota na fila + filtro tipo | **concluído** (ago/2026) |
+| **Tasks P1–P2** | Responsável/reassign · anexos | **backlog** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3 |
 | **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops) |
 | **F2c** | Depreciar PVA | **pendente** — após homologação Comercial/QA |
 
@@ -80,7 +81,7 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] F2b harden — paridade UX open-orders/carteira com PVA
 - [x] Wave G / G+ — worklist / Meu dia / RBAC / Home gestão / Conta follow-up
 - [x] UX polish Home + Meu dia ([UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1)
-- [ ] Tasks P0 Observação na UI
+- [x] Tasks P0 Observação na UI + filtro tipo
 - [ ] Tasks P1 Responsável / reassign
 - [ ] Tasks P2 Anexos (volume persistente)
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))

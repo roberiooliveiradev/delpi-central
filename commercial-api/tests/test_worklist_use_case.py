@@ -217,6 +217,37 @@ def test_defer_task_updates_due_at():
     )
 
 
+def test_create_task_persists_description_in_worklist_and_activity():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    uc = ManageWorklistUseCase(task_repository=tasks, activity_repository=activities)
+
+    now = datetime.now(timezone.utc)
+    created = uc.create_task(
+        user_id="u1",
+        data=CreateTaskInput(
+            title="Follow-up ACME",
+            description="  Confirmar NF e prazo de entrega  ",
+            due_at=now.replace(hour=18),
+            task_type="call",
+            priority="high",
+        ),
+    )
+    assert created.description == "Confirmar NF e prazo de entrega"
+
+    wl = uc.get_worklist(user_id="u1")
+    matched = next(
+        (item for bucket in ("overdue", "today", "later") for item in wl[bucket] if item["id"] == str(created.id)),
+        None,
+    )
+    assert matched is not None
+    assert matched["description"] == "Confirmar NF e prazo de entrega"
+    assert any(
+        a.task_id == created.id and a.body == "Confirmar NF e prazo de entrega"
+        for a in activities.items
+    )
+
+
 def test_permissions_helpers():
     from commercial_app.application.security.commercial_permissions import (
         can_manage_followups,

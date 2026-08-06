@@ -162,6 +162,18 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
 
+.delpi-ui-worklist-item__detail {
+  margin-top: 6px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
 .delpi-ui-worklist-item__actions {
   display: flex;
   flex-wrap: wrap;

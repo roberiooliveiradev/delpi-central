@@ -25,7 +25,9 @@ import {
   CommercialPageHero,
   CommercialScopeChipBar,
   CommercialSelectField,
+  CommercialTextAreaField,
   CommercialTextField,
+  CommercialTitleWithHelp,
   CommercialViewTransition,
   CommercialWorklistItem,
 } from "../../app/commercialUi";
@@ -37,6 +39,56 @@ type MyDayPageProps = {
 };
 
 type BucketKey = "overdue" | "today" | "later";
+type TypeFilter = "all" | string;
+
+const PRIORITY_LABELS: Record<string, string> = {
+  low: "Baixa",
+  normal: "Normal",
+  high: "Alta",
+  critical: "Crítica",
+};
+
+const TASK_TYPE_OPTIONS = [
+  { value: "follow_up", label: "Follow-up" },
+  { value: "call", label: "Ligar" },
+  { value: "email", label: "E-mail" },
+  { value: "visit", label: "Visita" },
+  { value: "todo", label: "To-do" },
+] as const;
+
+const TYPE_LABELS: Record<string, string> = Object.fromEntries(
+  TASK_TYPE_OPTIONS.map((item) => [item.value, item.label]),
+);
+
+const PRIORITY_OPTIONS = [
+  { value: "low", label: "Baixa" },
+  { value: "normal", label: "Normal" },
+  { value: "high", label: "Alta" },
+] as const;
+
+const BUCKET_META: Record<
+  BucketKey,
+  { label: string; emptyHint: string }
+> = {
+  overdue: {
+    label: "Atrasadas",
+    emptyHint: "Nenhuma atrasada — foque no hoje ou crie um follow-up.",
+  },
+  today: {
+    label: "Hoje",
+    emptyHint: "Nada com prazo hoje nesta fila.",
+  },
+  later: {
+    label: "Depois",
+    emptyHint: "Sem tarefas futuras — agende o próximo contato.",
+  },
+};
+
+const cmEmptyCompactClassNames = {
+  ...cmEmptyStateClassNames,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+  withTitle: true,
+};
 
 function readCreateTaskDeepLink(): {
   createTask: boolean;
@@ -75,41 +127,11 @@ function clearCreateTaskQueryFromUrl(): void {
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-const PRIORITY_OPTIONS = [
-  { value: "low", label: "Baixa" },
-  { value: "normal", label: "Normal" },
-  { value: "high", label: "Alta" },
-] as const;
-
-const TASK_TYPE_OPTIONS = [
-  { value: "follow_up", label: "Follow-up" },
-  { value: "call", label: "Ligar" },
-  { value: "todo", label: "To-do" },
-] as const;
-
-const BUCKET_META: Record<
-  BucketKey,
-  { label: string; emptyHint: string }
-> = {
-  overdue: {
-    label: "Atrasadas",
-    emptyHint: "Nenhuma atrasada — foque no hoje ou crie um follow-up.",
-  },
-  today: {
-    label: "Hoje",
-    emptyHint: "Nada com prazo hoje nesta fila.",
-  },
-  later: {
-    label: "Depois",
-    emptyHint: "Sem tarefas futuras — agende o próximo contato.",
-  },
-};
-
-const cmEmptyCompactClassNames = {
-  ...cmEmptyStateClassNames,
-  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
-  withTitle: true,
-};
+function truncateNote(text: string, max = 160): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (normalized.length <= max) return normalized;
+  return `${normalized.slice(0, max - 1).trimEnd()}…`;
+}
 
 function formatDue(dueAt?: string | null): string {
   if (!dueAt) return "Sem prazo";
@@ -177,10 +199,12 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [data, setData] = useState<WorklistData | null>(null);
   const [bucket, setBucket] = useState<BucketKey>("overdue");
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState(localDateInputValue);
   const [priority, setPriority] = useState("normal");
   const [taskType, setTaskType] = useState("follow_up");
   const [customerKey, setCustomerKey] = useState("");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [highlightCreateForm, setHighlightCreateForm] = useState(false);
@@ -258,8 +282,38 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const items = useMemo(() => {
     if (!data) return [] as CommercialTaskDto[];
-    return data[bucket] ?? [];
-  }, [bucket, data]);
+    const bucketItems = data[bucket] ?? [];
+    if (typeFilter === "all") return bucketItems;
+    return bucketItems.filter((task) => (task.task_type || "follow_up") === typeFilter);
+  }, [bucket, data, typeFilter]);
+
+  const typeFilterChips = useMemo(() => {
+    const source = data ? [...data.overdue, ...data.today, ...data.later] : [];
+    const counts = new Map<string, number>();
+    for (const task of source) {
+      const key = task.task_type || "follow_up";
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const chips = [
+      {
+        id: "all",
+        label: `Todos (${source.length})`,
+        active: typeFilter === "all",
+        onSelect: () => setTypeFilter("all"),
+      },
+    ];
+    for (const option of TASK_TYPE_OPTIONS) {
+      const count = counts.get(option.value) ?? 0;
+      if (count === 0 && typeFilter !== option.value) continue;
+      chips.push({
+        id: option.value,
+        label: `${option.label} (${count})`,
+        active: typeFilter === option.value,
+        onSelect: () => setTypeFilter(option.value),
+      });
+    }
+    return chips;
+  }, [data, typeFilter]);
 
   const onComplete = async (taskId: string) => {
     if (!canManageFollowups) return;
@@ -291,8 +345,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     setActionError(null);
     try {
       const customer = parseCustomerKey(customerKey);
+      const note = description.trim();
       await createTask({
         title: trimmed,
+        description: note || undefined,
         task_type: taskType || "follow_up",
         priority: priority || "normal",
         due_at: dueDateInputToIsoEod(dueDate),
@@ -300,6 +356,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         customer_store: customer?.store ?? null,
       });
       setTitle("");
+      setDescription("");
       setDueDate(localDateInputValue());
       setPriority("normal");
       setTaskType("follow_up");
@@ -395,6 +452,18 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             aria-label="Filas do Meu dia"
             chips={bucketChips}
           />
+          {typeFilterChips.length > 1 ? (
+            <CommercialScopeChipBar
+              label={
+                <CommercialTitleWithHelp
+                  title="Tipo"
+                  hint={CM_HELP.myDay.typeFilter}
+                />
+              }
+              aria-label="Filtro por tipo de tarefa"
+              chips={typeFilterChips}
+            />
+          ) : null}
         </div>
 
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
@@ -410,12 +479,20 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         ) : null}
 
         {!loading && !error ? (
-          <CommercialViewTransition transitionKey={`bucket-${bucket}`} tone="panel">
+          <CommercialViewTransition transitionKey={`bucket-${bucket}-${typeFilter}`} tone="panel">
             {items.length === 0 ? (
               <EmptyState
                 classNames={cmEmptyCompactClassNames}
-                defaultTitle={`Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`}
-                defaultMessage={BUCKET_META[bucket].emptyHint}
+                defaultTitle={
+                  typeFilter === "all"
+                    ? `Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`
+                    : `Nenhuma ${TYPE_LABELS[typeFilter] ?? typeFilter} em ${BUCKET_META[bucket].label.toLowerCase()}`
+                }
+                defaultMessage={
+                  typeFilter === "all"
+                    ? BUCKET_META[bucket].emptyHint
+                    : "Tente outro tipo ou crie uma tarefa com este tipo."
+                }
               >
                 {canManageFollowups ? (
                   <ActionButton variant="primary" onClick={focusCreateForm}>
@@ -425,17 +502,23 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               </EmptyState>
             ) : (
               <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
-                {items.map((task) => (
+                {items.map((task) => {
+                  const note = (task.description ?? "").trim();
+                  const typeLabel = TYPE_LABELS[task.task_type] ?? task.task_type;
+                  const priorityLabel =
+                    PRIORITY_LABELS[task.priority] ?? task.priority;
+                  return (
                   <CommercialWorklistItem
                     key={task.id}
                     title={task.title}
-                    meta={`${formatDue(task.due_at)} · ${task.priority}${
-                      task.task_type ? ` · ${task.task_type}` : ""
+                    meta={`${formatDue(task.due_at)} · ${priorityLabel}${
+                      typeLabel ? ` · ${typeLabel}` : ""
                     }${
                       task.customer_code
                         ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
                         : ""
                     }`}
+                    detail={note ? truncateNote(note) : undefined}
                     tone={toneForBucket(bucket)}
                     primaryActionLabel={canManageFollowups ? "Concluir" : undefined}
                     onPrimaryAction={
@@ -457,7 +540,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       canManageFollowups ? () => void onDefer(task) : undefined
                     }
                   />
-                ))}
+                  );
+                })}
               </div>
             )}
           </CommercialViewTransition>
@@ -475,8 +559,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             title="Nova tarefa"
             subtitle={
               highlightCreateForm
-                ? "Cliente ou ação pré-preenchidos — confirme prazo e título."
-                : "Follow-up com prazo, prioridade e cliente da carteira."
+                ? "Cliente ou ação pré-preenchidos — confirme prazo, título e observação."
+                : "Título, prazo, tipo, cliente e observação — padrão HubSpot/Pipedrive."
             }
             hint={CM_HELP.myDay.newTask}
             classNames={cmSectionCardClassNames}
@@ -491,6 +575,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                   onChange={setTitle}
                   placeholder="Ex.: Ligar para ACME sobre atraso"
                   required
+                />
+              </div>
+              <div className="cm-my-day-form__title">
+                <CommercialTextAreaField
+                  label="Observação"
+                  hint={CM_HELP.myDay.taskDescription}
+                  value={description}
+                  onChange={setDescription}
+                  placeholder="Ex.: Cliente pediu retorno após emitir NF 12345"
                 />
               </div>
               <CommercialTextField
