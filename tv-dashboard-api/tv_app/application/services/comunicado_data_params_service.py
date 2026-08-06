@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Mapping
 
 from tv_app.application.services.tv_date_range_preset_service import (
     DATE_RANGE_PRESET_KEY,
@@ -43,6 +43,50 @@ def canonical_branch_wire_value(value: Any) -> str | None:
     if _is_all_branches_scope(raw):
         return BRANCH_SCOPE_WIRE_ALL
     return raw
+
+
+def resolve_any_branch_value(params: Mapping[str, Any] | None) -> Any:
+    """Primeiro valor de filial entre aliases (branch/filial/…)."""
+    values = params if isinstance(params, Mapping) else {}
+    for key in BRANCH_PARAM_KEYS:
+        if key not in values:
+            continue
+        value = values.get(key)
+        if value is None or value == "":
+            continue
+        if str(value).strip():
+            return value
+    return None
+
+
+def schema_branch_param_keys(schema: Mapping[str, Any] | None) -> list[str]:
+    """Chaves de filial declaradas no paramSchema da rota (ordem estável)."""
+    if not isinstance(schema, Mapping):
+        return []
+    return [str(key) for key in schema.keys() if str(key) in BRANCH_PARAM_KEYS]
+
+
+def project_branch_params_onto_route_schema(
+    params: Mapping[str, Any] | None,
+    schema: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Projeta filial de qualquer alias para a(s) chave(s) do schema da rota.
+
+    Programação/tela/dados mistos gravam ``branch``; rotas como ``/refugos/*``
+    só expõem ``filial`` no OpenAPI. Sem projeção o gateway emitia ``branch=01``
+    (via always_allow) e a api-delpi ignorava — consolidado indevido.
+    """
+    out = dict(params) if isinstance(params, Mapping) else {}
+    targets = schema_branch_param_keys(schema)
+    if not targets:
+        return out
+    wire = canonical_branch_wire_value(resolve_any_branch_value(out))
+    _clear_branch_aliases(out)
+    if wire is None:
+        return out
+    for key in targets:
+        out[key] = wire
+    return out
 
 
 def _clear_branch_aliases(target: dict[str, Any]) -> None:

@@ -410,6 +410,51 @@ def test_filter_query_drops_path_params_marked_in_schema():
     assert filtered == {"branch": "01"}
 
 
+def test_build_query_params_projects_playlist_branch_onto_refugo_filial():
+    """Programação grava branch; /refugos/* só aceita filial — projeção no gateway."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "direct",
+            "operationId": "get_refugos_resumo",
+            "paramSchema": {
+                "filial": {
+                    "type": "string",
+                    "optional": True,
+                    "enum": ["all", "01", "02"],
+                },
+                "date_start": {"type": "string", "optional": True},
+                "date_end": {"type": "string", "optional": True},
+            },
+        },
+        {
+            # Como dataDefaults da programação (OEE/KPI mistos usam `branch`).
+            "branch": "01",
+            "date_start": "2026-08-06",
+            "date_end": "2026-08-06",
+        },
+    )
+    assert query.get("filial") == "01"
+    assert "branch" not in query
+
+
+def test_build_query_params_date_range_projects_branch_to_filial():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "openEndedDateRange": True,
+            "paramSchema": {
+                "filial": {"type": "string", "optional": True},
+                "start_date": {"type": "string", "optional": True},
+                "end_date": {"type": "string", "optional": True},
+            },
+        },
+        {"branch": "02"},
+    )
+    assert query.get("filial") == "02"
+    assert "branch" not in query
+
+
 def test_build_query_params_normalizes_legacy_todas_to_all():
     """Playlists com branch=Todas não podem ir à api-delpi (pattern all|01|02)."""
     query = _build_query_params(
