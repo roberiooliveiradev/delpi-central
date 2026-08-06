@@ -1,9 +1,10 @@
 /**
- * UnderlineNav — secondary section nav (Primer / SAP pattern).
+ * UnderlineNav — secondary section nav (alinhado ao Tabs admin do portal).
  */
 
 .delpi-ui-underline-nav {
   min-width: 0;
+  flex: 1 1 auto;
   width: 100%;
   border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
 }
@@ -11,63 +12,71 @@
 .delpi-ui-underline-nav__scroller {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0;
+  gap: 4px;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   margin: 0;
   padding: 0;
 }
 
+.delpi-ui-underline-nav__scroller::-webkit-scrollbar {
+  display: none;
+}
+
 .delpi-ui-underline-nav__item {
   appearance: none;
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 0 0 auto;
-  min-height: 44px;
+  min-height: 40px;
   margin: 0;
-  padding: 10px 14px 12px;
+  padding: 10px 14px;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  border-radius: 0;
   background: transparent;
-  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.72)));
+  color: var(--delpi-ui-text-muted, var(--text-muted, rgba(17, 17, 17, 0.72)));
   font: inherit;
-  font-size: 0.9375rem;
-  font-weight: 550;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
-  transition: color 140ms ease, border-color 140ms ease;
+  box-shadow: inset 0 -2px 0 transparent;
+  transition: color 140ms ease, box-shadow 140ms ease;
 }
 
 .delpi-ui-underline-nav__item:hover {
   color: var(--delpi-ui-text, var(--text, #111111));
+  box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 35%, transparent);
 }
 
 .delpi-ui-underline-nav__item:focus-visible {
-  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-.delpi-ui-underline-nav__item--active {
-  color: var(--delpi-ui-text, var(--text, #111111));
-  font-weight: 700;
-  border-bottom-color: var(--delpi-ui-accent, #089bdb);
+.delpi-ui-underline-nav__item--active,
+.delpi-ui-underline-nav__item--active:hover {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 .delpi-ui-underline-nav__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   color: inherit;
-  opacity: 0.9;
 }
 
 .delpi-ui-underline-nav__label {
-  display: inline-block;
+  display: inline-flex;
 }
 
 .delpi-ui-underline-nav__count {
@@ -81,8 +90,8 @@
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1;
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 18%, transparent);
-  color: var(--delpi-ui-accent, #089bdb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 18%, transparent);
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
 :root[data-theme="dark"] .delpi-ui-underline-nav,
@@ -96,8 +105,13 @@
 }
 
 :root[data-theme="dark"] .delpi-ui-underline-nav__item:hover,
-.theme-dark .delpi-ui-underline-nav__item:hover,
-:root[data-theme="dark"] .delpi-ui-underline-nav__item--active,
-.theme-dark .delpi-ui-underline-nav__item--active {
+.theme-dark .delpi-ui-underline-nav__item:hover {
   color: #fff;
+}
+
+:root[data-theme="dark"] .delpi-ui-underline-nav__item--active,
+.theme-dark .delpi-ui-underline-nav__item--active,
+:root[data-theme="dark"] .delpi-ui-underline-nav__item--active:hover,
+.theme-dark .delpi-ui-underline-nav__item--active:hover {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }

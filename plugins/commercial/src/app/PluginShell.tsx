@@ -3,6 +3,7 @@ import {
   BriefcaseBusiness,
   CalendarCheck,
   ClipboardList,
+  Home,
   Settings,
   Users,
 } from "lucide-react";
@@ -13,11 +14,7 @@ import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
-import {
-  CommercialScopeChipBar,
-  CommercialTitleWithHelp,
-  CommercialUnderlineNav,
-} from "./commercialUi";
+import { CommercialScopeChipBar, CommercialUnderlineNav } from "./commercialUi";
 
 type PluginShellProps = {
   view: PluginView;
@@ -37,6 +34,14 @@ const NAV_HELP: Partial<Record<NavId, string>> = {
   open_orders: CM_HELP.shell.navOrders,
   customers: CM_HELP.shell.navCustomers,
   seller_portfolios: CM_HELP.shell.navAdmin,
+};
+
+const NAV_ICONS: Record<NavId, ReactNode> = {
+  home: <Home size={16} strokeWidth={1.75} aria-hidden="true" />,
+  my_day: <CalendarCheck size={16} strokeWidth={1.75} aria-hidden="true" />,
+  open_orders: <ClipboardList size={16} strokeWidth={1.75} aria-hidden="true" />,
+  customers: <Users size={16} strokeWidth={1.75} aria-hidden="true" />,
+  seller_portfolios: <BriefcaseBusiness size={16} strokeWidth={1.75} aria-hidden="true" />,
 };
 
 function resolveActiveNavId(view: PluginView): NavId {
@@ -109,48 +114,42 @@ export function PluginShell({
   const activeId = resolveActiveNavId(view);
   const showGreeting = view === "home";
   const greeting = greetingForNow();
-  const greetingTitle = userFirstName
-    ? `${greeting}, ${userFirstName}`
-    : greeting;
+  const greetingLine = userFirstName
+    ? `${greeting}, ${userFirstName}. Bem vindo ao Portal Comercial!`
+    : `${greeting}. Bem vindo ao Portal Comercial!`;
 
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
       <div className="cm-page-stack">
         {showGreeting ? (
           <header className="cm-shell-greeting" aria-label="Saudação">
-            <div className="cm-shell-greeting__text">
-              <h1 className="cm-shell-greeting__title">
-                {greetingTitle}
-                <HelpTooltip
-                  content={CM_HELP.home.overview}
-                  ariaLabel="Ajuda: Início"
-                />
-              </h1>
-              <p className="cm-shell-greeting__subtitle">
-                Aqui está o que precisa da sua atenção hoje.
-              </p>
-            </div>
+            <h1 className="cm-shell-greeting__title">
+              {greetingLine}
+              <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
+            </h1>
           </header>
         ) : null}
 
         <div className="cm-admin-topbar">
-          <div className="cm-admin-topbar__brand">
-            <div className="cm-admin-topbar__identity">
-              <span className="cm-admin-topbar__icon" aria-hidden="true">
-                <BriefcaseBusiness size={20} strokeWidth={1.75} />
-              </span>
-              <div className="cm-admin-topbar__titles">
-                <h2 className="cm-admin-topbar__title">
-                  <CommercialTitleWithHelp
-                    title="Portal Comercial"
-                    hint={CM_HELP.shell.portal}
-                  />
-                </h2>
-                <p className="cm-admin-topbar__subtitle">
-                  Carteira, pedidos, Meu dia e gestão.
-                </p>
-              </div>
-            </div>
+          <div className="cm-admin-topbar__row">
+            <CommercialUnderlineNav
+              aria-label="Áreas do Portal Comercial"
+              activeId={activeId}
+              items={items.map((item) => ({
+                id: item.id,
+                label: item.label,
+                icon: NAV_ICONS[item.id],
+                count: item.count,
+                title: NAV_HELP[item.id]
+                  ? `${item.label}. ${NAV_HELP[item.id]}`
+                  : item.label,
+                onSelect: () =>
+                  navigatePluginView(item.id, {
+                    basePath,
+                    search: search || undefined,
+                  }),
+              }))}
+            />
             {scopeLabel ? (
               <div className="cm-shell-scope">
                 <CommercialScopeChipBar
@@ -161,24 +160,6 @@ export function PluginShell({
               </div>
             ) : null}
           </div>
-
-          <CommercialUnderlineNav
-            aria-label="Áreas do Portal Comercial"
-            activeId={activeId}
-            items={items.map((item) => ({
-              id: item.id,
-              label: item.label,
-              count: item.count,
-              title: NAV_HELP[item.id]
-                ? `${item.label}. ${NAV_HELP[item.id]}`
-                : item.label,
-              onSelect: () =>
-                navigatePluginView(item.id, {
-                  basePath,
-                  search: search || undefined,
-                }),
-            }))}
-          />
         </div>
 
         {children}
