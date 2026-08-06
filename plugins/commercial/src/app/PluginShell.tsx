@@ -6,14 +6,14 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { HelpTooltip, PageHeader } from "@delpi/plugin-ui/index";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
 import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
 import {
-  cmPageHeaderClassNames,
   CommercialScopeChipBar,
   CommercialTitleWithHelp,
   CommercialUnderlineNav,
@@ -45,6 +45,13 @@ function resolveActiveNavId(view: PluginView): NavId {
   return view;
 }
 
+function greetingForNow(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 export function PluginShell({
   view,
   basePath,
@@ -55,6 +62,7 @@ export function PluginShell({
   children,
 }: PluginShellProps) {
   const [myDayBadge, setMyDayBadge] = useState(0);
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!showWorklist) {
@@ -72,6 +80,18 @@ export function PluginShell({
     return () => controller.abort();
   }, [showWorklist, view]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetchMeProfile(controller.signal)
+      .then((profile) => {
+        setUserFirstName(firstNameFromDisplay(profile.name));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setUserFirstName(null);
+      });
+    return () => controller.abort();
+  }, []);
+
   const items: Array<{
     id: NavId;
     label: string;
@@ -87,32 +107,60 @@ export function PluginShell({
   ];
 
   const activeId = resolveActiveNavId(view);
+  const showGreeting = view === "home";
+  const greeting = greetingForNow();
+  const greetingTitle = userFirstName
+    ? `${greeting}, ${userFirstName}`
+    : greeting;
 
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
       <div className="cm-page-stack">
-        <div className="cm-shell-chrome">
-          <PageHeader
-            layout="brand"
-            classNames={cmPageHeaderClassNames}
-            labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
-            title={
-              <CommercialTitleWithHelp title="Portal Comercial" hint={CM_HELP.shell.portal} />
-            }
-            subtitle="Carteira, pedidos, Meu dia e gestão."
-            icon={<BriefcaseBusiness size={26} strokeWidth={1.75} aria-hidden="true" />}
-            actions={
-              scopeLabel ? (
-                <div className="cm-shell-scope">
-                  <CommercialScopeChipBar
-                    label="Escopo"
-                    chips={[{ id: "scope", label: scopeLabel, active: true }]}
+        {showGreeting ? (
+          <header className="cm-shell-greeting" aria-label="Saudação">
+            <div className="cm-shell-greeting__text">
+              <h1 className="cm-shell-greeting__title">
+                {greetingTitle}
+                <HelpTooltip
+                  content={CM_HELP.home.overview}
+                  ariaLabel="Ajuda: Início"
+                />
+              </h1>
+              <p className="cm-shell-greeting__subtitle">
+                Aqui está o que precisa da sua atenção hoje.
+              </p>
+            </div>
+          </header>
+        ) : null}
+
+        <div className="cm-admin-topbar">
+          <div className="cm-admin-topbar__brand">
+            <div className="cm-admin-topbar__identity">
+              <span className="cm-admin-topbar__icon" aria-hidden="true">
+                <BriefcaseBusiness size={20} strokeWidth={1.75} />
+              </span>
+              <div className="cm-admin-topbar__titles">
+                <h2 className="cm-admin-topbar__title">
+                  <CommercialTitleWithHelp
+                    title="Portal Comercial"
+                    hint={CM_HELP.shell.portal}
                   />
-                  <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
-                </div>
-              ) : null
-            }
-          />
+                </h2>
+                <p className="cm-admin-topbar__subtitle">
+                  Carteira, pedidos, Meu dia e gestão.
+                </p>
+              </div>
+            </div>
+            {scopeLabel ? (
+              <div className="cm-shell-scope">
+                <CommercialScopeChipBar
+                  label="Escopo"
+                  chips={[{ id: "scope", label: scopeLabel, active: true }]}
+                />
+                <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
+              </div>
+            ) : null}
+          </div>
 
           <CommercialUnderlineNav
             aria-label="Áreas do Portal Comercial"

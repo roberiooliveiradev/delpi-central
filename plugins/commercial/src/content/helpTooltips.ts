@@ -16,7 +16,7 @@ export const CM_HELP = {
   },
   home: {
     overview:
-      "Saudação e resumo do dia: chips de pedidos, follow-ups e atrasos no escopo atual.",
+      "Saudação com o nome do usuário (perfil /core-api/me) acima da top bar; chips e alertas abaixo da navegação.",
     alerts: "Fila do que precisa de ação agora — CTAs levam direto a Pedidos ou Meu dia.",
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",

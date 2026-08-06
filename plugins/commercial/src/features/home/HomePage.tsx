@@ -64,13 +64,6 @@ type HomeOrdersKpis = {
   atrasos: number;
 };
 
-function greetingForNow(date = new Date()): string {
-  const hour = date.getHours();
-  if (hour < 12) return "Bom dia";
-  if (hour < 18) return "Boa tarde";
-  return "Boa noite";
-}
-
 function kpisFromOpenOrders(data: OpenOrdersData): HomeOrdersKpis {
   const items = data.items ?? [];
   const summary = data.summary as
@@ -400,43 +393,35 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     },
   ].filter((card) => !("adminOnly" in card && card.adminOnly) || showAdmin);
 
-  const portfolioName = myPortfolio?.display_name?.trim() || "Carteira própria";
-  const greeting = greetingForNow();
+  const portfolioHint = myPortfolio?.display_name?.trim() || "Carteira própria";
 
   return (
     <section className="cm-page-stack">
-      <SectionCard
-        title={`${greeting} · ${portfolioName}`}
-        subtitle="Aqui está o que precisa da sua atenção hoje."
-        hint={CM_HELP.home.overview}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        <div className="cm-home-hero">
-          <div className="cm-home-hero__chips" aria-label="Resumo rápido">
+      <div className="cm-home-summary" aria-label="Resumo rápido da carteira">
+        <div className="cm-home-hero__chips">
+          <StatusBadge
+            classNames={cmStatusBadgeClassNames}
+            variant="info"
+            label={`Pedidos: ${summary.totalLinhas.toLocaleString("pt-BR")}`}
+          />
+          {showWorklist ? (
             <StatusBadge
               classNames={cmStatusBadgeClassNames}
-              variant="info"
-              label={`Pedidos: ${summary.totalLinhas.toLocaleString("pt-BR")}`}
+              variant={worklistOverdue > 0 ? "danger" : "neutral"}
+              label={`Follow-ups: ${worklistOpen.toLocaleString("pt-BR")}`}
             />
-            {showWorklist ? (
-              <StatusBadge
-                classNames={cmStatusBadgeClassNames}
-                variant={worklistOverdue > 0 ? "danger" : "neutral"}
-                label={`Follow-ups: ${worklistOpen.toLocaleString("pt-BR")}`}
-              />
-            ) : null}
-            <StatusBadge
-              classNames={cmStatusBadgeClassNames}
-              variant={summary.atrasos > 0 ? "warning" : "neutral"}
-              label={`Atrasos: ${summary.atrasos.toLocaleString("pt-BR")}`}
-            />
-          </div>
-          <ActionButton variant="ghost" onClick={() => reload()}>
-            Atualizar
-          </ActionButton>
+          ) : null}
+          <StatusBadge
+            classNames={cmStatusBadgeClassNames}
+            variant={summary.atrasos > 0 ? "warning" : "neutral"}
+            label={`Atrasos: ${summary.atrasos.toLocaleString("pt-BR")}`}
+          />
+          <span className="cm-muted cm-home-summary__scope">{portfolioHint}</span>
         </div>
-      </SectionCard>
+        <ActionButton variant="ghost" onClick={() => reload()}>
+          Atualizar
+        </ActionButton>
+      </div>
 
       <SectionCard
         title="Precisa de atenção"

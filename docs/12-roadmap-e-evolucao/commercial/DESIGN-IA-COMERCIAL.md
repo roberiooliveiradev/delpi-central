@@ -21,9 +21,11 @@ Analytics pesado (ROL/OTD/BI) permanece em deep link para `dashboard-commercial`
 ## Navegação (Wave G+)
 
 ```text
-Shell: PageHeader compacto + UnderlineNav (não ActionButton pills)
+Shell: saudação (Início) → top bar admin sticky + UnderlineNav
 Início → Meu dia → Pedidos em aberto → Minha carteira → Conta → Carteiras (admin)
 ```
+
+Hero de saudação (“Bom dia, Nome”) fica **acima** da top bar; a top bar segue o padrão admin do portal (faixa sticky em `--surface`, sem cartão brand).
 
 - Badge Meu dia = `overdue + today` (padrão Pipedrive).
 - Escopo (carteira/vendedor) via `ScopeChipBar` no chrome.
