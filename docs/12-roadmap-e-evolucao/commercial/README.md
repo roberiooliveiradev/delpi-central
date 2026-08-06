@@ -1,13 +1,13 @@
 # Portal Comercial — documentação
 
-> **Status:** playbook oficial + F0–F2b em `main`; **F2c em rollback** até paridade UX (ago/2026)  
+> **Status:** playbook oficial + F0–F2b harden (paridade UX PVA) em `main`; F2c pendente de homologação  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
 
 O **Portal Comercial** concentra jornadas de carteira, pedidos em aberto e admin de vendedores. Reads TOTVS ficam na **api-delpi**; estado Delpi (carteira/avatar) na **commercial-api**.
 
-O plugin `pedidos-venda-abertos` (Portal do Vendedor) **permanece ativo** no launcher. O cutover F2c foi **revertido**: o commercial open-orders ainda não cobre KPIs, filtros ricos, previsão OP, Excel e column picker do PVA ([runbook](./F2C-CUTOVER-RUNBOOK.md)).
+O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A UX operacional (KPIs, filtros, Excel, previsão OP, check-up) está no Portal Comercial — [runbook F2c](./F2C-CUTOVER-RUNBOOK.md).
 
 ## Documentos
 
@@ -34,8 +34,8 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **permanece ativo** no lau
 | `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
-| Homologação Comercial § 2.1.1 | **Reaberta** — exige paridade UX real |
-| F2c (ocultar PVA + redirects) | **Rollback** — snippet pronto; não ativo no nginx |
+| Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |
+| F2c (ocultar PVA + redirects) | Artefatos prontos — flip após homologação |
 
 ## Pacotes e URLs
 
@@ -74,8 +74,8 @@ Portal Comercial (carteira Delpi, admin, avatars)
 | Fase | Entrega | Status |
 |------|---------|--------|
 | F0–F2 | Docs, API, migrations, dual-read | Concluído |
-| F2b | Paridade UX | Parcial — open-orders ainda subset do PVA |
-| F2c | Depreciar PVA | **Rollback** até fechar gap de UX |
+| F2b | Paridade UX | **Concluído** (port PVA → commercial) |
+| F2c | Depreciar PVA | Pendente homologação |
 | F3–F4 | Runtime módulo + composição | Fora do escopo atual |
 | F5–F7 | CRM / forecast / amostras | Fora do escopo atual |
 

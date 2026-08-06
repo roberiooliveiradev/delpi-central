@@ -5,6 +5,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+    "types": [],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -19,9 +20,9 @@
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
     "paths": {
-      "@delpi/plugin-ui": ["./src/shims/plugin-ui-index.d.ts"],
-      "@delpi/plugin-ui/index": ["./src/shims/plugin-ui-index.d.ts"],
-      "@delpi/plugin-ui/styles": ["./src/shims/plugin-ui-index.d.ts"]
+      "@delpi/plugin-ui": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/index": ["../plugin-ui/src/index.ts"],
+      "@delpi/plugin-ui/styles": ["../plugin-ui/src/styles.css"]
     }
   },
   "include": ["src"]

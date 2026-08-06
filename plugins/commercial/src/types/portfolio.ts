@@ -31,6 +31,10 @@ export type CustomerEnrichmentItem = {
   state: string | null;
   last_purchase_date: string | null;
   billed_12m: number;
+  billed_recent_6m?: number;
+  billed_prior_6m?: number;
+  billing_trend?: "up" | "down" | "stable" | "insufficient";
+  billing_trend_pct?: number | null;
   has_avatar: boolean;
   avatar_url: string | null;
 };

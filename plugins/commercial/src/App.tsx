@@ -45,6 +45,7 @@ function AppRoutes({
           codigo={route.codigo}
           loja={route.loja}
           basePath={basePath}
+          search={search}
         />
       ) : null}
       {view === "seller_portfolios" ? (

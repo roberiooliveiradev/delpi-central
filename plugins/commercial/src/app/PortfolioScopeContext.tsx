@@ -20,6 +20,7 @@ type PortfolioScopeValue = {
   sellerIdFilter: string | null;
   setSellerIdFilter: (sellerId: string | null) => void;
   reload: () => void;
+  reloadScope: () => void;
 };
 
 const PortfolioScopeContext = createContext<PortfolioScopeValue | null>(null);
@@ -87,6 +88,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       sellerIdFilter,
       setSellerIdFilter,
       reload,
+      reloadScope: reload,
     }),
     [loading, error, isAdmin, myPortfolio, sellers, sellerIdFilter, setSellerIdFilter, reload],
   );

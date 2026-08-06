@@ -38,7 +38,7 @@ export function PluginShell({
     : NAV_ITEMS;
 
   return (
-    <div className="dashboard-commercial dashboard-page">
+    <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
       <div className="cm-page-stack">
         <PageHeader
           layout="brand"

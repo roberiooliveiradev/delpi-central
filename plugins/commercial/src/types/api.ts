@@ -1,7 +1,15 @@
+export type ApiDelpiResponseMeta = {
+  dataVersion?: string;
+  operationId?: string;
+  entity?: string;
+  shape?: string;
+};
+
 export type ApiSuccessResponse<T> = {
   success: boolean;
   message?: string;
   data: T;
+  meta?: ApiDelpiResponseMeta;
 };
 
 export function unwrapEnvelope<T>(response: ApiSuccessResponse<T>, fallbackMessage: string): T {
@@ -10,3 +18,6 @@ export function unwrapEnvelope<T>(response: ApiSuccessResponse<T>, fallbackMessa
   }
   return response.data;
 }
+
+/** Alias usado pelo código portado do Portal do Vendedor. */
+export const unwrapApiDelpiEnvelope = unwrapEnvelope;
