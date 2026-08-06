@@ -87,6 +87,8 @@ export const CM_HELP = {
       "Comparativo mês a mês: últimos 12 meses versus os 12 meses imediatamente anteriores.",
     timeline:
       "Atividades e follow-ups registrados na commercial-api para esta conta (código+loja).",
+    scheduleFollowUp:
+      "Abre o Meu dia com este cliente já selecionado para criar um follow-up com prazo.",
     billingValue: "Total faturado no período selecionado nos filtros de notas.",
     billingInvoiceCount: "Quantidade de notas fiscais de saída no período.",
     billingLastDate: "Data da nota mais recente no período filtrado.",

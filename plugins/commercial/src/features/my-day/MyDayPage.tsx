@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActionButton, EmptyState, HelpTooltip, SectionCard } from "@delpi/plugin-ui/index";
 
 import {
@@ -21,6 +21,32 @@ import {
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
+
+function readCreateTaskDeepLink(): {
+  createTask: boolean;
+  customerCode: string;
+  customerStore: string;
+} {
+  if (typeof window === "undefined") {
+    return { createTask: false, customerCode: "", customerStore: "" };
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    createTask: params.get("createTask") === "1",
+    customerCode: (params.get("customer_code") ?? "").trim(),
+    customerStore: (params.get("customer_store") ?? "").trim(),
+  };
+}
+
+function clearCreateTaskQueryFromUrl(): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("createTask") && !url.searchParams.has("customer_code")) return;
+  url.searchParams.delete("createTask");
+  url.searchParams.delete("customer_code");
+  url.searchParams.delete("customer_store");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
 
 type MyDayPageProps = {
   basePath: string;
@@ -75,6 +101,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [customerKey, setCustomerKey] = useState("");
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [highlightCreateForm, setHighlightCreateForm] = useState(false);
+  const createFormRef = useRef<HTMLDivElement | null>(null);
 
   const customerOptions = useMemo(() => {
     const rows = myPortfolio?.customers ?? [];
@@ -83,6 +111,21 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       label: `${c.customer_name?.trim() || "Cliente"} (${c.customer_code}/${c.customer_store})`,
     }));
   }, [myPortfolio]);
+
+  useEffect(() => {
+    if (!canManageFollowups) return;
+    const link = readCreateTaskDeepLink();
+    if (!link.createTask && !link.customerCode) return;
+    if (link.customerCode && link.customerStore) {
+      setCustomerKey(`${link.customerCode}|${link.customerStore}`);
+    }
+    setHighlightCreateForm(true);
+    clearCreateTaskQueryFromUrl();
+    const timer = window.setTimeout(() => {
+      createFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [canManageFollowups]);
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -237,9 +280,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       </SectionCard>
 
       {canManageFollowups ? (
+        <div ref={createFormRef}>
         <SectionCard
           title="Nova tarefa"
-          subtitle="Follow-up com prazo, prioridade e cliente da carteira."
+          subtitle={
+            highlightCreateForm
+              ? "Cliente pré-preenchido — confirme prazo e título para agendar o follow-up."
+              : "Follow-up com prazo, prioridade e cliente da carteira."
+          }
           hint={CM_HELP.myDay.newTask}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
@@ -290,6 +338,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             </div>
           </div>
         </SectionCard>
+        </div>
       ) : null}
     </section>
   );

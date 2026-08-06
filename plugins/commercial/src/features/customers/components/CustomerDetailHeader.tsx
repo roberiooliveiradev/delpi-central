@@ -26,6 +26,7 @@ type CustomerDetailHeaderProps = {
   onBack: () => void;
   onReload: () => void;
   onRegisterContact: () => void;
+  onScheduleFollowUp?: () => void;
 };
 
 function formatUpdatedAt(value: Date | null): string {
@@ -56,6 +57,7 @@ export function CustomerDetailHeader({
   onBack,
   onReload,
   onRegisterContact,
+  onScheduleFollowUp,
 }: CustomerDetailHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -143,6 +145,17 @@ export function CustomerDetailHeader({
         </div>
 
         <div className="pva-detail-header__actions">
+          {onScheduleFollowUp ? (
+            <button
+              type="button"
+              className="pva-btn pva-btn--primary"
+              onClick={onScheduleFollowUp}
+              title={CM_HELP.customerDetail.scheduleFollowUp}
+            >
+              <Calendar size={16} aria-hidden="true" />
+              Agendar follow-up
+            </button>
+          ) : null}
           <button
             type="button"
             className="pva-btn pva-btn--secondary"

@@ -39,7 +39,7 @@ export function CustomerDetailPage({
   basePath,
   search,
 }: CustomerDetailPageProps) {
-  const { isAdmin, sellers, myPortfolio } = usePortfolioScope();
+  const { isAdmin, sellers, myPortfolio, canViewWorklist, canManageFollowups } = usePortfolioScope();
 
   const sellerNameByKey = useMemo(() => {
     if (isAdmin) return buildSellerNameByCustomerKey(sellers);
@@ -144,6 +144,21 @@ export function CustomerDetailPage({
           onBack={goBack}
           onReload={reload}
           onRegisterContact={() => changeSection("contatos")}
+          onScheduleFollowUp={
+            canViewWorklist && canManageFollowups
+              ? () => {
+                  const params = new URLSearchParams({
+                    createTask: "1",
+                    customer_code: codigo,
+                    customer_store: loja,
+                  });
+                  navigatePluginView("my_day", {
+                    basePath,
+                    search: `?${params.toString()}`,
+                  });
+                }
+              : undefined
+          }
         />
       )}
 

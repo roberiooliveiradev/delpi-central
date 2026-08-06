@@ -177,6 +177,16 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         actionLabel: "Meu dia",
         onAction: () => navigatePluginView("my_day", { basePath }),
       });
+    } else if (showWorklist) {
+      items.push({
+        id: "create-follow-up",
+        title: "Nenhum follow-up na fila",
+        description: "Agende um follow-up com prazo para não perder o cliente.",
+        tone: "info" as const,
+        actionLabel: "Criar follow-up",
+        onAction: () =>
+          navigatePluginView("my_day", { basePath, search: "?createTask=1" }),
+      });
     }
     if (summary.totalLinhas === 0 && !ordersError && !ordersLoading) {
       items.push({
