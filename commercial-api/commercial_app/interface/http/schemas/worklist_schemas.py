@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 class CreateTaskBody(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: str | None = None
-    task_type: Literal["follow_up", "call", "email", "visit", "internal", "other"] = "follow_up"
+    task_type: Literal["follow_up", "call", "todo", "email", "visit", "internal", "other"] = "follow_up"
     priority: Literal["low", "normal", "high", "critical"] = "normal"
     due_at: datetime | None = None
     customer_code: str | None = None
@@ -25,3 +25,9 @@ class CreateActivityBody(BaseModel):
     customer_code: str | None = None
     customer_store: str | None = None
     task_id: UUID | None = None
+
+
+class DeferTaskBody(BaseModel):
+    """Adia a tarefa para a data/hora informada (padrão CRM)."""
+
+    due_at: datetime

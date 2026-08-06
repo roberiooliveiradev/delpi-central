@@ -26,4 +26,17 @@ describe("myDayDueDate", () => {
     assert.equal(parsed.getMinutes(), 59);
     assert.equal(parsed.getDate(), 6);
   });
+
+  it("deferDueAtOneDay avança um dia civil", () => {
+    function deferDueAtOneDay(dueAt) {
+      const base = dueAt ? new Date(dueAt) : new Date();
+      const next = Number.isNaN(base.getTime()) ? new Date() : base;
+      next.setDate(next.getDate() + 1);
+      next.setHours(23, 59, 0, 0);
+      return next.toISOString();
+    }
+    const deferred = new Date(deferDueAtOneDay("2026-08-06T12:00:00"));
+    assert.equal(deferred.getDate(), 7);
+    assert.equal(deferred.getHours(), 23);
+  });
 });

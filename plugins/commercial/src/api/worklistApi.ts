@@ -77,6 +77,19 @@ export async function completeTask(taskId: string, signal?: AbortSignal): Promis
   return unwrapEnvelope(response, "Erro ao concluir tarefa.");
 }
 
+export async function deferTask(
+  taskId: string,
+  dueAt: string,
+  signal?: AbortSignal,
+): Promise<CommercialTaskDto> {
+  const response = await httpPost<ApiSuccessResponse<CommercialTaskDto>>(
+    commercialApiUrl(`/tasks/${encodeURIComponent(taskId)}/defer`),
+    { due_at: dueAt },
+    { signal },
+  );
+  return unwrapEnvelope(response, "Erro ao adiar tarefa.");
+}
+
 export async function listCustomerActivities(
   customerCode: string,
   customerStore: string,

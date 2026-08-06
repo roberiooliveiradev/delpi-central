@@ -155,6 +155,34 @@ class ManageWorklistUseCase:
         )
         return task
 
+    def defer_task(self, *, user_id: str, task_id: UUID, due_at: datetime) -> CommercialTask:
+        if due_at.tzinfo is None:
+            due_at = due_at.replace(tzinfo=timezone.utc)
+        task = self._tasks.update_due_at(
+            task_id=task_id, actor_user_id=user_id, due_at=due_at
+        )
+        if task is None:
+            raise LookupError("Tarefa não encontrada ou já concluída.")
+        if self._audit:
+            self._audit.append(
+                actor_user_id=user_id,
+                action="commercial.task.deferred",
+                entity_type="task",
+                entity_id=str(task.id),
+                payload={"due_at": due_at.isoformat()},
+            )
+        self._activities.create(
+            activity_type="system",
+            subject=f"Tarefa adiada: {task.title}",
+            body=None,
+            occurred_at=None,
+            actor_user_id=user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            task_id=task.id,
+        )
+        return task
+
     def create_activity(self, *, user_id: str, data: CreateActivityInput) -> CommercialActivity:
         activity_type = (data.activity_type or "").strip()
         if not activity_type:

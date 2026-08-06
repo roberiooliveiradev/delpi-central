@@ -171,6 +171,28 @@ class PostgresTaskRepository(PluginBaseRepository, TaskRepositoryPort):
         )
         return _row_task(row)
 
+    def update_due_at(
+        self,
+        *,
+        task_id: UUID,
+        actor_user_id: str,
+        due_at: datetime,
+    ) -> CommercialTask | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE commercial.tasks
+               SET due_at = %s,
+                   updated_at = NOW()
+             WHERE id = %s
+               AND deleted_at IS NULL
+               AND assignee_user_id = %s
+               AND status = 'open'
+         RETURNING {_TASK_COLUMNS}
+            """,
+            (due_at, str(task_id), actor_user_id),
+        )
+        return _row_task(row)
+
 
 class PostgresActivityRepository(PluginBaseRepository, ActivityRepositoryPort):
     def list_for_customer(

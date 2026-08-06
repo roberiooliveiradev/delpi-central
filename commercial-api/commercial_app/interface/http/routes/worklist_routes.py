@@ -21,6 +21,7 @@ from commercial_app.core.responses import fail, ok
 from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateActivityBody,
     CreateTaskBody,
+    DeferTaskBody,
 )
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,24 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
     except Exception:
         logger.exception("complete_task_failed")
         return fail("Erro interno ao concluir tarefa.", 500, operation_id="complete_task")
+
+
+@tasks_router.post("/{task_id}/defer", operation_id="defer_task")
+@require_any_permission(*COMMERCIAL_FOLLOWUPS_PERMISSIONS)
+def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody = ...):
+    try:
+        user_id = _user_id(request)
+        if not user_id:
+            return fail("Usuário não identificado.", 401, operation_id="defer_task")
+        task = _use_case().defer_task(user_id=user_id, task_id=task_id, due_at=body.due_at)
+        return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
+    except LookupError as exc:
+        return fail(str(exc), 404, operation_id="defer_task")
+    except ValueError as exc:
+        return fail(str(exc), 422, operation_id="defer_task")
+    except Exception:
+        logger.exception("defer_task_failed")
+        return fail("Erro interno ao adiar tarefa.", 500, operation_id="defer_task")
 
 
 @activities_router.post("", operation_id="create_activity")

@@ -21,6 +21,8 @@ export type WorklistItemProps = {
   onPrimaryAction?: () => void;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
+  tertiaryActionLabel?: string;
+  onTertiaryAction?: () => void;
   classNames: WorklistItemClassNames;
   className?: string;
 };
@@ -44,6 +46,8 @@ export function WorklistItem({
   onPrimaryAction,
   secondaryActionLabel,
   onSecondaryAction,
+  tertiaryActionLabel,
+  onTertiaryAction,
   classNames,
   className,
 }: WorklistItemProps) {
@@ -51,14 +55,28 @@ export function WorklistItem({
     .filter(Boolean)
     .join(" ");
 
+  const hasActions =
+    Boolean(primaryActionLabel) ||
+    Boolean(secondaryActionLabel) ||
+    Boolean(tertiaryActionLabel);
+
   return (
     <div className={rootClass}>
       <div className={classNames.body}>
         <div className={classNames.title}>{title}</div>
         {meta ? <div className={classNames.meta}>{meta}</div> : null}
       </div>
-      {primaryActionLabel || secondaryActionLabel ? (
+      {hasActions ? (
         <div className={classNames.actions}>
+          {tertiaryActionLabel && onTertiaryAction ? (
+            <button
+              type="button"
+              className={withBemModifier(classNames.action, "ghost")}
+              onClick={onTertiaryAction}
+            >
+              {tertiaryActionLabel}
+            </button>
+          ) : null}
           {secondaryActionLabel && onSecondaryAction ? (
             <button
               type="button"

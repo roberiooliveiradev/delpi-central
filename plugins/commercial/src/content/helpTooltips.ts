@@ -37,7 +37,9 @@ export const CM_HELP = {
     taskTitle: "Texto curto na fila. Prefira verbo + cliente/assunto.",
     taskDue: "Data de compromisso. Sem prazo a tarefa não entra bem na fila do dia.",
     taskPriority: "Ajuda a ordenar quando há várias tarefas no mesmo dia.",
+    taskType: "Ligar, follow-up ou to-do — padrão HubSpot Activities.",
     taskCustomer: "Cliente da sua carteira — abre atalho Abrir conta na linha da tarefa.",
+    deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
   },
   openOrders: {
     page:

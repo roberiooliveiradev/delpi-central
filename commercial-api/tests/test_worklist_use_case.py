@@ -97,6 +97,36 @@ class InMemoryTaskRepo:
         self.items[task.id] = done
         return done
 
+    def update_due_at(
+        self,
+        *,
+        task_id: UUID,
+        actor_user_id: str,
+        due_at: datetime,
+    ) -> CommercialTask | None:
+        task = self.items.get(task_id)
+        if task is None or task.assignee_user_id != actor_user_id or task.status != "open":
+            return None
+        now = datetime.now(timezone.utc)
+        updated = CommercialTask(
+            id=task.id,
+            title=task.title,
+            description=task.description,
+            task_type=task.task_type,
+            status=task.status,
+            priority=task.priority,
+            due_at=due_at,
+            completed_at=task.completed_at,
+            assignee_user_id=task.assignee_user_id,
+            created_by_user_id=task.created_by_user_id,
+            customer_code=task.customer_code,
+            customer_store=task.customer_store,
+            created_at=task.created_at,
+            updated_at=now,
+        )
+        self.items[task.id] = updated
+        return updated
+
 
 class InMemoryActivityRepo:
     def __init__(self) -> None:
@@ -166,6 +196,25 @@ def test_worklist_buckets_and_complete():
     done = uc.complete_task(user_id="u1", task_id=overdue.id)
     assert done.status == "done"
     assert any(a.task_id == overdue.id for a in activities.items)
+
+
+def test_defer_task_updates_due_at():
+    tasks = InMemoryTaskRepo()
+    activities = InMemoryActivityRepo()
+    uc = ManageWorklistUseCase(task_repository=tasks, activity_repository=activities)
+
+    now = datetime.now(timezone.utc)
+    task = uc.create_task(
+        user_id="u1",
+        data=CreateTaskInput(title="Adiar", due_at=now),
+    )
+    new_due = now + timedelta(days=1)
+    deferred = uc.defer_task(user_id="u1", task_id=task.id, due_at=new_due)
+    assert deferred.due_at == new_due
+    assert any(
+        a.task_id == task.id and "adiada" in (a.subject or "").lower()
+        for a in activities.items
+    )
 
 
 def test_permissions_helpers():

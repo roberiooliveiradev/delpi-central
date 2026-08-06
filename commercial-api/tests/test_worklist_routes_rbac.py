@@ -97,6 +97,18 @@ def test_complete_task_403_without_followups_manage():
     assert response.status_code == 403
 
 
+def test_defer_task_403_without_followups_manage():
+    request = _request("/tasks/x/defer", method="POST")
+    request.state.user = _User(["commercial.worklist.view"])
+    body = SimpleNamespace(due_at=datetime.now(timezone.utc))
+    response = worklist_routes.defer_task(
+        request,
+        task_id=UUID("00000000-0000-0000-0000-000000000001"),
+        body=body,
+    )
+    assert response.status_code == 403
+
+
 def test_get_my_worklist_200_with_worklist_view(monkeypatch: pytest.MonkeyPatch):
     request = _request("/me/worklist")
     request.state.user = _User(["commercial.worklist.view"])

@@ -13,3 +13,12 @@ export function dueDateInputToIsoEod(dateStr: string): string {
   if (!y || !m || !d) return new Date().toISOString();
   return new Date(y, m - 1, d, 23, 59, 0, 0).toISOString();
 }
+
+/** Adia +1 dia civil a partir do prazo atual (ou de agora se sem prazo). */
+export function deferDueAtOneDay(dueAt?: string | null): string {
+  const base = dueAt ? new Date(dueAt) : new Date();
+  const next = Number.isNaN(base.getTime()) ? new Date() : base;
+  next.setDate(next.getDate() + 1);
+  next.setHours(23, 59, 0, 0);
+  return next.toISOString();
+}

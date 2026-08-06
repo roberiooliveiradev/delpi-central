@@ -45,6 +45,16 @@ class TaskRepositoryPort(ABC):
     def complete(self, *, task_id: UUID, actor_user_id: str) -> CommercialTask | None:
         raise NotImplementedError
 
+    @abstractmethod
+    def update_due_at(
+        self,
+        *,
+        task_id: UUID,
+        actor_user_id: str,
+        due_at: datetime,
+    ) -> CommercialTask | None:
+        raise NotImplementedError
+
 
 class ActivityRepositoryPort(ABC):
     @abstractmethod

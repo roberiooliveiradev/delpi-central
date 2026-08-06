@@ -4,6 +4,7 @@ import { ActionButton, EmptyState, HelpTooltip, SectionCard } from "@delpi/plugi
 import {
   completeTask,
   createTask,
+  deferTask,
   getMyWorklist,
   type CommercialTaskDto,
   type WorklistData,
@@ -20,7 +21,7 @@ import {
   CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
-import { dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
+import { deferDueAtOneDay, dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
 
 function readCreateTaskDeepLink(): {
   createTask: boolean;
@@ -58,6 +59,12 @@ const PRIORITY_OPTIONS = [
   { value: "low", label: "Baixa" },
   { value: "normal", label: "Normal" },
   { value: "high", label: "Alta" },
+] as const;
+
+const TASK_TYPE_OPTIONS = [
+  { value: "follow_up", label: "Follow-up" },
+  { value: "call", label: "Ligar" },
+  { value: "todo", label: "To-do" },
 ] as const;
 
 function formatDue(dueAt?: string | null): string {
@@ -98,6 +105,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState(localDateInputValue);
   const [priority, setPriority] = useState("normal");
+  const [taskType, setTaskType] = useState("follow_up");
   const [customerKey, setCustomerKey] = useState("");
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -167,6 +175,17 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }
   };
 
+  const onDefer = async (task: CommercialTaskDto) => {
+    if (!canManageFollowups) return;
+    setActionError(null);
+    try {
+      await deferTask(task.id, deferDueAtOneDay(task.due_at));
+      await reload();
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Falha ao adiar.");
+    }
+  };
+
   const onCreate = async () => {
     if (!canManageFollowups) return;
     const trimmed = title.trim();
@@ -177,7 +196,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       const customer = parseCustomerKey(customerKey);
       await createTask({
         title: trimmed,
-        task_type: "follow_up",
+        task_type: taskType || "follow_up",
         priority: priority || "normal",
         due_at: dueDateInputToIsoEod(dueDate),
         customer_code: customer?.code ?? null,
@@ -186,7 +205,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setTitle("");
       setDueDate(localDateInputValue());
       setPriority("normal");
+      setTaskType("follow_up");
       setCustomerKey("");
+      setHighlightCreateForm(false);
       await reload();
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
@@ -254,6 +275,8 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               key={task.id}
               title={task.title}
               meta={`${formatDue(task.due_at)} · ${task.priority}${
+                task.task_type ? ` · ${task.task_type}` : ""
+              }${
                 task.customer_code
                   ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
                   : ""
@@ -273,6 +296,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         basePath,
                       })
                   : undefined
+              }
+              tertiaryActionLabel={canManageFollowups ? "Adiar +1 dia" : undefined}
+              onTertiaryAction={
+                canManageFollowups ? () => void onDefer(task) : undefined
               }
             />
           ))}
@@ -315,6 +342,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               options={[...PRIORITY_OPTIONS]}
               value={priority}
               onChange={setPriority}
+              allowEmpty={false}
+            />
+            <CommercialSelectField
+              label="Tipo"
+              hint={CM_HELP.myDay.taskType}
+              options={[...TASK_TYPE_OPTIONS]}
+              value={taskType}
+              onChange={setTaskType}
               allowEmpty={false}
             />
             <CommercialSelectField
