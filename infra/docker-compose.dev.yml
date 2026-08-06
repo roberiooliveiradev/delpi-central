@@ -1505,6 +1505,7 @@ services:
       COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: ${COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP:-true}
       COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-commercial}
       COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
+      COMMERCIAL_ATTACHMENT_UPLOAD_DIR: /app/data/commercial-attachments
 
       JWT_SECRET: ${API_DELPI_JWT_SECRET}
       KEYCLOAK_REALM: ${KEYCLOAK_REALM}
@@ -1532,6 +1533,7 @@ services:
       - ../commercial-api:/app
       - ../shared:/shared
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-avatars:/app/data/commercial-avatars
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/commercial-attachments:/app/data/commercial-attachments
 
     depends_on:
       - keycloak

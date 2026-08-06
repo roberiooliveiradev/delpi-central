@@ -16,6 +16,7 @@ import {
   type WorklistData,
   type WorklistScope,
 } from "../../api/worklistApi";
+import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
@@ -37,6 +38,7 @@ import {
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { deferDueAtOneDay, dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
+import { TaskAttachmentsBlock } from "./TaskAttachmentsBlock";
 
 type MyDayPageProps = {
   basePath: string;
@@ -214,6 +216,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [assigneeUserId, setAssigneeUserId] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [highlightCreateForm, setHighlightCreateForm] = useState(false);
   const [reassignTaskId, setReassignTaskId] = useState<string | null>(null);
   const [reassignTargetUserId, setReassignTargetUserId] = useState("");
@@ -431,7 +434,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     try {
       const customer = parseCustomerKey(customerKey);
       const note = description.trim();
-      await createTask({
+      const created = await createTask({
         title: title.trim(),
         description: note || undefined,
         task_type: taskType || "follow_up",
@@ -441,15 +444,27 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         customer_store: customer?.store ?? null,
         assignee_user_id: isAdmin && assigneeUserId ? assigneeUserId : undefined,
       });
+      if (attachmentFile) {
+        try {
+          await uploadTaskAttachment(created.id, attachmentFile);
+        } catch (attachErr: unknown) {
+          notifyError(
+            attachErr instanceof Error
+              ? `Tarefa criada, mas o anexo falhou: ${attachErr.message}`
+              : "Tarefa criada, mas o anexo falhou.",
+          );
+        }
+      }
       setTitle("");
       setDescription("");
+      setAttachmentFile(null);
       setDueDate(localDateInputValue());
       setPriority("normal");
       setTaskType("follow_up");
       setCustomerKey("");
       setAssigneeUserId("");
       setHighlightCreateForm(false);
-      notifySuccess("Tarefa criada.");
+      notifySuccess(attachmentFile ? "Tarefa criada com anexo." : "Tarefa criada.");
       await reload();
     } catch (err: unknown) {
       notifyError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
@@ -678,9 +693,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       ? sellerNameByUserId.get(task.assignee_user_id) ??
                         directoryLabelFor(task.assignee_user_id)
                       : null;
+                  const attachmentCount = task.attachment_count ?? 0;
                   return (
+                  <div key={task.id} className="cm-my-day-list__item">
                   <CommercialWorklistItem
-                    key={task.id}
                     title={task.title}
                     meta={`${formatDue(task.due_at)} · ${priorityLabel}${
                       typeLabel ? ` · ${typeLabel}` : ""
@@ -688,7 +704,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       task.customer_code
                         ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
                         : ""
-                    }`}
+                    }${attachmentCount > 0 ? ` · ${attachmentCount} anexo${attachmentCount === 1 ? "" : "s"}` : ""}`}
                     detail={note ? truncateNote(note) : undefined}
                     tone={toneForBucket(bucket)}
                     primaryActionLabel={canManageFollowups ? "Concluir" : undefined}
@@ -720,6 +736,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         : undefined
                     }
                   />
+                  <TaskAttachmentsBlock
+                    taskId={task.id}
+                    initialCount={attachmentCount}
+                    canManage={canManageFollowups}
+                    onChanged={() => void reload()}
+                    notifyError={notifyError}
+                    notifySuccess={notifySuccess}
+                  />
+                  </div>
                   );
                 })}
               </div>
@@ -817,6 +842,23 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                 emptyLabel="Sem vínculo (opcional)"
                 searchable={customerOptions.length > 8}
               />
+              <div className="cm-my-day-form__title">
+                <label className="cm-task-attachments__upload cm-task-attachments__upload--field">
+                  <span className="cm-field-label-text">Anexo (opcional)</span>
+                  <input
+                    type="file"
+                    accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.txt,.doc,.docx,.xls,.xlsx,application/pdf,image/*,text/plain"
+                    onChange={(event) => {
+                      setAttachmentFile(event.target.files?.[0] ?? null);
+                    }}
+                  />
+                  <span className="cm-hint-text">
+                    {attachmentFile
+                      ? attachmentFile.name
+                      : "PDF, imagem, TXT, Word ou Excel · máx. 10 MB"}
+                  </span>
+                </label>
+              </div>
               <div className="cm-my-day-form__actions">
                 <ActionButton
                   variant="primary"

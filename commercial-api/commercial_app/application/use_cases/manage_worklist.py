@@ -6,6 +6,7 @@ from typing import Any, Literal
 from uuid import UUID
 
 from commercial_app.domain.entities.task import CommercialActivity, CommercialTask
+from commercial_app.domain.ports.attachment_repository_port import AttachmentRepositoryPort
 from commercial_app.domain.ports.customer_avatar_repository_port import AuditLogRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
 from commercial_app.domain.ports.task_repository_port import (
@@ -48,14 +49,20 @@ def _end_of_today_utc() -> datetime:
     return _start_of_today_utc().replace(hour=23, minute=59, second=59, microsecond=999999)
 
 
-def _bucket_tasks(open_tasks: list[CommercialTask]) -> dict[str, Any]:
+def _bucket_tasks(
+    open_tasks: list[CommercialTask],
+    *,
+    attachment_counts: dict[str, int] | None = None,
+) -> dict[str, Any]:
     start = _start_of_today_utc()
     end = _end_of_today_utc()
+    counts = attachment_counts or {}
     overdue: list[dict[str, Any]] = []
     today: list[dict[str, Any]] = []
     later: list[dict[str, Any]] = []
     for task in open_tasks:
         payload = task.to_dict()
+        payload["attachment_count"] = int(counts.get(str(task.id), 0))
         due = task.due_at
         if due is not None and due.tzinfo is None:
             due = due.replace(tzinfo=timezone.utc)
@@ -89,12 +96,21 @@ class ManageWorklistUseCase:
         activity_repository: ActivityRepositoryPort,
         audit_repository: AuditLogRepositoryPort | None = None,
         portfolio_repository: SellerPortfolioRepositoryPort | None = None,
+        attachment_repository: AttachmentRepositoryPort | None = None,
     ) -> None:
         self._tasks = task_repository
         self._activities = activity_repository
         self._audit = audit_repository
         self._portfolios = portfolio_repository
+        self._attachments = attachment_repository
 
+    def _attachment_counts(self, tasks: list[CommercialTask]) -> dict[str, int]:
+        if self._attachments is None or not tasks:
+            return {}
+        return self._attachments.count_for_owners(
+            owner_type="task",
+            owner_ids=[str(task.id) for task in tasks],
+        )
     def team_user_ids(self) -> set[str]:
         if self._portfolios is None:
             return set()
@@ -157,7 +173,10 @@ class ManageWorklistUseCase:
                         limit=500,
                     )
                 )
-            payload = _bucket_tasks(open_tasks)
+            payload = _bucket_tasks(
+                open_tasks,
+                attachment_counts=self._attachment_counts(open_tasks),
+            )
             payload["scope"] = "team"
             payload["team_user_ids"] = team_ids
             return payload
@@ -165,7 +184,10 @@ class ManageWorklistUseCase:
         open_tasks = list(
             self._tasks.list_for_assignee(assignee_user_id=user_id, status="open", limit=200)
         )
-        payload = _bucket_tasks(open_tasks)
+        payload = _bucket_tasks(
+            open_tasks,
+            attachment_counts=self._attachment_counts(open_tasks),
+        )
         payload["scope"] = "mine"
         return payload
 

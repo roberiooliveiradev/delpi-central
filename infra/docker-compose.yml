@@ -1535,6 +1535,7 @@ services:
       COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP: ${COMMERCIAL_RUN_MIGRATIONS_ON_STARTUP:-true}
       COMMERCIAL_PORTFOLIO_SOURCE: ${COMMERCIAL_PORTFOLIO_SOURCE:-commercial}
       COMMERCIAL_AVATAR_UPLOAD_DIR: /app/data/commercial-avatars
+      COMMERCIAL_ATTACHMENT_UPLOAD_DIR: /app/data/commercial-attachments
 
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
       DELPI_AUTH_CORE_API_URL: http://core-api:8000
@@ -1562,6 +1563,7 @@ services:
 
     volumes:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/commercial-avatars:/app/data/commercial-avatars
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/commercial-attachments:/app/data/commercial-attachments
 
     depends_on:
       keycloak:

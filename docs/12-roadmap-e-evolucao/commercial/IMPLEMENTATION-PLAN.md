@@ -13,7 +13,7 @@
 | **UX polish** | PageHero/TopBar; Home + Meu dia + Carteiras anti-redundância | **concluído** (ago/2026) — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
 | **Tasks P0** | Observação UI + nota na fila + filtro tipo | **concluído** (ago/2026) |
 | **Tasks P1** | Responsável / reassign / fila equipe | **concluído** (ago/2026) |
-| **Tasks P2** | Anexos | **backlog** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3 |
+| **Tasks P2** | Anexos | **concluído** (ago/2026) — volume + API + Meu dia |
 | **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops) |
 | **F2c** | Depreciar PVA | **pendente** — após homologação Comercial/QA |
 
@@ -84,7 +84,7 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] UX polish Home + Meu dia ([UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1)
 - [x] Tasks P0 Observação na UI + filtro tipo
 - [x] Tasks P1 Responsável / reassign / fila equipe
-- [ ] Tasks P2 Anexos (volume persistente)
+- [x] Tasks P2 Anexos (volume persistente)
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
 - [ ] Homologação assinada Wave G+ ([HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md))
 - [ ] F2c flip menu + redirects

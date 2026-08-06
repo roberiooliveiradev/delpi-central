@@ -131,7 +131,7 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | `seller-portfolios.manage` + carteira ativa destino | `task` | `scalar` | WF-06 · **P1 entregue** [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | POST | `/tasks/{id}/defer` | `defer_task` | F5 | manage | `task` | `scalar` | WF-06 |
 
-`create_task` aceita `description` (Observação) e `assignee_user_id` (P1 — gestão). Worklist: `scope=team` + `assignee_user_id` opcional. Anexos: § attachments + `persistent-upload-storage` (P2).
+`create_task` aceita `description` (Observação) e `assignee_user_id` (P1 — gestão). Worklist: `scope=team` + `assignee_user_id` opcional + `attachment_count`. Anexos P2: § 3.18 (`/attachments`, volume `commercial-attachments`).
 
 ### 3.7 Activities (F5)
 
@@ -267,14 +267,16 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | GET | `/data-quality/issues` | `list_data_quality_issues` | M5 | `commercial.data-quality.manage` | `data_quality_issue` | `paged_list` |
 | POST | `/data-quality/issues/{id}/resolve` | `resolve_data_quality_issue` | M5 | data-quality.manage | `data_quality_issue` | `scalar` |
 
-### 3.18 Attachments (M2+)
+### 3.18 Attachments (P2 — entregue)
 
 | Method | Path | operationId | Fase | Permissão | entity | shape |
 |--------|------|-------------|------|-----------|--------|-------|
-| GET | `/attachments` | `list_attachments` | F5 | conforme owner | `attachment` | `list` |
-| POST | `/attachments` | `upload_attachment` | F5 | manage no owner | `attachment` | `scalar` |
-| GET | `/attachments/{id}/content` | `download_attachment` | F5 | view | `attachment` | file |
-| DELETE | `/attachments/{id}` | `delete_attachment` | F5 | manage | `attachment` | `scalar` |
+| GET | `/attachments?owner_type=&owner_id=` | `list_attachments` | P2 | followups / accounts.view | `attachment` | `list` |
+| POST | `/attachments` (multipart) | `upload_attachment` | P2 | followups.manage | `attachment` | `scalar` |
+| GET | `/attachments/{id}/content` | `download_attachment` | P2 | followups / accounts.view | `attachment` | file |
+| DELETE | `/attachments/{id}` | `delete_attachment` | P2 | followups.manage | `attachment` | `scalar` |
+
+`owner_type` inicial: `task`. Volume: `COMMERCIAL_ATTACHMENT_UPLOAD_DIR` / `${DELPI_DATA_HOST_DIR}/commercial-attachments`.
 
 ### 3.19 Sequences (P2 — cadências)
 

@@ -17,7 +17,7 @@ Microfrontend federado do domínio comercial — paridade F2b com o Portal do Ve
 
 | Base | Uso |
 |------|-----|
-| `/apps/commercial-api` | Carteiras, avatars, worklist/tasks, enrichment (`X-Delpi-Caller-App: commercial`) |
+| `/apps/commercial-api` | Carteiras, avatars, worklist/tasks, anexos (P2), enrichment (`X-Delpi-Caller-App: commercial`) |
 | `/apps/api-delpi/pedidos-venda-abertos/` | Pedidos em aberto (read TOTVS) — **barra final** (evita Mixed Content atrás de HTTPS) |
 
 Clients usam paths **relativos** ao gateway. A `commercial-api` roda com `redirect_slashes=False` (list/create de `seller-portfolios` **sem** barra final).
@@ -43,6 +43,10 @@ TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-mani
 ## Ajuda (balões)
 
 Textos dos `HelpTooltip` / `SectionCard.hint` / `titleHint` ficam em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (`CM_HELP`). Não hardcode frases de explicação nos componentes.
+
+## Anexos de tarefa (P2)
+
+Upload multipart em `/attachments` (`owner_type=task`). Binários em volume persistente `${DELPI_DATA_HOST_DIR}/commercial-attachments` → `COMMERCIAL_ATTACHMENT_UPLOAD_DIR`. UI: Meu dia (criação + lista por tarefa).
 
 ## Cutover de carteira
 

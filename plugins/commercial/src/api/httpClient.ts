@@ -147,6 +147,26 @@ export async function httpPutFormData<T>(
   return response.json() as Promise<T>;
 }
 
+/** POST multipart (não define Content-Type — o browser preenche o boundary). */
+export async function httpPostFormData<T>(
+  url: string,
+  formData: FormData,
+  options: RequestOptions = {},
+): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: buildHeaders(false),
+    body: formData,
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseError(response));
+  }
+
+  return response.json() as Promise<T>;
+}
+
 export async function httpGetBlob(url: string, options: RequestOptions = {}): Promise<Blob> {
   const response = await fetch(url, {
     method: "GET",

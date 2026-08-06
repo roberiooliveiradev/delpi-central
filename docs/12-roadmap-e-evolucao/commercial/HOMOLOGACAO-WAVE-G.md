@@ -66,7 +66,7 @@ curl -sS http://localhost/apps/commercial-api/health
 | Observação (`description`) na UI do Meu dia | — | **Feito** P0 (ago/2026) |
 | Filtro por tipo + tipos e-mail/visita | — | **Feito** P0 |
 | Responsável / reassign multi-user | — | **Feito** P1 (ago/2026): create assignee + `reassign` + `scope=team` |
-| Anexos em tarefa | Média (P2) | Spec attachments + volume Compose |
+| Anexos em tarefa | — | **Feito** P2 (ago/2026): `/attachments` + volume |
 | Reminder / checklist / recorrência | Baixa (P3) | Paridade CRM |
 | Start tasks HubSpot / auto-tasks pedidos | Média | Wave futura (P3) |
 | Manifest + papel Vendedor | Ops | Gate acima — checklist item 17 |

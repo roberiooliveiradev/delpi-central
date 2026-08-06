@@ -1,6 +1,6 @@
 # Portal Comercial — UX polish e evolução de tarefas (ago/2026)
 
-> **Status:** UX Home + Meu dia + Carteiras **entregues** · **Tasks P0 + P1 entregues** · P2–P3 backlog  
+> **Status:** UX Home + Meu dia + Carteiras **entregues** · **Tasks P0 + P1 + P2 entregues** · P3 backlog  
 > **Relacionados:** [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) · [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · [DATA-MODEL.md](./DATA-MODEL.md) § 4.1 · [API-ROUTES.md](./API-ROUTES.md) § 3.6 / attachments
 
 Documento canônico das **melhorias de UI** pós–Wave G+ e do **roadmap de tarefas/follow-ups** alinhado ao mercado (HubSpot / Pipedrive / Salesforce).
@@ -76,7 +76,7 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | **Observação / description** | Sim (form + fila) | Coluna + create + activity body | **P0 entregue** |
 | Filtro por tipo | Sim | Client-side na worklist | Padrão Pipedrive/HubSpot |
 | Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
-| **Anexo** | Não | Spec `/attachments` | Fora da wave; storage persistente obrigatório |
+| **Anexo** | Sim (form + linha) | `/attachments` + volume | **P2 entregue** |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |
 | Lembrete / recorrência | Não | — | Mercado sim |
 | Convidados / local / calendário busy | Não | — | Pipedrive meetings |
@@ -107,12 +107,14 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 - Destino de create/reassign deve ter carteira ativa.
 - Testes: `test_create_and_reassign_team_task`, RBAC `reassign_task_*`.
 
-### P2 — Anexos
+### P2 — Anexos (entregue ago/2026)
 
-- `POST/GET/DELETE /attachments` ligados a `task` (e depois conta).
-- Volume Compose persistente (`persistent-upload-storage`).
-- UI: upload no form + lista na tarefa / Conta 360.
-- Limites e tipos MIME em content JSON / config.
+- `POST/GET/DELETE /attachments` ligados a `task` (`owner_type=task`).
+- Volume Compose `commercial-attachments` (`persistent-upload-storage`).
+- UI Meu dia: anexo opcional na criação + lista/baixar/remover na linha.
+- Limites: 10 MB; PDF, imagem, TXT, Word, Excel.
+- Migration `V004__attachments.sql`.
+- Testes: `tests/test_attachments_use_case.py`.
 
 ### P3 — Paridade CRM (depois)
 

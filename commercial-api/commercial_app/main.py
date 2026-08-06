@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from commercial_app.config import settings
 from commercial_app.core.responses import fail
+from commercial_app.interface.http.routes.attachment_routes import router as attachment_router
 from commercial_app.interface.http.routes.customer_routes import router as customer_router
 from commercial_app.interface.http.routes.seller_portfolio_routes import (
     router as seller_portfolio_router,
@@ -136,3 +137,4 @@ app.include_router(customer_router)
 app.include_router(worklist_me_router)
 app.include_router(tasks_router)
 app.include_router(activities_router)
+app.include_router(attachment_router)

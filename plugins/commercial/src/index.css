@@ -188,6 +188,96 @@
   min-width: 0;
 }
 
+.dashboard-commercial .cm-my-day-list__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-commercial .cm-task-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 4px 4px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--cm-border) 85%, transparent);
+  background: color-mix(in srgb, var(--cm-surface-muted) 70%, transparent);
+}
+
+.dashboard-commercial .cm-task-attachments__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.dashboard-commercial .cm-task-attachments__upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--cm-text);
+}
+
+.dashboard-commercial .cm-task-attachments__upload input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.dashboard-commercial .cm-task-attachments__upload--field {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+
+.dashboard-commercial .cm-task-attachments__upload--field .cm-field-label-text {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-commercial .cm-task-attachments__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-commercial .cm-task-attachments__list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.dashboard-commercial .cm-task-attachments__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-commercial .cm-task-attachments__meta strong {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-commercial .cm-task-attachments__meta span {
+  font-size: 12px;
+  color: var(--cm-text-muted);
+}
+
 .dashboard-commercial .cm-my-day-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

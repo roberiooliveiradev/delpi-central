@@ -14,6 +14,7 @@ export type CommercialTaskDto = {
   customer_code?: string | null;
   customer_store?: string | null;
   bucket?: "overdue" | "today" | "later" | string;
+  attachment_count?: number;
 };
 
 export type WorklistScope = "mine" | "team";

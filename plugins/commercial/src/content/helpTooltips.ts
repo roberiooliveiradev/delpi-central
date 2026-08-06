@@ -52,6 +52,8 @@ export const CM_HELP = {
       "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
       "Observação interna (notes). Aparece na fila e no histórico da conta — não é e-mail ao cliente.",
+    taskAttachment:
+      "Anexo opcional na criação (PDF/imagem/Office). Também dá para anexar depois na linha da tarefa.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
     reassignTask:
       "Troca o responsável (só gestão). Destino deve ter carteira ativa no Comercial.",
