@@ -13,10 +13,23 @@ Checklist chat/apresentação: **`new-api-route-checklist.mdc`**. Envelope/`meta
 
 O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger. Consumidores **importam** o contrato — **não** reinventam `operationId`, enums nem labels.
 
+## Idioma — path e contrato (obrigatório em rota nova)
+
+| Camada | Idioma |
+|--------|--------|
+| Path HTTP (`/process-inspection-plans/...`) | **inglês** kebab-case |
+| `operation_id` / `meta.entity` / campos `data` | **inglês** snake_case |
+| Query params (`branch`, `page`, `page_size`) | **inglês**; factories em `query_param_enums.py` |
+| OpenAPI `summary`/`description` nativos | **inglês** (`locale.en`) |
+| `x-delpi.locale.pt-BR`, labels TV/chat, UI | **português** (e EN no par bilíngue) |
+
+**Anti-padrão:** segmentos de path em português em rota **nova** (`/inspecoes-*`, `/resumo`, `/historico`, `/pendentes`, `/ops-sem-cadastro`). Legado PT (`/inspecoes-entrada`, `/inspecoes-processo`) permanece — **não** copiar o padrão.
+
 ## Checklist — toda rota nova (HTTP)
 
 | # | Obrigatório | Como |
 |---|-------------|------|
+| 0 | Path / entity / params em **inglês** | Ver tabela Idioma acima — PT só em locale/UI |
 | 1 | `operation_id` estável snake_case | No **decorator** FastAPI **e** em `api_delpi_success(..., operation_id=...)` — **iguais** |
 | 2 | Sem auto-id FastAPI | Proibido depender de `*_get` / `*_post` gerados; gate `audit_openapi_operation_ids.py --check` |
 | 3 | Contratos | `route_contract_registry.py` (`entity` + `shape`) |
@@ -62,6 +75,7 @@ Depois:
 
 ## O que NÃO fazer
 
+- Path / `operationId` / nomes de query / `meta.entity` em **português** em rota nova (usar inglês; PT só em `locale.pt-BR` / UI).
 - Decorator sem `operation_id` quando o `def` ≠ oid do envelope (ex.: `def update_audit` vs `update_audit_5s_audit`).
 - `**QUALITY_FOO, operation_id="..."` — `operation_id` duplicado quebra o startup.
 - Inventar labels/enums no gerador TV (`PARAM_LABELS_PT`, `KNOWN_PARAM_ENUMS`) ou editar `dataParamCatalog.ts` à mão.

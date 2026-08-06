@@ -332,6 +332,18 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 
 ---
 
+## Process inspection plans (`/process-inspection-plans`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/process-inspection-plans/summary` | IP |
+| GET | `/process-inspection-plans/orders-without-plan` | IP |
+| GET | `/process-inspection-plans/products-without-plan` | IP |
+| GET | `/process-inspection-plans/products` | IP |
+| GET | `/process-inspection-plans/products/{code}` | IP |
+
+---
+
 ## Controle de Retrabalhos (`/retrabalhos`)
 
 | Método | Endpoint | Perm. |

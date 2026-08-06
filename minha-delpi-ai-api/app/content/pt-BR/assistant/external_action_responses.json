@@ -438,6 +438,20 @@
       "ops",
       "sc2010"
     ],
+    "processInspectionPlanBlockTerms": [
+      "inspecao de processo",
+      "inspeção de processo",
+      "plano de inspecao",
+      "plano de inspeção",
+      "planos de inspecao",
+      "planos de inspeção",
+      "sem plano de inspecao",
+      "sem plano de inspeção",
+      "sem cadastro de inspecao",
+      "sem cadastro de inspeção",
+      "process-inspection-plans",
+      "qp6"
+    ],
     "productionPcpOrdersTriggerTerms": [
       "ops em atraso",
       "op em atraso",
@@ -1004,6 +1018,11 @@
         { "termsFrom": "external_action_responses.actionSelection.productionOtdDetailTerms" },
         {
           "termsFrom": "external_action_responses.actionSelection.productionOtdDetailProductionContextTerms"
+        }
+      ],
+      "noneOf": [
+        {
+          "termsFrom": "external_action_responses.actionSelection.processInspectionPlanBlockTerms"
         }
       ]
     },

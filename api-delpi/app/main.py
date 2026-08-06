@@ -63,6 +63,9 @@ from app.interface.http.routes.planejamento_orcamentario import (
 )
 from app.interface.http.routes.inspecoes_entrada import inspecoes_entrada_router
 from app.interface.http.routes.inspecoes_processo import inspecoes_processo_router
+from app.interface.http.routes.process_inspection_plans import (
+    process_inspection_plans_router,
+)
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
 from app.interface.http import propostas_comerciais_controller
 from app.core.responses import error_response, not_found_response
@@ -290,6 +293,7 @@ app.include_router(system_routes.router, prefix="/system", tags=["system"])
 app.include_router(data_routes.router, prefix="/data", tags=["data"])
 app.include_router(inspecoes_entrada_router.router)
 app.include_router(inspecoes_processo_router.router)
+app.include_router(process_inspection_plans_router.router)
 app.include_router(pedidos_venda_abertos_router.router)
 app.include_router(propostas_comerciais_controller.router)
 

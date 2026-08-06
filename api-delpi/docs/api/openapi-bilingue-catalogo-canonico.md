@@ -40,6 +40,7 @@ def handler(
 
 | Regra | Detalhe |
 |-------|---------|
+| Path / entity / params | **Inglês** (kebab-case no path, snake_case no oid/campos). Português só em `x-delpi.locale.pt-BR`, labels TV/chat e UI. **Anti-padrão:** path PT em rota nova (`/inspecoes-*`, `/resumo`, …) — legado permanece, não copiar |
 | `operation_id` no decorator | Sempre; se o `def` for curto (`update_audit`), o oid canônico vai no decorator |
 | Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
 | Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |

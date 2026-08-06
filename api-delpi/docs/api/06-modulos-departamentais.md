@@ -421,6 +421,24 @@ Documentação completa: [inspecoes-processo.md](./inspecoes-processo.md) · aud
 
 ---
 
+## Planos de inspeção de processo — `/process-inspection-plans`
+
+**Permissão:** mesmas de inspeções de processo (`inspecoes-processo.view` / filiais) ou `api-delpi.access`
+
+Cadastro de **como inspecionar** (QP6/QP7/QP8) e lacunas versus OPs abertas (`SC2010`). Não substitui `/inspecoes-processo` (execução em linha).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/process-inspection-plans/summary` | KPIs + distribuição com/sem plano. |
+| GET | `/process-inspection-plans/orders-without-plan` | OPs abertas sem QP6. |
+| GET | `/process-inspection-plans/products-without-plan` | Produtos sem plano com OP aberta. |
+| GET | `/process-inspection-plans/products` | Produtos com plano cadastrado. |
+| GET | `/process-inspection-plans/products/{code}` | Detalhe QP6+QP7+QP8. |
+
+Documentação completa: [process-inspection-plans.md](./process-inspection-plans.md).
+
+---
+
 ## Controle de Retrabalhos — `/retrabalhos`
 
 **Permissão:** `controle-retrabalhos.access`, `controle-retrabalhos.view`, `controle-retrabalhos.view.filial-sc`, `controle-retrabalhos.view.filial-es` ou `api-delpi.access`

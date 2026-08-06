@@ -375,6 +375,10 @@
     "entity": "commercial_rol_series",
     "shape": "scalar"
   },
+  "get_commercial_rol_by_customer": {
+    "entity": "commercial_rol_by_customer",
+    "shape": "paged_list"
+  },
   "list_commercial_proposals": {
     "entity": "commercial_proposal",
     "shape": "paged_list"
@@ -558,6 +562,26 @@
   "get_inspecoes_entrada_resumo": {
     "entity": "inspecoes_entrada_resumo",
     "shape": "scalar"
+  },
+  "get_process_inspection_plans_summary": {
+    "entity": "process_inspection_plans_summary",
+    "shape": "scalar"
+  },
+  "get_process_inspection_plans_orders_without_plan": {
+    "entity": "process_inspection_plans_orders_without_plan",
+    "shape": "paged_list"
+  },
+  "get_process_inspection_plans_products_without_plan": {
+    "entity": "process_inspection_plans_products_without_plan",
+    "shape": "paged_list"
+  },
+  "get_process_inspection_plans_products": {
+    "entity": "process_inspection_plans_products",
+    "shape": "paged_list"
+  },
+  "get_process_inspection_plans_product": {
+    "entity": "process_inspection_plans_product",
+    "shape": "composite_analysis"
   },
   "get_inspecoes_processo_resumo": {
     "entity": "inspecoes_processo_resumo",
@@ -818,6 +842,74 @@
   "list_ops_abertas_pedidos_venda": {
     "entity": "open_production_order",
     "shape": "composite_analysis"
+  },
+  "list_cliente_notas_fiscais_saida": {
+    "entity": "customer_outbound_invoice",
+    "shape": "playbook_report"
+  },
+  "get_my_seller_portfolio": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "list_seller_portfolios": {
+    "entity": "seller_portfolio",
+    "shape": "paged_list"
+  },
+  "create_seller_portfolio": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "get_seller_portfolio": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "update_seller_portfolio": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "deactivate_seller_portfolio": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "replace_seller_customers": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "add_seller_customer": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "remove_seller_customer": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "transfer_seller_customers": {
+    "entity": "seller_portfolio",
+    "shape": "scalar"
+  },
+  "search_active_customers_for_portfolio": {
+    "entity": "customers",
+    "shape": "paged_list"
+  },
+  "enrich_portfolio_customers": {
+    "entity": "customers",
+    "shape": "paged_list"
+  },
+  "list_customer_billing_series": {
+    "entity": "customers",
+    "shape": "scalar"
+  },
+  "get_customer_avatar": {
+    "entity": "customer_avatar",
+    "shape": "scalar"
+  },
+  "upsert_customer_avatar": {
+    "entity": "customer_avatar",
+    "shape": "scalar"
+  },
+  "delete_customer_avatar": {
+    "entity": "customer_avatar",
+    "shape": "scalar"
   },
   "list_propostas_comerciais": {
     "entity": "commercial_proposal_document",
@@ -1551,6 +1643,10 @@
     "entity": "report_dataset",
     "shape": "paged_list"
   },
+  "preview_report_provider_management_revenue_monthly": {
+    "entity": "report_dataset",
+    "shape": "paged_list"
+  },
   "list_report_recipients": {
     "entity": "report_recipient",
     "shape": "paged_list"
@@ -1745,6 +1841,322 @@
   },
   "refresh_lancamento_notas_fiscais_reconciliation": {
     "entity": "invoice_posting_reconciliation_refresh",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_context": {
+    "entity": "budget_planning_context",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_guidance_current": {
+    "entity": "budget_guidance",
+    "shape": "scalar"
+  },
+  "acknowledge_planejamento_orcamentario_guidance": {
+    "entity": "budget_guidance_acknowledgement",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_guidance_documents": {
+    "entity": "budget_support_document",
+    "shape": "paged_list"
+  },
+  "download_planejamento_orcamentario_document": {
+    "entity": "budget_support_document",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_admin_exercises": {
+    "entity": "budget_exercise",
+    "shape": "paged_list"
+  },
+  "create_planejamento_orcamentario_admin_exercise": {
+    "entity": "budget_exercise",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_admin_exercise": {
+    "entity": "budget_exercise",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_exercise": {
+    "entity": "budget_exercise",
+    "shape": "scalar"
+  },
+  "transition_planejamento_orcamentario_admin_exercise": {
+    "entity": "budget_exercise",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_admin_guidance": {
+    "entity": "budget_guidance",
+    "shape": "scalar"
+  },
+  "create_planejamento_orcamentario_admin_guidance_draft": {
+    "entity": "budget_guidance",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_guidance": {
+    "entity": "budget_guidance",
+    "shape": "scalar"
+  },
+  "publish_planejamento_orcamentario_admin_guidance": {
+    "entity": "budget_guidance",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_admin_documents": {
+    "entity": "budget_support_document",
+    "shape": "paged_list"
+  },
+  "upload_planejamento_orcamentario_admin_document": {
+    "entity": "budget_support_document",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_document": {
+    "entity": "budget_support_document",
+    "shape": "scalar"
+  },
+  "archive_planejamento_orcamentario_admin_document": {
+    "entity": "budget_support_document",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_admin_scopes": {
+    "entity": "budget_user_org_scope",
+    "shape": "paged_list"
+  },
+  "create_planejamento_orcamentario_admin_scope": {
+    "entity": "budget_user_org_scope",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_scope": {
+    "entity": "budget_user_org_scope",
+    "shape": "scalar"
+  },
+  "deactivate_planejamento_orcamentario_admin_scope": {
+    "entity": "budget_user_org_scope",
+    "shape": "scalar"
+  },
+  "upsert_planejamento_orcamentario_admin_cost_center": {
+    "entity": "budget_org_cost_center",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_admin_budget_responsibilities": {
+    "entity": "budget_responsibility",
+    "shape": "paged_list"
+  },
+  "create_planejamento_orcamentario_admin_budget_responsibility": {
+    "entity": "budget_responsibility",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_admin_budget_responsibility": {
+    "entity": "budget_responsibility",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_budget_responsibility": {
+    "entity": "budget_responsibility",
+    "shape": "scalar"
+  },
+  "deactivate_planejamento_orcamentario_admin_budget_responsibility": {
+    "entity": "budget_responsibility",
+    "shape": "scalar"
+  },
+  "reactivate_planejamento_orcamentario_admin_budget_responsibility": {
+    "entity": "budget_responsibility",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_my_responsibilities": {
+    "entity": "budget_responsibility",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_categories": {
+    "entity": "capex_category",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_admin_capex_categories": {
+    "entity": "capex_category",
+    "shape": "paged_list"
+  },
+  "create_planejamento_orcamentario_admin_capex_category": {
+    "entity": "capex_category",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_admin_capex_category": {
+    "entity": "capex_category",
+    "shape": "scalar"
+  },
+  "deactivate_planejamento_orcamentario_admin_capex_category": {
+    "entity": "capex_category",
+    "shape": "scalar"
+  },
+  "reactivate_planejamento_orcamentario_admin_capex_category": {
+    "entity": "capex_category",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_investments": {
+    "entity": "capex_investment",
+    "shape": "paged_list"
+  },
+  "create_planejamento_orcamentario_capex_investment": {
+    "entity": "capex_investment",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_capex_investment": {
+    "entity": "capex_investment",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_capex_investment": {
+    "entity": "capex_investment",
+    "shape": "scalar"
+  },
+  "archive_planejamento_orcamentario_capex_investment": {
+    "entity": "capex_investment",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_investment_attachments": {
+    "entity": "capex_investment_attachment",
+    "shape": "paged_list"
+  },
+  "upload_planejamento_orcamentario_capex_investment_attachment": {
+    "entity": "capex_investment_attachment",
+    "shape": "scalar"
+  },
+  "download_planejamento_orcamentario_capex_attachment": {
+    "entity": "capex_investment_attachment",
+    "shape": "scalar"
+  },
+  "archive_planejamento_orcamentario_capex_attachment": {
+    "entity": "capex_investment_attachment",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_plans": {
+    "entity": "capex_plan",
+    "shape": "paged_list"
+  },
+  "resolve_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "submit_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_plan_history": {
+    "entity": "capex_plan_history",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_review_queue": {
+    "entity": "capex_plan",
+    "shape": "paged_list"
+  },
+  "get_planejamento_orcamentario_capex_review": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "request_changes_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "reject_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "approve_planejamento_orcamentario_capex_plan": {
+    "entity": "capex_plan",
+    "shape": "scalar"
+  },
+  "get_planejamento_orcamentario_capex_consolidation_summary": {
+    "entity": "capex_consolidation",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_unit": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_area": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_cost_center": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_category": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_priority": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_origin": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_month": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_by_plan_status": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_capex_consolidation_details": {
+    "entity": "capex_consolidation",
+    "shape": "paged_list"
+  },
+  "export_planejamento_orcamentario_capex_consolidation_xlsx": {
+    "entity": "capex_consolidation",
+    "shape": "document_export"
+  },
+  "resolve_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_personnel_plans": {
+    "entity": "personnel_plan",
+    "shape": "paged_list"
+  },
+  "get_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "create_planejamento_orcamentario_personnel_plan_line": {
+    "entity": "personnel_plan_line",
+    "shape": "scalar"
+  },
+  "update_planejamento_orcamentario_personnel_plan_line": {
+    "entity": "personnel_plan_line",
+    "shape": "scalar"
+  },
+  "archive_planejamento_orcamentario_personnel_plan_line": {
+    "entity": "personnel_plan_line",
+    "shape": "scalar"
+  },
+  "submit_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "list_planejamento_orcamentario_personnel_plan_history": {
+    "entity": "personnel_plan_history",
+    "shape": "paged_list"
+  },
+  "list_planejamento_orcamentario_personnel_review_queue": {
+    "entity": "personnel_plan",
+    "shape": "paged_list"
+  },
+  "get_planejamento_orcamentario_personnel_review": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "request_changes_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "reject_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
+    "shape": "scalar"
+  },
+  "approve_planejamento_orcamentario_personnel_plan": {
+    "entity": "personnel_plan",
     "shape": "scalar"
   }
 }

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-04",
-  "baselineOperationCount": 523,
-  "operationCount": 523,
-  "coveredCount": 521,
+  "generatedAt": "2026-08-06",
+  "baselineOperationCount": 528,
+  "operationCount": 528,
+  "coveredCount": 526,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -100,6 +100,12 @@
     "pedidos-venda-abertos": {
       "total": 19,
       "covered": 19,
+      "gap": 0,
+      "exempt": 0
+    },
+    "process-inspection-plans": {
+      "total": 5,
+      "covered": 5,
       "gap": 0,
       "exempt": 0
     },
@@ -4888,6 +4894,51 @@
       "path": "/system/tables/{tableName}/schema",
       "module": "system",
       "entity": "protheus_table_schema",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_summary",
+      "method": "GET",
+      "path": "/process-inspection-plans/summary",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_summary",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_orders_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/orders-without-plan",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_orders_without_plan",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/products-without-plan",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_products_without_plan",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_products",
+      "method": "GET",
+      "path": "/process-inspection-plans/products",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_products",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "method": "GET",
+      "path": "/process-inspection-plans/products/{code}",
+      "module": "process-inspection-plans",
+      "entity": "process_inspection_plans_product",
       "shape": "composite_analysis",
       "status": "covered"
     }

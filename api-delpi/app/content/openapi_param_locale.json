@@ -1776,6 +1776,18 @@
         }
       }
     },
+    "include_bom": {
+      "locale": {
+        "en": {
+          "label": "Include BOM",
+          "description": "When true, expand the product BOM when loading the process inspection plan."
+        },
+        "pt-BR": {
+          "label": "Incluir estrutura (BOM)",
+          "description": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo."
+        }
+      }
+    },
     "max_size_bytes": {
       "locale": {
         "en": {

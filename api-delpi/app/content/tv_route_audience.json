@@ -7900,6 +7900,91 @@
         }
       },
       "category": "commercial"
+    },
+    "get_process_inspection_plans_summary": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Process inspection plans — summary KPIs",
+          "description": "KPIs for registered process inspection plans versus open production orders (products/orders without plan, coverage percentage, distribution).",
+          "label": "Process inspection plans summary",
+          "whenToUse": "Use for KPI tiles of the process inspection plan registration dashboard."
+        },
+        "pt-BR": {
+          "summary": "Planos de inspeção de processo — resumo",
+          "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+          "label": "Resumo de planos de inspeção de processo",
+          "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo."
+        }
+      }
+    },
+    "get_process_inspection_plans_orders_without_plan": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Open production orders without inspection plan",
+          "description": "Paged list of open production orders whose product has no QP6 process inspection plan.",
+          "label": "Orders without inspection plan",
+          "whenToUse": "Use when listing open OPs missing process inspection registration."
+        },
+        "pt-BR": {
+          "summary": "OPs abertas sem plano de inspeção",
+          "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+          "label": "OPs sem plano de inspeção",
+          "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar."
+        }
+      }
+    },
+    "get_process_inspection_plans_products_without_plan": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Products without inspection plan (open OPs)",
+          "description": "Paged distinct products that have open production orders and no QP6 process inspection plan.",
+          "label": "Products without inspection plan",
+          "whenToUse": "Use when drilling into products missing process inspection registration."
+        },
+        "pt-BR": {
+          "summary": "Produtos sem plano de inspeção (com OP aberta)",
+          "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+          "label": "Produtos sem plano de inspeção",
+          "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção."
+        }
+      }
+    },
+    "get_process_inspection_plans_products": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Products with process inspection plan",
+          "description": "Paged list of products that have a registered QP6 process inspection plan (active revision).",
+          "label": "Products with inspection plan",
+          "whenToUse": "Use when browsing registered process inspection plans by product."
+        },
+        "pt-BR": {
+          "summary": "Produtos com plano de inspeção de processo",
+          "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+          "label": "Produtos com plano de inspeção",
+          "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto."
+        }
+      }
+    },
+    "get_process_inspection_plans_product": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Process inspection plan detail by product",
+          "description": "QP6 header plus QP7/QP8 tests for a product (optional BOM expansion).",
+          "label": "Inspection plan detail",
+          "whenToUse": "Use when opening how to inspect a specific product."
+        },
+        "pt-BR": {
+          "summary": "Detalhe do plano de inspeção por produto",
+          "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+          "label": "Detalhe do plano de inspeção",
+          "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto."
+        }
+      }
     }
   }
 }

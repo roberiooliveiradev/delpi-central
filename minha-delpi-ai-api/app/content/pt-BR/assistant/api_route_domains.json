@@ -80,6 +80,12 @@
       "parameterStrategy": "semantic",
       "method": "GET"
     },
+    "process_inspection_plans": {
+      "label": "Planos de inspeção de processo",
+      "pathMarkers": ["/process-inspection-plans/"],
+      "parameterStrategy": "none",
+      "method": "GET"
+    },
     "department_kpi": {
       "label": "KPI departamental",
       "pathMarkers": [

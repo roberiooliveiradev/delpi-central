@@ -19,6 +19,7 @@ _DOMAIN_LABELS: dict[str, str] = {
     "/sales/": "Vendas",
     "/purchases/": "Compras",
     "/inspecoes-entrada/": "Inspeções de entrada",
+    "/process-inspection-plans/": "Planos de inspeção de processo",
     "/pedidos-venda-abertos/": "Pedidos de venda em aberto",
     "/propostas-comerciais/": "Propostas comerciais",
     "/system/": "Sistema",
@@ -73,6 +74,15 @@ _ENTITY_LABELS: dict[str, str] = {
         "histórico de preço unitário do produto com um fornecedor"
     ),
     "supplies_safety_stock_item": "itens de estoque de segurança",
+    "process_inspection_plans_summary": "resumo de planos de inspeção de processo",
+    "process_inspection_plans_orders_without_plan": (
+        "OPs abertas sem plano de inspeção de processo cadastrado"
+    ),
+    "process_inspection_plans_products_without_plan": (
+        "produtos sem plano de inspeção com OP aberta"
+    ),
+    "process_inspection_plans_products": "produtos com plano de inspeção de processo",
+    "process_inspection_plans_product": "detalhe do plano de inspeção de processo",
     "supplies_safety_stock_summary": "resumo de estoque de segurança",
     "supplies_safety_stock_filters": "filtros de estoque de segurança",
     "supplies_stock_balances_summary": "resumo de saldos de estoque por armazém",

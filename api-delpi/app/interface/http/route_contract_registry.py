@@ -343,6 +343,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_inspecoes_entrada_resumo": RouteContract(
         "inspecoes_entrada_resumo", "scalar"
     ),
+    "get_process_inspection_plans_summary": RouteContract(
+        "process_inspection_plans_summary", "scalar"
+    ),
+    "get_process_inspection_plans_orders_without_plan": RouteContract(
+        "process_inspection_plans_orders_without_plan", "paged_list"
+    ),
+    "get_process_inspection_plans_products_without_plan": RouteContract(
+        "process_inspection_plans_products_without_plan", "paged_list"
+    ),
+    "get_process_inspection_plans_products": RouteContract(
+        "process_inspection_plans_products", "paged_list"
+    ),
+    "get_process_inspection_plans_product": RouteContract(
+        "process_inspection_plans_product", "composite_analysis"
+    ),
     "get_inspecoes_processo_resumo": RouteContract(
         "inspecoes_processo_resumo", "scalar"
     ),

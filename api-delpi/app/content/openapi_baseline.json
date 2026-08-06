@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 523,
+  "operation_count": 528,
   "operations": [
     {
       "method": "POST",
@@ -29239,6 +29239,22 @@
                 },
                 "pt-BR": {
                   "label": "Pendente (T)"
+                }
+              },
+              "APROVADA": {
+                "en": {
+                  "label": "Approved"
+                },
+                "pt-BR": {
+                  "label": "Aprovada"
+                }
+              },
+              "REJEITADA": {
+                "en": {
+                  "label": "Rejected"
+                },
+                "pt-BR": {
+                  "label": "Rejeitada"
                 }
               }
             }
@@ -76818,6 +76834,1341 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Protheus table schema."
+    },
+    {
+      "operationId": "get_process_inspection_plans_summary",
+      "method": "GET",
+      "path": "/process-inspection-plans/summary",
+      "summary": "Process inspection plans — summary KPIs",
+      "xDelpi": {
+        "entity": "process_inspection_plans_summary",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Process inspection plans — summary KPIs",
+            "description": "KPIs for registered process inspection plans versus open production orders (products/orders without plan, coverage percentage, distribution).",
+            "whenToUse": "Use for KPI tiles of the process inspection plan registration dashboard.",
+            "label": "Process inspection plans summary"
+          },
+          "pt-BR": {
+            "summary": "Planos de inspeção de processo — resumo",
+            "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+            "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo.",
+            "label": "Resumo de planos de inspeção de processo"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo.",
+          "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+          "label": "Resumo de planos de inspeção de processo"
+        }
+      },
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(all|01|02)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+            "enum": [
+              "all",
+              "01",
+              "02"
+            ],
+            "title": "Branch"
+          },
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+        }
+      ]
+    },
+    {
+      "operationId": "get_process_inspection_plans_orders_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/orders-without-plan",
+      "summary": "Open production orders without inspection plan",
+      "xDelpi": {
+        "entity": "process_inspection_plans_orders_without_plan",
+        "shape": "paged_list",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Open production orders without inspection plan",
+            "description": "Paged list of open production orders whose product has no QP6 process inspection plan.",
+            "whenToUse": "Use when listing open OPs missing process inspection registration.",
+            "label": "Orders without inspection plan"
+          },
+          "pt-BR": {
+            "summary": "OPs abertas sem plano de inspeção",
+            "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+            "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar.",
+            "label": "OPs sem plano de inspeção"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar.",
+          "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+          "label": "OPs sem plano de inspeção"
+        }
+      },
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(all|01|02)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+            "enum": [
+              "all",
+              "01",
+              "02"
+            ],
+            "title": "Branch"
+          },
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "title": "Page"
+          },
+          "description": "Page number in paginated listing."
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "maximum": 200,
+            "minimum": 1,
+            "default": 50,
+            "title": "Page Size"
+          },
+          "description": "Rows per page."
+        }
+      ]
+    },
+    {
+      "operationId": "get_process_inspection_plans_products_without_plan",
+      "method": "GET",
+      "path": "/process-inspection-plans/products-without-plan",
+      "summary": "Products without inspection plan (open OPs)",
+      "xDelpi": {
+        "entity": "process_inspection_plans_products_without_plan",
+        "shape": "paged_list",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Products without inspection plan (open OPs)",
+            "description": "Paged distinct products that have open production orders and no QP6 process inspection plan.",
+            "whenToUse": "Use when drilling into products missing process inspection registration.",
+            "label": "Products without inspection plan"
+          },
+          "pt-BR": {
+            "summary": "Produtos sem plano de inspeção (com OP aberta)",
+            "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+            "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção.",
+            "label": "Produtos sem plano de inspeção"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção.",
+          "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+          "label": "Produtos sem plano de inspeção"
+        }
+      },
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(all|01|02)$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+            "enum": [
+              "all",
+              "01",
+              "02"
+            ],
+            "title": "Branch"
+          },
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "title": "Page"
+          },
+          "description": "Page number in paginated listing."
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "maximum": 200,
+            "minimum": 1,
+            "default": 50,
+            "title": "Page Size"
+          },
+          "description": "Rows per page."
+        }
+      ]
+    },
+    {
+      "operationId": "get_process_inspection_plans_products",
+      "method": "GET",
+      "path": "/process-inspection-plans/products",
+      "summary": "Products with process inspection plan",
+      "xDelpi": {
+        "entity": "process_inspection_plans_products",
+        "shape": "paged_list",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Products with process inspection plan",
+            "description": "Paged list of products that have a registered QP6 process inspection plan (active revision).",
+            "whenToUse": "Use when browsing registered process inspection plans by product.",
+            "label": "Products with inspection plan"
+          },
+          "pt-BR": {
+            "summary": "Produtos com plano de inspeção de processo",
+            "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+            "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto.",
+            "label": "Produtos com plano de inspeção"
+          }
+        },
+        "params": {
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto.",
+          "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+          "label": "Produtos com plano de inspeção"
+        }
+      },
+      "parameters": [
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "title": "Page"
+          },
+          "description": "Page number in paginated listing."
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "integer",
+            "maximum": 200,
+            "minimum": 1,
+            "default": 50,
+            "title": "Page Size"
+          },
+          "description": "Rows per page."
+        }
+      ]
+    },
+    {
+      "operationId": "get_process_inspection_plans_product",
+      "method": "GET",
+      "path": "/process-inspection-plans/products/{code}",
+      "summary": "Process inspection plan detail by product",
+      "xDelpi": {
+        "entity": "process_inspection_plans_product",
+        "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Process inspection plan detail by product",
+            "description": "QP6 header plus QP7/QP8 tests for a product (optional BOM expansion).",
+            "whenToUse": "Use when opening how to inspect a specific product.",
+            "label": "Inspection plan detail"
+          },
+          "pt-BR": {
+            "summary": "Detalhe do plano de inspeção por produto",
+            "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+            "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto.",
+            "label": "Detalhe do plano de inspeção"
+          }
+        },
+        "params": {
+          "code": {
+            "locale": {
+              "en": {
+                "description": "Code query parameter.",
+                "label": "Code"
+              },
+              "pt-BR": {
+                "description": "Código do registro a filtrar.",
+                "label": "Código"
+              }
+            }
+          },
+          "include_bom": {
+            "locale": {
+              "en": {
+                "description": "When true, expand the product BOM when loading the process inspection plan.",
+                "label": "Include BOM"
+              },
+              "pt-BR": {
+                "description": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo.",
+                "label": "Incluir estrutura (BOM)"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto.",
+          "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+          "label": "Detalhe do plano de inspeção"
+        }
+      },
+      "parameters": [
+        {
+          "name": "code",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30,
+            "title": "Code"
+          },
+          "description": "Code query parameter."
+        },
+        {
+          "name": "include_bom",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "description": "Include BOM components when true",
+            "default": false,
+            "title": "Include Bom"
+          },
+          "description": "Include BOM components when true"
+        }
+      ]
     }
-  ]
+  ],
+  "paths": {
+    "/process-inspection-plans/summary": {
+      "get": {
+        "tags": [
+          "Process inspection plans"
+        ],
+        "summary": "Process inspection plans — summary KPIs",
+        "description": "KPIs for registered process inspection plans versus open production orders (products/orders without plan, coverage percentage, distribution).",
+        "operationId": "get_process_inspection_plans_summary",
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(all|01|02)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+              "enum": [
+                "all",
+                "01",
+                "02"
+              ],
+              "title": "Branch"
+            },
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-delpi": {
+          "entity": "process_inspection_plans_summary",
+          "shape": "scalar",
+          "presentation": {
+            "strategy": "as_delivered"
+          },
+          "category": "quality",
+          "locale": {
+            "en": {
+              "summary": "Process inspection plans — summary KPIs",
+              "description": "KPIs for registered process inspection plans versus open production orders (products/orders without plan, coverage percentage, distribution).",
+              "whenToUse": "Use for KPI tiles of the process inspection plan registration dashboard.",
+              "label": "Process inspection plans summary"
+            },
+            "pt-BR": {
+              "summary": "Planos de inspeção de processo — resumo",
+              "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+              "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo.",
+              "label": "Resumo de planos de inspeção de processo"
+            }
+          },
+          "params": {
+            "branch": {
+              "locale": {
+                "en": {
+                  "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                  "label": "Filial"
+                }
+              },
+              "enumLabels": {
+                "all": {
+                  "en": {
+                    "label": "All"
+                  },
+                  "pt-BR": {
+                    "label": "Todas"
+                  }
+                },
+                "01": {
+                  "en": {
+                    "label": "Branch 01"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 01"
+                  }
+                },
+                "02": {
+                  "en": {
+                    "label": "Branch 02"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 02"
+                  }
+                },
+                "ES": {
+                  "en": {
+                    "label": "ES"
+                  },
+                  "pt-BR": {
+                    "label": "ES"
+                  }
+                },
+                "SC": {
+                  "en": {
+                    "label": "SC"
+                  },
+                  "pt-BR": {
+                    "label": "SC"
+                  }
+                }
+              }
+            }
+          },
+          "tv": {
+            "whenToUse": "Use em cards de KPI do painel de cadastro de inspeção de processo.",
+            "description": "KPIs de cadastro de planos de inspeção versus OPs abertas (produtos/OPs sem plano, percentual cadastrado, distribuição).",
+            "label": "Resumo de planos de inspeção de processo"
+          }
+        }
+      }
+    },
+    "/process-inspection-plans/orders-without-plan": {
+      "get": {
+        "tags": [
+          "Process inspection plans"
+        ],
+        "summary": "Open production orders without inspection plan",
+        "description": "Paged list of open production orders whose product has no QP6 process inspection plan.",
+        "operationId": "get_process_inspection_plans_orders_without_plan",
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(all|01|02)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+              "enum": [
+                "all",
+                "01",
+                "02"
+              ],
+              "title": "Branch"
+            },
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number in paginated listing."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Rows per page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-delpi": {
+          "entity": "process_inspection_plans_orders_without_plan",
+          "shape": "paged_list",
+          "presentation": {
+            "strategy": "as_delivered"
+          },
+          "category": "quality",
+          "locale": {
+            "en": {
+              "summary": "Open production orders without inspection plan",
+              "description": "Paged list of open production orders whose product has no QP6 process inspection plan.",
+              "whenToUse": "Use when listing open OPs missing process inspection registration.",
+              "label": "Orders without inspection plan"
+            },
+            "pt-BR": {
+              "summary": "OPs abertas sem plano de inspeção",
+              "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+              "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar.",
+              "label": "OPs sem plano de inspeção"
+            }
+          },
+          "params": {
+            "branch": {
+              "locale": {
+                "en": {
+                  "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                  "label": "Filial"
+                }
+              },
+              "enumLabels": {
+                "all": {
+                  "en": {
+                    "label": "All"
+                  },
+                  "pt-BR": {
+                    "label": "Todas"
+                  }
+                },
+                "01": {
+                  "en": {
+                    "label": "Branch 01"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 01"
+                  }
+                },
+                "02": {
+                  "en": {
+                    "label": "Branch 02"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 02"
+                  }
+                },
+                "ES": {
+                  "en": {
+                    "label": "ES"
+                  },
+                  "pt-BR": {
+                    "label": "ES"
+                  }
+                },
+                "SC": {
+                  "en": {
+                    "label": "SC"
+                  },
+                  "pt-BR": {
+                    "label": "SC"
+                  }
+                }
+              }
+            },
+            "page": {
+              "locale": {
+                "en": {
+                  "description": "Page number in paginated listing.",
+                  "label": "Page"
+                },
+                "pt-BR": {
+                  "description": "Número da página na listagem paginada.",
+                  "label": "Página"
+                }
+              }
+            },
+            "page_size": {
+              "locale": {
+                "en": {
+                  "description": "Rows per page.",
+                  "label": "Page size"
+                },
+                "pt-BR": {
+                  "description": "Quantidade de linhas por página.",
+                  "label": "Tamanho da página"
+                }
+              }
+            }
+          },
+          "tv": {
+            "whenToUse": "Use para listar OPs abertas sem cadastro de como inspecionar.",
+            "description": "Lista paginada de OPs abertas cujo produto não tem plano de inspeção de processo (QP6).",
+            "label": "OPs sem plano de inspeção"
+          }
+        }
+      }
+    },
+    "/process-inspection-plans/products-without-plan": {
+      "get": {
+        "tags": [
+          "Process inspection plans"
+        ],
+        "summary": "Products without inspection plan (open OPs)",
+        "description": "Paged distinct products that have open production orders and no QP6 process inspection plan.",
+        "operationId": "get_process_inspection_plans_products_without_plan",
+        "parameters": [
+          {
+            "name": "branch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(all|01|02)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+              "enum": [
+                "all",
+                "01",
+                "02"
+              ],
+              "title": "Branch"
+            },
+            "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed."
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number in paginated listing."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Rows per page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-delpi": {
+          "entity": "process_inspection_plans_products_without_plan",
+          "shape": "paged_list",
+          "presentation": {
+            "strategy": "as_delivered"
+          },
+          "category": "quality",
+          "locale": {
+            "en": {
+              "summary": "Products without inspection plan (open OPs)",
+              "description": "Paged distinct products that have open production orders and no QP6 process inspection plan.",
+              "whenToUse": "Use when drilling into products missing process inspection registration.",
+              "label": "Products without inspection plan"
+            },
+            "pt-BR": {
+              "summary": "Produtos sem plano de inspeção (com OP aberta)",
+              "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+              "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção.",
+              "label": "Produtos sem plano de inspeção"
+            }
+          },
+          "params": {
+            "branch": {
+              "locale": {
+                "en": {
+                  "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                  "label": "Branch"
+                },
+                "pt-BR": {
+                  "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                  "label": "Filial"
+                }
+              },
+              "enumLabels": {
+                "all": {
+                  "en": {
+                    "label": "All"
+                  },
+                  "pt-BR": {
+                    "label": "Todas"
+                  }
+                },
+                "01": {
+                  "en": {
+                    "label": "Branch 01"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 01"
+                  }
+                },
+                "02": {
+                  "en": {
+                    "label": "Branch 02"
+                  },
+                  "pt-BR": {
+                    "label": "Filial 02"
+                  }
+                },
+                "ES": {
+                  "en": {
+                    "label": "ES"
+                  },
+                  "pt-BR": {
+                    "label": "ES"
+                  }
+                },
+                "SC": {
+                  "en": {
+                    "label": "SC"
+                  },
+                  "pt-BR": {
+                    "label": "SC"
+                  }
+                }
+              }
+            },
+            "page": {
+              "locale": {
+                "en": {
+                  "description": "Page number in paginated listing.",
+                  "label": "Page"
+                },
+                "pt-BR": {
+                  "description": "Número da página na listagem paginada.",
+                  "label": "Página"
+                }
+              }
+            },
+            "page_size": {
+              "locale": {
+                "en": {
+                  "description": "Rows per page.",
+                  "label": "Page size"
+                },
+                "pt-BR": {
+                  "description": "Quantidade de linhas por página.",
+                  "label": "Tamanho da página"
+                }
+              }
+            }
+          },
+          "tv": {
+            "whenToUse": "Use no drill do KPI de produtos sem cadastro de inspeção.",
+            "description": "Lista paginada de produtos distintos com OP aberta e sem plano de inspeção de processo (QP6).",
+            "label": "Produtos sem plano de inspeção"
+          }
+        }
+      }
+    },
+    "/process-inspection-plans/products": {
+      "get": {
+        "tags": [
+          "Process inspection plans"
+        ],
+        "summary": "Products with process inspection plan",
+        "description": "Paged list of products that have a registered QP6 process inspection plan (active revision).",
+        "operationId": "get_process_inspection_plans_products",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number in paginated listing."
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            },
+            "description": "Rows per page."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-delpi": {
+          "entity": "process_inspection_plans_products",
+          "shape": "paged_list",
+          "presentation": {
+            "strategy": "as_delivered"
+          },
+          "category": "quality",
+          "locale": {
+            "en": {
+              "summary": "Products with process inspection plan",
+              "description": "Paged list of products that have a registered QP6 process inspection plan (active revision).",
+              "whenToUse": "Use when browsing registered process inspection plans by product.",
+              "label": "Products with inspection plan"
+            },
+            "pt-BR": {
+              "summary": "Produtos com plano de inspeção de processo",
+              "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+              "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto.",
+              "label": "Produtos com plano de inspeção"
+            }
+          },
+          "params": {
+            "page": {
+              "locale": {
+                "en": {
+                  "description": "Page number in paginated listing.",
+                  "label": "Page"
+                },
+                "pt-BR": {
+                  "description": "Número da página na listagem paginada.",
+                  "label": "Página"
+                }
+              }
+            },
+            "page_size": {
+              "locale": {
+                "en": {
+                  "description": "Rows per page.",
+                  "label": "Page size"
+                },
+                "pt-BR": {
+                  "description": "Quantidade de linhas por página.",
+                  "label": "Tamanho da página"
+                }
+              }
+            }
+          },
+          "tv": {
+            "whenToUse": "Use para navegar nos planos de inspeção cadastrados por produto.",
+            "description": "Lista paginada de produtos com plano de inspeção de processo cadastrado (QP6, revisão ativa).",
+            "label": "Produtos com plano de inspeção"
+          }
+        }
+      }
+    },
+    "/process-inspection-plans/products/{code}": {
+      "get": {
+        "tags": [
+          "Process inspection plans"
+        ],
+        "summary": "Process inspection plan detail by product",
+        "description": "QP6 header plus QP7/QP8 tests for a product (optional BOM expansion).",
+        "operationId": "get_process_inspection_plans_product",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30,
+              "title": "Code"
+            },
+            "description": "Code query parameter."
+          },
+          {
+            "name": "include_bom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Include BOM components when true",
+              "default": false,
+              "title": "Include Bom"
+            },
+            "description": "Include BOM components when true"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-delpi": {
+          "entity": "process_inspection_plans_product",
+          "shape": "composite_analysis",
+          "presentation": {
+            "strategy": "as_delivered"
+          },
+          "category": "quality",
+          "locale": {
+            "en": {
+              "summary": "Process inspection plan detail by product",
+              "description": "QP6 header plus QP7/QP8 tests for a product (optional BOM expansion).",
+              "whenToUse": "Use when opening how to inspect a specific product.",
+              "label": "Inspection plan detail"
+            },
+            "pt-BR": {
+              "summary": "Detalhe do plano de inspeção por produto",
+              "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+              "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto.",
+              "label": "Detalhe do plano de inspeção"
+            }
+          },
+          "params": {
+            "code": {
+              "locale": {
+                "en": {
+                  "description": "Code query parameter.",
+                  "label": "Code"
+                },
+                "pt-BR": {
+                  "description": "Código do registro a filtrar.",
+                  "label": "Código"
+                }
+              }
+            },
+            "include_bom": {
+              "locale": {
+                "en": {
+                  "description": "When true, expand the product BOM when loading the process inspection plan.",
+                  "label": "Include BOM"
+                },
+                "pt-BR": {
+                  "description": "Quando verdadeiro, expande a estrutura do produto ao carregar o plano de inspeção de processo.",
+                  "label": "Incluir estrutura (BOM)"
+                }
+              }
+            }
+          },
+          "tv": {
+            "whenToUse": "Use ao abrir o cadastro de como inspecionar um produto.",
+            "description": "Cabeçalho QP6 e ensaios QP7/QP8 do produto (expansão de BOM opcional).",
+            "label": "Detalhe do plano de inspeção"
+          }
+        }
+      }
+    }
+  }
 }
