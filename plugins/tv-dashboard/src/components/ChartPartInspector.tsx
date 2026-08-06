@@ -589,31 +589,38 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       ) : null}
 
       {selectedChartPart.kind === "goalLine" ? (
-        <DeckField id="td-chart-part-goal-value" label="Valor da meta">
-          <NativeTextControl
-            id="td-chart-part-goal-value"
-            type="number"
-            step="any"
-            value={
-              options.goalLineValue == null || Number.isNaN(Number(options.goalLineValue))
-                ? ""
-                : String(options.goalLineValue)
-            }
-            onChange={(value) => {
-              const trimmed = value.trim();
-              if (!trimmed) {
-                persistOptions({ ...options, showGoalLine: true, goalLineValue: null });
-                return;
+        <>
+          <p className="td-deck-inspector__hint">
+            Informe o valor numérico da meta. A linha só aparece no gráfico depois que o valor for
+            definido.
+          </p>
+          <DeckField id="td-chart-part-goal-value" label="Valor da meta">
+            <NativeTextControl
+              id="td-chart-part-goal-value"
+              type="number"
+              step="any"
+              placeholder="Ex.: 95"
+              value={
+                options.goalLineValue == null || Number.isNaN(Number(options.goalLineValue))
+                  ? ""
+                  : String(options.goalLineValue)
               }
-              const parsed = Number(trimmed);
-              persistOptions({
-                ...options,
-                showGoalLine: true,
-                goalLineValue: Number.isFinite(parsed) ? parsed : null,
-              });
-            }}
-          />
-        </DeckField>
+              onChange={(value) => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                  persistOptions({ ...options, showGoalLine: true, goalLineValue: null });
+                  return;
+                }
+                const parsed = Number(trimmed);
+                persistOptions({
+                  ...options,
+                  showGoalLine: true,
+                  goalLineValue: Number.isFinite(parsed) ? parsed : null,
+                });
+              }}
+            />
+          </DeckField>
+        </>
       ) : null}
 
       {selectedChartPart.kind === "series" && primitive && chartPrimitiveSupportsStroke(primitive) ? (

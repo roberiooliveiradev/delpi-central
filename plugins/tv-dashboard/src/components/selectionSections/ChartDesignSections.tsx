@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from "react";
 import {
   BarChart3,
   Database,
+  Goal,
   Grid3x3,
   LayoutTemplate,
   Palette,
@@ -129,7 +130,12 @@ function useChartDesignControls() {
     const part = chartElementPrimaryPartRef(elementId);
     if (part) selectChartPart(block.id, part);
     setSelectionPanelTab("element");
-    document.getElementById("td-chart-pane-elements")?.scrollIntoView({ block: "nearest" });
+    // Com parte selecionada a lista de elementos some; o campo da meta fica no ChartPartInspector.
+    const scrollId =
+      elementId === "goalLine" ? "td-chart-part-goal-value" : "td-chart-pane-elements";
+    queueMicrotask(() => {
+      document.getElementById(scrollId)?.scrollIntoView({ block: "nearest" });
+    });
     setAddElementOpen(false);
   };
 
@@ -499,6 +505,12 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
             icon: Grid3x3,
             label: "Grade",
             hint: "Liga a grade horizontal e edita o traço das linhas.",
+          },
+          {
+            id: "goalLine" as const,
+            icon: Goal,
+            label: "Meta",
+            hint: "Liga a linha de meta e abre o campo do valor no inspetor.",
           },
         ] as const
       ).map((item) => {

@@ -33,4 +33,12 @@ describe("ComunicadoElementInspector table block sections", () => {
       /showChartBlockSections\s*=\s*[\s\S]*panelFocus === "element" \|\| !selectedChartPart/,
     );
   });
+
+  it("mantém ChartViewOptionsInspector com parte selecionada (valor da meta / grade)", () => {
+    const source = readFileSync(resolve(__dirname, "./ComunicadoElementInspector.tsx"), "utf8");
+    expect(source).toContain("<ChartViewOptionsInspector pane={pane} omitSeries />");
+    expect(source).not.toMatch(
+      /!selectedChartPart\s*\?\s*<ChartViewOptionsInspector/,
+    );
+  });
 });

@@ -75,5 +75,6 @@ describe("resolveSelectionChromeMode", () => {
     expect(chartPartSelectionLabel({ kind: "dataLabels" })).toBe("Rótulos de dados");
     expect(chartPartSelectionLabel({ kind: "axes" })).toBe("Eixos");
     expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
+    expect(chartPartSelectionLabel({ kind: "goalLine" })).toBe("Linha de meta");
   });
 });
