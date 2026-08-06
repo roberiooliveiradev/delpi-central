@@ -21,7 +21,10 @@ export const CM_HELP = {
     kpis: "Indicadores operacionais da carteira (pedidos em aberto). Falha parcial não derruba o restante da Home.",
     kpiTasks: "Tarefas atrasadas + com prazo hoje na sua worklist.",
     management:
-      "Área do administrador. KPIs ROL/OTD/conversão e tabela de equipe entram na etapa P1.",
+      "KPIs de gestão (ROL, conversão, OTD) via api-delpi e tabela da equipe por carteira. Falha parcial não derruba a Home.",
+    kpiRol: "ROL da matriz versus meta no mês corrente (Dashboard Comercial).",
+    kpiClosing: "Taxa de conversão de propostas no mês (ganhas ÷ propostas).",
+    kpiOtd: "On-time delivery de linhas de pedido de venda no mês.",
     shortcuts: "Atalhos para as áreas principais — objetivo: chegar à ação em até dois cliques.",
     analytics:
       "BI e propostas ficam em apps irmãos. Aqui só há deep links para não misturar worklist com analytics.",

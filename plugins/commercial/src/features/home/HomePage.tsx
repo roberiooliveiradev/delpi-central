@@ -12,18 +12,31 @@ import {
 } from "lucide-react";
 import {
   ActionButton,
+  DataTable,
   EmptyState,
   NavigationCard,
   SectionCard,
   StatusBadge,
+  type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 
 import { CM_HELP } from "../../content/helpTooltips";
 import { getOpenOrders } from "../../api/openOrdersApi";
 import { getMyWorklist } from "../../api/worklistApi";
+import {
+  formatPct,
+  getClosingRate,
+  getHeadOfficeRolTargetPct,
+  getSalesOrderOtd,
+  pickClosingPct,
+  pickOtdPct,
+  pickRolPct,
+} from "../../api/commercialKpisApi";
 import { navigatePluginView } from "../../app/pluginNavigation";
 import { HomeNavIcon } from "../../app/PluginShell";
 import {
+  cmDataTableClassNames,
+  cmDataTableLabels,
   cmEmptyStateClassNames,
   cmNavCardClassNames,
   cmSectionCardClassNames,
@@ -36,6 +49,7 @@ import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { KpiCard } from "../../components/KpiCard";
 import { formatCurrency } from "../../utils/format";
 import type { OpenOrdersData } from "../../types/openOrders";
+import type { SellerPortfolio } from "../../types/portfolio";
 
 type HomePageProps = {
   basePath: string;
@@ -84,8 +98,26 @@ const emptyKpis: HomeOrdersKpis = {
   atrasos: 0,
 };
 
+type TeamRow = {
+  id: string;
+  name: string;
+  customers: number;
+  lines: number;
+  openValue: number;
+  error?: string | null;
+};
+
+type MgmtKpis = {
+  rolPct: number | null;
+  closingPct: number | null;
+  otdPct: number | null;
+};
+
+const emptyMgmt: MgmtKpis = { rolPct: null, closingPct: null, otdPct: null };
+const TEAM_FETCH_CAP = 12;
+
 export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
-  const { sellerIdFilter, myPortfolio } = usePortfolioScope();
+  const { sellerIdFilter, myPortfolio, sellers } = usePortfolioScope();
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [worklistLoading, setWorklistLoading] = useState(showWorklist);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -94,6 +126,12 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
   const [worklistOpen, setWorklistOpen] = useState(0);
   const [worklistOverdue, setWorklistOverdue] = useState(0);
   const [worklistToday, setWorklistToday] = useState(0);
+  const [mgmtLoading, setMgmtLoading] = useState(showAdmin);
+  const [mgmtError, setMgmtError] = useState<string | null>(null);
+  const [mgmtKpis, setMgmtKpis] = useState<MgmtKpis>(emptyMgmt);
+  const [teamLoading, setTeamLoading] = useState(showAdmin);
+  const [teamRows, setTeamRows] = useState<TeamRow[]>([]);
+  const [teamError, setTeamError] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     const controller = new AbortController();
@@ -101,6 +139,12 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     setOrdersError(null);
     setWorklistLoading(showWorklist);
     setWorklistError(null);
+    if (showAdmin) {
+      setMgmtLoading(true);
+      setMgmtError(null);
+      setTeamLoading(true);
+      setTeamError(null);
+    }
 
     const ordersPromise = getOpenOrders(controller.signal, {
       sellerId: sellerIdFilter,
@@ -138,14 +182,128 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           setWorklistLoading(false);
         });
 
-    void Promise.allSettled([ordersPromise, worklistPromise]);
+    const mgmtPromise = showAdmin
+      ? Promise.allSettled([
+          getHeadOfficeRolTargetPct(controller.signal),
+          getClosingRate(controller.signal),
+          getSalesOrderOtd(controller.signal),
+        ])
+          .then((results) => {
+            if (controller.signal.aborted) return;
+            const [rolR, closingR, otdR] = results;
+            const next: MgmtKpis = { ...emptyMgmt };
+            let failed = 0;
+            if (rolR.status === "fulfilled") next.rolPct = pickRolPct(rolR.value);
+            else failed += 1;
+            if (closingR.status === "fulfilled") next.closingPct = pickClosingPct(closingR.value);
+            else failed += 1;
+            if (otdR.status === "fulfilled") next.otdPct = pickOtdPct(otdR.value);
+            else failed += 1;
+            setMgmtKpis(next);
+            if (failed === 3) {
+              setMgmtError("KPIs de gestão indisponíveis (permissão ou API).");
+            } else if (failed > 0) {
+              setMgmtError("Alguns KPIs de gestão falharam — os disponíveis seguem abaixo.");
+            } else {
+              setMgmtError(null);
+            }
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) setMgmtLoading(false);
+          })
+      : Promise.resolve().then(() => {
+          setMgmtLoading(false);
+        });
+
+    const teamPromise = showAdmin
+      ? (async () => {
+          const active = sellers.filter((s) => s.active).slice(0, TEAM_FETCH_CAP);
+          if (!active.length) {
+            setTeamRows([]);
+            setTeamError(null);
+            return;
+          }
+          const settled = await Promise.allSettled(
+            active.map(async (seller: SellerPortfolio) => {
+              const data = await getOpenOrders(controller.signal, {
+                sellerId: seller.user_id,
+              });
+              const kpis = kpisFromOpenOrders(data);
+              return {
+                id: seller.id,
+                name: seller.display_name || seller.user_id,
+                customers: seller.customer_count ?? seller.customers?.length ?? 0,
+                lines: kpis.totalLinhas,
+                openValue: kpis.valorAberto,
+                error: null as string | null,
+              } satisfies TeamRow;
+            }),
+          );
+          if (controller.signal.aborted) return;
+          const rows: TeamRow[] = settled.map((result, index) => {
+            const seller = active[index];
+            if (result.status === "fulfilled") return result.value;
+            return {
+              id: seller.id,
+              name: seller.display_name || seller.user_id,
+              customers: seller.customer_count ?? seller.customers?.length ?? 0,
+              lines: 0,
+              openValue: 0,
+              error: result.reason instanceof Error ? result.reason.message : "Falha",
+            };
+          });
+          setTeamRows(rows);
+          if (settled.every((r) => r.status === "rejected")) {
+            setTeamError("Não foi possível carregar a tabela da equipe.");
+          } else {
+            setTeamError(null);
+          }
+        })()
+          .catch((err: unknown) => {
+            if (controller.signal.aborted) return;
+            setTeamRows([]);
+            setTeamError(err instanceof Error ? err.message : "Erro na tabela da equipe.");
+          })
+          .finally(() => {
+            if (!controller.signal.aborted) setTeamLoading(false);
+          })
+      : Promise.resolve().then(() => {
+          setTeamLoading(false);
+        });
+
+    void Promise.allSettled([ordersPromise, worklistPromise, mgmtPromise, teamPromise]);
     return () => controller.abort();
-  }, [sellerIdFilter, showWorklist]);
+  }, [sellerIdFilter, sellers, showAdmin, showWorklist]);
 
   useEffect(() => {
     const abort = reload();
     return abort;
   }, [reload]);
+
+  const teamColumns = useMemo<DataTableColumn<TeamRow>[]>(
+    () => [
+      { key: "name", header: "Vendedor", render: (row) => row.name },
+      {
+        key: "customers",
+        header: "Clientes",
+        align: "right",
+        render: (row) => row.customers.toLocaleString("pt-BR"),
+      },
+      {
+        key: "lines",
+        header: "Linhas abertas",
+        align: "right",
+        render: (row) => (row.error ? "—" : row.lines.toLocaleString("pt-BR")),
+      },
+      {
+        key: "openValue",
+        header: "Valor aberto",
+        align: "right",
+        render: (row) => (row.error ? row.error : formatCurrency(row.openValue)),
+      },
+    ],
+    [],
+  );
 
   const alerts = useMemo(() => {
     const items = [];
@@ -372,16 +530,86 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
       {showAdmin ? (
         <SectionCard
           title="Gestão"
-          subtitle="KPIs de equipe e ROL entram na próxima etapa (P1)."
+          subtitle="ROL, conversão e OTD do mês + carteiras da equipe."
           hint={CM_HELP.home.management}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
-          <p className="cm-muted">
-            Enquanto isso, use o Dashboard Comercial para analytics pesado ou Carteiras para
-            administração.
-          </p>
-          <div className="cm-nav-row">
+          {mgmtLoading ? (
+            <CommercialLoadingCard title="Carregando KPIs de gestão…" variant="panel" />
+          ) : null}
+          {mgmtError ? (
+            <EmptyState
+              classNames={cmEmptyStateClassNames}
+              defaultMessage={mgmtError}
+              role="alert"
+            />
+          ) : null}
+          {!mgmtLoading ? (
+            <div className="cm-home-kpi-grid" aria-label="Indicadores de gestão">
+              <KpiCard
+                title="ROL vs meta"
+                titleHint={CM_HELP.home.kpiRol}
+                value={formatPct(mgmtKpis.rolPct)}
+                subtitle="Matriz no mês"
+                icon={<Wallet size={22} />}
+              />
+              <KpiCard
+                title="Conversão"
+                titleHint={CM_HELP.home.kpiClosing}
+                value={formatPct(mgmtKpis.closingPct)}
+                subtitle="Propostas → ganhas"
+                icon={<PackageCheck size={22} />}
+              />
+              <KpiCard
+                title="OTD pedidos"
+                titleHint={CM_HELP.home.kpiOtd}
+                value={formatPct(mgmtKpis.otdPct)}
+                subtitle="Entrega no prazo"
+                icon={<Package size={22} />}
+              />
+            </div>
+          ) : null}
+
+          <h3 className="cm-section-subtitle" style={{ marginTop: 16 }}>
+            Equipe (carteiras)
+          </h3>
+          {teamLoading ? (
+            <CommercialLoadingCard title="Carregando equipe…" variant="panel" />
+          ) : null}
+          {teamError ? (
+            <EmptyState
+              classNames={cmEmptyStateClassNames}
+              defaultMessage={teamError}
+              role="alert"
+            />
+          ) : null}
+          {!teamLoading && !teamError && teamRows.length === 0 ? (
+            <EmptyState
+              classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+              defaultTitle="Nenhuma carteira ativa"
+              defaultMessage="Cadastre vendedores em Carteiras para ver a tabela da equipe."
+            >
+              <ActionButton
+                variant="primary"
+                onClick={() => navigatePluginView("seller_portfolios", { basePath })}
+              >
+                Abrir Carteiras
+              </ActionButton>
+            </EmptyState>
+          ) : null}
+          {!teamLoading && teamRows.length > 0 ? (
+            <DataTable
+              rows={teamRows}
+              columns={teamColumns}
+              rowKey={(row) => row.id}
+              classNames={cmDataTableClassNames}
+              labels={cmDataTableLabels}
+              layout="section"
+            />
+          ) : null}
+
+          <div className="cm-nav-row" style={{ marginTop: 12 }}>
             <ActionButton
               variant="ghost"
               onClick={() => window.location.assign("/apps/dashboard-commercial")}
