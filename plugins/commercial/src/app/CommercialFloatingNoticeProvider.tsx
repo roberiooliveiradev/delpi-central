@@ -22,6 +22,14 @@ export const FORM_VALIDATION_AUTO_DISMISS_MS = 6500;
 type CommercialFloatingNoticeContextValue = {
   notice: (input: FloatingNoticeInput | string) => string;
   notifySuccess: (message: string, options?: { title?: string; id?: string }) => string;
+  notifyInfo: (
+    message: string,
+    options?: { title?: string; id?: string; autoDismissMs?: number | null },
+  ) => string;
+  notifyWarning: (
+    message: string,
+    options?: { title?: string; id?: string; autoDismissMs?: number | null },
+  ) => string;
   notifyError: (
     message: string,
     options?: { title?: string; id?: string; autoDismissMs?: number | null },
@@ -84,6 +92,36 @@ export function CommercialFloatingNoticeProvider({ children }: { children: React
     [notice],
   );
 
+  const notifyInfo = useCallback(
+    (
+      message: string,
+      options?: { title?: string; id?: string; autoDismissMs?: number | null },
+    ) =>
+      notice({
+        id: options?.id,
+        variant: "info",
+        title: options?.title ?? "Atualização",
+        message,
+        autoDismissMs: options?.autoDismissMs ?? 6500,
+      }),
+    [notice],
+  );
+
+  const notifyWarning = useCallback(
+    (
+      message: string,
+      options?: { title?: string; id?: string; autoDismissMs?: number | null },
+    ) =>
+      notice({
+        id: options?.id,
+        variant: "warning",
+        title: options?.title ?? "Atenção",
+        message,
+        autoDismissMs: options?.autoDismissMs ?? 6500,
+      }),
+    [notice],
+  );
+
   const notifyError = useCallback(
     (
       message: string,
@@ -117,7 +155,15 @@ export function CommercialFloatingNoticeProvider({ children }: { children: React
 
   return (
     <CommercialFloatingNoticeContext.Provider
-      value={{ notice, notifySuccess, notifyError, notifyMissingRequired, dismiss }}
+      value={{
+        notice,
+        notifySuccess,
+        notifyInfo,
+        notifyWarning,
+        notifyError,
+        notifyMissingRequired,
+        dismiss,
+      }}
     >
       {children}
       <CommercialFloatingNotices items={items} onDismiss={dismiss} />

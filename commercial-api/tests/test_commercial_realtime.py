@@ -52,14 +52,22 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
         task_id="abc",
         assignee_user_ids=["seller-a"],
         actor_client_id="client-1",
+        actor_user_id="manager-1",
+        task_title="Ligar ACME",
     )
 
     rooms = {room for room, _ in scheduled}
     assert user_room("seller-a") in rooms
     assert TEAM_ROOM in rooms
-    assert scheduled[0][1]["type"] == "worklist.changed"
-    assert scheduled[0][1]["reason"] == "task.created"
-    assert scheduled[0][1]["actorClientId"] == "client-1"
+    body = scheduled[0][1]
+    assert body["type"] == "worklist.changed"
+    assert body["reason"] == "task.created"
+    assert body["actorClientId"] == "client-1"
+    assert body["actorUserId"] == "manager-1"
+    assert body["taskTitle"] == "Ligar ACME"
+    assert body["notification"]["title"] == "Nova tarefa"
+    assert "Ligar ACME" in body["notification"]["message"]
+    assert body["notification"]["variant"] == "info"
 
 
 def test_user_room_key():

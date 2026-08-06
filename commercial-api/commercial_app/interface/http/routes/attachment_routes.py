@@ -48,6 +48,8 @@ def _notify_task_attachment(task_id: str, request: Request) -> None:
         reason="attachment.changed",
         task_id=str(task.id),
         assignee_user_ids=[task.assignee_user_id],
+        actor_user_id=_user_id(request),
+        task_title=task.title,
         actor_client_id=client_id_from_request(request),
     )
 

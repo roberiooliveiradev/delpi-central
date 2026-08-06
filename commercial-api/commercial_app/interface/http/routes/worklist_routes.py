@@ -129,6 +129,8 @@ def create_task(request: Request, body: CreateTaskBody):
             reason="task.created",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
+            actor_user_id=user_id,
+            task_title=task.title,
             actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
@@ -172,6 +174,8 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
             reason="task.updated",
             task_id=str(task.id),
             assignee_user_ids=assignees,
+            actor_user_id=user_id,
+            task_title=task.title,
             actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
@@ -202,6 +206,8 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
             reason="task.completed",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
+            actor_user_id=user_id,
+            task_title=task.title,
             actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
@@ -231,6 +237,8 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
             reason="task.deferred",
             task_id=str(task.id),
             assignee_user_ids=[task.assignee_user_id],
+            actor_user_id=user_id,
+            task_title=task.title,
             actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
@@ -266,6 +274,8 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
             reason="task.reassigned",
             task_id=str(task.id),
             assignee_user_ids=assignees,
+            actor_user_id=user_id,
+            task_title=task.title,
             actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")

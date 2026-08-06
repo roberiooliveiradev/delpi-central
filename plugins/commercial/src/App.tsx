@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import { CommercialFloatingNoticeProvider } from "./app/CommercialFloatingNoticeProvider";
-import { CommercialRealtimeProvider } from "./app/CommercialRealtimeProvider";
+import { CommercialRealtimeProvider, useCommercialRealtimeNotices } from "./app/CommercialRealtimeProvider";
 import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
@@ -90,9 +90,15 @@ function RealtimeShell({
   const { canViewWorklist } = usePortfolioScope();
   return (
     <CommercialRealtimeProvider getAccessToken={getAccessToken} enabled={canViewWorklist}>
+      <CommercialRealtimeNoticesBridge enabled={canViewWorklist} />
       {children}
     </CommercialRealtimeProvider>
   );
+}
+
+function CommercialRealtimeNoticesBridge({ enabled }: { enabled: boolean }) {
+  useCommercialRealtimeNotices(enabled);
+  return null;
 }
 
 export default function App({

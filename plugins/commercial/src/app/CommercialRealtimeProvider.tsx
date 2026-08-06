@@ -9,8 +9,10 @@ import {
 } from "react";
 
 import { getCommercialClientId } from "./commercialClientId";
+import { useCommercialFloatingNotice } from "./CommercialFloatingNoticeProvider";
 import {
   buildCommercialRealtimeWsUrl,
+  fallbackWorklistNotification,
   parseCommercialRealtimeEvent,
   type CommercialWorklistChangedEvent,
 } from "../constants/realtime";
@@ -205,4 +207,41 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
       if (timer != null) window.clearTimeout(timer);
     };
   }, [enabled, subscribeWorklistChanged]);
+}
+
+/**
+ * Toast in-app para eventos WS de outros clientes (anti-eco por clientId).
+ * Refetch da fila fica em `useCommercialWorklistSync`.
+ */
+export function useCommercialRealtimeNotices(enabled = true) {
+  const { subscribeWorklistChanged } = useCommercialRealtime();
+  const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
+  const clientId = getCommercialClientId();
+
+  useEffect(() => {
+    if (!enabled) return;
+    return subscribeWorklistChanged((event) => {
+      if (event.actorClientId && event.actorClientId === clientId) {
+        return;
+      }
+      const payload =
+        event.notification && event.notification.message
+          ? event.notification
+          : fallbackWorklistNotification(event);
+      const options = {
+        title: payload.title,
+        id: `cm-rt-${event.taskId}-${event.reason}`,
+        autoDismissMs: 6500 as number | null,
+      };
+      if (payload.variant === "success") {
+        notifySuccess(payload.message, options);
+        return;
+      }
+      if (payload.variant === "warning") {
+        notifyWarning(payload.message, options);
+        return;
+      }
+      notifyInfo(payload.message, options);
+    });
+  }, [clientId, enabled, notifyInfo, notifySuccess, notifyWarning, subscribeWorklistChanged]);
 }
