@@ -6,7 +6,7 @@
 > **Paridade:** § 2.1.1 (Portal do Vendedor → Portal Comercial)  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
 > **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais  
-> **Wave G:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) (Overview→Action, WF-01R…06, 11–12). Este arquivo mantém os IDs canônicos WF-01…10; a rota `/my-day` (WF-06) está **implementada**. Polish tipográfico “R” em pedidos/carteira/admin = evolução incremental sobre F2b, não wireframes ASCII novos separados.
+> **Wave G / G+:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md). IDs canônicos WF-01…10; **Wave G+** adiciona WF-00 (shell UnderlineNav), WF-01R (Home hero), WF-06R (Meu dia CRM). Rota `/my-day` implementada.
 
 ## Convenções
 
@@ -50,6 +50,62 @@ Portal Comercial
 └── Administração
     └── Carteiras                  /apps/commercial/seller-portfolios        ← admin
 ```
+
+---
+
+## Wave G+ — shell e Home (ago/2026)
+
+Nav secundária do plugin = **UnderlineNav** (padrão GitHub Primer / SAP), **não** pills de `ActionButton`. Host Minha DELPI já tem sidebar — sem sidebar interna no plugin. Meu dia alinhado a HubSpot/Pipedrive/Gong: prazo + prioridade + cliente.
+
+### WF-00 — Shell (UnderlineNav)
+
+```text
+┌─ plugin ────────────────────────────────────────────────────────────────────┐
+│ [icon] Portal Comercial [?]                    Escopo: Carteira própria     │
+│ ─────────────────────────────────────────────────────────────────────────── │
+│ Início   Meu dia (3)   Pedidos em aberto   Minha carteira   Carteiras†      │
+│ ═══════                                                                     │
+│   ↑ underline accent #089bdb; badge Meu dia = overdue+today                 │
+│ … página …                                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### WF-01R — Início (hero + permissões)
+
+```text
+┌─ HERO ──────────────────────────────────────────────────────────────────────┐
+│ Bom dia · {escopo/carteira}                                   [Atualizar]   │
+│ “Aqui está o que precisa da sua atenção hoje.”                              │
+│ Chips: Pedidos abertos · Follow-ups · Atrasos                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ PRECISA DE ATENÇÃO (AlertQueue) ──────────────────────────────────────────┐
+│ ⚠ N atrasos [Ver pedidos]  │  ⚠ M follow-ups [Meu dia]                     │
+│ empty → EmptyState + CTA · loading/erro por card (allSettled)               │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ SEUS NÚMEROS (accounts.view) ──────────────────────────────────────────────┐
+│ Linhas │ Valor │ Pode faturar │ Atrasos │ Tarefas* (worklist.view)          │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ GESTÃO (seller-portfolios.manage) ─────────────────────────────────────────┐
+│ ROL · Conversão · OTD + tabela equipe                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+┌─ ATALHOS ───────────────────────────────────────────────────────────────────┐
+│ Meu dia* · Pedidos · Carteira · Carteiras†                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### WF-06R — Meu dia (CRM mínimo)
+
+```text
+┌─ Filtros in-page ─ [Atrasadas] [Hoje] [Depois] ─ [Atualizar] ───────────────┐
+│ item: título · prioridade · prazo · cliente                                 │
+│        [Concluir] [Adiar] [Abrir conta]                                     │
+├─ Nova tarefa ───────────────────────────────────────────────────────────────┤
+│ Título* | Prazo* (default hoje EOD) | Prioridade | Cliente | Tipo           │
+│                                                    [Criar tarefa]           │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+Conta 360: CTA **Agendar follow-up** → Meu dia com `customer_code`/`store` pré-preenchidos.
 
 ---
 
@@ -282,7 +338,8 @@ Portal Comercial
 ## WF-06 — Meu dia (F5)
 
 **Rota:** `/apps/commercial/my-day`  
-**Dados:** commercial-api worklist
+**Dados:** commercial-api worklist  
+**Wave G+:** ver **WF-06R** acima (form com prazo/prioridade/cliente; Adiar/Abrir).
 
 ```
 ┌─ Portal Comercial · Meu dia ────────────────────────────────────────────────┐
