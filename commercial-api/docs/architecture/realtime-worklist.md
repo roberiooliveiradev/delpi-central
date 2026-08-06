@@ -17,21 +17,34 @@ wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={u
 ```json
 {
   "type": "worklist.changed",
-  "reason": "task.created",
+  "reason": "task.reassigned",
   "taskId": "uuid",
   "taskTitle": "Ligar ACME",
-  "assigneeUserIds": ["seller-a"],
+  "assigneeUserIds": ["seller-b", "seller-a"],
   "actorUserId": "manager-1",
+  "actorDisplayName": "Ana Gestora",
   "actorClientId": "client-uuid",
   "notification": {
-    "title": "Nova tarefa",
-    "message": "Foi atribuída a você (ou à equipe): Ligar ACME",
+    "title": "Tarefa reatribuída",
+    "message": "Ana Gestora reatribuiu a tarefa: Ligar ACME",
     "variant": "info"
   }
 }
 ```
 
 Valores de `reason`: `task.created`, `task.updated`, `task.completed`, `task.deferred`, `task.reassigned`, `attachment.changed`.
+
+`actorDisplayName` vem da carteira (`display_name`); se ausente → «Alguém da equipe».
+
+O payload `notification` no fio é genérico (audiência `team`). O MFE personaliza o toast com `assigneeUserIds` + `myPortfolio.user_id`:
+
+| Papel do usuário logado | Exemplo (atribuição) |
+|-------------------------|----------------------|
+| Responsável atual (`assigneeUserIds[0]`) | `{actor} atribuiu a você: {title}` |
+| Responsável anterior | `{actor} reatribuiu a tarefa: {title}` |
+| Gestor / equipe | `{actor} atribuiu: {title}` / `{actor} reatribuiu…` |
+
+Assim gestores em `user:` + `team` não recebem toast duplicado.
 
 ## Fan-out
 
@@ -43,7 +56,7 @@ Após mutação HTTP (create/update/complete/defer/reassign/anexo), notify broad
 O MFE:
 
 1. **Refetch** `GET /me/worklist` (debounce ~400 ms) — Meu dia + contagens no Início.
-2. **Toast** `FloatingNotice` com `notification` — **exceto** eco do mesmo `actorClientId` (a aba que mutou já tem `notifySuccess` local).
+2. **Toast** `FloatingNotice` via `resolveWorklistNotification` — **exceto** eco do mesmo `actorClientId` (a aba que mutou já tem `notifySuccess` local).
 
 ## Anti-eco
 
@@ -63,6 +76,7 @@ Mutações enviam header `X-Commercial-Client-Id`; evento inclui `actorClientId`
 ## Homologação
 
 1. Dois browsers (vendedor + gestor): mutação em um → fila do outro atualiza **e** toast aparece no outro sem **Atualizar**.
-2. Na aba que mutou: toast local de sucesso; toast WS **não** duplica.
-3. Gateway: `Upgrade` + `Connection` em `/apps/commercial-api/` (prod e dev).
-4. Reconnect após F5.
+2. Atribuição/reatribuição: o responsável vê «{nome} atribuiu a você: …»; gestor vê texto genérico com o mesmo ator.
+3. Na aba que mutou: toast local de sucesso; toast WS **não** duplica.
+4. Gateway: `Upgrade` + `Connection` em `/apps/commercial-api/` (prod e dev).
+5. Reconnect após F5.

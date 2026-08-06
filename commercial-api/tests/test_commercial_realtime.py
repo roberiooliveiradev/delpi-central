@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 from commercial_app.application.services.commercial_realtime_hub import CommercialRealtimeHub
 from commercial_app.application.services.commercial_realtime_notify import (
     TEAM_ROOM,
+    build_worklist_notification,
     notify_worklist_changed,
     user_room,
 )
@@ -34,6 +35,18 @@ def test_hub_broadcasts_to_room():
     asyncio.run(run())
 
 
+def test_build_notification_mentions_who_assigned():
+    note = build_worklist_notification(
+        reason="task.reassigned",
+        task_title="Ligar ACME",
+        actor_display_name="Ana Gestora",
+        audience="assignee",
+    )
+    assert note["title"] == "Tarefa reatribuída"
+    assert note["message"] == "Ana Gestora atribuiu a você: Ligar ACME"
+    assert note["variant"] == "info"
+
+
 def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
     hub = MagicMock()
     scheduled: list[tuple[str, dict]] = []
@@ -46,6 +59,10 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
         "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
         hub,
     )
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.resolve_actor_display_name",
+        lambda _uid: "Ana Gestora",
+    )
 
     notify_worklist_changed(
         reason="task.created",
@@ -56,18 +73,41 @@ def test_notify_worklist_changed_schedules_user_and_team(monkeypatch):
         task_title="Ligar ACME",
     )
 
-    rooms = {room for room, _ in scheduled}
-    assert user_room("seller-a") in rooms
-    assert TEAM_ROOM in rooms
-    body = scheduled[0][1]
-    assert body["type"] == "worklist.changed"
-    assert body["reason"] == "task.created"
-    assert body["actorClientId"] == "client-1"
-    assert body["actorUserId"] == "manager-1"
-    assert body["taskTitle"] == "Ligar ACME"
-    assert body["notification"]["title"] == "Nova tarefa"
-    assert "Ligar ACME" in body["notification"]["message"]
-    assert body["notification"]["variant"] == "info"
+    by_room = {room: payload for room, payload in scheduled}
+    assert user_room("seller-a") in by_room
+    assert TEAM_ROOM in by_room
+
+    # Mesmo payload em todas as salas — MFE personaliza «a você» pelo userId.
+    for room, body in by_room.items():
+        assert body["actorDisplayName"] == "Ana Gestora"
+        assert body["assigneeUserIds"] == ["seller-a"]
+        assert body["notification"]["message"] == "Ana Gestora atribuiu: Ligar ACME"
+        assert body["notification"]["title"] == "Nova tarefa"
+
+
+def test_notify_reassign_includes_previous_and_new_assignee(monkeypatch):
+    hub = MagicMock()
+    scheduled: list[tuple[str, dict]] = []
+    hub.schedule_broadcast = lambda room, payload: scheduled.append((room, payload))
+    monkeypatch.setattr(
+        "commercial_app.application.services.commercial_realtime_notify.commercial_realtime_hub",
+        hub,
+    )
+
+    notify_worklist_changed(
+        reason="task.reassigned",
+        task_id="abc",
+        assignee_user_ids=["seller-b", "seller-a"],
+        actor_display_name="Ana Gestora",
+        task_title="Follow-up",
+    )
+
+    by_room = {room: payload for room, payload in scheduled}
+    assert set(by_room) == {TEAM_ROOM, user_room("seller-a"), user_room("seller-b")}
+    body = by_room[user_room("seller-b")]
+    assert body["assigneeUserIds"] == ["seller-b", "seller-a"]
+    assert body["actorDisplayName"] == "Ana Gestora"
+    assert body["notification"]["message"] == "Ana Gestora reatribuiu a tarefa: Follow-up"
 
 
 def test_user_room_key():

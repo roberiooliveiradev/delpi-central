@@ -21,6 +21,8 @@ export type CommercialWorklistChangedEvent = {
   taskTitle?: string | null;
   assigneeUserIds?: string[];
   actorUserId?: string | null;
+  /** Nome amigável de quem originou a mutação (nunca UUID). */
+  actorDisplayName?: string | null;
   actorClientId?: string | null;
   notification?: CommercialRealtimeNotification | null;
 };
@@ -57,52 +59,113 @@ export function parseCommercialRealtimeEvent(raw: string): CommercialRealtimeEve
   return null;
 }
 
-/** Fallback local se o payload vier sem `notification` (clientes antigos). */
+function actorLabel(event: CommercialWorklistChangedEvent): string {
+  const name = (event.actorDisplayName || "").trim();
+  if (name) return name;
+  return "Alguém da equipe";
+}
+
+export type WorklistNotificationAudience = "assignee" | "previous" | "team";
+
+/**
+ * Quem é o usuário atual em relação ao evento.
+ * `assigneeUserIds[0]` = responsável atual; demais = anteriores (reatribuição).
+ */
+export function resolveWorklistNotificationAudience(
+  event: CommercialWorklistChangedEvent,
+  currentUserId: string | null | undefined,
+): WorklistNotificationAudience {
+  const me = (currentUserId || "").trim();
+  if (!me) return "team";
+  const ids = (event.assigneeUserIds || [])
+    .map((id) => (id || "").trim())
+    .filter(Boolean);
+  if (ids[0] === me) return "assignee";
+  if (ids.slice(1).includes(me)) return "previous";
+  return "team";
+}
+
+/** Monta o texto do toast (sempre no cliente para «atribuiu a você»). */
+export function resolveWorklistNotification(
+  event: CommercialWorklistChangedEvent,
+  currentUserId?: string | null,
+): CommercialRealtimeNotification {
+  return fallbackWorklistNotification(event, {
+    audience: resolveWorklistNotificationAudience(event, currentUserId),
+  });
+}
+
+/** Fallback / personalização local por audiência. */
 export function fallbackWorklistNotification(
   event: CommercialWorklistChangedEvent,
+  options?: { audience?: WorklistNotificationAudience },
 ): CommercialRealtimeNotification {
   const titleLabel = (event.taskTitle || "").trim() || "Tarefa sem título";
+  const actor = actorLabel(event);
+  const audience = options?.audience ?? "assignee";
+  const assigneeChanged = (event.assigneeUserIds || []).length > 1;
+
   switch (event.reason) {
     case "task.created":
       return {
         title: "Nova tarefa",
-        message: `Foi atribuída a você (ou à equipe): ${titleLabel}`,
+        message:
+          audience === "assignee"
+            ? `${actor} atribuiu a você: ${titleLabel}`
+            : `${actor} atribuiu: ${titleLabel}`,
         variant: "info",
       };
     case "task.updated":
+      if (assigneeChanged && audience === "assignee") {
+        return {
+          title: "Tarefa reatribuída",
+          message: `${actor} atribuiu a você: ${titleLabel}`,
+          variant: "info",
+        };
+      }
+      if (assigneeChanged && audience === "previous") {
+        return {
+          title: "Tarefa reatribuída",
+          message: `${actor} reatribuiu a tarefa: ${titleLabel}`,
+          variant: "info",
+        };
+      }
       return {
         title: "Tarefa atualizada",
-        message: `Alteração na fila: ${titleLabel}`,
+        message: `${actor} alterou a tarefa: ${titleLabel}`,
         variant: "info",
       };
     case "task.completed":
       return {
         title: "Tarefa concluída",
-        message: `Concluída: ${titleLabel}`,
+        message: `${actor} concluiu: ${titleLabel}`,
         variant: "success",
       };
     case "task.deferred":
       return {
         title: "Prazo adiado",
-        message: `Adiada em +1 dia: ${titleLabel}`,
+        message: `${actor} adiou o prazo: ${titleLabel}`,
         variant: "warning",
       };
     case "task.reassigned":
       return {
         title: "Tarefa reatribuída",
-        message: `Responsável alterado: ${titleLabel}`,
+        message:
+          audience === "assignee"
+            ? `${actor} atribuiu a você: ${titleLabel}`
+            : `${actor} reatribuiu a tarefa: ${titleLabel}`,
         variant: "info",
       };
     case "attachment.changed":
       return {
         title: "Anexo na tarefa",
-        message: `Anexo alterado em: ${titleLabel}`,
+        message: `${actor} alterou anexo em: ${titleLabel}`,
         variant: "info",
       };
     default:
       return {
         title: "Fila atualizada",
-        message: titleLabel,
+        message: `${actor}: ${titleLabel}`,
         variant: "info",
       };
   }

@@ -10,10 +10,11 @@ import {
 
 import { getCommercialClientId } from "./commercialClientId";
 import { useCommercialFloatingNotice } from "./CommercialFloatingNoticeProvider";
+import { usePortfolioScope } from "./PortfolioScopeContext";
 import {
   buildCommercialRealtimeWsUrl,
-  fallbackWorklistNotification,
   parseCommercialRealtimeEvent,
+  resolveWorklistNotification,
   type CommercialWorklistChangedEvent,
 } from "../constants/realtime";
 
@@ -211,12 +212,15 @@ export function useCommercialWorklistSync(onChanged: () => void, enabled = true)
 
 /**
  * Toast in-app para eventos WS de outros clientes (anti-eco por clientId).
+ * Mensagem personalizada: responsável vê «{ator} atribuiu a você».
  * Refetch da fila fica em `useCommercialWorklistSync`.
  */
 export function useCommercialRealtimeNotices(enabled = true) {
   const { subscribeWorklistChanged } = useCommercialRealtime();
   const { notifyInfo, notifySuccess, notifyWarning } = useCommercialFloatingNotice();
+  const { myPortfolio } = usePortfolioScope();
   const clientId = getCommercialClientId();
+  const currentUserId = myPortfolio?.user_id ?? null;
 
   useEffect(() => {
     if (!enabled) return;
@@ -224,10 +228,7 @@ export function useCommercialRealtimeNotices(enabled = true) {
       if (event.actorClientId && event.actorClientId === clientId) {
         return;
       }
-      const payload =
-        event.notification && event.notification.message
-          ? event.notification
-          : fallbackWorklistNotification(event);
+      const payload = resolveWorklistNotification(event, currentUserId);
       const options = {
         title: payload.title,
         id: `cm-rt-${event.taskId}-${event.reason}`,
@@ -243,5 +244,13 @@ export function useCommercialRealtimeNotices(enabled = true) {
       }
       notifyInfo(payload.message, options);
     });
-  }, [clientId, enabled, notifyInfo, notifySuccess, notifyWarning, subscribeWorklistChanged]);
+  }, [
+    clientId,
+    currentUserId,
+    enabled,
+    notifyInfo,
+    notifySuccess,
+    notifyWarning,
+    subscribeWorklistChanged,
+  ]);
 }
