@@ -13,7 +13,12 @@ def _is_commercial_public_path(path: str) -> bool:
         return True
     if normalized in {"/ready", "/health"}:
         return True
-    return normalized.endswith("/commercial-api/ready") or normalized.endswith("/commercial-api/health")
+    if normalized.endswith("/commercial-api/ready") or normalized.endswith("/commercial-api/health"):
+        return True
+    # Token vai na query; o handler valida JWT + RBAC (como o Transformômetro).
+    if normalized.endswith("/commercial/realtime/ws"):
+        return True
+    return False
 
 
 async def jwt_middleware(request, call_next):

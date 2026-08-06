@@ -8,9 +8,10 @@ Atualização live da fila de tarefas (Meu dia / Início) **e** toasts in-app vi
 wss://{host}/apps/commercial-api/commercial/realtime/ws?token={jwt}&client_id={uuid}
 ```
 
-- **Auth:** JWT em query `token` (`validate_token`); exige permissão `commercial.worklist.view` (ou alias legado).
+- **Auth:** JWT em query `token` → `validate_token` + **RBAC via core-api** (`load_user_rbac`), igual ao middleware HTTP. Exige `commercial.worklist.view` (ou alias). O access token Keycloak **não** carrega permissões Delpi — checar só o JWT quebrava o handshake (401 em loop).
 - **Salas:** `user:{sub}` sempre; `team` se gestor (`commercial.seller-portfolios.manage`).
 - **Keepalive:** cliente envia texto `ping`; servidor responde `{ "type": "pong" }`.
+- **Middleware HTTP:** path `/commercial/realtime/ws` é público no JWT middleware (token na query; auth no handler).
 
 ## Evento
 
