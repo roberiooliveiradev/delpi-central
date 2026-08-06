@@ -67,10 +67,13 @@ class TvCopilotSuggestOpsService:
             prefer_kpi=prefer_kpi,
         )
         max_ops = TvCopilotContentService.setting_int("maxSuggestOps", 5)
+        destructive_intent = cls._has_destructive_intent(normalized)
 
         scored: list[tuple[float, dict[str, Any]]] = []
         for cap in TvCopilotContentService.capabilities():
-            score = cls._score_capability(cap, normalized)
+            score = cls._score_capability(
+                cap, normalized, destructive_intent=destructive_intent
+            )
             if score <= 0:
                 continue
             scored.append((score, cap))
@@ -230,8 +233,11 @@ class TvCopilotSuggestOpsService:
                 value = str(item or "").strip()
                 if value:
                     return value
-        single = host.get("selectedBlockId")
-        return str(single or "").strip()
+        single = str(host.get("selectedBlockId") or "").strip()
+        if single:
+            return single
+        # Host pode enviar só o foco (contrato buildTvDashboardHostContext).
+        return str(host.get("focusBlockId") or "").strip()
 
     @classmethod
     def _normalize_hex(cls, raw: str) -> str:
@@ -612,17 +618,49 @@ class TvCopilotSuggestOpsService:
     def _action_terms_for_capability(cls, cap: dict[str, Any]) -> list[str]:
         raw_terms = cap.get("actionTerms")
         if isinstance(raw_terms, list) and raw_terms:
-            return [str(item).strip().lower() for item in raw_terms if str(item).strip()]
-        return TvCopilotContentService.action_terms_for_set(
-            str(cap.get("actionTermSet") or "any")
-        )
+            terms = [str(item).strip().lower() for item in raw_terms if str(item).strip()]
+        else:
+            terms = TvCopilotContentService.action_terms_for_set(
+                str(cap.get("actionTermSet") or "any")
+            )
+        if cls._is_destructive_capability(cap):
+            return terms
+        # Verbo de remoção não reforça capability construtiva («apague» ≠ criar texto).
+        destructive = set(TvCopilotContentService.destructive_action_terms())
+        return [term for term in terms if term not in destructive]
+
+    @classmethod
+    def _is_destructive_capability(cls, cap: dict[str, Any]) -> bool:
+        """Polaridade da capability: declarada no catálogo ou inferida pela op ``delete_*``."""
+        declared = str(cap.get("intentPolarity") or "").strip().lower()
+        if declared in {"destructive", "constructive"}:
+            return declared == "destructive"
+        return str(cap.get("op") or "").strip().startswith("delete_")
+
+    @classmethod
+    def _has_destructive_intent(cls, normalized: str) -> bool:
+        for term in TvCopilotContentService.destructive_action_terms():
+            if cls._marker_hit(term, normalized):
+                return True
+        return False
 
     @classmethod
     def _marker_hit(cls, needle: str, haystack: str) -> bool:
         return TvCopilotCommandRecognitionService.marker_hit(needle, haystack)
 
     @classmethod
-    def _score_capability(cls, cap: dict[str, Any], normalized: str) -> float:
+    def _score_capability(
+        cls,
+        cap: dict[str, Any],
+        normalized: str,
+        *,
+        destructive_intent: bool = False,
+    ) -> float:
+        # Pedido de remoção só concorre com capability destrutiva (e vice-versa):
+        # evita «apague a caixa de texto» virar criação de texto vazio.
+        if destructive_intent != cls._is_destructive_capability(cap):
+            return 0.0
+
         exclude = cap.get("excludeMarkers")
         if isinstance(exclude, list):
             for marker in exclude:

@@ -80,6 +80,46 @@ def test_suggest_apague_bloco_sem_selecao_clarifica():
     assert "selecione" in str(result.get("reason") or "").lower()
 
 
+def test_suggest_apague_caixa_de_texto_selecionada_delete_block():
+    """Regressão: «apague a caixa de texto» não pode virar upsert_block vazio."""
+    result = TvCopilotSuggestOpsService.suggest(
+        message="apague a caixa de texto selecionada",
+        host_context={
+            "selectedBlockIds": ["txt_de88186807"],
+            "slideId": "s1",
+            "playlistId": "pl-1",
+        },
+    )
+    assert result["ops"] == [
+        {"op": "delete_block", "blockId": "txt_de88186807"}
+    ]
+    assert result["matchedCapabilityKeys"] == ["delete_block"]
+    assert all(op.get("op") != "upsert_block" for op in result["ops"])
+
+
+def test_suggest_exclua_kpi_usa_focus_block_id():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="exclua o kpi selecionado",
+        host_context={
+            "focusBlockId": "kpi-1",
+            "slideId": "s1",
+            "playlistId": "pl-1",
+        },
+    )
+    assert result["ops"] == [{"op": "delete_block", "blockId": "kpi-1"}]
+
+
+def test_suggest_apague_caixa_sem_selecao_clarifica_nao_cria_texto():
+    result = TvCopilotSuggestOpsService.suggest(
+        message="apague a caixa de texto",
+        host_context={"slideId": "s1", "playlistId": "pl-1"},
+    )
+    assert result["ops"] == []
+    assert "delete_block" in result["matchedCapabilityKeys"]
+    assert "upsert_block" not in result["matchedCapabilityKeys"]
+    assert result.get("clarificationKey") == "suggestNeedSelection"
+
+
 def test_suggest_empty_message_returns_no_ops():
     result = TvCopilotSuggestOpsService.suggest(message="   ", host_context={})
     assert result["ops"] == []

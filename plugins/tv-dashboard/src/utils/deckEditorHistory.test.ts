@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { Playlist, Slide } from "../api/tvDashboardApi";
-import { buildDeckEditorSnapshot, cloneDeckEditorSnapshot, pushDeckHistory } from "./deckEditorHistory";
+import {
+  buildDeckEditorSnapshot,
+  cloneDeckEditorSnapshot,
+  pickRemoteUndoPointer,
+  pushDeckHistory,
+  shouldStackRemoteDeckUndo,
+} from "./deckEditorHistory";
 
 function slide(id: string, sortOrder: number): Slide {
   return {
@@ -58,5 +64,69 @@ describe("deckEditorHistory", () => {
     live.blocks[0]!.style.borderRadius = 40;
     expect(stored.blocks[0]!.style.rotation).toBe(0);
     expect(stored.blocks[0]!.style.borderRadius).toBe(0);
+  });
+});
+
+describe("shouldStackRemoteDeckUndo", () => {
+  it("empilha mutação remota (IA/outro editor) sem pending local", () => {
+    expect(
+      shouldStackRemoteDeckUndo({
+        previousRevision: 2,
+        currentRevision: 3,
+        lastLocalRevision: null,
+        pendingLocalChanges: 0,
+        restoring: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("não empilha eco do próprio save nem restore em curso", () => {
+    expect(
+      shouldStackRemoteDeckUndo({
+        previousRevision: 2,
+        currentRevision: 3,
+        lastLocalRevision: 3,
+        pendingLocalChanges: 0,
+        restoring: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldStackRemoteDeckUndo({
+        previousRevision: 2,
+        currentRevision: 3,
+        lastLocalRevision: null,
+        pendingLocalChanges: 1,
+        restoring: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldStackRemoteDeckUndo({
+        previousRevision: 2,
+        currentRevision: 3,
+        lastLocalRevision: null,
+        pendingLocalChanges: 0,
+        restoring: true,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("pickRemoteUndoPointer", () => {
+  it("prefere o snapshot da revisão vista antes da mutação remota", () => {
+    expect(
+      pickRemoteUndoPointer(
+        [
+          { snapshotId: "snap-new", revision: 4 },
+          { snapshotId: "snap-pre", revision: 2 },
+        ],
+        2,
+      ),
+    ).toEqual({ snapshotId: "snap-pre", revision: 2 });
+  });
+
+  it("cai no item mais recente quando o baseline não está na página", () => {
+    expect(
+      pickRemoteUndoPointer([{ snapshotId: "snap-only", revision: 5 }], 2),
+    ).toEqual({ snapshotId: "snap-only", revision: 5 });
   });
 });

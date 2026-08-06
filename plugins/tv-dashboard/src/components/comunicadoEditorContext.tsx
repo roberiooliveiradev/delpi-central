@@ -31,11 +31,12 @@ import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
 import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicadoEditorDrag";
-import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import { useComunicadoEditorHistory, snapshotConfig } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
   shouldForceAcceptRemoteComunicadoValue,
+  shouldStackRemoteComunicadoUndo,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
 import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
@@ -452,6 +453,18 @@ export function ComunicadoEditorProvider({
       return;
     }
 
+    if (
+      shouldStackRemoteComunicadoUndo({
+        identityChanged,
+        remoteRevisionChanged,
+        fromHistoryRestore: forceAcceptFromHistory,
+        incomingFingerprint: incomingFp,
+        currentFingerprint: currentFp,
+      })
+    ) {
+      pushPast(snapshotConfig(configRef.current));
+    }
+
     setConfig(enriched);
     lastEmittedFingerprintRef.current = incomingFp;
     if (identityChanged) {
@@ -463,6 +476,7 @@ export function ComunicadoEditorProvider({
     playlistId,
     slideId,
     remoteRevision,
+    pushPast,
     resetLocalHistory,
     clearDragSnapshot,
     deckHistory?.historyEpoch,

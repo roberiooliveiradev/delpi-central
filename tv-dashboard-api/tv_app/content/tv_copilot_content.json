@@ -172,6 +172,23 @@
     "insira",
     "inserir"
   ],
+  "destructiveActionTerms": [
+    "apague",
+    "apagar",
+    "apaga",
+    "remova",
+    "remover",
+    "remove",
+    "exclua",
+    "excluir",
+    "exclui",
+    "delete",
+    "deletar",
+    "tire",
+    "tirar",
+    "elimine",
+    "eliminar"
+  ],
   "messages": {
     "invalidEnvelope": "Envelope TvCopilotPatch inválido: informe target e ops.",
     "unknownOp": "Operação não suportada: {op}.",
@@ -1212,9 +1229,6 @@
       "excludeMarkers": [
         "script m",
         "power query",
-        "apagar bloco",
-        "apague o bloco",
-        "remover bloco",
         "kpi",
         "indicador",
         "gráfico",
@@ -1317,21 +1331,35 @@
       "op": "delete_block",
       "whenToUse": "Remover um bloco do slide pelo blockId (ou seleção do host).",
       "contentMarkers": [
-        "apague o bloco",
-        "apagar o bloco",
-        "apagar bloco",
-        "remover bloco",
-        "remova o bloco",
-        "remova o elemento",
-        "remover elemento",
-        "excluir bloco",
-        "excluir elemento",
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "bloco de texto",
+        "texto",
+        "título",
+        "titulo",
+        "kpi",
+        "indicador",
+        "gráfico",
+        "grafico",
+        "tabela",
+        "imagem",
+        "forma",
+        "ícone",
+        "icone",
+        "selecionado",
+        "selecionada",
+        "seleção",
+        "selecao",
         "delete block"
       ],
       "excludeMarkers": [
-        "apagar slide",
-        "apague o slide",
-        "excluir tela"
+        "slide",
+        "tela",
+        "seção",
+        "secao",
+        "programação",
+        "programacao"
       ],
       "actionTermSet": "mutation",
       "requiresFilledPlaceholders": [
@@ -1509,6 +1537,8 @@
       "op": "delete_slide",
       "whenToUse": "Excluir o slide indicado em target.slideId.",
       "contentMarkers": [
+        "slide",
+        "tela",
         "apagar slide",
         "apague o slide",
         "excluir slide",
@@ -1516,9 +1546,11 @@
         "remover slide"
       ],
       "excludeMarkers": [
-        "apagar bloco",
-        "apague o bloco",
-        "remover bloco"
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "seção",
+        "secao"
       ],
       "actionTermSet": "mutation",
       "payloadTemplate": {
@@ -1546,10 +1578,18 @@
       "op": "delete_section",
       "whenToUse": "Excluir uma seção (não a principal).",
       "contentMarkers": [
+        "seção",
+        "secao",
         "apagar seção",
         "excluir seção"
       ],
-      "excludeMarkers": [],
+      "excludeMarkers": [
+        "bloco",
+        "elemento",
+        "caixa de texto",
+        "slide",
+        "tela"
+      ],
       "actionTermSet": "mutation",
       "payloadTemplate": {
         "op": "delete_section",

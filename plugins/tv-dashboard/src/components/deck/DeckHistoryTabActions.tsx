@@ -42,15 +42,13 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
   );
   /*
    * Slide custom: Desfazer/Refazer = pilha local imediata do editor.
-   * Outras telas / sem editor: ponteiros de revisão do deck.
-   * (Painel de revisões continua no histórico da programação.)
+   * Sem passo local (ex.: a IA criou/apagou slide), cai nos ponteiros de revisão
+   * do deck — mesma precedência do teclado (comunicado 60 → deck 50).
    */
-  const canUndo = editor
-    ? Boolean(editor.canUndo)
-    : Boolean(history?.canUndo && !history.restoring);
-  const canRedo = editor
-    ? Boolean(editor.canRedo)
-    : Boolean(history?.canRedo && !history.restoring);
+  const deckCanUndo = Boolean(history?.canUndo && !history.restoring);
+  const deckCanRedo = Boolean(history?.canRedo && !history.restoring);
+  const canUndo = editor ? Boolean(editor.canUndo) || deckCanUndo : deckCanUndo;
+  const canRedo = editor ? Boolean(editor.canRedo) || deckCanRedo : deckCanRedo;
 
   if (!history && !onBack && !hasDataBlocks && !editor) return null;
 
@@ -79,7 +77,7 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
                   className="td-deck-chrome__history-btn"
                   disabled={!canUndo}
                   onClick={() => {
-                    if (editor) {
+                    if (editor?.canUndo) {
                       editor.undo();
                       return;
                     }
@@ -100,7 +98,7 @@ export function DeckHistoryTabActions({ onBack, backLabel, backHint }: Props) {
                   className="td-deck-chrome__history-btn"
                   disabled={!canRedo}
                   onClick={() => {
-                    if (editor) {
+                    if (editor?.canRedo) {
                       editor.redo();
                       return;
                     }

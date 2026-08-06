@@ -187,4 +187,43 @@ describe("useDeckEditorHistory", () => {
     expect(result.current.canUndo).toBe(true);
     expect(result.current.canRedo).toBe(false);
   });
+
+  it("empilha undo após mutação remota sem pending local (copiloto/outro editor)", async () => {
+    const { result } = renderHook(() =>
+      useDeckEditorHistory({
+        playlistId: "pl-1",
+        getPlaylist: () => playlist,
+        getSelectedSlideId: () => null,
+        getLiveComunicadoConfig: () => null,
+        getComunicadoSlideId: () => null,
+        applySnapshot: vi.fn(),
+      }),
+    );
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.canUndo).toBe(false);
+
+    vi.mocked(listPlaylistHistory).mockResolvedValue({
+      items: [
+        { snapshotId: "snap-pre-ai", revision: 2, createdAt: "2026-07-16T12:00:00Z" },
+      ],
+      page: 1,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+      hasNext: false,
+      currentRevision: 3,
+    });
+    await act(async () => result.current.handleRemoteUpdate());
+    expect(result.current.canUndo).toBe(true);
+
+    vi.mocked(restorePlaylistHistorySnapshot).mockResolvedValue({
+      ...playlist,
+      revision: 4,
+    });
+    vi.mocked(listPlaylistHistory).mockResolvedValue(page("snap-after-undo", 4));
+    await act(async () => {
+      await result.current.undo();
+    });
+    expect(restorePlaylistHistorySnapshot).toHaveBeenCalledWith("pl-1", "snap-pre-ai", 3);
+  });
 });

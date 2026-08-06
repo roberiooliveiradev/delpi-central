@@ -77,16 +77,30 @@ class TvCopilotContentService:
         return [str(item).strip().lower() for item in raw if str(item).strip()]
 
     @classmethod
+    def destructive_action_terms(cls) -> list[str]:
+        """Verbos que indicam remoção (apagar, excluir, …) — vocabulário do catálogo."""
+        raw = _load().get("destructiveActionTerms")
+        if not isinstance(raw, list):
+            return []
+        return [str(item).strip().lower() for item in raw if str(item).strip()]
+
+    @classmethod
     def action_terms_for_set(cls, term_set: str) -> list[str]:
         key = str(term_set or "").strip().lower()
         if key == "create":
             return cls.create_action_terms()
         if key == "mutation":
             return cls.mutation_action_terms()
+        if key == "destructive":
+            return cls.destructive_action_terms()
         if key == "any":
             seen: set[str] = set()
             out: list[str] = []
-            for term in [*cls.mutation_action_terms(), *cls.create_action_terms()]:
+            for term in [
+                *cls.mutation_action_terms(),
+                *cls.create_action_terms(),
+                *cls.destructive_action_terms(),
+            ]:
                 if term in seen:
                     continue
                 seen.add(term)

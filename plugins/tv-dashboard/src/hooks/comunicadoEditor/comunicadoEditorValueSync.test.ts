@@ -4,6 +4,7 @@ import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
   shouldForceAcceptRemoteComunicadoValue,
+  shouldStackRemoteComunicadoUndo,
 } from "./comunicadoEditorValueSync";
 
 describe("shouldAcceptExternalComunicadoValue", () => {
@@ -125,5 +126,40 @@ describe("shouldForceAcceptRemoteComunicadoValue", () => {
         }),
       }),
     ).toBe(true);
+  });
+});
+
+describe("shouldStackRemoteComunicadoUndo", () => {
+  it("empilha config pré-IA quando a revisão remota muda o canvas", () => {
+    expect(
+      shouldStackRemoteComunicadoUndo({
+        identityChanged: false,
+        remoteRevisionChanged: true,
+        fromHistoryRestore: false,
+        incomingFingerprint: "pos-ia",
+        currentFingerprint: "pre-ia",
+      }),
+    ).toBe(true);
+  });
+
+  it("não empilha troca de slide nem restore do deck", () => {
+    expect(
+      shouldStackRemoteComunicadoUndo({
+        identityChanged: true,
+        remoteRevisionChanged: true,
+        fromHistoryRestore: false,
+        incomingFingerprint: "a",
+        currentFingerprint: "b",
+      }),
+    ).toBe(false);
+    expect(
+      shouldStackRemoteComunicadoUndo({
+        identityChanged: false,
+        remoteRevisionChanged: true,
+        fromHistoryRestore: true,
+        incomingFingerprint: "a",
+        currentFingerprint: "b",
+      }),
+    ).toBe(false);
   });
 });
