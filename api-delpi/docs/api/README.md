@@ -56,6 +56,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [supplies-stock-balances.md](./supplies-stock-balances.md) | Saldos por armazém (`/supplies/stock-balances`) — qtd produtos + valor QATU×CM1. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [comercial-sales-order-otd.md](./comercial-sales-order-otd.md) | OTD de pedidos de venda. |
+| [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md) | OTD de pedidos de compra (MP). |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
 | [lancamento-notas-fiscais.md](./lancamento-notas-fiscais.md) | Lançamento de NF de entrada — fila, atendimento, conciliação SF1, Já lançada. |
 | [scrap-monitoring.md](./scrap-monitoring.md) | Monitoramento de refugos / scrap. |

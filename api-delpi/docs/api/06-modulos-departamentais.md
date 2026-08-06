@@ -188,7 +188,10 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
-| GET | `/supplies/otd` | On-Time Delivery compras. |
+| GET | `/supplies/otd` | On-Time Delivery compras (geral). |
+| GET | `/supplies/purchase-order-otd` | OTD de pedidos de compra **só MP** (KPI). Ver [supplies-purchase-order-otd.md](./supplies-purchase-order-otd.md). |
+| GET | `/supplies/purchase-order-otd/series` | Série temporal OTD PC MP por filial. |
+| GET | `/supplies/purchase-order-otd/panel` | Painel OTD PC MP — resumo + linhas paginadas. |
 | GET | `/supplies/safety-stock/filters` | Filtros do painel de estoque de segurança. |
 | GET | `/supplies/safety-stock/summary` | Resumo / KPIs de estoque de segurança. |
 | GET | `/supplies/safety-stock/items` | Lista paginada de MPs vs ESTSEG. |
@@ -205,6 +208,12 @@ Doc OPs: [production-pcp-orders.md](./production-pcp-orders.md). View: `VW_PCP_O
 - Views com `WITH (NOLOCK)` (leitura analítica).
 - Cache: resposta completa em `query_cache` (namespace `supplies-otd`, TTL `QUERY_CACHE_TTL_SECONDS`, default 300 s).
 - Console: `operation_id=get_supplies_otd`; caller `strategic-indicators-api` — após o primeiro load do período, polling deve gerar cache hit (&lt; 500 ms).
+
+**Performance (`/supplies/purchase-order-otd*`):**
+
+- Fonte: `VW_PONTUALIDADE_FORNECEDORES` com `WITH (NOLOCK)` e filtro fixo `TIPO_PRODUTO = MP`.
+- Cache KPI: `supplies-purchase-order-otd`; série: `supplies-purchase-order-otd-series` (TTL `QUERY_CACHE_TTL_SECONDS`).
+- Série: um KPI por bucket/filial (mitigado pelo cache do KPI e da série completa).
 
 | GET | `/supplies/stock-value` | Valor de estoque (SB2 atual, fechamento SB9 na `end_date` ou modo híbrido `register_snapshot`). `stock_method=auto|hybrid|estimated|official_closure`. Ver [supplies-estoque-historico.md](./supplies-estoque-historico.md) e [modo híbrido](../roadmaps/estoque-supplies-modo-hibrido.md). |
 | GET | `/supplies/inventory-turnover` | Giro de estoque (IDD). Herda `stock_method=auto` e expõe `stock_estimation` quando o período é histórico. |

@@ -425,7 +425,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
 /** Rótulos PT-BR das opções de enum — gerados de openapi_param_locale.json enumLabels. */
 export const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
   audit_status: { "closed": "Encerrada", "closed_without_nc_treatment": "Encerrada sem tratamento de NC", "draft": "Rascunho", "evaluation_complete": "Avaliação concluída", "nc_in_progress": "NC em andamento" },
-  branch: { "01": "Filial 01", "02": "Filial 02", "ES": "ES", "SC": "SC", "all": "Todas as filiais" },
+  branch: { "01": "Filial 01", "02": "Filial 02", "ES": "ES", "SC": "SC", "all": "Todas" },
   branch_code: { "01": "Filial 01", "02": "Filial 02" },
   customer_segment: { "new_business": "Novos negócios", "weg": "WEG" },
   department_id: { "commercial": "Comercial", "engineering": "Engenharia", "financial": "Financeiro", "hr": "RH", "production": "Produção", "quality": "Qualidade", "supplies": "Suprimentos" },
@@ -433,7 +433,7 @@ export const ENUM_OPTION_LABELS: Record<string, Record<string, string>> = {
   direction: { "asc": "Crescente", "desc": "Decrescente" },
   evidence_type: { "email": "E-mail", "image": "Imagem", "manual_text": "Texto manual", "message": "Mensagem", "other": "Outro", "pdf": "PDF", "spreadsheet": "Planilha", "system_reference": "Referência do sistema" },
   filial: { "01": "Filial 01", "02": "Filial 02" },
-  filial_id: { "01": "Filial 01", "02": "Filial 02", "all": "Todas as filiais" },
+  filial_id: { "01": "Filial 01", "02": "Filial 02", "all": "Todas" },
   granularity: { "auto": "Automático", "day": "Dia", "month": "Mês", "week": "Semana", "year": "Ano" },
   group_by: { "branch": "Filial", "branch_summary": "Resumo por filial", "day": "Dia", "day_work_center": "Dia × centro de trabalho", "general": "Geral", "product": "Produto", "product_group": "Grupo de produto", "unit": "Unidade" },
   inspecao_status: { "all": "Todos", "inspecionou": "Inspecionou", "nao_inspecionou": "Não inspecionou", "sem_cadastro": "Não possui inspeção cadastrada" },

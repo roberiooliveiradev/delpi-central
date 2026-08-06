@@ -4073,6 +4073,53 @@
       },
       "category": "supplies"
     },
+    "get_supplies_purchase_order_otd": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD (raw materials)",
+          "description": "On-time delivery percentage for purchase-order lines of raw materials (MP).",
+          "label": "Purchase order OTD (MP)",
+          "whenToUse": "Use for MP purchase-order on-time delivery KPI (not general supplies OTD)."
+        },
+        "pt-BR": {
+          "label": "OTD pedidos de compra (MP)",
+          "summary": "OTD de pedidos de compra — matéria-prima",
+          "description": "Percentual de linhas de pedido de compra de MP recebidas no prazo (VW_PONTUALIDADE).",
+          "whenToUse": "Use para atendimento de PC de matéria-prima no prazo (não confundir com /supplies/otd geral)."
+        }
+      },
+      "category": "supplies"
+    },
+    "get_supplies_purchase_order_otd_panel": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD panel (MP)",
+          "description": "Paged purchase-order OTD lines for raw materials with on_time/late filter.",
+          "label": "Purchase order OTD panel (MP)"
+        },
+        "pt-BR": {
+          "label": "Painel OTD pedidos de compra (MP)",
+          "summary": "Painel OTD de pedidos de compra (MP)",
+          "description": "Listagem paginada de linhas de PC de MP no prazo ou atrasadas."
+        }
+      },
+      "category": "supplies"
+    },
+    "get_supplies_purchase_order_otd_series": {
+      "locale": {
+        "en": {
+          "summary": "Purchase order OTD series (MP)",
+          "description": "Time series of purchase-order OTD for raw materials by branch.",
+          "label": "Purchase order OTD series (MP)"
+        },
+        "pt-BR": {
+          "label": "Série OTD pedidos de compra (MP)",
+          "summary": "Série temporal OTD de pedidos de compra (MP)",
+          "description": "Série temporal do OTD de PC de matéria-prima por filial."
+        }
+      },
+      "category": "supplies"
+    },
     "get_supplies_safety_stock_filters": {
       "category": "supplies",
       "locale": {

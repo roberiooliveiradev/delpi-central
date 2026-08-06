@@ -3,7 +3,7 @@
   "api_title": "API DELPI",
   "api_version": "1.0.0",
   "openapi_version": "3.0.3",
-  "operation_count": 528,
+  "operation_count": 531,
   "operations": [
     {
       "method": "POST",
@@ -77433,6 +77433,1080 @@
           "description": "Include BOM components when true"
         }
       ]
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd",
+      "operationId": "get_supplies_purchase_order_otd",
+      "summary": "Indicador — Otd de pedidos de compra (mp)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_order_otd",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Purchase order OTD (raw materials)",
+            "description": "On-time delivery percentage for purchase-order lines of raw materials (MP).",
+            "whenToUse": "Use for MP purchase-order on-time delivery KPI (not general supplies OTD).",
+            "label": "Purchase order OTD (MP)"
+          },
+          "pt-BR": {
+            "summary": "OTD de pedidos de compra — matéria-prima",
+            "description": "Percentual de linhas de pedido de compra de MP recebidas no prazo (VW_PONTUALIDADE).",
+            "whenToUse": "Use para atendimento de PC de matéria-prima no prazo (não confundir com /supplies/otd geral).",
+            "label": "OTD pedidos de compra (MP)"
+          }
+        },
+        "tv": {
+          "whenToUse": "Use para atendimento de PC de matéria-prima no prazo (não confundir com /supplies/otd geral).",
+          "description": "Percentual de linhas de pedido de compra de MP recebidas no prazo (VW_PONTUALIDADE).",
+          "label": "OTD pedidos de compra (MP)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna OTD de pedidos de compra (MP) via API DELPI. Indicador agregado ou KPI pontual. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/panel",
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "summary": "Lista paginada — Painel otd de pedidos de compra (mp)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "status",
+          "in": "query",
+          "required": false,
+          "description": "OTD status filter: on_time or late.",
+          "enum": [
+            "on_time",
+            "late"
+          ],
+          "type": "string"
+        },
+        {
+          "name": "page",
+          "in": "query",
+          "required": false,
+          "description": "Page number in paginated listing.",
+          "type": "integer",
+          "default": 1
+        },
+        {
+          "name": "page_size",
+          "in": "query",
+          "required": false,
+          "description": "Rows per page.",
+          "type": "integer",
+          "default": 20
+        },
+        {
+          "name": "sort_by",
+          "in": "query",
+          "required": false,
+          "description": "Sort by query parameter.",
+          "type": "string"
+        },
+        {
+          "name": "sort_dir",
+          "in": "query",
+          "required": false,
+          "description": "Sort direction: asc or desc.",
+          "type": "string",
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_order_otd_panel",
+        "shape": "paged_list",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "page": {
+            "locale": {
+              "en": {
+                "description": "Page number in paginated listing.",
+                "label": "Page"
+              },
+              "pt-BR": {
+                "description": "Número da página na listagem paginada.",
+                "label": "Página"
+              }
+            }
+          },
+          "page_size": {
+            "locale": {
+              "en": {
+                "description": "Rows per page.",
+                "label": "Page size"
+              },
+              "pt-BR": {
+                "description": "Quantidade de linhas por página.",
+                "label": "Tamanho da página"
+              }
+            }
+          },
+          "sort_by": {
+            "locale": {
+              "en": {
+                "description": "Sort by query parameter.",
+                "label": "Sort by"
+              },
+              "pt-BR": {
+                "description": "Campo usado para ordenar a listagem.",
+                "label": "Ordenar por"
+              }
+            },
+            "enumLabels": {
+              "customer_name": {
+                "en": {
+                  "label": "Customer name"
+                },
+                "pt-BR": {
+                  "label": "Nome do cliente"
+                }
+              },
+              "defect_description": {
+                "en": {
+                  "label": "Defect description"
+                },
+                "pt-BR": {
+                  "label": "Descrição do defeito"
+                }
+              },
+              "executed_by": {
+                "en": {
+                  "label": "Executed by"
+                },
+                "pt-BR": {
+                  "label": "Executado por"
+                }
+              },
+              "last_revision_date": {
+                "en": {
+                  "label": "Last revision date"
+                },
+                "pt-BR": {
+                  "label": "Data da última revisão"
+                }
+              },
+              "launch_date": {
+                "en": {
+                  "label": "Launch date"
+                },
+                "pt-BR": {
+                  "label": "Data de lançamento"
+                }
+              },
+              "lmp_number": {
+                "en": {
+                  "label": "LMP number"
+                },
+                "pt-BR": {
+                  "label": "Número LMP"
+                }
+              },
+              "occurrence_date": {
+                "en": {
+                  "label": "Occurrence date"
+                },
+                "pt-BR": {
+                  "label": "Data da ocorrência"
+                }
+              },
+              "problem_tags": {
+                "en": {
+                  "label": "Problem tags"
+                },
+                "pt-BR": {
+                  "label": "Tags do problema"
+                }
+              },
+              "products": {
+                "en": {
+                  "label": "Products"
+                },
+                "pt-BR": {
+                  "label": "Produtos"
+                }
+              },
+              "registered_at": {
+                "en": {
+                  "label": "Registered at"
+                },
+                "pt-BR": {
+                  "label": "Registrado em"
+                }
+              },
+              "released_by": {
+                "en": {
+                  "label": "Released by"
+                },
+                "pt-BR": {
+                  "label": "Liberado por"
+                }
+              },
+              "sale_number": {
+                "en": {
+                  "label": "Sale number"
+                },
+                "pt-BR": {
+                  "label": "Número da venda"
+                }
+              },
+              "status": {
+                "en": {
+                  "label": "Status"
+                },
+                "pt-BR": {
+                  "label": "Status"
+                }
+              }
+            }
+          },
+          "sort_dir": {
+            "locale": {
+              "en": {
+                "description": "Sort direction: asc or desc.",
+                "label": "Sort direction"
+              },
+              "pt-BR": {
+                "description": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
+                "label": "Direção da ordenação"
+              }
+            },
+            "enumLabels": {
+              "asc": {
+                "en": {
+                  "label": "Ascending"
+                },
+                "pt-BR": {
+                  "label": "Crescente"
+                }
+              },
+              "desc": {
+                "en": {
+                  "label": "Descending"
+                },
+                "pt-BR": {
+                  "label": "Decrescente"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "status": {
+            "locale": {
+              "en": {
+                "description": "Status query parameter.",
+                "label": "Status"
+              },
+              "pt-BR": {
+                "description": "Status do registro no fluxo.",
+                "label": "Status"
+              }
+            },
+            "enumLabels": {
+              "1": {
+                "en": {
+                  "label": "Registered (1)"
+                },
+                "pt-BR": {
+                  "label": "Registrada (1)"
+                }
+              },
+              "2": {
+                "en": {
+                  "label": "Under analysis (2)"
+                },
+                "pt-BR": {
+                  "label": "Em análise (2)"
+                }
+              },
+              "3": {
+                "en": {
+                  "label": "Proceeds (3)"
+                },
+                "pt-BR": {
+                  "label": "Procede (3)"
+                }
+              },
+              "4": {
+                "en": {
+                  "label": "Does not proceed (4)"
+                },
+                "pt-BR": {
+                  "label": "Não procede (4)"
+                }
+              },
+              "5": {
+                "en": {
+                  "label": "Cancelled (5)"
+                },
+                "pt-BR": {
+                  "label": "Cancelada (5)"
+                }
+              },
+              "Andamento": {
+                "en": {
+                  "label": "In progress"
+                },
+                "pt-BR": {
+                  "label": "Andamento"
+                }
+              },
+              "Atrasado": {
+                "en": {
+                  "label": "Late"
+                },
+                "pt-BR": {
+                  "label": "Atrasado"
+                }
+              },
+              "Pontual": {
+                "en": {
+                  "label": "On time"
+                },
+                "pt-BR": {
+                  "label": "Pontual"
+                }
+              },
+              "Retornada": {
+                "en": {
+                  "label": "Returned"
+                },
+                "pt-BR": {
+                  "label": "Retornada"
+                }
+              },
+              "Todos": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              },
+              "above_safety_stock": {
+                "en": {
+                  "label": "Above safety stock"
+                },
+                "pt-BR": {
+                  "label": "Acima do estoque de segurança"
+                }
+              },
+              "action_plan_defined": {
+                "en": {
+                  "label": "Action plan defined"
+                },
+                "pt-BR": {
+                  "label": "Plano de ação definido"
+                }
+              },
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todos"
+                }
+              },
+              "aprovado": {
+                "en": {
+                  "label": "Approved"
+                },
+                "pt-BR": {
+                  "label": "Aprovado"
+                }
+              },
+              "archived": {
+                "en": {
+                  "label": "Archived"
+                },
+                "pt-BR": {
+                  "label": "Arquivado"
+                }
+              },
+              "at_safety_stock": {
+                "en": {
+                  "label": "At safety stock"
+                },
+                "pt-BR": {
+                  "label": "No estoque de segurança"
+                }
+              },
+              "below_safety_stock": {
+                "en": {
+                  "label": "Below safety stock"
+                },
+                "pt-BR": {
+                  "label": "Abaixo do estoque de segurança"
+                }
+              },
+              "cancelado": {
+                "en": {
+                  "label": "Cancelled"
+                },
+                "pt-BR": {
+                  "label": "Cancelado"
+                }
+              },
+              "cancelled": {
+                "en": {
+                  "label": "Cancelled"
+                },
+                "pt-BR": {
+                  "label": "Cancelado"
+                }
+              },
+              "closed": {
+                "en": {
+                  "label": "Closed"
+                },
+                "pt-BR": {
+                  "label": "Encerrado"
+                }
+              },
+              "closed_without_nc_treatment": {
+                "en": {
+                  "label": "Closed without NC treatment"
+                },
+                "pt-BR": {
+                  "label": "Encerrada sem tratamento de NC"
+                }
+              },
+              "completed": {
+                "en": {
+                  "label": "Completed"
+                },
+                "pt-BR": {
+                  "label": "Concluído"
+                }
+              },
+              "containment": {
+                "en": {
+                  "label": "Containment"
+                },
+                "pt-BR": {
+                  "label": "Contenção"
+                }
+              },
+              "descontinuado": {
+                "en": {
+                  "label": "Discontinued"
+                },
+                "pt-BR": {
+                  "label": "Descontinuado"
+                }
+              },
+              "done": {
+                "en": {
+                  "label": "Done"
+                },
+                "pt-BR": {
+                  "label": "Concluído"
+                }
+              },
+              "draft": {
+                "en": {
+                  "label": "Draft"
+                },
+                "pt-BR": {
+                  "label": "Rascunho"
+                }
+              },
+              "evaluation_complete": {
+                "en": {
+                  "label": "Evaluation complete"
+                },
+                "pt-BR": {
+                  "label": "Avaliação concluída"
+                }
+              },
+              "implantado": {
+                "en": {
+                  "label": "Implemented"
+                },
+                "pt-BR": {
+                  "label": "Implantado"
+                }
+              },
+              "in_progress": {
+                "en": {
+                  "label": "In progress"
+                },
+                "pt-BR": {
+                  "label": "Em andamento"
+                }
+              },
+              "late": {
+                "en": {
+                  "label": "Late"
+                },
+                "pt-BR": {
+                  "label": "Atrasado"
+                }
+              },
+              "nc_in_progress": {
+                "en": {
+                  "label": "NC in progress"
+                },
+                "pt-BR": {
+                  "label": "NC em andamento"
+                }
+              },
+              "on_time": {
+                "en": {
+                  "label": "On time"
+                },
+                "pt-BR": {
+                  "label": "No prazo"
+                }
+              },
+              "open": {
+                "en": {
+                  "label": "Open"
+                },
+                "pt-BR": {
+                  "label": "Aberto"
+                }
+              },
+              "outlier": {
+                "en": {
+                  "label": "Outlier"
+                },
+                "pt-BR": {
+                  "label": "Fora da faixa"
+                }
+              },
+              "published": {
+                "en": {
+                  "label": "Published"
+                },
+                "pt-BR": {
+                  "label": "Publicado"
+                }
+              },
+              "recebido": {
+                "en": {
+                  "label": "Received"
+                },
+                "pt-BR": {
+                  "label": "Recebido"
+                }
+              },
+              "root_cause_analysis": {
+                "en": {
+                  "label": "Root cause analysis"
+                },
+                "pt-BR": {
+                  "label": "Análise de causa raiz"
+                }
+              },
+              "triage": {
+                "en": {
+                  "label": "Triage"
+                },
+                "pt-BR": {
+                  "label": "Triagem"
+                }
+              },
+              "valid": {
+                "en": {
+                  "label": "Valid"
+                },
+                "pt-BR": {
+                  "label": "Válido"
+                }
+              },
+              "waiting_validation": {
+                "en": {
+                  "label": "Waiting validation"
+                },
+                "pt-BR": {
+                  "label": "Aguardando validação"
+                }
+              },
+              "without_safety_stock": {
+                "en": {
+                  "label": "Without safety stock"
+                },
+                "pt-BR": {
+                  "label": "Sem estoque de segurança"
+                }
+              },
+              "won": {
+                "en": {
+                  "label": "Won"
+                },
+                "pt-BR": {
+                  "label": "Ganha"
+                }
+              }
+            }
+          }
+        },
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Purchase order OTD panel (MP)",
+            "description": "Paged purchase-order OTD lines for raw materials with on_time/late filter.",
+            "label": "Purchase order OTD panel (MP)"
+          },
+          "pt-BR": {
+            "summary": "Painel OTD de pedidos de compra (MP)",
+            "description": "Listagem paginada de linhas de PC de MP no prazo ou atrasadas.",
+            "label": "Painel OTD pedidos de compra (MP)"
+          }
+        },
+        "tv": {
+          "description": "Listagem paginada de linhas de PC de MP no prazo ou atrasadas.",
+          "label": "Painel OTD pedidos de compra (MP)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna Painel OTD de pedidos de compra (MP) via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+    },
+    {
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/series",
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "summary": "Indicador — Série temporal otd de pedidos de compra (mp)",
+      "tags": [
+        "Suprimentos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "granularity",
+          "in": "query",
+          "required": false,
+          "description": "Series bucket size.",
+          "type": "string",
+          "default": "month",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "year"
+          ]
+        },
+        {
+          "name": "start_date",
+          "in": "query",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "in": "query",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "in": "query",
+          "required": false,
+          "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when consolidated access is allowed.",
+          "enum": [
+            "all",
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "supplies_purchase_order_otd_series",
+        "shape": "scalar",
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Branch scope: all (no branch filter), 01 or 02. Empty defaults to all when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Escopo: all (sem filtro de filial), 01 ou 02. Vazio equivale a all, quando permitido.",
+                "label": "Filial"
+              }
+            },
+            "enumLabels": {
+              "all": {
+                "en": {
+                  "label": "All"
+                },
+                "pt-BR": {
+                  "label": "Todas"
+                }
+              },
+              "01": {
+                "en": {
+                  "label": "Branch 01"
+                },
+                "pt-BR": {
+                  "label": "Filial 01"
+                }
+              },
+              "02": {
+                "en": {
+                  "label": "Branch 02"
+                },
+                "pt-BR": {
+                  "label": "Filial 02"
+                }
+              },
+              "ES": {
+                "en": {
+                  "label": "ES"
+                },
+                "pt-BR": {
+                  "label": "ES"
+                }
+              },
+              "SC": {
+                "en": {
+                  "label": "SC"
+                },
+                "pt-BR": {
+                  "label": "SC"
+                }
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "granularity": {
+            "locale": {
+              "en": {
+                "description": "Series bucket size: day, week, month or year.",
+                "label": "Granularity"
+              },
+              "pt-BR": {
+                "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
+                "label": "Granularidade"
+              }
+            },
+            "enumLabels": {
+              "auto": {
+                "en": {
+                  "label": "Auto"
+                },
+                "pt-BR": {
+                  "label": "Automático"
+                }
+              },
+              "day": {
+                "en": {
+                  "label": "Day"
+                },
+                "pt-BR": {
+                  "label": "Dia"
+                }
+              },
+              "month": {
+                "en": {
+                  "label": "Month"
+                },
+                "pt-BR": {
+                  "label": "Mês"
+                }
+              },
+              "week": {
+                "en": {
+                  "label": "Week"
+                },
+                "pt-BR": {
+                  "label": "Semana"
+                }
+              },
+              "year": {
+                "en": {
+                  "label": "Year"
+                },
+                "pt-BR": {
+                  "label": "Ano"
+                }
+              }
+            }
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "category": "supplies",
+        "locale": {
+          "en": {
+            "summary": "Purchase order OTD series (MP)",
+            "description": "Time series of purchase-order OTD for raw materials by branch.",
+            "label": "Purchase order OTD series (MP)"
+          },
+          "pt-BR": {
+            "summary": "Série temporal OTD de pedidos de compra (MP)",
+            "description": "Série temporal do OTD de PC de matéria-prima por filial.",
+            "label": "Série OTD pedidos de compra (MP)"
+          }
+        },
+        "tv": {
+          "description": "Série temporal do OTD de PC de matéria-prima por filial.",
+          "label": "Série OTD pedidos de compra (MP)"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Retorna Série temporal OTD de pedidos de compra (MP) via API DELPI. Indicador agregado ou KPI pontual. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
     }
   ],
   "paths": {

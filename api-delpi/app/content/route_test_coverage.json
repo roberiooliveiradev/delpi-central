@@ -2,8 +2,8 @@
   "version": 1,
   "generatedAt": "2026-08-06",
   "baselineOperationCount": 528,
-  "operationCount": 528,
-  "coveredCount": 526,
+  "operationCount": 531,
+  "coveredCount": 529,
   "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
@@ -176,8 +176,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 16,
-      "covered": 16,
+      "total": 19,
+      "covered": 19,
       "gap": 0,
       "exempt": 0
     },
@@ -4940,6 +4940,33 @@
       "module": "process-inspection-plans",
       "entity": "process_inspection_plans_product",
       "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_panel",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/panel",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd_panel",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_purchase_order_otd_series",
+      "method": "GET",
+      "path": "/supplies/purchase-order-otd/series",
+      "module": "supplies",
+      "entity": "supplies_purchase_order_otd_series",
+      "shape": "scalar",
       "status": "covered"
     }
   ]

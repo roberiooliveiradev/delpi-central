@@ -115,6 +115,15 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Suprimentos
     "get_supplies_cpv": RouteContract("supplies_cpv", "scalar"),
     "get_supplies_otd": RouteContract("supplies_otd", "scalar"),
+    "get_supplies_purchase_order_otd": RouteContract(
+        "supplies_purchase_order_otd", "scalar"
+    ),
+    "get_supplies_purchase_order_otd_series": RouteContract(
+        "supplies_purchase_order_otd_series", "scalar"
+    ),
+    "get_supplies_purchase_order_otd_panel": RouteContract(
+        "supplies_purchase_order_otd_panel", "paged_list"
+    ),
     "get_supplies_stock_value": RouteContract("supplies_stock_value", "scalar"),
     "get_supplies_stock_balances_summary": RouteContract(
         "supplies_stock_balances_summary", "playbook_report"

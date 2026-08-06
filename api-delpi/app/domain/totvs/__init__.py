@@ -1,5 +1,11 @@
 """Domínio transversal — convenções TOTVS/Protheus da Delpi."""
 
+from app.domain.totvs.protheus_product_types import (
+    PRODUCT_TYPE_FINISHED_GOOD,
+    PRODUCT_TYPE_INTERMEDIATE,
+    PRODUCT_TYPE_LABELS_PT,
+    PRODUCT_TYPE_RAW_MATERIAL,
+)
 from app.domain.totvs.protheus_warehouses import (
     AVAILABLE_BALANCE_WAREHOUSES,
     COST_UNIT_WAREHOUSE,
@@ -12,6 +18,10 @@ from app.domain.totvs.protheus_warehouses import (
 __all__ = [
     "AVAILABLE_BALANCE_WAREHOUSES",
     "COST_UNIT_WAREHOUSE",
+    "PRODUCT_TYPE_FINISHED_GOOD",
+    "PRODUCT_TYPE_INTERMEDIATE",
+    "PRODUCT_TYPE_LABELS_PT",
+    "PRODUCT_TYPE_RAW_MATERIAL",
     "WAREHOUSE_ALMOXARIFADO",
     "WAREHOUSE_FABRICA",
     "WAREHOUSE_LABELS_PT",

@@ -13,7 +13,9 @@ from app.application.dto.production.production_otd_series_request import (
     ProductionOtdSeriesRequest,
 )
 from app.application.dto.ppm.ppm_series_request import PpmSeriesRequest
-
+from app.application.dto.supplies.purchase_order_otd_series_request import (
+    PurchaseOrderOtdSeriesRequest,
+)
 
 def commercial_rol_series_cache_key(request: CommercialRolSeriesRequest) -> str:
     return "|".join(
@@ -50,6 +52,20 @@ def commercial_sales_order_otd_series_cache_key(
             request.date_end or "",
             request.branch or "",
             request.customer_segment or "",
+        ]
+    )
+
+
+def supplies_purchase_order_otd_series_cache_key(
+    request: PurchaseOrderOtdSeriesRequest,
+) -> str:
+    return "|".join(
+        [
+            "supplies-purchase-order-otd-series",
+            request.granularity,
+            request.date_start or "",
+            request.date_end or "",
+            request.branch or "",
         ]
     )
 

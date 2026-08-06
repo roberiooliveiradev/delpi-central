@@ -13,6 +13,17 @@ Parte da [biblioteca de padrões TOTVS](./README.md).
 | `B1_UM` | Unidade de medida | Ver [unidades-medida.md](./unidades-medida.md) |
 | `B1_CUSTD` | Custo padrão | Fallback de valoração quando `B2_CM1` do almoxarifado falta — [armazem-custo.md](./armazem-custo.md) |
 | `B1_TPMAT` | Produto de terceiro (SX3) | `1` = Não · `2` = Sim |
+| `B1_TIPO` | Tipo de produto | `MP` matéria-prima · `PA` acabado · `PI` intermediário — constante `PRODUCT_TYPE_RAW_MATERIAL` em `protheus_product_types.py` |
+
+---
+
+## Tipo de produto (`B1_TIPO`)
+
+Filtros de estoque de segurança e **OTD de pedidos de compra MP** usam `B1_TIPO = 'MP'` (ou `TIPO_PRODUTO` nas views de pontualidade).
+
+Constante: `PRODUCT_TYPE_RAW_MATERIAL = "MP"` em `app/domain/totvs/protheus_product_types.py`.
+
+Doc da rota: [supplies-purchase-order-otd.md](../supplies-purchase-order-otd.md).
 
 ---
 

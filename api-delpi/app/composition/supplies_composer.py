@@ -8,6 +8,15 @@ from app.application.use_cases.supplies.get_inventory_turnover_use_case import (
     GetInventoryTurnoverUseCase,
 )
 from app.application.use_cases.supplies.get_otd_use_case import GetOTDUseCase
+from app.application.use_cases.supplies.get_purchase_order_otd_panel_use_case import (
+    GetPurchaseOrderOtdPanelUseCase,
+)
+from app.application.use_cases.supplies.get_purchase_order_otd_series_use_case import (
+    GetPurchaseOrderOtdSeriesUseCase,
+)
+from app.application.use_cases.supplies.get_purchase_order_otd_use_case import (
+    GetPurchaseOrderOtdUseCase,
+)
 from app.application.use_cases.supplies.get_stock_value_use_case import (
     GetStockValueUseCase,
 )
@@ -28,6 +37,9 @@ from app.infrastructure.persistence.totvs.supplies_repositories.inventory_turnov
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.otd_query_repository import (
     OtdQueryRepository,
+)
+from app.infrastructure.persistence.totvs.supplies_repositories.purchase_order_otd_repository import (
+    PurchaseOrderOtdRepository,
 )
 from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_query_repository import (
     StockValueQueryRepository,
@@ -117,6 +129,24 @@ def build_get_cpv_use_case() -> GetCPVUseCase:
 def build_get_otd_use_case() -> GetOTDUseCase:
     repository = OtdQueryRepository()
     return GetOTDUseCase(repository)
+
+
+def build_get_purchase_order_otd_use_case() -> GetPurchaseOrderOtdUseCase:
+    return GetPurchaseOrderOtdUseCase(
+        purchase_order_otd_repository=PurchaseOrderOtdRepository()
+    )
+
+
+def build_get_purchase_order_otd_panel_use_case() -> GetPurchaseOrderOtdPanelUseCase:
+    return GetPurchaseOrderOtdPanelUseCase(
+        purchase_order_otd_repository=PurchaseOrderOtdRepository()
+    )
+
+
+def build_get_purchase_order_otd_series_use_case() -> GetPurchaseOrderOtdSeriesUseCase:
+    return GetPurchaseOrderOtdSeriesUseCase(
+        purchase_order_otd_repository=PurchaseOrderOtdRepository()
+    )
 
 
 def build_get_stock_value_use_case() -> GetStockValueUseCase:

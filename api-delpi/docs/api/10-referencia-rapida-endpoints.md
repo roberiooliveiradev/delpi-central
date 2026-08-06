@@ -223,6 +223,9 @@ Legenda de permissões:
 |---|---|---|
 | GET | `/supplies/cpv` | A |
 | GET | `/supplies/otd` | A |
+| GET | `/supplies/purchase-order-otd` | A |
+| GET | `/supplies/purchase-order-otd/series` | A |
+| GET | `/supplies/purchase-order-otd/panel` | A |
 | GET | `/supplies/stock-value` | A |
 | GET | `/supplies/inventory-turnover` | A |
 | GET | `/supplies/negotiation-savings/summary` | A |

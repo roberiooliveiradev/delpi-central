@@ -106,6 +106,13 @@ SUPPLIES_OTD_FIELD_LABELS: dict[str, str] = {
     "target": "Meta OTD compras (%)",
 }
 
+SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
+    "purchase_order_otd_pct": "OTD pedidos de compra MP (%)",
+    "total_lines": "Total de linhas",
+    "on_time_lines": "Linhas no prazo",
+    "late_lines": "Linhas atrasadas",
+}
+
 SUPPLIES_STOCK_VALUE_FIELD_LABELS: dict[str, str] = {
     "total_stock_value": "Valor total de estoque",
     "total_stock_quantity": "Quantidade em estoque",

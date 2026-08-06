@@ -54,6 +54,7 @@ Permanece em `docs/roadmaps/` (fora desta biblioteca): `playbook-api-delpi-conso
 | Constante / módulo | Seção |
 |--------------------|--------|
 | `app/domain/totvs/protheus_warehouses.py` | [armazem-custo.md](./armazem-custo.md) |
+| `app/domain/totvs/protheus_product_types.py` | [cadastro-produto.md](./cadastro-produto.md) · OTD PC MP |
 | `REFUGOS_COST_WAREHOUSE` / `refugos_scope.py` | [armazem-custo.md](./armazem-custo.md) · [cadastro-produto.md](./cadastro-produto.md) |
 | `PRIMARY_WAREHOUSE` (estoque de segurança) | [armazem-custo.md](./armazem-custo.md) (alinhar semanticamente) |
 

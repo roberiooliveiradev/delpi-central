@@ -1,7 +1,11 @@
 from fastapi import APIRouter, Query
+from typing import Optional
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    COMMERCIAL_OTD_STATUS_QUERY,
+    GRANULARITY_QUERY_MONTH,
+    SORT_DIR_QUERY,
     STOCK_METHOD_QUERY,
 )
 
@@ -14,12 +18,19 @@ from app.utils.logger import log_error
 
 from app.application.dto.supplies.get_cpv_request import GetCPVRequest
 from app.application.dto.supplies.get_otd_request import GetOTDRequest
+from app.application.dto.supplies.get_purchase_order_otd_panel_request import (
+    GetPurchaseOrderOtdPanelRequest,
+)
 from app.application.dto.supplies.get_stock_value_request import GetStockValueRequest
 from app.application.dto.supplies.get_inventory_turnover_request import (
     GetInventoryTurnoverRequest,
 )
 from app.application.dto.supplies.negotiation_savings_summary_request import (
     NegotiationSavingsSummaryRequest,
+)
+from app.application.dto.supplies.purchase_order_otd_request import PurchaseOrderOtdRequest
+from app.application.dto.supplies.purchase_order_otd_series_request import (
+    PurchaseOrderOtdSeriesRequest,
 )
 from app.application.services.strategic_indicators.dashboard_goal_dates import (
     normalize_si_branch,
@@ -32,11 +43,15 @@ from app.interface.http.openapi_agent_metadata import (
     SUPPLIES_OTD,
     SUPPLIES_STOCK_VALUE,
 )
+from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.application.services.strategic_indicators import dashboard_goal_source_keys as goal_keys
 from app.composition.supplies_composer import (
     build_get_cpv_use_case,
     build_get_negotiation_savings_summary_use_case,
     build_get_otd_use_case,
+    build_get_purchase_order_otd_panel_use_case,
+    build_get_purchase_order_otd_series_use_case,
+    build_get_purchase_order_otd_use_case,
     build_get_stock_value_use_case,
     build_get_inventory_turnover_use_case,
 )
@@ -45,6 +60,7 @@ from app.interface.http.kpi_field_labels import (
     SUPPLIES_INVENTORY_TURNOVER_FIELD_LABELS,
     SUPPLIES_NEGOTIATION_SAVINGS_FIELD_LABELS,
     SUPPLIES_OTD_FIELD_LABELS,
+    SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS,
     SUPPLIES_STOCK_VALUE_FIELD_LABELS,
     kpi_fields,
 )
@@ -143,6 +159,131 @@ def get_otd(
         log_error(f"Erro ao buscar OTD: {exc}")
         return error_response(
             "Erro interno ao buscar OTD.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/purchase-order-otd/series",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_supplies_purchase_order_otd_series",
+        path="/supplies/purchase-order-otd/series",
+    ),
+)
+@require_any_permission(KPI_SUPPLIES_ACCESS)
+def get_supplies_purchase_order_otd_series(
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+):
+    try:
+        request = PurchaseOrderOtdSeriesRequest(
+            granularity=granularity,
+            date_start=start_date,
+            date_end=end_date,
+            branch=branch,
+        )
+        use_case = build_get_purchase_order_otd_series_use_case()
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result.to_dict(),
+            operation_id="get_supplies_purchase_order_otd_series",
+            message="Purchase order OTD (MP) time series fetched successfully.",
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching purchase order OTD series: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching purchase order OTD series: {exc}")
+        return error_response(
+            "Internal error while fetching purchase order OTD series.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/purchase-order-otd/panel",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_supplies_purchase_order_otd_panel",
+        path="/supplies/purchase-order-otd/panel",
+    ),
+)
+@require_any_permission(KPI_SUPPLIES_ACCESS)
+def get_supplies_purchase_order_otd_panel(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=1000),
+    sort_by: Optional[str] = Query(None),
+    sort_dir: str = SORT_DIR_QUERY(),
+):
+    try:
+        request = GetPurchaseOrderOtdPanelRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+            status=status,
+            page=page,
+            page_size=page_size,
+            sort_by=sort_by,
+            sort_dir=sort_dir,
+        )
+        use_case = build_get_purchase_order_otd_panel_use_case()
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_purchase_order_otd_panel",
+            message="Purchase order OTD (MP) panel fetched successfully.",
+            fields=kpi_fields(SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching purchase order OTD panel: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching purchase order OTD panel: {exc}")
+        return error_response(
+            "Internal error while fetching purchase order OTD panel.",
+            status_code=500,
+        )
+
+
+@router.get(
+    "/purchase-order-otd",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_supplies_purchase_order_otd",
+        path="/supplies/purchase-order-otd",
+    ),
+)
+@require_any_permission(KPI_SUPPLIES_ACCESS)
+def get_supplies_purchase_order_otd(
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+):
+    try:
+        use_case = build_get_purchase_order_otd_use_case()
+        request = PurchaseOrderOtdRequest(
+            branch=branch,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_supplies_purchase_order_otd",
+            message="Purchase order OTD (MP) percentage fetched successfully.",
+            fields=kpi_fields(SUPPLIES_PURCHASE_ORDER_OTD_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Validation error while fetching purchase order OTD: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Error while fetching purchase order OTD: {exc}")
+        return error_response(
+            "Internal error while fetching purchase order OTD.",
             status_code=500,
         )
     
