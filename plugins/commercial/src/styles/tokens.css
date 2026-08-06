@@ -46,6 +46,34 @@
   --delpi-ui-text-muted: var(--pva-muted);
 }
 
+/*
+ * Modo escuro: --secundary/#003866 não serve como tinta de texto/ícone.
+ * Remapeamos brand e superfícies derivadas para contraste legível (WCAG).
+ */
+:root[data-theme="dark"] .dashboard-pedidos-venda-abertos,
+.theme-dark .dashboard-pedidos-venda-abertos {
+  --pva-brand: color-mix(in srgb, var(--primary, #089bdb) 58%, #ffffff);
+  --pva-accent: color-mix(in srgb, var(--primary, #089bdb) 72%, #ffffff);
+  --pva-accent-strong: color-mix(in srgb, var(--primary, #089bdb) 55%, #ffffff);
+  --pva-text: var(--text, rgba(255, 255, 255, 0.92));
+  --pva-muted: var(--text-muted, rgba(255, 255, 255, 0.72));
+  --pva-surface: var(--surface, #121722);
+  --pva-surface-elevated: color-mix(in srgb, var(--pva-surface) 88%, #fff);
+  --pva-surface-soft: color-mix(in srgb, var(--pva-accent) 10%, var(--pva-surface));
+  --pva-border: var(--border, rgba(255, 255, 255, 0.12));
+  --pva-border-strong: color-mix(in srgb, var(--pva-accent) 38%, var(--pva-border));
+  --pva-table-head-bg: color-mix(in srgb, var(--pva-accent) 14%, var(--pva-surface));
+  --pva-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.18);
+  --pva-shadow-md: 0 2px 4px rgba(0, 0, 0, 0.25), 0 14px 32px rgba(0, 0, 0, 0.22);
+
+  --delpi-ui-accent: var(--pva-accent);
+  --delpi-ui-surface: var(--pva-surface);
+  --delpi-ui-text: var(--pva-text);
+  --delpi-ui-border: var(--pva-border);
+  --delpi-ui-muted: var(--pva-muted);
+  --delpi-ui-text-muted: var(--pva-muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-pedidos-venda-abertos *,
   .dashboard-pedidos-venda-abertos *::before,

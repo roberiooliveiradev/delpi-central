@@ -32,10 +32,17 @@
 }
 
 :root[data-theme="dark"] .dashboard-commercial {
-  --cm-text: rgba(255, 255, 255, 0.88);
+  --cm-accent: color-mix(in srgb, var(--primary, #089bdb) 62%, #ffffff);
+  --cm-text: rgba(255, 255, 255, 0.92);
   --cm-text-muted: rgba(255, 255, 255, 0.72);
   --cm-surface: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
-  --cm-border: rgba(255, 255, 255, 0.1);
+  --cm-border: rgba(255, 255, 255, 0.12);
+  --delpi-ui-accent: var(--cm-accent);
+  --delpi-ui-surface: var(--cm-surface);
+  --delpi-ui-text: var(--cm-text);
+  --delpi-ui-text-muted: var(--cm-text-muted);
+  --delpi-ui-border: var(--cm-border);
+  --delpi-ui-muted: var(--cm-text-muted);
 }
 
 .dashboard-commercial.dashboard-page {

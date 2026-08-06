@@ -800,10 +800,3 @@
     text-align: left;
   }
 }
-
-:root[data-theme="dark"] .dashboard-pedidos-venda-abertos {
-  --pva-text: var(--text, #f3f4f6);
-  --pva-muted: var(--text-muted, rgba(243, 244, 246, 0.72));
-  --pva-surface: var(--surface, #111827);
-  --pva-border: var(--border, #374151);
-}
