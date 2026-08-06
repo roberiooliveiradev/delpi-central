@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
@@ -13,7 +13,10 @@ import {
 
 import type { BranchScope } from "../api/tvDashboardApi";
 import { useTvDataRouteLabelCatalog } from "../hooks/useTvDataRouteLabelCatalog";
-import { hydrateComunicadoDataBindings } from "../utils/hydrateComunicadoDataBindings";
+import {
+  commitHydrateBindingsApplyPlan,
+  planHydrateBindingsApply,
+} from "../utils/hydrateComunicadoDataBindings";
 import { resolveRouteForDataBoundBlock } from "../utils/resolveDataBoundBlockRoute";
 import type {
   DataCatalogMode,
@@ -84,7 +87,6 @@ export function SelectedDataSidePanel({
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [hydrateHint, setHydrateHint] = useState<string | null>(null);
-  const hydratedFpRef = useRef<string>("");
   const bindingTarget = context.bindingTarget;
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
@@ -96,42 +98,28 @@ export function SelectedDataSidePanel({
 
   const { routes, labelCatalog } = useTvDataRouteLabelCatalog();
 
+  // Hydrate uma vez por fingerprint de bindings (não por tick de config).
+  // Ribbon + painel lateral compartilham planHydrateBindingsApply (sessão).
   useEffect(() => {
     if (routes.length === 0) return;
-    const result = hydrateComunicadoDataBindings(config, routes);
-    const fp = JSON.stringify({
-      orphans: result.orphanOperationIds,
-      stripped: result.strippedParamKeys,
-      remapped: result.remappedParamKeys,
-      cleared: result.clearedLabels,
-      changed: result.changed,
-    });
-    if (fp === hydratedFpRef.current) return;
-    hydratedFpRef.current = fp;
-    if (!result.changed) {
+    const plan = planHydrateBindingsApply(config, routes);
+    if (!plan) {
       setHydrateHint(null);
       return;
     }
-    // Hydrate devolve blocos completos — converter para patches {blockId, patch}.
-    // Passar ComunicadoBlock[] direto em updateBlocksAtomically era no-op (sem blockId).
-    updateBlocksAtomically(
-      (result.config.blocks ?? []).map((block) => ({
-        blockId: block.id,
-        patch: block as Partial<ComunicadoBlock>,
-      })),
-    );
-    if (result.config.dataFilters !== config.dataFilters) {
-      setDataFilters(result.config.dataFilters);
+    if (plan.patches.length > 0) {
+      updateBlocksAtomically(
+        plan.patches.map((item) => ({
+          blockId: item.blockId,
+          patch: { dataBinding: item.dataBinding } as Partial<ComunicadoBlock>,
+        })),
+      );
     }
-    if (
-      result.clearedLabels > 0 ||
-      result.remappedParamKeys.length > 0 ||
-      result.strippedParamKeys.length > 0
-    ) {
-      setHydrateHint("Parâmetros atualizados pelo catálogo");
-    } else {
-      setHydrateHint(null);
+    if (plan.dataFiltersChanged) {
+      setDataFilters(plan.dataFilters);
     }
+    commitHydrateBindingsApplyPlan(plan);
+    setHydrateHint(plan.hint ? "Parâmetros atualizados pelo catálogo" : null);
   }, [routes, config, setDataFilters, updateBlocksAtomically]);
 
   const selectedRoute = useMemo(

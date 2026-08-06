@@ -27,7 +27,23 @@ describe("SelectedDataSidePanel ribbon contract", () => {
     expect(ribbon).toMatch(/setSelectionPanelTab\("data"\)/);
   });
 
+  it("hydrate do painel Dados usa plan idempotente (não fingerprint de result.changed)", () => {
+    expect(source).toMatch(/planHydrateBindingsApply/);
+    expect(source).toMatch(/commitHydrateBindingsApplyPlan/);
+    expect(source).not.toMatch(/hydratedFpRef/);
+    expect(source).not.toMatch(/result\.changed/);
+  });
+
+  it("ribbon não reage à identidade do objeto selected (só id/tipo)", () => {
+    expect(ribbon).toMatch(/selectedId/);
+    expect(ribbon).toMatch(/selectedType/);
+    expect(ribbon).not.toMatch(/\}, \[selected,/);
+  });
+
   it("aba Dados usa densidade band (não fit)", () => {
-    expect(chrome).toMatch(/tab === "element" \? "fit" : "band"/);
+    // Densidade estável em todas as abas — evita reflow do palco ao abrir Dados.
+    expect(chrome).toMatch(/function ribbonDensityFor\([^)]*\):\s*"band"\s*\|\s*"fit"/);
+    expect(chrome).toMatch(/return "band"/);
+    expect(chrome).not.toMatch(/tab === "element" \? "fit"/);
   });
 });
