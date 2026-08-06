@@ -30,7 +30,10 @@ const emptyClassNames = {
 type MetricCardProps = {
   label: string;
   value: string;
+  /** Subtítulo sob o valor (texto ou slot). */
   hint?: ReactNode;
+  /** Balão `?` ao lado do rótulo. */
+  titleHint?: string;
   icon?: ReactNode;
   hero?: boolean;
   tone?: "default" | "danger";
@@ -48,6 +51,7 @@ export function MetricCard({
   label,
   value,
   hint,
+  titleHint,
   icon,
   hero = false,
   tone = "default",
@@ -57,6 +61,7 @@ export function MetricCard({
     label,
     value: loading ? "…" : value,
     hint,
+    titleHint,
     icon,
     tone: mapTone(tone),
     fitValue: hero,

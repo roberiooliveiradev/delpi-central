@@ -1,5 +1,6 @@
 import { BarChart3, CalendarClock, Clock3, Wallet } from "lucide-react";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import { formatDisplayDate } from "../../../utils/dates";
 import { MetricCard } from "../../../ui/MetricCard";
@@ -17,6 +18,7 @@ export function CustomerOverviewKpis({ customer, loading = false }: CustomerOver
     <section className="pva-metrics pva-metrics--overview" aria-label="Indicadores do cliente">
       <MetricCard
         label="Faturamento 12 meses"
+        titleHint={CM_HELP.customerDetail.billed12m}
         value={formatCurrency(billed)}
         icon={<BarChart3 size={18} aria-hidden="true" />}
         loading={loading}
@@ -31,18 +33,21 @@ export function CustomerOverviewKpis({ customer, loading = false }: CustomerOver
       />
       <MetricCard
         label="Valor em aberto"
+        titleHint={CM_HELP.customerDetail.openValue}
         value={formatCurrency(customer.valorTotalAberto)}
         icon={<Wallet size={18} aria-hidden="true" />}
         loading={loading}
       />
       <MetricCard
         label="Pedidos em aberto"
+        titleHint={CM_HELP.customerDetail.openOrders}
         value={customer.quantidadePedidosAbertos.toLocaleString("pt-BR")}
         icon={<CalendarClock size={18} aria-hidden="true" />}
         loading={loading}
       />
       <MetricCard
         label="Última venda"
+        titleHint={CM_HELP.customerDetail.lastSale}
         value={
           customer.lastPurchaseDate
             ? formatDisplayDate(customer.lastPurchaseDate)

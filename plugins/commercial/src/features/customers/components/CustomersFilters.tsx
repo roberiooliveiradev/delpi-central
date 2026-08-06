@@ -1,5 +1,7 @@
 import { Search, X } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import type { CustomerAttentionFilter } from "../types/customerSummary";
 
 type CustomersFiltersProps = {
@@ -41,6 +43,7 @@ export function CustomersFilters({
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Buscar por código, loja, nome ou pedido"
             autoComplete="off"
+            title={CM_HELP.customers.filterSearch}
           />
           {search.trim() ? (
             <button
@@ -53,11 +56,17 @@ export function CustomersFilters({
             </button>
           ) : null}
         </div>
+        <HelpTooltip
+          content={CM_HELP.customers.filterSearch}
+          ariaLabel="Ajuda: Buscar cliente"
+          placement="bottom"
+        />
         <label className="pva-customers-toolbar__select-wrap">
           <span className="visually-hidden">Situação</span>
           <select
             className="pva-customers-toolbar__select"
             value={filter}
+            title={CM_HELP.customers.filterSituation}
             onChange={(event) =>
               onFilterChange(event.target.value as CustomerAttentionFilter)
             }
@@ -68,6 +77,11 @@ export function CustomersFilters({
               </option>
             ))}
           </select>
+          <HelpTooltip
+            content={CM_HELP.customers.filterSituation}
+            ariaLabel="Ajuda: Situação"
+            placement="bottom"
+          />
         </label>
         {hasActiveFilters ? (
           <button type="button" className="pva-btn pva-btn--secondary" onClick={onReset}>

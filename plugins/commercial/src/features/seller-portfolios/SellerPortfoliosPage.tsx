@@ -23,6 +23,7 @@ import {
   transferSellerCustomers,
   updateSellerPortfolio,
 } from "../../api/commercialPortfolioApi";
+import { CM_HELP } from "../../content/helpTooltips";
 import {
   CommercialLoadingCard,
   CommercialMultiSelectField,
@@ -357,6 +358,7 @@ export function SellerPortfoliosPage() {
       <SectionCard
         title="Carteiras de vendedores"
         subtitle="Administração de carteiras via commercial-api"
+        hint={CM_HELP.sellerPortfolios.list}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -383,6 +385,7 @@ export function SellerPortfoliosPage() {
 
       <SectionCard
         title="Nova carteira"
+        hint={CM_HELP.sellerPortfolios.create}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -394,12 +397,13 @@ export function SellerPortfoliosPage() {
             maxSelected={1}
             labels={{
               title: "Usuário (Keycloak)",
-              hint: "Busque por nome ou e-mail.",
+              hint: CM_HELP.sellerPortfolios.directoryUser,
               placeholder: "Buscar usuário…",
             }}
           />
           <CommercialTextField
             label="Nome de exibição"
+            hint={CM_HELP.sellerPortfolios.displayName}
             value={createDisplayName}
             onChange={setCreateDisplayName}
             placeholder="Ex.: João Silva"
@@ -415,12 +419,14 @@ export function SellerPortfoliosPage() {
       {editingPortfolioId ? (
         <SectionCard
           title="Editar carteira"
+          hint={CM_HELP.sellerPortfolios.edit}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
           <div className="cm-form-grid">
             <CommercialTextField
               label="Nome de exibição"
+              hint={CM_HELP.sellerPortfolios.displayName}
               value={editDisplayName}
               onChange={setEditDisplayName}
               required
@@ -440,6 +446,7 @@ export function SellerPortfoliosPage() {
       <SectionCard
         title="Gerenciar clientes da carteira"
         subtitle="Busque clientes ativos no TOTVS e vincule ou remova da carteira selecionada."
+        hint={CM_HELP.sellerPortfolios.customers}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -535,6 +542,7 @@ export function SellerPortfoliosPage() {
       <SectionCard
         title="Transferir clientes"
         subtitle="Selecione origem, destino, clientes e o motivo da transferência."
+        hint={CM_HELP.sellerPortfolios.customers}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >

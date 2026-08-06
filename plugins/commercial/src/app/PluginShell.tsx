@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { BriefcaseBusiness, CalendarCheck, ClipboardList, Settings, Users } from "lucide-react";
-import { ActionButton, PageHeader } from "@delpi/plugin-ui/index";
+import { ActionButton, HelpTooltip, PageHeader } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../content/helpTooltips";
 import {
   isPluginNavActive,
   type PluginView,
@@ -10,6 +11,7 @@ import { navigatePluginView } from "./pluginNavigation";
 import {
   cmPageHeaderClassNames,
   CommercialScopeChipBar,
+  CommercialTitleWithHelp,
 } from "./commercialUi";
 
 type PluginShellProps = {
@@ -23,6 +25,14 @@ type PluginShellProps = {
 };
 
 type NavId = Exclude<PluginView, "customer_detail" | "not_found">;
+
+const NAV_HELP: Partial<Record<NavId, string>> = {
+  home: CM_HELP.shell.navHome,
+  my_day: CM_HELP.shell.navMyDay,
+  open_orders: CM_HELP.shell.navOrders,
+  customers: CM_HELP.shell.navCustomers,
+  seller_portfolios: CM_HELP.shell.navAdmin,
+};
 
 export function PluginShell({
   view,
@@ -48,16 +58,21 @@ export function PluginShell({
           layout="brand"
           classNames={cmPageHeaderClassNames}
           labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
-          title="Portal Comercial"
+          title={
+            <CommercialTitleWithHelp title="Portal Comercial" hint={CM_HELP.shell.portal} />
+          }
           subtitle="Carteira, pedidos, Meu dia e gestão comercial."
           icon={<BriefcaseBusiness size={28} strokeWidth={1.75} aria-hidden="true" />}
         />
 
         {scopeLabel ? (
-          <CommercialScopeChipBar
-            label="Escopo"
-            chips={[{ id: "scope", label: scopeLabel, active: true }]}
-          />
+          <div className="cm-nav-row" style={{ alignItems: "center", gap: 8 }}>
+            <CommercialScopeChipBar
+              label="Escopo"
+              chips={[{ id: "scope", label: scopeLabel, active: true }]}
+            />
+            <HelpTooltip content={CM_HELP.shell.scope} ariaLabel="Ajuda: Escopo" />
+          </div>
         ) : null}
 
         <nav className="cm-nav-row" aria-label="Áreas do Portal Comercial">
@@ -67,7 +82,9 @@ export function PluginShell({
               <ActionButton
                 key={item.id}
                 variant={active ? "primary" : "ghost"}
-                aria-label={item.label}
+                aria-label={
+                  NAV_HELP[item.id] ? `${item.label}. ${NAV_HELP[item.id]}` : item.label
+                }
                 onClick={() =>
                   navigatePluginView(item.id, {
                     basePath,

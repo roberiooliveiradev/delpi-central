@@ -13,6 +13,7 @@ import { KpiCard } from "../components/KpiCard";
 import { PageHeader } from "../components/PageHeader";
 import { Pagination } from "../components/Pagination";
 import { PedidosTable } from "../components/PedidosTable";
+import { CM_HELP } from "../content/helpTooltips";
 import { SellerScopeFilter } from "../features/customers/components/SellerScopeFilter";
 import { usePedidosVendaAbertosDashboard } from "../hooks/usePedidosVendaAbertosDashboard";
 import { EmptyState } from "../ui/EmptyState";
@@ -89,6 +90,7 @@ export function PedidosVendaAbertosPage() {
           <section className="pva-kpi-grid" aria-label="Resumo">
             <KpiCard
               title="Linhas em aberto"
+              titleHint={CM_HELP.openOrders.kpiLines}
               value={summary.total_linhas.toLocaleString("pt-BR")}
               subtitle={hasActiveFilters ? "Com filtros aplicados" : "Total carregado"}
               icon={<Package size={22} />}
@@ -96,6 +98,7 @@ export function PedidosVendaAbertosPage() {
             />
             <KpiCard
               title="Valor em aberto"
+              titleHint={CM_HELP.openOrders.kpiValue}
               value={formatCurrency(summary.valor_total_aberto)}
               icon={<Wallet size={22} />}
               loading={loading}
@@ -103,18 +106,21 @@ export function PedidosVendaAbertosPage() {
             />
             <KpiCard
               title="Pode faturar"
+              titleHint={CM_HELP.openOrders.kpiCanInvoice}
               value={summary.itens_com_estoque.toLocaleString("pt-BR")}
               icon={<PackageCheck size={22} />}
               loading={loading}
             />
             <KpiCard
               title="Estoque parcial"
+              titleHint={CM_HELP.openOrders.kpiPartialStock}
               value={summary.itens_estoque_parcial.toLocaleString("pt-BR")}
               icon={<AlertTriangle size={22} />}
               loading={loading}
             />
             <KpiCard
               title="Pedidos em atraso"
+              titleHint={CM_HELP.openOrders.kpiLate}
               value={summary.linhas_em_atraso.toLocaleString("pt-BR")}
               icon={<CalendarClock size={22} />}
               loading={loading}

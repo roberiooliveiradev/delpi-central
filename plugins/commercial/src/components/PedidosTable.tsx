@@ -16,7 +16,8 @@ import { OpPrevisaoModal } from "./OpPrevisaoModal";
 import { StatusBadge } from "./StatusBadge";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
-import { ExcelExportButton, withBemModifier } from "@delpi/plugin-ui/index";
+import { ExcelExportButton, HelpTooltip, withBemModifier } from "@delpi/plugin-ui/index";
+import { CM_HELP } from "../content/helpTooltips";
 import { PVA_TABLE } from "../ui/tableChrome";
 
 type PedidosTableProps = {
@@ -172,6 +173,11 @@ export function PedidosTable({
             {visibleColumnCount} coluna(s) visível(is)
             {exportRows.length > 0 ? ` · ${exportRows.length.toLocaleString("pt-BR")} linha(s) para exportar` : ""}.
             Previsão (OP) = data em que o saldo faltante da linha seria coberto pelas OPs abertas (FIFO).
+            <HelpTooltip
+              content={CM_HELP.openOrders.table}
+              ariaLabel="Ajuda: tabela de pedidos"
+              placement="bottom"
+            />
           </p>
           <div className="pva-table-card__actions">
             <ExcelExportButton

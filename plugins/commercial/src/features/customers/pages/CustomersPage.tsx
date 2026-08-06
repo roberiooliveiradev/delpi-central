@@ -1,8 +1,11 @@
 import { RefreshCw } from "lucide-react";
 import { useMemo } from "react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { usePortfolioScope } from "../../../app/usePortfolioScope";
+import { CommercialTitleWithHelp } from "../../../app/commercialUi";
 import { Pagination } from "../../../components/Pagination";
+import { CM_HELP } from "../../../content/helpTooltips";
 import { EmptyState } from "../../../ui/EmptyState";
 import { CustomerSummaryCards } from "../components/CustomerSummaryCards";
 import { CustomerBillingSeriesChart } from "../components/CustomerBillingSeriesChart";
@@ -82,7 +85,12 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
     <div className="pva-internal-page pva-customers-page">
       <header className="pva-customers-page__header">
         <div className="pva-customers-page__titles">
-          <h2 className="pva-internal-page__title">Minha carteira de clientes</h2>
+          <h2 className="pva-internal-page__title">
+            <CommercialTitleWithHelp
+              title="Minha carteira de clientes"
+              hint={CM_HELP.customers.page}
+            />
+          </h2>
           <p className="pva-internal-page__text">
             Clientes da sua carteira com pedidos de venda em aberto — priorize atrasos e abra o
             detalhe do cliente.
@@ -219,7 +227,14 @@ export function CustomersPage({ basePath }: CustomersPageProps) {
             <section className="pva-section" aria-label="Todos os clientes da carteira">
               <div className="pva-section__header">
                 <div>
-                  <h2 className="pva-customers-page__list-title">Clientes da carteira</h2>
+                  <h2 className="pva-customers-page__list-title">
+                    Clientes da carteira
+                    <HelpTooltip
+                      content={CM_HELP.customers.list}
+                      ariaLabel="Ajuda: Clientes da carteira"
+                      placement="bottom"
+                    />
+                  </h2>
                   <p className="pva-section__hint">
                     {filteredCustomers.length === 0
                       ? "0 clientes"

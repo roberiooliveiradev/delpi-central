@@ -7,8 +7,9 @@ import {
   RefreshCw,
   UserRound,
 } from "lucide-react";
-import { BackLink } from "@delpi/plugin-ui/index";
+import { BackLink, HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import { formatEntityCodeStore } from "../../../utils/entityCodeStore";
 import type { CustomerSummary } from "../types/customerSummary";
 import {
@@ -104,6 +105,10 @@ export function CustomerDetailHeader({
               <h1 className="pva-detail-header__name">
                 {customer.nome || "Cliente sem nome"}
               </h1>
+              <HelpTooltip
+                content={CM_HELP.customerDetail.header}
+                ariaLabel="Ajuda: Conta do cliente"
+              />
               <span className={`pva-status-pill pva-status-pill--${status}`}>
                 <span className="pva-status-pill__dot" aria-hidden="true" />
                 {statusLabel(status)}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ActionButton, EmptyState, SectionCard } from "@delpi/plugin-ui/index";
+import { ActionButton, EmptyState, HelpTooltip, SectionCard } from "@delpi/plugin-ui/index";
 
 import {
   completeTask,
@@ -8,6 +8,7 @@ import {
   type CommercialTaskDto,
   type WorklistData,
 } from "../../api/worklistApi";
+import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
 import {
   cmEmptyStateClassNames,
@@ -117,25 +118,28 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       <SectionCard
         title="Meu dia"
         subtitle="Fila priorizada: atrasadas → hoje → depois."
+        hint={CM_HELP.myDay.worklist}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
         <div className="cm-nav-row" role="tablist" aria-label="Filas do Meu dia">
           {(
             [
-              ["overdue", "Atrasadas", data?.counts.overdue ?? 0],
-              ["today", "Hoje", data?.counts.today ?? 0],
-              ["later", "Depois", data?.counts.later ?? 0],
+              ["overdue", "Atrasadas", data?.counts.overdue ?? 0, CM_HELP.myDay.bucketOverdue],
+              ["today", "Hoje", data?.counts.today ?? 0, CM_HELP.myDay.bucketToday],
+              ["later", "Depois", data?.counts.later ?? 0, CM_HELP.myDay.bucketLater],
             ] as const
-          ).map(([id, label, count]) => (
-            <ActionButton
-              key={id}
-              variant={bucket === id ? "primary" : "ghost"}
-              aria-selected={bucket === id}
-              onClick={() => setBucket(id)}
-            >
-              {label} ({count})
-            </ActionButton>
+          ).map(([id, label, count, help]) => (
+            <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+              <ActionButton
+                variant={bucket === id ? "primary" : "ghost"}
+                aria-selected={bucket === id}
+                onClick={() => setBucket(id)}
+              >
+                {label} ({count})
+              </ActionButton>
+              <HelpTooltip content={help} ariaLabel={`Ajuda: ${label}`} />
+            </span>
           ))}
           <ActionButton variant="ghost" onClick={() => void reload()}>
             Atualizar
@@ -197,6 +201,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         <SectionCard
           title="Nova tarefa"
           subtitle="Follow-up atribuído a você."
+          hint={CM_HELP.myDay.newTask}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
@@ -204,6 +209,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
             <div style={{ flex: "1 1 240px", minWidth: 0 }}>
               <CommercialTextField
                 label="Título"
+                hint={CM_HELP.myDay.taskTitle}
                 value={title}
                 onChange={setTitle}
                 placeholder="Ex.: Ligar para ACME sobre atraso"

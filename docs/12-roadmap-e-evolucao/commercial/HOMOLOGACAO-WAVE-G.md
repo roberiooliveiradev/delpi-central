@@ -45,6 +45,18 @@ Esperado: remote commercial `200`; health commercial-api `online`; PVA remote ai
 
 **Executado (ago/2026):** commercial `200` · health `online` · plugin-ui `200` · PVA `200` · tabelas `commercial.tasks` / `commercial.activities` criadas (V003).
 
+**Rebuild sequencial (06/08/2026):** `plugin-ui` → `commercial` → `commercial-api` — remotes `200`, health/ready `online`/`db_ready`, OpenAPI com `/me/worklist` `/tasks` `/activities`, migrations V001–V003, testes API **5 passed**.
+
+## Gaps vs plano (não bloqueiam rebuild; backlog)
+
+| Gap | Severidade | Próximo passo |
+|-----|------------|---------------|
+| Home gestão (KPI ROL/OTD / equipe) | Média | Wave G+ — cards leves api-delpi |
+| Testes HTTP 403 worklist/followups | Média | `tests/test_worklist_routes_rbac.py` |
+| Wireframes ASCII WF-01R…05R, 11–12 | Baixa | Doc; IA já em DESIGN-IA |
+| Overrides `.delpi-ui-*` no MFE (legado F2b) | Baixa | Ondas plugin-ui Fase 7 |
+| Manifest no Core + papel Vendedor | Ops | `register-manifest.sh` + Minha Delpi |
+
 ## Assinatura
 
 | Papel | Nome | Data | OK |
@@ -52,4 +64,4 @@ Esperado: remote commercial `200`; health commercial-api `online`; PVA remote ai
 | Comercial | | | |
 | QA / Tech | | | |
 
-**Observações:** Rebuild sequencial `plugin-ui` → `commercial` → `commercial-api`. Gateway recriado após bind mount stale. F2c **não** aplicado.
+**Observações:** Rebuild sequencial `plugin-ui` → `commercial` → `commercial-api`. F2c **não** aplicado. Matriz completa: [IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md) § Wave G.

@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { ChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import type { PurchaseEvolutionPoint } from "../hooks/useCustomerPurchaseEvolution";
 
@@ -67,6 +68,7 @@ export function CustomerPurchaseEvolutionChart({
   return (
     <ChartCard
       title="Evolução de compras"
+      titleHint={CM_HELP.customerDetail.purchaseEvolution}
       hint="Comparativo: últimos 12 meses × 12 meses anteriores"
       classNames={CHART_CLASSES}
       className="pva-purchase-evolution"

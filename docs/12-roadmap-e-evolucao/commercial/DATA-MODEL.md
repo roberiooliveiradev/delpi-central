@@ -1,8 +1,8 @@
 # Portal Comercial — modelo de dados (`commercial-api`)
 
-> **Schema Postgres proposto:** `commercial`  
+> **Schema Postgres:** `commercial`  
 > **Produto:** Portal Comercial (`id` técnico `commercial`)  
-> **Status:** especificação física (ago/2026) — ainda **não** aplicada como migration  
+> **Status:** M1 aplicado (V001–V002); **M2 parcial** aplicado em `V003__tasks_activities.sql` (Wave G — só `tasks` + `activities`). Demais entidades deste doc = especificação futura.  
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md) § 8  
 > **Fronteiras:** [PLAYBOOK-01-fronteiras-api-delpi.md](./PLAYBOOK-01-fronteiras-api-delpi.md)  
 > **ADR:** [adr/ADR-001-commercial-api.md](./adr/ADR-001-commercial-api.md)
@@ -35,7 +35,7 @@
 | Onda | Fase | Tabelas |
 |------|------|---------|
 | **M1** | F2 | Carteira + avatars (+ `audit_log` mínimo) |
-| **M2** | F5 | Tasks, activities, worklist support, visits leves, outbox |
+| **M2** | F5 | Tasks, activities (+ Wave G `V003`); visits leves / outbox / task_deps = futuro |
 | **M3** | F6 | Opportunities, pipeline refs, forecast |
 | **M4** | F7 | Samples, order confirmations, delivery exceptions |
 | **M5** | Admin | `reference_*`, `sla_policies`, account plans, data quality |

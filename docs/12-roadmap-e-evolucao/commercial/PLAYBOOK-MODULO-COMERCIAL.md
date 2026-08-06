@@ -407,6 +407,10 @@ Regras: migrations imutáveis; sem reset em prod; UTC; soft delete quando histó
 
 ## 9. Permissões (proposta)
 
+> **Wave G (ativo no manifest):** ver [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) — papéis Minha Delpi × codes.  
+> Códigos ativos hoje: `commercial.accounts.view`, `commercial.worklist.view`, `commercial.followups.manage`, `commercial.seller-portfolios.manage`, `commercial.audit.view`.  
+> **Não** usar `commercial.home.view` na Wave G (Home cobre com `accounts.view`). Demais codes abaixo = roadmap H+.
+
 ### 9.1 Módulo / commercial-api
 
 ```text

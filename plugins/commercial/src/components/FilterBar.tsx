@@ -1,5 +1,7 @@
 import { Filter, RotateCcw } from "lucide-react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../content/helpTooltips";
 import type { ClientOption, PedidosVendaAbertosFilters } from "../utils/filterItems";
 import type { StockFilter } from "../utils/statusBadges";
 import { MultiSelectField } from "./MultiSelectField";
@@ -41,6 +43,7 @@ export function FilterBar({
           <div className="pva-filter-bar__title">
             <Filter size={18} aria-hidden="true" />
             <h2>Filtros</h2>
+            <HelpTooltip content={CM_HELP.openOrders.filters} ariaLabel="Ajuda: Filtros" />
           </div>
           {hasActiveFilters ? (
             <button type="button" className="pva-btn pva-btn--ghost pva-btn--sm" onClick={onReset}>
@@ -54,6 +57,7 @@ export function FilterBar({
       <FilterInputField
         id="pva-filter-search"
         label="Busca livre"
+        hint={CM_HELP.openOrders.filterSearch}
         type="search"
         wide
         value={filters.search}
@@ -63,6 +67,7 @@ export function FilterBar({
       <FilterSelectField
         id="pva-filter-filial"
         label="Filial"
+        hint={CM_HELP.openOrders.filterBranch}
         value={filters.filial}
         onChange={(value) => onChange({ filial: value })}
         options={filialOptions}
@@ -70,6 +75,7 @@ export function FilterBar({
       />
       <MultiSelectField
         label="Cliente"
+        hint={CM_HELP.openOrders.filterClient}
         searchable
         options={clientOptions}
         selectedValues={filters.clientCodes}
@@ -78,6 +84,7 @@ export function FilterBar({
       <FilterSelectField
         id="pva-filter-stock"
         label="Status da linha"
+        hint={CM_HELP.openOrders.filterStock}
         value={filters.stockStatus}
         onChange={(value) => onChange({ stockStatus: value as StockFilter })}
         options={STOCK_OPTIONS}
@@ -86,6 +93,7 @@ export function FilterBar({
       <FilterInputField
         id="pva-filter-date-start"
         label="Entrega de"
+        hint={CM_HELP.openOrders.filterDateStart}
         type="date"
         value={filters.dateStart}
         onChange={(value) => onChange({ dateStart: value })}
@@ -93,6 +101,7 @@ export function FilterBar({
       <FilterInputField
         id="pva-filter-date-end"
         label="Entrega até"
+        hint={CM_HELP.openOrders.filterDateEnd}
         type="date"
         value={filters.dateEnd}
         onChange={(value) => onChange({ dateEnd: value })}

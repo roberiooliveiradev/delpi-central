@@ -5,7 +5,8 @@
 > **Playbook:** [PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)  
 > **Paridade:** § 2.1.1 (Portal do Vendedor → Portal Comercial)  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
-> **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais
+> **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais  
+> **Wave G:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) (Overview→Action, WF-01R…06, 11–12). Este arquivo mantém os IDs canônicos WF-01…10; a rota `/my-day` (WF-06) está **implementada**. Polish tipográfico “R” em pedidos/carteira/admin = evolução incremental sobre F2b, não wireframes ASCII novos separados.
 
 ## Convenções
 

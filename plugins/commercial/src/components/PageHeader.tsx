@@ -1,6 +1,12 @@
 import { ClipboardList } from "lucide-react";
 
-import { PageHeader as PluginPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui/index";
+import {
+  PageHeader as PluginPageHeader,
+  pageHeaderTitleRowBemClasses,
+} from "@delpi/plugin-ui/index";
+
+import { CM_HELP } from "../content/helpTooltips";
+import { CommercialTitleWithHelp } from "../app/commercialUi";
 
 type PageHeaderProps = {
   loading: boolean;
@@ -25,7 +31,12 @@ export function PageHeader({ loading, onRefresh, totalLoaded }: PageHeaderProps)
       classNames={pageHeaderTitleRowBemClasses("pva")}
       labels={LABELS}
       icon={<ClipboardList size={28} strokeWidth={1.75} />}
-      title="Pedidos em aberto"
+      title={
+        <CommercialTitleWithHelp
+          title="Pedidos em aberto"
+          hint={CM_HELP.openOrders.page}
+        />
+      }
       subtitle={subtitle}
       onRefresh={onRefresh}
       refreshing={loading}

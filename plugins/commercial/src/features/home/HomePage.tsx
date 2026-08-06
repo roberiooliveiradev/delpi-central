@@ -7,6 +7,7 @@ import {
   SectionCard,
 } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../../content/helpTooltips";
 import { getOpenOrders } from "../../api/openOrdersApi";
 import { getMyWorklist } from "../../api/worklistApi";
 import { navigatePluginView } from "../../app/pluginNavigation";
@@ -176,6 +177,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
             ? `Resumo parcial — ${ordersError}`
             : `Pedidos em aberto: ${openCount}. Atualize para ver alertas da carteira.`
         }
+        hint={CM_HELP.home.overview}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -192,6 +194,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
       <SectionCard
         title="Atalhos"
         subtitle="Menos de dois cliques até a ação."
+        hint={CM_HELP.home.shortcuts}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
@@ -218,6 +221,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
       <SectionCard
         title="Analytics e propostas"
         subtitle="Deep links — BI permanece fora do portal operacional."
+        hint={CM_HELP.home.analytics}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >

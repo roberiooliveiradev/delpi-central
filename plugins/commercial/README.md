@@ -40,6 +40,10 @@ Registrar no Core:
 TOKEN=<jwt> BASE_URL=http://localhost ./plugins/commercial/scripts/register-manifest.sh
 ```
 
+## Ajuda (balões)
+
+Textos dos `HelpTooltip` / `SectionCard.hint` / `titleHint` ficam em [`src/content/helpTooltips.ts`](./src/content/helpTooltips.ts) (`CM_HELP`). Não hardcode frases de explicação nos componentes.
+
 ## Cutover de carteira
 
 Default Compose: `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (após backfill).

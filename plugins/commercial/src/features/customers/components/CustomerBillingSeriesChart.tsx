@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { ChartCard, chartCardBemClasses } from "@delpi/plugin-ui/index";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import { formatCurrency } from "../../../utils/format";
 import {
   BILLING_SERIES_ALL_KEY,
@@ -81,7 +82,7 @@ export function CustomerBillingSeriesChart({ customers }: CustomerBillingSeriesC
   return (
     <ChartCard
       title="Faturamento — últimos 12 meses"
-      titleHint="Soma das notas fiscais de saída no período. Selecione um cliente para ver só a curva dele."
+      titleHint={CM_HELP.customers.billingSeries}
       hint={
         loading
           ? "Atualizando série…"

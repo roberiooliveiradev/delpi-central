@@ -8,6 +8,7 @@ import {
   createDashboardSelectField,
   createDashboardTextAreaField,
   createDashboardTextField,
+  createDashboardTitleWithHelp,
   createDashboardWorklistItem,
   createInitialsAvatar,
   createTimeline,
@@ -21,6 +22,7 @@ import {
   statusBadgeBemClasses,
   textAreaFieldBemClasses,
   textFieldBemClasses,
+  titleWithHelpBemClasses,
   alertQueueBemClasses,
   scopeChipBarBemClasses,
   worklistItemBemClasses,
@@ -44,6 +46,13 @@ export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 export const cmSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
 };
+
+export const CommercialTitleWithHelp = createDashboardTitleWithHelp({
+  classNames: titleWithHelpBemClasses(UI_PREFIX),
+  labels: {
+    titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
+  },
+});
 
 export const cmDataTableLabels = {
   emptyMessage: "Sem linhas para exibir.",

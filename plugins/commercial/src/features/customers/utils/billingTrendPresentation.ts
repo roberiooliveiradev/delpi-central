@@ -2,12 +2,7 @@ import type { CustomerSummary } from "../types/customerSummary";
 
 export type BillingTrendDirection = NonNullable<CustomerSummary["billingTrend"]>;
 
-/** Texto de ajuda para o usuário final (sem jargão técnico). */
-export const BILLING_TREND_HELP =
-  "Comparamos o faturamento dos últimos 6 meses com o dos 6 meses anteriores. " +
-  "Se subir mais de 5%, mostramos alta (verde); se cair mais de 5%, mostramos queda; " +
-  "variações menores ficam como estável. Quando não há vendas suficientes no período, " +
-  "a tendência não aparece.";
+export { BILLING_TREND_HELP } from "../../../content/helpTooltips";
 
 export function billingTrendSymbol(trend: BillingTrendDirection | null | undefined): string {
   if (trend === "up") return "↑";

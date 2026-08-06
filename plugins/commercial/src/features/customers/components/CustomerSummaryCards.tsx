@@ -1,5 +1,6 @@
 import { AlertTriangle, ClipboardList, Clock3, Users, Wallet } from "lucide-react";
 
+import { CM_HELP } from "../../../content/helpTooltips";
 import { MetricCard } from "../../../ui/MetricCard";
 import { formatCurrency } from "../../../utils/format";
 import type { CustomerAggregationResult } from "../types/customerSummary";
@@ -26,6 +27,7 @@ export function CustomerSummaryCards({ aggregation, loading }: CustomerSummaryCa
     <section className="pva-metrics pva-metrics--portfolio" aria-label="Resumo da carteira">
       <MetricCard
         label="Clientes ativos"
+        titleHint={CM_HELP.customers.kpiActive}
         value={clientesAtivos.toLocaleString("pt-BR")}
         hint="Na carteira com pedidos em aberto"
         icon={<Users size={18} aria-hidden="true" />}
@@ -33,6 +35,7 @@ export function CustomerSummaryCards({ aggregation, loading }: CustomerSummaryCa
       />
       <MetricCard
         label="Sem venda há 60 dias"
+        titleHint={CM_HELP.customers.kpiNoSale60}
         value={semVenda60d.toLocaleString("pt-BR")}
         hint="Última venda há 60 dias ou mais"
         icon={<Clock3 size={18} aria-hidden="true" />}
@@ -42,6 +45,7 @@ export function CustomerSummaryCards({ aggregation, loading }: CustomerSummaryCa
       <MetricCard
         hero
         label="Valor em aberto"
+        titleHint={CM_HELP.customers.kpiOpenValue}
         value={formatCurrency(aggregation.totalValorAberto)}
         hint="Soma dos pedidos com saldo em aberto"
         icon={<Wallet size={18} aria-hidden="true" />}
@@ -49,6 +53,7 @@ export function CustomerSummaryCards({ aggregation, loading }: CustomerSummaryCa
       />
       <MetricCard
         label="Pedidos em aberto"
+        titleHint={CM_HELP.customers.kpiOpenOrders}
         value={aggregation.totalPedidosAbertos.toLocaleString("pt-BR")}
         hint="Pedidos distintos na carteira"
         icon={<ClipboardList size={18} aria-hidden="true" />}
@@ -56,6 +61,7 @@ export function CustomerSummaryCards({ aggregation, loading }: CustomerSummaryCa
       />
       <MetricCard
         label="Clientes com atraso"
+        titleHint={CM_HELP.customers.kpiLateCustomers}
         value={aggregation.clientesComAtraso.toLocaleString("pt-BR")}
         hint="Com pedido vencido"
         icon={<AlertTriangle size={18} aria-hidden="true" />}

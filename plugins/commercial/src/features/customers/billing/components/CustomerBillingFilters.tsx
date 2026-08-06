@@ -1,4 +1,10 @@
-import type { CustomerBillingPeriodPreset, CustomerBillingSituationFilter } from "../types/customerBilling";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
+
+import { CM_HELP } from "../../../../content/helpTooltips";
+import type {
+  CustomerBillingPeriodPreset,
+  CustomerBillingSituationFilter,
+} from "../types/customerBilling";
 
 type CustomerBillingFiltersProps = {
   preset: CustomerBillingPeriodPreset;
@@ -39,6 +45,17 @@ export function CustomerBillingFilters({
 }: CustomerBillingFiltersProps) {
   return (
     <section className="pva-billing-filters" aria-label="Filtros de faturamento">
+      <p
+        className="pva-billing-filters__hint"
+        style={{ display: "flex", alignItems: "center", gap: 6 }}
+      >
+        Período e situação das notas de saída deste cliente.
+        <HelpTooltip
+          content={CM_HELP.customerDetail.billingFilters}
+          ariaLabel="Ajuda: Filtros de faturamento"
+        />
+      </p>
+
       <div className="pva-billing-filters__presets" role="group" aria-label="Período">
         {PRESETS.map((item) => (
           <button

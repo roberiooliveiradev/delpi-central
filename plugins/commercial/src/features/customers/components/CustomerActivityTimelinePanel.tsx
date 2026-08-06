@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ActionButton, SectionCard } from "@delpi/plugin-ui/index";
 
 import { listCustomerActivities, type CommercialActivityDto } from "../../../api/worklistApi";
+import { CM_HELP } from "../../../content/helpTooltips";
 import {
   cmSectionCardClassNames,
   cmSectionLabels,
@@ -60,6 +61,7 @@ export function CustomerActivityTimelinePanel({
     <SectionCard
       title="Timeline de atividades"
       subtitle="Follow-ups e registros da conta (commercial-api)."
+      hint={CM_HELP.customerDetail.timeline}
       classNames={cmSectionCardClassNames}
       labels={cmSectionLabels}
     >
