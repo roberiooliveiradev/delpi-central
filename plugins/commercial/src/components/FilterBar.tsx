@@ -90,6 +90,15 @@ export function FilterBar({
         options={STOCK_OPTIONS}
         placeholderOption="Todos os status"
       />
+      <FilterSelectField
+        id="pva-filter-late"
+        label="Entrega"
+        hint="Filtrar só linhas com entrega em atraso."
+        value={filters.lateOnly ? "late" : ""}
+        onChange={(value) => onChange({ lateOnly: value === "late" })}
+        options={[{ value: "late", label: "Em atraso" }]}
+        placeholderOption="Todas"
+      />
       <FilterInputField
         id="pva-filter-date-start"
         label="Entrega de"

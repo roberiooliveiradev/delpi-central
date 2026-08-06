@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActionButton, EmptyState, HelpTooltip, SectionCard } from "@delpi/plugin-ui/index";
+import {
+  ActionButton,
+  EmptyState,
+  SectionCard,
+  StatusBadge,
+} from "@delpi/plugin-ui/index";
 
 import {
   completeTask,
@@ -15,45 +20,60 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
+  cmStatusBadgeClassNames,
   CommercialLoadingCard,
+  CommercialPageHero,
+  CommercialScopeChipBar,
   CommercialSelectField,
   CommercialTextField,
+  CommercialViewTransition,
   CommercialWorklistItem,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
 import { deferDueAtOneDay, dueDateInputToIsoEod, localDateInputValue } from "./myDayDueDate";
-
-function readCreateTaskDeepLink(): {
-  createTask: boolean;
-  customerCode: string;
-  customerStore: string;
-} {
-  if (typeof window === "undefined") {
-    return { createTask: false, customerCode: "", customerStore: "" };
-  }
-  const params = new URLSearchParams(window.location.search);
-  return {
-    createTask: params.get("createTask") === "1",
-    customerCode: (params.get("customer_code") ?? "").trim(),
-    customerStore: (params.get("customer_store") ?? "").trim(),
-  };
-}
-
-function clearCreateTaskQueryFromUrl(): void {
-  if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  if (!url.searchParams.has("createTask") && !url.searchParams.has("customer_code")) return;
-  url.searchParams.delete("createTask");
-  url.searchParams.delete("customer_code");
-  url.searchParams.delete("customer_store");
-  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
-}
 
 type MyDayPageProps = {
   basePath: string;
 };
 
 type BucketKey = "overdue" | "today" | "later";
+
+function readCreateTaskDeepLink(): {
+  createTask: boolean;
+  customerCode: string;
+  customerStore: string;
+  bucket: BucketKey | null;
+} {
+  if (typeof window === "undefined") {
+    return { createTask: false, customerCode: "", customerStore: "", bucket: null };
+  }
+  const params = new URLSearchParams(window.location.search);
+  const rawBucket = (params.get("bucket") ?? "").trim().toLowerCase();
+  const bucket: BucketKey | null =
+    rawBucket === "overdue" || rawBucket === "today" || rawBucket === "later"
+      ? rawBucket
+      : null;
+  return {
+    createTask: params.get("createTask") === "1",
+    customerCode: (params.get("customer_code") ?? "").trim(),
+    customerStore: (params.get("customer_store") ?? "").trim(),
+    bucket,
+  };
+}
+
+function clearCreateTaskQueryFromUrl(): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  let changed = false;
+  for (const key of ["createTask", "customer_code", "customer_store", "bucket"]) {
+    if (url.searchParams.has(key)) {
+      url.searchParams.delete(key);
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
 
 const PRIORITY_OPTIONS = [
   { value: "low", label: "Baixa" },
@@ -66,6 +86,30 @@ const TASK_TYPE_OPTIONS = [
   { value: "call", label: "Ligar" },
   { value: "todo", label: "To-do" },
 ] as const;
+
+const BUCKET_META: Record<
+  BucketKey,
+  { label: string; emptyHint: string }
+> = {
+  overdue: {
+    label: "Atrasadas",
+    emptyHint: "Nenhuma atrasada — foque no hoje ou crie um follow-up.",
+  },
+  today: {
+    label: "Hoje",
+    emptyHint: "Nada com prazo hoje nesta fila.",
+  },
+  later: {
+    label: "Depois",
+    emptyHint: "Sem tarefas futuras — agende o próximo contato.",
+  },
+};
+
+const cmEmptyCompactClassNames = {
+  ...cmEmptyStateClassNames,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+  withTitle: true,
+};
 
 function formatDue(dueAt?: string | null): string {
   if (!dueAt) return "Sem prazo";
@@ -96,6 +140,36 @@ function parseCustomerKey(key: string): { code: string; store: string } | null {
   return { code, store };
 }
 
+function heroCopy(counts: { overdue: number; today: number; later: number }): {
+  title: string;
+  description: string;
+} {
+  if (counts.overdue > 0) {
+    return {
+      title: `${counts.overdue} atrasada${counts.overdue === 1 ? "" : "s"}`,
+      description:
+        "Priorize a fila atrasada antes do restante do dia. Conclua, adie ou abra a conta.",
+    };
+  }
+  if (counts.today > 0) {
+    return {
+      title: `${counts.today} para hoje`,
+      description: "Foque os follow-ups com prazo ainda hoje. Depois trate o que ficou para frente.",
+    };
+  }
+  if (counts.later > 0) {
+    return {
+      title: "Fila em dia",
+      description: "Nada atrasado nem para hoje — há tarefas futuras para acompanhar.",
+    };
+  }
+  return {
+    title: "Fila livre",
+    description:
+      "Nenhuma tarefa na worklist. Crie um follow-up com prazo para não perder o cliente.",
+  };
+}
+
 export function MyDayPage({ basePath }: MyDayPageProps) {
   const { canManageFollowups, myPortfolio } = usePortfolioScope();
   const [loading, setLoading] = useState(true);
@@ -111,6 +185,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [highlightCreateForm, setHighlightCreateForm] = useState(false);
   const createFormRef = useRef<HTMLDivElement | null>(null);
+  const deepLinkBucketRef = useRef<BucketKey | null>(null);
 
   const customerOptions = useMemo(() => {
     const rows = myPortfolio?.customers ?? [];
@@ -120,20 +195,30 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }));
   }, [myPortfolio]);
 
+  const focusCreateForm = useCallback(() => {
+    setHighlightCreateForm(true);
+    window.setTimeout(() => {
+      createFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }, []);
+
   useEffect(() => {
     if (!canManageFollowups) return;
     const link = readCreateTaskDeepLink();
-    if (!link.createTask && !link.customerCode) return;
+    if (!link.createTask && !link.customerCode && !link.bucket) return;
+    if (link.bucket) {
+      deepLinkBucketRef.current = link.bucket;
+      setBucket(link.bucket);
+    }
     if (link.customerCode && link.customerStore) {
       setCustomerKey(`${link.customerCode}|${link.customerStore}`);
     }
-    setHighlightCreateForm(true);
+    if (link.createTask || link.customerCode) {
+      focusCreateForm();
+    }
     clearCreateTaskQueryFromUrl();
-    const timer = window.setTimeout(() => {
-      createFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
-    return () => window.clearTimeout(timer);
-  }, [canManageFollowups]);
+    return undefined;
+  }, [canManageFollowups, focusCreateForm]);
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
@@ -141,7 +226,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     try {
       const wl = await getMyWorklist(signal);
       setData(wl);
-      if (wl.counts.overdue > 0) setBucket("overdue");
+      const pinned = deepLinkBucketRef.current;
+      if (pinned) {
+        setBucket(pinned);
+        deepLinkBucketRef.current = null;
+      } else if (wl.counts.overdue > 0) setBucket("overdue");
       else if (wl.counts.today > 0) setBucket("today");
       else setBucket("later");
     } catch (err: unknown) {
@@ -158,6 +247,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     void reload(controller.signal);
     return () => controller.abort();
   }, [reload]);
+
+  const counts = {
+    overdue: data?.counts.overdue ?? 0,
+    today: data?.counts.today ?? 0,
+    later: data?.counts.later ?? 0,
+  };
+  const openTotal = counts.overdue + counts.today + counts.later;
+  const hero = heroCopy(counts);
 
   const items = useMemo(() => {
     if (!data) return [] as CommercialTaskDto[];
@@ -216,37 +313,88 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     }
   };
 
+  const bucketChips = (
+    [
+      ["overdue", counts.overdue] as const,
+      ["today", counts.today] as const,
+      ["later", counts.later] as const,
+    ] as const
+  ).map(([id, count]) => ({
+    id,
+    label: `${BUCKET_META[id].label} (${count})`,
+    active: bucket === id,
+    onSelect: () => setBucket(id),
+  }));
+
   return (
     <section className="cm-page-stack">
+      <CommercialPageHero
+        aria-label="Resumo do Meu dia"
+        eyebrow="Meu dia"
+        title={loading ? "Carregando fila…" : hero.title}
+        description={
+          loading
+            ? "Buscando follow-ups e tarefas atribuídas a você."
+            : hero.description
+        }
+        badge={
+          !loading && counts.overdue > 0 ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label="Atrasadas"
+              variant="danger"
+            />
+          ) : !loading && openTotal === 0 ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label="Em dia"
+              variant="success"
+            />
+          ) : (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label={`${openTotal} aberta${openTotal === 1 ? "" : "s"}`}
+              variant="info"
+            />
+          )
+        }
+        highlights={[
+          {
+            id: "overdue",
+            label: "Atrasadas",
+            value: loading ? "—" : counts.overdue.toLocaleString("pt-BR"),
+          },
+          {
+            id: "today",
+            label: "Hoje",
+            value: loading ? "—" : counts.today.toLocaleString("pt-BR"),
+          },
+          {
+            id: "later",
+            label: "Depois",
+            value: loading ? "—" : counts.later.toLocaleString("pt-BR"),
+          },
+        ]}
+      />
+
       <SectionCard
-        title="Meu dia"
-        subtitle="Fila do dia: atrasadas → hoje → depois (padrão CRM)."
+        title="Fila"
+        subtitle="Atrasadas → hoje → depois (padrão CRM)."
         hint={CM_HELP.myDay.worklist}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
-      >
-        <div className="cm-nav-row" role="tablist" aria-label="Filas do Meu dia">
-          {(
-            [
-              ["overdue", "Atrasadas", data?.counts.overdue ?? 0, CM_HELP.myDay.bucketOverdue],
-              ["today", "Hoje", data?.counts.today ?? 0, CM_HELP.myDay.bucketToday],
-              ["later", "Depois", data?.counts.later ?? 0, CM_HELP.myDay.bucketLater],
-            ] as const
-          ).map(([id, label, count, help]) => (
-            <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-              <ActionButton
-                variant={bucket === id ? "primary" : "ghost"}
-                aria-selected={bucket === id}
-                onClick={() => setBucket(id)}
-              >
-                {label} ({count})
-              </ActionButton>
-              <HelpTooltip content={help} ariaLabel={`Ajuda: ${label}`} />
-            </span>
-          ))}
+        actions={
           <ActionButton variant="ghost" onClick={() => void reload()}>
             Atualizar
           </ActionButton>
+        }
+      >
+        <div className="cm-my-day-toolbar">
+          <CommercialScopeChipBar
+            label="Fila"
+            aria-label="Filas do Meu dia"
+            chips={bucketChips}
+          />
         </div>
 
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
@@ -254,125 +402,142 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
         ) : null}
         {actionError ? (
-          <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={actionError} role="alert" />
-        ) : null}
-
-        {!loading && !error && items.length === 0 ? (
           <EmptyState
-            classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
-            defaultTitle="Nenhuma tarefa nesta fila"
-            defaultMessage="Crie um follow-up com prazo ou escolha outra fila."
-          >
-            {canManageFollowups ? (
-              <p className="cm-muted">Use o formulário abaixo — prazo padrão é hoje.</p>
-            ) : null}
-          </EmptyState>
+            classNames={cmEmptyStateClassNames}
+            defaultMessage={actionError}
+            role="alert"
+          />
         ) : null}
 
-        <div className="cm-page-stack" style={{ gap: 8 }}>
-          {items.map((task) => (
-            <CommercialWorklistItem
-              key={task.id}
-              title={task.title}
-              meta={`${formatDue(task.due_at)} · ${task.priority}${
-                task.task_type ? ` · ${task.task_type}` : ""
-              }${
-                task.customer_code
-                  ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
-                  : ""
-              }`}
-              tone={toneForBucket(bucket)}
-              primaryActionLabel={canManageFollowups ? "Concluir" : undefined}
-              onPrimaryAction={
-                canManageFollowups ? () => void onComplete(task.id) : undefined
-              }
-              secondaryActionLabel={
-                task.customer_code && task.customer_store ? "Abrir conta" : undefined
-              }
-              onSecondaryAction={
-                task.customer_code && task.customer_store
-                  ? () =>
-                      navigateCustomerDetail(task.customer_code!, task.customer_store!, {
-                        basePath,
-                      })
-                  : undefined
-              }
-              tertiaryActionLabel={canManageFollowups ? "Adiar +1 dia" : undefined}
-              onTertiaryAction={
-                canManageFollowups ? () => void onDefer(task) : undefined
-              }
-            />
-          ))}
-        </div>
+        {!loading && !error ? (
+          <CommercialViewTransition transitionKey={`bucket-${bucket}`} tone="panel">
+            {items.length === 0 ? (
+              <EmptyState
+                classNames={cmEmptyCompactClassNames}
+                defaultTitle={`Nenhuma em ${BUCKET_META[bucket].label.toLowerCase()}`}
+                defaultMessage={BUCKET_META[bucket].emptyHint}
+              >
+                {canManageFollowups ? (
+                  <ActionButton variant="primary" onClick={focusCreateForm}>
+                    Criar follow-up
+                  </ActionButton>
+                ) : null}
+              </EmptyState>
+            ) : (
+              <div className="cm-my-day-list" aria-label={`Tarefas: ${BUCKET_META[bucket].label}`}>
+                {items.map((task) => (
+                  <CommercialWorklistItem
+                    key={task.id}
+                    title={task.title}
+                    meta={`${formatDue(task.due_at)} · ${task.priority}${
+                      task.task_type ? ` · ${task.task_type}` : ""
+                    }${
+                      task.customer_code
+                        ? ` · ${task.customer_code}-${task.customer_store ?? ""}`
+                        : ""
+                    }`}
+                    tone={toneForBucket(bucket)}
+                    primaryActionLabel={canManageFollowups ? "Concluir" : undefined}
+                    onPrimaryAction={
+                      canManageFollowups ? () => void onComplete(task.id) : undefined
+                    }
+                    secondaryActionLabel={
+                      task.customer_code && task.customer_store ? "Abrir conta" : undefined
+                    }
+                    onSecondaryAction={
+                      task.customer_code && task.customer_store
+                        ? () =>
+                            navigateCustomerDetail(task.customer_code!, task.customer_store!, {
+                              basePath,
+                            })
+                        : undefined
+                    }
+                    tertiaryActionLabel={canManageFollowups ? "Adiar +1 dia" : undefined}
+                    onTertiaryAction={
+                      canManageFollowups ? () => void onDefer(task) : undefined
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </CommercialViewTransition>
+        ) : null}
       </SectionCard>
 
       {canManageFollowups ? (
-        <div ref={createFormRef}>
-        <SectionCard
-          title="Nova tarefa"
-          subtitle={
-            highlightCreateForm
-              ? "Cliente pré-preenchido — confirme prazo e título para agendar o follow-up."
-              : "Follow-up com prazo, prioridade e cliente da carteira."
+        <div
+          ref={createFormRef}
+          className={
+            highlightCreateForm ? "cm-my-day-create cm-my-day-create--focus" : "cm-my-day-create"
           }
-          hint={CM_HELP.myDay.newTask}
-          classNames={cmSectionCardClassNames}
-          labels={cmSectionLabels}
         >
-          <div className="cm-form-grid">
-            <CommercialTextField
-              label="Título"
-              hint={CM_HELP.myDay.taskTitle}
-              value={title}
-              onChange={setTitle}
-              placeholder="Ex.: Ligar para ACME sobre atraso"
-              required
-            />
-            <CommercialTextField
-              label="Prazo"
-              hint={CM_HELP.myDay.taskDue}
-              type="date"
-              value={dueDate}
-              onChange={setDueDate}
-              required
-            />
-            <CommercialSelectField
-              label="Prioridade"
-              hint={CM_HELP.myDay.taskPriority}
-              options={[...PRIORITY_OPTIONS]}
-              value={priority}
-              onChange={setPriority}
-              allowEmpty={false}
-            />
-            <CommercialSelectField
-              label="Tipo"
-              hint={CM_HELP.myDay.taskType}
-              options={[...TASK_TYPE_OPTIONS]}
-              value={taskType}
-              onChange={setTaskType}
-              allowEmpty={false}
-            />
-            <CommercialSelectField
-              label="Cliente"
-              hint={CM_HELP.myDay.taskCustomer}
-              options={customerOptions}
-              value={customerKey}
-              onChange={setCustomerKey}
-              allowEmpty
-              emptyLabel="Sem vínculo (opcional)"
-              searchable={customerOptions.length > 8}
-            />
-            <div className="cm-form-grid__actions">
-              <ActionButton
-                variant="primary"
-                disabled={creating || !title.trim() || !dueDate}
-                onClick={() => void onCreate()}
-              >
-                {creating ? "Criando…" : "Criar tarefa"}
-              </ActionButton>
+          <SectionCard
+            title="Nova tarefa"
+            subtitle={
+              highlightCreateForm
+                ? "Cliente ou ação pré-preenchidos — confirme prazo e título."
+                : "Follow-up com prazo, prioridade e cliente da carteira."
+            }
+            hint={CM_HELP.myDay.newTask}
+            classNames={cmSectionCardClassNames}
+            labels={cmSectionLabels}
+          >
+            <div className="cm-my-day-form">
+              <div className="cm-my-day-form__title">
+                <CommercialTextField
+                  label="Título"
+                  hint={CM_HELP.myDay.taskTitle}
+                  value={title}
+                  onChange={setTitle}
+                  placeholder="Ex.: Ligar para ACME sobre atraso"
+                  required
+                />
+              </div>
+              <CommercialTextField
+                label="Prazo"
+                hint={CM_HELP.myDay.taskDue}
+                type="date"
+                value={dueDate}
+                onChange={setDueDate}
+                required
+              />
+              <CommercialSelectField
+                label="Prioridade"
+                hint={CM_HELP.myDay.taskPriority}
+                options={[...PRIORITY_OPTIONS]}
+                value={priority}
+                onChange={setPriority}
+                allowEmpty={false}
+              />
+              <CommercialSelectField
+                label="Tipo"
+                hint={CM_HELP.myDay.taskType}
+                options={[...TASK_TYPE_OPTIONS]}
+                value={taskType}
+                onChange={setTaskType}
+                allowEmpty={false}
+              />
+              <CommercialSelectField
+                label="Cliente"
+                hint={CM_HELP.myDay.taskCustomer}
+                options={customerOptions}
+                value={customerKey}
+                onChange={setCustomerKey}
+                allowEmpty
+                emptyLabel="Sem vínculo (opcional)"
+                searchable={customerOptions.length > 8}
+              />
+              <div className="cm-my-day-form__actions">
+                <ActionButton
+                  variant="primary"
+                  disabled={creating || !title.trim() || !dueDate}
+                  onClick={() => void onCreate()}
+                >
+                  {creating ? "Criando…" : "Criar tarefa"}
+                </ActionButton>
+              </div>
             </div>
-          </div>
-        </SectionCard>
+          </SectionCard>
         </div>
       ) : null}
     </section>

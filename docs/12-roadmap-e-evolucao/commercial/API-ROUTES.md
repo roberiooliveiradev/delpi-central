@@ -128,8 +128,10 @@ Colunas: **Method · Path · operationId · Fase · Permissão (proposta) · Ent
 | GET | `/tasks/{id}` | `get_task` | F5 | view/manage | `task` | `scalar` | WF-06 |
 | PATCH | `/tasks/{id}` | `update_task` | F5 | manage | `task` | `scalar` | WF-06 |
 | POST | `/tasks/{id}/complete` | `complete_task` | F5 | manage | `task` | `scalar` | WF-06 |
-| POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | manage / team | `task` | `scalar` | WF-06 |
+| POST | `/tasks/{id}/reassign` | `reassign_task` | F5 | manage / team | `task` | `scalar` | WF-06 · **spec; não no código Wave G+** — backlog P1 [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | POST | `/tasks/{id}/defer` | `defer_task` | F5 | manage | `task` | `scalar` | WF-06 |
+
+`create_task` aceita `description` (Observação). Meu dia Wave G+ **não** envia o campo pela UI — P0 em UX-E-TASKS-EVOLUTION. Anexos: § attachments + `persistent-upload-storage` (P2).
 
 ### 3.7 Activities (F5)
 

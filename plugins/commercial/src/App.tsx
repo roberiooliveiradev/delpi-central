@@ -1,4 +1,5 @@
 import { configureHttpClient } from "./api/httpClient";
+import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
 import { PortfolioScopeProvider, usePortfolioScope } from "./app/PortfolioScopeContext";
@@ -88,11 +89,13 @@ export default function App({
 
   return (
     <PortfolioScopeProvider>
-      <AppRoutes
-        basePath={basePath}
-        search={search}
-        pathnameFromHost={pathnameFromHost}
-      />
+      <HomeHeroMetricsProvider>
+        <AppRoutes
+          basePath={basePath}
+          search={search}
+          pathnameFromHost={pathnameFromHost}
+        />
+      </HomeHeroMetricsProvider>
     </PortfolioScopeProvider>
   );
 }

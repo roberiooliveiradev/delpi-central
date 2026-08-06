@@ -1,7 +1,7 @@
 # Homologação — Wave G / G+ (Portal Comercial)
 
 > UI Overview + Meu dia CRM + shell UnderlineNav + Home hero/gestão · **sem F2c**  
-> Docs: [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [WIREFRAMES.md](./WIREFRAMES.md) (WF-00 / 01R / 06R)
+> Docs: [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md) · [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) · [PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md) · [WIREFRAMES.md](./WIREFRAMES.md) (WF-00 / 01R / 06R)
 
 ## Pré-requisitos (gate ops)
 
@@ -62,8 +62,14 @@ curl -sS http://localhost/apps/commercial-api/health
 | Gap | Severidade | Nota |
 |-----|------------|------|
 | F2c / SavedViewChips / purge CSS espelho | Baixa | Fora desta wave |
-| Start tasks HubSpot / auto-tasks pedidos | Média | Wave futura |
+| Observação (`description`) na UI do Meu dia | Alta (P0) | API/DB já têm; ver [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
+| Responsável / reassign multi-user | Média (P1) | Spec `reassign_task`; MVP = sempre self |
+| Anexos em tarefa | Média (P2) | Spec attachments + volume Compose |
+| Reminder / checklist / recorrência | Baixa (P3) | Paridade CRM |
+| Start tasks HubSpot / auto-tasks pedidos | Média | Wave futura (P3) |
 | Manifest + papel Vendedor | Ops | Gate acima — checklist item 17 |
+
+UX polish Home/Meu dia (ago/2026) documentado em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 — não bloqueia assinatura Wave G+.
 
 ## Assinatura
 

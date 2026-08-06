@@ -37,7 +37,10 @@ describe("TextField", () => {
     );
 
     expect(container.querySelector(".pac-field--full")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-field__required")).toBeTruthy();
     expect(screen.getByText("*")).toBeTruthy();
+    const label = container.querySelector(".delpi-ui-field__label");
+    expect(label?.textContent?.replace(/\s+/g, " ").trim()).toBe("Descrição *");
   });
 
   it("propaga onChange", () => {

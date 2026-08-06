@@ -15,7 +15,8 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A U
 |-----------|----------|
 | **[PLAYBOOK-MODULO-COMERCIAL.md](./PLAYBOOK-MODULO-COMERCIAL.md)** | Playbook mestre — matriz dores, fases, gates |
 | **[IMPLEMENTATION-PLAN.md](./IMPLEMENTATION-PLAN.md)** | Status executável F0–F2c + Wave G+ |
-| **[DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)** | Design de IA embarcada no Portal Comercial |
+| **[DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md)** | Design de IA / navegação / princípios UX |
+| **[UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md)** | UX polish entregue + backlog tarefas (obs./responsável/anexos) |
 | **[PERFIS-E-PERMISSOES.md](./PERFIS-E-PERMISSOES.md)** | Papéis Minha Delpi × permission codes (Wave G) |
 | **[HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md)** | Checklist / smoke Wave G+ (P0 + P1) |
 | **[HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md)** | Checklist de paridade (assinatura Comercial/QA) |
@@ -36,6 +37,8 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) **coexiste** até F2c. A U
 | `commercial-api/` (health, JWT, portfolios, avatars, proxy search/enrich) | **Entregue** |
 | `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
 | Wave G+ — Meu dia CRM / Conta follow-up / Home gestão / UnderlineNav | **Entregue** (P0+P1; M2 parcial `V003`) |
+| UX polish Home + Meu dia (PageHero, anti-redundância) | **Entregue** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
+| Tasks: observação UI · responsável · anexos | **Backlog** P0–P2 — mesmo doc § 3 |
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
 | Homologação Comercial § 2.1.1 | **Pendente** (assinatura Comercial/QA) |

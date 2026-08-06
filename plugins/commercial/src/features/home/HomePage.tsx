@@ -2,21 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CalendarCheck,
-  ClipboardList,
   ExternalLink,
   Package,
   PackageCheck,
-  Settings,
-  Users,
   Wallet,
 } from "lucide-react";
 import {
   ActionButton,
   DataTable,
   EmptyState,
-  NavigationCard,
   SectionCard,
-  StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 
@@ -32,16 +27,14 @@ import {
   pickOtdPct,
   pickRolPct,
 } from "../../api/commercialKpisApi";
+import { useHomeHeroMetrics } from "../../app/HomeHeroMetricsContext";
 import { navigatePluginView } from "../../app/pluginNavigation";
-import { HomeNavIcon } from "../../app/PluginShell";
 import {
   cmDataTableClassNames,
   cmDataTableLabels,
   cmEmptyStateClassNames,
-  cmNavCardClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
-  cmStatusBadgeClassNames,
   CommercialAlertQueue,
   CommercialLoadingCard,
 } from "../../app/commercialUi";
@@ -108,9 +101,18 @@ type MgmtKpis = {
 
 const emptyMgmt: MgmtKpis = { rolPct: null, closingPct: null, otdPct: null };
 const TEAM_FETCH_CAP = 12;
+const DASHBOARD_COMMERCIAL_URL = "/apps/dashboard-commercial";
+const PROPOSTAS_URL = "/apps/propostas-comerciais";
+
+const cmEmptyCompactClassNames = {
+  ...cmEmptyStateClassNames,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+  withTitle: true,
+};
 
 export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
-  const { sellerIdFilter, myPortfolio, sellers } = usePortfolioScope();
+  const { sellerIdFilter, sellers } = usePortfolioScope();
+  const { setMetrics, resetMetrics } = useHomeHeroMetrics();
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [worklistLoading, setWorklistLoading] = useState(showWorklist);
   const [ordersError, setOrdersError] = useState<string | null>(null);
@@ -273,6 +275,41 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     return abort;
   }, [reload]);
 
+  useEffect(() => {
+    const alertsReady = !ordersLoading && (!showWorklist || !worklistLoading);
+    if (!alertsReady) {
+      setMetrics({
+        valorAberto: null,
+        atrasos: null,
+        followUps: null,
+        ready: false,
+      });
+      return;
+    }
+    setMetrics({
+      valorAberto: ordersError ? null : summary.valorAberto,
+      atrasos: ordersError ? null : summary.atrasos,
+      followUps: showWorklist
+        ? worklistError
+          ? null
+          : worklistOpen
+        : null,
+      ready: true,
+    });
+  }, [
+    ordersError,
+    ordersLoading,
+    setMetrics,
+    showWorklist,
+    summary.atrasos,
+    summary.valorAberto,
+    worklistError,
+    worklistLoading,
+    worklistOpen,
+  ]);
+
+  useEffect(() => () => resetMetrics(), [resetMetrics]);
+
   const teamColumns = useMemo<DataTableColumn<TeamRow>[]>(
     () => [
       { key: "name", header: "Vendedor", render: (row) => row.name },
@@ -298,7 +335,10 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     [],
   );
 
+  const alertsReady = !ordersLoading && (!showWorklist || !worklistLoading);
+
   const alerts = useMemo(() => {
+    if (!alertsReady) return [];
     const items = [];
     if (summary.atrasos > 0) {
       items.push({
@@ -306,8 +346,9 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         title: `${summary.atrasos} linha(s) em atraso`,
         description: "Revise pedidos em aberto e priorize entregas vencidas.",
         tone: "warning" as const,
-        actionLabel: "Ver pedidos",
-        onAction: () => navigatePluginView("open_orders", { basePath }),
+        actionLabel: "Ver atrasos",
+        onAction: () =>
+          navigatePluginView("open_orders", { basePath, search: "?focus=late" }),
       });
     }
     if (showWorklist && worklistOverdue > 0) {
@@ -317,7 +358,8 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         description: "Conclua ou reagende no Meu dia.",
         tone: "danger" as const,
         actionLabel: "Meu dia",
-        onAction: () => navigatePluginView("my_day", { basePath }),
+        onAction: () =>
+          navigatePluginView("my_day", { basePath, search: "?bucket=overdue" }),
       });
     } else if (showWorklist && worklistOpen > 0) {
       items.push({
@@ -328,18 +370,8 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         actionLabel: "Meu dia",
         onAction: () => navigatePluginView("my_day", { basePath }),
       });
-    } else if (showWorklist) {
-      items.push({
-        id: "create-follow-up",
-        title: "Nenhum follow-up na fila",
-        description: "Agende um follow-up com prazo para não perder o cliente.",
-        tone: "info" as const,
-        actionLabel: "Criar follow-up",
-        onAction: () =>
-          navigatePluginView("my_day", { basePath, search: "?createTask=1" }),
-      });
     }
-    if (summary.totalLinhas === 0 && !ordersError && !ordersLoading) {
+    if (summary.totalLinhas === 0 && !ordersError) {
       items.push({
         id: "no-orders",
         title: "Nenhum pedido em aberto na carteira",
@@ -351,9 +383,9 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     }
     return items;
   }, [
+    alertsReady,
     basePath,
     ordersError,
-    ordersLoading,
     showWorklist,
     summary.atrasos,
     summary.totalLinhas,
@@ -361,68 +393,19 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
     worklistOverdue,
   ]);
 
-  const cards = [
-    ...(showWorklist
-      ? [
-          {
-            id: "my_day" as const,
-            title: "Meu dia",
-            description: "Fila de follow-ups e tarefas do dia.",
-            icon: "my_day" as const,
-          },
-        ]
-      : []),
-    {
-      id: "open_orders" as const,
-      title: "Pedidos em aberto",
-      description: "Consulte pedidos de venda em aberto no TOTVS.",
-      icon: "orders" as const,
-    },
-    {
-      id: "customers" as const,
-      title: "Minha carteira",
-      description: "Veja clientes da sua carteira com dados enriquecidos.",
-      icon: "customers" as const,
-    },
-    {
-      id: "seller_portfolios" as const,
-      title: "Carteiras de vendedores",
-      description: "Administre carteiras, cadastros e transferências.",
-      icon: "admin" as const,
-      adminOnly: true,
-    },
-  ].filter((card) => !("adminOnly" in card && card.adminOnly) || showAdmin);
-
-  const portfolioHint = myPortfolio?.display_name?.trim() || "Carteira própria";
+  const openOrders = () => navigatePluginView("open_orders", { basePath });
+  const openOrdersBillable = () =>
+    navigatePluginView("open_orders", { basePath, search: "?stock=com_estoque" });
+  const openOrdersLate = () =>
+    navigatePluginView("open_orders", { basePath, search: "?focus=late" });
+  const openMyDay = (bucket?: "overdue" | "today") =>
+    navigatePluginView("my_day", {
+      basePath,
+      search: bucket ? `?bucket=${bucket}` : undefined,
+    });
 
   return (
     <section className="cm-page-stack">
-      <div className="cm-home-summary" aria-label="Resumo rápido da carteira">
-        <div className="cm-home-hero__chips">
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
-            variant="info"
-            label={`Pedidos: ${summary.totalLinhas.toLocaleString("pt-BR")}`}
-          />
-          {showWorklist ? (
-            <StatusBadge
-              classNames={cmStatusBadgeClassNames}
-              variant={worklistOverdue > 0 ? "danger" : "neutral"}
-              label={`Follow-ups: ${worklistOpen.toLocaleString("pt-BR")}`}
-            />
-          ) : null}
-          <StatusBadge
-            classNames={cmStatusBadgeClassNames}
-            variant={summary.atrasos > 0 ? "warning" : "neutral"}
-            label={`Atrasos: ${summary.atrasos.toLocaleString("pt-BR")}`}
-          />
-          <span className="cm-muted cm-home-summary__scope">{portfolioHint}</span>
-        </div>
-        <ActionButton variant="ghost" onClick={() => reload()}>
-          Atualizar
-        </ActionButton>
-      </div>
-
       <SectionCard
         title="Precisa de atenção"
         subtitle="Alertas da carteira e do Meu dia."
@@ -430,7 +413,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        {ordersLoading && worklistLoading ? (
+        {!alertsReady ? (
           <CommercialLoadingCard title="Carregando alertas…" variant="panel" />
         ) : (
           <>
@@ -449,6 +432,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               />
             ) : null}
             <CommercialAlertQueue
+              className={alerts.length === 0 ? "delpi-ui-alert-queue--compact-empty" : undefined}
               items={alerts}
               emptyMessage="Nada precisa de atenção agora. Bom trabalho!"
             />
@@ -462,6 +446,11 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         hint={CM_HELP.home.kpis}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
+        actions={
+          <ActionButton variant="ghost" onClick={() => reload()}>
+            Atualizar
+          </ActionButton>
+        }
       >
         {ordersLoading ? (
           <CommercialLoadingCard title="Carregando indicadores…" variant="panel" />
@@ -479,6 +468,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               value={summary.totalLinhas.toLocaleString("pt-BR")}
               subtitle="No escopo atual"
               icon={<Package size={22} />}
+              onClick={openOrders}
             />
             <KpiCard
               title="Valor em aberto"
@@ -486,18 +476,23 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               value={formatCurrency(summary.valorAberto)}
               icon={<Wallet size={22} />}
               wide
+              onClick={openOrders}
             />
             <KpiCard
               title="Pode faturar"
               titleHint={CM_HELP.openOrders.kpiCanInvoice}
               value={summary.podeFaturar.toLocaleString("pt-BR")}
               icon={<PackageCheck size={22} />}
+              onClick={openOrdersBillable}
             />
             <KpiCard
               title="Pedidos em atraso"
               titleHint={CM_HELP.openOrders.kpiLate}
               value={summary.atrasos.toLocaleString("pt-BR")}
               icon={<AlertTriangle size={22} />}
+              valueTone={summary.atrasos > 0 ? "danger" : "default"}
+              iconTone={summary.atrasos > 0 ? "warning" : undefined}
+              onClick={openOrdersLate}
             />
             {showWorklist ? (
               <KpiCard
@@ -506,6 +501,10 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={(worklistToday + worklistOverdue).toLocaleString("pt-BR")}
                 subtitle={`${worklistOverdue} atrasada(s)`}
                 icon={<CalendarCheck size={22} />}
+                valueTone={worklistOverdue > 0 ? "danger" : "default"}
+                onClick={() =>
+                  openMyDay(worklistOverdue > 0 ? "overdue" : "today")
+                }
               />
             ) : null}
           </div>
@@ -519,6 +518,14 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           hint={CM_HELP.home.management}
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
+          actions={
+            <ActionButton
+              variant="ghost"
+              onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
+            >
+              <ExternalLink size={16} aria-hidden="true" /> Ver no Dashboard
+            </ActionButton>
+          }
         >
           {mgmtLoading ? (
             <CommercialLoadingCard title="Carregando KPIs de gestão…" variant="panel" />
@@ -538,6 +545,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.rolPct)}
                 subtitle="Matriz no mês"
                 icon={<Wallet size={22} />}
+                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
               />
               <KpiCard
                 title="Conversão"
@@ -545,6 +553,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.closingPct)}
                 subtitle="Propostas → ganhas"
                 icon={<PackageCheck size={22} />}
+                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
               />
               <KpiCard
                 title="OTD pedidos"
@@ -552,13 +561,12 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
                 value={formatPct(mgmtKpis.otdPct)}
                 subtitle="Entrega no prazo"
                 icon={<Package size={22} />}
+                onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
               />
             </div>
           ) : null}
 
-          <h3 className="cm-section-subtitle" style={{ marginTop: 16 }}>
-            Equipe (carteiras)
-          </h3>
+          <h3 className="cm-section-subtitle">Equipe (carteiras)</h3>
           {teamLoading ? (
             <CommercialLoadingCard title="Carregando equipe…" variant="panel" />
           ) : null}
@@ -571,7 +579,7 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
           ) : null}
           {!teamLoading && !teamError && teamRows.length === 0 ? (
             <EmptyState
-              classNames={{ ...cmEmptyStateClassNames, withTitle: true }}
+              classNames={cmEmptyCompactClassNames}
               defaultTitle="Nenhuma carteira ativa"
               defaultMessage="Cadastre vendedores em Carteiras para ver a tabela da equipe."
             >
@@ -593,54 +601,12 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
               layout="section"
             />
           ) : null}
-
-          <div className="cm-nav-row" style={{ marginTop: 12 }}>
-            <ActionButton
-              variant="ghost"
-              onClick={() => window.location.assign("/apps/dashboard-commercial")}
-            >
-              <ExternalLink size={16} aria-hidden="true" /> Dashboard Comercial
-            </ActionButton>
-            <ActionButton
-              variant="primary"
-              onClick={() => navigatePluginView("seller_portfolios", { basePath })}
-            >
-              Abrir Carteiras
-            </ActionButton>
-          </div>
         </SectionCard>
       ) : null}
 
       <SectionCard
-        title="Atalhos"
-        subtitle="Menos de dois cliques até a ação."
-        hint={CM_HELP.home.shortcuts}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
-      >
-        <div className="cm-home-grid">
-          {cards.map((card) => (
-            <NavigationCard
-              key={card.id}
-              classNames={cmNavCardClassNames}
-              title={card.title}
-              description={card.description}
-              icon={<HomeNavIcon target={card.icon} />}
-              onClick={() => navigatePluginView(card.id, { basePath })}
-            />
-          ))}
-        </div>
-        {!cards.length ? (
-          <EmptyState
-            classNames={cmEmptyStateClassNames}
-            defaultMessage="Nenhuma área disponível para o seu perfil."
-          />
-        ) : null}
-      </SectionCard>
-
-      <SectionCard
         title="Analytics e propostas"
-        subtitle="Deep links — BI permanece fora do portal operacional."
+        subtitle="Deep links externos — BI permanece fora do portal operacional."
         hint={CM_HELP.home.analytics}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
@@ -648,39 +614,16 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
         <div className="cm-nav-row">
           <ActionButton
             variant="ghost"
-            onClick={() => {
-              window.location.assign("/apps/dashboard-commercial");
-            }}
+            onClick={() => window.location.assign(DASHBOARD_COMMERCIAL_URL)}
           >
             <ExternalLink size={16} aria-hidden="true" /> Dashboard Comercial
           </ActionButton>
           <ActionButton
             variant="ghost"
-            onClick={() => {
-              window.location.assign("/apps/propostas-comerciais");
-            }}
+            onClick={() => window.location.assign(PROPOSTAS_URL)}
           >
             <ExternalLink size={16} aria-hidden="true" /> Propostas
           </ActionButton>
-          <ActionButton variant="ghost" onClick={() => navigatePluginView("open_orders", { basePath })}>
-            <ClipboardList size={16} aria-hidden="true" /> Pedidos
-          </ActionButton>
-          <ActionButton variant="ghost" onClick={() => navigatePluginView("customers", { basePath })}>
-            <Users size={16} aria-hidden="true" /> Carteira
-          </ActionButton>
-          {showWorklist ? (
-            <ActionButton variant="ghost" onClick={() => navigatePluginView("my_day", { basePath })}>
-              <CalendarCheck size={16} aria-hidden="true" /> Meu dia
-            </ActionButton>
-          ) : null}
-          {showAdmin ? (
-            <ActionButton
-              variant="ghost"
-              onClick={() => navigatePluginView("seller_portfolios", { basePath })}
-            >
-              <Settings size={16} aria-hidden="true" /> Admin
-            </ActionButton>
-          ) : null}
         </div>
       </SectionCard>
     </section>

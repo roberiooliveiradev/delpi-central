@@ -12,8 +12,10 @@ import { HelpTooltip, StatusBadge } from "@delpi/plugin-ui/index";
 import { fetchMeProfile, firstNameFromDisplay } from "../api/meApi";
 import { getMyWorklist } from "../api/worklistApi";
 import { CM_HELP } from "../content/helpTooltips";
+import { formatCurrency } from "../utils/format";
 import { type PluginView } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
+import { useHomeHeroMetricsOptional } from "./HomeHeroMetricsContext";
 import {
   CommercialPageHero,
   CommercialScopeChipBar,
@@ -74,6 +76,7 @@ export function PluginShell({
 }: PluginShellProps) {
   const [myDayBadge, setMyDayBadge] = useState(0);
   const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const homeMetrics = useHomeHeroMetricsOptional()?.metrics;
 
   useEffect(() => {
     if (!showWorklist) {
@@ -121,42 +124,41 @@ export function PluginShell({
   const showGreeting = view === "home";
   const greeting = greetingForNow();
   const heroTitle = userFirstName ? `${greeting}, ${userFirstName}` : greeting;
-  const heroHighlights =
-    showWorklist || myDayBadge > 0
-      ? [
-          {
-            id: "my-day",
-            label: "Meu dia",
-            value: myDayBadge > 0 ? `${myDayBadge} na fila` : "Em dia",
-          },
-          {
-            id: "scope",
-            label: "Escopo",
-            value: scopeLabel ?? "Carteira própria",
-          },
-          {
-            id: "focus",
-            label: "Foco",
-            value: "Carteira e follow-ups",
-          },
-        ]
-      : [
-          {
-            id: "scope",
-            label: "Escopo",
-            value: scopeLabel ?? "Carteira própria",
-          },
-          {
-            id: "focus",
-            label: "Foco",
-            value: "Pedidos e carteira",
-          },
-          {
-            id: "next",
-            label: "Próximo passo",
-            value: "Abrir pedidos ou Conta",
-          },
-        ];
+
+  const followUpsValue =
+    homeMetrics?.ready && homeMetrics.followUps != null
+      ? homeMetrics.followUps > 0
+        ? `${homeMetrics.followUps.toLocaleString("pt-BR")} na fila`
+        : "Em dia"
+      : myDayBadge > 0
+        ? `${myDayBadge} na fila`
+        : "—";
+  const valorValue =
+    homeMetrics?.ready && homeMetrics.valorAberto != null
+      ? formatCurrency(homeMetrics.valorAberto)
+      : "—";
+  const atrasosValue =
+    homeMetrics?.ready && homeMetrics.atrasos != null
+      ? homeMetrics.atrasos.toLocaleString("pt-BR")
+      : "—";
+
+  const heroHighlights = [
+    {
+      id: "follow-ups",
+      label: "Follow-ups",
+      value: followUpsValue,
+    },
+    {
+      id: "open-value",
+      label: "Valor em aberto",
+      value: valorValue,
+    },
+    {
+      id: "late",
+      label: "Atrasos",
+      value: atrasosValue,
+    },
+  ];
 
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
@@ -172,17 +174,23 @@ export function PluginShell({
                   <HelpTooltip content={CM_HELP.home.overview} ariaLabel="Ajuda: Início" />
                 </>
               }
-              description="Bem vindo ao Portal Comercial! Use o Início para alertas e números da carteira; Meu dia para follow-ups priorizados."
-              badge={
-                scopeLabel ? (
-                  <StatusBadge
-                    classNames={cmStatusBadgeClassNames}
-                    label={scopeLabel}
-                    variant="info"
-                  />
-                ) : undefined
-              }
-              highlights={heroHighlights}
+            description="Bem vindo ao Portal Comercial! Alertas e números da carteira abaixo — use a navegação para operar."
+            badge={
+              scopeLabel ? (
+                <StatusBadge
+                  classNames={cmStatusBadgeClassNames}
+                  label={scopeLabel}
+                  variant="info"
+                />
+              ) : (
+                <StatusBadge
+                  classNames={cmStatusBadgeClassNames}
+                  label="Carteira própria"
+                  variant="neutral"
+                />
+              )
+            }
+            highlights={heroHighlights}
             />
           </CommercialViewTransition>
         ) : null}

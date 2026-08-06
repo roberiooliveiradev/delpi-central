@@ -24,6 +24,8 @@ export type PedidosVendaAbertosFilters = {
   stockStatus: StockFilter;
   dateStart: string;
   dateEnd: string;
+  /** Só linhas com entrega em atraso. */
+  lateOnly: boolean;
 };
 
 export const DEFAULT_FILTERS: PedidosVendaAbertosFilters = {
@@ -33,6 +35,7 @@ export const DEFAULT_FILTERS: PedidosVendaAbertosFilters = {
   stockStatus: "",
   dateStart: "",
   dateEnd: "",
+  lateOnly: false,
 };
 
 export function getClientKey(item: PedidosVendaAbertosItem): string {
@@ -58,6 +61,7 @@ export function filterPedidosItems(
       return false;
     }
     if (!matchesStockFilter(item, filters.stockStatus)) return false;
+    if (filters.lateOnly && !isDeliveryOverdue(item.data_entrega, item.saldo)) return false;
 
     if (filters.dateStart || filters.dateEnd) {
       if (!isWithinDateRange(item.data_entrega, filters.dateStart, filters.dateEnd)) {

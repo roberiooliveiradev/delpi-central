@@ -172,13 +172,13 @@ Trilha imutável (append-only).
 |--------|------|--------|
 | `id` | UUID PK | |
 | `title` | TEXT NOT NULL | |
-| `description` | TEXT | |
+| `description` | TEXT | Observação livre · **Wave G+:** coluna e API create; **UI Meu dia ainda não expõe** — backlog P0 em [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | `task_type` | TEXT NOT NULL | `follow_up` \| `call` \| `email` \| `visit` \| `internal` \| `other` |
 | `status` | TEXT NOT NULL | `open` \| `done` \| `cancelled` \| `deferred` |
 | `priority` | TEXT NOT NULL | `low` \| `normal` \| `high` \| `critical` · default `normal` |
 | `due_at` | TIMESTAMPTZ | |
 | `completed_at` | TIMESTAMPTZ | |
-| `assignee_user_id` | TEXT NOT NULL | |
+| `assignee_user_id` | TEXT NOT NULL | **Wave G+ MVP:** create sempre = caller; reassign / picker = backlog P1 |
 | `created_by_user_id` | TEXT NOT NULL | |
 | `customer_code` / `customer_store` | TEXT | conta opcional |
 | `opportunity_id` | UUID NULL | FK → `opportunities` (nullable até M3; criar FK na M3) |

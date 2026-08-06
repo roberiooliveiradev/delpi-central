@@ -6,7 +6,7 @@
 > **Paridade:** § 2.1.1 (Portal do Vendedor → Portal Comercial)  
 > **UI kit:** `@delpi/plugin-ui` · modais contidos no host  
 > **Status:** wireframes de produto (ago/2026) — não são mockups de marca finais  
-> **Wave G / G+:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md). IDs canônicos WF-01…10; **Wave G+** adiciona WF-00 (shell UnderlineNav), WF-01R (Home hero), WF-06R (Meu dia CRM). Rota `/my-day` implementada.
+> **Wave G / G+:** revisão de IA em [DESIGN-IA-COMERCIAL.md](./DESIGN-IA-COMERCIAL.md). UX polish + backlog de tarefas: [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md). IDs canônicos WF-01…10; **Wave G+** adiciona WF-00 (shell UnderlineNav), WF-01R (Home hero), WF-06R (Meu dia CRM). Rota `/my-day` implementada.
 
 ## Convenções
 

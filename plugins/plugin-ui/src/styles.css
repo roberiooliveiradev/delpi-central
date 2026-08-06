@@ -214,7 +214,9 @@
 }
 
 .delpi-ui-field-label {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
   color: var(--delpi-ui-text, var(--text, #111111));

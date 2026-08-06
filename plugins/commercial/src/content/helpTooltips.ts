@@ -31,7 +31,7 @@ export const CM_HELP = {
   },
   myDay: {
     worklist:
-      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Cada tarefa tem prazo, prioridade e, de preferência, cliente vinculado.",
+      "Fila operacional do dia (padrão CRM): atrasadas → hoje → depois. Hero com contagens vivas; cada tarefa tem prazo, prioridade e, de preferência, cliente vinculado.",
     bucketOverdue: "Tarefas com prazo anterior a hoje.",
     bucketToday: "Tarefas com prazo ainda hoje.",
     bucketLater: "Tarefas com prazo futuro.",
@@ -101,12 +101,29 @@ export const CM_HELP = {
     billingFilters: "Período e opções da consulta de faturamento deste cliente.",
   },
   sellerPortfolios: {
-    list: "Carteiras cadastradas na commercial-api (usuário Keycloak + nome de exibição).",
+    list: "Carteiras cadastradas (usuário Minha Delpi + nome de exibição).",
+    filter: "Filtre a lista por status: todas, só ativas ou só inativas.",
     create: "Cria carteira vinculada a um usuário do diretório. O nome aparece no seletor de escopo.",
     displayName: "Nome amigável exibido no Portal Comercial (não precisa ser o login).",
-    directoryUser: "Usuário Keycloak que será o dono da carteira (busca por nome ou e-mail).",
+    directoryUser:
+      "Usuário Minha Delpi que será o dono da carteira (busca por nome ou e-mail).",
     edit: "Altera o nome de exibição da carteira selecionada.",
-    customers: "Clientes (código+loja) vinculados a esta carteira. Use busca TOTVS para incluir.",
+    customers:
+      "Clientes (código+loja) vinculados a esta carteira. Use busca TOTVS para incluir.",
+    colDisplayName: "Nome da carteira no seletor de escopo e nas telas do portal.",
+    colUserId: "Identificador do usuário Minha Delpi dono da carteira.",
+    colCustomerCount: "Quantidade de clientes (código+loja) vinculados a esta carteira.",
+    colStatus: "Ativa: aparece no escopo. Inativa: ocultada para operação normal.",
+    colActions: "Editar nome, gerenciar clientes ou ativar/desativar a carteira.",
+    managePortfolio: "Carteira cujos clientes você vai vincular ou remover.",
+    searchCustomers:
+      "Busca clientes ativos no TOTVS por código ou nome (mínimo 2 caracteres).",
+    transfer:
+      "Move clientes de uma carteira para outra com motivo registrado (auditoria).",
+    transferSource: "Carteira de onde os clientes saem.",
+    transferTarget: "Carteira que recebe os clientes.",
+    transferCustomers: "Selecione um ou mais clientes da carteira de origem.",
+    transferReason: "Motivo obrigatório da transferência (fica no histórico).",
   },
 } as const;
 

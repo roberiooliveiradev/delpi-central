@@ -30,11 +30,13 @@
 }
 
 .delpi-ui-alert-queue__item--warning {
-  border-color: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 40%, var(--delpi-ui-border, #e6e6e6));
+  border-color: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 45%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-warning, #f59e0b) 12%, var(--delpi-ui-surface, #ffffff));
 }
 
 .delpi-ui-alert-queue__item--danger {
-  border-color: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 40%, var(--delpi-ui-border, #e6e6e6));
+  border-color: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 45%, var(--delpi-ui-border, #e6e6e6));
+  background: color-mix(in srgb, var(--delpi-ui-danger, #ef4444) 12%, var(--delpi-ui-surface, #ffffff));
 }
 
 .delpi-ui-alert-queue__item--info {
@@ -75,8 +77,14 @@
 
 .delpi-ui-alert-queue__empty {
   margin: 0;
-  padding: 12px 0;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-alert-queue--compact-empty .delpi-ui-alert-queue__empty {
+  padding: 4px 0;
 }
 
 .delpi-ui-scope-chip-bar {

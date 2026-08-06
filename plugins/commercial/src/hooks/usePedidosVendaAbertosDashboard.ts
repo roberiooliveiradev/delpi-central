@@ -1,6 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import {
   collectDistinctClients,
   collectDistinctFiliais,
@@ -9,6 +8,7 @@ import {
   filterPedidosItems,
   type PedidosVendaAbertosFilters,
 } from "../utils/filterItems";
+import type { StockFilter } from "../utils/statusBadges";
 import { allocateStockToOrders } from "../utils/stockAllocation";
 import { allocateOpsToOrders, buildOpsProductIndex } from "../utils/opAllocation";
 import { usePedidosVendaAbertos } from "./usePedidosVendaAbertos";
@@ -21,13 +21,47 @@ import {
 
 export const PAGE_SIZE = 50;
 
+const STOCK_QUERY_VALUES = new Set<string>(["com_estoque", "parcial", "sem_estoque"]);
+
+function readOrdersDeepLinkFilters(): Partial<PedidosVendaAbertosFilters> {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  const patch: Partial<PedidosVendaAbertosFilters> = {};
+  const stock = (params.get("stock") ?? "").trim();
+  if (STOCK_QUERY_VALUES.has(stock)) patch.stockStatus = stock as StockFilter;
+  const focus = (params.get("focus") ?? "").trim().toLowerCase();
+  if (focus === "late" || focus === "atraso") patch.lateOnly = true;
+  return patch;
+}
+
+function clearOrdersDeepLinkQueryFromUrl(): void {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  let changed = false;
+  for (const key of ["stock", "focus"]) {
+    if (url.searchParams.has(key)) {
+      url.searchParams.delete(key);
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function usePedidosVendaAbertosDashboard(sellerId?: string | null) {
   const { data, opsData, opsWarning, loading, error, reload } =
     usePedidosVendaAbertos(sellerId);
-  const [filters, setFilters] = useState<PedidosVendaAbertosFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<PedidosVendaAbertosFilters>(() => ({
+    ...DEFAULT_FILTERS,
+    ...readOrdersDeepLinkFilters(),
+  }));
   const [page, setPage] = useState(1);
   const [sortKey, setSortKey] = useState<SortKey>(DEFAULT_SORT.key);
   const [sortDirection, setSortDirection] = useState<SortDirection>(DEFAULT_SORT.direction);
+
+  useEffect(() => {
+    clearOrdersDeepLinkQueryFromUrl();
+  }, []);
 
   const allItems = useMemo(() => data?.items ?? [], [data?.items]);
 
@@ -96,7 +130,8 @@ export function usePedidosVendaAbertosDashboard(sellerId?: string | null) {
     filters.clientCodes.length > 0 ||
     Boolean(filters.stockStatus) ||
     Boolean(filters.dateStart) ||
-    Boolean(filters.dateEnd);
+    Boolean(filters.dateEnd) ||
+    filters.lateOnly;
 
   return {
     loading,
@@ -124,9 +159,3 @@ export function usePedidosVendaAbertosDashboard(sellerId?: string | null) {
     toggleSort,
   };
 }
-
-export type UsePedidosVendaAbertosDashboardResult = ReturnType<
-  typeof usePedidosVendaAbertosDashboard
->;
-
-export type { PedidosVendaAbertosItem };

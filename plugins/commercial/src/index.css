@@ -14,8 +14,10 @@
 
 .dashboard-commercial {
   --cm-page-padding: 24px;
-  --cm-section-gap: 20px;
+  --cm-section-gap: 24px;
   --cm-grid-gap: 16px;
+  --cm-form-row-gap: 20px;
+  --cm-form-col-gap: 20px;
   --cm-accent: var(--primary, #089bdb);
   --cm-text: var(--text, #111111);
   --cm-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
@@ -84,20 +86,24 @@
   gap: 10px;
 }
 
-.dashboard-commercial .cm-home-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--border, var(--pva-border, #e6e6e6));
-  border-radius: var(--radius-md, 12px);
-  background: var(--surface, var(--card, transparent));
+.dashboard-commercial .cm-section-subtitle {
+  margin: 16px 0 10px;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--cm-text, var(--text, #111));
 }
 
-.dashboard-commercial .cm-home-summary__scope {
-  font-size: 0.85rem;
+.dashboard-commercial .cm-empty-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+}
+
+.dashboard-commercial .cm-empty-compact > :not(h3):not(p) {
+  width: auto;
+  align-self: flex-start;
 }
 
 .dashboard-commercial .cm-nav-row {
@@ -110,14 +116,15 @@
 .dashboard-commercial .cm-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px 16px;
-  align-items: end;
+  gap: var(--cm-form-row-gap, 20px) var(--cm-form-col-gap, 20px);
+  align-items: start;
 }
 
 .dashboard-commercial .cm-form-grid__actions {
   display: flex;
   align-items: flex-end;
   min-height: 44px;
+  padding-top: 4px;
 }
 
 .dashboard-commercial .cm-link {
@@ -128,21 +135,6 @@
 
 .dashboard-commercial .cm-link:hover {
   text-decoration: underline;
-}
-
-.dashboard-commercial .cm-home-hero {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.dashboard-commercial .cm-home-hero__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
 }
 
 .dashboard-commercial .cm-home-kpi-grid {
@@ -157,28 +149,110 @@
   gap: var(--cm-grid-gap);
 }
 
-.dashboard-commercial .cm-form-grid {
-  display: grid;
-  gap: 12px;
-  max-width: 480px;
+/* Meu dia */
+.dashboard-commercial .cm-my-day-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 4px;
 }
 
-.dashboard-commercial .cm-form-grid label {
+.dashboard-commercial .cm-my-day-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--cm-text-muted);
+  gap: 10px;
+  min-width: 0;
 }
 
-.dashboard-commercial .cm-form-grid input,
-.dashboard-commercial .cm-form-grid select {
-  min-height: 42px;
-  border-radius: 12px;
-  border: 1px solid var(--cm-border);
-  background: var(--cm-surface);
-  color: var(--cm-text);
-  padding: 0 12px;
+.dashboard-commercial .cm-my-day-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cm-form-row-gap, 20px) var(--cm-form-col-gap, 20px);
+  align-items: start;
+}
+
+.dashboard-commercial .cm-my-day-form__title {
+  grid-column: 1 / -1;
+}
+
+.dashboard-commercial .cm-my-day-form__actions {
+  display: flex;
+  align-items: flex-end;
+  min-height: 44px;
+  padding-top: 4px;
+}
+
+.dashboard-commercial .cm-my-day-create--focus {
+  border-radius: 16px;
+  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 55%, transparent);
+  outline-offset: 4px;
+}
+
+/* Carteiras (admin) */
+.dashboard-commercial .cm-portfolios-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 4px;
+}
+
+.dashboard-commercial .cm-portfolios-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--cm-form-row-gap, 20px) var(--cm-form-col-gap, 20px);
+  align-items: start;
+}
+
+.dashboard-commercial .cm-portfolios-form__user {
+  grid-column: 1 / -1;
+}
+
+.dashboard-commercial .cm-portfolios-form__actions {
+  display: flex;
+  align-items: flex-end;
+  min-height: 44px;
+  padding-top: 4px;
+}
+
+.dashboard-commercial .cm-portfolios-create--focus {
+  border-radius: 16px;
+  outline: 2px solid color-mix(in srgb, var(--cm-accent, #089bdb) 55%, transparent);
+  outline-offset: 4px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-commercial .cm-home-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-home-kpi-grid .delpi-ui-kpi-card--wide,
+  .dashboard-commercial .cm-home-kpi-grid .pva-kpi-card--wide {
+    grid-column: auto;
+  }
+
+  .dashboard-commercial .cm-my-day-form {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-my-day-form__title {
+    grid-column: auto;
+  }
+
+  .dashboard-commercial .cm-portfolios-form {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-commercial .cm-portfolios-form__user {
+    grid-column: auto;
+  }
 }
 
 .dashboard-commercial .cm-customer-header {
@@ -268,11 +342,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--cm-grid-gap);
-  margin-top: 16px;
+  margin-top: 4px;
 }
 
 .dashboard-commercial .cm-manage-customers-grid h4 {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-size: 13px;
   color: var(--cm-text-muted);
 }

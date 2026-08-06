@@ -10,6 +10,8 @@
 | **F2b** | MFE paridade (scaffold) | `concluído` |
 | **F2b harden** | UX real + clients + scope | `concluído` (ago/2026 — port PVA completo) |
 | Wave G | Shell/IA, Home, Meu dia, worklist, timeline Conta 360 | **concluído Wave G+** (P0+P1; sem F2c) |
+| **UX polish** | PageHero/TopBar; Home + Meu dia + Carteiras anti-redundância | **concluído** (ago/2026) — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1 |
+| **Tasks P0–P2** | Observação UI · responsável/reassign · anexos | **backlog** — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3 |
 | **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops) |
 | **F2c** | Depreciar PVA | **pendente** — após homologação Comercial/QA |
 
@@ -45,12 +47,15 @@ Homologação: [HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md) · Perfis: [PERF
 | **G0** EmptyState onboarding (WF-11) / SavedViewChips | **Parcial / fora** | Empty states básicos em Home/Meu dia; SavedViewChips **não** |
 | **G1** Shell + nav por objeto + ScopeChipBar | **Feito** | `PluginShell.tsx` |
 | **G1** Remover CSS espelho kit no MFE | **Dívida** | Overrides `.delpi-ui-*` legados PVA em `customers.css` / `responsive.css` (pré-Wave G) |
-| **G2** Home vendedor (AlertQueue + atalhos ≤2 cliques) | **Feito** | `HomePage.tsx` |
-| **G2** Home gestão (ROL/OTD/equipe api-delpi) | **Feito** | `commercialKpisApi.ts` + painel Gestão na `HomePage` (allSettled) |
+| **G2** Home vendedor (AlertQueue + ≤2 cliques) | **Feito** | `HomePage.tsx` — sem atalhos redundantes (UX polish) |
+| **G2** Home gestão (ROL/OTD/equipe api-delpi) | **Feito** | `commercialKpisApi.ts` + painel Gestão; KPIs clicáveis |
+| **G2+** Hero SI + highlights vivos | **Feito** | `PageHero` + `HomeHeroMetricsContext` |
 | **G3** Timeline conta + deep links propostas/dashboard | **Feito** | `CustomerActivityTimelinePanel.tsx` |
-| **G4** Migration M2 parcial `tasks`/`activities` | **Feito** | `V003__tasks_activities.sql` |
-| **G4** API worklist/tasks/activities | **Feito** | list/create/complete/**defer** + worklist buckets; sem reassign multi-user |
-| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Form prazo/prioridade/cliente/tipo; Adiar; Conta→follow-up |
+| **G4** Migration M2 parcial `tasks`/`activities` | **Feito** | `V003__tasks_activities.sql` (`description` no DB) |
+| **G4** API worklist/tasks/activities | **Feito** | list/create/complete/**defer** + worklist; **sem** reassign multi-user |
+| **G4** MFE `/my-day` + RBAC `worklist`/`followups` | **Feito** | Form prazo/prioridade/cliente/tipo; Adiar; Conta→follow-up; **sem** UI de `description` |
+| **G4+** Meu dia PageHero / ScopeChipBar / empty CTA | **Feito** | `MyDayPage.tsx` (UX polish) |
+| **Pós-G** Observação / responsável / anexos | **Backlog** | [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) |
 | **G5** Manifest capacidades (sem persona) | **Feito** | Sem `commercial.home.view` — Home usa `accounts.view` |
 | **G5** `PERFIS-E-PERMISSOES.md` | **Feito** | Papéis sugeridos Minha Delpi |
 | Docs DESIGN-IA / HOMOLOGAÇÃO / README | **Feito** | Wave G+ P0/P1 |
@@ -74,6 +79,10 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] F2 migrations + dual-read + transfer audit
 - [x] F2b harden — paridade UX open-orders/carteira com PVA
 - [x] Wave G / G+ — worklist / Meu dia / RBAC / Home gestão / Conta follow-up
+- [x] UX polish Home + Meu dia ([UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 1)
+- [ ] Tasks P0 Observação na UI
+- [ ] Tasks P1 Responsável / reassign
+- [ ] Tasks P2 Anexos (volume persistente)
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
 - [ ] Homologação assinada Wave G+ ([HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md))
 - [ ] F2c flip menu + redirects

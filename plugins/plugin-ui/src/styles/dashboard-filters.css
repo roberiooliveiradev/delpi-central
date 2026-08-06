@@ -26,8 +26,28 @@
 .delpi-ui-filter-box {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--delpi-ui-field-stack-gap, 10px);
   min-width: 0;
+}
+
+.delpi-ui-filter-box > label,
+.delpi-ui-filter-box .delpi-ui-field__label,
+.delpi-ui-filter-box [class$="-field__label"] {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 0.2em;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+}
+
+.delpi-ui-field__required,
+.delpi-ui-filter-box [class$="-field__required"] {
+  display: inline;
+  flex-shrink: 0;
+  white-space: nowrap;
+  line-height: inherit;
 }
 
 .delpi-ui-filter-box--action {
@@ -209,7 +229,7 @@
 .delpi-ui-filter-bar [class$="-field"] {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--delpi-ui-field-stack-gap, 10px);
   min-width: 0;
   /* Shell é flex column; MFE com `flex: 1` no field (layout horizontal legado)
      esticava cada campo e gerava buracos verticais enormes (maintenance jul/2026). */

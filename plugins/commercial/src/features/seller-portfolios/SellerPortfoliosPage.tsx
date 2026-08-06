@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import {
   ActionButton,
@@ -27,9 +27,13 @@ import { CM_HELP } from "../../content/helpTooltips";
 import {
   CommercialLoadingCard,
   CommercialMultiSelectField,
+  CommercialPageHero,
+  CommercialScopeChipBar,
   CommercialSelectField,
   CommercialTextAreaField,
   CommercialTextField,
+  CommercialTitleWithHelp,
+  CommercialViewTransition,
   cmDataTableClassNames,
   cmDataTableLabels,
   cmEmptyStateClassNames,
@@ -41,15 +45,58 @@ import {
 import type { SellerPortfolio, TotvsCustomerHit } from "../../types/portfolio";
 import { customerKey } from "../../shared/format";
 
+type PortfolioFilter = "all" | "active" | "inactive";
+
+const FILTER_META: Record<PortfolioFilter, { label: string; emptyHint: string }> = {
+  all: { label: "Todas", emptyHint: "Cadastre a primeira carteira abaixo." },
+  active: { label: "Ativas", emptyHint: "Nenhuma carteira ativa neste filtro." },
+  inactive: { label: "Inativas", emptyHint: "Nenhuma carteira inativa neste filtro." },
+};
+
+const cmEmptyCompactClassNames = {
+  ...cmEmptyStateClassNames,
+  root: `${cmEmptyStateClassNames.root} delpi-ui-state-box--compact cm-empty-compact`,
+};
+
+function portfolioHeroCopy(stats: {
+  total: number;
+  active: number;
+  inactive: number;
+  customers: number;
+}) {
+  if (stats.total === 0) {
+    return {
+      title: "Nenhuma carteira ainda",
+      description: "Crie a primeira carteira e vincule clientes do TOTVS.",
+    };
+  }
+  if (stats.inactive > 0 && stats.active === 0) {
+    return {
+      title: "Só carteiras inativas",
+      description: "Reative uma carteira ou cadastre um novo vendedor.",
+    };
+  }
+  return {
+    title:
+      stats.active === 1
+        ? "1 carteira ativa"
+        : `${stats.active.toLocaleString("pt-BR")} carteiras ativas`,
+    description: "Cadastre vendedores, vincule clientes e transfira entre carteiras.",
+  };
+}
+
 export function SellerPortfoliosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [portfolios, setPortfolios] = useState<SellerPortfolio[]>([]);
+  const [filter, setFilter] = useState<PortfolioFilter>("all");
 
   const [createUser, setCreateUser] = useState<DirectoryUserOption[]>([]);
   const [createDisplayName, setCreateDisplayName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [highlightCreateForm, setHighlightCreateForm] = useState(false);
+  const createFormRef = useRef<HTMLDivElement | null>(null);
 
   const [editingPortfolioId, setEditingPortfolioId] = useState<string | null>(null);
   const [editDisplayName, setEditDisplayName] = useState("");
@@ -110,6 +157,27 @@ export function SellerPortfoliosPage() {
     };
   }, [customerQuery]);
 
+  const stats = useMemo(() => {
+    const active = portfolios.filter((item) => item.active).length;
+    const inactive = portfolios.length - active;
+    const customers = portfolios.reduce((sum, item) => sum + (item.customer_count ?? 0), 0);
+    return { total: portfolios.length, active, inactive, customers };
+  }, [portfolios]);
+
+  const filteredPortfolios = useMemo(() => {
+    if (filter === "active") return portfolios.filter((item) => item.active);
+    if (filter === "inactive") return portfolios.filter((item) => !item.active);
+    return portfolios;
+  }, [portfolios, filter]);
+
+  const hero = portfolioHeroCopy(stats);
+
+  function focusCreateForm() {
+    setHighlightCreateForm(true);
+    createFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => setHighlightCreateForm(false), 2200);
+  }
+
   async function handleCreate() {
     const user = createUser[0];
     if (!user || !createDisplayName.trim()) {
@@ -128,6 +196,7 @@ export function SellerPortfoliosPage() {
       setCreateUser([]);
       setCreateDisplayName("");
       setMessage("Carteira criada com sucesso.");
+      setFilter("all");
       reload();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Erro ao criar carteira.");
@@ -296,19 +365,44 @@ export function SellerPortfoliosPage() {
     [portfolios],
   );
 
+  const filterChips = (
+    [
+      ["all", stats.total] as const,
+      ["active", stats.active] as const,
+      ["inactive", stats.inactive] as const,
+    ] as const
+  ).map(([id, count]) => ({
+    id,
+    label: `${FILTER_META[id].label} (${count})`,
+    active: filter === id,
+    onSelect: () => setFilter(id),
+  }));
+
   const columns = useMemo<DataTableColumn<SellerPortfolio>[]>(
     () => [
-      { key: "display_name", header: "Carteira", render: (row) => row.display_name },
-      { key: "user_id", header: "Usuário", render: (row) => row.user_id },
+      {
+        key: "display_name",
+        header: "Carteira",
+        headerHint: CM_HELP.sellerPortfolios.colDisplayName,
+        render: (row) => row.display_name,
+      },
+      {
+        key: "user_id",
+        header: "Usuário",
+        headerHint: CM_HELP.sellerPortfolios.colUserId,
+        render: (row) => row.user_id,
+      },
       {
         key: "customer_count",
         header: "Clientes",
+        headerHint: CM_HELP.sellerPortfolios.colCustomerCount,
         align: "right",
         render: (row) => row.customer_count.toLocaleString("pt-BR"),
       },
       {
         key: "status",
         header: "Status",
+        headerHint: CM_HELP.sellerPortfolios.colStatus,
         render: (row) => (
           <StatusBadge
             label={row.active ? "Ativa" : "Inativa"}
@@ -320,12 +414,21 @@ export function SellerPortfoliosPage() {
       {
         key: "actions",
         header: "Ações",
+        headerHint: CM_HELP.sellerPortfolios.colActions,
         render: (row) => (
           <div className="cm-row-actions">
             <ActionButton variant="ghost" onClick={() => startEdit(row)}>
               Editar
             </ActionButton>
-            <ActionButton variant="ghost" onClick={() => setManageDataPortfolioId(row.id)}>
+            <ActionButton
+              variant="ghost"
+              onClick={() => {
+                setManageDataPortfolioId(row.id);
+                document
+                  .getElementById("cm-manage-customers")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
               Gerenciar clientes
             </ActionButton>
             <ActionButton variant="ghost" onClick={() => handleToggleActive(row)}>
@@ -344,6 +447,60 @@ export function SellerPortfoliosPage() {
 
   return (
     <section className="cm-page-stack">
+      <CommercialPageHero
+        aria-label="Resumo das carteiras"
+        eyebrow="Admin"
+        title={loading ? "Carregando carteiras…" : hero.title}
+        description={
+          loading
+            ? "Buscando carteiras cadastradas na commercial-api."
+            : hero.description
+        }
+        badge={
+          !loading && stats.total === 0 ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label="Vazio"
+              variant="neutral"
+            />
+          ) : !loading && stats.inactive > 0 && stats.active === 0 ? (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label="Inativas"
+              variant="warning"
+            />
+          ) : (
+            <StatusBadge
+              classNames={cmStatusBadgeClassNames}
+              label={`${stats.active} ativa${stats.active === 1 ? "" : "s"}`}
+              variant="info"
+            />
+          )
+        }
+        highlights={[
+          {
+            id: "total",
+            label: "Carteiras",
+            value: loading ? "—" : stats.total.toLocaleString("pt-BR"),
+          },
+          {
+            id: "active",
+            label: "Ativas",
+            value: loading ? "—" : stats.active.toLocaleString("pt-BR"),
+          },
+          {
+            id: "inactive",
+            label: "Inativas",
+            value: loading ? "—" : stats.inactive.toLocaleString("pt-BR"),
+          },
+          {
+            id: "customers",
+            label: "Clientes",
+            value: loading ? "—" : stats.customers.toLocaleString("pt-BR"),
+          },
+        ]}
+      />
+
       {message ? (
         <StateBanner variant="success" classNames={cmStateBannerClassNames}>
           {message}
@@ -356,65 +513,110 @@ export function SellerPortfoliosPage() {
       ) : null}
 
       <SectionCard
-        title="Carteiras de vendedores"
-        subtitle="Administração de carteiras via commercial-api"
+        title="Carteiras"
+        subtitle="Usuário Minha Delpi + nome de exibição no portal."
         hint={CM_HELP.sellerPortfolios.list}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
+        actions={
+          <ActionButton variant="ghost" onClick={() => reload()}>
+            Atualizar
+          </ActionButton>
+        }
       >
-        {loading ? (
-          <CommercialLoadingCard title="Carregando carteiras" variant="panel" />
-        ) : portfolios.length === 0 ? (
-          <EmptyState
-            title="Nenhuma carteira cadastrada"
-            message="Cadastre a primeira carteira abaixo."
-            defaultMessage="Nenhuma carteira cadastrada."
-            classNames={cmEmptyStateClassNames}
+        <div className="cm-portfolios-toolbar">
+          <CommercialScopeChipBar
+            label={
+              <CommercialTitleWithHelp
+                title="Filtro"
+                hint={CM_HELP.sellerPortfolios.filter}
+              />
+            }
+            aria-label="Filtro de carteiras"
+            chips={filterChips}
           />
-        ) : (
-          <DataTable
-            rows={portfolios}
-            columns={columns}
-            rowKey={(row: SellerPortfolio) => row.id}
-            classNames={cmDataTableClassNames}
-            labels={cmDataTableLabels}
-            layout="section"
-          />
-        )}
+        </div>
+
+        {loading ? <CommercialLoadingCard title="Carregando carteiras" variant="panel" /> : null}
+
+        {!loading ? (
+          <CommercialViewTransition transitionKey={`filter-${filter}`} tone="panel">
+            {filteredPortfolios.length === 0 ? (
+              <EmptyState
+                classNames={cmEmptyCompactClassNames}
+                defaultTitle={
+                  stats.total === 0
+                    ? "Nenhuma carteira cadastrada"
+                    : `Nenhuma em ${FILTER_META[filter].label.toLowerCase()}`
+                }
+                defaultMessage={FILTER_META[filter].emptyHint}
+              >
+                {stats.total === 0 || filter === "all" ? (
+                  <ActionButton variant="primary" onClick={focusCreateForm}>
+                    Criar carteira
+                  </ActionButton>
+                ) : null}
+              </EmptyState>
+            ) : (
+              <DataTable
+                rows={filteredPortfolios}
+                columns={columns}
+                rowKey={(row: SellerPortfolio) => row.id}
+                classNames={cmDataTableClassNames}
+                labels={cmDataTableLabels}
+                layout="section"
+              />
+            )}
+          </CommercialViewTransition>
+        ) : null}
       </SectionCard>
 
-      <SectionCard
-        title="Nova carteira"
-        hint={CM_HELP.sellerPortfolios.create}
-        classNames={cmSectionCardClassNames}
-        labels={cmSectionLabels}
+      <div
+        ref={createFormRef}
+        className={
+          highlightCreateForm
+            ? "cm-portfolios-create cm-portfolios-create--focus"
+            : "cm-portfolios-create"
+        }
       >
-        <div className="cm-form-grid">
-          <UserDirectoryPicker
-            value={createUser}
-            onChange={setCreateUser}
-            searchUsers={searchDirectoryUsers}
-            maxSelected={1}
-            labels={{
-              title: "Usuário (Keycloak)",
-              hint: CM_HELP.sellerPortfolios.directoryUser,
-              placeholder: "Buscar usuário…",
-            }}
-          />
-          <CommercialTextField
-            label="Nome de exibição"
-            hint={CM_HELP.sellerPortfolios.displayName}
-            value={createDisplayName}
-            onChange={setCreateDisplayName}
-            placeholder="Ex.: João Silva"
-            required
-          />
-          <ActionButton variant="primary" onClick={handleCreate} disabled={creating}>
-            <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
-            {creating ? "Salvando…" : "Criar carteira"}
-          </ActionButton>
-        </div>
-      </SectionCard>
+        <SectionCard
+          title="Nova carteira"
+          subtitle="Vincule um usuário do diretório e defina o nome no seletor de escopo."
+          hint={CM_HELP.sellerPortfolios.create}
+          classNames={cmSectionCardClassNames}
+          labels={cmSectionLabels}
+        >
+          <div className="cm-portfolios-form">
+            <div className="cm-portfolios-form__user">
+              <UserDirectoryPicker
+                value={createUser}
+                onChange={setCreateUser}
+                searchUsers={searchDirectoryUsers}
+                maxSelected={1}
+                labels={{
+                  title: "Usuário (Minha Delpi)",
+                  hint: CM_HELP.sellerPortfolios.directoryUser,
+                  placeholder: "Buscar usuário…",
+                }}
+              />
+            </div>
+            <CommercialTextField
+              label="Nome de exibição"
+              hint={CM_HELP.sellerPortfolios.displayName}
+              value={createDisplayName}
+              onChange={setCreateDisplayName}
+              placeholder="Ex.: João Silva"
+              required
+            />
+            <div className="cm-portfolios-form__actions">
+              <ActionButton variant="primary" onClick={handleCreate} disabled={creating}>
+                <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
+                {creating ? "Salvando…" : "Criar carteira"}
+              </ActionButton>
+            </div>
+          </div>
+        </SectionCard>
+      </div>
 
       {editingPortfolioId ? (
         <SectionCard
@@ -423,15 +625,17 @@ export function SellerPortfoliosPage() {
           classNames={cmSectionCardClassNames}
           labels={cmSectionLabels}
         >
-          <div className="cm-form-grid">
-            <CommercialTextField
-              label="Nome de exibição"
-              hint={CM_HELP.sellerPortfolios.displayName}
-              value={editDisplayName}
-              onChange={setEditDisplayName}
-              required
-            />
-            <div className="cm-row-actions">
+          <div className="cm-portfolios-form">
+            <div className="cm-portfolios-form__user">
+              <CommercialTextField
+                label="Nome de exibição"
+                hint={CM_HELP.sellerPortfolios.displayName}
+                value={editDisplayName}
+                onChange={setEditDisplayName}
+                required
+              />
+            </div>
+            <div className="cm-portfolios-form__actions cm-row-actions">
               <ActionButton variant="primary" onClick={handleSaveEdit} disabled={savingEdit}>
                 {savingEdit ? "Salvando…" : "Salvar"}
               </ActionButton>
@@ -443,112 +647,129 @@ export function SellerPortfoliosPage() {
         </SectionCard>
       ) : null}
 
+      <div id="cm-manage-customers">
       <SectionCard
-        title="Gerenciar clientes da carteira"
+        title="Gerenciar clientes"
         subtitle="Busque clientes ativos no TOTVS e vincule ou remova da carteira selecionada."
         hint={CM_HELP.sellerPortfolios.customers}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        <div className="cm-form-grid">
-          <CommercialSelectField
-            label="Carteira"
-            value={manageDataPortfolioId}
-            onChange={setManageDataPortfolioId}
-            options={portfolioOptions}
-            allowEmpty
-            emptyLabel="Selecione uma carteira"
-            searchable
-          />
+        <div className="cm-portfolios-form">
+          <div className="cm-portfolios-form__user">
+            <CommercialSelectField
+              label="Carteira"
+              hint={CM_HELP.sellerPortfolios.managePortfolio}
+              value={manageDataPortfolioId}
+              onChange={setManageDataPortfolioId}
+              options={portfolioOptions}
+              allowEmpty
+              emptyLabel="Selecione uma carteira"
+              searchable
+            />
+          </div>
         </div>
 
-        {manageDataPortfolio ? (
-          <div className="cm-manage-customers-grid">
-            <div>
-              <h4>Clientes vinculados ({manageDataPortfolio.customers.length})</h4>
-              {manageDataPortfolio.customers.length === 0 ? (
-                <EmptyState
-                  title="Nenhum cliente vinculado"
-                  message="Use a busca ao lado para adicionar clientes."
-                  defaultMessage="Nenhum cliente vinculado."
-                  classNames={cmEmptyStateClassNames}
-                />
-              ) : (
-                <ul className="cm-customer-chip-list">
-                  {manageDataPortfolio.customers.map((customer) => {
-                    const key = customerKey(customer.customer_code, customer.customer_store);
-                    return (
-                      <li key={key}>
-                        <span>
-                          {customer.customer_code}/{customer.customer_store} ·{" "}
-                          {customer.customer_name?.trim() || "—"}
-                        </span>
-                        <ActionButton
-                          variant="ghost"
-                          disabled={busyCustomerKey === key}
-                          onClick={() =>
-                            handleRemoveCustomer(customer.customer_code, customer.customer_store)
-                          }
-                          aria-label={`Remover ${customer.customer_name ?? customer.customer_code}`}
-                        >
-                          <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
-                        </ActionButton>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+        <CommercialViewTransition
+          transitionKey={manageDataPortfolioId || "none"}
+          tone="panel"
+        >
+          {!manageDataPortfolio ? (
+            <EmptyState
+              classNames={cmEmptyCompactClassNames}
+              defaultTitle="Selecione uma carteira"
+              defaultMessage="Escolha acima ou use Gerenciar clientes na lista."
+            />
+          ) : (
+            <div className="cm-manage-customers-grid">
+              <div>
+                <h4>Clientes vinculados ({manageDataPortfolio.customers.length})</h4>
+                {manageDataPortfolio.customers.length === 0 ? (
+                  <EmptyState
+                    classNames={cmEmptyCompactClassNames}
+                    defaultTitle="Nenhum cliente vinculado"
+                    defaultMessage="Use a busca ao lado para adicionar clientes."
+                  />
+                ) : (
+                  <ul className="cm-customer-chip-list">
+                    {manageDataPortfolio.customers.map((customer) => {
+                      const key = customerKey(customer.customer_code, customer.customer_store);
+                      return (
+                        <li key={key}>
+                          <span>
+                            {customer.customer_code}/{customer.customer_store} ·{" "}
+                            {customer.customer_name?.trim() || "—"}
+                          </span>
+                          <ActionButton
+                            variant="ghost"
+                            disabled={busyCustomerKey === key}
+                            onClick={() =>
+                              handleRemoveCustomer(customer.customer_code, customer.customer_store)
+                            }
+                            aria-label={`Remover ${customer.customer_name ?? customer.customer_code}`}
+                          >
+                            <Trash2 size={14} strokeWidth={1.75} aria-hidden="true" />
+                          </ActionButton>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
 
-            <div>
-              <h4>Buscar clientes ativos (TOTVS)</h4>
-              <CommercialTextField
-                label="Buscar"
-                value={customerQuery}
-                onChange={setCustomerQuery}
-                placeholder="Código ou nome do cliente"
-              />
-              {searchingCustomers ? <p className="cm-hint-text">Buscando…</p> : null}
-              {customerHits.length > 0 ? (
-                <ul className="cm-customer-chip-list">
-                  {customerHits.map((hit) => {
-                    const key = customerKey(hit.code, hit.store);
-                    const alreadyLinked = manageDataPortfolio.customers.some(
-                      (customer) =>
-                        customerKey(customer.customer_code, customer.customer_store) === key,
-                    );
-                    return (
-                      <li key={key}>
-                        <span>
-                          {hit.code}/{hit.store} · {hit.name}
-                        </span>
-                        <ActionButton
-                          variant="ghost"
-                          disabled={alreadyLinked || busyCustomerKey === key}
-                          onClick={() => handleAddCustomer(hit)}
-                        >
-                          {alreadyLinked ? "Já vinculado" : "Adicionar"}
-                        </ActionButton>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : null}
+              <div>
+                <h4>Buscar clientes ativos (TOTVS)</h4>
+                <CommercialTextField
+                  label="Buscar"
+                  hint={CM_HELP.sellerPortfolios.searchCustomers}
+                  value={customerQuery}
+                  onChange={setCustomerQuery}
+                  placeholder="Código ou nome do cliente"
+                />
+                {searchingCustomers ? <p className="cm-hint-text">Buscando…</p> : null}
+                {customerHits.length > 0 ? (
+                  <ul className="cm-customer-chip-list">
+                    {customerHits.map((hit) => {
+                      const key = customerKey(hit.code, hit.store);
+                      const alreadyLinked = manageDataPortfolio.customers.some(
+                        (customer) =>
+                          customerKey(customer.customer_code, customer.customer_store) === key,
+                      );
+                      return (
+                        <li key={key}>
+                          <span>
+                            {hit.code}/{hit.store} · {hit.name}
+                          </span>
+                          <ActionButton
+                            variant="ghost"
+                            disabled={alreadyLinked || busyCustomerKey === key}
+                            onClick={() => handleAddCustomer(hit)}
+                          >
+                            {alreadyLinked ? "Já vinculado" : "Adicionar"}
+                          </ActionButton>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ) : null}
+          )}
+        </CommercialViewTransition>
       </SectionCard>
+      </div>
 
       <SectionCard
         title="Transferir clientes"
-        subtitle="Selecione origem, destino, clientes e o motivo da transferência."
-        hint={CM_HELP.sellerPortfolios.customers}
+        subtitle="Origem, destino, clientes e motivo — com auditoria."
+        hint={CM_HELP.sellerPortfolios.transfer}
         classNames={cmSectionCardClassNames}
         labels={cmSectionLabels}
       >
-        <div className="cm-form-grid">
+        <div className="cm-portfolios-form">
           <CommercialSelectField
             label="Carteira origem"
+            hint={CM_HELP.sellerPortfolios.transferSource}
             value={transferSourceId}
             onChange={(value: string) => {
               setTransferSourceId(value);
@@ -561,6 +782,7 @@ export function SellerPortfoliosPage() {
           />
           <CommercialSelectField
             label="Carteira destino"
+            hint={CM_HELP.sellerPortfolios.transferTarget}
             value={transferTargetId}
             onChange={setTransferTargetId}
             options={portfolioOptions}
@@ -568,24 +790,32 @@ export function SellerPortfoliosPage() {
             emptyLabel="Selecione…"
             searchable
           />
-          <CommercialMultiSelectField
-            label="Clientes a transferir"
-            options={transferCustomerOptions}
-            selectedValues={transferCustomerKeys}
-            onChange={setTransferCustomerKeys}
-            searchable
-            showSelectedTags
-          />
-          <CommercialTextAreaField
-            label="Motivo da transferência"
-            value={transferReason}
-            onChange={setTransferReason}
-            placeholder="Ex.: Reorganização de carteira regional"
-            required
-          />
-          <ActionButton variant="primary" onClick={handleTransfer} disabled={transferring}>
-            {transferring ? "Transferindo…" : "Transferir clientes"}
-          </ActionButton>
+          <div className="cm-portfolios-form__user">
+            <CommercialMultiSelectField
+              label="Clientes a transferir"
+              hint={CM_HELP.sellerPortfolios.transferCustomers}
+              options={transferCustomerOptions}
+              selectedValues={transferCustomerKeys}
+              onChange={setTransferCustomerKeys}
+              searchable
+              showSelectedTags
+            />
+          </div>
+          <div className="cm-portfolios-form__user">
+            <CommercialTextAreaField
+              label="Motivo da transferência"
+              hint={CM_HELP.sellerPortfolios.transferReason}
+              value={transferReason}
+              onChange={setTransferReason}
+              placeholder="Ex.: Reorganização de carteira regional"
+              required
+            />
+          </div>
+          <div className="cm-portfolios-form__actions">
+            <ActionButton variant="primary" onClick={handleTransfer} disabled={transferring}>
+              {transferring ? "Transferindo…" : "Transferir clientes"}
+            </ActionButton>
+          </div>
         </div>
       </SectionCard>
     </section>

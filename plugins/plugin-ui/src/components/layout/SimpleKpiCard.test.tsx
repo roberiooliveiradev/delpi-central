@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   createAnalyticsKpiCard,
@@ -41,6 +41,21 @@ describe("SimpleKpiCard", () => {
     );
 
     expect(screen.getByText("…")).toBeTruthy();
+  });
+
+  it("dispara onClick quando interativo", () => {
+    const onClick = vi.fn();
+    render(
+      <SimpleKpiCard
+        title="Linhas"
+        value="10"
+        icon={null}
+        classNames={simpleKpiCardBemClasses("cm")}
+        onClick={onClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Abrir detalhes: Linhas/i }));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 
   it("exibe HelpTooltip quando titleHint é informado", () => {

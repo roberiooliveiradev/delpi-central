@@ -277,10 +277,10 @@ export function selectFieldPacClasses(prefix: string): {
 } {
   return {
     field: {
-      root: `${prefix}-field`,
-      labelWrapper: `${prefix}-field__label`,
+      root: delpiUiClass(`${prefix}-field`, "delpi-ui-filter-box"),
+      labelWrapper: delpiUiClass(`${prefix}-field__label`, "delpi-ui-field__label"),
       fieldLabel: "",
-      required: `${prefix}-field__required`,
+      required: delpiUiClass(`${prefix}-field__required`, "delpi-ui-field__required"),
     },
     control: selectControlBemClasses(prefix),
   };
