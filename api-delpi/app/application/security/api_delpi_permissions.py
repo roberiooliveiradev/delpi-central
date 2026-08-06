@@ -109,6 +109,11 @@ PROPOSTAS_COMERCIAIS_VIEW = "propostas-comerciais.view"
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
 
+# Aliases Portal Comercial (cutover): papel Vendedor recebe commercial.* e ainda
+# consome rotas TOTVS em /pedidos-venda-abertos via api-delpi.
+COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
+COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
+
 # --- financeiro — despesas por centro de custo ---
 FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
 FINANCEIRO_CENTRO_CUSTO_VIEW = "financeiro-centro-custo.view"
@@ -324,11 +329,14 @@ PEDIDOS_VENDA_ABERTOS_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
+    COMMERCIAL_ACCOUNTS_VIEW,
+    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
 ]
 
 PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS = [
     API_DELPI_ACCESS,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
+    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
 ]
 
 FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS = [

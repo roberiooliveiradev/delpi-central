@@ -73,3 +73,13 @@ def test_financeiro_centro_custo_export_permissions_include_export() -> None:
     assert perms.FINANCEIRO_CENTRO_CUSTO_EXPORT in (
         perms.FINANCEIRO_CENTRO_CUSTO_EXPORT_PERMISSIONS
     )
+
+
+def test_pedidos_venda_abertos_accepts_commercial_aliases() -> None:
+    """Portal Comercial (papel Vendedor) usa commercial.accounts.view — não o legado."""
+    assert perms.COMMERCIAL_ACCOUNTS_VIEW in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
+    assert (
+        perms.COMMERCIAL_SELLER_PORTFOLIOS_MANAGE
+        in perms.PEDIDOS_VENDA_ABERTOS_ADMIN_PERMISSIONS
+    )
+    assert perms.PEDIDOS_VENDA_ABERTOS_ACCESS in perms.PEDIDOS_VENDA_ABERTOS_PERMISSIONS
