@@ -240,13 +240,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const directoryUserIds = useMemo(() => {
     const ids = activeSellers.map((seller) => seller.user_id);
+    if (myPortfolio?.user_id) ids.push(myPortfolio.user_id);
     if (data) {
       for (const task of [...data.overdue, ...data.today, ...data.later]) {
         if (task.assignee_user_id) ids.push(task.assignee_user_id);
+        if (task.created_by_user_id) ids.push(task.created_by_user_id);
       }
     }
     return ids;
-  }, [activeSellers, data]);
+  }, [activeSellers, data, myPortfolio?.user_id]);
   const { labelFor: directoryLabelFor } = useDirectoryUserLabels(directoryUserIds);
 
   const sellerNameByUserId = useMemo(() => {
@@ -308,6 +310,11 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const openEditForm = useCallback(
     (task: CommercialTaskDto) => {
+      const me = (myPortfolio?.user_id || "").trim();
+      if (!me || (task.created_by_user_id || "").trim() !== me) {
+        notifyError("Só quem criou a tarefa pode editá-la.");
+        return;
+      }
       setPendingAttachments([]);
       setPendingPreview(null);
       setEditingTaskId(task.id);
@@ -325,7 +332,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setFormMode("edit");
       scrollToTaskForm();
     },
-    [scrollToTaskForm],
+    [myPortfolio?.user_id, notifyError, scrollToTaskForm],
   );
 
   const closeTaskForm = useCallback(() => {
@@ -741,6 +748,15 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       ? sellerNameByUserId.get(task.assignee_user_id) ??
                         directoryLabelFor(task.assignee_user_id)
                       : null;
+                  const createdBy = (task.created_by_user_id || "").trim();
+                  const assignee = (task.assignee_user_id || "").trim();
+                  const me = (myPortfolio?.user_id || "").trim();
+                  const assignedByLabel =
+                    createdBy && createdBy !== assignee
+                      ? sellerNameByUserId.get(createdBy) ?? directoryLabelFor(createdBy)
+                      : null;
+                  const canEdit =
+                    canManageFollowups && Boolean(me) && createdBy === me;
                   return (
                     <TaskDetailCard
                       key={task.id}
@@ -749,7 +765,9 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                       typeLabel={typeLabel}
                       priorityLabel={priorityLabel}
                       assigneeLabel={assigneeLabel}
+                      assignedByLabel={assignedByLabel}
                       canManage={canManageFollowups}
+                      canEdit={canEdit}
                       formatDue={formatDue}
                       onEdit={() => openEditForm(task)}
                       onComplete={() => void onComplete(task.id)}

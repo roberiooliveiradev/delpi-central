@@ -15,7 +15,11 @@ type TaskDetailCardProps = {
   typeLabel: string;
   priorityLabel: string;
   assigneeLabel?: string | null;
+  /** Quem criou/atribuiu — exibido quando diferente do responsável. */
+  assignedByLabel?: string | null;
   canManage: boolean;
+  /** Só o criador edita; assignee de tarefa atribuída não. */
+  canEdit: boolean;
   onEdit: () => void;
   onComplete: () => void;
   onDefer: () => void;
@@ -41,7 +45,9 @@ export function TaskDetailCard({
   typeLabel,
   priorityLabel,
   assigneeLabel,
+  assignedByLabel,
   canManage,
+  canEdit,
   onEdit,
   onComplete,
   onDefer,
@@ -61,6 +67,15 @@ export function TaskDetailCard({
     { label: "Tipo", value: typeLabel, hint: CM_HELP.myDay.taskType },
     ...(assigneeLabel
       ? [{ label: "Responsável", value: assigneeLabel, hint: CM_HELP.myDay.taskAssignee }]
+      : []),
+    ...(assignedByLabel
+      ? [
+          {
+            label: "Atribuído por",
+            value: assignedByLabel,
+            hint: CM_HELP.myDay.taskAssignedBy,
+          },
+        ]
       : []),
     ...(task.customer_code
       ? [
@@ -98,7 +113,7 @@ export function TaskDetailCard({
       }
       headerActions={
         <div className="cm-task-detail-card__actions">
-          {canManage ? (
+          {canEdit ? (
             <ActionButton variant="ghost" onClick={onEdit}>
               Editar
             </ActionButton>

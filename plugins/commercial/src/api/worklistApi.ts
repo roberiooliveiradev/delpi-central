@@ -11,6 +11,7 @@ export type CommercialTaskDto = {
   due_at?: string | null;
   completed_at?: string | null;
   assignee_user_id: string;
+  created_by_user_id: string;
   customer_code?: string | null;
   customer_store?: string | null;
   bucket?: "overdue" | "today" | "later" | string;

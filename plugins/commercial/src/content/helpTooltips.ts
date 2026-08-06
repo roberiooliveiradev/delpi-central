@@ -48,6 +48,8 @@ export const CM_HELP = {
     taskType: "Follow-up, ligar, e-mail, visita ou to-do — alinhado a HubSpot/Pipedrive.",
     taskAssignee:
       "Responsável com carteira ativa. Vazio = você. Só gestores atribuem a outro vendedor.",
+    taskAssignedBy:
+      "Quem criou e atribuiu a tarefa. Só essa pessoa pode editar; o responsável pode adiar ou concluir.",
     taskCustomer:
       "Cliente da carteira do responsável — abre atalho Abrir conta na linha da tarefa.",
     taskDescription:
@@ -55,7 +57,7 @@ export const CM_HELP = {
     taskAttachment:
       "Adicione ou remova anexos em Nova tarefa / Editar. No card da fila só há prévia (clique para abrir).",
     editTask:
-      "Altera título, observação, prazo, tipo, prioridade, cliente e anexos. Gestores também trocam o responsável aqui.",
+      "Só quem criou a tarefa pode editar título, observação, prazo, tipo, prioridade, cliente e anexos. Gestores criadores também trocam o responsável aqui.",
     deferTask: "Empurra o prazo em +1 dia (fim do dia), mantendo a tarefa aberta.",
     reassignTask:
       "Troca o responsável no formulário Editar (campo Responsável). Destino deve ter carteira ativa.",
