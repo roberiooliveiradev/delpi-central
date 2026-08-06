@@ -1,4 +1,5 @@
 import { configureHttpClient } from "./api/httpClient";
+import { CommercialFloatingNoticeProvider } from "./app/CommercialFloatingNoticeProvider";
 import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
@@ -89,13 +90,15 @@ export default function App({
 
   return (
     <PortfolioScopeProvider>
-      <HomeHeroMetricsProvider>
-        <AppRoutes
-          basePath={basePath}
-          search={search}
-          pathnameFromHost={pathnameFromHost}
-        />
-      </HomeHeroMetricsProvider>
+      <CommercialFloatingNoticeProvider>
+        <HomeHeroMetricsProvider>
+          <AppRoutes
+            basePath={basePath}
+            search={search}
+            pathnameFromHost={pathnameFromHost}
+          />
+        </HomeHeroMetricsProvider>
+      </CommercialFloatingNoticeProvider>
     </PortfolioScopeProvider>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "../../api/worklistApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
+import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
@@ -196,6 +197,7 @@ function heroCopy(counts: { overdue: number; today: number; later: number }): {
 
 export function MyDayPage({ basePath }: MyDayPageProps) {
   const { canManageFollowups, isAdmin, myPortfolio, sellers } = usePortfolioScope();
+  const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<WorklistData | null>(null);
@@ -211,7 +213,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const [assigneeUserId, setAssigneeUserId] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [creating, setCreating] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [highlightCreateForm, setHighlightCreateForm] = useState(false);
   const [reassignTaskId, setReassignTaskId] = useState<string | null>(null);
   const [reassignTargetUserId, setReassignTargetUserId] = useState("");
@@ -368,37 +369,38 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const onComplete = async (taskId: string) => {
     if (!canManageFollowups) return;
-    setActionError(null);
     try {
       await completeTask(taskId);
+      notifySuccess("Tarefa concluída.");
       await reload();
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : "Falha ao concluir.");
+      notifyError(err instanceof Error ? err.message : "Falha ao concluir.");
     }
   };
 
   const onDefer = async (task: CommercialTaskDto) => {
     if (!canManageFollowups) return;
-    setActionError(null);
     try {
       await deferTask(task.id, deferDueAtOneDay(task.due_at));
+      notifySuccess("Prazo adiado em +1 dia.");
       await reload();
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : "Falha ao adiar.");
+      notifyError(err instanceof Error ? err.message : "Falha ao adiar.");
     }
   };
 
   const onReassign = async () => {
-    if (!isAdmin || !reassignTaskId || !reassignTargetUserId) return;
+    if (!isAdmin || !reassignTaskId) return;
+    if (!notifyMissingRequired(reassignTargetUserId ? [] : ["Novo responsável"])) return;
     setReassigning(true);
-    setActionError(null);
     try {
       await reassignTask(reassignTaskId, reassignTargetUserId);
       setReassignTaskId(null);
       setReassignTargetUserId("");
+      notifySuccess("Tarefa reatribuída.");
       await reload();
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : "Falha ao reatribuir.");
+      notifyError(err instanceof Error ? err.message : "Falha ao reatribuir.");
     } finally {
       setReassigning(false);
     }
@@ -406,15 +408,16 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
 
   const onCreate = async () => {
     if (!canManageFollowups) return;
-    const trimmed = title.trim();
-    if (!trimmed || !dueDate) return;
+    const missing: string[] = [];
+    if (!title.trim()) missing.push("Título");
+    if (!dueDate) missing.push("Prazo");
+    if (!notifyMissingRequired(missing)) return;
     setCreating(true);
-    setActionError(null);
     try {
       const customer = parseCustomerKey(customerKey);
       const note = description.trim();
       await createTask({
-        title: trimmed,
+        title: title.trim(),
         description: note || undefined,
         task_type: taskType || "follow_up",
         priority: priority || "normal",
@@ -431,9 +434,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
       setCustomerKey("");
       setAssigneeUserId("");
       setHighlightCreateForm(false);
+      notifySuccess("Tarefa criada.");
       await reload();
     } catch (err: unknown) {
-      setActionError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
+      notifyError(err instanceof Error ? err.message : "Falha ao criar tarefa.");
     } finally {
       setCreating(false);
     }
@@ -608,7 +612,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               </ActionButton>
               <ActionButton
                 variant="primary"
-                disabled={reassigning || !reassignTargetUserId}
+                disabled={reassigning}
                 onClick={() => void onReassign()}
               >
                 {reassigning ? "Reatribuindo…" : "Confirmar reatribução"}
@@ -620,13 +624,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
         {loading ? <CommercialLoadingCard title="Carregando worklist…" variant="panel" /> : null}
         {error ? (
           <EmptyState classNames={cmEmptyStateClassNames} defaultMessage={error} role="alert" />
-        ) : null}
-        {actionError ? (
-          <EmptyState
-            classNames={cmEmptyStateClassNames}
-            defaultMessage={actionError}
-            role="alert"
-          />
         ) : null}
 
         {!loading && !error ? (
@@ -704,7 +701,6 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
                         ? () => {
                             setReassignTaskId(task.id);
                             setReassignTargetUserId(task.assignee_user_id);
-                            setActionError(null);
                           }
                         : undefined
                     }
@@ -809,7 +805,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
               <div className="cm-my-day-form__actions">
                 <ActionButton
                   variant="primary"
-                  disabled={creating || !title.trim() || !dueDate}
+                  disabled={creating}
                   onClick={() => void onCreate()}
                 >
                   {creating ? "Criando…" : "Criar tarefa"}

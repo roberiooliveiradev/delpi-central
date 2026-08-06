@@ -5,7 +5,6 @@ import {
   DataTable,
   EmptyState,
   SectionCard,
-  StateBanner,
   StatusBadge,
   UserDirectoryPicker,
   type DataTableColumn,
@@ -23,6 +22,7 @@ import {
   transferSellerCustomers,
   updateSellerPortfolio,
 } from "../../api/commercialPortfolioApi";
+import { useCommercialFloatingNotice, FORM_VALIDATION_AUTO_DISMISS_MS } from "../../app/CommercialFloatingNoticeProvider";
 import { CM_HELP } from "../../content/helpTooltips";
 import {
   CommercialLoadingCard,
@@ -39,7 +39,6 @@ import {
   cmEmptyStateClassNames,
   cmSectionCardClassNames,
   cmSectionLabels,
-  cmStateBannerClassNames,
   cmStatusBadgeClassNames,
 } from "../../app/commercialUi";
 import type { SellerPortfolio, TotvsCustomerHit } from "../../types/portfolio";
@@ -86,9 +85,8 @@ function portfolioHeroCopy(stats: {
 }
 
 export function SellerPortfoliosPage() {
+  const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [portfolios, setPortfolios] = useState<SellerPortfolio[]>([]);
   const [filter, setFilter] = useState<PortfolioFilter>("all");
 
@@ -117,11 +115,10 @@ export function SellerPortfoliosPage() {
 
   function reload() {
     setLoading(true);
-    setError(null);
     listSellerPortfolios()
       .then((response) => setPortfolios(response))
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : "Erro ao listar carteiras.");
+        notifyError(err instanceof Error ? err.message : "Erro ao listar carteiras.");
         setPortfolios([]);
       })
       .finally(() => setLoading(false));
@@ -129,6 +126,7 @@ export function SellerPortfoliosPage() {
 
   useEffect(() => {
     reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- carga inicial
   }, []);
 
   useEffect(() => {
@@ -180,26 +178,24 @@ export function SellerPortfoliosPage() {
 
   async function handleCreate() {
     const user = createUser[0];
-    if (!user || !createDisplayName.trim()) {
-      setError("Selecione um usuário e informe o nome de exibição.");
-      return;
-    }
+    const missing: string[] = [];
+    if (!user) missing.push("Usuário (Minha Delpi)");
+    if (!createDisplayName.trim()) missing.push("Nome de exibição");
+    if (!notifyMissingRequired(missing)) return;
 
     setCreating(true);
-    setMessage(null);
-    setError(null);
     try {
       await createSellerPortfolio({
-        user_id: user.id,
+        user_id: user!.id,
         display_name: createDisplayName.trim(),
       });
       setCreateUser([]);
       setCreateDisplayName("");
-      setMessage("Carteira criada com sucesso.");
+      notifySuccess("Carteira criada com sucesso.");
       setFilter("all");
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao criar carteira.");
+      notifyError(err instanceof Error ? err.message : "Erro ao criar carteira.");
     } finally {
       setCreating(false);
     }
@@ -208,22 +204,19 @@ export function SellerPortfoliosPage() {
   function startEdit(portfolio: SellerPortfolio) {
     setEditingPortfolioId(portfolio.id);
     setEditDisplayName(portfolio.display_name);
-    setMessage(null);
-    setError(null);
   }
 
   async function handleSaveEdit() {
-    if (!editingPortfolioId || !editDisplayName.trim()) return;
+    if (!editingPortfolioId) return;
+    if (!notifyMissingRequired(editDisplayName.trim() ? [] : ["Nome de exibição"])) return;
     setSavingEdit(true);
-    setMessage(null);
-    setError(null);
     try {
       await updateSellerPortfolio(editingPortfolioId, { display_name: editDisplayName.trim() });
-      setMessage("Carteira atualizada com sucesso.");
+      notifySuccess("Carteira atualizada com sucesso.");
       setEditingPortfolioId(null);
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao atualizar carteira.");
+      notifyError(err instanceof Error ? err.message : "Erro ao atualizar carteira.");
     } finally {
       setSavingEdit(false);
     }
@@ -235,49 +228,46 @@ export function SellerPortfoliosPage() {
         setConfirmingDeactivateId(portfolio.id);
         return;
       }
-      setMessage(null);
-      setError(null);
       try {
         await deactivateSellerPortfolio(portfolio.id);
-        setMessage("Carteira desativada com sucesso.");
+        notifySuccess("Carteira desativada com sucesso.");
         reload();
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Erro ao desativar carteira.");
+        notifyError(err instanceof Error ? err.message : "Erro ao desativar carteira.");
       } finally {
         setConfirmingDeactivateId(null);
       }
       return;
     }
 
-    setMessage(null);
-    setError(null);
     try {
       await updateSellerPortfolio(portfolio.id, { active: true });
-      setMessage("Carteira reativada com sucesso.");
+      notifySuccess("Carteira reativada com sucesso.");
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao reativar carteira.");
+      notifyError(err instanceof Error ? err.message : "Erro ao reativar carteira.");
     }
   }
 
   const manageDataPortfolio = portfolios.find((item) => item.id === manageDataPortfolioId) ?? null;
 
   async function handleAddCustomer(hit: TotvsCustomerHit) {
-    if (!manageDataPortfolio) return;
+    if (!manageDataPortfolio) {
+      notifyMissingRequired(["Carteira"]);
+      return;
+    }
     const key = customerKey(hit.code, hit.store);
     setBusyCustomerKey(key);
-    setMessage(null);
-    setError(null);
     try {
       await addSellerCustomer(manageDataPortfolio.id, {
         customer_code: hit.code,
         customer_store: hit.store,
         customer_name: hit.name,
       });
-      setMessage(`Cliente ${hit.name} adicionado à carteira.`);
+      notifySuccess(`Cliente ${hit.name} adicionado à carteira.`);
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao adicionar cliente.");
+      notifyError(err instanceof Error ? err.message : "Erro ao adicionar cliente.");
     } finally {
       setBusyCustomerKey(null);
     }
@@ -287,14 +277,12 @@ export function SellerPortfoliosPage() {
     if (!manageDataPortfolio) return;
     const key = customerKey(code, store);
     setBusyCustomerKey(key);
-    setMessage(null);
-    setError(null);
     try {
       await removeSellerCustomer(manageDataPortfolio.id, code, store);
-      setMessage("Cliente removido da carteira.");
+      notifySuccess("Cliente removido da carteira.");
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao remover cliente.");
+      notifyError(err instanceof Error ? err.message : "Erro ao remover cliente.");
     } finally {
       setBusyCustomerKey(null);
     }
@@ -312,20 +300,17 @@ export function SellerPortfoliosPage() {
   );
 
   async function handleTransfer() {
-    if (!transferSourceId || !transferTargetId) {
-      setError("Selecione carteira de origem e destino.");
-      return;
-    }
+    const missing: string[] = [];
+    if (!transferSourceId) missing.push("Carteira de origem");
+    if (!transferTargetId) missing.push("Carteira de destino");
+    if (transferCustomerKeys.length === 0) missing.push("Clientes");
+    if (!transferReason.trim()) missing.push("Motivo");
+    if (!notifyMissingRequired(missing)) return;
     if (transferSourceId === transferTargetId) {
-      setError("Origem e destino devem ser carteiras diferentes.");
-      return;
-    }
-    if (transferCustomerKeys.length === 0) {
-      setError("Selecione ao menos um cliente para transferir.");
-      return;
-    }
-    if (!transferReason.trim()) {
-      setError("Informe o motivo da transferência.");
+      notifyError("Origem e destino devem ser carteiras diferentes.", {
+        title: "Transferência inválida",
+        autoDismissMs: FORM_VALIDATION_AUTO_DISMISS_MS,
+      });
       return;
     }
 
@@ -340,8 +325,6 @@ export function SellerPortfoliosPage() {
       }));
 
     setTransferring(true);
-    setMessage(null);
-    setError(null);
     try {
       const result = await transferSellerCustomers({
         source_portfolio_id: transferSourceId,
@@ -349,12 +332,12 @@ export function SellerPortfoliosPage() {
         customers,
         reason_note: transferReason.trim(),
       });
-      setMessage(`Transferência concluída: ${result.transferred_count} cliente(s) movido(s).`);
+      notifySuccess(`Transferência concluída: ${result.transferred_count} cliente(s) movido(s).`);
       setTransferCustomerKeys([]);
       setTransferReason("");
       reload();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erro ao transferir clientes.");
+      notifyError(err instanceof Error ? err.message : "Erro ao transferir clientes.");
     } finally {
       setTransferring(false);
     }
@@ -500,17 +483,6 @@ export function SellerPortfoliosPage() {
           },
         ]}
       />
-
-      {message ? (
-        <StateBanner variant="success" classNames={cmStateBannerClassNames}>
-          {message}
-        </StateBanner>
-      ) : null}
-      {error ? (
-        <StateBanner variant="error" classNames={cmStateBannerClassNames}>
-          {error}
-        </StateBanner>
-      ) : null}
 
       <SectionCard
         title="Carteiras"
