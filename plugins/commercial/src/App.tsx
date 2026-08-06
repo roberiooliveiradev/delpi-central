@@ -1,5 +1,6 @@
 import { useCallback, type ReactNode } from "react";
 import { configureHttpClient } from "./api/httpClient";
+import { CommercialConfirmDialogProvider } from "./app/CommercialConfirmDialogProvider";
 import { CommercialFloatingNoticeProvider } from "./app/CommercialFloatingNoticeProvider";
 import { CommercialRealtimeProvider, useCommercialRealtimeNotices } from "./app/CommercialRealtimeProvider";
 import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
@@ -115,15 +116,17 @@ export default function App({
   return (
     <PortfolioScopeProvider>
       <CommercialFloatingNoticeProvider>
-        <RealtimeShell getAccessToken={tokenGetter}>
-          <HomeHeroMetricsProvider>
-            <AppRoutes
-              basePath={basePath}
-              search={search}
-              pathnameFromHost={pathnameFromHost}
-            />
-          </HomeHeroMetricsProvider>
-        </RealtimeShell>
+        <CommercialConfirmDialogProvider>
+          <RealtimeShell getAccessToken={tokenGetter}>
+            <HomeHeroMetricsProvider>
+              <AppRoutes
+                basePath={basePath}
+                search={search}
+                pathnameFromHost={pathnameFromHost}
+              />
+            </HomeHeroMetricsProvider>
+          </RealtimeShell>
+        </CommercialConfirmDialogProvider>
       </CommercialFloatingNoticeProvider>
     </PortfolioScopeProvider>
   );

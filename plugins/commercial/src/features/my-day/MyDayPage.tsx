@@ -22,6 +22,7 @@ import {
 import { uploadTaskAttachment } from "../../api/attachmentsApi";
 import { CM_HELP } from "../../content/helpTooltips";
 import { navigateCustomerDetail } from "../../app/pluginNavigation";
+import { useCommercialConfirm } from "../../app/CommercialConfirmDialogProvider";
 import { useCommercialFloatingNotice } from "../../app/CommercialFloatingNoticeProvider";
 import { useDirectoryUserLabels } from "../../app/useDirectoryUserLabels";
 import {
@@ -219,6 +220,7 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const { canManageFollowups, isAdmin, myPortfolio, currentUserId, sellers } =
     usePortfolioScope();
   const { notifyError, notifySuccess, notifyMissingRequired } = useCommercialFloatingNotice();
+  const confirm = useCommercialConfirm();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<WorklistData | null>(null);
@@ -514,12 +516,14 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
   const onDelete = async (task: CommercialTaskDto) => {
     if (!canManageFollowups) return;
     const label = (task.title || "").trim() || "esta tarefa";
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`Excluir «${label}»? Esta ação não pode ser desfeita.`)
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Excluir tarefa",
+      message: `Excluir «${label}»? Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await deleteTask(task.id);
       if (editingTaskId === task.id) closeTaskForm();
