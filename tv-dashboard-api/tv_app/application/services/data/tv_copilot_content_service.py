@@ -44,6 +44,14 @@ class TvCopilotContentService:
             return default
 
     @classmethod
+    def setting_float(cls, key: str, default: float) -> float:
+        settings = _load().get("settings") or {}
+        try:
+            return float(settings.get(key, default))
+        except (TypeError, ValueError):
+            return default
+
+    @classmethod
     def setting_str(cls, key: str, default: str = "") -> str:
         settings = _load().get("settings") or {}
         value = settings.get(key, default)

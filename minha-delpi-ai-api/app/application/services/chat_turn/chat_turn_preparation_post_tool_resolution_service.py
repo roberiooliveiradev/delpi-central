@@ -505,8 +505,11 @@ class ChatTurnPreparationPostToolResolutionService:
             if (
                 isinstance(tool_context, dict)
                 and tool_context.get("platformDirectAnswer")
-                and ChatPlatformInternalToolsService.is_platform_direct_answer_turn(
-                    tool_calls
+                and (
+                    ChatPlatformInternalToolsService.is_platform_direct_answer_turn(
+                        tool_calls
+                    )
+                    or not tool_calls
                 )
                 and "platform_direct_answer" not in pipeline_stages
             ):

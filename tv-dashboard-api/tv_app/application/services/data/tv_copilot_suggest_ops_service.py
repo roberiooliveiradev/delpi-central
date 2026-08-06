@@ -46,7 +46,14 @@ class TvCopilotSuggestOpsService:
         return TvCopilotCommandPlannerService.to_suggest_payload(plan)
 
     @classmethod
-    def materialize(cls, *, message: str, host_context: dict | None) -> dict[str, Any]:
+    def materialize(
+        cls,
+        *,
+        message: str,
+        host_context: dict | None,
+        authorization: str | None = None,
+        user: Any | None = None,
+    ) -> dict[str, Any]:
         """Materializa capability → ops; o planner valida target e política."""
         catalog_version = TvCopilotContentService.catalog_version()
         normalized = cls._normalize(message)
@@ -60,14 +67,37 @@ class TvCopilotSuggestOpsService:
 
         host = host_context if isinstance(host_context, dict) else {}
         prefer_kpi = cls._message_asks_kpi(normalized)
+        ranked_routes = cls._rank_operation_candidates(
+            normalized=normalized,
+            host=host,
+            prefer_kpi=prefer_kpi,
+            message=message,
+        )
         placeholders = cls._build_placeholders(
             message=message,
             host=host,
             normalized=normalized,
             prefer_kpi=prefer_kpi,
+            ranked_routes=ranked_routes,
         )
         max_ops = TvCopilotContentService.setting_int("maxSuggestOps", 5)
         destructive_intent = cls._has_destructive_intent(normalized)
+
+        # Resume estruturado: «adicione no slide as fontes: op1, op2»
+        explicit_ids = cls._extract_explicit_operation_ids(message)
+        if explicit_ids:
+            ops = cls._ops_for_explicit_operation_ids(explicit_ids)
+            if ops:
+                return {
+                    "catalogVersion": catalog_version,
+                    "ops": ops,
+                    "matchedCapabilityKeys": ["create_data_source"],
+                    "clarificationKey": None,
+                    "candidates": [],
+                    "reason": TvCopilotContentService.message(
+                        "suggestOk", count=len(ops)
+                    ),
+                }
 
         scored: list[tuple[float, dict[str, Any]]] = []
         for cap in TvCopilotContentService.capabilities():
@@ -95,6 +125,38 @@ class TvCopilotSuggestOpsService:
             ][: max(1, max_ops)]
             if not top and composites:
                 top = [composites[0]]
+
+        # Pedido de modelo/fonte com várias rotas próximas → seleção interativa.
+        if cls._should_offer_route_selection(top, ranked_routes, placeholders):
+            candidates = cls._candidate_payloads(ranked_routes)
+            try:
+                from tv_app.application.services.data.tv_catalog_selection_evidence_service import (
+                    TvCatalogSelectionEvidenceService,
+                )
+
+                candidates = TvCatalogSelectionEvidenceService.enrich(
+                    candidates,
+                    authorization=authorization,
+                    user=user,
+                )
+            except Exception:  # noqa: BLE001
+                pass
+            reason = TvCopilotContentService.message(
+                "suggestNeedRouteSelection",
+                count=len(candidates),
+            )
+            return {
+                "catalogVersion": catalog_version,
+                "ops": [],
+                "matchedCapabilityKeys": [
+                    str(cap.get("key") or "")
+                    for _score, cap in top
+                    if str(cap.get("key") or "").strip()
+                ],
+                "clarificationKey": "suggestNeedRouteSelection",
+                "candidates": candidates,
+                "reason": reason,
+            }
 
         ops: list[dict[str, Any]] = []
         matched_keys: list[str] = []
@@ -168,6 +230,7 @@ class TvCopilotSuggestOpsService:
                 "ops": [],
                 "matchedCapabilityKeys": matched_keys,
                 "clarificationKey": clarification_keys[0] if clarification_keys else None,
+                "candidates": [],
                 "reason": reason,
             }
 
@@ -176,6 +239,7 @@ class TvCopilotSuggestOpsService:
             "ops": ops,
             "matchedCapabilityKeys": matched_keys,
             "clarificationKey": None,
+            "candidates": [],
             "reason": TvCopilotContentService.message(
                 "suggestOk", count=len(ops)
             ),
@@ -414,37 +478,153 @@ class TvCopilotSuggestOpsService:
         return {values[0]: values[1]}
 
     @classmethod
-    def _resolve_operation_id(
+    def _extract_explicit_operation_ids(cls, message: str) -> list[str]:
+        """Resume structured_action: «adicione no slide as fontes: id1, id2»."""
+        raw = str(message or "")
+        lower = raw.lower()
+        marker = "fontes:"
+        idx = lower.rfind(marker)
+        if idx < 0:
+            marker = "fonte:"
+            idx = lower.rfind(marker)
+        if idx < 0:
+            return []
+        tail = raw[idx + len(marker) :]
+        parts = re.split(r"[,;\s]+", tail)
+        out: list[str] = []
+        seen: set[str] = set()
+        for part in parts:
+            op_id = str(part or "").strip().strip("«»\"'")
+            if not op_id or op_id in seen:
+                continue
+            if not TvDataRouteCatalogService().get_route(op_id):
+                continue
+            seen.add(op_id)
+            out.append(op_id)
+        return out
+
+    @classmethod
+    def _ops_for_explicit_operation_ids(
+        cls,
+        operation_ids: list[str],
+    ) -> list[dict[str, Any]]:
+        ops: list[dict[str, Any]] = []
+        for op_id in operation_ids:
+            route = TvDataRouteCatalogService().get_route(op_id) or {}
+            label = str(route.get("label") or op_id).strip()
+            ops.append(
+                {
+                    "op": "upsert_data_source",
+                    "operationId": op_id,
+                    "params": {},
+                    "blockId": cls._new_id("ds"),
+                    "label": label,
+                }
+            )
+        return ops
+
+    @classmethod
+    def _should_offer_route_selection(
+        cls,
+        top: list[tuple[float, dict[str, Any]]],
+        ranked_routes: list[dict[str, Any]],
+        placeholders: dict[str, str],
+    ) -> bool:
+        if len(ranked_routes) < 2:
+            return False
+        # Já há operationId único resolvido e capability não é só create_data_source?
+        keys = {
+            str(cap.get("key") or "").strip()
+            for _score, cap in top
+            if str(cap.get("key") or "").strip()
+        }
+        data_source_keys = {
+            "create_data_source",
+            "add_kpi_from_route",
+            "add_chart_from_route",
+            "add_table_from_route",
+            "update_data_source",
+        }
+        if not (keys & data_source_keys):
+            return False
+        # create_data_source / model requests prefer selection when rivals exist.
+        if "create_data_source" in keys:
+            return True
+        # Composites: só se não houver vencedor único preenchido.
+        return not str(placeholders.get("operationId") or "").strip()
+
+    @classmethod
+    def _candidate_payloads(
+        cls,
+        ranked_routes: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
+        for row in ranked_routes:
+            op_id = str(row.get("operationId") or "").strip()
+            if not op_id:
+                continue
+            out.append(
+                {
+                    "operationId": op_id,
+                    "id": op_id,
+                    "label": str(row.get("label") or op_id).strip(),
+                    "score": row.get("score"),
+                    "reason": str(row.get("reason") or "").strip() or None,
+                    "path": str(row.get("path") or "").strip() or None,
+                    "suggestedDisplayModes": row.get("suggestedDisplayModes")
+                    or row.get("allowedDisplayModes"),
+                }
+            )
+        return out
+
+    @classmethod
+    def _rank_operation_candidates(
         cls,
         *,
         normalized: str,
         host: dict[str, Any],
         prefer_kpi: bool,
-    ) -> tuple[str, str]:
-        # 1) alias explícito na mensagem  2) foco do host  3) score no catálogo
+        message: str,
+    ) -> list[dict[str, Any]]:
+        """Rankeia rotas allowlisted; gap alto → 1 vencedor; gap baixo → top-N."""
+        limit = TvCopilotContentService.setting_int("routeCandidateLimit", 5)
+        min_score = TvCopilotContentService.setting_float("routeCandidateMinScore", 4.0)
+        gap_threshold = TvCopilotContentService.setting_float(
+            "routeCandidateScoreGap", 2.5
+        )
+
+        # Preferir ranking do chat base (S2S) quando disponível.
+        ai_ranked = cls._rank_via_ai_suggest(message=message, limit=limit)
+        if ai_ranked:
+            return cls._apply_gap_policy(
+                ai_ranked,
+                gap_threshold=gap_threshold,
+                min_score=0.0,
+            )
+
+        scored: list[dict[str, Any]] = []
         hints = TvCopilotContentService.nl_route_hints()
+        hint_boost_ids: set[str] = set()
         for alias, operation_id in sorted(hints.items(), key=lambda item: -len(item[0])):
             if alias and alias in normalized:
                 op_id = str(operation_id or "").strip()
-                if not op_id:
-                    continue
-                route = TvDataRouteCatalogService().get_route(op_id)
-                if not route:
-                    continue
-                label = str(route.get("label") or op_id).strip()
-                return op_id, label
+                if op_id:
+                    hint_boost_ids.add(op_id)
 
         from_host = str(host.get("operationId") or "").strip()
         if from_host:
             route = TvDataRouteCatalogService().get_route(from_host)
-            label = ""
             if isinstance(route, dict):
-                label = str(route.get("label") or from_host).strip()
-            return from_host, label or from_host
+                return [
+                    {
+                        **route,
+                        "operationId": from_host,
+                        "label": str(route.get("label") or from_host).strip(),
+                        "score": 100.0,
+                        "reason": "host",
+                    }
+                ]
 
-        best_id = ""
-        best_label = ""
-        best_score = 0.0
         for route in TvDataRouteCatalogService().list_routes():
             if not isinstance(route, dict):
                 continue
@@ -452,13 +632,136 @@ class TvCopilotSuggestOpsService:
             if not op_id:
                 continue
             score = cls._score_route(route, normalized, prefer_kpi=prefer_kpi)
-            if score > best_score:
-                best_score = score
-                best_id = op_id
-                best_label = str(route.get("label") or op_id).strip()
+            if op_id in hint_boost_ids:
+                score += 6.0
+            if score <= 0:
+                continue
+            scored.append(
+                {
+                    **route,
+                    "operationId": op_id,
+                    "label": str(route.get("label") or op_id).strip(),
+                    "score": round(score, 4),
+                    "reason": "local_rank",
+                }
+            )
 
-        if best_score >= 4.0:
-            return best_id, best_label
+        scored.sort(
+            key=lambda item: (
+                -float(item.get("score") or 0),
+                str(item.get("operationId") or ""),
+            )
+        )
+        return cls._apply_gap_policy(
+            scored[: max(limit * 2, limit)],
+            gap_threshold=gap_threshold,
+            min_score=min_score,
+            limit=limit,
+        )
+
+    @classmethod
+    def _rank_via_ai_suggest(
+        cls,
+        *,
+        message: str,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        try:
+            from tv_app.application.services.data.tv_data_route_suggest_service import (
+                TvDataRouteSuggestService,
+            )
+            from tv_app.infrastructure.gateways.minha_delpi_ai_client import (
+                MinhaDelpiAiClient,
+            )
+
+            # Copiloto precisa de resposta rápida; Assistente modal mantém timeout longo.
+            service = TvDataRouteSuggestService(
+                TvDataRouteCatalogService(),
+                ai_client=MinhaDelpiAiClient(timeout_seconds=2.0),
+            )
+            result = service.suggest(query=message, limit=limit)
+        except Exception:
+            return []
+        if not isinstance(result, dict) or result.get("degraded"):
+            return []
+        suggestions = result.get("suggestions")
+        if not isinstance(suggestions, list) or not suggestions:
+            return []
+        out: list[dict[str, Any]] = []
+        for row in suggestions:
+            if not isinstance(row, dict):
+                continue
+            op_id = str(row.get("operationId") or "").strip()
+            if not op_id:
+                continue
+            score_raw = row.get("score")
+            try:
+                score = float(score_raw) if score_raw is not None else 0.0
+            except (TypeError, ValueError):
+                score = 0.0
+            out.append(
+                {
+                    **row,
+                    "operationId": op_id,
+                    "label": str(row.get("label") or op_id).strip(),
+                    "score": score,
+                    "reason": str(row.get("reason") or "ai_suggest").strip(),
+                }
+            )
+        return out
+
+    @classmethod
+    def _apply_gap_policy(
+        cls,
+        ranked: list[dict[str, Any]],
+        *,
+        gap_threshold: float,
+        min_score: float,
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
+        if not ranked:
+            return []
+        cap = limit or TvCopilotContentService.setting_int("routeCandidateLimit", 5)
+        filtered = [
+            row
+            for row in ranked
+            if float(row.get("score") or 0) >= min_score or min_score <= 0
+        ]
+        if not filtered:
+            filtered = list(ranked[:cap])
+        if len(filtered) == 1:
+            return filtered[:1]
+        top = float(filtered[0].get("score") or 0)
+        second = float(filtered[1].get("score") or 0)
+        if top - second >= gap_threshold and top >= min_score:
+            return filtered[:1]
+        return filtered[:cap]
+
+    @classmethod
+    def _resolve_operation_id(
+        cls,
+        *,
+        normalized: str,
+        host: dict[str, Any],
+        prefer_kpi: bool,
+        ranked_routes: list[dict[str, Any]] | None = None,
+        message: str = "",
+    ) -> tuple[str, str]:
+        ranked = ranked_routes
+        if ranked is None:
+            ranked = cls._rank_operation_candidates(
+                normalized=normalized,
+                host=host,
+                prefer_kpi=prefer_kpi,
+                message=message or normalized,
+            )
+        if len(ranked) == 1:
+            op_id = str(ranked[0].get("operationId") or "").strip()
+            label = str(ranked[0].get("label") or op_id).strip()
+            return op_id, label
+        # Múltiplos candidatos: não preencher placeholder (força seleção).
+        if len(ranked) > 1:
+            return "", ""
         return "", ""
 
     @classmethod
@@ -515,6 +818,7 @@ class TvCopilotSuggestOpsService:
         host: dict[str, Any],
         normalized: str,
         prefer_kpi: bool,
+        ranked_routes: list[dict[str, Any]] | None = None,
     ) -> dict[str, str]:
         quoted = cls._extract_quoted(message)
         default_title = TvCopilotContentService.setting_str(
@@ -530,6 +834,8 @@ class TvCopilotSuggestOpsService:
             normalized=normalized,
             host=host,
             prefer_kpi=prefer_kpi,
+            ranked_routes=ranked_routes,
+            message=message,
         )
         background_color = cls._extract_background_color(message, normalized)
         default_text = TvCopilotContentService.setting_str(

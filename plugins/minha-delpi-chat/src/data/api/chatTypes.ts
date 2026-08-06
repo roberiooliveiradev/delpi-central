@@ -578,6 +578,33 @@ export type ChatMessageMetadata = {
     sourceIntent?: string | null;
     suggestionsShown?: string[];
   } | null;
+  selectionPending?: {
+    kind?: string;
+    multiSelect?: boolean;
+    prompt?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    candidates?: {
+      id: string;
+      label: string;
+      score?: number | null;
+      reason?: string | null;
+      operationId?: string | null;
+      path?: string | null;
+      query?: string | null;
+      evidence?: {
+        shape?: string;
+        columns?: string[];
+        rows?: unknown[][];
+        truncated?: boolean;
+      } | null;
+    }[];
+    resume?: {
+      mode?: string;
+      action?: string;
+    };
+  } | null;
+  selectionFollowUpSuggestions?: ChatFollowUpSuggestion[];
   presentationFollowUpSuggestions?: ChatFollowUpSuggestion[];
   attachmentFollowUpSuggestions?: ChatFollowUpSuggestion[];
   routingDisambiguationSuggestions?: ChatFollowUpSuggestion[];

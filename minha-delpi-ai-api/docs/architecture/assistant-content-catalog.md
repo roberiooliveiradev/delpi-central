@@ -71,6 +71,7 @@ Wrappers especializados (mantêm API estável):
 | `operational_parameters.json` | Parâmetros faltantes (`missingProductCode`, `missingDateByContext`, OV, filial) | `ChatOperationalParameterService`, `ChatOperationalDateParameterService` |
 | `operational_follow_up_routing.json` | Follow-up operacional: escopo de produto, herança de data playbook, segmentos, gate capabilities | `ChatOperationalFollowUpRoutingService` |
 | `interactivity.json` | Chips, refinamentos, disponibilidade (`hideUnavailableSuggestions`, labels operacionais/SQL) | `ChatInteractivityContentService`, `ChatInteractivitySuggestionAvailabilityService`, `ChatInteractivitySuggestionService` |
+| `selection_pending.json` | Prompt/labels/caps do contrato `selectionPending` (multi-candidatos) | `ChatCatalogSelectionPendingService` |
 | `small_talk.json` | Conversa leve | `ChatSmallTalkService` |
 | `unclear_requests.json` | Pedidos ambíguos | `ChatUnclearRequestService` |
 | `utility_answers.json` | Hora, data | `ChatUtilityDirectAnswerService` |

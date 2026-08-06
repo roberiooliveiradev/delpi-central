@@ -224,6 +224,7 @@
     "suggestOk": "Sugestão gerada a partir do catálogo ({count} op(s)).",
     "suggestNeedColor": "Indique a cor do fundo (ex.: azul, #2563eb).",
     "suggestNeedOperationId": "Não foi possível resolver a rota de dados. Cite o indicador (ex.: OEE) ou selecione uma fonte no slide.",
+    "suggestNeedRouteSelection": "Encontrei {count} fonte(s) próximas. Selecione quais adicionar ao slide.",
     "suggestNeedSelection": "Selecione o bloco no editor (ou informe o alvo) e repita o pedido.",
     "suggestNeedPreset": "Informe o presetKey do catálogo de slides (ex.: production_oee_overview).",
     "suggestNeedSection": "Informe ou selecione a seção alvo.",
@@ -346,7 +347,12 @@
     "defaultSlideTitle": "Slide personalizado",
     "defaultPlaylistName": "Nova programação",
     "defaultSectionName": "Nova seção",
-    "defaultTextBlockContent": ""
+    "defaultTextBlockContent": "",
+    "routeCandidateLimit": 5,
+    "routeCandidateMinScore": 4.0,
+    "routeCandidateScoreGap": 2.5,
+    "routeEvidenceMaxCandidates": 3,
+    "routeEvidenceMaxRows": 5
   },
   "blockDefaults": {
     "default": {

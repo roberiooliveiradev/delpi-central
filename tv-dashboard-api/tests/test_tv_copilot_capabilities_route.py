@@ -5,13 +5,27 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
+from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
+    TvCopilotSuggestOpsService,
+)
 from tv_app.main import app
 
 
 async def _bypass_auth_middleware(request, call_next):
     return await call_next(request)
+
+
+@pytest.fixture(autouse=True)
+def _skip_ai_route_rank_in_unit_tests():
+    with patch.object(
+        TvCopilotSuggestOpsService,
+        "_rank_via_ai_suggest",
+        return_value=[],
+    ):
+        yield
 
 
 def test_copilot_capabilities_requires_tv_write_and_returns_catalog():

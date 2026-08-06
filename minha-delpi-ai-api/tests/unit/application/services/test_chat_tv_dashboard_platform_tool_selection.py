@@ -524,3 +524,43 @@ def test_prompt_addon_includes_catalog_when_to_use():
     )
     assert "pl-42" in addon
     assert "Inserir bloco de texto" in addon
+
+
+def test_selection_pending_from_bff_candidates_claims_platform_path():
+    """Ambiguidade de fontes (ex.: várias rotas OEE) → selectionPending + directAnswer."""
+    port = _FakeCatalogPort(
+        catalog={"catalogVersion": "test.sel", "capabilities": []},
+        suggestion={
+            "status": "selection_pending",
+            "catalogVersion": "test.sel",
+            "ops": [],
+            "matchedCapabilityKeys": ["create_data_source"],
+            "clarificationKey": "suggestNeedRouteSelection",
+            "reason": "Encontrei 3 fonte(s) próximas. Selecione quais adicionar ao slide.",
+            "candidates": [
+                {
+                    "operationId": "get_overall_equipment_effectiveness_pct",
+                    "label": "OEE geral",
+                    "score": 11.0,
+                },
+                {
+                    "operationId": "get_oee_series",
+                    "label": "OEE série",
+                    "score": 10.2,
+                },
+            ],
+        },
+    )
+    result = ChatTvDashboardPlatformToolSelectionService.select(
+        "adicione o modelo de dados oee",
+        workspace_context=_TV_WORKSPACE,
+        access_token="tok",
+        catalog_service=ChatTvDashboardCatalogService(catalog_port=port),
+    )
+    assert result.tool_call is None
+    assert result.platform_direct_answer is True
+    assert result.direct_answer
+    assert result.selection_pending is not None
+    assert result.selection_pending["kind"] == "catalog_route"
+    assert len(result.selection_pending["candidates"]) == 2
+    assert result.selection_pending["multiSelect"] is True

@@ -583,9 +583,14 @@ def copilot_suggest_ops(request: Request, body: SuggestOpsBody):
         TvCopilotCommandPlannerService,
     )
 
+    authorization = request.headers.get("authorization") or request.headers.get(
+        "Authorization"
+    )
     plan = TvCopilotCommandPlannerService.plan(
         message=body.message,
         host_context=body.hostContext,
+        authorization=authorization,
+        user=user,
     )
     result = TvCopilotCommandPlannerService.to_suggest_payload(plan)
     return ok(result, message=str(result.get("reason") or "Sugestão gerada."))

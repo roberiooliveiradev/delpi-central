@@ -20,6 +20,7 @@ class TvCopilotCommandPlannerService:
 
     Status:
     - ``ready`` — ops tipadas válidas; ``confirmationPolicy`` diz se aplica direto
+    - ``selection_pending`` — candidatos de catálogo para multi-seleção
     - ``clarification`` — faltam dados/contexto; ``reason`` é a mensagem ao usuário
     - ``unsupported`` — fala com o editor, mas nenhuma capability cobre o pedido
     - ``not_command`` — não é pedido para o editor (pergunta, conversa, dado)
@@ -27,10 +28,19 @@ class TvCopilotCommandPlannerService:
     """
 
     @classmethod
-    def plan(cls, *, message: str, host_context: dict | None) -> dict[str, Any]:
+    def plan(
+        cls,
+        *,
+        message: str,
+        host_context: dict | None,
+        authorization: str | None = None,
+        user: Any | None = None,
+    ) -> dict[str, Any]:
         suggestion = TvCopilotSuggestOpsService.materialize(
             message=message,
             host_context=host_context,
+            authorization=authorization,
+            user=user,
         )
         catalog_version = str(suggestion.get("catalogVersion") or "").strip()
         matched = suggestion.get("matchedCapabilityKeys") or []
@@ -39,6 +49,9 @@ class TvCopilotCommandPlannerService:
         ops = suggestion.get("ops")
         if not isinstance(ops, list):
             ops = []
+        candidates = suggestion.get("candidates")
+        if not isinstance(candidates, list):
+            candidates = []
 
         host = host_context if isinstance(host_context, dict) else {}
         playlist_id = str(host.get("playlistId") or "").strip()
@@ -57,6 +70,15 @@ class TvCopilotCommandPlannerService:
                     reason=reason,
                     clarification_key=clarification_key,
                 )
+            if candidates and str(clarification_key or "") == "suggestNeedRouteSelection":
+                return cls._result(
+                    status="selection_pending",
+                    catalog_version=catalog_version,
+                    matched=matched,
+                    reason=reason,
+                    clarification_key=clarification_key,
+                    candidates=candidates,
+                )
             if matched:
                 return cls._result(
                     status="clarification",
@@ -64,6 +86,7 @@ class TvCopilotCommandPlannerService:
                     matched=matched,
                     reason=reason,
                     clarification_key=clarification_key,
+                    candidates=candidates,
                 )
             if TvCopilotCommandRecognitionService.is_editor_command(message):
                 return cls._result(
@@ -139,6 +162,7 @@ class TvCopilotCommandPlannerService:
         """Fachada compatível com o contrato histórico de suggest-ops."""
         status = str(plan.get("status") or "")
         ops = plan.get("ops") if isinstance(plan.get("ops"), list) else []
+        candidates = plan.get("candidates") if isinstance(plan.get("candidates"), list) else []
         ready = status == "ready"
         return {
             "catalogVersion": plan.get("catalogVersion"),
@@ -152,6 +176,7 @@ class TvCopilotCommandPlannerService:
             "sideEffectHints": plan.get("sideEffectHints") or [],
             "requiresPlaylist": bool(plan.get("requiresPlaylist")),
             "requiresSlide": bool(plan.get("requiresSlide")),
+            "candidates": list(candidates),
         }
 
     @classmethod
@@ -165,6 +190,7 @@ class TvCopilotCommandPlannerService:
         clarification_key: str | None = None,
         ops: list[dict[str, Any]] | None = None,
         policy: dict[str, Any] | None = None,
+        candidates: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         policy = policy or {}
         return {
@@ -179,4 +205,5 @@ class TvCopilotCommandPlannerService:
             "sideEffectHints": list(policy.get("sideEffectHints") or []),
             "requiresPlaylist": bool(policy.get("requiresPlaylist")),
             "requiresSlide": bool(policy.get("requiresSlide")),
+            "candidates": list(candidates or []),
         }

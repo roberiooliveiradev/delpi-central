@@ -134,18 +134,25 @@ class ChatToolContextSelectionService:
             host._build_workspace_context = workspace_context
 
         if tv_selection.direct_answer and not tv_selection.tool_call:
+            early_payload: dict = {
+                "context": "",
+                "toolCalls": [],
+                "nativeToolCalling": native_meta,
+                "directAnswer": tv_selection.direct_answer,
+                "skipRag": True,
+                "currentMessage": raw_message,
+                "platformDirectAnswer": bool(
+                    tv_selection.platform_direct_answer
+                    or tv_selection.selection_pending
+                ),
+            }
+            if isinstance(tv_selection.selection_pending, dict):
+                early_payload["selectionPending"] = tv_selection.selection_pending
             return ToolSelectionOutcome(
                 early_result=host._finalize_tool_context_result(
                     message=raw_message,
                     previous_messages=previous_messages,
-                    result={
-                        "context": "",
-                        "toolCalls": [],
-                        "nativeToolCalling": native_meta,
-                        "directAnswer": tv_selection.direct_answer,
-                        "skipRag": True,
-                        "currentMessage": raw_message,
-                    },
+                    result=early_payload,
                 ),
             )
 
@@ -290,23 +297,36 @@ class ChatToolContextSelectionService:
                     first_planned
                 ):
                     args = first_planned.get("arguments") or {}
+                    route_clarification = {
+                        "scoreGap": args.get("scoreGap"),
+                        "rivalIds": args.get("rivalIds") or [],
+                        "suggestions": args.get("suggestions") or [],
+                    }
+                    from app.application.services.chat_catalog_selection_pending_service import (
+                        ChatCatalogSelectionPendingService,
+                    )
+
+                    selection_pending = (
+                        ChatCatalogSelectionPendingService.build_from_score_gap_clarification(
+                            route_clarification
+                        )
+                    )
+                    early_payload = {
+                        "context": "",
+                        "toolCalls": [],
+                        "nativeToolCalling": native_meta,
+                        "directAnswer": str(args.get("directAnswer") or ""),
+                        "skipRag": True,
+                        "currentMessage": raw_message,
+                        "routeSelectionClarification": route_clarification,
+                    }
+                    if selection_pending:
+                        early_payload["selectionPending"] = selection_pending
                     return ToolSelectionOutcome(
                         early_result=host._finalize_tool_context_result(
                             message=raw_message,
                             previous_messages=previous_messages,
-                            result={
-                                "context": "",
-                                "toolCalls": [],
-                                "nativeToolCalling": native_meta,
-                                "directAnswer": str(args.get("directAnswer") or ""),
-                                "skipRag": True,
-                                "currentMessage": raw_message,
-                                "routeSelectionClarification": {
-                                    "scoreGap": args.get("scoreGap"),
-                                    "rivalIds": args.get("rivalIds") or [],
-                                    "suggestions": args.get("suggestions") or [],
-                                },
-                            },
+                            result=early_payload,
                         ),
                     )
 

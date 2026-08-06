@@ -25,6 +25,8 @@ class TvPlatformToolSelectionResult:
     direct_answer: str | None = None
     catalog: dict[str, Any] | None = None
     has_suggested_ops: bool = False
+    selection_pending: dict[str, Any] | None = None
+    platform_direct_answer: bool = False
 
 
 class ChatTvDashboardPlatformToolSelectionService:
@@ -127,15 +129,18 @@ class ChatTvDashboardPlatformToolSelectionService:
                 # Catálogo antigo sem status: não sequestrar small talk.
                 return TvPlatformToolSelectionResult(catalog=catalog)
 
-            # Clarificação / não suportado: reason do catálogo vira resposta
-            # direta, sem deixar o LLM inventar UI.
+            # Clarificação / não suportado / seleção de candidatos: reason do
+            # catálogo vira resposta direta, sem deixar o LLM inventar UI.
             answer = (
                 bff_reason
                 or ChatTvDashboardCopilotIntentService.catalog_unavailable_message()
             )
+            selection_pending = cls._selection_pending_from_suggestion(suggestion)
             return TvPlatformToolSelectionResult(
                 catalog=catalog,
                 direct_answer=answer or None,
+                selection_pending=selection_pending,
+                platform_direct_answer=True,
             )
 
         reason = str(
@@ -205,4 +210,36 @@ class ChatTvDashboardPlatformToolSelectionService:
         return TvPlatformToolSelectionResult(
             catalog=catalog,
             direct_answer=answer or None,
+            platform_direct_answer=True,
         )
+
+    @classmethod
+    def _selection_pending_from_suggestion(
+        cls,
+        suggestion: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        from app.application.services.chat_catalog_selection_pending_service import (
+            ChatCatalogSelectionPendingService,
+        )
+
+        status = str(suggestion.get("status") or "").strip().lower()
+        candidates = suggestion.get("candidates")
+        if not isinstance(candidates, list) or not candidates:
+            return None
+        clarification_key = str(suggestion.get("clarificationKey") or "").strip()
+        if status in {"clarification", "selection_pending"}:
+            return ChatCatalogSelectionPendingService.build_from_route_candidates(
+                candidates=candidates,
+                prompt=str(suggestion.get("reason") or "").strip() or None,
+                multi_select=True,
+            )
+        if clarification_key in {
+            "suggestNeedRouteSelection",
+            "suggestNeedOperationId",
+        }:
+            return ChatCatalogSelectionPendingService.build_from_route_candidates(
+                candidates=candidates,
+                prompt=str(suggestion.get("reason") or "").strip() or None,
+                multi_select=True,
+            )
+        return None

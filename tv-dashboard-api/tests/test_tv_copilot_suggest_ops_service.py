@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
+import pytest
+
 from tv_app.application.services.data.tv_copilot_content_service import (
     clear_tv_copilot_content_cache,
 )
@@ -10,7 +14,16 @@ from tv_app.application.services.data.tv_copilot_suggest_ops_service import (
 )
 
 
-def setup_function() -> None:
+@pytest.fixture(autouse=True)
+def _skip_ai_route_rank_in_unit_tests():
+    """Unitários usam ranking local; S2S AI é coberto em testes dedicados."""
+    clear_tv_copilot_content_cache()
+    with patch.object(
+        TvCopilotSuggestOpsService,
+        "_rank_via_ai_suggest",
+        return_value=[],
+    ):
+        yield
     clear_tv_copilot_content_cache()
 
 
@@ -417,4 +430,83 @@ def test_suggest_field_labels_rename():
     source = next(op for op in result["ops"] if op.get("op") == "upsert_data_source")
     assert source.get("blockId") == "ds-1"
     assert (source.get("fieldLabels") or {}).get("value") == "OEE"
+
+
+def test_suggest_modelo_de_dados_generico_selection_pending():
+    """Pedido genérico de modelo sem vencedor claro → candidatos, sem inventar rota."""
+    result = TvCopilotSuggestOpsService.suggest(
+        message="adicione o modelo de dados",
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["status"] == "selection_pending"
+    assert result["ops"] == []
+    assert result["clarificationKey"] == "suggestNeedRouteSelection"
+    assert isinstance(result.get("candidates"), list)
+    assert len(result["candidates"]) >= 2
+    assert all(c.get("operationId") for c in result["candidates"])
+
+
+def test_suggest_resume_explicit_operation_ids_creates_sources():
+    result = TvCopilotSuggestOpsService.suggest(
+        message=(
+            "adicione no slide as fontes: get_overall_equipment_effectiveness_pct, "
+            "get_product_detail"
+        ),
+        host_context={"slideId": "slide-1", "playlistId": "pl-1"},
+    )
+    assert result["status"] == "ready"
+    sources = [op for op in result["ops"] if op.get("op") == "upsert_data_source"]
+    ids = {op.get("operationId") for op in sources}
+    assert "get_overall_equipment_effectiveness_pct" in ids
+    assert "get_product_detail" in ids
+
+
+def test_selection_evidence_failure_keeps_candidates():
+    from tv_app.application.services.data.tv_catalog_selection_evidence_service import (
+        TvCatalogSelectionEvidenceService,
+    )
+
+    def _boom(*_args, **_kwargs):
+        raise RuntimeError("preview down")
+
+    enriched = TvCatalogSelectionEvidenceService.enrich(
+        [
+            {
+                "operationId": "get_overall_equipment_effectiveness_pct",
+                "label": "OEE",
+                "score": 9.0,
+            }
+        ],
+        preview_fn=_boom,
+    )
+    assert len(enriched) == 1
+    assert enriched[0]["operationId"] == "get_overall_equipment_effectiveness_pct"
+    assert "evidence" not in enriched[0]
+
+
+def test_selection_evidence_from_preview_payload():
+    from tv_app.application.services.data.tv_catalog_selection_evidence_service import (
+        TvCatalogSelectionEvidenceService,
+    )
+
+    def _ok(*_args, **_kwargs):
+        return {
+            "resolved": {
+                "data": {
+                    "items": [
+                        {"filial": "01", "oee": 0.82},
+                        {"filial": "02", "oee": 0.77},
+                    ]
+                }
+            }
+        }
+
+    enriched = TvCatalogSelectionEvidenceService.enrich(
+        [{"operationId": "get_oee", "label": "OEE", "score": 8.0}],
+        preview_fn=_ok,
+    )
+    evidence = enriched[0].get("evidence")
+    assert evidence["shape"] == "table"
+    assert "filial" in evidence["columns"]
+    assert len(evidence["rows"]) == 2
 

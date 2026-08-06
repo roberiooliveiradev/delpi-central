@@ -86,6 +86,10 @@ import {
   ChatActionConfirmationPanel,
   type ChatActionConfirmation,
 } from "./ChatActionConfirmationPanel";
+import {
+  ChatSelectionPendingPanel,
+  type ChatSelectionPending,
+} from "./ChatSelectionPendingPanel";
 import { ChatStreamingActivityPanel } from "./ChatStreamingActivityPanel";
 import { ChatInlineCanvas } from "../canvas/ChatInlineCanvas";
 import { resolveUserMessageTurnContextChips } from "../../../state/chatComposerContext";
@@ -1523,6 +1527,14 @@ export function ChatMessageList({
                   confirmation={
                     message.metadata?.actionConfirmation as
                       | ChatActionConfirmation
+                      | undefined
+                  }
+                  onUseQuery={onDrillDown ?? onReuseMessage}
+                />
+                <ChatSelectionPendingPanel
+                  pending={
+                    message.metadata?.selectionPending as
+                      | ChatSelectionPending
                       | undefined
                   }
                   onUseQuery={onDrillDown ?? onReuseMessage}

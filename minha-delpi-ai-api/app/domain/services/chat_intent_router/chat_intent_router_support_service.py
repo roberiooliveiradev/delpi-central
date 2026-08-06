@@ -19,6 +19,7 @@ class ChatIntentRouterSupportService:
         "operational_parameter": ("clarification", "missing_params", 2),
         "intent_disambiguation": ("operational_query", "scope_clarification", 6),
         "tools": ("operational_query", None, 6),
+        "platform_direct_answer": ("platform_action", "tv_dashboard_copilot", 4),
         "capabilities": ("self_help", "capabilities_catalog", 9),
         "small_talk": ("small_talk", None, 9),
         "utility_direct": ("utility", None, 9),
