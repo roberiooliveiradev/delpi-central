@@ -1,13 +1,13 @@
 # Portal Comercial — documentação
 
-> **Status:** playbook oficial + implementação F0–F2b harden em `main` (ago/2026)  
+> **Status:** playbook oficial + F0–F2c em `main` (ago/2026)  
 > **Nome ao usuário:** **Portal Comercial**  
 > **Id técnico:** `commercial` · **basePath:** `/apps/commercial`  
 > **API:** `commercial-api` · gateway `/apps/commercial-api/`
 
 O **Portal Comercial** concentra jornadas de carteira, pedidos em aberto e admin de vendedores. Reads TOTVS ficam na **api-delpi**; estado Delpi (carteira/avatar) na **commercial-api**.
 
-O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até homologação § 2.1.1**; depreciação = **F2c** ([runbook](./F2C-CUTOVER-RUNBOOK.md)). `dashboard-commercial` e `propostas-comerciais` coexistem.
+O plugin `pedidos-venda-abertos` (Portal do Vendedor) está **depreciado (F2c)**: oculto do launcher; URLs antigas redirecionam para o Portal Comercial ([runbook](./F2C-CUTOVER-RUNBOOK.md)). `dashboard-commercial` e `propostas-comerciais` coexistem.
 
 ## Documentos
 
@@ -34,8 +34,8 @@ O plugin `pedidos-venda-abertos` (Portal do Vendedor) permanece **ativo até hom
 | `plugins/commercial/` (home, open-orders, customers, detail, seller-portfolios) | **Entregue** (paridade F2b harden) |
 | Compose + gateway + volume `commercial-avatars` | **Entregue** |
 | `COMMERCIAL_PORTFOLIO_SOURCE=commercial` (default Compose) | **Entregue** — ops: backfill/reconcile |
-| Homologação Comercial § 2.1.1 | **Pendente** |
-| F2c (ocultar PVA + redirects em prod) | Artefatos prontos — **flip após homologação** |
+| Homologação Comercial § 2.1.1 | **Cutover autorizado** (registro em HOMOLOGACAO) |
+| F2c (ocultar PVA + redirects) | **Concluído** no código — prod: rebuild gateway + re-register |
 
 ## Pacotes e URLs
 
@@ -66,7 +66,7 @@ Portal Comercial (carteira Delpi, admin, avatars)
 |--------|--------|---------|
 | `commercial` | **Portal Comercial** (entrada canônica da paridade) | Ativo |
 | `dashboard-commercial` | Cockpit KPIs / OTD / propostas OV | Permanece |
-| `pedidos-venda-abertos` | Portal do Vendedor | Depreciar em F2c |
+| `pedidos-venda-abertos` | Portal do Vendedor | **Depreciado (F2c)** — redirects + menu oculto |
 | `propostas-comerciais` | Propostas ativas + PDF | Permanece |
 
 ## Fases
@@ -74,8 +74,8 @@ Portal Comercial (carteira Delpi, admin, avatars)
 | Fase | Entrega | Status |
 |------|---------|--------|
 | F0–F2 | Docs, API, migrations, dual-read | Concluído |
-| F2b | Paridade UX | Concluído (harden) — homologação aberta |
-| F2c | Depreciar PVA | Runbook/ADR prontos |
+| F2b | Paridade UX | Concluído (harden) |
+| F2c | Depreciar PVA | **Concluído** (nginx + manifest; prod: deploy gateway) |
 | F3–F4 | Runtime módulo + composição | Fora do escopo atual |
 | F5–F7 | CRM / forecast / amostras | Fora do escopo atual |
 

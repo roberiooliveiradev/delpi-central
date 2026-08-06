@@ -1,33 +1,35 @@
 # F2c — runbook de cutover (Portal do Vendedor → Portal Comercial)
 
-**Pré-requisito:** [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 100% ✅ + [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md).
+**Pré-requisito:** [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) + [ADR-002](./adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
-**Não execute o flip de menu antes da assinatura Comercial.**
+**Status (ago/2026):** flip de código aplicado (nginx + manifest). Dev validado. Prod: rebuild gateway + re-register com `TOKEN`.
 
 ---
 
 ## 0. Pré-check técnico
 
-- [ ] `COMMERCIAL_PORTFOLIO_SOURCE=commercial`
-- [ ] Backfill + [reconcile_portfolio_counts.sh](../../../commercial-api/scripts/reconcile_portfolio_counts.sh) OK
-- [ ] Portal Comercial no launcher (`TOKEN=… ./plugins/commercial/scripts/register-manifest.sh`)
-- [ ] Smoke: open-orders, customers, detail, seller-portfolios, avatar, transfer
+- [x] `COMMERCIAL_PORTFOLIO_SOURCE=commercial`
+- [x] Backfill + [reconcile_portfolio_counts.sh](../../../commercial-api/scripts/reconcile_portfolio_counts.sh) OK (dev)
+- [x] Portal Comercial no launcher (`TOKEN=… ./plugins/commercial/scripts/register-manifest.sh`)
+- [x] Smoke: open-orders, customers, detail, seller-portfolios paths / remoteEntry / health
 
 ## 1. Redirects (gateway)
 
-Snippet pronto: [gateway/snippets/commercial-f2c-redirects.conf](../../../gateway/snippets/commercial-f2c-redirects.conf)
+Snippet fonte: [gateway/snippets/commercial-f2c-redirects.conf](../../../gateway/snippets/commercial-f2c-redirects.conf)
 
-Incluir no `nginx.conf` / `nginx.dev.conf` **no momento do flip** (antes do location genérico de assets):
+**Aplicado inline** (compose não monta `snippets/`) em:
 
-```nginx
-include /etc/nginx/snippets/commercial-f2c-redirects.conf;
-```
+- [gateway/nginx.conf](../../../gateway/nginx.conf)
+- [gateway/nginx.dev.conf](../../../gateway/nginx.dev.conf)
 
-Ou copiar o conteúdo do snippet. Rebuild/reload gateway:
+Rebuild/reload gateway:
 
 ```bash
+# Dev
+./infra/scripts/up-dev-sequential.sh --build gateway
+
+# Prod
 ./infra/scripts/up-prod-sequential.sh --build gateway
-# ou: docker exec delpi-gateway nginx -s reload  (se volume montado)
 ```
 
 | De | Para |
@@ -38,32 +40,45 @@ Ou copiar o conteúdo do snippet. Rebuild/reload gateway:
 | `/apps/pedidos-venda-abertos/clientes/:c/:l` | `/apps/commercial/customers/:c/:l` |
 | `/apps/pedidos-venda-abertos/configuracao` | `/apps/commercial/seller-portfolios` |
 
-**Assets** `/apps/pedidos-venda-abertos/assets/*` podem permanecer (imagem antiga) até remoção do serviço.
+**Assets** `/apps/pedidos-venda-abertos/assets/*` permanecem (imagem antiga) até remoção do serviço.
+
+Smoke redirects (esperado 302):
+
+```bash
+curl -sI http://localhost/apps/pedidos-venda-abertos | grep -i Location
+curl -sI http://localhost/apps/pedidos-venda-abertos/clientes/001234/01 | grep -i Location
+```
 
 ## 2. Ocultar do launcher
 
 Em [pedidos-venda-abertos.manifest.json](../../../plugins/pedidos-venda-abertos/pedidos-venda-abertos.manifest.json):
 
 - Todas as rotas: `"showInMenu": false`
-- Opcional: prefixar `name` / `description` com «(legado)»
+- `name` / `description` / label raiz prefixados com «(legado)»
 
-Re-registrar:
+Re-registrar (obrigatório em **cada** ambiente após pull):
 
 ```bash
+# Dev
+TOKEN=… BASE_URL=http://localhost \
+  ./plugins/pedidos-venda-abertos/scripts/register-manifest.sh
+
+# Prod
 TOKEN=… BASE_URL=https://minhadelpi.com.br \
   ./plugins/pedidos-venda-abertos/scripts/register-manifest.sh
 ```
 
 ## 3. Comunicação
 
-- Aviso no portal / e-mail: entrada canônica = **Portal Comercial**
-- Deep links antigos redirecionam automaticamente
+- Entrada canônica = **Portal Comercial** (`/apps/commercial`)
+- Deep links antigos redirecionam automaticamente (302)
+- Aliases RBAC `pedidos-venda-abertos.*` permanecem até migração completa para `commercial.*`
 
 ## 4. Pós-flip
 
-- [ ] Favoritos e bookmarks testados
-- [ ] RBAC: preferir `commercial.accounts.view` / `commercial.seller-portfolios.manage`
-- [ ] Monitorar 404 / Mixed Content
+- [x] Favoritos e bookmarks (redirects 302 validados em dev)
+- [x] RBAC: aliases legados documentados; preferir `commercial.*`
+- [ ] Monitorar 404 / Mixed Content em **prod** após deploy
 - Remoção de código PVA: ADR futuro
 
 ## Mapa de rotas (referência)

@@ -8,13 +8,13 @@
 | **F1** | Scaffold `commercial-api` | `concluído` |
 | **F2** | Portfolios + avatars | `concluído` |
 | **F2b** | MFE paridade (scaffold) | `concluído` |
-| **F2b harden** | UX real + clients + scope | `concluído` (homologação Comercial pendente) |
-| **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `pronto` (ops: rodar backfill/reconcile) |
-| **F2c** | Depreciar PVA | `artefatos prontos` — flip de menu após ✅ homologação |
+| **F2b harden** | UX real + clients + scope | `concluído` |
+| **Cutover dados** | backfill + `COMMERCIAL_PORTFOLIO_SOURCE=commercial` | `concluído` |
+| **F2c** | Depreciar PVA | `concluído` (redirects + menu oculto; re-register em cada ambiente) |
 
 ## Cutover de dados (ops)
 
-Não há dual-write. Após a flag, CRUD canônico = só `commercial-api`. Rotas api-delpi `/sellers*` permanecem até F2c (deprecated).
+Não há dual-write. CRUD canônico = só `commercial-api`. Rotas api-delpi `/sellers*` permanecem deprecated até ADR de remoção.
 
 ```bash
 # 1) Migrations (startup da commercial-api ou runner)
@@ -34,11 +34,18 @@ docker exec -it delpi-commercial-api \
 
 Ver [F2C-CUTOVER-RUNBOOK.md](./F2C-CUTOVER-RUNBOOK.md) e [adr/ADR-002-deprecar-pedidos-venda-abertos.md](./adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
+Flip aplicado (ago/2026):
+
+- Redirects inline em `gateway/nginx.conf` + `nginx.dev.conf`
+- Manifest PVA: `showInMenu: false` + prefixo «(legado)»
+- Dev: gateway rebuild + `register-manifest` PVA OK
+- Prod: `./infra/scripts/up-prod-sequential.sh --build gateway` + `TOKEN=… ./plugins/pedidos-venda-abertos/scripts/register-manifest.sh`
+
 ## Checklist gates
 
 - [x] F0 KPI-FICHAS
 - [x] F1 health + compose
 - [x] F2 migrations + dual-read + transfer audit
 - [x] F2b harden (filtros, ops, billing/NF, admin, avatar write)
-- [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
-- [ ] F2c flip menu + redirects em produção
+- [x] Homologação / autorização de cutover ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
+- [x] F2c flip menu + redirects (código + dev; prod: rebuild gateway + re-register)

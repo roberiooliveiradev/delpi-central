@@ -1,11 +1,11 @@
 # ADR-002 — Deprecar pedidos-venda-abertos (F2c)
 
-- **Status:** Aceito (ago/2026) — execução do flip **após** homologação § 2.1.1
+- **Status:** Aceito e **executado** (ago/2026) — flip de menu + redirects no gateway
 - **Contexto:** Portal Comercial (`plugins/commercial` + `commercial-api`) entrega paridade do Portal do Vendedor
 
 ## Decisão
 
-1. Após checklist [HOMOLOGACAO-PARIDADE-PEDIDOS.md](../HOMOLOGACAO-PARIDADE-PEDIDOS.md) 100% ✅ (Comercial + QA):
+1. Após checklist [HOMOLOGACAO-PARIDADE-PEDIDOS.md](../HOMOLOGACAO-PARIDADE-PEDIDOS.md) / autorização de cutover:
    - Ocultar `pedidos-venda-abertos` do launcher (`showInMenu: false`)
    - Redirects HTTP de deep links antigos → rotas do Portal Comercial
    - Comunicar cutover aos usuários

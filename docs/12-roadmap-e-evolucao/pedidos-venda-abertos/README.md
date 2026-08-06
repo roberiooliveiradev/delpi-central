@@ -4,7 +4,7 @@ Consulta operacional read-only de pedidos de venda em aberto para vendedores, co
 
 **Status:** Fase 3 concluída (2026-06-09) — dashboard operacional MVP.
 
-> **Sucessor:** [Portal Comercial](../commercial/README.md) (`commercial`) já cobre paridade F2b. Este plugin permanece ativo até a homologação § 2.1.1; a depreciação (ocultar menu + redirects) é **F2c** — [runbook](../commercial/F2C-CUTOVER-RUNBOOK.md) · [ADR-002](../commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md).
+> **Sucessor / cutover F2c:** [Portal Comercial](../commercial/README.md) (`commercial`) é a entrada canônica. Este plugin está **depreciado** (menu oculto); URLs antigas redirecionam — [runbook](../commercial/F2C-CUTOVER-RUNBOOK.md) · [ADR-002](../commercial/adr/ADR-002-deprecar-pedidos-venda-abertos.md).
 
 ---
 
