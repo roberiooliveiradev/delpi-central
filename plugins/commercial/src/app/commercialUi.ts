@@ -1,12 +1,16 @@
 import {
+  createDashboardAlertQueue,
   createDashboardDetailFieldGrid,
   createDashboardFiltersKit,
   createDashboardLoadingActivityCard,
   createDashboardMultiSelectField,
+  createDashboardScopeChipBar,
   createDashboardSelectField,
   createDashboardTextAreaField,
   createDashboardTextField,
+  createDashboardWorklistItem,
   createInitialsAvatar,
+  createTimeline,
   dataTableBemClasses,
   emptyStateCardBemClasses,
   navigationCardBemClasses,
@@ -17,6 +21,10 @@ import {
   statusBadgeBemClasses,
   textAreaFieldBemClasses,
   textFieldBemClasses,
+  alertQueueBemClasses,
+  scopeChipBarBemClasses,
+  worklistItemBemClasses,
+  timelineBemClasses,
 } from "@delpi/plugin-ui/index";
 
 export const UI_PREFIX = "cm";
@@ -28,6 +36,10 @@ export const cmDataTableClassNames = dataTableBemClasses(UI_PREFIX);
 export const cmEmptyStateClassNames = emptyStateCardBemClasses(UI_PREFIX);
 export const cmStateBannerClassNames = stateBannerBemClasses(UI_PREFIX);
 export const cmStatusBadgeClassNames = statusBadgeBemClasses(UI_PREFIX);
+export const cmAlertQueueClassNames = alertQueueBemClasses(UI_PREFIX);
+export const cmScopeChipBarClassNames = scopeChipBarBemClasses(UI_PREFIX);
+export const cmWorklistItemClassNames = worklistItemBemClasses(UI_PREFIX);
+export const cmTimelineClassNames = timelineBemClasses(UI_PREFIX);
 
 export const cmSectionLabels = {
   titleHelpAriaLabel: (title: string) => `Ajuda: ${title}`,
@@ -51,6 +63,11 @@ export const CommercialLoadingCard = createDashboardLoadingActivityCard({
   prefix: UI_PREFIX,
   labels: loadingLabels,
 });
+
+export const CommercialAlertQueue = createDashboardAlertQueue({ prefix: UI_PREFIX });
+export const CommercialScopeChipBar = createDashboardScopeChipBar({ prefix: UI_PREFIX });
+export const CommercialWorklistItem = createDashboardWorklistItem({ prefix: UI_PREFIX });
+export const CommercialActivityTimeline = createTimeline({ prefix: UI_PREFIX });
 
 const { field: cmSelectFieldClasses, control: cmSelectControlClasses } =
   selectFieldPacClasses(UI_PREFIX);

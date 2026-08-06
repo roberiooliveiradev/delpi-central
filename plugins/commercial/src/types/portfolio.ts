@@ -19,9 +19,16 @@ export type SellerPortfolio = {
   customers: SellerCustomer[];
 };
 
+export type CommercialCapabilities = {
+  worklist_view: boolean;
+  followups_manage: boolean;
+  seller_portfolios_manage: boolean;
+};
+
 export type SellerPortfolioMeResponse = {
   portfolio: SellerPortfolio | null;
   is_admin: boolean;
+  capabilities?: CommercialCapabilities;
 };
 
 export type CustomerEnrichmentItem = {

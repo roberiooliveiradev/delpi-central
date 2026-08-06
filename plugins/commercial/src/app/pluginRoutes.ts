@@ -3,6 +3,7 @@ export const COMMERCIAL_BASE_PATH = "/apps/commercial";
 
 export type PluginView =
   | "home"
+  | "my_day"
   | "open_orders"
   | "customers"
   | "customer_detail"
@@ -55,6 +56,10 @@ export function resolvePluginRoute(
 
   const relativePath = path.slice(base.length + 1);
 
+  if (relativePath === "my-day") {
+    return { view: "my_day", pathname: path, relativePath };
+  }
+
   if (relativePath === "open-orders") {
     return { view: "open_orders", pathname: path, relativePath };
   }
@@ -104,7 +109,9 @@ export function buildPluginPath(
         ? `${base}/customers`
         : view === "seller_portfolios"
           ? `${base}/seller-portfolios`
-          : base;
+          : view === "my_day"
+            ? `${base}/my-day`
+            : base;
   if (!search) return path;
   const normalizedSearch = search.startsWith("?") ? search : `?${search}`;
   if (normalizedSearch === "?") return path;

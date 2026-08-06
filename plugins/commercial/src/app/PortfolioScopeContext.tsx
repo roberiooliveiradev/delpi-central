@@ -9,12 +9,14 @@ import {
 } from "react";
 
 import { getMySellerPortfolio, listSellerPortfolios } from "../api/commercialPortfolioApi";
-import type { SellerPortfolio } from "../types/portfolio";
+import type { CommercialCapabilities, SellerPortfolio } from "../types/portfolio";
 
 type PortfolioScopeValue = {
   loading: boolean;
   error: string | null;
   isAdmin: boolean;
+  canViewWorklist: boolean;
+  canManageFollowups: boolean;
   myPortfolio: SellerPortfolio | null;
   sellers: SellerPortfolio[];
   sellerIdFilter: string | null;
@@ -25,10 +27,17 @@ type PortfolioScopeValue = {
 
 const PortfolioScopeContext = createContext<PortfolioScopeValue | null>(null);
 
+const EMPTY_CAPABILITIES: CommercialCapabilities = {
+  worklist_view: false,
+  followups_manage: false,
+  seller_portfolios_manage: false,
+};
+
 export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [capabilities, setCapabilities] = useState<CommercialCapabilities>(EMPTY_CAPABILITIES);
   const [myPortfolio, setMyPortfolio] = useState<SellerPortfolio | null>(null);
   const [sellers, setSellers] = useState<SellerPortfolio[]>([]);
   const [sellerIdFilter, setSellerIdFilterState] = useState<string | null>(null);
@@ -52,6 +61,13 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         const admin = Boolean(response.is_admin);
         setIsAdmin(admin);
         setMyPortfolio(response.portfolio);
+        setCapabilities({
+          worklist_view: Boolean(response.capabilities?.worklist_view),
+          followups_manage: Boolean(response.capabilities?.followups_manage),
+          seller_portfolios_manage: Boolean(
+            response.capabilities?.seller_portfolios_manage ?? admin,
+          ),
+        });
 
         if (admin) {
           const portfolios = await listSellerPortfolios({
@@ -68,6 +84,7 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
         if (controller.signal.aborted) return;
         setError(err instanceof Error ? err.message : "Erro ao carregar carteira.");
         setIsAdmin(false);
+        setCapabilities(EMPTY_CAPABILITIES);
         setMyPortfolio(null);
         setSellers([]);
       })
@@ -83,6 +100,8 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       loading,
       error,
       isAdmin,
+      canViewWorklist: capabilities.worklist_view,
+      canManageFollowups: capabilities.followups_manage,
       myPortfolio,
       sellers,
       sellerIdFilter,
@@ -90,7 +109,17 @@ export function PortfolioScopeProvider({ children }: { children: ReactNode }) {
       reload,
       reloadScope: reload,
     }),
-    [loading, error, isAdmin, myPortfolio, sellers, sellerIdFilter, setSellerIdFilter, reload],
+    [
+      loading,
+      error,
+      isAdmin,
+      capabilities,
+      myPortfolio,
+      sellers,
+      sellerIdFilter,
+      setSellerIdFilter,
+      reload,
+    ],
   );
 
   return (

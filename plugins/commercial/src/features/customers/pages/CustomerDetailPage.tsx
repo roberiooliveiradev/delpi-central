@@ -206,6 +206,7 @@ export function CustomerDetailPage({
               customer={customer}
               orders={orders}
               loading={refreshing}
+              basePath={basePath}
               onGoToOrders={() => changeSection("pedidos")}
               onGoToContacts={() => changeSection("contatos")}
             />

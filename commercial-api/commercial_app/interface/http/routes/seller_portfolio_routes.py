@@ -8,7 +8,9 @@ from commercial_app.application.security.auth_dependencies import require_any_pe
 from commercial_app.application.security.commercial_permissions import (
     COMMERCIAL_MANAGE_PERMISSIONS,
     COMMERCIAL_READ_PERMISSIONS,
+    can_manage_followups,
     can_manage_portfolios,
+    can_view_worklist,
 )
 from commercial_app.application.use_cases.manage_seller_portfolio import (
     CreatePortfolioRequest,
@@ -57,10 +59,16 @@ def get_my_seller_portfolio(request: Request):
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="get_my_seller_portfolio")
         portfolio = _use_case().get_me(user_id)
+        user = current_user_from_request(request)
         return ok(
             {
                 "portfolio": portfolio_to_dict(portfolio) if portfolio else None,
-                "is_admin": can_manage_portfolios(current_user_from_request(request)),
+                "is_admin": can_manage_portfolios(user),
+                "capabilities": {
+                    "worklist_view": can_view_worklist(user),
+                    "followups_manage": can_manage_followups(user),
+                    "seller_portfolios_manage": can_manage_portfolios(user),
+                },
             },
             message="Carteira do usuário carregada.",
             operation_id="get_my_seller_portfolio",

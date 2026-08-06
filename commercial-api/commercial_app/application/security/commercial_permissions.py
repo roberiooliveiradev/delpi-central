@@ -5,7 +5,10 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 COMMERCIAL_ACCOUNTS_VIEW = "commercial.accounts.view"
+COMMERCIAL_WORKLIST_VIEW = "commercial.worklist.view"
+COMMERCIAL_FOLLOWUPS_MANAGE = "commercial.followups.manage"
 COMMERCIAL_SELLER_PORTFOLIOS_MANAGE = "commercial.seller-portfolios.manage"
+COMMERCIAL_AUDIT_VIEW = "commercial.audit.view"
 
 PEDIDOS_VENDA_ABERTOS_ACCESS = "pedidos-venda-abertos.access"
 PEDIDOS_VENDA_ABERTOS_ADMIN = "pedidos-venda-abertos.admin"
@@ -17,7 +20,24 @@ COMMERCIAL_READ_PERMISSIONS: tuple[str, ...] = (
     API_DELPI_ACCESS,
 )
 
+COMMERCIAL_WORKLIST_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_WORKLIST_VIEW,
+    API_DELPI_ACCESS,
+)
+
+COMMERCIAL_FOLLOWUPS_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_FOLLOWUPS_MANAGE,
+    API_DELPI_ACCESS,
+)
+
 COMMERCIAL_MANAGE_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
+    PEDIDOS_VENDA_ABERTOS_ADMIN,
+    API_DELPI_ACCESS,
+)
+
+COMMERCIAL_AUDIT_PERMISSIONS: tuple[str, ...] = (
+    COMMERCIAL_AUDIT_VIEW,
     COMMERCIAL_SELLER_PORTFOLIOS_MANAGE,
     PEDIDOS_VENDA_ABERTOS_ADMIN,
     API_DELPI_ACCESS,
@@ -59,5 +79,17 @@ def can_read_commercial(user: Any | None) -> bool:
     return has_any_permission(user, COMMERCIAL_READ_PERMISSIONS)
 
 
+def can_view_worklist(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_WORKLIST_PERMISSIONS)
+
+
+def can_manage_followups(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_FOLLOWUPS_PERMISSIONS)
+
+
 def can_manage_portfolios(user: Any | None) -> bool:
     return has_any_permission(user, COMMERCIAL_MANAGE_PERMISSIONS)
+
+
+def can_view_audit(user: Any | None) -> bool:
+    return has_any_permission(user, COMMERCIAL_AUDIT_PERMISSIONS)

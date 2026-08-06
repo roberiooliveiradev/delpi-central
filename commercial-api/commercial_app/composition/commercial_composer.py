@@ -3,9 +3,14 @@ from __future__ import annotations
 from commercial_app.application.services.customer_avatar_storage import CustomerAvatarStorage
 from commercial_app.application.use_cases.manage_customer_avatar import ManageCustomerAvatarUseCase
 from commercial_app.application.use_cases.manage_seller_portfolio import ManageSellerPortfolioUseCase
+from commercial_app.application.use_cases.manage_worklist import ManageWorklistUseCase
 from commercial_app.config import settings
 from commercial_app.domain.ports.customer_avatar_repository_port import CustomerAvatarRepositoryPort
 from commercial_app.domain.ports.seller_portfolio_repository_port import SellerPortfolioRepositoryPort
+from commercial_app.domain.ports.task_repository_port import (
+    ActivityRepositoryPort,
+    TaskRepositoryPort,
+)
 from commercial_app.infrastructure.gateways.delpi_commercial_gateway import DelpiCommercialGateway
 from commercial_app.infrastructure.persistence.repositories.legacy_postgres_customer_avatar_repository import (
     LegacyPostgresCustomerAvatarRepository,
@@ -22,11 +27,18 @@ from commercial_app.infrastructure.persistence.repositories.postgres_customer_av
 from commercial_app.infrastructure.persistence.repositories.postgres_seller_portfolio_repository import (
     PostgresSellerPortfolioRepository,
 )
+from commercial_app.infrastructure.persistence.repositories.postgres_task_repository import (
+    PostgresActivityRepository,
+    PostgresTaskRepository,
+)
 
 _portfolio_repository: SellerPortfolioRepositoryPort | None = None
 _avatar_repository: CustomerAvatarRepositoryPort | None = None
+_task_repository: TaskRepositoryPort | None = None
+_activity_repository: ActivityRepositoryPort | None = None
 _portfolio_use_case: ManageSellerPortfolioUseCase | None = None
 _avatar_use_case: ManageCustomerAvatarUseCase | None = None
+_worklist_use_case: ManageWorklistUseCase | None = None
 _commercial_gateway: DelpiCommercialGateway | None = None
 
 
@@ -90,3 +102,28 @@ def build_delpi_commercial_gateway() -> DelpiCommercialGateway:
     if _commercial_gateway is None:
         _commercial_gateway = DelpiCommercialGateway()
     return _commercial_gateway
+
+
+def build_task_repository() -> TaskRepositoryPort:
+    global _task_repository
+    if _task_repository is None:
+        _task_repository = PostgresTaskRepository()
+    return _task_repository
+
+
+def build_activity_repository() -> ActivityRepositoryPort:
+    global _activity_repository
+    if _activity_repository is None:
+        _activity_repository = PostgresActivityRepository()
+    return _activity_repository
+
+
+def build_manage_worklist_use_case() -> ManageWorklistUseCase:
+    global _worklist_use_case
+    if _worklist_use_case is None:
+        _worklist_use_case = ManageWorklistUseCase(
+            task_repository=build_task_repository(),
+            activity_repository=build_activity_repository(),
+            audit_repository=build_audit_log_repository(),
+        )
+    return _worklist_use_case

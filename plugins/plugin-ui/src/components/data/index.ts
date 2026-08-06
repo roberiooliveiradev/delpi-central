@@ -292,3 +292,9 @@ export {
   type TimelineTone,
   type TimelineTreeNode,
 } from "./Timeline";
+/** Alias de produto (Account 360 / follow-ups) — mesmo componente Timeline. */
+export {
+  Timeline as ActivityTimeline,
+  createTimeline as createActivityTimeline,
+  timelineBemClasses as activityTimelineBemClasses,
+} from "./Timeline";

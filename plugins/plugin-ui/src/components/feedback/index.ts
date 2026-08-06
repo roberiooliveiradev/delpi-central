@@ -173,3 +173,31 @@ export {
   type StatusBadgeProps,
   type StatusBadgeVariant,
 } from "./StatusBadge";
+export {
+  AlertQueue,
+  alertQueueBemClasses,
+  createDashboardAlertQueue,
+  type AlertQueueClassNames,
+  type AlertQueueItem,
+  type AlertQueueProps,
+  type AlertQueueTone,
+  type DashboardAlertQueueProps,
+} from "./AlertQueue";
+export {
+  ScopeChipBar,
+  scopeChipBarBemClasses,
+  createDashboardScopeChipBar,
+  type DashboardScopeChipBarProps,
+  type ScopeChip,
+  type ScopeChipBarClassNames,
+  type ScopeChipBarProps,
+} from "./ScopeChipBar";
+export {
+  WorklistItem,
+  worklistItemBemClasses,
+  createDashboardWorklistItem,
+  type DashboardWorklistItemProps,
+  type WorklistItemClassNames,
+  type WorklistItemProps,
+  type WorklistItemTone,
+} from "./WorklistItem";

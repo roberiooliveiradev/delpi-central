@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BriefcaseBusiness, ClipboardList, Settings, Users } from "lucide-react";
+import { BriefcaseBusiness, CalendarCheck, ClipboardList, Settings, Users } from "lucide-react";
 import { ActionButton, PageHeader } from "@delpi/plugin-ui/index";
 
 import {
@@ -7,35 +7,39 @@ import {
   type PluginView,
 } from "./pluginRoutes";
 import { navigatePluginView } from "./pluginNavigation";
-import { cmPageHeaderClassNames } from "./commercialUi";
+import {
+  cmPageHeaderClassNames,
+  CommercialScopeChipBar,
+} from "./commercialUi";
 
 type PluginShellProps = {
   view: PluginView;
   basePath: string;
   search?: string;
   showAdmin?: boolean;
+  showWorklist?: boolean;
+  scopeLabel?: string;
   children: ReactNode;
 };
 
-const NAV_ITEMS: Array<{
-  id: Exclude<PluginView, "customer_detail" | "not_found">;
-  label: string;
-}> = [
-  { id: "home", label: "Início" },
-  { id: "open_orders", label: "Pedidos em aberto" },
-  { id: "customers", label: "Minha carteira" },
-];
+type NavId = Exclude<PluginView, "customer_detail" | "not_found">;
 
 export function PluginShell({
   view,
   basePath,
   search,
   showAdmin = false,
+  showWorklist = false,
+  scopeLabel,
   children,
 }: PluginShellProps) {
-  const items = showAdmin
-    ? [...NAV_ITEMS, { id: "seller_portfolios" as const, label: "Carteiras" }]
-    : NAV_ITEMS;
+  const items: Array<{ id: NavId; label: string }> = [
+    { id: "home", label: "Início" },
+    ...(showWorklist ? [{ id: "my_day" as const, label: "Meu dia" }] : []),
+    { id: "open_orders", label: "Pedidos em aberto" },
+    { id: "customers", label: "Minha carteira" },
+    ...(showAdmin ? [{ id: "seller_portfolios" as const, label: "Carteiras" }] : []),
+  ];
 
   return (
     <div className="dashboard-commercial dashboard-pedidos-venda-abertos dashboard-page">
@@ -45,9 +49,16 @@ export function PluginShell({
           classNames={cmPageHeaderClassNames}
           labels={{ refresh: "Atualizar", refreshing: "Atualizando…" }}
           title="Portal Comercial"
-          subtitle="Carteira de clientes, pedidos em aberto e gestão comercial."
+          subtitle="Carteira, pedidos, Meu dia e gestão comercial."
           icon={<BriefcaseBusiness size={28} strokeWidth={1.75} aria-hidden="true" />}
         />
+
+        {scopeLabel ? (
+          <CommercialScopeChipBar
+            label="Escopo"
+            chips={[{ id: "scope", label: scopeLabel, active: true }]}
+          />
+        ) : null}
 
         <nav className="cm-nav-row" aria-label="Áreas do Portal Comercial">
           {items.map((item) => {
@@ -79,13 +90,16 @@ export function PluginShell({
 export function HomeNavIcon({
   target,
 }: {
-  target: "orders" | "customers" | "admin";
+  target: "orders" | "customers" | "admin" | "my_day";
 }) {
   if (target === "orders") {
     return <ClipboardList size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
   if (target === "customers") {
     return <Users size={22} strokeWidth={1.75} aria-hidden="true" />;
+  }
+  if (target === "my_day") {
+    return <CalendarCheck size={22} strokeWidth={1.75} aria-hidden="true" />;
   }
   return <Settings size={22} strokeWidth={1.75} aria-hidden="true" />;
 }

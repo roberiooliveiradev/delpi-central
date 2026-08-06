@@ -14,6 +14,11 @@ from commercial_app.interface.http.routes.customer_routes import router as custo
 from commercial_app.interface.http.routes.seller_portfolio_routes import (
     router as seller_portfolio_router,
 )
+from commercial_app.interface.http.routes.worklist_routes import (
+    activities_router,
+    me_router as worklist_me_router,
+    tasks_router,
+)
 from commercial_app.middleware.auth_middleware import jwt_middleware
 from commercial_app.startup.run_migrations_on_startup import run_migrations_on_startup
 
@@ -128,3 +133,6 @@ def ready():
 
 app.include_router(seller_portfolio_router)
 app.include_router(customer_router)
+app.include_router(worklist_me_router)
+app.include_router(tasks_router)
+app.include_router(activities_router)

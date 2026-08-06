@@ -6,17 +6,18 @@ Microfrontend federado do domínio comercial — paridade F2b com o Portal do Ve
 
 | Rota | Descrição |
 |------|-----------|
-| `/apps/commercial` | Início — atalhos para pedidos, carteira e admin |
+| `/apps/commercial` | Início — overview + alertas (Wave G) |
+| `/apps/commercial/my-day` | Meu dia — worklist / follow-ups |
 | `/apps/commercial/open-orders` | Pedidos de venda em aberto (TOTVS) |
 | `/apps/commercial/customers` | Minha carteira de clientes |
-| `/apps/commercial/customers/:codigo/:loja` | Detalhe do cliente |
+| `/apps/commercial/customers/:codigo/:loja` | Detalhe do cliente (timeline de atividades) |
 | `/apps/commercial/seller-portfolios` | Administração de carteiras |
 
 ## APIs
 
 | Base | Uso |
 |------|-----|
-| `/apps/commercial-api` | Carteiras, avatars, enrichment (`X-Delpi-Caller-App: commercial`) |
+| `/apps/commercial-api` | Carteiras, avatars, worklist/tasks, enrichment (`X-Delpi-Caller-App: commercial`) |
 | `/apps/api-delpi/pedidos-venda-abertos/` | Pedidos em aberto (read TOTVS) — **barra final** (evita Mixed Content atrás de HTTPS) |
 
 Clients usam paths **relativos** ao gateway. A `commercial-api` roda com `redirect_slashes=False` (list/create de `seller-portfolios` **sem** barra final).
@@ -26,7 +27,12 @@ Clients usam paths **relativos** ao gateway. A `commercial-api` roda com `redire
 | Permissão | Escopo |
 |-----------|--------|
 | `commercial.accounts.view` | Acesso geral (alias cutover: `pedidos-venda-abertos.access`) |
+| `commercial.worklist.view` | Meu dia / `GET /me/worklist` |
+| `commercial.followups.manage` | Criar/concluir tarefas e atividades |
 | `commercial.seller-portfolios.manage` | Admin carteiras (alias: `pedidos-venda-abertos.admin`) |
+| `commercial.audit.view` | Auditoria (quando exposta) |
+
+Papéis sugeridos: [PERFIS-E-PERMISSOES.md](../../docs/12-roadmap-e-evolucao/commercial/PERFIS-E-PERMISSOES.md).
 
 Registrar no Core:
 
@@ -62,6 +68,6 @@ Smoke federado: `curl -I http://localhost/apps/commercial/assets/remoteEntry.js`
 src/
   api/           — httpClient + clients commercial-api / api-delpi
   app/           — rotas, shell, navegação, portfolio scope
-  features/      — home, open-orders, customers, seller-portfolios
+  features/      — home, my-day, open-orders, customers, seller-portfolios
   shared/        — formatadores
 ```
