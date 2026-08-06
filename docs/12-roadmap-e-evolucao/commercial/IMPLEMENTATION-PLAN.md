@@ -85,6 +85,7 @@ Só após [HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md) 1
 - [x] Tasks P0 Observação na UI + filtro tipo
 - [x] Tasks P1 Responsável / reassign / fila equipe
 - [x] Tasks P2 Anexos (volume persistente)
+- [x] Realtime worklist (WebSocket Meu dia + Início) — [realtime-worklist.md](../../../commercial-api/docs/architecture/realtime-worklist.md)
 - [ ] **Correção futura:** tarefas concluídas na UI Meu dia (hoje só `status=done` no banco — somem da fila) — [UX-E-TASKS-EVOLUTION.md](./UX-E-TASKS-EVOLUTION.md) § 3.1
 - [ ] Homologação Comercial ([HOMOLOGACAO-PARIDADE-PEDIDOS.md](./HOMOLOGACAO-PARIDADE-PEDIDOS.md))
 - [ ] Homologação assinada Wave G+ ([HOMOLOGACAO-WAVE-G.md](./HOMOLOGACAO-WAVE-G.md))

@@ -1,5 +1,7 @@
 import logging
 import os
+import asyncio
+import contextlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -10,6 +12,10 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from commercial_app.config import settings
 from commercial_app.core.responses import fail
+from commercial_app.application.services.commercial_realtime_hub import (
+    commercial_realtime_hub,
+)
+from commercial_app.interface.http.routes.realtime_routes import router as realtime_router
 from commercial_app.interface.http.routes.attachment_routes import router as attachment_router
 from commercial_app.interface.http.routes.customer_routes import router as customer_router
 from commercial_app.interface.http.routes.seller_portfolio_routes import (
@@ -54,7 +60,15 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
-    yield
+    loop = asyncio.get_running_loop()
+    commercial_realtime_hub.bind_loop(loop)
+    worker = asyncio.create_task(commercial_realtime_hub.worker())
+    try:
+        yield
+    finally:
+        worker.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await worker
 
 
 app = FastAPI(
@@ -138,3 +152,4 @@ app.include_router(worklist_me_router)
 app.include_router(tasks_router)
 app.include_router(activities_router)
 app.include_router(attachment_router)
+app.include_router(realtime_router)

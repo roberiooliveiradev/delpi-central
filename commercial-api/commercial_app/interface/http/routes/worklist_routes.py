@@ -17,9 +17,14 @@ from commercial_app.application.use_cases.manage_worklist import (
     CreateTaskInput,
     UpdateTaskInput,
 )
-from commercial_app.composition.commercial_composer import build_manage_worklist_use_case
+from commercial_app.composition.commercial_composer import (
+    build_manage_worklist_use_case,
+    build_task_repository,
+)
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
 from commercial_app.core.responses import fail, ok
+from commercial_app.application.services.commercial_realtime_notify import notify_worklist_changed
+from commercial_app.interface.http.client_id import client_id_from_request
 from commercial_app.interface.http.schemas.worklist_schemas import (
     CreateActivityBody,
     CreateTaskBody,
@@ -120,6 +125,12 @@ def create_task(request: Request, body: CreateTaskBody):
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
+        notify_worklist_changed(
+            reason="task.created",
+            task_id=str(task.id),
+            assignee_user_ids=[task.assignee_user_id],
+            actor_client_id=client_id_from_request(request),
+        )
         return ok(task.to_dict(), message="Tarefa criada.", operation_id="create_task")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="create_task")
@@ -137,7 +148,9 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
         user_id = _user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="update_task")
-        task = _use_case().update_task(
+        uc = _use_case()
+        existing = build_task_repository().get_by_id(task_id)
+        task = uc.update_task(
             user_id=user_id,
             task_id=task_id,
             data=UpdateTaskInput(
@@ -151,6 +164,15 @@ def update_task(request: Request, task_id: UUID = Path(...), body: UpdateTaskBod
                 assignee_user_id=body.assignee_user_id,
             ),
             actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
+        assignees = [task.assignee_user_id]
+        if existing and existing.assignee_user_id != task.assignee_user_id:
+            assignees.append(existing.assignee_user_id)
+        notify_worklist_changed(
+            reason="task.updated",
+            task_id=str(task.id),
+            assignee_user_ids=assignees,
+            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa atualizada.", operation_id="update_task")
     except PermissionError as exc:
@@ -176,6 +198,12 @@ def complete_task(request: Request, task_id: UUID = Path(...)):
             task_id=task_id,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
+        notify_worklist_changed(
+            reason="task.completed",
+            task_id=str(task.id),
+            assignee_user_ids=[task.assignee_user_id],
+            actor_client_id=client_id_from_request(request),
+        )
         return ok(task.to_dict(), message="Tarefa concluída.", operation_id="complete_task")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="complete_task")
@@ -199,6 +227,12 @@ def defer_task(request: Request, task_id: UUID = Path(...), body: DeferTaskBody 
             due_at=body.due_at,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
+        notify_worklist_changed(
+            reason="task.deferred",
+            task_id=str(task.id),
+            assignee_user_ids=[task.assignee_user_id],
+            actor_client_id=client_id_from_request(request),
+        )
         return ok(task.to_dict(), message="Tarefa adiada.", operation_id="defer_task")
     except PermissionError as exc:
         return fail(str(exc), 403, operation_id="defer_task")
@@ -218,11 +252,21 @@ def reassign_task(request: Request, task_id: UUID = Path(...), body: ReassignTas
         user_id = _user_id(request)
         if not user_id:
             return fail("Usuário não identificado.", 401, operation_id="reassign_task")
+        existing = build_task_repository().get_by_id(task_id)
         task = _use_case().reassign_task(
             user_id=user_id,
             task_id=task_id,
             new_assignee_user_id=body.assignee_user_id,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
+        )
+        assignees = [task.assignee_user_id]
+        if existing and existing.assignee_user_id != task.assignee_user_id:
+            assignees.append(existing.assignee_user_id)
+        notify_worklist_changed(
+            reason="task.reassigned",
+            task_id=str(task.id),
+            assignee_user_ids=assignees,
+            actor_client_id=client_id_from_request(request),
         )
         return ok(task.to_dict(), message="Tarefa reatribuída.", operation_id="reassign_task")
     except PermissionError as exc:

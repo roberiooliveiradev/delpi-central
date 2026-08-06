@@ -13,9 +13,15 @@ from commercial_app.application.security.commercial_permissions import (
     can_manage_portfolios,
 )
 from commercial_app.application.services.attachment_storage import AttachmentStorageError
-from commercial_app.composition.commercial_composer import build_manage_attachments_use_case
+from commercial_app.composition.commercial_composer import (
+    build_attachment_repository,
+    build_manage_attachments_use_case,
+    build_task_repository,
+)
 from commercial_app.core.auth_actor import actor_sub_from_request, current_user_from_request
 from commercial_app.core.responses import fail, ok
+from commercial_app.application.services.commercial_realtime_notify import notify_worklist_changed
+from commercial_app.interface.http.client_id import client_id_from_request
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +34,22 @@ def _user_id(request: Request) -> str | None:
 
 def _is_portfolio_manager(request: Request) -> bool:
     return can_manage_portfolios(current_user_from_request(request))
+
+
+def _notify_task_attachment(task_id: str, request: Request) -> None:
+    try:
+        task_uuid = UUID(task_id)
+    except ValueError:
+        return
+    task = build_task_repository().get_by_id(task_uuid)
+    if task is None:
+        return
+    notify_worklist_changed(
+        reason="attachment.changed",
+        task_id=str(task.id),
+        assignee_user_ids=[task.assignee_user_id],
+        actor_client_id=client_id_from_request(request),
+    )
 
 
 @router.get("", operation_id="list_attachments")
@@ -85,6 +107,8 @@ async def upload_attachment(
             uploaded_by_user_id=user_id,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
+        if owner_type.strip().lower() == "task":
+            _notify_task_attachment(owner_id.strip(), request)
         return ok(
             record.to_dict(),
             message="Anexo enviado com sucesso.",
@@ -146,11 +170,14 @@ def delete_attachment(
     if not user_id:
         return fail("Usuário não identificado.", 401, operation_id="delete_attachment")
     try:
+        record = build_attachment_repository().get_by_id(attachment_id)
         payload = build_manage_attachments_use_case().delete(
             attachment_id=attachment_id,
             actor_user_id=user_id,
             actor_is_portfolio_manager=_is_portfolio_manager(request),
         )
+        if record and record.owner_type == "task":
+            _notify_task_attachment(record.owner_id, request)
         return ok(
             payload,
             message="Anexo removido.",

@@ -78,6 +78,7 @@ Ordem canônica: **Hero → Lista (filtro) → Nova carteira → Editar (condici
 | Tipos Ligar/E-mail/Visita | Sim | `task_type` | Alinhado ao DATA-MODEL |
 | **Anexo** | Prévia no card; gestão em Nova/Editar | `/attachments` + volume | **P2 entregue** |
 | **Editar tarefa** | Form colapsável (campos + anexos + responsável) | `PATCH /tasks/{id}` | Entregue ago/2026 |
+| **Realtime worklist** | WS invalida fila (Meu dia + KPIs Início) | `GET /commercial/realtime/ws` | Entregue ago/2026 |
 | **Tarefas concluídas na UI** | Não (somem da fila) | Persistidas `status=done` | **Correção futura** — § 3.1 |
 | Checklist / subtarefas | Não | Spec `task_dependencies` | Futuro |
 | Lembrete / recorrência | Não | — | Mercado sim |
@@ -128,6 +129,7 @@ Prioridade alinhada a valor × esforço e ao que já existe no contrato.
 | Meeting: local, guests, busy/free | Pipedrive | Só se calendário entrar no escopo |
 | Auto-tasks (pedido atrasado → follow-up) | HubSpot workflows | “Start tasks” já no backlog Wave G |
 | Sequências / cadências | HubSpot Sequences | Spec P2 em API-ROUTES |
+| **Realtime worklist (WS)** | HubSpot live board | **Entregue ago/2026** — invalidação + refetch Meu dia/Início |
 
 ### 3.1 Correção futura — tarefas concluídas “somem” da UI
 

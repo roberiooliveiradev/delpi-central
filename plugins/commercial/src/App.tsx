@@ -1,5 +1,7 @@
+import { useCallback, type ReactNode } from "react";
 import { configureHttpClient } from "./api/httpClient";
 import { CommercialFloatingNoticeProvider } from "./app/CommercialFloatingNoticeProvider";
+import { CommercialRealtimeProvider } from "./app/CommercialRealtimeProvider";
 import { HomeHeroMetricsProvider } from "./app/HomeHeroMetricsContext";
 import { NotFoundPage } from "./app/NotFoundPage";
 import { PluginShell } from "./app/PluginShell";
@@ -78,6 +80,21 @@ function AppRoutes({
   );
 }
 
+function RealtimeShell({
+  getAccessToken,
+  children,
+}: {
+  getAccessToken: () => string | undefined;
+  children: ReactNode;
+}) {
+  const { canViewWorklist } = usePortfolioScope();
+  return (
+    <CommercialRealtimeProvider getAccessToken={getAccessToken} enabled={canViewWorklist}>
+      {children}
+    </CommercialRealtimeProvider>
+  );
+}
+
 export default function App({
   getAccessToken,
   pathname: pathnameFromHost,
@@ -87,17 +104,20 @@ export default function App({
   configureHttpClient(() => getAccessToken?.());
 
   const basePath = normalizeBasePath(basePathFromHost ?? COMMERCIAL_BASE_PATH);
+  const tokenGetter = useCallback(() => getAccessToken?.(), [getAccessToken]);
 
   return (
     <PortfolioScopeProvider>
       <CommercialFloatingNoticeProvider>
-        <HomeHeroMetricsProvider>
-          <AppRoutes
-            basePath={basePath}
-            search={search}
-            pathnameFromHost={pathnameFromHost}
-          />
-        </HomeHeroMetricsProvider>
+        <RealtimeShell getAccessToken={tokenGetter}>
+          <HomeHeroMetricsProvider>
+            <AppRoutes
+              basePath={basePath}
+              search={search}
+              pathnameFromHost={pathnameFromHost}
+            />
+          </HomeHeroMetricsProvider>
+        </RealtimeShell>
       </CommercialFloatingNoticeProvider>
     </PortfolioScopeProvider>
   );

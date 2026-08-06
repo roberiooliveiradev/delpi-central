@@ -6,6 +6,7 @@ import {
   StatusBadge,
 } from "@delpi/plugin-ui/index";
 
+import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
 import {
   completeTask,
   createTask,
@@ -399,6 +400,10 @@ export function MyDayPage({ basePath }: MyDayPageProps) {
     void reload(controller.signal);
     return () => controller.abort();
   }, [reload]);
+
+  useCommercialWorklistSync(() => {
+    void reload();
+  }, canManageFollowups);
 
   const counts = {
     overdue: data?.counts.overdue ?? 0,

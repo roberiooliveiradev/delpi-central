@@ -1,3 +1,8 @@
+import {
+  COMMERCIAL_CLIENT_ID_HEADER,
+  getCommercialClientId,
+} from "../app/commercialClientId";
+
 type RequestOptions = {
   signal?: AbortSignal;
 };
@@ -37,13 +42,16 @@ function formatErrorMessage(errorBody: unknown, fallback: string): string {
   return base;
 }
 
-function buildHeaders(withJsonBody: boolean): Record<string, string> {
+function buildHeaders(withJsonBody: boolean, includeClientId = false): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "X-Delpi-Caller-App": DELPI_CALLER_APP,
   };
   if (withJsonBody) {
     headers["Content-Type"] = "application/json";
+  }
+  if (includeClientId && typeof window !== "undefined") {
+    headers[COMMERCIAL_CLIENT_ID_HEADER] = getCommercialClientId();
   }
   const token = accessTokenGetter?.();
   if (token) {
@@ -95,7 +103,7 @@ async function httpJson<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method,
-    headers: buildHeaders(body !== undefined),
+    headers: buildHeaders(body !== undefined, true),
     body: body !== undefined ? JSON.stringify(body) : undefined,
     signal: options.signal,
   });
@@ -135,7 +143,7 @@ export async function httpPutFormData<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method: "PUT",
-    headers: buildHeaders(false),
+    headers: buildHeaders(false, true),
     body: formData,
     signal: options.signal,
   });
@@ -155,7 +163,7 @@ export async function httpPostFormData<T>(
 ): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
-    headers: buildHeaders(false),
+    headers: buildHeaders(false, true),
     body: formData,
     signal: options.signal,
   });

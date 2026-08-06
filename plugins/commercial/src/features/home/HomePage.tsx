@@ -39,6 +39,7 @@ import {
   CommercialLoadingCard,
 } from "../../app/commercialUi";
 import { usePortfolioScope } from "../../app/usePortfolioScope";
+import { useCommercialWorklistSync } from "../../app/CommercialRealtimeProvider";
 import { KpiCard } from "../../components/KpiCard";
 import { formatCurrency } from "../../utils/format";
 import type { OpenOrdersData } from "../../types/openOrders";
@@ -127,6 +128,25 @@ export function HomePage({ basePath, showAdmin, showWorklist }: HomePageProps) {
   const [teamLoading, setTeamLoading] = useState(showAdmin);
   const [teamRows, setTeamRows] = useState<TeamRow[]>([]);
   const [teamError, setTeamError] = useState<string | null>(null);
+
+  const reloadWorklist = useCallback(() => {
+    if (!showWorklist) return;
+    void getMyWorklist()
+      .then((wl) => {
+        setWorklistOpen(wl.counts?.open ?? 0);
+        setWorklistOverdue(wl.counts?.overdue ?? 0);
+        setWorklistToday(wl.counts?.today ?? 0);
+        setWorklistError(null);
+      })
+      .catch((err: unknown) => {
+        setWorklistError(err instanceof Error ? err.message : "Erro ao carregar Meu dia.");
+        setWorklistOpen(0);
+        setWorklistOverdue(0);
+        setWorklistToday(0);
+      });
+  }, [showWorklist]);
+
+  useCommercialWorklistSync(reloadWorklist, showWorklist);
 
   const reload = useCallback(() => {
     const controller = new AbortController();
